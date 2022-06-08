@@ -21,4 +21,6 @@ RUN chmod ugo+w apiurl.js
 
 USER static
 
+LABEL org.opencontainers.image.source https://github.com/support-pl/nocloud-app
+
 ENTRYPOINT ["sh", "command.sh" ]
