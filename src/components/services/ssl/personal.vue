@@ -1,0 +1,318 @@
+<template>
+  <div>
+    <a-form-model
+      ref="personalForm"
+      :model="personal"
+      :rules="rules"
+      v-if="personal.result"
+    >
+      <a-divider orientation="left">{{
+        $t("ssl.technical_Contact")
+      }}</a-divider>
+      <a-alert
+        style="margin: 10px"
+        :message="$t('ssl.personal_warning')"
+        type="warning"
+        show-icon
+      />
+      <a-form-model-item :label="$t('ssl.order type')" prop="order">
+        <a-select placeholder=" Please choose one..." v-model="personal.order">
+          <a-select-option value="newOrder">
+            {{ $t("ssl.new order") }}
+          </a-select-option>
+          <a-select-option value="renewOrder">
+            {{ $t("ssl.renewal") }}
+          </a-select-option>
+        </a-select>
+      </a-form-model-item>
+
+      <a-form-model-item :label="$t('ssl.webserver type')" prop="webserver">
+        <a-select
+          v-model="personal.webserver"
+          placeholder="Please choose one..."
+        >
+          <a-select-option value="Nginx"> Nginx </a-select-option>
+          <a-select-option value="Apache"> Apache </a-select-option>
+          <a-select-option value="IIS"> IIS (Windows OS) </a-select-option>
+        </a-select>
+      </a-form-model-item>
+
+      <a-form-model-item :label="$t('ssl.firstname')" prop="firstname">
+        <a-input v-model="personal.firstname" />
+      </a-form-model-item>
+
+      <a-form-model-item :label="$t('ssl.lastname')" prop="lastname">
+        <a-input v-model="personal.lastname" />
+      </a-form-model-item>
+
+      <a-form-model-item label="Email" prop="email">
+        <a-input v-model="personal.email" type="email" />
+      </a-form-model-item>
+
+      <a-form-model-item :label="$t('ssl.phone number')" prop="phonenumber">
+        <a-input v-model.number="personal.phonenumber" />
+      </a-form-model-item>
+
+      <a-form-model-item :label="$t('ssl.companyname')" prop="companyname">
+        <a-input v-model="personal.companyname" />
+      </a-form-model-item>
+
+      <a-form-model-item :label="$t('ssl.address')" prop="address1">
+        <a-input v-model="personal.address1" />
+      </a-form-model-item>
+
+      <a-form-model-item :label="$t('ssl.city')" prop="city">
+        <a-input v-model="personal.city" />
+      </a-form-model-item>
+
+      <a-form-model-item :label="$t('ssl.state')" prop="state">
+        <a-input v-model="personal.state" />
+      </a-form-model-item>
+
+      <a-form-model-item :label="$t('ssl.countryname')" prop="country">
+        <a-select
+          v-model="personal.country"
+          placeholder=" Please choose one..."
+        >
+          <a-select-option
+            v-for="country in Object.keys(countries)"
+            :key="country"
+            :value="country"
+          >
+           {{ country }}: {{ $t(`country.${country}`) }}
+          </a-select-option>
+        </a-select>
+      </a-form-model-item>
+
+      <div v-if="orgVerification.includes(this.product_info.pid)">
+        <a-divider orientation="left">Company details</a-divider>
+
+        <a-form-model-item
+          v-for="(val, key) in companyFields"
+          :key="key"
+          :label="$t('ssl.' + key)"
+          :prop="key"
+        >
+          <a-input v-model="personal[key]" />
+        </a-form-model-item>
+
+        <a-form-model-item :label="$t('ssl.org_country')" prop="org_country">
+          <a-select
+            v-model="personal.org_country"
+            placeholder=" Please choose one..."
+          >
+            <a-select-option
+              v-for="country in Object.keys(countries)"
+              :key="country"
+              :value="country"
+            >
+              {{ country }}: {{ countries[country] }}
+            </a-select-option>
+          </a-select>
+        </a-form-model-item>
+      </div>
+
+      <a-form-model-item>
+        <a-button type="primary" @click="$emit('handleClickPrev')"
+          ><a-icon type="left" /> {{ $t("ssl.back") }}
+        </a-button>
+        <a-button
+          type="primary"
+          @click="handleClickNext"
+          style="margin-left: 10px"
+        >
+          {{ $t("ssl.continue") }} <a-icon type="right"
+        /></a-button>
+      </a-form-model-item>
+    </a-form-model>
+    <loading v-else />
+  </div>
+</template>
+
+<script>
+import loading from "@/components/loading/loading";
+import { countries } from "@/setup/countries";
+import { mapGetters } from "vuex";
+import api from "@/api.js";
+const interestedKeys = [
+  "firstname",
+  "lastname",
+  "email",
+  "address1",
+  "city",
+  "state",
+  "phonenumber",
+  "result",
+  "country",
+  "companyname",
+];
+const companyFields = {
+  org_name: true,
+  org_division: true,
+  org_duns: true,
+  org_addressline1: true,
+  org_city: true,
+  org_region: true,
+  org_lei: false,
+  org_postalcode: true,
+  org_phone: true,
+};
+
+export default {
+  name: "Personal-data",
+  components: { loading },
+  props: {
+    personal_back: {
+      type: Object,
+      default: () => {},
+    },
+    csr: {
+      type: Object,
+      default: () => {},
+    },
+    product_info: {
+      type: Object,
+      default: () => {},
+    },
+  },
+  data() {
+    return {
+      countries,
+      companyFields,
+      orgVerification: [843, 958, 838, 839, 837, 841, 840, 874, 976, 1151],
+      personal: {
+        webserver: "Nginx",
+        order: "newOrder",
+      },
+      rules: {
+        org_country: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        order: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        webserver: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        firstname: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        lastname: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        companyname: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        email: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        address1: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        city: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        state: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        country: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+        phonenumber: [
+          {
+            required: true,
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ],
+      },
+    };
+  },
+  computed: {
+    ...mapGetters({
+      userData: "getUserData",
+    }),
+  },
+  methods: {
+    fetchInfo() {
+      api
+        .sendAsUser("clientDetails")
+        .then((res) => {
+          this.$store.commit("setUserData", res);
+          this.installDataToBuffer();
+        })
+        .catch((res) => {
+          console.error(res);
+        });
+    },
+    handleClickNext() {
+      this.$refs.personalForm.validate((valid) => {
+        if (valid) {
+          if ("csr" in this.personal) delete this.personal.csr;
+          this.$emit("handleClickNext", this.personal);
+        } else {
+          this.$message.error(`${this.$t("ssl.fields is required")}`);
+          return false;
+        }
+      });
+    },
+    installDataToBuffer() {
+      if (this.personal_back.firstname) {
+        this.personal = Object.assign({}, this.personal, this.personal_back);
+      } else {
+        interestedKeys.forEach((key) => {
+          this.$set(this.personal, key, this.userData[key]);
+        });
+        this.personal = Object.assign({}, this.personal, this.csr);
+      }
+    },
+  },
+  mounted() {
+    this.fetchInfo();
+    if (this.orgVerification.includes(this.product_info.pid)) {
+      for (let keyField in this.companyFields) {
+        this.rules[keyField] = [
+          {
+            required: this.companyFields[keyField],
+            message: `${this.$t("ssl.field is required")}`,
+          },
+        ];
+      }
+    }
+  },
+};
+</script>
+
+<style></style>
