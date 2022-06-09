@@ -1,26 +1,24 @@
-FROM node:16-alpine3.12 AS builder
+FROM node:16-alpine3.12 AS ui-builder
 
 WORKDIR /app
 
 COPY . .
 RUN yarn && yarn build
 
-FROM alpine:3.13.2
+FROM golang:1.18-alpine as server-builder
 
-RUN apk add thttpd
+RUN apk add upx
+COPY go.mod main.go /go/src/github.com/support-pl/nocloud-app/
+WORKDIR /go/src/github.com/support-pl/nocloud-app
 
-RUN adduser -D static
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -buildvcs=false -o app
+RUN upx app
 
-WORKDIR /home/static
+FROM alpine
 
-COPY --from=builder  /app/dist/  .
-COPY --from=builder  /app/command.sh .
-
-RUN chmod +x command.sh
-RUN chmod ugo+w apiurl.js
-
-USER static
+COPY --from=ui-builder /app/dist/ /dist
+COPY --from=server-builder /go/src/github.com/support-pl/nocloud-app/app /app
 
 LABEL org.opencontainers.image.source https://github.com/support-pl/nocloud-app
 
-ENTRYPOINT ["sh", "command.sh" ]
+ENTRYPOINT ["/app" ]
