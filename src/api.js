@@ -1,4 +1,4 @@
-import Api from 'nocloudjsrest';
+ import Api from 'nocloudjsrest';
 import vuex from '@/store/index.js'
 // const api = new Api();
 // const api = new Api("http://localhost/https://rest.nocloud.ione-cloud.net/", 8624);
@@ -12,8 +12,7 @@ import vuex from '@/store/index.js'
 // );
 
 const api = new Api(
-	VUE_APP_BASE_URL,
-	8000
+	VUE_APP_BASE_URL
 );
 
 
