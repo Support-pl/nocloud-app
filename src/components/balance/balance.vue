@@ -57,13 +57,13 @@ export default {
   },
   computed: {
     user() {
-      return this.$store.getters.getUser;
+      return this.$store.getters['nocloud/auth/userdata'];
     },
     currency() {
       return this.$config.currency;
     },
     isLogged() {
-      return this.$store.getters.isLogged;
+         return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
   },
   methods: {

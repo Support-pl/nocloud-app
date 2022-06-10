@@ -1,24 +1,28 @@
 import api from "@/api.js"
+
 export default {
+    namespaced: true,
     state: {
-        plans: []
+        accounts: [],
+        loading: false,
     },
     mutations: {
-        setPlans(state, data) {
-            state.plans = data;
+        setAccounts(state, data) {
+            state.accounts = data;
         },
 
         setLoading(state, data) {
             state.loading = data;
         },
+
     },
     actions: {
         fetch({ commit }) {
-            commit("setLoading", true);
             return new Promise((resolve, reject) => {
-                api.plans.list()
+                commit("setLoading", true);
+                api.accounts.list()
                     .then(response => {
-                        commit('setPlans', response.pool)
+                        commit('setAccounts', response.pool)
                         resolve(response)
                     })
                     .catch(error => {
@@ -29,10 +33,10 @@ export default {
                     })
             })
         }
+
     },
     getters: {
-        getPlans: state => state.plans,
-        isPlansLoading: state => state.loading
+        getAccounts: state => state.accounts
 
     }
 }

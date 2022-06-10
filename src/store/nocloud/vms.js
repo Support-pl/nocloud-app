@@ -94,6 +94,7 @@ export default {
 			})
 		},
 		createService({ commit }, data) {
+			console.log('sdfsdf')
 			return new Promise((resolve, reject) => {
 				// commit("setLoading", true);
 				api.services._create(data)
