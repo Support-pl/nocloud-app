@@ -10,22 +10,132 @@
               accordion
               :style="{ 'border-radius': '20px' }"
             >
-              <a-collapse-panel key="location" header="Location:">
-                <span>dfhgfd</span>
-                <span>dfhgfd</span>
-           
+              <!-- :header="
+                  $t('Location:') +
+                  (options.location == '' ? ' ' : ' ' + options.location + '')
+                " -->
+              <a-collapse-panel key="location" header="Location">
+                <a-row justify="space-between" style="margin-bottom: 10px">
+                  <!-- Please select a suitable location -->
+                  <a-alert
+                    message="Please select a suitable location"
+                    type="warning"
+                    show-icon
+                    style="margin-bottom: 30px"
+                  />
+                  <a-col
+                    class="location_item"
+                    v-for="(item, index) in getSP"
+                    :key="index"
+                    span="8"
+                    :xs="8"
+                  >
+                    <!-- {{ options.location }} -->
+
+                    <a-switch
+                      :checked="
+                        options.location ==
+                        item.title.replace('Location #', ' ')
+                      "
+                      @change="
+                        (val) => {
+                          options.location = val
+                            ? item.title.replace('Location #', ' ')
+                            : item.title.replace('Location #', ' ');
+                          activeKey = 'plan';
+                          itemSP = item;
+                        }
+                      "
+                      style="width: 40px; margin-right: 5px"
+                    >
+                      <!-- <span slot="checkedChildren">x2</span>
+                        <span slot="unCheckedChildren">x1</span> -->
+                    </a-switch>
+                    {{ item.title.replace("Location #", " ") }}
+                  </a-col>
+                </a-row>
               </a-collapse-panel>
               <!-- :disabled="true" -->
-              <a-collapse-panel key="tarif" header="Tarif:">
+              <a-collapse-panel
+                key="plan"
+                header="Plan:"
+                :disabled="options.location.length ? false : true"
+              >
+                <a-row
+                  type="flex"
+                  justify="space-between"
+                  align="middle"
+                  style="margin-top: 12px"
+                >
+                  <a-col>
+                    <a-switch
+                      :checked="options.total.tarification == 'month'"
+                      @change="
+                        (val) => {
+                          options.total.tarification = val ? 'month' : 'hour';
+                        }
+                      "
+                      style="width: 65px"
+                    >
+                      <span slot="checkedChildren">month</span>
+                      <span slot="unCheckedChildren">month</span>
+                    </a-switch>
+                  </a-col>
+
+                  <a-col :xs="12" :sm="18" :lg="10">
+                    <a-row type="flex" justify="space-between" align="middle">
+                      <a-col> {{ $t("Payment period") }}: </a-col>
+                      <a-col :lg="15">
+                        <a-select
+                          v-model="options.period"
+                          style="width: 100%"
+                          :disabled="options.total.tarification !== 'month'"
+                        >
+                          <a-select-option
+                            v-for="period in periods"
+                            :key="period.title + period.count"
+                            :value="period.count"
+                          >
+                            {{ period.title == "year" ? "1 " : ""
+                            }}{{ $tc(period.title, period.count) }}
+                          </a-select-option>
+                        </a-select>
+                      </a-col>
+                    </a-row>
+                  </a-col>
+                </a-row>
+                <a-row
+                  type="flex"
+                  justify="space-between"
+                  :style="{
+                    'font-size': '1.2rem',
+                    'margin-top': '20px',
+                    'margin-bottom': '40px',
+                  }"
+                >
+                  <a-col>
+                    <a-switch
+                      :checked="options.total.tarification == 'hour'"
+                      @change="
+                        (val) => {
+                          options.total.tarification = val ? 'hour' : 'month';
+                        }
+                      "
+                      style="width: 65px"
+                    >
+                      <span slot="checkedChildren">hour</span>
+                      <span slot="unCheckedChildren">hour</span>
+                    </a-switch>
+                  </a-col>
+                </a-row>
                 <a-slider
                   :marks="{ ...getProductsNocloud }"
                   :tip-formatter="null"
                   :max="getProductsNocloud.length - 1"
                   :min="0"
-                  :value="getProductsNocloud.indexOf(options.size_nocloud)"
+                  :value="getProductsNocloud.indexOf(options.size)"
                   @change="
-                    (newval) =>
-                      (options.size_nocloud = getProductsNocloud[newval])
+                    (newval) => (options.size = getProductsNocloud[newval])
                   "
                 >
                 </a-slider>
@@ -114,20 +224,20 @@
                   </transition>
                 </a-row>
 
-                <!-- <a-row class="newCloud__prop">
-                    <a-col span="8" :xs="6">
-                      <span style="display: inline-block; width: 70px"
-                        >{{ $t("Drive") }}:</span
-                      >
-                    </a-col>
-                    <a-col :xs="10" :sm="14">
-                      <a-switch v-model="options.drive" style="width: 60px">
-                        <span slot="checkedChildren">SSD</span>
-                        <span slot="unCheckedChildren">HDD</span>
-                      </a-switch>
-                    </a-col>
-                    <a-col :xs="8" :sm="4">
-                      <a-select
+                <a-row class="newCloud__prop">
+                  <a-col span="8" :xs="6">
+                    <span style="display: inline-block; width: 70px"
+                      >{{ $t("Drive") }}:</span
+                    >
+                  </a-col>
+                  <a-col :xs="10" :sm="14">
+                    <a-switch v-model="options.drive" style="width: 60px">
+                      <span slot="checkedChildren">SSD</span>
+                      <span slot="unCheckedChildren">HDD</span>
+                    </a-switch>
+                  </a-col>
+                  <a-col :xs="8" :sm="4">
+                    <!-- <a-select
                         default-value="-1"
                         style="width: 100%"
                         @change="(newdata) => setAddon('drive', +newdata)"
@@ -148,9 +258,10 @@
                           }}
                           Gb
                         </a-select-option>
-                      </a-select>
-                    </a-col>
-                  </a-row> -->
+                      </a-select> -->
+                  </a-col>
+                </a-row>
+
                 <!-- <a-row class="newCloud__prop">
                     <a-col span="8" :xs="6"
                       >{{ $t("traffic") | capitalize }}:</a-col
@@ -184,7 +295,8 @@
               </a-collapse-panel>
 
               <!-- OS -->
-              <!-- <a-collapse-panel
+              <a-collapse-panel
+                :disabled="options.location.length ? false : true"
                 key="OS"
                 :header="
                   $t('OS') +
@@ -192,27 +304,49 @@
                 "
               >
                 <div class="newCloud__option-field">
-                  <div class="newCloud__template">
+                  <div class="newCloud__template" v-if="itemSP.publicData">
                     <div
-                      v-for="OS in getOS"
+                      v-for="(item, index) in itemSP.publicData.templates"
                       class="newCloud__template-item"
-                      @click="setOS(OS.id)"
-                      :class="{ active: options.os.id == OS.id }"
-                      :key="OS.id"
+                      :key="index"
+                      :class="{ active: options.os.name == item.name }"
                     >
-                      <div class="newCloud__template-image">
-                        <img
-                          :src="OS.logo.replace('images/', 'img/')"
-                          :alt="OS.name"
-                        />
-                      </div>
-                      <div class="newCloud__template-name">
-                        {{ OS.description }}
-                      </div>
+                      <template v-if="item.warning">
+                        <div class="newCloud__template-image">
+                          <img
+                            :src="`/img/OS/${item.name}.png`"
+                            :alt="item.desc"
+                          />
+                        </div>
+                        <div class="newCloud__template-name">
+                          {{ item.name }}
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div class="newCloud__template-image">
+                          <img
+                            :src="`/img/OS/${item.name}.png`"
+                            :alt="item.desc"
+                            @click="setOS(item, index)"
+                          />
+                        </div>
+                        <div class="newCloud__template-name">
+                          {{ item.desc }}
+                        </div>
+                      </template>
                     </div>
                   </div>
+                  <a-row class="newCloud__prop">
+                    <a-col :xs="12" :sm="10" style="margin-top: 10px">
+                      <a-input
+                        placeholder="Input password"
+                        v-model="options.password"
+                      />
+                    </a-col>
+                  </a-row>
                 </div>
 
+                <!-- 
                 <a-row class="newCloud__prop">
                   <a-col span="8" :xs="6">{{ $t("os") }}:</a-col>
                   <a-col span="16" :xs="18">
@@ -228,11 +362,15 @@
                       >
                     </a-select>
                   </a-col>
-                </a-row>
-              </a-collapse-panel> -->
+                </a-row> -->
+              </a-collapse-panel>
 
               <!-- network -->
-              <!-- <a-collapse-panel key="network" :header="$t('Network') + ':'">
+              <a-collapse-panel
+                key="network"
+                :header="$t('Network') + ':'"
+                :disabled="options.location.length ? false : true"
+              >
                 <div class="newCloud__option-field">
                   <a-row :gutter="[10, 10]">
                     <a-col :sm="12" :span="24">
@@ -259,12 +397,12 @@
                           {{ $t("Local network") }}:
                         </a-col>
                         <a-col :sm="12" :span="12">
-                          <a-switch v-model="options.network.local.status" />
+                          <a-switch v-model="options.network.private.status" />
                           <a-input-number
-                            v-model="options.network.local.count"
+                            v-model="options.network.private.count"
                             :min="0"
                             :max="10"
-                            :disabled="!options.network.local.status"
+                            :disabled="!options.network.private.status"
                             :style="{ 'margin-left': '10px' }"
                           />
                         </a-col>
@@ -272,7 +410,7 @@
                     </a-col>
                   </a-row>
                 </div>
-              </a-collapse-panel> -->
+              </a-collapse-panel>
 
               <!-- Addons -->
               <!-- <div class="paas_addons" v-if="!isAddonsLoading"> -->
@@ -328,23 +466,42 @@
           </div>
 
           <div class="newCloud__calculate field result">
-            <!-- Tarif -->
+            <!-- Location -->
             <transition name="networkApear">
               <a-row
                 type="flex"
                 justify="space-between"
+                style="
+                  font-size: 1.2rem;
+                  padding-bottom: 5px;
+                  margin-bottom: 10px;
+                  border-bottom: 1px solid #e8e8e8;
+                "
+                v-if="options.location.length > 0"
+              >
+                <a-col> {{ $t("Location") }}: </a-col>
+                <a-col>
+                  {{ options.location }}
+                </a-col>
+              </a-row>
+            </transition>
+            <!-- Tarif -->
+            <transition name="networkApear" v-if="options.location.length > 0">
+              <a-row
+                type="flex"
+                justify="space-between"
                 :style="{ 'font-size': '1.2rem' }"
-                v-if="options.size_nocloud"
+                v-if="options.size"
               >
                 <a-col> {{ $t("Tarif") }}: </a-col>
                 <a-col>
-                  {{ options.size_nocloud }}
+                  {{ options.size }}
                 </a-col>
               </a-row>
             </transition>
 
             <!-- CPU -->
-            <transition name="networkApear">
+            <transition name="networkApear" v-if="options.location.length > 0">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -367,7 +524,7 @@
             </transition>
 
             <!-- RAM -->
-            <transition name="networkApear">
+            <transition name="networkApear" v-if="options.location.length > 0">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -437,7 +594,7 @@
             </transition> -->
 
             <!-- os -->
-            <!-- <transition name="networkApear">
+            <transition name="networkApear">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -449,10 +606,10 @@
                   {{ options.os.name }}
                 </a-col>
               </a-row>
-            </transition> -->
+            </transition>
 
             <!-- network -->
-            <!-- <transition name="networkApear">
+            <transition name="networkApear" v-if="options.location.length > 0">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -460,7 +617,7 @@
                 v-if="options.network.public.status"
               >
                 <a-col>
-                  <a-tooltip>
+                  <!-- <a-tooltip>
                     <template slot="title">
                       {{
                         $t(
@@ -481,33 +638,33 @@
                       }"
                       :offset="[10, 2]"
                     >
-                      {{ $t("public") }} IPv4:
+                   
                     </a-badge>
-                  </a-tooltip>
+                  </a-tooltip> -->
+                  {{ $t("public") }} IPv4:
                 </a-col>
                 <a-col>
                   {{ options.network.public.count }}
                 </a-col>
               </a-row>
-            </transition> -->
+            </transition>
 
             <!-- Panel -->
-            <transition name="networkApear">
+            <!-- <transition name="networkApear">
               <a-row
                 type="flex"
                 justify="space-between"
                 :style="{ 'font-size': '1.1rem' }"
                 v-if="options.addonsObjects.panel"
               >
-                <!-- <a-col> {{ $t("Panel") }}: </a-col> -->
                 <a-col>{{
                   options.addonsObjects.panel.description.TITLE
                 }}</a-col>
               </a-row>
-            </transition>
+            </transition> -->
 
             <!-- Backup -->
-            <transition name="networkApear">
+            <!-- <transition name="networkApear">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -519,32 +676,46 @@
                   {{ options.addonsObjects.backup.description.TITLE }}
                 </a-col>
               </a-row>
-            </transition>
+            </transition> -->
             <!-- <a-skeleton :loading="getCurrentProd == null" :active="true"> -->
-            <a-divider orientation="left" :style="{ 'margin-bottom': '0' }">
+            <a-row
+              type="flex"
+              justify="space-between"
+              style="width: 100%; margin-top: 10px"
+              v-if="options.location.length > 0"
+            >
+              <a-col style="width: 100%">
+                <!-- {{options.namespaces}} -->
+                <a-select
+                  style="width: 100%"
+                  v-model="options.namespaces"
+                  placeholder="NameSpaces"
+                >
+                  <!-- <a-select-option value="NameSpaces">0 Gb</a-select-option> -->
+                  <a-select-option
+                    v-for="name in getNameSpaces"
+                    :key="name.uuid"
+                    :value="name.uuid"
+                    >{{ name.title }}</a-select-option
+                  >
+                </a-select>
+              </a-col>
+            </a-row>
+            <a-divider
+              orientation="left"
+              :style="{ 'margin-bottom': '0' }"
+              v-if="options.location.length > 0"
+            >
               {{ $t("Total") }}:
             </a-divider>
             <!-- <transition name="textchange" mode="out-in"> -->
             <a-row
               type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem', 'margin-top': '10px' }"
+              justify="center"
+              :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
+              v-if="options.total.tarification === 'month'"
             >
-              <a-col>
-                <a-switch
-                  :checked="options.total.tarification == 'month'"
-                  @change="
-                    (val) => {
-                      options.total.tarification = val ? 'month' : '';
-                    }
-                  "
-                  style="width: 65px"
-                >
-                  <span slot="checkedChildren">month</span>
-                  <span slot="unCheckedChildren">month</span>
-                </a-switch>
-              </a-col>
-              <a-col>
+              <a-col v-if="options.location.length > 0">
                 <!-- {{
                     calculatePrice(
                       +getFullPrice +
@@ -554,6 +725,7 @@
                   }} -->
                 <!-- {{ currency }}/{{ $tc("period.month") }} -->
                 <!-- </a-tooltip> -->
+
                 {{
                   calculatePrice(productFullPrice, (period = "month")).toFixed(
                     2
@@ -562,50 +734,13 @@
                 BYN/{{ $tc("period.month") }}
               </a-col>
             </a-row>
-            <a-row type="flex" justify="space-around" style="margin-top: 12px">
-              <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
-                {{ $t("Payment period") }}:
-              </a-col>
-
-              <a-col :xs="12" :sm="18" :lg="12">
-                <a-select
-                  v-model="options.period"
-                  style="width: 100%"
-                  :disabled="options.total.tarification !== 'month'"
-                >
-                  <!-- :value="period.value" -->
-                  <a-select-option
-                    v-for="period in periods"
-                    :key="period.title + period.count"
-                    :value="period.count"
-                  >
-                    {{ period.title == "year" ? "1 " : ""
-                    }}{{ $tc(period.title, period.count) }}
-                  </a-select-option>
-                </a-select>
-              </a-col>
-            </a-row>
             <a-row
               type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem', 'margin-top': '30px' }"
+              justify="center"
+              :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
+              v-if="options.total.tarification === 'hour'"
             >
-              <a-col>
-                <a-switch
-                  :checked="options.total.tarification == 'hour'"
-                  @change="
-                    (val) => {
-                      options.total.tarification = val ? 'hour' : '';
-                    }
-                  "
-                  style="width: 65px"
-                >
-                  <span slot="checkedChildren">hour</span>
-                  <span slot="unCheckedChildren">hour</span>
-                </a-switch>
-              </a-col>
-
-              <a-col>
+              <a-col v-if="options.location.length > 0">
                 <!-- ~{{
                     calculatePrice(
                       +getFullPrice +
@@ -638,7 +773,7 @@
                   block
                   shape="round"
                   @click="() => (modal.confirmCreate = true)"
-                  :disabled="!options.total.tarification"
+                  :disabled="!options.location.length > 0"
                 >
                   {{ $t("Create") }}
                 </a-button>
@@ -793,35 +928,43 @@ import { mapGetters } from "vuex";
 import loading from "../loading/loading";
 export default {
   name: "newPaaS",
+  components: {
+    loading,
+  },
   data() {
     return {
-      activeKey: ["tarif"],
+      activeKey: "location",
+      itemSP: "",
+      plan: "",
       periods,
       tariffs,
       options: {
-        kind: "standart",
+        // kind: "standart",
+        location: [],
         // period: "monthly",
         period: "1",
         // size: "L",
+        namespace: "",
         isOnCalc: false,
-        drive: false, // 1 ssd, 0 hdd
+        drive_type: "SSD", // 1 ssd, 0 hdd
         highCPU: false, // 1 highCPU, 0 basicCPU
         slide: 1,
-        addons: {
-          drive: -1,
-          traffic: -1,
-          panel: -1,
-          os: -1,
-          backup: -1,
-        },
-        addonsObjects: {
-          drive: null,
-          traffic: null,
-          panel: null,
-          os: null,
-          backup: null,
-          network: null,
-        },
+        password: "",
+        // addons: {
+        //   drive: -1,
+        //   traffic: -1,
+        //   panel: -1,
+        //   os: -1,
+        //   backup: -1,
+        // },
+        // addonsObjects: {
+        //   drive: null,
+        //   traffic: null,
+        //   panel: null,
+        //   os: null,
+        //   backup: null,
+        //   network: null,
+        // },
         os: {
           id: -1,
           name: "",
@@ -831,14 +974,14 @@ export default {
             status: true,
             count: 1,
           },
-          local: {
+          private: {
             status: false,
             count: 0,
           },
           price: 0,
         },
         total: {
-          tarification: "",
+          tarification: "month",
         },
       },
       modal: {
@@ -848,165 +991,28 @@ export default {
       },
     };
   },
-  components: {
-    loading,
-  },
-  mounted() {
-    this.$store.dispatch("newPaaS/fetchProductsAuto");
-    this.$store.dispatch("newPaaS/fetchAddonsAuto");
-    this.$store.dispatch("newPaaS/fetchOS");
-    this.$axios
-      .get("getSettings.php?filter=cost,disktypes,minDisk,maxDisk")
-      .then((res) => {
-        this.options.network.price = res.data.PUBLIC_IP_COST;
-      })
-      .catch((err) => {
-        console.error(err);
-        this.$message.error("Can't load prices. Show saved ones.");
-      });
-  },
-  methods: {
-    calculatePrice(price, period = this.period) {
-      // if(this.options.tarification){
-      // 	return price;
-      // }
-      switch (period) {
-        case "minute":
-          price = price / 60;
-        case "hour":
-          price = price / 24;
-        case "day":
-          price = price / 30;
-        case "month":
-          break;
-        case "week":
-          price = (price / 30) * 7;
-          break;
-        default:
-          console.error("[VDC Calculator]: Wrong period in calc.", period);
-          return undefined;
-          break;
-      }
-      return price;
-    },
-    // setOS(id) {
-    //   this.options.os.id = id;
-    //   this.options.os.name = this.getOS.find((el) => el.id == id).description;
-    //   //   if (this.options.rate.id == 0) {
-    //     this.collapseKey = "CPURAM";
-    //   } else {
-    //     this.collapseKey = "drive";
-    //   }
-    // },
-    getPopupContainer(trigger) {
-      const elem = trigger.parentElement.parentElement.parentElement;
-      return elem;
-    },
-    URLparameter(obj, outer = "") {
-      var str = "";
-      for (var key in obj) {
-        if (key == "price") continue;
-        if (str != "") {
-          str += "&";
-        }
-        if (typeof obj[key] == "object") {
-          str += this.URLparameter(obj[key], outer + key);
-        } else {
-          str += outer + key + "=" + encodeURIComponent(obj[key]);
-        }
-      }
-      return str;
-    },
-    handleOkOnCreateOrder() {
-      // const addons = Object.values(this.options.addons)
-      //   .filter((el) => el != -1)
-      //   .join(",");
-      const orderData = {
-        body:{
-        plan: this.options.size_nocloud,
-        CPU: this.product.resources.cpu,
-        RAM: this.product.resources.ram,
-        // addons,
-        billingcycle: this.options.period,
-        tarification: this.options.total.tarification,
-        },
-        namespace:{
-          group: 'test'
-        }
 
-        // pid: this.getCurrentProd.pid,
-
-      };
-      // if (!this.$store.getters.getUser) {
-      //   this.$store.commit("setOnloginInfo", {
-      //     type: "VM",
-      //     title: "Virtual machine",
-      //     cost: this.getFullPrice,
-      //   });
-      //   this.$store.dispatch("setOnloginAction", () => {
-      //     this.orderVM(orderData);
-      //   });
-      //   this.$router.push({ name: "login" });
-      //   return;
-      // } else {
-      //   this.orderVM(orderData);
-      // }
-
-      this.orderVM(orderData);
-    },
-    orderVM(orderData) {
-      this.modal.confirmLoading = true;
-      const self = this;
-      this.$store.dispatch("nocloud/vms/createService", orderData)
-        .then((result) => {
-          const res = result.data;
-          if (res.result == "success") {
-            self.$message.success(self.$t("Order created successfully."));
-            if (self.modal.goToInvoice) {
-              self.$router.push(`/invoice-${res.invoiceid}`);
-            }
-          } else {
-            throw result.data;
-          }
-        })
-        .catch((err) => {
-          self.$message.error("Can't create order. Try later.");
-          console.error(err);
-        })
-        .finally((res) => {
-          self.modal.confirmLoading = false;
-        });
-    },
-    // setAddon(name, value) {
-    //   if (name == "os") {
-    //     const data = this.getAddons[name];
-    //     this.options.os.name = data.find(
-    //       (el) => el.id == value
-    //     ).description.TITLE;
-    //   }
-
-    //   this.options.addons[name] = value;
-    //   let addons = [];
-    //   if (name == "drive") {
-    //     addons = this.getAddons[this.options.drive ? "ssd" : "hdd"];
-    //   } else {
-    //     addons = this.getAddons[name];
-    //   }
-    //   const addon = addons.find((el) => el.id == value);
-    //   this.options.addonsObjects[name] = addon !== undefined ? addon : null;
-    // },
-    sliderNavNext() {
-      if (this.sliderIsCanNext) {
-        this.options.slide += 1;
-      }
-    },
-    sliderNavPrev() {
-      if (this.sliderIsCanPrev) {
-        this.options.slide -= 1;
-      }
-    },
-  },
   computed: {
+    ...mapGetters("nocloud/namespaces", ["getNameSpaces"]),
+    ...mapGetters("nocloud", ["getPlans"]),
+    ...mapGetters("nocloud/sp/", ["getSP"]),
+    user() {
+      return this.$store.getters["nocloud/auth/userdata"];
+    },
+    ...mapGetters("nocloud/vms", ["getInstances"]),
+    // getInstances() {
+    //   return this.$store.getters["nocloud/vms/getInstances"];
+    // },
+    // ...mapGetters("nocloud/vms/", ["getSP"]),
+    // dataSP() {
+    //   const data = this.getSP.find((el) => {
+    //     return el.uuid == this.VM.sp;
+    //   });
+    //   return data;
+    // },
+    isLogged() {
+      return this.$store.getters["nocloud/auth/isLoggedIn"];
+    },
     ...mapGetters("newPaaS", [
       "getProducts",
       "getAddons",
@@ -1015,7 +1021,7 @@ export default {
       "getOS",
     ]),
     ...mapGetters("app", ["isMaintananceMode"]),
-    ...mapGetters("nocloud", ["getPlans"]),
+
     // defaultOS() {
     //   this.options.os.name = this.getAddons.os[0].description.TITLE;
     //   return this.getAddons.os[0].id;
@@ -1030,23 +1036,34 @@ export default {
     //   );
     //   return Object.keys(this.getProducts.standart);
     // },
+    getPlansOne() {
+      for (let item of this.getPlans) {
+        if (item.products.vds_l) {
+          this.plan = item;
+          return item;
+        }
+      }
+      return item;
+    },
+
     getProductsNocloud() {
       const planTitle = [];
       const sort = [];
-      for (let item of Object.values(this.getPlans.products)) {
+
+      for (let item of Object.values(this.getPlansOne.products)) {
         sort.push(+item.sorter);
         sort.sort();
       }
 
       for (let el of sort) {
-        for (let prod of Object.values(this.getPlans.products)) {
+        for (let prod of Object.values(this.getPlansOne.products)) {
           if (el === +prod.sorter) {
             planTitle.push(prod.title);
             this.$set(
               this.options,
-              "size_nocloud",
-              Object.values(this.getPlans.products)[
-                Math.min(0, Object.values(this.getPlans.products).length)
+              "size",
+              Object.values(this.getPlansOne.products)[
+                Math.min(0, Object.values(this.getPlansOne.products).length)
               ].title
             );
           }
@@ -1055,17 +1072,21 @@ export default {
       return planTitle;
     },
     product() {
-      for (let product of Object.values(this.getPlans.products)) {
-        if (product.title === this.options.size_nocloud) {
+      for (let [key, item] of Object.entries(this.getPlansOne.products)) {
+        if (item.title === this.options.size) {
+          const product = {
+            ...item,
+            key: key,
+          };
           return product;
         }
       }
     },
     productFullPrice() {
-      for (let product of Object.values(this.getPlans.products)) {
-        if (product.title === this.options.size_nocloud) {
+      for (let product of Object.values(this.getPlansOne.products)) {
+        if (product.title === this.options.size) {
           return (
-            Math.floor(product.period / (3600 * 24)) *
+            Math.floor((product.period = 86400 / (3600 * 24))) *
             30 *
             product.price *
             this.options.period
@@ -1124,15 +1145,214 @@ export default {
       return this.$config.currency.code;
     },
   },
-  watch: {
-    getAddons: function (newVal) {
-      this.options.addons.os = +newVal.os[0].id;
+  mounted() {
+    if (this.isLogged) {
+      this.$store.dispatch("nocloud/fetch");
+      this.$store.dispatch("nocloud/vms/fetch");
+      this.$store.dispatch("nocloud/sp/fetch");
+      this.$store.dispatch("nocloud/namespaces/fetch");
+      this.$store.dispatch("nocloud/accounts/fetch");
+    }
+    this.$store.dispatch("newPaaS/fetchProductsAuto");
+    this.$store.dispatch("newPaaS/fetchAddonsAuto");
+    this.$store.dispatch("newPaaS/fetchOS");
+    // this.$axios
+    //   .get("getSettings.php?filter=cost,disktypes,minDisk,maxDisk")
+    //   .then((res) => {
+    //     this.options.network.price = res.data.PUBLIC_IP_COST;
+    //   })
+    //   .catch((err) => {
+    //     console.error(err);
+    //     this.$message.error("Can't load prices. Show saved ones.");
+    //   });
+  },
+  methods: {
+    handleChange() {},
+    calculatePrice(price, period = this.period) {
+      // if(this.options.tarification){
+      // 	return price;
+      // }
+      switch (period) {
+        case "minute":
+          price = price / 60;
+        case "hour":
+          price = price / 24;
+        case "day":
+          price = price / 30;
+        case "month":
+          break;
+        case "week":
+          price = (price / 30) * 7;
+          break;
+        default:
+          console.error("[VDC Calculator]: Wrong period in calc.", period);
+          return undefined;
+          break;
+      }
+      return price;
     },
+    setOS(item, index) {
+      this.options.os.id = +index;
+      // this.options.os.name = this.getOS.find((el) => el.id == id).description;
+      this.options.os.name = item.name;
+    },
+    getPopupContainer(trigger) {
+      const elem = trigger.parentElement.parentElement.parentElement;
+      return elem;
+    },
+    // URLparameter(obj, outer = "") {
+    //   var str = "";
+    //   for (var key in obj) {
+    //     if (key == "price") continue;
+    //     if (str != "") {
+    //       str += "&";
+    //     }
+    //     if (typeof obj[key] == "object") {
+    //       str += this.URLparameter(obj[key], outer + key);
+    //     } else {
+    //       str += outer + key + "=" + encodeURIComponent(obj[key]);
+    //     }
+    //   }
+    //   return str;
+    // },
+    handleOkOnCreateOrder() {
+      // const addons = Object.values(this.options.addons)
+      //   .filter((el) => el != -1)
+      //   .join(",");
+      const orderData = {
+        namespace: this.options.namespaces,
+        service: {
+          title: this.user.title,
+          context: {},
+          version: "1",
+          instances_groups: [
+            {
+              title: this.user.title + Date.now(),
+              resources: {
+                ips_public: 0,
+              },
+              type: "ione",
+              instances: [
+                {
+                  title: "instance#1",
+                  config: {
+                    template_id: this.options.os.id,
+                    password: this.options.password,
+                  },
+                  resources: {
+                    cpu: this.product.resources.cpu,
+                    ram: this.product.resources.ram,
+                    drive_type: this.options.drive_type,
+                    drive_size: 10000,
+                    ips_private: this.options.network.private.count,
+                    ips_public: this.options.network.public.count,
+                  },
+                  billing_plan: {
+                    uuid: this.plan.uuid,
+                    title: this.plan.title,
+                    type: this.plan.type,
+                    public: this.plan.bulic,
+                  },
+                  plan: this.plan.title,
+                  product: this.product.key,
+                },
+              ],
+            },
+          ],
+
+          // billingcycle: this.options.period,
+          // tarification: this.options.total.tarification,
+        },
+
+        // pid: this.getCurrentProd.pid,
+      };
+      // if (!this.$store.getters.getUser) {
+      //   this.$store.commit("setOnloginInfo", {
+      //     type: "VM",
+      //     title: "Virtual machine",
+      //     cost: this.getFullPrice,
+      //   });
+      //   this.$store.dispatch("setOnloginAction", () => {
+      //     this.orderVM(orderData);
+      //   });
+      //   this.$router.push({ name: "login" });
+      //   return;
+      // } else {
+      //   this.orderVM(orderData);
+      // }
+      console.log(orderData);
+      this.orderVM(orderData);
+    },
+    orderVM(orderData) {
+      this.modal.confirmLoading = true;
+      const self = this;
+      this.$store
+        .dispatch("nocloud/vms/createService", orderData)
+        .then((result) => {
+          const res = result.data;
+          if (res.result == "success") {
+            self.$message.success(self.$t("Order created successfully."));
+            if (self.modal.goToInvoice) {
+              self.$router.push(`/invoice-${res.invoiceid}`);
+            }
+          } else {
+            throw result.data;
+          }
+        })
+        .catch((err) => {
+          self.$message.error("Can't create order. Try later.");
+          console.error(err);
+        })
+        .finally((res) => {
+          self.modal.confirmLoading = false;
+        });
+    },
+    // setAddon(name, value) {
+    //   if (name == "os") {
+    //     const data = this.getAddons[name];
+    //     this.options.os.name = data.find(
+    //       (el) => el.id == value
+    //     ).description.TITLE;
+    //   }
+
+    //   this.options.addons[name] = value;
+    //   let addons = [];
+    //   if (name == "drive") {
+    //     addons = this.getAddons[this.options.drive ? "ssd" : "hdd"];
+    //   } else {
+    //     addons = this.getAddons[name];
+    //   }
+    //   const addon = addons.find((el) => el.id == value);
+    //   this.options.addonsObjects[name] = addon !== undefined ? addon : null;
+    // },
+    sliderNavNext() {
+      if (this.sliderIsCanNext) {
+        this.options.slide += 1;
+      }
+    },
+    sliderNavPrev() {
+      if (this.sliderIsCanPrev) {
+        this.options.slide -= 1;
+      }
+    },
+  },
+
+  watch: {
+    // getAddons: function (newVal) {
+    //   this.options.addons.os = +newVal.os[0].id;
+    // },
+    // activeKey: function(){
+    //     this.activeKey.push('tarif')
+    // }
   },
 };
 </script>
 
 <style>
+.location_item {
+  display: flex;
+  justify-content: center;
+}
 .ant-slider-mark-text:first-of-type {
   width: 60px !important;
   left: 2% !important;

@@ -13,7 +13,7 @@
         <!-- <div class="item__status">{{ $t(`cloudStateItem.${cloud.STATE}`) }}</div> -->
         <div class="item__status">{{ instance.status }}</div>
       </div>
-      <div class="item_location">{{ location }}</div>
+      <!-- <div class="item_location">{{ location }}</div> -->
       <div class="cloud__lower">
         <!-- <template v-if="cloud.HOST != '' && cloud.HOST != undefined">
 					HOST: {{cloud.HOST}},
@@ -40,14 +40,15 @@ export default {
     // 	const color = this.$store.getters['cloud/getStateColor'](this.cloud.STATE);
     // 	return color;
     // }
-    location() {
-      if (this.getSP.length) {
-        const data = this.getSP.find((el) => {
-          return el.uuid == this.instance.sp;
-        });
-        return data.title;
-      }
-    },
+
+    // location() {
+    //   if (this.getSP.length) {
+    //     const data = this.getSP.find((el) => {
+    //         el.uuid == this.instance.sp;
+    //     });
+    //     return data.title;
+    //   }
+    // },
     getSP() {
       return this.$store.getters["nocloud/sp/getSP"];
     },
