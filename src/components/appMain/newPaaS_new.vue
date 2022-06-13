@@ -685,13 +685,33 @@
               v-if="options.location.length > 0"
             >
               <a-col style="width: 100%">
-                <!-- {{options.namespaces}} -->
+                <a-select
+                  placeholder="Services"
+                  style="width: 100%"
+                  @change="(item) => (service = item)"
+                >
+                  <a-select-option
+                    v-for="service in getServices"
+                    :key="service.uuid"
+                    :value="service.uuid"
+                    >{{ service.title }}</a-select-option
+                  >
+                </a-select>
+              </a-col>
+            </a-row>
+
+            <a-row
+              type="flex"
+              justify="space-between"
+              style="width: 100%; margin-top: 10px"
+              v-if="options.location.length > 0"
+            >
+              <a-col style="width: 100%">
                 <a-select
                   style="width: 100%"
-                  v-model="options.namespaces"
                   placeholder="NameSpaces"
+                  @change="(item) => (options.namespaces = item)"
                 >
-                  <!-- <a-select-option value="NameSpaces">0 Gb</a-select-option> -->
                   <a-select-option
                     v-for="name in getNameSpaces"
                     :key="name.uuid"
@@ -701,6 +721,7 @@
                 </a-select>
               </a-col>
             </a-row>
+
             <a-divider
               orientation="left"
               :style="{ 'margin-bottom': '0' }"
@@ -937,14 +958,16 @@ export default {
       itemSP: "",
       plan: "",
       periods,
-      tariffs,
+      service: "",
+      // tariffs,
       options: {
         // kind: "standart",
         location: [],
         // period: "monthly",
         period: "1",
         // size: "L",
-        namespace: "",
+        namespaces: "",
+
         isOnCalc: false,
         drive_type: "SSD", // 1 ssd, 0 hdd
         highCPU: false, // 1 highCPU, 0 basicCPU
@@ -996,10 +1019,22 @@ export default {
     ...mapGetters("nocloud/namespaces", ["getNameSpaces"]),
     ...mapGetters("nocloud", ["getPlans"]),
     ...mapGetters("nocloud/sp/", ["getSP"]),
-    user() {
-      return this.$store.getters["nocloud/auth/userdata"];
-    },
+    ...mapGetters("nocloud/auth/", ["userdata"]),
+    // user() {
+    //   return this.$store.getters["nocloud/auth/userdata"];
+    // },
     ...mapGetters("nocloud/vms", ["getInstances"]),
+    ...mapGetters("nocloud/vms", ["getServices"]),
+    isLogged() {
+      return this.$store.getters["nocloud/auth/isLoggedIn"];
+    },
+
+    getInstance() {
+      const item = this.getInstances.find((el) => {
+        return el.uuidService === this.service;
+      });
+      return item;
+    },
     // getInstances() {
     //   return this.$store.getters["nocloud/vms/getInstances"];
     // },
@@ -1010,9 +1045,7 @@ export default {
     //   });
     //   return data;
     // },
-    isLogged() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
-    },
+
     ...mapGetters("newPaaS", [
       "getProducts",
       "getAddons",
@@ -1151,7 +1184,6 @@ export default {
       this.$store.dispatch("nocloud/vms/fetch");
       this.$store.dispatch("nocloud/sp/fetch");
       this.$store.dispatch("nocloud/namespaces/fetch");
-      this.$store.dispatch("nocloud/accounts/fetch");
     }
     this.$store.dispatch("newPaaS/fetchProductsAuto");
     this.$store.dispatch("newPaaS/fetchAddonsAuto");
@@ -1222,14 +1254,15 @@ export default {
       const orderData = {
         namespace: this.options.namespaces,
         service: {
-          title: this.user.title,
+          title: this.userdata.title,
           context: {},
           version: "1",
           instances_groups: [
             {
-              title: this.user.title + Date.now(),
+              title: this.userdata.title + Date.now(),
               resources: {
-                ips_public: 0,
+                ips_private: 1,
+                // ips_public: 0,
               },
               type: "ione",
               instances: [
@@ -1248,24 +1281,25 @@ export default {
                     ips_public: this.options.network.public.count,
                   },
                   billing_plan: {
-                    uuid: this.plan.uuid,
+                    // uuid: this.plan.uuid,
+                    uuid: "50792d51-7a57-4be6-8057-25d77b8bf8d5",
                     title: this.plan.title,
                     type: this.plan.type,
-                    public: this.plan.bulic,
+                    public: this.plan.public,
                   },
                   plan: this.plan.title,
-                  product: this.product.key,
+                  // product: this.product.key,
                 },
               ],
             },
           ],
-
           // billingcycle: this.options.period,
           // tarification: this.options.total.tarification,
         },
 
         // pid: this.getCurrentProd.pid,
       };
+
       // if (!this.$store.getters.getUser) {
       //   this.$store.commit("setOnloginInfo", {
       //     type: "VM",
@@ -1280,8 +1314,35 @@ export default {
       // } else {
       //   this.orderVM(orderData);
       // }
-      console.log(orderData);
-      this.orderVM(orderData);
+      if (this.service !== "") {
+        const service = Object.assign(
+          {},
+          { uuid: this.service },
+          orderData.service
+        );
+
+        service.instances_groups[0] = Object.assign(
+          {},
+          { uuid: this.getInstance.uuidInstancesGroups },
+          service.instances_groups[0]
+        );
+
+        service.instances_groups[0].instances[0] = Object.assign(
+          {},
+          { uuid: this.getInstance.uuid },
+          service.instances_groups[0].instances[0]
+        );
+        const newData = {
+          uuid: this.service,
+          data: {
+            namespace: this.options.namespaces,
+            service,
+          },
+        };
+        this.updateVM(newData);
+      } else {
+        this.orderVM(orderData);
+      }
     },
     orderVM(orderData) {
       this.modal.confirmLoading = true;
@@ -1289,18 +1350,40 @@ export default {
       this.$store
         .dispatch("nocloud/vms/createService", orderData)
         .then((result) => {
-          const res = result.data;
-          if (res.result == "success") {
+          if (result) {
             self.$message.success(self.$t("Order created successfully."));
             if (self.modal.goToInvoice) {
               self.$router.push(`/invoice-${res.invoiceid}`);
             }
           } else {
-            throw result.data;
+            throw "error";
           }
         })
         .catch((err) => {
           self.$message.error("Can't create order. Try later.");
+          console.error(err);
+        })
+        .finally((res) => {
+          self.modal.confirmLoading = false;
+        });
+    },
+    updateVM(data) {
+      this.modal.confirmLoading = true;
+      const self = this;
+      this.$store
+        .dispatch("nocloud/vms/updateService", data)
+        .then((result) => {
+          if (result) {
+            self.$message.success(self.$t("Order update successfully."));
+            if (self.modal.goToInvoice) {
+              self.$router.push(`/invoice-${res.invoiceid}`);
+            }
+          } else {
+            throw "error";
+          }
+        })
+        .catch((err) => {
+          self.$message.error("Can't update order. Try later.");
           console.error(err);
         })
         .finally((res) => {

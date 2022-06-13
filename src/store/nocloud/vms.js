@@ -6,9 +6,24 @@ export default {
 	state: {
 		services: [],
 		instances: [],
+
 		loading: false,
 	},
 	mutations: {
+		setCreateInstance(state, data) {
+			data.instancesGroups.forEach(item => {
+				item.instances.forEach(el => {
+					const instanceItem = {
+						uuidService: data.uuid,
+						uuidInstancesGroups: item.uuid,
+						type: item.type,
+						sp: item.sp,
+						...el
+					}
+					state.instances.push(instanceItem)
+				})
+			})
+		},
 		setServices(state, services) {
 			state.services = services;
 		},
@@ -34,6 +49,7 @@ export default {
 				item.instances.forEach(el => {
 					const instanceItem = {
 						uuidService: data.uuid,
+						uuidInstancesGroups: item.uuid,
 						type: item.type,
 						sp: item.sp,
 						...el
@@ -55,12 +71,26 @@ export default {
 				})
 			})
 		},
+		setUpdateInstance(state, data) {
+			const index = state.instances.findIndex(el => el.uuidService === data.uuid)
+			data.instancesGroups.forEach(item => {
+				item.instances.forEach(el => {
+					const instanceItem = {
+						uuidService: data.uuid,
+						uuidInstancesGroups: item.uuid,
+						type: item.type,
+						sp: item.sp,
+						...el
+					}
+					state.instances.splice(index, 1, instanceItem)
+				})
+			})
+		},
+	
 		setLoading(state, data) {
 			state.loading = data;
 		},
-		// setCreateServices(state, data) {
-		// 	state.services.push(data)
-		// }
+
 	},
 	actions: {
 		fetch({ commit }) {
@@ -71,8 +101,8 @@ export default {
 						commit('setServices', response.pool)
 						for (let srv of response.pool) {
 							api.services.get(srv.uuid).then((response) => {
-
 								commit("setInstances", response);
+								// commit('setInstancesGroups', response)
 								resolve(response);
 							})
 								.catch((error) => {
@@ -94,15 +124,25 @@ export default {
 			})
 		},
 		createService({ commit }, data) {
-			console.log('sdfsdf')
 			return new Promise((resolve, reject) => {
-				// commit("setLoading", true);
 				api.services._create(data)
 					.then(response => {
-						console.log(responce)
-						// commit('setCreateServices', response.pool)
+						commit('setCreateInstance', response)
 						resolve(response)
 					})
+					.catch(error => {
+						reject(error);
+					})
+					.finally(() => {
+					})
+			})
+		},
+		updateService({ commit }, data) {
+			return new Promise((resolve, reject) => {
+				api.services._update(data).then(response => {
+					commit('setUpdateInstance', response)
+					resolve(response)
+				})
 					.catch(error => {
 						reject(error);
 					})
@@ -120,6 +160,10 @@ export default {
 		getInstances(state) {
 			if (state.instances.length < 0) return []
 			return state.instances
+		},
+		getServices(state) {
+			if (state.services.length < 0) return []
+			return state.services
 		},
 		// instances(state){
 		// 	const instances = [];
