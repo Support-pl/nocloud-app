@@ -6,7 +6,7 @@ export default {
 	state: {
 		services: [],
 		instances: [],
-
+		servicesFull: [],
 		loading: false,
 	},
 	mutations: {
@@ -48,45 +48,36 @@ export default {
 			data.instancesGroups.forEach(item => {
 				item.instances.forEach(el => {
 					const instanceItem = {
-						uuidService: data.uuid,
+						// uuidService: data.uuid,
 						uuidInstancesGroups: item.uuid,
 						type: item.type,
 						sp: item.sp,
 						...el
 					}
-
-					if (state.instances.length) {
-						let isInstance = false;
-						state.instances.forEach(item => {
-							if (item.uuidService === data.uuid) {
-								isInstance = true
-							}
-						})
-						if (!isInstance) {
-							state.instances.push(instanceItem)
-						}
-					} else {
+					const index = state.instances.findIndex(item => item.uuid === instanceItem.uuid)
+					if (index == -1) {
 						state.instances.push(instanceItem)
 					}
 				})
 			})
 		},
-		setUpdateInstance(state, data) {
-			const index = state.instances.findIndex(el => el.uuidService === data.uuid)
-			data.instancesGroups.forEach(item => {
-				item.instances.forEach(el => {
-					const instanceItem = {
-						uuidService: data.uuid,
-						uuidInstancesGroups: item.uuid,
-						type: item.type,
-						sp: item.sp,
-						...el
+		setServicesFull(state, data) {
+			if (state.servicesFull.length) {
+				let servicesFull = false;
+				state.servicesFull.forEach(item => {
+					if (item.uuid === data.uuid) {
+						servicesFull = true
 					}
-					state.instances.splice(index, 1, instanceItem)
 				})
-			})
+				if (!servicesFull) {
+					state.servicesFull.push(data)
+				}
+			} else {
+				state.servicesFull.push(data)
+			}
+
 		},
-	
+
 		setLoading(state, data) {
 			state.loading = data;
 		},
@@ -102,7 +93,7 @@ export default {
 						for (let srv of response.pool) {
 							api.services.get(srv.uuid).then((response) => {
 								commit("setInstances", response);
-								// commit('setInstancesGroups', response)
+								commit('setServicesFull', response)
 								resolve(response);
 							})
 								.catch((error) => {
@@ -140,7 +131,7 @@ export default {
 		updateService({ commit }, data) {
 			return new Promise((resolve, reject) => {
 				api.services._update(data).then(response => {
-					commit('setUpdateInstance', response)
+					// commit('setUpdateInstance', response)
 					resolve(response)
 				})
 					.catch(error => {
@@ -164,6 +155,10 @@ export default {
 		getServices(state) {
 			if (state.services.length < 0) return []
 			return state.services
+		},
+		getServicesFull(state) {
+			if (state.servicesFull.length < 0) return []
+			return state.servicesFull
 		},
 		// instances(state){
 		// 	const instances = [];
