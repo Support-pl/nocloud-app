@@ -1,7 +1,6 @@
 <template>
   <div class="newCloud_wrapper">
-    <maintanance-mode v-if="isMaintananceMode"></maintanance-mode>
-    <template v-else>
+    <template>
       <template v-if="true">
         <div class="newCloud" v-if="!isProductsLoading">
           <div class="newCloud__inputs field">
@@ -23,43 +22,39 @@
                     show-icon
                     style="margin-bottom: 30px"
                   />
-                  <a-col
-                    class="location_item"
-                    v-for="(item, index) in getSP"
-                    :key="index"
-                    span="8"
-                    :xs="8"
-                  >
-                    <!-- {{ options.location }} -->
-
-                    <a-switch
-                      :checked="
-                        options.location ==
-                        item.title.replace('Location #', ' ')
-                      "
+                  <a-radio-group v-model="location_uuid">
+                    <a-radio-button
+                      v-for="(item, index) in getSP"
+                      :key="index"
+                      style="width: 130px; text-align: center"
+                      :value="item.uuid"
+                    >
+                      {{ item.title.replace("Location", " ") }}
+                    </a-radio-button>
+                  </a-radio-group>
+                  <!-- <a-switch
+                      :checked="options.location == item.title"
                       @change="
                         (val) => {
-                          options.location = val
-                            ? item.title.replace('Location #', ' ')
-                            : item.title.replace('Location #', ' ');
+                          options.location = val ? item.title : item.title;
                           activeKey = 'plan';
                           itemSP = item;
                         }
                       "
                       style="width: 40px; margin-right: 5px"
-                    >
-                      <!-- <span slot="checkedChildren">x2</span>
+                    > -->
+                  <!-- <span slot="checkedChildren">x2</span>
                         <span slot="unCheckedChildren">x1</span> -->
-                    </a-switch>
-                    {{ item.title.replace("Location #", " ") }}
-                  </a-col>
+                  <!-- </a-switch> -->
+                  <!-- {{ item.title }} -->
                 </a-row>
               </a-collapse-panel>
               <!-- :disabled="true" -->
+
               <a-collapse-panel
                 key="plan"
                 header="Plan:"
-                :disabled="options.location.length ? false : true"
+                :disabled="itemSP ? false : true"
               >
                 <a-row
                   type="flex"
@@ -67,68 +62,56 @@
                   align="middle"
                   style="margin-top: 12px"
                 >
-                  <a-col>
-                    <a-switch
-                      :checked="options.total.tarification == 'month'"
-                      @change="
-                        (val) => {
-                          options.total.tarification = val ? 'month' : 'hour';
-                        }
-                      "
-                      style="width: 65px"
+                  <a-radio-group default-value="kind" v-model="tarification">
+                    <a-radio-button
+                      v-for="(item, index) in getPlans"
+                      :key="index"
+                      style="width: 180px; text-align: center"
+                      :value="item.kind"
                     >
-                      <span slot="checkedChildren">month</span>
-                      <span slot="unCheckedChildren">month</span>
-                    </a-switch>
-                  </a-col>
+                      {{ item.title }}
+                    </a-radio-button>
 
-                  <a-col :xs="12" :sm="18" :lg="10">
-                    <a-row type="flex" justify="space-between" align="middle">
-                      <a-col> {{ $t("Payment period") }}: </a-col>
-                      <a-col :lg="15">
-                        <a-select
-                          v-model="options.period"
-                          style="width: 100%"
-                          :disabled="options.total.tarification !== 'month'"
-                        >
-                          <a-select-option
-                            v-for="period in periods"
-                            :key="period.title + period.count"
-                            :value="period.count"
-                          >
-                            {{ period.title == "year" ? "1 " : ""
-                            }}{{ $tc(period.title, period.count) }}
-                          </a-select-option>
-                        </a-select>
-                      </a-col>
-                    </a-row>
-                  </a-col>
-                </a-row>
-                <a-row
-                  type="flex"
-                  justify="space-between"
-                  :style="{
-                    'font-size': '1.2rem',
-                    'margin-top': '20px',
-                    'margin-bottom': '40px',
-                  }"
-                >
-                  <a-col>
-                    <a-switch
-                      :checked="options.total.tarification == 'hour'"
-                      @change="
-                        (val) => {
-                          options.total.tarification = val ? 'hour' : 'month';
-                        }
-                      "
-                      style="width: 65px"
+                    <!-- <a-col>
+                      <a-radio-button
+                        style="width: 100px; text-align: center"
+                        value="hourly"
+                      >
+                        Hourly
+                      </a-radio-button>
+                    </a-col> -->
+
+                    <a-col
+                      :xs="12"
+                      :sm="18"
+                      :lg="12"
+                      style="margin-top: 20px; margin-bottom: 30px"
                     >
-                      <span slot="checkedChildren">hour</span>
-                      <span slot="unCheckedChildren">hour</span>
-                    </a-switch>
-                  </a-col>
+                      <a-row type="flex" justify="space-between" align="middle">
+                        <a-col> {{ $t("Payment period") }}: </a-col>
+                        <a-col :lg="17">
+                          <a-select
+                            v-model="options.period"
+                            style="width: 100%"
+                            :disabled="tarification !== 'STATIC'"
+                          >
+                            <a-select-option
+                              v-for="period in periods"
+                              :key="period.title + period.count"
+                              :value="period.count"
+                            >
+                              {{ period.title == "year" ? "1 " : ""
+                              }}{{ $tc(period.title, period.count) }}
+                            </a-select-option>
+                          </a-select>
+                        </a-col>
+                      </a-row>
+                    </a-col>
+                  </a-radio-group>
                 </a-row>
+
                 <a-slider
+                  v-if="tarification === 'STATIC'"
                   :marks="{ ...getProductsNocloud }"
                   :tip-formatter="null"
                   :max="getProductsNocloud.length - 1"
@@ -139,16 +122,10 @@
                   "
                 >
                 </a-slider>
-
-                <!-- <a-slider
-                  :marks="{ ...getProductsData }"
-                  :tip-formatter="null"
-                  :max="getProductsData.length - 1"
-                  :min="0"
-                  :value="getProductsData.indexOf(options.size)"
-                  @change="(newval) => (options.size = getProductsData[newval])"
-                >
-                </a-slider> -->
+                <div v-else>
+                  {{ getCustom.title }}
+                  {{ getCustom }}
+                </div>
 
                 <!-- <a-skeleton :loading="getCurrentProd == null" :active="true"> -->
                 <a-row
@@ -159,6 +136,7 @@
                   <a-col span="8" :xs="6">
                     <span style="display: inline-block; width: 70px">CPU:</span>
                   </a-col>
+
                   <a-col span="12">
                     <!-- <a-switch
                         :checked="options.kind == 'X2RAM'"
@@ -173,20 +151,57 @@
                         <span slot="unCheckedChildren">x1</span>
                       </a-switch> -->
                   </a-col>
-                  <transition name="textchange" mode="out-in">
-                    <!-- :key="
+                  <!-- <transition name="textchange" mode="out-in"> -->
+                  <!-- :key="
                           getCurrentProd != null
                             ? getCurrentProd.props.ram.TITLE
                             : 'DefaultKeyForRAM'
                         " -->
-                    <a-col
-                      class="changing__field"
-                      span="6"
-                      style="text-align: right"
-                    >
-                      {{ product.resources.cpu }} vCPU
-                    </a-col>
-                  </transition>
+                  <a-col
+                    class="changing__field"
+                    span="6"
+                    style="text-align: right"
+                    v-if="tarification === 'STATIC'"
+                  >
+                    {{ product.resources.cpu }} vCPU
+                  </a-col>
+
+                  <a-col :sm="13" :span="14" v-else>
+                    <a-row>
+                      <a-col :span="24">
+                        <a-row
+                          type="flex"
+                          justify="space-between"
+                          align="middle"
+                        >
+                          <a-col :span="3">
+                            <a-icon
+                              type="minus"
+                              class="slider_btn"
+                              @click="changeValue('cpu', -1)"
+                            ></a-icon>
+                          </a-col>
+                          <a-col :span="18">
+                            <a-input-number
+                              v-model="options.cpu.size"
+                              class="max-width"
+                              :min="options.cpu.min"
+                              :max="options.cpu.max"
+                              default-value="1"
+                            />
+                          </a-col>
+                          <a-col :span="3">
+                            <a-icon
+                              type="plus"
+                              class="slider_btn"
+                              @click="changeValue('cpu', 1)"
+                            ></a-icon>
+                          </a-col>
+                        </a-row>
+                      </a-col>
+                    </a-row>
+                  </a-col>
+                  <!-- </transition> -->
                 </a-row>
 
                 <a-row justify="space-between" class="newCloud__prop">
@@ -296,7 +311,7 @@
 
               <!-- OS -->
               <a-collapse-panel
-                :disabled="options.location.length ? false : true"
+                :disabled="itemSP ? false : true"
                 key="OS"
                 :header="
                   $t('OS') +
@@ -304,9 +319,9 @@
                 "
               >
                 <div class="newCloud__option-field">
-                  <div class="newCloud__template" v-if="itemSP.publicData">
+                  <div class="newCloud__template" v-if="this.itemSP">
                     <div
-                      v-for="(item, index) in itemSP.publicData.templates"
+                      v-for="(item, index) in this.itemSP.publicData.templates"
                       class="newCloud__template-item"
                       :key="index"
                       :class="{ active: options.os.name == item.name }"
@@ -340,7 +355,7 @@
                     <a-col :xs="12" :sm="10" style="margin-top: 10px">
                       <a-input
                         placeholder="Input password"
-                        v-model="options.password"
+                        v-model="password"
                       />
                     </a-col>
                   </a-row>
@@ -369,7 +384,7 @@
               <a-collapse-panel
                 key="network"
                 :header="$t('Network') + ':'"
-                :disabled="options.location.length ? false : true"
+                :disabled="itemSP ? false : true"
               >
                 <div class="newCloud__option-field">
                   <a-row :gutter="[10, 10]">
@@ -394,7 +409,7 @@
                     <a-col :sm="12" :span="24">
                       <a-row :style="{ display: 'flex', alignItems: 'center' }">
                         <a-col :sm="10" :span="12">
-                          {{ $t("Local network") }}:
+                          {{ $t("Private network") }}:
                         </a-col>
                         <a-col :sm="12" :span="12">
                           <a-switch v-model="options.network.private.status" />
@@ -477,16 +492,16 @@
                   margin-bottom: 10px;
                   border-bottom: 1px solid #e8e8e8;
                 "
-                v-if="options.location.length > 0"
+                v-if="this.itemSP"
               >
                 <a-col> {{ $t("Location") }}: </a-col>
                 <a-col>
-                  {{ options.location }}
+                  {{ this.itemSP.title }}
                 </a-col>
               </a-row>
             </transition>
             <!-- Tarif -->
-            <transition name="networkApear" v-if="options.location.length > 0">
+            <transition name="networkApear" v-if="this.itemSP">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -501,7 +516,7 @@
             </transition>
 
             <!-- CPU -->
-            <transition name="networkApear" v-if="options.location.length > 0">
+            <transition name="networkApear" v-if="this.itemSP">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -524,7 +539,7 @@
             </transition>
 
             <!-- RAM -->
-            <transition name="networkApear" v-if="options.location.length > 0">
+            <transition name="networkApear" v-if="this.itemSP">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -609,7 +624,7 @@
             </transition>
 
             <!-- network -->
-            <transition name="networkApear" v-if="options.location.length > 0">
+            <transition name="networkApear" v-if="this.itemSP">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -649,6 +664,46 @@
               </a-row>
             </transition>
 
+            <transition name="networkApear" v-if="this.itemSP">
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.1rem' }"
+                v-if="options.network.private.status"
+              >
+                <a-col>
+                  <!-- <a-tooltip>
+                    <template slot="title">
+                      {{
+                        $t(
+                          `Included in total by default ${
+                            options.network.price * options.network.public.count
+                          }`
+                        )
+                      }}
+                      {{ currency }}
+                    </template>
+                    <a-badge
+                      :style="{ 'font-size': '1.1rem' }"
+                      count="?"
+                      :number-style="{
+                        backgroundColor: '#fff',
+                        color: '#999',
+                        boxShadow: '0 0 0 1px #d9d9d9 inset',
+                      }"
+                      :offset="[10, 2]"
+                    >
+                   
+                    </a-badge>
+                  </a-tooltip> -->
+                  {{ $t("Private") }} IPv4:
+                </a-col>
+                <a-col>
+                  {{ options.network.private.count }}
+                </a-col>
+              </a-row>
+            </transition>
+
             <!-- Panel -->
             <!-- <transition name="networkApear">
               <a-row
@@ -682,7 +737,7 @@
               type="flex"
               justify="space-between"
               style="width: 100%; margin-top: 10px"
-              v-if="options.location.length > 0"
+              v-if="this.itemSP && getServicesFull"
             >
               <a-col style="width: 100%">
                 <a-select
@@ -691,11 +746,11 @@
                   @change="(item) => (service = item)"
                 >
                   <a-select-option
-                    v-for="service in getServices"
+                    v-for="service in getServicesFull"
                     :key="service.uuid"
                     :value="service.uuid"
-                    >{{ service.title }}</a-select-option
-                  >
+                    >{{ service.title }}
+                  </a-select-option>
                 </a-select>
               </a-col>
             </a-row>
@@ -704,13 +759,13 @@
               type="flex"
               justify="space-between"
               style="width: 100%; margin-top: 10px"
-              v-if="options.location.length > 0"
+              v-if="this.itemSP && getNameSpaces"
             >
               <a-col style="width: 100%">
                 <a-select
                   style="width: 100%"
                   placeholder="NameSpaces"
-                  @change="(item) => (options.namespaces = item)"
+                  @change="(item) => (namespace = item)"
                 >
                   <a-select-option
                     v-for="name in getNameSpaces"
@@ -725,7 +780,7 @@
             <a-divider
               orientation="left"
               :style="{ 'margin-bottom': '0' }"
-              v-if="options.location.length > 0"
+              v-if="this.itemSP"
             >
               {{ $t("Total") }}:
             </a-divider>
@@ -734,9 +789,9 @@
               type="flex"
               justify="center"
               :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
-              v-if="options.total.tarification === 'month'"
+              v-if="tarification === 'STATIC'"
             >
-              <a-col v-if="options.location.length > 0">
+              <a-col v-if="this.itemSP">
                 <!-- {{
                     calculatePrice(
                       +getFullPrice +
@@ -759,9 +814,9 @@
               type="flex"
               justify="center"
               :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
-              v-if="options.total.tarification === 'hour'"
+              v-if="tarification === 'UNKNOWN'"
             >
-              <a-col v-if="options.location.length > 0">
+              <a-col v-if="this.itemSP">
                 <!-- ~{{
                     calculatePrice(
                       +getFullPrice +
@@ -794,7 +849,7 @@
                   block
                   shape="round"
                   @click="() => (modal.confirmCreate = true)"
-                  :disabled="!options.location.length > 0"
+                  :disabled="!this.itemSP"
                 >
                   {{ $t("Create") }}
                 </a-button>
@@ -955,24 +1010,38 @@ export default {
   data() {
     return {
       activeKey: "location",
-      itemSP: "",
       plan: "",
       periods,
       service: "",
+      namespace: "",
+      tarification: "STATIC",
+      location_uuid: "",
+      password: "",
       // tariffs,
       options: {
         // kind: "standart",
-        location: [],
+
         // period: "monthly",
         period: "1",
         // size: "L",
-        namespaces: "",
 
         isOnCalc: false,
         drive_type: "SSD", // 1 ssd, 0 hdd
         highCPU: false, // 1 highCPU, 0 basicCPU
-        slide: 1,
-        password: "",
+        // slide: 1,
+
+        cpu: {
+          count: 1,
+          price: 0,
+          min: 1,
+          max: 32,
+        },
+        ram: {
+          size: 1,
+          price: 0,
+          min: 1,
+          max: 512,
+        },
         // addons: {
         //   drive: -1,
         //   traffic: -1,
@@ -1003,9 +1072,6 @@ export default {
           },
           price: 0,
         },
-        total: {
-          tarification: "month",
-        },
       },
       modal: {
         confirmCreate: false,
@@ -1017,24 +1083,41 @@ export default {
 
   computed: {
     ...mapGetters("nocloud/namespaces", ["getNameSpaces"]),
-    ...mapGetters("nocloud", ["getPlans"]),
+    ...mapGetters("nocloud/plans", ["getPlans"]),
+    ...mapGetters("nocloud/plans", ["getCustom"]),
     ...mapGetters("nocloud/sp/", ["getSP"]),
     ...mapGetters("nocloud/auth/", ["userdata"]),
-    // user() {
-    //   return this.$store.getters["nocloud/auth/userdata"];
-    // },
-    ...mapGetters("nocloud/vms", ["getInstances"]),
-    ...mapGetters("nocloud/vms", ["getServices"]),
+    // ...mapGetters("nocloud/vms", ["getInstances"]),
+    // ...mapGetters("nocloud/vms", ["getServices"]),
+    ...mapGetters("nocloud/vms", ["getServicesFull"]),
+
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
 
-    getInstance() {
-      const item = this.getInstances.find((el) => {
-        return el.uuidService === this.service;
+    serviceItem() {
+      const data = this.getServicesFull.find((el) => {
+        return this.service === el.uuid;
       });
+      return data;
+    },
+
+    itemSP() {
+      const item = this.getSP.find((el) => {
+        return el.uuid === this.location_uuid;
+      });
+      if (item) {
+        this.activeKey = "plan";
+      }
+
       return item;
     },
+    // getInstance() {
+    //   const item = this.getInstances.find((el) => {
+    //     return el.uuidService === this.service;
+    //   });
+    //   return item;
+    // },
     // getInstances() {
     //   return this.$store.getters["nocloud/vms/getInstances"];
     // },
@@ -1046,14 +1129,7 @@ export default {
     //   return data;
     // },
 
-    ...mapGetters("newPaaS", [
-      "getProducts",
-      "getAddons",
-      "isProductsLoading",
-      "isAddonsLoading",
-      "getOS",
-    ]),
-    ...mapGetters("app", ["isMaintananceMode"]),
+    ...mapGetters("newPaaS", ["isProductsLoading"]),
 
     // defaultOS() {
     //   this.options.os.name = this.getAddons.os[0].description.TITLE;
@@ -1180,14 +1256,13 @@ export default {
   },
   mounted() {
     if (this.isLogged) {
-      this.$store.dispatch("nocloud/fetch");
       this.$store.dispatch("nocloud/vms/fetch");
       this.$store.dispatch("nocloud/sp/fetch");
       this.$store.dispatch("nocloud/namespaces/fetch");
+      this.$store.dispatch("nocloud/plans/fetch");
     }
     this.$store.dispatch("newPaaS/fetchProductsAuto");
-    this.$store.dispatch("newPaaS/fetchAddonsAuto");
-    this.$store.dispatch("newPaaS/fetchOS");
+
     // this.$axios
     //   .get("getSettings.php?filter=cost,disktypes,minDisk,maxDisk")
     //   .then((res) => {
@@ -1199,6 +1274,15 @@ export default {
     //   });
   },
   methods: {
+    changeValue(variable, val) {
+      if (
+        variable == "cpu" &&
+        this.options.disk.size + val <= this.diskMaxValue &&
+        this.options.disk.size + val >= this.diskMinValue
+      ) {
+        this.options.disk.size += val;
+      }
+    },
     handleChange() {},
     calculatePrice(price, period = this.period) {
       // if(this.options.tarification){
@@ -1251,53 +1335,29 @@ export default {
       // const addons = Object.values(this.options.addons)
       //   .filter((el) => el != -1)
       //   .join(",");
-      const orderData = {
-        namespace: this.options.namespaces,
-        service: {
-          title: this.userdata.title,
-          context: {},
-          version: "1",
-          instances_groups: [
-            {
-              title: this.userdata.title + Date.now(),
-              resources: {
-                ips_private: 1,
-                // ips_public: 0,
-              },
-              type: "ione",
-              instances: [
-                {
-                  title: "instance#1",
-                  config: {
-                    template_id: this.options.os.id,
-                    password: this.options.password,
-                  },
-                  resources: {
-                    cpu: this.product.resources.cpu,
-                    ram: this.product.resources.ram,
-                    drive_type: this.options.drive_type,
-                    drive_size: 10000,
-                    ips_private: this.options.network.private.count,
-                    ips_public: this.options.network.public.count,
-                  },
-                  billing_plan: {
-                    // uuid: this.plan.uuid,
-                    uuid: "50792d51-7a57-4be6-8057-25d77b8bf8d5",
-                    title: this.plan.title,
-                    type: this.plan.type,
-                    public: this.plan.public,
-                  },
-                  plan: this.plan.title,
-                  // product: this.product.key,
-                },
-              ],
-            },
-          ],
-          // billingcycle: this.options.period,
-          // tarification: this.options.total.tarification,
+      const instance = {
+        title: "instance#1",
+        config: {
+          template_id: this.options.os.id,
+          password: this.password,
         },
-
-        // pid: this.getCurrentProd.pid,
+        resources: {
+          cpu: this.product.resources.cpu,
+          ram: this.product.resources.ram,
+          drive_type: this.options.drive_type,
+          drive_size: 10000,
+          ips_private: this.options.network.private.count,
+          ips_public: this.options.network.public.count,
+        },
+        billing_plan: {
+          // uuid: this.plan.uuid,
+          uuid: "3805b400-9601-4425-ae78-673024dffc31",
+          title: this.plan.title,
+          type: this.plan.type,
+          public: this.plan.public,
+        },
+        // plan: this.plan.title,
+        // product: this.product.key,
       };
 
       // if (!this.$store.getters.getUser) {
@@ -1314,33 +1374,48 @@ export default {
       // } else {
       //   this.orderVM(orderData);
       // }
+
       if (this.service !== "") {
-        const service = Object.assign(
+        console.log(this.service);
+        console.log("1111111111");
+        const newObj = Object.assign(
           {},
-          { uuid: this.service },
-          orderData.service
+          { instances_groups: this.serviceItem.instancesGroups },
+          { ...this.serviceItem }
         );
+        delete newObj.instancesGroups;
+        newObj.instances_groups[0].instances.push(instance);
 
-        service.instances_groups[0] = Object.assign(
-          {},
-          { uuid: this.getInstance.uuidInstancesGroups },
-          service.instances_groups[0]
-        );
-
-        service.instances_groups[0].instances[0] = Object.assign(
-          {},
-          { uuid: this.getInstance.uuid },
-          service.instances_groups[0].instances[0]
-        );
-        const newData = {
-          uuid: this.service,
-          data: {
-            namespace: this.options.namespaces,
-            service,
+        const data = {
+          uuid: newObj.uuid,
+          service: {
+            namespace: this.namespace,
+            service: newObj,
           },
         };
-        this.updateVM(newData);
+        this.updateVM(data);
       } else {
+        console.log("dfgdfgdf");
+        const orderData = {
+          namespace: this.namespace,
+          service: {
+            title: this.userdata.title,
+            context: {},
+            version: "1",
+            instances_groups: [
+              {
+                title: this.userdata.title + Date.now(),
+                resources: {
+                  ips_private: this.options.network.private.count,
+                  ips_public: this.options.network.public.count,
+                },
+                type: "ione",
+                instances: [instance],
+              },
+            ],
+          },
+        };
+
         this.orderVM(orderData);
       }
     },
