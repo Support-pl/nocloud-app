@@ -242,7 +242,7 @@ const routes = [
 		component: () => import('../components/appMain/support/ticketchat.vue')
 	},
 	{
-		path: '/invoice-*',
+		path: '/invoice/:uuid',
 		name: 'invoiceFS',
 		meta: {
 			mustBeLoggined: true,
