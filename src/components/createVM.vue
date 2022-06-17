@@ -1,7 +1,8 @@
 <template>
 	<div class="create-vm__wrapper">
 		<a-row :gutter="[15,15]">
-			<a-col :md="12" :xs="24" v-for="type in ['IaaS', 'PaaS']" :key="type">
+			<!-- 'IaaS' -->
+			<a-col :md="12" :xs="24" v-for="type in ['PaaS']" :key="type">
 				<a-button
 					class="create-vm__btn"
 					size="large"

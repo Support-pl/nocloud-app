@@ -4,6 +4,7 @@ import vms from './nocloud/vms.js'
 import plans from './nocloud/plans.js'
 import namespaces from './nocloud/namespaces.js'
 import accounts from './nocloud/accounts'
+import transactions from './nocloud/transactions'
 
 export default {
     namespaced: true,
@@ -13,6 +14,7 @@ export default {
         vms,
         plans,
         namespaces,
-        accounts
+        accounts,
+        transactions
     }
 }

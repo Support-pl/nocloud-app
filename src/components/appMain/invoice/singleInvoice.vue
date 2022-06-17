@@ -1,21 +1,21 @@
 <template>
-  <div class="invoice" @click="clickOnInvoice(invoice.id)">
+  <div class="invoice" @click="clickOnInvoice(invoice.uuid)">
     <div class="invoice__header flex-between">
-      <div class="invoice__id">#{{ invoice.id }}</div>
+      <div class="invoice__id">#{{ invoice.uuid }}</div>
       <div class="invoice__status" :style="{ color: statusColor }">
         {{ $t("invoice_" + invoice.status) }}
       </div>
     </div>
     <div class="invoice__middle">
       <div class="invoice__cost">
-        {{ invoice.subtotal }} {{ invoice.currencycode }}
+        {{ invoice.total }} {{ invoice.currencycode }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
           {{ $t("invoiceDate") }}
         </div>
         <div class="invoice__date">
-          {{ invoice.date | dateFormat }}
+          {{ invoice.proc  }}
         </div>
       </div>
       <div class="invoice__date-item invoice__dueDate">
@@ -23,7 +23,7 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ invoice.duedate | dateFormat }}
+          {{ invoice.exec }}
         </div>
       </div>
     </div>
@@ -42,24 +42,27 @@ export default {
     invoice: Object,
   },
   computed: {
-    statusColor() {
-      switch (this.invoice.status.toLowerCase()) {
-        case "paid":
-          return this.$config.colors.success;
-          break;
-        case "cancelled":
-          return this.$config.colors.gray;
-          break;
+    // statusColor() {
+    //   switch (this.invoice.status.toLowerCase()) {
+    //     case "paid":
+    //       return this.$config.colors.success;
+    //       break;
+    //     case "cancelled":
+    //       return this.$config.colors.gray;
+    //       break;
 
-        default:
-          return this.$config.colors.err;
-          break;
-      }
-    },
+    //     default:
+    //       return this.$config.colors.err;
+    //       break;
+    //   }
+    // },
   },
   methods: {
-    clickOnInvoice(id) {
-      this.$router.push("/invoice-" + id);
+    clickOnInvoice(uuid) {
+      this.$router.push({
+        name: "invoiceFS",
+        params: { uuid: uuid },
+      });
     },
   },
 };
