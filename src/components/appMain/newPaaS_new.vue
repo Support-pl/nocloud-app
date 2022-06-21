@@ -1063,7 +1063,7 @@ export default {
       location_uuid: "",
       vmName: "",
       password: "",
-      textInvalid: '',
+      textInvalid: "",
       focused: false,
       options: {
         // kind: "standart",
@@ -1263,7 +1263,14 @@ export default {
         } else {
           this.textInvalid = "";
         }
-        if (this.password.length < 6) {
+        if (!this.password.match(/[\W_]/)) {
+          this.textInvalid =
+            "Password must contain at least one special characters";
+          return false;
+        } else {
+          this.textInvalid = "";
+        }
+        if (this.password.length < 11) {
           this.textInvalid = "Password is too short";
           return false;
         } else {
@@ -1271,7 +1278,7 @@ export default {
         }
       } else {
         this.textInvalid = "";
-        return false
+        return false;
       }
     },
     // getCurrentProd() {
