@@ -1265,7 +1265,7 @@ export default {
         }
         if (!this.password.match(/[\W_]/)) {
           this.textInvalid =
-            "Password must contain at least one special characters";
+            "Password must contain at least one special symbol";
           return false;
         } else {
           this.textInvalid = "";
