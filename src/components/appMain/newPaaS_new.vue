@@ -191,6 +191,17 @@
                                   default-value="1"
                                 />
                               </a-col>
+
+                              <a-col>
+                                <!-- <a-input-number
+                                  style="width: 60px"
+                                  v-model="options.disk.size"
+                                  class="max-width"
+                                  :min="options.disk.min"
+                                  :max="options.disk.max"
+                                  default-value="1"
+                                /> -->
+                              </a-col>
                               <a-col>
                                 <a-button
                                   icon="plus"
@@ -269,7 +280,13 @@
                         <span slot="unCheckedChildren">HDD</span>
                       </a-switch>
                     </a-col>
-                    <a-col :xs="8" :sm="4"> </a-col>
+                    <a-col
+                      class="changing__field"
+                      span="4"
+                      style="text-align: right"
+                    >
+                      {{ options.disk.size }} Gb
+                    </a-col>
                   </a-row>
                 </div>
                 <!-- <a-row class="newCloud__prop">
@@ -348,16 +365,23 @@
                   </div>
                   <a-row class="newCloud__prop">
                     <a-col :xs="12" :sm="10" style="margin-top: 10px">
+                      <!-- <a-form-model-item> -->
                       <a-input
-                        placeholder="Input password"
+                        @focus="focused = true"
+                        class="password"
+                        :class="{ invalid: textInvalid }"
                         v-model="password"
+                        placeholder="Password"
                       />
-
+                      <span style="color: red">{{ textInvalid }}</span>
+                      <!-- </a-form-model-item> -->
+                      <!-- <a-form-model-item> -->
                       <a-input
-                        style="margin-top: 20px"
-                        placeholder="VM name"
+                        style="margin-top: 10px"
                         v-model="vmName"
+                        placeholder="VM name"
                       />
+                      <!-- </a-form-model-item> -->
                     </a-col>
                   </a-row>
                 </div>
@@ -515,7 +539,7 @@
               >
                 <a-col> {{ $t("Tarif") }}: </a-col>
                 <a-col>
-                  {{ options.size }}
+                  {{ productSize }}
                 </a-col>
               </a-row>
             </transition>
@@ -863,7 +887,13 @@
                   block
                   shape="round"
                   @click="() => (modal.confirmCreate = true)"
-                  :disabled="!this.itemSP"
+                  :disabled="
+                    this.passwordValid == false ||
+                    vmName == '' ||
+                    service == '' ||
+                    namespace == '' ||
+                    options.os.name == ''
+                  "
                 >
                   {{ $t("Create") }}
                 </a-button>
@@ -1031,17 +1061,17 @@ export default {
       namespace: "",
       tarification: "STATIC",
       location_uuid: "",
-      password: "",
       vmName: "",
+      password: "",
+      textInvalid: '',
+      focused: false,
       options: {
         // kind: "standart",
 
         // period: "monthly",
         period: "1",
         size: "VDS L",
-
         isOnCalc: false,
-        drive_type: "SSD", // 1 ssd, 0 hdd
         highCPU: false, // 1 highCPU, 0 basicCPU
         // slide: 1,
 
@@ -1055,7 +1085,12 @@ export default {
           min: 1,
           max: 12,
         },
-
+        disk: {
+          type: "SSD",
+          size: 1,
+          min: 1,
+          max: 12,
+        },
         // ip: {
         //   size: 1,
         //   price: 0,
@@ -1119,6 +1154,8 @@ export default {
 
     ...mapGetters("newPaaS", ["isProductsLoading"]),
 
+    //--------------Plans-----------------
+    //UNKNOWN and STATIC
     getPlan() {
       const item = this.getPlans.find((el) => {
         return el.kind === this.tarification;
@@ -1127,11 +1164,13 @@ export default {
       return item;
     },
 
+    //STATIC
     getPlanOneStatic() {
       for (let planStatic of this.getPlans) {
         return planStatic;
       }
     },
+    //-------------------------------------
 
     getProducts() {
       const planTitle = [];
@@ -1160,6 +1199,7 @@ export default {
           };
           this.options.ram.size = product.resources.ram / 1024;
           this.options.cpu.size = product.resources.cpu;
+          this.options.disk.size = 13000;
           return product;
         }
       }
@@ -1200,7 +1240,6 @@ export default {
               this.options.network.public.count *
               resource.price *
               Math.floor(resource.period / (3600 * 24));
-            console.log(priceIP);
             price.push(priceIP);
           }
         }
@@ -1208,6 +1247,31 @@ export default {
           return accum + item;
         });
         return fullPrice;
+      }
+    },
+    passwordValid() {
+      if (this.focused == true) {
+        if (!this.password.match(/[A-Za-z]/)) {
+          this.textInvalid = "Password must contain at least one letter";
+          return false;
+        } else {
+          this.textInvalid = "";
+        }
+        if (!this.password.match(/[0-9]/)) {
+          this.textInvalid = "Password must contain at least one number";
+          return false;
+        } else {
+          this.textInvalid = "";
+        }
+        if (this.password.length < 6) {
+          this.textInvalid = "Password is too short";
+          return false;
+        } else {
+          this.textInvalid = "";
+        }
+      } else {
+        this.textInvalid = "";
+        return false
       }
     },
     // getCurrentProd() {
@@ -1384,25 +1448,26 @@ export default {
         },
         resources: {
           cpu: this.options.cpu.size,
-          ram: this.options.ram.size,
-          drive_type: this.options.drive_type,
-          drive_size: 10000,
+          ram: this.options.ram.size * 1024,
+          drive_type: this.options.disk.type,
+          drive_size: this.options.disk.size,
           ips_private: this.options.network.private.count,
           ips_public: this.options.network.public.count,
         },
         billing_plan: {
-          // uuid: this.plan.uuid,
           uuid: this.plan.uuid,
+          // uuid: "fe8bb5cc-1a14-4d51-a3e1-df0053bc72ed",
           title: this.plan.title,
           type: this.plan.type,
           public: this.plan.public,
         },
+        product: this.product.key,
       };
       //add key product in instance
-      const newInstance =
-        this.plan.kind === "STATIC"
-          ? Object.assign({}, { product: this.product.key },instance)
-          : instance;
+      // const newInstance =
+      //   this.plan.kind === "STATIC"
+      //     ? Object.assign({}, { product: this.product.key },instance)
+      //     : instance;
       // -------------------------------------
       //apdate service
       if (this.service !== "") {
@@ -1441,7 +1506,7 @@ export default {
                   ips_public: this.options.network.public.count,
                 },
                 type: "ione",
-                instances: [newInstance],
+                instances: [instance],
               },
             ],
           },
@@ -1543,6 +1608,9 @@ export default {
 </script>
 
 <style>
+.password.invalid {
+  border: 1px solid red;
+}
 .location_item {
   display: flex;
   justify-content: center;

@@ -250,13 +250,12 @@
               <div class="Fcloud__info-header">
                 <div class="Fcloud__info-title">
                   {{ $t("Information") }}
-                 
                 </div>
               </div>
-                   <div class="Fcloud__info-block block">
+              <div class="Fcloud__info-block block">
                 <div class="Fcloud__block-header">
                   <a-icon type="environment" theme="filled" />
-                  {{ 'Location' }}
+                  {{ "Location" }}
                 </div>
                 <div class="Fcloud__block-content">
                   <div class="block__column">
@@ -264,8 +263,6 @@
                       {{ dataSP.title }}
                     </div>
                   </div>
-        
-       
                 </div>
               </div>
 
@@ -307,7 +304,7 @@
                     <div class="block__title">OS</div>
                     <div class="block__value">
                       <!-- {{ (VM && VM.os) || "no data" }} -->
-                       <!-- {{ dataSP.publicData.templates[5].name || "no data"}} -->
+                      <!-- {{ dataSP.publicData.templates[5].name || "no data"}} -->
                     </div>
                   </div>
                   <div class="block__column">
@@ -319,7 +316,7 @@
                   <div class="block__column">
                     <div class="block__title">{{ $t("cloud_Memory") }}</div>
                     <div class="block__value">
-                      {{ mbToGb(VM && VM.resources.ram) }} GB
+                      {{ VM && VM.resources.ram }} GB
                     </div>
                   </div>
                 </div>
@@ -778,16 +775,16 @@ export default {
     // servicesProviders(){
     // 	return this.$store.getters['nocloud/sp/all']
     // },
-    VM(){
-    	const clouds = this.$store.getters['nocloud/vms/instances']
-    	const vm = clouds.find(el => el.uuid == this.$route.params.uuid);
-    	return vm;
+    VM() {
+      const clouds = this.$store.getters["nocloud/vms/instances"];
+      const vm = clouds.find((el) => el.uuid == this.$route.params.uuid);
+      return vm;
     },
     VM() {
       const data = this.$store.getters["nocloud/vms/getInstances"];
       for (let item of data) {
         if (item.uuid === this.$route.params.uuid) {
-          console.log(item)
+          console.log(item);
           return item;
         }
       }
@@ -797,7 +794,7 @@ export default {
     },
     dataSP() {
       const data = this.getSP.find((el) => {
-        return el.uuid == this.VM.sp
+        return el.uuid == this.VM.sp;
       });
       return data;
     },
