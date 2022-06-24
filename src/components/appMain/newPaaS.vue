@@ -12,19 +12,33 @@
             >
               <a-collapse-panel
                 key="location"
+                class="map__container"
                 :header="
                   $t('Location:') +
                   (itemSP == undefined ? ' ' : ' (' + itemSP.title + ')')
                 "
               >
-                <a-row justify="space-between" style="margin-bottom: 10px">
+                <a-row justify="space-between">
                   <a-alert
                     message="Please select a suitable location"
                     type="warning"
                     show-icon
-                    style="margin-bottom: 30px"
+                    style="margin: 15px auto 10px; width: 90%"
                   />
-                  <a-radio-group v-model="location_uuid">
+                  <!-- <select v-model="test" name="" id="">
+                    <option
+                      v-for="item in data"
+                      :key="item.id"
+                      :value="item.id"
+                    >
+                      {{ item.id }}
+                    </option>
+                  </select> -->
+
+                  <div class="wrapper">
+                    <my-map v-model="locationId" :markers="markers"> </my-map>
+                  </div>
+                  <!-- <a-radio-group v-model="location_uuid">
                     <a-radio-button
                       v-for="(sp, index) in getSP"
                       :key="index"
@@ -33,7 +47,7 @@
                     >
                       {{ sp.title }}
                     </a-radio-button>
-                  </a-radio-group>
+                  </a-radio-group> -->
                 </a-row>
               </a-collapse-panel>
 
@@ -704,7 +718,7 @@
                     this.passwordValid == false ||
                     vmName == '' ||
                     (service == '' && this.getServicesFull.length > 0) ||
-                    (namespace == '' && this.getNameSpaces.length > 0 )||
+                    (namespace == '' && this.getNameSpaces.length > 0) ||
                     options.os.name == ''
                   "
                 >
@@ -859,13 +873,19 @@ const tariffs = ["standart", "X2CPU", "X2RAM"];
 // const sizes = ["M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
 import { mapGetters } from "vuex";
 import loading from "../loading/loading";
+import myMap from "../map/map.vue";
+import markers from "../../markers.json";
 export default {
   name: "newPaaS",
   components: {
+    myMap,
     loading,
   },
   data() {
     return {
+      test: "",
+      // data: [{ id: "PL" }, { id: "DE" }],
+      markers,
       productSize: "VDS L",
       activeKey: "location",
       plan: "",
@@ -873,7 +893,7 @@ export default {
       service: "",
       namespace: "",
       tarification: "Monthly",
-      location_uuid: "",
+      locationId: "",
       vmName: "",
       password: "",
       textInvalid: "",
@@ -954,15 +974,22 @@ export default {
       });
       return data;
     },
-
-    itemSP() {
-      const sp = this.getSP.find((el) => {
-        return el.uuid === this.location_uuid;
+    location() {
+      const item = this.markers.find((el) => {
+        return el.id === this.locationId;
       });
-      if (sp) {
-        this.activeKey = "plan";
+      return item;
+    },
+    itemSP() {
+      if (this.location) {
+        const sp = this.getSP.find((el) => {
+          return el.title === this.location.title.split(",")[0];
+        });
+        if (sp) {
+          this.activeKey = "plan";
+        }
+        return sp;
       }
-      return sp;
     },
 
     ...mapGetters("newPaaS", ["isProductsLoading"]),
@@ -1335,6 +1362,9 @@ export default {
 </script>
 
 <style>
+.map__container .ant-collapse-content-box {
+  padding: 0;
+}
 .password.invalid {
   border: 1px solid red;
 }
