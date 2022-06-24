@@ -316,7 +316,7 @@
                   <div class="block__column">
                     <div class="block__title">{{ $t("cloud_Memory") }}</div>
                     <div class="block__value">
-                      {{ VM && VM.resources.ram }} GB
+                      {{ VM && VM.resources.ram / 1024 }} GB
                     </div>
                   </div>
                 </div>

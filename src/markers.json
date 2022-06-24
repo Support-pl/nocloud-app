@@ -1,0 +1,21 @@
+[
+	{
+		"id": "PL",
+		"title": "Warsaw, Poland",
+		"x": 517,
+		"y": 255
+	},
+	{
+		"id": "DE",
+		"title": "Berlin, Germany",
+		"x": 489,
+		"y": 260
+	},
+	{
+		"id": "BY",
+		"title": "Minsk, Belarus",
+		"x": 540,
+		"y": 250
+	}
+
+]

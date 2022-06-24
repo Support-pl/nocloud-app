@@ -126,7 +126,7 @@ const routes = [
 				meta: {
 					footerTitle: 'cloud'
 				},
-				component: () => import('../components/appMain/newPaaS_new.vue')
+				component: () => import('../components/appMain/newPaaS.vue')
 			},
 			// {
 			// 	path: 'cloud/plans',
