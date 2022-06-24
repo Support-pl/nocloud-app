@@ -23,7 +23,7 @@ export default {
 	},
 	created(){
     this.$store.dispatch('nocloud/auth/load')
-    this.$store.dispatch('nocloud/auth/fetchUserData')
+    // this.$store.dispatch('nocloud/auth/fetchUserData')
 		
 		const user = this.$store.getters.getCookie('CloudUser');
 		if(user !== undefined) {
