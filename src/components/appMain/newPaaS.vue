@@ -24,7 +24,19 @@
                     show-icon
                     style="margin-bottom: 30px"
                   />
-                  <a-radio-group v-model="location_uuid">
+                  <!-- <select v-model="test" name="" id="">
+                    <option
+                      v-for="item in data"
+                      :key="item.id"
+                      :value="item.id"
+                    >
+                      {{ item.id }}
+                    </option>
+                  </select> -->
+                  <div class="wrapper">
+                    <my-map v-model="locationId" :markers="markers"> </my-map>
+                  </div>
+                  <!-- <a-radio-group v-model="location_uuid">
                     <a-radio-button
                       v-for="(sp, index) in getSP"
                       :key="index"
@@ -33,7 +45,7 @@
                     >
                       {{ sp.title }}
                     </a-radio-button>
-                  </a-radio-group>
+                  </a-radio-group> -->
                 </a-row>
               </a-collapse-panel>
 
@@ -1042,17 +1054,19 @@ const periods = [
     discount: 10,
   },
 ];
-const tariffs = ["standart", "X2CPU", "X2RAM"];
-// const sizes = ["M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
 import { mapGetters } from "vuex";
 import loading from "../loading/loading";
+import myMap from "../map/map.vue";
+import markers from "../../markers.json";
 export default {
   name: "newPaaS",
   components: {
     loading,
+    myMap,
   },
   data() {
     return {
+      markers,
       productSize: "VDS L",
       activeKey: "location",
       plan: "",
@@ -1060,7 +1074,7 @@ export default {
       service: "",
       namespace: "",
       tarification: "STATIC",
-      location_uuid: "",
+      locationId: "",
       vmName: "",
       password: "",
       textInvalid: "",
@@ -1142,17 +1156,23 @@ export default {
       return data;
     },
 
-    itemSP() {
-      const sp = this.getSP.find((el) => {
-        return el.uuid === this.location_uuid;
+    location() {
+      const item = this.markers.find((el) => {
+        return el.id === this.locationId;
       });
-      if (sp) {
-        this.activeKey = "plan";
-      }
-      return sp;
+      return item;
     },
-
-    ...mapGetters("newPaaS", ["isProductsLoading"]),
+    itemSP() {
+      if (this.location) {
+        const sp = this.getSP.find((el) => {
+          return el.title === this.location.title.split(",")[0];
+        });
+        if (sp) {
+          this.activeKey = "plan";
+        }
+        return sp;
+      }
+    },
 
     //--------------Plans-----------------
     //UNKNOWN and STATIC
@@ -1264,7 +1284,7 @@ export default {
           this.textInvalid = "";
         }
         if (!this.password.match(/[\W_]/)) {
-          this.textInvalid = "Password is too short ";
+          this.textInvalid = "Password must contain at least one special symbol";
           return false;
         } else {
           this.textInvalid = "";
