@@ -15,7 +15,7 @@
           {{ $t("invoiceDate") }}
         </div>
         <div class="invoice__date">
-          {{ invoice.proc  }}
+          {{new Date(invoice.proc * 1000) | dateFormat}}
         </div>
       </div>
       <div class="invoice__date-item invoice__dueDate">

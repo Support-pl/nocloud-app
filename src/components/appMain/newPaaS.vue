@@ -668,7 +668,7 @@
                 </a-radio-group>
               </a-col>
             </a-row>
-            <!-- <transition name="textchange" mode="out-in"> -->
+      
             <a-row
               type="flex"
               justify="center"
@@ -695,8 +695,7 @@
                 BYN/{{ $t("hour") }}
               </a-col>
             </a-row>
-            <!-- </transition> -->
-            <!-- </a-skeleton> -->
+      
             <a-row
               type="flex"
               justify="space-around"
@@ -707,8 +706,6 @@
               "
             >
               <a-col :span="22" style="margin-top: 20px">
-                <!-- :loading="getCurrentProd == null" -->
-                <!-- service == '' || -->
                 <a-button
                   type="primary"
                   block
@@ -991,9 +988,7 @@ export default {
         return sp;
       }
     },
-
-    ...mapGetters("newPaaS", ["isProductsLoading"]),
-
+    
     //STATIC
     getPlanOneStatic() {
       for (let plan of this.getPlans) {
@@ -1131,18 +1126,6 @@ export default {
       this.$store.dispatch("nocloud/namespaces/fetch");
       this.$store.dispatch("nocloud/plans/fetch");
     }
-
-    // this.$store.dispatch("newPaaS/fetchProductsAuto");
-
-    // this.$axios
-    //   .get("getSettings.php?filter=cost,disktypes,minDisk,maxDisk")
-    //   .then((res) => {
-    //     this.options.network.price = res.data.PUBLIC_IP_COST;
-    //   })
-    //   .catch((err) => {
-    //     console.error(err);
-    //     this.$message.error("Can't load prices. Show saved ones.");
-    //   });
   },
   methods: {
     setOneService() {
@@ -1160,9 +1143,6 @@ export default {
       }
     },
     calculatePrice(price, period = this.period) {
-      // if(this.options.tarification){
-      // 	return price;
-      // }
       switch (period) {
         case "minute":
           price = price / 60;
@@ -1254,7 +1234,6 @@ export default {
             service: newObj,
           },
         };
-        console.log(orderDataNew);
         this.updateVM(orderDataNew);
       } else {
         //create service
