@@ -25,15 +25,19 @@
                     show-icon
                     style="margin: 15px auto 10px; width: 90%"
                   />
-                  <!-- <select v-model="test" name="" id="">
-                    <option
-                      v-for="item in data"
+                  <a-select
+                    v-model="locationId"
+                    placeholder="Select location"
+                    style="width: 180px; margin-left: 35px"
+                  >
+                    <a-select-option
+                      v-for="item in markers"
                       :key="item.id"
                       :value="item.id"
                     >
-                      {{ item.id }}
-                    </option>
-                  </select> -->
+                      {{ item.title }}
+                    </a-select-option>
+                  </a-select>
 
                   <div class="wrapper">
                     <my-map v-model="locationId" :markers="markers"> </my-map>
@@ -668,7 +672,7 @@
                 </a-radio-group>
               </a-col>
             </a-row>
-      
+
             <a-row
               type="flex"
               justify="center"
@@ -695,7 +699,7 @@
                 BYN/{{ $t("hour") }}
               </a-col>
             </a-row>
-      
+
             <a-row
               type="flex"
               justify="space-around"
@@ -881,7 +885,7 @@ export default {
   data() {
     return {
       test: "",
-      // data: [{ id: "PL" }, { id: "DE" }],
+      // data: [{ id: "PL", title: "Warsaw, Poland" }, { id: "DE", title:"Berlin, Germany" }, { id: "BY" , title: "Minsk, Belarus"}],
       markers,
       productSize: "VDS L",
       activeKey: "location",
@@ -890,7 +894,7 @@ export default {
       service: "",
       namespace: "",
       tarification: "Monthly",
-      locationId: "",
+      locationId: "Location",
       vmName: "",
       password: "",
       textInvalid: "",
@@ -988,7 +992,7 @@ export default {
         return sp;
       }
     },
-    
+
     //STATIC
     getPlanOneStatic() {
       for (let plan of this.getPlans) {
