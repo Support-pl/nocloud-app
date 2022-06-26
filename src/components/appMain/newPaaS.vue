@@ -22,17 +22,22 @@
                     message="Please select a suitable location"
                     type="warning"
                     show-icon
-                    style="margin-bottom: 30px"
+                    style="margin-bottom: 15px"
                   />
-                  <!-- <select v-model="test" name="" id="">
-                    <option
-                      v-for="item in data"
+
+                  <a-select
+                    v-model="locationId"
+                    placeholder="Select location"
+                    style="width: 180px;"
+                  >
+                    <a-select-option
+                      v-for="item in markers"
                       :key="item.id"
                       :value="item.id"
                     >
-                      {{ item.id }}
-                    </option>
-                  </select> -->
+                      {{ item.title }}
+                    </a-select-option>
+                  </a-select>
                   <div class="wrapper">
                     <my-map v-model="locationId" :markers="markers"> </my-map>
                   </div>
@@ -1074,7 +1079,7 @@ export default {
       service: "",
       namespace: "",
       tarification: "STATIC",
-      locationId: "",
+      locationId: "Location",
       vmName: "",
       password: "",
       textInvalid: "",
@@ -1284,7 +1289,8 @@ export default {
           this.textInvalid = "";
         }
         if (!this.password.match(/[\W_]/)) {
-          this.textInvalid = "Password must contain at least one special symbol";
+          this.textInvalid =
+            "Password must contain at least one special symbol";
           return false;
         } else {
           this.textInvalid = "";
