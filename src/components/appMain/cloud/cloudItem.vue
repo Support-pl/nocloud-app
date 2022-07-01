@@ -2,16 +2,16 @@
   <div class="cloud__item-wrapper" @click="cloudClick(instance.uuid)">
     <div class="cloud__item">
       <div class="cloud__upper">
-        <!-- <div
+        <div
           class="item__color"
           :style="{ 'background-color': statusColor }"
-        ></div> -->
+        ></div>
         <!-- <div class="item__title">{{cloud.CUSTOM_VM_NAME ? cloud.CUSTOM_VM_NAME : cloud.NAME}}</div> -->
         <!-- {{instance && instance}} -->
         <div class="item__title">{{ instance.title }}</div>
 
         <!-- <div class="item__status">{{ $t(`cloudStateItem.${cloud.STATE}`) }}</div> -->
-        <div class="item__status">{{ instance.status }}</div>
+        <div class="item__status">{{ instance.state.state }}</div>
       </div>
       <!-- <div class="item_location">{{ location }}</div> -->
       <div class="cloud__lower">
@@ -40,7 +40,6 @@ export default {
     // 	const color = this.$store.getters['cloud/getStateColor'](this.cloud.STATE);
     // 	return color;
     // }
-
     // location() {
     //   if (this.getSP.length) {
     //     const data = this.getSP.find((el) => {
@@ -49,6 +48,28 @@ export default {
     //     return data.title;
     //   }
     // },
+    statusColor() {
+      let color = "";
+      switch (this.instance.state.meta.lcm_state) {
+        case 3:
+          color = "#0fd058";
+          break;
+        // останавливающийся
+        case 18:
+          color = "#919191";
+          break;
+        // запускающийся
+        case 20:
+          color = "#919191";
+          break;
+        case 0:
+          color = "#f9f038";
+          break;
+        default:
+          break;
+      }
+      return color
+    },
     getSP() {
       return this.$store.getters["nocloud/sp/getSP"];
     },
@@ -92,17 +113,14 @@ export default {
 .cloud__item-wrapper:not(:last-child) {
   margin-bottom: 20px;
 }
-
 .cloud__item {
   position: relative;
   font-size: 16px;
 }
-
 .cloud__upper {
   display: flex;
   justify-content: space-between;
 }
-
 .item__color {
   width: 18px;
   height: 18px;
@@ -110,9 +128,8 @@ export default {
   position: absolute;
   border-radius: 50%;
   left: -28px;
-  top: 15px;
+  top: 5px;
 }
-
 .item__title {
   flex-grow: 1;
   padding-right: 10px;
@@ -121,12 +138,10 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .item__status,
 .cloud__lower {
   color: rgba(0, 0, 0, 0.4);
 }
-
 @media screen and (min-width: 768px) {
   .cloud__item-wrapper:not(:last-child) {
     margin-bottom: 0px;
@@ -135,7 +150,6 @@ export default {
     height: max-content;
   }
 }
-
 .cloud__label {
   position: absolute;
   right: 0;
@@ -148,7 +162,6 @@ export default {
   transition-duration: 0.2s;
   transition-timing-function: ease;
 }
-
 .cloud__item-wrapper:hover .cloud__label {
   padding: 7px 20px;
   border-radius: 22px 0px 0px 0px;

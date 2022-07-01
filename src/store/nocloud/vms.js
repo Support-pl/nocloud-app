@@ -8,6 +8,7 @@ export default {
 		instances: [],
 		servicesFull: [],
 		loading: false,
+		loadingInvoke: false,
 	},
 	mutations: {
 		setCreateInstance(state, data) {
@@ -48,7 +49,7 @@ export default {
 			data.instancesGroups.forEach(item => {
 				item.instances.forEach(el => {
 					const instanceItem = {
-						// uuidService: data.uuid,
+						uuidService: data.uuid,
 						uuidInstancesGroups: item.uuid,
 						type: item.type,
 						sp: item.sp,
@@ -77,11 +78,43 @@ export default {
 			}
 
 		},
+		setUpdateInstanceInvoke(state, data) {
+			state.instances.find(item => {
+				if (item.state.meta.uuid === data.meta.uuid) {
+					return item.state.meta = data.meta
+				}
+			})
 
+			// const state = {
+			// 	// останавливающийся
+			// 	SHUTDOWN_POWEROFF: {
+			// 		lcm_state:18,
+			// 		state:3
+			// 	},
+			// 	// остановленный
+			// 	POWEROFF:{
+			// 		lcm_state:0,
+			// 		state:8
+			// 	},
+			// 	// запускающийся
+			// 	BOOT_POWEROFF:{
+			// 		lcm_state:20,
+			// 		state:3
+			// 	},
+			// 	// запущенный
+			// 	RUNNING:{
+			// 		lcm_state:3,
+			// 		state:3
+			// 	}
+			// }
+
+		},
 		setLoading(state, data) {
 			state.loading = data;
 		},
-
+		setLoadingInvoke(state, data) {
+			state.loadingInvoke = data;
+		},
 	},
 	actions: {
 		fetch({ commit }) {
@@ -140,7 +173,32 @@ export default {
 					.finally(() => {
 					})
 			})
-		}
+		},
+		actionVMInvoke({ commit, dispatch }, data) {
+			commit("setLoadingInvoke", true);
+			return new Promise((resolve, reject) => {
+				api.instances
+					.action(data)
+					.then((response) => {
+						commit('setUpdateInstanceInvoke', response)
+						// if (response.meta.state == 3 && response.meta.lcm_state == 18 || response.meta.state == 3 && response.meta.lcm_state == 20 ) {
+						// 	setInterval(() => {
+						// 		dispatch("actionVMInvoke", data)
+						// 	}, 3000); 
+						// } else commit('setLoadingInvoke', false)
+						resolve(response)
+					})
+					.catch((err) => {
+						reject(err);
+					})
+					.finally(() => {
+						commit("setLoadingInvoke", false);
+					});
+			})
+		},
+
+
+
 	},
 	getters: {
 		all(state) {
@@ -160,6 +218,8 @@ export default {
 			if (state.servicesFull.length < 0) return []
 			return state.servicesFull
 		},
+		getActionLoadingInvoke: state => state.loadingInvoke,
+		// getLoadingUpdateInvoke: state => state.loadingUpdateInvoke
 		// instances(state){
 		// 	const instances = [];
 		// 	if(state?.services == undefined || state.services.length > 0) return []
