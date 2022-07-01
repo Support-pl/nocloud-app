@@ -1,14 +1,14 @@
  import Api from 'nocloudjsrest';
 import vuex from '@/store/index.js'
 
-const api = new Api(
-	"http://localhost/https://api.nocloud.ione-cloud.net/",
-	8000
-);
-
 // const api = new Api(
-// 	VUE_APP_BASE_URL
+// 	"http://localhost/https://api.nocloud.ione-cloud.net/",
+// 	8000
 // );
+
+const api = new Api(
+	VUE_APP_BASE_URL
+);
 
 
 api.axios.interceptors.response.use(function (response) {
