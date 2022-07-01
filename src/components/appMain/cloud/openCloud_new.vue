@@ -1,3 +1,4 @@
+
 <template>
   <div class="cloud__fullscreen Fcloud">
     <template>
@@ -10,11 +11,10 @@
                   <a-icon type="left" />
                 </div>
               </div>
-
               <div v-if="VM && VM.status" class="Fcloud__header-title">
                 <div
                   class="Fcloud__status-color"
-                  :class="{ 'glowing-animations': updating }"
+                  :class="{ 'glowing-animations': getActionLoadingInvoke }"
                   :style="{ 'background-color': stateColor }"
                 ></div>
                 <div class="Fcloud__title">
@@ -22,24 +22,26 @@
                 </div>
                 <div
                   class="Fcloud__status"
-                  :class="{ 'glowing-animations': updating }"
+                  :class="{ 'glowing-animations': getActionLoadingInvoke }"
                 >
                   <!-- {{
                     VM.state.meta.state_str
                       ? VM.state.meta.state_str
                       : VM.state.meta.error
                   }} -->
-                  {{ vmState | replace("_", " ") }}
+                  <!-- {{ vmState | replace("_", " ") }} -->
+                  {{ VM.state.meta.lcm_state_str }}
                 </div>
               </div>
               <div class="Fcloud__menu-wrapper">
                 <div class="Fcloud__menu-btn icon__wrapper">
                   <a-icon type="more" @click="openModal('menu')" />
                   <a-modal v-model="modal.menu" title="Menu" :footer="null">
-                    <a-button
-                      v-for="btn in menuOptions.filter(
+                    <!-- v-for="btn in menuOptions.filter(
                         (el) => !el.forVNC || SingleCloud.GNAME == 'VDC'
-                      )"
+                      )" -->
+                    <a-button
+                      v-for="btn in menuOptions"
                       :key="btn.title"
                       :icon="btn.icon"
                       @click="btn.onclick(...btn.params)"
@@ -121,19 +123,66 @@
                       </a-col>
                     </a-row>
                   </a-modal>
+                  <a-modal
+                    v-model="modal.diskControl"
+                    :title="$t('Disk control')"
+                    :footer="null"
+                  >
+                    <disk-control />
+                  </a-modal>
+
+                  <a-modal
+                    v-model="modal.networkControl"
+                    :title="$t('Network control')"
+                    :footer="null"
+                  >
+                    <network-control />
+                  </a-modal>
+
+                  <a-modal
+                    v-model="modal.bootOrder"
+                    :title="$t('Boot order')"
+                    :footer="null"
+                  >
+                    <boot-order @onEnd="bootOrderNewState" />
+                  </a-modal>
+
+                  <a-modal
+                    v-model="modal.accessManager"
+                    :title="$t('Access manager')"
+                    :footer="null"
+                  >
+                    <access-manager />
+                  </a-modal>
                 </div>
               </div>
             </div>
-            <div class="Fcloud__buttons">
-              <!-- <div v-if="SingleCloud.STATE == '3'" class="Fcloud__button" :class="{ 'disabled': permissions.shutdown }" @click='openModal("shutdown")'> -->
-              <div class="Fcloud__button" @click="sendAction('poweroff')">
+            <div class="Fcloud__buttons" v-if="VM.state === null">
+              <div class="Fcloud__button" @click="deployService()">
+                <div class="Fcloud__BTN-icon">
+                  <a-icon type="deployment-unit" />
+                </div>
+                <div class="Fcloud__BTN-title">
+                  <!-- {{$t('Start')}} -->
+                  Deploy
+                </div>
+              </div>
+            </div>
+            <div class="Fcloud__buttons" v-else>
+              <div
+                v-if="
+                  VM.state.meta.state !== 8 && VM.state.meta.lsm_state !== 0
+                "
+                class="Fcloud__button"
+                @click="openModal('shutdown')"
+                :class="{
+                  disabled: statusVM.shutdown,
+                }"
+              >
                 <div class="Fcloud__BTN-icon">
                   <div class="cloud__icon cloud__icon--stop"></div>
                 </div>
-                <div class="Fcloud__BTN-title">
-                  <!-- {{$t('Power off')}} -->
-                  stop
-                </div>
+                <div class="Fcloud__BTN-title">{{ $t("Power off") }}</div>
                 <a-modal
                   v-model="modal.shutdown"
                   :title="$t('cloud_Shutdown_modal')"
@@ -160,34 +209,35 @@
                   </a-radio-group>
                 </a-modal>
               </div>
-              <!-- <div v-else class="Fcloud__button" :class="{ 'disabled': permissions.start }" @click='sendAction("Start")'> -->
-              <!-- <div v-else class="Fcloud__button" @click='sendAction("Start")'> -->
-              <div class="Fcloud__button" @click="sendAction('resume')">
+              <div
+                v-else
+                class="Fcloud__button"
+                @click="sendAction('resume')"
+                :class="{
+                  disabled: statusVM.start,
+                }"
+              >
                 <div class="Fcloud__BTN-icon">
                   <a-icon type="caret-right" />
                 </div>
-                <div class="Fcloud__BTN-title">
-                  <!-- {{$t('Start')}} -->
-                  start
-                </div>
+                <div class="Fcloud__BTN-title">{{ $t("Start") }}</div>
               </div>
-              <!-- <div class="Fcloud__button" :class="{ 'disabled': permissions.reboot , 'btn_disabled_wiggle': true}" @click='openModal("reboot")'> -->
               <div
                 class="Fcloud__button"
-                :class="{ btn_disabled_wiggle: true }"
-                @click="sendAction('reboot')"
+                @click="openModal('reboot')"
+                :class="{
+                  disabled: statusVM.reboot,
+                  btn_disabled_wiggle: true,
+                }"
               >
                 <div class="Fcloud__BTN-icon">
                   <a-icon type="redo" />
                 </div>
-                <div class="Fcloud__BTN-title">
-                  <!-- {{$t('Reboot')}} -->
-                  reboot
-                </div>
+                <div class="Fcloud__BTN-title">{{ $t("Reboot") }}</div>
                 <a-modal
                   v-model="modal.reboot"
                   :title="$t('cloud_Reboot_modal')"
-                  @ok="sendAction('suspend')"
+                  @ok="handleOk('reboot')"
                 >
                   <p>{{ $t("cloud_Reboot_invite") }}</p>
                   <a-radio-group
@@ -208,19 +258,17 @@
                   </a-radio-group>
                 </a-modal>
               </div>
-              <!-- <div class="Fcloud__button" :class="{ 'disabled': permissions.recover , 'btn_disabled_wiggle': true}" @click='openModal("recover")'> -->
               <div
                 class="Fcloud__button"
-                :class="{ btn_disabled_wiggle: true }"
                 @click="openModal('recover')"
+                :class="{
+                  disabled: statusVM.recover,
+                }"
               >
                 <div class="Fcloud__BTN-icon">
                   <a-icon type="backward" />
                 </div>
-                <div class="Fcloud__BTN-title">
-                  <!-- {{$t('Recover')}} -->
-                  recover
-                </div>
+                <div class="Fcloud__BTN-title">{{ $t("Recover") }}</div>
                 <a-modal
                   v-model="modal.recover"
                   :title="$t('cloud_Recover_modal')"
@@ -252,19 +300,6 @@
                   {{ $t("Information") }}
                 </div>
               </div>
-              <div class="Fcloud__info-block block">
-                <div class="Fcloud__block-header">
-                  <a-icon type="environment" theme="filled" />
-                  {{ "Location" }}
-                </div>
-                <div class="Fcloud__block-content">
-                  <div class="block__column">
-                    <div class="block__value" v-if="dataSP">
-                      {{ dataSP.title }}
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               <!-- <div v-if="SingleCloud.ORDER_INFO.invoicestatus && SingleCloud.ORDER_INFO.invoicestatus.toLowerCase() == 'unpaid'" class="Fcloud__main-info Fcloud__main-info--invoice">
 							<div class="icon">
@@ -282,17 +317,62 @@
 								</router-link>
 							</div>
 						</div> -->
+              <div
+                v-if="
+                  VM.state.meta.networking.private &&
+                  VM.state.meta.networking.private.length > 0
+                "
+                class="Fcloud__main-info"
+              >
+                <table class="Fcloud__table">
+                  <tbody>
+                    <tr
+                      v-for="nic in VM.state.meta.networking.public"
+                      :key="nic.NAME"
+                    >
+                      <td>IP</td>
+                      <td>{{ nic }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                v-if="
+                  VM.state.meta.networking.public &&
+                  VM.state.meta.networking.public.length > 0
+                "
+                class="Fcloud__main-info"
+              >
+                <table class="Fcloud__table">
+                  <tbody>
+                    <tr
+                      v-for="nic in VM.state.meta.networking.public"
+                      :key="nic.NAME"
+                    >
+                      <td>IP</td>
+                      <td>{{ nic }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-              <!-- <div v-if="IPs.length > 0" class="Fcloud__main-info">
-							<table class="Fcloud__table">
-								<tbody>
-									<tr v-for="nic in IPs" :key="nic.NAME">
-										<td>IP</td>
-										<td>{{nic.IP}}</td>
-									</tr>
-								</tbody>
-							</table>
-						</div> -->
+              <div class="Fcloud__info-block block">
+                <div class="Fcloud__block-header">
+                  <a-icon type="environment" theme="filled" />
+                  {{ "Location" }}
+                </div>
+                <div class="Fcloud__block-content">
+                  <div class="block__column">
+                    <div
+                      class="block__value"
+                      v-if="dataSP"
+                      style="font-size: 18px"
+                    >
+                      {{ dataSP.title }}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <div class="Fcloud__info-block block">
                 <div class="Fcloud__block-header">
@@ -304,7 +384,7 @@
                     <div class="block__title">OS</div>
                     <div class="block__value">
                       <!-- {{ (VM && VM.os) || "no data" }} -->
-                      <!-- {{ dataSP.publicData.templates[5].name || "no data"}} -->
+                      {{ dataSP.publicData.templates[5].name || "no data" }}
                     </div>
                   </div>
                   <div class="block__column">
@@ -583,7 +663,7 @@
                     </a-button>
                   </div>
                 </a-col>
-              </a-row>
+              </a-row> 
             </div>
           </div>
         </div>
@@ -605,7 +685,6 @@ import bootOrder from "./openCloud/bootOrder";
 import networkControl from "./openCloud/networkControl";
 import accessManager from "./openCloud/accessManager";
 import notification from "../../../mixins/notification";
-
 const columns = [
   {
     title: "Name",
@@ -624,9 +703,7 @@ const columns = [
     scopedSlots: { customRender: "actions" },
   },
 ];
-
 const sizes = ["bytes", "KB", "MB", "GB", "TB", "PB"];
-
 export default {
   name: "openCloud",
   components: {
@@ -755,10 +832,8 @@ export default {
           forVNC: true,
         },
       ],
-
       actualAction: "",
       actionLoading: false,
-
       selectedSP: "",
       deployLoading: false,
     };
@@ -772,13 +847,37 @@ export default {
       permissions: "permissions",
       // singleLoading: 'singleLoading'
     }),
-    // servicesProviders(){
-    // 	return this.$store.getters['nocloud/sp/all']
-    // },
-    VM() {
-      const clouds = this.$store.getters["nocloud/vms/instances"];
-      const vm = clouds.find((el) => el.uuid == this.$route.params.uuid);
-      return vm;
+    ...mapGetters("nocloud/vms", ["getActionLoadingInvoke"]),
+    statusVM() {
+      return {
+        shutdown:
+          (this.VM.state.meta.lcm_state == 18 &&
+            this.VM.state.meta.state == 3) ||
+          (this.VM.state.meta.lcm_state == 20 && this.VM.state.meta.state == 3),
+        reboot:
+          (this.VM.state.meta.lcm_state == 18 &&
+            this.VM.state.meta.state == 3) ||
+          (this.VM.state.meta.lcm_state == 20 &&
+            this.VM.state.meta.state == 3) ||
+          (this.VM.state.meta.lcm_state == 0 && this.VM.state.meta.state == 8),
+        start:
+          (this.VM.state.meta.lcm_state == 18 &&
+            this.VM.state.meta.state == 3) ||
+          (this.VM.state.meta.lcm_state == 20 && this.VM.state.meta.state == 3),
+        recover:
+          (this.VM.state.meta.lcm_state == 18 &&
+            this.VM.state.meta.state == 3) ||
+          (this.VM.state.meta.lcm_state == 20 && this.VM.state.meta.state == 3),
+      };
+    },
+    service() {
+      const data = this.$store.getters["nocloud/vms/getServicesFull"];
+      for (let item of data) {
+        if (item.uuid === this.VM.uuidService) {
+          console.log(item);
+          return item;
+        }
+      }
     },
     VM() {
       const data = this.$store.getters["nocloud/vms/getInstances"];
@@ -803,21 +902,22 @@ export default {
     },
     stateColor() {
       let color = "";
-      switch (this?.VM?.status?.toLowerCase()) {
-        case "running":
-        case "up":
+      switch (this.VM.state.meta.lcm_state) {
+        case 3:
           color = "#0fd058";
           break;
-        case "poweroff":
-        case "down":
+        // останавливающийся
+        case 18:
           color = "#919191";
           break;
-        case "suspend":
-        case "init":
+        // запускающийся
+        case 20:
+          color = "#919191";
+          break;
+        case 0:
           color = "#f9f038";
           break;
         default:
-          color = "#f9f038";
           break;
       }
       return color;
@@ -835,7 +935,6 @@ export default {
     // 		this.selectedSP = res.pool[0].uuid
     // 	})
     // }
-
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
       this.$store.dispatch("nocloud/sp/fetch");
@@ -863,7 +962,6 @@ export default {
       // if(this.SingleCloud.DISABLE.includes(menuName) || (this.SingleCloud.STATE == 3 && this.SingleCloud.LCM_STATE == 2)){
       // 	return true;
       // }
-
       return false;
     },
     sync(vmid = null) {
@@ -946,13 +1044,10 @@ export default {
     // 			if(this.permissions.reinstall) return;
     // 			break;
     // 	}
-
     // 	const user = this.$store.getters.getUser;
     // 	const userid = user.id;
     // 	const vmid = this.SingleCloud.ID;
-
     // 	let lowerAct = action.toLowerCase();
-
     // 	let close_your_eyes = md5('vmaction' + userid + user.secret);
     // 	let url = `/vmaction.php?userid=${userid}&action=${action}&vmid=${vmid}&secret=${close_your_eyes}`
     // 	if(lowerAct == 'reinstall'){
@@ -981,11 +1076,9 @@ export default {
     // 							case 1:
     // 								self.$message.error(self.$t('There was a problem while recovering. Please contact support'));
     // 								break;
-
     // 							case 2:
     // 								self.$message.error(self.$t('Before restoring from a service copy, please delete manually created snapshots'));
     // 								break;
-
     // 							default:
     // 								self.$message.error(res.response.error.msg);
     // 								break;
@@ -998,7 +1091,6 @@ export default {
     // 				})
     // 			}, 10000);
     // 		}
-
     // 		if(lowerAct == 'delete' || lowerAct=='reinstall'){
     // 			if(res.data.result == "success"){
     // 				this.$message.success(res.data.message);
@@ -1017,18 +1109,37 @@ export default {
     // 	.finally(() => {
     // 		this.$store.dispatch('cloud/silentUpdate', this.$route.params.pathMatch);
     // 	})
-
     // },
     sendAction(action) {
-      this.actualAction = action;
+      const data = {
+        uuid: this.VM.uuid,
+        action,
+      };
+      console.log(data);
+      this.$store
+        .dispatch("nocloud/vms/actionVMInvoke", data)
+        // .then((res) => {
+        //   const opts = {
+        //     message: `Done!`,
+        //   };
+        //   this.openNotificationWithIcon("success", opts);
+        // })
+        .catch((err) => {
+          const opts = {
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotificationWithIcon("error", opts);
+        });
+    },
+    deployService() {
       this.actionLoading = true;
-      api.instances
-        .action(this.VM.uuid, action)
+      api.services
+        .up(this.service.uuid)
         .then(() => {
           const opts = {
             message: `Done!`,
           };
-          this.showSnackbarSuccess(opts);
+          this.openNotificationWithIcon("success", opts);
         })
         .catch((err) => {
           const opts = {
@@ -1037,7 +1148,6 @@ export default {
           this.openNotificationWithIcon("error", opts);
         })
         .finally(() => {
-          this.actualAction = "";
           this.actionLoading = false;
         });
     },
@@ -1049,22 +1159,20 @@ export default {
       switch (from) {
         case "reboot":
           if (this.option.reboot) {
-            this.sendAction("RebootHard");
+            this.sendAction("rebootHard");
           } else {
-            this.sendAction("Reboot");
+            this.sendAction("reboot");
           }
           this.modal.reboot = false;
           break;
-
         case "shutdown":
           if (this.option.shutdown) {
-            this.sendAction("PoweroffHard");
+            this.sendAction("poweroffHard");
           } else {
-            this.sendAction("Poweroff");
+            this.sendAction("poweroff");
           }
           this.modal.shutdown = false;
           break;
-
         case "recover":
           const me = this;
           let trigger = this.modal;
@@ -1109,12 +1217,10 @@ export default {
           content: self.$t("remove or commit old ones to create new"),
         });
       }
-
       const user = this.$store.getters.getUser;
       const userid = user.id;
       const vmid = this.SingleCloud.ID;
       const snapname = encodeURI(this.snapshots.addSnap.snapname);
-
       const close_your_eyes = md5("vmaction" + userid + user.secret);
       const url = `/vmaction.php?userid=${userid}&action=newSnapshot&snapname=${snapname}&vmid=${vmid}&secret=${close_your_eyes}`;
       this.snapshots.addSnap.loading = true;
@@ -1129,38 +1235,37 @@ export default {
       });
     },
     openModal(name) {
-      // switch (name.toLowerCase()){
-      // 	case 'start':
-      // 		if(this.permissions.start) return;
-      // 		break;
-      // 	case 'shutdown':
-      // 		if(this.permissions.shutdown) return;
-      // 		break;
-      // 	case 'reboot':
-      // 		if(this.permissions.reboot) return;
-      // 		break;
-      // 	case 'delete':
-      // 		if(this.permissions.delete) return;
-      // 		break;
-      // 	case 'recover':
-      // 		if(this.permissions.recover) return;
-      // 		break;
-      // 	case 'snapshot':
-      // 		if(this.permissions.snapshot) return;
-      // 		this.snapshotsFetch();
-      // 		this.snapshots.modal = true
-      // 		break;
-      // 	case 'createsnapshot':
-      // 		if(this.permissions.createSnapshot) return;
-      // 		this.snapshots.addSnap.modal = true;
-      // 		const me = this;
-      // 		setTimeout(() => {
-      // 			const element = me.$refs.snapNameInput.$el;
-      // 			element.select();
-      // 		}, 0);
-      // 		break;
-      // }
-
+      switch (name.toLowerCase()){
+      	case 'start':
+      		if(this.statusVM.start) return;
+      		break;
+      	case 'shutdown':
+      		if(this.statusVM.shutdown) return;
+      		break;
+      	case 'reboot':
+      		if(this.statusVM.reboot) return;
+      		break;
+      	case 'delete':
+      		if(this.statusVM.delete) return;
+      		break;
+      	case 'recover':
+      		if(this.statusVM.recover) return;
+      		break;
+      	// case 'snapshot':
+      	// 	if(this.stateVM.snapshot) return;
+      	// 	this.snapshotsFetch();
+      	// 	this.snapshots.modal = true
+      	// 	break;
+      	// case 'createsnapshot':
+      	// 	if(this.stateVM.createSnapshot) return;
+      	// 	this.snapshots.addSnap.modal = true;
+      	// 	const me = this;
+      	// 	setTimeout(() => {
+      	// 		const element = me.$refs.snapNameInput.$el;
+      	// 		element.select();
+      	// 	}, 0);
+      	// 	break;
+      }
       this.modal[name] = true;
     },
     changeModal(name) {
@@ -1181,19 +1286,16 @@ export default {
     ExpandVM() {
       const keys = Object.keys(this.resize);
       const newVmSpecs = {};
-
       const specScale = {
         RAM: 1024,
         VCPU: 1,
       };
-
       keys.forEach((spec) => {
         const newSpec = +this.resize[spec] * specScale[spec];
         if (this.SingleCloud[spec] != newSpec) {
           newVmSpecs[spec] = newSpec;
         }
       });
-
       // console.log(newVmSpecs);
       if (Object.keys(newVmSpecs).length == 0) {
         this.$message.warning("Can't resize to same size");
@@ -1202,16 +1304,13 @@ export default {
       const user = this.$store.getters.getUser;
       const userid = user.id;
       const vmid = this.SingleCloud.ID;
-
       const close_your_eyes = md5("VMresize" + userid + user.secret);
-
       let query = {
         userid,
         vmid,
         secret: close_your_eyes,
       };
       query = Object.assign(newVmSpecs, query);
-
       let url = `/VMresize.php?${this.URLparameter(query)}`;
       // console.log(url)
       this.loadingResizeVM = true;
@@ -1260,7 +1359,6 @@ export default {
       const vmid = this.SingleCloud.ID;
       const snapid = object.SNAPSHOT_ID;
       this.$store.dispatch("cloud/silentUpdate", this.$route.params.pathMatch);
-
       const close_your_eyes = md5("vmaction" + userid + user.secret);
       const url = `/vmaction.php?userid=${userid}&action=RMSnapshot&snapid=${snapid}&vmid=${vmid}&secret=${close_your_eyes}`;
       this.snapshots.data.find((el) => el.SNAPSHOT_ID == snapid).loading = true;
@@ -1283,9 +1381,7 @@ export default {
       const userid = user.id;
       const vmid = this.SingleCloud.ID;
       const snapid = object.SNAPSHOT_ID;
-
       this.$store.dispatch("cloud/silentUpdate", this.$route.params.pathMatch);
-
       const close_your_eyes = md5("vmaction" + userid + user.secret);
       const url = `/vmaction.php?userid=${userid}&action=RevSnapshot&snapid=${snapid}&vmid=${vmid}&secret=${close_your_eyes}`;
       this.snapshots.data.find((el) => el.SNAPSHOT_ID == snapid).loading = true;
@@ -1309,7 +1405,6 @@ export default {
       const user = this.$store.getters.getUser;
       const userid = user.id;
       const vmid = this.SingleCloud.ID;
-
       const close_your_eyes = md5("getSnapshots" + userid + user.secret);
       const url = `/getSnapshots.php?userid=${userid}&vmid=${vmid}&secret=${close_your_eyes}`;
       this.$axios.get(url).then((res) => {
@@ -1418,30 +1513,25 @@ export default {
   },
 };
 </script>
-
 <style>
 .cloud__container {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
-
 .cloud__fullscreen {
   background: var(--main);
   display: flex;
 }
-
 .cloud__fullscreen--while {
   background: #fff;
 }
-
 .Fcloud {
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
-
 .Fcloud__header {
   position: sticky;
   padding-top: 10px;
@@ -1453,18 +1543,15 @@ export default {
   justify-items: center;
   align-items: center;
 }
-
 .Fcloud__header-title {
   position: relative;
   transition: transform 0.3s ease;
 }
-
 .Fcloud__title {
   font-weight: bold;
   font-size: 24px;
   line-height: 1;
 }
-
 .Fcloud__status {
   text-transform: uppercase;
   font-weight: bold;
@@ -1472,7 +1559,6 @@ export default {
   color: var(--bright_font);
   opacity: 0.7;
 }
-
 .Fcloud__status-color {
   position: absolute;
   height: 15px;
@@ -1483,14 +1569,12 @@ export default {
   left: -25px;
   transform: translateY(-50%);
 }
-
 .Fcloud__buttons {
   display: flex;
   justify-content: space-around;
   align-items: center;
   margin-top: 20px;
 }
-
 .Fcloud__button {
   display: flex;
   flex-direction: column;
@@ -1499,7 +1583,6 @@ export default {
   cursor: pointer;
   transition: transform 0.1s ease;
 }
-
 .Fcloud__BTN-icon {
   padding: 10px;
   background: var(--bright_bg);
@@ -1513,7 +1596,6 @@ export default {
   box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.2);
   transition: background-color 0.1s ease, box-shadow 0.1s ease;
 }
-
 .Fcloud__BTN-title {
   color: var(--bright_font);
   opacity: 0.8;
@@ -1521,37 +1603,30 @@ export default {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
   transition: color 0.1s ease, text-shadow 0.1s ease, opacity 0.1s ease;
 }
-
 .Fcloud__button:hover .Fcloud__BTN-icon {
   background-color: #fff;
   box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.2);
 }
-
 .Fcloud__button:hover .Fcloud__BTN-title {
   text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   color: rgba(255, 255, 255, 1);
   opacity: 1;
 }
-
 .Fcloud__button:active {
   transform: scale(1.05);
 }
-
 .Fcloud__button.disabled {
   opacity: 0.8;
   transform: scale(0.8);
   color: #c9c9c9;
 }
-
 .Fcloud__button.disabled .Fcloud__BTN-title {
   color: var(--bright_font);
   opacity: 0.8;
 }
-
 .Fcloud__button.disabled:hover {
   transform: scale(0.81);
 }
-
 .Fcloud__info {
   background: var(--bright_bg);
   flex: 1 0;
@@ -1560,43 +1635,35 @@ export default {
   padding: 10px 30px 0;
   overflow: auto;
 }
-
 .Fcloud__info-header {
   text-align: center;
 }
-
 .Fcloud__back {
   font-weight: bold;
   color: #fff;
   font-size: 1.4rem;
   cursor: pointer;
 }
-
 .Fcloud__menu-btn {
   font-size: 1.4rem;
 }
-
 .Fcloud__info-title {
   font-weight: bold;
   text-align: center;
   font-size: 1.2rem;
 }
-
 .Fcloud__main-info {
   margin-top: 20px;
   background: #fff;
   border-radius: 15px;
   padding: 15px 0;
 }
-
 .Fcloud__table td {
   padding: 0 15px;
 }
-
 .Fcloud__table td:first-child {
   color: rgba(0, 0, 0, 0.5);
 }
-
 .Fcloud__main-info--invoice {
   display: flex;
   align-items: stretch;
@@ -1606,7 +1673,6 @@ export default {
   padding: 0;
   overflow: hidden;
 }
-
 .Fcloud__main-info--invoice .icon {
   padding: 5px 15px;
   font-size: 24px;
@@ -1614,13 +1680,11 @@ export default {
   justify-content: center;
   align-items: center;
 }
-
 .Fcloud__main-info--invoice .content {
   font-weight: bold;
   flex: 1 0;
   padding: 15px 0;
 }
-
 .Fcloud__main-info--invoice .link {
   height: 100%;
   display: flex;
@@ -1636,17 +1700,14 @@ export default {
 .Fcloud__main-info--invoice .link:hover {
   background-color: #b9e6b9;
 }
-
 .block {
   margin-top: 10px;
 }
-
 .Fcloud__block-header {
   font-weight: 700;
   font-size: 1rem;
   color: #919392;
 }
-
 .Fcloud__block-content {
   display: flex;
   justify-content: space-around;
@@ -1657,11 +1718,9 @@ export default {
   border-radius: 20px;
   padding: 10px 0;
 }
-
 .Fcloud__block-content--charts {
   flex-wrap: wrap;
 }
-
 .block__column {
   display: flex;
   flex-direction: column;
@@ -1669,11 +1728,9 @@ export default {
   justify-content: center;
   font-weight: 600;
 }
-
 .block__title {
   color: #919392;
 }
-
 .permissions td:not(:first-child) {
   text-align: center;
   width: 80px;
@@ -1685,11 +1742,9 @@ export default {
 .permissions td:first-child {
   color: #919392;
 }
-
 .glowing-animations {
   animation: glowing 1.5s ease infinite;
 }
-
 @keyframes glowing {
   from,
   to {
@@ -1699,9 +1754,7 @@ export default {
     opacity: 0.5;
   }
 }
-
 /* ANIMATIONS AFTER LOADING */
-
 .opencloud-enter-active,
 .opencloud-leave-active {
   transition: opacity 0.6s;
@@ -1710,77 +1763,62 @@ export default {
 .opencloud-leave-to {
   opacity: 0;
 }
-
 .opencloud-enter-active .Fcloud__header-title {
   transition: transform 0.2s 0.4s ease;
 }
-
 .opencloud-enter .Fcloud__header-title {
   transform-origin: center left;
   transform: translateY(-50px) rotate(10deg);
 }
-
 .opencloud-enter-active .Fcloud__info {
   transition: opacity 0.2s 0.2s ease, transform 0.2s 0.2s ease;
 }
-
 .opencloud-enter .Fcloud__info {
   transform: translateY(200px);
   opacity: 0;
 }
-
 .opencloud-enter-active .Fcloud__button {
   transition: opacity 0.2s 0.1s ease, transform 0.2s 0.1s ease;
 }
-
 .opencloud-enter .Fcloud__button {
   transform: scale(0.5) rotate(15deg);
   opacity: 0;
 }
-
 .cloud__icon {
   height: 0.8em;
   width: 0.8em;
   background: rgba(0, 0, 0, 0.65);
   border-radius: 2px;
 }
-
 .button--mt20 {
   margin-top: 20px;
 }
-
 .modal__buttons {
   display: flex;
   justify-content: flex-end;
   margin-top: 10px;
 }
 /* disabled button animation */
-
 .disabled:active {
   animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
-
 .menu__button:not(:last-child) {
   margin-bottom: 10px;
 }
-
 @keyframes shake {
   10%,
   90% {
     transform: translateX(-1px) scale(0.85);
   }
-
   20%,
   80% {
     transform: translateX(2px) scale(0.85);
   }
-
   30%,
   50%,
   70% {
     transform: translateX(-4px) scale(0.85);
   }
-
   40%,
   60% {
     transform: translateX(4px) scale(0.85);

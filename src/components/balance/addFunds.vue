@@ -41,8 +41,8 @@ export default {
   data() {
     return {
       confirmLoading: false,
-      amount: 10000,
-      btns: [10000, 50000, 100000, 200000, 500000],
+      amount: 5,
+      btns: [5, 10, 50, 100, 200],
       stay: false,
     };
   },

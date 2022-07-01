@@ -28,7 +28,13 @@
                   <a-select
                     v-model="locationId"
                     placeholder="Select location"
-                    style="width: 180px;"
+                    style="
+                      width: 180px;
+                      margin-left: 20px;
+                      position: relative;
+                      top: 30px;
+                      z-index: 4;
+                    "
                   >
                     <a-select-option
                       v-for="item in markers"
@@ -38,7 +44,7 @@
                       {{ item.title }}
                     </a-select-option>
                   </a-select>
-                  <div class="wrapper">
+                  <div style="overflow: hidden; margin-top: -15px">
                     <my-map v-model="locationId" :markers="markers"> </my-map>
                   </div>
                   <!-- <a-radio-group v-model="location_uuid">
@@ -383,14 +389,25 @@
                   <a-row class="newCloud__prop">
                     <a-col :xs="12" :sm="10" style="margin-top: 10px">
                       <!-- <a-form-model-item> -->
-                      <a-input
-                        @focus="focused = true"
-                        class="password"
-                        :class="{ invalid: textInvalid }"
-                        v-model="password"
-                        placeholder="Password"
+                      <password-meter
+                        style="height: 10px; margin-bottom: 7px"
+                        :password="password"
+                        @score="onScore"
                       />
-                      <span style="color: red">{{ textInvalid }}</span>
+                      <a-form-item
+                        :has-feedback="password.length ? true : false"
+                        :validate-status="
+                          score < 4 && password.length ? 'error' : 'success'
+                        "
+                      >
+                        <a-input
+                          @focus="focused = true"
+                          class="password"
+                          v-model="password"
+                          placeholder="Password"
+                        />
+                      </a-form-item>
+                      <!-- <span style="color: red">{{ textInvalid }}</span> -->
                       <!-- </a-form-model-item> -->
                       <!-- <a-form-model-item> -->
                       <a-input
@@ -905,10 +922,11 @@
                   shape="round"
                   @click="() => (modal.confirmCreate = true)"
                   :disabled="
-                    this.passwordValid == false ||
+                    score < 4 ||
+                    password.length === 0 ||
                     vmName == '' ||
-                    (service == '' && this.getServicesFull.length > 0) ||
-                    (namespace == '' && this.getNameSpaces.length > 0) ||
+                    (service == '' && this.getServicesFull.length > 1) ||
+                    (namespace == '' && this.getNameSpaces.length > 1) ||
                     options.os.name == ''
                   "
                 >
@@ -1063,11 +1081,14 @@ import { mapGetters } from "vuex";
 import loading from "../loading/loading";
 import myMap from "../map/map.vue";
 import markers from "../../markers.json";
+import passwordMeter from "vue-simple-password-meter";
+import api from "@/api.js";
 export default {
   name: "newPaaS",
   components: {
     loading,
     myMap,
+    passwordMeter,
   },
   data() {
     return {
@@ -1082,8 +1103,7 @@ export default {
       locationId: "Location",
       vmName: "",
       password: "",
-      textInvalid: "",
-      focused: false,
+      score: null,
       options: {
         // kind: "standart",
 
@@ -1172,9 +1192,9 @@ export default {
         const sp = this.getSP.find((el) => {
           return el.title === this.location.title.split(",")[0];
         });
-        if (sp) {
-          this.activeKey = "plan";
-        }
+        // if (sp) {
+        //   this.activeKey = "plan";
+        // }
         return sp;
       }
     },
@@ -1274,38 +1294,38 @@ export default {
         return fullPrice;
       }
     },
-    passwordValid() {
-      if (this.focused == true) {
-        if (!this.password.match(/[A-Za-z]/)) {
-          this.textInvalid = "Password must contain at least one letter";
-          return false;
-        } else {
-          this.textInvalid = "";
-        }
-        if (!this.password.match(/[0-9]/)) {
-          this.textInvalid = "Password must contain at least one number";
-          return false;
-        } else {
-          this.textInvalid = "";
-        }
-        if (!this.password.match(/[\W_]/)) {
-          this.textInvalid =
-            "Password must contain at least one special symbol";
-          return false;
-        } else {
-          this.textInvalid = "";
-        }
-        if (this.password.length < 11) {
-          this.textInvalid = "Password is too short (at least 10 symbol)";
-          return false;
-        } else {
-          this.textInvalid = "";
-        }
-      } else {
-        this.textInvalid = "";
-        return false;
-      }
-    },
+    // passwordValid() {
+    //   if (this.focused == true) {
+    //     if (!this.password.match(/[A-Za-z]/)) {
+    //       this.textInvalid = "Password must contain at least one letter";
+    //       return false;
+    //     } else {
+    //       this.textInvalid = "";
+    //     }
+    //     if (!this.password.match(/[0-9]/)) {
+    //       this.textInvalid = "Password must contain at least one number";
+    //       return false;
+    //     } else {
+    //       this.textInvalid = "";
+    //     }
+    //     if (!this.password.match(/[\W_]/)) {
+    //       this.textInvalid =
+    //         "Password must contain at least one special symbol";
+    //       return false;
+    //     } else {
+    //       this.textInvalid = "";
+    //     }
+    //     if (this.password.length < 11) {
+    //       this.textInvalid = "Password is too short (at least 10 symbol)";
+    //       return false;
+    //     } else {
+    //       this.textInvalid = "";
+    //     }
+    //   } else {
+    //     this.textInvalid = "";
+    //     return false;
+    //   }
+    // },
     // getCurrentProd() {
     //   const o = this.options;
     //   const path = [o.kind, o.size, +o.drive, +o.highCPU];
@@ -1360,12 +1380,12 @@ export default {
   mounted() {
     this.setOneService();
     this.setOneNameSpace();
-    if (this.isLogged) {
-      this.$store.dispatch("nocloud/vms/fetch");
-      this.$store.dispatch("nocloud/sp/fetch");
-      this.$store.dispatch("nocloud/namespaces/fetch");
-      this.$store.dispatch("nocloud/plans/fetch");
-    }
+    // if (this.isLogged) {
+    this.$store.dispatch("nocloud/vms/fetch");
+    this.$store.dispatch("nocloud/sp/fetch");
+    this.$store.dispatch("nocloud/namespaces/fetch");
+    this.$store.dispatch("nocloud/plans/fetch");
+    // }
 
     // this.$store.dispatch("newPaaS/fetchProductsAuto");
 
@@ -1380,6 +1400,9 @@ export default {
     //   });
   },
   methods: {
+    onScore({ score }) {
+      this.score = score;
+    },
     setOneService() {
       if (this.getServicesFull.length === 1) {
         for (let gSF of this.getServicesFull) {
@@ -1535,7 +1558,8 @@ export default {
                 title: this.userdata.title + Date.now(),
                 resources: {
                   ips_private: this.options.network.private.count,
-                  ips_public: this.options.network.public.count,
+                  // ips_public: this.options.network.public.count,
+                  ips_public: 4,
                 },
                 type: "ione",
                 instances: [instance],
@@ -1554,6 +1578,7 @@ export default {
         .then((result) => {
           if (result) {
             self.$message.success(self.$t("Order created successfully."));
+            this.deployService(result.uuid);
             if (self.modal.goToInvoice) {
               self.$router.push(`/invoice-${res.invoiceid}`);
             }
@@ -1577,6 +1602,7 @@ export default {
         .then((result) => {
           if (result) {
             self.$message.success(self.$t("Order update successfully."));
+            this.deployService(result.uuid);
             if (self.modal.goToInvoice) {
               self.$router.push(`/invoice-${res.invoiceid}`);
             }
@@ -1591,6 +1617,20 @@ export default {
         .finally((res) => {
           self.modal.confirmLoading = false;
         });
+    },
+    deployService(uuidService) {
+      const self = this;
+      api.services
+        .up(uuidService)
+        .then(() => {
+          self.$message.success("Service deployed");
+        })
+        .catch((err) => {
+          self.$message.success(
+            `Error: ${err?.response?.data?.message ?? "Unknown"}.`
+          );
+        })
+        .finally(() => {});
     },
     // setAddon(name, value) {
     //   if (name == "os") {

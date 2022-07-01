@@ -11,12 +11,15 @@ import axios from './axios'
 import config from './appconfig'
 import api from "@/api.js"
 import './assets/style.css'
+import panZoom from 'vue-panzoom'
 
 import maintanance from '@/components/maintanance.vue'
 
 Vue.config.productionTip = false
 Vue.use(Antd)
+Vue.use(panZoom);
 Vue.use(VueGoogleCharts)
+
 
 Vue.prototype.$config = config;
 Vue.prototype.$axios = axios;
