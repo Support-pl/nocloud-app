@@ -10,11 +10,10 @@
                   <a-icon type="left" />
                 </div>
               </div>
-
               <div v-if="VM && VM.status" class="Fcloud__header-title">
                 <div
                   class="Fcloud__status-color"
-                  :class="{ 'glowing-animations': updating }"
+                  :class="{ 'glowing-animations': getActionLoadingInvoke }"
                   :style="{ 'background-color': stateColor }"
                 ></div>
                 <div class="Fcloud__title">
@@ -22,24 +21,26 @@
                 </div>
                 <div
                   class="Fcloud__status"
-                  :class="{ 'glowing-animations': updating }"
+                  :class="{ 'glowing-animations': getActionLoadingInvoke }"
                 >
                   <!-- {{
                     VM.state.meta.state_str
                       ? VM.state.meta.state_str
                       : VM.state.meta.error
                   }} -->
-                  {{ vmState | replace("_", " ") }}
+                  <!-- {{ vmState | replace("_", " ") }} -->
+                  {{ VM.state.meta.lcm_state_str }}
                 </div>
               </div>
               <div class="Fcloud__menu-wrapper">
                 <div class="Fcloud__menu-btn icon__wrapper">
                   <a-icon type="more" @click="openModal('menu')" />
                   <a-modal v-model="modal.menu" title="Menu" :footer="null">
-                    <a-button
-                      v-for="btn in menuOptions.filter(
+                    <!-- v-for="btn in menuOptions.filter(
                         (el) => !el.forVNC || SingleCloud.GNAME == 'VDC'
-                      )"
+                      )" -->
+                    <a-button
+                      v-for="btn in menuOptions"
                       :key="btn.title"
                       :icon="btn.icon"
                       @click="btn.onclick(...btn.params)"
@@ -121,19 +122,66 @@
                       </a-col>
                     </a-row>
                   </a-modal>
+                  <a-modal
+                    v-model="modal.diskControl"
+                    :title="$t('Disk control')"
+                    :footer="null"
+                  >
+                    <disk-control />
+                  </a-modal>
+
+                  <a-modal
+                    v-model="modal.networkControl"
+                    :title="$t('Network control')"
+                    :footer="null"
+                  >
+                    <network-control />
+                  </a-modal>
+
+                  <a-modal
+                    v-model="modal.bootOrder"
+                    :title="$t('Boot order')"
+                    :footer="null"
+                  >
+                    <boot-order @onEnd="bootOrderNewState" />
+                  </a-modal>
+
+                  <a-modal
+                    v-model="modal.accessManager"
+                    :title="$t('Access manager')"
+                    :footer="null"
+                  >
+                    <access-manager />
+                  </a-modal>
                 </div>
               </div>
             </div>
-            <div class="Fcloud__buttons">
-              <!-- <div v-if="SingleCloud.STATE == '3'" class="Fcloud__button" :class="{ 'disabled': permissions.shutdown }" @click='openModal("shutdown")'> -->
-              <div class="Fcloud__button" @click="sendAction('poweroff')">
+            <div class="Fcloud__buttons" v-if="VM.state === null">
+              <div class="Fcloud__button" @click="deployService()">
+                <div class="Fcloud__BTN-icon">
+                  <a-icon type="deployment-unit" />
+                </div>
+                <div class="Fcloud__BTN-title">
+                  <!-- {{$t('Start')}} -->
+                  Deploy
+                </div>
+              </div>
+            </div>
+            <div class="Fcloud__buttons" v-else>
+              <div
+                v-if="
+                  VM.state.meta.state !== 8 && VM.state.meta.lsm_state !== 0
+                "
+                class="Fcloud__button"
+                @click="openModal('shutdown')"
+                :class="{
+                  disabled: statusVM.shutdown,
+                }"
+              >
                 <div class="Fcloud__BTN-icon">
                   <div class="cloud__icon cloud__icon--stop"></div>
                 </div>
-                <div class="Fcloud__BTN-title">
-                  <!-- {{$t('Power off')}} -->
-                  stop
-                </div>
+                <div class="Fcloud__BTN-title">{{ $t("Power off") }}</div>
                 <a-modal
                   v-model="modal.shutdown"
                   :title="$t('cloud_Shutdown_modal')"
@@ -160,34 +208,35 @@
                   </a-radio-group>
                 </a-modal>
               </div>
-              <!-- <div v-else class="Fcloud__button" :class="{ 'disabled': permissions.start }" @click='sendAction("Start")'> -->
-              <!-- <div v-else class="Fcloud__button" @click='sendAction("Start")'> -->
-              <div class="Fcloud__button" @click="sendAction('resume')">
+              <div
+                v-else
+                class="Fcloud__button"
+                @click="sendAction('resume')"
+                :class="{
+                  disabled: statusVM.start,
+                }"
+              >
                 <div class="Fcloud__BTN-icon">
                   <a-icon type="caret-right" />
                 </div>
-                <div class="Fcloud__BTN-title">
-                  <!-- {{$t('Start')}} -->
-                  start
-                </div>
+                <div class="Fcloud__BTN-title">{{ $t("Start") }}</div>
               </div>
-              <!-- <div class="Fcloud__button" :class="{ 'disabled': permissions.reboot , 'btn_disabled_wiggle': true}" @click='openModal("reboot")'> -->
               <div
                 class="Fcloud__button"
-                :class="{ btn_disabled_wiggle: true }"
-                @click="sendAction('reboot')"
+                @click="openModal('reboot')"
+                :class="{
+                  disabled: statusVM.reboot,
+                  btn_disabled_wiggle: true,
+                }"
               >
                 <div class="Fcloud__BTN-icon">
                   <a-icon type="redo" />
                 </div>
-                <div class="Fcloud__BTN-title">
-                  <!-- {{$t('Reboot')}} -->
-                  reboot
-                </div>
+                <div class="Fcloud__BTN-title">{{ $t("Reboot") }}</div>
                 <a-modal
                   v-model="modal.reboot"
                   :title="$t('cloud_Reboot_modal')"
-                  @ok="sendAction('suspend')"
+                  @ok="handleOk('reboot')"
                 >
                   <p>{{ $t("cloud_Reboot_invite") }}</p>
                   <a-radio-group
@@ -208,19 +257,17 @@
                   </a-radio-group>
                 </a-modal>
               </div>
-              <!-- <div class="Fcloud__button" :class="{ 'disabled': permissions.recover , 'btn_disabled_wiggle': true}" @click='openModal("recover")'> -->
               <div
                 class="Fcloud__button"
-                :class="{ btn_disabled_wiggle: true }"
                 @click="openModal('recover')"
+                :class="{
+                  disabled: statusVM.recover,
+                }"
               >
                 <div class="Fcloud__BTN-icon">
                   <a-icon type="backward" />
                 </div>
-                <div class="Fcloud__BTN-title">
-                  <!-- {{$t('Recover')}} -->
-                  recover
-                </div>
+                <div class="Fcloud__BTN-title">{{ $t("Recover") }}</div>
                 <a-modal
                   v-model="modal.recover"
                   :title="$t('cloud_Recover_modal')"
@@ -252,19 +299,6 @@
                   {{ $t("Information") }}
                 </div>
               </div>
-              <div class="Fcloud__info-block block">
-                <div class="Fcloud__block-header">
-                  <a-icon type="environment" theme="filled" />
-                  {{ "Location" }}
-                </div>
-                <div class="Fcloud__block-content">
-                  <div class="block__column">
-                    <div class="block__value" v-if="dataSP">
-                      {{ dataSP.title }}
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               <!-- <div v-if="SingleCloud.ORDER_INFO.invoicestatus && SingleCloud.ORDER_INFO.invoicestatus.toLowerCase() == 'unpaid'" class="Fcloud__main-info Fcloud__main-info--invoice">
 							<div class="icon">
@@ -282,17 +316,62 @@
 								</router-link>
 							</div>
 						</div> -->
+              <div
+                v-if="
+                  VM.state.meta.networking.private &&
+                  VM.state.meta.networking.private.length > 0
+                "
+                class="Fcloud__main-info"
+              >
+                <table class="Fcloud__table">
+                  <tbody>
+                    <tr
+                      v-for="nic in VM.state.meta.networking.public"
+                      :key="nic.NAME"
+                    >
+                      <td>IP</td>
+                      <td>{{ nic }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                v-if="
+                  VM.state.meta.networking.public &&
+                  VM.state.meta.networking.public.length > 0
+                "
+                class="Fcloud__main-info"
+              >
+                <table class="Fcloud__table">
+                  <tbody>
+                    <tr
+                      v-for="nic in VM.state.meta.networking.public"
+                      :key="nic.NAME"
+                    >
+                      <td>IP</td>
+                      <td>{{ nic }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-              <!-- <div v-if="IPs.length > 0" class="Fcloud__main-info">
-							<table class="Fcloud__table">
-								<tbody>
-									<tr v-for="nic in IPs" :key="nic.NAME">
-										<td>IP</td>
-										<td>{{nic.IP}}</td>
-									</tr>
-								</tbody>
-							</table>
-						</div> -->
+              <div class="Fcloud__info-block block">
+                <div class="Fcloud__block-header">
+                  <a-icon type="environment" theme="filled" />
+                  {{ "Location" }}
+                </div>
+                <div class="Fcloud__block-content">
+                  <div class="block__column">
+                    <div
+                      class="block__value"
+                      v-if="dataSP"
+                      style="font-size: 18px"
+                    >
+                      {{ dataSP.title }}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <div class="Fcloud__info-block block">
                 <div class="Fcloud__block-header">
@@ -304,7 +383,7 @@
                     <div class="block__title">OS</div>
                     <div class="block__value">
                       <!-- {{ (VM && VM.os) || "no data" }} -->
-                      <!-- {{ dataSP.publicData.templates[5].name || "no data"}} -->
+                      {{ dataSP.publicData.templates[5].name || "no data" }}
                     </div>
                   </div>
                   <div class="block__column">
@@ -583,7 +662,7 @@
                     </a-button>
                   </div>
                 </a-col>
-              </a-row>
+              </a-row> 
             </div>
           </div>
         </div>
@@ -772,13 +851,39 @@ export default {
       permissions: "permissions",
       // singleLoading: 'singleLoading'
     }),
-    // servicesProviders(){
-    // 	return this.$store.getters['nocloud/sp/all']
-    // },
-    VM() {
-      const clouds = this.$store.getters["nocloud/vms/instances"];
-      const vm = clouds.find((el) => el.uuid == this.$route.params.uuid);
-      return vm;
+    ...mapGetters("nocloud/vms", ["getActionLoadingInvoke"]),
+
+    statusVM() {
+      return {
+        shutdown:
+          (this.VM.state.meta.lcm_state == 18 &&
+            this.VM.state.meta.state == 3) ||
+          (this.VM.state.meta.lcm_state == 20 && this.VM.state.meta.state == 3),
+        reboot:
+          (this.VM.state.meta.lcm_state == 18 &&
+            this.VM.state.meta.state == 3) ||
+          (this.VM.state.meta.lcm_state == 20 &&
+            this.VM.state.meta.state == 3) ||
+          (this.VM.state.meta.lcm_state == 0 && this.VM.state.meta.state == 8),
+        start:
+          (this.VM.state.meta.lcm_state == 18 &&
+            this.VM.state.meta.state == 3) ||
+          (this.VM.state.meta.lcm_state == 20 && this.VM.state.meta.state == 3),
+        recover:
+          (this.VM.state.meta.lcm_state == 18 &&
+            this.VM.state.meta.state == 3) ||
+          (this.VM.state.meta.lcm_state == 20 && this.VM.state.meta.state == 3),
+      };
+    },
+
+    service() {
+      const data = this.$store.getters["nocloud/vms/getServicesFull"];
+      for (let item of data) {
+        if (item.uuid === this.VM.uuidService) {
+          console.log(item);
+          return item;
+        }
+      }
     },
     VM() {
       const data = this.$store.getters["nocloud/vms/getInstances"];
@@ -803,21 +908,22 @@ export default {
     },
     stateColor() {
       let color = "";
-      switch (this?.VM?.status?.toLowerCase()) {
-        case "running":
-        case "up":
+      switch (this.VM.state.meta.lcm_state) {
+        case 3:
           color = "#0fd058";
           break;
-        case "poweroff":
-        case "down":
+        // останавливающийся
+        case 18:
           color = "#919191";
           break;
-        case "suspend":
-        case "init":
+        // запускающийся
+        case 20:
+          color = "#919191";
+          break;
+        case 0:
           color = "#f9f038";
           break;
         default:
-          color = "#f9f038";
           break;
       }
       return color;
@@ -1020,15 +1126,36 @@ export default {
 
     // },
     sendAction(action) {
-      this.actualAction = action;
+      const data = {
+        uuid: this.VM.uuid,
+        action,
+      };
+      console.log(data);
+      this.$store
+        .dispatch("nocloud/vms/actionVMInvoke", data)
+        // .then((res) => {
+        //   const opts = {
+        //     message: `Done!`,
+        //   };
+        //   this.openNotificationWithIcon("success", opts);
+        // })
+        .catch((err) => {
+          const opts = {
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotificationWithIcon("error", opts);
+        });
+    },
+
+    deployService() {
       this.actionLoading = true;
-      api.instances
-        .action(this.VM.uuid, action)
+      api.services
+        .up(this.service.uuid)
         .then(() => {
           const opts = {
             message: `Done!`,
           };
-          this.showSnackbarSuccess(opts);
+          this.openNotificationWithIcon("success", opts);
         })
         .catch((err) => {
           const opts = {
@@ -1037,7 +1164,6 @@ export default {
           this.openNotificationWithIcon("error", opts);
         })
         .finally(() => {
-          this.actualAction = "";
           this.actionLoading = false;
         });
     },
@@ -1049,18 +1175,18 @@ export default {
       switch (from) {
         case "reboot":
           if (this.option.reboot) {
-            this.sendAction("RebootHard");
+            this.sendAction("rebootHard");
           } else {
-            this.sendAction("Reboot");
+            this.sendAction("reboot");
           }
           this.modal.reboot = false;
           break;
 
         case "shutdown":
           if (this.option.shutdown) {
-            this.sendAction("PoweroffHard");
+            this.sendAction("poweroffHard");
           } else {
-            this.sendAction("Poweroff");
+            this.sendAction("poweroff");
           }
           this.modal.shutdown = false;
           break;
@@ -1129,37 +1255,37 @@ export default {
       });
     },
     openModal(name) {
-      // switch (name.toLowerCase()){
-      // 	case 'start':
-      // 		if(this.permissions.start) return;
-      // 		break;
-      // 	case 'shutdown':
-      // 		if(this.permissions.shutdown) return;
-      // 		break;
-      // 	case 'reboot':
-      // 		if(this.permissions.reboot) return;
-      // 		break;
-      // 	case 'delete':
-      // 		if(this.permissions.delete) return;
-      // 		break;
-      // 	case 'recover':
-      // 		if(this.permissions.recover) return;
-      // 		break;
-      // 	case 'snapshot':
-      // 		if(this.permissions.snapshot) return;
-      // 		this.snapshotsFetch();
-      // 		this.snapshots.modal = true
-      // 		break;
-      // 	case 'createsnapshot':
-      // 		if(this.permissions.createSnapshot) return;
-      // 		this.snapshots.addSnap.modal = true;
-      // 		const me = this;
-      // 		setTimeout(() => {
-      // 			const element = me.$refs.snapNameInput.$el;
-      // 			element.select();
-      // 		}, 0);
-      // 		break;
-      // }
+      switch (name.toLowerCase()){
+      	case 'start':
+      		if(this.statusVM.start) return;
+      		break;
+      	case 'shutdown':
+      		if(this.statusVM.shutdown) return;
+      		break;
+      	case 'reboot':
+      		if(this.statusVM.reboot) return;
+      		break;
+      	case 'delete':
+      		if(this.statusVM.delete) return;
+      		break;
+      	case 'recover':
+      		if(this.statusVM.recover) return;
+      		break;
+      	// case 'snapshot':
+      	// 	if(this.stateVM.snapshot) return;
+      	// 	this.snapshotsFetch();
+      	// 	this.snapshots.modal = true
+      	// 	break;
+      	// case 'createsnapshot':
+      	// 	if(this.stateVM.createSnapshot) return;
+      	// 	this.snapshots.addSnap.modal = true;
+      	// 	const me = this;
+      	// 	setTimeout(() => {
+      	// 		const element = me.$refs.snapNameInput.$el;
+      	// 		element.select();
+      	// 	}, 0);
+      	// 	break;
+      }
 
       this.modal[name] = true;
     },

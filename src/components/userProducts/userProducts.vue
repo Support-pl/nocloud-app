@@ -239,7 +239,7 @@ export default {
 
 .products__wrapper--loading {
   min-height: 170px;
-  display: flex;
+  /* display: flex; */
   justify-content: center;
   align-items: center;
 }

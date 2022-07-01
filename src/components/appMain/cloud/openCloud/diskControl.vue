@@ -1,5 +1,6 @@
 <template>
   <div class="disk">
+    {{disks}}
     <a-table :columns="columns" :data-source="disks" :pagination="false">
       <span slot="ImageName" slot-scope="value, row">{{
         getImageName(row)
@@ -179,20 +180,29 @@ export default {
     }),
     ...mapGetters({ user: "getUser" }),
     disks() {
-      if (Array.isArray(this.SingleCloud.DISKS)) {
-        const arrayDISKS = [];
-        for (let i = 0; i < this.SingleCloud.DISKS.length; i++) {
-          const objDISKS = {
-            ...this.SingleCloud.DISKS[i],
-            DISK_ID_ITEM: i + 1,
-            FORMAT: (this.SingleCloud.DISKS[i].FORMAT = "VMDK"),
-          };
-          arrayDISKS.push(objDISKS);
+      const data = this.$store.getters["nocloud/vms/getInstances"];
+      for (let item of data) {
+        if (item.uuid === this.$route.params.uuid) {
+          console.log(item);
+          return item;
         }
-        return arrayDISKS;
       }
-      return [this.SingleCloud.DISKS];
     },
+    // disks() {
+    //   if (Array.isArray(this.SingleCloud.DISKS)) {
+    //     const arrayDISKS = [];
+    //     for (let i = 0; i < this.SingleCloud.DISKS.length; i++) {
+    //       const objDISKS = {
+    //         ...this.SingleCloud.DISKS[i],
+    //         DISK_ID_ITEM: i + 1,
+    //         FORMAT: (this.SingleCloud.DISKS[i].FORMAT = "VMDK"),
+    //       };
+    //       arrayDISKS.push(objDISKS);
+    //     }
+    //     return arrayDISKS;
+    //   }
+    //   return [this.SingleCloud.DISKS];
+    // },
   },
   mounted() {
     const user = this.user;

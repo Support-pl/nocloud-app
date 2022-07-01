@@ -1,5 +1,5 @@
 <template>
-  <div class="newCloud_wrapper">
+  <div class="newCloud___map">
     <template>
       <template>
         <div class="newCloud" v-if="!isPlansLoading">
@@ -23,12 +23,18 @@
                     message="Please select a suitable location"
                     type="warning"
                     show-icon
-                    style="margin: 15px auto 10px; width: 90%"
+                    style="margin: 15px auto 0; width: 90%"
                   />
                   <a-select
                     v-model="locationId"
                     placeholder="Select location"
-                    style="width: 180px; margin-left: 35px"
+                    style="
+                      width: 180px;
+                      margin-left: 20px;
+                      position: relative;
+                      top: 30px;
+                      z-index: 4;
+                    "
                   >
                     <a-select-option
                       v-for="item in markers"
@@ -39,7 +45,7 @@
                     </a-select-option>
                   </a-select>
 
-                  <div class="wrapper">
+                  <div style="overflow: hidden; margin-top: -15px">
                     <my-map v-model="locationId" :markers="markers"> </my-map>
                   </div>
                   <!-- <a-radio-group v-model="location_uuid">
@@ -215,14 +221,37 @@
                   <a-row class="newCloud__prop">
                     <a-col :xs="12" :sm="10" style="margin-top: 10px">
                       <!-- <a-form-model-item> -->
-                      <a-input
-                        @focus="focused = true"
-                        class="password"
-                        :class="{ invalid: textInvalid }"
-                        v-model="password"
-                        placeholder="Password"
+                      <!-- <div
+                        :style="{ background: passwordСomplexity }"
+                        style="height: 5px; margin-bottom: 10px"
+                      ></div> -->
+
+                      <!-- <span v-if="score  === 0">Use better password</span> -->
+                      <!-- {{password}} -->
+                      <!-- <span v-if="score===0">{{ strength }}</span> -->
+                      <!-- {{ score }} -->
+                      <!-- <span v-if="score === 0">Use better password</span> -->
+                      <!-- <span v-if="score < 2">Use better password</span> -->
+                      <!-- {{ rate }} -->
+                      <password-meter
+                        style="height: 10px; margin-bottom: 7px"
+                        :password="password"
+                        @score="onScore"
                       />
-                      <span style="color: red">{{ textInvalid }}</span>
+                      <a-form-item
+                        :has-feedback="password.length ? true : false"
+                        :validate-status="
+                          score < 4 && password.length ? 'error' : 'success'
+                        "
+                      >
+                        <a-input
+                          @focus="focused = true"
+                          class="password"
+                          v-model="password"
+                          placeholder="Password"
+                        />
+                      </a-form-item>
+                      <!-- <span style="color: red">{{ textInvalid }}</span> -->
                       <!-- </a-form-model-item> -->
                       <!-- <a-form-model-item> -->
                       <a-input
@@ -710,16 +739,25 @@
               "
             >
               <a-col :span="22" style="margin-top: 20px">
+                <!-- <div class="products__unregistred" v-if="userData">
+                  {{ $t("unregistered.will be able after") }}
+                  <router-link :to="{ name: 'login' }">{{
+                    $t("unregistered.login")
+                  }}</router-link
+                  >.
+                </div> -->
+
                 <a-button
                   type="primary"
                   block
                   shape="round"
                   @click="() => (modal.confirmCreate = true)"
                   :disabled="
-                    this.passwordValid == false ||
+                    score < 4 ||
+                    password.length === 0 ||
                     vmName == '' ||
-                    (service == '' && this.getServicesFull.length > 0) ||
-                    (namespace == '' && this.getNameSpaces.length > 0) ||
+                    (service == '' && getServicesFull.length > 1) ||
+                    (namespace == '' && getNameSpaces.length > 1) ||
                     options.os.name == ''
                   "
                 >
@@ -759,7 +797,7 @@
         <div class="field field--fluid">
           <div class="tariff__header">Choose your tariff</div>
 
-          <div class="tariff__wrapper">
+          <div class="tariff____map">
             <div class="tariff__cards">
               <div class="tariff__items">
                 <div
@@ -871,16 +909,18 @@ const periods = [
   },
 ];
 const tariffs = ["standart", "X2CPU", "X2RAM"];
-// const sizes = ["M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
 import { mapGetters } from "vuex";
 import loading from "../loading/loading";
 import myMap from "../map/map.vue";
 import markers from "../../markers.json";
+import passwordMeter from "vue-simple-password-meter";
+import api from "@/api.js";
 export default {
   name: "newPaaS",
   components: {
     myMap,
     loading,
+    passwordMeter,
   },
   data() {
     return {
@@ -897,8 +937,7 @@ export default {
       locationId: "Location",
       vmName: "",
       password: "",
-      textInvalid: "",
-      focused: false,
+      score: null,
       options: {
         // kind: "standart",
 
@@ -965,9 +1004,9 @@ export default {
     ...mapGetters("nocloud/auth/", ["userdata"]),
     ...mapGetters("nocloud/vms", ["getServicesFull"]),
 
-    isLogged() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
-    },
+    // isLogged() {
+    //   return this.$store.getters["nocloud/auth/isLoggedIn"];
+    // },
 
     itemService() {
       const data = this.getServicesFull.find((el) => {
@@ -986,9 +1025,9 @@ export default {
         const sp = this.getSP.find((el) => {
           return el.title === this.location.title.split(",")[0];
         });
-        if (sp) {
-          this.activeKey = "plan";
-        }
+        // if (sp) {
+        //   this.activeKey = "plan";
+        // }
         return sp;
       }
     },
@@ -1079,38 +1118,38 @@ export default {
     //     return fullPrice;
     //   }
     // },
-    passwordValid() {
-      if (this.focused == true) {
-        if (!this.password.match(/[A-Za-z]/)) {
-          this.textInvalid = "Password must contain at least one letter";
-          return false;
-        } else {
-          this.textInvalid = "";
-        }
-        if (!this.password.match(/[0-9]/)) {
-          this.textInvalid = "Password must contain at least one number";
-          return false;
-        } else {
-          this.textInvalid = "";
-        }
-        if (!this.password.match(/[\W_]/)) {
-          this.textInvalid =
-            "Password must contain at least one special symbol";
-          return false;
-        } else {
-          this.textInvalid = "";
-        }
-        if (this.password.length < 11) {
-          this.textInvalid = "Password is too short (at least 10 symbol)";
-          return false;
-        } else {
-          this.textInvalid = "";
-        }
-      } else {
-        this.textInvalid = "";
-        return false;
-      }
-    },
+    // passwordValid() {
+    //   if (this.focused == true) {
+    //     if (!this.password.match(/[A-Za-z]/)) {
+    //       this.textInvalid = "Password must contain at least one letter";
+    //       return false;
+    //     } else {
+    //       this.textInvalid = "";
+    //     }
+    //     if (!this.password.match(/[0-9]/)) {
+    //       this.textInvalid = "Password must contain at least one number";
+    //       return false;
+    //     } else {
+    //       this.textInvalid = "";
+    //     }
+    //     if (!this.password.match(/[\W_]/)) {
+    //       this.textInvalid =
+    //         "Password must contain at least one special symbol";
+    //       return false;
+    //     } else {
+    //       this.textInvalid = "";
+    //     }
+    //     if (this.password.length < 11) {
+    //       this.textInvalid = "Password is too short (at least 10 symbol)";
+    //       return false;
+    //     } else {
+    //       this.textInvalid = "";
+    //     }
+    //   } else {
+    //     this.textInvalid = "";
+    //     return false;
+    //   }
+    // },
     sliderIsCanNext() {
       return this.options.slide < this.getProductsData.length - 1;
     },
@@ -1124,14 +1163,18 @@ export default {
   mounted() {
     this.setOneService();
     this.setOneNameSpace();
-    if (this.isLogged) {
-      this.$store.dispatch("nocloud/vms/fetch");
-      this.$store.dispatch("nocloud/sp/fetch");
-      this.$store.dispatch("nocloud/namespaces/fetch");
-      this.$store.dispatch("nocloud/plans/fetch");
-    }
+    // if (this.isLogged) {
+    this.$store.dispatch("nocloud/vms/fetch");
+    this.$store.dispatch("nocloud/sp/fetch");
+    this.$store.dispatch("nocloud/namespaces/fetch");
+    this.$store.dispatch("nocloud/plans/fetch");
+    // }
   },
   methods: {
+    onScore({ score }) {
+      this.score = score;
+    },
+
     setOneService() {
       if (this.getServicesFull.length === 1) {
         for (let gSF of this.getServicesFull) {
@@ -1255,7 +1298,8 @@ export default {
                 title: this.userdata.title + Date.now(),
                 resources: {
                   ips_private: this.options.network.private.count,
-                  ips_public: this.options.network.public.count,
+                  // ips_public: this.options.network.public.count,
+                  ips_public: 4,
                 },
                 type: "ione",
                 instances: [instance],
@@ -1274,6 +1318,7 @@ export default {
         .then((result) => {
           if (result) {
             self.$message.success(self.$t("Order created successfully."));
+            this.deployService(result.uuid);
             if (self.modal.goToInvoice) {
               self.$router.push(`/invoice-${res.invoiceid}`);
             }
@@ -1297,6 +1342,7 @@ export default {
         .then((result) => {
           if (result) {
             self.$message.success(self.$t("Order update successfully."));
+            this.deployService(result.uuid);
             if (self.modal.goToInvoice) {
               self.$router.push(`/invoice-${res.invoiceid}`);
             }
@@ -1311,6 +1357,20 @@ export default {
         .finally((res) => {
           self.modal.confirmLoading = false;
         });
+    },
+    deployService(uuidService) {
+      const self = this;
+      api.services
+        .up(uuidService)
+        .then(() => {
+          self.$message.success("Service deployed");
+        })
+        .catch((err) => {
+          self.$message.success(
+            `Error: ${err?.response?.data?.message ?? "Unknown"}.`
+          );
+        })
+        .finally(() => {});
     },
     // setAddon(name, value) {
     //   if (name == "os") {
@@ -1345,11 +1405,40 @@ export default {
 </script>
 
 <style>
+.po-password-strength-bar {
+  border-radius: 2px;
+  transition: all 0.2s linear;
+  height: 5px;
+  margin-top: 8px;
+  width: 0;
+}
+
+.po-password-strength-bar.risky {
+  background-color: #f95e68;
+  width: 10%;
+}
+
+.po-password-strength-bar.guessable {
+  background-color: #fb964d;
+  width: 32.5%;
+}
+
+.po-password-strength-bar.weak {
+  background-color: #fdd244;
+  width: 55%;
+}
+
+.po-password-strength-bar.safe {
+  background-color: #b0dc53;
+  width: 77.5%;
+}
+
+.po-password-strength-bar.secure {
+  background-color: #35cc62;
+  width: 100%;
+}
 .map__container .ant-collapse-content-box {
   padding: 0;
-}
-.password.invalid {
-  border: 1px solid red;
 }
 .location_item {
   display: flex;
@@ -1366,7 +1455,7 @@ export default {
 .newCloud__prop {
   margin-bottom: 15px;
 }
-.period__wrapper {
+.period____map {
   display: block;
   padding: 15px 0 0;
 }
@@ -1388,7 +1477,7 @@ export default {
   color: var(--err);
   font-weight: bold;
 }
-.newCloud_wrapper {
+.newCloud___map {
   position: relative;
   width: 100%;
   min-height: 100%;
@@ -1437,8 +1526,8 @@ export default {
   padding: 5px 0;
   font-size: 1.6rem;
 }
-/* .tariff__wrapper:not(:last-child){ */
-.tariff__wrapper {
+/* .tariff____map:not(:last-child){ */
+.tariff____map {
   margin-top: 20px;
   margin-bottom: 20px;
   display: flex;
