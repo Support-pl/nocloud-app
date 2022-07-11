@@ -5,6 +5,7 @@ import plans from './nocloud/plans.js'
 import namespaces from './nocloud/namespaces.js'
 import accounts from './nocloud/accounts'
 import transactions from './nocloud/transactions'
+import app from './nocloud/app'
 
 export default {
     namespaced: true,
@@ -15,6 +16,7 @@ export default {
         plans,
         namespaces,
         accounts,
-        transactions
+        transactions,
+        app
     }
 }

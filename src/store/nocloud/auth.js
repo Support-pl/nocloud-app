@@ -6,66 +6,86 @@ const COOKIES_NAME = 'noCloudinApp-token';
 
 export default {
 	namespaced: true,
-  state: {
+	state: {
 		token: '',
 		userdata: {}
-  },
-  mutations: {
-		setToken(state, token){
+	},
+	mutations: {
+		setToken(state, token) {
 			state.token = token;
 		},
-		setUserdata(state, data){
+		setUserdata(state, data) {
+			state.userdata = data
+		},
+		setAddSSH(state, data) {
 			state.userdata = data
 		}
-  },
-  actions: {
-		login({commit}, {login, password}){
+	},
+	actions: {
+		login({ commit }, { login, password }) {
 			return new Promise((resolve, reject) => {
 				api.auth(login, password)
-				.then(response => {
-					Cookies.set(COOKIES_NAME, response.token)
-					commit('setToken', response.token);
-					resolve(response);
-				})
-				.catch(error => {
-					reject(error)
-				})
+					.then(response => {
+						Cookies.set(COOKIES_NAME, response.token)
+						commit('setToken', response.token);
+						resolve(response);
+					})
+					.catch(error => {
+						reject(error)
+					})
 			})
 		},
 
-		logout({commit}){
+		logout({ commit }) {
 			commit('setToken', '');
 			Cookies.remove(COOKIES_NAME);
-			router.push({name: "Login"});
+			router.push({ name: "Login" });
 		},
 
-		load({commit}){
+		load({ commit }) {
 			const token = Cookies.get(COOKIES_NAME);
-			if(token){
+			if (token) {
 				api.axios.defaults.headers.common['Authorization'] = "Bearer " + token;
 				commit('setToken', token);
 			}
 		},
 
-		fetchUserData({commit}){
+		fetchUserData({ commit }) {
 			commit
 			return new Promise((resolve, reject) => {
 				api.accounts.get('me')
-				.then(response => {
-					commit('setUserdata', response);
-					resolve(response);
-				})
-				.catch(error => {
-					reject(error)
-				})
+					.then(response => {
+						commit('setUserdata', response);
+						resolve(response);
+					})
+					.catch(error => {
+						reject(error)
+					})
+			})
+		},
+		addSSH({ commit }, data) {
+			console.log(data.id, data.body)
+			return new Promise((resolve, reject) => {
+				// commit("setLoading", true);
+				api.accounts.update(data.id, data.body)
+					.then(response => {
+						commit('setAddSSH', response.pool)
+						resolve(response)
+					})
+					.catch(error => {
+						reject(error);
+					})
+					.finally(() => {
+						// commit("setLoading", false);
+					})
 			})
 		}
-  },
+	},
 	getters: {
-		isLoggedIn(state){
+		isLoggedIn(state) {
 			return state.token.length > 0;
 		},
-		userdata(state){
+		userdata(state) {
 			return state.userdata;
 		}
 	}

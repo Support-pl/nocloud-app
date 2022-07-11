@@ -5,12 +5,14 @@
       <div class="container ha">
         <create-vm />
       </div>
-      <loading :ha="true" v-if="isLoading" />
+      <loading :ha="true" v-if="isLoading" style="margin-top:50px" />
+      <empty v-else-if="getInstances.length === 0" />
       <template v-else>
         <div class="container ha">
-          <div class="cloud__wrapper">
+          <loading :ha="true" v-if="isLoading" />
+          <div class="cloud__wrapper" v-else>
             <div v-for="(instance, idx) in getInstances" :key="idx">
-              <cloudItem v-if="instance.type == 'ione'" :instance="instance" />
+              <cloudItem :instance="instance" />
             </div>
           </div>
         </div>
@@ -24,6 +26,7 @@ import cloudItem from "@/components/appMain/cloud/cloudItem.vue";
 import loading from "@/components/loading/loading.vue";
 import createvm from "@/components/createVM.vue";
 import maintanance from "@/components/maintanance.vue";
+import empty from "../components/empty/empty.vue";
 import { mapGetters } from "vuex";
 
 export default {
@@ -33,6 +36,7 @@ export default {
     loading,
     maintanance,
     "create-vm": createvm,
+    empty,
   },
   created() {
     if (this.isLogged) {
@@ -44,7 +48,7 @@ export default {
     getInstances() {
       return this.$store.getters["nocloud/vms/getInstances"];
     },
- 
+
     // getServices() {
     //   return this.$store.getters["nocloud/vms/getServices"];
     // },

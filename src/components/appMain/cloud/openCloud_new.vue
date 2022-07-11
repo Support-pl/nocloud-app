@@ -1,4 +1,3 @@
-
 <template>
   <div class="cloud__fullscreen Fcloud">
     <template>
@@ -30,7 +29,7 @@
                       : VM.state.meta.error
                   }} -->
                   <!-- {{ vmState | replace("_", " ") }} -->
-                  {{ VM.state.meta.lcm_state_str }}
+                  {{ VM.state && VM.state.meta.lcm_state_str }}
                 </div>
               </div>
               <div class="Fcloud__menu-wrapper">
@@ -40,6 +39,7 @@
                     <!-- v-for="btn in menuOptions.filter(
                         (el) => !el.forVNC || SingleCloud.GNAME == 'VDC'
                       )" -->
+
                     <a-button
                       v-for="btn in menuOptions"
                       :key="btn.title"
@@ -91,17 +91,19 @@
                     :confirm-loading="loadingResizeVM"
                     v-model="modal.expand"
                     :title="$t('Resize VM')"
-                    @ok="ExpandVM"
+                    @ok="ResizeVM"
                     :ok-button-props="{
                       props: {
                         disabled:
-                          SingleCloud.LCM_STATE != 0 || SingleCloud.STATE != 8,
+                          (VM.state && VM.state.meta.lsm_state != 0) ||
+                          (VM.state && VM.state.meta.state != 8),
                       },
                     }"
                   >
                     <div
                       v-if="
-                        SingleCloud.LCM_STATE != 0 || SingleCloud.STATE != 8
+                        (VM.state && VM.state.meta.lsm_state != 0) ||
+                        (VM.state && VM.state.meta.state != 8)
                       "
                       :style="{
                         color: config.colors.err,
@@ -110,18 +112,63 @@
                     >
                       {{ $t("turn of VM to resize it") | capitalize }}
                     </div>
-                    <a-row :gutter="[10, 10]">
+                    <a-row
+                      :gutter="[10, 10]"
+                      style="
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 5px;
+                      "
+                    >
                       <a-col :xs="24" :sm="4"> CPU </a-col>
                       <a-col :xs="24" :sm="20">
-                        <a-input type="number" :min="1" v-model="resize.VCPU" />
+                        <a-input-number
+                          style="width: 100%"
+                          v-model="resize.VCPU"
+                          :min="1"
+                          default-value="1"
+                        />
                       </a-col>
                     </a-row>
-                    <a-row :gutter="[10, 10]">
+                    <a-row
+                      :gutter="[10, 10]"
+                      style="
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 5px;
+                      "
+                    >
                       <a-col :xs="24" :sm="4"> RAM (GB) </a-col>
                       <a-col :xs="24" :sm="20">
-                        <a-input type="number" :min="1" v-model="resize.RAM" />
+                        <a-input-number
+                          style="width: 100%"
+                          v-model="resize.RAM"
+                          :min="1"
+                          default-value="1"
+                        />
                       </a-col>
                     </a-row>
+                    <a-row
+                      :gutter="[10, 10]"
+                      style="display: flex; align-items: center"
+                    >
+                      <a-col :xs="24" :sm="4"> Disk (GB) </a-col>
+                      <a-col :xs="24" :sm="20">
+                        <a-input-number
+                          style="width: 100%"
+                          v-model="resize.size"
+                          :min="VM.resources.drive_size / 1024"
+                          default-value="1"
+                        />
+                      </a-col>
+                    </a-row>
+
+                    <!-- <a-slider
+                      :min="mbToGb(VM && VM.resources.drive_size)"
+                      :tooltip-visible="true"
+                      v-model="resize.size"
+                     :tipFormatter="(el) => el + resize.scale" 
+                    /> -->
                   </a-modal>
                   <a-modal
                     v-model="modal.diskControl"
@@ -154,10 +201,20 @@
                   >
                     <access-manager />
                   </a-modal>
+                  <a-modal
+                    v-model="modal.SSH"
+                    :title="$t('SSH keys')"
+                    :footer="null"
+                  >
+                    <div style="margin-bottom: 20px">
+                      <p>While here is not one SSH key</p>
+                    </div>
+                    <addSSH />
+                  </a-modal>
                 </div>
               </div>
             </div>
-            <div class="Fcloud__buttons" v-if="VM.state === null">
+            <div class="Fcloud__buttons" v-if="VM && VM.state === null">
               <div class="Fcloud__button" @click="deployService()">
                 <div class="Fcloud__BTN-icon">
                   <a-icon type="deployment-unit" />
@@ -171,7 +228,10 @@
             <div class="Fcloud__buttons" v-else>
               <div
                 v-if="
-                  VM.state.meta.state !== 8 && VM.state.meta.lsm_state !== 0
+                  VM &&
+                  VM.state.meta.state !== 8 &&
+                  VM &&
+                  VM.state.meta.lsm_state !== 0
                 "
                 class="Fcloud__button"
                 @click="openModal('shutdown')"
@@ -214,7 +274,7 @@
                 class="Fcloud__button"
                 @click="sendAction('resume')"
                 :class="{
-                  disabled: statusVM.start,
+                  disabled: statusVM && statusVM.start,
                 }"
               >
                 <div class="Fcloud__BTN-icon">
@@ -226,7 +286,7 @@
                 class="Fcloud__button"
                 @click="openModal('reboot')"
                 :class="{
-                  disabled: statusVM.reboot,
+                  disabled: statusVM && statusVM.reboot,
                   btn_disabled_wiggle: true,
                 }"
               >
@@ -262,7 +322,7 @@
                 class="Fcloud__button"
                 @click="openModal('recover')"
                 :class="{
-                  disabled: statusVM.recover,
+                  disabled: statusVM && statusVM.recover,
                 }"
               >
                 <div class="Fcloud__BTN-icon">
@@ -317,43 +377,45 @@
 								</router-link>
 							</div>
 						</div> -->
+
               <div
-                v-if="
-                  VM.state.meta.networking.private &&
-                  VM.state.meta.networking.private.length > 0
-                "
-                class="Fcloud__main-info"
+                class="Fcloud__info-block block"
+                v-if="VM.state && VM.state.meta.networking"
               >
-                <table class="Fcloud__table">
-                  <tbody>
-                    <tr
-                      v-for="nic in VM.state.meta.networking.public"
-                      :key="nic.NAME"
+                <div class="Fcloud__block-header">
+                  <a-icon type="flag" theme="filled" />
+                  {{ "IP" }}
+                </div>
+                <div class="Fcloud__block-content">
+                  <div class="block__column">
+                    <div
+                      class="block__value"
+                      v-if="dataSP"
+                      style="font-size: 18px"
                     >
-                      <td>IP</td>
-                      <td>{{ nic }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div
-                v-if="
-                  VM.state.meta.networking.public &&
-                  VM.state.meta.networking.public.length > 0
-                "
-                class="Fcloud__main-info"
-              >
-                <table class="Fcloud__table">
-                  <tbody>
-                    <tr
-                      v-for="nic in VM.state.meta.networking.public"
-                      :key="nic.NAME"
-                    >
-                      <td>IP</td>
-                      <td>{{ nic }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                      <table class="Fcloud__table">
+                        <tbody>
+                          <tr
+                            v-for="nic in VM &&
+                            VM.state.meta.networking.private"
+                            :key="nic.NAME"
+                          >
+                            <td>{{ nic }}</td>
+                          </tr>
+                        </tbody>
+                        <tbody>
+                          <tr
+                            v-for="nic in VM.state &&
+                            VM.state.meta.networking.public"
+                            :key="nic.NAME"
+                          >
+                            <td>{{ nic }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="Fcloud__info-block block">
@@ -384,7 +446,10 @@
                     <div class="block__title">OS</div>
                     <div class="block__value">
                       <!-- {{ (VM && VM.os) || "no data" }} -->
-                      {{ dataSP.publicData.templates[5].name || "no data" }}
+                      {{
+                        (dataSP && dataSP.publicData.templates[5].name) ||
+                        "no data"
+                      }}
                     </div>
                   </div>
                   <div class="block__column">
@@ -663,7 +728,7 @@
                     </a-button>
                   </div>
                 </a-col>
-              </a-row> 
+              </a-row>
             </div>
           </div>
         </div>
@@ -684,6 +749,7 @@ import diskControl from "./openCloud/diskControl";
 import bootOrder from "./openCloud/bootOrder";
 import networkControl from "./openCloud/networkControl";
 import accessManager from "./openCloud/accessManager";
+import addSSH from "./openCloud/addSSH";
 import notification from "../../../mixins/notification";
 const columns = [
   {
@@ -712,6 +778,7 @@ export default {
     bootOrder,
     networkControl,
     accessManager,
+    addSSH,
   },
   mixins: [notification],
   data() {
@@ -752,6 +819,7 @@ export default {
         networkControl: false,
         accessManager: false,
         rename: false,
+        SSH: false,
       },
       option: {
         reboot: 0,
@@ -776,6 +844,8 @@ export default {
       resize: {
         VCPU: 0,
         RAM: 0,
+        size: 0,
+        scale: "GB",
       },
       menuOptions: [
         {
@@ -791,11 +861,17 @@ export default {
           icon: "tag",
         },
         {
-          title: "Access manager",
+          title: "SSH",
           onclick: this.openModal,
-          params: ["accessManager"],
+          params: ["SSH"],
           icon: "safety",
         },
+        // {
+        //   title: "Access manager",
+        //   onclick: this.openModal,
+        //   params: ["accessManager"],
+        //   icon: "safety",
+        // },
         {
           title: "Resize VM",
           onclick: this.changeModal,
@@ -817,13 +893,13 @@ export default {
           icon: "global",
           forVNC: true,
         },
-        {
-          title: "Boot order",
-          onclick: this.changeModal,
-          params: ["bootOrder"],
-          icon: "ordered-list",
-          forVNC: true,
-        },
+        // {
+        //   title: "Boot order",
+        //   onclick: this.changeModal,
+        //   params: ["bootOrder"],
+        //   icon: "ordered-list",
+        //   forVNC: true,
+        // },
         {
           title: "Delete",
           onclick: this.sendDelete,
@@ -847,32 +923,47 @@ export default {
       permissions: "permissions",
       // singleLoading: 'singleLoading'
     }),
-    ...mapGetters("nocloud/vms", ["getActionLoadingInvoke"]),
+    ...mapGetters("nocloud/vms", [
+      "getActionLoadingInvoke",
+      "getServicesFull",
+      "getInstances",
+    ]),
+    itemService() {
+      const data = this.getServicesFull.find((el) => {
+        return this.VM.uuidService === el.uuid;
+      });
+      return data;
+    },
     statusVM() {
-      return {
-        shutdown:
-          (this.VM.state.meta.lcm_state == 18 &&
-            this.VM.state.meta.state == 3) ||
-          (this.VM.state.meta.lcm_state == 20 && this.VM.state.meta.state == 3),
-        reboot:
-          (this.VM.state.meta.lcm_state == 18 &&
-            this.VM.state.meta.state == 3) ||
-          (this.VM.state.meta.lcm_state == 20 &&
-            this.VM.state.meta.state == 3) ||
-          (this.VM.state.meta.lcm_state == 0 && this.VM.state.meta.state == 8),
-        start:
-          (this.VM.state.meta.lcm_state == 18 &&
-            this.VM.state.meta.state == 3) ||
-          (this.VM.state.meta.lcm_state == 20 && this.VM.state.meta.state == 3),
-        recover:
-          (this.VM.state.meta.lcm_state == 18 &&
-            this.VM.state.meta.state == 3) ||
-          (this.VM.state.meta.lcm_state == 20 && this.VM.state.meta.state == 3),
-      };
+      if (this.VM) {
+        return {
+          shutdown:
+            (this.VM.state.meta.lcm_state == 18 &&
+              this.VM.state.meta.state == 3) ||
+            (this.VM.state.meta.lcm_state == 20 &&
+              this.VM.state.meta.state == 3),
+          reboot:
+            (this.VM.state.meta.lcm_state == 18 &&
+              this.VM.state.meta.state == 3) ||
+            (this.VM.state.meta.lcm_state == 20 &&
+              this.VM.state.meta.state == 3) ||
+            (this.VM.state.meta.lcm_state == 0 &&
+              this.VM.state.meta.state == 8),
+          start:
+            (this.VM.state.meta.lcm_state == 18 &&
+              this.VM.state.meta.state == 3) ||
+            (this.VM.state.meta.lcm_state == 20 &&
+              this.VM.state.meta.state == 3),
+          recover:
+            (this.VM.state.meta.lcm_state == 18 &&
+              this.VM.state.meta.state == 3) ||
+            (this.VM.state.meta.lcm_state == 20 &&
+              this.VM.state.meta.state == 3),
+        };
+      }
     },
     service() {
-      const data = this.$store.getters["nocloud/vms/getServicesFull"];
-      for (let item of data) {
+      for (let item of this.getServicesFull) {
         if (item.uuid === this.VM.uuidService) {
           console.log(item);
           return item;
@@ -880,11 +971,12 @@ export default {
       }
     },
     VM() {
-      const data = this.$store.getters["nocloud/vms/getInstances"];
-      for (let item of data) {
-        if (item.uuid === this.$route.params.uuid) {
-          console.log(item);
-          return item;
+      for (let instance of this.getInstances) {
+        if (instance.uuid === this.$route.params.uuid) {
+          this.resize.VCPU = instance.resources.cpu;
+          this.resize.RAM = instance.resources.ram / 1024;
+          this.resize.size = instance.resources.drive_size / 1024;
+          return instance;
         }
       }
     },
@@ -902,7 +994,7 @@ export default {
     },
     stateColor() {
       let color = "";
-      switch (this.VM.state.meta.lcm_state) {
+      switch (this.VM.state && this.VM.state.meta.lcm_state) {
         case 3:
           color = "#0fd058";
           break;
@@ -918,6 +1010,7 @@ export default {
           color = "#f9f038";
           break;
         default:
+          color = "rgb(145, 145, 145)";
           break;
       }
       return color;
@@ -926,6 +1019,7 @@ export default {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
   },
+
   created() {
     // this.sync(); //он вызывается ниже, в вотче изменения роута
     // if (this.isLogged) {
@@ -935,6 +1029,7 @@ export default {
     // 		this.selectedSP = res.pool[0].uuid
     // 	})
     // }
+
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
       this.$store.dispatch("nocloud/sp/fetch");
@@ -959,10 +1054,12 @@ export default {
       //   });
     },
     disabledMenu(menuName) {
+      if (this.VM.product && menuName === "resize vm") {
+        return true;
+      }
       // if(this.SingleCloud.DISABLE.includes(menuName) || (this.SingleCloud.STATE == 3 && this.SingleCloud.LCM_STATE == 2)){
       // 	return true;
       // }
-      return false;
     },
     sync(vmid = null) {
       if (vmid == null) {
@@ -1115,7 +1212,6 @@ export default {
         uuid: this.VM.uuid,
         action,
       };
-      console.log(data);
       this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
         // .then((res) => {
@@ -1235,36 +1331,36 @@ export default {
       });
     },
     openModal(name) {
-      switch (name.toLowerCase()){
-      	case 'start':
-      		if(this.statusVM.start) return;
-      		break;
-      	case 'shutdown':
-      		if(this.statusVM.shutdown) return;
-      		break;
-      	case 'reboot':
-      		if(this.statusVM.reboot) return;
-      		break;
-      	case 'delete':
-      		if(this.statusVM.delete) return;
-      		break;
-      	case 'recover':
-      		if(this.statusVM.recover) return;
-      		break;
-      	// case 'snapshot':
-      	// 	if(this.stateVM.snapshot) return;
-      	// 	this.snapshotsFetch();
-      	// 	this.snapshots.modal = true
-      	// 	break;
-      	// case 'createsnapshot':
-      	// 	if(this.stateVM.createSnapshot) return;
-      	// 	this.snapshots.addSnap.modal = true;
-      	// 	const me = this;
-      	// 	setTimeout(() => {
-      	// 		const element = me.$refs.snapNameInput.$el;
-      	// 		element.select();
-      	// 	}, 0);
-      	// 	break;
+      switch (name.toLowerCase()) {
+        case "start":
+          if (this.statusVM.start) return;
+          break;
+        case "shutdown":
+          if (this.statusVM.shutdown) return;
+          break;
+        case "reboot":
+          if (this.statusVM.reboot) return;
+          break;
+        case "delete":
+          if (this.statusVM.delete) return;
+          break;
+        case "recover":
+          if (this.statusVM.recover) return;
+          break;
+        // case 'snapshot':
+        // 	if(this.stateVM.snapshot) return;
+        // 	this.snapshotsFetch();
+        // 	this.snapshots.modal = true
+        // 	break;
+        // case 'createsnapshot':
+        // 	if(this.stateVM.createSnapshot) return;
+        // 	this.snapshots.addSnap.modal = true;
+        // 	const me = this;
+        // 	setTimeout(() => {
+        // 		const element = me.$refs.snapNameInput.$el;
+        // 		element.select();
+        // 	}, 0);
+        // 	break;
       }
       this.modal[name] = true;
     },
@@ -1283,60 +1379,97 @@ export default {
           this.modal[name] = false;
       }
     },
-    ExpandVM() {
-      const keys = Object.keys(this.resize);
-      const newVmSpecs = {};
-      const specScale = {
-        RAM: 1024,
-        VCPU: 1,
-      };
-      keys.forEach((spec) => {
-        const newSpec = +this.resize[spec] * specScale[spec];
-        if (this.SingleCloud[spec] != newSpec) {
-          newVmSpecs[spec] = newSpec;
+    ResizeVM() {
+      this.isRenameLoading = true;
+      this.itemService.instancesGroups[0].instances.find((el) => {
+        if (el.uuid === this.VM.uuid) {
+          el.resources.cpu = +this.resize.VCPU;
+          el.resources.ram = this.resize.RAM * 1024;
+          el.resources.drive_size = this.resize.size * 1024;
+          return el;
         }
       });
-      // console.log(newVmSpecs);
-      if (Object.keys(newVmSpecs).length == 0) {
-        this.$message.warning("Can't resize to same size");
-        return;
-      }
-      const user = this.$store.getters.getUser;
-      const userid = user.id;
-      const vmid = this.SingleCloud.ID;
-      const close_your_eyes = md5("VMresize" + userid + user.secret);
-      let query = {
-        userid,
-        vmid,
-        secret: close_your_eyes,
-      };
-      query = Object.assign(newVmSpecs, query);
-      let url = `/VMresize.php?${this.URLparameter(query)}`;
-      // console.log(url)
-      this.loadingResizeVM = true;
-      this.$axios
-        .get(url)
+      this.$store
+        .dispatch("nocloud/vms/updateService", this.itemService)
         .then((result) => {
-          if (result.data.result == "success") {
-            this.$message.success("VM resized successfully");
+          if (result) {
+            // this.$message.success(this.$t("VM resized successfully"));
+            this.openNotificationWithIcon("success", {
+              message: "VM resized successfully",
+            });
+            this.isRenameLoading = false;
+            this.closeModal("resize");
           } else {
-            this.$message.error("Some kind an error during resizing VM");
-            // console.log(result.data);
+            this.openNotificationWithIcon("error", {
+              message: "Can't VM resize to same size",
+            });
+            // this.$message.error("Can't resize to same size");
           }
         })
-        .catch((er) => {
-          this.$message.error("Some kind an error during resizing VM");
-          console.er(er);
-          this.closeModal("expand");
+        .catch((err) => {
+          // this.$message.error( "Can't resize to same size");
+          this.openNotificationWithIcon("error", {
+            message: "Can't VM resize to same size",
+          });
+          console.error(err);
         })
-        .finally(() => {
-          this.$store.dispatch(
-            "cloud/silentUpdate",
-            this.$route.params.pathMatch
-          );
-          this.closeModal("expand");
-          this.loadingResizeVM = false;
+        .finally((res) => {
+          this.modal.confirmLoading = false;
         });
+
+      // const keys = Object.keys(this.resize);
+      // const newVmSpecs = {};
+      // const specScale = {
+      //   RAM: 1024,
+      //   VCPU: 1,
+      // };
+      // keys.forEach((spec) => {
+      //   const newSpec = +this.resize[spec] * specScale[spec];
+      //   if (this.SingleCloud[spec] != newSpec) {
+      //     newVmSpecs[spec] = newSpec;
+      //   }
+      // });
+      // // console.log(newVmSpecs);
+      // if (Object.keys(newVmSpecs).length == 0) {
+      //   this.$message.warning("Can't resize to same size");
+      //   return;
+      // }
+      // const user = this.$store.getters.getUser;
+      // const userid = user.id;
+      // const vmid = this.SingleCloud.ID;
+      // const close_your_eyes = md5("VMresize" + userid + user.secret);
+      // let query = {
+      //   userid,
+      //   vmid,
+      //   secret: close_your_eyes,
+      // };
+      // query = Object.assign(newVmSpecs, query);
+      // let url = `/VMresize.php?${this.URLparameter(query)}`;
+      // // console.log(url)
+      // this.loadingResizeVM = true;
+      // this.$axios
+      //   .get(url)
+      //   .then((result) => {
+      //     if (result.data.result == "success") {
+      //       this.$message.success("VM resized successfully");
+      //     } else {
+      //       this.$message.error("Some kind an error during resizing VM");
+      //       // console.log(result.data);
+      //     }
+      //   })
+      //   .catch((er) => {
+      //     this.$message.error("Some kind an error during resizing VM");
+      //     console.er(er);
+      //     this.closeModal("expand");
+      //   })
+      //   .finally(() => {
+      //     this.$store.dispatch(
+      //       "cloud/silentUpdate",
+      //       this.$route.params.pathMatch
+      //     );
+      //     this.closeModal("expand");
+      //     this.loadingResizeVM = false;
+      //   });
     },
     URLparameter(obj, outer = "") {
       var str = "";
@@ -1435,27 +1568,64 @@ export default {
     },
     sendRename() {
       this.isRenameLoading = true;
-      api
-        .sendVMaction("VMChangeName", { newVmName: this.renameNewName })
-        .then((res) => {
-          if (res.result == "success") {
-            this.$store.dispatch(
-              "cloud/silentUpdate",
-              this.$route.params.pathMatch
-            );
-            this.closeModal("rename");
-            this.closeModal("menu");
-            this.renameNewName = "";
-            this.$message.success(this.$t("vm name changes successfully"));
-            this.isRenameLoading = false;
-          } else {
-            throw res;
+      if (this.renameNewName !== "") {
+        this.itemService.instancesGroups[0].instances.find((el) => {
+          if (el.uuid === this.VM.uuid) {
+            return (el.title = this.renameNewName);
           }
-        })
-        .catch((err) => {
-          console.error(err);
         });
+
+        this.$store
+          .dispatch("nocloud/vms/updateService", this.itemService)
+          .then((result) => {
+            console.log(result);
+            if (result) {
+              // this.$message.success(this.$t("VM name changes successfully"));
+              this.openNotificationWithIcon("success", {
+                message: "VM name changes successfully",
+              });
+              this.isRenameLoading = false;
+              this.renameNewName = "";
+              this.closeModal("rename");
+              this.closeModal("menu");
+            } else {
+              this.openNotificationWithIcon("error", {
+                message: "Can't VM name changes",
+              });
+            }
+          })
+          .catch((err) => {
+            this.openNotificationWithIcon("error", {
+              message: "Can't VM name changes",
+            });
+          })
+          .finally((res) => {
+            this.modal.confirmLoading = false;
+          });
+      }
+
+      // api
+      //   .sendVMaction("VMChangeName", { newVmName: this.renameNewName })
+      //   .then((res) => {
+      //     if (res.result == "success") {
+      //       this.$store.dispatch(
+      //         "cloud/silentUpdate",
+      //         this.$route.params.pathMatch
+      //       );
+      //       this.closeModal("rename");
+      //       this.closeModal("menu");
+      //       this.renameNewName = "";
+      //       this.$message.success(this.$t("vm name changes successfully"));
+      //       this.isRenameLoading = false;
+      //     } else {
+      //       throw res;
+      //     }
+      //   })
+      //   .catch((err) => {
+      //     console.error(err);
+      //   });
     },
+
     sendReinstall() {
       if (this.disabledMenu("reinstall")) {
         this.$store
@@ -1565,7 +1735,7 @@ export default {
   width: 15px;
   background-color: var(--bright_font);
   border-radius: 50%;
-  top: 50%;
+  top: 55%;
   left: -25px;
   transform: translateY(-50%);
 }
