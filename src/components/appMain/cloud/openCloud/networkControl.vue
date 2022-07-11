@@ -39,7 +39,7 @@
       :confirm-loading="attach.loading"
       @ok="sendNewIP"
       @cancel="closeModal('attach')"
-	  :cancelText="$t('Cancel')"
+	    :cancelText="$t('Cancel')"
     >
       <a-radio-group v-model="attach.type" style="margin-bottom: 20px">
         <a-radio :value="1">{{ $t("private") }}</a-radio>

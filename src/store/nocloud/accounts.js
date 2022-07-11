@@ -14,6 +14,7 @@ export default {
         setLoading(state, data) {
             state.loading = data;
         },
+      
 
     },
     actions: {
@@ -32,7 +33,8 @@ export default {
                         commit("setLoading", false);
                     })
             })
-        }
+        },
+    
 
     },
     getters: {

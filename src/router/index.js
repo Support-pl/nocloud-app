@@ -124,7 +124,8 @@ const routes = [
 				path: 'cloud/newPaaS',
 				name: 'newPaaS',
 				meta: {
-					footerTitle: 'cloud'
+					footerTitle: 'cloud',
+					isFromRoute: true,
 				},
 				component: () => import('../components/appMain/newPaaS.vue')
 			},

@@ -916,6 +916,24 @@
             >
               <a-col :span="22" style="margin-top: 20px">
                 <!-- :loading="getCurrentProd == null" -->
+                <div
+                  class="products__unregistred"
+                  style="margin-bottom: 10px; text-align: center"
+                  v-if="
+                    score > 3 &&
+                    password.length > 0 &&
+                    options.os.name &&
+                    vmName &&
+                    !isLoggedIn
+                  "
+                >
+                  {{ $t("unregistered.will be able after") }}
+                  <router-link
+                    :to="{ name: 'login' }"
+                    @click.native="availableLogin"
+                    >{{ $t("unregistered.login") }}</router-link
+                  >.
+                </div>
                 <a-button
                   type="primary"
                   block
@@ -927,7 +945,8 @@
                     vmName == '' ||
                     (service == '' && this.getServicesFull.length > 1) ||
                     (namespace == '' && this.getNameSpaces.length > 1) ||
-                    options.os.name == ''
+                    options.os.name == '' ||
+                    !isLoggedIn
                   "
                 >
                   {{ $t("Create") }}
@@ -1092,6 +1111,7 @@ export default {
   },
   data() {
     return {
+      dataLocalStorage: "",
       markers,
       productSize: "VDS L",
       activeKey: "location",
@@ -1130,12 +1150,6 @@ export default {
           min: 1,
           max: 12,
         },
-        // ip: {
-        //   size: 1,
-        //   price: 0,
-        //   min: 1,
-        //   max: 5,
-        // },
         os: {
           id: -1,
           name: "",
@@ -1167,12 +1181,9 @@ export default {
     ...mapGetters("nocloud/plans", ["getPlans"]),
     ...mapGetters("nocloud/plans", ["isPlansLoading"]),
     ...mapGetters("nocloud/sp/", ["getSP"]),
-    ...mapGetters("nocloud/auth/", ["userdata"]),
+    ...mapGetters("nocloud/auth/", ["userdata", "isLoggedIn"]),
     ...mapGetters("nocloud/vms", ["getServicesFull"]),
-
-    isLogged() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
-    },
+    // ...mapGetters("nocloud/auth", ["isLoggedIn"]),
 
     itemService() {
       const data = this.getServicesFull.find((el) => {
@@ -1183,14 +1194,21 @@ export default {
 
     location() {
       const item = this.markers.find((el) => {
-        return el.id === this.locationId;
+        if (this.dataLocalStorage) {
+          if (el.title === this.dataLocalStorage.titleSP) {
+            this.locationId = el.id;
+            return el;
+          }
+        } else {
+          return el.id === this.locationId;
+        }
       });
       return item;
     },
     itemSP() {
       if (this.location) {
         const sp = this.getSP.find((el) => {
-          return el.title === this.location.title.split(",")[0];
+          return el.title === this.location.title;
         });
         // if (sp) {
         //   this.activeKey = "plan";
@@ -1242,9 +1260,16 @@ export default {
             ...el,
             key: key,
           };
-          this.options.ram.size = product.resources.ram / 1024;
-          this.options.cpu.size = product.resources.cpu;
-          this.options.disk.size = 13000;
+          if (this.dataLocalStorage && this.getPlan.kind == "UNKNOWN") {
+            this.options.ram.size = this.dataLocalStorage.resources.ram / 1024;
+            this.options.cpu.size = this.dataLocalStorage.resources.cpu;
+            this.options.disk.size = this.dataLocalStorage.resources.drive_size;
+          } else {
+            this.options.ram.size = product.resources.ram / 1024;
+            this.options.cpu.size = product.resources.cpu;
+            this.options.disk.size = 13000;
+          }
+
           return product;
         }
       }
@@ -1378,13 +1403,57 @@ export default {
     },
   },
   mounted() {
+    if (localStorage.getItem("data")) {
+      try {
+        this.dataLocalStorage = JSON.parse(localStorage.getItem("data"));
+        this.tarification = this.dataLocalStorage.plan;
+        this.productSize = this.dataLocalStorage.productSize;
+        this.options.os.id = this.dataLocalStorage.config.template_id;
+        this.options.os.name = this.dataLocalStorage.config.template_name;
+        this.password = this.dataLocalStorage.config.password;
+        this.vmName = this.dataLocalStorage.titleVM;
+      } catch (e) {
+        localStorage.removeItem("data");
+      }
+    }
     this.setOneService();
     this.setOneNameSpace();
-    // if (this.isLogged) {
-    this.$store.dispatch("nocloud/vms/fetch");
-    this.$store.dispatch("nocloud/sp/fetch");
-    this.$store.dispatch("nocloud/namespaces/fetch");
     this.$store.dispatch("nocloud/plans/fetch");
+    this.$store.dispatch("nocloud/sp/fetch");
+    this.$store.dispatch("nocloud/vms/fetch");
+    this.$store.dispatch("nocloud/namespaces/fetch");
+  
+    this.$router.beforeEach((to, from, next) => {
+      if (from.path === "/cloud/newPaaS" && localStorage.getItem("data") && this.isLoggedIn) {
+        const answer = window.confirm("Data will be lost");
+        if (answer) {
+          localStorage.removeItem("data");
+          next();
+        } else {
+          next(false);
+        }
+      }else{
+          next();
+      }
+    });
+
+    // window.addEventListener("load", () => {
+    //   if (localStorage.getItem("data")) {
+    //     const answer = window.confirm(
+    //       "Do you really want to leave? you have unsaved changes!"
+    //     );
+    //     if (answer) {
+    //       localStorage.removeItem("data");
+    //     }
+    //   }
+    // });
+    // if (window.location.reload() && localStorage.getItem("data")) {
+    //   const answer = window.confirm(
+    //     "Do you really want to leave? you have unsaved changes!"
+    //   );
+    //   if (answer) {
+    //     localStorage.removeItem("data");
+    //   }
     // }
 
     // this.$store.dispatch("newPaaS/fetchProductsAuto");
@@ -1511,12 +1580,10 @@ export default {
         },
         billing_plan: {
           uuid: this.plan.uuid,
-          // uuid: "fe8bb5cc-1a14-4d51-a3e1-df0053bc72ed",
           title: this.plan.title,
           type: this.plan.type,
           public: this.plan.public,
         },
-        product: this.product.key,
       };
       //add key product in instance
       const newInstance =
@@ -1524,23 +1591,15 @@ export default {
           ? Object.assign({}, { product: this.product.key }, instance)
           : instance;
       // -------------------------------------
-      //apdate service
+      //update service
       if (this.service !== "") {
-        const newObj = Object.assign(
+        const orderDataNew = Object.assign(
           {},
           { instances_groups: this.itemService.instancesGroups },
           { ...this.itemService }
         );
-        delete newObj.instancesGroups;
-        newObj.instances_groups[0].instances.push(newInstance);
-
-        const orderDataNew = {
-          uuid: newObj.uuid,
-          service: {
-            namespace: this.namespace,
-            service: newObj,
-          },
-        };
+        delete orderDataNew.instancesGroups;
+        orderDataNew.instances_groups[0].instances.push(newInstance);
         this.updateVM(orderDataNew);
       } else {
         //create service
@@ -1631,6 +1690,29 @@ export default {
           );
         })
         .finally(() => {});
+    },
+    availableLogin() {
+      const data = {
+        path: "/cloud/newPaaS",
+        titleSP: this.itemSP.title,
+        plan: this.plan.kind,
+        productSize: this.productSize,
+        titleVM: this.vmName,
+        resources: {
+          cpu: this.options.cpu.size,
+          ram: this.options.ram.size * 1024,
+          drive_type: this.options.disk.type,
+          drive_size: this.options.disk.size,
+          ips_private: this.options.network.private.count,
+          ips_public: this.options.network.public.count,
+        },
+        config: {
+          template_id: this.options.os.id,
+          template_name: this.options.os.name,
+          password: this.password,
+        },
+      };
+      localStorage.setItem("data", JSON.stringify(data));
     },
     // setAddon(name, value) {
     //   if (name == "os") {

@@ -109,6 +109,22 @@ export default {
 			// }
 
 		},
+		setUpdateInstance(state, data) {
+			data.instancesGroups.forEach(item => {
+				item.instances.forEach(el => {
+					const instanceItem = {
+						uuidService: data.uuid,
+						uuidInstancesGroups: item.uuid,
+						type: item.type,
+						sp: item.sp,
+						...el
+					}
+					const index = state.instances.findIndex(item => item.uuid === instanceItem.uuid)
+					state.instances.splice(index, 1, instanceItem)
+					
+				})
+			})
+		},
 		setLoading(state, data) {
 			state.loading = data;
 		},
@@ -164,7 +180,7 @@ export default {
 		updateService({ commit }, data) {
 			return new Promise((resolve, reject) => {
 				api.services._update(data).then(response => {
-					// commit('setUpdateInstance', response)
+					commit('setUpdateInstance', response)
 					resolve(response)
 				})
 					.catch(error => {

@@ -1,19 +1,19 @@
 [
 	{
 		"id": "PL",
-		"title": "Warsaw, Poland",
+		"title": "Warsaw",
 		"x": 517,
 		"y": 255
 	},
 	{
 		"id": "DE",
-		"title": "Berlin, Germany",
+		"title": "Berlin",
 		"x": 489,
 		"y": 260
 	},
 	{
 		"id": "BY",
-		"title": "Minsk, Belarus",
+		"title": "Minsk",
 		"x": 540,
 		"y": 250
 	}

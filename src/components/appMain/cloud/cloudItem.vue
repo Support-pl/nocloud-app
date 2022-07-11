@@ -11,7 +11,7 @@
         <div class="item__title">{{ instance.title }}</div>
 
         <!-- <div class="item__status">{{ $t(`cloudStateItem.${cloud.STATE}`) }}</div> -->
-        <div class="item__status">{{ instance.state.state }}</div>
+        <div class="item__status">{{ instance.state }}</div>
       </div>
       <!-- <div class="item_location">{{ location }}</div> -->
       <div class="cloud__lower">
@@ -49,26 +49,29 @@ export default {
     //   }
     // },
     statusColor() {
-      let color = "";
-      switch (this.instance.state.meta.lcm_state) {
-        case 3:
-          color = "#0fd058";
-          break;
-        // останавливающийся
-        case 18:
-          color = "#919191";
-          break;
-        // запускающийся
-        case 20:
-          color = "#919191";
-          break;
-        case 0:
-          color = "#f9f038";
-          break;
-        default:
-          break;
-      }
-      return color
+ 
+        let color = "";
+        switch (this.instance.state && this.instance.state.meta.lcm_state) {
+          case 3:
+            color = "#0fd058";
+            break;
+          // останавливающийся
+          case 18:
+            color = "#919191";
+            break;
+          // запускающийся
+          case 20:
+            color = "#919191";
+            break;
+          case 0:
+            color = "#f9f038";
+            break;
+          default:
+            color = "rgb(145, 145, 145)";
+            break;
+        }
+        return color;
+      
     },
     getSP() {
       return this.$store.getters["nocloud/sp/getSP"];
