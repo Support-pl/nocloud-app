@@ -31,6 +31,11 @@ export default {
 			creationRouteName: "service-virtual",
 			icon: 'solution',
 		},
+		domains: {
+			groupname: ['Domains'],
+			creationRouteName: "service-domains",
+			icon: 'solution',
+		},
 		SSL: {
 			groupname: ['GoGet SSL 2.5.6', 'SSL', 'SSL сертификаты'],
 			creationRouteName: "service-SSL",
