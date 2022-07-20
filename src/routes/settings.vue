@@ -179,8 +179,9 @@ export default {
     },
     logoutFunc() {
       this.$store.commit("logout");
-      	this.$store.dispatch('nocloud/auth/logout')
+      this.$store.dispatch("nocloud/auth/logout");
       this.$router.push({ name: "login" });
+      localStorage.removeItem("data");
     },
     URLparameter(obj, outer = "") {
       var str = "";

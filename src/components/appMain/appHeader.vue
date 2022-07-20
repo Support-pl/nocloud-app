@@ -393,7 +393,7 @@ export default {
       } else return "";
     },
     isLogged() {
-      return this.$store.getters['nocloud/auth/isLoggedIn'];
+      return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
   },
   created() {},

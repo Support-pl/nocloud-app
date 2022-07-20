@@ -739,14 +739,24 @@
               "
             >
               <a-col :span="22" style="margin-top: 20px">
-                <!-- <div class="products__unregistred" v-if="userData">
+                <div
+                  class="products__unregistred"
+                  style="margin-bottom: 10px; text-align: center"
+                  v-if="
+                    score > 3 &&
+                    password.length > 0 &&
+                    options.os.name &&
+                    vmName &&
+                    !isLoggedIn
+                  "
+                >
                   {{ $t("unregistered.will be able after") }}
-                  <router-link :to="{ name: 'login' }">{{
-                    $t("unregistered.login")
-                  }}</router-link
+                  <router-link
+                    :to="{ name: 'login' }"
+                    @click.native="availableLogin"
+                    >{{ $t("unregistered.login") }}</router-link
                   >.
-                </div> -->
-
+                </div>
                 <a-button
                   type="primary"
                   block
@@ -758,7 +768,8 @@
                     vmName == '' ||
                     (service == '' && getServicesFull.length > 1) ||
                     (namespace == '' && getNameSpaces.length > 1) ||
-                    options.os.name == ''
+                    options.os.name == '' ||
+                    !isLoggedIn
                   "
                 >
                   {{ $t("Create") }}
@@ -908,7 +919,7 @@ const periods = [
     discount: 10,
   },
 ];
-const tariffs = ["standart", "X2CPU", "X2RAM"];
+
 import { mapGetters } from "vuex";
 import loading from "../loading/loading";
 import myMap from "../map/map.vue";
@@ -924,8 +935,8 @@ export default {
   },
   data() {
     return {
+      dataLocalStorage: "",
       test: "",
-      // data: [{ id: "PL", title: "Warsaw, Poland" }, { id: "DE", title:"Berlin, Germany" }, { id: "BY" , title: "Minsk, Belarus"}],
       markers,
       productSize: "VDS L",
       activeKey: "location",
@@ -1004,9 +1015,9 @@ export default {
     ...mapGetters("nocloud/auth/", ["userdata"]),
     ...mapGetters("nocloud/vms", ["getServicesFull"]),
 
-    // isLogged() {
-    //   return this.$store.getters["nocloud/auth/isLoggedIn"];
-    // },
+    isLoggedIn() {
+      return this.$store.getters["nocloud/auth/isLoggedIn"];
+    },
 
     itemService() {
       const data = this.getServicesFull.find((el) => {
@@ -1016,7 +1027,14 @@ export default {
     },
     location() {
       const item = this.markers.find((el) => {
-        return el.id === this.locationId;
+        if (this.dataLocalStorage) {
+          if (el.title === this.dataLocalStorage.titleSP) {
+            this.locationId = el.id;
+            return el;
+          }
+        } else {
+          return el.id === this.locationId;
+        }
       });
       return item;
     },
@@ -1161,6 +1179,39 @@ export default {
     },
   },
   mounted() {
+    if (localStorage.getItem("data")) {
+      try {
+        this.dataLocalStorage = JSON.parse(localStorage.getItem("data"));
+        this.tarification = this.dataLocalStorage.tarification;
+        this.productSize = this.dataLocalStorage.productSize;
+        this.options.os.id = this.dataLocalStorage.config.template_id;
+        this.options.os.name = this.dataLocalStorage.config.template_name;
+        this.password = this.dataLocalStorage.config.password;
+        this.vmName = this.dataLocalStorage.titleVM;
+      } catch (e) {
+        localStorage.removeItem("data");
+      }
+    }
+    // this.$router.beforeEach((to, from, next) => {
+    //   if (
+    //     from.path === "/cloud/newPaaS" &&
+    //     localStorage.getItem("data") &&
+    //     this.isLoggedIn
+    //   ) {
+    //     const answer = window.confirm("Data will be lost");
+    //     if (answer) {
+    //       localStorage.removeItem("data");
+    //       next();
+    //     }
+    //     if (!answer) {
+    //       {
+    //         next(false);
+    //       }
+    //     }
+    //   } else {
+    //     next();
+    //   }
+    // });
     this.setOneService();
     this.setOneNameSpace();
     // if (this.isLogged) {
@@ -1171,6 +1222,26 @@ export default {
     // }
   },
   methods: {
+    availableLogin() {
+      const data = {
+        path: "/cloud/newPaaS",
+        titleSP: this.itemSP.title,
+        productSize: this.productSize,
+        titleVM: this.vmName,
+        tarification: this.tarification,
+        resources: {
+          drive_type: this.options.disk.type,
+          ips_private: this.options.network.private.count,
+          ips_public: this.options.network.public.count,
+        },
+        config: {
+          template_id: this.options.os.id,
+          template_name: this.options.os.name,
+          password: this.password,
+        },
+      };
+      localStorage.setItem("data", JSON.stringify(data));
+    },
     onScore({ score }) {
       this.score = score;
     },
@@ -1250,7 +1321,6 @@ export default {
         },
         billing_plan: {
           uuid: this.plan.uuid,
-          // uuid: "fe8bb5cc-1a14-4d51-a3e1-df0053bc72ed",
           title: this.plan.title,
           type: this.plan.type,
           public: this.plan.public,
