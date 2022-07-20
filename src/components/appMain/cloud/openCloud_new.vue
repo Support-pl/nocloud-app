@@ -29,7 +29,7 @@
                       : VM.state.meta.error
                   }} -->
                   <!-- {{ vmState | replace("_", " ") }} -->
-                  {{ VM.state && VM.state.meta.lcm_state_str }}
+                  {{ stateVM }}
                 </div>
               </div>
               <div class="Fcloud__menu-wrapper">
@@ -95,14 +95,14 @@
                     :ok-button-props="{
                       props: {
                         disabled:
-                          (VM.state && VM.state.meta.lsm_state != 0) ||
+                          (VM.state && VM.state.meta.lsm_state != 0) &&
                           (VM.state && VM.state.meta.state != 8),
                       },
                     }"
                   >
                     <div
                       v-if="
-                        (VM.state && VM.state.meta.lsm_state != 0) ||
+                        (VM.state && VM.state.meta.lsm_state != 0) &&
                         (VM.state && VM.state.meta.state != 8)
                       "
                       :style="{
@@ -879,13 +879,13 @@ export default {
           icon: "arrows-alt",
           forVNC: true,
         },
-        {
-          title: "Disk control",
-          onclick: this.changeModal,
-          params: ["diskControl"],
-          icon: "container",
-          forVNC: true,
-        },
+        // {
+        //   title: "Disk control",
+        //   onclick: this.changeModal,
+        //   params: ["diskControl"],
+        //   icon: "container",
+        //   forVNC: true,
+        // },
         {
           title: "Network control",
           onclick: this.changeModal,
@@ -962,20 +962,20 @@ export default {
         };
       }
     },
-    service() {
-      for (let item of this.getServicesFull) {
-        if (item.uuid === this.VM.uuidService) {
-          console.log(item);
-          return item;
-        }
-      }
-    },
+    // service() {
+    //   for (let item of this.getServicesFull) {
+    //     if (item.uuid === this.VM.uuidService) {
+    //       console.log(item);
+    //       return item;
+    //     }
+    //   }
+    // },
     VM() {
       for (let instance of this.getInstances) {
         if (instance.uuid === this.$route.params.uuid) {
           this.resize.VCPU = instance.resources.cpu;
           this.resize.RAM = instance.resources.ram / 1024;
-          this.resize.size = instance.resources.drive_size / 1024;
+          this.resize.size = Math.ceil(instance.resources.drive_size / 1024);
           return instance;
         }
       }
@@ -991,6 +991,24 @@ export default {
     },
     vmsLoading() {
       return this.$store.getters["nocloud/vms/isLoading"];
+    },
+    stateVM() {
+      let state = "";
+      switch (this.VM.state && this.VM.state.meta.lcm_state_str) {
+        case "LCM_INIT":
+          state = "POWEROFF";
+          break;
+        case "BOOT_POWEROFF":
+          state = "BOOT POWEROFF";
+          break;
+        case "RUNNING":
+          state = "RUNNING";
+          break;
+        case "DELETED":
+          state = "DELETED";
+          break;
+      }
+      return state;
     },
     stateColor() {
       let color = "";
@@ -1019,7 +1037,6 @@ export default {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
   },
-
   created() {
     // this.sync(); //он вызывается ниже, в вотче изменения роута
     // if (this.isLogged) {
@@ -1029,10 +1046,12 @@ export default {
     // 		this.selectedSP = res.pool[0].uuid
     // 	})
     // }
-
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
       this.$store.dispatch("nocloud/sp/fetch");
+      // this.$store.dispatch(
+      //   "nocloud/vms/subscribeWebSocket"
+      // );
     }
   },
   methods: {
@@ -1116,102 +1135,23 @@ export default {
       newOpt.title = `${capitalized} (${range})`;
       return newOpt;
     },
-    // sendAction(action){
-    // 	return true
-    // 	switch (action.toLowerCase()){
-    // 		case 'start':
-    // 			if(this.SingleCloud.DISABLE.start) return;
-    // 			if(this.permissions.start) return;
-    // 			break;
-    // 		case 'Poweroff':
-    // 		case 'PoweroffHard':
-    // 			if(this.SingleCloud.DISABLE.Poweroff) return;
-    // 			if(this.permissions.shutdown) return;
-    // 			break;
-    // 		case 'reboot':
-    // 			if(this.SingleCloud.DISABLE.reboot) return;
-    // 			if(this.permissions.reboot) return;
-    // 			break;
-    // 		case 'recover':
-    // 			if(this.SingleCloud.DISABLE.recover) return;
-    // 			if(this.permissions.recover) return;
-    // 			break;
-    // 		case 'reinstall':
-    // 			if(this.SingleCloud.DISABLE.reinstall) return;
-    // 			if(this.permissions.reinstall) return;
-    // 			break;
-    // 	}
-    // 	const user = this.$store.getters.getUser;
-    // 	const userid = user.id;
-    // 	const vmid = this.SingleCloud.ID;
-    // 	let lowerAct = action.toLowerCase();
-    // 	let close_your_eyes = md5('vmaction' + userid + user.secret);
-    // 	let url = `/vmaction.php?userid=${userid}&action=${action}&vmid=${vmid}&secret=${close_your_eyes}`
-    // 	if(lowerAct == 'reinstall'){
-    // 		url = `/vm.recreate_new.php?userid=${userid}&action=${action}&vmid=${vmid}&secret=${close_your_eyes}&passwd=${this.reinstallPass}`
-    // 	}
-    // 	if(lowerAct == 'delete'){
-    // 		close_your_eyes = md5('VMremove' + userid + user.secret);
-    // 		url = `/VMremove.php?userid=${userid}&action=${action}&vmid=${vmid}&secret=${close_your_eyes}&passwd=${this.reinstallPass}`
-    // 	}
-    // 	if(lowerAct == 'recovertoday' || lowerAct == 'recoveryesterday'){
-    // 		this.$message.warning(this.$t("Recover sended. Wait please"));
-    // 	}
-    // 	this.$axios.get(url)
-    // 	.then(res => {
-    // 		if(lowerAct == 'recovertoday' || lowerAct == 'recoveryesterday'){
-    // 			let self = this;
-    // 			// console.log('started wait for ans');
-    // 			setTimeout(() => {
-    // 				self.$store.dispatch('cloud/fetchAnsible', res.data.id)
-    // 				.then( res => {
-    // 					// console.log(res);
-    // 					if(res.response.status == 'FAILED'){
-    // 						// console.log(res.response.error.message_type);
-    // 						// console.log(res.response.error);
-    // 						switch (res.response.error.message_type) {
-    // 							case 1:
-    // 								self.$message.error(self.$t('There was a problem while recovering. Please contact support'));
-    // 								break;
-    // 							case 2:
-    // 								self.$message.error(self.$t('Before restoring from a service copy, please delete manually created snapshots'));
-    // 								break;
-    // 							default:
-    // 								self.$message.error(res.response.error.msg);
-    // 								break;
-    // 						}
-    // 					}
-    // 					this.$store.dispatch('cloud/silentUpdate', this.$route.params.pathMatch);
-    // 				})
-    // 				.catch( err => {
-    // 					console.error(err);
-    // 				})
-    // 			}, 10000);
-    // 		}
-    // 		if(lowerAct == 'delete' || lowerAct=='reinstall'){
-    // 			if(res.data.result == "success"){
-    // 				this.$message.success(res.data.message);
-    // 				this.$router.replace({name: "cloud"})
-    // 			} else {
-    // 				this.$message.error(res.data.message);
-    // 				// console.log(res.data.errorMSG);
-    // 			}
-    // 		} else {
-    // 			this.$store.dispatch('cloud/silentUpdate', this.$route.params.pathMatch);
-    // 		}
-    // 	})
-    // 	.catch(err => {
-    // 		console.error(err);
-    // 	})
-    // 	.finally(() => {
-    // 		this.$store.dispatch('cloud/silentUpdate', this.$route.params.pathMatch);
-    // 	})
-    // },
     sendAction(action) {
-      const data = {
-        uuid: this.VM.uuid,
-        action,
-      };
+      let data = {};
+      if (this.option.reboot) {
+        data = {
+          uuid: this.VM.uuid,
+          uuidService: this.VM.uuidService,
+          action,
+          params: { hard: true },
+        };
+      } else {
+        data = {
+          uuid: this.VM.uuid,
+          uuidService: this.VM.uuidService,
+          action,
+          params: {},
+        };
+      }
       this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
         // .then((res) => {
@@ -1230,12 +1170,16 @@ export default {
     deployService() {
       this.actionLoading = true;
       api.services
-        .up(this.service.uuid)
+        .up(this.itemService.uuid)
         .then(() => {
           const opts = {
             message: `Done!`,
           };
           this.openNotificationWithIcon("success", opts);
+          this.$store.dispatch(
+            "nocloud/vms/subscribeWebSocket",
+            this.VM.uuidService
+          );
         })
         .catch((err) => {
           const opts = {
@@ -1254,11 +1198,7 @@ export default {
     handleOk(from) {
       switch (from) {
         case "reboot":
-          if (this.option.reboot) {
-            this.sendAction("rebootHard");
-          } else {
-            this.sendAction("reboot");
-          }
+          this.sendAction("reboot");
           this.modal.reboot = false;
           break;
         case "shutdown":
@@ -1347,20 +1287,11 @@ export default {
         case "recover":
           if (this.statusVM.recover) return;
           break;
-        // case 'snapshot':
-        // 	if(this.stateVM.snapshot) return;
-        // 	this.snapshotsFetch();
-        // 	this.snapshots.modal = true
-        // 	break;
-        // case 'createsnapshot':
-        // 	if(this.stateVM.createSnapshot) return;
-        // 	this.snapshots.addSnap.modal = true;
-        // 	const me = this;
-        // 	setTimeout(() => {
-        // 		const element = me.$refs.snapNameInput.$el;
-        // 		element.select();
-        // 	}, 0);
-        // 	break;
+          //  case "snapshot":
+          // if (this.permissions.snapshot) return;
+          // this.snapshotsFetch();
+          // this.snapshots.modal = true;
+          // break;
       }
       this.modal[name] = true;
     },
@@ -1380,43 +1311,45 @@ export default {
       }
     },
     ResizeVM() {
-      this.isRenameLoading = true;
-      this.itemService.instancesGroups[0].instances.find((el) => {
-        if (el.uuid === this.VM.uuid) {
-          el.resources.cpu = +this.resize.VCPU;
-          el.resources.ram = this.resize.RAM * 1024;
-          el.resources.drive_size = this.resize.size * 1024;
-          return el;
-        }
-      });
-      this.$store
-        .dispatch("nocloud/vms/updateService", this.itemService)
-        .then((result) => {
-          if (result) {
-            // this.$message.success(this.$t("VM resized successfully"));
-            this.openNotificationWithIcon("success", {
-              message: "VM resized successfully",
-            });
-            this.isRenameLoading = false;
-            this.closeModal("resize");
-          } else {
+      let confirm = window.confirm("VM will be restarted");
+      if (confirm) {
+        this.isRenameLoading = true;
+        this.itemService.instancesGroups[0].instances.find((el) => {
+          if (el.uuid === this.VM.uuid) {
+            el.resources.cpu = +this.resize.VCPU;
+            el.resources.ram = this.resize.RAM * 1024;
+            el.resources.drive_size = Match.floor(this.resize.size * 1024);
+            return el;
+          }
+        });
+        this.$store
+          .dispatch("nocloud/vms/updateService", this.itemService)
+          .then((result) => {
+            if (result) {
+              // this.$message.success(this.$t("VM resized successfully"));
+              this.openNotificationWithIcon("success", {
+                message: "VM resized successfully",
+              });
+              this.isRenameLoading = false;
+              this.closeModal("resize");
+            } else {
+              this.openNotificationWithIcon("error", {
+                message: "Can't VM resize to same size",
+              });
+              // this.$message.error("Can't resize to same size");
+            }
+          })
+          .catch((err) => {
+            // this.$message.error( "Can't resize to same size");
             this.openNotificationWithIcon("error", {
               message: "Can't VM resize to same size",
             });
-            // this.$message.error("Can't resize to same size");
-          }
-        })
-        .catch((err) => {
-          // this.$message.error( "Can't resize to same size");
-          this.openNotificationWithIcon("error", {
-            message: "Can't VM resize to same size",
+            console.error(err);
+          })
+          .finally((res) => {
+            this.modal.confirmLoading = false;
           });
-          console.error(err);
-        })
-        .finally((res) => {
-          this.modal.confirmLoading = false;
-        });
-
+      }
       // const keys = Object.keys(this.resize);
       // const newVmSpecs = {};
       // const specScale = {
@@ -1574,7 +1507,6 @@ export default {
             return (el.title = this.renameNewName);
           }
         });
-
         this.$store
           .dispatch("nocloud/vms/updateService", this.itemService)
           .then((result) => {
@@ -1603,7 +1535,6 @@ export default {
             this.modal.confirmLoading = false;
           });
       }
-
       // api
       //   .sendVMaction("VMChangeName", { newVmName: this.renameNewName })
       //   .then((res) => {
@@ -1625,7 +1556,6 @@ export default {
       //     console.error(err);
       //   });
     },
-
     sendReinstall() {
       if (this.disabledMenu("reinstall")) {
         this.$store

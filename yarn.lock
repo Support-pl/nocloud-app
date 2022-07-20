@@ -1958,6 +1958,13 @@ alphanum-sort@^1.0.0:
   resolved "https://registry.npmjs.org/alphanum-sort/-/alphanum-sort-1.0.2.tgz"
   integrity sha512-0FcBfdcmaumGPQ0qPn7Q5qTgz/ooXgIyp1rf8ik5bGX8mpE2YHjC0P/eyQvxu1GURYQgq9ozf2mteQ5ZD9YiyQ==
 
+amator@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/amator/-/amator-1.1.0.tgz#08c6b60bc93aec2b61bbfc0c4d677d30323cc0f1"
+  integrity sha512-V5+aH8pe+Z3u/UG3L3pG3BaFQGXAyXHVQDroRwjPHdh08bcUEchAVsU1MCuJSCaU5o60wTK6KaE6te5memzgYw==
+  dependencies:
+    bezier-easing "^2.0.3"
+
 ansi-colors@^3.0.0:
   version "3.2.4"
   resolved "https://registry.npmjs.org/ansi-colors/-/ansi-colors-3.2.4.tgz"
@@ -2491,6 +2498,11 @@ bcrypt-pbkdf@^1.0.0:
   integrity sha512-qeFIXtP4MSoi6NLqO12WfqARWWuCKi2Rn/9hJLEmtB5yTNr9DqFWkJRCf2qShWzPeAMRnOgCrq0sg/KLv5ES9w==
   dependencies:
     tweetnacl "^0.14.3"
+
+bezier-easing@^2.0.3:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/bezier-easing/-/bezier-easing-2.1.0.tgz#c04dfe8b926d6ecaca1813d69ff179b7c2025d86"
+  integrity sha512-gbIqZ/eslnUFC1tjEvtz0sgx+xTK20wDnYMIA27VA04R7w6xxXQPZDbibjA9DTWZRA2CXtwHykkVzlCaAJAZig==
 
 bfj@^6.1.1:
   version "6.1.2"
@@ -4234,7 +4246,7 @@ error-ex@^1.3.1:
   dependencies:
     is-arrayish "^0.2.1"
 
-error-stack-parser@2.0.6, error-stack-parser@^2.0.6:
+error-stack-parser@^2.0.6:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/error-stack-parser/-/error-stack-parser-2.0.6.tgz#5a99a707bd7a4c58a797902d48d82803ede6aad8"
   integrity sha512-d51brTeqC+BHlwF0BhPtcYgF5nlzf9ZZ0ZIUQNZpc9ZB9qw5IJ2diTrBY9jlCJkTLITYPjmiX6OWCwH+fuyNgQ==
@@ -7127,6 +7139,11 @@ neo-async@^2.5.0, neo-async@^2.6.0, neo-async@^2.6.1:
   resolved "https://registry.npmjs.org/neo-async/-/neo-async-2.6.2.tgz"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
+ngraph.events@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/ngraph.events/-/ngraph.events-1.2.2.tgz#3ceb92d676a04a4e7ce60a09fa8e17a4f0346d7f"
+  integrity sha512-JsUbEOzANskax+WSYiAPETemLWYXmixuPAlmZmhIbIj6FH/WDgEGCGnRwUQBK0GjOnVm8Ui+e5IJ+5VZ4e32eQ==
+
 nice-try@^1.0.4:
   version "1.0.5"
   resolved "https://registry.npmjs.org/nice-try/-/nice-try-1.0.5.tgz"
@@ -7139,10 +7156,10 @@ no-case@^2.2.0:
   dependencies:
     lower-case "^1.1.1"
 
-nocloudjsrest@^1.4.15:
-  version "1.4.15"
-  resolved "https://registry.yarnpkg.com/nocloudjsrest/-/nocloudjsrest-1.4.15.tgz#74e548ae4d73350812171becb832586d3d601f5f"
-  integrity sha512-vCHgqwGjNMoxzVq1V24KgtZ1sFhudb7NUJXUTbdJAdLLWsnkS5oUxSmA2znQ8khckN37qkUA0dgUDnZjyB3mtg==
+nocloudjsrest@^1.4.17:
+  version "1.4.18"
+  resolved "https://registry.yarnpkg.com/nocloudjsrest/-/nocloudjsrest-1.4.18.tgz#3b1e79ff37242386e3c4a32a2d5b46d779b759b6"
+  integrity sha512-1EUK23mAuPkPetM2Phc9UdLBlVO62KyFBBUKoSW+ffIQlqW9VU0RApHGA1yDIGxX17hfOtz1GEkSymq43Rtutg==
   dependencies:
     axios "^0.24.0"
 
@@ -7572,6 +7589,15 @@ pako@~1.0.5:
   version "1.0.11"
   resolved "https://registry.npmjs.org/pako/-/pako-1.0.11.tgz"
   integrity sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==
+
+panzoom@^9.4.0:
+  version "9.4.3"
+  resolved "https://registry.yarnpkg.com/panzoom/-/panzoom-9.4.3.tgz#195c4031bb643f2e6c42f1de0ca87cc10e224042"
+  integrity sha512-xaxCpElcRbQsUtIdwlrZA90P90+BHip4Vda2BC8MEb4tkI05PmR6cKECdqUCZ85ZvBHjpI9htJrZBxV5Gp/q/w==
+  dependencies:
+    amator "^1.1.0"
+    ngraph.events "^1.2.2"
+    wheel "^1.0.0"
 
 parallel-transform@^1.1.0:
   version "1.2.0"
@@ -10071,6 +10097,13 @@ vue-loader@^15.9.1:
     vue-hot-reload-api "^2.3.0"
     vue-style-loader "^4.1.0"
 
+vue-panzoom@1.1.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/vue-panzoom/-/vue-panzoom-1.1.3.tgz#5d1caae505e066bb899bcc4da2d6d6875a1d8e2c"
+  integrity sha512-iGiTo76HR5hCQd8xob+qZW/3T0pLHs3jZab4MiWSbeo71MIOPikCw1Xr6+kmCUzpde0Nx4oiDmG+fOpuX9j8xQ==
+  dependencies:
+    panzoom "^9.4.0"
+
 vue-ref@^2.0.0:
   version "2.0.0"
   resolved "https://registry.npmjs.org/vue-ref/-/vue-ref-2.0.0.tgz"
@@ -10080,6 +10113,11 @@ vue-router@^3.3.4:
   version "3.5.4"
   resolved "https://registry.npmjs.org/vue-router/-/vue-router-3.5.4.tgz"
   integrity sha512-x+/DLAJZv2mcQ7glH2oV9ze8uPwcI+H+GgTgTmb5I55bCgY3+vXWIsqbYUzbBSZnwFHEJku4eoaH/x98veyymQ==
+
+vue-simple-password-meter@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/vue-simple-password-meter/-/vue-simple-password-meter-0.1.0.tgz#bf6ab33739fb3cfc508140ba7c2ca521cca1d2c8"
+  integrity sha512-5ZlI4AebAhoETMjUzdTZd8FcpUB0ecWGZ2cBggydJc70EBqEUPye6LI56anDlS+KSHQEAv7r9PdvQk8Ndt7WjQ==
 
 vue-style-loader@^4.1.0, vue-style-loader@^4.1.2:
   version "4.1.3"
@@ -10351,6 +10389,11 @@ whatwg-url@^7.0.0:
     lodash.sortby "^4.7.0"
     tr46 "^1.0.1"
     webidl-conversions "^4.0.2"
+
+wheel@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/wheel/-/wheel-1.0.0.tgz#6cf46e06a854181adb8649228077f8b0d5c574ce"
+  integrity sha512-XiCMHibOiqalCQ+BaNSwRoZ9FDTAvOsXxGHXChBugewDj7HC8VBIER71dEOiRH1fSdLbRCQzngKTSiZ06ZQzeA==
 
 which-boxed-primitive@^1.0.2:
   version "1.0.2"

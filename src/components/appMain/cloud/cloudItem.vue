@@ -11,7 +11,7 @@
         <div class="item__title">{{ instance.title }}</div>
 
         <!-- <div class="item__status">{{ $t(`cloudStateItem.${cloud.STATE}`) }}</div> -->
-        <div class="item__status">{{ instance.state }}</div>
+        <div class="item__status">{{ instance.state.state }}</div>
       </div>
       <!-- <div class="item_location">{{ location }}</div> -->
       <div class="cloud__lower">
@@ -36,18 +36,6 @@ export default {
     },
   },
   computed: {
-    // statusColor(){
-    // 	const color = this.$store.getters['cloud/getStateColor'](this.cloud.STATE);
-    // 	return color;
-    // }
-    // location() {
-    //   if (this.getSP.length) {
-    //     const data = this.getSP.find((el) => {
-    //         el.uuid == this.instance.sp;
-    //     });
-    //     return data.title;
-    //   }
-    // },
     statusColor() {
  
         let color = "";
