@@ -2,23 +2,6 @@
 <template>
   <div class="map">
     <panZoom :options="{ minZoom: 1 }">
-      <!-- <svg xmlns="http://www.w3.org/2000/svg" >
-        <symbol >
-          <path
-            d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"
-            id="Shape"
-            fill="#FF6E6E"
-          ></path>
-          <circle
-            id="elips"
-            fill="#FFFFFF"
-            fill-rule="nonzero"
-            cx="14"
-            cy="14"
-            r="7"
-          ></circle>
-        </symbol>
-      </svg> -->
       <svg
         @click="mapClickHandler"
         :viewBox="`0 0 ${mapData.meta.width} ${mapData.meta.height}`"

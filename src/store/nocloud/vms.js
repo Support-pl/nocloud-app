@@ -9,6 +9,7 @@ export default {
 		servicesFull: [],
 		loading: false,
 		loadingInvoke: false,
+		stateVM: ''
 	},
 	mutations: {
 		setCreateInstance(state, data) {
@@ -28,23 +29,6 @@ export default {
 		setServices(state, services) {
 			state.services = services;
 		},
-		// setInstances(state, services) {
-		// 	const instances = [];
-		// 	services.forEach(service => {
-		// 		Object.keys(service.instancesGroups).forEach(groupName => {
-		// 			service.instancesGroups[groupName].instances.forEach(instance => {
-		// 				instance.status = service.status
-		// 				instance.meta = {
-		// 					serviceUUID: service.uuid,
-		// 					groupName,
-		// 					groupUUID: service.instancesGroups[groupName].uuid
-		// 				}
-		// 				vue.set(instances, instances.length, instance);
-		// 			})
-		// 		})
-		// 	})
-		// 	state.instances = instances
-		// },
 		setInstances(state, data) {
 			data.instancesGroups.forEach(item => {
 				item.instances.forEach(el => {
@@ -76,37 +60,13 @@ export default {
 			} else {
 				state.servicesFull.push(data)
 			}
-
 		},
 		setUpdateInstanceInvoke(state, data) {
 			state.instances.find(item => {
-				if (item.state.meta.uuid === data.meta.uuid) {
-					return item.state.meta = data.meta
-				}
+					if (item.uuid === data.uuid) {
+						return item.state = data.state
+					}
 			})
-
-			// const state = {
-			// 	// останавливающийся
-			// 	SHUTDOWN_POWEROFF: {
-			// 		lcm_state:18,
-			// 		state:3
-			// 	},
-			// 	// остановленный
-			// 	POWEROFF:{
-			// 		lcm_state:0,
-			// 		state:8
-			// 	},
-			// 	// запускающийся
-			// 	BOOT_POWEROFF:{
-			// 		lcm_state:20,
-			// 		state:3
-			// 	},
-			// 	// запущенный
-			// 	RUNNING:{
-			// 		lcm_state:3,
-			// 		state:3
-			// 	}
-			// }
 
 		},
 		setUpdateInstance(state, data) {
@@ -121,7 +81,7 @@ export default {
 					}
 					const index = state.instances.findIndex(item => item.uuid === instanceItem.uuid)
 					state.instances.splice(index, 1, instanceItem)
-					
+
 				})
 			})
 		},
@@ -190,13 +150,35 @@ export default {
 					})
 			})
 		},
+		subscribeWebSocket({ commit }, uuid) {
+	
+			let socket = new WebSocket(`wss://api.nocloud.ione-cloud.net/services/${uuid}/stream`);
+			socket.onopen = (even) => {
+				console.log(even)
+			};
+			socket.onmessage = (even) => {
+				console.log(even)
+				let response = JSON.parse(even.data).result
+				if (response) {
+					commit('setUpdateInstanceInvoke', response)
+				}
+			}
+			socket.onclose = (event) => {
+				console.log(event)
+			};
+			socket.onerror = (event) => {
+				console.log(event)
+			};
+
+		},
 		actionVMInvoke({ commit, dispatch }, data) {
-			commit("setLoadingInvoke", true);
+			
 			return new Promise((resolve, reject) => {
 				api.instances
 					.action(data)
 					.then((response) => {
-						commit('setUpdateInstanceInvoke', response)
+						dispatch('subscribeWebSocket', data.uuidService)
+						// commit('setUpdateInstanceInvoke', response)
 						// if (response.meta.state == 3 && response.meta.lcm_state == 18 || response.meta.state == 3 && response.meta.lcm_state == 20 ) {
 						// 	setInterval(() => {
 						// 		dispatch("actionVMInvoke", data)
@@ -235,20 +217,5 @@ export default {
 			return state.servicesFull
 		},
 		getActionLoadingInvoke: state => state.loadingInvoke,
-		// getLoadingUpdateInvoke: state => state.loadingUpdateInvoke
-		// instances(state){
-		// 	const instances = [];
-		// 	if(state?.services == undefined || state.services.length > 0) return []
-		// 	state.services.forEach(service => {
-		// 		Object.keys(service.instancesGroups).forEach(groupName => {
-		// 			service.instancesGroups[groupName].instances.forEach(instance => {
-		// 				instance.status = service.status
-		// 				instances.push(instance)
-		// 				console.log(instances)
-		// 			})
-		// 		})
-		// 	})
-		// 	return instances;
-
 	}
 }

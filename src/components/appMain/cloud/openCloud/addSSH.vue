@@ -13,7 +13,7 @@
       >
         <a-col :xs="24" :sm="4"> SSH </a-col>
         <a-col :xs="24" :sm="20">
-          <a-textarea v-model="value"  :auto-size="{ minRows: 3, maxRows: 5 }" />
+          <a-textarea v-model="value" :auto-size="{ minRows: 3, maxRows: 5 }" />
         </a-col>
       </a-row>
     </a-modal>
@@ -42,7 +42,6 @@ export default {
     handleOk() {
       this.isRenameLoading = true;
       const ssh = { title: this.title, value: this.value };
-
       const dataObj = {
         data: {
           ssh_keys: [],
@@ -53,7 +52,6 @@ export default {
       } else {
         dataObj.data.ssh_keys.push(ssh);
       }
-
       const dataSSH = {
         id: this.userdata.uuid,
         body: dataObj,
@@ -68,6 +66,8 @@ export default {
             });
             this.isVisible = false;
             this.isRenameLoading = false;
+            this.title = "";
+            this.value = "";
           } else {
             this.openNotificationWithIcon("error", {
               message: "Error adding SSh key",
