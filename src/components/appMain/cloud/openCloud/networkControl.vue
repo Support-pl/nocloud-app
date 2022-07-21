@@ -39,18 +39,21 @@
       :confirm-loading="attach.loading"
       @ok="sendNewIP"
       @cancel="closeModal('attach')"
-	    :cancelText="$t('Cancel')"
+      :cancelText="$t('Cancel')"
     >
       <a-radio-group v-model="attach.type" style="margin-bottom: 20px">
         <a-radio :value="1">{{ $t("private") }}</a-radio>
         <a-radio :value="2">{{ $t("public") }}</a-radio>
       </a-radio-group>
       <div v-if="attach.type == 1">
-        <p style="margin-bottom: 2px">{{ $t("available intervals") }}</p>
-        <span v-for="ips in privateIPS" :key="ips.min"
+        <!-- <p style="margin-bottom: 2px">{{ $t("available intervals") }}</p> -->
+        <!-- <span v-for="ips in privateIPS" :key="ips.min"
           >{{ ips.min }} - {{ ips.max }}<br
-        /></span>
-
+        /></span> -->
+        <span
+          v-for="nic in VM.state  && VM.state.meta.networking.private"
+          :key="nic.NAME"
+        ></span>
         <p style="margin-top: 15px">{{ $t("enter new private IP") }}</p>
         <a-input v-model="attach.newIP" @change="ipInput">
           <a-select v-model="attach.mask" slot="addonAfter" style="width: 80px">
@@ -64,7 +67,26 @@
           </a-select>
         </a-input>
       </div>
-      <public-network v-if="attach.type == 2" @onselect="selectedRows" />
+      <!-- <public-network v-if="attach.type == 2" @onselect="selectedRows" /> -->
+      <div v-if="attach.type == 2" @onselect="selectedRows">
+        <span
+          v-for="nic in VM.state && VM.state.meta.networking.public"
+          :key="nic.NAME"
+        ></span>
+        <!-- <p style="margin-top: 15px">{{ $t("enter new private IP") }}</p> -->
+        <p style="margin-top: 15px">Enter new public IP:</p>
+        <a-input v-model="attach.newIP" @change="ipInput">
+          <a-select v-model="attach.mask" slot="addonAfter" style="width: 80px">
+            <a-select-option
+              v-for="mask in possibleMasks"
+              :key="mask"
+              :value="mask"
+            >
+              /{{ mask }}
+            </a-select-option>
+          </a-select>
+        </a-input>
+      </div>
     </a-modal>
 
     <a-row style="margin-top: 15px">
@@ -83,6 +105,7 @@
 import md5 from "md5";
 import { mapGetters } from "vuex";
 import publicNetwork from "../../../publicNetwork";
+import notification from "../../../../mixins/notification";
 
 const columns = [
   {
@@ -159,9 +182,20 @@ for (let i = 8; i <= 32; i++) {
 
 export default {
   name: "networkControl",
+  props: {
+    itemService: {
+      type: Object,
+      default: "",
+    },
+    VM: {
+      type: Object,
+      dafault: "",
+    },
+  },
   components: {
     publicNetwork,
   },
+  mixins: [notification],
   data() {
     return {
       columns: [
@@ -218,7 +252,7 @@ export default {
     }),
     ...mapGetters({ user: "getUser" }),
     newtworks() {
-          if (Array.isArray(this.SingleCloud.NIC)) {
+      if (Array.isArray(this.SingleCloud.NIC)) {
         const arrayNIC = [];
         for (let i = 0; i < this.SingleCloud.NIC.length; i++) {
           if (this.SingleCloud.NIC[i] !== null) {
@@ -345,78 +379,108 @@ export default {
       const arrayOfOctets = arrayOfBinOctets.map((bin) => this.bin2Dec(bin));
       return arrayOfOctets.join(".");
     },
+
     sendNewIP() {
-      const user = this.user;
-      const vmid = this.SingleCloud.ID;
-
-      const close_your_eyes = md5("VMNICattach" + user.id + user.secret);
-      const auth = {
-        userid: user.id,
-        vmid,
-        secret: close_your_eyes,
-      };
-      let query = {};
-      if (this.attach.type == 1) {
-        if (
-          !privateIPS.some((el) => {
-            const min = this.ipToSingleNumber(el.min);
-            const max = this.ipToSingleNumber(el.max);
-            const ip = this.ipToSingleNumber(this.attach.newIP);
-            return min <= ip && ip <= max;
-          }) &&
-          this.attach.newIP != ""
-        ) {
-          this.$message.error("You can't use that IP for private network");
-          return;
+      const ip = this.attach.newIP;
+      this.itemService.instancesGroups[0].instances.find((el) => {
+        if (el.uuid === this.VM.uuid) {
+          el.state.meta.networking.private.push(ip);
+          return el;
         }
-
-        let actionParams = {
-          type: this.attach.type,
-          // nicID: this.NICs.PRIVATE.NETWORK_ID
-        };
-
-        if (this.attach.newIP != "") {
-          actionParams.newIP = this.attach.newIP;
-          actionParams.mask = this.attach.mask;
-        }
-
-        query = Object.assign(auth, actionParams);
-      }
-
-      if (this.attach.type == 2) {
-        let actionParams = {
-          type: this.attach.type,
-          AR_ID: this.attach.publicAR_ID,
-        };
-        query = Object.assign(auth, actionParams);
-      }
-      this.attach.loading = true;
-      const url = `/VMNICattach.php?${this.URLparameter(query)}`;
-      this.$axios
-        .get(url)
-        .then((res) => {
-          // console.log(res);
-          if (res.data.result == "success")
-            this.$message.success(`NIC attached`);
-          else {
-            this.$message.error(`NIC attach failed`);
-            console.error(res.data);
+      });
+      this.$store
+        .dispatch("nocloud/vms/updateService", this.itemService)
+        .then((result) => {
+          if (result) {
+            // this.$message.success(this.$t("VM resized successfully"));
+            this.openNotificationWithIcon("success", {
+              message: "Add ip successfully",
+            });
+            this.isRenameLoading = false;
+            this.closeModal("resize");
+          } else {
+            this.openNotificationWithIcon("error", {
+              message: "Can't add ip VM",
+            });
+            // this.$message.error("Can't resize to same size");
           }
         })
         .catch((err) => {
-          this.$message.error(`NIC attach failed`);
+          // this.$message.error( "Can't resize to same size");
+          this.openNotificationWithIcon("error", {
+            message: "Can't add ip VM",
+          });
           console.error(err);
         })
-        .finally(() => {
-          this.$store.dispatch(
-            "cloud/silentUpdate",
-            this.$route.params.pathMatch
-          );
-          this.$store.dispatch("network/silentFetchNICs");
-          this.closeModal("attach");
-          this.attach.loading = false;
-          this.attach.newIP = "";
+        .finally((res) => {
+          this.modal.confirmLoading = false;
         });
+      // const user = this.user;
+      // const vmid = this.SingleCloud.ID;
+      // const close_your_eyes = md5("VMNICattach" + user.id + user.secret);
+      // const auth = {
+      //   userid: user.id,
+      //   vmid,
+      //   secret: close_your_eyes,
+      // };
+      // let query = {};
+      // if (this.attach.type == 1) {
+      //   if (
+      //     !privateIPS.some((el) => {
+      //       const min = this.ipToSingleNumber(el.min);
+      //       const max = this.ipToSingleNumber(el.max);
+      //       const ip = this.ipToSingleNumber(this.attach.newIP);
+      //       return min <= ip && ip <= max;
+      //     }) &&
+      //     this.attach.newIP != ""
+      //   ) {
+      //     this.$message.error("You can't use that IP for private network");
+      //     return;
+      //   }
+      //   let actionParams = {
+      //     type: this.attach.type,
+      //     // nicID: this.NICs.PRIVATE.NETWORK_ID
+      //   };
+      //   if (this.attach.newIP != "") {
+      //     actionParams.newIP = this.attach.newIP;
+      //     actionParams.mask = this.attach.mask;
+      //   }
+      //   query = Object.assign(auth, actionParams);
+      // }
+      // if (this.attach.type == 2) {
+      //   let actionParams = {
+      //     type: this.attach.type,
+      //     AR_ID: this.attach.publicAR_ID,
+      //   };
+      //   query = Object.assign(auth, actionParams);
+      // }
+      // this.attach.loading = true;
+      // const url = `/VMNICattach.php?${this.URLparameter(query)}`;
+      // this.$axios
+      //   .get(url)
+      //   .then((res) => {
+      //     // console.log(res);
+      //     if (res.data.result == "success")
+      //       this.$message.success(`NIC attached`);
+      //     else {
+      //       this.$message.error(`NIC attach failed`);
+      //       console.error(res.data);
+      //     }
+      //   })
+      //   .catch((err) => {
+      //     this.$message.error(`NIC attach failed`);
+      //     console.error(err);
+      //   })
+      //   .finally(() => {
+      //     this.$store.dispatch(
+      //       "cloud/silentUpdate",
+      //       this.$route.params.pathMatch
+      //     );
+      //     this.$store.dispatch("network/silentFetchNICs");
+      //     this.closeModal("attach");
+      //     this.attach.loading = false;
+      //     this.attach.newIP = "";
+      //   });
     },
     dec2Bin(dec) {
       return (dec >>> 0).toString(2);
