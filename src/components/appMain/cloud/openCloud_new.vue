@@ -95,15 +95,19 @@
                     :ok-button-props="{
                       props: {
                         disabled:
-                          (VM.state && VM.state.meta.lsm_state != 0) &&
-                          (VM.state && VM.state.meta.state != 8),
+                          VM.state &&
+                          VM.state.meta.lsm_state != 0 &&
+                          VM.state &&
+                          VM.state.meta.state != 8,
                       },
                     }"
                   >
                     <div
                       v-if="
-                        (VM.state && VM.state.meta.lsm_state != 0) &&
-                        (VM.state && VM.state.meta.state != 8)
+                        VM.state &&
+                        VM.state.meta.lsm_state != 0 &&
+                        VM.state &&
+                        VM.state.meta.state != 8
                       "
                       :style="{
                         color: config.colors.err,
@@ -183,7 +187,7 @@
                     :title="$t('Network control')"
                     :footer="null"
                   >
-                    <network-control />
+                    <network-control :itemService="itemService" :VM="VM" />
                   </a-modal>
 
                   <a-modal
@@ -228,9 +232,9 @@
             <div class="Fcloud__buttons" v-else>
               <div
                 v-if="
-                  VM &&
+                  VM.state &&
                   VM.state.meta.state !== 8 &&
-                  VM &&
+                  VM.state &&
                   VM.state.meta.lsm_state !== 0
                 "
                 class="Fcloud__button"
@@ -589,9 +593,9 @@
                     >
                       <div
                         v-if="
-                          (SingleCloud.LCM_STATE != 3 ||
-                            SingleCloud.STATE != 3) &&
-                          SingleCloud.LCM_STATE != 24
+                          (VM.state && VM.state.meta.state != 3 ||
+                            VM.state && VM.state.meta.lsm_state != 3) &&
+                          VM.state && VM.state.meta.lsm_state != 24
                         "
                         :style="{
                           color: config.colors.err,
@@ -619,8 +623,8 @@
                             @click="revToShapshot(actions)"
                             :disabled="
                               actions.ACTION != undefined ||
-                              SingleCloud.LCM_STATE != 3 ||
-                              SingleCloud.STATE != 3
+                              VM.state && VM.state.meta.lsm_state != 3 ||
+                              VM.state && VM.state.meta.state != 3
                             "
                             :loading="
                               snapshots.loadingSnaps.includes(
@@ -635,8 +639,8 @@
                             @click="RMSnapshot(actions)"
                             :disabled="
                               actions.ACTION != undefined ||
-                              SingleCloud.LCM_STATE != 3 ||
-                              SingleCloud.STATE != 3
+                               VM.state && VM.state.meta.lsm_state != 3 ||
+                               VM.state && VM.state.meta.state != 3
                             "
                             :loading="
                               snapshots.loadingSnaps.includes(
@@ -647,17 +651,17 @@
                         </template>
                       </a-table>
                       <div class="modal__buttons">
+                        <!-- :disabled="
+                            snapshots.data.length > 2 ||
+                            snapshots.loading ||
+                            VM.state.meta.lsm_state  != 3 ||
+                            VM.state.meta.state  != 3
+                          " -->
                         <a-button
                           icon="plus"
                           type="primary"
                           shape="round"
                           size="large"
-                          :disabled="
-                            snapshots.data.length > 2 ||
-                            snapshots.loading ||
-                            SingleCloud.LCM_STATE != 3 ||
-                            SingleCloud.STATE != 3
-                          "
                           @click="openModal('createSnapshot')"
                           >{{ $t("Take snapshot") }}</a-button
                         >
@@ -711,7 +715,7 @@
                   <div class="button">
                     <a-button
                       :disabled="
-                        SingleCloud.STATE != 3 || SingleCloud.LCM_STATE != 3
+                        VM.state && VM.state.meta.state != 3 ||  VM.state && VM.state.meta.lsm_state != 3
                       "
                       type="primary"
                       shape="round"
@@ -820,6 +824,7 @@ export default {
         accessManager: false,
         rename: false,
         SSH: false,
+        resize: false,
       },
       option: {
         reboot: 0,
@@ -1246,32 +1251,48 @@ export default {
       return `${newVal} ${range}`;
     },
     newsnap() {
-      const self = this;
       if (this.snapshots.data.lenght >= 3) {
         this.$error({
-          title: self.$t("You can't have more than 3 snaps at the same time"),
-          content: self.$t("remove or commit old ones to create new"),
+          title: this.$t("You can't have more than 3 snaps at the same time"),
+          content: this.$t("remove or commit old ones to create new"),
         });
       }
-      const user = this.$store.getters.getUser;
-      const userid = user.id;
-      const vmid = this.SingleCloud.ID;
-      const snapname = encodeURI(this.snapshots.addSnap.snapname);
-      const close_your_eyes = md5("vmaction" + userid + user.secret);
-      const url = `/vmaction.php?userid=${userid}&action=newSnapshot&snapname=${snapname}&vmid=${vmid}&secret=${close_your_eyes}`;
-      this.snapshots.addSnap.loading = true;
-      this.$axios.get(url).then((res) => {
-        this.snapshots.addSnap.loading = false;
-        this.snapshots.addSnap.modal = false;
-        this.$store.dispatch(
-          "cloud/silentUpdate",
-          this.$route.params.pathMatch
-        );
-        this.snapshotsFetch();
-      });
+      const snapname = this.snapshots.addSnap.snapname;
+      console.log(snapname);
+
+      this.$store
+        .dispatch("nocloud/vms/actionVMInvoke", data)
+        // .then((res) => {
+        //   const opts = {
+        //     message: `Done!`,
+        //   };
+        //   this.openNotificationWithIcon("success", opts);
+        // })
+        .catch((err) => {
+          const opts = {
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotificationWithIcon("error", opts);
+        });
+      // const user = this.$store.getters.getUser;
+      // const userid = user.id;
+      // const vmid = this.SingleCloud.ID;
+      // const snapname = encodeURI(this.snapshots.addSnap.snapname);
+      // const close_your_eyes = md5("vmaction" + userid + user.secret);
+      // const url = `/vmaction.php?userid=${userid}&action=newSnapshot&snapname=${snapname}&vmid=${vmid}&secret=${close_your_eyes}`;
+      // this.snapshots.addSnap.loading = true;
+      // this.$axios.get(url).then((res) => {
+      //   this.snapshots.addSnap.loading = false;
+      //   this.snapshots.addSnap.modal = false;
+      //   this.$store.dispatch(
+      //     "cloud/silentUpdate",
+      //     this.$route.params.pathMatch
+      //   );
+      //   this.snapshotsFetch();
+      // });
     },
     openModal(name) {
-      switch (name.toLowerCase()) {
+      switch (name) {
         case "start":
           if (this.statusVM.start) return;
           break;
@@ -1287,11 +1308,16 @@ export default {
         case "recover":
           if (this.statusVM.recover) return;
           break;
-          //  case "snapshot":
+        case "snapshot":
           // if (this.permissions.snapshot) return;
           // this.snapshotsFetch();
-          // this.snapshots.modal = true;
-          // break;
+          this.snapshots.modal = true;
+          break;
+        case "createSnapshot":
+          // if (this.permissions.snapshot) return;
+          // this.snapshotsFetch();
+          this.snapshots.addSnap.modal = true;
+          break;
       }
       this.modal[name] = true;
     },
@@ -1318,7 +1344,7 @@ export default {
           if (el.uuid === this.VM.uuid) {
             el.resources.cpu = +this.resize.VCPU;
             el.resources.ram = this.resize.RAM * 1024;
-            el.resources.drive_size = Match.floor(this.resize.size * 1024);
+            el.resources.drive_size = this.resize.size * 1024
             return el;
           }
         });
@@ -1331,7 +1357,7 @@ export default {
                 message: "VM resized successfully",
               });
               this.isRenameLoading = false;
-              this.closeModal("resize");
+              this.closeModal("expand");
             } else {
               this.openNotificationWithIcon("error", {
                 message: "Can't VM resize to same size",
@@ -1419,81 +1445,81 @@ export default {
       }
       return str;
     },
-    RMSnapshot(object) {
-      const user = this.$store.getters.getUser;
-      const userid = user.id;
-      const vmid = this.SingleCloud.ID;
-      const snapid = object.SNAPSHOT_ID;
-      this.$store.dispatch("cloud/silentUpdate", this.$route.params.pathMatch);
-      const close_your_eyes = md5("vmaction" + userid + user.secret);
-      const url = `/vmaction.php?userid=${userid}&action=RMSnapshot&snapid=${snapid}&vmid=${vmid}&secret=${close_your_eyes}`;
-      this.snapshots.data.find((el) => el.SNAPSHOT_ID == snapid).loading = true;
-      this.snapshots.loadingSnaps.push(snapid);
-      this.$axios.get(url).then((res) => {
-        if (res.data.result == "success") {
-          const index = this.snapshots.data.indexOf(object);
-          this.snapshots.data.splice(index, 1);
-          this.$message.success(this.$t("Snapshot successfully deleted"));
-        }
-        const ind = this.snapshots.loadingSnaps.indexOf(snapid);
-        if (ind > -1) {
-          this.snapshots.loadingSnaps.splice(ind, 1);
-        }
-        this.snapshotsFetch();
-      });
-    },
-    revToShapshot(object) {
-      const user = this.$store.getters.getUser;
-      const userid = user.id;
-      const vmid = this.SingleCloud.ID;
-      const snapid = object.SNAPSHOT_ID;
-      this.$store.dispatch("cloud/silentUpdate", this.$route.params.pathMatch);
-      const close_your_eyes = md5("vmaction" + userid + user.secret);
-      const url = `/vmaction.php?userid=${userid}&action=RevSnapshot&snapid=${snapid}&vmid=${vmid}&secret=${close_your_eyes}`;
-      this.snapshots.data.find((el) => el.SNAPSHOT_ID == snapid).loading = true;
-      this.snapshots.loadingSnaps.push(snapid);
-      this.$axios.get(url).then((res) => {
-        if (res.data.result == "success") {
-          const index = this.snapshots.data.indexOf(object);
-          this.snapshots.data.splice(index, 1);
-          this.$message.success(
-            this.$t("Vm was successfully restored from snapshot")
-          );
-        }
-        const ind = this.snapshots.loadingSnaps.indexOf(snapid);
-        if (ind > -1) {
-          this.snapshots.loadingSnaps.splice(ind, 1);
-        }
-        this.snapshotsFetch();
-      });
-    },
+    // RMSnapshot(object) {
+    //   const user = this.$store.getters.getUser;
+    //   const userid = user.id;
+    //   const vmid = this.SingleCloud.ID;
+    //   const snapid = object.SNAPSHOT_ID;
+    //   this.$store.dispatch("cloud/silentUpdate", this.$route.params.pathMatch);
+    //   const close_your_eyes = md5("vmaction" + userid + user.secret);
+    //   const url = `/vmaction.php?userid=${userid}&action=RMSnapshot&snapid=${snapid}&vmid=${vmid}&secret=${close_your_eyes}`;
+    //   this.snapshots.data.find((el) => el.SNAPSHOT_ID == snapid).loading = true;
+    //   this.snapshots.loadingSnaps.push(snapid);
+    //   this.$axios.get(url).then((res) => {
+    //     if (res.data.result == "success") {
+    //       const index = this.snapshots.data.indexOf(object);
+    //       this.snapshots.data.splice(index, 1);
+    //       this.$message.success(this.$t("Snapshot successfully deleted"));
+    //     }
+    //     const ind = this.snapshots.loadingSnaps.indexOf(snapid);
+    //     if (ind > -1) {
+    //       this.snapshots.loadingSnaps.splice(ind, 1);
+    //     }
+    //     this.snapshotsFetch();
+    //   });
+    // },
+    // revToShapshot(object) {
+    //   const user = this.$store.getters.getUser;
+    //   const userid = user.id;
+    //   const vmid = this.SingleCloud.ID;
+    //   const snapid = object.SNAPSHOT_ID;
+    //   this.$store.dispatch("cloud/silentUpdate", this.$route.params.pathMatch);
+    //   const close_your_eyes = md5("vmaction" + userid + user.secret);
+    //   const url = `/vmaction.php?userid=${userid}&action=RevSnapshot&snapid=${snapid}&vmid=${vmid}&secret=${close_your_eyes}`;
+    //   this.snapshots.data.find((el) => el.SNAPSHOT_ID == snapid).loading = true;
+    //   this.snapshots.loadingSnaps.push(snapid);
+    //   this.$axios.get(url).then((res) => {
+    //     if (res.data.result == "success") {
+    //       const index = this.snapshots.data.indexOf(object);
+    //       this.snapshots.data.splice(index, 1);
+    //       this.$message.success(
+    //         this.$t("Vm was successfully restored from snapshot")
+    //       );
+    //     }
+    //     const ind = this.snapshots.loadingSnaps.indexOf(snapid);
+    //     if (ind > -1) {
+    //       this.snapshots.loadingSnaps.splice(ind, 1);
+    //     }
+    //     this.snapshotsFetch();
+    //   });
+    // },
     snapshotsFetch() {
-      const user = this.$store.getters.getUser;
-      const userid = user.id;
-      const vmid = this.SingleCloud.ID;
-      const close_your_eyes = md5("getSnapshots" + userid + user.secret);
-      const url = `/getSnapshots.php?userid=${userid}&vmid=${vmid}&secret=${close_your_eyes}`;
-      this.$axios.get(url).then((res) => {
-        // console.log(res);
-        if (
-          res.data.response[0] != null &&
-          res.data.response.some((element) => element.ACTION != undefined)
-        ) {
-          setTimeout(() => {
-            this.snapshotsFetch();
-          }, 10000);
-        }
-        this.snapshots.loadingSnaps.splice(
-          0,
-          this.snapshots.loadingSnaps.lenght
-        );
-        if (res.data.response[0] == null) {
-          this.snapshots.data = [];
-        } else {
-          this.snapshots.data = res.data.response;
-        }
-        this.snapshots.loading = false;
-      });
+      // const user = this.$store.getters.getUser;
+      // const userid = user.id;
+      // const vmid = this.SingleCloud.ID;
+      // const close_your_eyes = md5("getSnapshots" + userid + user.secret);
+      // const url = `/getSnapshots.php?userid=${userid}&vmid=${vmid}&secret=${close_your_eyes}`;
+      // this.$axios.get(url).then((res) => {
+      //   // console.log(res);
+      //   if (
+      //     res.data.response[0] != null &&
+      //     res.data.response.some((element) => element.ACTION != undefined)
+      //   ) {
+      //     setTimeout(() => {
+      //       this.snapshotsFetch();
+      //     }, 10000);
+      //   }
+      //   this.snapshots.loadingSnaps.splice(
+      //     0,
+      //     this.snapshots.loadingSnaps.lenght
+      //   );
+      //   if (res.data.response[0] == null) {
+      //     this.snapshots.data = [];
+      //   } else {
+      //     this.snapshots.data = res.data.response;
+      //   }
+      //   this.snapshots.loading = false;
+      // });
     },
     getFormatedDate(dstring) {
       const date = new Date(+(dstring + "000"));
