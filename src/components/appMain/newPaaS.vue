@@ -80,10 +80,10 @@
                     >
                       <a-tooltip placement="top">
                         <template slot="title" v-if="pl.kind == 'STATIC'">
-                          Pre-Paid VDS
+                         VDS Pre-Paid 
                         </template>
                         <template slot="title" v-else>
-                          VDC (Pay-as-you-Go)</template
+                          VDC Pay-as-you-Go</template
                         >
                         <span style="display: block">{{ pl.title }}</span>
                       </a-tooltip>
