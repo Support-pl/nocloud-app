@@ -80,7 +80,7 @@
                     >
                       <a-tooltip placement="top">
                         <template slot="title" v-if="pl.kind == 'STATIC'">
-                         VDS Pre-Paid 
+                          VDS Pre-Paid
                         </template>
                         <template slot="title" v-else>
                           VDC Pay-as-you-Go</template
@@ -386,19 +386,30 @@
                       </template>
                     </div>
                   </div>
-                  <a-row class="newCloud__prop">
-                    <a-col :xs="12" :sm="10" style="margin-top: 10px">
+                  <a-row>
+                    <a-col :xs="12" :sm="10" >
                       <!-- <a-form-model-item> -->
+                      <a-input
+                        style="margin-top: 10px"
+                        v-model="vmName"
+                        placeholder="VM name"
+                      />
                       <password-meter
-                        style="height: 10px; margin-bottom: 7px"
+                        style="height: 10px; "
                         :password="password"
                         @score="onScore"
                       />
+
+                      <!-- <span style="color: red">{{ textInvalid }}</span> -->
+                      <!-- </a-form-model-item> -->
+                      <!-- <a-form-model-item> -->
+
                       <a-form-item
                         :has-feedback="password.length ? true : false"
                         :validate-status="
                           score < 4 && password.length ? 'error' : 'success'
                         "
+                        style="margin-bottom:0px"
                       >
                         <a-input
                           @focus="focused = true"
@@ -407,36 +418,10 @@
                           placeholder="Password"
                         />
                       </a-form-item>
-                      <!-- <span style="color: red">{{ textInvalid }}</span> -->
-                      <!-- </a-form-model-item> -->
-                      <!-- <a-form-model-item> -->
-                      <a-input
-                        style="margin-top: 10px"
-                        v-model="vmName"
-                        placeholder="VM name"
-                      />
                       <!-- </a-form-model-item> -->
                     </a-col>
                   </a-row>
                 </div>
-
-                <!-- 
-                <a-row class="newCloud__prop">
-                  <a-col span="8" :xs="6">{{ $t("os") }}:</a-col>
-                  <a-col span="16" :xs="18">
-                    <a-select
-                      :default-value="defaultOS"
-                      style="width: 100%"
-                      @change="(newdata) => setAddon('os', +newdata)"
-                    >
-                      <a-select-option
-                        v-for="group in getAddons.os"
-                        :key="group.id"
-                        >{{ group.description.TITLE }}</a-select-option
-                      >
-                    </a-select>
-                  </a-col>
-                </a-row> -->
               </a-collapse-panel>
 
               <!-- network -->
@@ -1422,9 +1407,13 @@ export default {
     this.$store.dispatch("nocloud/sp/fetch");
     this.$store.dispatch("nocloud/vms/fetch");
     this.$store.dispatch("nocloud/namespaces/fetch");
-  
+
     this.$router.beforeEach((to, from, next) => {
-      if (from.path === "/cloud/newPaaS" && localStorage.getItem("data") && this.isLoggedIn) {
+      if (
+        from.path === "/cloud/newPaaS" &&
+        localStorage.getItem("data") &&
+        this.isLoggedIn
+      ) {
         const answer = window.confirm("Data will be lost");
         if (answer) {
           localStorage.removeItem("data");
@@ -1432,8 +1421,8 @@ export default {
         } else {
           next(false);
         }
-      }else{
-          next();
+      } else {
+        next();
       }
     });
 
