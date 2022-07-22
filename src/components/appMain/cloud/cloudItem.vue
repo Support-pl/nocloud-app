@@ -21,9 +21,6 @@
 					IP: {{cloud.IP || $t('ip.none')}} -->
       </div>
     </div>
-    <div class="cloud__label cloud__label__mainColor">
-      <!-- {{cloud.VDC == 1 ? $t('PAYG') : $t('PrePaid')}} -->
-    </div>
   </div>
 </template>
 

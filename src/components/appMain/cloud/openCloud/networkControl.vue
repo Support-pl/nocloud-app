@@ -51,7 +51,7 @@
           >{{ ips.min }} - {{ ips.max }}<br
         /></span> -->
         <span
-          v-for="nic in VM.state  && VM.state.meta.networking.private"
+          v-for="nic in VM.state && VM.state.meta.networking.private"
           :key="nic.NAME"
         ></span>
         <p style="margin-top: 15px">{{ $t("enter new private IP") }}</p>
@@ -382,12 +382,22 @@ export default {
 
     sendNewIP() {
       const ip = this.attach.newIP;
-      this.itemService.instancesGroups[0].instances.find((el) => {
-        if (el.uuid === this.VM.uuid) {
-          el.state.meta.networking.private.push(ip);
-          return el;
-        }
-      });
+      if (this.attach.type === 1) {
+        this.itemService.instancesGroups[0].instances.find((el) => {
+          if (el.uuid === this.VM.uuid) {
+            el.state.meta.networking.private.push(ip);
+            return el;
+          }
+        });
+      } else {
+        this.itemService.instancesGroups[0].instances.find((el) => {
+          if (el.uuid === this.VM.uuid) {
+            el.state.meta.networking.public.push(ip);
+            return el;
+          }
+        });
+      }
+
       this.$store
         .dispatch("nocloud/vms/updateService", this.itemService)
         .then((result) => {
