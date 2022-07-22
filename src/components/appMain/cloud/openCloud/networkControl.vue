@@ -71,8 +71,10 @@
       <div v-if="attach.type == 2" @onselect="selectedRows">
         <span
           v-for="nic in VM.state && VM.state.meta.networking.public"
-          :key="nic.NAME"
-        ></span>
+          :key="nic"
+        >
+        {{nic}}
+        </span>
         <!-- <p style="margin-top: 15px">{{ $t("enter new private IP") }}</p> -->
         <p style="margin-top: 15px">Enter new public IP:</p>
         <a-input v-model="attach.newIP" @change="ipInput">
