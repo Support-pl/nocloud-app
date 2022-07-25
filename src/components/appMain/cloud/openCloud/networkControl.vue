@@ -106,36 +106,8 @@
 <script>
 import md5 from "md5";
 import { mapGetters } from "vuex";
-import publicNetwork from "../../../publicNetwork";
+// import publicNetwork from "../../../publicNetwork";
 import notification from "../../../../mixins/notification";
-
-const columns = [
-  {
-    title: "№",
-    dataIndex: "NIC_ID",
-    key: "NIC_ID",
-    width: 50,
-    align: "center",
-  },
-  {
-    title: "Network",
-    dataIndex: "NETWORK",
-    key: "NETWORK",
-    // scopedSlots: { customRender: 'ImageName' },
-  },
-  {
-    title: "IP",
-    dataIndex: "IP",
-    key: "IP",
-    scopedSlots: { customRender: "ip" },
-  },
-  {
-    title: "Actions",
-    key: "actions",
-    scopedSlots: { customRender: "buttons" },
-    width: 100,
-  },
-];
 
 const NICsColumns = [
   {
@@ -195,7 +167,7 @@ export default {
     },
   },
   components: {
-    publicNetwork,
+    // publicNetwork,
   },
   mixins: [notification],
   data() {
@@ -307,11 +279,8 @@ export default {
       this.modal[modalname] = false;
     },
     detachInit(NIC) {
-      // console.log(NIC)
-      // console.log('works', NIC.NIC_ID)
       this.detach.NIC = NIC.NIC_ID;
       this.showModal("detach");
-      // console.log('works', this.modal.detach)
     },
     sendDetach(disk) {
       // console.log(disk)

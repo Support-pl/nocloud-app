@@ -92,7 +92,8 @@
                     v-model="modal.expand"
                     :title="$t('Resize VM')"
                     @ok="ResizeVM"
-                    :ok-button-props="{
+                  >
+                    <!-- :ok-button-props="{
                       props: {
                         disabled:
                           VM.state &&
@@ -100,9 +101,8 @@
                           VM.state &&
                           VM.state.meta.state != 8,
                       },
-                    }"
-                  >
-                    <div
+                    }" -->
+                    <!-- <div
                       v-if="
                         VM.state &&
                         VM.state.meta.lsm_state != 0 &&
@@ -115,7 +115,7 @@
                       }"
                     >
                       {{ $t("turn of VM to resize it") | capitalize }}
-                    </div>
+                    </div> -->
                     <a-row
                       :gutter="[10, 10]"
                       style="
@@ -158,6 +158,14 @@
                     >
                       <a-col :xs="24" :sm="4"> Disk (GB) </a-col>
                       <a-col :xs="24" :sm="20">
+                        <div
+                          :style="{
+                            color: config.colors.err,
+                            'text-align': 'center',
+                          }"
+                        >
+                          Can't reduce disk size
+                        </div>
                         <a-input-number
                           style="width: 100%"
                           v-model="resize.size"
@@ -210,9 +218,44 @@
                     :title="$t('SSH keys')"
                     :footer="null"
                   >
-                    <div style="margin-bottom: 20px">
-                      <p>While here is not one SSH key</p>
+                    <div
+                      style="margin-bottom: 20px"
+                      v-if="userdata.data.ssh_keys.length"
+                    >
+                      <div
+                        v-for="(item, index) in userdata.data.ssh_keys"
+                        :key="item.uuid"
+                        style="
+                          display: flex;
+                          align-items: center;
+                          margin-bottom: 20px;
+                        "
+                      >
+                        <a-col style="width: 100%">
+                          <div
+                            style="
+                              display: flex;
+                              align-items: center;
+                              margin-right: 10px;
+                            "
+                          >
+                            <div style="margin-right: 10px; width: 20%">
+                              {{ index + 1 }}.{{ item.title }}
+                            </div>
+                            <a-input
+                              :value="item.value"
+                              style="width: 80%; margin-left: auto"
+                            />
+                          </div>
+                        </a-col>
+                        <a-col style="margin-left: auto">
+                          <a-button type="danger" @click="deleteSSH(index)"
+                            ><a-icon type="close"
+                          /></a-button>
+                        </a-col>
+                      </div>
                     </div>
+                    <p v-else>While here is not one SSH key</p>
                     <addSSH />
                   </a-modal>
                 </div>
@@ -591,11 +634,12 @@
                       :title="$t('Snapshots')"
                       :footer="null"
                     >
-                      <div
+                      <!-- <div
                         v-if="
-                          (VM.state && VM.state.meta.state != 3 ||
-                            VM.state && VM.state.meta.lsm_state != 3) &&
-                          VM.state && VM.state.meta.lsm_state != 24
+                          ((VM.state && VM.state.meta.state != 3) ||
+                            (VM.state && VM.state.meta.lsm_state != 3)) &&
+                          VM.state &&
+                          VM.state.meta.lsm_state != 24
                         "
                         :style="{
                           color: config.colors.err,
@@ -603,8 +647,8 @@
                         }"
                       >
                         {{ $t("turn on VM to create or load snapshots") }}
-                      </div>
-                      <a-table
+                      </div> -->
+                      <!-- <a-table
                         :columns="snapshots.columns"
                         :data-source="snapshots.data"
                         :pagination="false"
@@ -623,8 +667,8 @@
                             @click="revToShapshot(actions)"
                             :disabled="
                               actions.ACTION != undefined ||
-                              VM.state && VM.state.meta.lsm_state != 3 ||
-                              VM.state && VM.state.meta.state != 3
+                              (VM.state && VM.state.meta.lsm_state != 3) ||
+                              (VM.state && VM.state.meta.state != 3)
                             "
                             :loading="
                               snapshots.loadingSnaps.includes(
@@ -639,8 +683,8 @@
                             @click="RMSnapshot(actions)"
                             :disabled="
                               actions.ACTION != undefined ||
-                               VM.state && VM.state.meta.lsm_state != 3 ||
-                               VM.state && VM.state.meta.state != 3
+                              (VM.state && VM.state.meta.lsm_state != 3) ||
+                              (VM.state && VM.state.meta.state != 3)
                             "
                             :loading="
                               snapshots.loadingSnaps.includes(
@@ -649,15 +693,68 @@
                             "
                           ></a-button>
                         </template>
-                      </a-table>
+                      </a-table> -->
+
+                      <!-- <div v-for="item in this.VM.state.meta.snapshots" :key="item.name">
+                          {{item.name}}{{item.ts}}
+                      </div> -->
+
+                      <div
+                        style="margin-bottom: 40px"
+                        v-if="VM.state.meta.snapshots"
+                      >
+                        <div
+                          v-for="(item, index) in VM.state.meta.snapshots"
+                          :key="item.name"
+                          style="
+                            display: flex;
+                            align-items: center;
+                            margin-bottom: 10px;
+                          "
+                        >
+                          <a-col style="width: 100%">
+                            <div style="display: flex; font-size: 16px">
+                              <div style="margin-right: 30px; width: 30%">
+                                {{ item.name }}
+                              </div>
+                              <div style="width: 70%">
+                                {{ (item.ts * 1000) | dateFormat }}
+                              </div>
+                            </div>
+                          </a-col>
+                          <a-col style="margin-left: auto; display: flex">
+                            <a-button
+                              :disabled="!VM.state.meta.snapshots"
+                              type="primary"
+                              @click="revSnapshot(index)"
+                              style="margin-right: 10px"
+                            >
+                              <a-icon type="caret-right" />
+                            </a-button>
+                            <a-button
+                              :disabled="!VM.state.meta.snapshots"
+                              type="danger"
+                              @click="deleteSnapshot(index)"
+                            >
+                              <a-icon type="close"
+                            /></a-button>
+                          </a-col>
+                        </div>
+                      </div>
+                      <div
+                        v-else
+                        style="
+                          display: flex;
+                          justify-content: center;
+                          margin: 20px 0;
+                        "
+                      >
+                        <a-spin />
+                      </div>
+
                       <div class="modal__buttons">
-                        <!-- :disabled="
-                            snapshots.data.length > 2 ||
-                            snapshots.loading ||
-                            VM.state.meta.lsm_state  != 3 ||
-                            VM.state.meta.state  != 3
-                          " -->
                         <a-button
+                          :disabled="!VM.state.meta.snapshots"
                           icon="plus"
                           type="primary"
                           shape="round"
@@ -715,7 +812,8 @@
                   <div class="button">
                     <a-button
                       :disabled="
-                        VM.state && VM.state.meta.state != 3 ||  VM.state && VM.state.meta.lsm_state != 3
+                        (VM.state && VM.state.meta.state != 3) ||
+                        (VM.state && VM.state.meta.lsm_state != 3)
                       "
                       type="primary"
                       shape="round"
@@ -744,7 +842,7 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 import md5 from "md5";
 import loading from "@/components/loading/loading.vue";
 import config from "@/appconfig";
@@ -920,19 +1018,13 @@ export default {
     };
   },
   computed: {
-    ...mapGetters("cloud", {
-      updating: "isUpdating",
-      SingleCloud: "getOpenedCloud",
-      vmState: "getCloudState",
-      // isLoading: 'isLoading',
-      permissions: "permissions",
-      // singleLoading: 'singleLoading'
-    }),
     ...mapGetters("nocloud/vms", [
       "getActionLoadingInvoke",
       "getServicesFull",
       "getInstances",
     ]),
+    ...mapGetters("nocloud/auth", ["userdata"]),
+
     itemService() {
       const data = this.getServicesFull.find((el) => {
         return this.VM.uuidService === el.uuid;
@@ -967,14 +1059,6 @@ export default {
         };
       }
     },
-    // service() {
-    //   for (let item of this.getServicesFull) {
-    //     if (item.uuid === this.VM.uuidService) {
-    //       console.log(item);
-    //       return item;
-    //     }
-    //   }
-    // },
     VM() {
       for (let instance of this.getInstances) {
         if (instance.uuid === this.$route.params.uuid) {
@@ -1054,12 +1138,44 @@ export default {
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
       this.$store.dispatch("nocloud/sp/fetch");
-      // this.$store.dispatch(
-      //   "nocloud/vms/subscribeWebSocket"
-      // );
     }
   },
   methods: {
+    deleteSSH(index) {
+      for (let item in this.userdata.data.ssh_keys) {
+        if (+item === index) {
+          this.userdata.data.ssh_keys.splice(item, 1);
+        }
+      }
+      const dataSSH = {
+        id: this.userdata.uuid,
+        body: { data: this.userdata.data },
+      };
+
+      this.$store
+        .dispatch("nocloud/auth/addSSH", dataSSH)
+        .then((result) => {
+          if (result) {
+            this.openNotificationWithIcon("success", {
+              message: "Delete SSH key successfully",
+            });
+            this.$store.dispatch("nocloud/auth/fetchUserData");
+          } else {
+            this.openNotificationWithIcon("error", {
+              message: "Error delete SSH key",
+            });
+          }
+        })
+        .catch((err) => {
+          this.openNotificationWithIcon("error", {
+            message: "Error delete SSH key",
+          });
+          console.error(err);
+        })
+        .finally((res) => {
+          this.modal.confirmLoading = false;
+        });
+    },
     deployVM() {
       this.deployLoading = true;
       // this.$api.services
@@ -1251,45 +1367,36 @@ export default {
       return `${newVal} ${range}`;
     },
     newsnap() {
-      if (this.snapshots.data.lenght >= 3) {
-        this.$error({
-          title: this.$t("You can't have more than 3 snaps at the same time"),
-          content: this.$t("remove or commit old ones to create new"),
-        });
-      }
-      const snapname = this.snapshots.addSnap.snapname;
-      console.log(snapname);
+      // if (this.snapshots.data.lenght >= 3) {
+      //   this.$error({
+      //     title: this.$t("You can't have more than 3 snaps at the same time"),
+      //     content: this.$t("remove or commit old ones to create new"),
+      //   });
+      // }
 
+      const data = {
+        uuid: this.VM.uuid,
+        params: { snap_name: this.snapshots.addSnap.snapname },
+        action: "snapcreate",
+      };
       this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
-        // .then((res) => {
-        //   const opts = {
-        //     message: `Done!`,
-        //   };
-        //   this.openNotificationWithIcon("success", opts);
-        // })
+        .then((res) => {
+          this.openNotificationWithIcon("success", {
+            message: "Create Snapshot",
+          });
+          this.$store.dispatch(
+            "nocloud/vms/subscribeWebSocket",
+            this.VM.uuidService
+          );
+          this.snapshots.addSnap.modal = false;
+        })
         .catch((err) => {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
           this.openNotificationWithIcon("error", opts);
         });
-      // const user = this.$store.getters.getUser;
-      // const userid = user.id;
-      // const vmid = this.SingleCloud.ID;
-      // const snapname = encodeURI(this.snapshots.addSnap.snapname);
-      // const close_your_eyes = md5("vmaction" + userid + user.secret);
-      // const url = `/vmaction.php?userid=${userid}&action=newSnapshot&snapname=${snapname}&vmid=${vmid}&secret=${close_your_eyes}`;
-      // this.snapshots.addSnap.loading = true;
-      // this.$axios.get(url).then((res) => {
-      //   this.snapshots.addSnap.loading = false;
-      //   this.snapshots.addSnap.modal = false;
-      //   this.$store.dispatch(
-      //     "cloud/silentUpdate",
-      //     this.$route.params.pathMatch
-      //   );
-      //   this.snapshotsFetch();
-      // });
     },
     openModal(name) {
       switch (name) {
@@ -1344,7 +1451,7 @@ export default {
           if (el.uuid === this.VM.uuid) {
             el.resources.cpu = +this.resize.VCPU;
             el.resources.ram = this.resize.RAM * 1024;
-            el.resources.drive_size = this.resize.size * 1024
+            el.resources.drive_size = this.resize.size * 1024;
             return el;
           }
         });
@@ -1376,59 +1483,6 @@ export default {
             this.modal.confirmLoading = false;
           });
       }
-      // const keys = Object.keys(this.resize);
-      // const newVmSpecs = {};
-      // const specScale = {
-      //   RAM: 1024,
-      //   VCPU: 1,
-      // };
-      // keys.forEach((spec) => {
-      //   const newSpec = +this.resize[spec] * specScale[spec];
-      //   if (this.SingleCloud[spec] != newSpec) {
-      //     newVmSpecs[spec] = newSpec;
-      //   }
-      // });
-      // // console.log(newVmSpecs);
-      // if (Object.keys(newVmSpecs).length == 0) {
-      //   this.$message.warning("Can't resize to same size");
-      //   return;
-      // }
-      // const user = this.$store.getters.getUser;
-      // const userid = user.id;
-      // const vmid = this.SingleCloud.ID;
-      // const close_your_eyes = md5("VMresize" + userid + user.secret);
-      // let query = {
-      //   userid,
-      //   vmid,
-      //   secret: close_your_eyes,
-      // };
-      // query = Object.assign(newVmSpecs, query);
-      // let url = `/VMresize.php?${this.URLparameter(query)}`;
-      // // console.log(url)
-      // this.loadingResizeVM = true;
-      // this.$axios
-      //   .get(url)
-      //   .then((result) => {
-      //     if (result.data.result == "success") {
-      //       this.$message.success("VM resized successfully");
-      //     } else {
-      //       this.$message.error("Some kind an error during resizing VM");
-      //       // console.log(result.data);
-      //     }
-      //   })
-      //   .catch((er) => {
-      //     this.$message.error("Some kind an error during resizing VM");
-      //     console.er(er);
-      //     this.closeModal("expand");
-      //   })
-      //   .finally(() => {
-      //     this.$store.dispatch(
-      //       "cloud/silentUpdate",
-      //       this.$route.params.pathMatch
-      //     );
-      //     this.closeModal("expand");
-      //     this.loadingResizeVM = false;
-      //   });
     },
     URLparameter(obj, outer = "") {
       var str = "";
@@ -1445,81 +1499,53 @@ export default {
       }
       return str;
     },
-    // RMSnapshot(object) {
-    //   const user = this.$store.getters.getUser;
-    //   const userid = user.id;
-    //   const vmid = this.SingleCloud.ID;
-    //   const snapid = object.SNAPSHOT_ID;
-    //   this.$store.dispatch("cloud/silentUpdate", this.$route.params.pathMatch);
-    //   const close_your_eyes = md5("vmaction" + userid + user.secret);
-    //   const url = `/vmaction.php?userid=${userid}&action=RMSnapshot&snapid=${snapid}&vmid=${vmid}&secret=${close_your_eyes}`;
-    //   this.snapshots.data.find((el) => el.SNAPSHOT_ID == snapid).loading = true;
-    //   this.snapshots.loadingSnaps.push(snapid);
-    //   this.$axios.get(url).then((res) => {
-    //     if (res.data.result == "success") {
-    //       const index = this.snapshots.data.indexOf(object);
-    //       this.snapshots.data.splice(index, 1);
-    //       this.$message.success(this.$t("Snapshot successfully deleted"));
-    //     }
-    //     const ind = this.snapshots.loadingSnaps.indexOf(snapid);
-    //     if (ind > -1) {
-    //       this.snapshots.loadingSnaps.splice(ind, 1);
-    //     }
-    //     this.snapshotsFetch();
-    //   });
-    // },
-    // revToShapshot(object) {
-    //   const user = this.$store.getters.getUser;
-    //   const userid = user.id;
-    //   const vmid = this.SingleCloud.ID;
-    //   const snapid = object.SNAPSHOT_ID;
-    //   this.$store.dispatch("cloud/silentUpdate", this.$route.params.pathMatch);
-    //   const close_your_eyes = md5("vmaction" + userid + user.secret);
-    //   const url = `/vmaction.php?userid=${userid}&action=RevSnapshot&snapid=${snapid}&vmid=${vmid}&secret=${close_your_eyes}`;
-    //   this.snapshots.data.find((el) => el.SNAPSHOT_ID == snapid).loading = true;
-    //   this.snapshots.loadingSnaps.push(snapid);
-    //   this.$axios.get(url).then((res) => {
-    //     if (res.data.result == "success") {
-    //       const index = this.snapshots.data.indexOf(object);
-    //       this.snapshots.data.splice(index, 1);
-    //       this.$message.success(
-    //         this.$t("Vm was successfully restored from snapshot")
-    //       );
-    //     }
-    //     const ind = this.snapshots.loadingSnaps.indexOf(snapid);
-    //     if (ind > -1) {
-    //       this.snapshots.loadingSnaps.splice(ind, 1);
-    //     }
-    //     this.snapshotsFetch();
-    //   });
-    // },
-    snapshotsFetch() {
-      // const user = this.$store.getters.getUser;
-      // const userid = user.id;
-      // const vmid = this.SingleCloud.ID;
-      // const close_your_eyes = md5("getSnapshots" + userid + user.secret);
-      // const url = `/getSnapshots.php?userid=${userid}&vmid=${vmid}&secret=${close_your_eyes}`;
-      // this.$axios.get(url).then((res) => {
-      //   // console.log(res);
-      //   if (
-      //     res.data.response[0] != null &&
-      //     res.data.response.some((element) => element.ACTION != undefined)
-      //   ) {
-      //     setTimeout(() => {
-      //       this.snapshotsFetch();
-      //     }, 10000);
-      //   }
-      //   this.snapshots.loadingSnaps.splice(
-      //     0,
-      //     this.snapshots.loadingSnaps.lenght
-      //   );
-      //   if (res.data.response[0] == null) {
-      //     this.snapshots.data = [];
-      //   } else {
-      //     this.snapshots.data = res.data.response;
-      //   }
-      //   this.snapshots.loading = false;
-      // });
+    deleteSnapshot(index) {
+      const data = {
+        uuid: this.VM.uuid,
+        params: { snap_id: +index },
+        action: "snapdelete",
+      };
+      this.$store
+        .dispatch("nocloud/vms/actionVMInvoke", data)
+        .then((res) => {
+          this.openNotificationWithIcon("success", {
+            message: "Delete Snapshot",
+          });
+          this.$store.dispatch(
+            "nocloud/vms/subscribeWebSocket",
+            this.VM.uuidService
+          );
+        })
+        .catch((err) => {
+          const opts = {
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotificationWithIcon("error", opts);
+        });
+    },
+    revSnapshot(index) {
+      const data = {
+        uuid: this.VM.uuid,
+        params: { snap_id: +index },
+        action: "snaprevert",
+      };
+      this.$store
+        .dispatch("nocloud/vms/actionVMInvoke", data)
+        .then((res) => {
+          this.openNotificationWithIcon("success", {
+            message: "Revert Snapshot",
+          });
+          this.$store.dispatch(
+            "nocloud/vms/subscribeWebSocket",
+            this.VM.uuidService
+          );
+        })
+        .catch((err) => {
+          const opts = {
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotificationWithIcon("error", opts);
+        });
     },
     getFormatedDate(dstring) {
       const date = new Date(+(dstring + "000"));
@@ -1582,57 +1608,57 @@ export default {
       //     console.error(err);
       //   });
     },
-    sendReinstall() {
-      if (this.disabledMenu("reinstall")) {
-        this.$store
-          .dispatch("utils/createTicket", {
-            subject: `[generated]: Reinstall VM#${this.$route.params.pathMatch}`,
-            message: `VM#${this.$route.params.pathMatch} имеет аддон, запрещающий автопереустановку. Необходимо выполнить перустановку вручную.`,
-          })
-          .then(() => {
-            this.$message.success("Order created successuffly");
-            this.closeModal("reinstall");
-          })
-          .catch(() => {
-            this.$message.success("Some error during creation order");
-          });
-        return;
-      }
-      const me = this;
-      this.$confirm({
-        title: me.$t("Do you want to reinstall this virtual machine?"),
-        okType: "danger",
-        content: (h) => (
-          <div style="color:red;">{me.$t("All data will be deleted!")}</div>
-        ),
-        onOk() {
-          me.sendAction("Reinstall");
-          me.modal.menu = false;
-          me.modal.reinstall = false;
-        },
-        onCancel() {
-          me.modal.reinstall = false;
-        },
-      });
-    },
-    sendDelete() {
-      const me = this;
-      this.$confirm({
-        title: me.$t("Do you want to delete this virtual machine?"),
-        okType: "danger",
-        content: (h) => (
-          <div style="color:red;">{me.$t("All data will be deleted!")}</div>
-        ),
-        onOk() {
-          me.sendAction("Delete");
-          me.modal.menu = false;
-          me.modal.delete = false;
-        },
-        onCancel() {
-          me.modal.delete = false;
-        },
-      });
-    },
+    // sendReinstall() {
+    //   if (this.disabledMenu("reinstall")) {
+    //     this.$store
+    //       .dispatch("utils/createTicket", {
+    //         subject: `[generated]: Reinstall VM#${this.$route.params.pathMatch}`,
+    //         message: `VM#${this.$route.params.pathMatch} имеет аддон, запрещающий автопереустановку. Необходимо выполнить перустановку вручную.`,
+    //       })
+    //       .then(() => {
+    //         this.$message.success("Order created successuffly");
+    //         this.closeModal("reinstall");
+    //       })
+    //       .catch(() => {
+    //         this.$message.success("Some error during creation order");
+    //       });
+    //     return;
+    //   }
+    //   const me = this;
+    //   this.$confirm({
+    //     title: me.$t("Do you want to reinstall this virtual machine?"),
+    //     okType: "danger",
+    //     content: (h) => (
+    //       <div style="color:red;">{me.$t("All data will be deleted!")}</div>
+    //     ),
+    //     onOk() {
+    //       me.sendAction("Reinstall");
+    //       me.modal.menu = false;
+    //       me.modal.reinstall = false;
+    //     },
+    //     onCancel() {
+    //       me.modal.reinstall = false;
+    //     },
+    //   });
+    // },
+    // sendDelete() {
+    //   const me = this;
+    //   this.$confirm({
+    //     title: me.$t("Do you want to delete this virtual machine?"),
+    //     okType: "danger",
+    //     content: (h) => (
+    //       <div style="color:red;">{me.$t("All data will be deleted!")}</div>
+    //     ),
+    //     onOk() {
+    //       me.sendAction("Delete");
+    //       me.modal.menu = false;
+    //       me.modal.delete = false;
+    //     },
+    //     onCancel() {
+    //       me.modal.delete = false;
+    //     },
+    //   });
+    // },
     bootOrderNewState() {
       this.closeModal("bootOrder");
     },

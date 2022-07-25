@@ -21,7 +21,7 @@
   </div>
 </template>
 <script>
-import { mapGetters } from "vuex";
+import {mapGetters, mapActions} from 'vuex'
 import notification from "../../../../mixins/notification";
 export default {
   mixins: [notification],
@@ -48,7 +48,7 @@ export default {
         },
       };
       if (this.userdata.data.ssh_keys) {
-        dataObj.data.ssh_keys.push(this.userdata.data.ssh_keys, ssh);
+        dataObj.data.ssh_keys.push(...this.userdata.data.ssh_keys, ssh);
       } else {
         dataObj.data.ssh_keys.push(ssh);
       }
@@ -60,7 +60,6 @@ export default {
         .dispatch("nocloud/auth/addSSH", dataSSH)
         .then((result) => {
           if (result) {
-            // this.$message.success(this.$t("VM resized successfully"));
             this.openNotificationWithIcon("success", {
               message: "Add SSH key successfully",
             });
@@ -68,15 +67,14 @@ export default {
             this.isRenameLoading = false;
             this.title = "";
             this.value = "";
+            this.$store.dispatch("nocloud/auth/fetchUserData");
           } else {
             this.openNotificationWithIcon("error", {
               message: "Error adding SSh key",
             });
-            // this.$message.error("Can't resize to same size");
           }
         })
         .catch((err) => {
-          // this.$message.error( "Can't resize to same size");
           this.openNotificationWithIcon("error", {
             message: "Error adding SSh key",
           });
