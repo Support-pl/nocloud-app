@@ -172,18 +172,10 @@ export default {
 
 		},
 		actionVMInvoke({ commit, dispatch }, data) {
-			
 			return new Promise((resolve, reject) => {
 				api.instances
 					.action(data)
 					.then((response) => {
-						dispatch('subscribeWebSocket', data.uuidService)
-						// commit('setUpdateInstanceInvoke', response)
-						// if (response.meta.state == 3 && response.meta.lcm_state == 18 || response.meta.state == 3 && response.meta.lcm_state == 20 ) {
-						// 	setInterval(() => {
-						// 		dispatch("actionVMInvoke", data)
-						// 	}, 3000); 
-						// } else commit('setLoadingInvoke', false)
 						resolve(response)
 					})
 					.catch((err) => {

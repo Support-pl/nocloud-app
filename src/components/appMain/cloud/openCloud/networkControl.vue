@@ -490,7 +490,6 @@ export default {
       // console.log(this.attach.publicAR_ID);
     },
   },
-  mounted() {},
 };
 </script>
 
