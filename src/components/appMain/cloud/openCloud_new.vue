@@ -1297,10 +1297,6 @@ export default {
             message: `Done!`,
           };
           this.openNotificationWithIcon("success", opts);
-          this.$store.dispatch(
-            "nocloud/vms/subscribeWebSocket",
-            this.VM.uuidService
-          );
         })
         .catch((err) => {
           const opts = {
@@ -1385,10 +1381,6 @@ export default {
           this.openNotificationWithIcon("success", {
             message: "Create Snapshot",
           });
-          this.$store.dispatch(
-            "nocloud/vms/subscribeWebSocket",
-            this.VM.uuidService
-          );
           this.snapshots.addSnap.modal = false;
         })
         .catch((err) => {
@@ -1511,10 +1503,6 @@ export default {
           this.openNotificationWithIcon("success", {
             message: "Delete Snapshot",
           });
-          this.$store.dispatch(
-            "nocloud/vms/subscribeWebSocket",
-            this.VM.uuidService
-          );
         })
         .catch((err) => {
           const opts = {
@@ -1535,10 +1523,6 @@ export default {
           this.openNotificationWithIcon("success", {
             message: "Revert Snapshot",
           });
-          this.$store.dispatch(
-            "nocloud/vms/subscribeWebSocket",
-            this.VM.uuidService
-          );
         })
         .catch((err) => {
           const opts = {
@@ -1658,9 +1642,17 @@ export default {
     //       me.modal.delete = false;
     //     },
     //   });
-    // },
+    //
     bootOrderNewState() {
       this.closeModal("bootOrder");
+    },
+  },
+  watch: {
+    "VM.uuidService": function () {
+      this.$store.dispatch(
+        "nocloud/vms/subscribeWebSocket",
+        this.VM.uuidService
+      );
     },
   },
 };
