@@ -17,11 +17,11 @@
       </div>
       <!-- <div class="item_location">{{ location }}</div> -->
       <div class="cloud__lower">
-        <template v-if="instance.state">
-					<!-- HOST: {{cloud.HOST}}, -->
-				</template>
-        <div v-for="(item,index ) in instance.state.meta.networking.public"  :key="index">
-					IP: {{item || $t('ip.none')}}
+        <div
+          v-for="(item, index) in instance.state && instance.state.meta.networking.public"
+          :key="index"
+        >
+          IP: {{ item || $t("ip.none") }}
         </div>
       </div>
     </div>
