@@ -1633,7 +1633,7 @@ export default {
                 resources: {
                   ips_private: this.options.network.private.count,
                   // ips_public: this.options.network.public.count,
-                  ips_public: 4,
+                  ips_public: 30,
                 },
                 type: "ione",
                 instances: [instance],

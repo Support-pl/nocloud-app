@@ -18,7 +18,7 @@
       <!-- <div class="item_location">{{ location }}</div> -->
       <div class="cloud__lower">
         <div
-          v-for="(item, index) in instance.state && instance.state.meta.networking.public"
+          v-for="(item, index) in instance.state && instance.state.meta.networking && instance.state.meta.networking.public"
           :key="index"
         >
           IP: {{ item || $t("ip.none") }}
