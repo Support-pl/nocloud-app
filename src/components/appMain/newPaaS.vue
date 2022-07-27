@@ -62,8 +62,7 @@
 
               <a-collapse-panel
                 key="plan"
-                :header="
-                  $t('Plan:') + planHeader"
+                :header="$t('Plan:') + planHeader"
                 :disabled="itemSP ? false : true"
               >
                 <a-row
@@ -388,7 +387,7 @@
                     </div>
                   </div>
                   <a-row>
-                    <a-col :xs="12" :sm="10" >
+                    <a-col :xs="12" :sm="10">
                       <!-- <a-form-model-item> -->
                       <a-input
                         style="margin-top: 10px"
@@ -396,7 +395,7 @@
                         placeholder="VM name"
                       />
                       <password-meter
-                        style="height: 10px; "
+                        style="height: 10px"
                         :password="password"
                         @score="onScore"
                       />
@@ -410,7 +409,7 @@
                         :validate-status="
                           score < 4 && password.length ? 'error' : 'success'
                         "
-                        style="margin-bottom:0px"
+                        style="margin-bottom: 0px"
                       >
                         <a-input
                           @focus="focused = true"
@@ -429,8 +428,7 @@
               <a-collapse-panel
                 v-if="getPlan.kind === 'STATIC'"
                 key="network"
-                :header="
-                  $t('Network:') + networkHeader"
+                :header="$t('Network:') + networkHeader"
                 :disabled="itemSP ? false : true"
               >
                 <div class="newCloud__option-field">
@@ -1393,10 +1391,10 @@ export default {
       const priv = this.options.network.private;
 
       if (!this.itemSP) {
-        return ' ';
+        return " ";
       }
       if (pub.status && priv.status) {
-        return ` (Public - ${pub.count}, Private - ${priv.count})`
+        return ` (Public - ${pub.count}, Private - ${priv.count})`;
       }
       if (pub.status) {
         return ` (Public - ${pub.count})`;
@@ -1407,11 +1405,13 @@ export default {
     },
     planHeader() {
       if (this.itemSP) {
-        return (this.tarification == 'STATIC' ? ' (VDS Pre-Paid)' : ' (VDC pay-as-you-Go)');
+        return this.tarification == "STATIC"
+          ? " (VDS Pre-Paid)"
+          : " (VDC pay-as-you-Go)";
       } else {
-        return ' ';
+        return " ";
       }
-    }
+    },
   },
   mounted() {
     if (localStorage.getItem("data")) {
@@ -1636,7 +1636,7 @@ export default {
                   ips_public: 30,
                 },
                 type: "ione",
-                instances: [instance],
+                instances: [this.service ? instance : newInstance],
               },
             ],
           },
