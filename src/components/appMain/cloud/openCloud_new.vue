@@ -93,41 +93,17 @@
                     :title="$t('Resize VM')"
                     @ok="ResizeVM"
                   >
-                    <!-- :ok-button-props="{
-                      props: {
-                        disabled:
-                          VM.state &&
-                          VM.state.meta.lsm_state != 0 &&
-                          VM.state &&
-                          VM.state.meta.state != 8,
-                      },
-                    }" -->
-                    <!-- <div
-                      v-if="
-                        VM.state &&
-                        VM.state.meta.lsm_state != 0 &&
-                        VM.state &&
-                        VM.state.meta.state != 8
-                      "
-                      :style="{
-                        color: config.colors.err,
-                        'text-align': 'center',
-                      }"
-                    >
-                      {{ $t("turn of VM to resize it") | capitalize }}
-                    </div> -->
                     <a-row
-                      :gutter="[10, 10]"
                       style="
                         display: flex;
                         align-items: center;
                         margin-bottom: 5px;
                       "
                     >
-                      <a-col :xs="24" :sm="4"> CPU </a-col>
-                      <a-col :xs="24" :sm="20">
+                      <a-col  style="width: 75px"> CPU </a-col>
+                      <a-col style="width: 100%">
                         <a-input-number
-                          style="width: 100%"
+                        style="width: 100%"
                           v-model="resize.VCPU"
                           :min="1"
                           default-value="1"
@@ -135,15 +111,15 @@
                       </a-col>
                     </a-row>
                     <a-row
-                      :gutter="[10, 10]"
                       style="
                         display: flex;
                         align-items: center;
                         margin-bottom: 5px;
+                        width: 100%
                       "
                     >
-                      <a-col :xs="24" :sm="4"> RAM (GB) </a-col>
-                      <a-col :xs="24" :sm="20">
+                      <a-col style="width: 75px"> RAM (GB) </a-col>
+                      <a-col style="width: 100%">
                         <a-input-number
                           style="width: 100%"
                           v-model="resize.RAM"
@@ -152,12 +128,9 @@
                         />
                       </a-col>
                     </a-row>
-                    <a-row
-                      :gutter="[10, 10]"
-                      style="display: flex; align-items: center"
-                    >
-                      <a-col :xs="24" :sm="4"> Disk (GB) </a-col>
-                      <a-col :xs="24" :sm="20">
+                    <a-row style="display: flex; align-items: center; width: 100%">
+                      <a-col style="width: 75px; padding-top:20px"> Disk (GB) </a-col>
+                      <a-col style="width: 100%">
                         <div
                           :style="{
                             color: config.colors.err,
@@ -701,7 +674,7 @@
 
                       <div
                         style="margin-bottom: 40px"
-                        v-if="VM.state.meta.snapshots"
+                        v-if="VM.state && VM.state.meta.snapshots"
                       >
                         <div
                           v-for="(item, index) in VM.state.meta.snapshots"
@@ -723,16 +696,16 @@
                             </div>
                           </a-col>
                           <a-col style="margin-left: auto; display: flex">
+                            <!-- :disabled="!VM.state.meta.snapshots" -->
                             <a-button
-                              :disabled="!VM.state.meta.snapshots"
                               type="primary"
                               @click="revSnapshot(index)"
                               style="margin-right: 10px"
                             >
                               <a-icon type="caret-right" />
                             </a-button>
+                            <!-- :disabled=" !VM.state.meta.snapshots" -->
                             <a-button
-                              :disabled="!VM.state.meta.snapshots"
                               type="danger"
                               @click="deleteSnapshot(index)"
                             >
@@ -753,8 +726,8 @@
                       </div>
 
                       <div class="modal__buttons">
+                        <!-- :disabled="!VM.state.meta.snapshots" -->
                         <a-button
-                          :disabled="!VM.state.meta.snapshots"
                           icon="plus"
                           type="primary"
                           shape="round"
@@ -1089,6 +1062,9 @@ export default {
           break;
         case "BOOT_POWEROFF":
           state = "BOOT POWEROFF";
+          break;
+        case "SHUTDOWN_POWEROFF":
+          state = "SHUTDOWN POWEROFF";
           break;
         case "RUNNING":
           state = "RUNNING";

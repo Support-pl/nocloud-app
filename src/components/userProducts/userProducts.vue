@@ -88,7 +88,7 @@
           :wholeProduct="product"
         />
       </template>
-      <loading v-else-if="productsLoading" />
+      <!-- <loading v-else-if="productsLoading" /> -->
       <a-empty v-else />
       <a-button
         class="products__new"
@@ -135,11 +135,14 @@ export default {
     this.$store.dispatch("products/autoFetch");
   },
   computed: {
-    user() {
-      return this.$store.getters.getUser;
-    },
+    // user() {
+    //   return this.$store.getters.getUser;
+    // },
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
+    },
+    user() {
+      return this.$store.getters["nocloud/auth/userdata"];
     },
     productsPrepared() {
       if (this.min) return this.products.slice(0, 5);
