@@ -62,7 +62,8 @@
 
               <a-collapse-panel
                 key="plan"
-                header="Plan:"
+                :header="
+                  $t('Plan:') + planHeader"
                 :disabled="itemSP ? false : true"
               >
                 <a-row
@@ -349,8 +350,8 @@
                 :disabled="itemSP ? false : true"
                 key="OS"
                 :header="
-                  $t('OS') +
-                  (options.os.name == '' ? ':' : ' (' + options.os.name + '):')
+                  $t('OS:') +
+                  (options.os.name == '' ? ' ' : ' (' + options.os.name + ')')
                 "
               >
                 <div class="newCloud__option-field">
@@ -428,7 +429,8 @@
               <a-collapse-panel
                 v-if="getPlan.kind === 'STATIC'"
                 key="network"
-                :header="$t('Network') + ':'"
+                :header="
+                  $t('Network:') + networkHeader"
                 :disabled="itemSP ? false : true"
               >
                 <div class="newCloud__option-field">
@@ -1386,6 +1388,30 @@ export default {
     currency() {
       return this.$config.currency.code;
     },
+    networkHeader() {
+      const pub = this.options.network.public;
+      const priv = this.options.network.private;
+
+      if (!this.itemSP) {
+        return ' ';
+      }
+      if (pub.status && priv.status) {
+        return ` (Public - ${pub.count}, Private - ${priv.count})`
+      }
+      if (pub.status) {
+        return ` (Public - ${pub.count})`;
+      }
+      if (priv.status) {
+        return ` (Private - ${priv.count})`;
+      }
+    },
+    planHeader() {
+      if (this.itemSP) {
+        return (this.tarification == 'STATIC' ? ' (VDS Pre-Paid)' : ' (VDC pay-as-you-Go)');
+      } else {
+        return ' ';
+      }
+    }
   },
   mounted() {
     if (localStorage.getItem("data")) {
