@@ -19,10 +19,10 @@
               >
                 <a-row justify="space-between" style="margin-bottom: 10px">
                   <a-alert
-                    message="Please select a suitable location"
-                    type="warning"
                     show-icon
+                    type="warning"
                     style="margin-bottom: 15px"
+                    :message="$t('Please select a suitable location')"
                   />
 
                   <a-select
@@ -65,253 +65,261 @@
                 :header="$t('Plan:') + planHeader"
                 :disabled="itemSP ? false : true"
               >
-                <a-row
-                  type="flex"
-                  justify="space-between"
-                  align="middle"
-                  style="margin-top: 12px"
-                >
-                  <a-radio-group default-value="kind" v-model="tarification">
-                    <a-radio-button
-                      v-for="(pl, index) in getPlans"
-                      :key="index"
-                      style="width: 180px; text-align: center"
-                      :value="pl.kind"
-                    >
-                      <a-tooltip placement="top">
-                        <template slot="title" v-if="pl.kind == 'STATIC'">
-                          VDS Pre-Paid
-                        </template>
-                        <template slot="title" v-else>
-                          VDC Pay-as-you-Go</template
-                        >
-                        <span style="display: block">{{ pl.title }}</span>
-                      </a-tooltip>
-                    </a-radio-button>
-
-                    <!-- <a-col
-                      :xs="12"
-                      :sm="18"
-                      :lg="12"
-                      style="margin-top: 20px; margin-bottom: 30px"
-                      v-if="tarification == 'STATIC'"
-                    >
-                      <a-row type="flex" justify="space-between" align="middle">
-                        <a-col> {{ $t("Payment period") }}: </a-col>
-                        <a-col :lg="17">
-                          <a-select
-                            v-model="options.period"
-                            style="width: 100%"
-                          >
-                            <a-select-option
-                              v-for="period in periods"
-                              :key="period.title + period.count"
-                              :value="period.count"
-                            >
-                              {{ period.title == "year" ? "1 " : ""
-                              }}{{ $tc(period.title, period.count) }}
-                            </a-select-option>
-                          </a-select>
-                        </a-col>
-                      </a-row>
-                    </a-col> -->
-                  </a-radio-group>
-                </a-row>
-
-                <a-slider
-                  style="margin-top: 30px"
-                  v-if="getPlan.kind === 'STATIC'"
-                  :marks="{ ...getProducts }"
-                  :tip-formatter="null"
-                  :max="getProducts.length - 1"
-                  :min="0"
-                  :value="getProducts.indexOf(productSize)"
-                  @change="(newval) => (productSize = getProducts[newval])"
-                >
-                </a-slider>
-                <div
-                  class="vdc_plan"
-                  v-if="getPlan.kind === 'UNKNOWN'"
-                  style="margin-top: 30px"
-                >
-                  <div
-                    v-for="resource in getPlan.resources"
-                    :key="resource.key"
+                <template v-if="getPlans.length > 0">
+                  <a-row
+                    type="flex"
+                    justify="space-between"
+                    align="middle"
+                    style="margin-top: 12px"
                   >
+                    <a-radio-group default-value="kind" v-model="tarification">
+                      <a-radio-button
+                        v-for="(pl, index) in getPlans"
+                        :key="index"
+                        style="width: 180px; text-align: center"
+                        :value="pl.kind"
+                      >
+                        <a-tooltip placement="top">
+                          <template slot="title" v-if="pl.kind == 'STATIC'">
+                            VDS {{ $t('Pre-Paid') }}
+                          </template>
+                          <template slot="title" v-else>
+                            VDC {{ $t('Pay-as-you-Go') }}
+                          </template>
+                          <span style="display: block">{{ pl.title }}</span>
+                        </a-tooltip>
+                      </a-radio-button>
+
+                      <!-- <a-col
+                        :xs="12"
+                        :sm="18"
+                        :lg="12"
+                        style="margin-top: 20px; margin-bottom: 30px"
+                        v-if="tarification == 'STATIC'"
+                      >
+                        <a-row type="flex" justify="space-between" align="middle">
+                          <a-col> {{ $t("Payment period") }}: </a-col>
+                          <a-col :lg="17">
+                            <a-select
+                              v-model="options.period"
+                              style="width: 100%"
+                            >
+                              <a-select-option
+                                v-for="period in periods"
+                                :key="period.title + period.count"
+                                :value="period.count"
+                              >
+                                {{ period.title == "year" ? "1 " : ""
+                                }}{{ $tc(period.title, period.count) }}
+                              </a-select-option>
+                            </a-select>
+                          </a-col>
+                        </a-row>
+                      </a-col> -->
+                    </a-radio-group>
+                  </a-row>
+
+                  <a-slider
+                    style="margin-top: 30px"
+                    v-if="getPlan.kind === 'STATIC'"
+                    :marks="{ ...getProducts }"
+                    :tip-formatter="null"
+                    :max="getProducts.length - 1"
+                    :min="0"
+                    :value="getProducts.indexOf(productSize)"
+                    @change="(newval) => (productSize = getProducts[newval])"
+                  >
+                  </a-slider>
+                  <div
+                    class="vdc_plan"
+                    v-if="getPlan.kind === 'UNKNOWN'"
+                    style="margin-top: 30px"
+                  >
+                    <div
+                      v-for="resource in getPlan.resources"
+                      :key="resource.key"
+                    >
+                      <a-row
+                        type="flex"
+                        justify="space-between"
+                        align="middle"
+                        class="newCloud__prop"
+                        style="margin-top: 20px"
+                      >
+                        <a-col>
+                          <div v-if="resource.key == 'cpu'">
+                            <span style="text-transform: uppercase"
+                              >{{ resource.key }}
+                            </span>
+                            (vCPU):
+                          </div>
+
+                          <div v-if="resource.key == 'ram'">
+                            <span style="text-transform: uppercase"
+                              >{{ resource.key }}
+                            </span>
+                            (Gb):
+                          </div>
+                          <span
+                            style="text-transform: uppercase"
+                            v-if="resource.key == 'ip'"
+                            >{{ resource.key }}:
+                          </span>
+                        </a-col>
+
+                        <a-col style="width: 130px">
+                          <a-row>
+                            <a-col>
+                              <a-row
+                                type="flex"
+                                justify="space-between"
+                                align="middle"
+                              >
+                                <a-col>
+                                  <a-button
+                                    type="link"
+                                    icon="minus"
+                                    @click="changeValueMinus(`${resource.key}`)"
+                                  >
+                                  </a-button>
+                                </a-col>
+                                <a-col v-if="resource.key === 'cpu'">
+                                  <a-input-number
+                                    style="width: 60px"
+                                    v-model="options.cpu.size"
+                                    class="max-width"
+                                    :min="options.cpu.min"
+                                    :max="options.cpu.max"
+                                    default-value="1"
+                                  />
+                                </a-col>
+
+                                <a-col v-if="resource.key === 'ram'">
+                                  <a-input-number
+                                    style="width: 60px"
+                                    v-model="options.ram.size"
+                                    class="max-width"
+                                    :min="options.ram.min"
+                                    :max="options.ram.max"
+                                    default-value="1"
+                                  />
+                                </a-col>
+
+                                <a-col v-if="resource.key === 'ip'">
+                                  <a-input-number
+                                    style="width: 60px"
+                                    v-model="options.network.public.count"
+                                    class="max-width"
+                                    :min="options.network.public.min"
+                                    :max="options.network.public.max"
+                                    default-value="1"
+                                  />
+                                </a-col>
+
+                                <a-col>
+                                  <!-- <a-input-number
+                                    style="width: 60px"
+                                    v-model="options.disk.size"
+                                    class="max-width"
+                                    :min="options.disk.min"
+                                    :max="options.disk.max"
+                                    default-value="1"
+                                  /> -->
+                                </a-col>
+                                <a-col>
+                                  <a-button
+                                    icon="plus"
+                                    type="link"
+                                    @click="changeValuePlus(`${resource.key}`)"
+                                  >
+                                  </a-button>
+                                </a-col>
+                              </a-row>
+                            </a-col>
+                          </a-row>
+                        </a-col>
+                        <!-- </transition> -->
+                      </a-row>
+                    </div>
+                  </div>
+
+                  <!-- <a-skeleton :loading="getCurrentProd == null" :active="true"> -->
+                  <div v-if="getPlan.kind === 'STATIC'">
                     <a-row
                       type="flex"
                       justify="space-between"
                       align="middle"
                       class="newCloud__prop"
-                      style="margin-top: 20px"
+                      style="margin-top: 50px"
                     >
                       <a-col>
-                        <div v-if="resource.key == 'cpu'">
-                          <span style="text-transform: uppercase"
-                            >{{ resource.key }}
-                          </span>
-                          (vCPU):
-                        </div>
-
-                        <div v-if="resource.key == 'ram'">
-                          <span style="text-transform: uppercase"
-                            >{{ resource.key }}
-                          </span>
-                          (Gb):
-                        </div>
-                        <span
-                          style="text-transform: uppercase"
-                          v-if="resource.key == 'ip'"
-                          >{{ resource.key }}:
-                        </span>
+                        <span style="display: inline-block; width: 70px"
+                          >CPU:</span
+                        >
                       </a-col>
-
-                      <a-col style="width: 130px">
-                        <a-row>
-                          <a-col>
-                            <a-row
-                              type="flex"
-                              justify="space-between"
-                              align="middle"
-                            >
-                              <a-col>
-                                <a-button
-                                  type="link"
-                                  icon="minus"
-                                  @click="changeValueMinus(`${resource.key}`)"
-                                >
-                                </a-button>
-                              </a-col>
-                              <a-col v-if="resource.key === 'cpu'">
-                                <a-input-number
-                                  style="width: 60px"
-                                  v-model="options.cpu.size"
-                                  class="max-width"
-                                  :min="options.cpu.min"
-                                  :max="options.cpu.max"
-                                  default-value="1"
-                                />
-                              </a-col>
-
-                              <a-col v-if="resource.key === 'ram'">
-                                <a-input-number
-                                  style="width: 60px"
-                                  v-model="options.ram.size"
-                                  class="max-width"
-                                  :min="options.ram.min"
-                                  :max="options.ram.max"
-                                  default-value="1"
-                                />
-                              </a-col>
-
-                              <a-col v-if="resource.key === 'ip'">
-                                <a-input-number
-                                  style="width: 60px"
-                                  v-model="options.network.public.count"
-                                  class="max-width"
-                                  :min="options.network.public.min"
-                                  :max="options.network.public.max"
-                                  default-value="1"
-                                />
-                              </a-col>
-
-                              <a-col>
-                                <!-- <a-input-number
-                                  style="width: 60px"
-                                  v-model="options.disk.size"
-                                  class="max-width"
-                                  :min="options.disk.min"
-                                  :max="options.disk.max"
-                                  default-value="1"
-                                /> -->
-                              </a-col>
-                              <a-col>
-                                <a-button
-                                  icon="plus"
-                                  type="link"
-                                  @click="changeValuePlus(`${resource.key}`)"
-                                >
-                                </a-button>
-                              </a-col>
-                            </a-row>
-                          </a-col>
-                        </a-row>
-                      </a-col>
-                      <!-- </transition> -->
-                    </a-row>
-                  </div>
-                </div>
-
-                <!-- <a-skeleton :loading="getCurrentProd == null" :active="true"> -->
-                <div v-if="getPlan.kind === 'STATIC'">
-                  <a-row
-                    type="flex"
-                    justify="space-between"
-                    align="middle"
-                    class="newCloud__prop"
-                    style="margin-top: 50px"
-                  >
-                    <a-col>
-                      <span style="display: inline-block; width: 70px"
-                        >CPU:</span
-                      >
-                    </a-col>
-                    <a-col
-                      class="changing__field"
-                      span="6"
-                      style="text-align: right"
-                    >
-                      {{ options.cpu.size }} vCPU
-                    </a-col>
-                  </a-row>
-                  <a-row
-                    type="flex"
-                    justify="space-between"
-                    align="middle"
-                    class="newCloud__prop"
-                  >
-                    <a-col>
-                      <span style="display: inline-block; width: 70px"
-                        >RAM:</span
-                      >
-                    </a-col>
-                    <transition name="textchange" mode="out-in">
-                      <!-- :key="
-                          getCurrentProd != null
-                            ? getCurrentProd.props.ram.TITLE
-                            : 'DefaultKeyForRAM'
-                        " -->
                       <a-col
                         class="changing__field"
                         span="6"
                         style="text-align: right"
                       >
-                        {{ options.ram.size }}
-                        Gb
+                        {{ options.cpu.size }} vCPU
                       </a-col>
-                    </transition>
-                  </a-row>
-                  <a-row class="newCloud__prop">
-                    <a-col span="8" :xs="6">
-                      <span style="display: inline-block; width: 70px"
-                        >{{ $t("Drive") }}:</span
-                      >
-                    </a-col>
-                    <a-col :xs="10" :sm="14">
-                      <a-switch v-model="options.drive" style="width: 60px">
-                        <span slot="checkedChildren">SSD</span>
-                        <span slot="unCheckedChildren">HDD</span>
-                      </a-switch>
-                    </a-col>
-                    <a-col
-                      class="changing__field"
-                      span="4"
-                      style="text-align: right"
+                    </a-row>
+                    <a-row
+                      type="flex"
+                      justify="space-between"
+                      align="middle"
+                      class="newCloud__prop"
                     >
-                      {{ options.disk.size }} Gb
-                    </a-col>
-                  </a-row>
-                </div>
+                      <a-col>
+                        <span style="display: inline-block; width: 70px"
+                          >RAM:</span
+                        >
+                      </a-col>
+                      <transition name="textchange" mode="out-in">
+                        <!-- :key="
+                            getCurrentProd != null
+                              ? getCurrentProd.props.ram.TITLE
+                              : 'DefaultKeyForRAM'
+                          " -->
+                        <a-col
+                          class="changing__field"
+                          span="6"
+                          style="text-align: right"
+                        >
+                          {{ options.ram.size }}
+                          Gb
+                        </a-col>
+                      </transition>
+                    </a-row>
+                    <a-row class="newCloud__prop">
+                      <a-col span="8" :xs="6">
+                        <span style="display: inline-block; width: 70px"
+                          >{{ $t("Drive") }}:</span
+                        >
+                      </a-col>
+                      <a-col :xs="10" :sm="14">
+                        <a-switch v-model="options.drive" style="width: 60px">
+                          <span slot="checkedChildren">SSD</span>
+                          <span slot="unCheckedChildren">HDD</span>
+                        </a-switch>
+                      </a-col>
+                      <a-col
+                        class="changing__field"
+                        span="4"
+                        style="text-align: right"
+                      >
+                        {{ options.disk.size }} Gb
+                      </a-col>
+                    </a-row>
+                  </div>
+                </template>
+                <a-alert
+                  v-else
+                  show-icon
+                  type="warning"
+                  :message="$t('No linked plans. Choose another location')"
+                />
                 <!-- <a-row class="newCloud__prop">
                     <a-col span="8" :xs="6"
                       >{{ $t("traffic") | capitalize }}:</a-col
@@ -1209,13 +1217,15 @@ export default {
         return el.kind === this.tarification;
       });
       this.plan = item;
-      return item;
+      return item || {};
     },
 
     //STATIC
     getPlanOneStatic() {
-      for (let planStatic of this.getPlans) {
-        return planStatic;
+      for (let planStatic of this.getPlans || {}) {
+        if (planStatic.kind === 'STATIC') {
+          return planStatic;
+        }
       }
     },
     //-------------------------------------
@@ -1224,6 +1234,7 @@ export default {
       const planTitle = [];
       const sort = [];
 
+      if (!this.getPlanOneStatic) return planTitle;
       for (let prod of Object.values(this.getPlanOneStatic.products)) {
         sort.push(+prod.sorter);
         sort.sort();
@@ -1239,6 +1250,7 @@ export default {
       return planTitle;
     },
     product() {
+      if (!this.getPlanOneStatic) return {};
       for (let [key, el] of Object.entries(this.getPlanOneStatic.products)) {
         if (el.title === this.productSize) {
           const product = {
@@ -1261,6 +1273,7 @@ export default {
     },
 
     productFullPriceStatic() {
+      if (!this.getPlanOneStatic) return 0;
       for (let product of Object.values(this.getPlanOneStatic.products)) {
         if (product.title === this.productSize) {
           return (
@@ -1402,12 +1415,13 @@ export default {
       if (priv.status) {
         return ` (Private - ${priv.count})`;
       }
+      return " ";
     },
     planHeader() {
-      if (this.itemSP) {
-        return this.tarification == "STATIC"
-          ? " (VDS Pre-Paid)"
-          : " (VDC pay-as-you-Go)";
+      if (this.itemSP && this.getPlans.length > 0) {
+        return this.tarification === "STATIC"
+          ? ` (VDS ${this.$t("Pre-Paid")})`
+          : ` (VDC ${this.$t("Pay-as-you-Go")})`;
       } else {
         return " ";
       }
@@ -1429,7 +1443,6 @@ export default {
     }
     this.setOneService();
     this.setOneNameSpace();
-    this.$store.dispatch("nocloud/plans/fetch");
     this.$store.dispatch("nocloud/sp/fetch");
     this.$store.dispatch("nocloud/vms/fetch");
     this.$store.dispatch("nocloud/namespaces/fetch");
@@ -1766,6 +1779,26 @@ export default {
         this.options.cpu.size = this.product.resources.cpu;
       }
     },
+    locationId() {
+      this.$store.dispatch("nocloud/plans/fetch", {
+        sp_uuid: this.itemSP.uuid,
+        anonymously: false
+      })
+      .then(({ pool }) => {
+        const plans = pool.map((plan) => {
+          let title = plan.title;
+
+          if (plan.kind === 'STATIC') {
+            title = plan.title.replace('Pre-Paid', this.$t('Pre-Paid'));
+          } else {
+            title = plan.title.replace('Pay-as-you-Go', this.$t('PAYG'));
+          }
+          return { ...plan, title };
+        });
+
+        this.$store.commit('nocloud/plans/setPlans', plans);
+      });
+    }
     // getAddons: function (newVal) {
     //   this.options.addons.os = +newVal.os[0].id;
     // },

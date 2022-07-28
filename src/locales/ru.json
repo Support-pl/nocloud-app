@@ -83,6 +83,8 @@
 	"Snapshot successfully deleted": "Снапшот успешно удален",
 	"Vm was successfully restored from snapshot": "Вм успешно восстановлена из снапшота",
 	"Recover sended. Wait please": "Отправлен запрос на восстановление. Ожидайте",
+  "Please select a suitable location": "Пожалуйста выберите подходящую локацию",
+  "No linked plans. Choose another location": "Нет ни одного привязанного плана. Выберите другую локацию.",
 	"There was a problem while restoring. Please contact support": "При восстановлении возникла проблема. Обратитесь, пожалуйста, в поддержку",
 	"Before restoring from a service copy, please delete manually created snapshots": "Перед восстановлением из служебной копии удалите, пожалуйста, созданные вручную снапшоты",
 	"Reinstall": "Переустановить",
@@ -204,7 +206,7 @@
 	"info": "информация",
 	"enter": "войти",
 	"all fields are required": "необходимо заполнить все поля",
-	"field must contain more characters": "поле должн содержать больше символов",
+	"field must contain more characters": "поле должен содержать больше символов",
 	"advice": {
 		"look up": "перейти",
 		"You have billed for the renewal of this virtual machine": "Вам выставлен счёт продления данной виртуальной машины",
@@ -379,6 +381,10 @@
 	"provider":"Провайдер",
 	"Payment period":"Период оплаты",
 	"public":"Public",
+  "PAYG": "по использ.",
+  "Pay-as-you-Go": "по использованию",
+  "PrePaid": "предоплата",
+  "Pre-Paid": "предоплата",
 	"country":{
 		"BY": "Беларусь",
 		"RU": "Россия",

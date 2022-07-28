@@ -67,6 +67,8 @@
 	"Network": "Network",
 	"Total": "Total",
 	"Ready made servers": "VPS SSD Plans",
+  "Please select a suitable location": "Please select a suitable location",
+  "No linked plans. Choose another location": "No linked plans. Choose another location.",
 	"Pay as you Go": "Cloud Server PAYG",
 	"VDC created successfully with": "VDC created successfully with",
 	"Monthly payment": "Monthly Payment",
@@ -256,7 +258,7 @@
 	"PaaS": {
 		"order_info": "Here you can order servers with monthly payment.",
 		"description": "Get simple, fast, budget-friendly and reliable VPS SSD plans.",
-		"createButton": "VPS SSD"
+		"createButton": "VM"
 	},
 	"virtual_product": {
 		"used space": "Used Space",
