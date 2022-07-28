@@ -66,6 +66,8 @@
 	"Network": "Mạng",
 	"Total": "Tổng cộng",
 	"Ready made servers": "Gói VPS SSD",
+  "Please select a suitable location": "Vui lòng chọn một địa điểm phù hợp",
+  "No linked plans. Choose another location": "Không có kế hoạch được liên kết. Chọn một vị trí khác.",
 	"Pay as you Go": "Cloud Server PAYG",
 	"VDC created successfully with": "VDC được tạo thành công với",
 	"Monthly payment": "Thanh toán hàng tháng",
@@ -255,7 +257,7 @@
 	"PaaS": {
 		"order_info": "Bạn có thể đặt hàng máy chủ thanh toán hàng tháng tại đây.",
 		"description": "Nhận ngay gói VPS SSD đơn giản, nhanh chóng, tiết kiệm và bảo mật.",
-		"createButton": "Gói VPS SSD"
+		"createButton": "Gói VM"
 	},
 	"virtual_product": {
 		"used space": "Dung lượng đã sử dụng",
