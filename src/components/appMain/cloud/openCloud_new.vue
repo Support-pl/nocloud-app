@@ -1055,48 +1055,27 @@ export default {
       return this.$store.getters["nocloud/vms/isLoading"];
     },
     stateVM() {
-      let state = "";
-      switch (this.VM.state && this.VM.state.meta.lcm_state_str) {
+      if (!this.VM.state) return "UNKNOWN";
+      switch (this.VM.state.meta.lcm_state_str) {
         case "LCM_INIT":
-          state = "POWEROFF";
-          break;
-        case "BOOT_POWEROFF":
-          state = "BOOT POWEROFF";
-          break;
-        case "SHUTDOWN_POWEROFF":
-          state = "SHUTDOWN POWEROFF";
-          break;
-        case "RUNNING":
-          state = "RUNNING";
-          break;
-        case "DELETED":
-          state = "DELETED";
-          break;
+          return "POWEROFF";
+        default:
+          return this.VM.state.meta.lcm_state_str;
       }
-      return state;
     },
     stateColor() {
-      let color = "";
       switch (this.VM.state && this.VM.state.meta.lcm_state) {
         case 3:
-          color = "#0fd058";
-          break;
-        // останавливающийся
+          return "#0fd058";
+        // останавливающийся и запускающийся
         case 18:
-          color = "#919191";
-          break;
-        // запускающийся
         case 20:
-          color = "#919191";
-          break;
+          return "#919191";
         case 0:
-          color = "#f9f038";
-          break;
+          return "#f9f038";
         default:
-          color = "rgb(145, 145, 145)";
-          break;
+          return "rgb(145, 145, 145)";
       }
-      return color;
     },
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
@@ -1249,14 +1228,16 @@ export default {
           params: {},
         };
       }
+
+      this.VM.state.meta.state = 0;
       this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
-        // .then((res) => {
-        //   const opts = {
-        //     message: `Done!`,
-        //   };
-        //   this.openNotificationWithIcon("success", opts);
-        // })
+        .then(() => {
+          const opts = {
+            message: `Done!`,
+          };
+          this.openNotificationWithIcon("success", opts);
+        })
         .catch((err) => {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
