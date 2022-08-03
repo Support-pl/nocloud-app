@@ -186,51 +186,6 @@
                   >
                     <access-manager />
                   </a-modal>
-                  <a-modal
-                    v-model="modal.SSH"
-                    :title="$t('SSH keys')"
-                    :footer="null"
-                  >
-                    <div
-                      style="margin-bottom: 20px"
-                      v-if="userdata.data.ssh_keys.length"
-                    >
-                      <div
-                        v-for="(item, index) in userdata.data.ssh_keys"
-                        :key="item.uuid"
-                        style="
-                          display: flex;
-                          align-items: center;
-                          margin-bottom: 20px;
-                        "
-                      >
-                        <a-col style="width: 100%">
-                          <div
-                            style="
-                              display: flex;
-                              align-items: center;
-                              margin-right: 10px;
-                            "
-                          >
-                            <div style="margin-right: 10px; width: 20%">
-                              {{ index + 1 }}.{{ item.title }}
-                            </div>
-                            <a-input
-                              :value="item.value"
-                              style="width: 80%; margin-left: auto"
-                            />
-                          </div>
-                        </a-col>
-                        <a-col style="margin-left: auto">
-                          <a-button type="danger" @click="deleteSSH(index)"
-                            ><a-icon type="close"
-                          /></a-button>
-                        </a-col>
-                      </div>
-                    </div>
-                    <p v-else>While here is not one SSH key</p>
-                    <addSSH />
-                  </a-modal>
                 </div>
               </div>
             </div>
@@ -824,7 +779,6 @@ import diskControl from "./openCloud/diskControl";
 import bootOrder from "./openCloud/bootOrder";
 import networkControl from "./openCloud/networkControl";
 import accessManager from "./openCloud/accessManager";
-import addSSH from "./openCloud/addSSH";
 import notification from "../../../mixins/notification";
 const columns = [
   {
@@ -853,7 +807,6 @@ export default {
     bootOrder,
     networkControl,
     accessManager,
-    addSSH,
   },
   mixins: [notification],
   data() {
@@ -894,7 +847,6 @@ export default {
         networkControl: false,
         accessManager: false,
         rename: false,
-        SSH: false,
         resize: false,
       },
       option: {
@@ -935,12 +887,6 @@ export default {
           onclick: this.openModal,
           params: ["rename"],
           icon: "tag",
-        },
-        {
-          title: "SSH",
-          onclick: this.openModal,
-          params: ["SSH"],
-          icon: "safety",
         },
         // {
         //   title: "Access manager",
@@ -996,7 +942,6 @@ export default {
       "getServicesFull",
       "getInstances",
     ]),
-    ...mapGetters("nocloud/auth", ["userdata"]),
 
     itemService() {
       const data = this.getServicesFull.find((el) => {
@@ -1060,7 +1005,8 @@ export default {
         case "LCM_INIT":
           return "POWEROFF";
         default:
-          return this.VM.state.meta.lcm_state_str;
+          return this.VM.state.meta.lcm_state_str
+            .replaceAll('_', ' ');
       }
     },
     stateColor() {
@@ -1082,55 +1028,21 @@ export default {
     },
   },
   created() {
-    // this.sync(); //он вызывается ниже, в вотче изменения роута
-    // if (this.isLogged) {
-    //   this.$store.dispatch("nocloud/vms/fetchById", this.$route.params.uuid);
-    // this.$store.dispatch('nocloud/sp/fetch')
-    // 	.then(res => {
-    // 		this.selectedSP = res.pool[0].uuid
-    // 	})
-    // }
+    if (this.VM?.uuidService) {
+      this.$store.dispatch(
+        "nocloud/vms/subscribeWebSocket",
+        this.VM.uuidService
+      );
+    }
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
       this.$store.dispatch("nocloud/sp/fetch");
     }
   },
+  destroyed() {
+    this.$store.state.nocloud.vms.socket.close(1000, 'Work is done');
+  },
   methods: {
-    deleteSSH(index) {
-      for (let item in this.userdata.data.ssh_keys) {
-        if (+item === index) {
-          this.userdata.data.ssh_keys.splice(item, 1);
-        }
-      }
-      const dataSSH = {
-        id: this.userdata.uuid,
-        body: { data: this.userdata.data },
-      };
-
-      this.$store
-        .dispatch("nocloud/auth/addSSH", dataSSH)
-        .then((result) => {
-          if (result) {
-            this.openNotificationWithIcon("success", {
-              message: "Delete SSH key successfully",
-            });
-            this.$store.dispatch("nocloud/auth/fetchUserData");
-          } else {
-            this.openNotificationWithIcon("error", {
-              message: "Error delete SSH key",
-            });
-          }
-        })
-        .catch((err) => {
-          this.openNotificationWithIcon("error", {
-            message: "Error delete SSH key",
-          });
-          console.error(err);
-        })
-        .finally((res) => {
-          this.modal.confirmLoading = false;
-        });
-    },
     deployVM() {
       this.deployLoading = true;
       // this.$api.services
@@ -1229,7 +1141,6 @@ export default {
         };
       }
 
-      this.VM.state.meta.state = 0;
       this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
@@ -1270,6 +1181,8 @@ export default {
       return gb;
     },
     handleOk(from) {
+      this.VM.state.meta.state = 0;
+
       switch (from) {
         case "reboot":
           this.sendAction("reboot");
@@ -1582,30 +1495,53 @@ export default {
     //     },
     //   });
     // },
-    // sendDelete() {
-    //   const me = this;
-    //   this.$confirm({
-    //     title: me.$t("Do you want to delete this virtual machine?"),
-    //     okType: "danger",
-    //     content: (h) => (
-    //       <div style="color:red;">{me.$t("All data will be deleted!")}</div>
-    //     ),
-    //     onOk() {
-    //       me.sendAction("Delete");
-    //       me.modal.menu = false;
-    //       me.modal.delete = false;
-    //     },
-    //     onCancel() {
-    //       me.modal.delete = false;
-    //     },
-    //   });
-    //
+    sendDelete() {
+      this.$confirm({
+        title: this.$t("Do you want to delete this virtual machine?"),
+        okType: "danger",
+        content: () => (
+          <div style="color:red">{this.$t("All data will be deleted!")}</div>
+        ),
+        onOk: () => {
+          const group = this.itemService.instancesGroups.find(
+            (el) => el.uuid === this.VM.uuidInstancesGroups
+          );
+
+          group.instances = group.instances.filter(
+            (inst) => inst.uuid !== this.VM.uuid
+          );
+          this.$store
+            .dispatch("nocloud/vms/updateService", this.itemService)
+            .then((result) => {
+              if (result) {
+                this.openNotificationWithIcon("success", {
+                  message: "VM deleted successfully",
+                });
+
+                this.$router.push({ path: '/cloud' });
+              } else {
+                this.openNotificationWithIcon("error", {
+                  message: "Failed to delete VM",
+                });
+              }
+            })
+            .catch(() => {
+              this.openNotificationWithIcon("error", {
+                message: "Failed to delete VM",
+              });
+            });
+        },
+        onCancel: () => {
+          this.modal.delete = false;
+        },
+      });
+    },
     bootOrderNewState() {
       this.closeModal("bootOrder");
     },
   },
   watch: {
-    "VM.uuidService": function () {
+    "VM.uuidService"() {
       this.$store.dispatch(
         "nocloud/vms/subscribeWebSocket",
         this.VM.uuidService

@@ -2,7 +2,7 @@
   <div class="newCloud_wrapper">
     <template>
       <template>
-        <div class="newCloud" v-if="!isPlansLoading">
+        <div class="newCloud">
           <div class="newCloud__inputs field">
             <div style="display: none">{{ product }}</div>
             <a-collapse
@@ -45,7 +45,9 @@
                     </a-select-option>
                   </a-select>
                   <div style="overflow: hidden; margin-top: -15px">
-                    <my-map v-model="locationId" :markers="markers"> </my-map>
+                    <a-spin tip="Loading..." :spinning="isPlansLoading">
+                      <my-map v-model="locationId" :markers="markers"> </my-map>
+                    </a-spin>
                   </div>
                   <!-- <a-radio-group v-model="location_uuid">
                     <a-radio-button
@@ -354,7 +356,7 @@
 
               <!-- OS -->
               <a-collapse-panel
-                :disabled="itemSP ? false : true"
+                :disabled="!itemSP || getPlans.length < 1"
                 key="OS"
                 :header="
                   $t('OS:') +
@@ -533,7 +535,7 @@
             </a-collapse>
           </div>
 
-          <div class="newCloud__calculate field result">
+          <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
             <!-- Location -->
             <transition name="networkApear">
               <a-row
@@ -545,7 +547,6 @@
                   margin-bottom: 10px;
                   border-bottom: 1px solid #e8e8e8;
                 "
-                v-if="this.itemSP"
               >
                 <a-col> {{ $t("Location") }}: </a-col>
                 <a-col>
@@ -556,7 +557,7 @@
             <!-- Tarif -->
             <transition
               name="networkApear"
-              v-if="this.itemSP && getPlan.kind === 'STATIC'"
+              v-if="getPlan.kind === 'STATIC'"
             >
               <a-row
                 type="flex"
@@ -572,7 +573,7 @@
             </transition>
 
             <!-- CPU -->
-            <transition name="networkApear" v-if="this.itemSP">
+            <transition name="networkApear">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -595,7 +596,7 @@
             </transition>
 
             <!-- RAM -->
-            <transition name="networkApear" v-if="this.itemSP">
+            <transition name="networkApear">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -680,7 +681,7 @@
             </transition>
 
             <!-- network -->
-            <transition name="networkApear" v-if="this.itemSP">
+            <transition name="networkApear">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -724,7 +725,7 @@
               </a-row>
             </transition>
 
-            <transition name="networkApear" v-if="this.itemSP">
+            <transition name="networkApear">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -798,7 +799,7 @@
               type="flex"
               justify="space-between"
               style="width: 100%; margin-top: 10px"
-              v-if="this.itemSP && getServicesFull.length > 1"
+              v-if="getServicesFull.length > 1"
             >
               <a-col style="width: 100%">
                 <a-select
@@ -820,7 +821,7 @@
               type="flex"
               justify="space-between"
               style="width: 100%; margin-top: 10px"
-              v-if="this.itemSP && getNameSpaces.length > 1"
+              v-if="getNameSpaces.length > 1"
             >
               <a-col style="width: 100%">
                 <a-select
@@ -841,7 +842,6 @@
             <a-divider
               orientation="left"
               :style="{ 'margin-bottom': '0' }"
-              v-if="this.itemSP"
             >
               {{ $t("Total") }}:
             </a-divider>
@@ -852,7 +852,7 @@
               :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
               v-if="tarification === 'STATIC'"
             >
-              <a-col v-if="this.itemSP">
+              <a-col>
                 <!-- {{
                     calculatePrice(
                       +getFullPrice +
@@ -878,7 +878,7 @@
               :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
               v-if="tarification === 'UNKNOWN'"
             >
-              <a-col v-if="this.itemSP">
+              <a-col>
                 <!-- ~{{
                     calculatePrice(
                       +getFullPrice +
@@ -972,7 +972,6 @@
             </a-row>
           </div>
         </div>
-        <loading v-else></loading>
       </template>
       <!-- <div v-else class="newCloud tariff">
         <div class="field field--fluid">
@@ -1203,9 +1202,6 @@ export default {
         const sp = this.getSP.find((el) => {
           return el.title === this.location.title;
         });
-        // if (sp) {
-        //   this.activeKey = "plan";
-        // }
         return sp;
       }
     },
@@ -1645,8 +1641,7 @@ export default {
                 title: this.userdata.title + Date.now(),
                 resources: {
                   ips_private: this.options.network.private.count,
-                  // ips_public: this.options.network.public.count,
-                  ips_public: 30,
+                  ips_public: this.options.network.public.count,
                 },
                 type: "ione",
                 instances: [this.service ? instance : newInstance],
@@ -1706,18 +1701,17 @@ export default {
         });
     },
     deployService(uuidService) {
-      const self = this;
       api.services
         .up(uuidService)
         .then(() => {
-          self.$message.success("Service deployed");
+          this.$message.success("Service deployed");
+          this.$router.push({ path: '/cloud' });
         })
         .catch((err) => {
-          self.$message.success(
+          this.$message.success(
             `Error: ${err?.response?.data?.message ?? "Unknown"}.`
           );
-        })
-        .finally(() => {});
+        });
     },
     availableLogin() {
       const data = {
@@ -1797,6 +1791,7 @@ export default {
         });
 
         this.$store.commit('nocloud/plans/setPlans', plans);
+        setTimeout(() => { this.activeKey = "plan" }, 300);
       });
     }
     // getAddons: function (newVal) {
