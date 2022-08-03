@@ -68,6 +68,60 @@
           <add-funds :modalVisible="modal.addFunds" :hideModal="hideFunds" />
         </div>
 
+        <div class="settings__item" @click="showModal('SSH')">
+          <div class="settings__logo">
+            <a-icon type="safety" />
+          </div>
+          <div class="settings__title">
+            {{ $t("SSH") }}
+          </div>
+          <a-modal
+            v-model="modal.SSH"
+            :title="$t('SSH keys')"
+            :footer="null"
+          >
+            <div
+              style="margin-bottom: 20px"
+              v-if="userdata.data && userdata.data.ssh_keys.length"
+            >
+              <div
+                v-for="(item, index) in userdata.data && userdata.data.ssh_keys"
+                :key="item.uuid"
+                style="
+                  display: flex;
+                  align-items: center;
+                  margin-bottom: 20px;
+                "
+              >
+                <a-col style="width: 100%">
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      margin-right: 10px;
+                    "
+                  >
+                    <div style="margin-right: 10px; width: 20%">
+                      {{ index + 1 }}.{{ item.title }}
+                    </div>
+                    <a-input
+                      :value="item.value"
+                      style="width: 80%; margin-left: auto"
+                    />
+                  </div>
+                </a-col>
+                <a-col style="margin-left: auto">
+                  <a-button type="danger" @click="deleteSSH(index)"
+                    ><a-icon type="close"
+                  /></a-button>
+                </a-col>
+              </div>
+            </div>
+            <p v-else>While here is not one SSH key</p>
+            <addSSH />
+          </a-modal>
+        </div>
+
         <div class="settings__item" @click="showModal('QR')">
           <div class="settings__logo">
             <a-icon type="qrcode" />
@@ -113,8 +167,10 @@
 <script>
 import balance from "../components/balance/balance.vue";
 import addFunds from "../components/balance/addFunds.vue";
+import addSSH from "@/components/appMain/cloud/openCloud/addSSH.vue";
 import config from "../appconfig";
 import QrcodeVue from "qrcode.vue";
+import { mapGetters } from 'vuex';
 
 export default {
   name: "settings",
@@ -125,6 +181,7 @@ export default {
       modal: {
         language: false,
         addFunds: false,
+        SSH: false,
         QR: false,
       },
       config,
@@ -134,6 +191,7 @@ export default {
     balance,
     addFunds,
     QrcodeVue,
+    addSSH
   },
   methods: {
     exit() {
@@ -217,8 +275,44 @@ export default {
           this.$message.success(this.$t("Some error. Copy link manually"));
         });
     },
+    deleteSSH(index) {
+      for (let item in this.userdata.data.ssh_keys) {
+        if (+item === index) {
+          this.userdata.data.ssh_keys.splice(item, 1);
+        }
+      }
+      const dataSSH = {
+        id: this.userdata.uuid,
+        body: { data: this.userdata.data },
+      };
+
+      this.$store
+        .dispatch("nocloud/auth/addSSH", dataSSH)
+        .then((result) => {
+          if (result) {
+            this.openNotificationWithIcon("success", {
+              message: "Delete SSH key successfully",
+            });
+            this.$store.dispatch("nocloud/auth/fetchUserData");
+          } else {
+            this.openNotificationWithIcon("error", {
+              message: "Error delete SSH key",
+            });
+          }
+        })
+        .catch((err) => {
+          this.openNotificationWithIcon("error", {
+            message: "Error delete SSH key",
+          });
+          console.error(err);
+        })
+        .finally((res) => {
+          this.modal.confirmLoading = false;
+        });
+    },
   },
   computed: {
+    ...mapGetters("nocloud/auth", ["userdata"]),
     user() {
       return this.$store.getters.getUser;
     },

@@ -9,7 +9,8 @@ export default {
 		servicesFull: [],
 		loading: false,
 		loadingInvoke: false,
-		stateVM: ''
+		stateVM: '',
+    socket: null
 	},
 	mutations: {
 		setCreateInstance(state, data) {
@@ -62,12 +63,10 @@ export default {
 			}
 		},
 		setUpdateInstanceInvoke(state, data) {
-			state.instances.find(item => {
-					if (item.uuid === data.uuid) {
-						return item.state = data.state
-					}
-			})
+			const inst = state.instances.find(item => item.uuid === data.uuid);
 
+      data.state.meta.networking = inst.state.meta.networking;
+			inst.state = data.state;
 		},
 		setUpdateInstance(state, data) {
 			data.instancesGroups.forEach(item => {
@@ -119,7 +118,7 @@ export default {
 						reject(error);
 					})
 					.finally(() => {
-
+            commit("setLoading", false);
 					})
 			})
 		},
@@ -150,23 +149,23 @@ export default {
 					})
 			})
 		},
-		subscribeWebSocket({ commit }, uuid) {
-	
-			let socket = new WebSocket(`wss://api.nocloud.ione-cloud.net/services/${uuid}/stream`);
-			socket.onopen = (even) => {
-				console.log(even)
+		subscribeWebSocket({ commit, state }, uuid) {
+			state.socket = new WebSocket(`wss://api.nocloud.ione-cloud.net/services/${uuid}/stream`);
+
+			state.socket.onopen = (event) => {
+				console.log(event)
 			};
-			socket.onmessage = (even) => {
-				console.log(even)
-				let response = JSON.parse(even.data).result
+			state.socket.onmessage = (event) => {
+				console.log(event)
+				let response = JSON.parse(event.data).result
 				if (response) {
 					commit('setUpdateInstanceInvoke', response)
 				}
 			}
-			socket.onclose = (event) => {
+			state.socket.onclose = (event) => {
 				console.log(event)
 			};
-			socket.onerror = (event) => {
+			state.socket.onerror = (event) => {
 				console.log(event)
 			};
 

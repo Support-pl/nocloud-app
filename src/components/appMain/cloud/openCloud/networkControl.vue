@@ -1,14 +1,14 @@
 <template>
   <div class="network-control">
     <a-table
-      :columns="columns"
-      :data-source="newtworks"
+      :columns="NICsColumns"
+      :data-source="networks"
       :pagination="false"
-      rowKey="NIC_ID"
+      rowKey="id"
     >
       <div slot="buttons" slot-scope="value, row">
         <span
-          v-if="value.NIC_ID != 0"
+          v-if="value.id !== 0"
           class="modal_table_action_btn"
           :title="$t('Detach')"
           @click="detachInit(row)"
@@ -26,7 +26,7 @@
       :title="$t('NIC detach')"
       :visible="modal.detach"
       :confirm-loading="detach.loading"
-      @ok="sendDetach"
+      @ok="removeIP"
       @cancel="closeModal('detach')"
     >
       <p>{{ $t("This will detach the NIC immediately") }}</p>
@@ -40,64 +40,47 @@
       @ok="sendNewIP"
       @cancel="closeModal('attach')"
       :cancelText="$t('Cancel')"
+      :okText="$t('Send')"
     >
-      <a-radio-group v-model="attach.type" style="margin-bottom: 20px">
-        <a-radio :value="1">{{ $t("private") }}</a-radio>
-        <a-radio :value="2">{{ $t("public") }}</a-radio>
-      </a-radio-group>
-      <div v-if="attach.type == 1">
-        <!-- <p style="margin-bottom: 2px">{{ $t("available intervals") }}</p> -->
-        <!-- <span v-for="ips in privateIPS" :key="ips.min"
-          >{{ ips.min }} - {{ ips.max }}<br
-        /></span> -->
-        <span
-          v-for="nic in VM.state && VM.state.meta.networking.private"
-          :key="nic.NAME"
-        ></span>
-        <p style="margin-top: 15px">{{ $t("enter new private IP") }}</p>
-        <a-input v-model="attach.newIP" @change="ipInput">
-          <a-select v-model="attach.mask" slot="addonAfter" style="width: 80px">
-            <a-select-option
-              v-for="mask in possibleMasks"
-              :key="mask"
-              :value="mask"
-            >
-              /{{ mask }}
-            </a-select-option>
-          </a-select>
-        </a-input>
-      </div>
-      <!-- <public-network v-if="attach.type == 2" @onselect="selectedRows" /> -->
-      <div v-if="attach.type == 2" @onselect="selectedRows">
-        <span
-          v-for="nic in VM.state && VM.state.meta.networking.public"
-          :key="nic"
-        >
-        {{nic}}
-        </span>
-        <!-- <p style="margin-top: 15px">{{ $t("enter new private IP") }}</p> -->
-        <p style="margin-top: 15px">Enter new public IP:</p>
-        <a-input v-model="attach.newIP" @change="ipInput">
-          <a-select v-model="attach.mask" slot="addonAfter" style="width: 80px">
-            <a-select-option
-              v-for="mask in possibleMasks"
-              :key="mask"
-              :value="mask"
-            >
-              /{{ mask }}
-            </a-select-option>
-          </a-select>
-        </a-input>
-      </div>
+      <a-row :gutter="[10, 10]">
+        <a-col style="display: flex; align-items: center">
+          <span>{{ $t("Public network") }}:</span>
+          <a-switch
+            v-model="networking.public.status"
+            :style="{ 'margin': '0 10px' }"
+          />
+          <a-input-number
+            v-model="networking.public.count"
+            :min="publicMin"
+            :max="10"
+            :disabled="!networking.public.status"
+          />
+        </a-col>
+
+        <a-col style="display: flex; align-items: center">
+          <span>{{ $t("Private network") }}:</span>
+          <a-switch
+            v-model="networking.private.status"
+            :style="{ 'margin': '0 10px' }"
+          />
+          <a-input-number
+            v-model="networking.private.count"
+            :min="privateMin"
+            :max="10"
+            :disabled="!networking.private.status"
+          />
+        </a-col>
+      </a-row>
     </a-modal>
 
     <a-row style="margin-top: 15px">
       <a-col>
         <a-button
           @click="showModal('attach')"
-          @final="() => this.closeModal('detach')"
-          >{{ $t("attach new NIC") }}</a-button
+          @final="closeModal('detach')"
         >
+          {{ $t("attach new NIC") }}
+        </a-button>
       </a-col>
     </a-row>
   </div>
@@ -106,22 +89,26 @@
 <script>
 import md5 from "md5";
 import { mapGetters } from "vuex";
-// import publicNetwork from "../../../publicNetwork";
-import notification from "../../../../mixins/notification";
+import notification from "@/mixins/notification";
 
 const NICsColumns = [
   {
-    title: "ID",
-    dataIndex: "AR_ID",
-    key: "AR_ID",
+    title: "№",
+    dataIndex: "id",
+    key: "id",
     width: 50,
     align: "center",
   },
   {
     title: "IP",
-    dataIndex: "IP",
-    key: "IP",
+    dataIndex: "ip",
+    key: "ip",
     scopedSlots: { customRender: "ip" },
+  },
+  {
+    title: "Type",
+    dataIndex: "type",
+    key: "type",
   },
   {
     title: "Actions",
@@ -165,9 +152,6 @@ export default {
       type: Object,
       dafault: "",
     },
-  },
-  components: {
-    // publicNetwork,
   },
   mixins: [notification],
   data() {
@@ -214,10 +198,21 @@ export default {
       attach: {
         loading: false,
         type: 1,
-        newIP: "",
         mask: 24,
         publicAR_ID: -1,
       },
+      networking: {
+        private: {
+          list: [],
+          status: false,
+          count: 0
+        },
+        public: {
+          list: [],
+          status: false,
+          count: 0
+        }
+      }
     };
   },
   computed: {
@@ -225,7 +220,7 @@ export default {
       SingleCloud: "getOpenedCloud",
     }),
     ...mapGetters({ user: "getUser" }),
-    newtworks() {
+    networks() {
       if (Array.isArray(this.SingleCloud.NIC)) {
         const arrayNIC = [];
         for (let i = 0; i < this.SingleCloud.NIC.length; i++) {
@@ -236,7 +231,18 @@ export default {
         }
         return arrayNIC;
       }
-      return [this.SingleCloud.NIC];
+      const networks = [];
+
+      this.networking.private.list.forEach((ip, i) => {
+        networks.push({ id: i + 1, ip, type: 'private' });
+      });
+      const length = this.networking.private.list.length;
+
+      this.networking.public.list.forEach((ip, i) => {
+        networks.push({ id: length + i + 1, ip, type: 'public' });
+      });
+
+      return networks;
     },
     possibleMasks() {
       const interval = this.privateIPS.find((el) => {
@@ -255,6 +261,12 @@ export default {
         return this.masks;
       }
     },
+    privateMin() {
+      return this.VM.resources.ips_private;
+    },
+    publicMin() {
+      return this.VM.resources.ips_public;
+    }
   },
   methods: {
     URLparameter(obj, outer = "") {
@@ -279,7 +291,7 @@ export default {
       this.modal[modalname] = false;
     },
     detachInit(NIC) {
-      this.detach.NIC = NIC.NIC_ID;
+      this.detach.NIC = NIC;
       this.showModal("detach");
     },
     sendDetach(disk) {
@@ -351,51 +363,69 @@ export default {
       return arrayOfOctets.join(".");
     },
 
-    sendNewIP() {
-      const ip = this.attach.newIP;
-      if (this.attach.type === 1) {
-        this.itemService.instancesGroups[0].instances.find((el) => {
-          if (el.uuid === this.VM.uuid) {
-            el.state.meta.networking.private.push(ip);
-            return el;
-          }
-        });
-      } else {
-        this.itemService.instancesGroups[0].instances.find((el) => {
-          if (el.uuid === this.VM.uuid) {
-            el.state.meta.networking.public.push(ip);
-            return el;
-          }
-        });
-      }
-
+    updateService(action) {
       this.$store
         .dispatch("nocloud/vms/updateService", this.itemService)
         .then((result) => {
           if (result) {
-            // this.$message.success(this.$t("VM resized successfully"));
             this.openNotificationWithIcon("success", {
-              message: "Add ip successfully",
+              message: `${action} ip successfully`,
             });
-            this.isRenameLoading = false;
-            this.closeModal("resize");
+
+            if (action === 'Delete') this.closeModal("detach");
+            else this.closeModal('attach');
           } else {
             this.openNotificationWithIcon("error", {
-              message: "Can't add ip VM",
+              message: `Can't ${action.toLowerCase()} ip VM`,
             });
-            // this.$message.error("Can't resize to same size");
           }
         })
         .catch((err) => {
-          // this.$message.error( "Can't resize to same size");
           this.openNotificationWithIcon("error", {
-            message: "Can't add ip VM",
+            message: `Can't ${action.toLowerCase()} ip VM`,
           });
           console.error(err);
         })
-        .finally((res) => {
-          this.modal.confirmLoading = false;
+        .finally(() => {
+          this.attach.loading = false;
+          this.detach.loading = false;
         });
+    },
+    removeIP() {
+      const { type, ip } = this.detach.NIC;
+      const group = this.itemService.instancesGroups.find(
+        (el) => el.uuid === this.VM.uuidInstancesGroups
+      );
+      const instance = group.instances
+        .find((el) => el.uuid === this.VM.uuid);
+
+      instance.resources[`ips_${type}`] =
+        --this.networking[type].count;
+
+      instance.state.meta.networking[type] = 
+        this.networking[type].list.filter((el) => el !== ip);
+
+      this.detach.loading = true;
+      this.updateService('Delete');
+    },
+    sendNewIP() {
+      const group = this.itemService.instancesGroups.find(
+        (el) => el.uuid === this.VM.uuidInstancesGroups
+      );
+      const instance = group.instances
+        .find((el) => el.uuid === this.VM.uuid);
+
+      instance.resources = {
+        ...instance.resources,
+        ips_private: this.networking.private.count,
+        ips_public: this.networking.public.count
+      };
+      instance.state.meta.networking = {
+        private: this.networking.private.list,
+        public: this.networking.public.list
+      };
+      this.attach.loading = true;
+      this.updateService('Add');
       // const user = this.user;
       // const vmid = this.SingleCloud.ID;
       // const close_your_eyes = md5("VMNICattach" + user.id + user.secret);
@@ -490,6 +520,19 @@ export default {
       // console.log(this.attach.publicAR_ID);
     },
   },
+  mounted() {
+    const privateIPS = this.VM.state.meta.networking.private;
+    const publicIPS = this.VM.state.meta.networking.public;
+    const privateCount = this.VM.resources.ips_private;
+    const publicCount = this.VM.resources.ips_public;
+
+    this.networking.private.list = JSON.parse(JSON.stringify(privateIPS));
+    this.networking.public.list = JSON.parse(JSON.stringify(publicIPS));
+    this.networking.private.status = privateCount > 0;
+    this.networking.public.status = publicCount > 0;
+    this.networking.private.count = privateCount;
+    this.networking.public.count = publicCount;
+  }
 };
 </script>
 
