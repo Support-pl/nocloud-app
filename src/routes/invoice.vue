@@ -17,7 +17,7 @@
           <div v-if="value === 'Detail'">
               <empty style="margin-top:50px" v-if="getTransactions.length === 0" />
             <singleInvoice v-else
-              v-for="(invoice, index) in getTransactions"
+              v-for="(invoice, index) in transactions"
               :key="index"
               :invoice="invoice"
             />
@@ -63,6 +63,9 @@ export default {
   computed: {
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
+    },
+    transactions() {
+      return this.getTransactions.reverse();
     },
     ...mapGetters("nocloud/auth/", ["userdata"]),
     ...mapGetters("nocloud/transactions", ["isTransactionsLoading"]),

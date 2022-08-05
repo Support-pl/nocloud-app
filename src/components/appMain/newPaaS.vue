@@ -429,6 +429,13 @@
                         />
                       </a-form-item>
                       <!-- </a-form-model-item> -->
+                      <a-select
+                        placeholder="SSH keys"
+                        style="width: 100%; margin-top: 18px"
+                        mode="multiple"
+                        v-model="sshKeys"
+                        :options="userdata && userdata.data.ssh_keys"
+                      />
                     </a-col>
                   </a-row>
                 </div>
@@ -1115,6 +1122,7 @@ export default {
       locationId: "Location",
       vmName: "",
       password: "",
+      sshKeys: [],
       score: null,
       options: {
         // kind: "standart",
@@ -1593,6 +1601,9 @@ export default {
         config: {
           template_id: this.options.os.id,
           password: this.password,
+          ssh_keys: this.sshKeys.map((key) =>
+            this.userdata.data.ssh_keys.find((el) => el.value === key)
+          ),
         },
         resources: {
           cpu: this.options.cpu.size,
@@ -1790,8 +1801,8 @@ export default {
           return { ...plan, title };
         });
 
+        this.activeKey = "plan";
         this.$store.commit('nocloud/plans/setPlans', plans);
-        setTimeout(() => { this.activeKey = "plan" }, 300);
       });
     }
     // getAddons: function (newVal) {

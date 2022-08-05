@@ -23,7 +23,7 @@
         >
           IP: {{ item }}
         </div>
-        <div v-if="!instance.state.meta.networking.public">IP: {{ $t("ip.none") }}</div>
+        <div v-if="!(instance.state && instance.state.meta.networking && instance.state.meta.networking.public)">IP: {{ $t("ip.none") }}</div>
       </div>
     </div>
     <div class="cloud__label cloud__label__mainColor">

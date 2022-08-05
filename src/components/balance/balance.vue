@@ -11,9 +11,6 @@
       <span class="badge" v-if="clickable">
         <a-icon type="plus" />
       </span>
-      <template v-else>
-        {{ currency.suffix }}
-      </template>
     </div>
     <addFunds :modalVisible="modalVisible" :hideModal="hideModal" />
   </div>
