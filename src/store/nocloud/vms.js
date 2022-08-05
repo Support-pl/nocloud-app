@@ -13,37 +13,22 @@ export default {
     socket: null
 	},
 	mutations: {
-		setCreateInstance(state, data) {
-			data.instancesGroups.forEach(item => {
-				item.instances.forEach(el => {
-					const instanceItem = {
-						uuidService: data.uuid,
-						uuidInstancesGroups: item.uuid,
-						type: item.type,
-						sp: item.sp,
-						...el
-					}
-					state.instances.push(instanceItem)
-				})
-			})
-		},
 		setServices(state, services) {
 			state.services = services;
 		},
 		setInstances(state, data) {
-			data.instancesGroups.forEach(item => {
-				item.instances.forEach(el => {
-					const instanceItem = {
+      state.instances = state.instances.filter(({ uuidService }) =>
+        uuidService !== data.uuid
+      )
+			data.instancesGroups.forEach(group => {
+				group.instances.forEach(inst => {
+					state.instances.push({
+						...inst,
 						uuidService: data.uuid,
-						uuidInstancesGroups: item.uuid,
-						type: item.type,
-						sp: item.sp,
-						...el
-					}
-					const index = state.instances.findIndex(item => item.uuid === instanceItem.uuid)
-					if (index == -1) {
-						state.instances.push(instanceItem)
-					}
+						uuidInstancesGroups: group.uuid,
+						type: group.type,
+						sp: group.sp
+					})
 				})
 			})
 		},
@@ -62,27 +47,11 @@ export default {
 				state.servicesFull.push(data)
 			}
 		},
-		setUpdateInstanceInvoke(state, data) {
+		setInstanceInvoke(state, data) {
 			const inst = state.instances.find(item => item.uuid === data.uuid);
 
       data.state.meta.networking = inst.state.meta.networking;
 			inst.state = data.state;
-		},
-		setUpdateInstance(state, data) {
-			data.instancesGroups.forEach(item => {
-				item.instances.forEach(el => {
-					const instanceItem = {
-						uuidService: data.uuid,
-						uuidInstancesGroups: item.uuid,
-						type: item.type,
-						sp: item.sp,
-						...el
-					}
-					const index = state.instances.findIndex(item => item.uuid === instanceItem.uuid)
-					state.instances.splice(index, 1, instanceItem)
-
-				})
-			})
 		},
 		setLoading(state, data) {
 			state.loading = data;
@@ -126,7 +95,7 @@ export default {
 			return new Promise((resolve, reject) => {
 				api.services._create(data)
 					.then(response => {
-						commit('setCreateInstance', response)
+						commit('setInstances', response)
 						resolve(response)
 					})
 					.catch(error => {
@@ -138,14 +107,13 @@ export default {
 		},
 		updateService({ commit }, data) {
 			return new Promise((resolve, reject) => {
-				api.services._update(data).then(response => {
-					commit('setUpdateInstance', response)
-					resolve(response)
-				})
+				api.services._update(data)
+          .then(response => {
+            commit('setInstances', response)
+            resolve(response)
+          })
 					.catch(error => {
 						reject(error);
-					})
-					.finally(() => {
 					})
 			})
 		},
@@ -159,7 +127,7 @@ export default {
 				console.log(event)
 				let response = JSON.parse(event.data).result
 				if (response) {
-					commit('setUpdateInstanceInvoke', response)
+					commit('setInstanceInvoke', response)
 				}
 			}
 			state.socket.onclose = (event) => {

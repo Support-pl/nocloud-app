@@ -41,14 +41,15 @@
                       )" -->
 
                     <a-button
+                      block
+                      class="menu__button"
                       v-for="btn in menuOptions"
                       :key="btn.title"
                       :icon="btn.icon"
-                      @click="btn.onclick(...btn.params)"
-                      block
-                      class="menu__button"
                       :type="btn.type || 'default'"
                       :disabled="disabledMenu(btn.title.toLowerCase())"
+                      :loading="(btn.icon === 'delete') ? isDeleteLoading : null"
+                      @click="btn.onclick(...btn.params)"
                     >
                       {{ $t(btn.title) }}
                     </a-button>
@@ -829,6 +830,7 @@ export default {
       status: "running",
       name: "test3",
       showPermissions: false,
+      isDeleteLoading: false,
       isRenameLoading: false,
       reinstallPass: "",
       renameNewName: "",
@@ -1507,6 +1509,7 @@ export default {
             (el) => el.uuid === this.VM.uuidInstancesGroups
           );
 
+          this.isDeleteLoading = true;
           group.instances = group.instances.filter(
             (inst) => inst.uuid !== this.VM.uuid
           );
@@ -1529,6 +1532,9 @@ export default {
               this.openNotificationWithIcon("error", {
                 message: "Failed to delete VM",
               });
+            })
+            .finally(() => {
+              this.isDeleteLoading = false;
             });
         },
         onCancel: () => {
