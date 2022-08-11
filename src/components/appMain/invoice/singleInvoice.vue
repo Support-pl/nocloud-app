@@ -84,8 +84,11 @@ export default {
       const time =  date.toTimeString().split(' ')[0];
 
       const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
+
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
 
       return `${day}.${month}.${year} ${time}`;
     }

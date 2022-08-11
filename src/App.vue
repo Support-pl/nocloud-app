@@ -24,23 +24,12 @@ export default {
   created() {
     this.$store.dispatch("nocloud/auth/load");
 
-    const user = this.$store.getters.getCookie("CloudUser");
-    if (user !== undefined) {
-      this.$store.commit("setUser", JSON.parse(user));
-      this.$store.dispatch("cloud/fetchClouds");
-    }
-
-    this.$router.beforeEach((to, from, next) => {
-      // const isLogged = this.$store.getters.isLogged;
-      const isLogged = this.loggedIn;
+    this.$router.beforeEach((to, _, next) => {
       const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined);
-      if (mustBeLoggined && !isLogged) {
-        // this.$router.replace("login");
+
+      if (mustBeLoggined && !this.loggedIn) {
         next({ name: "login" });
       }
-      // if((to.meta?.mustBeLoggined === undefined || to.meta?.mustBeLoggined) && !this.$store.getters.isLogged) next({ name: 'login' })
-      // else if((to.meta?.mustBeUnloggined === undefined || to.meta?.mustBeUnloggined) && this.$store.getters.isLogged) next({ name: 'root' })
-      // if (to.name !== 'login' && !this.$store.getters.isLogged) next({ name: 'login' })
       else if (to.name == "login" && this.loggedIn) next({ name: "root" });
       else next();
     });
@@ -50,25 +39,22 @@ export default {
     if (this.loggedIn) {
       this.$store.dispatch("nocloud/auth/fetchUserData");
     }
-    // this.$store.dispatch('fetchDomainInfo')
   },
   mounted() {
-    this.$router.onReady((route) => {
-      const rt = this.$router.currentRoute;
+    this.$router.onReady(() => {
+      const route = this.$router.currentRoute;
       const isLogged = this.loggedIn;
-      const mustBeLoggined = rt.matched.some((el) => !!el.meta?.mustBeLoggined);
+      const mustBeLoggined = route.matched.some((el) => !!el.meta?.mustBeLoggined);
+
       if (mustBeLoggined && !isLogged) {
         this.$router.replace("login");
       }
     });
-    // if (this.$router.currentRoute.name != 'login' && !this.$store.getters.isLogged) {
-    // 	this.$router.replace("login");
-    // }
+
     document.title = "Cloud";
-    const bodyCSS = Object.entries(this.cssVars)
-      .map(([k, v]) => `${k}:${v}`)
-      .join(";");
-    document.body.setAttribute("style", bodyCSS);
+    document.body.setAttribute("style", 
+      Object.entries(this.cssVars).map(([k, v]) => `${k}:${v}`).join(";")
+    );
   },
   computed: {
     cssVars() {

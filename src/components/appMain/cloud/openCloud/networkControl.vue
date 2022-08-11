@@ -521,8 +521,8 @@ export default {
     },
   },
   mounted() {
-    const privateIPS = this.VM.state.meta.networking.private;
-    const publicIPS = this.VM.state.meta.networking.public;
+    const privateIPS = this.VM.state?.meta.networking.private || [];
+    const publicIPS = this.VM.state?.meta.networking.public || [];
     const privateCount = this.VM.resources.ips_private;
     const publicCount = this.VM.resources.ips_public;
 
