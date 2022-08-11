@@ -68,253 +68,85 @@
                 :disabled="itemSP ? false : true"
               >
                 <template v-if="getPlans.length > 0">
+                  <a-slider
+                  style="margin-top: 10px"
+                  :marks="{ ...getProducts }"
+                  :tip-formatter="null"
+                  :max="getProducts.length - 1"
+                  :min="0"
+                  :value="getProducts.indexOf(productSize)"
+                  @change="(newval) => (productSize = getProducts[newval])"
+                >
+                </a-slider>
+                <div>
                   <a-row
                     type="flex"
                     justify="space-between"
                     align="middle"
-                    style="margin-top: 12px"
+                    class="newCloud__prop"
+                    style="margin-top: 50px"
                   >
-                    <a-radio-group default-value="kind" v-model="tarification">
-                      <a-radio-button
-                        v-for="(pl, index) in getPlans"
-                        :key="index"
-                        style="width: 180px; text-align: center"
-                        :value="pl.kind"
+                    <a-col>
+                      <span style="display: inline-block; width: 70px"
+                        >CPU:</span
                       >
-                        <a-tooltip placement="top">
-                          <template slot="title" v-if="pl.kind == 'STATIC'">
-                            VDS {{ $t('Pre-Paid') }}
-                          </template>
-                          <template slot="title" v-else>
-                            VDC {{ $t('Pay-as-you-Go') }}
-                          </template>
-                          <span style="display: block">{{ pl.title }}</span>
-                        </a-tooltip>
-                      </a-radio-button>
-
-                      <!-- <a-col
-                        :xs="12"
-                        :sm="18"
-                        :lg="12"
-                        style="margin-top: 20px; margin-bottom: 30px"
-                        v-if="tarification == 'STATIC'"
-                      >
-                        <a-row type="flex" justify="space-between" align="middle">
-                          <a-col> {{ $t("Payment period") }}: </a-col>
-                          <a-col :lg="17">
-                            <a-select
-                              v-model="options.period"
-                              style="width: 100%"
-                            >
-                              <a-select-option
-                                v-for="period in periods"
-                                :key="period.title + period.count"
-                                :value="period.count"
-                              >
-                                {{ period.title == "year" ? "1 " : ""
-                                }}{{ $tc(period.title, period.count) }}
-                              </a-select-option>
-                            </a-select>
-                          </a-col>
-                        </a-row>
-                      </a-col> -->
-                    </a-radio-group>
+                    </a-col>
+                    <a-col
+                      class="changing__field"
+                      span="6"
+                      style="text-align: right"
+                    >
+                      {{ options.cpu.size }} vCPU
+                    </a-col>
                   </a-row>
-
-                  <a-slider
-                    style="margin-top: 30px"
-                    v-if="getPlan.kind === 'STATIC'"
-                    :marks="{ ...getProducts }"
-                    :tip-formatter="null"
-                    :max="getProducts.length - 1"
-                    :min="0"
-                    :value="getProducts.indexOf(productSize)"
-                    @change="(newval) => (productSize = getProducts[newval])"
+                  <a-row
+                    type="flex"
+                    justify="space-between"
+                    align="middle"
+                    class="newCloud__prop"
                   >
-                  </a-slider>
-                  <div
-                    class="vdc_plan"
-                    v-if="getPlan.kind === 'UNKNOWN'"
-                    style="margin-top: 30px"
-                  >
-                    <div
-                      v-for="resource in getPlan.resources"
-                      :key="resource.key"
-                    >
-                      <a-row
-                        type="flex"
-                        justify="space-between"
-                        align="middle"
-                        class="newCloud__prop"
-                        style="margin-top: 20px"
+                    <a-col>
+                      <span style="display: inline-block; width: 70px"
+                        >RAM:</span
                       >
-                        <a-col>
-                          <div v-if="resource.key == 'cpu'">
-                            <span style="text-transform: uppercase"
-                              >{{ resource.key }}
-                            </span>
-                            (vCPU):
-                          </div>
-
-                          <div v-if="resource.key == 'ram'">
-                            <span style="text-transform: uppercase"
-                              >{{ resource.key }}
-                            </span>
-                            (Gb):
-                          </div>
-                          <span
-                            style="text-transform: uppercase"
-                            v-if="resource.key == 'ip'"
-                            >{{ resource.key }}:
-                          </span>
-                        </a-col>
-
-                        <a-col style="width: 130px">
-                          <a-row>
-                            <a-col>
-                              <a-row
-                                type="flex"
-                                justify="space-between"
-                                align="middle"
-                              >
-                                <a-col>
-                                  <a-button
-                                    type="link"
-                                    icon="minus"
-                                    @click="changeValueMinus(`${resource.key}`)"
-                                  >
-                                  </a-button>
-                                </a-col>
-                                <a-col v-if="resource.key === 'cpu'">
-                                  <a-input-number
-                                    style="width: 60px"
-                                    v-model="options.cpu.size"
-                                    class="max-width"
-                                    :min="options.cpu.min"
-                                    :max="options.cpu.max"
-                                    default-value="1"
-                                  />
-                                </a-col>
-
-                                <a-col v-if="resource.key === 'ram'">
-                                  <a-input-number
-                                    style="width: 60px"
-                                    v-model="options.ram.size"
-                                    class="max-width"
-                                    :min="options.ram.min"
-                                    :max="options.ram.max"
-                                    default-value="1"
-                                  />
-                                </a-col>
-
-                                <a-col v-if="resource.key === 'ip'">
-                                  <a-input-number
-                                    style="width: 60px"
-                                    v-model="options.network.public.count"
-                                    class="max-width"
-                                    :min="options.network.public.min"
-                                    :max="options.network.public.max"
-                                    default-value="1"
-                                  />
-                                </a-col>
-
-                                <a-col>
-                                  <!-- <a-input-number
-                                    style="width: 60px"
-                                    v-model="options.disk.size"
-                                    class="max-width"
-                                    :min="options.disk.min"
-                                    :max="options.disk.max"
-                                    default-value="1"
-                                  /> -->
-                                </a-col>
-                                <a-col>
-                                  <a-button
-                                    icon="plus"
-                                    type="link"
-                                    @click="changeValuePlus(`${resource.key}`)"
-                                  >
-                                  </a-button>
-                                </a-col>
-                              </a-row>
-                            </a-col>
-                          </a-row>
-                        </a-col>
-                        <!-- </transition> -->
-                      </a-row>
-                    </div>
-                  </div>
-
-                  <!-- <a-skeleton :loading="getCurrentProd == null" :active="true"> -->
-                  <div v-if="getPlan.kind === 'STATIC'">
-                    <a-row
-                      type="flex"
-                      justify="space-between"
-                      align="middle"
-                      class="newCloud__prop"
-                      style="margin-top: 50px"
-                    >
-                      <a-col>
-                        <span style="display: inline-block; width: 70px"
-                          >CPU:</span
-                        >
-                      </a-col>
+                    </a-col>
+                    <transition name="textchange" mode="out-in">
+                      <!-- :key="
+                          getCurrentProd != null
+                            ? getCurrentProd.props.ram.TITLE
+                            : 'DefaultKeyForRAM'
+                        " -->
                       <a-col
                         class="changing__field"
                         span="6"
                         style="text-align: right"
                       >
-                        {{ options.cpu.size }} vCPU
+                        {{ options.ram.size }}
+                        Gb
                       </a-col>
-                    </a-row>
-                    <a-row
-                      type="flex"
-                      justify="space-between"
-                      align="middle"
-                      class="newCloud__prop"
-                    >
-                      <a-col>
-                        <span style="display: inline-block; width: 70px"
-                          >RAM:</span
-                        >
-                      </a-col>
-                      <transition name="textchange" mode="out-in">
-                        <!-- :key="
-                            getCurrentProd != null
-                              ? getCurrentProd.props.ram.TITLE
-                              : 'DefaultKeyForRAM'
-                          " -->
-                        <a-col
-                          class="changing__field"
-                          span="6"
-                          style="text-align: right"
-                        >
-                          {{ options.ram.size }}
-                          Gb
-                        </a-col>
-                      </transition>
-                    </a-row>
-                    <a-row class="newCloud__prop">
-                      <a-col span="8" :xs="6">
-                        <span style="display: inline-block; width: 70px"
-                          >{{ $t("Drive") }}:</span
-                        >
-                      </a-col>
-                      <a-col :xs="10" :sm="14">
-                        <a-switch v-model="options.drive" style="width: 60px">
-                          <span slot="checkedChildren">SSD</span>
-                          <span slot="unCheckedChildren">HDD</span>
-                        </a-switch>
-                      </a-col>
-                      <a-col
-                        class="changing__field"
-                        span="4"
-                        style="text-align: right"
+                    </transition>
+                  </a-row>
+                  <a-row class="newCloud__prop">
+                    <a-col span="8" :xs="6">
+                      <span style="display: inline-block; width: 70px"
+                        >{{ $t("Drive") }}:</span
                       >
-                        {{ options.disk.size }} Gb
-                      </a-col>
-                    </a-row>
-                  </div>
+                    </a-col>
+                    <a-col :xs="10" :sm="14">
+                      <a-switch v-model="options.drive" style="width: 60px">
+                        <span slot="checkedChildren">SSD</span>
+                        <span slot="unCheckedChildren">HDD</span>
+                      </a-switch>
+                    </a-col>
+                    <a-col
+                      class="changing__field"
+                      span="4"
+                      style="text-align: right"
+                    >
+                      {{ options.disk.size }} Gb
+                    </a-col>
+                  </a-row>
+                </div>
                 </template>
                 <a-alert
                   v-else
@@ -430,11 +262,10 @@
                       </a-form-item>
                       <!-- </a-form-model-item> -->
                       <a-select
-                        placeholder="SSH keys"
+                        placeholder="SSH key"
                         style="width: 100%; margin-top: 18px"
-                        mode="multiple"
-                        v-model="sshKeys"
-                        :options="userdata && userdata.data.ssh_keys"
+                        v-model="sshKey"
+                        :options="userdata.data && userdata.data.ssh_keys"
                       />
                     </a-col>
                   </a-row>
@@ -456,10 +287,13 @@
                           {{ $t("Public network") }}:
                         </a-col>
                         <a-col :sm="12" :span="12">
-                          <a-switch v-model="options.network.public.status" />
+                          <a-switch
+                            v-model="options.network.public.status"
+                            @change="changeNetwork('public')"
+                          />
                           <a-input-number
                             v-model="options.network.public.count"
-                            :min="1"
+                            :min="(options.network.public.status) ? 1 : 0"
                             :max="10"
                             :disabled="!options.network.public.status"
                             :style="{ 'margin-left': '10px' }"
@@ -474,10 +308,13 @@
                           {{ $t("Private network") }}:
                         </a-col>
                         <a-col :sm="12" :span="12">
-                          <a-switch v-model="options.network.private.status" />
+                          <a-switch
+                            v-model="options.network.private.status"
+                            @change="changeNetwork('private')"
+                          />
                           <a-input-number
                             v-model="options.network.private.count"
-                            :min="0"
+                            :min="(options.network.private.status) ? 1 : 0"
                             :max="10"
                             :disabled="!options.network.private.status"
                             :style="{ 'margin-left': '10px' }"
@@ -806,7 +643,7 @@
               type="flex"
               justify="space-between"
               style="width: 100%; margin-top: 10px"
-              v-if="getServicesFull.length > 1"
+              v-if="services.length > 1"
             >
               <a-col style="width: 100%">
                 <a-select
@@ -815,7 +652,7 @@
                   @change="(item) => (service = item)"
                 >
                   <a-select-option
-                    v-for="service in getServicesFull"
+                    v-for="service in services"
                     :key="service.uuid"
                     :value="service.uuid"
                     >{{ service.title }}
@@ -852,24 +689,21 @@
             >
               {{ $t("Total") }}:
             </a-divider>
+            <a-row type="flex" justify="center" style="margin-top: 15px">
+              <a-col>
+                <a-radio-group default-value="Monthly" v-model="tarification">
+                  <a-radio-button value="Monthly"> Monthly </a-radio-button>
+                  <a-radio-button value="Hourly"> Hourly </a-radio-button>
+                </a-radio-group>
+              </a-col>
+            </a-row>
             <!-- <transition name="textchange" mode="out-in"> -->
             <a-row
               type="flex"
               justify="center"
               :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
-              v-if="tarification === 'STATIC'"
             >
-              <a-col>
-                <!-- {{
-                    calculatePrice(
-                      +getFullPrice +
-                        options.network.price * options.network.public.count,
-                      (period = "month")
-                    ).toFixed(2)
-                  }} -->
-                <!-- {{ currency }}/{{ $tc("period.month") }} -->
-                <!-- </a-tooltip> -->
-
+              <a-col v-if="tarification === 'Monthly'">
                 {{
                   calculatePrice(
                     productFullPriceStatic,
@@ -878,25 +712,11 @@
                 }}
                 BYN/{{ $tc("period.month") }}
               </a-col>
-            </a-row>
-            <a-row
-              type="flex"
-              justify="center"
-              :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
-              v-if="tarification === 'UNKNOWN'"
-            >
-              <a-col>
-                <!-- ~{{
-                    calculatePrice(
-                      +getFullPrice +
-                        options.network.price * options.network.public.count,
-                      (period = "hour")
-                    ).toFixed(2)
-                  }} -->
-                <!-- {{ currency }}/{{ $t("hour") }} -->
+
+              <a-col v-if="tarification === 'Hourly'">
                 ~{{
                   calculatePrice(
-                    productFullPriceCustom,
+                    productFullPriceStatic,
                     (period = "hour")
                   ).toFixed(2)
                 }}
@@ -1118,11 +938,11 @@ export default {
       periods,
       service: "",
       namespace: "",
-      tarification: "STATIC",
+      tarification: "Monthly",
       locationId: "Location",
       vmName: "",
       password: "",
-      sshKeys: [],
+      sshKey: undefined,
       score: null,
       options: {
         // kind: "standart",
@@ -1191,6 +1011,11 @@ export default {
       });
       return data;
     },
+    services() {
+      return this.getServicesFull.filter((el) =>
+        el.status !== 'DEL'
+      );
+    },
 
     location() {
       const item = this.markers.find((el) => {
@@ -1220,7 +1045,6 @@ export default {
       const item = this.getPlans.find((el) => {
         return el.kind === this.tarification;
       });
-      this.plan = item;
       return item || {};
     },
 
@@ -1228,6 +1052,7 @@ export default {
     getPlanOneStatic() {
       for (let planStatic of this.getPlans || {}) {
         if (planStatic.kind === 'STATIC') {
+          this.plan = planStatic;
           return planStatic;
         }
       }
@@ -1261,15 +1086,9 @@ export default {
             ...el,
             key: key,
           };
-          if (this.dataLocalStorage && this.getPlan.kind == "UNKNOWN") {
-            this.options.ram.size = this.dataLocalStorage.resources.ram / 1024;
-            this.options.cpu.size = this.dataLocalStorage.resources.cpu;
-            this.options.disk.size = this.dataLocalStorage.resources.drive_size;
-          } else {
-            this.options.ram.size = product.resources.ram / 1024;
-            this.options.cpu.size = product.resources.cpu;
-            this.options.disk.size = 13000;
-          }
+          this.options.ram.size = product.resources.ram / 1024;
+          this.options.cpu.size = product.resources.cpu;
+          this.options.disk.size = 13000;
 
           return product;
         }
@@ -1423,7 +1242,7 @@ export default {
     },
     planHeader() {
       if (this.itemSP && this.getPlans.length > 0) {
-        return this.tarification === "STATIC"
+        return this.plan.kind === "STATIC"
           ? ` (VDS ${this.$t("Pre-Paid")})`
           : ` (VDC ${this.$t("Pay-as-you-Go")})`;
       } else {
@@ -1548,6 +1367,22 @@ export default {
           this.options.network.public.count--;
       }
     },
+    changeNetwork(type) {
+      switch (type) {
+        case 'public':
+          if (!this.options.network.public.status) {
+            this.options.network.private.status = true;
+            this.options.network.public.count = 0;
+          }
+          break;
+        case 'private':
+          if (!this.options.network.private.status) {
+            this.options.network.public.status = true;
+            this.options.network.private.count = 0;
+          }
+          break;
+      }
+    },
     calculatePrice(price, period = this.period) {
       // if(this.options.tarification){
       // 	return price;
@@ -1601,9 +1436,9 @@ export default {
         config: {
           template_id: this.options.os.id,
           password: this.password,
-          ssh_keys: this.sshKeys.map((key) =>
-            this.userdata.data.ssh_keys.find((el) => el.value === key)
-          ),
+          ssh_keys: [this.userdata.data.ssh_keys.find(
+            (el) => el.value === this.sshKey
+          )],
         },
         resources: {
           cpu: this.options.cpu.size,
@@ -1627,6 +1462,17 @@ export default {
           : instance;
       // -------------------------------------
       //update service
+      if (this?.itemService?.instancesGroups.length < 1) {
+        this.itemService.instancesGroups = [{
+          title: this.userdata.title + Date.now(),
+          resources: {
+            ips_private: this.options.network.private.count,
+            ips_public: this.options.network.public.count,
+          },
+          type: "ione",
+          instances: []
+        }];
+      }
       if (this.service !== "") {
         const orderDataNew = Object.assign(
           {},
@@ -2018,7 +1864,7 @@ export default {
 .newCloud__template {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  gap: 15px;
 }
 .newCloud__template.one-line {
   flex-wrap: nowrap;

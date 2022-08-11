@@ -143,7 +143,7 @@
                         <a-input-number
                           style="width: 100%"
                           v-model="resize.size"
-                          :min="VM.resources.drive_size / 1024"
+                          :min="VM.resources && VM.resources.drive_size / 1024"
                           default-value="1"
                         />
                       </a-col>
@@ -155,6 +155,24 @@
                       v-model="resize.size"
                      :tipFormatter="(el) => el + resize.scale" 
                     /> -->
+                  </a-modal>
+                  <a-modal
+                    v-model="modal.SSH"
+                    :title="$t('SSH key')"
+                    :footer="null"
+                  >
+                    <div v-if="VM.config && VM.config.ssh_keys">
+                      <span style="font-weight: 700">
+                        {{ `${VM.config.ssh_keys[0].title}: `}}
+                      </span>
+                      <span
+                        class="ssh-text"
+                        title="Click to copy"
+                        @click="addToClipboard"
+                      >
+                        {{`${VM.config.ssh_keys[0].value}` }}
+                      </span>
+                    </div>
                   </a-modal>
                   <a-modal
                     v-model="modal.diskControl"
@@ -190,7 +208,7 @@
                 </div>
               </div>
             </div>
-            <div class="Fcloud__buttons" v-if="VM && VM.state === null">
+            <div class="Fcloud__buttons" v-if="!VM.state">
               <div class="Fcloud__button" @click="deployService()">
                 <div class="Fcloud__BTN-icon">
                   <a-icon type="deployment-unit" />
@@ -372,7 +390,7 @@
                       <table class="Fcloud__table">
                         <tbody>
                           <tr
-                            v-for="nic in VM &&
+                            v-for="nic in VM.state &&
                             VM.state.meta.networking.private"
                             :key="nic.NAME"
                           >
@@ -431,13 +449,13 @@
                   <div class="block__column">
                     <div class="block__title">CPU</div>
                     <div class="block__value">
-                      {{ VM && VM.resources.cpu }}
+                      {{ VM.resources && VM.resources.cpu }}
                     </div>
                   </div>
                   <div class="block__column">
                     <div class="block__title">{{ $t("cloud_Memory") }}</div>
                     <div class="block__value">
-                      {{ VM && VM.resources.ram / 1024 }} GB
+                      {{ VM.resources && VM.resources.ram / 1024 }} GB
                     </div>
                   </div>
                 </div>
@@ -451,13 +469,13 @@
                   <div class="block__column">
                     <div class="block__title">{{ $t("cloud_Type") }}</div>
                     <div class="block__value">
-                      {{ VM && VM.resources.drive_type }}
+                      {{ VM.resources && VM.resources.drive_type }}
                     </div>
                   </div>
                   <div class="block__column">
                     <div class="block__title">{{ $t("cloud_Size") }}</div>
                     <div class="block__value">
-                      {{ mbToGb(VM && VM.resources.drive_size) }} GB
+                      {{ mbToGb(VM.resources && VM.resources.drive_size) }} GB
                     </div>
                   </div>
                 </div>
@@ -531,14 +549,14 @@
                     <a-col>
                       <GChart
                         type="LineChart"
-                        :data="inbChartDataReady"
+                        :data="[] || inbChartDataReady"
                         :options="chartOption('inbound')"
                       />
                     </a-col>
                     <a-col>
                       <GChart
                         type="LineChart"
-                        :data="outChartDataReady"
+                        :data="[] || outChartDataReady"
                         :options="chartOption('outgoing')"
                       />
                     </a-col>
@@ -846,6 +864,7 @@ export default {
         expand: false,
         diskControl: false,
         bootOrder: false,
+        SSH: false,
         networkControl: false,
         accessManager: false,
         rename: false,
@@ -910,6 +929,12 @@ export default {
         //   icon: "container",
         //   forVNC: true,
         // },
+        {
+          title: "SSH key",
+          onclick: this.changeModal,
+          params: ["SSH"],
+          icon: "safety",
+        },
         {
           title: "Network control",
           onclick: this.changeModal,
@@ -988,6 +1013,7 @@ export default {
           return instance;
         }
       }
+      return {};
     },
     getSP() {
       return this.$store.getters["nocloud/sp/getSP"];
@@ -1063,35 +1089,12 @@ export default {
       //   });
     },
     disabledMenu(menuName) {
-      if (this.VM.product && menuName === "resize vm") {
+      if (this.VM?.product && menuName === "resize vm") {
         return true;
       }
       // if(this.SingleCloud.DISABLE.includes(menuName) || (this.SingleCloud.STATE == 3 && this.SingleCloud.LCM_STATE == 2)){
       // 	return true;
       // }
-    },
-    sync(vmid = null) {
-      if (vmid == null) {
-        vmid = this.$route.params.pathMatch;
-      }
-      this.$store.dispatch("cloud/fetchSingleCloud", vmid).then((res) => {
-        if (res.result == "error" && res.message == "Not your VM.") {
-          this.$router.replace("/cloud");
-        }
-      }),
-        this.$axios
-          .get(`VMMonitorting.php?vmid=${vmid}`)
-          .then((res) => {
-            if (res.data.NETRX != undefined) {
-              this.chart1Data = res.data.NETRX;
-            }
-            if (res.data.NETTX != undefined) {
-              this.chart2Data = res.data.NETTX;
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-          });
     },
     checkRange(val) {
       let count = 0;
@@ -1464,39 +1467,38 @@ export default {
       //     console.error(err);
       //   });
     },
-    // sendReinstall() {
-    //   if (this.disabledMenu("reinstall")) {
-    //     this.$store
-    //       .dispatch("utils/createTicket", {
-    //         subject: `[generated]: Reinstall VM#${this.$route.params.pathMatch}`,
-    //         message: `VM#${this.$route.params.pathMatch} имеет аддон, запрещающий автопереустановку. Необходимо выполнить перустановку вручную.`,
-    //       })
-    //       .then(() => {
-    //         this.$message.success("Order created successuffly");
-    //         this.closeModal("reinstall");
-    //       })
-    //       .catch(() => {
-    //         this.$message.success("Some error during creation order");
-    //       });
-    //     return;
-    //   }
-    //   const me = this;
-    //   this.$confirm({
-    //     title: me.$t("Do you want to reinstall this virtual machine?"),
-    //     okType: "danger",
-    //     content: (h) => (
-    //       <div style="color:red;">{me.$t("All data will be deleted!")}</div>
-    //     ),
-    //     onOk() {
-    //       me.sendAction("Reinstall");
-    //       me.modal.menu = false;
-    //       me.modal.reinstall = false;
-    //     },
-    //     onCancel() {
-    //       me.modal.reinstall = false;
-    //     },
-    //   });
-    // },
+    sendReinstall() {
+      if (this.disabledMenu("reinstall")) {
+        this.$store
+          .dispatch("utils/createTicket", {
+            subject: `[generated]: Reinstall VM#${this.$route.params.pathMatch}`,
+            message: `VM#${this.$route.params.pathMatch} имеет аддон, запрещающий автопереустановку. Необходимо выполнить перустановку вручную.`,
+          })
+          .then(() => {
+            this.$message.success("Order created successuffly");
+            this.closeModal("reinstall");
+          })
+          .catch(() => {
+            this.$message.success("Some error during creation order");
+          });
+        return;
+      }
+      this.$confirm({
+        title: this.$t("Do you want to reinstall this virtual machine?"),
+        okType: "danger",
+        content: (h) => (
+          <div style="color:red;">{ this.$t("All data will be deleted!") }</div>
+        ),
+        onOk: () => {
+          this.sendAction("Reinstall");
+          this.modal.menu = false;
+          this.modal.reinstall = false;
+        },
+        onCancel: () => {
+          this.modal.reinstall = false;
+        },
+      });
+    },
     sendDelete() {
       this.$confirm({
         title: this.$t("Do you want to delete this virtual machine?"),
@@ -1545,6 +1547,24 @@ export default {
     bootOrderNewState() {
       this.closeModal("bootOrder");
     },
+    addToClipboard({ target }) {
+      if (navigator?.clipboard) {
+        navigator.clipboard
+          .writeText(target.innerText)
+          .then(() => {
+            this.openNotificationWithIcon("success", {
+              message: 'Text copied'
+            });
+          })
+          .catch((res) => {
+            console.error(res);
+          });
+      } else {
+        this.openNotificationWithIcon("error", {
+          message: 'Clipboard is not supported!'
+        });
+      }
+    }
   },
   watch: {
     "VM.uuidService"() {
@@ -1773,6 +1793,14 @@ export default {
 }
 .block__title {
   color: #919392;
+}
+.ssh-text {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  transition: 0.3s;
+}
+.ssh-text:hover {
+  border-bottom: 0px solid rgba(0, 0, 0, 0);
 }
 .permissions td:not(:first-child) {
   text-align: center;

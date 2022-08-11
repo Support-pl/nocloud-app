@@ -63,9 +63,9 @@
                       {{ record.total }} BYN
                     </template>
                     <template slot="product" slot-scope="text, record">
-                      {{ (record.resource)
-                        ? record.resource.toUpperCase()
-                        : record.product.replaceAll('_', ' ').toUpperCase() }}
+                      {{ (record.product)
+                        ? record.product.replaceAll('_', ' ').toUpperCase()
+                        : record.resource.toUpperCase() }}
                     </template>
                   </a-table>
                 </div>
@@ -126,6 +126,9 @@ export default {
       const month = date.getMonth() + 1;
       const day = date.getDate();
 
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
+
       return `${day}.${month}.${year} ${time}`;
     },
     changeVisible(uuid) {
@@ -141,7 +144,7 @@ export default {
         this.records = pool;
         this.loading = false;
 
-        this.columns[1].title = (pool[0].resource) ? 'Resource' : 'Product';
+        this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource';
       })
       .catch((err) => {
         this.$router.push("/invoice");
