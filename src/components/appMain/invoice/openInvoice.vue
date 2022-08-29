@@ -1,7 +1,7 @@
 <template>
   <div class="openInvoice__fullscreen">
     <transition name="invoiceApear">
-      <div v-if="!loading" class="openInvoice">
+      <div v-if="!isLoading" class="openInvoice">
         <div class="openInvoice__header">
           <div class="container full-height">
             <div class="openInvoice__header--content">
@@ -14,8 +14,13 @@
                 <div
                   class="openInvoice__title-color"
                   :style="{ 'background-color': statusColor }"
-                />
-                {{ `${$t("singleInvoice")} #${this.$route.params.uuid}` }}
+                ></div>
+                {{
+                  $t("singleInvoice") +
+                  " " +
+                  "#" +
+                  parseInt(this.$route.params.uuid, 10)
+                }}
               </div>
             </div>
           </div>
@@ -28,53 +33,132 @@
                 <svg viewBox="0 0 120 25">
                   <text
                     class="openInvoice__cost-text"
-                    x="50%" y="75%"
+                    x="50%"
+                    y="75%"
                     dominant-baseline="middle"
                     text-anchor="middle"
                   >
-                    {{ records.reduce((prev, el) => +prev + +el.total, 0) }}
-                    {{ user && user.currency_code || "BYN" }}
+                    {{ invoice.total }}
+                    {{ invoice.currencycode === undefined ? "USD" : "BYN" }}
                   </text>
                 </svg>
               </div>
               <div class="openInvoice__info">
                 <div class="info__header-title">{{ $t("Information") }}</div>
+
                 <div class="info__main">
-                  <a-table row-key="uuid" :data-source="records" :columns="columns">
-                    <template slot="inst" slot-scope="text, record">
-                      {{ (!visibleHash.includes(record.uuid))
-                        ? `${record.instance.slice(0, 8)}...`
-                        : record.instance }}
-                      <a-icon
-                        type="eye"
-                        v-if="!visibleHash.includes(record.uuid)"
-                        @click="visibleHash.push(record.uuid, text)"
-                      />
-                      <a-icon
-                        v-else
-                        type="eye-invisible"
-                        @click="changeVisible(record.uuid)"
-                      />
-                    </template>
-                    <template slot="date" slot-scope="text, record">
-                      {{ date(record.exec) }}
-                    </template>
-                    <template slot="amount" slot-scope="text, record">
-                      {{ record.total }} BYN
-                    </template>
-                    <template slot="product" slot-scope="text, record">
-                      {{ (record.product)
-                        ? record.product.replaceAll('_', ' ').toUpperCase()
-                        : record.resource.toUpperCase() }}
-                    </template>
-                  </a-table>
+                  <div class="info__dates">
+                    <div class="info__date-item">
+                      <div class="info__date-title">
+                        {{ $t("invoiceDate") }}
+                      </div>
+                      <div class="info__date-value">
+                        {{ invoice.date | dateFormat }}
+                      </div>
+                    </div>
+                    <div class="info__date-item">
+                      <div class="info__date-title">{{ $t("dueDate") }}</div>
+                      <div class="info__date-value">
+                        {{ invoice.duedate | dateFormat }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="info__table table">
+                    <div class="table__header">
+                      <div class="table__header-item">
+                        {{ $t("invoice_Description") }}
+                      </div>
+                      <div class="table__header-item">
+                        {{ $t("invoice_Price") }}
+                      </div>
+                    </div>
+                    <div class="table__wrapper">
+                      <transition name="tableAnim">
+                        <table v-if="!showFullTable" class="table__table">
+                          <tr>
+                            <td
+                              v-if="
+                                invoice.items.item[0].description === 'Add funds'
+                              "
+                            >
+                              {{ $t("Add funds") }}
+                            </td>
+                            <td v-else>{{ invoice.items.item[0].description }}</td>
+                            <td>
+                              {{ total }}
+                              {{
+                                invoice.currencycode === undefined ? "USD" : "BYN"
+                              }}
+                            </td>
+                          </tr>
+                        </table>
+                        <table v-else class="table__table">
+                          <tr
+                            v-for="(item, index) of invoice.items.item"
+                            :key="index"
+                          >
+                            <td>{{ item.description }}</td>
+                            <td v-if="item.amount">
+                              {{ item.amount }}
+                              {{
+                                invoice.currencycode === undefined ? "USD" : "BYN"
+                              }}
+                            </td>
+                          </tr>
+                        </table>
+                      </transition>
+                    </div>
+                    <div
+                      v-if="invoice.items.item.length > 1 && !showFullTable"
+                      @click="showfull"
+                      class="table__show-full"
+                    >
+                      {{ $t("Show full list") }} ({{ invoice.items.item.length }})
+                    </div>
+                  </div>
+                </div>
+                <div class="info__footer">
+                  <!-- <p class="info__footer__discount">
+                    {{ $t("VNDExcludeVAT") }}
+                  </p> -->
+                  <template v-if="invoice.status == 'Unpaid'">
+                    <!-- <div class="info__postpone" @click="showConfirm">
+                      <a-icon type="clock-circle" />
+                    </div> -->
+
+                    <div class="info__button info__button--pay">
+                      <a-button class="info__button" :loading="confirmLoading.pay" @click='showPayModal'>
+                        {{ $t("Pay") }}
+                      </a-button>
+                      <a-modal
+                        :title="$t('Choose your payment method')"
+                        :visible="visible.pay"
+                        :confirm-loading="confirmLoading.pay"
+                        @ok="handlePayOk"
+                        @cancel="handlePayCancel"
+                      >
+                        <p>{{ $t("Payment method") }}:</p>
+                        <a-select style="min-width: 100%" v-model="elem">
+                          <a-select-option
+                            v-for="method in payMethods"
+                            :key="method.module"
+                            :value="method.module"
+                          >
+                            {{ method.displayname }}
+                          </a-select-option>
+                        </a-select>
+                      </a-modal>
+                    </div>
+                  </template>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <loading v-else class="loading" color="#fff" key="loading" duration: />
+      <loading v-else color="#fff" :style="{'position': 'absolute', 'height':
+      '100%', 'width': '100%'}" key="loading" duration: />
     </transition>
   </div>
 </template>
@@ -85,66 +169,91 @@ import loading from "@/components/loading/loading.vue";
 export default {
   name: "openInvoice",
   components: { loading },
-  data: () => ({
-    loading: true,
-    visibleHash: [],
-    records: null,
-    columns: [
-      {
-        title: 'Instance',
-        dataIndex: 'instance',
-        scopedSlots: { customRender: 'inst' }
+  data() {
+    return {
+      payment: ["visa", "mastercard", "yandex.money"],
+      payMethods: [],
+      showFullTable: false,
+      visible: {
+        pay: false,
       },
-      {
-        title: 'Product',
-        dataIndex: 'product',
-        scopedSlots: { customRender: 'product' }
+      confirmLoading: {
+        pay: false,
       },
-      {
-        title: 'Date',
-        dataIndex: 'exec',
-        scopedSlots: { customRender: 'date' }
-      },
-      {
-        title: 'Amount',
-        dataIndex: 'total',
-        scopedSlots: { customRender: 'amount' }
-      },
-    ],
-  }),
+      elem: "",
+    };
+  },
   methods: {
     goBack() {
       this.$router.push("/invoice");
     },
-    date(timestamp) {
-      if (timestamp < 1) return '-';
-
-      const date = new Date(timestamp * 1000);
-      const time =  date.toTimeString().split(' ')[0];
-
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-
-      if (`${month}`.length < 2) month = `0${month}`;
-      if (`${day}`.length < 2) day = `0${day}`;
-
-      return `${day}.${month}.${year} ${time}`;
+    showfull() {
+      this.showFullTable = true;
     },
-    changeVisible(uuid) {
-      this.visibleHash = this.visibleHash.filter(
-        (el) => el !== uuid
-      );
-    }
+    showPayModal() {
+      if (this.payMethods.length === 1) {
+        this.confirmLoading.pay = true;
+        this.$api.get(this.baseURL, { params: {
+          run: 'get_pay_token',
+          invoice_id: this.invoice.id,
+          paymetod: this.payMethods[0]
+        }})
+        .then((res) => {
+          window.location.href = res;
+        })
+        .finally(() => {
+          this.confirmLoading.pay = false;
+        });
+        // window.location.href = this.invoice.paytoken.checkout.redirect_url;
+        return;
+      }
+      this.PayVisible = true;
+      this.visible.pay = true;
+    },
+    handlePayOk() {
+      this.confirmLoading.pay = true;
+      this.$api.get(this.baseURL, { params: {
+        run: 'get_pay_token',
+        invoice_id: this.invoice.id,
+        paymetod: this.elem
+      }})
+        .then((res) => {
+          window.location.href = res;
+        })
+        .finally(() => {
+          this.visible.pay = false;
+          this.confirmLoading.pay = false;
+        });
+    },
+    handlePayCancel() {
+      this.visible.pay = false;
+    },
+    showConfirm() {
+      this.$confirm({
+        title: this.$t("Do you want to defer payment?"),
+        maskClosable: true,
+        content: () => (
+          <div>
+            {this.$t(
+              "The payment can be postponed only once. The payment is postponed for 5 days."
+            )}
+          </div>
+        ),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        onOk() {},
+        onCancel() {},
+        class: "test",
+      });
+    },
   },
   mounted() {
-    const url = `/billing/transactions/${this.$route.params.uuid}`;
-    this.$api.get(url)
-      .then(({ pool }) => {
-        this.records = pool;
-        this.loading = false;
+    this.$store.dispatch('invoices/autoFetch')
+      .then(() => {
+        if (this.invoice?.status !== 'Unpaid') return;
 
-        this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource';
+        this.$api.get(this.baseURL, { params: { run: 'get_payment' } })
+          .then(res => { this.payMethods = res.paymentmethod });
       })
       .catch((err) => {
         this.$router.push("/invoice");
@@ -153,12 +262,27 @@ export default {
   },
   computed: {
     user() {
-      return this.$store.getters['nocloud/auth'];
+      return this.$store.getters['nocloud/auth/userdata'];
+    },
+    baseURL() {
+      return this.$store.getters['invoices/getURL'];
+    },
+    invoice() {
+      const uuid = this.$route.params.uuid;
+
+      return this.$store.getters['invoices/getInvoices']
+        .find((invoice) => invoice.id === +uuid);
+    },
+    isLoading() {
+      return this.$store.getters['invoices/isLoading'];
     },
     statusColor() {
-      return this.records[0].processed
+      return this.invoice.status.toLowerCase() == "paid"
         ? this.$config.colors.success
         : this.$config.colors.err;
+    },
+    total() {
+      return this.invoice.items.item.reduce((a, b) => a + +b.amount, 0);
     },
   },
 };
@@ -201,7 +325,7 @@ export default {
   height: 10px;
   width: 10px;
   border-radius: 50%;
-  top: calc(50% - 2px);
+  top: 50%;
   left: -15px;
   transform: translateY(-50%);
 }
@@ -247,6 +371,161 @@ export default {
   padding-bottom: 64px;
 }
 
+.info__dates {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30px;
+}
+
+.info__date-item {
+  text-align: center;
+}
+.info__date-title {
+  font-weight: bold;
+  font-size: 16px;
+  padding: 0;
+}
+.info__date-value {
+  font-weight: bold;
+  font-size: 16px;
+  line-height: 10px;
+  padding: 0;
+}
+
+.info__table {
+  flex: 1 0;
+  overflow: auto;
+}
+.table__wrapper {
+  overflow: auto;
+}
+
+.table__header {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(0, 0, 0, 0.8);
+  margin-bottom: 5px;
+}
+
+.table__header-item {
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
+.table__table {
+  border: 1px solid #5252d5;
+  width: 100%;
+  overflow: hidden;
+}
+
+.table__table td {
+  padding: 10px 0;
+  font-size: 16px;
+}
+.table__table td:first-child {
+  font-weight: bold;
+  padding-left: 20px;
+}
+
+.table__table td:last-child {
+  border-left: 1px solid #5252d5;
+  text-align: right;
+  width: 34%;
+  max-width: 150px;
+  padding-right: 10px;
+  color: #06a506;
+  font-weight: 500;
+}
+.info__footer {
+  max-width: 400px;
+  margin: 0 auto;
+  display: flex;
+  height: 45px;
+  position: absolute;
+  bottom: 30px;
+  left: 20px;
+  right: 20px;
+  flex-direction: column;
+}
+/* .info__footer__discount {
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+} */
+
+.info__postpone {
+  font-size: 24px;
+  padding: 9px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.info__postpone:hover {
+  transform: scale(1.1);
+}
+
+.info__postpone:active {
+  transform: scale(0.9);
+}
+
+.info__button {
+  flex: 1 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 24px;
+  font-weight: 600;
+  color: var(--bright_font);
+  cursor: pointer;
+  font-size: 16px;
+  transition: filter 0.2s ease;
+  background-color: var(--success);
+  background-size: 150% 200%;
+  background-position: 0 0;
+  animation: AnimationName 1s ease infinite;
+}
+
+.info__button--pay:hover {
+  filter: brightness(1.05);
+}
+
+.info__button--pay:active {
+  filter: brightness(0.95);
+}
+.table__show-full {
+  cursor: pointer;
+}
+.info__row {
+  display: flex;
+  border-top: 1px solid rgb(230, 230, 230);
+}
+
+.info__row--pay {
+  margin-top: 40px;
+}
+
+.info__title,
+.info__value {
+  flex: 1 0;
+  padding: 10px 5px;
+}
+
+.info__row:last-child {
+  border-bottom: 1px solid rgb(230, 230, 230);
+}
+
+.info__title {
+  border-right: 1px solid rgb(230, 230, 230);
+}
+
+.info__value {
+  text-align: center;
+}
+
 .full-height {
   height: 100%;
 }
@@ -259,10 +538,38 @@ export default {
   margin-bottom: 20px;
 }
 
-.loading {
-  position: absolute;
-  height: 100%; 
-  width: 100%;
+.info__payment-select {
+  border: none;
+  outline: none;
+  background-color: rgb(250, 250, 250);
+  width: 90%;
+}
+
+.info__payment-select > option {
+  border: none;
+  outline: none;
+}
+
+.info__row--pay-btn {
+  background-color: #0fd058;
+  color: #fff;
+  font-weight: 500;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+  border-radius: 20px;
+  transition: background-color 0.2s ease;
+  margin-top: 30px;
+}
+
+.info__row--pay-btn:hover {
+  background-color: #18da62;
+  filter: brightness(0.8);
+}
+
+.info__row--pay-btn:active {
+  background-color: rgb(22, 194, 88);
 }
 
 /* anims */

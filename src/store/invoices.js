@@ -7,6 +7,7 @@ export default {
 		loading: false,
 		invoices: [],
 		filter: ['all'],
+    baseURL: 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php',
 	},
 	mutations: {
 		updateInvoices(state, value) {
@@ -20,16 +21,17 @@ export default {
 		},
 	},
 	actions: {
-		silentFetch({commit}){
+		silentFetch({state, commit}){
 			return new Promise((resolve, reject) => {
-				api.sendAsUser('invoices')
-				.then(res => {
-					const invoices = res?.invoices?.invoice ?? [];
-					commit('updateInvoices', invoices);
-					commit('makeLoadingIs', false);
-					resolve(invoices)
-				})
-				.catch(err => reject(err));
+				api.get(state.baseURL, { params: { run: 'get_invoices' } })
+          .then(res => {
+					  const invoices = res?.invoices?.invoice ?? [];
+
+            if (!res.ERROR) commit('updateInvoices', invoices);
+            commit('makeLoadingIs', false);
+            resolve(invoices);
+          })
+          .catch(err => reject(err));
 			});
 		},
 		fetch({dispatch, commit}){
@@ -43,26 +45,6 @@ export default {
 				return dispatch('fetch');
 			}
 		}
-		// fetchInvoices(ctx) {
-		// 	if (ctx.getters.isLoading) return;
-		// 	ctx.commit('makeLoadingIs', true);
-		// 	const user = ctx.rootGetters.getUser;
-
-		// 	const close_your_eyes = md5('invoices' + user.id + user.secret);
-		// 	const url = `/invoices.php?userid=${user.id}&secret=${close_your_eyes}`;
-		// 	// console.log(url)
-
-		// 	axios.get(url)
-		// 		.then(resp => {
-		// 			// console.log("vuex action invoices responsive: ", resp);
-		// 			if (Object.keys(resp.data.invoices).length > 0){
-		// 				ctx.commit("updateInvoices", resp.data.invoices.invoice);
-		// 			} else {
-		// 				ctx.commit("updateInvoices", []);
-		// 			}
-		// 			ctx.commit('makeLoadingIs', false)
-		// 		})
-		// },
 	},
 	getters: {
 		getAllInvoices(state){
@@ -93,6 +75,9 @@ export default {
 				return bid - aid;
 			});
 		},
+    getURL(state) {
+      return state.baseURL;
+    },
 		isLoading(state) {
 			return state.loading;
 		},

@@ -87,6 +87,7 @@ export default {
   },
   data() {
     return {
+      status: null,
       subject: "SUPPORT",
       replies: null,
       messageInput: "",
@@ -98,7 +99,7 @@ export default {
   },
   computed: {
     user() {
-      return this.$store.getters.getUser;
+      return this.$store.getters['nocloud/auth/userdata'];
     },
     titleDecoded() {
       var txt = document.createElement("textarea");
@@ -129,32 +130,24 @@ export default {
         attachment: "",
         contactid: "0",
         date: new Date(),
-        email: this.user.email,
+        email: this.user?.email || 'none',
         message: this.messageInput.trim(),
-        name: this.user.firstname + " " + this.user.lastname,
+        name: this.user.title,
         userid: this.user.id,
         sending: true,
       };
       this.sendingMessagesCount++;
       this.replies.unshift(message);
 
-      const object = {
+      const url = 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php';
+
+      this.$api.get(url, { params: {
+        run: 'answer_ticket',
         id: this.$route.params.pathMatch,
         message: this.messageInput,
-      };
-
-      const params = this.objectToParams(object);
-
-      const url = `/ticketreply.php?${params}`;
-
-      this.$api
-        .sendAsUser("ticketreply", object)
-        .then((res) => {
-          if (res.result == "success")
-            this.replies[--this.sendingMessagesCount].sending = false;
-          else {
-            throw res;
-          }
+      }})
+        .then(() => {
+          this.replies[--this.sendingMessagesCount].sending = false;
         })
         .catch((err) => {
           console.error(err);
@@ -165,17 +158,21 @@ export default {
       this.messageInput = "";
     },
     loadMessages() {
+      const url = 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php';
+
       this.loading = true;
-      const object = {
-        userid: this.user.id,
-        id: this.chatid,
-      };
-      this.$api.sendAsUser("ticket", object).then((resp) => {
-        this.status = resp.status;
-        this.replies = resp.replies.reply;
-        this.subject = resp.subject;
-        this.loading = false;
-      });
+      this.$api.get(url, { params: {
+        run: 'get_ticket_full',
+        ticket_id: this.chatid,
+      }})
+        .then((resp) => {
+          this.status = resp.status;
+          this.replies = resp.replies;
+          this.subject = resp.subject;
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     },
     reload() {
       this.loading = true;

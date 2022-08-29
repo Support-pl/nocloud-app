@@ -143,7 +143,7 @@
                       span="4"
                       style="text-align: right"
                     >
-                      {{ options.disk.size }} Gb
+                      {{ options.disk.size }} Mb
                     </a-col>
                   </a-row>
                 </div>
@@ -763,8 +763,8 @@
                     score < 4 ||
                     password.length === 0 ||
                     vmName == '' ||
-                    (service == '' && this.getServicesFull.length > 1) ||
-                    (namespace == '' && this.getNameSpaces.length > 1) ||
+                    service == '' ||
+                    namespace == '' ||
                     options.os.name == '' ||
                     !isLoggedIn
                   "
@@ -1264,11 +1264,15 @@ export default {
         localStorage.removeItem("data");
       }
     }
-    this.setOneService();
-    this.setOneNameSpace();
     this.$store.dispatch("nocloud/sp/fetch");
-    this.$store.dispatch("nocloud/vms/fetch");
-    this.$store.dispatch("nocloud/namespaces/fetch");
+    this.$store.dispatch("nocloud/vms/fetch")
+      .then(() => {
+        setTimeout(this.setOneService, 300);
+      });
+    this.$store.dispatch("nocloud/namespaces/fetch")
+      .then(() => {
+        setTimeout(this.setOneNameSpace, 300);
+      });
 
     this.$router.beforeEach((to, from, next) => {
       if (
@@ -1324,17 +1328,14 @@ export default {
       this.score = score;
     },
     setOneService() {
-      if (this.getServicesFull.length === 1) {
-        for (let gSF of this.getServicesFull) {
-          this.service = gSF.uuid;
-        }
+      console.log(this.services);
+      if (this.services?.length === 1) {
+        this.service = this.services[0].uuid;
       }
     },
     setOneNameSpace() {
       if (this.getNameSpaces.length === 1) {
-        for (let gNS of this.getNameSpaces) {
-          this.namespace = gNS.uuid;
-        }
+        this.namespace = this.getNameSpaces.uuid;
       }
     },
     setData() {
@@ -1436,9 +1437,7 @@ export default {
         config: {
           template_id: this.options.os.id,
           password: this.password,
-          ssh_keys: [this.userdata.data.ssh_keys.find(
-            (el) => el.value === this.sshKey
-          )],
+          ssh_public_key: this.sshKey,
         },
         resources: {
           cpu: this.options.cpu.size,
@@ -1456,22 +1455,23 @@ export default {
         },
       };
       //add key product in instance
-      const newInstance =
-        this.plan.kind === "STATIC"
-          ? Object.assign({}, { product: this.product.key }, instance)
-          : instance;
+      const newInstance = (this.plan.kind === "STATIC")
+        ? Object.assign({}, { product: this.product.key }, instance)
+        : instance;
+      const newGroup = {
+        title: this.userdata.title + Date.now(),
+        resources: {
+          ips_private: 0,
+          ips_public: 0,
+        },
+        type: "ione",
+        instances: [],
+        sp: this.itemSP.uuid
+      };
       // -------------------------------------
       //update service
-      if (this?.itemService?.instancesGroups.length < 1) {
-        this.itemService.instancesGroups = [{
-          title: this.userdata.title + Date.now(),
-          resources: {
-            ips_private: this.options.network.private.count,
-            ips_public: this.options.network.public.count,
-          },
-          type: "ione",
-          instances: []
-        }];
+      if (this.itemService?.instancesGroups.length < 1) {
+        this.itemService.instancesGroups = [newGroup];
       }
       if (this.service !== "") {
         const orderDataNew = Object.assign(
@@ -1479,15 +1479,22 @@ export default {
           { instances_groups: this.itemService.instancesGroups },
           { ...this.itemService }
         );
+        let group = orderDataNew.instances_groups.find(
+          (el) => el.sp === this.itemSP.uuid
+        );
+
+        if (!group) {
+          orderDataNew.instances_groups.push(newGroup);
+          group = orderDataNew.instances_groups.at(-1);
+        }
+        group.instances.push(newInstance);
+        group.resources.ips_public = group.instances.length;
+
         delete orderDataNew.instancesGroups;
-        orderDataNew.instances_groups[0].instances.push(newInstance);
         this.updateVM(orderDataNew);
       } else {
         //create service
         const orderData = {
-          deploy_policies: {
-            0: this.itemSP.uuid,
-          },
           namespace: this.namespace,
           service: {
             title: this.userdata.title,
@@ -1497,11 +1504,12 @@ export default {
               {
                 title: this.userdata.title + Date.now(),
                 resources: {
-                  ips_private: this.options.network.private.count,
-                  ips_public: this.options.network.public.count,
+                  ips_private: 0,
+                  ips_public: 1,
                 },
                 type: "ione",
                 instances: [this.service ? instance : newInstance],
+                sp: this.itemSP.uuid,
               },
             ],
           },
@@ -1511,53 +1519,52 @@ export default {
     },
     orderVM(orderData) {
       this.modal.confirmLoading = true;
-      const self = this;
       this.$store
         .dispatch("nocloud/vms/createService", orderData)
         .then((result) => {
           if (result) {
-            self.$message.success(self.$t("Order created successfully."));
+            this.$message.success(this.$t("Order created successfully."));
             this.deployService(result.uuid);
-            if (self.modal.goToInvoice) {
-              self.$router.push(`/invoice-${res.invoiceid}`);
+            if (this.modal.goToInvoice) {
+              this.$router.push(`/invoice-${res.invoiceid}`);
             }
           } else {
             throw "error";
           }
         })
         .catch((err) => {
-          self.$message.error("Can't create order. Try later.");
+          this.$message.error("Can't create order. Try later.");
           console.error(err);
         })
-        .finally((res) => {
-          self.modal.confirmLoading = false;
+        .finally(() => {
+          this.modal.confirmLoading = false;
         });
     },
     updateVM(orderDataNew) {
       this.modal.confirmLoading = true;
-      const self = this;
       this.$store
         .dispatch("nocloud/vms/updateService", orderDataNew)
         .then((result) => {
           if (result) {
-            self.$message.success(self.$t("Order update successfully."));
+            this.$message.success(this.$t("Order update successfully."));
             this.deployService(result.uuid);
-            if (self.modal.goToInvoice) {
-              self.$router.push(`/invoice-${res.invoiceid}`);
+            if (this.modal.goToInvoice) {
+              this.$router.push(`/invoice-${result.invoiceid}`);
             }
           } else {
             throw "error";
           }
         })
         .catch((err) => {
-          self.$message.error("Can't update order. Try later.");
+          this.$message.error("Can't update order. Try later.");
           console.error(err);
         })
-        .finally((res) => {
-          self.modal.confirmLoading = false;
+        .finally(() => {
+          this.modal.confirmLoading = false;
         });
     },
     deployService(uuidService) {
+      this.modal.confirmLoading = true;
       api.services
         .up(uuidService)
         .then(() => {
@@ -1568,6 +1575,9 @@ export default {
           this.$message.success(
             `Error: ${err?.response?.data?.message ?? "Unknown"}.`
           );
+        })
+        .finally(() => {
+          this.modal.confirmLoading = false;
         });
     },
     availableLogin() {

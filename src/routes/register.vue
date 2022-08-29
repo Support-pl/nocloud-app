@@ -179,18 +179,21 @@ export default {
 				return
 			}
 
+      const url = 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php';
 			const temp = JSON.parse(JSON.stringify(this.userinfo));
 			temp.phonenumber = temp.phonenumber.replace("+", "")
 
 			this.registerLoading = true;
-			api.getWithParams('client.addClient', {...temp, lang: this.$i18n.locale})
+			api.get(url, {
+        params: {
+          ...temp,
+          language: this.$i18n.locale,
+          run: 'create_user'
+        }
+      })
 			.then(result => {
-				if(result.result == 'success'){
-					this.$message.success('Account created successfully.');
-					this.$router.push({name: 'login'});
-				} else {
-					throw result;
-				}
+        this.$message.success('Account created successfully.');
+        this.$router.push({name: 'login'});
 				console.log(result)
 			})
 			.catch(err => {

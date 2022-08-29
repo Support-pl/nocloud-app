@@ -31,9 +31,6 @@ export default {
 		addTicketField
 	},
 	computed: {
-		...mapGetters({
-			user: 'getUser',
-		}),
 		...mapGetters('support', {
 			isLoading: 'isLoading',
 			tickets: 'getTickets',
@@ -41,7 +38,7 @@ export default {
 		})
 	},
 	mounted(){
-		this.$store.dispatch("support/autoFetch")
+		this.$store.dispatch("support/autoFetch");
 	},
 }
 </script>

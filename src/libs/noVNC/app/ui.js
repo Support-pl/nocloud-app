@@ -796,13 +796,13 @@ const UI = {
 	disableSetting(name) {
 		const ctrl = document.getElementById('noVNC_setting_' + name);
 		ctrl.disabled = true;
-		ctrl.label.classList.add('noVNC_disabled');
+		ctrl.labels[0].classList.add('noVNC_disabled');
 	},
 
 	enableSetting(name) {
 		const ctrl = document.getElementById('noVNC_setting_' + name);
 		ctrl.disabled = false;
-		ctrl.label.classList.remove('noVNC_disabled');
+		ctrl.labels[0].classList.remove('noVNC_disabled');
 	},
 
 /* ------^-------
@@ -977,7 +977,7 @@ const UI = {
 		// 		.classList.remove("noVNC_open");
 	},
 
-	connect(url) {
+	connect(url, token) {
 
 		// Ignore when rfb already exists
 		if (typeof UI.rfb !== 'undefined') {
@@ -1018,9 +1018,10 @@ const UI = {
 		// 		url += ':' + port;
 		// }
 		// url += '/' + path;
+    const wsProtocols = ['binary', 'base64'];
+    if (token) wsProtocols.unshift(token);
 
-		UI.rfb = new RFB(document.getElementById('noVNC_container'), url,
-						 { wsProtocols: ['binary', 'base64'], });
+		UI.rfb = new RFB(document.getElementById('noVNC_container'), url, { wsProtocols });
 		UI.rfb.addEventListener("connect", UI.connectFinished);
 		UI.rfb.addEventListener("disconnect", UI.disconnectFinished);
 		UI.rfb.addEventListener("credentialsrequired", UI.credentials);
