@@ -1,82 +1,83 @@
 <template>
   <div class="invoices">
-    <!-- {{isTransactionsLoading}} -->
-    <loading v-if="isTransactionsLoading" />
+    <loading v-if="isLoading || isInvoicesLoading" />
     <div class="container" v-else>
-      <template>
-      
-        <div class="invoices__wrapper">
-          <a-radio-group default-value="Invoice" v-model="value" size="large">
-            <a-radio-button value="Invoice"> Invoice </a-radio-button>
-            <a-radio-button value="Detail"> Detail </a-radio-button>
-          </a-radio-group>
-          <div v-if="value === 'Invoice'">
-            <empty style="margin-top:50px" v-if="getTransactions" />
-            <div v-else>dfgjhg</div>
-          </div>
-          <div v-if="value === 'Detail'">
-              <empty style="margin-top:50px" v-if="getTransactions.length === 0" />
-            <singleInvoice v-else
-              v-for="(invoice, index) in transactions"
-              :key="index"
-              :invoice="invoice"
-            />
-          </div>
-          <!-- <a-tabs type="card">
-              <a-tab-pane key="1" tab="Invoice">
-                <p>Content of Tab Pane 1</p>
-                <p>Content of Tab Pane 1</p>
-                <p>Content of Tab Pane 1</p>
-              </a-tab-pane>
-              <a-tab-pane key="2" tab="Detail">
-                <singleInvoice
-                  v-for="(invoice, index) in getTransactions"
-                  :key="index"
-                  :invoice="invoice"
-                />
-              </a-tab-pane>
-            </a-tabs> -->
+      <div class="invoices__wrapper">
+        <a-radio-group default-value="Invoice" v-model="value" size="large">
+          <a-radio-button value="Invoice"> Invoice </a-radio-button>
+          <a-radio-button value="Detail"> Detail </a-radio-button>
+        </a-radio-group>
+        <div v-if="value === 'Invoice'">
+          <empty style="margin-top:50px" v-if="transactions.length === 0" />
+          <single-invoice
+            v-else
+            v-for="(invoice, index) in invoices"
+            :key="index"
+            :invoice="invoice"
+          />
         </div>
-      </template>
+        <div v-if="value === 'Detail'">
+          <empty style="margin-top:50px" v-if="invoices.length === 0" />
+          <single-transaction
+            v-else
+            v-for="(invoice, index) in transactions"
+            :key="index"
+            :invoice="invoice"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import singleInvoice from "../components/appMain/invoice/singleInvoice.vue";
-import loading from "../components/loading/loading.vue";
-import empty from "../components/empty/empty.vue";
-import { mapGetters } from "vuex";
+import singleInvoice from "@/components/appMain/invoice/singleInvoice.vue";
+import singleTransaction from '@/components/appMain/invoice/singleTransaction.vue';
+import loading from "@/components/loading/loading.vue";
+import empty from "@/components/empty/empty.vue";
 
 export default {
   name: "invoices",
   components: {
     singleInvoice,
+    singleTransaction,
     loading,
     empty,
   },
-  data() {
-    return {
-      value: "Invoice",
-    };
-  },
+  data: () => ({ value: "Invoice" }),
   computed: {
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
-    transactions() {
-      return this.getTransactions.reverse();
+    user() {
+      return this.$store.getters["nocloud/auth/userdata"];
     },
-    ...mapGetters("nocloud/auth/", ["userdata"]),
-    ...mapGetters("nocloud/transactions", ["isTransactionsLoading"]),
-    ...mapGetters("nocloud/transactions", ["getTransactions"]),
-  },
-
-  mounted() {
-    if (this.isLogged) {
-      this.$store.dispatch("nocloud/transactions/fetch", this.userdata.uuid);
+    transactions() {
+      return this.$store.getters["nocloud/transactions/getTransactions"]
+        .reverse();
+    },
+    isLoading() {
+      return this.$store.getters["nocloud/transactions/isTransactionsLoading"];
+    },
+    invoices() {
+      return this.$store.getters["invoices/getInvoices"];
+    },
+    isInvoicesLoading() {
+      return this.$store.getters["invoices/isLoading"];
     }
   },
+  mounted() {
+    if (this.isLogged) {
+      this.$store.dispatch("nocloud/transactions/fetch", this.user.uuid);
+    }
+  },
+  watch: {
+    value() {
+      if (this.value === 'Invoice') return;
+
+      this.$store.dispatch("invoices/autoFetch");
+    }
+  }
 };
 </script>
 

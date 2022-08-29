@@ -10,6 +10,7 @@ export default {
 		addTicketState: false,
 		filter: ['all'],
 		departments: [],
+    baseURL: 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php',
 	},
 	mutations: {
 		updateTickets(state, value){
@@ -32,16 +33,16 @@ export default {
 		}
 	},
 	actions: {
-		silentFetch({commit}){
+		silentFetch({state, commit}){
 			return new Promise((resolve, reject) => {
-				api.sendAsUser('tickets')
-				.then(res => {
-					const tickets = res.tickets.ticket;
-					commit('updateTickets', tickets);
-					commit('makeLoadingIs', false);
-					resolve(tickets)
-				})
-				.catch(err => reject(err));
+				api.get(state.baseURL, { params: { run: "get_tickets" } })
+          .then((res) => {
+            if (res?.ERROR) throw res.ERROR.toLowerCase();
+            commit("updateTickets", res);
+            resolve(res);
+          })
+          .catch((err) => reject(err))
+          .finally(() => commit("makeLoadingIs", false));
 			});
 		},
 		fetch({dispatch, commit}){
@@ -55,16 +56,12 @@ export default {
 				return dispatch('fetch');
 			}
 		},
-		fetchDepartments({commit}){
+		fetchDepartments({state, commit}){
 			return new Promise((resolve, reject) => {
-				api.getWithParams('support.getDepartments')
+				api.get(state.baseURL, { params: { run: 'get_dept' } })
 				.then(res => {
-					if(res.result == "success"){
-						commit('setDepartments', res.response);
-						resolve(res);
-					} else {
-						throw res;
-					}
+          commit('setDepartments', res);
+          resolve(res);
 				})
 				.catch(err => {
 					console.error(err);
@@ -103,6 +100,9 @@ export default {
 		},
 		getDepartments(state){
 			return state.departments;
-		}
+		},
+    getURL(state){
+      return state.baseURL;
+    }
 	}
 }

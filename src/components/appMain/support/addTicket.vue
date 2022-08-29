@@ -54,6 +54,7 @@ export default {
     ...mapGetters("support", {
       addTicketStatus: "isAddTicketState",
       departments: "getDepartments",
+      baseURL: "getURL",
     }),
   },
   methods: {
@@ -72,13 +73,12 @@ export default {
       }
 
       this.isSending = true;
-
-      this.$api
-        .sendAsUser("openticket", {
-          subject: this.ticketTitle,
-          message: this.ticketMessage,
-          department: this.ticketDepartment,
-        })
+      this.$api.get(this.baseURL, { params: {
+        run: 'create_ticket',
+        subject: this.ticketTitle,
+        message: this.ticketMessage,
+        department: this.ticketDepartment,
+      }})
         .then((resp) => {
           if (resp.result == "success") {
             this.ticketTitle = "";
@@ -101,7 +101,7 @@ export default {
     },
   },
   created() {
-    this.$store.dispatch("support/fetchDepartments").then((res) => {
+    this.$store.dispatch("support/fetchDepartments").then(() => {
       this.ticketDepartment = this.departments[0].id;
     });
   },

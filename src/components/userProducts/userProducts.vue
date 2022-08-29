@@ -66,6 +66,7 @@
     </div>
     <div
       class="products__wrapper"
+      style="flex-direction: column"
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
       <div class="products__unregistred" v-if="!user">

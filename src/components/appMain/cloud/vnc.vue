@@ -97,12 +97,12 @@
 									<li class="noVNC_heading">
 										<img alt="" src="img/images/settings.svg"> Settings
 									</li>
-									<template v-if="SingleCloud && !isLoading">
+									<template v-if="instance && !isLoading">
 										<li>
 											password:
 										</li>
 										<li>
-											<password :password="SingleCloud.TEMPLATE.CONTEXT.PASSWORD"/>
+											<password :password="instance.config.password"/>
 										</li>
 									</template>
 									<li>
@@ -231,9 +231,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import md5 from 'md5'
-import UI from '../../../libs/noVNC/app/ui.js';
+import { mapGetters } from 'vuex';
+import UI from '@/libs/noVNC/app/ui.js';
 import password from '@/components/password.vue';
 
 export default {
@@ -249,72 +248,70 @@ export default {
 			url: '',
 		}
 	},
-	components: {
-		password
-	},
+	components: { password },
 	created() {
-		this.$store.dispatch('cloud/fetchSingleCloud', this.$route.params.pathMatch)
-		.then( res => {
-			if(res.result == 'error' && res.message == 'Not your VM.'){
-				this.$router.replace('/cloud');
-			}
-		})
+    const instances = this.$store.getters['nocloud/vms/getInstances'];
+    if (instances.length > 0) return;
+
+    this.$store.dispatch('nocloud/vms/fetch')
+      .catch((err) => {
+        this.$router.replace('/cloud');
+        alert(err);
+      });
 	},
 	mounted() {
-		this.getToken()
-			.then(res => {
-				this.connect(this.token);
-			})
-		UI.prime();
-		if (UI.connected) {
-			location.reload();
-		}
+    if (!this.instance) return;
+		this.getToken();
 	},
 	methods: {
 		getToken() {
-			const user = this.$store.getters.getUser;
-			const userid = user.id;
-
-			const vmid = this.$route.params.pathMatch
-
-			let close_your_eyes = md5('getVNCtoken' + vmid + userid + user.secret);
-			let url = `/getVNCtoken.php?userid=${userid}&vmid=${vmid}&secret=${close_your_eyes}`
-
-			return this.$axios.get(url)
+			this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+        uuid: this.$route.params.pathMatch,
+        action: 'start_vnc'
+      })
 				.then(res => {
-					this.token = res.data.response.token;
-					this.desktopName = res.data.response.vm_name;
-					this.url = res.data.response.connectURL;
+					this.token = res.meta.token;
+					this.desktopName = this.instance?.title ?? 'Unknown';
+					this.url = `wss://${this.instance.sp}.proxy.nocloud.ione-cloud.net/socket?${res.meta.url}`;
+          this.connect(this.$store.state.nocloud.auth.token);
 				})
 				.catch(err => console.error(err));
 		},
 		connect(token) {
 			this.$refs.vncscreen.innerHTML = '';
-			UI.connect(this.url);
+      UI.connect(this.url, token);
+      UI.prime();
+      if (UI.connected) location.reload();
 		},
-		credentialsAreRequired(e) {
+		credentialsAreRequired() {
 			const password = prompt("Password Required:");
-			this.rfb.sendCredentials({
-				password: password
-			});
+
+			this.rfb.sendCredentials({ password });
 		},
 		updateDesktopName(e) {
 			this.desktopName = e.detail.name;
 		},
 		removeCanvases() {
-			let conv = document.getElementsByTagName('canvas');
-			Array.from(conv).forEach(el => {
-				el.remove()
-			})
+			const conv = document.getElementsByTagName('canvas');
+
+			Array.from(conv).forEach(el => el.remove());
 		}
 	},
 	computed: {
 		...mapGetters('app', ['isMaintananceMode']),
-		...mapGetters('cloud', {
-			SingleCloud: 'getOpenedCloud',
-			isLoading: 'isLoading',
-		}),
-	}
+    instance() {
+      const uuid = this.$route.params.pathMatch;
+
+      return this.$store.getters['nocloud/vms/getInstances']
+        .find((inst) => inst.uuid === uuid);
+    },
+    isLoading() {
+      return this.$store.getters['nocloud/vms/isLoading'];
+    }
+	},
+  watch: {
+    instance() { this.getToken() }
+  }
 }
 </script>
 
@@ -877,7 +874,6 @@ export default {
 		display: block;
 		padding: 4px 4px;
 		margin: 10px 0;
-		vertical-align: middle;
 		border: 1px solid rgba(255, 255, 255, 0.2);
 		border-radius: 6px;
 	}
@@ -1047,8 +1043,6 @@ export default {
 	:root:not(.noVNC_connected) #noVNC_power_button {
 		display: none;
 	}
-
-	#noVNC_power {}
 
 	#noVNC_power_buttons {
 		display: none;

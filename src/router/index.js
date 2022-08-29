@@ -210,7 +210,7 @@ const routes = [
 		},
 	},
 	{
-		path: '/cloud-*',
+		path: '/cloud/*',
 		component: () => import('../components/appMain/cloud/cloudRouter.vue'),
 		meta: {
 			mustBeLoggined: true,
@@ -223,14 +223,12 @@ const routes = [
 			},
 			{
 				path: '*',
-				redirect: to => {
-					return `/cloud-${to.params.pathMatch}`
-				}
+				redirect: to => `/cloud-${to.params.uuid}`
 			},
 			{
 				path: '',
 				name: 'openCloud',
-				component: () => import('../components/appMain/cloud/openCloud.vue')
+				component: () => import('../components/appMain/cloud/openCloud_new.vue')
 			},
 		]
 	},
@@ -249,7 +247,15 @@ const routes = [
 			mustBeLoggined: true,
 		},
 		component: () => import('../components/appMain/invoice/openInvoice.vue')
-	}
+	},
+  {
+    path: '/transaction/:uuid',
+    name: 'transaction',
+    meta: {
+      mustBeLoggined: true,
+    },
+    component: () => import('../components/appMain/invoice/openTransaction.vue')
+  }
 ]
 
 const router = new VueRouter({

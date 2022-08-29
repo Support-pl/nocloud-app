@@ -107,6 +107,7 @@
                         style="width: 100%"
                           v-model="resize.VCPU"
                           :min="1"
+                          :max="32"
                           default-value="1"
                         />
                       </a-col>
@@ -125,6 +126,7 @@
                           style="width: 100%"
                           v-model="resize.RAM"
                           :min="1"
+                          :max="64"
                           default-value="1"
                         />
                       </a-col>
@@ -161,16 +163,14 @@
                     :title="$t('SSH key')"
                     :footer="null"
                   >
-                    <div v-if="VM.config && VM.config.ssh_keys">
-                      <span style="font-weight: 700">
-                        {{ `${VM.config.ssh_keys[0].title}: `}}
-                      </span>
+                    <div>
+                      <span style="font-weight: 700">Key: </span>
                       <span
                         class="ssh-text"
                         title="Click to copy"
                         @click="addToClipboard"
                       >
-                        {{`${VM.config.ssh_keys[0].value}` }}
+                        {{ VM.config && VM.config.ssh_public_key || 'none' }}
                       </span>
                     </div>
                   </a-modal>
@@ -755,13 +755,10 @@
                   </div>
                 </a-col>
 
-                <a-col :span="24" :md="12">
+                <a-col :span="24" :md="12" v-if="VM.state">
                   <div class="button">
                     <a-button
-                      :disabled="
-                        (VM.state && VM.state.meta.state != 3) ||
-                        (VM.state && VM.state.meta.lsm_state != 3)
-                      "
+                      :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lsm_state === 3)"
                       type="primary"
                       shape="round"
                       block
@@ -769,7 +766,7 @@
                     >
                       <router-link
                         :to="{
-                          path: `cloud-${$route.params.pathMatch}/vnc`,
+                          path: `${$route.params.uuid}/vnc`,
                         }"
                       >
                         VNC
@@ -1515,6 +1512,7 @@ export default {
           group.instances = group.instances.filter(
             (inst) => inst.uuid !== this.VM.uuid
           );
+          group.resources.ips_public = group.instances.length ;
           this.$store
             .dispatch("nocloud/vms/updateService", this.itemService)
             .then((result) => {
