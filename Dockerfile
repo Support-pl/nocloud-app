@@ -20,5 +20,6 @@ COPY --from=ui-builder /app/dist/ /dist
 COPY --from=server-builder /go/src/github.com/support-pl/nocloud-app/app /app
 
 LABEL org.opencontainers.image.source https://github.com/support-pl/nocloud-app
+LABEL nocloud.update "true"
 
 ENTRYPOINT ["/app" ]
