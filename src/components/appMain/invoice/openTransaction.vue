@@ -1,7 +1,7 @@
 <template>
   <div class="openInvoice__fullscreen">
     <transition name="invoiceApear">
-      <div v-if="!loading" class="openInvoice">
+      <div v-if="!isLoading" class="openInvoice">
         <div class="openInvoice__header">
           <div class="container full-height">
             <div class="openInvoice__header--content">
@@ -39,12 +39,28 @@
               </div>
               <div class="openInvoice__info">
                 <div class="info__header-title">{{ $t("Information") }}</div>
+
+                  <div class="info__dates">
+                    <div class="info__date-item">
+                      <div class="info__date-title">{{ $t("invoiceDate") }}</div>
+                      <div class="info__date-value">
+                        {{ date(records.at(-1).start) }}
+                      </div>
+                    </div>
+                    <div class="info__date-item">
+                      <div class="info__date-title">{{ $t("dueDate") }}</div>
+                      <div class="info__date-value">
+                        {{ date(records.at(-1).end) }}
+                      </div>
+                    </div>
+                  </div>
+
                 <div class="info__main">
                   <a-table row-key="uuid" :data-source="records" :columns="columns">
                     <template slot="inst" slot-scope="text, record">
                       {{ (!visibleHash.includes(record.uuid))
-                        ? `${record.instance.slice(0, 8)}...`
-                        : record.instance }}
+                        ? `${record.instance.title} (${record.instance.uuid.slice(0, 6)}...)`
+                        : `${record.instance.title} (${record.instance.uuid})` }}
                       <a-icon
                         type="eye"
                         v-if="!visibleHash.includes(record.uuid)"
@@ -83,16 +99,16 @@
 import loading from "@/components/loading/loading.vue";
 
 export default {
-  name: "openInvoice",
+  name: "openTransaction",
   components: { loading },
   data: () => ({
-    loading: true,
+    isLoading: true,
     visibleHash: [],
     records: null,
     columns: [
       {
         title: 'Instance',
-        dataIndex: 'instance',
+        dataIndex: 'instance.title',
         scopedSlots: { customRender: 'inst' }
       },
       {
@@ -139,10 +155,25 @@ export default {
   },
   mounted() {
     const url = `/billing/transactions/${this.$route.params.uuid}`;
+    this.$store.dispatch('nocloud/vms/fetch');
     this.$api.get(url)
       .then(({ pool }) => {
-        this.records = pool;
-        this.loading = false;
+        const instances = {};
+
+        this.services.forEach((service) => {
+          service.instancesGroups.forEach((group) => {
+            group.instances.forEach((inst) => {
+              instances[inst.uuid] = inst.title;
+            });
+          });
+        });
+        this.records = pool.map((el) => ({
+          ...el, instance: {
+            uuid: el.instance,
+            title: instances[el.instance] ?? ''
+          }
+        }));
+        this.isLoading = false;
 
         this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource';
       })
@@ -159,6 +190,9 @@ export default {
       return this.records[0].processed
         ? this.$config.colors.success
         : this.$config.colors.err;
+    },
+    services() {
+      return this.$store.getters['nocloud/vms/getServicesFull'];
     },
   },
 };
@@ -245,6 +279,27 @@ export default {
   flex-direction: column;
   flex: 1 0;
   padding-bottom: 64px;
+}
+
+.info__dates {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30px;
+}
+
+.info__date-item {
+  text-align: center;
+}
+.info__date-title {
+  font-weight: bold;
+  font-size: 16px;
+  padding: 0;
+}
+.info__date-value {
+  font-weight: bold;
+  font-size: 16px;
+  line-height: 10px;
+  padding: 0;
 }
 
 .full-height {
