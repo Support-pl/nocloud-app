@@ -8,7 +8,7 @@
           <a-radio-button value="Detail"> Detail </a-radio-button>
         </a-radio-group>
         <div v-if="value === 'Invoice'">
-          <empty style="margin-top:50px" v-if="transactions.length === 0" />
+          <empty style="margin-top:50px" v-if="invoices.length === 0" />
           <single-invoice
             v-else
             v-for="(invoice, index) in invoices"
@@ -17,7 +17,7 @@
           />
         </div>
         <div v-if="value === 'Detail'">
-          <empty style="margin-top:50px" v-if="invoices.length === 0" />
+          <empty style="margin-top:50px" v-if="transactions.length === 0" />
           <single-transaction
             v-else
             v-for="(invoice, index) in transactions"
@@ -68,14 +68,15 @@ export default {
   },
   mounted() {
     if (this.isLogged) {
-      this.$store.dispatch("nocloud/transactions/fetch", this.user.uuid);
+      this.$store.dispatch("invoices/autoFetch");
     }
   },
   watch: {
     value() {
       if (this.value === 'Invoice') return;
+      if (this.transactions.length > 0) return;
 
-      this.$store.dispatch("invoices/autoFetch");
+      this.$store.dispatch("nocloud/transactions/fetch", this.user.uuid);
     }
   }
 };
