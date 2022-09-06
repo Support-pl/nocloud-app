@@ -4,15 +4,15 @@
       <div class="content__wrapper">
        Личный кабинет  
         <!-- нету юзера -->
-        <!-- <div class="content__title">
+        <div class="content__title">
           {{ $t("Personal Area") }}
-          <span class="content__small"> #{{ user.id }} </span>
+          <span class="content__small"> #{{ userData.uuid }} </span>
         </div>
         <div class="content__fields-wrapper">
           <a-form-model
             ref="form"
             :model="form"
-            v-if="form.firstname"
+            v-if="userData.title"
             :rules="rules"
           >
             <a-form-model-item
@@ -106,7 +106,7 @@
           </a-form-model>
 
           <loading v-else />
-        </div> -->
+        </div>
       </div>
     </div>
   </div>
@@ -114,21 +114,20 @@
 
 <script>
 import { mapGetters } from "vuex";
-import api from "@/api.js";
-import loading from "@/components/loading/loading";
 import { countries } from "@/setup/countries";
+import loading from "@/components/loading/loading";
+import api from "@/api.js";
+
 export default {
   name: "userSettings-view",
-  components: {
-    loading,
-  },
+  components: { loading },
   data() {
     return {
       form: {},
       isSendingInfo: false,
       countries,
       rules: {
-        firstname: [
+        title: [
           {
             required: true,
             message: `${this.$t("ssl.field is required")}`,
@@ -211,10 +210,8 @@ export default {
       });
     },
     fetchInfo() {
-      api
-        .sendAsUser("clientDetails")
-        .then((res) => {
-          this.$store.commit("setUserData", res);
+      this.$store.dispatch('nocloud/auth/fetchUserData')
+        .then(() => {
           this.installDataToBuffer();
         })
         .catch((res) => {
@@ -225,12 +222,11 @@ export default {
       this.$refs.form.validate((valid) => {
         if (valid) {
           this.isSendingInfo = true;
-          api
-            .sendAsUser("user.update", {
-              ...this.deltaInfo,
-              country: this.form.countryname,
-            })
-            .then((res) => {
+          api.get(this.baseURL, { params: {
+            run: 'update_user',
+            user: { ...this.deltaInfo, country: this.form.countryname }
+          }})
+            .then(() => {
               this.$message.success("success");
               this.fetchInfo();
             })
@@ -250,10 +246,7 @@ export default {
     },
   },
   computed: {
-    ...mapGetters({
-      user: "getUser",
-      userData: "getUserData",
-    }),
+    ...mapGetters({ userData: "nocloud/auth/userdata", baseURL: "support/getURL" }),
     deltaInfo() {
       const info = { ...this.form };
       for (let key in info) {
@@ -264,9 +257,7 @@ export default {
       return info;
     },
   },
-  mounted() {
-    this.fetchInfo();
-  },
+  mounted() { this.fetchInfo() },
 };
 </script>
 

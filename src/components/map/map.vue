@@ -1,5 +1,19 @@
 <template>
   <div class="map">
+    <div style="position: absolute; right: 25px; top: 13px">
+      <a-button
+        style="margin-right: 5px; font-size: 20px"
+        @click="(e) => zoom(e, 1)"
+      >
+        +
+      </a-button>
+      <a-button
+        style="font-size: 20px"
+        @click="(e) => zoom(e, -1)"
+      >
+        -
+      </a-button>
+    </div>
     <svg
       ref="svgwrapper"
       :viewBox="`0 0 ${mapData.meta.width} ${mapData.meta.height}`"
@@ -124,6 +138,7 @@
 
 <script>
 import mapData from "../../map.json";
+
 export default {
   name: "support-map",
   props: ["value", "markers"],
@@ -203,10 +218,11 @@ export default {
 				this.selectedDrag = undefined;
 			}
 		},
-		zoom(e) {
+		zoom(e, num) {
 			e.stopPropagation();
 			e.preventDefault();
-			let delta = e.wheelDelta,
+
+			let delta = num || e.wheelDelta,
 					container = this.$refs.veiwport,
 					scaleStep = delta > 0 ? 1.25 : 0.8;
 			if (this.scale * scaleStep > this.maxScale) {
@@ -267,6 +283,7 @@ export default {
   /* width: 800px;
   height: 600px; */
   /* display: flex; */
+  position: relative;
   align-items: center;
   justify-content: center;
 }

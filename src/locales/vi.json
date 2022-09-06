@@ -133,6 +133,7 @@
 	"invoice_Unpaid": "Chưa thanh toán",
 	"invoice_Cancelled": "Đã hủy bỏ",
 	"invoice_Refunded": "Đã hoàn lại",
+  "invoice_Draft": "Bản thảo",
 	"Active": "Kích hoạt",
 	"Suspended": "Tạm dừng",
 	"Canceled": "Đã hủy bỏ",

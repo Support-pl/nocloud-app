@@ -4,9 +4,6 @@
     :style="{ cursor: (invoice.records.length > 0) ? 'pointer': 'default' }"
     @click="clickOnInvoice(invoice.uuid)"
   >
-    <div class="invoice__header flex-between">
-      <div class="invoice__service">Service: {{ invoice.service || 'none' }}</div>
-    </div>
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
         {{ invoice.total }} {{ invoice.currency_code || 'BYN' }}
@@ -16,7 +13,7 @@
           {{ $t("invoiceDate") }}
         </div>
         <div class="invoice__date">
-          {{ date(invoice.proc)  }}
+          {{ date(invoice.exec)  }}
         </div>
       </div>
       <div class="invoice__date-item invoice__dueDate">
@@ -24,7 +21,7 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ date(invoice.exec) }}
+          {{ date(invoice.proc) }}
         </div>
       </div>
     </div>
@@ -91,8 +88,7 @@ export default {
   cursor: pointer;
 }
 
-.invoice__id,
-.invoice__service {
+.invoice__id{
   font-size: 12px;
   color: var(--gray);
 }
@@ -133,7 +129,6 @@ export default {
   flex: 1 1 0;
 }
 
-.invoice__header,
 .invoice__middle,
 .horisontal-line {
   margin-bottom: 2px;

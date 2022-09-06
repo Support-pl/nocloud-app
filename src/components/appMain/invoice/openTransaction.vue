@@ -44,34 +44,19 @@
                     <div class="info__date-item">
                       <div class="info__date-title">{{ $t("invoiceDate") }}</div>
                       <div class="info__date-value">
-                        {{ date(records.at(-1).start) }}
+                        {{ invoice && date(invoice.exec) }}
                       </div>
                     </div>
                     <div class="info__date-item">
                       <div class="info__date-title">{{ $t("dueDate") }}</div>
                       <div class="info__date-value">
-                        {{ date(records.at(-1).end) }}
+                        {{ invoice && date(invoice.proc) }}
                       </div>
                     </div>
                   </div>
 
                 <div class="info__main">
                   <a-table row-key="uuid" :data-source="records" :columns="columns">
-                    <template slot="inst" slot-scope="text, record">
-                      {{ (!visibleHash.includes(record.uuid))
-                        ? `${record.instance.title} (${record.instance.uuid.slice(0, 6)}...)`
-                        : `${record.instance.title} (${record.instance.uuid})` }}
-                      <a-icon
-                        type="eye"
-                        v-if="!visibleHash.includes(record.uuid)"
-                        @click="visibleHash.push(record.uuid, text)"
-                      />
-                      <a-icon
-                        v-else
-                        type="eye-invisible"
-                        @click="changeVisible(record.uuid)"
-                      />
-                    </template>
                     <template slot="date" slot-scope="text, record">
                       {{ date(record.exec) }}
                     </template>
@@ -103,13 +88,11 @@ export default {
   components: { loading },
   data: () => ({
     isLoading: true,
-    visibleHash: [],
     records: null,
     columns: [
       {
         title: 'Instance',
-        dataIndex: 'instance.title',
-        scopedSlots: { customRender: 'inst' }
+        dataIndex: 'instance'
       },
       {
         title: 'Product',
@@ -146,41 +129,36 @@ export default {
       if (`${day}`.length < 2) day = `0${day}`;
 
       return `${day}.${month}.${year} ${time}`;
-    },
-    changeVisible(uuid) {
-      this.visibleHash = this.visibleHash.filter(
-        (el) => el !== uuid
-      );
     }
   },
   mounted() {
     const url = `/billing/transactions/${this.$route.params.uuid}`;
-    this.$store.dispatch('nocloud/vms/fetch');
-    this.$api.get(url)
-      .then(({ pool }) => {
-        const instances = {};
 
-        this.services.forEach((service) => {
-          service.instancesGroups.forEach((group) => {
-            group.instances.forEach((inst) => {
-              instances[inst.uuid] = inst.title;
+    this.$store.dispatch('nocloud/vms/fetch');
+    setTimeout(() => {
+      this.$api.get(url)
+        .then(({ pool }) => {
+          const instances = {};
+
+          this.services.forEach((service) => {
+            service.instancesGroups.forEach((group) => {
+              group.instances.forEach((inst) => {
+                instances[inst.uuid] = inst.title;
+              });
             });
           });
-        });
-        this.records = pool.map((el) => ({
-          ...el, instance: {
-            uuid: el.instance,
-            title: instances[el.instance] ?? ''
-          }
-        }));
-        this.isLoading = false;
+          this.records = pool.map((el) => ({
+            ...el, instance: instances[el.instance] ?? 'unknown'
+          }));
+          this.isLoading = false;
 
-        this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource';
-      })
-      .catch((err) => {
-        this.$router.push("/invoice");
-        console.error(err);
-      });
+          this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource';
+        })
+        .catch((err) => {
+          this.$router.push("/invoice");
+          console.error(err);
+        });
+    }, 1000);
   },
   computed: {
     user() {
@@ -194,7 +172,16 @@ export default {
     services() {
       return this.$store.getters['nocloud/vms/getServicesFull'];
     },
+    invoice() {
+      return this.$store.getters['nocloud/transactions/getTransactions']
+        .find((el) => el.uuid === this.$route.params.uuid);
+    }
   },
+  watch: {
+    user() {
+      this.$store.dispatch('nocloud/transactions/fetch', this.user.uuid);
+    }
+  }
 };
 </script>
 

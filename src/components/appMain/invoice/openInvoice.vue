@@ -127,7 +127,7 @@
                       <a-icon type="clock-circle" />
                     </div> -->
 
-                    <div class="info__button info__button--pay">
+                    <!-- <div class="info__button info__button--pay"> -->
                       <a-button class="info__button" :loading="confirmLoading.pay" @click='showPayModal'>
                         {{ $t("Pay") }}
                       </a-button>
@@ -139,7 +139,7 @@
                         @cancel="handlePayCancel"
                       >
                         <p>{{ $t("Payment method") }}:</p>
-                        <a-select style="min-width: 100%" v-model="elem">
+                        <a-select style="min-width: 100%" v-model="elem" :loading="paymentLoading">
                           <a-select-option
                             v-for="method in payMethods"
                             :key="method.module"
@@ -149,7 +149,7 @@
                           </a-select-option>
                         </a-select>
                       </a-modal>
-                    </div>
+                    <!-- </div> -->
                   </template>
                 </div>
               </div>
@@ -174,6 +174,7 @@ export default {
       payment: ["visa", "mastercard", "yandex.money"],
       payMethods: [],
       showFullTable: false,
+      paymentLoading: false,
       visible: {
         pay: false,
       },
@@ -252,8 +253,10 @@ export default {
       .then(() => {
         if (this.invoice?.status !== 'Unpaid') return;
 
+        this.paymentLoading = true;
         this.$api.get(this.baseURL, { params: { run: 'get_payment' } })
-          .then(res => { this.payMethods = res.paymentmethod });
+          .then(res => { this.payMethods = res.paymentmethod })
+          .finally(() => { this.paymentLoading = false; });
       })
       .catch((err) => {
         this.$router.push("/invoice");
@@ -277,7 +280,7 @@ export default {
       return this.$store.getters['invoices/isLoading'];
     },
     statusColor() {
-      return this.invoice.status.toLowerCase() == "paid"
+      return this.invoice?.status.toLowerCase() == "paid"
         ? this.$config.colors.success
         : this.$config.colors.err;
     },
