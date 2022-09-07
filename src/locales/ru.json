@@ -127,6 +127,7 @@
 	"invoice_Paid": "Оплачен",
 	"invoice_Unpaid": "Не оплачен",
 	"invoice_Cancelled": "Отменен",
+  "invoice_Draft": "Запланирован",
 	"Active": "Активен",
 	"Suspended": "Заморожен",
 	"Canceled": "Отменен",

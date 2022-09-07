@@ -18,38 +18,47 @@
 
     <load v-if="loading" />
     <div v-else class="chat__content">
-      <div
-        v-for="(reply, index) in replies"
-        :key="index"
-        class="chat__message"
-        :class="[
-          isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
-        ]"
-      >
-        <pre v-html="beauty(reply.message)"></pre>
-        <a-icon
-          v-if="reply.sending"
-          type="loading"
-          class="msgStatus loading"
-        ></a-icon>
-        <a-popover v-if="reply.error" :title="$t('Send error')">
-          <template slot="content">
-            <a
-              class="popover-link"
-              slot="content"
-              @click="messageDelete(reply)"
-              >{{ $t("chat_Delete_message") }}</a
-            >
-            <a
-              class="popover-link"
-              slot="content"
-              @click="messageResend(reply)"
-              >{{ $t("chat_Resend_message") }}</a
-            >
-          </template>
-          <a-icon type="exclamation-circle" class="msgStatus error"></a-icon>
-        </a-popover>
-      </div>
+      <template v-for="(reply, i) in replies">
+        <span class="chat__date" v-if="isDateVisible(replies, i)" :key="i">
+          {{ reply.date.split(' ')[0] }}
+        </span>
+        <div
+          class="chat__message"
+          :key="`${i}_message`"
+          :class="[
+            isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
+          ]"
+        >
+          <pre v-html="beauty(reply.message)" />
+          <div class="chat__info">
+            <span>{{ reply.name }}</span>
+            <span>{{ reply.date.slice(-8, -3) }}</span>
+          </div>
+          <a-icon
+            v-if="reply.sending"
+            type="loading"
+            class="msgStatus loading"
+          />
+
+          <a-popover v-if="reply.error" :title="$t('Send error')">
+            <template slot="content">
+              <a
+                class="popover-link"
+                slot="content"
+                @click="messageDelete(reply)"
+                >{{ $t("chat_Delete_message") }}</a
+              >
+              <a
+                class="popover-link"
+                slot="content"
+                @click="messageResend(reply)"
+                >{{ $t("chat_Resend_message") }}</a
+              >
+            </template>
+            <a-icon type="exclamation-circle" class="msgStatus error"></a-icon>
+          </a-popover>
+        </div>
+      </template>
     </div>
 
     <div class="chat__footer">
@@ -78,13 +87,11 @@
 </template>
 
 <script>
-import load from "../../loading/loading.vue";
+import load from "@/components/loading/loading.vue";
 
 export default {
   name: "ticketChat",
-  components: {
-    load,
-  },
+  components: { load },
   data() {
     return {
       status: null,
@@ -116,11 +123,15 @@ export default {
       message = message.replace(/[\s\uFEFF\xA0]{2,}/g, " ");
       return message.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, "");
     },
+    isDateVisible(replies, i) {
+      if (i === 0) return true;
+      return replies[i - 1].date.split(' ')[0] !== replies[i].date.split(' ')[0];
+    },
     newLine() {
       this.messageInput.replace(/$/, "\n");
     },
     isAdminSent(reply) {
-      return reply.admin !== "";
+      return reply.requestor_type !== 'Owner';
     },
     sendMessage() {
       if (this.messageInput.length < 1) return;
@@ -286,7 +297,7 @@ export default {
   height: 100%;
   flex: 1 0;
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
   justify-content: flex-start;
   padding: 6px 15px;
   overflow: auto;
@@ -307,6 +318,24 @@ export default {
 
 .chat__message pre {
   white-space: pre-wrap;
+}
+
+.chat__date {
+  padding: 7px 15px;
+  margin: 10px auto 5px;
+  text-align: center;
+  border-radius: 7px;
+  line-height: 1;
+  color: var(--bright_font);
+  background: var(--main);
+}
+
+.chat__info {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--gray);
 }
 
 .msgStatus {

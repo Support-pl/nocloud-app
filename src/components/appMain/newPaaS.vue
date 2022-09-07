@@ -143,7 +143,7 @@
                       span="4"
                       style="text-align: right"
                     >
-                      {{ options.disk.size }} Mb
+                      {{ diskSize }}
                     </a-col>
                   </a-row>
                 </div>
@@ -1249,6 +1249,11 @@ export default {
         return " ";
       }
     },
+    diskSize() {
+      const size = (this.options.disk.size / 1024).toFixed(1);
+
+      return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
+    }
   },
   mounted() {
     if (localStorage.getItem("data")) {

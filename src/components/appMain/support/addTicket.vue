@@ -7,30 +7,25 @@
     @ok="sendNewTicket"
     :cancelText="$t('Cancel')"
   >
-    <a-form-model layout="vertical">
-      <a-form-model-item :label="$t('department')">
-        <a-select
-          :loading="ticketDepartment == -1"
-          v-model="ticketDepartment"
-          placeholder="department"
-        >
-          <a-select-option
-            v-for="department in departments"
-            :key="department.id"
-            :value="department.id"
-            >{{ department.name }}</a-select-option
-          >
-        </a-select>
-      </a-form-model-item>
+    <a-spin tip="Loading..." :spinning="ticketDepartment === -1">
+      <a-form-model layout="vertical">
+        <a-form-model-item :label="$t('department')">
+          <a-select v-model="ticketDepartment" placeholder="department">
+            <a-select-option v-for="dep in departments" :key="dep.id" :value="dep.id" >
+              {{ dep.name }}
+            </a-select-option>
+          </a-select>
+        </a-form-model-item>
 
-      <a-form-model-item :label="$t('subject')">
-        <a-input v-model="ticketTitle" placeholder="" />
-      </a-form-model-item>
+        <a-form-model-item :label="$t('subject')">
+          <a-input v-model="ticketTitle" placeholder="" />
+        </a-form-model-item>
 
-      <a-form-model-item :label="$t('question')">
-        <a-textarea v-model="ticketMessage" rows="10" />
-      </a-form-model-item>
-    </a-form-model>
+        <a-form-model-item :label="$t('question')">
+          <a-textarea v-model="ticketMessage" rows="10" />
+        </a-form-model-item>
+      </a-form-model>
+    </a-spin>
   </a-modal>
 </template>
 

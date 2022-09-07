@@ -306,9 +306,6 @@ export default {
     },
   },
   computed: {
-    user() {
-      return this.$store.getters.getUser;
-    },
     ...mapGetters("support", [
       "isAddTicketState",
       "isOnlyClosedTickets",
@@ -318,7 +315,6 @@ export default {
     ...mapGetters("app", ["getActiveTab"]),
     ...mapGetters("cloud", ["searchString"]),
     ...mapGetters("invoices", ["getInvoices", "getAllInvoices"]),
-    ...mapGetters(["getUser"]),
     active() {
       const headerTitle = this.$route.meta?.headerTitle;
       const layoutTitle = this.$route.meta?.layoutTitle;
@@ -497,7 +493,7 @@ export default {
 
 .icon__wrapper:hover {
   background-color: var(--bright_bg);
-  color: var(--light);
+  color: var(--main);
   transform: scale(1.2);
 }
 .icon__wrapper.active__btn {

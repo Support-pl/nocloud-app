@@ -134,6 +134,7 @@
 	"invoice_Unpaid": "Awaiting Payment",
 	"invoice_Cancelled": "Cancelled",
 	"invoice_Refunded": "Refunded",
+  "invoice_Draft": "Draft",
 	"Active": "Active",
 	"Suspended": "Suspended",
 	"Canceled": "Cancelled",
@@ -447,7 +448,8 @@
 		"In Progress":"In progress",
 		"On Hold": "On hold",
 		"Answered":"Answered",
-		"Cancelled":"Cancelled"
+		"Cancelled":"Cancelled",
+    "Draft": "Draft"
 	},
 	"virtual":"virtual",
 	"input new name":"Input new name",	

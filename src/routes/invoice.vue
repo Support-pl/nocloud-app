@@ -54,7 +54,7 @@ export default {
     },
     transactions() {
       return this.$store.getters["nocloud/transactions/getTransactions"]
-        .reverse();
+        .sort((a, b) => b.proc - a.proc);
     },
     isLoading() {
       return this.$store.getters["nocloud/transactions/isTransactionsLoading"];
