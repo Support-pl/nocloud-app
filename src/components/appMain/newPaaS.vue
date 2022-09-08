@@ -69,15 +69,14 @@
               >
                 <template v-if="getPlans.length > 0">
                   <a-slider
-                  style="margin-top: 10px"
-                  :marks="{ ...getProducts }"
-                  :tip-formatter="null"
-                  :max="getProducts.length - 1"
-                  :min="0"
-                  :value="getProducts.indexOf(productSize)"
-                  @change="(newval) => (productSize = getProducts[newval])"
-                >
-                </a-slider>
+                    style="margin-top: 10px"
+                    :marks="{ ...getProducts }"
+                    :tip-formatter="null"
+                    :max="getProducts.length - 1"
+                    :min="0"
+                    :value="getProducts.indexOf(productSize)"
+                    @change="(newval) => (productSize = getProducts[newval])"
+                  />
                 <div>
                   <a-row
                     type="flex"
@@ -755,10 +754,19 @@
                   >.
                 </div>
                 <a-button
-                  type="primary"
                   block
+                  type="primary"
                   shape="round"
-                  @click="() => (modal.confirmCreate = true)"
+                  v-if="activeKey !== 'OS'"
+                  @click="nextStep"
+                >
+                  {{ $t("Next") }}
+                </a-button>
+                <a-button
+                  block
+                  v-else
+                  type="primary"
+                  shape="round"
                   :disabled="
                     score < 4 ||
                     password.length === 0 ||
@@ -768,6 +776,7 @@
                     options.os.name == '' ||
                     !isLoggedIn
                   "
+                  @click="() => (modal.confirmCreate = true)"
                 >
                   {{ $t("Create") }}
                 </a-button>
@@ -1389,6 +1398,13 @@ export default {
           break;
       }
     },
+    nextStep() {
+      if (this.activeKey === 'location') {
+        this.activeKey = 'plan';
+      } else if (this.activeKey === 'plan') {
+        this.activeKey = 'OS';
+      }
+    },
     calculatePrice(price, period = this.period) {
       // if(this.options.tarification){
       // 	return price;
@@ -1661,8 +1677,6 @@ export default {
           }
           return { ...plan, title };
         });
-
-        this.activeKey = "plan";
         this.$store.commit('nocloud/plans/setPlans', plans);
       });
     }

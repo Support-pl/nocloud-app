@@ -34,11 +34,7 @@
             <span>{{ reply.name }}</span>
             <span>{{ reply.date.slice(-8, -3) }}</span>
           </div>
-          <a-icon
-            v-if="reply.sending"
-            type="loading"
-            class="msgStatus loading"
-          />
+          <a-icon v-if="reply.sending" type="loading" class="msgStatus loading" />
 
           <a-popover v-if="reply.error" :title="$t('Send error')">
             <template slot="content">
@@ -108,6 +104,9 @@ export default {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
+    baseURL() {
+      return this.$store.getters['support/getURL'];
+    },
     titleDecoded() {
       var txt = document.createElement("textarea");
       txt.innerHTML = this.subject;
@@ -126,6 +125,17 @@ export default {
     isDateVisible(replies, i) {
       if (i === 0) return true;
       return replies[i - 1].date.split(' ')[0] !== replies[i].date.split(' ')[0];
+    },
+    date(date) {
+      const time =  date.toTimeString().split(' ')[0];
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
+
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
+
+      return `${year}-${month}-${day} ${time}`;
     },
     newLine() {
       this.messageInput.replace(/$/, "\n");
@@ -147,32 +157,31 @@ export default {
         userid: this.user.id,
         sending: true,
       };
+      const requestor_type = 'Owner';
+      const date = this.date(message.date);
+
       this.sendingMessagesCount++;
-      this.replies.unshift(message);
+      this.replies.push({ ...message, date, requestor_type  });
 
-      const url = 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php';
-
-      this.$api.get(url, { params: {
-        run: 'answer_ticket',
-        id: this.$route.params.pathMatch,
-        message: this.messageInput,
-      }})
-        .then(() => {
-          this.replies[--this.sendingMessagesCount].sending = false;
-        })
-        .catch((err) => {
-          console.error(err);
-          this.sendingMessagesCount--;
-          this.replies[this.sendingMessagesCount].sending = false;
-          this.replies[this.sendingMessagesCount].error = true;
-        });
+      // this.$api.get(this.baseURL, { params: {
+      //   run: 'answer_ticket',
+      //   id: this.$route.params.pathMatch,
+      //   message: this.messageInput,
+      // }})
+      //   .then(() => {
+      //     this.replies[--this.sendingMessagesCount].sending = false;
+      //   })
+      //   .catch((err) => {
+      //     console.error(err);
+      //     this.sendingMessagesCount--;
+      //     this.replies[this.sendingMessagesCount].sending = false;
+      //     this.replies[this.sendingMessagesCount].error = true;
+      //   });
       this.messageInput = "";
     },
     loadMessages() {
-      const url = 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php';
-
       this.loading = true;
-      this.$api.get(url, { params: {
+      this.$api.get(this.baseURL, { params: {
         run: 'get_ticket_full',
         ticket_id: this.chatid,
       }})
@@ -341,14 +350,14 @@ export default {
 .msgStatus {
   position: absolute;
   bottom: 5px;
-  left: 5px;
+  left: -20px;
   font-size: 14px;
   height: auto;
 }
 
 .msgStatus.error {
-  left: -25px;
-  top: 50%;
+  left: -20px;
+  bottom: 5px;
   transform: translateY(-50%);
   background: var(--err);
   border-radius: 50%;

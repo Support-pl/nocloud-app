@@ -60,6 +60,7 @@ export default {
 			return new Promise((resolve, reject) => {
 				api.get(state.baseURL, { params: { run: 'get_dept' } })
 				.then(res => {
+          if (res?.ERROR) throw res.ERROR.toLowerCase();
           commit('setDepartments', res);
           resolve(res);
 				})

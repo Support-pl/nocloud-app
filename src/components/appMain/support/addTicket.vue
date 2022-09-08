@@ -7,7 +7,7 @@
     @ok="sendNewTicket"
     :cancelText="$t('Cancel')"
   >
-    <a-spin tip="Loading..." :spinning="ticketDepartment === -1">
+    <a-spin tip="Loading..." :spinning="isLoading">
       <a-form-model layout="vertical">
         <a-form-model-item :label="$t('department')">
           <a-select v-model="ticketDepartment" placeholder="department">
@@ -40,6 +40,7 @@ export default {
       ticketTitle: "",
       ticketMessage: "",
       isSending: false,
+      isLoading: false
     };
   },
   computed: {
@@ -96,9 +97,18 @@ export default {
     },
   },
   created() {
-    this.$store.dispatch("support/fetchDepartments").then(() => {
-      this.ticketDepartment = this.departments[0].id;
-    });
+    this.isLoading = true;
+    this.$store.dispatch("support/fetchDepartments")
+      .then(() => {
+        if (this.departments.length < 1) return;
+        this.ticketDepartment = this.departments[0].id;
+      })
+      .catch(() => {
+        this.$message.error("Departments not found");
+      })
+      .finally(() => {
+        this.isLoading = false;
+      });
   },
 };
 </script>
