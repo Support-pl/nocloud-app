@@ -41,7 +41,7 @@
       </defs>
       <g
         class="map__viewport"
-				ref="veiwport"
+				ref="viewport"
 				transform="matrix(1 0 0 1 0 0)"
 				@mousedown="beginDrag"
 				@mousewheel="zoom"
@@ -179,7 +179,7 @@ export default {
 			if (target.classList.contains('draggable')) {
 				this.selectedDrag = target;
 			} else {
-				this.selectedDrag = this.$refs.veiwport;
+				this.selectedDrag = this.$refs.viewport;
 			}
 			this.selectedDrag.dataset.startMouseX = e.clientX;
 			this.selectedDrag.dataset.startMouseY = e.clientY;
@@ -218,31 +218,35 @@ export default {
 				this.selectedDrag = undefined;
 			}
 		},
-		zoom(e, num) {
+		zoom(e, delta) {
 			e.stopPropagation();
 			e.preventDefault();
 
-			let delta = num || e.wheelDelta,
-					container = this.$refs.veiwport,
-					scaleStep = delta > 0 ? 1.25 : 0.8;
+			const container = this.$refs.viewport;
+			let scaleStep = (delta || e.wheelDelta) > 0 ? 1.25 : 0.8;
+
 			if (this.scale * scaleStep > this.maxScale) {
-					scaleStep = this.maxScale / this.scale;
+        scaleStep = this.maxScale / this.scale;
 			}
 			if (this.scale * scaleStep < this.minScale) {
-					scaleStep = this.minScale / this.scale;
+        scaleStep = this.minScale / this.scale;
 			}
-			this.scale *= scaleStep;
-			let box = this.svg.getBoundingClientRect();
+
+			const box = this.svg.getBoundingClientRect();
 			let point = this.svg.createSVGPoint();
-			point.x = e.clientX - box.left;
-			point.y = e.clientY - box.top;
-			let currentZoomMatrix = container.transform.baseVal[0].matrix;
+
+			this.scale *= scaleStep;
+			point.x = (delta) ? box.x / 2 + box.left : e.clientX - box.left;
+			point.y = (delta) ? box.y / 2 + box.top : e.clientY - box.top;
+
+			const currentZoomMatrix = container.transform.baseVal[0].matrix;
 			point = point.matrixTransform(currentZoomMatrix.inverse());
-			let matrix = this.svg.createSVGMatrix()
+			const matrix = this.svg.createSVGMatrix()
 					.translate(point.x, point.y)
 					.scale(scaleStep)
 					.translate(-point.x, -point.y);
-			let newZoomMatrix = currentZoomMatrix.multiply(matrix);
+			const newZoomMatrix = currentZoomMatrix.multiply(matrix);
+
 			container.transform.baseVal.initialize(this.svg.createSVGTransformFromMatrix(newZoomMatrix));
 		}
   },
@@ -264,8 +268,30 @@ export default {
     this.selected = this.value ?? this.selected;
   },
   mounted(){
+    const container = this.$refs.viewport;
+    const min = { x: Infinity, y: Infinity };
+    const max = { x: 0, y: 0 };
+    let x, y;
+
+    this.markers.forEach(({ x, y }) => {
+      if (min.x > x) min.x = x;
+      if (min.y > y) min.y = y;
+      if (max.x < x) max.x = x;
+      if (max.y < y) max.y = y;
+    });
+    this.scale = 1010 / (max.x - min.x + 70);
+
+    if (this.scale > this.maxScale) {
+      this.scale = this.maxScale;
+      x = (min.x + 20) * this.scale - (max.x + min.x) / 2;
+      y = (min.y + 20) * this.scale - (max.y + min.y) / 2;
+    } else {
+      x = (min.x - 20) * this.scale;
+      y = (min.y - 20) * this.scale;
+    }
+
 		this.svg = this.$refs.svgwrapper;
-		this.$refs.veiwport.setAttribute('transform', `matrix(${this.scale} 0 0 ${this.scale} 0 0)`)
+		container.setAttribute('transform', `matrix(${this.scale} 0 0 ${this.scale} ${-x} ${-y})`);
 		window.addEventListener('mouseup', this.endDrag);
 	},
 	beforeUnmount(){

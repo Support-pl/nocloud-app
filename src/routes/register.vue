@@ -93,21 +93,21 @@
 							</a-select>
 						</div>
 
-						<!-- <div class="inputs__log-pas">
+						<div class="inputs__log-pas">
 							<select name="country" id="country" v-model="userinfo.country">
 								<option v-for="country in countries" :key="country.code" :value="country.code">{{country.title}}</option>
 							</select>
-							<span class="login__horisontal-line"></span>
+							<!-- <span class="login__horisontal-line"></span>
 							<input type="text" :placeholder="$t('clientinfo.state') | capitalize" v-model="userinfo.state">
 							<span class="login__horisontal-line"></span>
 							<input type="text" :placeholder="$t('clientinfo.city') | capitalize" v-model="userinfo.city">
 							<span class="login__horisontal-line"></span>
 							<input type="text" :placeholder="$t('clientinfo.postcode') | capitalize" v-model="userinfo.postcode">
 							<span class="login__horisontal-line"></span>
-							<input type="text" :placeholder="$t('clientinfo.address') | capitalize"  v-model="userinfo.address1">
+							<input type="text" :placeholder="$t('clientinfo.address') | capitalize"  v-model="userinfo.address1"> -->
 						</div>
 
-						<div class="inputs__log-pas">
+						<!-- <div class="inputs__log-pas">
 							<input type="text" :placeholder="$t('clientinfo.phone number') | capitalize" v-model="userinfo.phonenumber">
 						</div> -->
 
@@ -191,10 +191,9 @@ export default {
           run: 'create_user'
         }
       })
-			.then(result => {
+			.then(() => {
         this.$message.success('Account created successfully.');
         this.$router.push({name: 'login'});
-				console.log(result)
 			})
 			.catch(err => {
 				this.$message.error(err.message);
