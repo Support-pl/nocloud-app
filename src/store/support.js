@@ -38,6 +38,7 @@ export default {
 				api.get(state.baseURL, { params: { run: "get_tickets" } })
           .then((res) => {
             if (res?.ERROR) throw res.ERROR.toLowerCase();
+            if (!res) throw 'tickets not found';
             commit("updateTickets", res);
             resolve(res);
           })

@@ -771,7 +771,6 @@
                     score < 4 ||
                     password.length === 0 ||
                     vmName == '' ||
-                    service == '' ||
                     namespace == '' ||
                     options.os.name == '' ||
                     !isLoggedIn

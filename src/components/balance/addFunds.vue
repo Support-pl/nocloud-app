@@ -8,7 +8,7 @@
     :cancelText="$t('Cancel')"
   >
     <p v-if="isLogged">{{ $t("Enter value") }} ({{ user.currency_code }}):</p>
-    <a-input type="number" min="0" v-model="amount" allow-clear />
+    <a-input-number min="0" v-model="amount" allow-clear />
     <a-row
       type="flex"
       justify="space-around"
@@ -34,7 +34,6 @@
 </template>
 
 <script>
-import md5 from "md5";
 export default {
   name: "balance_addFunds",
   props: ["modalVisible", "hideModal"],
@@ -48,42 +47,28 @@ export default {
   },
   computed: {
     user() {
-      return this.$store.getters.getUser;
+      return this.$store.getters['nocloud/auth/userdata'];
     },
     isLogged() {
-      return this.$store.getters.isLogged;
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
+    baseURL() {
+      return $store.getters['support/getURL'];
+    }
   },
   methods: {
-    URLparameter(obj, outer = "") {
-      var str = "";
-      for (var key in obj) {
-        if (key == "price") continue;
-        if (str != "") {
-          str += "&";
-        }
-        if (typeof obj[key] == "object") {
-          str += this.URLparameter(obj[key], outer + key);
-        } else {
-          str += outer + key + "=" + encodeURIComponent(obj[key]);
-        }
-      }
-      return str;
-    },
-    handleOk(e) {
+    handleOk() {
       this.confirmLoading = true;
-      let userinfo = {
-        userid: this.user.id,
-        amount: this.amount,
-        secret: md5("addFunds" + this.user.id + this.user.secret),
-      };
-      this.$axios
-        .get("addFunds.php?" + this.URLparameter(userinfo))
+      this.$api.get(this.baseURL, { params: {
+        run: 'add_funds',
+        userid: this.user.uuid,
+        amount: this.amount
+      }})
         .then((res) => {
           this.hideModal();
           this.confirmLoading = false;
           if (!this.stay) {
-            this.$router.push({ path: `/invoice-${res.data.invoiceid}` });
+            this.$router.push({ path: `/invoice/${res.data.invoiceid}` });
           } else {
             this.$message.success(`Now look invoice#${res.data.invoiceid}`);
           }
@@ -92,15 +77,13 @@ export default {
           console.error(err);
         });
     },
-    handleCancel(e) {
+    handleCancel() {
       this.hideModal();
     },
     addAmount(amount) {
       if (this.amount == "") this.amount = 0;
       this.amount += amount;
     },
-  },
-};
+  }
+}
 </script>
-
-<style></style>

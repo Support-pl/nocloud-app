@@ -22,11 +22,13 @@
 </template>
 <script>
 import {mapGetters} from 'vuex'
-import notification from "../../../../mixins/notification";
+import notification from '@/mixins/notification';
+
 export default {
   mixins: [notification],
   data() {
     return {
+      isLoading: false,
       isVisible: false,
       title: "",
       value: "",
@@ -40,14 +42,14 @@ export default {
       this.isVisible = true;
     },
     handleOk() {
-      this.isRenameLoading = true;
+      this.isLoading = true;
       const ssh = { title: this.title, value: this.value };
       const dataObj = {
         data: {
           ssh_keys: [],
         },
       };
-      if (this.userdata.data.ssh_keys) {
+      if (this.userdata.data?.ssh_keys) {
         dataObj.data.ssh_keys.push(...this.userdata.data.ssh_keys, ssh);
       } else {
         dataObj.data.ssh_keys.push(ssh);
@@ -64,24 +66,23 @@ export default {
               message: "Add SSH key successfully",
             });
             this.isVisible = false;
-            this.isRenameLoading = false;
             this.title = "";
             this.value = "";
             this.$store.dispatch("nocloud/auth/fetchUserData");
           } else {
             this.openNotificationWithIcon("error", {
-              message: "Error adding SSh key",
+              message: "Error adding SSH key",
             });
           }
         })
         .catch((err) => {
           this.openNotificationWithIcon("error", {
-            message: "Error adding SSh key",
+            message: "Error adding SSH key",
           });
           console.error(err);
         })
-        .finally((res) => {
-          this.modal.confirmLoading = false;
+        .finally(() => {
+          this.isLoading = false;
         });
     },
   },

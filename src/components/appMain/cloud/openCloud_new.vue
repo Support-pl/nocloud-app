@@ -1058,6 +1058,7 @@ export default {
         "nocloud/vms/subscribeWebSocket",
         this.VM.uuidService
       );
+      this.renameNewName = this.VM.title;
     }
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
@@ -1410,7 +1411,9 @@ export default {
     sendRename() {
       this.isRenameLoading = true;
       if (this.renameNewName !== "") {
-        this.itemService.instancesGroups[0].instances.find((el) => {
+        this.itemService.instancesGroups.find((el) =>
+          el.uuid === this.VM.uuidInstancesGroups
+        ).instances.find((el) => {
           if (el.uuid === this.VM.uuid) {
             return (el.title = this.renameNewName);
           }
@@ -1570,6 +1573,7 @@ export default {
         "nocloud/vms/subscribeWebSocket",
         this.VM.uuidService
       );
+      this.renameNewName = this.VM.title;
     },
   },
 };

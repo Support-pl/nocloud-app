@@ -94,9 +94,11 @@
 						</div>
 
 						<div class="inputs__log-pas">
-							<select name="country" id="country" v-model="userinfo.country">
-								<option v-for="country in countries" :key="country.code" :value="country.code">{{country.title}}</option>
-							</select>
+							<a-select name="country" id="country" v-model="userinfo.country">
+								<a-select-option v-for="country in countries" :key="country.code" :value="country.code">
+                  {{country.title}}
+                </a-select-option>
+							</a-select>
 							<!-- <span class="login__horisontal-line"></span>
 							<input type="text" :placeholder="$t('clientinfo.state') | capitalize" v-model="userinfo.state">
 							<span class="login__horisontal-line"></span>
@@ -179,20 +181,20 @@ export default {
 				return
 			}
 
-      const url = 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php';
 			const temp = JSON.parse(JSON.stringify(this.userinfo));
 			temp.phonenumber = temp.phonenumber.replace("+", "")
 
 			this.registerLoading = true;
-			api.get(url, {
+			api.get(this.baseURL, {
         params: {
           ...temp,
           language: this.$i18n.locale,
           run: 'create_user'
         }
       })
-			.then(() => {
-        this.$message.success('Account created successfully.');
+			.then((res) => {
+        if (res.result === 'error') this.$message.error(res.message);
+        else this.$message.success('Account created successfully.');
         this.$router.push({name: 'login'});
 			})
 			.catch(err => {
@@ -232,6 +234,9 @@ export default {
 		companyLogoPos(){
 			return this.$config.appLogo.pos;
 		},
+    baseURL(){
+      return this.$store.getters['support/getURL'];
+    }
 	}
 }
 </script>
