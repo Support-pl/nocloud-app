@@ -174,81 +174,66 @@ const info = [
 
 export default {
   name: "user-service-view",
-  components: {
-    loading,
-  },
-  data() {
-    return {
-      service: null,
-      info,
-    };
-  },
+  components: { loading },
+  data: () => ({ service: null, info }),
   created() {
-    api
-      .sendAsUser("services.getInfo", {
-        serviceid: this.$route.params.id,
+    this.$store.dispatch('nocloud/auth/fetchBillingData')
+      .then((user) => {
+        api.get(`${this.baseURL}/services.getInfo.php`, { params: {
+          serviceid: this.$route.params.id,
+          userid: user.client_id
+        }})
+          .then((res) => this.service = res)
+          .catch((err) => console.error(err));
       })
-      .then((res) => {
-        this.service = res;
-        // console.log(res);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+      .catch((err) => console.error(err));
   },
   computed: {
+    user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    },
+    baseURL() {
+      return this.$store.getters['products/getURL'];
+    },
     getTagColor() {
       switch (this.service.status) {
         case "Active":
           return "green";
-          break;
         case "Pending":
           return "orange";
-          break;
         case "Cancelled":
           return "red";
-          break;
-
         default:
-          break;
+          return ""
       }
-      return "";
     },
     getTagColorSSL() {
       switch (this.service.SSL.sslstatus) {
         case "Completed":
           return "green";
-          break;
         case "Awaiting Configuration":
           return "red";
-          break;
-
         default:
-          break;
+          return "";
       }
-      return "";
     },
     getInvoiceStatusColor() {
       switch (this.service.ORDER_INFO.invoicestatus) {
         case "Paind":
           return "green";
-          break;
         case "Unpaid":
           return "red";
-          break;
-
         default:
-          break;
+          return "";
       }
-      return "";
-    },
-    user() {
-      return this.$store.getters.getUser;
     },
     getModuleButtons() {
-      let serviceType = config.getServiceType(this.service.groupname);
-      if (serviceType == undefined) return;
-      serviceType = serviceType.toLowerCase();
+      const serviceType = config
+        .getServiceType(this.service.groupname)
+        ?.toLowerCase();
+
+      if (serviceType === undefined) return;
+      if (this.service.status !== 'Active') return;
       return () => import(`@/components/services/${serviceType}/draw`);
     },
   },

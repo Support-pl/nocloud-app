@@ -6,13 +6,13 @@
         <!-- нету юзера -->
         <div class="content__title">
           {{ $t("Personal Area") }}
-          <span class="content__small"> #{{ userData.uuid }} </span>
+          <span class="content__small"> #{{ userData.id }} </span>
         </div>
         <div class="content__fields-wrapper">
           <a-form-model
             ref="form"
             :model="form"
-            v-if="userData.title"
+            v-if="userData.firstname"
             :rules="rules"
           >
             <a-form-model-item
@@ -127,7 +127,7 @@ export default {
       isSendingInfo: false,
       countries,
       rules: {
-        title: [
+        firstname: [
           {
             required: true,
             message: `${this.$t("ssl.field is required")}`,
@@ -210,7 +210,7 @@ export default {
       });
     },
     fetchInfo() {
-      this.$store.dispatch('nocloud/auth/fetchUserData')
+      this.$store.dispatch('nocloud/auth/fetchBillingData')
         .then(() => {
           this.installDataToBuffer();
         })
@@ -223,8 +223,8 @@ export default {
         if (valid) {
           this.isSendingInfo = true;
           api.get(this.baseURL, { params: {
-            run: 'update_user',
-            user: { ...this.deltaInfo, country: this.form.countryname }
+            run: 'update_client',
+            user: { ...this.userData, ...this.deltaInfo }
           }})
             .then(() => {
               this.$message.success("success");
@@ -246,7 +246,7 @@ export default {
     },
   },
   computed: {
-    ...mapGetters({ userData: "nocloud/auth/userdata", baseURL: "support/getURL" }),
+    ...mapGetters("nocloud/auth", { baseURL: "getURL", userData: "billingData" }),
     deltaInfo() {
       const info = { ...this.form };
       for (let key in info) {

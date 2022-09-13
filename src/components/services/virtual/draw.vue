@@ -29,45 +29,44 @@
 </template>
 
 <script>
-// import md5 from "md5";
 import api from "@/api.js"
 
 export default {
 	name: 'virtual-draw',
-	props: {
-		service: {
-			required: true
-		}
-	},
-	data(){
-		return {
-			loginLoading: false
-		}
-	},
+	props: { service: { required: true } },
+	data: () => ({ loginLoading: false }),
 	methods: {
 		logIntoCpanel(){
 			this.loginLoading = true;
-			api.sendAsUser('cpanel.createSession', {
-				serviceid: this.service.id
-			})
-			.then(res => {
-				if(res.result == 'error')
-					throw res;
-				window.open(res.data.url);
-			})
-			.catch(err => {
-				console.error(err);
-				if(err.message){
-					this.$message.error(err.message);
-				} else {
-					this.$message.error('can\'t open cpanel');
-				}
-			})
-			.finally(res => {
-				this.loginLoading = false;
-			})
+      this.$store.dispatch('nocloud/auth/fetchBillingData')
+        .then((user) => {
+          api.get(`${this.baseURL}/cpanel.createSession.php`, { params: {
+            serviceid: this.service.id, userid: user.client_id
+          }})
+            .then(res => {
+              if (res.result == 'error') throw res;
+              window.open(res.data.url);
+            })
+            .catch(err => {
+              console.error(err);
+              if (err.message) {
+                this.$message.error(err.message);
+              } else {
+                this.$message.error('can\'t open cpanel');
+              }
+            })
+            .finally(() => {
+              this.loginLoading = false;
+            });
+        })
+        .catch((err) => console.error(err));
 		}
-	}
+	},
+  computed: {
+    baseURL() {
+      return this.$store.getters['products/getURL'];
+    }
+  }
 }
 </script>
 

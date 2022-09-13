@@ -1,10 +1,12 @@
 import api from '@/api'
+
 export default {
 	namespaced: true,
 
 	state: {
 		products: [],
-		productsLoading: false
+		productsLoading: false,
+    baseURL: 'https://whmcs.demo.support.pl/virtualHosting'
 	},
 	mutations: {
 		setProducts(state, data){
@@ -15,26 +17,26 @@ export default {
 		}
 	},
 	actions: {
-		fetch({commit, dispatch}){
+		fetch({ commit, dispatch }, userid){
 			commit('setProductsLoading', true);
-			return dispatch('silentFetch');
+			return dispatch('silentFetch', userid);
 		},
-		silentFetch({commit}){
+		silentFetch({ state, commit }, userid){
 			return new Promise((resolve, reject) => {
-				api.sendAsUser('get.user.products')
-				.then(res => {
-					commit('setProducts', res);
-					commit('setProductsLoading', false);
-					resolve(res);
-				})
-				.catch(error => reject(error))
+				api.get(`${state.baseURL}/get.user.products.php`, { params: { userid } })
+          .then(res => {
+            commit('setProducts', res);
+            commit('setProductsLoading', false);
+            resolve(res);
+          })
+          .catch(error => reject(error))
 			})
 		},
-		autoFetch({dispatch, state}){
+		autoFetch({ dispatch, state }, userid){
 			if(state.products.length > 0){
-				return dispatch('silentFetch');
+				return dispatch('silentFetch', userid);
 			} else {
-				return dispatch('fetch');
+				return dispatch('fetch', userid);
 			}
 		}
 	},
@@ -44,6 +46,9 @@ export default {
 		},
 		getProductsLoading(state){
 			return state.productsLoading;
-		}
+		},
+    getURL(state){
+      return state.baseURL;
+    }
 	}
 }

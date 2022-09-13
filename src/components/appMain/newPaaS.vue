@@ -1556,9 +1556,6 @@ export default {
         .catch((err) => {
           this.$message.error("Can't create order. Try later.");
           console.error(err);
-        })
-        .finally(() => {
-          this.modal.confirmLoading = false;
         });
     },
     updateVM(orderDataNew) {
@@ -1579,13 +1576,9 @@ export default {
         .catch((err) => {
           this.$message.error("Can't update order. Try later.");
           console.error(err);
-        })
-        .finally(() => {
-          this.modal.confirmLoading = false;
         });
     },
     deployService(uuidService) {
-      this.modal.confirmLoading = true;
       api.services
         .up(uuidService)
         .then(() => {

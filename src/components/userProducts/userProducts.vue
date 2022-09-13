@@ -128,19 +128,20 @@ export default {
       default: 5,
     },
   },
-  data() {
-    return {};
-  },
   mounted() {
     if (!this.isLogged) return;
-    this.$store.dispatch("products/autoFetch");
+    this.$store.dispatch("nocloud/auth/fetchBillingData")
+      .then((user) => {
+        this.$store.dispatch("products/autoFetch", user.client_id);
+      })
+      .catch((err) => console.error(err));
   },
   computed: {
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
     user() {
-      return this.$store.getters["nocloud/auth/userdata"];
+      return this.$store.getters["nocloud/auth/billingData"];
     },
     productsPrepared() {
       if (this.min) return this.products.slice(0, 5);

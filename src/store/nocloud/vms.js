@@ -170,15 +170,14 @@ export default {
 		getInstances(state) {
 			const regexp = new RegExp(state.searchString, "i")
 
-			if (state.instances.length < 0) return []
 			if (state.searchString) {
 				return state.instances.filter((inst) => {
           const net = inst.state.meta.networking
 					const rules = [
 						inst.title.search(regexp) !== -1,
-						inst.uuid.search(regexp) !== -1,
-						net.private.some((el) => el.search(regexp) !== -1),
-						net.public.some((el) => el.search(regexp) !== -1),
+						inst.state?.state.search(regexp) !== -1,
+						net?.private.some((el) => el.search(regexp) !== -1),
+						net?.public.some((el) => el.search(regexp) !== -1),
 					]
 					return rules.some(el => !!el)
 				})
@@ -193,6 +192,9 @@ export default {
 			if (state.servicesFull.length < 0) return []
 			return state.servicesFull
 		},
+    getString(state) {
+      return state.searchString;
+    },
 		getActionLoadingInvoke: state => state.loadingInvoke,
 	}
 }
