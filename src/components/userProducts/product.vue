@@ -27,10 +27,7 @@
 			<div class="product__column product__column--secondary-info">
 				<div class="product__date">{{localDate}}</div>
 				<div class="product__cost">
-					{{user.currency_code === '$' || user.currency_code.toUpperCase() === 'USD'
-						? `$${cost}`
-						: `${cost}${user.currency_code}`
-					}}
+					{{ user.currency_code === 'USD' ? `$${cost}` : `${cost}${user.currency_code}` }}
 				</div>
 			</div>
 		</div>
@@ -67,7 +64,7 @@ export default {
 	},
 	computed: {
 		user(){
-			return this.$store.getters['getUser'];
+			return this.$store.getters['nocloud/auth/billingData'];
 		},
 		localDate(){
 			return new Intl.DateTimeFormat().format(this.date);
@@ -93,12 +90,19 @@ export default {
 			return colorVariableName;
 		},
 		getModuleProductBtn(){
-			let serviceType = config.getServiceType(this.wholeProduct.groupname)
-			if(serviceType == undefined) return;
-			serviceType = serviceType.toLowerCase();
+			const serviceType = config
+        .getServiceType(this.wholeProduct.groupname)
+        ?.toLowerCase();
+
+			if (serviceType === undefined) return;
+      if (this.status !== 'Active') return;
 			return () => import(`@/components/services/${serviceType}/lilbtn`);
 		}
 	},
+  created() {
+    this.$store.dispatch('nocloud/auth/fetchBillingData')
+      .catch((err) => console.error(err));
+  }
 }
 </script>
 

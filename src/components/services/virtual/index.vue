@@ -105,7 +105,6 @@ import api from "@/api.js";
 export default {
 	name: 'ssl-component',
 	data:() => ({
-    baseURL: 'https://whmcs.demo.support.pl/virtualHosting',
     sizes: [],
     products: [],
     fetchLoading: false,
@@ -144,7 +143,7 @@ export default {
 				domain: this.options.domain,
 				billingcycle: this.options.period,
 				pid: this.getProducts.pid,
-        userid: this.user.uuid
+        userid: this.user.client_id
 			}
 
 			if(!this.user){
@@ -192,11 +191,14 @@ export default {
 			return this.products[this.sizes.indexOf(this.options.size)]
 		},
     user() {
-      return this.$store.getters['nocloud/auth/userdata'];
+      return this.$store.getters['nocloud/auth/billingData'];
+    },
+    baseURL() {
+      return this.$store.getters['products/getURL'];
     }
 	},
 	created(){
-		// console.log(this.data);
+		this.$store.dispatch('nocloud/auth/fetchBillingData');
 		this.fetch();
 	}
 }

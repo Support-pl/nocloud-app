@@ -8,15 +8,20 @@ export default {
 	namespaced: true,
 	state: {
 		token: '',
-		userdata: {}
+		userdata: {},
+    billingUser: {},
+    baseURL: 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php'
 	},
 	mutations: {
 		setToken(state, token) {
-			state.token = token;
+			state.token = token
 		},
 		setUserdata(state, data) {
 			state.userdata = data
 		},
+    setBillingUser(state, data) {
+      state.billingUser = data
+    },
 		setAddSSH(state, data) {
 			state.userdata = data
 		}
@@ -51,7 +56,6 @@ export default {
 		},
 
 		fetchUserData({ commit }) {
-			commit
 			return new Promise((resolve, reject) => {
 				api.accounts.get('me')
 					.then(response => {
@@ -63,6 +67,18 @@ export default {
 					})
 			})
 		},
+    fetchBillingData({ state, commit }) {
+      return new Promise((resolve, reject) => {
+        api.get(state.baseURL, { params: { run: 'client_detail' }})
+          .then(response => {
+            commit('setBillingUser', response);
+            resolve(response);
+          })
+          .catch(error => {
+            reject(error);
+          });
+      })
+    },
 		addSSH({ commit }, data) {
 			console.log(data.id, data.body)
 			return new Promise((resolve, reject) => {
@@ -87,6 +103,12 @@ export default {
 		},
 		userdata(state) {
 			return state.userdata;
-		}
+		},
+    billingData(state) {
+      return state.billingUser;
+    },
+    getURL(state) {
+      return state.baseURL;
+    }
 	}
 }

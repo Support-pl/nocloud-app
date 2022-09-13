@@ -18,7 +18,7 @@
     >
       <a-col v-for="add in btns" :key="add" :xl="6" :xs="8">
         <a-button style="width: 100%" @click="addAmount(add)"
-          >+{{ add | numsepar }}</a-button
+          >+{{ add }}</a-button
         >
       </a-col>
     </a-row>
@@ -64,9 +64,9 @@ export default {
           this.hideModal();
           this.confirmLoading = false;
           if (!this.stay) {
-            this.$router.push({ path: `/invoice/${res.data.invoiceid}` });
+            this.$router.push({ path: `/invoice/${res.invoiceid}` });
           } else {
-            this.$message.success(`Now look invoice#${res.data.invoiceid}`);
+            this.$message.success(`Now look invoice#${res.invoiceid}`);
           }
         })
         .catch((err) => {

@@ -117,9 +117,9 @@
 </template>
 
 <script>
-import md5 from "md5";
 import QrcodeVue from "qrcode.vue";
 import { mapGetters } from "vuex";
+
 export default {
   name: "login",
   data() {
@@ -132,67 +132,14 @@ export default {
       qrcode: null,
     };
   },
-  components: {
-    QrcodeVue,
-  },
-  props: {
-    getUser: Function,
-  },
+  components: { QrcodeVue },
+  props: { getUser: Function },
   methods: {
     submitHandler() {
       this.tryingLogin = true;
       this.send(this);
     },
-    send(context) {
-      // const email = encodeURIComponent(this.email);
-      // const password = encodeURIComponent(this.password);
-
-      // this.$api.auth(email, password)
-      // .then(Response => {
-      // 	const data = Response.data;
-      // 	const user = {};
-      // 	if (data.result == "success"){
-
-      // 		user.id = data.userid;
-      // 		user.passwordhash = data.passwordhash;
-      // 		user.email = data.email;
-      // 		user.secret = data.secret;
-
-      // 		const close_your_eyes = md5('clientDetails'+user.id+user.secret);
-      // 		const url = `/clientDetails.php?userid=${user.id}&secret=${close_your_eyes}`;
-      // 		this.$axios.get(url)
-      // 		.then(resp => {
-      // 			user.firstname = resp.data.firstname;
-      // 			user.lastname = resp.data.lastname;
-      // 			user.balance = resp.data.credit;
-      // 			user.currency_code = resp.data.currency_code;
-
-      // 			this.$store.dispatch("onLoadUser", user);
-      // 			if(this.getOnlogin.redirect){
-      // 				this.$router.push({name: this.getOnlogin.redirect});
-      // 			} else {
-      // 				this.$router.push({name: 'root'});
-      // 			}
-
-      // 			if(this.getOnlogin.action){
-      // 				this.getOnlogin.action();
-      // 			}
-      // 			// location.reload() //костыль, починить позже
-      // 		})
-      // 		.finally( () => {
-      // 			this.tryingLogin = false;
-      // 		})
-      // 	}
-      // 	else if(data.result == "error"){
-      // 		this.loginError = data.message;
-      // 		this.tryingLogin = false;
-      // 	}
-      // })
-      // .catch(err => {
-      // 	console.error(err);
-      // 	this.$message.error("Can't connect to the server")
-      // })
-
+    send() {
       this.loginLoading = true;
       (this.isLoginFailed = false),
         this.$store
@@ -205,23 +152,16 @@ export default {
               try {
                 const data = JSON.parse(localStorage.getItem("data"));
                 this.$router.push({ path: data.path });
-                // this.$store.dispatch("nocloud/app/fromRoute", "");
-              } catch (e) {
+              } catch {
                 localStorage.removeItem("data");
               }
             } else {
               this.$router.push({ name: "root" });
               this.$store.dispatch("nocloud/auth/fetchUserData");
             }
-            // if (this.getFromRoute) {
-
-            // } else {
-            //
-            // }
           })
           .catch((error) => {
             if (error.response && error.response.status == 401) {
-              // this.isLoginFailed = true;
               this.$message.error("wrong");
             }
           })
@@ -236,16 +176,13 @@ export default {
     restorePass() {
       const email = encodeURIComponent(this.email);
 
-      this.$axios
-        .get(`/userResetPassword.php?email=${email}`)
-        .then((res) => {
-          const data = res.data;
-          // console.log(data);
+      this.$api.get(`${this.baseURL}`, { params: {
+        run: 'reset_password', email
+      }})
+        .then(({ data }) => {
           if (data.result == "success") {
-            // console.log('succ');
             this.$message.success(data.message);
           } else if (data.result == "error") {
-            // console.log('err');
             this.loginError = data.message;
             this.tryingLogin = false;
           }

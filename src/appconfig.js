@@ -27,7 +27,7 @@ export default {
 	},
 	services: {
 		virtual: {
-			groupname: ['Виртуальный хостинг'],
+			groupname: ['Виртуальный хостинг', 'Shared Hosting'],
 			creationRouteName: "service-virtual",
 			icon: 'solution',
 		},

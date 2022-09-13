@@ -73,16 +73,12 @@
                   <template slot="content">
                     <div>
                       <a-input-search
-                        placeholder="title/id/IP"
+                        placeholder="title/status/IP"
                         enter-button
                         :value="searchString"
-                        @input="
-                          (e) =>
-                            $store.commit('nocloud/vms/setSearch', e.target.value)
-                        "
-                        @search="
-                          (text) => $store.commit('nocloud/vms/setSearch', text)
-                        "
+                        @input="(e) => $store.commit('nocloud/vms/setSearch', e.target.value)"
+                        @search="(text) => $store.commit('nocloud/vms/setSearch', text)"
+                        @keydown="updateSearch"
                       >
                         <div
                           slot="suffix"
@@ -294,6 +290,12 @@ export default {
         this.$store.commit("invoices/updateFilter", info);
       }
     },
+    updateSearch({ key, target }) {
+      if (key !== 'Backspace') return;
+      if (target.value.length > 1) return;
+
+      this.$store.commit('nocloud/vms/setSearch', '');
+    }
   },
   computed: {
     ...mapGetters("support", [
@@ -303,7 +305,7 @@ export default {
       "getAllTickets",
     ]),
     ...mapGetters("app", ["getActiveTab"]),
-    ...mapGetters("cloud", ["searchString"]),
+    ...mapGetters("nocloud/vms", { searchString: "getString" }),
     ...mapGetters("invoices", ["getInvoices", "getAllInvoices"]),
     active() {
       const headerTitle = this.$route.meta?.headerTitle;
@@ -381,9 +383,8 @@ export default {
     isLogged() {
       return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
-  },
-  created() {},
-};
+  }
+}
 </script>
 
 <style>
