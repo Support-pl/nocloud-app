@@ -17,7 +17,7 @@
     </div>
 
     <load v-if="loading" />
-    <div v-else class="chat__content">
+    <div v-else class="chat__content" ref="content">
       <template v-for="(reply, i) in replies">
         <span class="chat__date" v-if="isDateVisible(replies, i)" :key="i">
           {{ reply.date.split(' ')[0] }}
@@ -96,7 +96,6 @@ export default {
       messageInput: "",
       loading: true,
       chatid: this.$route.params.pathMatch,
-      sendingMessagesCount: 0,
       showSendFiles: false,
     };
   },
@@ -154,29 +153,29 @@ export default {
         email: this.user?.email || 'none',
         message: this.messageInput.trim(),
         name: this.user.title,
-        userid: this.user.id,
+        userid: this.user.uuid,
         sending: true,
       };
       const requestor_type = 'Owner';
       const date = this.date(message.date);
+      const { content } = this.$refs;
 
-      this.sendingMessagesCount++;
-      this.replies.push({ ...message, date, requestor_type  });
+      this.replies.push({ ...message, date, requestor_type });
 
-      // this.$api.get(this.baseURL, { params: {
-      //   run: 'answer_ticket',
-      //   id: this.$route.params.pathMatch,
-      //   message: this.messageInput,
-      // }})
-      //   .then(() => {
-      //     this.replies[--this.sendingMessagesCount].sending = false;
-      //   })
-      //   .catch((err) => {
-      //     console.error(err);
-      //     this.sendingMessagesCount--;
-      //     this.replies[this.sendingMessagesCount].sending = false;
-      //     this.replies[this.sendingMessagesCount].error = true;
-      //   });
+      setTimeout(() => { content.scrollTo(0, content.scrollHeight) }, 100);
+      this.$api.get(this.baseURL, { params: {
+        run: 'answer_ticket',
+        id: this.$route.params.pathMatch,
+        message: this.messageInput,
+      }})
+        .then(() => {
+          this.replies.at(-1).sending = false;
+        })
+        .catch((err) => {
+          console.error(err);
+          this.replies.at(-1).sending = false;
+          this.replies.at(-1).error = true;
+        });
       this.messageInput = "";
     },
     loadMessages() {

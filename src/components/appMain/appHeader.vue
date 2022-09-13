@@ -69,7 +69,7 @@
                   class="header__icon"
                   :type="button.icon"
                 />
-                <a-popover v-else placement="bottomRight">
+                <a-popover v-else placement="bottomRight" arrow-point-at-center>
                   <template slot="content">
                     <div>
                       <a-input-search
@@ -78,15 +78,15 @@
                         :value="searchString"
                         @input="
                           (e) =>
-                            $store.commit('cloud/updateSearch', e.target.value)
+                            $store.commit('nocloud/vms/setSearch', e.target.value)
                         "
                         @search="
-                          (text) => $store.commit('cloud/updateSearch', text)
+                          (text) => $store.commit('nocloud/vms/setSearch', text)
                         "
                       >
                         <div
                           slot="suffix"
-                          @click="$store.commit('cloud/updateSearch', '')"
+                          @click="$store.commit('nocloud/vms/setSearch', '')"
                           style="cursor: pointer"
                         >
                           <a-icon
@@ -249,28 +249,18 @@ export default {
     };
   },
   methods: {
-    ...mapActions("support", {
-      fetchTickets: "fetch",
-    }),
-    ...mapActions("invoices", {
-      fetchInvoices: "fetch",
-    }),
-    ...mapActions("cloud", ["fetchClouds"]),
+    ...mapActions("support", { fetchTickets: "fetch" }),
+    ...mapActions("invoices", { fetchInvoices: "fetch" }),
+    ...mapActions("nocloud/vms", { fetchClouds: "fetch" }),
     ...mapMutations("support", ["inverseAddTicketState"]),
     getState(name) {
       switch (name) {
         case "support_filter":
           return this.isOnlyClosedTickets;
-          break;
         case "support_plus":
           return this.isAddTicketState;
-          break;
         case "cloud_plus":
           return false;
-          break;
-
-        default:
-          break;
       }
     },
     createVDC() {

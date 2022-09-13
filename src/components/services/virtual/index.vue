@@ -104,50 +104,50 @@ import api from "@/api.js";
 
 export default {
 	name: 'ssl-component',
-	data(){
-		return {
-			sizes: [],
-			products: [],
-			fetchLoading: false,
-			sendloading: false,
-			options: {
-				size: '',
-				domain: '',
-				period: ''
-			},
-			modal: {
-				confirmCreate: false,
-				confirmLoading: false,
-				goToInvoice: true
-			},
-			periods: []
-		}
-	},
+	data:() => ({
+    baseURL: 'https://whmcs.demo.support.pl/virtualHosting',
+    sizes: [],
+    products: [],
+    fetchLoading: false,
+    sendloading: false,
+    options: {
+      size: '',
+      domain: '',
+      period: ''
+    },
+    modal: {
+      confirmCreate: false,
+      confirmLoading: false,
+      goToInvoice: true
+    },
+    periods: []
+	}),
 	methods: {
 		fetch(){
 			this.fetchLoading = true;
-			api.getWithParams('products.get.virtual', {})
-			.then(res => {
-				res = res.sort((a, b) => b.name - a.name)
-				this.products = res;
-				this.sizes = res.map(el => el.name.replace(/Виртуальный хостинг |Host /gi, ''));
-				this.options.size = this.sizes[1];
-				this.periods = Object.keys(res[0].pricing).filter(el => !el.match(/fix/));
-				this.options.period = this.periods[1];
-			})
-			.catch(err => console.error(err))
-			.finally(() => {
-				this.fetchLoading = false;
-			})
+			api.get(`${this.baseURL}/products.get.virtual.php`)
+        .then(res => {
+          res = res.sort((a, b) => b.name - a.name)
+          this.products = res;
+          this.sizes = res.map(el => el.name.replace(/Виртуальный хостинг |Host /gi, ''));
+          this.options.size = this.sizes[1];
+          this.periods = Object.keys(res[0].pricing).filter(el => !el.match(/fix/));
+          this.options.period = this.periods[1];
+        })
+        .catch(err => console.error(err))
+        .finally(() => {
+          this.fetchLoading = false;
+        })
 		},
 		orderClickHandler(){
 			const info = {
 				domain: this.options.domain,
 				billingcycle: this.options.period,
-				pid: this.getProducts.pid
+				pid: this.getProducts.pid,
+        userid: this.user.uuid
 			}
 
-			if(!this.$store.getters.getUser){
+			if(!this.user){
 				this.$store.commit('setOnloginRedirect', this.$route.name);
 				this.$store.commit('setOnloginInfo', {
 					type: 'IaaS',
@@ -165,7 +165,7 @@ export default {
 		},
 		createVirtual(info){
 			this.sendloading = true;
-			api.sendAsUser('createOrder', info)
+			api.get(`${this.baseURL}/createOrder.php`, { params: info })
 			.then(result => {
 				if(this.modal.goToInvoice){
 					this.$router.push({name: 'invoiceFS', params: {pathMatch: result.invoiceid}});
@@ -187,10 +187,13 @@ export default {
 		}
 	},
 	computed: {
-		getProducts(){
+		getProducts() {
 			if(Object.keys(this.products).length == 0) return "NAN"
 			return this.products[this.sizes.indexOf(this.options.size)]
-		}
+		},
+    user() {
+      return this.$store.getters['nocloud/auth/userdata'];
+    }
 	},
 	created(){
 		// console.log(this.data);

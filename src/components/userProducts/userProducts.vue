@@ -136,9 +136,6 @@ export default {
     this.$store.dispatch("products/autoFetch");
   },
   computed: {
-    // user() {
-    //   return this.$store.getters.getUser;
-    // },
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
