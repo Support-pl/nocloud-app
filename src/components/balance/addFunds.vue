@@ -7,8 +7,8 @@
     @cancel="handleCancel"
     :cancelText="$t('Cancel')"
   >
-    <p v-if="isLogged">{{ $t("Enter value") }} ({{ user.currency_code }}):</p>
-    <a-input-number min="0" v-model="amount" allow-clear />
+    <p v-if="isLogged">{{ $t("Enter value") }} ({{ user.currency_code || 'USD' }}):</p>
+    <a-input-number allow-clear style="width: 100%" v-model="amount" :min="0" />
     <a-row
       type="flex"
       justify="space-around"
@@ -53,17 +53,13 @@ export default {
       return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
     baseURL() {
-      return $store.getters['support/getURL'];
+      return this.$store.getters['support/getURL'];
     }
   },
   methods: {
     handleOk() {
       this.confirmLoading = true;
-      this.$api.get(this.baseURL, { params: {
-        run: 'add_funds',
-        userid: this.user.uuid,
-        amount: this.amount
-      }})
+      this.$api.get(this.baseURL, { params: { run: 'add_func', sum: this.amount }})
         .then((res) => {
           this.hideModal();
           this.confirmLoading = false;

@@ -7,6 +7,7 @@ export default {
 		services: [],
 		instances: [],
 		servicesFull: [],
+    searchString: '',
 		loading: false,
 		loadingInvoke: false,
 		stateVM: '',
@@ -59,6 +60,9 @@ export default {
 		setLoadingInvoke(state, data) {
 			state.loadingInvoke = data;
 		},
+    setSearch(state, data) {
+      state.searchString = data;
+    }
 	},
 	actions: {
 		fetch({ commit }) {
@@ -164,7 +168,21 @@ export default {
 		isLoading: state => state.loading,
 
 		getInstances(state) {
+			const regexp = new RegExp(state.searchString, "i")
+
 			if (state.instances.length < 0) return []
+			if (state.searchString) {
+				return state.instances.filter((inst) => {
+          const net = inst.state.meta.networking
+					const rules = [
+						inst.title.search(regexp) !== -1,
+						inst.uuid.search(regexp) !== -1,
+						net.private.some((el) => el.search(regexp) !== -1),
+						net.public.some((el) => el.search(regexp) !== -1),
+					]
+					return rules.some(el => !!el)
+				})
+			}
 			return state.instances
 		},
 		getServices(state) {

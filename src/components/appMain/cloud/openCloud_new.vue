@@ -183,11 +183,16 @@
                   </a-modal>
 
                   <a-modal
+                    width="600px"
                     v-model="modal.networkControl"
                     :title="$t('Network control')"
                     :footer="null"
                   >
-                    <network-control :itemService="itemService" :VM="VM" />
+                    <network-control
+                      :itemService="itemService"
+                      :VM="VM"
+                      @closeModal="modal.networkControl = false"
+                    />
                   </a-modal>
 
                   <a-modal
@@ -224,7 +229,6 @@
                 v-if="
                   VM.state &&
                   VM.state.meta.state !== 8 &&
-                  VM.state &&
                   VM.state.meta.lsm_state !== 0
                 "
                 class="Fcloud__button"
@@ -975,6 +979,9 @@ export default {
     },
     statusVM() {
       if (this.VM) {
+        if (this.VM.state.meta.state === 1) return {
+          shutdown: true, reboot: true, recover: true
+        }
         return {
           shutdown:
             (this.VM.state.meta.lcm_state == 18 &&
@@ -1026,6 +1033,7 @@ export default {
     },
     stateVM() {
       if (!this.VM.state) return "UNKNOWN";
+      if (this.VM.state.meta.state === 1) return "PENDING";
       switch (this.VM.state.meta.lcm_state_str) {
         case "LCM_INIT":
           return "POWEROFF";
@@ -1180,8 +1188,7 @@ export default {
         });
     },
     mbToGb(mb) {
-      const gb = Math.round(mb / 1024);
-      return gb;
+      return (mb / 1024).toFixed(1);
     },
     handleOk(from) {
       this.VM.state.meta.state = 0;
@@ -1200,27 +1207,21 @@ export default {
           this.modal.shutdown = false;
           break;
         case "recover":
-          const me = this;
-          let trigger = this.modal;
-          let opt = this.option;
           this.$confirm({
-            title: me.$t("Do you want to download a backup?"),
+            title: this.$t("Do you want to download a backup?"),
             maskClosable: true,
-            content: (h) => {
-              let string = me.$t(
-                "All unsaved progress will be lost, are you sure?"
-              );
-              return <div>{string}</div>;
+            content: () => {
+              return <div>{ this.$t("All unsaved progress will be lost, are you sure?") }</div>;
             },
-            okText: me.$t("Yes"),
-            cancelText: me.$t("Cancel"),
+            okText: this.$t("Yes"),
+            cancelText: this.$t("Cancel"),
             onOk() {
-              if (me.option.recover) {
-                me.sendAction("recoverToday");
+              if (this.option.recover) {
+                this.sendAction("recoverToday");
               } else {
-                me.sendAction("recoverYesterday");
+                this.sendAction("recoverYesterday");
               }
-              me.modal.recover = false;
+              this.modal.recover = false;
             },
             onCancel() {},
           });

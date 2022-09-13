@@ -1348,7 +1348,7 @@ export default {
     },
     setOneNameSpace() {
       if (this.getNameSpaces.length === 1) {
-        this.namespace = this.getNameSpaces.uuid;
+        this.namespace = this.getNameSpaces[0].uuid;
       }
     },
     setData() {
@@ -1514,6 +1514,7 @@ export default {
         this.updateVM(orderDataNew);
       } else {
         //create service
+        console.log(this.namespace);
         const orderData = {
           namespace: this.namespace,
           service: {
