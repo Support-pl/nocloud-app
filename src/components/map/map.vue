@@ -166,8 +166,8 @@ export default {
         this.selected = target.getAttribute("data-id");
         this.$emit("input", this.selected);
       }
-      // this.markers[0].x = layerX * kx - parseInt(w) / this.scale - 12;
-      // this.markers[0].y = layerY * ky - parseInt(h) / this.scale - 36;
+      // this.markers[0].x = offsetX * kx - parseInt(w) / this.scale - 15;
+      // this.markers[0].y = offsetY * ky - parseInt(h) / this.scale - 38;
     },
     mouseEnterHandler(id) {
       this.hovered = id;
