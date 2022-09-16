@@ -156,7 +156,7 @@ export default {
     mapData,
   }),
   methods: {
-    mapClickHandler({ target, offsetX, offsetY }) {
+    mapClickHandler({ target, layerX, layerY }) {
       // const kx = mapData.meta.width / (this.svg.clientWidth * this.scale);
       // const ky = mapData.meta.height / (this.svg.clientHeight * this.scale);
       // const w = this.$refs.viewport.getAttribute('transform').split(' ')[4];
