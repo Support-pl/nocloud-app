@@ -27,14 +27,7 @@
 <script>
 export default {
   name: "ticket",
-  data() {
-    return {
-      // lastMessage: ''
-    };
-  },
-  props: {
-    ticket: Object,
-  },
+  props: { ticket: Object },
   methods: {
     ticketClick(id) {
       this.$router.push("ticket-" + id);
@@ -89,9 +82,8 @@ export default {
     titleDecoded() {
       return this.decode(this.ticket.title);
     },
-  },
-  mounted() {},
-};
+  }
+}
 </script>
 
 <style>
