@@ -21,7 +21,7 @@
 							<table v-if="getProducts.description != undefined" class="product__specs" :key="getProducts.name">
 								<tr v-for="val in getProducts.description.properties" :key="val.GROUP">
 									<td>{{$t('virtual_product.'+val.GROUP) | capitalize}}</td>
-									<td>{{val.TITLE}}</td>
+									<td>{{(val.TITLE === 'Не ограничен') ? $t('virtual_product.unlimited') : val.TITLE}}</td>
 								</tr>
 							</table>
 						</transition>

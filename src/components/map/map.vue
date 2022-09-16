@@ -156,12 +156,18 @@ export default {
     mapData,
   }),
   methods: {
-    mapClickHandler(e) {
-      const item = e.target;
-      if (item.dataset.id) {
-        this.selected = item.getAttribute("data-id");
+    mapClickHandler({ target, offsetX, offsetY }) {
+      // const kx = mapData.meta.width / (this.svg.clientWidth * this.scale);
+      // const ky = mapData.meta.height / (this.svg.clientHeight * this.scale);
+      // const w = this.$refs.viewport.getAttribute('transform').split(' ')[4];
+      // const h = this.$refs.viewport.getAttribute('transform').split(' ')[5];
+
+      if (target.dataset.id) {
+        this.selected = target.getAttribute("data-id");
         this.$emit("input", this.selected);
       }
+      // this.markers[0].x = offsetX * kx - parseInt(w) / this.scale - 15;
+      // this.markers[0].y = offsetY * ky - parseInt(h) / this.scale - 38;
     },
     mouseEnterHandler(id) {
       this.hovered = id;
@@ -279,7 +285,7 @@ export default {
       if (max.x < x) max.x = x;
       if (max.y < y) max.y = y;
     });
-    this.scale = 1010 / (max.x - min.x + 70);
+    this.scale = mapData.meta.width / (max.x - min.x + 70);
 
     if (this.scale > this.maxScale) {
       this.scale = this.maxScale;

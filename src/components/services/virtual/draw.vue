@@ -9,7 +9,7 @@
 
 					<div class="service-page__info-value">
             {{ service.diskusage}}MB / {{service.disklimit }}MB
-            ({{ (service.diskusage / service.disklimit * 100).toFixed(2) || 0 }}%)
+            ({{ ((service.diskusage / service.disklimit * 100) || 0).toFixed(2) }}%)
           </div>
    				<a-progress :percent="service.diskusage / service.disklimit * 100" :show-info="false" />
 				</div>

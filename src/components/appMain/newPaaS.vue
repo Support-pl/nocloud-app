@@ -1513,7 +1513,6 @@ export default {
         this.updateVM(orderDataNew);
       } else {
         //create service
-        console.log(this.namespace);
         const orderData = {
           namespace: this.namespace,
           service: {
