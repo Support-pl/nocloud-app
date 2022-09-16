@@ -26,9 +26,10 @@
 			<component :service="wholeProduct" :is="getModuleProductBtn"></component>
 			<div class="product__column product__column--secondary-info">
 				<div class="product__date">{{localDate}}</div>
-				<div class="product__cost">
+				<div class="product__cost" v-if="user.currency_code">
 					{{ user.currency_code === 'USD' ? `$${cost}` : `${cost}${user.currency_code}` }}
 				</div>
+        <div class="product__cost" v-else>{{ `$${cost}` }}</div>
 			</div>
 		</div>
 	</div>
@@ -67,6 +68,7 @@ export default {
 			return this.$store.getters['nocloud/auth/billingData'];
 		},
 		localDate(){
+      if (this.date?.getTime() === 0) return 'none';
 			return new Intl.DateTimeFormat().format(this.date);
 		},
 		iconColor(){

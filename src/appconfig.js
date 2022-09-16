@@ -52,12 +52,7 @@ export default {
 			groupname: ['Self-Service VDS (2018)', 'Self-Service VDS SSD HC', 'Self-Service VDS SSD (2018)'],
 			creationRouteName: "newPaaS",
 			icon: 'database',
-		},
-		IaaS: {
-			groupname: ['IaaS'],
-			creationRouteName: "newVDC",
-			icon: 'cloud-server',
-		},
+		}
 	},
 	getServiceType(groupname){
 		const services = this.services;

@@ -30,7 +30,7 @@
               <router-link
                 :to="{
                   name: 'invoiceFS',
-                  params: { pathMatch: service.ORDER_INFO.invoiceid },
+                  params: { uuid: service.ORDER_INFO.invoiceid },
                 }"
               >
                 <a-button size="small" type="primary">

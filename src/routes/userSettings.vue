@@ -2,7 +2,6 @@
   <div class="user__settings">
     <div class="container">
       <div class="content__wrapper">
-       Личный кабинет  
         <!-- нету юзера -->
         <div class="content__title">
           {{ $t("Personal Area") }}
@@ -248,7 +247,7 @@ export default {
   computed: {
     ...mapGetters("nocloud/auth", { baseURL: "getURL", userData: "billingData" }),
     deltaInfo() {
-      const info = { ...this.form };
+      const info = { ...this.form, country: this.form.countryname };
       for (let key in info) {
         if (info[key] == this.userData[key]) {
           delete info[key];

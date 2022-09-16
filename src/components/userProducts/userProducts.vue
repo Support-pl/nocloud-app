@@ -51,16 +51,24 @@
         </a-popover>
         <a-popover placement="bottomRight">
           <template slot="content">
-            <p>
-              {{ $t("coming soon") }}
-            </p>
+            <a-radio-group v-model="sortBy">
+              <a-radio value="Name">Name</a-radio>
+              <a-radio value="Cost">Cost</a-radio>
+              <a-radio value="Date">Date</a-radio>
+            </a-radio-group>
           </template>
           <template slot="title">
             <span>
               {{ $t("sort") | capitalize }}
             </span>
           </template>
-          <a-icon class="products__control-item" type="sort-ascending" />
+          <a-icon
+            class="products__control-item"
+            :type="sortType"
+            @click="() => (sortType === 'sort-descending')
+              ? sortType = 'sort-ascending'
+              : sortType = 'sort-descending'"
+          />
         </a-popover>
       </div>
     </div>
@@ -114,22 +122,15 @@ import loading from "../loading/loading.vue";
 
 export default {
   name: "products-block",
-  components: {
-    product,
-    loading,
-  },
+  components: { product, loading },
   props: {
-    min: {
-      type: Boolean,
-      default: true,
-    },
-    count: {
-      type: Number,
-      default: 5,
-    },
+    min: { type: Boolean, default: true },
+    count: { type: Number, default: 5 },
   },
+  data: () => ({ sortBy: 'Date', sortType: 'sort-ascending' }),
   mounted() {
     if (!this.isLogged) return;
+    this.$store.dispatch("nocloud/vms/fetch");
     this.$store.dispatch("nocloud/auth/fetchBillingData")
       .then((user) => {
         this.$store.dispatch("products/autoFetch", user.client_id);
@@ -165,7 +166,31 @@ export default {
       return this.products;
     },
     products() {
-      return this.$store.getters["products/getProducts"];
+      const products = this.$store.getters["products/getProducts"];
+      const instances = this.$store.getters["nocloud/vms/getInstances"]
+        .map((inst) => ({
+          orderid: inst.uuid,
+          groupname: 'Self-Service VDS SSD HC',
+          invoicestatus: null,
+          domainstatus: inst.state?.meta?.state_str || 'DELETED',
+          productname: inst.title,
+          domain: inst.state?.meta.networking?.public?.at(0),
+          date: inst.data.last_monitoring * 1000 || 0,
+          orderamount: 0,
+        }));
+
+      return [...products, ...instances]
+        .sort((a, b) => {
+          if (this.sortType === 'sort-ascending') [b, a] = [a, b];
+          switch (this.sortBy) {
+            case 'Date':
+              return new Date(a.date).getTime() - new Date(b.date).getTime();
+            case 'Name' :
+              return a.productname - b.productname;
+            case 'Cost':
+              return parseFloat(a.orderamount) - parseFloat(a.orderamount);
+          }
+        });
     },
     productsLoading() {
       return this.$store.getters["products/getProductsLoading"];
@@ -198,7 +223,11 @@ export default {
   },
   methods: {
     productClickHandler(product) {
-      this.$router.push({ name: "service", params: { id: product.hostingid } });
+      if (product.groupname === 'Self-Service VDS SSD HC') {
+        this.$router.push({ name: 'openCloud_new', params: { uuid: product.orderid } });
+      } else {
+        this.$router.push({ name: "service", params: { id: product.hostingid } });
+      }
     },
     filterElementClickHandler(key) {
       const types = new Set(this.checkedTypes);
