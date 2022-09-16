@@ -167,7 +167,7 @@ export default {
 			api.get(`${this.baseURL}/createOrder.php`, { params: info })
 			.then(result => {
 				if(this.modal.goToInvoice){
-					this.$router.push({name: 'invoiceFS', params: {pathMatch: result.invoiceid}});
+					this.$router.push({name: 'invoiceFS', params: {uuid: result.invoiceid}});
 				} else {
 					this.$router.push({name: 'services'});
 				}

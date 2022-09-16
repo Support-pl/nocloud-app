@@ -256,7 +256,10 @@ export default {
       return info;
     },
   },
-  mounted() { this.fetchInfo() },
+  mounted() {
+    if (!('firstname' in this.userData)) this.fetchInfo();
+    else this.installDataToBuffer();
+  },
 };
 </script>
 
