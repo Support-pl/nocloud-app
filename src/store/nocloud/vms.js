@@ -172,7 +172,7 @@ export default {
 
 			if (state.searchString) {
 				return state.instances.filter((inst) => {
-          const net = inst.state.meta.networking
+          const net = inst.state?.meta?.networking
 					const rules = [
 						inst.title.search(regexp) !== -1,
 						inst.state?.state.search(regexp) !== -1,

@@ -77,7 +77,6 @@
                     :value="getProducts.indexOf(productSize)"
                     @change="(newval) => (productSize = getProducts[newval])"
                   />
-                <div>
                   <a-row
                     type="flex"
                     justify="space-between"
@@ -145,7 +144,19 @@
                       {{ diskSize }}
                     </a-col>
                   </a-row>
-                </div>
+                  <a-row class="newCloud__prop">
+                    <a-col>{{ $t("Drive size") }}:</a-col>
+                    <a-col>
+                      <a-slider
+                        style="margin-top: 10px"
+                        :tip-formatter="null"
+                        :max="options.disk.max"
+                        :min="options.disk.min"
+                        :value="parseFloat(diskSize)"
+                        @change="(value) => (options.disk.size = value * 1024)"
+                      />
+                    </a-col>
+                  </a-row>
                 </template>
                 <a-alert
                   v-else
@@ -453,7 +464,7 @@
             </transition>
 
             <!-- Drive -->
-            <!-- <transition name="networkApear">
+            <transition name="networkApear">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -462,22 +473,10 @@
                 <a-col> {{ $t("Drive") }}: </a-col>
                 <a-col>
                   {{ options.drive ? "SDD" : "HDD" }}
-                  <span v-if="!options.addonsObjects.drive">{{
-                    getCurrentProd.props.drive.VALUE
-                  }}</span>
-                  <span v-else>
-                    {{
-                      parseInt(getCurrentProd.props.drive.VALUE) +
-                      parseInt(
-                        options.addonsObjects.drive &&
-                          options.addonsObjects.drive.description.VALUE
-                      )
-                    }}
-                    Gb</span
-                  >
+                  <span>{{ diskSize }}</span>
                 </a-col>
               </a-row>
-            </transition> -->
+            </transition>
 
             <!-- Trafic -->
             <!-- <transition name="networkApear">
@@ -975,8 +974,8 @@ export default {
         disk: {
           type: "SSD",
           size: 1,
-          min: 1,
-          max: 12,
+          min: 0,
+          max: 1024,
         },
         os: {
           id: -1,
@@ -1096,7 +1095,7 @@ export default {
           };
           this.options.ram.size = product.resources.ram / 1024;
           this.options.cpu.size = product.resources.cpu;
-          this.options.disk.size = 13000;
+          this.options.disk.size = product.resources.disk ?? 13000;
 
           return product;
         }
@@ -1547,7 +1546,7 @@ export default {
             this.$message.success(this.$t("Order created successfully."));
             this.deployService(result.uuid);
             if (this.modal.goToInvoice) {
-              this.$router.push(`/invoice-${res.invoiceid}`);
+              this.$router.push(`/invoice/${res.invoiceid}`);
             }
           } else {
             throw "error";
@@ -1567,7 +1566,7 @@ export default {
             this.$message.success(this.$t("Order update successfully."));
             this.deployService(result.uuid);
             if (this.modal.goToInvoice) {
-              this.$router.push(`/invoice-${result.invoiceid}`);
+              this.$router.push(`/invoice/${result.invoiceid}`);
             }
           } else {
             throw "error";
@@ -1672,6 +1671,19 @@ export default {
         });
         this.$store.commit('nocloud/plans/setPlans', plans);
       });
+
+      const { type } = this.options.disk;
+      const { min_drive_size, max_drive_size } = this.itemSP.vars;
+
+      if (!(min_drive_size || max_drive_size)) return;
+      this.options.disk.min = min_drive_size[type].default;
+      this.options.disk.max = max_drive_size[type].default;
+    },
+    'options.disk.size'() {
+      const { max, size } = this.options.disk;
+
+      if (max >= 64 * 1024) return;
+      if (max === size / 1024) this.options.disk.max += 1024;
     }
     // getAddons: function (newVal) {
     //   this.options.addons.os = +newVal.os[0].id;

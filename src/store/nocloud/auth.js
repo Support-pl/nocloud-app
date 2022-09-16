@@ -44,7 +44,7 @@ export default {
 		logout({ commit }) {
 			commit('setToken', '');
 			Cookies.remove(COOKIES_NAME);
-			router.push({ name: "Login" });
+      location.reload();
 		},
 
 		load({ commit }) {
