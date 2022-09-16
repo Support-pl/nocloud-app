@@ -790,8 +790,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from "vuex";
-import md5 from "md5";
+import { mapGetters } from "vuex";
 import loading from "@/components/loading/loading.vue";
 import config from "@/appconfig";
 import api from "@/api";
@@ -970,6 +969,7 @@ export default {
       "getServicesFull",
       "getInstances",
     ]),
+    ...mapGetters("support", { baseURL: "getURL" }),
 
     itemService() {
       const data = this.getServicesFull.find((el) => {
@@ -1152,6 +1152,27 @@ export default {
         };
       }
 
+      if (action === 'recoverYesterday' || action === 'recoverToday') {
+        action = action.replace('recover', '');
+        this.$api.get(this.baseURL, { params: {
+          run: 'create_ticket',
+          subject: `Recover VM ${this.VM.title}`,
+          message: `1. ID: ${this.VM.uuid}\n 2. Date: ${action}`,
+          department: 1,
+        }})
+          .then((resp) => {
+            if (resp.result == "success") {
+              this.$message.success("Ticket created successfully");
+            } else {
+              throw resp;
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            this.$message.error("Something went wrong");
+          });
+        return;
+      }
       this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
@@ -1215,7 +1236,7 @@ export default {
             },
             okText: this.$t("Yes"),
             cancelText: this.$t("Cancel"),
-            onOk() {
+            onOk: () => {
               if (this.option.recover) {
                 this.sendAction("recoverToday");
               } else {
