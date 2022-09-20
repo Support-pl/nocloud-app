@@ -1695,8 +1695,8 @@ export default {
       if (min_size !== 0 && max === 128) {
         this.options.disk.min = 0;
       }
-      if (max >= 64 * 1024) return;
       if (max === value / 1024) {
+        if (max >= 512) return;
         this.options.disk.max += 128;
         this.options.disk.min += 128;
       }

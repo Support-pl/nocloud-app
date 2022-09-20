@@ -143,7 +143,7 @@ export default {
         ],
         companyname: [
           {
-            required: true,
+            required: false,
             message: `${this.$t("ssl.field is required")}`,
           },
         ],
@@ -155,19 +155,19 @@ export default {
         ],
         address1: [
           {
-            required: true,
+            required: false,
             message: `${this.$t("ssl.field is required")}`,
           },
         ],
         city: [
           {
-            required: true,
+            required: false,
             message: `${this.$t("ssl.field is required")}`,
           },
         ],
         state: [
           {
-            required: true,
+            required: false,
             message: `${this.$t("ssl.field is required")}`,
           },
         ],
@@ -179,7 +179,7 @@ export default {
         ],
         postcode: [
           {
-            required: true,
+            required: false,
             message: `${this.$t("ssl.field is required")}`,
           },
         ],

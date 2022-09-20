@@ -27,11 +27,12 @@ export default {
 		}
 	},
 	actions: {
-		login({ commit }, { login, password }) {
+		login({ commit }, { login, password, type }) {
 			return new Promise((resolve, reject) => {
-				api.auth(login, password)
+				api.authorizeCustom({ auth: { type, data: [login, password] } })
 					.then(response => {
-						Cookies.set(COOKIES_NAME, response.token)
+            api.applyToken(response.token);
+						Cookies.set(COOKIES_NAME, response.token);
 						commit('setToken', response.token);
 						resolve(response);
 					})

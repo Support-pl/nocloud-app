@@ -128,27 +128,9 @@
                     </div> -->
 
                     <!-- <div class="info__button info__button--pay"> -->
-                      <a-button class="info__button" :loading="confirmLoading.pay" @click='showPayModal'>
+                      <a-button class="info__button" :loading="confirmLoading" @click='showPayModal'>
                         {{ $t("Pay") }}
                       </a-button>
-                      <a-modal
-                        :title="$t('Choose your payment method')"
-                        :visible="visible.pay"
-                        :confirm-loading="confirmLoading.pay"
-                        @ok="handlePayOk"
-                        @cancel="handlePayCancel"
-                      >
-                        <p>{{ $t("Payment method") }}:</p>
-                        <a-select style="min-width: 100%" v-model="elem" :loading="paymentLoading">
-                          <a-select-option
-                            v-for="method in payMethods"
-                            :key="method.module"
-                            :value="method.module"
-                          >
-                            {{ method.displayname }}
-                          </a-select-option>
-                        </a-select>
-                      </a-modal>
                     <!-- </div> -->
                   </template>
                 </div>
@@ -172,15 +154,8 @@ export default {
   data() {
     return {
       payment: ["visa", "mastercard", "yandex.money"],
-      payMethods: [],
       showFullTable: false,
-      paymentLoading: false,
-      visible: {
-        pay: false,
-      },
-      confirmLoading: {
-        pay: false,
-      },
+      confirmLoading: false,
       elem: "",
     };
   },
@@ -192,42 +167,18 @@ export default {
       this.showFullTable = true;
     },
     showPayModal() {
-      if (this.payMethods.length === 1) {
-        this.confirmLoading.pay = true;
-        this.$api.get(this.baseURL, { params: {
-          run: 'get_pay_token',
-          invoice_id: this.invoice.id,
-          paymetod: this.payMethods[0]
-        }})
-        .then((res) => {
-          window.location.href = res;
-        })
-        .finally(() => {
-          this.confirmLoading.pay = false;
-        });
-        // window.location.href = this.invoice.paytoken.checkout.redirect_url;
-        return;
-      }
-      this.PayVisible = true;
-      this.visible.pay = true;
-    },
-    handlePayOk() {
-      this.confirmLoading.pay = true;
+      this.confirmLoading = true;
       this.$api.get(this.baseURL, { params: {
         run: 'get_pay_token',
-        invoice_id: this.invoice.id,
-        paymetod: this.elem
+        invoice_id: this.invoice.id
       }})
-        .then((res) => {
-          window.location.href = res;
-        })
-        .finally(() => {
-          this.visible.pay = false;
-          this.confirmLoading.pay = false;
-        });
-    },
-    handlePayCancel() {
-      this.visible.pay = false;
+      .then((res) => {
+        window.location.href = res;
+      })
+      .finally(() => {
+        this.confirmLoading = false;
+      });
+      // window.location.href = this.invoice.paytoken.checkout.redirect_url;
     },
     showConfirm() {
       this.$confirm({
@@ -250,14 +201,6 @@ export default {
   },
   mounted() {
     this.$store.dispatch('invoices/autoFetch')
-      .then(() => {
-        if (this.invoice?.status !== 'Unpaid') return;
-
-        this.paymentLoading = true;
-        this.$api.get(this.baseURL, { params: { run: 'get_payment' } })
-          .then(res => { this.payMethods = res.paymentmethod })
-          .finally(() => { this.paymentLoading = false; });
-      })
       .catch((err) => {
         this.$router.push("/invoice");
         console.error(err);
