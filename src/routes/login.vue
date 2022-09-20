@@ -98,6 +98,21 @@
           </template>
         </div>
         <div class="login__forgot">
+          <a-dropdown :trigger="['click']" placement="bottomCenter">
+            <a class="ant-dropdown-link" @click.prevent>
+              Advanced options
+              <a-icon type="down" />
+            </a>
+            <template #overlay>
+              <a-menu>
+                <a-menu-item key="0">
+                  <a-checkbox v-model="type">use standard credentials</a-checkbox>
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+        </div>
+        <div class="login__forgot">
           <a href="#" @click="forgotPass()">{{
             remember ? $t("forgotPass") : $t("I have a password") | capitalize
           }}</a>
@@ -130,6 +145,7 @@ export default {
       password: "",
       email: "",
       qrcode: null,
+      type: false
     };
   },
   components: { QrcodeVue },
@@ -146,6 +162,7 @@ export default {
           .dispatch("nocloud/auth/login", {
             login: this.email,
             password: this.password,
+            type: (this.type) ? 'standard' : 'WHMCS'
           })
           .then(() => {
             if (localStorage.getItem("data")) {
@@ -162,7 +179,7 @@ export default {
           })
           .catch((error) => {
             if (error.response && error.response.status == 401) {
-              this.$message.error("wrong");
+              this.$message.error(error.response.data.message);
             }
           })
           .finally(() => {
@@ -270,7 +287,6 @@ export default {
 }
 
 .login {
-  height: 100%;
   display: flex;
   flex-direction: column;
 }

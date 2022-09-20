@@ -1,9 +1,11 @@
 <template>
   <div id="app" :style="false && cssVars">
     <transition name="slide">
-      <router-view
-        :style="{ position: 'absolute', width: '100%', height: '100%' }"
-      ></router-view>
+      <router-view :style="{
+        position: 'absolute',
+        width: '100%',
+        height: (loggedIn) ? '100%' : 'auto'
+      }" />
     </transition>
     <update-notification />
   </div>
