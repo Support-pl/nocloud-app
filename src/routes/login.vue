@@ -162,7 +162,7 @@ export default {
           .dispatch("nocloud/auth/login", {
             login: this.email,
             password: this.password,
-            type: (this.type) ? 'standard' : 'WHMCS'
+            type: (this.type) ? 'standard' : 'whmcs'
           })
           .then(() => {
             if (localStorage.getItem("data")) {

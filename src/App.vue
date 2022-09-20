@@ -4,7 +4,8 @@
       <router-view :style="{
         position: 'absolute',
         width: '100%',
-        height: (loggedIn) ? '100%' : 'auto'
+        height: (loggedIn) ? '100%' : 'auto',
+        minHeight: (loggedIn) ? 'auto' : '100vh'
       }" />
     </transition>
     <update-notification />
