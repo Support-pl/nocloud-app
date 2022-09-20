@@ -11,7 +11,7 @@
           <a-form-model
             ref="form"
             :model="form"
-            v-if="userData.firstname"
+            v-if="!isLoading && userData.firstname"
             :rules="rules"
           >
             <a-form-model-item
@@ -104,7 +104,8 @@
             </a-form-model-item>
           </a-form-model>
 
-          <loading v-else />
+          <loading v-else-if="isLoading" />
+          <empty v-else style="height: 100%" />
         </div>
       </div>
     </div>
@@ -115,14 +116,16 @@
 import { mapGetters } from "vuex";
 import { countries } from "@/setup/countries";
 import loading from "@/components/loading/loading";
+import empty from '../components/empty/empty.vue';
 import api from "@/api.js";
 
 export default {
   name: "userSettings-view",
-  components: { loading },
+  components: { loading, empty },
   data() {
     return {
       form: {},
+      isLoading: false,
       isSendingInfo: false,
       countries,
       rules: {
@@ -209,12 +212,19 @@ export default {
       });
     },
     fetchInfo() {
+      this.isLoading = true;
       this.$store.dispatch('nocloud/auth/fetchBillingData')
-        .then(() => {
+        .then((res) => {
+          if (res.ERROR) throw res.ERROR.toLowerCase();
+          if (res.result === 'error') throw res.message;
           this.installDataToBuffer();
         })
-        .catch((res) => {
-          console.error(res);
+        .catch((err) => {
+          this.$message.error(err);
+          console.error(err);
+        })
+        .finally(() => {
+          this.isLoading = false;
         });
     },
     sendInfo() {
@@ -269,9 +279,17 @@ export default {
 }
 
 .content__wrapper {
-  background: #fff;
-  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 70vh;
   padding: 10px 10px 15px 10px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.content__fields-wrapper {
+  min-height: 100%;
 }
 
 .content__title {

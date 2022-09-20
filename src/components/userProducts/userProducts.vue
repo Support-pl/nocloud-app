@@ -84,7 +84,8 @@
         }}</router-link
         >.
       </div>
-      <template v-else-if="!productsLoading && productsPrepared.length > 0">
+      <loading v-else-if="productsLoading" />
+      <template v-else-if="productsPrepared.length > 0">
         <product
           v-for="product in productsPrepared"
           @click.native="productClickHandler(product)"
@@ -97,7 +98,6 @@
           :wholeProduct="product"
         />
       </template>
-      <!-- <loading v-else-if="productsLoading" /> -->
       <a-empty v-else />
       <a-button
         class="products__new"
@@ -130,10 +130,11 @@ export default {
   data: () => ({ sortBy: 'Date', sortType: 'sort-ascending' }),
   mounted() {
     if (!this.isLogged) return;
-    this.$store.dispatch("nocloud/vms/fetch");
+    this.$store.commit("products/setProductsLoading", true);
     this.$store.dispatch("nocloud/auth/fetchBillingData")
       .then((user) => {
-        this.$store.dispatch("products/autoFetch", user.client_id);
+        this.$store.dispatch("nocloud/vms/fetch");
+        this.$store.dispatch("products/fetch", user.client_id);
       })
       .catch((err) => console.error(err));
   },
@@ -193,7 +194,9 @@ export default {
         });
     },
     productsLoading() {
-      return this.$store.getters["products/getProductsLoading"];
+      const productsLoading = this.$store.getters["products/getProductsLoading"];
+      const instancesLoading = this.$store.getters["nocloud/vms/isLoading"];
+      return productsLoading || instancesLoading;
     },
     checkedTypes() {
       return (

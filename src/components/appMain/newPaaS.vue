@@ -150,6 +150,7 @@
                       <a-slider
                         style="margin-top: 10px"
                         :tip-formatter="null"
+                        :step="options.disk.step"
                         :max="options.disk.max"
                         :min="options.disk.min"
                         :value="parseFloat(diskSize)"
@@ -973,9 +974,10 @@ export default {
         },
         disk: {
           type: "SSD",
+          step: 1,
           size: 1,
           min: 0,
-          max: 1024,
+          max: 128,
         },
         os: {
           id: -1,
@@ -1642,7 +1644,7 @@ export default {
       if (this.sliderIsCanPrev) {
         this.options.slide -= 1;
       }
-    },
+    }
   },
 
   watch: {
@@ -1678,11 +1680,34 @@ export default {
       this.options.disk.min = min_drive_size[type].default;
       this.options.disk.max = max_drive_size[type].default;
     },
-    'options.disk.size'() {
-      const { max, size } = this.options.disk;
+    'options.os.name'() {
+      if (this.options.disk.min > 0) return;
+      const { id } = this.options.os;
+      const { min_size } = this.itemSP.publicData.templates[id];
 
+      this.options.disk.min = min_size / 1024;
+    },
+    'options.disk.size'(value) {
+      const { id } = this.options.os;
+      const { min_size = 0 } = this.itemSP?.publicData.templates[id] ?? {};
+      const { max, min } = this.options.disk;
+
+      if (min_size !== 0 && max === 128) {
+        this.options.disk.min = 0;
+      }
       if (max >= 64 * 1024) return;
-      if (max === size / 1024) this.options.disk.max += 1024;
+      if (max === value / 1024) {
+        this.options.disk.max += 128;
+        this.options.disk.min += 128;
+      }
+      if (min <= min_size / 1024 && max === 128) {
+        this.options.disk.min = min_size / 1024;
+        return;
+      }
+      if (min === value / 1024) {
+        this.options.disk.max -= 128;
+        this.options.disk.min -= 128;
+      }
     }
     // getAddons: function (newVal) {
     //   this.options.addons.os = +newVal.os[0].id;

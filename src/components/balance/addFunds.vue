@@ -47,7 +47,7 @@ export default {
   },
   computed: {
     user() {
-      return this.$store.getters['nocloud/auth/userdata'];
+      return this.$store.getters['nocloud/auth/billingData'];
     },
     isLogged() {
       return this.$store.getters['nocloud/auth/isLoggedIn'];

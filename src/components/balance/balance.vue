@@ -32,6 +32,7 @@ export default {
   },
   data() {
     return {
+      currency: {},
       modalVisible: false,
       confirmLoading: false,
       amount: 10,
@@ -40,27 +41,19 @@ export default {
     };
   },
   mounted() {
-    //нету юзера
-
-    // this.$api
-    //   .sendAsUser("getBalance")
-    //   .then((res) => {
-    //     if (this.isLogged && this.user.id == res.userid) {
-    //       this.$store.dispatch("updateBalance", res.balance);
-    //       this.$store.dispatch("updateCurrency", res.currency_code);
-    //     }
-    //   })
-    //   .catch((err) => console.error(err));
+    this.currency = this.$config.currency;
+    this.$store.dispatch("nocloud/auth/fetchBillingData")
+      .then((res) => {
+        this.currency.suffix = res.currency_code ?? 'USD';
+      })
+      .catch((err) => console.error(err));
   },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
-    currency() {
-      return this.$config.currency;
-    },
     isLogged() {
-         return this.$store.getters["nocloud/auth/isLoggedIn"];
+      return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
   },
   methods: {
