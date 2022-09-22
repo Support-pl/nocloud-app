@@ -31,7 +31,7 @@
         </router-link>
       </div>
       <div v-else-if="user" class="products__control">
-        <a-popover placement="bottomRight">
+        <a-popover placement="bottomRight" arrow-point-at-center>
           <template slot="content">
             <p v-for="(type, key) in $config.services" :key="key">
               <a-checkbox
@@ -49,7 +49,7 @@
           </template>
           <a-icon class="products__control-item" type="filter" />
         </a-popover>
-        <a-popover placement="bottomRight">
+        <a-popover placement="bottomRight" arrow-point-at-center>
           <template slot="content">
             <a-radio-group v-model="sortBy">
               <a-radio value="Name">Name</a-radio>

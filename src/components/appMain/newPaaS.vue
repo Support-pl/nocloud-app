@@ -155,6 +155,7 @@
                         :min="options.disk.min"
                         :value="parseFloat(diskSize)"
                         @change="(value) => (options.disk.size = value * 1024)"
+                        @afterChange="changeMinMax"
                       />
                     </a-col>
                   </a-row>
@@ -473,7 +474,7 @@
               >
                 <a-col> {{ $t("Drive") }}: </a-col>
                 <a-col>
-                  {{ options.drive ? "SDD" : "HDD" }}
+                  {{ options.drive ? "SSD" : "HDD" }}
                   <span>{{ diskSize }}</span>
                 </a-col>
               </a-row>
@@ -976,7 +977,7 @@ export default {
           type: "SSD",
           step: 1,
           size: 1,
-          min: 0,
+          min: 20,
           max: 128,
         },
         os: {
@@ -1097,7 +1098,7 @@ export default {
           };
           this.options.ram.size = product.resources.ram / 1024;
           this.options.cpu.size = product.resources.cpu;
-          this.options.disk.size = product.resources.disk ?? 13000;
+          this.options.disk.size = product.resources.disk ?? 20 * 1024;
 
           return product;
         }
@@ -1398,6 +1399,22 @@ export default {
           break;
       }
     },
+    changeMinMax(value) {
+      const { max, min } = this.options.disk;
+
+      if (value === 128 && max === 128) this.options.disk.min -= 20;
+      if (max === value) {
+        if (max >= 512) return;
+        this.options.disk.max += 128;
+        this.options.disk.min += 128;
+      }
+      if (min === 128 && value === 128) this.options.disk.min += 20;
+      if (min === value) {
+        if (min <= 20) return;
+        this.options.disk.max -= 128;
+        this.options.disk.min -= 128;
+      }
+    },
     nextStep() {
       if (this.activeKey === 'location') {
         this.activeKey = 'plan';
@@ -1686,28 +1703,6 @@ export default {
       const { min_size } = this.itemSP.publicData.templates[id];
 
       this.options.disk.min = min_size / 1024;
-    },
-    'options.disk.size'(value) {
-      const { id } = this.options.os;
-      const { min_size = 0 } = this.itemSP?.publicData.templates[id] ?? {};
-      const { max, min } = this.options.disk;
-
-      if (min_size !== 0 && max === 128) {
-        this.options.disk.min = 0;
-      }
-      if (max === value / 1024) {
-        if (max >= 512) return;
-        this.options.disk.max += 128;
-        this.options.disk.min += 128;
-      }
-      if (min <= min_size / 1024 && max === 128) {
-        this.options.disk.min = min_size / 1024;
-        return;
-      }
-      if (min === value / 1024) {
-        this.options.disk.max -= 128;
-        this.options.disk.min -= 128;
-      }
     }
     // getAddons: function (newVal) {
     //   this.options.addons.os = +newVal.os[0].id;

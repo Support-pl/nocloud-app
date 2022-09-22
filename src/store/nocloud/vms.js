@@ -175,7 +175,7 @@ export default {
           const net = inst.state?.meta?.networking
 					const rules = [
 						inst.title.search(regexp) !== -1,
-						inst.state?.state.search(regexp) !== -1,
+						inst.state && inst.state?.state.search(regexp) !== -1,
 						net?.private.some((el) => el.search(regexp) !== -1),
 						net?.public.some((el) => el.search(regexp) !== -1),
 					]

@@ -216,6 +216,9 @@ export default {
   computed: {
     ...mapGetters("nocloud/auth/", ["userdata", "isLoggedIn"]),
     ...mapGetters("nocloud/app/", ["getFromRoute"]),
+    baseURL() {
+      return this.$store.getters["nocloud/auth/getURL"];
+    },
     getOnlogin() {
       return this.$store.getters.getOnlogin;
     },
