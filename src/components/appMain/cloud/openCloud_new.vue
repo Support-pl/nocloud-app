@@ -553,14 +553,14 @@
                     <a-col>
                       <GChart
                         type="LineChart"
-                        :data="[] || inbChartDataReady"
+                        :data="inbChartDataReady"
                         :options="chartOption('inbound')"
                       />
                     </a-col>
                     <a-col>
                       <GChart
                         type="LineChart"
-                        :data="[] || outChartDataReady"
+                        :data="outChartDataReady"
                         :options="chartOption('outgoing')"
                       />
                     </a-col>
@@ -970,6 +970,46 @@ export default {
       "getInstances",
     ]),
     ...mapGetters("support", { baseURL: "getURL" }),
+    inbChartDataReady() {
+      let data = this.chart1Data;
+      if (data == undefined) {
+        console.error("can't get chart1");
+        return [[0], [0]];
+      }
+      if (data[0] == undefined || data[1] == undefined) {
+        return [
+          [this.chartHead[0], "bytes"],
+          [0, 0],
+        ];
+      }
+      let range = this.checkRange(data[data.length - 1][1]);
+      data = data.map((pair) => [
+        new Date(pair[0] * 1000),
+        this.fromBytesTo(parseInt(pair[1]), range),
+      ]);
+      data.unshift([this.chartHead[0], range]);
+      return data;
+    },
+    outChartDataReady() {
+      let data = this.chart2Data;
+      if (data == undefined) {
+        console.error("can't get chart2");
+        return [[0], [0]];
+      }
+      if (data[0] == undefined || data[1] == undefined) {
+        return [
+          [this.chartHead[0], "bytes"],
+          [0, 0],
+        ];
+      }
+      let range = this.checkRange(data[data.length - 1][1]);
+      data = data.map((pair) => [
+        new Date(pair[0] * 1000),
+        this.fromBytesTo(parseInt(pair[1]), range),
+      ]);
+      data.unshift([this.chartHead[0], range]);
+      return data;
+    },
 
     itemService() {
       const data = this.getServicesFull.find((el) => {
@@ -1062,11 +1102,20 @@ export default {
   },
   created() {
     if (this.VM?.uuidService) {
-      this.$store.dispatch(
-        "nocloud/vms/subscribeWebSocket",
-        this.VM.uuidService
-      );
       this.renameNewName = this.VM.title;
+      this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
+      this.$api.get(`${this.baseURL}?vmid=${this.VM.uuid}`)
+        .then((res) => {
+          if (res.data.NETRX !== undefined) {
+            this.chart1Data = res.data.NETRX;
+          }
+          if (res.data.NETTX !== undefined) {
+            this.chart2Data = res.data.NETTX;
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     }
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");

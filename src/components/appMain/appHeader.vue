@@ -113,7 +113,7 @@
                   class="header__icon"
                   :type="button.icon"
                 />
-                <a-popover v-else placement="bottomRight">
+                <a-popover v-else placement="bottomRight" arrow-point-at-center>
                   <template slot="content">
                     <div>
                       <a-checkbox-group
@@ -176,7 +176,10 @@ export default {
             {
               name: "cloud_reload",
               icon: "reload",
-              onClickFuncion: this.fetchClouds,
+              onClickFuncion: () => {
+                this.fetchClouds();
+                this.fetchUserData();
+              },
             },
           ],
         },
@@ -199,7 +202,10 @@ export default {
             {
               name: "support_reload",
               icon: "reload",
-              onClickFuncion: this.fetchTickets,
+              onClickFuncion: () => {
+                this.fetchTickets();
+                this.fetchUserData();
+              },
             },
           ],
         },
@@ -221,7 +227,10 @@ export default {
             {
               name: "invoice_reload",
               icon: "reload",
-              onClickFuncion: this.fetchInvoices,
+              onClickFuncion: () => {
+                this.fetchInvoices();
+                this.fetchUserData();
+              },
             },
           ],
         },
@@ -248,6 +257,7 @@ export default {
     ...mapActions("support", { fetchTickets: "fetch" }),
     ...mapActions("invoices", { fetchInvoices: "fetch" }),
     ...mapActions("nocloud/vms", { fetchClouds: "fetch" }),
+    ...mapActions("nocloud/auth", ["fetchUserData"]),
     ...mapMutations("support", ["inverseAddTicketState"]),
     getState(name) {
       switch (name) {

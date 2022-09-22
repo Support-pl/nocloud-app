@@ -271,6 +271,8 @@ export default {
 }
 
 .chat__input {
+  max-width: 768px;
+  margin-left: auto;
   border: 0;
   outline: 0;
   border-radius: 40px;
@@ -287,7 +289,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-left: 10px;
+  margin: 0 auto 0 10px;
   font-size: 1.2rem;
   transition: filter 0.2s ease;
   cursor: pointer;
@@ -302,7 +304,10 @@ export default {
 }
 
 .chat__content {
+  max-width: 768px;
+  width: 100%;
   height: 100%;
+  margin: 0 auto;
   flex: 1 0;
   display: flex;
   flex-direction: column;

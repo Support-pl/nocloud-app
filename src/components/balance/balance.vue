@@ -41,7 +41,7 @@ export default {
     };
   },
   mounted() {
-    this.currency = this.$config.currency;
+    this.currency = { ...this.$config.currency, suffix: '' };
     this.$store.dispatch("nocloud/auth/fetchBillingData")
       .then((res) => {
         this.currency.suffix = res.currency_code ?? 'USD';
