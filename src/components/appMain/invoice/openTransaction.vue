@@ -33,7 +33,7 @@
                     text-anchor="middle"
                   >
                     {{ records.reduce((prev, el) => +prev + +el.total, 0) }}
-                    {{ user && user.currency_code || "BYN" }}
+                    {{ user.currency_code || "USD" }}
                   </text>
                 </svg>
               </div>
@@ -61,7 +61,7 @@
                       {{ date(record.exec) }}
                     </template>
                     <template slot="amount" slot-scope="text, record">
-                      {{ record.total }} BYN
+                      {{ record.total }} {{ user.currency_code || 'USD' }}
                     </template>
                     <template slot="product" slot-scope="text, record">
                       {{ (record.product)
@@ -162,7 +162,7 @@ export default {
   },
   computed: {
     user() {
-      return this.$store.getters['nocloud/auth'];
+      return this.$store.getters['nocloud/auth/billingData'];
     },
     statusColor() {
       return this.records[0].processed

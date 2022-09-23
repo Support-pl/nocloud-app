@@ -6,7 +6,7 @@
   >
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
-        {{ invoice.total }} {{ invoice.currency_code || 'BYN' }}
+        {{ invoice.total }} {{ user.currency_code || 'USD' }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -51,6 +51,9 @@ export default {
         return null;
       }
     },
+    user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    }
   },
   methods: {
     clickOnInvoice(uuid) {
