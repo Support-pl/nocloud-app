@@ -443,11 +443,7 @@
                   <div class="block__column">
                     <div class="block__title">OS</div>
                     <div class="block__value">
-                      <!-- {{ (VM && VM.os) || "no data" }} -->
-                      {{
-                        (dataSP && dataSP.publicData.templates[5].name) ||
-                        "no data"
-                      }}
+                      {{ OSName || "no data" }}
                     </div>
                   </div>
                   <div class="block__column">
@@ -1099,12 +1095,17 @@ export default {
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
+    OSName() {
+      const i = this.VM?.config?.template_id;
+
+      return this.dataSP?.publicData.templates[i]?.name;
+    }
   },
   created() {
     if (this.VM?.uuidService) {
       this.renameNewName = this.VM.title;
       this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
-      this.$api.get(`${this.baseURL}?vmid=${this.VM.uuid}`)
+      this.$api.get(this.baseURL, { params: { vmid: this.VM.uuid } })
         .then((res) => {
           if (res.data.NETRX !== undefined) {
             this.chart1Data = res.data.NETRX;
