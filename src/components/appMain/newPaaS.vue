@@ -1599,7 +1599,7 @@ export default {
       api.services
         .up(uuidService)
         .then(() => {
-          this.$message.success("Service deployed");
+          this.$message.success("VM created succefully");
           this.$router.push({ path: '/cloud' });
         })
         .catch((err) => {
