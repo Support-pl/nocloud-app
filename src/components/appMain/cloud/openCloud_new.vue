@@ -647,56 +647,41 @@
                       </div> -->
 
                       <div
-                        style="margin-bottom: 40px"
-                        v-if="VM.state && VM.state.meta.snapshots"
-                      >
-                        <div
-                          v-for="(item, index) in VM.state.meta.snapshots"
-                          :key="item.name"
-                          style="
-                            display: flex;
-                            align-items: center;
-                            margin-bottom: 10px;
-                          "
-                        >
-                          <a-col style="width: 100%">
-                            <div style="display: flex; font-size: 16px">
-                              <div style="margin-right: 30px; width: 30%">
-                                {{ item.name }}
-                              </div>
-                              <div style="width: 70%">
-                                {{ (item.ts * 1000) | dateFormat }}
-                              </div>
-                            </div>
-                          </a-col>
-                          <a-col style="margin-left: auto; display: flex">
-                            <!-- :disabled="!VM.state.meta.snapshots" -->
-                            <a-button
-                              type="primary"
-                              @click="revSnapshot(index)"
-                              style="margin-right: 10px"
-                            >
-                              <a-icon type="caret-right" />
-                            </a-button>
-                            <!-- :disabled=" !VM.state.meta.snapshots" -->
-                            <a-button
-                              type="danger"
-                              @click="deleteSnapshot(index)"
-                            >
-                              <a-icon type="close"
-                            /></a-button>
-                          </a-col>
-                        </div>
-                      </div>
-                      <div
-                        v-else
+                        v-for="(item, index) in VM.state.meta.snapshots"
+                        :key="item.name"
                         style="
                           display: flex;
-                          justify-content: center;
-                          margin: 20px 0;
+                          align-items: center;
+                          margin-bottom: 10px;
                         "
                       >
-                        <a-spin />
+                        <a-col style="width: 100%">
+                          <div style="display: flex; font-size: 16px">
+                            <div style="margin-right: 30px; width: 30%">
+                              {{ item.name }}
+                            </div>
+                            <div style="width: 70%">
+                              {{ (item.ts * 1000) | dateFormat }}
+                            </div>
+                          </div>
+                        </a-col>
+                        <a-col style="margin-left: auto; display: flex">
+                          <!-- :disabled="!VM.state.meta.snapshots" -->
+                          <a-button
+                            type="primary"
+                            @click="revSnapshot(index)"
+                            style="margin-right: 10px"
+                          >
+                            <a-icon type="caret-right" />
+                          </a-button>
+                          <!-- :disabled=" !VM.state.meta.snapshots" -->
+                          <a-button
+                            type="danger"
+                            @click="deleteSnapshot(index)"
+                          >
+                            <a-icon type="close"
+                          /></a-button>
+                        </a-col>
                       </div>
 
                       <div class="modal__buttons">
@@ -1105,18 +1090,19 @@ export default {
     if (this.VM?.uuidService) {
       this.renameNewName = this.VM.title;
       this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
-      // this.$api.get(this.baseURL, { params: { vmid: this.VM.uuid } })
-      //   .then((res) => {
-      //     if (res.data.NETRX !== undefined) {
-      //       this.chart1Data = res.data.NETRX;
-      //     }
-      //     if (res.data.NETTX !== undefined) {
-      //       this.chart2Data = res.data.NETTX;
-      //     }
-      //   })
-      //   .catch((err) => {
-      //     console.error(err);
-      //   });
+      this.sendAction('monitoring')
+        .then((res) => {
+          console.log(res);
+          if (res.data.NETRX !== undefined) {
+            this.chart1Data = res.data.NETRX;
+          }
+          if (res.data.NETTX !== undefined) {
+            this.chart2Data = res.data.NETTX;
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     }
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
@@ -1145,7 +1131,7 @@ export default {
       //   });
     },
     disabledMenu(menuName) {
-      if (this.VM?.product && menuName === "resize vm") {
+      if (this.VM?.product && menuName === "resize") {
         return true;
       }
       // if(this.SingleCloud.DISABLE.includes(menuName) || (this.SingleCloud.STATE == 3 && this.SingleCloud.LCM_STATE == 2)){
@@ -1207,7 +1193,7 @@ export default {
         this.$api.get(this.baseURL, { params: {
           run: 'create_ticket',
           subject: `Recover VM ${this.VM.title}`,
-          message: `1. ID: ${this.VM.uuid}\n 2. Date: ${action}`,
+          message: `1. ID: ${this.VM.uuid}\n2. Date: ${action}`,
           department: 1,
         }})
           .then((resp) => {
@@ -1223,7 +1209,7 @@ export default {
           });
         return;
       }
-      this.$store
+      return this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
           const opts = {
@@ -1384,14 +1370,13 @@ export default {
       let confirm = window.confirm("VM will be restarted");
       if (confirm) {
         this.isRenameLoading = true;
-        this.itemService.instancesGroups[0].instances.find((el) => {
-          if (el.uuid === this.VM.uuid) {
-            el.resources.cpu = +this.resize.VCPU;
-            el.resources.ram = this.resize.RAM * 1024;
-            el.resources.drive_size = this.resize.size * 1024;
-            return el;
-          }
-        });
+        const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
+        const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
+
+        instance.resources.cpu = +this.resize.VCPU;
+        instance.resources.ram = this.resize.RAM * 1024;
+        instance.resources.drive_size = this.resize.size * 1024;
+
         this.$store
           .dispatch("nocloud/vms/updateService", this.itemService)
           .then((result) => {
