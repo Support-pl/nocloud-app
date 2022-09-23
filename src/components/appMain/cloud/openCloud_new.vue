@@ -1105,18 +1105,18 @@ export default {
     if (this.VM?.uuidService) {
       this.renameNewName = this.VM.title;
       this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
-      this.$api.get(this.baseURL, { params: { vmid: this.VM.uuid } })
-        .then((res) => {
-          if (res.data.NETRX !== undefined) {
-            this.chart1Data = res.data.NETRX;
-          }
-          if (res.data.NETTX !== undefined) {
-            this.chart2Data = res.data.NETTX;
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+      // this.$api.get(this.baseURL, { params: { vmid: this.VM.uuid } })
+      //   .then((res) => {
+      //     if (res.data.NETRX !== undefined) {
+      //       this.chart1Data = res.data.NETRX;
+      //     }
+      //     if (res.data.NETTX !== undefined) {
+      //       this.chart2Data = res.data.NETTX;
+      //     }
+      //   })
+      //   .catch((err) => {
+      //     console.error(err);
+      //   });
     }
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
@@ -1481,26 +1481,18 @@ export default {
       return date.toLocaleString();
     },
     sendRename() {
-      this.isRenameLoading = true;
       if (this.renameNewName !== "") {
-        this.itemService.instancesGroups.find((el) =>
-          el.uuid === this.VM.uuidInstancesGroups
-        ).instances.find((el) => {
-          if (el.uuid === this.VM.uuid) {
-            return (el.title = this.renameNewName);
-          }
-        });
+        const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
+        const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
+
+        this.isRenameLoading = true;
+        instance.title = this.renameNewName;
         this.$store
           .dispatch("nocloud/vms/updateService", this.itemService)
           .then((result) => {
-            console.log(result);
             if (result) {
-              // this.$message.success(this.$t("VM name changes successfully"));
-              this.openNotificationWithIcon("success", {
-                message: "VM name changes successfully",
-              });
+              this.$message.success(this.$t("VM name changes successfully"));
               this.isRenameLoading = false;
-              this.renameNewName = "";
               this.closeModal("rename");
               this.closeModal("menu");
             } else {
@@ -1509,7 +1501,7 @@ export default {
               });
             }
           })
-          .catch((err) => {
+          .catch(() => {
             this.openNotificationWithIcon("error", {
               message: "Can't VM name changes",
             });

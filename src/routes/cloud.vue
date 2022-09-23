@@ -68,7 +68,13 @@ export default {
   height: 100%;
   overflow: auto;
   position: relative;
-  padding: 20px 10px 0;
+  padding: 20px 10px;
+}
+
+.cloud__wrapper {
+  display: grid;
+  grid-auto-rows: min-content;
+  grid-gap: 20px;
 }
 
 .cloud_search-wrapper {
@@ -102,10 +108,7 @@ export default {
 
 @media screen and (min-width: 768px) {
   .cloud__wrapper {
-    display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    grid-auto-rows: min-content;
-    grid-gap: 20px;
   }
 }
 </style>
