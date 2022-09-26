@@ -21,6 +21,7 @@ export default {
 		},
     setBillingUser(state, data) {
       state.billingUser = data
+      localStorage.setItem('user', JSON.stringify(data))
     },
 		setAddSSH(state, data) {
 			state.userdata = data
@@ -28,6 +29,7 @@ export default {
 	},
 	actions: {
 		login({ commit }, { login, password, type }) {
+      localStorage.removeItem('user');
 			return new Promise((resolve, reject) => {
 				api.authorizeCustom({ auth: { type, data: [login, password] } })
 					.then(response => {
@@ -69,7 +71,14 @@ export default {
 			})
 		},
     fetchBillingData({ state, commit }) {
+      const user = localStorage.getItem('user');
+
       return new Promise((resolve, reject) => {
+        if (user) {
+          commit('setBillingUser', JSON.parse(user));
+          resolve(JSON.parse(user));
+          return;
+        };
         api.get(state.baseURL, { params: { run: 'client_detail' }})
           .then(response => {
             commit('setBillingUser', response);

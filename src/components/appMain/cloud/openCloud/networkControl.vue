@@ -171,11 +171,8 @@ export default {
         });
     },
     sendNewIP() {
-      const group = this.itemService.instancesGroups.find(
-        (el) => el.uuid === this.VM.uuidInstancesGroups
-      );
-      const instance = group.instances
-        .find((el) => el.uuid === this.VM.uuid);
+      const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
+      const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
 
       instance.resources = {
         ...instance.resources,

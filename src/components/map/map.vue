@@ -50,7 +50,7 @@
           <path
             v-for="country in mapData.countries"
             :key="country.id + country.title"
-            :class="{ 'map__part--selected': selected == country.id }"
+            :class="{ 'map__part--selected': selected.split(' ')[1] == country.id }"
             class="map__part"
             :id="country.id"
             :title="country.title"
@@ -156,18 +156,11 @@ export default {
     mapData,
   }),
   methods: {
-    mapClickHandler({ target, layerX, layerY }) {
-      // const kx = mapData.meta.width / (this.svg.clientWidth * this.scale);
-      // const ky = mapData.meta.height / (this.svg.clientHeight * this.scale);
-      // const w = this.$refs.viewport.getAttribute('transform').split(' ')[4];
-      // const h = this.$refs.viewport.getAttribute('transform').split(' ')[5];
-
+    mapClickHandler({ target }) {
       if (target.dataset.id) {
         this.selected = target.getAttribute("data-id");
         this.$emit("input", this.selected);
       }
-      // this.markers[0].x = offsetX * kx - parseInt(w) / this.scale - 15;
-      // this.markers[0].y = offsetY * ky - parseInt(h) / this.scale - 38;
     },
     mouseEnterHandler(id) {
       this.hovered = id;

@@ -564,7 +564,7 @@
                 </div>
               </div>
 
-              <a-row :gutter="[15, 15]" style="margin-top: 20px">
+              <a-row :gutter="[15, 15]" style="margin-top: 20px" v-if="VM.state">
                 <a-col :span="24" :md="12">
                   <div class="button">
                     <a-button
@@ -740,7 +740,7 @@
                   </div>
                 </a-col>
 
-                <a-col :span="24" :md="12" v-if="VM.state">
+                <a-col :span="24" :md="12">
                   <div class="button">
                     <a-button
                       :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lsm_state === 3)"
@@ -1090,19 +1090,7 @@ export default {
     if (this.VM?.uuidService) {
       this.renameNewName = this.VM.title;
       this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
-      this.sendAction('monitoring')
-        .then((res) => {
-          console.log(res);
-          if (res.data.NETRX !== undefined) {
-            this.chart1Data = res.data.NETRX;
-          }
-          if (res.data.NETTX !== undefined) {
-            this.chart2Data = res.data.NETTX;
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+      this.fetchMonitoring();
     }
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
@@ -1171,28 +1159,19 @@ export default {
       return newOpt;
     },
     sendAction(action) {
-      let data = {};
-      if (this.option.reboot) {
-        data = {
-          uuid: this.VM.uuid,
-          uuidService: this.VM.uuidService,
-          action,
-          params: { hard: true },
-        };
-      } else {
-        data = {
-          uuid: this.VM.uuid,
-          uuidService: this.VM.uuidService,
-          action,
-          params: {},
-        };
+      const hard = this.option.reboot || action.includes('Hard');
+      const data = {
+        uuid: this.VM.uuid,
+        uuidService: this.VM.uuidService,
+        action: action.replace('Hard', ''),
+        params: (hard) ? { hard: true } : {},
       }
 
       if (action === 'recoverYesterday' || action === 'recoverToday') {
         action = action.replace('recover', '');
         this.$api.get(this.baseURL, { params: {
           run: 'create_ticket',
-          subject: `Recover VM ${this.VM.title}`,
+          subject: `Recover VM - ${this.VM.title}`,
           message: `1. ID: ${this.VM.uuid}\n2. Date: ${action}`,
           department: 1,
         }})
@@ -1209,7 +1188,7 @@ export default {
           });
         return;
       }
-      return this.$store
+      this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
           const opts = {
@@ -1222,6 +1201,30 @@ export default {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
           this.openNotificationWithIcon("error", opts);
+        });
+    },
+    fetchMonitoring() {
+      const data = {
+        uuid: this.VM.uuid,
+        uuidService: this.VM.uuidService,
+        action: 'monitoring'
+      };
+
+      this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
+        .then((res) => {
+          console.log(res);
+          if (res.data?.NETRX !== undefined) {
+            this.chart1Data = res.data.NETRX;
+          }
+          if (res.data?.NETTX !== undefined) {
+            this.chart2Data = res.data.NETTX;
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          this.openNotificationWithIcon("error", {
+            message: `Error: ${err.response?.data?.message ?? "Unknown"}.`
+          });
         });
     },
     deployService() {
@@ -1373,8 +1376,28 @@ export default {
         const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
         const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
 
-        instance.resources.cpu = +this.resize.VCPU;
-        instance.resources.ram = this.resize.RAM * 1024;
+        if (this.VM.billingPlan.kind === 'DYNAMIC') {
+          instance.resources.cpu = +this.resize.VCPU;
+          instance.resources.ram = this.resize.RAM * 1024;
+        } else {
+          this.$api.get(this.baseURL, { params: {
+            run: 'create_ticket',
+            subject: `Resize VM - ${this.VM.title}`,
+            message: `1. ID: ${this.VM.uuid}\n2. Resources:\n- cpu: ${this.resize.VCPU}/n- ram: ${this.resize.RAM * 1024}`,
+            department: 1,
+          }})
+            .then((resp) => {
+              if (resp.result == "success") {
+                this.$message.success("Ticket created successfully");
+              } else {
+                throw resp;
+              }
+            })
+            .catch((err) => {
+              console.error(err);
+              this.$message.error("Something went wrong");
+            });
+        }
         instance.resources.drive_size = this.resize.size * 1024;
 
         this.$store
@@ -1539,7 +1562,7 @@ export default {
           <div style="color:red;">{ this.$t("All data will be deleted!") }</div>
         ),
         onOk: () => {
-          this.sendAction("Reinstall");
+          this.sendAction("reinstall");
           this.modal.menu = false;
           this.modal.reinstall = false;
         },
@@ -1623,6 +1646,7 @@ export default {
         this.VM.uuidService
       );
       this.renameNewName = this.VM.title;
+      this.fetchMonitoring();
     },
   },
 };
