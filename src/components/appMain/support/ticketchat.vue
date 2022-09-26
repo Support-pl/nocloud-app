@@ -186,7 +186,7 @@ export default {
       }})
         .then((resp) => {
           this.status = resp.status;
-          this.replies = resp.replies;
+          this.replies = resp.replies ?? [];
           this.subject = resp.subject;
         })
         .finally(() => {
@@ -229,6 +229,7 @@ export default {
   position: relative;
   padding-top: 64px;
   padding-bottom: 55px;
+  background: var(--bright_bg);
 }
 
 .chat__header {
@@ -314,6 +315,7 @@ export default {
   justify-content: flex-start;
   padding: 6px 15px;
   overflow: auto;
+  background: var(--bright_font);
 }
 
 .chat__message {

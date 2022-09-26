@@ -236,6 +236,7 @@ export default {
             user: { ...this.userData, ...this.deltaInfo }
           }})
             .then(() => {
+              localStorage.removeItem('user');
               this.$message.success("success");
               this.fetchInfo();
             })

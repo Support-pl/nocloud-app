@@ -37,7 +37,7 @@
                     "
                   >
                     <a-select-option
-                      v-for="item in markers"
+                      v-for="item in locations"
                       :key="item.id"
                       :value="item.id"
                     >
@@ -46,7 +46,7 @@
                   </a-select>
                   <div style="overflow: hidden; margin-top: -15px">
                     <a-spin tip="Loading..." :spinning="isPlansLoading">
-                      <my-map v-model="locationId" :markers="markers"> </my-map>
+                      <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
                     </a-spin>
                   </div>
                   <!-- <a-radio-group v-model="location_uuid">
@@ -155,7 +155,6 @@
                         :min="options.disk.min"
                         :value="parseFloat(diskSize)"
                         @change="(value) => (options.disk.size = value * 1024)"
-                        @afterChange="changeMinMax"
                       />
                     </a-col>
                   </a-row>
@@ -286,7 +285,7 @@
 
               <!-- network -->
               <a-collapse-panel
-                v-if="getPlan.kind === 'STATIC'"
+                v-if="false && getPlan.kind === 'STATIC'"
                 key="network"
                 :header="$t('Network:') + networkHeader"
                 :disabled="itemSP ? false : true"
@@ -413,7 +412,7 @@
             <!-- Tarif -->
             <transition
               name="networkApear"
-              v-if="getPlan.kind === 'STATIC'"
+              v-if="true || getPlan.kind === 'STATIC'"
             >
               <a-row
                 type="flex"
@@ -710,17 +709,17 @@
                     (period = "month")
                   ).toFixed(2)
                 }}
-                BYN/{{ $tc("period.month") }}
+                {{ billingData.currency_code || 'USD' }}/{{ $tc("period.month") }}
               </a-col>
 
               <a-col v-if="tarification === 'Hourly'">
                 ~{{
                   calculatePrice(
-                    productFullPriceStatic,
+                    productFullPriceCustom,
                     (period = "hour")
                   ).toFixed(2)
                 }}
-                BYN/{{ $t("hour") }}
+                {{ billingData.currency_code || 'USD' }}/{{ $t("hour") }}
               </a-col>
             </a-row>
             <!-- </transition> -->
@@ -927,20 +926,15 @@ const periods = [
 import { mapGetters } from "vuex";
 import loading from "../loading/loading";
 import myMap from "../map/map.vue";
-import markers from "../../markers.json";
 import passwordMeter from "vue-simple-password-meter";
 import api from "@/api.js";
+
 export default {
   name: "newPaaS",
-  components: {
-    loading,
-    myMap,
-    passwordMeter,
-  },
+  components: { loading, myMap, passwordMeter },
   data() {
     return {
       dataLocalStorage: "",
-      markers,
       productSize: "VDS L",
       activeKey: "location",
       plan: "",
@@ -978,7 +972,7 @@ export default {
           step: 1,
           size: 1,
           min: 20,
-          max: 128,
+          max: 500,
         },
         os: {
           id: -1,
@@ -1008,12 +1002,10 @@ export default {
 
   computed: {
     ...mapGetters("nocloud/namespaces", ["getNameSpaces"]),
-    ...mapGetters("nocloud/plans", ["getPlans"]),
-    ...mapGetters("nocloud/plans", ["isPlansLoading"]),
-    ...mapGetters("nocloud/sp/", ["getSP"]),
-    ...mapGetters("nocloud/auth/", ["userdata", "isLoggedIn"]),
+    ...mapGetters("nocloud/plans", ["getPlans", "isPlansLoading"]),
+    ...mapGetters("nocloud/sp", ["getSP"]),
+    ...mapGetters("nocloud/auth", ["userdata", "billingData", "isLoggedIn"]),
     ...mapGetters("nocloud/vms", ["getServicesFull"]),
-    // ...mapGetters("nocloud/auth", ["isLoggedIn"]),
 
     itemService() {
       const data = this.getServicesFull.find((el) => {
@@ -1027,8 +1019,22 @@ export default {
       );
     },
 
+    locations() {
+      const locations = [];
+
+      this.getSP.forEach((sp) => {
+        sp.locations.forEach((location) => {
+          locations.push({
+            ...location, sp: sp.uuid,
+            id: `${sp.title} ${location.id}`
+          });
+        });
+      });
+
+      return locations;
+    },
     location() {
-      const item = this.markers.find((el) => {
+      return this.locations.find((el) => {
         if (this.dataLocalStorage) {
           if (el.title === this.dataLocalStorage.titleSP) {
             this.locationId = el.id;
@@ -1038,23 +1044,21 @@ export default {
           return el.id === this.locationId;
         }
       });
-      return item;
     },
     itemSP() {
       if (this.location) {
-        const sp = this.getSP.find((el) => {
-          return el.title === this.location.title;
+        return this.getSP.find((el) => {
+          return el.uuid === this.location.sp;
         });
-        return sp;
       }
     },
 
     //--------------Plans-----------------
     //UNKNOWN and STATIC
     getPlan() {
-      const item = this.getPlans.find((el) => {
-        return el.kind === this.tarification;
-      });
+      const type = (this.tarification === 'Monthly') ? 'STATIC' : 'DYNAMIC';
+      const item = this.getPlans.find((el) => el.kind === type);
+      this.plan = item;
       return item || {};
     },
 
@@ -1062,7 +1066,6 @@ export default {
     getPlanOneStatic() {
       for (let planStatic of this.getPlans || {}) {
         if (planStatic.kind === 'STATIC') {
-          this.plan = planStatic;
           return planStatic;
         }
       }
@@ -1107,48 +1110,37 @@ export default {
 
     productFullPriceStatic() {
       if (!this.getPlanOneStatic) return 0;
-      for (let product of Object.values(this.getPlanOneStatic.products)) {
-        if (product.title === this.productSize) {
-          return (
-            Math.floor((product.period = 86400 / (3600 * 24))) *
-            30 *
-            product.price *
-            this.options.period
-          );
-        }
-      }
+      const product = Object.values(this.getPlanOneStatic.products)
+        .find(({ title }) => title === this.productSize);
+
+      return 30 * (product.period / (3600 * 24)) * product.price;
     },
     productFullPriceCustom() {
-      if (this.getPlan.kind === "UNKNOWN") {
+      const plan = this.getPlans.find(({ kind }) => kind !== 'STATIC');
+      if (plan) {
         const price = [];
-        for (let resource of this.getPlan.resources) {
-          if (resource.key === "cpu") {
-            const priceCPU =
-              this.options.cpu.size *
-              resource.price *
-              ((resource.period / 3600) * 24 * 30);
-            price.push(priceCPU);
-          }
-          if (resource.key === "ram") {
-            const priceRAM =
-              this.options.ram.size *
-              resource.price *
-              ((resource.period / 3600) * 24 * 30);
-            price.push(priceRAM);
-          }
+        for (let resource of plan.resources) {
           if (resource.key === "ip") {
-            const priceIP =
-              this.options.network.public.count *
-              resource.price *
-              Math.floor(resource.period / (3600 * 24));
-            price.push(priceIP);
+            const { count } = this.options.network.public;
+
+            price.push(resource.period / 3600 * count * resource.price);
+          } else {
+            const { size } = this.options[resource.key];
+
+            price.push(resource.period / 3600 * size * resource.price);
           }
         }
-        const fullPrice = price.reduce((accum, item) => {
-          return accum + item;
-        });
-        return fullPrice;
+        return price.reduce((accum, item) => accum + item);
       }
+    },
+    diskPrice() {
+      const { size } = this.options.disk;
+      const disk = this.getPlanOneStatic.resources
+        .find(({ key }) => key === `drive_${this.options.drive ? 'ssd' : 'hdd'}`);
+
+      return (this.tarification === 'Monthly')
+        ? 30 * (disk.period / (3600 * 24)) * disk.price * (size / 1024)
+        : disk.period / (3600 * 24 * 30) * disk.price * (size / 1024);
     },
     // passwordValid() {
     //   if (this.focused == true) {
@@ -1252,7 +1244,7 @@ export default {
     },
     planHeader() {
       if (this.itemSP && this.getPlans.length > 0) {
-        return this.plan.kind === "STATIC"
+        return this.tarification === "Monthly"
           ? ` (VDS ${this.$t("Pre-Paid")})`
           : ` (VDC ${this.$t("Pay-as-you-Go")})`;
       } else {
@@ -1423,27 +1415,19 @@ export default {
       }
     },
     calculatePrice(price, period = this.period) {
-      // if(this.options.tarification){
-      // 	return price;
-      // }
       switch (period) {
         case "minute":
-          price = price / 60;
-        case "hour":
-          price = price / 24;
+          return price / 60;
         case "day":
-          price = price / 30;
-        case "month":
-          break;
+          return price / 30;
         case "week":
-          price = (price / 30) * 7;
-          break;
+          return (price / 30) * 7;
+        case "hour":
+        case "month":
+          return price + this.diskPrice;
         default:
           console.error("[VDC Calculator]: Wrong period in calc.", period);
-          return undefined;
-          break;
       }
-      return price;
     },
     setOS(item, index) {
       this.options.os.id = +index;
@@ -1480,7 +1464,7 @@ export default {
         resources: {
           cpu: this.options.cpu.size,
           ram: this.options.ram.size * 1024,
-          drive_type: this.options.disk.type,
+          drive_type: this.options.drive ? "SSD" : "HDD",
           drive_size: this.options.disk.size,
           ips_private: this.options.network.private.count,
           ips_public: this.options.network.public.count,
@@ -1621,7 +1605,7 @@ export default {
         resources: {
           cpu: this.options.cpu.size,
           ram: this.options.ram.size * 1024,
-          drive_type: this.options.disk.type,
+          drive_type: this.options.drive ? "SSD" : "HDD",
           drive_size: this.options.disk.size,
           ips_private: this.options.network.private.count,
           ips_public: this.options.network.public.count,
@@ -1690,7 +1674,7 @@ export default {
         this.$store.commit('nocloud/plans/setPlans', plans);
       });
 
-      const { type } = this.options.disk;
+      const type = this.options.drive ? "SSD" : "HDD";
       const { min_drive_size, max_drive_size } = this.itemSP.vars;
 
       if (!(min_drive_size || max_drive_size)) return;
@@ -1703,6 +1687,11 @@ export default {
       const { min_size } = this.itemSP.publicData.templates[id];
 
       this.options.disk.min = min_size / 1024;
+    },
+    'options.disk.size'(value) {
+      if (value / 1024 <= 50) return;
+      if (this.options.disk.step >= 20) return;
+      this.options.disk.step = Math.round(value / 1024 / 10) - 1;
     }
     // getAddons: function (newVal) {
     //   this.options.addons.os = +newVal.os[0].id;

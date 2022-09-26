@@ -18,7 +18,7 @@ export default {
 		fetch({commit}){
 			commit("setLoading", true);
 			return new Promise((resolve, reject) => {
-				api.servicesProviders.list()
+				api.servicesProviders.list(false)
 				.then(response => {
 					commit('setServicesProviders', response.pool)
 					resolve(response)
