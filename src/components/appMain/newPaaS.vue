@@ -776,7 +776,7 @@
                     )
                   }}
 
-                  <a-row style="margin-top: 20px">
+                  <!-- <a-row style="margin-top: 20px">
                     <a-col>
                       <a-checkbox
                         :checked="modal.goToInvoice"
@@ -784,7 +784,7 @@
                       />
                       {{ $t("go to invoice") | capitalize }}
                     </a-col>
-                  </a-row>
+                  </a-row> -->
                 </a-modal>
               </a-col>
             </a-row>
@@ -978,7 +978,7 @@ export default {
       modal: {
         confirmCreate: false,
         confirmLoading: false,
-        goToInvoice: true,
+        goToInvoice: false,
       },
     };
   },
@@ -1649,6 +1649,7 @@ export default {
 
           if (plan.kind === 'STATIC') {
             title = plan.title.replace('Pre-Paid', this.$t('Pre-Paid'));
+            this.plan = plan;
           } else {
             title = plan.title.replace('Pay-as-you-Go', this.$t('PAYG'));
           }
@@ -1906,7 +1907,7 @@ export default {
   border-radius: 0 0 20px 20px;
 }
 .newCloud__template-item {
-  width: 116px;
+  width: 125px;
   margin-bottom: 10px;
   background-color: #fff;
   box-shadow: 3px 2px 6px rgba(0, 0, 0, 0.08), 0px 0px 8px rgba(0, 0, 0, 0.05);

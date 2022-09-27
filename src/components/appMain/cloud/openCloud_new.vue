@@ -433,11 +433,10 @@
                   </div>
                 </div>
               </div>
-
               <div class="Fcloud__info-block block">
                 <div class="Fcloud__block-header">
-                  <a-icon type="setting" theme="filled" />
-                  {{ $t("cloud_system") | capitalize }}
+                  <a-icon type="info-circle" />
+                  {{ $t("info") | capitalize }}
                 </div>
                 <div class="Fcloud__block-content">
                   <div class="block__column">
@@ -446,6 +445,27 @@
                       {{ OSName || "no data" }}
                     </div>
                   </div>
+                  <div class="block__column">
+                    <div class="block__title">Plan</div>
+                    <div class="block__value">
+                      {{ VM.billingPlan.title || 'no data' }}
+                    </div>
+                  </div>
+                  <div class="block__column">
+                    <div class="block__title">Product</div>
+                    <div class="block__value">
+                      {{ VM.product || 'no data' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="Fcloud__info-block block">
+                <div class="Fcloud__block-header">
+                  <a-icon type="setting" theme="filled" />
+                  {{ $t("cloud_system") | capitalize }}
+                </div>
+                <div class="Fcloud__block-content">
                   <div class="block__column">
                     <div class="block__title">CPU</div>
                     <div class="block__value">
@@ -458,6 +478,35 @@
                       {{ VM.resources && VM.resources.ram / 1024 }} GB
                     </div>
                   </div>
+                </div>
+              </div>
+              <div
+                class="Fcloud__info-block block"
+                v-if="!(chart3Data.length == 0 || chart4Data.length == 0)"
+              >
+                <div class="Fcloud__block-header">
+                  <a-icon type="line-chart" />
+                  {{ $t("graphs") | capitalize }}
+                </div>
+                <div
+                  class="Fcloud__block-content Fcloud__block-content--charts"
+                >
+                  <a-row type="flex" justify="space-around" style="width: 100%">
+                    <a-col>
+                      <GChart
+                        type="LineChart"
+                        :data="cpuChartDataReady"
+                        :options="chartOption('cpu')"
+                      />
+                    </a-col>
+                    <a-col>
+                      <GChart
+                        type="LineChart"
+                        :data="ramChartDataReady"
+                        :options="chartOption('ram')"
+                      />
+                    </a-col>
+                  </a-row>
                 </div>
               </div>
               <div class="Fcloud__info-block block">
@@ -813,6 +862,8 @@ export default {
     return {
       chart1Data: [["Time", ""]],
       chart2Data: [["Time", ""]],
+      chart3Data: [["Time", ""]],
+      chart4Data: [["Time", ""]],
       chartHead: ["Timestamp"],
       chartOptions: {
         title: "network",
@@ -991,6 +1042,42 @@ export default {
       data.unshift([this.chartHead[0], range]);
       return data;
     },
+    cpuChartDataReady() {
+      let data = this.chart3Data;
+      if (data == undefined) {
+        console.error("can't get chart3");
+        return [[0], [0]];
+      }
+      if (data[0] == undefined || data[1] == undefined) {
+        return [
+          [this.chartHead[0], "%"],
+          [0, 0],
+        ];
+      }
+      data = data.map((pair) => [new Date(pair[0] * 1000), parseInt(pair[1])]);
+      data.unshift([this.chartHead[0], 'usage']);
+      return data;
+    },
+    ramChartDataReady() {
+      let data = this.chart4Data;
+      if (data == undefined) {
+        console.error("can't get chart4");
+        return [[0], [0]];
+      }
+      if (data[0] == undefined || data[1] == undefined) {
+        return [
+          [this.chartHead[0], "mb"],
+          [0, 0],
+        ];
+      }
+      let range = this.checkRange(data[data.length - 1][1]);
+      data = data.map((pair) => [
+        new Date(pair[0] * 1000),
+        this.fromBytesTo(parseInt(pair[1]), range),
+      ]);
+      data.unshift([this.chartHead[0], range]);
+      return data;
+    },
 
     itemService() {
       const data = this.getServicesFull.find((el) => {
@@ -1148,13 +1235,20 @@ export default {
     chartOption(title) {
       const newOpt = JSON.parse(JSON.stringify(this.chartOptions));
       let range = "";
+      let capitalized = "";
       if (title.toLowerCase() == "inbound") {
         range = this.checkRange(this.chart1Data[this.chart1Data.length - 1][1]);
+        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
       } else if (title.toLowerCase() == "outgoing") {
         range = this.checkRange(this.chart2Data[this.chart2Data.length - 1][1]);
+        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
+      } else if (title.toLowerCase() == "cpu") {
+        range = "%"
+        capitalized = this.$t(title).toUpperCase();
+      } else if (title.toLowerCase() == "ram") {
+        range = this.checkRange(this.chart4Data[this.chart4Data.length - 1][1]);
+        capitalized = this.$t(title).toUpperCase();
       }
-      let localizeTitle = this.$t(title);
-      let capitalized = localizeTitle[0].toUpperCase() + localizeTitle.slice(1);
       newOpt.title = `${capitalized} (${range})`;
       return newOpt;
     },
@@ -1208,17 +1302,21 @@ export default {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
         action: 'monitoring',
-        params: { 0: ['NETTX', 'NETRX', 'CPU', 'MEMORY'] }
       };
 
       this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
         .then((res) => {
-          console.log(res);
-          if (res.data?.NETRX !== undefined) {
-            this.chart1Data = res.data.NETRX;
+          if (res.meta?.NETRX !== undefined) {
+            this.chart1Data = res.meta.NETRX;
           }
-          if (res.data?.NETTX !== undefined) {
-            this.chart2Data = res.data.NETTX;
+          if (res.meta?.NETTX !== undefined) {
+            this.chart2Data = res.meta.NETTX;
+          }
+          if (res.meta?.CPU !== undefined) {
+            this.chart3Data = res.meta.CPU;
+          }
+          if (res.meta?.MEMORY !== undefined) {
+            this.chart4Data = res.meta.MEMORY;
           }
         })
         .catch((err) => {

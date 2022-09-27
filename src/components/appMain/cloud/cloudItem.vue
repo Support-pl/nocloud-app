@@ -78,7 +78,7 @@ export default {
   },
   methods: {
     cloudClick(uuid, { target }) {
-      if (target.hasAttribute('role')) return;
+      if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return;
       this.$router.push({ name: "openCloud_new", params: { uuid } });
     },
   },
@@ -134,6 +134,7 @@ export default {
 }
 .cloud__lower {
   padding-right: 50px;
+  margin-top: 7px;
 }
 .item__status,
 .cloud__lower {
@@ -163,22 +164,25 @@ export default {
   padding: 7px 20px;
   border-radius: 22px 0px 0px 0px;
 }
-</style>
-
-<style scoped>
-.ant-collapse {
+.cloud__item-wrapper .ant-collapse {
   width: fit-content;
   background: transparent;
 }
-.ant-collapse-header {
+.cloud__item-wrapper .ant-collapse-item {
+  border: none !important;
+  border-radius: 0 !important;
+}
+.cloud__item-wrapper .ant-collapse-header {
   padding: 1px 20px 1px 0 !important;
+  font-size: 16px;
   color: rgba(0, 0, 0, 0.4) !important;
 }
-.ant-collapse-content-box {
+.cloud__item-wrapper .ant-collapse-content-box {
   padding: 5px !important;
   color: rgba(0, 0, 0, 0.4) !important;
 }
-.ant-collapse-arrow {
+.cloud__item-wrapper .ant-collapse-arrow {
+  top: 10.5px !important;
   right: 5px !important;
 }
 </style>
