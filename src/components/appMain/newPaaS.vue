@@ -1895,6 +1895,7 @@ export default {
 .newCloud__template {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   gap: 15px;
 }
 .newCloud__template.one-line {
@@ -1930,6 +1931,7 @@ export default {
 }
 .newCloud__template-name {
   padding: 10px;
+  word-break: break-word;
 }
 .newCloud__template-item.active .newCloud__template-name {
   background-color: var(--main);

@@ -163,6 +163,9 @@ export default {
   padding: 7px 20px;
   border-radius: 22px 0px 0px 0px;
 }
+</style>
+
+<style scoped>
 .ant-collapse {
   width: fit-content;
   background: transparent;
