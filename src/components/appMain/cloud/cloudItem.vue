@@ -1,5 +1,5 @@
 <template>
-  <div class="cloud__item-wrapper" @click="cloudClick(instance.uuid)">
+  <div class="cloud__item-wrapper" @click="(e) => cloudClick(instance.uuid, e)">
     <div class="cloud__item">
       <div class="cloud__upper">
         <div
@@ -17,19 +17,23 @@
       </div>
       <!-- <div class="item_location">{{ location }}</div> -->
       <div class="cloud__lower">
-        <div
-          v-for="(item, index) in instance.state && instance.state.meta.networking && instance.state.meta.networking.public"
-          :key="index"
-        >
-          IP: {{ item }}
-        </div>
-        <div v-if="!(instance.state && instance.state.meta.networking && instance.state.meta.networking.public.length > 0)">
+        <div v-if="!(instance.state && networking && networking.public.length > 0)">
           IP: {{ $t("ip.none") }}
         </div>
+        <a-collapse v-else v-model="activeKey" expandIconPosition="right" :bordered="false">
+          <a-collapse-panel key="1" :header="title">
+            <div
+              v-for="(item, index) in networking.public"
+              :key="index"
+            >
+              {{ item }}
+            </div>
+          </a-collapse-panel>
+        </a-collapse>
       </div>
     </div>
     <div class="cloud__label cloud__label__mainColor">
-      {{ instance.billingPlan.kind == "STATIC" ? $t("PrePaid") : $t("PAYG") }}
+      {{ instance.billingPlan.kind === "STATIC" ? $t("PrePaid") : $t("PAYG") }}
     </div>
   </div>
 </template>
@@ -37,34 +41,24 @@
 <script>
 export default {
   name: "cloudItem",
-  props: {
-    instance: {
-      type: Object,
-    },
-  },
+  props: { instance: { type: Object } },
+  data: () => ({ activeKey: [] }),
   computed: {
     statusColor() {
-      let color = "";
-      switch (this.instance.state && this.instance.state.meta.lcm_state) {
+      switch (this.instance?.state?.meta.lcm_state) {
         case 3:
-          color = "#0fd058";
-          break;
+          return "#0fd058";
         // останавливающийся
         case 18:
-          color = "#919191";
-          break;
+          return "#919191";
         // запускающийся
         case 20:
-          color = "#919191";
-          break;
+          return "#919191";
         case 0:
-          color = "#f9f038";
-          break;
+          return "#f9f038";
         default:
-          color = "rgb(145, 145, 145)";
-          break;
+          return "rgb(145, 145, 145)";
       }
-      return color;
     },
     getSP() {
       return this.$store.getters["nocloud/sp/getSP"];
@@ -75,13 +69,17 @@ export default {
     isLoading() {
       return this.$store.getters["nocloud/vms/isLoading"];
     },
+    networking() {
+      return this.instance?.state?.meta.networking;
+    },
+    title() {
+      return (!this.activeKey.includes('1')) ? `IP: ${this.networking.public[0]}` : 'IP\'s:';
+    }
   },
   methods: {
-    cloudClick(uuid) {
-      this.$router.push({
-        name: "openCloud_new",
-        params: { uuid: uuid },
-      });
+    cloudClick(uuid, { target }) {
+      if (target.hasAttribute('role')) return;
+      this.$router.push({ name: "openCloud_new", params: { uuid } });
     },
   },
   created() {
@@ -134,6 +132,9 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.cloud__lower {
+  padding-right: 50px;
+}
 .item__status,
 .cloud__lower {
   color: rgba(0, 0, 0, 0.4);
@@ -161,5 +162,20 @@ export default {
 .cloud__item-wrapper:hover .cloud__label {
   padding: 7px 20px;
   border-radius: 22px 0px 0px 0px;
+}
+.ant-collapse {
+  width: fit-content;
+  background: transparent;
+}
+.ant-collapse-header {
+  padding: 1px 20px 1px 0 !important;
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+.ant-collapse-content-box {
+  padding: 5px !important;
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+.ant-collapse-arrow {
+  right: 5px !important;
 }
 </style>

@@ -78,9 +78,9 @@ export default {
 		},
 		getTickets(state){
 			const order = ['open','closed','answered'];
-			const tickets = [...state.tickets].sort((a,b) => {
-				return order.indexOf(a.status.toLowerCase()) - order.indexOf(b.status.toLowerCase());
-			});
+			const tickets = [...state.tickets].sort((a, b) =>
+        new Date(b.date) - new Date(a.date)
+      );
       const filters = state.filter.map((el) => {
         if (!el.includes(' ')) return el;
         return el.split(' ').map((el) =>
