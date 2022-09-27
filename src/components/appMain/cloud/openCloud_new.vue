@@ -1207,7 +1207,8 @@ export default {
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
-        action: 'monitoring'
+        action: 'monitoring',
+        params: { 0: ['NETTX', 'NETRX', 'CPU', 'MEMORY'] }
       };
 
       this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
@@ -1383,7 +1384,7 @@ export default {
           this.$api.get(this.baseURL, { params: {
             run: 'create_ticket',
             subject: `Resize VM - ${this.VM.title}`,
-            message: `1. ID: ${this.VM.uuid}\n2. Resources:\n- cpu: ${this.resize.VCPU}/n- ram: ${this.resize.RAM * 1024}`,
+            message: `1. ID: ${this.VM.uuid}\n2. Resources:\n- cpu: ${this.resize.VCPU}\n- ram: ${this.resize.RAM * 1024}`,
             department: 1,
           }})
             .then((resp) => {
@@ -1641,11 +1642,9 @@ export default {
   },
   watch: {
     "VM.uuidService"() {
-      this.$store.dispatch(
-        "nocloud/vms/subscribeWebSocket",
-        this.VM.uuidService
-      );
+      if (!this.VM.uuidService) return;
       this.renameNewName = this.VM.title;
+      this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
       this.fetchMonitoring();
     },
   },

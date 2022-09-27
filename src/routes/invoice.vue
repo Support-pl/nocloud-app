@@ -90,7 +90,7 @@ export default {
 }
 
 .invoices__wrapper {
-  padding: 0 10px 20px;
+  padding: 20px 10px;
 }
 .invoices__wrapper .ant-radio-group {
   width: 100%;

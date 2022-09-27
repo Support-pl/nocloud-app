@@ -216,26 +216,15 @@
                     >
                       <template v-if="item.warning">
                         <div class="newCloud__template-image">
-                          <img
-                            :src="`/img/OS/${item.name}.png`"
-                            :alt="item.desc"
-                          />
+                          <img src="/img/OS/default.png" :alt="item.desc" />
                         </div>
-                        <div class="newCloud__template-name">
-                          {{ item.name }}
-                        </div>
+                        <div class="newCloud__template-name">{{ item.name }}</div>
                       </template>
                       <template v-else>
                         <div class="newCloud__template-image">
-                          <img
-                            :src="`/img/OS/${item.name}.png`"
-                            :alt="item.desc"
-                            @click="setOS(item, index)"
-                          />
+                          <img :src="`/img/OS/${item.name}.png`" :alt="item.desc" @click="setOS(item, index)" />
                         </div>
-                        <div class="newCloud__template-name">
-                          {{ item.desc }}
-                        </div>
+                        <div class="newCloud__template-name">{{ item.name }}</div>
                       </template>
                     </div>
                   </div>
@@ -257,14 +246,8 @@
                       <!-- </a-form-model-item> -->
                       <!-- <a-form-model-item> -->
 
-                      <a-form-item
-                        :has-feedback="password.length ? true : false"
-                        :validate-status="
-                          score < 4 && password.length ? 'error' : 'success'
-                        "
-                        style="margin-bottom: 0px"
-                      >
-                        <a-input
+                      <a-form-item style="margin-bottom: 0px">
+                        <a-input-password
                           @focus="focused = true"
                           class="password"
                           v-model="password"
@@ -1113,7 +1096,7 @@ export default {
       const product = Object.values(this.getPlanOneStatic.products)
         .find(({ title }) => title === this.productSize);
 
-      return 30 * (product.period / (3600 * 24)) * product.price;
+      return product.price / product.period * 3600 * 24 * 30;
     },
     productFullPriceCustom() {
       const plan = this.getPlans.find(({ kind }) => kind !== 'STATIC');
@@ -1123,11 +1106,11 @@ export default {
           if (resource.key === "ip") {
             const { count } = this.options.network.public;
 
-            price.push(resource.period / 3600 * count * resource.price);
+            price.push(resource.price / resource.period * 3600 * count);
           } else {
             const { size } = this.options[resource.key];
 
-            price.push(resource.period / 3600 * size * resource.price);
+            price.push(resource.price / resource.period * 3600 * size);
           }
         }
         return price.reduce((accum, item) => accum + item);
@@ -1139,8 +1122,8 @@ export default {
         .find(({ key }) => key === `drive_${this.options.drive ? 'ssd' : 'hdd'}`);
 
       return (this.tarification === 'Monthly')
-        ? 30 * (disk.period / (3600 * 24)) * disk.price * (size / 1024)
-        : disk.period / (3600 * 24 * 30) * disk.price * (size / 1024);
+        ? disk.price / disk.period * 3600 * 24 * 30 * (size / 1024)
+        : disk.price / disk.period * 3600 * (size / 1024);
     },
     // passwordValid() {
     //   if (this.focused == true) {
@@ -1689,9 +1672,15 @@ export default {
       this.options.disk.min = min_size / 1024;
     },
     'options.disk.size'(value) {
-      if (value / 1024 <= 50) return;
-      if (this.options.disk.step >= 20) return;
-      this.options.disk.step = Math.round(value / 1024 / 10) - 1;
+      if (value / 1024 >= 200) {
+        this.options.disk.step = 20;
+      } else if (value / 1024 >= 100) {
+        this.options.disk.step = 10;
+      } else if (value / 1024 >= 50) {
+        this.options.disk.step = 5;
+      } else {
+        this.options.disk.step = 1;
+      }
     }
     // getAddons: function (newVal) {
     //   this.options.addons.os = +newVal.os[0].id;
@@ -1752,7 +1741,7 @@ export default {
 .newCloud {
   position: absolute;
   margin-top: 15px;
-  margin-bottom: 15px;
+  padding-bottom: 15px;
   width: 100%;
   max-width: 1024px;
   left: 50%;
