@@ -1493,7 +1493,14 @@ export default {
           group = orderDataNew.instances_groups.at(-1);
         }
         group.instances.push(newInstance);
-        group.resources.ips_public = group.instances.length;
+
+        const res = group.instances.reduce((prev, curr) => ({
+          private: prev.private + curr.resources.ips_private,
+          public: prev.public + curr.resources.ips_public
+        }), { private: 0, public: 0 });
+
+        group.resources.ips_private = res.private;
+        group.resources.ips_public = res.public;
 
         delete orderDataNew.instancesGroups;
         this.updateVM(orderDataNew);
@@ -1509,8 +1516,8 @@ export default {
               {
                 title: this.userdata.title + Date.now(),
                 resources: {
-                  ips_private: 0,
-                  ips_public: 1,
+                  ips_private: newInstance.resources.ips_private,
+                  ips_public: newInstance.resources.ips_public,
                 },
                 type: "ione",
                 instances: [this.service ? instance : newInstance],

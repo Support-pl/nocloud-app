@@ -182,7 +182,7 @@ export default {
   color: rgba(0, 0, 0, 0.4) !important;
 }
 .cloud__item-wrapper .ant-collapse-arrow {
-  top: 10.5px !important;
+  top: 11px !important;
   right: 5px !important;
 }
 </style>
