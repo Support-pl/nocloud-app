@@ -1471,7 +1471,7 @@ export default {
         if (this.VM.billingPlan.kind === 'DYNAMIC') {
           instance.resources.cpu = +this.resize.VCPU;
           instance.resources.ram = this.resize.RAM * 1024;
-        } else if (!(cpuEqual || ramEqual)) {
+        } else if (!cpuEqual || !ramEqual) {
           this.$api.get(this.baseURL, { params: {
             run: 'create_ticket',
             subject: `Resize VM - ${this.VM.title}`,
