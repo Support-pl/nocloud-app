@@ -395,15 +395,6 @@
                         <tbody>
                           <tr
                             v-for="nic in VM.state &&
-                            VM.state.meta.networking.private"
-                            :key="nic.NAME"
-                          >
-                            <td>{{ nic }}</td>
-                          </tr>
-                        </tbody>
-                        <tbody>
-                          <tr
-                            v-for="nic in VM.state &&
                             VM.state.meta.networking.public"
                             :key="nic.NAME"
                           >
@@ -448,13 +439,13 @@
                   <div class="block__column">
                     <div class="block__title">Plan</div>
                     <div class="block__value">
-                      {{ VM.billingPlan.title || 'no data' }}
+                      {{ VM.billingPlan && VM.billingPlan.title || 'no data' }}
                     </div>
                   </div>
                   <div class="block__column">
                     <div class="block__title">Product</div>
                     <div class="block__value">
-                      {{ VM.product || 'no data' }}
+                      {{ VM.product && VM.product.replace('_', ' ').toUpperCase() || 'no data' }}
                     </div>
                   </div>
                 </div>
@@ -1474,15 +1465,17 @@ export default {
         this.isRenameLoading = true;
         const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
         const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
+        const cpuEqual = instance.resources.cpu === +this.resize.VCPU;
+        const ramEqual = instance.resources.ram === this.resize.RAM * 1024;
 
         if (this.VM.billingPlan.kind === 'DYNAMIC') {
           instance.resources.cpu = +this.resize.VCPU;
           instance.resources.ram = this.resize.RAM * 1024;
-        } else {
+        } else if (!(cpuEqual || ramEqual)) {
           this.$api.get(this.baseURL, { params: {
             run: 'create_ticket',
             subject: `Resize VM - ${this.VM.title}`,
-            message: `1. ID: ${this.VM.uuid}\n2. Resources:\n- cpu: ${this.resize.VCPU}\n- ram: ${this.resize.RAM * 1024}`,
+            message: `1. ID: ${this.VM.uuid}\n2. Resources:\n - cpu: ${this.resize.VCPU}\n - ram: ${this.resize.RAM * 1024}`,
             department: 1,
           }})
             .then((resp) => {
@@ -1958,6 +1951,7 @@ export default {
 }
 .block__column {
   display: flex;
+  flex: 1 1 33%;
   flex-direction: column;
   align-items: center;
   justify-content: center;

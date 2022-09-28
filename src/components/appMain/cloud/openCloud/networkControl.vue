@@ -183,6 +183,14 @@ export default {
         private: this.networking.private.list,
         public: this.networking.public.list
       };
+
+      const res = group.instances.reduce((prev, curr) => ({
+        private: prev.private + curr.resources.ips_private,
+        public: prev.public + curr.resources.ips_public
+      }), { private: 0, public: 0 });
+
+      group.resources.ips_private = res.private;
+      group.resources.ips_public = res.public;
       this.isLoading = true;
       this.updateService('Add');
     },

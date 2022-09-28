@@ -77,7 +77,7 @@ export default {
 			return state.tickets;
 		},
 		getTickets(state){
-			const order = ['open','closed','answered'];
+			const order = ['open', 'closed', 'answered'];
 			const tickets = [...state.tickets].sort((a, b) =>
         new Date(b.date) - new Date(a.date)
       );
