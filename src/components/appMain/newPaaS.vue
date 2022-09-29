@@ -130,7 +130,7 @@
                         >{{ $t("Drive") }}:</span
                       >
                     </a-col>
-                    <a-col :xs="10" :sm="14">
+                    <a-col :xs="12" :sm="14">
                       <a-switch v-model="options.drive" style="width: 60px">
                         <span slot="checkedChildren">SSD</span>
                         <span slot="unCheckedChildren">HDD</span>
@@ -138,8 +138,9 @@
                     </a-col>
                     <a-col
                       class="changing__field"
-                      span="4"
                       style="text-align: right"
+                      :sm="4"
+                      :xs="6"
                     >
                       {{ diskSize }}
                     </a-col>
@@ -229,7 +230,7 @@
                     </div>
                   </div>
                   <a-row>
-                    <a-col :xs="12" :sm="10">
+                    <a-col :xs="24" :sm="10">
                       <!-- <a-form-model-item> -->
                       <a-input
                         style="margin-top: 10px"

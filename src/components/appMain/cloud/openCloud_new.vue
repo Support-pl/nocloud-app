@@ -385,18 +385,28 @@
                   {{ "IP" }}
                 </div>
                 <div class="Fcloud__block-content">
-                  <div class="block__column">
+                  <div class="block__column" style="flex-direction: row">
                     <div
-                      class="block__value"
-                      v-if="dataSP"
-                      style="font-size: 18px"
-                    >
+                      class="block__value" v-if="dataSP" style="font-size: 18px">
                       <table class="Fcloud__table">
                         <tbody>
                           <tr
                             v-for="nic in VM.state &&
                             VM.state.meta.networking.public"
-                            :key="nic.NAME"
+                            :key="nic"
+                          >
+                            <td>{{ nic }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="block__value" v-if="dataSP" style="font-size: 18px">
+                      <table class="Fcloud__table">
+                        <tbody>
+                          <tr
+                            v-for="nic in VM.state &&
+                            VM.state.meta.networking.private"
+                            :key="nic"
                           >
                             <td>{{ nic }}</td>
                           </tr>
@@ -442,10 +452,10 @@
                       {{ VM.billingPlan && VM.billingPlan.title || 'no data' }}
                     </div>
                   </div>
-                  <div class="block__column">
+                  <div class="block__column" v-if="VM.product">
                     <div class="block__title">Product</div>
                     <div class="block__value">
-                      {{ VM.product && VM.product.replace('_', ' ').toUpperCase() || 'no data' }}
+                      {{ VM.product.replace('_', ' ').toUpperCase() || 'no data' }}
                     </div>
                   </div>
                 </div>
@@ -469,35 +479,6 @@
                       {{ VM.resources && VM.resources.ram / 1024 }} GB
                     </div>
                   </div>
-                </div>
-              </div>
-              <div
-                class="Fcloud__info-block block"
-                v-if="!(chart3Data.length == 0 || chart4Data.length == 0)"
-              >
-                <div class="Fcloud__block-header">
-                  <a-icon type="line-chart" />
-                  {{ $t("graphs") | capitalize }}
-                </div>
-                <div
-                  class="Fcloud__block-content Fcloud__block-content--charts"
-                >
-                  <a-row type="flex" justify="space-around" style="width: 100%">
-                    <a-col>
-                      <GChart
-                        type="LineChart"
-                        :data="cpuChartDataReady"
-                        :options="chartOption('cpu')"
-                      />
-                    </a-col>
-                    <a-col>
-                      <GChart
-                        type="LineChart"
-                        :data="ramChartDataReady"
-                        :options="chartOption('ram')"
-                      />
-                    </a-col>
-                  </a-row>
                 </div>
               </div>
               <div class="Fcloud__info-block block">
@@ -598,6 +579,20 @@
                         type="LineChart"
                         :data="outChartDataReady"
                         :options="chartOption('outgoing')"
+                      />
+                    </a-col>
+                    <a-col>
+                      <GChart
+                        type="LineChart"
+                        :data="cpuChartDataReady"
+                        :options="chartOption('cpu')"
+                      />
+                    </a-col>
+                    <a-col>
+                      <GChart
+                        type="LineChart"
+                        :data="ramChartDataReady"
+                        :options="chartOption('ram')"
                       />
                     </a-col>
                   </a-row>
@@ -709,14 +704,16 @@
                           <!-- :disabled="!VM.state.meta.snapshots" -->
                           <a-button
                             type="primary"
-                            @click="revSnapshot(index)"
                             style="margin-right: 10px"
+                            :loading="snapshots.addSnap.loading"
+                            @click="revSnapshot(index)"
                           >
                             <a-icon type="caret-right" />
                           </a-button>
                           <!-- :disabled=" !VM.state.meta.snapshots" -->
                           <a-button
                             type="danger"
+                            :loading="snapshots.loading"
                             @click="deleteSnapshot(index)"
                           >
                             <a-icon type="close"
@@ -903,7 +900,7 @@ export default {
       },
       snapshots: {
         modal: false,
-        loading: true,
+        loading: false,
         columns,
         data: [],
         loadingSnaps: [],
@@ -1399,9 +1396,12 @@ export default {
         params: { snap_name: this.snapshots.addSnap.snapname },
         action: "snapcreate",
       };
+
+      this.snapshots.addSnap.loading = true;
       this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
         .then((res) => {
+          this.VM.state.meta.snapshots = res?.meta.snapshots;
           this.openNotificationWithIcon("success", {
             message: "Create Snapshot",
           });
@@ -1412,6 +1412,9 @@ export default {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
           this.openNotificationWithIcon("error", opts);
+        })
+        .finally(() => {
+          this.snapshots.addSnap.loading = false;
         });
     },
     openModal(name) {
@@ -1542,9 +1545,12 @@ export default {
         params: { snap_id: +index },
         action: "snapdelete",
       };
+
+      this.snapshots.loading = true;
       this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
-        .then((res) => {
+        .then(() => {
+          delete this.VM.state.meta.snapshots[index];
           this.openNotificationWithIcon("success", {
             message: "Delete Snapshot",
           });
@@ -1554,6 +1560,9 @@ export default {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
           this.openNotificationWithIcon("error", opts);
+        })
+        .finally(() => {
+          this.snapshots.loading = false;
         });
     },
     revSnapshot(index) {
@@ -1562,6 +1571,8 @@ export default {
         params: { snap_id: +index },
         action: "snaprevert",
       };
+
+      this.snapshots.addSnap.loading = true;
       this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
         .then((res) => {
@@ -1574,6 +1585,9 @@ export default {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
           this.openNotificationWithIcon("error", opts);
+        })
+        .finally(() => {
+          this.snapshots.addSnap.loading = false;
         });
     },
     getFormatedDate(dstring) {
@@ -1940,11 +1954,13 @@ export default {
   display: flex;
   justify-content: space-around;
   align-items: center;
+  gap: 10px;
   margin-top: 8px;
   font-size: 1rem;
   background-color: #fff;
   border-radius: 20px;
   padding: 10px 0;
+  text-align: center;
 }
 .Fcloud__block-content--charts {
   flex-wrap: wrap;
@@ -1959,6 +1975,9 @@ export default {
 }
 .block__title {
   color: #919392;
+}
+.block__value {
+  word-break: break-word;
 }
 .ssh-text {
   border-bottom: 1px solid rgba(0, 0, 0, 0.65);

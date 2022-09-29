@@ -175,7 +175,7 @@ export default {
 				}
 			}
 
-			let regexEmail = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+			let regexEmail = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,15})+$/;
 			if(!this.userinfo.email.match(regexEmail)){
 				this.$message.warn('Email is not valid');
 				return
