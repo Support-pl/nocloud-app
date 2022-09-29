@@ -12,7 +12,7 @@
     </a-table>
 
     <a-row style="margin: 15px 0" :gutter="[10, 10]">
-      <a-col style="display: flex; align-items: center" :span="12">
+      <a-col style="display: flex; align-items: center" :sm="12" :xs="24">
         <span>{{ $t("Public network") }}:</span>
         <a-switch
           v-model="networking.public.status"
@@ -27,7 +27,7 @@
         />
       </a-col>
 
-      <a-col style="display: flex; align-items: center" :span="12">
+      <a-col style="display: flex; align-items: center" :sm="12" :xs="24">
         <span>{{ $t("Private network") }}:</span>
         <a-switch
           v-model="networking.private.status"
@@ -174,11 +174,8 @@ export default {
       const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
       const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
 
-      instance.resources = {
-        ...instance.resources,
-        ips_private: this.networking.private.count,
-        ips_public: this.networking.public.count
-      };
+      instance.resources.ips_private = this.networking.private.count;
+      instance.resources.ips_public = this.networking.public.count;
       instance.state.meta.networking = {
         private: this.networking.private.list,
         public: this.networking.public.list

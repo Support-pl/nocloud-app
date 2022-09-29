@@ -295,9 +295,21 @@ export default {
     },
     updateFilter(info) {
       if (this.active == "support") {
-        this.$store.commit("support/updateFilter", info);
+        const filtered = {};
+        this.getAllTickets.forEach((el) => {
+          const key = this.$t(`filterHeader.${el.status}`);
+
+          filtered[key] = el.status;
+        });
+        this.$store.commit("support/updateFilter", info.map((el) => filtered[el]));
       } else if (this.active == "invoice") {
-        this.$store.commit("invoices/updateFilter", info);
+        const filtered = {};
+        this.getAllInvoices.forEach((el) => {
+          const key = this.$t(`filterHeader.${el.status}`);
+
+          filtered[key] = el.status;
+        });
+        this.$store.commit("invoices/updateFilter", info.map((el) => filtered[el]));
       }
     },
     updateSearch({ key, target }) {

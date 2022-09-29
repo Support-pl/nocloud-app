@@ -17,13 +17,13 @@
       </div>
       <!-- <div class="item_location">{{ location }}</div> -->
       <div class="cloud__lower">
-        <div v-if="!(instance.state && networking && networking.public.length > 0)">
+        <div v-if="!(instance.state && networking.length > 0)">
           IP: {{ $t("ip.none") }}
         </div>
         <a-collapse v-else v-model="activeKey" expandIconPosition="right" :bordered="false">
           <a-collapse-panel key="1" :header="title">
             <div
-              v-for="(item, index) in networking.public"
+              v-for="(item, index) in networking"
               :key="index"
             >
               {{ item }}
@@ -70,10 +70,13 @@ export default {
       return this.$store.getters["nocloud/vms/isLoading"];
     },
     networking() {
-      return this.instance?.state?.meta.networking;
+      const net = this.instance?.state?.meta.networking;
+
+      if (!net) return [];
+      return [...net.public, ...net.private];
     },
     title() {
-      return (!this.activeKey.includes('1')) ? `IP: ${this.networking.public[0]}` : 'IP\'s:';
+      return (!this.activeKey.includes('1')) ? `IP: ${this.networking[0]}` : 'IP\'s:';
     }
   },
   methods: {

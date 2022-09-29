@@ -136,4 +136,10 @@ export default {
 .horisontal-line {
   margin-bottom: 2px;
 }
+
+@media (max-width: 400px) {
+  .invoice__cost {
+    flex: 1.5 1 0;
+  }
+}
 </style>
