@@ -38,7 +38,7 @@
                     dominant-baseline="middle"
                     text-anchor="middle"
                   >
-                    {{ invoice.total || total }}
+                    {{ +invoice.total || total }}
                     {{ (invoice.currencycode) ? invoice.currencycode : "USD" }}
                   </text>
                 </svg>

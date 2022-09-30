@@ -7,7 +7,7 @@
     </div>
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
-        {{ invoice.total || total }} {{ invoice.currencycode || 'USD' }}
+        {{ +invoice.total + +invoice.credit }} {{ invoice.currencycode || 'USD' }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -59,9 +59,6 @@ export default {
       } else {
         return null;
       }
-    },
-    total() {
-      return this.invoice.items.item.reduce((a, b) => a + +b.amount, 0);
     },
   },
   methods: {
