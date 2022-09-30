@@ -1,4 +1,5 @@
 import api from "@/api.js"
+import Cookies from "js-cookie";
 import vue from "vue"
 
 export default {
@@ -122,7 +123,9 @@ export default {
 			})
 		},
 		subscribeWebSocket({ commit, state }, uuid) {
-			state.socket = new WebSocket(`wss://api.nocloud.ione-cloud.net/services/${uuid}/stream`);
+      const token = Cookies.get('noCloudinApp-token');
+
+			state.socket = new WebSocket(`wss://api.nocloud.ione-cloud.net/services/${uuid}/stream`, ['Bearer', token]);
 
 			state.socket.onopen = (event) => {
 				console.log(event)
