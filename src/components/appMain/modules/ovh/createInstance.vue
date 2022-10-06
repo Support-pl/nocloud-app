@@ -82,6 +82,16 @@
       :header="$t('OS:') + (options.os.name == '' ? ' ' : ' (' + options.os.name + ')')"
     >
       <div class="newCloud__option-field" v-if="images.length > 0">
+        <a-row>
+          <a-col :xs="24" :sm="10">
+            <a-input
+              style="margin-bottom: 20px"
+              placeholder="VM name"
+              :value="vmName"
+              @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
+            />
+          </a-col>
+        </a-row>
         <div class="newCloud__template" v-if="this.itemSP">
           <div
             v-for="(item, index) in images"
@@ -104,16 +114,6 @@
             </template>
           </div>
         </div>
-        <a-row>
-          <a-col :xs="24" :sm="10">
-            <a-input
-              style="margin-top: 10px"
-              placeholder="VM name"
-              :value="vmName"
-              @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
-            />
-          </a-col>
-        </a-row>
       </div>
       <a-alert
         v-else
@@ -184,7 +184,7 @@ export default {
       const flavor = this.allFlavors.find((el) =>
         (el.region === this.region) && (el.name === value)
       );
-      const drive = flavor.type.split('.')[1];
+      const drive = flavor?.type.split('.')[1];
 
       this.options.cpu.size = flavor.vcpus;
       this.options.ram.size = +(flavor.ram / 1024).toFixed(2);
@@ -206,7 +206,7 @@ export default {
         this.allFlavors = meta.result;
         meta.result.forEach((el) => {
           if (this.flavors.find(({ value }) => value === el.name)) return;
-          this.flavors.push({ value: el.name, label: el.name });
+          this.flavors.push({ value: el.name, label: el.name.toUpperCase() });
         });
       })
       .finally(() => {

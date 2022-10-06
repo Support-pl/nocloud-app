@@ -213,78 +213,35 @@ export default {
   name: "openCloud",
   components: { loading, diskControl, bootOrder, networkControl, accessManager },
   mixins: [notification],
-  data() {
-    return {
-      isDeleteLoading: false,
-      isRenameLoading: false,
-      reinstallPass: "",
-      renameNewName: "",
-      loadingResizeVM: false,
-      modal: {
-        menu: false,
-        reinstall: false,
-        delete: false,
-        expand: false,
-        diskControl: false,
-        bootOrder: false,
-        SSH: false,
-        networkControl: false,
-        accessManager: false,
-        rename: false,
-        resize: false,
-      },
-      bootOrder: {
-        loading: false,
-      },
-      resize: {
-        VCPU: 0,
-        RAM: 0,
-        size: 0,
-        scale: "GB",
-      },
-      menuOptions: [
-        {
-          title: "Reinstall",
-          onclick: this.sendReinstall,
-          params: [],
-          icon: "exclamation",
-        },
-        {
-          title: "Rename",
-          onclick: this.changeModal,
-          params: ["rename"],
-          icon: "tag",
-        },
-        {
-          title: "Resize VM",
-          onclick: this.changeModal,
-          params: ["expand"],
-          icon: "arrows-alt",
-          forVNC: true,
-        },
-        {
-          title: "SSH key",
-          onclick: this.changeModal,
-          params: ["SSH"],
-          icon: "safety",
-        },
-        {
-          title: "Network control",
-          onclick: this.changeModal,
-          params: ["networkControl"],
-          icon: "global",
-          forVNC: true,
-        },
-        {
-          title: "Delete",
-          onclick: this.sendDelete,
-          icon: "delete",
-          type: "danger",
-          forVNC: true,
-        },
-      ],
-    }
-  },
+  data: () => ({
+    isDeleteLoading: false,
+    isRenameLoading: false,
+    reinstallPass: "",
+    renameNewName: "",
+    loadingResizeVM: false,
+    modal: {
+      menu: false,
+      reinstall: false,
+      delete: false,
+      expand: false,
+      diskControl: false,
+      bootOrder: false,
+      SSH: false,
+      networkControl: false,
+      accessManager: false,
+      rename: false,
+      resize: false,
+    },
+    bootOrder: {
+      loading: false,
+    },
+    resize: {
+      VCPU: 0,
+      RAM: 0,
+      size: 0,
+      scale: "GB",
+    },
+  }),
   computed: {
     ...mapGetters("nocloud/vms", [
       "getActionLoadingInvoke",
@@ -298,6 +255,58 @@ export default {
       } else {
         return () => import('@/components/appMain/modules/ione/openInstance.vue');
       }
+    },
+    menuOptions() {
+      const options = [
+        {
+          title: "Reinstall",
+          onclick: this.sendReinstall,
+          params: [],
+          icon: "exclamation",
+          modules: ['ione'],
+        },
+        {
+          title: "Rename",
+          onclick: this.changeModal,
+          params: ["rename"],
+          icon: "tag",
+        },
+        {
+          title: "Resize VM",
+          onclick: this.changeModal,
+          params: ["expand"],
+          icon: "arrows-alt",
+          forVNC: true,
+          modules: ['ione'],
+        },
+        {
+          title: "SSH key",
+          onclick: this.changeModal,
+          params: ["SSH"],
+          icon: "safety",
+        },
+        {
+          title: "Network control",
+          onclick: this.changeModal,
+          params: ["networkControl"],
+          icon: "global",
+          forVNC: true,
+          modules: ['ione'],
+        },
+        {
+          title: "Delete",
+          onclick: this.sendDelete,
+          icon: "delete",
+          type: "danger",
+          forVNC: true,
+        },
+      ];
+      const { type } = this.$store.getters['nocloud/sp/getSP']
+        .find(({ uuid }) => uuid === this.VM.sp);
+
+      return options.filter((el) =>
+        (el.modules) ? el.modules.includes(type) : true
+      );
     },
 
     itemService() {
@@ -327,6 +336,7 @@ export default {
         : this.VM.state.meta.lcm_state_str
 
       if (this.VM.state.meta.state === 1) return "PENDING";
+      if (this.VM.state.meta.state === "BUILD") return "BUILD";
       switch (state) {
         case "LCM_INIT":
           return "POWEROFF";
@@ -344,6 +354,7 @@ export default {
         case "RUNNING":
           return "#0fd058";
         // останавливающийся и запускающийся
+        case "BUILD":
         case "BOOT_POWEROFF":
         case "SHUTDOWN_POWEROFF":
           return "#919191";

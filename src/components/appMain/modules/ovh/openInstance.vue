@@ -100,40 +100,6 @@
           </a-radio-group>
         </a-modal>
       </div>
-      <div
-        class="Fcloud__button"
-        @click="openModal('recover')"
-        :class="{
-          disabled: statusVM && statusVM.recover,
-        }"
-      >
-        <div class="Fcloud__BTN-icon">
-          <a-icon type="backward" />
-        </div>
-        <div class="Fcloud__BTN-title">{{ $t("Recover") }}</div>
-        <a-modal
-          v-model="modal.recover"
-          :title="$t('cloud_Recover_modal')"
-          @ok="handleOk('recover')"
-        >
-          <p>{{ $t("cloud_Recover_invite_line1") }}</p>
-          <p>{{ $t("cloud_Recover_invite_line2") }}</p>
-          <p>{{ $t("cloud_Recover_invite_line3") }}</p>
-          <p>{{ $t("cloud_Recover_invite") }}</p>
-          <a-radio-group
-            v-model="option.recover"
-            name="recover"
-            :default-value="1"
-          >
-            <a-radio :value="0">
-              {{ $t("yesterday") }}
-            </a-radio>
-            <a-radio :value="1">
-              {{ $t("today") }}
-            </a-radio>
-          </a-radio-group>
-        </a-modal>
-      </div>
     </div>
 
     <div class="Fcloud__info">
@@ -284,13 +250,10 @@ export default {
     modal: {
       reboot: false,
       shutdown: false,
-      recover: false,
-      snapshot: false,
     },
     option: {
       reboot: 0,
       shutdown: 0,
-      recover: 0,
     },
     actualAction: "",
     actionLoading: false,
@@ -356,26 +319,6 @@ export default {
           }
           this.modal.shutdown = false;
           break;
-        case "recover":
-          this.$confirm({
-            title: this.$t("Do you want to download a backup?"),
-            maskClosable: true,
-            content: () => {
-              return <div>{ this.$t("All unsaved progress will be lost, are you sure?") }</div>;
-            },
-            okText: this.$t("Yes"),
-            cancelText: this.$t("Cancel"),
-            onOk: () => {
-              if (this.option.recover) {
-                this.sendAction("recoverToday");
-              } else {
-                this.sendAction("recoverYesterday");
-              }
-              this.modal.recover = false;
-            },
-            onCancel() {},
-          });
-          break;
       }
     },
     openModal(name) {
@@ -392,14 +335,6 @@ export default {
         case "delete":
           if (this.statusVM.delete) return;
           break;
-        case "recover":
-          if (this.statusVM.recover) return;
-          break;
-        case "snapshot":
-          this.snapshots.modal = true;
-          break;
-        case "createSnapshot":
-          this.snapshots.addSnap.modal = true;
       }
       this.modal[name] = true;
     },
@@ -412,27 +347,6 @@ export default {
         params: (hard) ? { hard: true } : {},
       }
 
-      if (action === 'recoverYesterday' || action === 'recoverToday') {
-        action = action.replace('recover', '');
-        this.$api.get(this.baseURL, { params: {
-          run: 'create_ticket',
-          subject: `Recover VM - ${this.VM.title}`,
-          message: `1. ID: ${this.VM.uuid}\n2. Date: ${action}`,
-          department: 1,
-        }})
-          .then((resp) => {
-            if (resp.result == "success") {
-              this.$message.success("Ticket created successfully");
-            } else {
-              throw resp;
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-            this.$message.error("Something went wrong");
-          });
-        return;
-      }
       this.$store
         .dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
@@ -457,16 +371,14 @@ export default {
     statusVM() {
       if (!this.VM) return;
       if (this.VM.state.state === 'PENDING') return {
-        shutdown: true, reboot: true, recover: true
+        shutdown: true, reboot: true
       }
       return {
         shutdown: this.VM.state.state !== 'RUNNING' &&
           this.VM.state.state !== 'STOPPED',
-        reboot: this.VM.state.state !== 'RUNNING' &&
-          this.VM.state.state !== 'STOPPED',
+        reboot: this.VM.state.meta.state !== 'BUILD' ||
+          this.VM.state.state === 'STOPPED',
         start: this.VM.state.state !== 'RUNNING' &&
-          this.VM.state.state !== 'STOPPED',
-        recover: this.VM.state.state !== 'RUNNING' &&
           this.VM.state.state !== 'STOPPED',
       };
     },
