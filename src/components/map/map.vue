@@ -50,7 +50,7 @@
           <path
             v-for="country in mapData.countries"
             :key="country.id + country.title"
-            :class="{ 'map__part--selected': selected.split(' ')[1] == country.id }"
+            :class="{ 'map__part--selected': selected.split(' ').at(-1) == country.id }"
             class="map__part"
             :id="country.id"
             :title="country.title"
@@ -149,7 +149,7 @@ export default {
     leaveDelay: 300,
     leaveDelayInterval: -1,
     scale: 1,
-    maxScale: 4,
+    maxScale: 6,
 		minScale: 1,
 		selectedDrag: null,
     svg: null,
@@ -269,7 +269,7 @@ export default {
   mounted(){
     const container = this.$refs.viewport;
     const min = { x: Infinity, y: Infinity };
-    const max = { x: 0, y: 0 };
+    const max = { x: -Infinity, y: -Infinity };
     let x, y;
 
     this.markers.forEach(({ x, y }) => {
@@ -278,16 +278,26 @@ export default {
       if (max.x < x) max.x = x;
       if (max.y < y) max.y = y;
     });
-    this.scale = mapData.meta.width / (max.x - min.x + 70);
 
+    const xScale = mapData.meta.width / (max.x - min.x + 70);
+    const yScale = mapData.meta.height / (max.y - min.y + 70);
+    let diff, right = 0, down = 0;
+
+    this.scale = Math.min(xScale, yScale);
     if (this.scale > this.maxScale) {
       this.scale = this.maxScale;
-      x = (min.x + 20) * this.scale - (max.x + min.x) / 2;
-      y = (min.y + 20) * this.scale - (max.y + min.y) / 2;
-    } else {
-      x = (min.x - 20) * this.scale;
-      y = (min.y - 20) * this.scale;
     }
+    if (xScale > yScale || this.scale > this.maxScale) {
+      diff = xScale - this.scale;
+      right = 20 * this.scale * diff;
+    }
+    if (yScale > xScale || this.scale > this.maxScale) {
+      diff = yScale - this.scale;
+      down = 20 * this.scale * diff;
+    }
+    
+    x = (min.x - 20) * this.scale - right;
+    y = (min.y - 10) * this.scale - down;
 
 		this.svg = this.$refs.svgwrapper;
 		container.setAttribute('transform', `matrix(${this.scale} 0 0 ${this.scale} ${-x} ${-y})`);
@@ -335,6 +345,7 @@ export default {
 .map__popup-content {
   height: 100%;
   width: 100%;
+  text-align: center;
 }
 .map__popup-content--default {
   font-size: 16px;

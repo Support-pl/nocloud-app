@@ -13,17 +13,11 @@
 </template>
 
 <script>
-import login from "./routes/login.vue";
-import appMain from "./components/appMain/appMain.vue";
 import updateNotification from "./components/updateNotification/index.vue";
 
 export default {
   name: "app",
-  components: {
-    login,
-    appMain,
-    updateNotification,
-  },
+  components: { updateNotification },
   created() {
     this.$store.dispatch("nocloud/auth/load");
 

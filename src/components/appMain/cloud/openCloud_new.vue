@@ -1,9 +1,9 @@
 <template>
   <div class="cloud__fullscreen Fcloud">
-    <template>
-      <transition name="opencloud" :duration="600">
-        <div v-if="!vmsLoading" class="cloud__container">
-          <div class="Fcloud">
+    <transition name="opencloud" :duration="600">
+      <div v-if="!vmsLoading" class="cloud__container">
+        <component :is="template" :VM="VM">
+          <template #header>
             <div class="Fcloud__header">
               <div class="Fcloud__back-wrapper">
                 <div class="Fcloud__back icon__wrapper" @click="$router.go(-1)">
@@ -23,23 +23,13 @@
                   class="Fcloud__status"
                   :class="{ 'glowing-animations': getActionLoadingInvoke }"
                 >
-                  <!-- {{
-                    VM.state.meta.state_str
-                      ? VM.state.meta.state_str
-                      : VM.state.meta.error
-                  }} -->
-                  <!-- {{ vmState | replace("_", " ") }} -->
                   {{ stateVM }}
                 </div>
               </div>
               <div class="Fcloud__menu-wrapper">
                 <div class="Fcloud__menu-btn icon__wrapper">
-                  <a-icon type="more" @click="openModal('menu')" />
+                  <a-icon type="more" @click="changeModal('menu')" />
                   <a-modal v-model="modal.menu" title="Menu" :footer="null">
-                    <!-- v-for="btn in menuOptions.filter(
-                        (el) => !el.forVNC || SingleCloud.GNAME == 'VDC'
-                      )" -->
-
                     <a-button
                       block
                       class="menu__button"
@@ -134,12 +124,7 @@
                     <a-row style="display: flex; align-items: center; width: 100%">
                       <a-col style="width: 75px; padding-top:20px"> Disk (GB) </a-col>
                       <a-col style="width: 100%">
-                        <div
-                          :style="{
-                            color: config.colors.err,
-                            'text-align': 'center',
-                          }"
-                        >
+                        <div :style="{ color: 'var(--err)', textAlign: 'center' }">
                           Can't reduce disk size
                         </div>
                         <a-input-number
@@ -150,13 +135,6 @@
                         />
                       </a-col>
                     </a-row>
-
-                    <!-- <a-slider
-                      :min="mbToGb(VM && VM.resources.drive_size)"
-                      :tooltip-visible="true"
-                      v-model="resize.size"
-                     :tipFormatter="(el) => el + resize.scale" 
-                    /> -->
                   </a-modal>
                   <a-modal
                     v-model="modal.SSH"
@@ -213,671 +191,36 @@
                 </div>
               </div>
             </div>
-            <div class="Fcloud__buttons" v-if="!VM.state">
-              <div class="Fcloud__button" @click="deployService()">
-                <div class="Fcloud__BTN-icon">
-                  <a-icon type="deployment-unit" />
-                </div>
-                <div class="Fcloud__BTN-title">
-                  <!-- {{$t('Start')}} -->
-                  Deploy
-                </div>
-              </div>
-            </div>
-            <div class="Fcloud__buttons" v-else>
-              <div
-                v-if="
-                  VM.state &&
-                  VM.state.meta.state !== 8 &&
-                  VM.state.meta.lsm_state !== 0
-                "
-                class="Fcloud__button"
-                @click="openModal('shutdown')"
-                :class="{
-                  disabled: statusVM.shutdown,
-                }"
-              >
-                <div class="Fcloud__BTN-icon">
-                  <div class="cloud__icon cloud__icon--stop"></div>
-                </div>
-                <div class="Fcloud__BTN-title">{{ $t("Power off") }}</div>
-                <a-modal
-                  v-model="modal.shutdown"
-                  :title="$t('cloud_Shutdown_modal')"
-                  @ok="handleOk('shutdown')"
-                >
-                  <p>{{ $t("cloud_Shutdown_invite") }}</p>
-                  <a-radio-group
-                    v-model="option.shutdown"
-                    name="shutdownOption"
-                    :default-value="1"
-                  >
-                    <a-radio :value="0" :style="{ 'margin-bottom': '10px' }">
-                      <a-tag color="green" :style="{ margin: '0 2px 0 0' }">{{
-                        $t("cloud_Regular")
-                      }}</a-tag>
-                      {{ $t("cloud_Shutdown") }}
-                    </a-radio>
-                    <a-radio :value="1">
-                      <a-tag color="red" :style="{ margin: '0 2px 0 0' }">
-                        HARD
-                      </a-tag>
-                      {{ $t("cloud_Shutdown") }}
-                    </a-radio>
-                  </a-radio-group>
-                </a-modal>
-              </div>
-              <div
-                v-else
-                class="Fcloud__button"
-                @click="sendAction('resume')"
-                :class="{
-                  disabled: statusVM && statusVM.start,
-                }"
-              >
-                <div class="Fcloud__BTN-icon">
-                  <a-icon type="caret-right" />
-                </div>
-                <div class="Fcloud__BTN-title">{{ $t("Start") }}</div>
-              </div>
-              <div
-                class="Fcloud__button"
-                @click="openModal('reboot')"
-                :class="{
-                  disabled: statusVM && statusVM.reboot,
-                  btn_disabled_wiggle: true,
-                }"
-              >
-                <div class="Fcloud__BTN-icon">
-                  <a-icon type="redo" />
-                </div>
-                <div class="Fcloud__BTN-title">{{ $t("Reboot") }}</div>
-                <a-modal
-                  v-model="modal.reboot"
-                  :title="$t('cloud_Reboot_modal')"
-                  @ok="handleOk('reboot')"
-                >
-                  <p>{{ $t("cloud_Reboot_invite") }}</p>
-                  <a-radio-group
-                    v-model="option.reboot"
-                    name="rebootOption"
-                    :default-value="1"
-                  >
-                    <a-radio :value="0">
-                      <a-tag color="green" :style="{ 'margin-bottom': '10px' }">
-                        {{ $t("cloud_Regular") }}
-                      </a-tag>
-                      {{ $t("cloud_Reboot_modal") }}
-                    </a-radio>
-                    <a-radio :value="1">
-                      <a-tag color="red"> HARD </a-tag>
-                      {{ $t("cloud_Reboot_modal") }}
-                    </a-radio>
-                  </a-radio-group>
-                </a-modal>
-              </div>
-              <div
-                class="Fcloud__button"
-                @click="openModal('recover')"
-                :class="{
-                  disabled: statusVM && statusVM.recover,
-                }"
-              >
-                <div class="Fcloud__BTN-icon">
-                  <a-icon type="backward" />
-                </div>
-                <div class="Fcloud__BTN-title">{{ $t("Recover") }}</div>
-                <a-modal
-                  v-model="modal.recover"
-                  :title="$t('cloud_Recover_modal')"
-                  @ok="handleOk('recover')"
-                >
-                  <p>{{ $t("cloud_Recover_invite_line1") }}</p>
-                  <p>{{ $t("cloud_Recover_invite_line2") }}</p>
-                  <p>{{ $t("cloud_Recover_invite_line3") }}</p>
-                  <p>{{ $t("cloud_Recover_invite") }}</p>
-                  <a-radio-group
-                    v-model="option.recover"
-                    name="recover"
-                    :default-value="1"
-                  >
-                    <a-radio :value="0">
-                      {{ $t("yesterday") }}
-                    </a-radio>
-                    <a-radio :value="1">
-                      {{ $t("today") }}
-                    </a-radio>
-                  </a-radio-group>
-                </a-modal>
-              </div>
-            </div>
-
-            <div class="Fcloud__info">
-              <div class="Fcloud__info-header">
-                <div class="Fcloud__info-title">
-                  {{ $t("Information") }}
-                </div>
-              </div>
-
-              <!-- <div v-if="SingleCloud.ORDER_INFO.invoicestatus && SingleCloud.ORDER_INFO.invoicestatus.toLowerCase() == 'unpaid'" class="Fcloud__main-info Fcloud__main-info--invoice">
-							<div class="icon">
-								<a-icon type="exclamation-circle" />
-							</div>
-							<div class="content">
-								{{$t('advice.renewal bill') | capitalize}}.
-							</div>
-							<div class="link__wrapper">
-								<router-link
-									class="link"
-									:to="{name: 'invoiceFS', params: {pathMatch: SingleCloud.ORDER_INFO.invoiceid}}"
-								>
-									{{$t('advice.open') | capitalize}}
-								</router-link>
-							</div>
-						</div> -->
-
-              <div
-                class="Fcloud__info-block block"
-                v-if="VM.state && VM.state.meta.networking"
-              >
-                <div class="Fcloud__block-header">
-                  <a-icon type="flag" theme="filled" />
-                  {{ "IP" }}
-                </div>
-                <div class="Fcloud__block-content">
-                  <div class="block__column" style="flex-direction: row">
-                    <div
-                      class="block__value" v-if="dataSP" style="font-size: 18px">
-                      <table class="Fcloud__table">
-                        <tbody>
-                          <tr
-                            v-for="nic in VM.state &&
-                            VM.state.meta.networking.public"
-                            :key="nic"
-                          >
-                            <td>{{ nic }}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div class="block__value" v-if="dataSP" style="font-size: 18px">
-                      <table class="Fcloud__table">
-                        <tbody>
-                          <tr
-                            v-for="nic in VM.state &&
-                            VM.state.meta.networking.private"
-                            :key="nic"
-                          >
-                            <td>{{ nic }}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="Fcloud__info-block block">
-                <div class="Fcloud__block-header">
-                  <a-icon type="environment" theme="filled" />
-                  {{ "Location" }}
-                </div>
-                <div class="Fcloud__block-content">
-                  <div class="block__column">
-                    <div
-                      class="block__value"
-                      v-if="dataSP"
-                      style="font-size: 18px"
-                    >
-                      {{ dataSP.title }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="Fcloud__info-block block">
-                <div class="Fcloud__block-header">
-                  <a-icon type="info-circle" />
-                  {{ $t("info") | capitalize }}
-                </div>
-                <div class="Fcloud__block-content">
-                  <div class="block__column">
-                    <div class="block__title">OS</div>
-                    <div class="block__value">
-                      {{ OSName || "no data" }}
-                    </div>
-                  </div>
-                  <div class="block__column">
-                    <div class="block__title">Plan</div>
-                    <div class="block__value">
-                      {{ VM.billingPlan && VM.billingPlan.title || 'no data' }}
-                    </div>
-                  </div>
-                  <div class="block__column" v-if="VM.product">
-                    <div class="block__title">Product</div>
-                    <div class="block__value">
-                      {{ VM.product.replace('_', ' ').toUpperCase() || 'no data' }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="Fcloud__info-block block">
-                <div class="Fcloud__block-header">
-                  <a-icon type="setting" theme="filled" />
-                  {{ $t("cloud_system") | capitalize }}
-                </div>
-                <div class="Fcloud__block-content">
-                  <div class="block__column">
-                    <div class="block__title">CPU</div>
-                    <div class="block__value">
-                      {{ VM.resources && VM.resources.cpu }}
-                    </div>
-                  </div>
-                  <div class="block__column">
-                    <div class="block__title">{{ $t("cloud_Memory") }}</div>
-                    <div class="block__value">
-                      {{ VM.resources && VM.resources.ram / 1024 }} GB
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="Fcloud__info-block block">
-                <div class="Fcloud__block-header">
-                  <a-icon type="database" theme="filled" />
-                  {{ $t("cloud_Storage") }}
-                </div>
-                <div class="Fcloud__block-content">
-                  <div class="block__column">
-                    <div class="block__title">{{ $t("cloud_Type") }}</div>
-                    <div class="block__value">
-                      {{ VM.resources && VM.resources.drive_type }}
-                    </div>
-                  </div>
-                  <div class="block__column">
-                    <div class="block__title">{{ $t("cloud_Size") }}</div>
-                    <div class="block__value">
-                      {{ mbToGb(VM.resources && VM.resources.drive_size) }} GB
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div
-                class="Fcloud__info-block block"
-                v-if="!(chart1Data.length == 0 || chart2Data.length == 0)"
-              >
-                <div class="Fcloud__block-header">
-                  <a-icon type="apartment" />
-                  {{ $t("Network") }}
-                </div>
-                <div class="Fcloud__block-content">
-                  <div class="block__column">
-                    <div class="block__title">
-                      {{ $t("inbound") | capitalize }}
-                    </div>
-                    <div class="block__value">
-                      {{
-                        printWidthRange(chart1Data[chart1Data.length - 1][1])
-                      }}
-                    </div>
-                  </div>
-                  <div class="block__column">
-                    <div class="block__title">
-                      {{ $t("outgoing") | capitalize }}
-                    </div>
-                    <div class="block__value">
-                      {{
-                        printWidthRange(chart2Data[chart2Data.length - 1][1])
-                      }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- <div v-if="VM.status != 'up'" class="Fcloud__info-block block"> -->
-              <!-- <div  class="Fcloud__info-block block">
-							<div class="Fcloud__block-header">
-								<a-icon type="database" theme="filled" />
-								Deloy
-							</div>
-							<div class="Fcloud__block-content">
-								<a-row> -->
-              <!-- <a-col>
-										<a-select v-model="selectedSP" style="width: 300px; margin-right: 10px">
-											<a-select-option v-for="sp in servicesProviders.filter(el=> el.type == 'ione')" :key="sp.uuid" :value="sp.uuid">
-												{{sp.title}}
-											</a-select-option>
-										</a-select>
-										<a-button type="primary" :loading="deployLoading" @click="deployVM">
-											deploy
-										</a-button>
-									</a-col> -->
-              <!-- </a-row>
-							</div>
-						</div> -->
-
-              <div
-                class="Fcloud__info-block block"
-                v-if="!(chart1Data.length == 0 || chart2Data.length == 0)"
-              >
-                <div class="Fcloud__block-header">
-                  <a-icon type="line-chart" />
-                  {{ $t("graphs") | capitalize }}
-                </div>
-                <div
-                  class="Fcloud__block-content Fcloud__block-content--charts"
-                >
-                  <a-row type="flex" justify="space-around" style="width: 100%">
-                    <a-col>
-                      <GChart
-                        type="LineChart"
-                        :data="inbChartDataReady"
-                        :options="chartOption('inbound')"
-                      />
-                    </a-col>
-                    <a-col>
-                      <GChart
-                        type="LineChart"
-                        :data="outChartDataReady"
-                        :options="chartOption('outgoing')"
-                      />
-                    </a-col>
-                    <a-col>
-                      <GChart
-                        type="LineChart"
-                        :data="cpuChartDataReady"
-                        :options="chartOption('cpu')"
-                      />
-                    </a-col>
-                    <a-col>
-                      <GChart
-                        type="LineChart"
-                        :data="ramChartDataReady"
-                        :options="chartOption('ram')"
-                      />
-                    </a-col>
-                  </a-row>
-                </div>
-              </div>
-
-              <a-row :gutter="[15, 15]" style="margin-top: 20px" v-if="VM.state">
-                <a-col :span="24" :md="12">
-                  <div class="button">
-                    <a-button
-                      type="primary"
-                      shape="round"
-                      block
-                      size="large"
-                      @click="openModal('snapshot')"
-                    >
-                      {{ $t("Snapshots") }}
-                    </a-button>
-                    <a-modal
-                      v-model="snapshots.modal"
-                      :title="$t('Snapshots')"
-                      :footer="null"
-                    >
-                      <!-- <div
-                        v-if="
-                          ((VM.state && VM.state.meta.state != 3) ||
-                            (VM.state && VM.state.meta.lsm_state != 3)) &&
-                          VM.state &&
-                          VM.state.meta.lsm_state != 24
-                        "
-                        :style="{
-                          color: config.colors.err,
-                          'text-align': 'center',
-                        }"
-                      >
-                        {{ $t("turn on VM to create or load snapshots") }}
-                      </div> -->
-                      <!-- <a-table
-                        :columns="snapshots.columns"
-                        :data-source="snapshots.data"
-                        :pagination="false"
-                        :loading="snapshots.loading"
-                        rowKey="TIME"
-                      >
-                        <template slot="time" slot-scope="time">
-                          {{ getFormatedDate(time) }}
-                        </template>
-                        <template slot="actions" slot-scope="actions">
-                          <a-button
-                            icon="caret-right"
-                            type="primary"
-                            shape="round"
-                            :style="{ 'margin-right': '10px' }"
-                            @click="revToShapshot(actions)"
-                            :disabled="
-                              actions.ACTION != undefined ||
-                              (VM.state && VM.state.meta.lsm_state != 3) ||
-                              (VM.state && VM.state.meta.state != 3)
-                            "
-                            :loading="
-                              snapshots.loadingSnaps.includes(
-                                actions.SNAPSHOT_ID
-                              )
-                            "
-                          ></a-button>
-                          <a-button
-                            icon="close"
-                            type="danger"
-                            shape="round"
-                            @click="RMSnapshot(actions)"
-                            :disabled="
-                              actions.ACTION != undefined ||
-                              (VM.state && VM.state.meta.lsm_state != 3) ||
-                              (VM.state && VM.state.meta.state != 3)
-                            "
-                            :loading="
-                              snapshots.loadingSnaps.includes(
-                                actions.SNAPSHOT_ID
-                              )
-                            "
-                          ></a-button>
-                        </template>
-                      </a-table> -->
-
-                      <!-- <div v-for="item in this.VM.state.meta.snapshots" :key="item.name">
-                          {{item.name}}{{item.ts}}
-                      </div> -->
-
-                      <div
-                        v-for="(item, index) in VM.state.meta.snapshots"
-                        :key="item.name"
-                        style="
-                          display: flex;
-                          align-items: center;
-                          margin-bottom: 10px;
-                        "
-                      >
-                        <a-col style="width: 100%">
-                          <div style="display: flex; font-size: 16px">
-                            <div style="margin-right: 30px; width: 30%">
-                              {{ item.name }}
-                            </div>
-                            <div style="width: 70%">
-                              {{ (item.ts * 1000) | dateFormat }}
-                            </div>
-                          </div>
-                        </a-col>
-                        <a-col style="margin-left: auto; display: flex">
-                          <!-- :disabled="!VM.state.meta.snapshots" -->
-                          <a-button
-                            type="primary"
-                            style="margin-right: 10px"
-                            :loading="snapshots.addSnap.loading"
-                            @click="revSnapshot(index)"
-                          >
-                            <a-icon type="caret-right" />
-                          </a-button>
-                          <!-- :disabled=" !VM.state.meta.snapshots" -->
-                          <a-button
-                            type="danger"
-                            :loading="snapshots.loading"
-                            @click="deleteSnapshot(index)"
-                          >
-                            <a-icon type="close"
-                          /></a-button>
-                        </a-col>
-                      </div>
-
-                      <div class="modal__buttons">
-                        <!-- :disabled="!VM.state.meta.snapshots" -->
-                        <a-button
-                          icon="plus"
-                          type="primary"
-                          shape="round"
-                          size="large"
-                          @click="openModal('createSnapshot')"
-                          >{{ $t("Take snapshot") }}</a-button
-                        >
-                      </div>
-                      <a-modal
-                        v-model="snapshots.addSnap.modal"
-                        :footer="null"
-                        title="Create snapshot"
-                      >
-                        <p>
-                          {{ $t("You can only have 3 snapshots at a time.") }}
-                        </p>
-                        <p>
-                          {{
-                            $t(
-                              "Each snapshot exists for 24 hours and is then deleted."
-                            )
-                          }}
-                        </p>
-                        <p>
-                          {{ $t("Choose a name for the new snapshot:") }}
-                        </p>
-                        <a-input
-                          ref="snapNameInput"
-                          placeholder="Snapshot name"
-                          v-model="snapshots.addSnap.snapname"
-                        />
-                        <div class="modal__buttons">
-                          <a-button
-                            shape="round"
-                            :style="{ 'margin-right': '10px' }"
-                            @click="closeModal('createSnapshot')"
-                            >{{ $t("Cancel") }}</a-button
-                          >
-                          <a-button
-                            icon="plus"
-                            type="primary"
-                            shape="round"
-                            :disabled="snapshots.addSnap.snapname.length < 1"
-                            :loading="snapshots.addSnap.loading"
-                            @click="newsnap()"
-                            >{{ $t("Take snapshot") }}</a-button
-                          >
-                        </div>
-                      </a-modal>
-                    </a-modal>
-                  </div>
-                </a-col>
-
-                <a-col :span="24" :md="12">
-                  <div class="button">
-                    <a-button
-                      :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lsm_state === 3)"
-                      type="primary"
-                      shape="round"
-                      block
-                      size="large"
-                    >
-                      <router-link
-                        :to="{
-                          path: `${$route.params.uuid}/vnc`,
-                        }"
-                      >
-                        VNC
-                      </router-link>
-                    </a-button>
-                  </div>
-                </a-col>
-              </a-row>
-            </div>
-          </div>
-        </div>
-        <loading v-else color="#fff" :style="{'position': 'absolute', 'height':
-        '100%', 'width': '100%'}" key="loading" duration: />
-      </transition>
-    </template>
+          </template>
+        </component>
+      </div>
+      <loading v-else color="#fff" :style="{'position': 'absolute', 'height':
+      '100%', 'width': '100%'}" key="loading" duration: />
+    </transition>
   </div>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
 import loading from "@/components/loading/loading.vue";
-import config from "@/appconfig";
-import api from "@/api";
 import diskControl from "./openCloud/diskControl";
 import bootOrder from "./openCloud/bootOrder";
 import networkControl from "./openCloud/networkControl";
 import accessManager from "./openCloud/accessManager";
-import notification from "../../../mixins/notification";
-const columns = [
-  {
-    title: "Name",
-    key: "Name",
-    dataIndex: "NAME",
-  },
-  {
-    title: "Time",
-    dataIndex: "TIME",
-    key: "Time",
-    scopedSlots: { customRender: "time" },
-  },
-  {
-    title: "Actions",
-    key: "Actions",
-    scopedSlots: { customRender: "actions" },
-  },
-];
-const sizes = ["bytes", "KB", "MB", "GB", "TB", "PB"];
+import notification from "@/mixins/notification";
+
 export default {
   name: "openCloud",
-  components: {
-    loading,
-    diskControl,
-    bootOrder,
-    networkControl,
-    accessManager,
-  },
+  components: { loading, diskControl, bootOrder, networkControl, accessManager },
   mixins: [notification],
   data() {
     return {
-      chart1Data: [["Time", ""]],
-      chart2Data: [["Time", ""]],
-      chart3Data: [["Time", ""]],
-      chart4Data: [["Time", ""]],
-      chartHead: ["Timestamp"],
-      chartOptions: {
-        title: "network",
-        curveType: "function",
-        legend: "none",
-        width: 300,
-        height: 150,
-        vAxis: {
-          viewWindowMode: "explicit",
-          viewWindow: { min: 0 },
-        },
-      },
-      config,
-      status: "running",
-      name: "test3",
-      showPermissions: false,
       isDeleteLoading: false,
       isRenameLoading: false,
       reinstallPass: "",
       renameNewName: "",
       loadingResizeVM: false,
       modal: {
-        reboot: false,
-        shutdown: false,
-        recover: false,
-        snapshot: false,
         menu: false,
         reinstall: false,
         delete: false,
@@ -890,25 +233,8 @@ export default {
         rename: false,
         resize: false,
       },
-      option: {
-        reboot: 0,
-        shutdown: 0,
-        recover: 0,
-      },
       bootOrder: {
         loading: false,
-      },
-      snapshots: {
-        modal: false,
-        loading: false,
-        columns,
-        data: [],
-        loadingSnaps: [],
-        addSnap: {
-          modal: false,
-          snapname: "Snapshot",
-          loading: false,
-        },
       },
       resize: {
         VCPU: 0,
@@ -925,16 +251,10 @@ export default {
         },
         {
           title: "Rename",
-          onclick: this.openModal,
+          onclick: this.changeModal,
           params: ["rename"],
           icon: "tag",
         },
-        // {
-        //   title: "Access manager",
-        //   onclick: this.openModal,
-        //   params: ["accessManager"],
-        //   icon: "safety",
-        // },
         {
           title: "Resize VM",
           onclick: this.changeModal,
@@ -942,13 +262,6 @@ export default {
           icon: "arrows-alt",
           forVNC: true,
         },
-        // {
-        //   title: "Disk control",
-        //   onclick: this.changeModal,
-        //   params: ["diskControl"],
-        //   icon: "container",
-        //   forVNC: true,
-        // },
         {
           title: "SSH key",
           onclick: this.changeModal,
@@ -962,13 +275,6 @@ export default {
           icon: "global",
           forVNC: true,
         },
-        // {
-        //   title: "Boot order",
-        //   onclick: this.changeModal,
-        //   params: ["bootOrder"],
-        //   icon: "ordered-list",
-        //   forVNC: true,
-        // },
         {
           title: "Delete",
           onclick: this.sendDelete,
@@ -977,11 +283,7 @@ export default {
           forVNC: true,
         },
       ],
-      actualAction: "",
-      actionLoading: false,
-      selectedSP: "",
-      deployLoading: false,
-    };
+    }
   },
   computed: {
     ...mapGetters("nocloud/vms", [
@@ -990,81 +292,12 @@ export default {
       "getInstances",
     ]),
     ...mapGetters("support", { baseURL: "getURL" }),
-    inbChartDataReady() {
-      let data = this.chart1Data;
-      if (data == undefined) {
-        console.error("can't get chart1");
-        return [[0], [0]];
+    template() {
+      if (this.VM.config?.imageId) {
+        return () => import('@/components/appMain/modules/ovh/openInstance.vue');
+      } else {
+        return () => import('@/components/appMain/modules/ione/openInstance.vue');
       }
-      if (data[0] == undefined || data[1] == undefined) {
-        return [
-          [this.chartHead[0], "bytes"],
-          [0, 0],
-        ];
-      }
-      let range = this.checkRange(data[data.length - 1][1]);
-      data = data.map((pair) => [
-        new Date(pair[0] * 1000),
-        this.fromBytesTo(parseInt(pair[1]), range),
-      ]);
-      data.unshift([this.chartHead[0], range]);
-      return data;
-    },
-    outChartDataReady() {
-      let data = this.chart2Data;
-      if (data == undefined) {
-        console.error("can't get chart2");
-        return [[0], [0]];
-      }
-      if (data[0] == undefined || data[1] == undefined) {
-        return [
-          [this.chartHead[0], "bytes"],
-          [0, 0],
-        ];
-      }
-      let range = this.checkRange(data[data.length - 1][1]);
-      data = data.map((pair) => [
-        new Date(pair[0] * 1000),
-        this.fromBytesTo(parseInt(pair[1]), range),
-      ]);
-      data.unshift([this.chartHead[0], range]);
-      return data;
-    },
-    cpuChartDataReady() {
-      let data = this.chart3Data;
-      if (data == undefined) {
-        console.error("can't get chart3");
-        return [[0], [0]];
-      }
-      if (data[0] == undefined || data[1] == undefined) {
-        return [
-          [this.chartHead[0], "%"],
-          [0, 0],
-        ];
-      }
-      data = data.map((pair) => [new Date(pair[0] * 1000), parseInt(pair[1])]);
-      data.unshift([this.chartHead[0], 'usage']);
-      return data;
-    },
-    ramChartDataReady() {
-      let data = this.chart4Data;
-      if (data == undefined) {
-        console.error("can't get chart4");
-        return [[0], [0]];
-      }
-      if (data[0] == undefined || data[1] == undefined) {
-        return [
-          [this.chartHead[0], "mb"],
-          [0, 0],
-        ];
-      }
-      let range = this.checkRange(data[data.length - 1][1]);
-      data = data.map((pair) => [
-        new Date(pair[0] * 1000),
-        this.fromBytesTo(parseInt(pair[1]), range),
-      ]);
-      data.unshift([this.chartHead[0], range]);
-      return data;
     },
 
     itemService() {
@@ -1072,37 +305,6 @@ export default {
         return this.VM.uuidService === el.uuid;
       });
       return data;
-    },
-    statusVM() {
-      if (this.VM) {
-        if (this.VM.state.meta.state === 1) return {
-          shutdown: true, reboot: true, recover: true
-        }
-        return {
-          shutdown:
-            (this.VM.state.meta.lcm_state == 18 &&
-              this.VM.state.meta.state == 3) ||
-            (this.VM.state.meta.lcm_state == 20 &&
-              this.VM.state.meta.state == 3),
-          reboot:
-            (this.VM.state.meta.lcm_state == 18 &&
-              this.VM.state.meta.state == 3) ||
-            (this.VM.state.meta.lcm_state == 20 &&
-              this.VM.state.meta.state == 3) ||
-            (this.VM.state.meta.lcm_state == 0 &&
-              this.VM.state.meta.state == 8),
-          start:
-            (this.VM.state.meta.lcm_state == 18 &&
-              this.VM.state.meta.state == 3) ||
-            (this.VM.state.meta.lcm_state == 20 &&
-              this.VM.state.meta.state == 3),
-          recover:
-            (this.VM.state.meta.lcm_state == 18 &&
-              this.VM.state.meta.state == 3) ||
-            (this.VM.state.meta.lcm_state == 20 &&
-              this.VM.state.meta.state == 3),
-        };
-      }
     },
     VM() {
       for (let instance of this.getInstances) {
@@ -1115,38 +317,38 @@ export default {
       }
       return {};
     },
-    getSP() {
-      return this.$store.getters["nocloud/sp/getSP"];
-    },
-    dataSP() {
-      const data = this.getSP.find((el) => {
-        return el.uuid == this.VM.sp;
-      });
-      return data;
-    },
     vmsLoading() {
       return this.$store.getters["nocloud/vms/isLoading"];
     },
     stateVM() {
       if (!this.VM.state) return "UNKNOWN";
+      const state = (this.VM.config?.imageId)
+        ? this.VM.state.state
+        : this.VM.state.meta.lcm_state_str
+
       if (this.VM.state.meta.state === 1) return "PENDING";
-      switch (this.VM.state.meta.lcm_state_str) {
+      switch (state) {
         case "LCM_INIT":
           return "POWEROFF";
         default:
-          return this.VM.state.meta.lcm_state_str
-            .replaceAll('_', ' ');
+          return state.replaceAll('_', ' ');
       }
     },
     stateColor() {
-      switch (this.VM.state && this.VM.state.meta.lcm_state) {
-        case 3:
+      if (!this.VM.state) return "rgb(145, 145, 145)"
+      const state = (this.VM?.config?.imageId)
+        ? this.VM.state.state
+        : this.VM.state.meta.lcm_state_str;
+
+      switch (state) {
+        case "RUNNING":
           return "#0fd058";
         // останавливающийся и запускающийся
-        case 18:
-        case 20:
+        case "BOOT_POWEROFF":
+        case "SHUTDOWN_POWEROFF":
           return "#919191";
-        case 0:
+        case "LCM_INIT":
+        case "STOPPED":
           return "#f9f038";
         default:
           return "rgb(145, 145, 145)";
@@ -1155,17 +357,11 @@ export default {
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
-    OSName() {
-      const i = this.VM?.config?.template_id;
-
-      return this.dataSP?.publicData.templates[i]?.name;
-    }
   },
   created() {
     if (this.VM?.uuidService) {
       this.renameNewName = this.VM.title;
       this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
-      this.fetchMonitoring();
     }
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
@@ -1176,276 +372,10 @@ export default {
     this.$store.state.nocloud.vms.socket.close(1000, 'Work is done');
   },
   methods: {
-    deployVM() {
-      this.deployLoading = true;
-      // this.$api.services
-      //   .up(this.VM.meta.serviceUUID, this.VM.meta.groupUUID, this.selectedSP)
-      //   .then(() => {
-      //     this.$store.dispatch("nocloud/vms/fetch");
-      //     this.$message.success("VM depoyed!");
-      //   })
-      //   .catch((res) => {
-      //     let data = res.response.data;
-      //     // console.log(data)
-      //     this.$message.error(`Error#${data.code}: ${data.message}`);
-      //   })
-      //   .finally(() => {
-      //     this.deployLoading = false;
-      //   });
-    },
     disabledMenu(menuName) {
       if (this.VM?.product && menuName === "resize") {
         return true;
       }
-      // if(this.SingleCloud.DISABLE.includes(menuName) || (this.SingleCloud.STATE == 3 && this.SingleCloud.LCM_STATE == 2)){
-      // 	return true;
-      // }
-    },
-    checkRange(val) {
-      let count = 0;
-      for (let i = 0; val > 1024; count++) {
-        val = val / 1024;
-      }
-      return sizes[count];
-    },
-    fromBytesTo(val, newRange) {
-      let count = sizes.indexOf(newRange);
-      if (count == -1) {
-        console.log("can't get such range");
-        return;
-      }
-      while (count > 0) {
-        val = val / 1024;
-        count--;
-      }
-      return val;
-    },
-    chartOption(title) {
-      const newOpt = JSON.parse(JSON.stringify(this.chartOptions));
-      let range = "";
-      let capitalized = "";
-      if (title.toLowerCase() == "inbound") {
-        range = this.checkRange(this.chart1Data[this.chart1Data.length - 1][1]);
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
-      } else if (title.toLowerCase() == "outgoing") {
-        range = this.checkRange(this.chart2Data[this.chart2Data.length - 1][1]);
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
-      } else if (title.toLowerCase() == "cpu") {
-        range = "%"
-        capitalized = this.$t(title).toUpperCase();
-      } else if (title.toLowerCase() == "ram") {
-        range = this.checkRange(this.chart4Data[this.chart4Data.length - 1][1]);
-        capitalized = this.$t(title).toUpperCase();
-      }
-      newOpt.title = `${capitalized} (${range})`;
-      return newOpt;
-    },
-    sendAction(action) {
-      const hard = this.option.reboot || action.includes('Hard');
-      const data = {
-        uuid: this.VM.uuid,
-        uuidService: this.VM.uuidService,
-        action: action.replace('Hard', ''),
-        params: (hard) ? { hard: true } : {},
-      }
-
-      if (action === 'recoverYesterday' || action === 'recoverToday') {
-        action = action.replace('recover', '');
-        this.$api.get(this.baseURL, { params: {
-          run: 'create_ticket',
-          subject: `Recover VM - ${this.VM.title}`,
-          message: `1. ID: ${this.VM.uuid}\n2. Date: ${action}`,
-          department: 1,
-        }})
-          .then((resp) => {
-            if (resp.result == "success") {
-              this.$message.success("Ticket created successfully");
-            } else {
-              throw resp;
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-            this.$message.error("Something went wrong");
-          });
-        return;
-      }
-      this.$store
-        .dispatch("nocloud/vms/actionVMInvoke", data)
-        .then(() => {
-          const opts = {
-            message: `Done!`,
-          };
-          this.openNotificationWithIcon("success", opts);
-        })
-        .catch((err) => {
-          const opts = {
-            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-          };
-          this.openNotificationWithIcon("error", opts);
-        });
-    },
-    fetchMonitoring() {
-      const data = {
-        uuid: this.VM.uuid,
-        uuidService: this.VM.uuidService,
-        action: 'monitoring',
-      };
-
-      this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
-        .then((res) => {
-          if (res.meta?.NETRX !== undefined) {
-            this.chart1Data = res.meta.NETRX;
-          }
-          if (res.meta?.NETTX !== undefined) {
-            this.chart2Data = res.meta.NETTX;
-          }
-          if (res.meta?.CPU !== undefined) {
-            this.chart3Data = res.meta.CPU;
-          }
-          if (res.meta?.MEMORY !== undefined) {
-            this.chart4Data = res.meta.MEMORY;
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          this.openNotificationWithIcon("error", {
-            message: `Error: ${err.response?.data?.message ?? "Unknown"}.`
-          });
-        });
-    },
-    deployService() {
-      this.actionLoading = true;
-      api.services
-        .up(this.itemService.uuid)
-        .then(() => {
-          const opts = {
-            message: `Done!`,
-          };
-          this.openNotificationWithIcon("success", opts);
-        })
-        .catch((err) => {
-          const opts = {
-            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-          };
-          this.openNotificationWithIcon("error", opts);
-        })
-        .finally(() => {
-          this.actionLoading = false;
-        });
-    },
-    mbToGb(mb) {
-      return (mb / 1024).toFixed(1);
-    },
-    handleOk(from) {
-      this.VM.state.meta.state = 0;
-
-      switch (from) {
-        case "reboot":
-          this.sendAction("reboot");
-          this.modal.reboot = false;
-          break;
-        case "shutdown":
-          if (this.option.shutdown) {
-            this.sendAction("poweroffHard");
-          } else {
-            this.sendAction("poweroff");
-          }
-          this.modal.shutdown = false;
-          break;
-        case "recover":
-          this.$confirm({
-            title: this.$t("Do you want to download a backup?"),
-            maskClosable: true,
-            content: () => {
-              return <div>{ this.$t("All unsaved progress will be lost, are you sure?") }</div>;
-            },
-            okText: this.$t("Yes"),
-            cancelText: this.$t("Cancel"),
-            onOk: () => {
-              if (this.option.recover) {
-                this.sendAction("recoverToday");
-              } else {
-                this.sendAction("recoverYesterday");
-              }
-              this.modal.recover = false;
-            },
-            onCancel() {},
-          });
-          break;
-      }
-    },
-    printWidthRange(value) {
-      let range = this.checkRange(value);
-      let newVal = this.fromBytesTo(value, range);
-      if (newVal) {
-        newVal = Math.round(newVal * 1000) / 1000;
-      }
-      return `${newVal} ${range}`;
-    },
-    newsnap() {
-      // if (this.snapshots.data.lenght >= 3) {
-      //   this.$error({
-      //     title: this.$t("You can't have more than 3 snaps at the same time"),
-      //     content: this.$t("remove or commit old ones to create new"),
-      //   });
-      // }
-
-      const data = {
-        uuid: this.VM.uuid,
-        params: { snap_name: this.snapshots.addSnap.snapname },
-        action: "snapcreate",
-      };
-
-      this.snapshots.addSnap.loading = true;
-      this.$store
-        .dispatch("nocloud/vms/actionVMInvoke", data)
-        .then((res) => {
-          this.VM.state.meta.snapshots = res?.meta.snapshots;
-          this.openNotificationWithIcon("success", {
-            message: "Create Snapshot",
-          });
-          this.snapshots.addSnap.modal = false;
-        })
-        .catch((err) => {
-          const opts = {
-            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-          };
-          this.openNotificationWithIcon("error", opts);
-        })
-        .finally(() => {
-          this.snapshots.addSnap.loading = false;
-        });
-    },
-    openModal(name) {
-      switch (name) {
-        case "start":
-          if (this.statusVM.start) return;
-          break;
-        case "shutdown":
-          if (this.statusVM.shutdown) return;
-          break;
-        case "reboot":
-          if (this.statusVM.reboot) return;
-          break;
-        case "delete":
-          if (this.statusVM.delete) return;
-          break;
-        case "recover":
-          if (this.statusVM.recover) return;
-          break;
-        case "snapshot":
-          // if (this.permissions.snapshot) return;
-          // this.snapshotsFetch();
-          this.snapshots.modal = true;
-          break;
-        case "createSnapshot":
-          // if (this.permissions.snapshot) return;
-          // this.snapshotsFetch();
-          this.snapshots.addSnap.modal = true;
-          break;
-      }
-      this.modal[name] = true;
     },
     changeModal(name) {
       for (let key in this.modal) {
@@ -1454,13 +384,7 @@ export default {
       this.modal[name] = true;
     },
     closeModal(name) {
-      switch (name.toLowerCase()) {
-        case "createsnapshot":
-          this.snapshots.addSnap.modal = false;
-          break;
-        default:
-          this.modal[name] = false;
-      }
+      this.modal[name] = false;
     },
     ResizeVM() {
       let confirm = window.confirm("VM will be restarted");
@@ -1524,76 +448,6 @@ export default {
           });
       }
     },
-    URLparameter(obj, outer = "") {
-      var str = "";
-      for (var key in obj) {
-        if (key == "price") continue;
-        if (str != "") {
-          str += "&";
-        }
-        if (typeof obj[key] == "object") {
-          str += this.URLparameter(obj[key], outer + key);
-        } else {
-          str += outer + key + "=" + encodeURIComponent(obj[key]);
-        }
-      }
-      return str;
-    },
-    deleteSnapshot(index) {
-      const data = {
-        uuid: this.VM.uuid,
-        params: { snap_id: +index },
-        action: "snapdelete",
-      };
-
-      this.snapshots.loading = true;
-      this.$store
-        .dispatch("nocloud/vms/actionVMInvoke", data)
-        .then(() => {
-          delete this.VM.state.meta.snapshots[index];
-          this.openNotificationWithIcon("success", {
-            message: "Delete Snapshot",
-          });
-        })
-        .catch((err) => {
-          const opts = {
-            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-          };
-          this.openNotificationWithIcon("error", opts);
-        })
-        .finally(() => {
-          this.snapshots.loading = false;
-        });
-    },
-    revSnapshot(index) {
-      const data = {
-        uuid: this.VM.uuid,
-        params: { snap_id: +index },
-        action: "snaprevert",
-      };
-
-      this.snapshots.addSnap.loading = true;
-      this.$store
-        .dispatch("nocloud/vms/actionVMInvoke", data)
-        .then((res) => {
-          this.openNotificationWithIcon("success", {
-            message: "Revert Snapshot",
-          });
-        })
-        .catch((err) => {
-          const opts = {
-            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-          };
-          this.openNotificationWithIcon("error", opts);
-        })
-        .finally(() => {
-          this.snapshots.addSnap.loading = false;
-        });
-    },
-    getFormatedDate(dstring) {
-      const date = new Date(+(dstring + "000"));
-      return date.toLocaleString();
-    },
     sendRename() {
       if (this.renameNewName !== "") {
         const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
@@ -1624,26 +478,6 @@ export default {
             this.modal.confirmLoading = false;
           });
       }
-      // api
-      //   .sendVMaction("VMChangeName", { newVmName: this.renameNewName })
-      //   .then((res) => {
-      //     if (res.result == "success") {
-      //       this.$store.dispatch(
-      //         "cloud/silentUpdate",
-      //         this.$route.params.pathMatch
-      //       );
-      //       this.closeModal("rename");
-      //       this.closeModal("menu");
-      //       this.renameNewName = "";
-      //       this.$message.success(this.$t("vm name changes successfully"));
-      //       this.isRenameLoading = false;
-      //     } else {
-      //       throw res;
-      //     }
-      //   })
-      //   .catch((err) => {
-      //     console.error(err);
-      //   });
     },
     sendReinstall() {
       if (this.disabledMenu("reinstall")) {
@@ -1750,7 +584,6 @@ export default {
       if (!this.VM.uuidService) return;
       this.renameNewName = this.VM.title;
       this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
-      this.fetchMonitoring();
     },
   },
 };
