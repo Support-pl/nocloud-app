@@ -55,8 +55,7 @@
             <input type="text" placeholder="Email" v-model="email" />
             <template v-if="remember">
               <span class="login__horisontal-line"></span>
-              <input
-                type="password"
+              <a-input-password
                 placeholder="Password"
                 v-model="password"
               />
@@ -132,8 +131,9 @@
 </template>
 
 <script>
-import QrcodeVue from "qrcode.vue";
 import { mapGetters } from "vuex";
+import notification from "@/mixins/notification.js";
+import QrcodeVue from "qrcode.vue";
 
 export default {
   name: "login",
@@ -149,6 +149,7 @@ export default {
     };
   },
   components: { QrcodeVue },
+  mixins: [notification],
   props: { getUser: Function },
   methods: {
     submitHandler() {
@@ -179,7 +180,9 @@ export default {
           })
           .catch((error) => {
             if (error.response && error.response.status == 401) {
-              this.$message.error(error.response.data.message);
+              this.openNotificationWithIcon('error', {
+                message: error.response.data.message
+              });
             }
           })
           .finally(() => {

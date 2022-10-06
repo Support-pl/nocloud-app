@@ -45,16 +45,20 @@ export default {
   data: () => ({ activeKey: [] }),
   computed: {
     statusColor() {
-      switch (this.instance?.state?.meta.lcm_state) {
-        case 3:
+      if (!this.instance.state) return "rgb(145, 145, 145)"
+      const state = (this.instance?.config?.imageId)
+        ? this.instance.state.state
+        : this.instance.state.meta.lcm_state_str;
+
+      switch (state) {
+        case "RUNNING":
           return "#0fd058";
-        // останавливающийся
-        case 18:
+        // останавливающийся и запускающийся
+        case "BOOT_POWEROFF":
+        case "SHUTDOWN_POWEROFF":
           return "#919191";
-        // запускающийся
-        case 20:
-          return "#919191";
-        case 0:
+        case "LCM_INIT":
+        case "STOPPED":
           return "#f9f038";
         default:
           return "rgb(145, 145, 145)";
