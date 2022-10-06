@@ -96,7 +96,7 @@
             </div>
           </template>
         </div>
-        <div class="login__forgot">
+        <div class="login__forgot" style="margin-top: 40px">
           <a-dropdown :trigger="['click']" placement="bottomCenter">
             <a class="ant-dropdown-link" @click.prevent>
               Advanced options
@@ -116,7 +116,7 @@
             remember ? $t("forgotPass") : $t("I have a password") | capitalize
           }}</a>
         </div>
-        <div class="login__forgot" style="margin-top: 5px">
+        <div class="login__forgot">
           <router-link :to="{ name: 'register' }">{{
             $t("sign up") | capitalize
           }}</router-link>
@@ -402,6 +402,10 @@ export default {
   padding: 10px 15px;
 }
 
+.login__forgot {
+  margin-top: 5px;
+}
+
 .login__forgot a {
   text-decoration: none;
 }
@@ -440,7 +444,7 @@ export default {
 }
 
 .login__onlogin-action {
-  margin-bottom: 40px;
+  margin: 20px 0 40px;
 }
 
 .login__see-services a {
@@ -518,10 +522,6 @@ export default {
 
   .login__UI {
     justify-content: center;
-  }
-
-  .login__forgot {
-    margin-top: 40px;
   }
 
   #qrcode {
