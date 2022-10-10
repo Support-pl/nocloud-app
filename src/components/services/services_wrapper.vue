@@ -59,6 +59,17 @@ export default {
 						paramsArr: [{name: 'products', query: {type: 'virtual'}}],
 					}
 				},
+        {
+          title: 'Domains',
+          translatable: true,
+          icon: 'global',
+          onclick: {
+            // function: this.openNotification,
+            // paramsArr: [{name: 'services'}],
+            function: this.routeTo,
+            paramsArr: [{name: 'products', query: {type: 'domains'}}],
+          },
+        }
 			],
 		}
 	},
@@ -99,6 +110,6 @@ export default {
 	/* background-color: red; */
 	display: grid;
 	grid-gap: 5px;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(4, 1fr);
 }
 </style>
