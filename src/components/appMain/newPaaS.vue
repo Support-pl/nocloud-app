@@ -1323,13 +1323,12 @@ export default {
       .then(({ pool }) => {
         pool.forEach((plan) => {
           if (plan.kind === 'STATIC') {
-            const { resources } = Object.values(plan.products).find(
-              (el) => el.title === this.productSize
-            );
+            const { resources, title } = Object.values(plan.products)[0];
 
             this.options.ram.size = resources.ram / 1024;
             this.options.cpu.size = resources.cpu;
             this.options.disk.size = resources.disk ?? 20 * 1024;
+            this.productSize = title;
             this.plan = plan;
           }
         });

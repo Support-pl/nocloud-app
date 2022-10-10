@@ -344,7 +344,7 @@ export default {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
         action: action.replace('Hard', ''),
-        params: (hard) ? { hard: true } : {},
+        params: { type: (hard) ? 'hard' : 'soft' },
       }
 
       this.$store
