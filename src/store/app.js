@@ -6,6 +6,7 @@ export default {
 	namespaced: true,
 
 	state: {
+    notification: false,
 		activeTabName: '',
 		activeTabNum: -1,
 		buttons: [
@@ -57,7 +58,10 @@ export default {
 		},
 		setMaintananceMode(state, value){
 			state.maintananceMode = value;
-		}
+		},
+    setNotification(state, value) {
+      state.notification = value;
+    }
 	},
 	actions: {
 		setTabByName(ctx, value){
@@ -102,6 +106,9 @@ export default {
 		},
 		isMaintananceMode(state){
 			return state.maintananceMode;
-		}
+		},
+    getNotification(state) {
+      return state.notification;
+    }
 	}
 }

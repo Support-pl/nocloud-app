@@ -7,6 +7,10 @@ export default {
         message: `${opts.message}`,
         duration: (type === 'error') ? 0 : 4.5
       });
+
+      if (type === 'error') {
+        this.$store.commit('app/setNotification', true);
+      }
     },
   },
 };

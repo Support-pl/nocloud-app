@@ -70,9 +70,15 @@ export default {
     if (this.isLogged) {
       this.$store.dispatch("invoices/autoFetch");
     }
+    if (localStorage.getItem('order')) {
+      this.value = localStorage.getItem('order');
+    } else {
+      localStorage.setItem('order', this.value);
+    }
   },
   watch: {
     value() {
+      localStorage.setItem('order', this.value);
       if (this.value === 'Invoice') return;
       if (this.transactions.length > 0) return;
 

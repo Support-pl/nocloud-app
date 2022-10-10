@@ -1138,8 +1138,7 @@ export default {
       //update service
       if (newGroup.type === 'ovh') {
         newGroup.data = { projectId: '2ccca3cf77574a80b4d0496f6f2539ec' };
-        newInstance.config.monthlyBilling = (this.tarification === 'Monthly')
-          ? true : false;
+        newInstance.config.monthlyBilling = false;
       }
       if (this.itemService?.instancesGroups.length < 1) {
         this.itemService.instancesGroups = [newGroup];

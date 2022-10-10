@@ -1,5 +1,5 @@
 <template>
-  <div id="app" :style="false && cssVars">
+  <div id="app" :style="false && cssVars" :class="{ 'block-page': notification }">
     <transition name="slide">
       <router-view :style="{
         position: 'absolute',
@@ -65,7 +65,25 @@ export default {
     loggedIn() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
+    notification() {
+      return this.$store.getters["app/getNotification"];
+    }
   },
+  watch: {
+    notification(value) {
+      if (!value) return;
+      setTimeout(() => {
+        const elements = document.querySelectorAll('.ant-notification-notice-close');
+        const close = Array.from(elements);
+        const open = () => {
+          if (close.length > 1) close.pop();
+          else this.$store.commit('app/setNotification', false);
+        }
+
+        close.forEach((el) => { el.addEventListener('click', open) });
+      }, 100);
+    }
+  }
 };
 </script>
 
@@ -89,6 +107,15 @@ body {
 
 #app {
   height: 100%;
+}
+
+.block-page::before {
+  content: '';
+  position: absolute;
+  z-index: 10;
+  height: 100%;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .slide-enter-active,
