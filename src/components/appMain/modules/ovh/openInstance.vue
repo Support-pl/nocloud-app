@@ -376,7 +376,7 @@ export default {
       return {
         shutdown: this.VM.state.state !== 'RUNNING' &&
           this.VM.state.state !== 'STOPPED',
-        reboot: this.VM.state.meta.state !== 'BUILD' ||
+        reboot: this.VM.state.meta.state === 'BUILD' ||
           this.VM.state.state === 'STOPPED',
         start: this.VM.state.state !== 'RUNNING' &&
           this.VM.state.state !== 'STOPPED',
