@@ -2,67 +2,69 @@
   <div class="newCloud_wrapper">
       <div class="newCloud">
         <div class="newCloud__inputs field">
-          <component
-            :is="template"
-            :activeKey="activeKey"
-            :itemSP="itemSP"
-            :options="options"
-            :getProducts="getProducts"
-            :productSize="productSize"
-            :tarification="tarification"
-            :vmName="vmName"
-            :password="password"
-            :sshKey="sshKey"
-            :locationId="locationId"
-            @score="onScore"
-            @setData="setData"
-          >
-            <template #location>
-              <a-row justify="space-between" style="margin-bottom: 10px">
-                <a-alert
-                  show-icon
-                  type="warning"
-                  style="margin-bottom: 15px"
-                  :message="$t('Please select a suitable location')"
-                />
+          <keep-alive>
+            <component
+              :is="template"
+              :activeKey="activeKey"
+              :itemSP="itemSP"
+              :options="options"
+              :getProducts="getProducts"
+              :productSize="productSize"
+              :tarification="tarification"
+              :vmName="vmName"
+              :password="password"
+              :sshKey="sshKey"
+              :locationId="locationId"
+              @score="onScore"
+              @setData="setData"
+            >
+              <template #location>
+                <a-row justify="space-between" style="margin-bottom: 10px">
+                  <a-alert
+                    show-icon
+                    type="warning"
+                    style="margin-bottom: 15px"
+                    :message="$t('Please select a suitable location')"
+                  />
 
-                <a-select
-                  v-model="locationId"
-                  placeholder="Select location"
-                  style="
-                    width: 180px;
-                    margin-left: 20px;
-                    position: relative;
-                    top: 30px;
-                    z-index: 4;
-                  "
-                >
-                  <a-select-option
-                    v-for="item in locations"
-                    :key="item.id"
-                    :value="item.id"
+                  <a-select
+                    v-model="locationId"
+                    placeholder="Select location"
+                    style="
+                      width: 180px;
+                      margin-left: 20px;
+                      position: relative;
+                      top: 30px;
+                      z-index: 4;
+                    "
                   >
-                    {{ item.title }}
-                  </a-select-option>
-                </a-select>
-                <div style="overflow: hidden; margin-top: -15px">
-                  <a-spin tip="Loading..." :spinning="isPlansLoading">
-                    <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
-                  </a-spin>
-                </div>
-                <!-- <a-radio-group v-model="location_uuid">
-                  <a-radio-button
-                    v-for="(sp, index) in getSP"
-                    :key="index"
-                    style="width: 130px; text-align: center"
-                    :value="sp.uuid"
-                  >
-                    {{ sp.title }}
-                  </a-radio-button>
-                </a-radio-group> -->
-              </a-row>
-            </template>
-          </component>
+                    <a-select-option
+                      v-for="item in locations"
+                      :key="item.id"
+                      :value="item.id"
+                    >
+                      {{ item.title }}
+                    </a-select-option>
+                  </a-select>
+                  <div style="overflow: hidden; margin-top: -15px">
+                    <a-spin tip="Loading..." :spinning="isPlansLoading">
+                      <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
+                    </a-spin>
+                  </div>
+                  <!-- <a-radio-group v-model="location_uuid">
+                    <a-radio-button
+                      v-for="(sp, index) in getSP"
+                      :key="index"
+                      style="width: 130px; text-align: center"
+                      :value="sp.uuid"
+                    >
+                      {{ sp.title }}
+                    </a-radio-button>
+                  </a-radio-group> -->
+                </a-row>
+              </template>
+            </component>
+          </keep-alive>
         </div>
 
         <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
@@ -718,24 +720,10 @@ export default {
 
       return locations;
     },
-    location() {
-      return this.locations.find((el) => {
-        if (this.dataLocalStorage) {
-          if (el.title === this.dataLocalStorage.titleSP) {
-            this.locationId = el.id;
-            return el;
-          }
-        } else {
-          return el.id === this.locationId;
-        }
-      });
-    },
     itemSP() {
-      if (this.location) {
-        return this.getSP.find((el) => {
-          return el.uuid === this.location.sp;
-        });
-      }
+      const { sp } = this.locations.find((el) => el.id === this.locationId) || {};
+
+      if (sp) return this.getSP.find((el) => el.uuid === sp);
     },
     template() {
       if (this.itemSP?.type === 'ovh') {
@@ -789,6 +777,7 @@ export default {
       const product = Object.values(this.getPlanOneStatic.products)
         .find(({ title }) => title === this.productSize);
 
+      if (!product) return 0;
       return product.price / product.period * 3600 * 24 * 30;
     },
     productFullPriceCustom() {
@@ -1144,31 +1133,37 @@ export default {
         this.itemService.instancesGroups = [newGroup];
       }
       if (this.service !== "") {
-        const orderDataNew = Object.assign(
-          {},
-          { instances_groups: this.itemService.instancesGroups },
-          { ...this.itemService }
-        );
-        let group = orderDataNew.instances_groups.find(
-          (el) => el.sp === this.itemSP.uuid
-        );
+        this.$store.dispatch("nocloud/vms/fetch")
+          .then(() => {
+            setTimeout(() => {
+              this.setOneService();
+              const orderDataNew = Object.assign(
+                {},
+                { instances_groups: this.itemService.instancesGroups },
+                { ...this.itemService }
+              );
+              let group = orderDataNew.instances_groups.find(
+                (el) => el.sp === this.itemSP.uuid
+              );
 
-        if (!group) {
-          orderDataNew.instances_groups.push(newGroup);
-          group = orderDataNew.instances_groups.at(-1);
-        }
-        group.instances.push(newInstance);
+              if (!group) {
+                orderDataNew.instances_groups.push(newGroup);
+                group = orderDataNew.instances_groups.at(-1);
+              }
+              group.instances.push(newInstance);
 
-        const res = group.instances.reduce((prev, curr) => ({
-          private: prev.private + curr.resources.ips_private,
-          public: prev.public + curr.resources.ips_public
-        }), { private: 0, public: 0 });
+              const res = group.instances.reduce((prev, curr) => ({
+                private: prev.private + curr.resources.ips_private,
+                public: prev.public + curr.resources.ips_public
+              }), { private: 0, public: 0 });
 
-        group.resources.ips_private = res.private;
-        group.resources.ips_public = res.public;
+              group.resources.ips_private = res.private;
+              group.resources.ips_public = res.public;
 
-        delete orderDataNew.instancesGroups;
-        this.updateVM(orderDataNew);
+              delete orderDataNew.instancesGroups;
+              this.updateVM(orderDataNew);
+            }, 300);
+          });
       } else {
         //create service
         const orderData = {
