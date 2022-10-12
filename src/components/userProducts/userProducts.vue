@@ -171,11 +171,13 @@ export default {
       const instances = this.$store.getters["nocloud/vms/getInstances"]
         .map((inst) => ({
           orderid: inst.uuid,
-          groupname: 'Self-Service VDS SSD HC',
+          groupname: (inst.type === 'opensrs') ? 'Domains' : 'Self-Service VDS SSD HC',
           invoicestatus: null,
           domainstatus: inst.state?.meta?.state_str || 'DELETED',
           productname: inst.title,
-          domain: inst.state?.meta.networking?.public?.at(0),
+          domain: (inst.type === 'opensrs')
+            ? inst.resources.domain
+            : inst.state?.meta.networking?.public?.at(0),
           date: inst.data.last_monitoring * 1000 || 0,
           orderamount: 0,
         }));
@@ -225,11 +227,14 @@ export default {
     },
   },
   methods: {
-    productClickHandler(product) {
-      if (product.groupname === 'Self-Service VDS SSD HC') {
-        this.$router.push({ name: 'openCloud_new', params: { uuid: product.orderid } });
+    productClickHandler({ groupname, orderid, hostingid }) {
+      if (groupname === 'Domains') {
+        // this.$router.push({ name: 'service', params: { id: orderid } });
+        return;
+      } else if (groupname === 'Self-Service VDS SSD HC') {
+        this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } });
       } else {
-        this.$router.push({ name: "service", params: { id: product.hostingid } });
+        this.$router.push({ name: 'service', params: { id: hostingid } });
       }
     },
     filterElementClickHandler(key) {

@@ -46,7 +46,8 @@ export default {
   computed: {
     ...mapGetters("app", ["isMaintananceMode"]),
     getInstances() {
-      return this.$store.getters["nocloud/vms/getInstances"];
+      return this.$store.getters["nocloud/vms/getInstances"]
+        .filter(({ resources }) => !resources.domain);
     },
 
     // getServices() {

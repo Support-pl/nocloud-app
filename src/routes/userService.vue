@@ -141,7 +141,6 @@
 
 <script>
 import loading from "@/components/loading/loading.vue";
-import api from "@/api.js";
 import config from "@/appconfig.js";
 
 const info = [
@@ -179,7 +178,7 @@ export default {
   created() {
     this.$store.dispatch('nocloud/auth/fetchBillingData')
       .then((user) => {
-        api.get(`${this.baseURL}/services.getInfo.php`, { params: {
+        this.$api.get(`${this.baseURL}/services.getInfo.php`, { params: {
           serviceid: this.$route.params.id,
           userid: user.client_id
         }})
@@ -219,7 +218,7 @@ export default {
     },
     getInvoiceStatusColor() {
       switch (this.service.ORDER_INFO.invoicestatus) {
-        case "Paind":
+        case "Paid":
           return "green";
         case "Unpaid":
           return "red";
