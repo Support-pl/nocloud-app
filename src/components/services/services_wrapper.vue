@@ -40,16 +40,16 @@ export default {
 				// 		paramsArr: [{name: 'cloud', query: {type: 'IaaS'}}],
 				// 	}
 				// },
-				{
-					title: 'SSL',
-					icon: 'lock',
-					onclick: {
-						// function: this.openNotification,
-						// paramsArr: [{name: 'services'}],
-						function: this.routeTo,
-						paramsArr: [{name: 'products', query: {type: 'SSL'}}],
-					}
-				},
+				// {
+				// 	title: 'SSL',
+				// 	icon: 'lock',
+				// 	onclick: {
+				// 		// function: this.openNotification,
+				// 		// paramsArr: [{name: 'services'}],
+				// 		function: this.routeTo,
+				// 		paramsArr: [{name: 'products', query: {type: 'SSL'}}],
+				// 	}
+				// },
 				{
 					title: 'Virtual',
 					translatable: true,
@@ -110,6 +110,6 @@ export default {
 	/* background-color: red; */
 	display: grid;
 	grid-gap: 5px;
-	grid-template-columns: repeat(4, 1fr);
+	grid-template-columns: repeat(3, 1fr);
 }
 </style>
