@@ -232,22 +232,12 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import UI from '@/libs/noVNC/app/ui.js';
+import UI from 'vnc-ui-vue';
 import password from '@/components/password.vue';
 
 export default {
 	name: 'vnc',
-	data() {
-		return {
-			status: '',
-			desktopName: '',
-			rfb: null,
-
-			curTok: 0,
-			token: '',
-			url: '',
-		}
-	},
+	data: () => ({ desktopName: '', token: '', url: '', rfb: null }),
 	components: { password },
 	created() {
     const instances = this.$store.getters['nocloud/vms/getInstances'];
