@@ -27,9 +27,9 @@
 			<div class="product__column product__column--secondary-info">
 				<div class="product__date">{{localDate}}</div>
 				<div class="product__cost" v-if="user.currency_code">
-					{{ user.currency_code === 'USD' ? `$${cost}` : `${cost}${user.currency_code}` }}
+					{{ user.currency_code === 'USD' ? `$${price}` : `${price}${user.currency_code}` }}
 				</div>
-        <div class="product__cost" v-else>{{ `$${cost}` }}</div>
+        <div class="product__cost" v-else>{{ `$${price}` }}</div>
 			</div>
 		</div>
 	</div>
@@ -63,12 +63,19 @@ export default {
 		},
 		wholeProduct: Object
 	},
+  data: () => ({ prices: {} }),
 	computed: {
 		user(){
 			return this.$store.getters['nocloud/auth/billingData'];
 		},
+    price(){
+      return this.prices[this.date.getTime()] || this.cost;
+    },
 		localDate(){
-      if (this.date?.getTime() === 0) return 'none';
+      if (this.date.getTime() === 0) return 'none';
+      if (this.wholeProduct.groupname === 'Domains') {
+        return `${this.date.getTime()} years`;
+      }
 			return new Intl.DateTimeFormat().format(this.date);
 		},
 		iconColor(){
@@ -103,6 +110,15 @@ export default {
 	},
   created() {
     this.$store.dispatch('nocloud/auth/fetchBillingData')
+      .catch((err) => console.error(err));
+
+    if (this.wholeProduct.groupname !== 'Domains') return;
+    this.$api.servicesProviders.action({
+      uuid: this.wholeProduct.sp,
+      action: 'get_domain_price',
+      params: { domain: this.domain },
+    })
+      .then(({ meta }) => this.prices = meta.prices)
       .catch((err) => console.error(err));
   }
 }
