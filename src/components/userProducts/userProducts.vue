@@ -170,15 +170,20 @@ export default {
       const products = this.$store.getters["products/getProducts"];
       const instances = this.$store.getters["nocloud/vms/getInstances"]
         .map((inst) => ({
+          sp: inst.sp,
           orderid: inst.uuid,
-          groupname: (inst.type === 'opensrs') ? 'Domains' : 'Self-Service VDS SSD HC',
+          groupname: (inst.type === 'opensrs')
+            ? 'Domains'
+            : 'Self-Service VDS SSD HC',
           invoicestatus: null,
           domainstatus: inst.state?.meta?.state_str || 'DELETED',
           productname: inst.title,
           domain: (inst.type === 'opensrs')
             ? inst.resources.domain
             : inst.state?.meta.networking?.public?.at(0),
-          date: inst.data.last_monitoring * 1000 || 0,
+          date: (inst.type === 'opensrs')
+            ? inst.resources.period
+            : inst.data.last_monitoring * 1000 || 0,
           orderamount: 0,
         }));
 

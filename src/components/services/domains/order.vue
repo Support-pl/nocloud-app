@@ -284,11 +284,7 @@ export default {
       fetchLoading: false,
       sendloading: false,
 
-      options: {
-        provider: '',
-        tarif: '',
-        domain: ''
-      },
+      options: { provider: '', tarif: '', domain: '' },
       modal: {
         confirmCreate: false,
         confirmLoading: false
@@ -341,8 +337,8 @@ export default {
 
       const instances = Object.keys(this.products).map((domain) => ({
         resources: { ...this.resources, user: this.user, domain },
-        title: this.resources.reg_username,
-        billingPlan: plan ?? {}
+        title: `Domain - ${domain}`,
+        billing_plan: plan ?? {}
       }));
       const newGroup = {
         title: this.user.fullname + Date.now(),
@@ -357,7 +353,7 @@ export default {
       );
       const group = info.instances_groups?.find(({ type }) => type === 'opensrs');
 
-      if (group) group.instances = { ...group.instances, ...instances };
+      if (group) group.instances = [...group.instances, ...instances];
       else if (this.service) info.instances_groups.push(newGroup);
 
       if (!this.user) {
@@ -390,16 +386,21 @@ export default {
 
       delete orderData.instancesGroups;
       this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
-        .then(() => {
-          this.$router.push({ name: 'services' });
-        })
+        .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
+          const config = { namespace: this.namespace, service: orderData };
+
+          this.$api.services.testConfig(config)
+            .then(({ result, errors }) => {
+              if (!result) errors.forEach(({ error }) => {
+                this.openNotificationWithIcon('error', { message: error });
+              });
+            });
           this.openNotificationWithIcon('error', {
-            message: err.response.data.message
-          })
+            message: err.response.data?.message
+          });
           console.error(err);
         })
-        .finally(() => this.sendloading = false);
     },
     orderConfirm() {
       const domains = Object.keys(this.products);
@@ -409,6 +410,21 @@ export default {
         return;
       }
       this.modal.confirmCreate = true;
+    },
+    deployService(uuid) {
+      this.$api.services.up(uuid)
+        .then(() => {
+          this.openNotificationWithIcon('success', {
+            message: 'Domain created successfully'
+          });
+          this.$router.push({ path: '/services' });
+        })
+        .catch((err) => {
+          this.openNotificationWithIcon('error', {
+            message: err.response.data?.message ?? 'Unknown'
+          });
+        })
+        .finally(() => this.sendloading = false);
     }
   },
   computed: {
