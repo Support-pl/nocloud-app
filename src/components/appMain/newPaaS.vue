@@ -785,7 +785,7 @@ export default {
       if (plan) {
         const price = [];
         for (let resource of plan.resources) {
-          if (resource.key === "ip") {
+          if (resource.key === "ip" || resource.key === "ip_public") {
             const { count } = this.options.network.public;
 
             price.push(resource.price / resource.period * 3600 * count);

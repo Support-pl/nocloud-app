@@ -5,7 +5,7 @@
 			class="update-notification"	
 		>
 			<span class='update-notification__message update-notification__element'>
-				{{$t('New content is avaliable')}}
+				{{$t('new content is avaliable')}}
 			</span>
 
 			<a-button
@@ -13,7 +13,7 @@
 				ghost
 				@click="skipWaiting"
 			>
-				Reload
+				{{ $t('reload') | capitalize }}
 			</a-button>
 
 			<a-icon

@@ -4,8 +4,8 @@
     <div class="container" v-else>
       <div class="invoices__wrapper">
         <a-radio-group default-value="Invoice" v-model="value" size="large">
-          <a-radio-button value="Invoice"> Invoice </a-radio-button>
-          <a-radio-button value="Detail"> Detail </a-radio-button>
+          <a-radio-button value="Invoice"> {{ $t('Invoice') }} </a-radio-button>
+          <a-radio-button value="Detail"> {{ $t('Detail') }} </a-radio-button>
         </a-radio-group>
         <div v-if="value === 'Invoice'">
           <empty style="margin-top:50px" v-if="invoices.length === 0" />
