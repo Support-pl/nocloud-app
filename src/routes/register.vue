@@ -137,9 +137,11 @@
 <script>
 import api from '@/api.js';
 import countries from '@/countries.json';
+import notification from '@/mixins/notification.js';
 
 export default {
 	name: "register-view",
+  mixins: [notification],
 	data(){
 		return {
 			countries,
@@ -177,7 +179,7 @@ export default {
 
 			let regexEmail = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,15})+$/;
 			if(!this.userinfo.email.match(regexEmail)){
-				this.$message.warn('Email is not valid');
+				this.$message.warn(this.$t('email is not valid'));
 				return
 			}
 
@@ -194,11 +196,15 @@ export default {
       })
 			.then((res) => {
         if (res.result === 'error') this.$message.error(res.message);
-        else this.$message.success('Account created successfully.');
+        else this.$message.success(this.$t('account created successfully'));
         this.$router.push({name: 'login'});
 			})
 			.catch(err => {
-				this.$message.error(err.message);
+        const message = err.response?.data?.message ?? err.message;
+
+				this.openNotificationWithIcon('error', {
+          message: this.$t(message)
+        });
 				console.error(err);
 			})
 			.finally(()=>{
@@ -216,20 +222,12 @@ export default {
 		companyLogo(){
 			const settings = this.$store.getters['getDomainInfo'];
 			if(settings.logo && typeof settings.logo == 'string'){
-				return settings.logo
+				return settings.logo;
 			}
-			const logo = this.$config.appLogo.path;
-			if(logo) {
-				return `./img/${logo}`;
-			}
-			
-			return "";
+			return this.$config.appLogo.path;
 		},
 		langs(){
 			return this.$config.languages;
-		},
-		companyLogo(){
-			return this.$config.appLogo.path;
 		},
 		companyLogoPos(){
 			return this.$config.appLogo.pos;

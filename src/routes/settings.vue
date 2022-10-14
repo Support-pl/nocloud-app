@@ -117,7 +117,7 @@
                 </a-col>
               </div>
             </div>
-            <p v-else>While here is not one SSH key</p>
+            <p v-else>{{ $t('while here is not one SSH key') }}</p>
             <addSSH />
           </a-modal>
         </div>
@@ -165,15 +165,18 @@
 </template>
 
 <script>
-import balance from "../components/balance/balance.vue";
-import addFunds from "../components/balance/addFunds.vue";
+import config from "@/appconfig";
+import notification from "@/mixins/notification.js";
+import balance from "@/components/balance/balance.vue";
+import addFunds from "@/components/balance/addFunds.vue";
 import addSSH from "@/components/appMain/cloud/openCloud/addSSH.vue";
-import config from "../appconfig";
 import QrcodeVue from "qrcode.vue";
-import { mapGetters } from 'vuex';
+import { mapGetters } from "vuex";
 
 export default {
   name: "settings",
+  components: { balance, addFunds, QrcodeVue, addSSH },
+  mixins: [notification],
   data() {
     return {
       confirmLoading: false,
@@ -186,12 +189,6 @@ export default {
       },
       config,
     };
-  },
-  components: {
-    balance,
-    addFunds,
-    QrcodeVue,
-    addSSH
   },
   methods: {
     exit() {
@@ -229,7 +226,9 @@ export default {
         })
         .catch((err) => {
           console.error(err);
-          this.$message.error("Something went wrong");
+          this.openNotificationWithIcon('error', {
+            message: this.$t(err.response?.data?.message)
+          });
         })
         .finally(() => {
           this.isSendingInfo = false;
@@ -291,18 +290,18 @@ export default {
         .then((result) => {
           if (result) {
             this.openNotificationWithIcon("success", {
-              message: "Delete SSH key successfully",
+              message: this.$t("delete SSH key successfully"),
             });
             this.$store.dispatch("nocloud/auth/fetchUserData");
           } else {
             this.openNotificationWithIcon("error", {
-              message: "Error delete SSH key",
+              message: this.$t("error delete SSH key"),
             });
           }
         })
         .catch((err) => {
           this.openNotificationWithIcon("error", {
-            message: "Error delete SSH key",
+            message: this.$t("error delete SSH key"),
           });
           console.error(err);
         })

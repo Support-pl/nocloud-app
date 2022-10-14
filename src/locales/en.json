@@ -14,11 +14,14 @@
 	"login": "Login",
 	"Enter value": "Enter value",
 	"stay on page": "Remain on this page",
+  "advanced options": "Advanced options",
+  "use standard credentials": "use standard credentials",
 	"forgotPass": "Forgot password?",
 	"Enter new password": "Enter new password",
 	"Cloud": "Cloud",
 	"Support": "Support",
 	"Invoice": "Orders",
+  "Detail": "Detail",
 	"cloudState": "Cloud",
 	"cloud":"Cloud",
 	"support": "Support",
@@ -167,6 +170,9 @@
 	"support_Create_ticket": "Create ticket",
 	"support_Question_subject": "Question Subject",
 	"support_Question": "Question",
+  "ticket subject or message is too short": "Ticket subject or message is too short",
+  "departments are loading": "Departments are loading...",
+  "departments not found": "Departments not found",
 	"Do you want to download a backup?": "Do you want to download a backup?",
 	"The payment can be postponed only once. The payment is postponed for 5 days.": "The payment can only be postponed once and has been postponed for 5 days.",
 	"All unsaved progress will be lost, are you sure?": "All unsaved progress will be lost, are you sure?",
@@ -197,6 +203,9 @@
 	"chat_Resend_message": "Resend message",
 	"chat_Delete_message": "Delete message",
 	"sort": "Sort",
+  "name": "name",
+  "cost": "cost",
+  "date": "date",
 	"filter": "Filter",
 	"search": "Search",
 	"monthly": "1-Monthly",
@@ -215,6 +224,11 @@
 	"enter": "Enter",
 	"all fields are required": "Please fill in all fields",
 	"field must contain more characters": "Field must contain more characters",
+  "email is not valid": "Email is not valid",
+  "account created successfully": "Account created successfully.",
+  "while here is not one SSH key": "While here is not one SSH key",
+  "delete SSH key successfully": "Delete SSH key successfully",
+  "error delete SSH key": "Error delete SSH key",
 	"advice": {
 		"look up": "look up",
 		"You have billed for the renewal of this virtual machine": "You have been billed for the renewal of this virtual machine.",
@@ -379,6 +393,11 @@
 		"download_validation_file": "Download Validation File",
 		"download": "Download"
 	},
+  "domains": {
+    "how_to_choose_the_right_domain": "HOW TO CHOOSE THE RIGHT DOMAIN",
+    "choose_a_name_that_fit_your_brand": "Choose a name that fit your brand",
+    "keep_your_name_easy_to_remember": "Keep your name easy to remember"
+  },
 	"unregistered": {
 		"will be able after": "Available after",
 		"login": "Login",
@@ -394,6 +413,8 @@
 	"VNDExcludeVAT": "Prices quoted in VND, subject to 10% VAT",
 
 
+  "reload": "reload",
+  "new content is avaliable": "New content is avaliable",
 	"accept terms":"Please accept terms of use to proceed.",
 	"ask a question":"Ask a question",
  	"department":"Department",

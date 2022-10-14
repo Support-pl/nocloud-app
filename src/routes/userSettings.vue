@@ -220,7 +220,11 @@ export default {
           this.installDataToBuffer();
         })
         .catch((err) => {
-          this.$message.error(err);
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
           console.error(err);
         })
         .finally(() => {
@@ -241,14 +245,21 @@ export default {
               this.fetchInfo();
             })
             .catch((err) => {
+              const message = err.response?.data?.message ?? err.message ?? err;
+
+              this.openNotificationWithIcon('error', {
+                message: this.$t(message)
+              });
               console.error(err);
-              this.$message.error("Something went wrong");
             })
             .finally(() => {
               this.isSendingInfo = false;
             });
         } else {
-          this.$message.error(`${this.$t("ssl.fields is required")}`);
+          this.openNotificationWithIcon('error', {
+            message: this.$t("ssl.fields is required")
+          });
+
           this.isSendingInfo = false;
           return false;
         }

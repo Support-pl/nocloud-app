@@ -52,9 +52,9 @@
         <a-popover placement="bottomRight" arrow-point-at-center>
           <template slot="content">
             <a-radio-group v-model="sortBy">
-              <a-radio value="Name">Name</a-radio>
-              <a-radio value="Cost">Cost</a-radio>
-              <a-radio value="Date">Date</a-radio>
+              <a-radio value="Name">{{ $t('name') | capitalize }}</a-radio>
+              <a-radio value="Cost">{{ $t('cost') | capitalize }}</a-radio>
+              <a-radio value="Date">{{ $t('date') | capitalize }}</a-radio>
             </a-radio-group>
           </template>
           <template slot="title">
@@ -203,6 +203,7 @@ export default {
     productsLoading() {
       const productsLoading = this.$store.getters["products/getProductsLoading"];
       const instancesLoading = this.$store.getters["nocloud/vms/isLoading"];
+
       return productsLoading || instancesLoading;
     },
     checkedTypes() {

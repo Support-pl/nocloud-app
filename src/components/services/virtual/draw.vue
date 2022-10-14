@@ -44,10 +44,12 @@
 
 <script>
 import api from "@/api.js"
+import notification from "@/mixins/notification.js"
 
 export default {
 	name: 'virtual-draw',
 	props: { service: { required: true } },
+  mixins: [notification],
 	data: () => ({ loginLoading: false }),
 	methods: {
 		logIntoCpanel(){
@@ -62,18 +64,25 @@ export default {
               window.open(res.data.url);
             })
             .catch(err => {
+              const message = err.response?.data?.message ?? err.message ?? err;
+
+              this.openNotificationWithIcon('error', {
+                message: this.$t(message)
+              });
               console.error(err);
-              if (err.message) {
-                this.$message.error(err.message);
-              } else {
-                this.$message.error('can\'t open cpanel');
-              }
             })
             .finally(() => {
               this.loginLoading = false;
             });
         })
-        .catch((err) => console.error(err));
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
+          console.error(err);
+        });
 		}
 	},
   computed: {

@@ -7,7 +7,7 @@
 						{{componentName}}
 					</div>
 					<div class="products__control">
-						<a-button shape="round" icon="plus">Order</a-button>
+						<a-button shape="round" icon="plus">{{ $t('singleInvoice') }}</a-button>
 					</div>
 
 				</div>

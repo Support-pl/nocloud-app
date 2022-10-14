@@ -47,13 +47,14 @@
             </a-row>
             <a-row class="order_option__card">
               <a-col :span="24">
-                <a-card title="HOW TO CHOOSE THE RIGHT DOMAIN">
+                <a-card :title="$t('domains.how_to_choose_the_right_domain')">
                   <div>
                     <a-icon type="check"/>
-                    <p>Keep your name easy to remember</p></div>
+                    <p>{{ $t('domains.keep_your_name_easy_to_remember') }}</p></div>
                   <div>
                     <a-icon type="check"/>
-                    <p>Choose a name that fit your brand</p></div>
+                    <p>{{ $t('domains.choose_a_name_that_fit_your_brand') }}</p>
+                  </div>
                 </a-card>
               </a-col>
             </a-row>
@@ -167,9 +168,11 @@ export default {
           });
         })
         .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
           this.openNotificationWithIcon('error', {
-            message: err.response.data.message
-          })
+            message: this.$t(message)
+          });
           console.error(err);
         })
         .finally(() => this.isDomainsLoading = false);
@@ -203,16 +206,20 @@ export default {
   created() {
     this.$store.dispatch('nocloud/auth/fetchBillingData')
       .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
         this.openNotificationWithIcon('error', {
-          message: err.response.data.message
-        })
+          message: this.$t(message)
+        });
         console.error(err);
       });
     this.$store.dispatch('nocloud/sp/fetch')
       .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
         this.openNotificationWithIcon('error', {
-          message: err.response.data.message
-        })
+          message: this.$t(message)
+        });
         console.error(err);
       });
   },

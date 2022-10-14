@@ -59,12 +59,12 @@ export default {
     },
     sendNewTicket() {
       if (this.ticketTitle.length < 3 || this.ticketMessage.length < 3) {
-        this.$message.warn("Ticket subject or message is too short");
+        this.$message.warn(this.$t("ticket subject or message is too short"));
         return;
       }
 
       if (this.ticketDepartment == -1) {
-        this.$message.warn("Departments are loading...");
+        this.$message.warn(this.$t("departments are loading"));
         return;
       }
 
@@ -88,8 +88,10 @@ export default {
           }
         })
         .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$message.error(this.$t(message));
           console.error(err);
-          this.$message.error("Something went wrong");
         })
         .finally(() => {
           this.isSending = false;
@@ -104,7 +106,7 @@ export default {
         this.ticketDepartment = this.departments[0].id;
       })
       .catch(() => {
-        this.$message.error("Departments not found");
+        this.$message.error(this.$t("departments not found"));
       })
       .finally(() => {
         this.isLoading = false;

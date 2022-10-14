@@ -6,9 +6,11 @@
 
 <script>
 import api from "@/api.js"
+import notification from "@/mixins/notification.js"
 
 export default {
 	props: ['service'],
+  mixins: [notification],
 	methods: {
 		logIntoCpanel(){
 			this.loginLoading = true;
@@ -26,18 +28,25 @@ export default {
               window.open(res.data.url);
             })
             .catch(err => {
+              const message = err.response?.data?.message ?? err.message ?? err;
+
+              this.openNotificationWithIcon('error', {
+                message: this.$t(message)
+              });
               console.error(err);
-              if(err.message){
-                this.$message.error(err.message);
-              } else {
-                this.$message.error('can\'t open cpanel');
-              }
             })
             .finally(() => {
               this.loginLoading = false;
             });
         })
-        .catch((err) => console.error(err));
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
+          console.error(err);
+        });
 		}
 	},
   computed: {

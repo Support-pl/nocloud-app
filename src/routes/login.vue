@@ -50,7 +50,7 @@
         </div>
 
         <div class="login__inputs">
-          <div v-if="loginError" class="login__error">{{ loginError }}</div>
+          <div v-if="loginError" class="login__error">{{ $t(loginError) }}</div>
           <div v-on:keyup.enter="submitHandler()" class="inputs__log-pas">
             <input type="text" placeholder="Email" v-model="email" />
             <template v-if="remember">
@@ -99,13 +99,13 @@
         <div class="login__forgot" style="margin-top: 40px">
           <a-dropdown :trigger="['click']" placement="bottomCenter">
             <a class="ant-dropdown-link" @click.prevent>
-              Advanced options
+              {{ $t('advanced options') }}
               <a-icon type="down" />
             </a>
             <template #overlay>
               <a-menu>
                 <a-menu-item key="0">
-                  <a-checkbox v-model="type">use standard credentials</a-checkbox>
+                  <a-checkbox v-model="type">{{ $t('use standard credentials') }}</a-checkbox>
                 </a-menu-item>
               </a-menu>
             </template>
@@ -181,7 +181,7 @@ export default {
           .catch((error) => {
             if (error.response && error.response.status == 401) {
               this.openNotificationWithIcon('error', {
-                message: error.response.data.message
+                message: this.$t(error.response.data.message)
               });
             }
           })
@@ -203,13 +203,15 @@ export default {
           if (data.result == "success") {
             this.$message.success(data.message);
           } else if (data.result == "error") {
-            this.loginError = data.message;
+            this.loginError = this.$t(data.message);
             this.tryingLogin = false;
           }
         })
         .catch((err) => {
           console.error(err);
-          this.$message.error("Can't connect to the server");
+          this.openNotificationWithIcon('error', {
+            message: this.$t("Can't connect to the server")
+          });
         })
         .finally(() => {
           this.tryingLogin = false;
