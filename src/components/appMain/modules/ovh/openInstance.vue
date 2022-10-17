@@ -8,7 +8,7 @@
         </div>
         <div class="Fcloud__BTN-title">
           <!-- {{$t('Start')}} -->
-          Deploy
+          {{ $t('Deploy') }}
         </div>
       </div>
     </div>
@@ -114,7 +114,7 @@
       >
         <div class="Fcloud__block-header">
           <a-icon type="flag" theme="filled" />
-          {{ "IP" }}
+          IP
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column" style="flex-direction: row">
@@ -152,7 +152,7 @@
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
           <a-icon type="environment" theme="filled" />
-          {{ "Location" }}
+          {{ $t("Location") }}
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
@@ -175,19 +175,19 @@
           <div class="block__column">
             <div class="block__title">OS</div>
             <div class="block__value">
-              {{ OSName || "no data" }}
+              {{ OSName || $t('No Data') }}
             </div>
           </div>
           <div class="block__column">
-            <div class="block__title">Plan</div>
+            <div class="block__title">{{ $t('Plan') }}</div>
             <div class="block__value">
-              {{ VM.billingPlan && VM.billingPlan.title || 'no data' }}
+              {{ VM.billingPlan && VM.billingPlan.title || $t('No Data') }}
             </div>
           </div>
           <div class="block__column" v-if="VM.product">
-            <div class="block__title">Product</div>
+            <div class="block__title">{{ $t('Product') }}</div>
             <div class="block__value">
-              {{ VM.product.replace('_', ' ').toUpperCase() || 'no data' }}
+              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}
             </div>
           </div>
         </div>
@@ -286,7 +286,7 @@ export default {
         .up(this.VM.uuidService)
         .then(() => {
           const opts = {
-            message: `Done!`,
+            message: `${this.$t('Done')}!`,
           };
           this.openNotificationWithIcon("success", opts);
         })

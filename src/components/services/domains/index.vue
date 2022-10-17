@@ -12,21 +12,12 @@
             >
               <a-col :span="16"><!--TODO: add finish status if cart (watch to cart)-->
                 <a-steps>
-                  <a-step
-                    class="search"
-                      status="start"
-                      title="Search"
-                    >
+                  <a-step class="search" status="start" :title="$t('search')">
                     <template #icon><!-- @click="search"-->
                       <a-icon type="search"/>
                     </template>
                   </a-step>
-                  <a-step
-                    class="cart"
-                    status="finish"
-                    title="Cart"
-                    @click="cart"
-                  >
+                  <a-step class="cart" status="finish" :title="$t('cart')" @click="cart">
                     <template #icon>
                       <a-icon type="shopping-cart"/>
                     </template>
@@ -47,13 +38,13 @@
             </a-row>
             <a-row class="order_option__card">
               <a-col :span="24">
-                <a-card :title="$t('domains.how_to_choose_the_right_domain')">
+                <a-card :title="$t('domain_product.how_to_choose_the_right_domain')">
                   <div>
                     <a-icon type="check"/>
-                    <p>{{ $t('domains.keep_your_name_easy_to_remember') }}</p></div>
+                    <p>{{ $t('domain_product.keep_your_name_easy_to_remember') }}</p></div>
                   <div>
                     <a-icon type="check"/>
-                    <p>{{ $t('domains.choose_a_name_that_fit_your_brand') }}</p>
+                    <p>{{ $t('domain_product.choose_a_name_that_fit_your_brand') }}</p>
                   </div>
                 </a-card>
               </a-col>

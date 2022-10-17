@@ -32,8 +32,7 @@
                     dominant-baseline="middle"
                     text-anchor="middle"
                   >
-                    {{ records.reduce((prev, el) => +prev + +el.total, 0) }}
-                    {{ user.currency_code || "USD" }}
+                    {{ total }} {{ user.currency_code || "USD" }}
                   </text>
                 </svg>
               </div>
@@ -61,7 +60,7 @@
                       {{ date(record.exec) }}
                     </template>
                     <template slot="amount" slot-scope="text, record">
-                      {{ record.total }} {{ user.currency_code || 'USD' }}
+                      {{ record.total.toFixed(2) }} {{ user.currency_code || 'USD' }}
                     </template>
                     <template slot="product" slot-scope="text, record">
                       {{ (record.product)
@@ -175,6 +174,9 @@ export default {
     invoice() {
       return this.$store.getters['nocloud/transactions/getTransactions']
         .find((el) => el.uuid === this.$route.params.uuid);
+    },
+    total() {
+      return this.records?.reduce((prev, el) => +prev + +el.total, 0)?.toFixed(2);
     }
   },
   watch: {

@@ -23,8 +23,12 @@
 		<a-row type="flex" justify="end">
 			<a-col>
 				<div class="footer" style="margin-top: 20px">
-					<a-button @click="discardChanges" :loading="loading">Discard</a-button>
-					<a-button type="primary" style="margin-left: 10px" @click="sendNewBootOrder" :loading="loading">Accept</a-button>
+					<a-button @click="discardChanges" :loading="loading">
+            {{ $t('Discard') }}
+          </a-button>
+					<a-button type="primary" style="margin-left: 10px" @click="sendNewBootOrder" :loading="loading">
+            {{ $t('Accept') }}
+          </a-button>
 				</div>
 
 			</a-col>

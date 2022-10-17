@@ -38,8 +38,8 @@
                     dominant-baseline="middle"
                     text-anchor="middle"
                   >
-                    {{ +invoice.total || total }}
-                    {{ (invoice.currencycode) ? invoice.currencycode : "USD" }}
+                    {{ (+invoice.total || total).toFixed(2) }}
+                    {{ invoice.currencycode || "USD" }}
                   </text>
                 </svg>
               </div>
@@ -86,8 +86,8 @@
                             </td>
                             <td v-else>{{ invoice.items.item[0].description }}</td>
                             <td>
-                              {{ total }}
-                              {{ (invoice.currencycode) ? invoice.currencycode : "USD" }}
+                              {{ total.toFixed(2) }}
+                              {{ invoice.currencycode || "USD" }}
                             </td>
                           </tr>
                         </table>
@@ -99,7 +99,7 @@
                             <td>{{ item.description }}</td>
                             <td v-if="item.amount">
                               {{ item.amount }}
-                              {{ (invoice.currencycode) ? invoice.currencycode : "USD" }}
+                              {{ invoice.currencycode || "USD" }}
                             </td>
                           </tr>
                         </table>

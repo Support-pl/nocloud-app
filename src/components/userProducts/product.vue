@@ -74,7 +74,9 @@ export default {
 		localDate(){
       if (this.date.getTime() === 0) return 'none';
       if (this.wholeProduct.groupname === 'Domains') {
-        return `${this.date.getTime()} years`;
+        const date = this.date.getTime();
+
+        return (date === 1) ? `${date} year` : `${date} years`;
       }
 			return new Intl.DateTimeFormat().format(this.date);
 		},
