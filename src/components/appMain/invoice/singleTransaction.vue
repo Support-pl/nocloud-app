@@ -6,7 +6,7 @@
   >
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
-        {{ invoice.total }} {{ user.currency_code || 'USD' }}
+        {{ invoice.total.toFixed(2) }} {{ user.currency_code || 'USD' }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">

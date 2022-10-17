@@ -337,7 +337,7 @@ export default {
 
 .chat__date {
   padding: 7px 15px;
-  margin: 10px auto 5px;
+  margin: 10px auto 15px;
   text-align: center;
   border-radius: 7px;
   line-height: 1;

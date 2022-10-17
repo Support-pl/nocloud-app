@@ -71,11 +71,8 @@
                       </a-input-password>
                     </template>
                     <template v-else>
-                      <p>
-                        We can't do it automaticly. Presss OK to create a
-                        ticket.
-                      </p>
-                      <p>All unsaved data will be lost.</p>
+                      <p>{{ $t('We can\'t do it automaticly. Presss OK to create a ticket') }}</p>
+                      <p>{{ $t('All unsaved data will be lost') }}</p>
                     </template>
                   </a-modal>
                   <a-modal
@@ -122,10 +119,10 @@
                       </a-col>
                     </a-row>
                     <a-row style="display: flex; align-items: center; width: 100%">
-                      <a-col style="width: 75px; padding-top:20px"> Disk (GB) </a-col>
+                      <a-col style="width: 75px; padding-top:20px"> {{ $t('disk') }} (GB) </a-col>
                       <a-col style="width: 100%">
                         <div :style="{ color: 'var(--err)', textAlign: 'center' }">
-                          Can't reduce disk size
+                          {{ $t('Can\'t reduce disk size') }}
                         </div>
                         <a-input-number
                           style="width: 100%"
@@ -142,13 +139,13 @@
                     :footer="null"
                   >
                     <div>
-                      <span style="font-weight: 700">Key: </span>
+                      <span style="font-weight: 700">{{ $t('key') | capitalize }}: </span>
                       <span
                         class="ssh-text"
                         title="Click to copy"
                         @click="addToClipboard"
                       >
-                        {{ VM.config && VM.config.ssh_public_key || 'none' }}
+                        {{ VM.config && VM.config.ssh_public_key || $t('none') }}
                       </span>
                     </div>
                   </a-modal>
@@ -301,8 +298,8 @@ export default {
           forVNC: true,
         },
       ];
-      const { type } = this.$store.getters['nocloud/sp/getSP']
-        .find(({ uuid }) => uuid === this.VM.sp);
+      const sp = this.$store.getters['nocloud/sp/getSP'];
+      const { type } = sp?.find(({ uuid }) => uuid === this.VM.sp) || {};
 
       return options.filter((el) =>
         (el.modules) ? el.modules.includes(type) : true
@@ -418,14 +415,18 @@ export default {
           }})
             .then((resp) => {
               if (resp.result == "success") {
-                this.$message.success("Ticket created successfully");
+                this.$message.success(this.$t("Ticket created successfully"));
               } else {
                 throw resp;
               }
             })
             .catch((err) => {
+              const message = err.response?.data?.message ?? err.message ?? err;
+
+              this.openNotificationWithIcon('error', {
+                message: this.$t(message)
+              });
               console.error(err);
-              this.$message.error("Something went wrong");
             });
         }
         instance.resources.drive_size = this.resize.size * 1024;
@@ -436,13 +437,13 @@ export default {
             if (result) {
               // this.$message.success(this.$t("VM resized successfully"));
               this.openNotificationWithIcon("success", {
-                message: "VM resized successfully",
+                message: this.$t("VM resized successfully"),
               });
               this.isRenameLoading = false;
               this.closeModal("expand");
             } else {
               this.openNotificationWithIcon("error", {
-                message: "Can't VM resize to same size",
+                message: this.$t("Can't VM resize to same size"),
               });
               // this.$message.error("Can't resize to same size");
             }
@@ -450,11 +451,11 @@ export default {
           .catch((err) => {
             // this.$message.error( "Can't resize to same size");
             this.openNotificationWithIcon("error", {
-              message: "Can't VM resize to same size",
+              message: this.$t("Can't VM resize to same size"),
             });
             console.error(err);
           })
-          .finally((res) => {
+          .finally(() => {
             this.modal.confirmLoading = false;
           });
       }
@@ -476,13 +477,13 @@ export default {
               this.closeModal("menu");
             } else {
               this.openNotificationWithIcon("error", {
-                message: "Can't VM name changes",
+                message: this.$t("Can't VM name changes"),
               });
             }
           })
           .catch(() => {
             this.openNotificationWithIcon("error", {
-              message: "Can't VM name changes",
+              message: this.$t("Can't VM name changes"),
             });
           })
           .finally((res) => {
@@ -498,11 +499,15 @@ export default {
             message: `VM#${this.$route.params.pathMatch} имеет аддон, запрещающий автопереустановку. Необходимо выполнить перустановку вручную.`,
           })
           .then(() => {
-            this.$message.success("Order created successuffly");
+            this.$message.success(this.$t("Order created successfully"));
             this.closeModal("reinstall");
           })
-          .catch(() => {
-            this.$message.success("Some error during creation order");
+          .catch((err) => {
+            const message = err.response?.data?.message ?? err.message ?? err;
+
+            this.openNotificationWithIcon('error', {
+              message: this.$t(message)
+            });
           });
         return;
       }
@@ -544,19 +549,19 @@ export default {
             .then((result) => {
               if (result) {
                 this.openNotificationWithIcon("success", {
-                  message: "VM deleted successfully",
+                  message: this.$t("VM deleted successfully"),
                 });
 
                 this.$router.push({ path: '/cloud' });
               } else {
                 this.openNotificationWithIcon("error", {
-                  message: "Failed to delete VM",
+                  message: this.$t("Failed to delete VM"),
                 });
               }
             })
             .catch(() => {
               this.openNotificationWithIcon("error", {
-                message: "Failed to delete VM",
+                message: this.$t("Failed to delete VM"),
               });
             })
             .finally(() => {
@@ -577,7 +582,7 @@ export default {
           .writeText(target.innerText)
           .then(() => {
             this.openNotificationWithIcon("success", {
-              message: 'Text copied'
+              message: this.$t('Text copied')
             });
           })
           .catch((res) => {
@@ -585,7 +590,7 @@ export default {
           });
       } else {
         this.openNotificationWithIcon("error", {
-          message: 'Clipboard is not supported!'
+          message: this.$t('Clipboard is not supported')
         });
       }
     }

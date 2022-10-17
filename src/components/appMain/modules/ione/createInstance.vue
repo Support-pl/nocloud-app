@@ -7,14 +7,14 @@
   >
     <a-collapse-panel
       key="location"
-      :header="$t('Location:') + (!itemSP ? ' ' : ' (' + itemSP.title + ')')"
+      :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${itemSP.title})`}`"
     >
       <slot name="location" />
     </a-collapse-panel>
 
     <a-collapse-panel
       key="plan"
-      :header="$t('Plan:') + planHeader"
+      :header="`${$t('Plan')}: ${planHeader}`"
       :disabled="itemSP ? false : true"
     >
       <template v-if="getProducts.length > 0">
@@ -129,7 +129,7 @@
     <a-collapse-panel
       key="OS"
       :disabled="!itemSP || getProducts.length < 1"
-      :header="$t('OS:') + (options.os.name == '' ? ' ' : ' (' + options.os.name + ')')"
+      :header="`${$t('os')}: ${(options.os.name == '') ? ' ' : ` (${options.os.name})`}`"
     >
       <div class="newCloud__option-field">
         <div class="newCloud__template" v-if="this.itemSP">
@@ -158,8 +158,8 @@
             <!-- <a-form-model-item> -->
             <a-input
               style="margin-top: 10px"
-              placeholder="VM name"
               :value="vmName"
+              :placeholder="$t('VM name')"
               @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
             />
             <password-meter
@@ -175,8 +175,8 @@
             <a-form-item style="margin-bottom: 0px">
               <a-input-password
                 class="password"
-                placeholder="Password"
                 :value="password"
+                :placeholder="$t('clientinfo.password')"
                 @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
               />
             </a-form-item>
@@ -197,7 +197,7 @@
     <a-collapse-panel
       v-if="false && getPlan.kind === 'STATIC'"
       key="network"
-      :header="$t('Network:') + networkHeader"
+      :header="`${$t('Network')}: ${networkHeader}`"
       :disabled="itemSP ? false : true"
     >
       <div class="newCloud__option-field">

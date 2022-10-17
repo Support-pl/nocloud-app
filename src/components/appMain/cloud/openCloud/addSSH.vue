@@ -1,8 +1,8 @@
 <template>
   <div>
-    <a-modal v-model="isVisible" @ok="handleOk" title="Add a new SSH key">
+    <a-modal v-model="isVisible" @ok="handleOk" :title="$t('Add a new SSH key')">
       <a-row :gutter="[10, 10]" style="display: flex; align-items: center">
-        <a-col :xs="24" :sm="4"> Title </a-col>
+        <a-col :xs="24" :sm="4"> {{ $t('title') | capitalize }} </a-col>
         <a-col :xs="24" :sm="20">
           <a-input v-model="title" type="text" />
         </a-col>
@@ -17,7 +17,7 @@
         </a-col>
       </a-row>
     </a-modal>
-    <a-button @click="showModal">Add SSH</a-button>
+    <a-button @click="showModal">{{ $t('Add') }} SSH</a-button>
   </div>
 </template>
 <script>
@@ -63,7 +63,7 @@ export default {
         .then((result) => {
           if (result) {
             this.openNotificationWithIcon("success", {
-              message: "Add SSH key successfully",
+              message: this.$t("Add SSH key successfully"),
             });
             this.isVisible = false;
             this.title = "";
@@ -71,13 +71,13 @@ export default {
             this.$store.dispatch("nocloud/auth/fetchUserData");
           } else {
             this.openNotificationWithIcon("error", {
-              message: "Error adding SSH key",
+              message: this.$t("Error adding SSH key"),
             });
           }
         })
         .catch((err) => {
           this.openNotificationWithIcon("error", {
-            message: "Error adding SSH key",
+            message: this.$t("Error adding SSH key"),
           });
           console.error(err);
         })

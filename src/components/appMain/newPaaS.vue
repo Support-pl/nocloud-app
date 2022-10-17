@@ -29,7 +29,7 @@
 
                   <a-select
                     v-model="locationId"
-                    placeholder="Select location"
+                    :placeholder="$t('select location')"
                     style="
                       width: 180px;
                       margin-left: 20px;
@@ -47,7 +47,7 @@
                     </a-select-option>
                   </a-select>
                   <div style="overflow: hidden; margin-top: -15px">
-                    <a-spin tip="Loading..." :spinning="isPlansLoading">
+                    <a-spin :tip="$t('loading')" :spinning="isPlansLoading">
                       <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
                     </a-spin>
                   </div>
@@ -80,7 +80,7 @@
                 border-bottom: 1px solid #e8e8e8;
               "
             >
-              <a-col> {{ $t("Location") }}: </a-col>
+              <a-col> {{ $t("location") | capitalize }}: </a-col>
               <a-col>
                 {{ this.itemSP.title }}
               </a-col>
@@ -97,7 +97,7 @@
               :style="{ 'font-size': '1.2rem' }"
               v-if="options.size"
             >
-              <a-col> {{ $t("Tarif") }}: </a-col>
+              <a-col> {{ $t("tarif") | capitalize }}: </a-col>
               <a-col>
                 {{ productSize }}
               </a-col>
@@ -277,7 +277,7 @@
                   
                   </a-badge>
                 </a-tooltip> -->
-                {{ $t("Private") }} IPv4:
+                {{ $t("private") }} IPv4:
               </a-col>
               <a-col>
                 {{ options.network.private.count }}
@@ -346,7 +346,7 @@
             <a-col style="width: 100%">
               <a-select
                 style="width: 100%"
-                placeholder="NameSpaces"
+                placeholder="Namespaces"
                 @change="(item) => (namespace = item)"
               >
                 <a-select-option
@@ -368,8 +368,8 @@
           <a-row type="flex" justify="center" style="margin-top: 15px">
             <a-col>
               <a-radio-group default-value="Monthly" v-model="tarification">
-                <a-radio-button value="Monthly"> Monthly </a-radio-button>
-                <a-radio-button value="Hourly"> Hourly </a-radio-button>
+                <a-radio-button value="Monthly"> {{ $t('Monthly') }} </a-radio-button>
+                <a-radio-button value="Hourly"> {{ $t('Hourly') }} </a-radio-button>
               </a-radio-group>
             </a-col>
           </a-row>
@@ -785,7 +785,7 @@ export default {
       if (plan) {
         const price = [];
         for (let resource of plan.resources) {
-          if (resource.key === "ip" || resource.key === "ip_public") {
+          if (resource.key.includes('ip')) {
             const { count } = this.options.network.public;
 
             price.push(resource.price / resource.period * 3600 * count);
@@ -926,7 +926,7 @@ export default {
         localStorage.getItem("data") &&
         this.isLoggedIn
       ) {
-        const answer = window.confirm("Data will be lost");
+        const answer = window.confirm(this.$t("Data will be lost"));
         if (answer) {
           localStorage.removeItem("data");
           next();
@@ -1200,7 +1200,7 @@ export default {
         .dispatch("nocloud/vms/createService", orderData)
         .then((result) => {
           if (result) {
-            this.$message.success(this.$t("Order created successfully."));
+            this.$message.success(this.$t("Order created successfully"));
             this.deployService(result.uuid);
             if (this.modal.goToInvoice) {
               this.$router.push(`/invoice/${res.invoiceid}`);
@@ -1210,7 +1210,11 @@ export default {
           }
         })
         .catch((err) => {
-          this.$message.error("Can't create order. Try later.");
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
           console.error(err);
         });
     },
@@ -1220,7 +1224,7 @@ export default {
         .dispatch("nocloud/vms/updateService", orderDataNew)
         .then((result) => {
           if (result) {
-            this.$message.success(this.$t("Order update successfully."));
+            this.$message.success(this.$t("Order update successfully"));
             this.deployService(result.uuid);
             if (this.modal.goToInvoice) {
               this.$router.push(`/invoice/${result.invoiceid}`);
@@ -1230,7 +1234,11 @@ export default {
           }
         })
         .catch((err) => {
-          this.$message.error("Can't update order. Try later.");
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
           console.error(err);
         });
     },
@@ -1242,9 +1250,11 @@ export default {
           this.$router.push({ path: '/cloud' });
         })
         .catch((err) => {
-          this.$message.success(
-            `Error: ${err?.response?.data?.message ?? "Unknown"}.`
-          );
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
         })
         .finally(() => {
           this.modal.confirmLoading = false;

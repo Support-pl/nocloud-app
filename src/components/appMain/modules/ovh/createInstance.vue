@@ -7,34 +7,34 @@
   >
     <a-collapse-panel
       key="location"
-      :header="$t('Location:') + (!itemSP ? ' ' : ' (' + itemSP.title + ')')"
+      :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${itemSP.title})`}`"
     >
       <slot name="location" />
     </a-collapse-panel>
 
     <a-collapse-panel
       key="plan"
-      :header="$t('Plan:') + planHeader"
+      :header="`${$t('Plan')}: ${planHeader}`"
       :disabled="!itemSP || isFlavorsLoading"
     >
       <a-row type="flex" align="middle" :gutter="[10, 10]">
-        <a-col :xs="4" :sm="3">Model:</a-col>
+        <a-col :xs="4" :sm="3">{{ $t('model') | capitalize }}:</a-col>
         <a-col :xs="20" :sm="9">
           <a-select
             style="width: 100%"
-            placeholder="Model"
             v-model="flavor"
+            :placeholder="$t('model') | capitalize"
             :options="flavors"
             :loading="isFlavorsLoading"
             @change="setData"
           />
         </a-col>
-        <a-col :xs="5" :sm="3">OS type:</a-col>
+        <a-col :xs="5" :sm="3">{{ $t('OS type') }}:</a-col>
         <a-col :xs="19" :sm="9">
           <a-select
             style="width: 100%"
-            placeholder="OS type"
             v-model="osType"
+            :placeholder="$t('OS type')"
             :options="osTypes"
             :loading="isOSLoading"
             @change="getOS"
@@ -79,15 +79,15 @@
     <a-collapse-panel
       key="OS"
       :disabled="!itemSP || isOSLoading || !flavor"
-      :header="$t('OS:') + (options.os.name == '' ? ' ' : ' (' + options.os.name + ')')"
+      :header="`${$t('os')}: ${(options.os.name == '') ? ' ' : ` (${options.os.name})`}`"
     >
       <div class="newCloud__option-field" v-if="images.length > 0">
         <a-row>
           <a-col :xs="24" :sm="10">
             <a-input
               style="margin-bottom: 20px"
-              placeholder="VM name"
               :value="vmName"
+              :placeholder="$t('VM name')"
               @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
             />
           </a-col>

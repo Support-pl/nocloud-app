@@ -12,21 +12,21 @@
         <span
           v-if="value.DISK_ID != 0"
           class="modal_table_action_btn"
-          title="Detach"
+          :title="$t('Detach')"
           @click="detachInit(row)"
         >
           <a-icon type="close" />
         </span>
         <span
           class="modal_table_action_btn"
-          title="Resize"
+          :title="$t('Resize')"
           @click="resizeInit(row)"
         >
           <a-icon type="arrows-alt" />
         </span>
 
         <a-modal
-          title="Disk resize"
+          :title="$t('disk resize')"
           :visible="modal.resize"
           :confirm-loading="resize.loading"
           @ok="sendResize"
@@ -52,7 +52,7 @@
       </a-col>
     </a-row>
     <a-modal
-      title="Disk detach"
+      :title="$t('disk detach')"
       :visible="modal.detach"
       :confirm-loading="detach.loading"
       @ok="sendDetach"
@@ -64,7 +64,7 @@
       <p>{{ $t("disk_manage.Do you want to proceed?") }}</p>
     </a-modal>
     <a-modal
-      title="Disk attach"
+      :title="$t('disk attach')"
       :visible="modal.attach"
       :confirm-loading="attach.loading"
       @ok="sendAttach"

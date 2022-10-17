@@ -72,9 +72,7 @@
           <div class="settings__logo">
             <a-icon type="safety" />
           </div>
-          <div class="settings__title">
-            {{ $t("SSH") }}
-          </div>
+          <div class="settings__title">SSH</div>
           <a-modal
             v-model="modal.SSH"
             :title="$t('SSH keys')"

@@ -150,19 +150,19 @@ export default {
         .then((result) => {
           if (result) {
             this.openNotificationWithIcon("success", {
-              message: `Change ip successfully`,
+              message: this.$t('Change ip successfully'),
             });
 
             this.$emit('closeModal');
           } else {
             this.openNotificationWithIcon("error", {
-              message: `Can't change ip VM`,
+              message: this.$t(`Can't change ip VM`),
             });
           }
         })
         .catch((err) => {
           this.openNotificationWithIcon("error", {
-            message: `Can't change ip VM`,
+            message: this.$t(`Can't change ip VM`),
           });
           console.error(err);
         })

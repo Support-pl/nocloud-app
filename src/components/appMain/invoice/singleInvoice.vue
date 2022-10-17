@@ -7,7 +7,7 @@
     </div>
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
-        {{ +invoice.total + +invoice.credit }} {{ invoice.currencycode || 'USD' }}
+        {{ total }} {{ invoice.currencycode || 'USD' }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -37,9 +37,7 @@
 <script>
 export default {
   name: "invoice",
-  props: {
-    invoice: Object,
-  },
+  props: { invoice: Object },
   computed: {
     statusColor() {
       switch (this.invoice.status.toLowerCase()) {
@@ -60,6 +58,9 @@ export default {
         return null;
       }
     },
+    total() {
+      return (+this.invoice?.total + +this.invoice?.credit).toFixed(2);
+    }
   },
   methods: {
     clickOnInvoice(uuid) {

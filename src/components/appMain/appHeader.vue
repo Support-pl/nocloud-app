@@ -229,6 +229,7 @@ export default {
               icon: "reload",
               onClickFuncion: () => {
                 this.fetchInvoices();
+                this.fetchTransactions()
                 this.fetchUserData();
               },
             },
@@ -257,6 +258,7 @@ export default {
     ...mapActions("support", { fetchTickets: "fetch" }),
     ...mapActions("invoices", { fetchInvoices: "fetch" }),
     ...mapActions("nocloud/vms", { fetchClouds: "fetch" }),
+    ...mapActions("nocloud/transactions", { fetchTransactions: "fetch" }),
     ...mapActions("nocloud/auth", ["fetchUserData"]),
     ...mapMutations("support", ["inverseAddTicketState"]),
     getState(name) {

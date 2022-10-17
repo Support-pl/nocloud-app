@@ -11,21 +11,12 @@
           >
             <a-col :span="16"><!--TODO: add finish status if cart (watch to cart)-->
               <a-steps>
-                <a-step
-                  class="search"
-                  status="start"
-                  title="Search"
-                  @click="search"
-                >
+                <a-step class="search" status="start" :title="$t('search')" @click="search">
                   <template #icon><!---->
                     <a-icon type="search"/>
                   </template>
                 </a-step>
-                <a-step
-                  class="cart"
-                  status="finish"
-                  title="Cart"
-                ><!--@click="cart"-->
+                <a-step class="cart" status="finish" :title="$t('cart')"><!--@click="cart"-->
                   <template #icon>
                     <a-icon type="shopping-cart"/>
                   </template>
@@ -40,20 +31,21 @@
                 :number-style="{
                   backgroundColor: '#fff',
                   color: '#999',
-                  boxShadow: '0 0 0 1px #d9d9d9 inset', }"
+                  boxShadow: '0 0 0 1px #d9d9d9 inset'
+                }"
               />
             </a-col>
           </a-row>
           <a-row :gutter="[10, 10]">
             <a-col :xs="24" :sm="12">
               <a-input
-                placeholder="username"
+                :placeholder="$t('clientinfo.username')"
                 v-model="resources.reg_username"
               />
             </a-col>
             <a-col :xs="24" :sm="12">
               <a-input-password
-                placeholder="password"
+                :placeholder="$t('clientinfo.password')"
                 v-model="resources.reg_password"
               />
             </a-col>
@@ -61,24 +53,24 @@
           <a-row justify="space-between" :gutter="[10, 10]">
             <a-col :xs="24" :sm="8">
               <a-switch v-model="resources.auto_renew" />
-              auto renew
+              {{ $t('domain_product.auto_renew') }}
             </a-col>
             <a-col :xs="24" :sm="8">
               <a-switch v-model="resources.who_is_privacy" />
-              who is privacy
+              {{ $t('domain_product.who_is_privacy') }}
             </a-col>
             <a-col :xs="24" :sm="8">
               <a-switch v-model="resources.lock_domain" />
-              lock domain
+              {{ $t('domain_product.lock_domain') }}
             </a-col>
           </a-row>
           <a-row class="order__prop" style="margin-bottom: 5px">
-            <a-col span="8" :xs="6">Domain in your cart:</a-col><!--{{$t('provider') | capitalize}}-->
+            <a-col span="8" :xs="6">{{ $t('domain_product.domain_in_your_cart') }}</a-col><!--{{$t('provider') | capitalize}}-->
           </a-row>
           <div class="description">
             <div v-if="!onCart.length" class="description-header">
               <a-icon type="question-circle" />
-              <p>YOUR CART IS EMPTY</p>
+              <p>{{ $t('domain_product.your_cart_is_empty') }}</p>
             </div>
               <a-descriptions
                 bordered
@@ -104,7 +96,7 @@
                       :key="index"
                       @click="removeFromCart(domain, index)"
                   >
-                    Delete
+                    {{ $t('Delete') }}
                   </a-button>
                 </a-descriptions-item>
               </a-descriptions>
@@ -252,7 +244,7 @@
               @ok="orderClickHandler"
               @cancel="modal.confirmCreate = false"
             >
-              <p>{{ $t('Do you want to order') }}: {{ getProducts['name'] }}</p>
+              <p>{{ $t('order_services.Do you want to order') }}: {{ getProducts['name'] }}</p>
             </a-modal>
           </a-col>
         </a-row>
@@ -323,10 +315,11 @@ export default {
           // this.options.tarif = res[this.options.provider][0].tarif;
         })
         .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
           this.openNotificationWithIcon('error', {
-            message: err.response.data.message
-          })
-          console.error(err);
+            message: this.$t(message)
+          });
         })
         .finally(() => this.fetchLoading = false);
     },
@@ -389,6 +382,7 @@ export default {
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
           const config = { namespace: this.namespace, service: orderData };
+          const message = err.response?.data?.message ?? err.message ?? err;
 
           this.$api.services.testConfig(config)
             .then(({ result, errors }) => {
@@ -397,7 +391,7 @@ export default {
               });
             });
           this.openNotificationWithIcon('error', {
-            message: err.response.data?.message
+            message: this.$t(message)
           });
           console.error(err);
         })
@@ -406,7 +400,7 @@ export default {
       const domains = Object.keys(this.products);
 
       if (!domains.every((el) => el.match(/.+\..+/))){
-        this.$message.error('domain is wrong');
+        this.$message.error(this.$t('domain is wrong'));
         return;
       }
       this.modal.confirmCreate = true;
@@ -415,13 +409,15 @@ export default {
       this.$api.services.up(uuid)
         .then(() => {
           this.openNotificationWithIcon('success', {
-            message: 'Domain created successfully'
+            message: this.$t('Domain created successfully')
           });
           this.$router.push({ path: '/services' });
         })
         .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
           this.openNotificationWithIcon('error', {
-            message: err.response.data?.message ?? 'Unknown'
+            message: this.$t(message)
           });
         })
         .finally(() => this.sendloading = false);
@@ -472,9 +468,11 @@ export default {
         if (pool.length === 1) this.plan = pool[0].uuid;
       })
       .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
         this.openNotificationWithIcon('error', {
-          message: err.response.data.message
-        })
+          message: this.$t(message)
+        });
         console.error(err);
       });
 
@@ -483,9 +481,11 @@ export default {
         if (pool.length === 1) this.namespace = pool[0].uuid;
       })
       .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
         this.openNotificationWithIcon('error', {
-          message: err.response.data.message
-        })
+          message: this.$t(message)
+        });
         console.error(err);
       });
 
@@ -494,9 +494,11 @@ export default {
         if (pool.length === 1) this.service = pool[0].uuid;
       })
       .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
         this.openNotificationWithIcon('error', {
-          message: err.response.data.message
-        })
+          message: this.$t(message)
+        });
         console.error(err);
       });
 

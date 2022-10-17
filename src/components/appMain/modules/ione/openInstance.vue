@@ -8,7 +8,7 @@
         </div>
         <div class="Fcloud__BTN-title">
           <!-- {{$t('Start')}} -->
-          Deploy
+          {{ $t('Deploy') }}
         </div>
       </div>
     </div>
@@ -152,7 +152,7 @@
       >
         <div class="Fcloud__block-header">
           <a-icon type="flag" theme="filled" />
-          {{ "IP" }}
+          IP
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column" style="flex-direction: row">
@@ -190,7 +190,7 @@
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
           <a-icon type="environment" theme="filled" />
-          {{ "Location" }}
+          {{ $t("Location") }}
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
@@ -213,19 +213,19 @@
           <div class="block__column">
             <div class="block__title">OS</div>
             <div class="block__value">
-              {{ OSName || "no data" }}
+              {{ OSName || $t('No Data') }}
             </div>
           </div>
           <div class="block__column">
-            <div class="block__title">Plan</div>
+            <div class="block__title">{{ $t('Plan') }}</div>
             <div class="block__value">
-              {{ VM.billingPlan && VM.billingPlan.title || 'no data' }}
+              {{ VM.billingPlan && VM.billingPlan.title || $t('No Data') }}
             </div>
           </div>
           <div class="block__column" v-if="VM.product">
-            <div class="block__title">Product</div>
+            <div class="block__title">{{ $t('Product') }}</div>
             <div class="block__value">
-              {{ VM.product.replace('_', ' ').toUpperCase() || 'no data' }}
+              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}
             </div>
           </div>
         </div>
@@ -410,14 +410,14 @@
               <a-modal
                 v-model="snapshots.addSnap.modal"
                 :footer="null"
-                title="Create snapshot"
+                :title="$t('Create snapshot')"
               >
                 <p>{{ $t("You can only have 3 snapshots at a time.") }}</p>
                 <p>{{ $t("Each snapshot exists for 24 hours and is then deleted.") }}</p>
                 <p>{{ $t("Choose a name for the new snapshot:") }}</p>
                 <a-input
                   ref="snapNameInput"
-                  placeholder="Snapshot name"
+                  :placeholder="$t('Snapshot name')"
                   v-model="snapshots.addSnap.snapname"
                 />
                 <div class="modal__buttons">
@@ -628,7 +628,7 @@ export default {
         .then((res) => {
           this.VM.state.meta.snapshots = res?.meta.snapshots;
           this.openNotificationWithIcon("success", {
-            message: "Create Snapshot",
+            message: $t("Create snapshot"),
           });
           this.snapshots.addSnap.modal = false;
         })
@@ -655,7 +655,7 @@ export default {
         .then(() => {
           delete this.VM.state.meta.snapshots[index];
           this.openNotificationWithIcon("success", {
-            message: "Delete Snapshot",
+            message: $t("Delete snapshot"),
           });
         })
         .catch((err) => {
@@ -680,7 +680,7 @@ export default {
         .dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
           this.openNotificationWithIcon("success", {
-            message: "Revert Snapshot",
+            message: $t("Revert snapshot"),
           });
         })
         .catch((err) => {
@@ -776,14 +776,18 @@ export default {
         }})
           .then((resp) => {
             if (resp.result == "success") {
-              this.$message.success("Ticket created successfully");
+              this.$message.success(this.$t("Ticket created successfully"));
             } else {
               throw resp;
             }
           })
           .catch((err) => {
+            const message = err.response?.data?.message ?? err.message ?? err;
+
+            this.openNotificationWithIcon('error', {
+              message: this.$t(message)
+            });
             console.error(err);
-            this.$message.error("Something went wrong");
           });
         return;
       }
@@ -791,7 +795,7 @@ export default {
         .dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
           const opts = {
-            message: `Done!`,
+            message: `${this.$t('Done')}!`,
           };
           this.openNotificationWithIcon("success", opts);
         })
