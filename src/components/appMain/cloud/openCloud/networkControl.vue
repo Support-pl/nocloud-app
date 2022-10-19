@@ -171,25 +171,36 @@ export default {
         });
     },
     sendNewIP() {
-      const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
-      const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
-
-      instance.resources.ips_private = this.networking.private.count;
-      instance.resources.ips_public = this.networking.public.count;
-      instance.state.meta.networking = {
-        private: this.networking.private.list,
-        public: this.networking.public.list
-      };
-
-      const res = group.instances.reduce((prev, curr) => ({
-        private: prev.private + curr.resources.ips_private,
-        public: prev.public + curr.resources.ips_public
-      }), { private: 0, public: 0 });
-
-      group.resources.ips_private = res.private;
-      group.resources.ips_public = res.public;
       this.isLoading = true;
-      this.updateService('Add');
+      this.$store.dispatch('nocloud/vms/fetch')
+        .then(() => {
+          const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
+          const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
+
+          instance.resources.ips_private = this.networking.private.count;
+          instance.resources.ips_public = this.networking.public.count;
+          instance.state.meta.networking = {
+            private: this.networking.private.list,
+            public: this.networking.public.list
+          };
+
+          const ips = group.instances.reduce((prev, curr) => ({
+            private: prev.private + curr.resources.ips_private,
+            public: prev.public + curr.resources.ips_public
+          }), { private: 0, public: 0 });
+
+          group.resources.ips_private = ips.private;
+          group.resources.ips_public = ips.public;
+          this.updateService();
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
+          console.error(err);
+        });
     },
   },
   mounted() {

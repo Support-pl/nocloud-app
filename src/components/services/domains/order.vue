@@ -39,18 +39,18 @@
           <a-row :gutter="[10, 10]">
             <a-col :xs="24" :sm="12">
               <a-input
-                :placeholder="$t('clientinfo.username')"
                 v-model="resources.reg_username"
+                :placeholder="$t('clientinfo.username')"
               />
             </a-col>
             <a-col :xs="24" :sm="12">
               <a-input-password
-                :placeholder="$t('clientinfo.password')"
                 v-model="resources.reg_password"
+                :placeholder="$t('clientinfo.password')"
               />
             </a-col>
           </a-row>
-          <a-row justify="space-between" :gutter="[10, 10]">
+          <a-row :gutter="[10, 10]">
             <a-col :xs="24" :sm="8">
               <a-switch v-model="resources.auto_renew" />
               {{ $t('domain_product.auto_renew') }}
@@ -64,6 +64,106 @@
               {{ $t('domain_product.lock_domain') }}
             </a-col>
           </a-row>
+
+          <a-form-model ref="form" :model="form">
+            <a-row :gutter="[15, 10]">
+              <a-col>User:</a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="first_name">
+                  <a-input
+                    v-model="form.first_name"
+                    :placeholder="$t('clientinfo.firstname')"
+                  />
+                </a-form-model-item>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="last_name">
+                  <a-input
+                    v-model="form.last_name"
+                    :placeholder="$t('clientinfo.lastname')"
+                  />
+                </a-form-model-item>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="email" :rules="rules.req">
+                  <a-input
+                    v-model="form.email"
+                    :placeholder="$t('clientinfo.email')"
+                  />
+                </a-form-model-item>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="phone" :rules="rules.req">
+                  <a-input
+                    v-model="form.phone"
+                    :placeholder="$t('clientinfo.phonenumber')"
+                  />
+                </a-form-model-item>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="country">
+                  <a-select v-model="form.country" style="width: 100%">
+                    <a-select-option
+                      v-for="country in Object.keys(countries)"
+                      :key="country"
+                      :value="country"
+                    >
+                      {{ $t(`country.${country}`) }}
+                    </a-select-option>
+                  </a-select>
+                </a-form-model-item>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="state" :rules="rules.state">
+                  <a-input
+                    v-model="form.state"
+                    :placeholder="$t('clientinfo.state')"
+                  />
+                </a-form-model-item>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="city" :rules="rules.req">
+                  <a-input
+                    v-model="form.city"
+                    :placeholder="$t('clientinfo.city')"
+                  />
+                </a-form-model-item>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="postal_code" :rules="rules.postal_code">
+                  <a-input
+                    v-model="form.postal_code"
+                    :placeholder="$t('clientinfo.postcode')"
+                  />
+                </a-form-model-item>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="address1" :rules="rules.req">
+                  <a-input
+                    v-model="form.address1"
+                    :placeholder="$t('clientinfo.address1')"
+                  />
+                </a-form-model-item>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="address2">
+                  <a-input
+                    v-model="form.address2"
+                    :placeholder="$t('clientinfo.address2')"
+                  />
+                </a-form-model-item>
+              </a-col>
+              <a-col :xs="24" :sm="12">
+                <a-form-model-item prop="org_name" :rules="rules.req">
+                  <a-input
+                    v-model="form.org_name"
+                    :placeholder="$t('clientinfo.companyname')"
+                  />
+                </a-form-model-item>
+              </a-col>
+            </a-row>
+          </a-form-model>
+
           <a-row class="order__prop" style="margin-bottom: 5px">
             <a-col span="8" :xs="6">{{ $t('domain_product.domain_in_your_cart') }}</a-col><!--{{$t('provider') | capitalize}}-->
           </a-row>
@@ -231,7 +331,7 @@
               block
               type="primary"
               shape="round"
-              :disabled="!service || !namespace || !plan"
+              :disabled="!onCart.length || !namespace || !plan"
               @click="orderConfirm"
             >
               {{ $t("order") | capitalize }}
@@ -256,6 +356,7 @@
 
 <script>
 import notification from '@/mixins/notification.js';
+import { countries } from '@/setup/countries.js';
 
 export default {
   name: 'domain-order',
@@ -267,32 +368,32 @@ export default {
     search: Function,
     sp: Object
   },
-  data(){
-    return {
-      products: {},
-      plan: null,
-      service: null,
-      namespace: null,
-      fetchLoading: false,
-      sendloading: false,
+  data: () => ({
+    countries,
+    products: {},
+    plan: null,
+    service: null,
+    namespace: null,
+    fetchLoading: false,
+    sendloading: false,
+    modal: {
+      confirmCreate: false,
+      confirmLoading: false
+    },
 
-      options: { provider: '', tarif: '', domain: '' },
-      modal: {
-        confirmCreate: false,
-        confirmLoading: false
-      },
-      resources: {
-        registrant_ip: '',
-        reg_username: '',
-        reg_password: '',
-        period: 1,
-        auto_renew: true,
-        who_is_privacy: false,
-        lock_domain: true
-      },
-      periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] // 'annually biennially triennial quadrennial quinquennial'
-    }
-  },
+    options: { provider: '', tarif: '', domain: '' },
+    resources: {
+      registrant_ip: '',
+      reg_username: '',
+      reg_password: '',
+      period: 1,
+      auto_renew: true,
+      who_is_privacy: false,
+      lock_domain: true
+    },
+    form: {},
+    periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] // 'annually biennially triennial quadrennial quinquennial'
+  }),
   methods: {
     fetch() {
       this.fetchLoading = true;
@@ -323,13 +424,43 @@ export default {
         })
         .finally(() => this.fetchLoading = false);
     },
+    installDataToBuffer() {
+      const interestedKeys = [
+        "firstname",
+        "lastname",
+        "companyname",
+        "email",
+        "address1",
+        "address2",
+        "city",
+        "state",
+        "country",
+        "postcode",
+        "phonenumber",
+      ];
+      interestedKeys.forEach((key) => {
+        switch (key) {
+          case 'firstname':
+            this.$set(this.form, 'first_name', this.user[key]);
+          case 'lastname':
+            this.$set(this.form, 'last_name', this.user[key]);
+          case 'companyname':
+            this.$set(this.form, 'org_name', this.user[key]);
+          case 'postcode':
+            this.$set(this.form, 'postal_code', this.user[key]);
+          case 'phonenumber':
+            this.$set(this.form, 'phone', this.user[key]);
+          default:
+            this.$set(this.form, key, this.user[key]);
+        }
+      });
+    },
     orderClickHandler() {
-      this.sendloading = true;
       const service = this.services.find(({ uuid }) => uuid === this.service);
       const plan = this.plans.find(({ uuid }) => uuid === this.plan);
 
       const instances = Object.keys(this.products).map((domain) => ({
-        resources: { ...this.resources, user: this.user, domain },
+        resources: { ...this.resources, user: this.form, domain },
         title: `Domain - ${domain}`,
         billing_plan: plan ?? {}
       }));
@@ -352,8 +483,8 @@ export default {
       if (!this.user) {
         this.$store.commit('setOnloginRedirect', this.$route.name);
         this.$store.commit('setOnloginInfo', {
-          type: 'SSL',
-          title: 'SSL Certificate',
+          type: 'Domains',
+          title: 'Domains',
           cost: this.getProducts.pricing[this.resources.period]
         });
         this.$store.dispatch('setOnloginAction', () => {
@@ -363,9 +494,20 @@ export default {
         return;
       }
 
-      this.createDomains(info);
+      if (this.resources.reg_password.length < 10) {
+        this.openNotificationWithIcon('error', {
+          message: this.$t('pass at least 10 characters')
+        });
+      }
+      this.$refs.form.validate((isValid) => {
+        if (isValid) this.createDomains(info);
+        else this.openNotificationWithIcon('error', {
+          message: this.$t('all fields are required')
+        });
+      });
     },
     createDomains(info) {
+      this.sendloading = true;
       const action = (this.service) ? 'update' : 'create';
       const orderData = (this.service) ? info : {
         namespace: this.namespace,
@@ -394,7 +536,7 @@ export default {
             message: this.$t(message)
           });
           console.error(err);
-        })
+        });
     },
     orderConfirm() {
       const domains = Object.keys(this.products);
@@ -460,12 +602,22 @@ export default {
         pricing: { ...prices }
       };
       // return this.products[this.options.provider].find(el => el.tarif == this.options.tarif);
+    },
+    rules() {
+      const message = this.$t('ssl.field is required');
+      const c = this.form.country;
+
+      return {
+        req: [{ required: true, message }],
+        state: [{ required: c === 'CA' || c === 'US' || c === 'ES', message }],
+        postal_code: [{ required: c === 'CA' || c === 'US', message }]
+      };
     }
   },
   created() {
     this.$store.dispatch('nocloud/plans/fetch')
       .then(({ pool }) => {
-        if (pool.length === 1) this.plan = pool[0].uuid;
+        if (pool.length === 1) this.plan = this.plans[0].uuid;
       })
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
@@ -491,7 +643,7 @@ export default {
 
     this.$store.dispatch('nocloud/vms/fetch')
       .then(({ pool }) => {
-        if (pool.length === 1) this.service = pool[0].uuid;
+        if (pool.length === 1) this.service = this.services[0].uuid;
       })
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
@@ -503,6 +655,7 @@ export default {
       });
 
     this.fetch();
+    this.installDataToBuffer();
   },
   // watch: {
   //   'options.provider'() {
@@ -511,6 +664,12 @@ export default {
   // }
 }
 </script>
+
+<style>
+.has-error .ant-form-explain, .has-error .ant-form-split {
+	position: absolute;
+}
+</style>
 
 <style scoped>
 

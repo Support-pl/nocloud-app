@@ -46,6 +46,7 @@
 	"It’s empty...": "No information is available yet.",
 	"Unknown error.": "Unknown error.",
 	"Password is too short": "Password is too short",
+  "password at least 10 characters": "Password must be at least 10 characters",
 	"Create VM": "Create VM",
 	"Create": "Create",
 	"Confirm": "Confirm",
@@ -451,7 +452,10 @@
     "your_cart_is_empty": "YOUR CART IS EMPTY",
     "auto_renew": "auto renew",
     "who_is_privacy": "who is privacy",
-    "lock_domain": "lock domain"
+    "lock_domain": "lock domain",
+    "global_domains": "global domains",
+    "national_domains": "national domains",
+    "more_national_domains": "more national domains"
   },
 	"unregistered": {
 		"will be able after": "Available after",

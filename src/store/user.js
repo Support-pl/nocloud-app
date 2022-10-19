@@ -1,4 +1,6 @@
-import api from "../api"
+import api from "../api";
+import config from "@/appconfig.js";
+
 export default {
 	state: {
 		user: null,
@@ -12,8 +14,10 @@ export default {
 		},
 
 		domain: {
-
-		}
+      settings: {
+        avaliable: Object.keys(config.services)
+      }
+    }
 	},
 	mutations: {
 		setUser(state, value){
