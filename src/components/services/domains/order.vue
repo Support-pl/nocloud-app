@@ -58,6 +58,7 @@
             <a-col :xs="24" :sm="8">
               <a-switch v-model="resources.who_is_privacy" />
               {{ $t('domain_product.who_is_privacy') }}
+              (3$)
             </a-col>
             <a-col :xs="24" :sm="8">
               <a-switch v-model="resources.lock_domain" />
@@ -66,7 +67,7 @@
           </a-row>
 
           <a-form-model ref="form" :model="form">
-            <a-row :gutter="[15, 10]">
+            <a-row :gutter="[15, 10]" style="margin-top: 15px">
               <a-col>User:</a-col>
               <a-col :xs="24" :sm="12">
                 <a-form-model-item prop="first_name">
@@ -442,14 +443,19 @@ export default {
         switch (key) {
           case 'firstname':
             this.$set(this.form, 'first_name', this.user[key]);
+            break;
           case 'lastname':
             this.$set(this.form, 'last_name', this.user[key]);
+            break;
           case 'companyname':
             this.$set(this.form, 'org_name', this.user[key]);
+            break;
           case 'postcode':
             this.$set(this.form, 'postal_code', this.user[key]);
+            break;
           case 'phonenumber':
             this.$set(this.form, 'phone', this.user[key]);
+            break;
           default:
             this.$set(this.form, key, this.user[key]);
         }
