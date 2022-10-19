@@ -1,0 +1,25 @@
+{
+	"whmcs": { "site_url": "https://my.support.by/" },
+	"app": {
+    "folder": "app_back/v1",
+    "title": "support.by",
+    "logo": "",
+    "logo_position": "",
+    "colors": {
+      "main": "#427cf7",
+      "success": "#0fd058",
+      "warn": "#f9f038",
+      "err": "#f9383b",
+      "gray": "#919191",
+      "bright_font": "#fff",
+      "bright_bg": "#f7f7f7"
+    }
+  },
+	"currency": {
+		"prefix": "",
+		"suffix": "BYN",
+		"code": "BYN"
+	},
+  "services": ["VM", "domains", "virtual"],
+	"dangerModeNoSSLCheck": false
+}

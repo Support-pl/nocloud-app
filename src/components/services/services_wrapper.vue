@@ -1,5 +1,7 @@
 <template>
-	<div class="services__wrapper">
+	<div class="services__wrapper" :style="{
+    gridTemplateColumns: `repeat(${avaliableServices.length}, 1fr)`
+  }">
 		<template
 			v-for="service in avaliableServices"
 		>
@@ -16,9 +18,7 @@
 import serviceItem from './service_min.vue';
 export default {
 	name: "services-wrapper",
-	components: {
-		serviceItem,
-	},
+	components: { serviceItem },
 	data(){
 		return {
 			services: [
@@ -26,34 +26,38 @@ export default {
 					title: 'Servers',
 					translatable: true,
 					icon: 'database',
+          type: 'VM',
 					onclick: {
 						function: this.routeTo,
 						paramsArr: [{name: 'cloud'}],
 					}
 				},
-				// {
-				// 	title: 'Cloud',
-				// 	translatable: true,
-				// 	icon: 'cloud-server',
-				// 	onclick: {
-				// 		function: this.routeTo,
-				// 		paramsArr: [{name: 'cloud', query: {type: 'IaaS'}}],
-				// 	}
-				// },
-				// {
-				// 	title: 'SSL',
-				// 	icon: 'lock',
-				// 	onclick: {
-				// 		// function: this.openNotification,
-				// 		// paramsArr: [{name: 'services'}],
-				// 		function: this.routeTo,
-				// 		paramsArr: [{name: 'products', query: {type: 'SSL'}}],
-				// 	}
-				// },
+				{
+					title: 'Cloud',
+					translatable: true,
+					icon: 'cloud-server',
+          type: 'cloud',
+					onclick: {
+						function: this.routeTo,
+						paramsArr: [{name: 'cloud', query: {type: 'IaaS'}}],
+					}
+				},
+				{
+					title: 'SSL',
+					icon: 'lock',
+          type: 'SSL',
+					onclick: {
+						// function: this.openNotification,
+						// paramsArr: [{name: 'services'}],
+						function: this.routeTo,
+						paramsArr: [{name: 'products', query: {type: 'SSL'}}],
+					}
+				},
 				{
 					title: 'Virtual',
 					translatable: true,
 					icon: 'solution',
+          type: 'virtual',
 					onclick: {
 						function: this.routeTo,
 						paramsArr: [{name: 'products', query: {type: 'virtual'}}],
@@ -63,6 +67,7 @@ export default {
           title: 'Domains',
           translatable: true,
           icon: 'global',
+          type: 'domains',
           onclick: {
             // function: this.openNotification,
             // paramsArr: [{name: 'services'}],
@@ -97,9 +102,9 @@ export default {
 			return this.$store.getters.isLogged;
 		},
 		avaliableServices(){
-			const settings = this.$store.getters['getDomainInfo'];
-			const disabled = settings?.disabled ?? [];
-			return this.services.filter(el => !disabled.includes(el.title)) 
+			const { avaliable = [] } = this.$store.getters['getDomainInfo'] || {};
+
+			return this.services.filter((el) => avaliable.includes(el.type)); 
 		}
 	}
 }

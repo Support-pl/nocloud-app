@@ -71,22 +71,12 @@ export default {
 				commit("setLoading", true);
 				api.services.list()
 					.then(response => {
-						commit('setServices', response.pool)
-						for (let srv of response.pool) {
-							api.services.get(srv.uuid).then((response) => {
-								commit("setInstances", response);
-								commit('setServicesFull', response)
-								resolve(response);
-							})
-								.catch((error) => {
-									reject(error);
-								})
-								.finally(() => {
-									commit("setLoading", false);
-								});
-
-						}
-						resolve(response)
+						commit('setServices', response.pool);
+            response.pool.forEach((service) => {
+              commit("setInstances", service);
+              commit('setServicesFull', service);
+            });
+						resolve(response);
 					})
 					.catch(error => {
 						reject(error);

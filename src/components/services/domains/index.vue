@@ -10,7 +10,7 @@
               type="flex"
               justify="center"
             >
-              <a-col :span="16"><!--TODO: add finish status if cart (watch to cart)-->
+              <a-col :xs="22" :sm="16"><!--TODO: add finish status if cart (watch to cart)-->
                 <a-steps>
                   <a-step class="search" status="start" :title="$t('search')">
                     <template #icon><!-- @click="search"-->
@@ -19,24 +19,23 @@
                   </a-step>
                   <a-step class="cart" status="finish" :title="$t('cart')" @click="cart">
                     <template #icon>
-                      <a-icon type="shopping-cart"/>
+                      <a-badge
+                        show-zero
+                        :count="itemsInCart"
+                        :offset="[55, 10]"
+                        :number-style="{
+                          backgroundColor: '#fff',
+                          color: '#999',
+                          boxShadow: '0 0 0 1px #d9d9d9 inset', }"
+                      >
+                        <a-icon type="shopping-cart"/>
+                      </a-badge>
                     </template>
                   </a-step>
                 </a-steps>
               </a-col>
-              <a-col :span="2" class="badge-wrapper">
-                <a-badge
-                  show-zero
-                  :count="itemsInCart"
-                  :offset=[-25,-2]
-                  :number-style="{
-                    backgroundColor: '#fff',
-                    color: '#999',
-                    boxShadow: '0 0 0 1px #d9d9d9 inset', }"
-                />
-              </a-col>
             </a-row>
-            <a-row class="order_option__card">
+            <a-row class="order_option__card" :gutter="[10, 10]">
               <a-col :span="24">
                 <a-card :title="$t('domain_product.how_to_choose_the_right_domain')">
                   <div>
@@ -47,6 +46,18 @@
                     <p>{{ $t('domain_product.choose_a_name_that_fit_your_brand') }}</p>
                   </div>
                 </a-card>
+              </a-col>
+              <a-col :xs="24" :md="8">
+                <a-switch v-model="global" />
+                {{ $t('domain_product.global_domains') }}
+              </a-col>
+              <a-col :xs="24" :md="8">
+                <a-switch v-model="national" />
+                {{ $t('domain_product.national_domains') }}
+              </a-col>
+              <a-col :xs="24" :md="8">
+                <a-switch v-model="moreNational" />
+                {{ $t('domain_product.more_national_domains') }}
               </a-col>
             </a-row>
             <a-input-search
@@ -112,6 +123,9 @@ export default {
   data: () => ({
     itemsInCart: 0, //в корзине
     domain: '',
+    global: true,
+    national: false,
+    moreNational: false,
     zones: ['.com', '.info', '.net', '.org', '.biz',],
     zonesMore: ['.pro', '.tv', '.ru', '.uk', '.fr', '.by', '.li', '.lt',],
     results: [],
@@ -137,7 +151,7 @@ export default {
         action: 'get_domains',
         params: {
           searchString: this.domain,
-          gTLD: true, p_ccTLD: false, m_ccTLD: false,
+          gTLD: this.global, p_ccTLD: this.national, m_ccTLD: this.moreNational,
         },
       })
         .then(({ meta }) => {
@@ -258,14 +272,9 @@ export default {
 
 
 /*--steps--*/
-.order_option__steps{
-  margin-left: 70px;
-}
-
 .search{
   font-weight: 600;
   font-size: 18px;
-  padding-left: 10px;
   margin-right: 12px;
 }
 
@@ -290,6 +299,7 @@ export default {
 /*--card--*/
 .order_option__card{
   margin: 20px 0 27px;
+  padding-bottom: 10px;
 }
 
 .ant-card-head{
