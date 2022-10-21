@@ -27,3 +27,13 @@ Add this to your nocloud `docker-compose.yml` services:
 ```
 
 Run `docker compose up -d`
+
+## Customizing
+
+1. Generate `config.json` using NoCloud Admin.
+2. Pass it to App container using volume like:
+
+```
+volumes:
+  - /root/config.json:/app/dist/
+```
