@@ -50,7 +50,7 @@
               />
             </a-col>
           </a-row>
-          <a-row :gutter="[10, 10]">
+          <a-row style="padding-top: 10px" :gutter="[10, 10]">
             <a-col :xs="24" :sm="8">
               <a-switch v-model="resources.auto_renew" />
               {{ $t('domain_product.auto_renew') }}
@@ -499,12 +499,6 @@ export default {
         this.$router.push({ name: 'login' });
         return;
       }
-
-      if (this.resources.reg_password.length < 10) {
-        this.openNotificationWithIcon('error', {
-          message: this.$t('pass at least 10 characters')
-        });
-      }
       this.$refs.form.validate((isValid) => {
         if (isValid) this.createDomains(info);
         else this.openNotificationWithIcon('error', {
@@ -547,6 +541,12 @@ export default {
     orderConfirm() {
       const domains = Object.keys(this.products);
 
+      if (this.resources.reg_password.length < 10) {
+        this.openNotificationWithIcon('error', {
+          message: this.$t('pass at least 10 characters')
+        });
+        return;
+      }
       if (!domains.every((el) => el.match(/.+\..+/))){
         this.$message.error(this.$t('domain is wrong'));
         return;
