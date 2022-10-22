@@ -46,7 +46,7 @@
 	"It’s empty...": "No information is available yet.",
 	"Unknown error.": "Unknown error.",
 	"Password is too short": "Password is too short",
-  "password at least 10 characters": "Password must be at least 10 characters",
+  "pass at least 10 characters": "Password must be at least 10 characters",
 	"Create VM": "Create VM",
 	"Create": "Create",
 	"Confirm": "Confirm",

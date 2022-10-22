@@ -36,7 +36,7 @@
               </a-col>
             </a-row>
             <a-row class="order_option__card" :gutter="[10, 10]">
-              <a-col :span="24">
+              <a-col style="margin-bottom: 10px" :span="24">
                 <a-card :title="$t('domain_product.how_to_choose_the_right_domain')">
                   <div>
                     <a-icon type="check"/>
@@ -158,17 +158,17 @@ export default {
           this.results = [];
           meta.domains.forEach((el) => {
             const options = {
-              name: el.Domain,
-              status: el.Status,
+              name: el.domain,
+              status: el.status,
               btnText: 'Add To Cart',
               btnClass: 'description-body__btn-add',
             };
 
-            if (el.Domain === this.domain) {
+            if (el.domain === this.domain) {
               this.results.unshift(options);
               return;
             };
-            if (el.Status !== 'available') return;
+            if (el.status !== 'available') return;
             else this.results.push(options);
           });
         })
@@ -299,7 +299,7 @@ export default {
 /*--card--*/
 .order_option__card{
   margin: 20px 0 27px;
-  padding-bottom: 10px;
+  padding-bottom: 15px;
 }
 
 .ant-card-head{
