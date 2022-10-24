@@ -2,7 +2,7 @@
 	"whmcs": { "site_url": "https://my.support.by/" },
 	"app": {
     "folder": "app_back/v1",
-    "title": "support.by",
+    "title": "support.pl",
     "logo": "",
     "logo_position": "",
     "colors": {
@@ -17,8 +17,8 @@
   },
 	"currency": {
 		"prefix": "",
-		"suffix": "BYN",
-		"code": "BYN"
+		"suffix": "USD",
+		"code": "USD"
 	},
   "services": ["VM", "domains", "virtual"],
 	"dangerModeNoSSLCheck": false
