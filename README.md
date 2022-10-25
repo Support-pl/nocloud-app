@@ -24,6 +24,9 @@ Add this to your nocloud `docker-compose.yml` services:
       BASE_URL: "https://api.${BASE_DOMAIN}"
     networks:
       - proxy
+#    volumes:
+#      - ./app_config/config.json:/dist/config.json
+#      - ./app_config/logo.svg:/dist/logo.svg
 ```
 
 Run `docker compose up -d`
