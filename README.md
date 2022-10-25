@@ -31,9 +31,11 @@ Run `docker compose up -d`
 ## Customizing
 
 1. Generate `config.json` using NoCloud Admin.
-2. Pass it to App container using volume like:
+2. Upload config.json and your logo in /root/deployment/app_config/ directory.
+3. Pass it to App container using volume like:
 
 ```
 volumes:
-  - /root/config.json:/app/dist/
+  - ./app_config/config.json:/dist/config.json
+  - ./app_config/logo.svg:/dist/logo.svg
 ```
