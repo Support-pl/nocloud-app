@@ -20,6 +20,6 @@
 		"suffix": "USD",
 		"code": "USD"
 	},
-  "services": ["VM", "domains", "virtual"],
+  "services": ["VM", "Domains", "Virtual", "SSL"],
 	"dangerModeNoSSLCheck": false
 }

@@ -163,7 +163,6 @@
 </template>
 
 <script>
-import config from "@/appconfig";
 import notification from "@/mixins/notification.js";
 import balance from "@/components/balance/balance.vue";
 import addFunds from "@/components/balance/addFunds.vue";
@@ -185,7 +184,6 @@ export default {
         SSH: false,
         QR: false,
       },
-      config,
     };
   },
   methods: {
@@ -314,7 +312,7 @@ export default {
       return this.$store.getters.getUser;
     },
     langs() {
-      return this.config.languages;
+      return this.$config.languages;
     },
     selfUrl() {
       return location.href;

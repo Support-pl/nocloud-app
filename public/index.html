@@ -12,6 +12,11 @@
 
     <title><%= htmlWebpackPlugin.options.title %></title>
     <script	src="./apiurl.js"></script>
+    <script defer>
+      fetch('./config.json')
+        .then((res) => res.json())
+        .then((res) => globalThis.globalConfig = res);
+    </script>
 	</head>
 	<body>
 		<noscript>
