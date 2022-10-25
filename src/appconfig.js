@@ -1,19 +1,17 @@
-import globalConfig from "../public/config.json";
-
 const allServices = {
   virtual: {
     groupname: ['Виртуальный хостинг', 'Shared Hosting'],
-    creationRouteName: "service-virtual",
+    creationRouteName: 'service-virtual',
     icon: 'solution',
   },
   domains: {
     groupname: ['Domains'],
-    creationRouteName: "service-domains",
+    creationRouteName: 'service-domains',
     icon: 'solution',
   },
-  SSL: {
+  ssl: {
   	groupname: ['GoGet SSL 2.5.6', 'SSL', 'SSL сертификаты'],
-  	creationRouteName: "service-SSL",
+  	creationRouteName: 'service-SSL',
   	icon: 'lock',
   	additionalRoutes: [
   		{
@@ -28,9 +26,9 @@ const allServices = {
   		}
   	]
   },
-  VM: {
+  vm: {
     groupname: ['Self-Service VDS (2018)', 'Self-Service VDS SSD HC', 'Self-Service VDS SSD (2018)'],
-    creationRouteName: "newPaaS",
+    creationRouteName: 'newPaaS',
     icon: 'database',
   }
 };
@@ -50,12 +48,12 @@ export default {
 		pos: globalConfig.app?.logo_position.toLowerCase() || 'top'
 	},
 	currency: {
-		prefix: globalConfig?.currency?.prefix ?? "",
-		suffix: globalConfig?.currency?.suffix ?? "USD",
-		code: globalConfig?.currency?.code ?? "USD",
+		prefix: globalConfig?.currency?.prefix ?? '',
+		suffix: globalConfig?.currency?.suffix ?? 'USD',
+		code: globalConfig?.currency?.code ?? 'USD',
 	},
 	services: globalConfig.services?.reduce((services, key) => ({
-    ...services, [key]: allServices[key]
+    ...services, [key]: allServices[key.toLowerCase()]
   }), {}),
 	getServiceType(groupname){
 		const services = this.services;

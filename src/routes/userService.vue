@@ -141,7 +141,6 @@
 
 <script>
 import loading from "@/components/loading/loading.vue";
-import config from "@/appconfig.js";
 
 const info = [
   // {
@@ -227,7 +226,7 @@ export default {
       }
     },
     getModuleButtons() {
-      const serviceType = config
+      const serviceType = this.$config
         .getServiceType(this.service.groupname)
         ?.toLowerCase();
 

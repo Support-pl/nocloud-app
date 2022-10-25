@@ -15,7 +15,7 @@ export default {
 
 		domain: {
       settings: {
-        avaliable: Object.keys(config.services)
+        avaliable: Object.keys(config.services).map((el) => el.toLowerCase())
       }
     }
 	},

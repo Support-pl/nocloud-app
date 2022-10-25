@@ -6,10 +6,8 @@ import i18n from '@/i18n'
 
 Vue.use(VueRouter)
 
-
 const servicesArray = config.services;
-const services = [
-]
+const services = [];
 for (let service in servicesArray) {
 	const temp = {
 		path: service,

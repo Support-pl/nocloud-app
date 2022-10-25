@@ -26,7 +26,7 @@ export default {
 					title: 'Servers',
 					translatable: true,
 					icon: 'database',
-          type: 'VM',
+          type: 'vm',
 					onclick: {
 						function: this.routeTo,
 						paramsArr: [{name: 'cloud'}],
@@ -45,7 +45,7 @@ export default {
 				{
 					title: 'SSL',
 					icon: 'lock',
-          type: 'SSL',
+          type: 'ssl',
 					onclick: {
 						// function: this.openNotification,
 						// paramsArr: [{name: 'services'}],

@@ -36,8 +36,6 @@
 </template>
 
 <script>
-import config from '@/appconfig.js'
-
 export default {
 	name: 'product',
 	props: {
@@ -101,7 +99,7 @@ export default {
 			return colorVariableName;
 		},
 		getModuleProductBtn(){
-			const serviceType = config
+			const serviceType = this.$config
         .getServiceType(this.wholeProduct.groupname)
         ?.toLowerCase();
 

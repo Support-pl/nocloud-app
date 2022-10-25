@@ -199,11 +199,11 @@ export default {
       this.$api.get(`${this.baseURL}`, { params: {
         run: 'reset_password', email
       }})
-        .then(({ data }) => {
-          if (data.result == "success") {
-            this.$message.success(data.message);
-          } else if (data.result == "error") {
-            this.loginError = this.$t(data.message);
+        .then(({ result, message }) => {
+          if (result == "success") {
+            this.$message.success(this.$t('Done'));
+          } else if (result == "error") {
+            this.loginError = this.$t(message);
             this.tryingLogin = false;
           }
         })
