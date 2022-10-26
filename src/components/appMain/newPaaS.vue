@@ -1126,7 +1126,6 @@ export default {
       // -------------------------------------
       //update service
       if (newGroup.type === 'ovh') {
-        newGroup.data = { projectId: '2ccca3cf77574a80b4d0496f6f2539ec' };
         newInstance.config.monthlyBilling = false;
       }
       if (this.itemService?.instancesGroups.length < 1) {
@@ -1186,11 +1185,6 @@ export default {
             ],
           },
         };
-        if (this.itemSP.type === 'ovh') {
-          orderData.service.instances_groups[0].data = { 
-            projectId: '2ccca3cf77574a80b4d0496f6f2539ec' 
-          };
-        }
         this.orderVM(orderData);
       }
     },

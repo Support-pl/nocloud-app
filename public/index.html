@@ -12,7 +12,7 @@
 
     <title><%= htmlWebpackPlugin.options.title %></title>
     <script	src="./apiurl.js"></script>
-    <script defer>
+    <script>
       fetch('./config.json')
         .then((res) => res.json())
         .then((res) => globalThis.globalConfig = res);

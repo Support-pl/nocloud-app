@@ -363,6 +363,7 @@ export default {
   name: 'domain-order',
   mixins: [notification],
   props: {
+    data: Object,
     onCart: Array,
     itemsInCart: Number,
     removeFromCart: Function,
@@ -661,8 +662,15 @@ export default {
       });
 
     this.fetch();
-    this.installDataToBuffer();
+    if (this.data) {
+      Object.entries(this.data).forEach(([key, value]) => {
+        this.$set(this, key, value);
+      });
+    } else this.installDataToBuffer();
   },
+  beforeDestroy() {
+    this.$emit('change', { resources: this.resources, form: this.form });
+  }
   // watch: {
   //   'options.provider'() {
   //     this.options.tarif = this.products[this.options.provider][0].tarif;
