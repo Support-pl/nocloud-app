@@ -33,6 +33,8 @@ const allServices = {
   }
 };
 
+if (!globalThis.globalConfig) location.reload();
+
 export default {
 	colors: globalConfig.app?.colors,
 

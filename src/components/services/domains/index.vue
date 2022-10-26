@@ -102,11 +102,13 @@
     </div>
     <order
       v-if="cartVisibility"
+      :data="dataCart"
       :on-cart="onCart"
       :items-in-cart="itemsInCart"
       :remove-from-cart="removeFromCart"
       :search="search"
       :sp="sp"
+      @change="(data) => dataCart = data"
     />
   </div>
 </template>
@@ -132,6 +134,7 @@ export default {
     isDomainsLoading: false,
     cartVisibility: false,
     onCart: [],
+    dataCart: {},
   }),
   methods: {
     searchDomain() {

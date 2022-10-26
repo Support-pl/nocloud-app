@@ -10,8 +10,8 @@ const servicesArray = config.services;
 const services = [];
 for (let service in servicesArray) {
 	const temp = {
-		path: service,
-		name: `service-${service}`,
+		path: service.toLowerCase(),
+		name: `service-${service.toLowerCase()}`,
 		meta: {
 			footerTitle: 'services',
 			isNeedBackButton: true,

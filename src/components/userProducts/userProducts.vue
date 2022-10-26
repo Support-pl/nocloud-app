@@ -254,10 +254,12 @@ export default {
       this.$router.replace({ query: { type: newTypes } });
     },
     newProductHandle() {
-      const newRoute = {
-        name: this.$config.services[this.queryTypes[0]].creationRouteName,
-      };
-      this.$router.push(newRoute);
+      const key = Object.keys(this.$config.services).find(
+        (key) => key.toLowerCase() === this.queryTypes[0]
+      );
+      const service = this.$config.services[key];
+
+      this.$router.push({ name: service.creationRouteName });
     },
   },
 };

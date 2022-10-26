@@ -1,5 +1,5 @@
 {
-	"whmcs": { "site_url": "https://my.support.by/" },
+	"whmcs": { "site_url": "https://whmcs.demo.support.pl/" },
 	"app": {
     "folder": "app_back/v1",
     "title": "support.pl",
