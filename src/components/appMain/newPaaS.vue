@@ -785,12 +785,14 @@ export default {
       if (plan) {
         const price = [];
         for (let resource of plan.resources) {
-          if (resource.key.includes('ip')) {
+          const key = resource.key.toLowerCase();
+
+          if (key.includes('ip')) {
             const { count } = this.options.network.public;
 
             price.push(resource.price / resource.period * 3600 * count);
           } else {
-            const { size } = this.options[resource.key];
+            const { size } = this.options[key];
 
             price.push(resource.price / resource.period * 3600 * size);
           }
