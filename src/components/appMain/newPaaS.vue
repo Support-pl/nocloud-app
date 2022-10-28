@@ -1052,6 +1052,7 @@ export default {
         case "week":
           return (price / 30) * 7;
         case "hour":
+          return price;
         case "month":
           return price + this.diskPrice;
         default:
