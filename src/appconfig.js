@@ -32,8 +32,10 @@ const allServices = {
     icon: 'database',
   }
 };
+const config = localStorage.getItem('globalConfig');
 
-if (!globalThis.globalConfig) globalThis.globalConfig = {};
+if (config) globalThis.globalConfig = JSON.parse(config);
+else localStorage.setItem('globalConfig', JSON.stringify(globalConfig));
 
 export default {
 	colors: globalConfig.app?.colors,

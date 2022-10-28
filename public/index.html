@@ -12,16 +12,16 @@
 
     <title><%= htmlWebpackPlugin.options.title %></title>
     <script	src="./apiurl.js"></script>
-	</head>
-	<body>
-		<noscript>
-			<strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
-		</noscript>
     <script>
       fetch('./config.json')
         .then((res) => res.json())
         .then((res) => globalThis.globalConfig = res);
     </script>
+	</head>
+	<body>
+		<noscript>
+			<strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+		</noscript>
 		<div id="app"></div>
 		<!-- built files will be auto injected -->
 	</body>
