@@ -8,7 +8,7 @@ RUN yarn && yarn build
 FROM golang:1.19-alpine as server-builder
 
 RUN apk add upx
-COPY go.mod main.go /go/src/github.com/support-pl/nocloud-app/
+COPY go.mod go.sum main.go /go/src/github.com/support-pl/nocloud-app/
 WORKDIR /go/src/github.com/support-pl/nocloud-app
 
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -buildvcs=false -o app
