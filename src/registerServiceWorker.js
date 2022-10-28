@@ -2,6 +2,7 @@
 
 import { register } from 'register-service-worker'
 import store from './store/index.js'
+import config from '../public/config.json'
 
 if (process.env.NODE_ENV === 'production') {
 	register(`${process.env.BASE_URL}service-worker.js`, {
@@ -22,7 +23,8 @@ if (process.env.NODE_ENV === 'production') {
 		},
 		updated (worker) {
 			console.log('New content is available; please refresh.')
-			store.commit('app/setUpdate', {worker, status: true});
+			store.commit('app/setUpdate', {worker, status: true})
+      localStorage.setItem('globalConfig', JSON.stringify(config))
 		},
 		offline () {
 			console.log('No internet connection found. App is running in offline mode.')
