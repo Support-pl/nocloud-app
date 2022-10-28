@@ -794,7 +794,7 @@ export default {
           } else if (key.includes('drive')) {
             const { size } = this.options.disk;
 
-            if (key !== `drive_${this.options.drive ? 'ssd' : 'hdd'}`) return;
+            if (key !== `drive_${this.options.drive ? 'ssd' : 'hdd'}`) continue;
             price.push(resource.price / resource.period * 3600 * (size / 1024));
           } else {
             const { size } = this.options[key];
@@ -995,7 +995,7 @@ export default {
 
             this.options.ram.size = product.resources.ram / 1024;
             this.options.cpu.size = product.resources.cpu;
-            this.options.disk.size = product.resources.disk ?? 20 * 1024;
+            this.options.disk.size = product.resources.disk ?? this.options.disk.size;
             this.product = product;
           }
         }
@@ -1317,8 +1317,8 @@ export default {
   watch: {
     tarification() {
       if (this.getPlan.kind == "STATIC") {
-        this.options.ram.size = this.product.resources.ram / 1024;
-        this.options.cpu.size = this.product.resources.cpu;
+        this.options.ram.size = this.product.resources?.ram / 1024;
+        this.options.cpu.size = this.product.resources?.cpu;
       }
     },
     locationId() {
