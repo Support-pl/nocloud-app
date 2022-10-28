@@ -6,7 +6,22 @@ import (
 	"net/http"
 	"os"
 	"path"
+
+	"github.com/google/uuid"
 )
+
+var ETAG = uuid.New().String()
+
+func StaticHandler(dir string) http.HandlerFunc {
+	fs := http.FileServer(http.Dir(dir))
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.Header.Del("If-Modified-Since")
+		w.Header().Set("Etag", ETAG)
+
+		fs.ServeHTTP(w, r)
+	}
+}
 
 func main() {
 	port := os.Getenv("PORT")
@@ -27,11 +42,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fs := http.FileServer(http.Dir(dist))
-	http.Handle("/", fs)
+	mux := http.NewServeMux()
+	mux.Handle("/", StaticHandler(dist))
 
 	log.Printf("Listening on port %s, serving: %s, api: %s", port, dist, api)
-	err = http.ListenAndServe(":"+port, nil)
+	err = http.ListenAndServe(":"+port, mux)
 	if err != nil {
 		log.Fatal(err)
 	}
