@@ -662,7 +662,7 @@ export default {
       });
 
     this.fetch();
-    if (this.data) {
+    if ('form' in this.data) {
       Object.entries(this.data).forEach(([key, value]) => {
         this.$set(this, key, value);
       });
