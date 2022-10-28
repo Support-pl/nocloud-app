@@ -791,6 +791,11 @@ export default {
             const { count } = this.options.network.public;
 
             price.push(resource.price / resource.period * 3600 * count);
+          } else if (key.includes('drive')) {
+            const { size } = this.options.disk;
+
+            if (key !== `drive_${this.options.drive ? 'ssd' : 'hdd'}`) return;
+            price.push(resource.price / resource.period * 3600 * (size / 1024));
           } else {
             const { size } = this.options[key];
 
