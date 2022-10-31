@@ -235,8 +235,7 @@ export default {
   methods: {
     productClickHandler({ groupname, orderid, hostingid }) {
       if (groupname === 'Domains') {
-        // this.$router.push({ name: 'service', params: { id: orderid } });
-        return;
+        this.$router.push({ name: 'service', params: { id: orderid } });
       } else if (groupname === 'Self-Service VDS SSD HC') {
         this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } });
       } else {

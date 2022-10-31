@@ -47,18 +47,6 @@
                   </div>
                 </a-card>
               </a-col>
-              <a-col :xs="24" :md="8">
-                <a-switch v-model="global" />
-                {{ $t('domain_product.global_domains') }}
-              </a-col>
-              <a-col :xs="24" :md="8">
-                <a-switch v-model="national" />
-                {{ $t('domain_product.national_domains') }}
-              </a-col>
-              <a-col :xs="24" :md="8">
-                <a-switch v-model="moreNational" />
-                {{ $t('domain_product.more_national_domains') }}
-              </a-col>
             </a-row>
             <a-input-search
               placeholder="input search text"
@@ -125,9 +113,6 @@ export default {
   data: () => ({
     itemsInCart: 0, //в корзине
     domain: '',
-    global: true,
-    national: false,
-    moreNational: false,
     zones: ['.com', '.info', '.net', '.org', '.biz',],
     zonesMore: ['.pro', '.tv', '.ru', '.uk', '.fr', '.by', '.li', '.lt',],
     results: [],
@@ -154,7 +139,7 @@ export default {
         action: 'get_domains',
         params: {
           searchString: this.domain,
-          gTLD: this.global, p_ccTLD: this.national, m_ccTLD: this.moreNational,
+          gTLD: true, p_ccTLD: true, m_ccTLD: true,
         },
       })
         .then(({ meta }) => {
