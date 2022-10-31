@@ -27,7 +27,7 @@ export default {
           .then(res => {
 					  const invoices = res?.invoices?.invoice ?? [];
 
-            if (!res.ERROR) commit('updateInvoices', invoices);
+            if (!res?.ERROR) commit('updateInvoices', invoices);
             commit('makeLoadingIs', false);
             resolve(invoices);
           })

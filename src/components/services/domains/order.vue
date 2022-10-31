@@ -623,8 +623,8 @@ export default {
   },
   created() {
     this.$store.dispatch('nocloud/plans/fetch')
-      .then(({ pool }) => {
-        if (pool.length === 1) this.plan = this.plans[0].uuid;
+      .then(() => {
+        if (this.plans.length === 1) this.plan = this.plans[0].uuid;
       })
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
@@ -649,8 +649,8 @@ export default {
       });
 
     this.$store.dispatch('nocloud/vms/fetch')
-      .then(({ pool }) => {
-        if (pool.length === 1) this.service = this.services[0].uuid;
+      .then(() => {
+        if (this.services.length === 1) this.service = this.services[0].uuid;
       })
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;

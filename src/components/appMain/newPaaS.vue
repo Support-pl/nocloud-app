@@ -1335,7 +1335,7 @@ export default {
             this.options.ram.size = resources.ram / 1024;
             this.options.cpu.size = resources.cpu;
             this.options.disk.size = resources.disk ?? 20 * 1024;
-            this.productSize = title;
+            this.setData({ key: 'productSize', value: title });
             this.plan = plan;
           }
         });
