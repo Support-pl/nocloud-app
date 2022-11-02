@@ -21,7 +21,7 @@
             </div>
           </div>
 
-          <div class="service-page__info">
+          <div class="service-page__info" v-if="service.ORDER_INFO">
             <div class="service-page__info-title">
               {{ $t("invoice status") | capitalize }}:
               <a-tag :color="getInvoiceStatusColor">
@@ -98,7 +98,7 @@
                   v-if="elem.type == 'money'"
                   class="service-page__info-value"
                 >
-                  {{ service[elem.key] }} {{ user.currency_code }}
+                  {{ service[elem.key] }} {{ user.currency_code || 'USD' }}
                 </div>
                 <div
                   v-else-if="
@@ -112,17 +112,14 @@
                   v-else-if="elem.type == 'date'"
                   class="service-page__info-value"
                 >
-                  {{
-                    new Intl.DateTimeFormat().format(
-                      new Date(service[elem.key])
-                    )
-                  }}
+                  {{ service[elem.key] &&
+                    new Intl.DateTimeFormat().format(new Date(service[elem.key])) }}
                 </div>
                 <div
                   v-else-if="elem.type == 'text'"
                   class="service-page__info-value"
                 >
-                  {{ $t(service[elem.key].toLowerCase()) | capitalize }}
+                  {{ service[elem.key] && $t(service[elem.key].toLowerCase()) | capitalize }}
                 </div>
                 <div v-else class="service-page__info-value">
                   {{ service[elem.key] }}
@@ -175,15 +172,50 @@ export default {
   components: { loading },
   data: () => ({ service: null, info }),
   created() {
-    this.$store.dispatch('nocloud/auth/fetchBillingData')
-      .then((user) => {
-        this.$api.get(`${this.baseURL}/services.getInfo.php`, { params: {
-          serviceid: this.$route.params.id,
-          userid: user.client_id
-        }})
-          .then((res) => this.service = res)
-          .catch((err) => console.error(err));
+    this.$store.dispatch('nocloud/vms/fetch')
+      .then(() => {
+        const domain = this.$store.getters['nocloud/vms/getInstances']
+          .find(({ uuid }) => uuid === this.$route.params.id);
+        const { period } = domain.resources;
+        const { expiredate } = domain.data.expiry;
+        const year = parseInt(expiredate) - period;
+        const periodText = (period === 1) ? 'year' : 'years';
+
+        this.service = {
+          ...domain,
+          groupname: 'Domains',
+          name: domain.title,
+          status: `cloudStateItem.${domain.state?.state}`,
+          domain: domain.resources.domain,
+          billingcycle: `${period} ${periodText}`,
+          recurringamount: '?',
+          regdate: `${year}${expiredate.slice(4)}`,
+          nextduedate: expiredate
+        };
+
+        return this.$api.servicesProviders.action({
+          uuid: domain.sp,
+          action: 'get_domain_price',
+          params: { domain: this.service.domain },
+        })
       })
+      .then(({ meta }) => {
+        const { period } = this.service.resources;
+
+        this.service.recurringamount = meta.prices[period];
+      })
+      .catch((err) => console.error(err));
+
+    if (!this.service) return;
+    this.$store.dispatch('nocloud/auth/fetchBillingData')
+      .then(({ client_id }) => {
+        const serviceid = this.$route.params.id;
+
+        return this.$api.get(`${this.baseURL}/services.getInfo.php`, {
+          params: { serviceid, userid: client_id }
+        });
+      })
+      .then((res) => this.service = res)
       .catch((err) => console.error(err));
   },
   computed: {
@@ -226,12 +258,13 @@ export default {
       }
     },
     getModuleButtons() {
+      const { status, state: { state } } = this.service;
       const serviceType = this.$config
         .getServiceType(this.service.groupname)
         ?.toLowerCase();
 
       if (serviceType === undefined) return;
-      if (this.service.status !== 'Active') return;
+      if (!(status === 'Active' || state === 'RUNNING')) return;
       return () => import(`@/components/services/${serviceType}/draw`);
     },
   },

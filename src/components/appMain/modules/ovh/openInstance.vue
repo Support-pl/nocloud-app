@@ -371,7 +371,7 @@ export default {
     statusVM() {
       if (!this.VM) return;
       if (this.VM.state.state === 'PENDING') return {
-        shutdown: true, reboot: true
+        shutdown: true, reboot: true, start: true
       }
       return {
         shutdown: this.VM.state.state !== 'RUNNING' &&

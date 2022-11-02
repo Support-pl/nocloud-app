@@ -628,7 +628,7 @@ export default {
         .then((res) => {
           this.VM.state.meta.snapshots = res?.meta.snapshots;
           this.openNotificationWithIcon("success", {
-            message: $t("Create snapshot"),
+            message: this.$t("Create snapshot"),
           });
           this.snapshots.addSnap.modal = false;
         })
@@ -655,7 +655,7 @@ export default {
         .then(() => {
           delete this.VM.state.meta.snapshots[index];
           this.openNotificationWithIcon("success", {
-            message: $t("Delete snapshot"),
+            message: this.$t("Delete snapshot"),
           });
         })
         .catch((err) => {
@@ -680,7 +680,7 @@ export default {
         .dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
           this.openNotificationWithIcon("success", {
-            message: $t("Revert snapshot"),
+            message: this.$t("Revert snapshot"),
           });
         })
         .catch((err) => {
@@ -845,7 +845,7 @@ export default {
     statusVM() {
       if (!this.VM) return;
       if (this.VM.state.meta.state === 1) return {
-        shutdown: true, reboot: true, recover: true
+        start: true, shutdown: true, reboot: true, recover: true
       }
       return {
         shutdown:

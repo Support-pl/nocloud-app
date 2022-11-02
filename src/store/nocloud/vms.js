@@ -66,9 +66,9 @@ export default {
     }
 	},
 	actions: {
-		fetch({ commit }) {
+		fetch({ commit }, silent) {
 			return new Promise((resolve, reject) => {
-				commit("setLoading", true);
+				commit("setLoading", (silent) ? false : true);
 				api.services.list()
 					.then(response => {
 						commit('setServices', response.pool);

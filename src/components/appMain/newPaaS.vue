@@ -612,11 +612,13 @@ const periods = [
 import { mapGetters } from "vuex";
 import loading from "../loading/loading";
 import myMap from "../map/map.vue";
+import notification from "@/mixins/notification.js";
 import api from "@/api.js";
 
 export default {
   name: "newPaaS",
   components: { loading, myMap },
+  mixins: [notification],
   data() {
     return {
       dataLocalStorage: "",
