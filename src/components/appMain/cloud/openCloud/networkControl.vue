@@ -144,11 +144,11 @@ export default {
           break;
       }
     },
-    updateService() {
+    updateService(service) {
       this.$store
-        .dispatch("nocloud/vms/updateService", this.itemService)
+        .dispatch("nocloud/vms/updateService", service)
         .then((result) => {
-          if (result) {
+          if (!result) {
             this.openNotificationWithIcon("success", {
               message: this.$t('Change ip successfully'),
             });
@@ -172,10 +172,15 @@ export default {
     },
     sendNewIP() {
       this.isLoading = true;
-      this.$store.dispatch('nocloud/vms/fetch')
-        .then(() => {
-          const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
-          const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
+      this.$store.dispatch('nocloud/vms/fetch', true)
+        .then(({ pool }) => {
+          let group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
+          let instance = group.instances.find((el) => el.uuid === this.VM.uuid);
+
+          if (!instance?.resources) {
+            group = pool.instancesGroups.find((el) => el.sp === this.VM.sp);
+            instance = group.instances.find((el) => el.uuid === this.VM.uuid);
+          }
 
           instance.resources.ips_private = this.networking.private.count;
           instance.resources.ips_public = this.networking.public.count;
@@ -191,7 +196,7 @@ export default {
 
           group.resources.ips_private = ips.private;
           group.resources.ips_public = ips.public;
-          this.updateService();
+          this.updateService((instance?.resources) ? this.itemService : pool);
         })
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err;
@@ -215,6 +220,9 @@ export default {
     this.networking.public.status = publicCount > 0;
     this.networking.private.count = privateCount;
     this.networking.public.count = publicCount;
+  },
+  beforeDestroy() {
+    this.$emit('closeModal');
   }
 };
 </script>
