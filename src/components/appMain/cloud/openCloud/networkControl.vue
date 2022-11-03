@@ -148,7 +148,7 @@ export default {
       this.$store
         .dispatch("nocloud/vms/updateService", service)
         .then((result) => {
-          if (!result) {
+          if (result) {
             this.openNotificationWithIcon("success", {
               message: this.$t('Change ip successfully'),
             });
