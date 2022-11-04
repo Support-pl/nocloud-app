@@ -15,7 +15,10 @@
     <script>
       fetch('./config.json')
         .then((res) => res.json())
-        .then((res) => globalThis.globalConfig = res);
+        .then((res) => {
+          globalThis.globalConfig = res;
+          localStorage.setItem('globalConfig', JSON.stringify(res))
+        });
     </script>
 	</head>
 	<body>

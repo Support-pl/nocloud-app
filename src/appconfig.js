@@ -57,7 +57,7 @@ export default {
 		code: globalConfig?.currency?.code ?? 'USD',
 	},
 	services: globalConfig.services?.reduce((services, key) => ({
-    ...services, [key]: allServices[key.toLowerCase()]
+    ...services, [key.toLowerCase()]: allServices[key.toLowerCase()]
   }), {}),
 	getServiceType(groupname){
 		const services = this.services;

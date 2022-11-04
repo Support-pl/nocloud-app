@@ -10,8 +10,8 @@ const servicesArray = config.services;
 const services = [];
 for (let service in servicesArray) {
 	const temp = {
-		path: service.toLowerCase(),
-		name: `service-${service.toLowerCase()}`,
+		path: service,
+		name: `service-${service}`,
 		meta: {
 			footerTitle: 'services',
 			isNeedBackButton: true,
@@ -19,7 +19,7 @@ for (let service in servicesArray) {
 			componentName: service,
 			productsGroupName: servicesArray[service].groupname
 		},
-		component: () => import(`../components/services/${service.toLowerCase()}/index.vue`),
+		component: () => import(`../components/services/${service}/index.vue`),
 	}
 	if (config.services[service].additionalRoutes) {
 		for (let additionalRoute of config.services[service].additionalRoutes) {
@@ -27,7 +27,7 @@ for (let service in servicesArray) {
 				path: additionalRoute.path,
 				name: additionalRoute.name,
 				meta: additionalRoute.meta,
-				component: () => import(`../components/services/${service.toLowerCase()}/${additionalRoute.componentName}.vue`)
+				component: () => import(`../components/services/${service}/${additionalRoute.componentName}.vue`)
 			}
 			services.push(route);
 		}
