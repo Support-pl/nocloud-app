@@ -11,7 +11,11 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('install', (event) => {
-	skipWaiting()
+	self.skipWaiting()
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim())
 });
 
 /**

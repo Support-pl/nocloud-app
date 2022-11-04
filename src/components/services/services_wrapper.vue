@@ -39,7 +39,7 @@ export default {
           type: 'cloud',
 					onclick: {
 						function: this.routeTo,
-						paramsArr: [{name: 'cloud', query: {type: 'IaaS'}}],
+						paramsArr: [{name: 'cloud', query: {type: 'iaas'}}],
 					}
 				},
 				{
@@ -50,7 +50,7 @@ export default {
 						// function: this.openNotification,
 						// paramsArr: [{name: 'services'}],
 						function: this.routeTo,
-						paramsArr: [{name: 'products', query: {type: 'SSL'}}],
+						paramsArr: [{name: 'products', query: {type: 'ssl'}}],
 					}
 				},
 				{
