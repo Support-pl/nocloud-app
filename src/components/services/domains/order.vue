@@ -320,8 +320,8 @@
 
         <a-row type="flex" justify="space-around" :style="{ fontSize: '1.5rem' }">
           <a-col v-if="!fetchLoading">
-            {{ getProducts.pricing[resources.period] }}
-            {{ getProducts.pricing.suffix }}
+            {{ getProducts().pricing[resources.period] }}
+            {{ getProducts().pricing.suffix }}
           </a-col>
           <a-col v-else><div class="loadingLine loadingLine--total" /></a-col>
         </a-row>
@@ -345,7 +345,7 @@
               @ok="orderClickHandler"
               @cancel="modal.confirmCreate = false"
             >
-              <p>{{ $t('order_services.Do you want to order') }}: {{ getProducts['name'] }}</p>
+              <p>{{ $t('order_services.Do you want to order') }}: {{ getProducts()['name'] }}</p>
             </a-modal>
           </a-col>
         </a-row>
@@ -492,7 +492,7 @@ export default {
         this.$store.commit('setOnloginInfo', {
           type: 'Domains',
           title: 'Domains',
-          cost: this.getProducts.pricing[this.resources.period]
+          cost: this.getProducts().pricing[this.resources.period]
         });
         this.$store.dispatch('setOnloginAction', () => {
           this.createDomains(info);
@@ -570,6 +570,29 @@ export default {
           });
         })
         .finally(() => this.sendloading = false);
+    },
+    getProducts() {
+      const prices = { suffix: this.user.currency_code };
+
+      if (this.onCart.length === 0) return {
+        pricing: this.periods.reduce((res, curr) => {
+          res[curr] = 0;
+          return res;
+        }, { ...prices })
+      };
+      this.onCart.forEach(({ name }) => {
+        const domain = this.products[name] ?? {};
+
+        Object.entries(domain).forEach(([key, value]) => {
+          if (!prices[key]) prices[key] = 0;
+          prices[key] = +(prices[key] + +value).toFixed(2);
+        });
+      });
+      return {
+        name: `domains - ${this.onCart.length}`,
+        pricing: { ...prices }
+      };
+      // return this.products[this.options.provider].find(el => el.tarif == this.options.tarif);
     }
   },
   computed: {
@@ -586,29 +609,6 @@ export default {
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
         .filter(({ type }) => type === 'opensrs');
-    },
-    getProducts() {
-      const prices = { suffix: this.user.currency_code };
-
-      if (this.onCart.length === 0) return {
-        pricing: this.periods.reduce((res, curr) => {
-          res[curr] = 0;
-          return res;
-        }, { ...prices })
-      };
-      this.onCart.forEach(({ name }) => {
-        const domain = this.products[name];
-
-        Object.entries(domain).forEach(([key, value]) => {
-          if (!prices[key]) prices[key] = 0;
-          prices[key] = +(prices[key] + +value).toFixed(2);
-        });
-      });
-      return {
-        name: `domains - ${this.onCart.length}`,
-        pricing: { ...prices }
-      };
-      // return this.products[this.options.provider].find(el => el.tarif == this.options.tarif);
     },
     rules() {
       const message = this.$t('ssl.field is required');

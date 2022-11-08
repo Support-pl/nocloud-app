@@ -178,7 +178,8 @@ export default {
           let instance = group.instances.find((el) => el.uuid === this.VM.uuid);
 
           if (!instance?.resources) {
-            group = pool.instancesGroups.find((el) => el.sp === this.VM.sp);
+            const service = pool.find(({ uuid }) => uuid === this.itemService.uuid);
+            group = service.instancesGroups.find((el) => el.sp === this.VM.sp);
             instance = group.instances.find((el) => el.uuid === this.VM.uuid);
           }
 
