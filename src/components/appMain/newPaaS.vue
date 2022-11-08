@@ -97,7 +97,7 @@
               :style="{ 'font-size': '1.2rem' }"
               v-if="options.size"
             >
-              <a-col> {{ $t("tarif") | capitalize }}: </a-col>
+              <a-col> {{ $t("tariff") | capitalize }}: </a-col>
               <a-col>
                 {{ productSize }}
               </a-col>
