@@ -18,18 +18,18 @@
       :disabled="!itemSP || isFlavorsLoading"
     >
       <a-row type="flex" align="middle" :gutter="[10, 10]">
-        <a-col :xs="4" :sm="3">{{ $t('model') | capitalize }}:</a-col>
+        <a-col :xs="4" :sm="3">{{ $t('Plan') | capitalize }}:</a-col>
         <a-col :xs="20" :sm="9">
           <a-select
             style="width: 100%"
-            v-model="flavor"
-            :placeholder="$t('model') | capitalize"
-            :options="flavors"
+            v-model="plan"
+            :placeholder="$t('Plan') | capitalize"
+            :options="plans"
             :loading="isFlavorsLoading"
             @change="setData"
           />
         </a-col>
-        <a-col :xs="5" :sm="3">{{ $t('OS type') }}:</a-col>
+        <!-- <a-col :xs="5" :sm="3">{{ $t('OS type') }}:</a-col>
         <a-col :xs="19" :sm="9">
           <a-select
             style="width: 100%"
@@ -39,7 +39,7 @@
             :loading="isOSLoading"
             @change="getOS"
           />
-        </a-col>
+        </a-col> -->
       </a-row>
       <a-row
         type="flex"
@@ -78,7 +78,7 @@
     <!-- OS -->
     <a-collapse-panel
       key="OS"
-      :disabled="!itemSP || isOSLoading || !flavor"
+      :disabled="!itemSP || isOSLoading || !plan"
       :header="`${$t('os')}: ${(options.os.name == '') ? ' ' : ` (${options.os.name})`}`"
     >
       <div class="newCloud__option-field" v-if="images.length > 0">
@@ -116,10 +116,18 @@
         </div>
       </div>
       <a-alert
-        v-else
+        v-else-if="!isOSLoading"
         show-icon
         type="warning"
         :message="$t('No OS. Choose another model')"
+      />
+      <a-spin v-else style="display: block; margin: 0 auto" :tip="$t('loading')" />
+      <a-alert
+        show-icon
+        type="warning"
+        style="margin-top: 16px"
+        v-if="images.find(({ name }) => name.toLowerCase().includes('windows'))"
+        :message="$t('Windows is paid')"
       />
     </a-collapse-panel>
   </a-collapse>
@@ -137,20 +145,24 @@ export default {
     vmName: { type: String, required: true }
   },
   data: () => ({
-    flavor: '',
-    osType: '',
-    osTypes: [
-      { label: 'all', value: '' },
-      { label: 'baremetal-linux', value: 'baremetal-linux '},
-      { label: 'bsd', value: 'bsd' },
-      { label: 'linux', value: 'linux' },
-      { label: 'windows', value: 'windows' }
-    ],
+    // flavor: '',
+    // osType: '',
+    cartId: '',
+    itemId: '',
+    plan: '',
+    // osTypes: [
+    //   { label: 'all', value: '' },
+    //   { label: 'baremetal-linux', value: 'baremetal-linux '},
+    //   { label: 'bsd', value: 'bsd' },
+    //   { label: 'linux', value: 'linux' },
+    //   { label: 'windows', value: 'windows' }
+    // ],
     isFlavorsLoading: false,
     isOSLoading: false,
-    allFlavors: [],
-    flavors: [],
-    images: []
+    // allFlavors: [],
+    // flavors: [],
+    images: [],
+    plans: []
   }),
   methods: {
     getOS() {
@@ -175,40 +187,125 @@ export default {
       if (item.warning) return;
       this.options.os.id = +index;
       this.options.os.name = item.name;
+
       this.$emit('setData', { key: 'imageId', value: item.id, type: 'ovh' });
+      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+        method: 'select_os_and_datacenter',
+        params: {
+          cartId: this.cartId,
+          itemId: this.itemId,
+          datacenter: this.region,
+          os: item.name
+        }
+      });
     },
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
     },
     setData(value) {
-      const flavor = this.allFlavors.find((el) =>
-        (el.region === this.region) && (el.name === value)
-      );
-      const drive = flavor?.type.split('.')[1];
+      // const flavor = this.allFlavors.find((el) =>
+      //   (el.region === this.region) && (el.name === value)
+      // );
+      // const drive = flavor?.type.split('.')[1];
+      const resources = value.split('-');
 
-      this.options.cpu.size = flavor.vcpus;
-      this.options.ram.size = +(flavor.ram / 1024).toFixed(2);
-      this.options.disk.size = flavor.disk * 1024;
-      this.options.drive = (drive === 'ssd') ? true : false;
-      this.$emit('setData', { key: 'flavorId', value: flavor.id, type: 'ovh' });
+      this.options.cpu.size = +resources.at(-3);
+      this.options.ram.size = +resources.at(-2);
+      this.options.disk.size = resources.at(-1) * 1024;
+      // this.options.drive = (drive === 'ssd') ? true : false;
+      // this.$emit('setData', { key: 'flavorId', value: flavor.id, type: 'ovh' });
+      let mode = '';
+      switch (this.tarification) {
+        case 'Annually':
+          mode = 'upfront12';
+          break;
+        case 'Biennially':
+          mode = 'upfront24';
+          break;
+        default:
+          mode = 'default';
+          break;
+      }
 
-      this.getOS();
+      const { periods } = this.plans.find((el) => el.value === value);
+      const tarifs = [];
+      let plan = {};
+
+      periods.forEach((period) => {
+        if (period.pricingMode === mode) plan = period;
+        switch (period.pricingMode) {
+          case 'upfront12':
+            tarifs.push({ value: 'Annually', label: 'annually' });
+            break;
+          case 'upfront24':
+            tarifs.push({ value: 'Biennially', label: 'biennially' });
+            break;
+          case 'default':
+            tarifs.push({ value: 'Monthly', label: 'ssl.Monthly' });
+        }
+      });
+      this.$emit('setData', { key: 'periods', value: tarifs });
+      this.$emit('setData', { key: 'priceOVH', value: {
+        value: plan.price.Value, currency: plan.price.CurrencyCode
+      } });
+
+      this.isOSLoading = true;
+      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+        method: 'select_plan',
+        params: {
+          cartId: this.cartId,
+          duration: plan.duration,
+          pricingMode: plan.pricingMode,
+          planCode: value
+        }
+      })
+        .then(({ meta: { itemId } }) => {
+          this.itemId = itemId;
+
+          this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+            method: 'get_os_and_datacenter',
+            params: { cartId: this.cartId, itemId }
+          })
+            .then(({ meta: { os } }) => {
+              os.sort();
+              this.images = os.map((el) => ({ name: el, desc: el }));
+            })
+            .finally(() => {
+              this.isOSLoading = false;
+            });
+        });
     }
   },
   created() {
     this.isFlavorsLoading = true;
     this.$emit('setData', { key: 'region', value: this.region, type: 'ovh' });
     this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-      method: 'flavors',
-      params: { region: this.region }
+      method: 'create_cart'
     })
-      .then(({ meta }) => {
-        this.allFlavors = meta.result;
-        meta.result.forEach((el) => {
-          if (this.flavors.find(({ value }) => value === el.name)) return;
-          this.flavors.push({ value: el.name, label: el.name.toUpperCase() });
+      .then(({ meta: { cartId } }) => {
+        this.cartId = cartId;
+
+        return this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+          method: 'get_plans',
+          params: { cartId }
         });
       })
+      .then(({ meta: { plans } }) => {
+        this.plans = Object.entries(plans).map(
+          ([value, periods]) => ({ label: value, value, periods })
+        );
+      })
+    // this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+    //   method: 'flavors',
+    //   params: { region: this.region }
+    // })
+    //   .then(({ meta: { result } }) => {
+    //     this.allFlavors = result;
+    //     result.forEach((el) => {
+    //       if (this.flavors.find(({ value }) => value === el.name)) return;
+    //       this.flavors.push({ value: el.name, label: el.name.toUpperCase() });
+    //     });
+    //   })
       .finally(() => {
         this.isFlavorsLoading = false;
       });
@@ -227,19 +324,17 @@ export default {
       return extra.region;
     },
     planHeader() {
-      if (this.itemSP) {
-        return this.tarification === "Monthly"
-          ? ` (VDS ${this.$t("Pre-Paid")})`
-          : ` (VDC ${this.$t("Pay-as-you-Go")})`;
-      } else {
-        return " ";
-      }
+      if (this.itemSP) return this.plan && ` (${this.plan})`;
+      else return ' ';
     },
     diskSize() {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
     }
+  },
+  watch: {
+    tarification() { this.setData(this.plan) }
   }
 }
 </script>

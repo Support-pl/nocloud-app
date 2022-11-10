@@ -111,7 +111,7 @@
               justify="space-between"
               :style="{ 'font-size': '1.2rem', 'align-items': 'center' }"
             >
-              <a-col> {{ $t("CPU") }}: </a-col>
+              <a-col> {{ $t("cpu") }}: </a-col>
               <!-- <a-col
                 :style="{
                   'font-size': '1rem',
@@ -134,7 +134,7 @@
               justify="space-between"
               :style="{ 'font-size': '1.2rem' }"
             >
-              <a-col> {{ $t("RAM") }}: </a-col>
+              <a-col> {{ $t("ram") }}: </a-col>
               <a-col v-if="options.ram.size">
                 {{ options.ram.size }} Gb
               </a-col>
@@ -237,7 +237,7 @@
                   
                   </a-badge>
                 </a-tooltip> -->
-                {{ $t("public") }} IPv4:
+                {{ $t("public") }} IPv4*:
               </a-col>
               <a-col>
                 {{ options.network.public.count }}
@@ -368,8 +368,13 @@
           <a-row type="flex" justify="center" style="margin-top: 15px">
             <a-col>
               <a-radio-group default-value="Monthly" v-model="tarification">
-                <a-radio-button value="Monthly"> {{ $t('Monthly') }} </a-radio-button>
-                <a-radio-button value="Hourly"> {{ $t('Hourly') }} </a-radio-button>
+                <a-radio-button
+                  v-for="period of periods"
+                  :key="period.value"
+                  :value="period.value"
+                >
+                  {{ $t(period.label || period.value) }}
+                </a-radio-button>
               </a-radio-group>
             </a-col>
           </a-row>
@@ -379,23 +384,30 @@
             justify="center"
             :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
           >
+            <a-col v-if="tarification === 'Annually'">
+              {{ calculatePrice(productFullPriceOVH, (period = "hour")).toFixed(2) }}
+              {{ priceOVH.currency || 'USD' }}/{{ $t("year") }}
+            </a-col>
+
+            <a-col v-if="tarification === 'Biennially'">
+              {{ calculatePrice(productFullPriceOVH, (period = "hour")).toFixed(2) }}
+              {{ priceOVH.currency || 'USD' }}/2 {{ $t("years") }}
+            </a-col>
+
             <a-col v-if="tarification === 'Monthly'">
               {{
                 calculatePrice(
-                  productFullPriceStatic,
+                  (plan.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
                   (period = "month")
                 ).toFixed(2)
               }}
-              {{ billingData.currency_code || 'USD' }}/{{ $tc("period.month") }}
+              {{ ((plan.type === 'ovh')
+                ? priceOVH.currency
+                : billingData.currency_code) || 'USD' }}/{{ $tc("period.month") }}
             </a-col>
 
             <a-col v-if="tarification === 'Hourly'">
-              ~{{
-                calculatePrice(
-                  productFullPriceCustom,
-                  (period = "hour")
-                ).toFixed(2)
-              }}
+              ~{{ calculatePrice(productFullPriceCustom, (period = "hour")).toFixed(2) }}
               {{ billingData.currency_code || 'USD' }}/{{ $t("hour") }}
             </a-col>
           </a-row>
@@ -437,7 +449,7 @@
                 v-if="activeKey !== 'OS'"
                 @click="nextStep"
               >
-                {{ $t("Next") }}
+                {{ $t("next") | capitalize }}
               </a-button>
               <a-button
                 block
@@ -491,6 +503,10 @@
                   </a-col>
                 </a-row> -->
               </a-modal>
+            </a-col>
+            <a-col style="font-size: 14px; margin: 16px 16px 0">
+              <span style="position: absolute; left: -8px">*</span>
+              {{ $t('Payment will be made immediately after purchase') }}
             </a-col>
           </a-row>
         </div>
@@ -585,30 +601,6 @@
 </template>
 
 <script>
-const periods = [
-  {
-    count: 1,
-    title: "month",
-    value: "monthly",
-  },
-  {
-    count: 3,
-    title: "month",
-    value: "quarterly",
-  },
-  {
-    count: 6,
-    title: "month",
-    value: "semiannually",
-    discount: 5,
-  },
-  {
-    count: 1,
-    title: "year",
-    value: "annually",
-    discount: 10,
-  },
-];
 import { mapGetters } from "vuex";
 import loading from "../loading/loading";
 import myMap from "../map/map.vue";
@@ -625,7 +617,10 @@ export default {
       productSize: "VDS L",
       activeKey: "location",
       plan: "",
-      periods,
+      periods: [
+        { value: "Monthly", label: "ssl.Monthly" },
+        { value: "Hourly", label: "ssl.Hourly" }
+      ],
       service: "",
       namespace: "",
       tarification: "Monthly",
@@ -635,6 +630,7 @@ export default {
       sshKey: undefined,
       score: null,
       product: {},
+      priceOVH: { value: 0, currency: 'USD' },
       options: {
         // kind: "standart",
 
@@ -740,7 +736,8 @@ export default {
     getPlan() {
       const type = (this.tarification === 'Monthly') ? 'STATIC' : 'DYNAMIC';
       const item = this.getPlans.find((el) => el.kind === type);
-      this.plan = item;
+
+      if (item) this.plan = item;
       return item || {};
     },
 
@@ -806,6 +803,17 @@ export default {
         }
         return price.reduce((accum, item) => accum + item, 0);
       }
+    },
+    productFullPriceOVH() {
+      if (!this.plan.fee?.ranges) return this.priceOVH.value;
+
+      for (let range of this.plan.fee.ranges) {
+        if (this.priceOVH.value <= range.from) continue;
+        if (this.priceOVH.value > range.to) continue;
+        return this.priceOVH.value * range.factor;
+      }
+
+      return this.priceOVH.value * this.plan.fee.default;
     },
     diskPrice() {
       const { size } = this.options.disk;
@@ -1057,6 +1065,10 @@ export default {
           return price;
         case "month":
           return price + this.diskPrice;
+        case "year":
+          return price * 12;
+        case "2 years":
+          return price * 24;
         default:
           console.error("[VDC Calculator]: Wrong period in calc.", period);
       }

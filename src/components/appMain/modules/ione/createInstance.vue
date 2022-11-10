@@ -394,6 +394,14 @@ export default {
 
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
     }
+  },
+  watch: {
+    itemSP() {
+      this.$emit('setData', { key: 'periods', value: [
+        { value: 'Monthly', label: 'ssl.Monthly' },
+        { value: 'Hourly', label: 'ssl.Hourly' }
+      ] });
+    }
   }
 }
 </script>
