@@ -100,8 +100,6 @@
 </template>
 
 <script>
-import api from "@/api.js";
-
 export default {
 	name: 'ssl-component',
 	data:() => ({
@@ -124,7 +122,7 @@ export default {
 	methods: {
 		fetch(){
 			this.fetchLoading = true;
-			api.get(`${this.baseURL}/products.get.virtual.php`)
+			this.$api.get(`${this.baseURL}/products.get.virtual.php`)
         .then(res => {
           res = res.sort((a, b) => b.name - a.name)
           this.products = res;
@@ -164,18 +162,18 @@ export default {
 		},
 		createVirtual(info){
 			this.sendloading = true;
-			api.get(`${this.baseURL}/createOrder.php`, { params: info })
-			.then(result => {
-				if(this.modal.goToInvoice){
-					this.$router.push({name: 'invoiceFS', params: {uuid: result.invoiceid}});
-				} else {
-					this.$router.push({name: 'services'});
-				}
-			})
-			.catch(err => console.error(err))
-			.finally(()=>{
-				this.sendloading = false;
-			})
+			this.$api.get(`${this.baseURL}/createOrder.php`, { params: info })
+        .then((result) => {
+          if (this.modal.goToInvoice){
+            this.$router.push({ name: 'invoiceFS', params: { uuid: result.invoiceid } });
+          } else {
+            this.$router.push({ name: 'services' });
+          }
+        })
+        .catch(err => console.error(err))
+        .finally(() => {
+          this.sendloading = false;
+        });
 		},
 		orderConfirm(){
 			if(!this.options.domain.match(/.+\..+/)){
