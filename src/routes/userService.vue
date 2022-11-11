@@ -176,6 +176,8 @@ export default {
       .then(() => {
         const domain = this.$store.getters['nocloud/vms/getInstances']
           .find(({ uuid }) => uuid === this.$route.params.id);
+
+        if (!domain) return new Promise((resolve) => resolve({ meta: null }));
         const { period } = domain.resources;
         const { expiredate } = domain.data.expiry;
         const year = parseInt(expiredate) - period;
@@ -197,16 +199,17 @@ export default {
           uuid: domain.sp,
           action: 'get_domain_price',
           params: { domain: this.service.domain },
-        })
+        });
       })
       .then(({ meta }) => {
-        const { period } = this.service.resources;
+        if (meta) {
+          const { period } = this.service.resources;
 
-        this.service.recurringamount = meta.prices[period];
+          this.service.recurringamount = meta.prices[period];
+        }
       })
       .catch((err) => console.error(err));
 
-    if (!this.service) return;
     this.$store.dispatch('nocloud/auth/fetchBillingData')
       .then(({ client_id }) => {
         const serviceid = this.$route.params.id;
@@ -258,13 +261,14 @@ export default {
       }
     },
     getModuleButtons() {
-      const { status, state: { state } } = this.service;
+      const { status, state } = this.service;
       const serviceType = this.$config
         .getServiceType(this.service.groupname)
         ?.toLowerCase();
 
       if (serviceType === undefined) return;
-      if (!(status === 'Active' || state === 'RUNNING')) return;
+      if (!(status === 'Active')) return;
+      if (!(state?.state === 'RUNNING')) return;
       return () => import(`@/components/services/${serviceType}/draw`);
     },
   },

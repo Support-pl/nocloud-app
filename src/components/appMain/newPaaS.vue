@@ -193,7 +193,7 @@
               :style="{ 'font-size': '1.1rem' }"
               v-if="options.os.name"
             >
-              <a-col> {{ $t("OS") }}: </a-col>
+              <a-col> {{ $t("os") }}: </a-col>
               <a-col>
                 {{ options.os.name }}
               </a-col>
@@ -630,7 +630,7 @@ export default {
       sshKey: undefined,
       score: null,
       product: {},
-      priceOVH: { value: 0, currency: 'USD' },
+      priceOVH: { value: 0, currency: 'USD', addons: 0 },
       options: {
         // kind: "standart",
 
@@ -805,12 +805,12 @@ export default {
       }
     },
     productFullPriceOVH() {
-      if (!this.plan.fee?.ranges) return this.priceOVH.value;
+      if (!this.plan.fee?.ranges) return this.priceOVH.value + this.priceOVH.addons;
 
       for (let range of this.plan.fee.ranges) {
         if (this.priceOVH.value <= range.from) continue;
         if (this.priceOVH.value > range.to) continue;
-        return this.priceOVH.value * range.factor;
+        return this.priceOVH.value * range.factor + this.priceOVH.addons;
       }
 
       return this.priceOVH.value * this.plan.fee.default;
