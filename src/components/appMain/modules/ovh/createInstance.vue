@@ -130,6 +130,33 @@
         :message="$t('Windows is paid')"
       />
     </a-collapse-panel>
+
+    <!-- Addons -->
+    <a-collapse-panel
+      key="addons"
+      :disabled="!itemSP || isAddonsLoading || !plan"
+      :header="$t('Addons') + ':'"
+      :style="{ 'border-radius': '0 0 20px 20px' }"
+    >
+      <template v-if="!isAddonsLoading">
+        <a-row class="newCloud__prop" v-for="(addon, key) in addons" :key="key">
+          <a-col span="8" :xs="6">{{ $t(key) | capitalize }}:</a-col>
+          <a-col span="16" :xs="18">
+            <a-select
+              default-value="-1"
+              style="width: 100%"
+              @change="(value) => setAddon(value, addon[value])"
+            >
+              <a-select-option value="-1">{{ $t('none') }}</a-select-option>
+              <a-select-option v-for="(_, id) in addon" :key="id">
+                {{ id }}
+              </a-select-option>
+            </a-select>
+          </a-col>
+        </a-row>
+      </template>
+      <a-spin v-else style="display: block; margin: 0 auto" :tip="$t('loading')" />
+    </a-collapse-panel>
   </a-collapse>
 </template>
 
@@ -158,11 +185,14 @@ export default {
     //   { label: 'windows', value: 'windows' }
     // ],
     isFlavorsLoading: false,
+    isAddonsLoading: false,
     isOSLoading: false,
     // allFlavors: [],
     // flavors: [],
     images: [],
-    plans: []
+    plans: [],
+    addons: {},
+    price: {}
   }),
   methods: {
     getOS() {
@@ -202,6 +232,52 @@ export default {
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
     },
+    getAddons(planCode) {
+      this.isAddonsLoading = true;
+      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+        method: 'get_options',
+        params: { cartId: this.cartId, planCode }
+      })
+        .then(({ meta }) => {
+          this.addons = meta;
+        })
+        .finally(() => {
+          this.isAddonsLoading = false;
+        });
+    },
+    setAddon(planCode, periods) {
+      let mode = '';
+      switch (this.tarification) {
+        case 'Annually':
+          mode = 'upfront12';
+          break;
+        case 'Biennially':
+          mode = 'upfront24';
+          break;
+        default:
+          mode = 'default';
+          break;
+      }
+      const addon = periods.find(({ pricingMode }) => pricingMode === mode);
+
+      this.price.addons += addon.price.Value;
+      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+        method: 'select_option',
+        params: {
+          itemId: this.itemId,
+          cartId: this.cartId,
+          duration: addon.duration,
+          pricingMode: addon.pricingMode,
+          planCode
+        }
+      })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$message.error(message);
+          console.error(err);
+        });
+    },
     setData(value) {
       // const flavor = this.allFlavors.find((el) =>
       //   (el.region === this.region) && (el.name === value)
@@ -212,7 +288,7 @@ export default {
       this.options.cpu.size = +resources.at(-3);
       this.options.ram.size = +resources.at(-2);
       this.options.disk.size = resources.at(-1) * 1024;
-      // this.options.drive = (drive === 'ssd') ? true : false;
+      this.options.drive = true;
       // this.$emit('setData', { key: 'flavorId', value: flavor.id, type: 'ovh' });
       let mode = '';
       switch (this.tarification) {
@@ -231,6 +307,7 @@ export default {
       const tarifs = [];
       let plan = {};
 
+      this.getAddons(value);
       periods.forEach((period) => {
         if (period.pricingMode === mode) plan = period;
         switch (period.pricingMode) {
@@ -244,10 +321,14 @@ export default {
             tarifs.push({ value: 'Monthly', label: 'ssl.Monthly' });
         }
       });
+      this.price = {
+        value: plan.price.Value,
+        currency: plan.price.CurrencyCode,
+        addons: 0
+      };
+
       this.$emit('setData', { key: 'periods', value: tarifs });
-      this.$emit('setData', { key: 'priceOVH', value: {
-        value: plan.price.Value, currency: plan.price.CurrencyCode
-      } });
+      this.$emit('setData', { key: 'priceOVH', value: this.price });
 
       this.isOSLoading = true;
       this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
