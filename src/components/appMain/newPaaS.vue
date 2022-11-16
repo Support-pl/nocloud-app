@@ -4,6 +4,7 @@
         <div class="newCloud__inputs field">
           <keep-alive>
             <component
+              ref="module"
               :is="template"
               :activeKey="activeKey"
               :itemSP="itemSP"
@@ -237,7 +238,8 @@
                   
                   </a-badge>
                 </a-tooltip> -->
-                {{ $t("public") }} IPv4*:
+                <template v-if="itemSP.type === 'ovh'">{{ $t("public") }} IPv4:</template>
+                <template v-else>{{ $t("public") }} IPv4*:</template>
               </a-col>
               <a-col>
                 {{ options.network.public.count }}
@@ -373,7 +375,7 @@
                   :key="period.value"
                   :value="period.value"
                 >
-                  {{ $t(period.label || period.value) }}
+                  {{ $t(period.label || period.value) | capitalize }}
                 </a-radio-button>
               </a-radio-group>
             </a-col>
@@ -446,7 +448,10 @@
                 block
                 type="primary"
                 shape="round"
-                v-if="activeKey !== 'OS'"
+                v-if="
+                  (activeKey !== 'addons' && itemSP.type === 'ovh') ||
+                  (activeKey !== 'OS' && itemSP.type !== 'ovh')
+                "
                 @click="nextStep"
               >
                 {{ $t("next") | capitalize }}
@@ -504,7 +509,7 @@
                 </a-row> -->
               </a-modal>
             </a-col>
-            <a-col style="font-size: 14px; margin: 16px 16px 0">
+            <a-col style="font-size: 14px; margin: 16px 16px 0" v-if="itemSP.type !== 'ovh'">
               <span style="position: absolute; left: -8px">*</span>
               {{ $t('Payment will be made immediately after purchase') }}
             </a-col>
@@ -630,7 +635,7 @@ export default {
       sshKey: undefined,
       score: null,
       product: {},
-      priceOVH: { value: 0, currency: 'USD', addons: 0 },
+      priceOVH: { value: 0, currency: 'USD', addons: {} },
       options: {
         // kind: "standart",
 
@@ -805,15 +810,18 @@ export default {
       }
     },
     productFullPriceOVH() {
-      if (!this.plan.fee?.ranges) return this.priceOVH.value + this.priceOVH.addons;
+      const { value, addons } = this.priceOVH;
+      const addonsPrice = Object.values(addons).reduce((a, b) => a + b, 0);
+
+      if (!this.plan.fee?.ranges) return value + addonsPrice;
 
       for (let range of this.plan.fee.ranges) {
-        if (this.priceOVH.value <= range.from) continue;
-        if (this.priceOVH.value > range.to) continue;
-        return this.priceOVH.value * range.factor + this.priceOVH.addons;
+        if (value <= range.from) continue;
+        if (value > range.to) continue;
+        return value * range.factor + addonsPrice;
       }
 
-      return this.priceOVH.value * this.plan.fee.default;
+      return value * this.plan.fee.default;
     },
     diskPrice() {
       const { size } = this.options.disk;
@@ -995,8 +1003,9 @@ export default {
         this.options.config[key] = value;
         return;
       }
+      if (typeof value === 'object') this[key] = Object.assign({}, value);
+      else this[key] = value;
 
-      this[key] = value;
       if (key === 'productSize') {
         if (!this.getPlanOneStatic) return;
         for (let [key, value] of Object.entries(this.getPlanOneStatic.products)) {
@@ -1051,6 +1060,8 @@ export default {
         this.activeKey = 'plan';
       } else if (this.activeKey === 'plan') {
         this.activeKey = 'OS';
+      } else if (this.activeKey === 'OS') {
+        this.activeKey = 'addons';
       }
     },
     calculatePrice(price, period = this.period) {
@@ -1149,6 +1160,7 @@ export default {
       //update service
       if (newGroup.type === 'ovh') {
         newInstance.config.monthlyBilling = false;
+        this.$refs.module.createVDS();
       }
       if (this.itemService?.instancesGroups.length < 1) {
         this.itemService.instancesGroups = [newGroup];
@@ -1182,7 +1194,7 @@ export default {
               group.resources.ips_public = res.public;
 
               delete orderDataNew.instancesGroups;
-              this.updateVM(orderDataNew);
+              if (newGroup.type !== 'ovh') this.updateVM(orderDataNew);
             }, 300);
           });
       } else {
@@ -1207,7 +1219,7 @@ export default {
             ],
           },
         };
-        this.orderVM(orderData);
+        if (newGroup.type !== 'ovh') this.orderVM(orderData);
       }
     },
     orderVM(orderData) {

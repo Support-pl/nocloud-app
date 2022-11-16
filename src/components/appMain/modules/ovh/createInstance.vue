@@ -17,62 +17,74 @@
       :header="`${$t('Plan')}: ${planHeader}`"
       :disabled="!itemSP || isFlavorsLoading"
     >
-      <a-row type="flex" align="middle" :gutter="[10, 10]">
-        <a-col :xs="4" :sm="3">{{ $t('Plan') | capitalize }}:</a-col>
-        <a-col :xs="20" :sm="9">
-          <a-select
-            style="width: 100%"
-            v-model="plan"
-            :placeholder="$t('Plan') | capitalize"
-            :options="plans"
-            :loading="isFlavorsLoading"
-            @change="setData"
-          />
-        </a-col>
-        <!-- <a-col :xs="5" :sm="3">{{ $t('OS type') }}:</a-col>
-        <a-col :xs="19" :sm="9">
-          <a-select
-            style="width: 100%"
-            v-model="osType"
-            :placeholder="$t('OS type')"
-            :options="osTypes"
-            :loading="isOSLoading"
-            @change="getOS"
-          />
-        </a-col> -->
-      </a-row>
-      <a-row
-        type="flex"
-        justify="space-between"
-        align="middle"
-        class="newCloud__prop"
-        style="margin-top: 15px"
-      >
-        <a-col>
-          <span style="display: inline-block; width: 70px">CPU:</span>
-        </a-col>
-        <a-col class="changing__field" span="6" style="text-align: right">
-          {{ options.cpu.size }} vCPU
-        </a-col>
-      </a-row>
-      <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
-        <a-col>
-          <span style="display: inline-block; width: 70px">RAM:</span>
-        </a-col>
-        <transition name="textchange" mode="out-in">
-          <a-col class="changing__field" span="6" style="text-align: right">
-            {{ options.ram.size }} Gb
+      <template v-if="!isFlavorsLoading">
+        <a-row type="flex" align="middle" style="margin-bottom: 15px">
+          <a-col span="24">
+            <a-slider
+              style="margin-top: 10px"
+              :marks="{ ...resources.plans }"
+              :tip-formatter="null"
+              :max="resources.plans.length - 1"
+              :min="0"
+              :value="resources.plans.indexOf(plan)"
+              @change="(i) => plan = resources.plans[i]"
+            />
           </a-col>
-        </transition>
-      </a-row>
-      <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
-        <a-col>
-          <span style="display: inline-block; width: 70px">{{ $t("Drive") }}:</span>
-        </a-col>
-        <a-col class="changing__field" span="6" style="text-align: right">
-          {{ diskSize }}
-        </a-col>
-      </a-row>
+        </a-row>
+        <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
+          <a-col>
+            <span style="display: inline-block; width: 70px">CPU:</span>
+          </a-col>
+          <a-col class="changing__field" span="3" style="text-align: right">
+            {{ options.cpu.size }} vCPU
+          </a-col>
+        </a-row>
+        <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
+          <a-col>
+            <span style="display: inline-block; width: 70px">RAM:</span>
+          </a-col>
+          <a-col span="18">
+            <a-slider
+              style="margin-top: 10px"
+              v-if="resources.ram.length > 1"
+              :marks="{ ...resources.ram }"
+              :tip-formatter="null"
+              :max="resources.ram.length - 1"
+              :min="0"
+              :value="resources.ram.indexOf(options.ram.size)"
+              @change="(i) => options.ram.size = resources.ram[i]"
+              @afterChange="setData(planKey)"
+            />
+          </a-col>
+          <transition name="textchange" mode="out-in">
+            <a-col class="changing__field" span="3" style="text-align: right">
+              {{ options.ram.size }} Gb
+            </a-col>
+          </transition>
+        </a-row>
+        <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
+          <a-col>
+            <span style="display: inline-block; width: 70px">{{ $t("Drive") }}:</span>
+          </a-col>
+          <a-col span="18">
+            <a-slider
+              style="margin-top: 10px"
+              v-if="resources.disk.length > 1"
+              :marks="{ ...resources.disk }"
+              :tip-formatter="null"
+              :max="resources.disk.length - 1"
+              :min="0"
+              :value="resources.disk.indexOf(parseInt(diskSize))"
+              @change="(i) => options.disk.size = resources.disk[i] * 1024"
+              @afterChange="setData(planKey)"
+            />
+          </a-col>
+          <a-col class="changing__field" span="3" style="text-align: right">
+            {{ diskSize }}
+          </a-col>
+        </a-row>
+      </template>
+      <a-spin v-else style="display: block; margin: 0 auto" :tip="$t('loading')" />
     </a-collapse-panel>
 
     <!-- OS -->
@@ -110,7 +122,12 @@
               <div class="newCloud__template-image">
                 <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" />
               </div>
-              <div class="newCloud__template-name">{{ item.name }}</div>
+              <div class="newCloud__template-name">
+                {{ item.name }} <br>
+                <template v-if="item.prices">
+                  ({{ osPrice(item.prices) }} {{ price.currency }})
+                </template>
+              </div>
             </template>
           </div>
         </div>
@@ -119,22 +136,15 @@
         v-else-if="!isOSLoading"
         show-icon
         type="warning"
-        :message="$t('No OS. Choose another model')"
+        :message="$t('No OS. Choose another plan')"
       />
       <a-spin v-else style="display: block; margin: 0 auto" :tip="$t('loading')" />
-      <a-alert
-        show-icon
-        type="warning"
-        style="margin-top: 16px"
-        v-if="images.find(({ name }) => name.toLowerCase().includes('windows'))"
-        :message="$t('Windows is paid')"
-      />
     </a-collapse-panel>
 
     <!-- Addons -->
     <a-collapse-panel
       key="addons"
-      :disabled="!itemSP || isAddonsLoading || !plan"
+      :disabled="!itemSP || isAddonsLoading || isOSLoading || !plan"
       :header="$t('Addons') + ':'"
       :style="{ 'border-radius': '0 0 20px 20px' }"
     >
@@ -145,7 +155,8 @@
             <a-select
               default-value="-1"
               style="width: 100%"
-              @change="(value) => setAddon(value, addon[value])"
+              :value="addonName(addon)"
+              @change="(value) => setAddon(value, addon[value], key)"
             >
               <a-select-option value="-1">{{ $t('none') }}</a-select-option>
               <a-select-option v-for="(_, id) in addon" :key="id">
@@ -172,65 +183,44 @@ export default {
     vmName: { type: String, required: true }
   },
   data: () => ({
-    // flavor: '',
-    // osType: '',
     cartId: '',
     itemId: '',
     plan: '',
-    // osTypes: [
-    //   { label: 'all', value: '' },
-    //   { label: 'baremetal-linux', value: 'baremetal-linux '},
-    //   { label: 'bsd', value: 'bsd' },
-    //   { label: 'linux', value: 'linux' },
-    //   { label: 'windows', value: 'windows' }
-    // ],
+    oldKey: '',
+
     isFlavorsLoading: false,
     isAddonsLoading: false,
     isOSLoading: false,
-    // allFlavors: [],
-    // flavors: [],
+
     images: [],
     plans: [],
     addons: {},
+    addonsCodes: {},
     price: {}
   }),
   methods: {
-    getOS() {
-      const flavor = this.flavor;
-      const region = this.region;
-      const os = this.osType;
-
-      if (!flavor) return;
-      this.isOSLoading = true;
-      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-        method: 'images',
-        params: { flavor, region, os }
-      })
-        .then(({ meta }) => {
-          this.images = meta.result;
-        })
-        .finally(() => {
-          this.isOSLoading = false;
-        });
-    },
     setOS(item, index) {
       if (item.warning) return;
       this.options.os.id = +index;
       this.options.os.name = item.name;
 
+      if (item.prices) {
+        this.price.addons.os = this.osPrice(item.prices);
+        this.$emit('setData', { key: 'priceOVH', value: this.price });
+      } else if (this.prices.addons.os !== 0) {
+        this.prices.addons.os = 0;
+        this.$emit('setData', { key: 'priceOVH', value: this.price });
+      }
+
       this.$emit('setData', { key: 'imageId', value: item.id, type: 'ovh' });
-      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-        method: 'select_os_and_datacenter',
-        params: {
-          cartId: this.cartId,
-          itemId: this.itemId,
-          datacenter: this.region,
-          os: item.name
-        }
-      });
     },
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
+    },
+    osPrice(prices) {
+      const addon = prices.find(({ pricingMode }) => pricingMode === this.mode);
+
+      return addon?.price.Value ?? 0;
     },
     getAddons(planCode) {
       this.isAddonsLoading = true;
@@ -239,77 +229,61 @@ export default {
         params: { cartId: this.cartId, planCode }
       })
         .then(({ meta }) => {
-          this.addons = meta;
-        })
-        .finally(() => {
-          this.isAddonsLoading = false;
-        });
-    },
-    setAddon(planCode, periods) {
-      let mode = '';
-      switch (this.tarification) {
-        case 'Annually':
-          mode = 'upfront12';
-          break;
-        case 'Biennially':
-          mode = 'upfront24';
-          break;
-        default:
-          mode = 'default';
-          break;
-      }
-      const addon = periods.find(({ pricingMode }) => pricingMode === mode);
+          this.images.forEach(({ name }, i, arr) => {
+            if (name.toLowerCase().includes('windows')) {
+              const key = Object.keys(meta.os).find((name) => name.includes('windows'));
 
-      this.price.addons += addon.price.Value;
-      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-        method: 'select_option',
-        params: {
-          itemId: this.itemId,
-          cartId: this.cartId,
-          duration: addon.duration,
-          pricingMode: addon.pricingMode,
-          planCode
-        }
-      })
+              arr[i].prices = meta.os[key];
+            }
+          });
+
+          delete meta.os;
+          this.addons = meta;
+          this.oldKey = this.planKey;
+        })
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err;
 
           this.$message.error(message);
           console.error(err);
+        })
+        .finally(() => {
+          this.isAddonsLoading = false;
         });
     },
+    setAddon(planCode, periods, key) {
+      if (planCode === '-1') {
+        this.price.addons[key] = 0;
+        this.$delete(this.addonsCodes, key);
+      } else {
+        const addon = periods.find(({ pricingMode }) => pricingMode === this.mode);
+
+        this.price.addons[key] = addon.price.Value;
+        this.$set(this.addonsCodes, key, planCode);
+        this.setPlan(this.planKey);
+      }
+
+      this.$emit('setData', { key: 'priceOVH', value: this.price });
+    },
+    addonName(addons) {
+      const codes = Object.values(this.addonsCodes);
+      const keys = Object.keys(addons);
+
+      return codes.find((el) => keys.includes(el)) ?? '-1';
+    },
     setData(value) {
-      // const flavor = this.allFlavors.find((el) =>
-      //   (el.region === this.region) && (el.name === value)
-      // );
-      // const drive = flavor?.type.split('.')[1];
+      const { periods } = this.plans.find((el) => el.value.includes(value));
       const resources = value.split('-');
+      const tarifs = [];
+      let plan = {};
 
       this.options.cpu.size = +resources.at(-3);
       this.options.ram.size = +resources.at(-2);
       this.options.disk.size = resources.at(-1) * 1024;
       this.options.drive = true;
-      // this.$emit('setData', { key: 'flavorId', value: flavor.id, type: 'ovh' });
-      let mode = '';
-      switch (this.tarification) {
-        case 'Annually':
-          mode = 'upfront12';
-          break;
-        case 'Biennially':
-          mode = 'upfront24';
-          break;
-        default:
-          mode = 'default';
-          break;
-      }
 
-      const { periods } = this.plans.find((el) => el.value === value);
-      const tarifs = [];
-      let plan = {};
-
-      this.getAddons(value);
       periods.forEach((period) => {
-        if (period.pricingMode === mode) plan = period;
+        if (period.pricingMode === this.mode) plan = period;
         switch (period.pricingMode) {
           case 'upfront12':
             tarifs.push({ value: 'Annually', label: 'annually' });
@@ -323,15 +297,22 @@ export default {
       });
       this.price = {
         value: plan.price.Value,
-        currency: plan.price.CurrencyCode,
-        addons: 0
+        currency: 'NCU' || plan.price.CurrencyCode,
+        addons: {}
       };
 
       this.$emit('setData', { key: 'periods', value: tarifs });
       this.$emit('setData', { key: 'priceOVH', value: this.price });
+    },
+    setPlan(planKey) {
+      if (this.oldKey === planKey) return;
+      const { periods, value } = this.plans.find((el) => el.value.includes(planKey));
+      const plan = periods.find(({ pricingMode }) => pricingMode === this.mode);
 
       this.isOSLoading = true;
-      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+      if (this.itemId !== '') this.deletePlan();
+
+      return this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
         method: 'select_plan',
         params: {
           cartId: this.cartId,
@@ -343,18 +324,70 @@ export default {
         .then(({ meta: { itemId } }) => {
           this.itemId = itemId;
 
-          this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+          return this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
             method: 'get_os_and_datacenter',
             params: { cartId: this.cartId, itemId }
-          })
-            .then(({ meta: { os } }) => {
-              os.sort();
-              this.images = os.map((el) => ({ name: el, desc: el }));
-            })
-            .finally(() => {
-              this.isOSLoading = false;
-            });
+          });
+        })
+        .then(({ meta: { os } }) => {
+          os.sort();
+          this.images = os.map((el) => ({ name: el, desc: el }));
+          this.getAddons(value);
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$message.error(message);
+          console.error(err);
+        })
+        .finally(() => {
+          this.isOSLoading = false;
         });
+    },
+    deletePlan() {
+      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+        method: 'delete_plan',
+        params: { cartId: this.cartId, itemId: this.itemId }
+      })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$message.error(message);
+          console.error(err);
+        });
+    },
+    createVDS() {
+      const { periods } = this.plans.find((el) => el.value.includes(this.planKey));
+      const plan = periods.find(({ pricingMode }) => pricingMode === this.mode);
+
+      this.setPlan(this.planKey).then(() => {
+        return this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+          method: 'config_vds',
+          params: {
+            cartId: this.cartId,
+            itemId: this.itemId,
+            duration: plan.duration,
+            pricingMode: plan.pricingMode,
+            datacenter: this.region.replace(/\d/g, ''),
+            addons: Object.values(this.addonsCodes),
+            os: this.options.os.name
+          }
+        });
+      })
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
+        this.$message.error(message);
+        console.error(err);
+      });
+    },
+    changeKey(obj, value) {
+      const oldKey = Object.keys(obj)[0];
+      const key = oldKey.split('-');
+
+      key[key.length - 1] = `${value / 1024}g`;
+      obj[key.join('-')] = obj[oldKey];
+      delete obj[oldKey];
     }
   },
   created() {
@@ -375,18 +408,30 @@ export default {
         this.plans = Object.entries(plans).map(
           ([value, periods]) => ({ label: value, value, periods })
         );
+
+        this.plans.sort((a, b) => {
+          const resA = a.value.split('-');
+          const resB = b.value.split('-');
+
+          const isCpuEqual = resB.at(-3) === resA.at(-3);
+          const isRamEqual = resB.at(-2) === resA.at(-2);
+
+          if (isCpuEqual && isRamEqual) return resA.at(-1) - resB.at(-1);
+          if (isCpuEqual) return resA.at(-2) - resB.at(-2);
+          return resA.at(-3) - resB.at(-3);
+        });
+
+        if (this.plan === '') {
+          this.plan = this.resources.plans[1];
+          this.setPlan(this.plans[1].value);
+        }
       })
-    // this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-    //   method: 'flavors',
-    //   params: { region: this.region }
-    // })
-    //   .then(({ meta: { result } }) => {
-    //     this.allFlavors = result;
-    //     result.forEach((el) => {
-    //       if (this.flavors.find(({ value }) => value === el.name)) return;
-    //       this.flavors.push({ value: el.name, label: el.name.toUpperCase() });
-    //     });
-    //   })
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
+        this.$message.error(message);
+        console.error(err);
+      })
       .finally(() => {
         this.isFlavorsLoading = false;
       });
@@ -404,6 +449,47 @@ export default {
       if (!extra) return null;
       return extra.region;
     },
+    resources() {
+      const plans = new Set(this.plans.map(({ value }) => value.split('-')[1]));
+      const ram = new Set();
+      const disk = new Set();
+
+      const filteredPlans = this.plans.filter(({ value }) =>
+        value.includes(this.plan)
+      );
+
+      filteredPlans.forEach(({ value }) => {
+        const resources = value.split('-');
+
+        ram.add(+resources.at(-2));
+        disk.add(+resources.at(-1));
+      });
+
+      return {
+        plans: Array.from(plans),
+        ram: Array.from(ram).sort((a, b) => a - b),
+        disk: Array.from(disk).sort((a, b) => a - b)
+      };
+    },
+    mode() {
+      switch (this.tarification) {
+        case 'Annually':
+          return 'upfront12';
+        case 'Biennially':
+          return 'upfront24';
+        default:
+          return 'default';
+      }
+    },
+    planKey() {
+      const { cpu, ram, disk } = this.options;
+      const drive = { ...disk };
+      drive.size /= 1024;
+
+      const resources = [cpu, ram, drive].map(({ size }) => size);
+
+      return `${this.plan}-${resources.join('-')}`;
+    },
     planHeader() {
       if (this.itemSP) return this.plan && ` (${this.plan})`;
       else return ' ';
@@ -415,7 +501,17 @@ export default {
     }
   },
   watch: {
-    tarification() { this.setData(this.plan) }
+    tarification() { this.setData(this.planKey) },
+    plan(plan) {
+      const { value } = this.plans.find((el) => el.value.includes(plan));
+
+      this.setData(value);
+      if (plan === 'starter') this.setPlan(value);
+    },
+    'options.disk.size'(value) {
+      if (this.addons.backup) this.changeKey(this.addons.backup, value);
+      if (this.addons.snapshot) this.changeKey(this.addons.snapshot, value);
+    }
   }
 }
 </script>
