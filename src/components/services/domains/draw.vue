@@ -92,7 +92,7 @@ export default {
         title: this.$t('Actions'),
         key: 'actions',
         scopedSlots: { customRender: 'actions' },
-        width: 90
+        width: 95
       }
     ],
     dnsTypes: ['AAAA', 'A', 'CNAME', 'MX', 'SRV', 'TXT'],

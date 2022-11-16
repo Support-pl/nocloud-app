@@ -138,6 +138,7 @@
             class="newCloud__template-item"
             :key="index"
             :class="{ active: options.os.name == item.name }"
+            @click="setOS(item, index)"
           >
             <template v-if="item.warning">
               <div class="newCloud__template-image">
@@ -147,7 +148,7 @@
             </template>
             <template v-else>
               <div class="newCloud__template-image">
-                <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" @click="setOS(item, index)" />
+                <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" />
               </div>
               <div class="newCloud__template-name">{{ item.name }}</div>
             </template>
@@ -319,6 +320,7 @@ export default {
   },
   methods: {
     setOS(item, index) {
+      if (item.warning) return;
       this.options.os.id = +index;
       this.options.os.name = item.name;
     },

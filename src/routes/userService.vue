@@ -181,7 +181,7 @@ export default {
         const { period } = domain.resources;
         const { expiredate } = domain.data.expiry;
         const year = parseInt(expiredate) - period;
-        const periodText = (period === 1) ? 'year' : 'years';
+        const periodText = (period === 1) ? this.$t('year') : this.$t('years');
 
         this.service = {
           ...domain,
@@ -194,6 +194,7 @@ export default {
           regdate: `${year}${expiredate.slice(4)}`,
           nextduedate: expiredate
         };
+        info[0].type = '';
 
         return this.$api.servicesProviders.action({
           uuid: domain.sp,
@@ -267,8 +268,8 @@ export default {
         ?.toLowerCase();
 
       if (serviceType === undefined) return;
-      if (!(status === 'Active')) return;
-      if (!(state?.state === 'RUNNING')) return;
+      if (!(status === 'Active' ||
+        state?.state === 'RUNNING')) return;
       return () => import(`@/components/services/${serviceType}/draw`);
     },
   },
