@@ -35,7 +35,7 @@
 						<a-col span="8" :xs="6">{{$t('product_name') | capitalize}}:</a-col>
 						<a-col span="16" :xs="18">
 							<a-select v-if="!fetchLoading" v-model="options.tarif" style="width: 100%">
-								<a-select-option v-for="kind of products[options.provider]" :value="kind.tarif" :key="kind.tarif">{{kind.tarif}}</a-select-option>
+								<a-select-option v-for="kind of products[options.provider]" :value="kind.product" :key="kind.product">{{kind.product}}</a-select-option>
 							</a-select>
 							<div v-else class="loadingLine"></div>
 						</a-col>
@@ -74,9 +74,9 @@
 				</a-divider>
 
 				<a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
-					<a-col>
+					<a-col v-if="getProducts.prices">
 						<template v-if="!fetchLoading">
-							{{getProducts.pricing[options.period]}} {{getProducts.pricing.suffix}}
+							{{ getProducts.prices[options.period] }} {{ user.currency_code }}
 						</template>
 						<div v-else class="loadingLine loadingLine--total"></div>
 					</a-col>
@@ -93,9 +93,9 @@
 							:confirm-loading="sendloading"
 							:cancel-text="$t('Cancel')"
 							@ok="orderClickHandler"
-							@cancel="() => {modal.confirmCreate = false}"
+							@cancel="() => { modal.confirmCreate = false }"
 						>
-							<p>{{$t('Do you want to order')}}: {{getProducts['name']}}</p>
+							<p>{{ $t('Do you want to order') }}: {{ getProducts.product }}</p>
 
 							<a-row style="margin-top: 20px">
 								<a-col>
@@ -112,8 +112,6 @@
 </template>
 
 <script>
-import api from "@/api.js";
-
 export default {
 	name: 'ssl-component',
 	data(){
@@ -125,24 +123,30 @@ export default {
 				provider: '',
 				tarif: '',
 				domain: '',
-				period: 'annually'
+				period: 12
 			},
 			modal: {
 				confirmCreate: false,
 				confirmLoading: false,
 				goToInvoice: true
 			},
-			periods: ['annually', 'biennially']
+			periods: [12, 24]
 		}
 	},
 	methods: {
 		fetch(){
-			this.fetchLoading = true;
-			api.getWithParams('products.get.SSL', {})
-			.then(res => {
-				this.products = res;
-				this.options.provider = Object.keys(res)[0];
-				this.options.tarif = res[this.options.provider][0].tarif;
+			this.$api.post(`/sp/${this.sp.uuid}/invoke`, {
+        method: 'get_certificate'
+      })
+			.then(({ meta }) => {
+				meta.cert.products.forEach((product) => {
+          if (!(product.brand in this.products)) {
+            this.products[product.brand] = [];
+          }
+          this.products[product.brand].push(product);
+        });
+				this.options.provider = meta.cert.products[0].brand;
+				this.options.tarif = this.products[this.options.provider][0].product;
 			})
 			.catch(err => console.error(err))
 			.finally(() => {
@@ -154,7 +158,7 @@ export default {
 			const info = {
 				domain: this.options.domain,
 				billingcycle: 'annually',
-				pid: this.getProducts.pid
+				pid: this.getProducts.id
 			}
 
 			if(!this.$store.getters.getUser){
@@ -162,7 +166,7 @@ export default {
 				this.$store.commit('setOnloginInfo', {
 					type: 'SSL',
 					title: 'SSL Certificate',
-					cost: this.getProducts.pricing[this.options.period]
+					cost: this.getProducts.prices[this.options.period]
 				});
 				this.$store.dispatch('setOnloginAction', () => {
 					this.createSSL(info);
@@ -196,21 +200,26 @@ export default {
 		}
 	},
 	computed: {
-		productName(){
-			return 'test'
+		getProducts() {
+			if (Object.keys(this.products).length === 0) return "NAN";
+      return this.products[this.options.provider]
+        .find(el => el.product === this.options.product);
 		},
-		getProducts(){
-			if(Object.keys(this.products).length == 0) return "NAN"
-			return this.products[this.options.provider].find(el => el.tarif == this.options.tarif)
-		}
+    user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    },
+    sp() {
+      return this.$store.getters['nocloud/sp/getSP']
+        .find(({ type }) => type === 'goget');
+    }
 	},
-	created(){
-		// console.log(this.data);
-		this.fetch();
+	created() {
+    this.fetchLoading = true;
+    this.$store.dispatch('nocloud/sp/fetch').then(() => this.fetch());
 	},
 	watch: {
-		'options.provider': function() {
-			this.options.tarif = this.products[this.options.provider][0].tarif;
+		'options.provider'() {
+			this.options.tarif = this.products[this.options.provider][0].product;
 		}
 	}
 }
@@ -357,6 +366,7 @@ export default {
 .order__slider{
 	display: flex;
 	overflow-x: auto;
+  padding-bottom: 10px;
 }
 
 .order__slider-item:not(:last-child){
