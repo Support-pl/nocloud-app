@@ -1,4 +1,5 @@
 import api from '@/api'
+import config from '@/appconfig'
 
 export default {
 	namespaced: true,
@@ -6,7 +7,7 @@ export default {
 	state: {
 		products: [],
 		productsLoading: false,
-    baseURL: 'https://whmcs.demo.support.pl/virtualHosting'
+    baseURL: `${config.WHMCSsiteurl}virtualHosting`
 	},
 	mutations: {
 		setProducts(state, data){

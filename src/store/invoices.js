@@ -1,4 +1,5 @@
 import api from '@/api'
+import config from '@/appconfig'
 
 export default {
 	namespaced: true,
@@ -7,7 +8,7 @@ export default {
 		loading: false,
 		invoices: [],
 		filter: ['all'],
-    baseURL: 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php',
+    baseURL: `${config.WHMCSsiteurl}modules/addons/nocloud/api/index.php`,
 	},
 	mutations: {
 		updateInvoices(state, value) {

@@ -1,4 +1,5 @@
 import api from '@/api'
+import config from '@/appconfig'
 
 export default {
 	namespaced: true,
@@ -10,7 +11,7 @@ export default {
 		addTicketState: false,
 		filter: ['all'],
 		departments: [],
-    baseURL: 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php',
+    baseURL: `${config.WHMCSsiteurl}modules/addons/nocloud/api/index.php`,
 	},
 	mutations: {
 		updateTickets(state, value){

@@ -1,6 +1,7 @@
 import api from "@/api.js"
 import Cookies from 'js-cookie'
 import router from '@/router'
+import config from '@/appconfig'
 
 const COOKIES_NAME = 'noCloudinApp-token';
 
@@ -10,7 +11,7 @@ export default {
 		token: '',
 		userdata: {},
     billingUser: {},
-    baseURL: 'https://whmcs.demo.support.pl/modules/addons/nocloud/api/index.php'
+    baseURL: `${config.WHMCSsiteurl}/modules/addons/nocloud/api/index.php`
 	},
 	mutations: {
 		setToken(state, token) {
