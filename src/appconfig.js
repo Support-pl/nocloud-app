@@ -11,7 +11,7 @@ const allServices = {
   },
   ssl: {
   	groupname: ['GoGet SSL 2.5.6', 'SSL', 'SSL сертификаты'],
-  	creationRouteName: 'service-SSL',
+  	creationRouteName: 'service-ssl',
   	icon: 'lock',
   	additionalRoutes: [
   		{
