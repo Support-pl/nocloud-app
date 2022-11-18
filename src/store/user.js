@@ -15,7 +15,7 @@ export default {
 
 		domain: {
       settings: {
-        avaliable: ["VM", "Domains", "Virtual", "SSL"].map((el) => el.toLowerCase())
+        avaliable: Object.keys(config.services).map((el) => el.toLowerCase())
       }
     }
 	},

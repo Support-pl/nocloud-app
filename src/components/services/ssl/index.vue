@@ -62,7 +62,7 @@
 					<a-col :xs="12" :sm="18" :lg='12'>
 						<a-select v-if="!fetchLoading" v-model="options.period"  style="width: 100%">
 							<a-select-option v-for="period in periods" :key="period.title+period.count" :value='period'>
-								{{$t(period)}}
+								{{ $t(period) }} {{ $t('months') }}
 							</a-select-option>
 						</a-select>
 						<div v-else class="loadingLine"></div>
@@ -76,7 +76,7 @@
 				<a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
 					<a-col v-if="getProducts.prices">
 						<template v-if="!fetchLoading">
-							{{ getProducts.prices[options.period] }} {{ user.currency_code }}
+							{{ getProducts.prices[options.period] }} {{ user.currency_code || 'USD' }}
 						</template>
 						<div v-else class="loadingLine loadingLine--total"></div>
 					</a-col>
@@ -116,21 +116,20 @@ export default {
 	name: 'ssl-component',
 	data(){
 		return {
-			products: [],
+			products: {},
 			fetchLoading: false,
 			sendloading: false,
 			options: {
 				provider: '',
 				tarif: '',
 				domain: '',
-				period: 12
+				period: ''
 			},
 			modal: {
 				confirmCreate: false,
 				confirmLoading: false,
 				goToInvoice: true
-			},
-			periods: [12, 24]
+			}
 		}
 	},
 	methods: {
@@ -147,6 +146,7 @@ export default {
         });
 				this.options.provider = meta.cert.products[0].brand;
 				this.options.tarif = this.products[this.options.provider][0].product;
+        this.products = Object.assign({}, this.products);
 			})
 			.catch(err => console.error(err))
 			.finally(() => {
@@ -203,7 +203,7 @@ export default {
 		getProducts() {
 			if (Object.keys(this.products).length === 0) return "NAN";
       return this.products[this.options.provider]
-        .find(el => el.product === this.options.product);
+        .find(el => el.product === this.options.tarif);
 		},
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
@@ -211,16 +211,24 @@ export default {
     sp() {
       return this.$store.getters['nocloud/sp/getSP']
         .find(({ type }) => type === 'goget');
+    },
+    periods() {
+      return Object.keys(this.getProducts.prices || {})
+        .filter((el) => isFinite(+el));
     }
 	},
 	created() {
     this.fetchLoading = true;
+    this.$store.dispatch('nocloud/auth/fetchBillingData');
     this.$store.dispatch('nocloud/sp/fetch').then(() => this.fetch());
 	},
 	watch: {
 		'options.provider'() {
 			this.options.tarif = this.products[this.options.provider][0].product;
-		}
+		},
+    periods(value) {
+      this.options.period = value[0];
+    }
 	}
 }
 </script>
