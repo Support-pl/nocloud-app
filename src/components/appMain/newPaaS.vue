@@ -1105,43 +1105,28 @@ export default {
     // },
     handleOkOnCreateOrder() {
       // --------------------------------
-      const instance = (this.itemSP.type === 'ovh')
-        ? {
-          title: this.vmName,
-          config: { type: 'vm', ...this.options.config },
-          resources: {
-            ips_private: this.options.network.private.count,
-            ips_public: this.options.network.public.count,
-          },
-          billing_plan: {
-            uuid: this.plan.uuid,
-            title: this.plan.title,
-            type: this.plan.type,
-            public: this.plan.public,
-          },
-        }
-        : {
-          title: this.vmName,
-          config: {
-            template_id: this.options.os.id,
-            password: this.password,
-            ssh_public_key: this.sshKey,
-          },
-          resources: {
-            cpu: this.options.cpu.size,
-            ram: this.options.ram.size * 1024,
-            drive_type: this.options.drive ? "SSD" : "HDD",
-            drive_size: this.options.disk.size,
-            ips_private: this.options.network.private.count,
-            ips_public: this.options.network.public.count,
-          },
-          billing_plan: {
-            uuid: this.plan.uuid,
-            title: this.plan.title,
-            type: this.plan.type,
-            public: this.plan.public,
-          },
-        };
+      const instance = {
+        title: this.vmName,
+        config: {
+          template_id: this.options.os.id,
+          password: this.password,
+          ssh_public_key: this.sshKey,
+        },
+        resources: {
+          cpu: this.options.cpu.size,
+          ram: this.options.ram.size * 1024,
+          drive_type: this.options.drive ? "SSD" : "HDD",
+          drive_size: this.options.disk.size,
+          ips_private: this.options.network.private.count,
+          ips_public: this.options.network.public.count,
+        },
+        billing_plan: {
+          uuid: this.plan.uuid,
+          title: this.plan.title,
+          type: this.plan.type,
+          public: this.plan.public,
+        },
+      };
       //add key product in instance
       const newInstance = (this.plan.kind === "STATIC")
         ? Object.assign({}, { product: this.product.key }, instance)
@@ -1159,8 +1144,7 @@ export default {
       // -------------------------------------
       //update service
       if (newGroup.type === 'ovh') {
-        newInstance.config.monthlyBilling = false;
-        this.$refs.module.createVDS();
+        newInstance.config = { type: 'vps', ...this.$refs.module.createVDS() };
       }
       if (this.itemService?.instancesGroups.length < 1) {
         this.itemService.instancesGroups = [newGroup];
@@ -1194,7 +1178,7 @@ export default {
               group.resources.ips_public = res.public;
 
               delete orderDataNew.instancesGroups;
-              if (newGroup.type !== 'ovh') this.updateVM(orderDataNew);
+              this.updateVM(orderDataNew);
             }, 300);
           });
       } else {
@@ -1219,7 +1203,7 @@ export default {
             ],
           },
         };
-        if (newGroup.type !== 'ovh') this.orderVM(orderData);
+        this.orderVM(orderData);
       }
     },
     orderVM(orderData) {

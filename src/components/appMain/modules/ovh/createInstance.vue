@@ -212,7 +212,7 @@ export default {
         this.$emit('setData', { key: 'priceOVH', value: this.price });
       }
 
-      this.$emit('setData', { key: 'imageId', value: item.id, type: 'ovh' });
+      this.$emit('setData', { key: 'os', value: item.name, type: 'ovh' });
     },
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
@@ -220,7 +220,7 @@ export default {
     osPrice(prices) {
       const addon = prices.find(({ pricingMode }) => pricingMode === this.mode);
 
-      return addon?.price.Value ?? 0;
+      return addon?.price.value ?? 0;
     },
     getAddons(planCode) {
       this.isAddonsLoading = true;
@@ -258,9 +258,8 @@ export default {
       } else {
         const addon = periods.find(({ pricingMode }) => pricingMode === this.mode);
 
-        this.price.addons[key] = addon.price.Value;
+        this.price.addons[key] = addon.price.value;
         this.$set(this.addonsCodes, key, planCode);
-        this.setPlan(this.planKey);
       }
 
       this.$emit('setData', { key: 'priceOVH', value: this.price });
@@ -296,7 +295,7 @@ export default {
         }
       });
       this.price = {
-        value: plan.price.Value,
+        value: plan.price.value,
         currency: 'NCU' || plan.price.CurrencyCode,
         addons: {}
       };
@@ -360,26 +359,14 @@ export default {
       const { periods } = this.plans.find((el) => el.value.includes(this.planKey));
       const plan = periods.find(({ pricingMode }) => pricingMode === this.mode);
 
-      this.setPlan(this.planKey).then(() => {
-        return this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-          method: 'config_vds',
-          params: {
-            cartId: this.cartId,
-            itemId: this.itemId,
-            duration: plan.duration,
-            pricingMode: plan.pricingMode,
-            datacenter: this.region.replace(/\d/g, ''),
-            addons: Object.values(this.addonsCodes),
-            os: this.options.os.name
-          }
-        });
-      })
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
-
-        this.$message.error(message);
-        console.error(err);
-      });
+      return {
+        planCode: `vps-${this.planKey}`,
+        duration: plan.duration,
+        pricingMode: plan.pricingMode,
+        datacenter: this.region.replace(/\d/g, ''),
+        addons: Object.values(this.addonsCodes),
+        os: this.options.os.name
+      };
     },
     changeKey(obj, value) {
       const oldKey = Object.keys(obj)[0];
@@ -394,20 +381,25 @@ export default {
     this.isFlavorsLoading = true;
     this.$emit('setData', { key: 'region', value: this.region, type: 'ovh' });
     this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-      method: 'create_cart'
+      method: 'get_plans'
     })
-      .then(({ meta: { cartId } }) => {
-        this.cartId = cartId;
+      .then(({ meta: { plans, backup, snapshot, disk, catalog } }) => {
+        const result = [];
+        const addons = {};
 
-        return this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-          method: 'get_plans',
-          params: { cartId }
+        plans.forEach(({ prices, planCode }) => {
+          result.push({
+            value: planCode,
+            label: planCode,
+            periods: prices.filter(({ pricingMode, duration }) => {
+              const isMonthly = duration === 'P1M' && pricingMode === 'default';
+              const isYearly = duration === 'P1Y' && pricingMode === 'upfront12';
+
+              return (isMonthly || isYearly);
+            })
+          });
         });
-      })
-      .then(({ meta: { plans } }) => {
-        this.plans = Object.entries(plans).map(
-          ([value, periods]) => ({ label: value, value, periods })
-        );
+        this.plans = result;
 
         this.plans.sort((a, b) => {
           const resA = a.value.split('-');
@@ -421,10 +413,26 @@ export default {
           return resA.at(-3) - resB.at(-3);
         });
 
+        backup.key = 'backup';
+        snapshot.key = 'snapshot';
+        disk.key = 'disk';
+
+        [backup, snapshot, disk].forEach((el) => {
+          el.forEach((addon) => addons[el.key] = addon);
+        });
+
+        this.addons = addons;
+
         if (this.plan === '') {
           this.plan = this.resources.plans[1];
-          this.setPlan(this.plans[1].value);
+          this.setData(this.plans[1].value);
         }
+
+        const { configurations } = catalog.plans.find(({ planCode }) => planCode.includes(this.planKey));
+        const os = configurations[1].values
+
+        os.sort();
+        this.images = os.map((el) => ({ name: el, desc: el }));
       })
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
@@ -506,7 +514,6 @@ export default {
       const { value } = this.plans.find((el) => el.value.includes(plan));
 
       this.setData(value);
-      if (plan === 'starter') this.setPlan(value);
     },
     'options.disk.size'(value) {
       if (this.addons.backup) this.changeKey(this.addons.backup, value);
