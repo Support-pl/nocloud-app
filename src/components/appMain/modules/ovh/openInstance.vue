@@ -16,7 +16,7 @@
       <div
         v-if="VM.state && VM.state.state !== 'STOPPED'"
         class="Fcloud__button"
-        @click="openModal('shutdown')"
+        @click="openModal('stop')"
         :class="{
           disabled: statusVM.shutdown,
         }"
@@ -28,7 +28,7 @@
         <a-modal
           v-model="modal.shutdown"
           :title="$t('cloud_Shutdown_modal')"
-          @ok="handleOk('shutdown')"
+          @ok="handleOk('stop')"
         >
           <p>{{ $t("cloud_Shutdown_invite") }}</p>
           <a-radio-group
@@ -175,7 +175,7 @@
           <div class="block__column">
             <div class="block__title">OS</div>
             <div class="block__value">
-              {{ OSName || $t('No Data') }}
+              {{ VM.config.os || $t('No Data') }}
             </div>
           </div>
           <div class="block__column">
@@ -202,13 +202,13 @@
           <div class="block__column">
             <div class="block__title">CPU</div>
             <div class="block__value">
-              {{ config.vcpus }}
+              {{ VM.resources.cpu }}
             </div>
           </div>
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Memory") }}</div>
             <div class="block__value">
-              {{ (config.ram / 1024).toFixed(2) }} GB
+              {{ (VM.resources.ram / 1024).toFixed(2) }} GB
             </div>
           </div>
         </div>
@@ -222,13 +222,13 @@
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Type") }}</div>
             <div class="block__value">
-              {{ config.type }}
+              {{ VM.resources.drive_type }}
             </div>
           </div>
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Size") }}</div>
             <div class="block__value">
-              {{ mbToGb(config.disk * 1024) }} GB
+              {{ (VM.resources.drive_size / 1024).toFixed(2) }} GB
             </div>
           </div>
         </div>
@@ -261,25 +261,6 @@ export default {
     deployLoading: false,
   }),
   methods: {
-    getData() {
-      if (!this.VM?.config) return;
-      const flavor = this.VM.config.flavorId;
-      const region = this.VM.config.region;
-
-      this.$api.post(`/sp/${this.dataSP.uuid}/invoke`, {
-        method: 'images', params: { flavor, region }
-      })
-        .then(({ meta }) => {
-          this.images = meta.result;
-        });
-
-      this.$api.post(`/sp/${this.dataSP.uuid}/invoke`, {
-        method: 'flavors', params: { region }
-      })
-        .then(({ meta }) => {
-          this.config = meta.result.find((el) => el.id === flavor);
-        });
-    },
     deployService() {
       this.actionLoading = true;
       this.$api.services
@@ -300,9 +281,6 @@ export default {
           this.actionLoading = false;
         });
     },
-    mbToGb(mb) {
-      return (mb / 1024).toFixed(1);
-    },
     handleOk(from) {
       this.VM.state.meta.state = 0;
 
@@ -311,7 +289,7 @@ export default {
           this.sendAction("reboot");
           this.modal.reboot = false;
           break;
-        case "shutdown":
+        case "stop":
           if (this.option.shutdown) {
             this.sendAction("poweroffHard");
           } else {
@@ -326,7 +304,7 @@ export default {
         case "start":
           if (this.statusVM.start) return;
           break;
-        case "shutdown":
+        case "stop":
           if (this.statusVM.shutdown) return;
           break;
         case "reboot":
@@ -363,7 +341,6 @@ export default {
         });
     },
   },
-  created() { this.getData() },
   computed: {
     baseURL() {
       return this.$store.getters['support/getURL'];
@@ -388,15 +365,7 @@ export default {
     },
     dataSP() {
       return this.getSP.find((el) => el.uuid === this.VM.sp);
-    },
-    OSName() {
-      const id = this.VM?.config?.imageId;
-
-      return this.images.find((os) => os.id === id)?.name;
     }
-  },
-  watch: {
-    'VM.config'() { this.getData() }
   }
 }
 </script>

@@ -260,9 +260,12 @@ export default {
         action: 'start_vnc'
       })
 				.then(res => {
+          const baseURL = VUE_APP_BASE_URL.split('.');
+
+          baseURL.splice(0, 1);
 					this.token = res.meta.token;
 					this.desktopName = this.instance?.title ?? 'Unknown';
-					this.url = `wss://${this.instance.sp}.proxy.nocloud.ione-cloud.net/socket?${res.meta.url}`;
+					this.url = `wss://${this.instance.sp}.proxy.${baseURL.join('.')}socket?${res.meta.url}`;
           this.connect(this.$store.state.nocloud.auth.token);
 				})
 				.catch(err => console.error(err));

@@ -328,7 +328,7 @@ export default {
     },
     stateVM() {
       if (!this.VM.state) return "UNKNOWN";
-      const state = (this.VM.config?.imageId)
+      const state = (this.VM.config?.os)
         ? this.VM.state.state
         : this.VM.state.meta.lcm_state_str
 
@@ -343,7 +343,7 @@ export default {
     },
     stateColor() {
       if (!this.VM.state) return "rgb(145, 145, 145)"
-      const state = (this.VM?.config?.imageId)
+      const state = (this.VM?.config?.os)
         ? this.VM.state.state
         : this.VM.state.meta.lcm_state_str;
 

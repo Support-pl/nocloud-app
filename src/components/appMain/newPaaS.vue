@@ -812,16 +812,17 @@ export default {
     productFullPriceOVH() {
       const { value, addons } = this.priceOVH;
       const addonsPrice = Object.values(addons).reduce((a, b) => a + b, 0);
+      let percent = (this.plan.fee?.default ?? 0) / 100 + 1;
 
       if (!this.plan.fee?.ranges) return value + addonsPrice;
 
       for (let range of this.plan.fee.ranges) {
         if (value <= range.from) continue;
         if (value > range.to) continue;
-        return value * range.factor + addonsPrice;
+        percent = range.factor / 100 + 1;
       }
 
-      return value * this.plan.fee.default;
+      return value + addonsPrice * percent;
     },
     diskPrice() {
       const { size } = this.options.disk;
@@ -1144,7 +1145,7 @@ export default {
       // -------------------------------------
       //update service
       if (newGroup.type === 'ovh') {
-        newInstance.config = { type: 'vps', ...this.$refs.module.createVDS() };
+        newInstance.config = { type: 'vps', ...this.options.config };
       }
       if (this.itemService?.instancesGroups.length < 1) {
         this.itemService.instancesGroups = [newGroup];
@@ -1591,8 +1592,7 @@ export default {
 .newCloud__template {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 15px;
+  gap: 17px;
 }
 .newCloud__template.one-line {
   flex-wrap: nowrap;
@@ -1602,7 +1602,7 @@ export default {
   border-radius: 0 0 20px 20px;
 }
 .newCloud__template-item {
-  width: 125px;
+  width: 124px;
   margin-bottom: 10px;
   background-color: #fff;
   box-shadow: 3px 2px 6px rgba(0, 0, 0, 0.08), 0px 0px 8px rgba(0, 0, 0, 0.05);
