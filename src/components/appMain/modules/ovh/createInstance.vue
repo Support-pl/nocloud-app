@@ -90,7 +90,7 @@
     <!-- OS -->
     <a-collapse-panel
       key="OS"
-      :disabled="!itemSP || isOSLoading || !plan"
+      :disabled="!itemSP || isFlavorsLoading || !plan"
       :header="`${$t('os')}: ${(options.os.name == '') ? ' ' : ` (${options.os.name})`}`"
     >
       <div class="newCloud__option-field" v-if="images.length > 0">
@@ -133,7 +133,7 @@
         </div>
       </div>
       <a-alert
-        v-else-if="!isOSLoading"
+        v-else-if="!isFlavorsLoading"
         show-icon
         type="warning"
         :message="$t('No OS. Choose another plan')"
@@ -144,11 +144,11 @@
     <!-- Addons -->
     <a-collapse-panel
       key="addons"
-      :disabled="!itemSP || isAddonsLoading || isOSLoading || !plan"
+      :disabled="!itemSP || isFlavorsLoading || !plan"
       :header="$t('Addons') + ':'"
       :style="{ 'border-radius': '0 0 20px 20px' }"
     >
-      <template v-if="!isAddonsLoading">
+      <template v-if="!isFlavorsLoading">
         <a-row class="newCloud__prop" v-for="(addon, key) in addons" :key="key">
           <a-col span="8" :xs="6">{{ $t(key) | capitalize }}:</a-col>
           <a-col span="16" :xs="18">
@@ -159,8 +159,8 @@
               @change="(value) => setAddon(value, addon[value], key)"
             >
               <a-select-option value="-1">{{ $t('none') }}</a-select-option>
-              <a-select-option v-for="(_, id) in addon" :key="id">
-                {{ id }}
+              <a-select-option v-for="(a, id) in addon" :key="id">
+                {{ a.productName }}
               </a-select-option>
             </a-select>
           </a-col>
@@ -183,18 +183,12 @@ export default {
     vmName: { type: String, required: true }
   },
   data: () => ({
-    cartId: '',
-    itemId: '',
     plan: '',
-    oldKey: '',
-
     isFlavorsLoading: false,
-    isAddonsLoading: false,
-    isOSLoading: false,
-
     images: [],
     plans: [],
-    addons: {},
+    meta: {},
+    allAddons: {},
     addonsCodes: {},
     price: {}
   }),
@@ -207,8 +201,8 @@ export default {
       if (item.prices) {
         this.price.addons.os = this.osPrice(item.prices);
         this.$emit('setData', { key: 'priceOVH', value: this.price });
-      } else if (this.prices.addons.os !== 0) {
-        this.prices.addons.os = 0;
+      } else if (this.price.addons.os !== 0) {
+        this.price.addons.os = 0;
         this.$emit('setData', { key: 'priceOVH', value: this.price });
       }
 
@@ -222,47 +216,26 @@ export default {
 
       return addon?.price.value ?? 0;
     },
-    getAddons(planCode) {
-      this.isAddonsLoading = true;
-      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-        method: 'get_options',
-        params: { cartId: this.cartId, planCode }
-      })
-        .then(({ meta }) => {
-          this.images.forEach(({ name }, i, arr) => {
-            if (name.toLowerCase().includes('windows')) {
-              const key = Object.keys(meta.os).find((name) => name.includes('windows'));
-
-              arr[i].prices = meta.os[key];
-            }
-          });
-
-          delete meta.os;
-          this.addons = meta;
-          this.oldKey = this.planKey;
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          this.$message.error(message);
-          console.error(err);
-        })
-        .finally(() => {
-          this.isAddonsLoading = false;
-        });
+    setAddons(plans) {
+      plans.forEach(({ planCode, addonFamilies }) => {
+        this.allAddons[planCode] = addonFamilies.reduce(
+          (res, { addons }) => [...res, ...addons], []
+        );
+      });
     },
-    setAddon(planCode, periods, key) {
+    setAddon(planCode, addon, key) {
       if (planCode === '-1') {
         this.price.addons[key] = 0;
         this.$delete(this.addonsCodes, key);
       } else {
-        const addon = periods.find(({ pricingMode }) => pricingMode === this.mode);
+        const period = addon.periods.find(({ pricingMode }) => pricingMode === this.mode);
 
-        this.price.addons[key] = addon.price.value;
+        this.price.addons[key] = period.price.value;
         this.$set(this.addonsCodes, key, planCode);
       }
 
       this.$emit('setData', { key: 'priceOVH', value: this.price });
+      this.$emit('setData', { key: 'addons', value: this.addonsCodes, type: 'ovh' });
     },
     addonName(addons) {
       const codes = Object.values(this.addonsCodes);
@@ -270,11 +243,11 @@ export default {
 
       return codes.find((el) => keys.includes(el)) ?? '-1';
     },
-    setData(value) {
-      const { periods } = this.plans.find((el) => el.value.includes(value));
+    setData(planKey) {
+      const { periods, value } = this.plans.find((el) => el.value.includes(planKey));
       const resources = value.split('-');
       const tarifs = [];
-      let plan = {};
+      let plan = periods[0];
 
       this.options.cpu.size = +resources.at(-3);
       this.options.ram.size = +resources.at(-2);
@@ -296,101 +269,29 @@ export default {
       });
       this.price = {
         value: plan.price.value,
-        currency: 'NCU' || plan.price.CurrencyCode,
+        currency: 'NCU' || plan.price.currencyCode,
         addons: {}
       };
 
       this.$emit('setData', { key: 'periods', value: tarifs });
       this.$emit('setData', { key: 'priceOVH', value: this.price });
-    },
-    setPlan(planKey) {
-      if (this.oldKey === planKey) return;
-      const { periods, value } = this.plans.find((el) => el.value.includes(planKey));
-      const plan = periods.find(({ pricingMode }) => pricingMode === this.mode);
-
-      this.isOSLoading = true;
-      if (this.itemId !== '') this.deletePlan();
-
-      return this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-        method: 'select_plan',
-        params: {
-          cartId: this.cartId,
-          duration: plan.duration,
-          pricingMode: plan.pricingMode,
-          planCode: value
-        }
-      })
-        .then(({ meta: { itemId } }) => {
-          this.itemId = itemId;
-
-          return this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-            method: 'get_os_and_datacenter',
-            params: { cartId: this.cartId, itemId }
-          });
-        })
-        .then(({ meta: { os } }) => {
-          os.sort();
-          this.images = os.map((el) => ({ name: el, desc: el }));
-          this.getAddons(value);
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          this.$message.error(message);
-          console.error(err);
-        })
-        .finally(() => {
-          this.isOSLoading = false;
-        });
-    },
-    deletePlan() {
-      this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-        method: 'delete_plan',
-        params: { cartId: this.cartId, itemId: this.itemId }
-      })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          this.$message.error(message);
-          console.error(err);
-        });
-    },
-    createVDS() {
-      const { periods } = this.plans.find((el) => el.value.includes(this.planKey));
-      const plan = periods.find(({ pricingMode }) => pricingMode === this.mode);
-
-      return {
-        planCode: `vps-${this.planKey}`,
-        duration: plan.duration,
-        pricingMode: plan.pricingMode,
-        datacenter: this.region.replace(/\d/g, ''),
-        addons: Object.values(this.addonsCodes),
-        os: this.options.os.name
-      };
-    },
-    changeKey(obj, value) {
-      const oldKey = Object.keys(obj)[0];
-      const key = oldKey.split('-');
-
-      key[key.length - 1] = `${value / 1024}g`;
-      obj[key.join('-')] = obj[oldKey];
-      delete obj[oldKey];
+      this.$emit('setData', { key: 'planCode', value, type: 'ovh' });
+      this.$emit('setData', { key: 'duration', value: plan.duration, type: 'ovh' });
+      this.$emit('setData', { key: 'pricingMode', value: plan.pricingMode, type: 'ovh' });
     }
   },
   created() {
     this.isFlavorsLoading = true;
-    this.$emit('setData', { key: 'region', value: this.region, type: 'ovh' });
+    this.$emit('setData', { key: 'datacenter', value: this.region.replace(/\d/g, ''), type: 'ovh' });
     this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
       method: 'get_plans'
     })
-      .then(({ meta: { plans, backup, snapshot, disk, catalog } }) => {
-        const result = [];
-        const addons = {};
+      .then(({ meta }) => {
+        const plans = [];
 
-        plans.forEach(({ prices, planCode }) => {
-          result.push({
-            value: planCode,
-            label: planCode,
+        meta.plans.forEach(({ prices, planCode }) => {
+          plans.push({
+            value: planCode, label: planCode,
             periods: prices.filter(({ pricingMode, duration }) => {
               const isMonthly = duration === 'P1M' && pricingMode === 'default';
               const isYearly = duration === 'P1Y' && pricingMode === 'upfront12';
@@ -399,7 +300,7 @@ export default {
             })
           });
         });
-        this.plans = result;
+        this.plans = plans;
 
         this.plans.sort((a, b) => {
           const resA = a.value.split('-');
@@ -413,26 +314,13 @@ export default {
           return resA.at(-3) - resB.at(-3);
         });
 
-        backup.key = 'backup';
-        snapshot.key = 'snapshot';
-        disk.key = 'disk';
-
-        [backup, snapshot, disk].forEach((el) => {
-          el.forEach((addon) => addons[el.key] = addon);
-        });
-
-        this.addons = addons;
+        this.setAddons(meta.catalog.plans);
+        this.meta = meta;
 
         if (this.plan === '') {
           this.plan = this.resources.plans[1];
           this.setData(this.plans[1].value);
         }
-
-        const { configurations } = catalog.plans.find(({ planCode }) => planCode.includes(this.planKey));
-        const os = configurations[1].values
-
-        os.sort();
-        this.images = os.map((el) => ({ name: el, desc: el }));
       })
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
@@ -479,6 +367,27 @@ export default {
         disk: Array.from(disk).sort((a, b) => a - b)
       };
     },
+    addons() {
+      const addons = { backup: {}, snapshot: {}, disk: {} };
+
+      Object.keys(addons).forEach((key) => {
+        this.meta[key].forEach(({ prices, planCode, productName }) => {
+          const periods = prices.filter(({ pricingMode, duration }) => {
+            const isMonthly = duration === 'P1M' && pricingMode === 'default';
+            const isYearly = duration === 'P1Y' && pricingMode === 'upfront12';
+
+            return (isMonthly || isYearly);
+          });
+          const { value } = this.plans.find((el) => el.value.includes(this.planKey));
+
+          if (this.allAddons[value]?.includes(planCode)) {
+            addons[key][planCode] = { periods, productName };
+          }
+        });
+      });
+
+      return addons;
+    },
     mode() {
       switch (this.tarification) {
         case 'Annually':
@@ -510,15 +419,30 @@ export default {
   },
   watch: {
     tarification() { this.setData(this.planKey) },
-    plan(plan) {
-      const { value } = this.plans.find((el) => el.value.includes(plan));
-
+    plan(value) {
       this.setData(value);
+      const { configurations } = this.meta.catalog.plans.find(
+        ({ planCode }) => planCode.includes(this.planKey)
+      );
+      const os = configurations[1].values;
+
+      os.sort();
+      this.images = os.map((el) => ({ name: el, desc: el }));
+      this.images.forEach(({ name }, i, arr) => {
+        if (name.toLowerCase().includes('windows')) {
+          const windows = this.meta.windows.find(
+            ({ planCode }) => planCode.includes(this.planKey)
+          );
+
+          arr[i].prices = windows.prices.filter(({ pricingMode, duration }) => {
+            const isMonthly = duration === 'P1M' && pricingMode === 'default';
+            const isYearly = duration === 'P1Y' && pricingMode === 'upfront12';
+
+            return (isMonthly || isYearly);
+          });
+        }
+      });
     },
-    'options.disk.size'(value) {
-      if (this.addons.backup) this.changeKey(this.addons.backup, value);
-      if (this.addons.snapshot) this.changeKey(this.addons.snapshot, value);
-    }
   }
 }
 </script>

@@ -299,6 +299,14 @@ export default {
     x = (min.x - 20) * this.scale - right;
     y = (min.y - 10) * this.scale - down;
 
+    if (this.markers.length < 2) {
+      const { width, height } = mapData.meta;
+
+      this.scale = this.maxScale;
+      x = (this.markers[0].x * this.scale - width / 2) + 70;
+      y = (this.markers[0].y * this.scale - height / 2) + 140;
+    }
+
 		this.svg = this.$refs.svgwrapper;
 		container.setAttribute('transform', `matrix(${this.scale} 0 0 ${this.scale} ${-x} ${-y})`);
 		window.addEventListener('mouseup', this.endDrag);
