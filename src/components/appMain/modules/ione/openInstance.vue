@@ -271,6 +271,7 @@
           </div>
         </div>
       </div>
+
       <div
         class="Fcloud__info-block block"
         v-if="!(chart1Data.length == 0 || chart2Data.length == 0)"
@@ -445,17 +446,13 @@
         <a-col :span="24" :md="12">
           <div class="button">
             <a-button
-              :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3)"
+              block
               type="primary"
               shape="round"
-              block
               size="large"
+              :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3)"
             >
-              <router-link
-                :to="{
-                  path: `${$route.params.uuid}/vnc`,
-                }"
-              >
+              <router-link :to="{ path: `${$route.params.uuid}/vnc`, }">
                 VNC
               </router-link>
             </a-button>
