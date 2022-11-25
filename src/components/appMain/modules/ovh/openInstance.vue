@@ -48,7 +48,7 @@
       <div
         class="Fcloud__button"
         @click="openModal('recover')"
-        :class="{ disabled: true }"
+        :class="{ disabled: statusVM.recover }"
       >
         <div class="Fcloud__BTN-icon">
           <a-icon type="backward" />
@@ -57,18 +57,20 @@
         <a-modal
           v-model="modal.recover"
           :title="$t('cloud_Recover_modal')"
-          @ok="sendAction('recover')"
+          @ok="sendRecover"
         >
           <p>{{ $t("cloud_Recover_invite_line1") }}</p>
           <p>{{ $t("cloud_Recover_invite_line2") }}</p>
           <p>{{ $t("cloud_Recover_invite_line3") }}</p>
           <p>{{ $t("cloud_Recover_invite") }}</p>
-          <a-radio-group
-            name="recover"
-            v-model="option.recover"
-          >
-            <a-radio v-for="date of dates" :key="date" :value="date">{{ date }}</a-radio>
-          </a-radio-group>
+          <a-spin :tip="$t('loading')" :spinning="actionLoading">
+            <a-radio-group
+              name="recover"
+              v-model="option.recover"
+            >
+              <a-radio v-for="date of dates" :key="date" :value="date">{{ date }}</a-radio>
+            </a-radio-group>
+          </a-spin>
         </a-modal>
       </div>
     </div>
@@ -288,7 +290,10 @@
               shape="round"
               block
               size="large"
-              :disabled="!VM.config.addons.find((el) => el.includes('snapshot'))"
+              :disabled="
+                VM.config.addons &&
+                !VM.config.addons.find((el) => el.includes('snapshot'))
+              "
               @click="openModal('snapshot')"
             >
               {{ $t("Snapshots") }}
@@ -642,20 +647,14 @@ export default {
           break;
         case "recover":
           if (this.statusVM.recover) return;
-          this.$confirm({
-            title: this.$t("Do you want to download a backup?"),
-            maskClosable: true,
-            content: () => {
-              return <div>{ this.$t("All unsaved progress will be lost, are you sure?") }</div>;
-            },
-            okText: this.$t("Yes"),
-            cancelText: this.$t("Cancel"),
-            onOk: () => {
-              this.sendAction("recover");
-              this.modal.recover = false;
-            },
-            onCancel() {},
-          });
+          this.actionLoading = true;
+          this.$store.dispatch("nocloud/vms/actionVMInvoke", {
+            uuid: this.VM.uuid,
+            uuidService: this.VM.uuidService,
+            action: 'backup_restore_points'
+          })
+            .then(({ meta }) => this.dates = meta.restorePoints)
+            .finally(() => this.actionLoading = false);
           break;
         case "snapshot":
           this.snapshots.modal = true;
@@ -664,6 +663,22 @@ export default {
           this.snapshots.addSnap.modal = true;
       }
       this.modal[name] = true;
+    },
+    sendRecover() {
+      this.$confirm({
+        title: this.$t("Do you want to download a backup?"),
+        maskClosable: true,
+        content: () => {
+          return <div>{ this.$t("All unsaved progress will be lost, are you sure?") }</div>;
+        },
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        onOk: () => {
+          this.sendAction("recover");
+          this.modal.recover = false;
+        },
+        onCancel() {},
+      });
     },
     sendAction(action) {
       const data = {
@@ -677,8 +692,7 @@ export default {
         data.params = { type: 'full', restorePoint: this.option.recover };
       }
 
-      this.$store
-        .dispatch("nocloud/vms/actionVMInvoke", data)
+      this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
           const opts = {
             message: `Done!`,
@@ -694,7 +708,7 @@ export default {
     },
     openVNC() {
       this.$store.dispatch('nocloud/vms/actionVMInvoke', {
-        uuid: this.$route.params.pathMatch,
+        uuid: this.$route.params.uuid,
         action: 'start_vnc'
       })
 				.then(({ meta }) => location.href = meta.url)
@@ -750,7 +764,8 @@ export default {
         start: this.VM.state.state !== 'RUNNING' &&
           this.VM.state.state !== 'STOPPED',
         recover: this.VM.state.state !== 'RUNNING' &&
-          this.VM.state.state !== 'STOPPED',
+          this.VM.state.state !== 'STOPPED' ||
+          !this.VM.config.addons?.find((el) => el.includes('backup')),
       };
     },
 

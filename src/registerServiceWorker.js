@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 
 import store from './store/index.js'
+import config from '../public/config.json'
 
 if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
 	navigator.serviceWorker.register(`${process.env.BASE_URL}service-worker.js`)
@@ -10,6 +11,7 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
       if (worker.waiting) {
         console.log('New content is available; please refresh.')
         store.commit('app/setUpdate', { worker, status: true })
+        localStorage.setItem('globalConfig', JSON.stringify(config));
       }
 
       worker.addEventListener('updatefound', () => {
@@ -23,6 +25,7 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
               console.log('New content is available; please refresh.')
 
               store.commit('app/setUpdate', { worker, status: true })
+              localStorage.setItem('globalConfig', JSON.stringify(config));
             } else {
 			        console.log('Content has been cached for offline use.')
             }
