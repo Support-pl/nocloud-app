@@ -94,14 +94,27 @@
       :header="`${$t('os')}: ${(options.os.name == '') ? ' ' : ` (${options.os.name})`}`"
     >
       <div class="newCloud__option-field" v-if="images.length > 0">
-        <a-row>
+        <a-row style="margin-bottom: 20px">
           <a-col :xs="24" :sm="10">
             <a-input
-              style="margin-bottom: 20px"
               :value="vmName"
               :placeholder="$t('VM name')"
               @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
             />
+            <password-meter
+              style="height: 10px"
+              :password="password"
+              @score="(value) => $emit('score', value)"
+            />
+
+            <a-form-item style="margin-bottom: 0px">
+              <a-input-password
+                class="password"
+                :value="password"
+                :placeholder="$t('clientinfo.password')"
+                @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
+              />
+            </a-form-item>
           </a-col>
         </a-row>
         <div class="newCloud__template" v-if="this.itemSP">
@@ -172,15 +185,20 @@
 </template>
 
 <script>
+import passwordMeter from 'vue-simple-password-meter';
+
 export default {
   name: 'createInstance-ovh',
+  components: { passwordMeter },
   props: {
+    getPlan: { type: Object, default: {} },
     itemSP: { type: Object, default: null },
     options: { type: Object, required: true },
     activeKey: { type: String, required: true },
     tarification: { type: String, required: true },
     locationId: { type: String, required: true },
-    vmName: { type: String, required: true }
+    vmName: { type: String, required: true },
+    password: { type: String, required: true }
   },
   data: () => ({
     plan: '',
@@ -217,10 +235,15 @@ export default {
       return addon?.price.value ?? 0;
     },
     setAddons(plans) {
+      const resources = this.getPlan.resources.map(({ key }) => key.split(' ')[1]);
+
       plans.forEach(({ planCode, addonFamilies }) => {
         this.allAddons[planCode] = addonFamilies.reduce(
           (res, { addons }) => [...res, ...addons], []
         );
+
+        this.allAddons[planCode] = this.allAddons[planCode]
+          .filter((el) => resources.includes(el));
       });
     },
     setAddon(planCode, addon, key) {
@@ -244,7 +267,9 @@ export default {
       return codes.find((el) => keys.includes(el)) ?? '-1';
     },
     setData(planKey) {
-      const { periods, value } = this.plans.find((el) => el.value.includes(planKey));
+      const { periods, value } = this.plans.find((el) => el.value.includes(planKey)) ?? {};
+      if (!value) return;
+
       const resources = value.split('-');
       const tarifs = [];
       let plan = periods[0];
@@ -288,16 +313,22 @@ export default {
     })
       .then(({ meta }) => {
         const plans = [];
+        const products = Object.keys(this.getPlan.products);
 
         meta.plans.forEach(({ prices, planCode }) => {
-          plans.push({
+          const i = products.findIndex((key) => key.includes(planCode));
+
+          if (i !== -1) plans.push({
             value: planCode, label: planCode,
             periods: prices.filter(({ pricingMode, duration }) => {
-              const isMonthly = duration === 'P1M' && pricingMode === 'default';
-              const isYearly = duration === 'P1Y' && pricingMode === 'upfront12';
+              const productDuration = products[i].split(' ')[0];
+              const isMonthly = duration === productDuration && pricingMode === 'default';
+              const isYearly = duration === productDuration && pricingMode === 'upfront12';
 
               return (isMonthly || isYearly);
-            })
+            }).map((period) => ({ ...period, price: {
+              ...period.price, value: this.getPlan.products[products[i]].price
+            }}))
           });
         });
         this.plans = plans;
@@ -372,13 +403,18 @@ export default {
 
       Object.keys(addons).forEach((key) => {
         this.meta[key].forEach(({ prices, planCode, productName }) => {
+          const { value } = this.plans.find((el) => el.value.includes(this.planKey)) || {};
+          const i = this.getPlan.resources.findIndex((res) => res.key.includes(planCode));
+          const resourceDuration = this.getPlan.resources[i]?.key.split(' ')[0];
+
           const periods = prices.filter(({ pricingMode, duration }) => {
-            const isMonthly = duration === 'P1M' && pricingMode === 'default';
-            const isYearly = duration === 'P1Y' && pricingMode === 'upfront12';
+            const isMonthly = duration === resourceDuration && pricingMode === 'default';
+            const isYearly = duration === resourceDuration && pricingMode === 'upfront12';
 
             return (isMonthly || isYearly);
-          });
-          const { value } = this.plans.find((el) => el.value.includes(this.planKey));
+          }).map((period) => ({ ...period, price: {
+            ...period.price, value: this.getPlan.resources[i]?.price
+          }}));
 
           if (this.allAddons[value]?.includes(planCode)) {
             addons[key][planCode] = { periods, productName };
