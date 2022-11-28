@@ -9,6 +9,7 @@ on:
       - "examples"
       - "**/*.md"
       - ".github/**"
+      - "!.github/workflows/docker.yml"
 
 env:
   REGISTRY: ghcr.io
