@@ -46,7 +46,7 @@ export default {
   computed: {
     statusColor() {
       if (!this.instance.state) return "rgb(145, 145, 145)"
-      const state = (this.instance?.config?.imageId)
+      const state = (this.instance?.config?.os)
         ? this.instance.state.state
         : this.instance.state.meta.lcm_state_str;
 

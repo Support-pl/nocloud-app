@@ -46,9 +46,9 @@
               class="service-page__info-title"
               v-if="service.SSL.sslstatus === 'Completed'"
             >
-              {{ $t("ssl.configuration status") }}:
+              {{ $t("ssl_product.configuration status") }}:
               <a-tag :color="getTagColorSSL">
-                {{ $t("ssl.completed") }}
+                {{ $t("ssl_product.completed") }}
               </a-tag>
               <router-link
                 :to="{
@@ -65,9 +65,9 @@
             </div>
 
             <div class="service-page__info-title" v-else>
-              {{ $t("ssl.configuration status") }}:
+              {{ $t("ssl_product.configuration status") }}:
               <a-tag :color="getTagColorSSL">
-                {{ $t("ssl.awaiting configuration") }}
+                {{ $t("ssl_product.awaiting configuration") }}
               </a-tag>
               <router-link
                 :to="{
@@ -76,7 +76,7 @@
                 }"
               >
                 <a-button size="small" type="primary">
-                  {{ $t("ssl.configure") }}
+                  {{ $t("ssl_product.configure") }}
                 </a-button>
               </router-link>
             </div>

@@ -6,7 +6,7 @@
           <div class="ssl__top">
             <div class="ssl-page__info">
               <div class="ssl-page__info-title">
-                {{ $t("ssl.registration_date") }}
+                {{ $t("ssl_product.registration_date") }}
               </div>
 
               <span>{{
@@ -15,11 +15,11 @@
             </div>
             <div class="ssl-page__info">
               <div class="ssl-page__info-title">
-                {{ $t("ssl.product_service") }}
+                {{ $t("ssl_product.product_service") }}
               </div>
 
               <span
-                >{{ $t("ssl.SSL certificate") }} - {{ data.name }}
+                >{{ $t("ssl_product.SSL certificate") }} - {{ data.name }}
                 <a-tag :color="getTagColor">
                   {{ $t(data.status) }}
                 </a-tag></span
@@ -30,7 +30,7 @@
               <a-col :md="12" :xs="12" :sm="12">
                 <div class="ssl-page__info">
                   <div class="ssl-page__info-title">
-                    {{ $t("ssl.first_payment") }}
+                    {{ $t("ssl_product.first_payment") }}
                   </div>
                   <span>{{ data.firstpaymentamount }} BYN</span>
                 </div>
@@ -38,7 +38,7 @@
               <a-col :md="12" :xs="12" :sm="12">
                 <div class="ssl-page__info">
                   <div class="ssl-page__info-title">
-                    {{ $t("ssl.renewal_amount") }}
+                    {{ $t("ssl_product.renewal_amount") }}
                   </div>
                   <span>{{ data.recurringamount }} BYN</span>
                 </div>
@@ -46,15 +46,15 @@
               <a-col :md="12" :xs="12" :sm="12">
                 <div class="ssl-page__info">
                   <div class="ssl-page__info-title">
-                    {{ $t("ssl.payment_cycle") }}
+                    {{ $t("ssl_product.payment_cycle") }}
                   </div>
-                  <span>{{ $t("ssl." + data.billingcycle) }}</span>
+                  <span>{{ $t("ssl_product." + data.billingcycle) }}</span>
                 </div>
               </a-col>
               <a-col :md="12" :xs="12" :sm="12">
                 <div class="ssl-page__info">
                   <div class="ssl-page__info-title">
-                    {{ $t("ssl.next_payment_date") }}
+                    {{ $t("ssl_product.next_payment_date") }}
                   </div>
                   <span>{{
                     new Intl.DateTimeFormat().format(new Date(data.nextduedate))
@@ -64,7 +64,7 @@
             </a-row>
             <div class="ssl-page__info">
               <div class="ssl-page__info-title">
-                {{ $t("ssl.payment_method") }}
+                {{ $t("ssl_product.payment_method") }}
               </div>
               <span>{{ data.paymentmethodname }}</span>
             </div>
@@ -72,20 +72,20 @@
 
           <div class="ssl__table">
             <div class="ssl__table__item">
-              <div>{{ $t("ssl.status") }}</div>
-              <div>{{ $t("ssl." + data.SSL.sslstatus) }}</div>
+              <div>{{ $t("ssl_product.status") }}</div>
+              <div>{{ $t("ssl_product." + data.SSL.sslstatus) }}</div>
             </div>
 
             <div class="ssl__table__item">
-              <div>{{ $t("ssl.ssl_status") }}</div>
-              <div>{{ $t("ssl." + data.SSL.configdata.status) }}</div>
+              <div>{{ $t("ssl_product.ssl_status") }}</div>
+              <div>{{ $t("ssl_product." + data.SSL.configdata.status) }}</div>
             </div>
 
             <div
               class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
             >
-              <div>{{ $t("ssl.valid_from") }}</div>
+              <div>{{ $t("ssl_product.valid_from") }}</div>
               <div>{{ data.SSL.configdata.valid_from }}</div>
             </div>
 
@@ -93,7 +93,7 @@
               class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
             >
-              <div>{{ $t("ssl.expires") }}</div>
+              <div>{{ $t("ssl_product.expires") }}</div>
               <div>{{ data.SSL.configdata.valid_till }}</div>
             </div>
 
@@ -101,7 +101,7 @@
               class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
             >
-              <div>{{ $t("ssl.subscription_starts") }}</div>
+              <div>{{ $t("ssl_product.subscription_starts") }}</div>
               <div>{{ data.SSL.configdata.begin_date }}</div>
             </div>
 
@@ -109,7 +109,7 @@
               class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
             >
-              <div>{{ $t("ssl.subscription_ends") }}</div>
+              <div>{{ $t("ssl_product.subscription_ends") }}</div>
               <div>{{ data.SSL.configdata.end_date }}</div>
             </div>
 
@@ -117,12 +117,12 @@
               class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
             >
-              <div>{{ $t("ssl.next_renewal") }}</div>
+              <div>{{ $t("ssl_product.next_renewal") }}</div>
               <div><b>Renew SSL within 91 days</b></div>
             </div>
 
             <div class="ssl__table__item">
-              <div>{{ $t("ssl.domain") }}:</div>
+              <div>{{ $t("ssl_product.domain") }}:</div>
               <div>{{ data.SSL.configdata.domain }}</div>
             </div>
 
@@ -130,12 +130,12 @@
               class="ssl__table__item"
               v-if="data.SSL.configdata.dcv_method === 'email'"
             >
-              <div>{{ $t("ssl.approver_email") }}</div>
+              <div>{{ $t("ssl_product.approver_email") }}</div>
               <div>{{ data.SSL.configdata.approver_method.email }}</div>
             </div>
 
             <div class="ssl__table__item">
-              <div>{{ $t("ssl.partner_order_id") }}</div>
+              <div>{{ $t("ssl_product.partner_order_id") }}</div>
               <div>{{ data.SSL.configdata.partner_order_id }}</div>
             </div>
 
@@ -143,7 +143,7 @@
               class="ssl__table__item"
               v-if="data.SSL.configdata.dcv_method === 'dns'"
             >
-              <div>{{ $t("ssl.dns_cname_record") }}</div>
+              <div>{{ $t("ssl_product.dns_cname_record") }}</div>
               <div>
                 <a-textarea
                   :value="data.SSL.configdata.approver_method.dns.record"
@@ -156,7 +156,7 @@
               class="ssl__table__item"
               v-if="method.includes(data.SSL.configdata.dcv_method)"
             >
-              <div>{{ $t("ssl.hash_file") }}</div>
+              <div>{{ $t("ssl_product.hash_file") }}</div>
               <div>
                 <a-textarea
                   :value="
@@ -173,7 +173,7 @@
               class="ssl__table__item"
               v-if="method.includes(data.SSL.configdata.dcv_method)"
             >
-              <div>{{ $t("ssl.content") }}</div>
+              <div>{{ $t("ssl_product.content") }}</div>
               <div>
                 <a-textarea
                   :value="
@@ -190,7 +190,7 @@
               class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
             >
-              <div>{{ $t("ssl.certificate_crt") }}</div>
+              <div>{{ $t("ssl_product.certificate_crt") }}</div>
               <div>
                 <a-textarea
                   :value="data.SSL.configdata.crt_code"
@@ -203,7 +203,7 @@
               class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
             >
-              <div>{{ $t("ssl.intermediate_chanfiles") }}</div>
+              <div>{{ $t("ssl_product.intermediate_chanfiles") }}</div>
               <div>
                 <a-textarea
                   :value="data.SSL.configdata.ca_code"
@@ -223,7 +223,7 @@
                     {{ data.SSL.configdata.san[0].san_name }}
                   </div>
                   <div class="ssl__table__item-sans__item">
-                    <div>{{ $t("ssl.hash_file") }}</div>
+                    <div>{{ $t("ssl_product.hash_file") }}</div>
                     <div>
                       <a-textarea
                         :value="
@@ -236,7 +236,7 @@
                     </div>
                   </div>
                   <div class="ssl__table__item-sans__item">
-                    <div>{{ $t("ssl.content") }}</div>
+                    <div>{{ $t("ssl_product.content") }}</div>
                     <div>
                       <a-textarea
                         :value="
@@ -253,7 +253,7 @@
             </div>
 
             <div class="ssl__table__item">
-              <div>{{ $t("ssl.certificate_signing_request") }}</div>
+              <div>{{ $t("ssl_product.certificate_signing_request") }}</div>
               <div>
                 <a-textarea
                   :value="data.SSL.configdata.csr_code"
@@ -263,7 +263,7 @@
             </div>
 
             <div class="ssl__table__item">
-              <div>{{ $t("ssl.actions") }}</div>
+              <div>{{ $t("ssl_product.actions") }}</div>
               <div class="ssl__table__item__button__wrap">
                 <a-button v-if="data.SSL.configdata.status == 'active'"
                   ><router-link
@@ -271,7 +271,7 @@
                       name: 'certificate',
                       params: { reissue: true },
                     }"
-                    >{{ $t("ssl.reissue_certificate") }}</router-link
+                    >{{ $t("ssl_product.reissue_certificate") }}</router-link
                   ></a-button
                 >
 
@@ -279,7 +279,7 @@
                   v-if="data.SSL.configdata.status == 'processing'"
                   @click="modal.confirmCreate = true"
                 >
-                  {{ $t("ssl.Domain Validation method") }}
+                  {{ $t("ssl_product.Domain Validation method") }}
                 </a-button>
 
                 <a-button
@@ -290,7 +290,7 @@
                   "
                   @click="resendValidationEmail"
                 >
-                  {{ $t("ssl.Resend Validation Email") }}
+                  {{ $t("ssl_product.Resend Validation Email") }}
                 </a-button>
 
                 <a-button
@@ -301,7 +301,7 @@
                   "
                   @click="revalidate"
                 >
-                  {{ $t("ssl.Revalidate") }}
+                  {{ $t("ssl_product.Revalidate") }}
                 </a-button>
 
                 <a-button
@@ -317,14 +317,14 @@
                       ].filename
                     )
                   "
-                  >{{ $t("ssl.download_validation_file") }}</a-button
+                  >{{ $t("ssl_product.download_validation_file") }}</a-button
                 >
 
                 <div v-for="(val, key) of fileinfo" :key="key">
                   <a-button
                     v-if="data.SSL.configdata.status == 'active'"
                     @click="download(key, data.SSL.configdata[val])"
-                    >{{ $t("ssl.download") }} {{ key.toUpperCase() }}</a-button
+                    >{{ $t("ssl_product.download") }} {{ key.toUpperCase() }}</a-button
                   >
                 </div>
 
@@ -337,7 +337,7 @@
                   @cancel="handleCancel"
                 >
                   <a-form-model :model="action_data">
-                    <a-form-model-item :label="$t('ssl.DCV Method')">
+                    <a-form-model-item :label="$t('ssl_product.DCV Method')">
                       <a-select v-model="action_data.dcv">
                         <a-select-option
                           v-for="item in dcv_list"
@@ -350,7 +350,7 @@
                     </a-form-model-item>
 
                     <a-form-model-item
-                      :label="$t('ssl.email')"
+                      :label="$t('ssl_product.email')"
                       v-if="action_data.dcv === 'EMAIL'"
                     >
                       <a-select v-model="action_data.email">

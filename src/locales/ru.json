@@ -118,6 +118,7 @@
 	"Disk control": "Управление дисками",
 	"Network control": "Управление сетями",
 	"Boot order": "Порядок загрузки",
+  "Logs": "Логи",
 	"Delete": "Удалить",
 	"Snapshots": "Снапшоты",
   "snapshot": "снапшот",
@@ -362,7 +363,7 @@
 		"address1": "адрес 1-ая линия",
 		"address2": "адрес 2-ая линия"
 	},
-	"ssl": {
+	"ssl_product": {
 		"firstname": "Имя",
 		"lastname": "Фамилия",
 		"state": "Район",
@@ -530,28 +531,29 @@
 
 	"virtualSlider":{
 		"Single": "Одиночный",
-		"Standard":"Стандартный",
-		"Deluxe":"Делюкс",
-		"Premium":"Премиум", 
-		"Business":"Бизнес"
+		"Standard": "Стандартный",
+		"Deluxe": "Делюкс",
+		"Premium": "Премиум", 
+		"Business": "Бизнес"
 	},
 	"PAYG":"PAYG",
 	"PrePaid":"PrePaid",
 	"filterHeader":{
-		"Unpaid":"Не оплачен",
-		"Paid":"Оплачен",
-		"Refunded":"Возвращён",
-		"Closed":"Закрыт",
+		"Unpaid": "Не оплачен",
+		"Paid": "Оплачен",
+		"Refunded": "Возвращён",
+		"Closed": "Закрыт",
 		"Close-Ticket": "Обращение закрыто",
-		"Customer-Reply":"Ответ клиента",
-		"In Progress":"В процессе",
+		"Customer-Reply": "Ответ клиента",
+		"In Progress": "В процессе",
 		"On Hold": "Заморожен",
 		"Open": "Открыт",
-		"Answered":"Отвечен",
-		"Cancelled":"Отменён",
+		"Answered": "Отвечен",
+		"Cancelled": "Отменён",
     "Draft": "Выделен"
 	},
-	"virtual":"хостинг",
+	"virtual": "хостинг",
+  "ssl": "SSL",
 	"input new name":"Введите новое имя",	
 	"reserve public NIC":"Зарезервировать публичную NIC",
 	"used for this VM":"использовать для этой VM",

@@ -160,7 +160,7 @@ const routes = [
 				name: 'certificate',
 				meta: {
 					mustBeLoggined: true,
-					headerTitle: i18n.t('ssl.certificate_configuration'),
+					headerTitle: i18n.t('ssl_product.certificate_configuration'),
 					isNeedBackButton: true,
 				},
 				props: true,

@@ -107,7 +107,7 @@
               @score="(value) => $emit('score', value)"
             />
 
-            <a-form-item style="margin-bottom: 0px">
+            <a-form-item style="margin-bottom: 0px" v-if="false">
               <a-input-password
                 class="password"
                 :value="password"
@@ -289,7 +289,7 @@ export default {
             tarifs.push({ value: 'Biennially', label: 'biennially' });
             break;
           case 'default':
-            tarifs.push({ value: 'Monthly', label: 'ssl.Monthly' });
+            tarifs.push({ value: 'Monthly', label: 'ssl_product.Monthly' });
         }
       });
       this.price = {

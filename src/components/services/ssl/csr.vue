@@ -2,7 +2,7 @@
   <div>
     <a-alert
       style="margin: 10px"
-      :message="$t('ssl.csr_warning')"
+      :message="$t('ssl_product.csr_warning')"
       type="warning"
       show-icon
     />
@@ -14,14 +14,14 @@
       </a-form-model-item>
       <a-form-model-item>
         <router-link :to="{ name: 'csr' }">
-          <a-button type="primary"> {{ $t("ssl.generate") }} CSR</a-button>
+          <a-button type="primary"> {{ $t("ssl_product.generate") }} CSR</a-button>
         </router-link>
         <a-button
           type="primary"
           @click="handleClickNext"
           :style="{ marginLeft: '10px' }"
         >
-          {{ $t("ssl.continue") }}<a-icon type="right"
+          {{ $t("ssl_product.continue") }}<a-icon type="right"
         /></a-button>
       </a-form-model-item>
     </a-form-model>
@@ -72,7 +72,7 @@ export default {
         csr: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
             min: 40,
           },
         ],
@@ -94,7 +94,7 @@ export default {
           };
           this.$emit("handleClickNext", data);
         } else {
-          this.$message.error(`${this.$t("ssl.fields is required")}`);
+          this.$message.error(`${this.$t("ssl_product.fields is required")}`);
           return false;
         }
       });

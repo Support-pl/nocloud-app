@@ -611,8 +611,8 @@ export default {
       activeKey: "location",
       plan: {},
       periods: [
-        { value: "Monthly", label: "ssl.Monthly" },
-        { value: "Hourly", label: "ssl.Hourly" }
+        { value: "Monthly", label: "ssl_product.Monthly" },
+        { value: "Hourly", label: "ssl_product.Hourly" }
       ],
       service: "",
       namespace: "",
@@ -1320,6 +1320,9 @@ export default {
         this.options.ram.size = this.product.resources?.ram / 1024;
         this.options.cpu.size = this.product.resources?.cpu;
       }
+    },
+    periods(periods) {
+      this.tarification = periods[0].value;
     },
     locationId() {
       this.$store.dispatch("nocloud/plans/fetch", {

@@ -611,7 +611,7 @@ export default {
         .filter(({ type }) => type === 'opensrs');
     },
     rules() {
-      const message = this.$t('ssl.field is required');
+      const message = this.$t('ssl_product.field is required');
       const c = this.form.country;
 
       return {
