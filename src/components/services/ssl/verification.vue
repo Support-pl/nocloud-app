@@ -2,15 +2,15 @@
   <div>
     <a-alert
       style="margin: 10px"
-      :message="$t('ssl.verification_warning')"
+      :message="$t('ssl_product.verification_warning')"
       type="warning"
       show-icon
     />
     <a-form-model ref="verification" :model="verification" :rules="rules">
-      <a-form-model-item :label="$t('ssl.domain')" prop="domain">
+      <a-form-model-item :label="$t('ssl_product.domain')" prop="domain">
         <a-input disabled v-model="verification.domain" />
       </a-form-model-item>
-      <a-form-model-item :label="$t('ssl.DCV Method')" prop="dcv">
+      <a-form-model-item :label="$t('ssl_product.DCV Method')" prop="dcv">
         <a-select v-model="verification.dcv">
           <a-select-option v-for="item in dcv_list" :value="item" :key="item">
             {{ item }}
@@ -18,7 +18,7 @@
         </a-select>
       </a-form-model-item>
 
-      <a-form-model-item :label="$t('ssl.email')" prop="email">
+      <a-form-model-item :label="$t('ssl_product.email')" prop="email">
         <a-select v-model="verification.email">
           <a-select-option
             v-for="item in email_list"
@@ -32,7 +32,7 @@
 
       <a-form-model-item>
         <a-button type="primary" @click="handleClickPrev"
-          ><a-icon type="left" /> {{ $t("ssl.back") }}</a-button
+          ><a-icon type="left" /> {{ $t("ssl_product.back") }}</a-button
         >
         <a-button
           type="primary"
@@ -40,7 +40,7 @@
           @click="handleSubmit"
           style="margin-left: 10px"
         >
-          {{ $t("ssl.send") }}
+          {{ $t("ssl_product.send") }}
         </a-button>
       </a-form-model-item>
     </a-form-model>
@@ -88,13 +88,13 @@ export default {
         dcv: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         email: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
       },

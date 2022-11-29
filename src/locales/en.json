@@ -118,6 +118,7 @@
 	"Disk control": "Disk Management",
 	"Network control": "Network Management",
 	"Boot order": "Boot Order",
+  "Logs": "Logs",
 	"Delete": "Delete",
 	"Snapshots": "Snapshots",
   "snapshot": "snapshot",
@@ -363,7 +364,7 @@
 		"address1": "Address Line 1",
 		"address2": "Address Line 2"
 	},
-	"ssl": {
+	"ssl_product": {
 		"firstname": "First Name",
 		"lastname": "Last Name",
 		"state": "State",
@@ -552,6 +553,7 @@
     "Draft": "Draft"
 	},
 	"virtual":"virtual",
+  "ssl": "SSL",
 	"input new name":"Input new name",	
 	"reserve public NIC":"Reserve public NIC",
 	"used for this VM":"used for this VM",

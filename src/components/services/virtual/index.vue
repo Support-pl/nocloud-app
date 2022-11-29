@@ -28,7 +28,7 @@
 					</template>
 
 					<a-row class="order__prop">
-						<a-col span="8" :xs="6">{{$t('ssl.domain') | capitalize}}:</a-col>
+						<a-col span="8" :xs="6">{{$t('ssl_product.domain') | capitalize}}:</a-col>
 						<a-col span="16" :xs="18">
 							<a-input v-if="!fetchLoading" v-model="options.domain" placeholder="example.com"></a-input>
 							<div v-else class="loadingLine"></div>

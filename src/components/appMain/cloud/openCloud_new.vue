@@ -150,6 +150,31 @@
                     </div>
                   </a-modal>
                   <a-modal
+                    v-model="modal.logs"
+                    :title="$t('Logs')"
+                    :footer="null"
+                  >
+                    <a-spin style="display: block; margin: 0 auto" :tip="$t('loading')" :spinning="isLogsLoading">
+                      <a-card
+                        size="small"
+                        v-for="(log, i) of logs"
+                        :key="log.date"
+                        :bodyStyle="{ display: 'flex' }"
+                        :style="{ marginBottom: (logs.length - 1 !== i) ? '24px' : null }"
+                      >
+                        <template #extra>
+                          <a-badge :status="(log.state === 'done') ? 'success' : 'error'" />
+                        </template>
+                        <template #title>
+                          <span style="font-weight: 700">{{ log.type }}</span>
+                        </template>
+                        <span style="margin-right: auto">{{ log.date.replace('T', ' ') }}</span>
+                        <span v-if="log.progress < 100">{{ `${log.progress}%` }}</span>
+                      </a-card>
+                    </a-spin>
+                  </a-modal>
+
+                  <a-modal
                     v-model="modal.diskControl"
                     :title="$t('Disk control')"
                     :footer="null"
@@ -213,6 +238,7 @@ export default {
   data: () => ({
     isDeleteLoading: false,
     isRenameLoading: false,
+    isLogsLoading: false,
     reinstallPass: "",
     renameNewName: "",
     loadingResizeVM: false,
@@ -224,6 +250,7 @@ export default {
       diskControl: false,
       bootOrder: false,
       SSH: false,
+      logs: false,
       networkControl: false,
       accessManager: false,
       rename: false,
@@ -238,6 +265,7 @@ export default {
       size: 0,
       scale: "GB",
     },
+    logs: [],
   }),
   computed: {
     ...mapGetters("nocloud/vms", [
@@ -289,6 +317,13 @@ export default {
           icon: "global",
           forVNC: true,
           modules: ['ione'],
+        },
+        {
+          title: "Logs",
+          onclick: this.getLogs,
+          params: ["logs"],
+          icon: "code",
+          modules: ['ovh'],
         },
         {
           title: "Delete",
@@ -572,6 +607,27 @@ export default {
           this.modal.delete = false;
         },
       });
+    },
+    getLogs() {
+      this.isLogsLoading = true;
+      this.changeModal('logs');
+      this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+        uuid: this.$route.params.uuid,
+        action: 'get_logs'
+      })
+        .then(({ meta: { logs } }) => {
+          logs?.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          this.logs = logs;
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          console.error(err);
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
+        })
+        .finally(() => this.isLogsLoading = false);
     },
     bootOrderNewState() {
       this.closeModal("bootOrder");
