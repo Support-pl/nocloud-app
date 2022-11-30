@@ -77,7 +77,7 @@ export default {
       const net = this.instance?.state?.meta.networking;
 
       if (!net) return [];
-      return [...net.public, ...net.private];
+      return [...net?.public ?? [], ...net?.private ?? []];
     },
     title() {
       return (!this.activeKey.includes('1')) ? `IP: ${this.networking[0]}` : 'IP\'s:';

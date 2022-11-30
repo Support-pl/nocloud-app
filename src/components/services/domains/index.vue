@@ -19,20 +19,22 @@
                   </a-step>
                   <a-step class="cart" status="finish" :title="$t('cart')" @click="cart">
                     <template #icon>
-                      <a-badge
-                        show-zero
-                        :count="itemsInCart"
-                        :offset="[55, 10]"
-                        :number-style="{
-                          backgroundColor: '#fff',
-                          color: '#999',
-                          boxShadow: '0 0 0 1px #d9d9d9 inset', }"
-                      >
-                        <a-icon type="shopping-cart"/>
-                      </a-badge>
+                      <a-icon type="shopping-cart"/>
                     </template>
                   </a-step>
                 </a-steps>
+              </a-col>
+              <a-col :span="2" class="badge-wrapper">
+                <a-badge
+                  :count="itemsInCart"
+                  :offset=[-25,-2]
+                  show-zero
+                  :number-style="{
+                    backgroundColor: '#fff',
+                    color: '#999',
+                    boxShadow: '0 0 0 1px #d9d9d9 inset'
+                  }"
+                />
               </a-col>
             </a-row>
             <a-row class="order_option__card" :gutter="[10, 10]">
