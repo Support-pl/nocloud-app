@@ -616,7 +616,7 @@ export default {
         action: 'get_logs'
       })
         .then(({ meta: { logs } }) => {
-          logs?.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          logs?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
           this.logs = logs;
         })
         .catch((err) => {
