@@ -400,8 +400,8 @@ export default {
   watch: {
     itemSP() {
       this.$emit('setData', { key: 'periods', value: [
-        { value: 'Monthly', label: 'ssl.Monthly' },
-        { value: 'Hourly', label: 'ssl.Hourly' }
+        { value: 'Monthly', label: 'ssl_product.Monthly' },
+        { value: 'Hourly', label: 'ssl_product.Hourly' }
       ] });
     }
   }

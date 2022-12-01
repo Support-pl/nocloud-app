@@ -36,73 +36,77 @@
               />
             </a-col>
           </a-row>
-          <a-row :gutter="[10, 10]">
-            <a-col :xs="24" :sm="12">
-              <a-input
-                v-model="resources.reg_username"
-                :placeholder="$t('clientinfo.username')"
-              />
+
+          <a-row :gutter="[10, 10]" type="flex" align="bottom">
+            <a-col span="12">
+              <a-row :gutter="[10, 10]">
+                <a-col>
+                  {{ $t('Data for authorization in the control panel') }}:
+                </a-col>
+                <a-col span="24">
+                  <a-input
+                    v-model="resources.reg_username"
+                    :placeholder="$t('clientinfo.username')"
+                  />
+                </a-col>
+                <a-col span="24">
+                  <password-meter
+                    style="height: 10px; margin-top: 0"
+                    :password="resources.reg_password"
+                    @score="(value) => score = value.score"
+                  />
+
+                  <a-input-password
+                    v-model="resources.reg_password"
+                    :placeholder="$t('clientinfo.password')"
+                  />
+                </a-col>
+              </a-row>
             </a-col>
-            <a-col :xs="24" :sm="12">
-              <a-input-password
-                v-model="resources.reg_password"
-                :placeholder="$t('clientinfo.password')"
-              />
-            </a-col>
-          </a-row>
-          <a-row style="padding-top: 10px" :gutter="[10, 10]">
-            <a-col :xs="24" :sm="8">
-              <a-switch v-model="resources.auto_renew" />
-              {{ $t('domain_product.auto_renew') }}
-            </a-col>
-            <a-col :xs="24" :sm="8">
-              <a-switch v-model="resources.who_is_privacy" />
-              {{ $t('domain_product.who_is_privacy') }}
-              (3$)
-            </a-col>
-            <a-col :xs="24" :sm="8">
-              <a-switch v-model="resources.lock_domain" />
-              {{ $t('domain_product.lock_domain') }}
+            <a-col span="12">
+              <a-row :gutter="[10, 10]">
+                <a-col>{{ $t('advanced options') | capitalize }}:</a-col>
+                <a-col>
+                  <a-switch v-model="resources.auto_renew" />
+                  {{ $t('domain_product.auto_renew') | capitalize }}
+                </a-col>
+                <a-col>
+                  <a-switch v-model="resources.who_is_privacy" />
+                  {{ $t('domain_product.who_is_privacy') | capitalize }} (3$)
+                </a-col>
+                <a-col>
+                  <a-switch v-model="resources.lock_domain" />
+                  {{ $t('domain_product.lock_domain') | capitalize }}
+                </a-col>
+              </a-row>
             </a-col>
           </a-row>
 
           <a-form-model ref="form" :model="form">
             <a-row :gutter="[15, 10]" style="margin-top: 15px">
-              <a-col>User:</a-col>
+              <a-col>{{ $t('user data') | capitalize }}:</a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="first_name">
-                  <a-input
-                    v-model="form.first_name"
-                    :placeholder="$t('clientinfo.firstname')"
-                  />
+                <a-form-model-item prop="first_name" :label="$t('clientinfo.firstname')" :rules="rules.req">
+                  <a-input v-model="form.first_name" />
                 </a-form-model-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="last_name">
-                  <a-input
-                    v-model="form.last_name"
-                    :placeholder="$t('clientinfo.lastname')"
-                  />
+                <a-form-model-item prop="last_name" :label="$t('clientinfo.lastname')" :rules="rules.req">
+                  <a-input v-model="form.last_name" />
                 </a-form-model-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="email" :rules="rules.req">
-                  <a-input
-                    v-model="form.email"
-                    :placeholder="$t('clientinfo.email')"
-                  />
+                <a-form-model-item prop="email" :label="$t('clientinfo.email')" :rules="rules.req">
+                  <a-input v-model="form.email" />
                 </a-form-model-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="phone" :rules="rules.req">
-                  <a-input
-                    v-model="form.phone"
-                    :placeholder="$t('clientinfo.phonenumber')"
-                  />
+                <a-form-model-item prop="phone" :label="$t('clientinfo.phonenumber')" :rules="rules.req">
+                  <a-input v-model="form.phone" />
                 </a-form-model-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="country">
+                <a-form-model-item prop="country" :label="$t('clientinfo.countryname')" :rules="rules.req">
                   <a-select v-model="form.country" style="width: 100%">
                     <a-select-option
                       v-for="country in Object.keys(countries)"
@@ -115,51 +119,33 @@
                 </a-form-model-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="state" :rules="rules.state">
-                  <a-input
-                    v-model="form.state"
-                    :placeholder="$t('clientinfo.state')"
-                  />
+                <a-form-model-item prop="state" :label="$t('clientinfo.state')" :rules="rules.state">
+                  <a-input v-model="form.state" />
                 </a-form-model-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="city" :rules="rules.req">
-                  <a-input
-                    v-model="form.city"
-                    :placeholder="$t('clientinfo.city')"
-                  />
+                <a-form-model-item prop="city" :label="$t('clientinfo.city')" :rules="rules.req">
+                  <a-input v-model="form.city" />
                 </a-form-model-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="postal_code" :rules="rules.postal_code">
-                  <a-input
-                    v-model="form.postal_code"
-                    :placeholder="$t('clientinfo.postcode')"
-                  />
+                <a-form-model-item prop="postal_code" :label="$t('clientinfo.postcode')" :rules="rules.postal_code">
+                  <a-input v-model="form.postal_code" />
                 </a-form-model-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="address1" :rules="rules.req">
-                  <a-input
-                    v-model="form.address1"
-                    :placeholder="$t('clientinfo.address1')"
-                  />
+                <a-form-model-item prop="address1" :label="$t('clientinfo.address1')" :rules="rules.req">
+                  <a-input v-model="form.address1" />
                 </a-form-model-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="address2">
-                  <a-input
-                    v-model="form.address2"
-                    :placeholder="$t('clientinfo.address2')"
-                  />
+                <a-form-model-item prop="address2" :label="$t('clientinfo.address2')">
+                  <a-input v-model="form.address2" />
                 </a-form-model-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="org_name" :rules="rules.req">
-                  <a-input
-                    v-model="form.org_name"
-                    :placeholder="$t('clientinfo.companyname')"
-                  />
+                <a-form-model-item prop="org_name" :label="$t('clientinfo.companyname')" :rules="rules.req">
+                  <a-input v-model="form.org_name" />
                 </a-form-model-item>
               </a-col>
             </a-row>
@@ -259,7 +245,7 @@
                 :key="period"
                 :value="period"
               >
-                {{ `${period} ${$t('year')}` }}
+                {{ $tc('year', period) }}
               </a-select-option>
             </a-select>
             <!--<div v-else class="loadingLine"></div>-->
@@ -332,7 +318,7 @@
               block
               type="primary"
               shape="round"
-              :disabled="!onCart.length || !namespace || !plan"
+              :disabled="!onCart.length || !namespace || !plan || !resources.reg_username || score < 4"
               @click="orderConfirm"
             >
               {{ $t("order") | capitalize }}
@@ -356,12 +342,14 @@
 </template>
 
 <script>
+import passwordMeter from 'vue-simple-password-meter';
 import notification from '@/mixins/notification.js';
 import { countries } from '@/setup/countries.js';
 
 export default {
   name: 'domain-order',
   mixins: [notification],
+  components: { passwordMeter },
   props: {
     data: Object,
     onCart: Array,
@@ -373,6 +361,7 @@ export default {
   data: () => ({
     countries,
     products: {},
+    score: 0,
     plan: null,
     service: null,
     namespace: null,
@@ -611,7 +600,7 @@ export default {
         .filter(({ type }) => type === 'opensrs');
     },
     rules() {
-      const message = this.$t('ssl.field is required');
+      const message = this.$t('ssl_product.field is required');
       const c = this.form.country;
 
       return {

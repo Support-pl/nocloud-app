@@ -202,34 +202,34 @@ export default {
     changeLanguage() {
       this.showModal("language");
     },
-    // changeLocale(lang){
-    // 	this.closeModal('language');
-    // 	this.$i18n.locale = lang;
-    // 	localStorage.setItem("lang", this.$i18n.locale);
-    // },
-    changeLocale(lang) {
-      this.closeModal("language");
-      this.$i18n.locale = lang;
-      localStorage.setItem("lang", this.$i18n.locale);
-
-      let billingLang = lang == "vi" ? "vietnam" : "english";
-      api
-        .sendAsUser("user.update", {
-          language: billingLang,
-        })
-        .then((res) => {
-          this.$message.success(this.$t("Successfully changed"));
-        })
-        .catch((err) => {
-          console.error(err);
-          this.openNotificationWithIcon('error', {
-            message: this.$t(err.response?.data?.message)
-          });
-        })
-        .finally(() => {
-          this.isSendingInfo = false;
-        });
+    changeLocale(lang){
+    	this.closeModal('language');
+    	this.$i18n.locale = lang;
+    	localStorage.setItem("lang", this.$i18n.locale);
     },
+    // changeLocale(lang) {
+    //   this.closeModal("language");
+    //   this.$i18n.locale = lang;
+    //   localStorage.setItem("lang", this.$i18n.locale);
+
+    //   let billingLang = lang == "vi" ? "vietnam" : "english";
+    //   api
+    //     .sendAsUser("user.update", {
+    //       language: billingLang,
+    //     })
+    //     .then((res) => {
+    //       this.$message.success(this.$t("Successfully changed"));
+    //     })
+    //     .catch((err) => {
+    //       console.error(err);
+    //       this.openNotificationWithIcon('error', {
+    //         message: this.$t(err.response?.data?.message)
+    //       });
+    //     })
+    //     .finally(() => {
+    //       this.isSendingInfo = false;
+    //     });
+    // },
     logoutFunc() {
       this.$store.commit("logout");
       	this.$store.dispatch('nocloud/auth/logout')

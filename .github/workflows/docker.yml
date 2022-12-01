@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - "master"
-      - "dev"
+      - "dev-*"
     paths-ignore:
       - "examples"
       - "**/*.md"
       - ".github/**"
+      - "!.github/workflows/docker.yml"
 
 env:
   REGISTRY: ghcr.io

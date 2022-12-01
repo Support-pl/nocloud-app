@@ -132,61 +132,61 @@ export default {
         firstname: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         lastname: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         companyname: [
           {
             required: false,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         email: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         address1: [
           {
             required: false,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         city: [
           {
             required: false,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         state: [
           {
             required: false,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         countryname: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         postcode: [
           {
             required: false,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         phonenumber: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
       },
@@ -257,7 +257,7 @@ export default {
             });
         } else {
           this.openNotificationWithIcon('error', {
-            message: this.$t("ssl.fields is required")
+            message: this.$t("ssl_product.fields is required")
           });
 
           this.isSendingInfo = false;

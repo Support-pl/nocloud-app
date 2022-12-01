@@ -7,26 +7,26 @@
       v-if="personal.result"
     >
       <a-divider orientation="left">{{
-        $t("ssl.technical_Contact")
+        $t("ssl_product.technical_Contact")
       }}</a-divider>
       <a-alert
         style="margin: 10px"
-        :message="$t('ssl.personal_warning')"
+        :message="$t('ssl_product.personal_warning')"
         type="warning"
         show-icon
       />
-      <a-form-model-item :label="$t('ssl.order type')" prop="order">
+      <a-form-model-item :label="$t('ssl_product.order type')" prop="order">
         <a-select placeholder=" Please choose one..." v-model="personal.order">
           <a-select-option value="newOrder">
-            {{ $t("ssl.new order") }}
+            {{ $t("ssl_product.new order") }}
           </a-select-option>
           <a-select-option value="renewOrder">
-            {{ $t("ssl.renewal") }}
+            {{ $t("ssl_product.renewal") }}
           </a-select-option>
         </a-select>
       </a-form-model-item>
 
-      <a-form-model-item :label="$t('ssl.webserver type')" prop="webserver">
+      <a-form-model-item :label="$t('ssl_product.webserver type')" prop="webserver">
         <a-select
           v-model="personal.webserver"
           placeholder="Please choose one..."
@@ -37,11 +37,11 @@
         </a-select>
       </a-form-model-item>
 
-      <a-form-model-item :label="$t('ssl.firstname')" prop="firstname">
+      <a-form-model-item :label="$t('ssl_product.firstname')" prop="firstname">
         <a-input v-model="personal.firstname" />
       </a-form-model-item>
 
-      <a-form-model-item :label="$t('ssl.lastname')" prop="lastname">
+      <a-form-model-item :label="$t('ssl_product.lastname')" prop="lastname">
         <a-input v-model="personal.lastname" />
       </a-form-model-item>
 
@@ -49,27 +49,27 @@
         <a-input v-model="personal.email" type="email" />
       </a-form-model-item>
 
-      <a-form-model-item :label="$t('ssl.phone number')" prop="phonenumber">
+      <a-form-model-item :label="$t('ssl_product.phone number')" prop="phonenumber">
         <a-input v-model.number="personal.phonenumber" />
       </a-form-model-item>
 
-      <a-form-model-item :label="$t('ssl.companyname')" prop="companyname">
+      <a-form-model-item :label="$t('ssl_product.companyname')" prop="companyname">
         <a-input v-model="personal.companyname" />
       </a-form-model-item>
 
-      <a-form-model-item :label="$t('ssl.address')" prop="address1">
+      <a-form-model-item :label="$t('ssl_product.address')" prop="address1">
         <a-input v-model="personal.address1" />
       </a-form-model-item>
 
-      <a-form-model-item :label="$t('ssl.city')" prop="city">
+      <a-form-model-item :label="$t('ssl_product.city')" prop="city">
         <a-input v-model="personal.city" />
       </a-form-model-item>
 
-      <a-form-model-item :label="$t('ssl.state')" prop="state">
+      <a-form-model-item :label="$t('ssl_product.state')" prop="state">
         <a-input v-model="personal.state" />
       </a-form-model-item>
 
-      <a-form-model-item :label="$t('ssl.countryname')" prop="country">
+      <a-form-model-item :label="$t('ssl_product.countryname')" prop="country">
         <a-select
           v-model="personal.country"
           placeholder=" Please choose one..."
@@ -90,13 +90,13 @@
         <a-form-model-item
           v-for="(val, key) in companyFields"
           :key="key"
-          :label="$t('ssl.' + key)"
+          :label="$t('ssl_product.' + key)"
           :prop="key"
         >
           <a-input v-model="personal[key]" />
         </a-form-model-item>
 
-        <a-form-model-item :label="$t('ssl.org_country')" prop="org_country">
+        <a-form-model-item :label="$t('ssl_product.org_country')" prop="org_country">
           <a-select
             v-model="personal.org_country"
             placeholder=" Please choose one..."
@@ -114,14 +114,14 @@
 
       <a-form-model-item>
         <a-button type="primary" @click="$emit('handleClickPrev')"
-          ><a-icon type="left" /> {{ $t("ssl.back") }}
+          ><a-icon type="left" /> {{ $t("ssl_product.back") }}
         </a-button>
         <a-button
           type="primary"
           @click="handleClickNext"
           style="margin-left: 10px"
         >
-          {{ $t("ssl.continue") }} <a-icon type="right"
+          {{ $t("ssl_product.continue") }} <a-icon type="right"
         /></a-button>
       </a-form-model-item>
     </a-form-model>
@@ -188,73 +188,73 @@ export default {
         org_country: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         order: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         webserver: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         firstname: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         lastname: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         companyname: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         email: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         address1: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         city: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         state: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         country: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         phonenumber: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
       },
@@ -283,7 +283,7 @@ export default {
           if ("csr" in this.personal) delete this.personal.csr;
           this.$emit("handleClickNext", this.personal);
         } else {
-          this.$message.error(`${this.$t("ssl.fields is required")}`);
+          this.$message.error(`${this.$t("ssl_product.fields is required")}`);
           return false;
         }
       });
@@ -306,7 +306,7 @@ export default {
         this.rules[keyField] = [
           {
             required: this.companyFields[keyField],
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ];
       }
