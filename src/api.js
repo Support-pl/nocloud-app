@@ -1,7 +1,7 @@
 import Api from 'nocloudjsrest';
 import vuex from '@/store/index.js'
 
-const api = new Api('https://api.nc-crm-test.nocloud.zone/api/');
+const api = new Api('https://api.nc-crm-test.nocloud.zone/');
 
 api.axios.interceptors.response.use((response) => response, (error) => {
 	if (error.response && error.response?.data?.code === 7) {
