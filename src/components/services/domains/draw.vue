@@ -96,7 +96,7 @@ export default {
       }
     ],
     dnsTypes: ['AAAA', 'A', 'CNAME', 'MX', 'SRV', 'TXT'],
-    rules: { req: [{ required: true, message: this.$t('ssl.field is required') }] }
+    rules: { req: [{ required: true, message: this.$t('ssl_product.field is required') }] }
   }},
   methods: {
     openModal(type, value) {

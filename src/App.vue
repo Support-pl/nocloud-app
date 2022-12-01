@@ -4,7 +4,7 @@
       <router-view :style="{
         position: 'absolute',
         width: '100%',
-        height: (loggedIn) ? '100%' : 'auto',
+        height: '100%',
         minHeight: (loggedIn) ? 'auto' : '100vh'
       }" />
     </transition>

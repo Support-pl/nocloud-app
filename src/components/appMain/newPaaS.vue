@@ -4,10 +4,10 @@
         <div class="newCloud__inputs field">
           <keep-alive>
             <component
-              ref="module"
               :is="template"
               :activeKey="activeKey"
               :itemSP="itemSP"
+              :getPlan="plan"
               :options="options"
               :getProducts="getProducts"
               :productSize="productSize"
@@ -208,9 +208,9 @@
               justify="space-between"
               :style="{ 'font-size': '1.1rem' }"
               v-if="
-                tarification === 'UNKNOWN'
-                  ? (options.network.public.status = true)
-                  : options.network.public.status
+                options.network.public.status &&
+                tarification !== 'Monthly' &&
+                itemSP.type !== 'ovh'
               "
             >
               <a-col>
@@ -458,21 +458,6 @@
               </a-button>
               <a-button
                 block
-                v-else-if="itemSP.type === 'ovh'"
-                type="primary"
-                shape="round"
-                :disabled="
-                  vmName == '' ||
-                  namespace == '' ||
-                  options.os.name == '' ||
-                  !isLoggedIn
-                "
-                @click="() => (modal.confirmCreate = true)"
-              >
-                {{ $t("Create") }}
-              </a-button>
-              <a-button
-                block
                 v-else
                 type="primary"
                 shape="round"
@@ -509,7 +494,10 @@
                 </a-row> -->
               </a-modal>
             </a-col>
-            <a-col style="font-size: 14px; margin: 16px 16px 0" v-if="itemSP.type !== 'ovh'">
+            <a-col
+              style="font-size: 14px; margin: 16px 16px 0"
+              v-if="itemSP.type !== 'ovh' && tarification !== 'Monthly'"
+            >
               <span style="position: absolute; left: -8px">*</span>
               {{ $t('Payment will be made immediately after purchase') }}
             </a-col>
@@ -621,10 +609,10 @@ export default {
       dataLocalStorage: "",
       productSize: "VDS L",
       activeKey: "location",
-      plan: "",
+      plan: {},
       periods: [
-        { value: "Monthly", label: "ssl.Monthly" },
-        { value: "Hourly", label: "ssl.Hourly" }
+        { value: "Monthly", label: "ssl_product.Monthly" },
+        { value: "Hourly", label: "ssl_product.Hourly" }
       ],
       service: "",
       namespace: "",
@@ -1333,6 +1321,9 @@ export default {
         this.options.cpu.size = this.product.resources?.cpu;
       }
     },
+    periods(periods) {
+      this.tarification = periods[0].value;
+    },
     locationId() {
       this.$store.dispatch("nocloud/plans/fetch", {
         sp_uuid: this.itemSP.uuid,
@@ -1350,7 +1341,7 @@ export default {
             this.plan = plan;
           }
         });
-        if (this.plan === '') this.plan = pool[0] ?? '';
+        if (!('uuid' in this.plan)) this.plan = pool[0] ?? {};
         this.$store.commit('nocloud/plans/setPlans', pool);
       });
 

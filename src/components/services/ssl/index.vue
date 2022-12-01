@@ -18,7 +18,7 @@
 								:class="{'order__slider-item--active': options.provider == provider}"
 								@click="() => options.provider = provider"
 							>
-								{{$t(`${provider}`)}}
+								{{ provider }}
 							</div>
 						</template>
 						<template v-else>
@@ -42,7 +42,7 @@
 					</a-row>
 
 					<a-row class="order__prop">
-						<a-col span="8" :xs="6">{{$t('ssl.domain') }}:</a-col>
+						<a-col span="8" :xs="6">{{$t('ssl_product.domain') }}:</a-col>
 						<a-col span="16" :xs="18">
 							<a-input v-if="!fetchLoading" v-model="options.domain" placeholder="example.com"></a-input>
 							<div v-else class="loadingLine"></div>
@@ -62,7 +62,7 @@
 					<a-col :xs="12" :sm="18" :lg='12'>
 						<a-select v-if="!fetchLoading" v-model="options.period"  style="width: 100%">
 							<a-select-option v-for="period in periods" :key="period.title+period.count" :value='period'>
-								{{ $t(period) }} {{ $t('months') }}
+								{{ $tc('month', period) }}
 							</a-select-option>
 						</a-select>
 						<div v-else class="loadingLine"></div>
@@ -95,7 +95,7 @@
 							@ok="orderClickHandler"
 							@cancel="() => { modal.confirmCreate = false }"
 						>
-							<p>{{ $t('Do you want to order') }}: {{ getProducts.product }}</p>
+							<p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.product }}</p>
 
 							<a-row style="margin-top: 20px">
 								<a-col>

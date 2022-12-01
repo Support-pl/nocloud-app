@@ -46,7 +46,7 @@ export default {
   computed: {
     statusColor() {
       if (!this.instance.state) return "rgb(145, 145, 145)"
-      const state = (this.instance?.config?.imageId)
+      const state = (this.instance?.config?.os)
         ? this.instance.state.state
         : this.instance.state.meta.lcm_state_str;
 
@@ -77,7 +77,7 @@ export default {
       const net = this.instance?.state?.meta.networking;
 
       if (!net) return [];
-      return [...net.public, ...net.private];
+      return [...net?.public ?? [], ...net?.private ?? []];
     },
     title() {
       return (!this.activeKey.includes('1')) ? `IP: ${this.networking[0]}` : 'IP\'s:';

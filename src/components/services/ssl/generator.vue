@@ -8,13 +8,13 @@
               CSR
             </div>
             <div class="generate-page__title" v-else>
-              {{ $t("ssl.csr_generation_form") }}
+              {{ $t("ssl_product.csr_generation_form") }}
             </div>
           </div>
           <a-alert
             v-if="result.result !== 'success'"
             style="margin: 10px"
-            :message="$t('ssl.generator_warning_info')"
+            :message="$t('ssl_product.generator_warning_info')"
             type="warning"
             show-icon
           />
@@ -26,7 +26,7 @@
               v-if="result.result !== 'success'"
             >
               <a-form-model-item
-                :label="$t('ssl.domain')"
+                :label="$t('ssl_product.domain')"
                 prop="csr_commonname"
               >
                 <a-input v-model="generate.csr_commonname" />
@@ -37,29 +37,29 @@
               </a-form-model-item>
 
               <a-form-model-item
-                :label="$t('ssl.companyname')"
+                :label="$t('ssl_product.companyname')"
                 prop="csr_organization"
               >
                 <a-input v-model="generate.csr_organization" />
               </a-form-model-item>
 
               <a-form-model-item
-                :label="$t('ssl.departament')"
+                :label="$t('ssl_product.departament')"
                 prop="csr_department"
               >
                 <a-input v-model="generate.csr_department" />
               </a-form-model-item>
 
-              <a-form-model-item :label="$t('ssl.city')" prop="csr_city">
+              <a-form-model-item :label="$t('ssl_product.city')" prop="csr_city">
                 <a-input v-model="generate.csr_city" />
               </a-form-model-item>
 
-              <a-form-model-item :label="$t('ssl.state')" prop="csr_state">
+              <a-form-model-item :label="$t('ssl_product.state')" prop="csr_state">
                 <a-input v-model="generate.csr_state" />
               </a-form-model-item>
 
               <a-form-model-item
-                :label="$t('ssl.countryname')"
+                :label="$t('ssl_product.countryname')"
                 prop="csr_country"
               >
                 <a-select v-model="generate.csr_country">
@@ -79,14 +79,14 @@
                   :loading="loading"
                   @click="generateCSR"
                 >
-                  {{ $t("ssl.generate") }} CSR
+                  {{ $t("ssl_product.generate") }} CSR
                 </a-button>
               </a-form-model-item>
             </a-form-model>
             <div v-else-if="result.result == 'success'">
               <a-alert
                 style="margin: 10px"
-                :message="$t('ssl.generator_warning_save_private_key')"
+                :message="$t('ssl_product.generator_warning_save_private_key')"
                 type="warning"
                 show-icon
               />
@@ -97,7 +97,7 @@
                 />
               </a-form-model-item>
               <a-form-model-item
-                :label="$t('ssl.private key (RSA)')"
+                :label="$t('ssl_product.private key (RSA)')"
                 style="margin-top: 20px"
               >
                 <a-textarea
@@ -122,14 +122,14 @@
                 >
                   <a-button type="primary">
                     <a-icon type="left" />{{
-                      $t("ssl.save and return")
+                      $t("ssl_product.save and return")
                     }}</a-button
                   >
                 </router-link>
                 <a-button
                   style="margin-left: 10px"
                   @click="download('txt', result.csr_key)"
-                  >{{ $t("ssl.download_private_key") }}</a-button
+                  >{{ $t("ssl_product.download_private_key") }}</a-button
                 >
               </a-form-model-item>
             </div>
@@ -172,45 +172,45 @@ export default {
         csr_commonname: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         csr_organization: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         csr_department: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
 
         csr_email: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
 
         csr_city: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         csr_state: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
         csr_country: [
           {
             required: true,
-            message: `${this.$t("ssl.field is required")}`,
+            message: `${this.$t("ssl_product.field is required")}`,
           },
         ],
       },
@@ -294,7 +294,7 @@ export default {
             })
             .finally(() => (this.loading = false));
         } else {
-          this.$message.error(`${this.$t("ssl.fields is required")}`);
+          this.$message.error(`${this.$t("ssl_product.fields is required")}`);
           return false;
         }
       });

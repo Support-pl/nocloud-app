@@ -453,14 +453,14 @@
     "download": "Скачать"
   },
   "domain_product": {
-    "how_to_choose_the_right_domain": "HOW TO CHOOSE THE RIGHT DOMAIN",
-    "choose_a_name_that_fit_your_brand": "Choose a name that fit your brand",
-    "keep_your_name_easy_to_remember": "Keep your name easy to remember",
-    "domain_in_your_cart": "Domain in your cart:",
-    "your_cart_is_empty": "YOUR CART IS EMPTY",
-    "auto_renew": "auto renew",
-    "who_is_privacy": "who is privacy",
-    "lock_domain": "lock domain",
+    "how_to_choose_the_right_domain": "КАК ВЫБРАТЬ ПРАВИЛЬНЫЙ ДОМЕН",
+    "choose_a_name_that_fit_your_brand": "Выберите имя, которое соответствует вашему бренду",
+    "keep_your_name_easy_to_remember": "Выберите запоминающееся имя",
+    "domain_in_your_cart": "Домены в корзине:",
+    "your_cart_is_empty": "ВАША КОРЗИНА ПУСТА",
+    "auto_renew": "авто продление",
+    "who_is_privacy": "скрыть информацию о регистрируемом",
+    "lock_domain": "заблокировать передачу домена",
     "global_domains": "global domains",
     "national_domains": "national domains",
     "more_national_domains": "more national domains"
@@ -500,6 +500,8 @@
   "domains": "домены",
   "domain is wrong": "Пожалуйста введите правильный домен",
   "Domain created successfully": "Домен успешно создан",
+  "Data for authorization in the control panel": "Данные для авторизации в панели управления",
+  "user data": "данные пользователя",
   "hostname": "имя хоста",
   "subdomain": "поддомен",
   "ip_adress": "IP адрес",
@@ -526,7 +528,6 @@
     "SUSPENDED": "ПРИОСТАНОВЛЕН"
   },
   "public": "Публичный",
-
   "virtualSlider": {
     "Single": "Одиночный",
     "Standard": "Стандартный",

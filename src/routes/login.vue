@@ -76,8 +76,8 @@
                 </button>
                 <a-select
                   style="width: 70px"
-                  @change="(e) => ($i18n.locale = e)"
-                  :value="$i18n.locale"
+                  :value="$i18n.locale.replace(/-[a-z]{2}/i, '')"
+                  @change="(lang) => changeLocale(lang)"
                 >
                   <a-select-option
                     v-for="lang in langs"
@@ -216,6 +216,10 @@ export default {
         .finally(() => {
           this.tryingLogin = false;
         });
+    },
+    changeLocale(lang) {
+    	this.$i18n.locale = lang;
+    	localStorage.setItem("lang", this.$i18n.locale);
     },
   },
   computed: {
