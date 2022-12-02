@@ -44,7 +44,7 @@ export default {
 	languages: ['en', 'ru', 'vi'],
 	dangerModeNoSSLCheck: globalConfig.dangerModeNoSSLCheck ?? false,
 	WHMCSsiteurl: globalConfig.whmcs?.site_url ?? '',
-	appFolder: globalConfig.app?.folder ?? 'app_backend/v1',
+	sharedFolder: globalConfig.app?.shared_folder ?? 'virtualHosting',
 	appTitle: globalConfig.app?.title ?? '',
 	appLogo: {
 		path: globalConfig.app?.logo ?? '',

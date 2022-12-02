@@ -270,7 +270,7 @@ export default {
     const container = this.$refs.viewport;
     const min = { x: Infinity, y: Infinity };
     const max = { x: -Infinity, y: -Infinity };
-    let x, y;
+    let x, y, right = 0, down = 0
 
     this.markers.forEach(({ x, y }) => {
       if (min.x > x) min.x = x;
@@ -281,20 +281,11 @@ export default {
 
     const xScale = mapData.meta.width / (max.x - min.x + 70);
     const yScale = mapData.meta.height / (max.y - min.y + 70);
-    let diff, right = 0, down = 0;
 
     this.scale = Math.min(xScale, yScale);
-    if (this.scale > this.maxScale) {
-      this.scale = this.maxScale;
-    }
-    if (xScale > yScale || this.scale > this.maxScale) {
-      diff = xScale - this.scale;
-      right = 20 * this.scale * diff;
-    }
-    if (yScale > xScale || this.scale > this.maxScale) {
-      diff = yScale - this.scale;
-      down = 20 * this.scale * diff;
-    }
+    if (this.scale > this.maxScale) this.scale = this.maxScale;
+    if (xScale > yScale) right = 20 * xScale;
+    if (yScale > xScale) down = 20 * yScale;
     
     x = (min.x - 20) * this.scale - right;
     y = (min.y - 10) * this.scale - down;
