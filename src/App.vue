@@ -27,7 +27,7 @@ export default {
       if (mustBeLoggined && !this.loggedIn) {
         next({ name: "login" });
       }
-      else if (to.name == "login" && this.loggedIn) next({ name: "root" });
+      else if (to.name == "login" && this.loggedIn) next({ name: "crm" });
       else next();
     });
 
