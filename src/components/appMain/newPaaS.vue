@@ -287,6 +287,22 @@
             </a-row>
           </transition>
 
+          <!-- addons -->
+          <transition-group name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              v-for="(addon, key) in priceOVH.addons"
+              :key="addon"
+              :style="{ 'font-size': '1.1rem' }"
+            >
+              <a-col> {{ $t(key) | capitalize }}: </a-col>
+              <a-col>
+                {{ addon }} {{ priceOVH.currency }}
+              </a-col>
+            </a-row>
+          </transition-group>
+
           <!-- Panel -->
           <!-- <transition name="networkApear">
             <a-row
@@ -388,7 +404,7 @@
           >
             <a-col v-if="tarification === 'Annually'">
               {{ calculatePrice(productFullPriceOVH, (period = "hour")).toFixed(2) }}
-              {{ priceOVH.currency || 'USD' }}/{{ $t("year") }}
+              {{ priceOVH.currency || 'USD' }}/{{ $tc("year", 0) }}
             </a-col>
 
             <a-col v-if="tarification === 'Biennially'">
@@ -455,6 +471,21 @@
                 @click="nextStep"
               >
                 {{ $t("next") | capitalize }}
+              </a-button>
+              <a-button
+                block
+                v-else-if="itemSP.type === 'ovh'"
+                type="primary"
+                shape="round"
+                :disabled="
+                  vmName == '' ||
+                  namespace == '' ||
+                  options.os.name == '' ||
+                  !isLoggedIn
+                "
+                @click="() => (modal.confirmCreate = true)"
+              >
+                {{ $t("Create") }}
               </a-button>
               <a-button
                 block

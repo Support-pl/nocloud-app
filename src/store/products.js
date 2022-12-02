@@ -7,7 +7,7 @@ export default {
 	state: {
 		products: [],
 		productsLoading: false,
-    baseURL: `${config.WHMCSsiteurl}virtualHosting`
+    baseURL: `${config.WHMCSsiteurl}${config.sharedFolder}`
 	},
 	mutations: {
 		setProducts(state, data){

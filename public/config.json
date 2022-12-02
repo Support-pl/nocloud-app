@@ -1,7 +1,7 @@
 {
 	"whmcs": { "site_url": "https://whmcs.demo.support.pl/" },
 	"app": {
-    "folder": "app_back/v1",
+    "shared_folder": "virtualHosting",
     "title": "support.pl",
     "logo": "",
     "logo_position": "",

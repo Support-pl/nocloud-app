@@ -69,7 +69,7 @@
 	"day": "day",
 	"week": "week",
 	"month": "no months | {n} month | {n} months",
-	"year": "year {n} year | {n} years",
+	"year": "year | {n} year | {n} years",
   "years": "years",
 	"Network": "Network",
 	"Total": "Total",

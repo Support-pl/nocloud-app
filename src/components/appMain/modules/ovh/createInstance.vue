@@ -7,7 +7,7 @@
   >
     <a-collapse-panel
       key="location"
-      :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${itemSP.title})`}`"
+      :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${region.title})`}`"
     >
       <slot name="location" />
     </a-collapse-panel>
@@ -248,7 +248,7 @@ export default {
     },
     setAddon(planCode, addon, key) {
       if (planCode === '-1') {
-        this.price.addons[key] = 0;
+        delete this.price.addons[key];
         this.$delete(this.addonsCodes, key);
       } else {
         const period = addon.periods.find(({ pricingMode }) => pricingMode === this.mode);
@@ -306,8 +306,11 @@ export default {
     }
   },
   created() {
+    this.$emit('setData', {
+      key: 'datacenter', type: 'ovh',
+      value: this.region.value.replace(/\d/g, '')
+    });
     this.isFlavorsLoading = true;
-    this.$emit('setData', { key: 'datacenter', value: this.region.replace(/\d/g, ''), type: 'ovh' });
     this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
       method: 'get_plans'
     })
@@ -369,12 +372,12 @@ export default {
     },
     region() {
       const location = this.locationId.split(' ').at(-1);
-      const { extra } = this.itemSP?.locations.find(
+      const { extra, title } = this.itemSP?.locations.find(
         ({ id }) => id === location
       ) || {};
 
       if (!extra) return null;
-      return extra.region;
+      return { value: extra.region, title };
     },
     resources() {
       const plans = new Set(this.plans.map(({ value }) => value.split('-')[1]));
@@ -404,19 +407,18 @@ export default {
       Object.keys(addons).forEach((key) => {
         this.meta[key].forEach(({ prices, planCode, productName }) => {
           const { value } = this.plans.find((el) => el.value.includes(this.planKey)) || {};
-          const i = this.getPlan.resources.findIndex((res) => res.key.includes(planCode));
+          const i = this.getPlan.resources.findIndex((res) =>
+            res.key.includes(`${(this.mode === 'upfront12') ? 'P1Y' : 'P1M'} ${planCode}`)
+          );
           const resourceDuration = this.getPlan.resources[i]?.key.split(' ')[0];
 
-          const periods = prices.filter(({ pricingMode, duration }) => {
-            const isMonthly = duration === resourceDuration && pricingMode === 'default';
-            const isYearly = duration === resourceDuration && pricingMode === 'upfront12';
-
-            return (isMonthly || isYearly);
-          }).map((period) => ({ ...period, price: {
+          const periods = prices.filter(({ pricingMode, duration }) =>
+            duration === resourceDuration && pricingMode === this.mode
+          ).map((period) => ({ ...period, price: {
             ...period.price, value: this.getPlan.resources[i]?.price
           }}));
 
-          if (this.allAddons[value]?.includes(planCode)) {
+          if (this.allAddons[value]?.includes(planCode) && periods.length > 0) {
             addons[key][planCode] = { periods, productName };
           }
         });
@@ -479,6 +481,24 @@ export default {
         }
       });
     },
+    'options.ram.size'(size) {
+      const plan = this.plans.find(({ value }) => value.includes(this.planKey));
+
+      if (plan) return;
+      const regexp = new RegExp(`${this.plan}-\\d{1,4}-${size}`, 'gm');
+      const { value } = this.plans.find((el) => regexp.test(el.value));
+
+      this.options.disk.size = value.split('-').at(-1) * 1024;
+    },
+    'options.disk.size'(size) {
+      const plan = this.plans.find(({ value }) => value.includes(this.planKey));
+
+      if (plan) return;
+      const regexp = new RegExp(`${this.plan}-\\d{1,4}-\\d{1,4}-${size / 1024}`, 'gm');
+      const { value } = this.plans.find((el) => regexp.test(el.value));
+
+      this.options.ram.size = value.split('-').at(-2);
+    }
   }
 }
 </script>
