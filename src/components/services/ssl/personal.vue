@@ -4,7 +4,7 @@
       ref="personalForm"
       :model="personal"
       :rules="rules"
-      v-if="personal.result"
+      v-if="personal.firstname"
     >
       <a-divider orientation="left">{{
         $t("ssl_product.technical_Contact")
@@ -84,7 +84,7 @@
         </a-select>
       </a-form-model-item>
 
-      <div v-if="orgVerification.includes(this.product_info.pid)">
+      <div v-if="orgVerification.includes(this.product_info.id)">
         <a-divider orientation="left">Company details</a-divider>
 
         <a-form-model-item
@@ -113,7 +113,7 @@
       </div>
 
       <a-form-model-item>
-        <a-button type="primary" @click="$emit('handleClickPrev')"
+        <a-button type="primary" @click="$emit('handleClickPrev', personal)"
           ><a-icon type="left" /> {{ $t("ssl_product.back") }}
         </a-button>
         <a-button
@@ -125,15 +125,15 @@
         /></a-button>
       </a-form-model-item>
     </a-form-model>
-    <loading v-else />
+
+    <empty v-else style="height: 100%" />
   </div>
 </template>
 
 <script>
-import loading from "@/components/loading/loading";
+import empty from "@/components/empty/empty";
 import { countries } from "@/setup/countries";
-import { mapGetters } from "vuex";
-import api from "@/api.js";
+
 const interestedKeys = [
   "firstname",
   "lastname",
@@ -160,20 +160,11 @@ const companyFields = {
 
 export default {
   name: "Personal-data",
-  components: { loading },
+  components: { empty },
   props: {
-    personal_back: {
-      type: Object,
-      default: () => {},
-    },
-    csr: {
-      type: Object,
-      default: () => {},
-    },
-    product_info: {
-      type: Object,
-      default: () => {},
-    },
+    csr: { type: Object, default: () => {} },
+    product_info: { type: Object, default: () => {} },
+    personal_back: { type: Object, default: () => {} },
   },
   data() {
     return {
@@ -261,22 +252,11 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({
-      userData: "getUserData",
-    }),
+    userData() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    }
   },
   methods: {
-    fetchInfo() {
-      api
-        .sendAsUser("clientDetails")
-        .then((res) => {
-          this.$store.commit("setUserData", res);
-          this.installDataToBuffer();
-        })
-        .catch((res) => {
-          console.error(res);
-        });
-    },
     handleClickNext() {
       this.$refs.personalForm.validate((valid) => {
         if (valid) {
@@ -300,8 +280,8 @@ export default {
     },
   },
   mounted() {
-    this.fetchInfo();
-    if (this.orgVerification.includes(this.product_info.pid)) {
+    this.installDataToBuffer();
+    if (this.orgVerification.includes(this.product_info.id)) {
       for (let keyField in this.companyFields) {
         this.rules[keyField] = [
           {
@@ -315,4 +295,3 @@ export default {
 };
 </script>
 
-<style></style>

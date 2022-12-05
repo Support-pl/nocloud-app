@@ -31,16 +31,8 @@
       </a-form-model-item>
 
       <a-form-model-item>
-        <a-button type="primary" @click="handleClickPrev"
-          ><a-icon type="left" /> {{ $t("ssl_product.back") }}</a-button
-        >
-        <a-button
-          type="primary"
-          :loading="loading"
-          @click="handleSubmit"
-          style="margin-left: 10px"
-        >
-          {{ $t("ssl_product.send") }}
+        <a-button type="primary" @click="$emit('handleClickPrev', verification)">
+          <a-icon type="left" /> {{ $t("ssl_product.back") }}
         </a-button>
       </a-form-model-item>
     </a-form-model>
@@ -49,23 +41,13 @@
 
 <script>
 import loading from "@/components/loading/loading";
-import api from "@/api.js";
+
 export default {
   name: "Verification",
   components: { loading },
   props: {
-    personal: {
-      type: Object,
-      default: () => {},
-    },
-    csr: {
-      type: Object,
-      default: () => {},
-    },
-    product_info: {
-      type: Object,
-      default: () => {},
-    },
+    verification_back: { type: Object, default: () => {} },
+    csr: { type: Object, default: () => {} }
   },
   data() {
     return {
@@ -100,52 +82,9 @@ export default {
       },
     };
   },
-  methods: {
-    handleClickPrev() {
-      this.$emit("handleClickPrev", this.personal);
-    },
-    handleSubmit() {
-      this.$refs.verification.validate((valid) => {
-        if (valid) {
-          const data = {
-            ...this.csr,
-            ...this.personal,
-            dcv: this.verification.dcv,
-            approver_email: this.verification.email,
-            serviceid: this.$route.params.id,
-            pid: this.product_info.pid,
-            certificate_name: this.product_info.name,
-          };
-
-          let method = this.personal.remoteid ? "ssl/reissue" : "ssl/configure";
-
-          this.loading = true;
-          api
-            .sendAsUser(
-              "moduleTouch",
-              { ...data, ...{ path: method } },
-              "moduleTouch.phpssl"
-            )
-            .then((resp) => {
-              if (resp.error) {
-                throw resp;
-              }
-
-              if (resp.success) {
-                this.$router.push({ name: "service" });
-              }
-            })
-            .catch((err) => {
-              console.error(err);
-              this.$message.error(err.description);
-            })
-            .finally(() => (this.loading = false));
-        } else {
-          this.$message.error("Please fill in all fields");
-          return false;
-        }
-      });
-    },
-  },
+  mounted() {
+    if (!('dcv' in this.verification_back)) return;
+    this.verification = this.verification_back;
+  }
 };
 </script>

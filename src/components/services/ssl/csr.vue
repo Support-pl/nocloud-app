@@ -8,21 +8,17 @@
     />
     <a-form-model ref="csrFormField" :model="fieldCSR" :rules="rules">
       <a-form-model-item label="CSR" prop="csr">
-        <a-spin tip="Loading..." :spinning="areaLoading">
+        <a-spin :tip="$t('loading')" :spinning="areaLoading">
           <a-textarea v-model="fieldCSR.csr" style="height: 150px" />
         </a-spin>
       </a-form-model-item>
       <a-form-model-item>
-        <router-link :to="{ name: 'csr' }">
-          <a-button type="primary"> {{ $t("ssl_product.generate") }} CSR</a-button>
-        </router-link>
-        <a-button
-          type="primary"
-          @click="handleClickNext"
-          :style="{ marginLeft: '10px' }"
-        >
-          {{ $t("ssl_product.continue") }}<a-icon type="right"
-        /></a-button>
+        <a-button type="primary" @click="$emit('handleClickPrev', { ...fieldCSR})">
+          {{ $t("ssl_product.back") }} <a-icon type="left" />
+        </a-button>
+        <a-button type="primary" style="margin-left: 10px" @click="handleClickNext">
+          {{ $t("ssl_product.continue") }} <a-icon type="right" />
+        </a-button>
       </a-form-model-item>
     </a-form-model>
   </div>
@@ -30,6 +26,7 @@
 
 <script>
 import api from "@/api.js";
+
 const keys = {
   firstname: "tech_firstname",
   lastname: "tech_lastname",
@@ -50,23 +47,15 @@ const keys = {
   org_postalcode: "org_postalcode",
   org_phone: "org_phone",
 };
+
 export default {
   name: "certificate",
   props: {
-    csr: {
-      type: Object,
-      default: () => {},
-    },
-    product_info: {
-      type: Object,
-      default: () => {},
-    },
+    csr: { type: Object, default: () => {} }
   },
   data() {
     return {
-      fieldCSR: {
-        csr: "",
-      },
+      fieldCSR: { csr: '' },
       areaLoading: false,
       rules: {
         csr: [
@@ -82,17 +71,10 @@ export default {
   methods: {
     handleClickNext() {
       this.$refs.csrFormField.validate(async (valid) => {
-        let params =
-          "domain" in this.$route.params
-            ? this.$route.params
-            : await this.decodeCSR(this.fieldCSR.csr);
+        const params = ("domain" in this.csr) ? this.csr : await this.decodeCSR(this.fieldCSR.csr);
 
         if (valid) {
-          const data = {
-            ...this.fieldCSR,
-            ...params,
-          };
-          this.$emit("handleClickNext", data);
+          this.$emit("handleClickNext", { ...this.fieldCSR, ...params });
         } else {
           this.$message.error(`${this.$t("ssl_product.fields is required")}`);
           return false;
@@ -137,31 +119,6 @@ export default {
   },
   mounted() {
     this.fieldCSR.csr = this.$route.params.csr || this.csr.csr;
-  },
-  created() {
-    this.areaLoading = this.$route.params.reissue ? true : false;
-    api
-      .sendAsUser("services.getInfo", {
-        serviceid: this.$route.params.id,
-      })
-      .then((res) => {
-        if (res.SSL.remoteid) {
-          this.fieldCSR.csr = res.SSL.configdata.csr_code;
-          let data = {};
-          for (let key in keys) {
-            this.$set(data, key, res.SSL.configdata[keys[key]]);
-          }
-          this.$set(data, "result", "success");
-          this.$set(data, "remoteid", res.SSL.remoteid);
-          this.$emit("saveReissueInfo", data);
-        }
-
-        this.$emit("saveProductInfo", res);
-        this.areaLoading = false;
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  },
+  }
 };
 </script>
