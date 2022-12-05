@@ -4,107 +4,180 @@
 			<div class="order__inputs order__field">
 
 				<div class="order_option">
+          <a-steps size="small" :current="currentStep">
+            <a-step :title="$t('product') | capitalize" />
+            <a-step :title="$t('csr')" />
+            <a-step :title="$t('personal') | capitalize" />
+            <a-step :title="$t('verification') | capitalize" />
+          </a-steps>
 
-					<a-row class="order__prop" style="margin-bottom: 5px">
-						<a-col span="8" :xs="6">{{$t('provider') | capitalize}}:</a-col>
-					</a-row>
-					
-					<div class="order__slider">
-						<template v-if="!fetchLoading">
-							<div
-								class="order__slider-item"
-								v-for="provider of Object.keys(products)"
-								:key="provider"
-								:class="{'order__slider-item--active': options.provider == provider}"
-								@click="() => options.provider = provider"
-							>
-								{{ provider }}
-							</div>
-						</template>
-						<template v-else>
-							<div
-								class="order__slider-item order__slider-item--loading"
-								v-for="(provider, index) of Array(4)"
-								:key="index"
-							>
-							</div>
-						</template>
-					</div>
+          <component
+            :is="template"
+            :csr="csr"
+            :personal="personal"
+            :personal_back="personal"
+            :product_info="getProducts"
+            :verification_back="verification"
+            @handleClickNext="handleClickNext"
+            @handleClickPrev="handleClickPrev"
+          />
 
-					<a-row class="order__prop">
-						<a-col span="8" :xs="6">{{$t('product_name') | capitalize}}:</a-col>
-						<a-col span="16" :xs="18">
-							<a-select v-if="!fetchLoading" v-model="options.tarif" style="width: 100%">
-								<a-select-option v-for="kind of products[options.provider]" :value="kind.product" :key="kind.product">{{kind.product}}</a-select-option>
-							</a-select>
-							<div v-else class="loadingLine"></div>
-						</a-col>
-					</a-row>
+          <template v-if="currentStep === 0">
+            <a-row class="order__prop" style="margin-bottom: 5px">
+              <a-col span="8" :xs="6">{{$t('provider') | capitalize}}:</a-col>
+            </a-row>
+            
+            <div class="order__slider">
+              <template v-if="!fetchLoading">
+                <div
+                  class="order__slider-item"
+                  v-for="provider of Object.keys(products)"
+                  :key="provider"
+                  :class="{'order__slider-item--active': options.provider == provider}"
+                  @click="() => options.provider = provider"
+                >
+                  {{ provider }}
+                </div>
+              </template>
+              <template v-else>
+                <div
+                  class="order__slider-item order__slider-item--loading"
+                  v-for="(provider, index) of Array(4)"
+                  :key="index"
+                >
+                </div>
+              </template>
+            </div>
 
-					<a-row class="order__prop">
-						<a-col span="8" :xs="6">{{$t('ssl_product.domain') }}:</a-col>
-						<a-col span="16" :xs="18">
-							<a-input v-if="!fetchLoading" v-model="options.domain" placeholder="example.com"></a-input>
-							<div v-else class="loadingLine"></div>
-						</a-col>
-					</a-row>
+            <a-row class="order__prop">
+              <a-col span="8" :xs="6">{{$t('product_name') | capitalize}}:</a-col>
+              <a-col span="16" :xs="18">
+                <a-select v-if="!fetchLoading" v-model="options.tarif" style="width: 100%">
+                  <a-select-option v-for="kind of products[options.provider]" :value="kind.product" :key="kind.product">{{kind.product}}</a-select-option>
+                </a-select>
+                <div v-else class="loadingLine"></div>
+              </a-col>
+            </a-row>
 
-				</div>
-			</div>
-			
-			<div class="order__calculate order__field">
+            <a-row class="order__prop">
+              <a-col span="8" :xs="6">{{$t('ssl_product.domain') }}:</a-col>
+              <a-col span="16" :xs="18">
+                <a-input v-if="!fetchLoading" v-model="options.domain" placeholder="example.com"></a-input>
+                <div v-else class="loadingLine"></div>
+              </a-col>
+            </a-row>
 
-				<a-row type="flex" justify="space-around" style="margin-top: 20px">
-					<a-col :xs="10" :sm="6" :lg='12' style="font-size: 1rem">
-						{{$t('Payment period')}}:
-					</a-col>
+            <a-row class="order__prop">
+              <a-col span="24">
+                <router-link :to="{ name: 'csr' }">
+                  <a-button type="primary" :disabled="true">
+                    {{ $t("ssl_product.generate") }} CSR
+                  </a-button>
+                </router-link>
+                <a-button type="primary" style="margin-left: 10px" @click="handleClickNext">
+                  {{ $t("ssl_product.continue") }} <a-icon type="right" />
+                </a-button>
+              </a-col>
+            </a-row>
+          </template>
+        </div>
+      </div>
+      
+      <div class="order__calculate order__field">
 
-					<a-col :xs="12" :sm="18" :lg='12'>
-						<a-select v-if="!fetchLoading" v-model="options.period"  style="width: 100%">
-							<a-select-option v-for="period in periods" :key="period.title+period.count" :value='period'>
-								{{ $tc('month', period) }}
-							</a-select-option>
-						</a-select>
-						<div v-else class="loadingLine"></div>
-					</a-col>
-				</a-row>
-				
-				<a-divider orientation="left" :style="{'margin-bottom': '0'}">
-					{{$t('Total')}}:
-				</a-divider>
+        <a-row type="flex" justify="space-around" style="margin-top: 20px">
+          <a-col :xs="10" :sm="6" :lg='12' style="font-size: 1rem">
+            {{$t('Payment period')}}:
+          </a-col>
 
-				<a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
-					<a-col v-if="getProducts.prices">
-						<template v-if="!fetchLoading">
-							{{ getProducts.prices[options.period] }} {{ user.currency_code || 'USD' }}
-						</template>
-						<div v-else class="loadingLine loadingLine--total"></div>
-					</a-col>
-				</a-row>
+          <a-col :xs="12" :sm="18" :lg='12'>
+            <a-select v-if="!fetchLoading" v-model="options.period"  style="width: 100%">
+              <a-select-option v-for="period in periods" :key="period.title+period.count" :value='period'>
+                {{ $tc('month', period) }}
+              </a-select-option>
+            </a-select>
+            <div v-else class="loadingLine"></div>
+          </a-col>
+        </a-row>
 
-				<a-row type="flex" justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
-					<a-col :span="22">
-						<a-button type="primary" block shape="round" @click="orderConfirm">
-							{{$t("order") | capitalize}}
-						</a-button>
-						<a-modal
-							:title="$t('Confirm')"
-							:visible="modal.confirmCreate"
-							:confirm-loading="sendloading"
-							:cancel-text="$t('Cancel')"
-							@ok="orderClickHandler"
-							@cancel="() => { modal.confirmCreate = false }"
-						>
-							<p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.product }}</p>
+        <a-row :gutter="[10, 10]" style="margin-top: 10px">
+          <a-col v-if="services.length > 1">
+            <a-select
+              style="width: 100%"
+              placeholder="services"
+              @change="(value) => service = value"
+            >
+              <a-select-option
+                v-for="service of services"
+                :key="service.uuid"
+                :value="service.uuid"
+              >
+                {{ service.title }}
+              </a-select-option>
+            </a-select>
+          </a-col>
+          <a-col v-if="namespaces.length > 1">
+            <a-select
+              style="width: 100%"
+              placeholder="namespaces"
+              @change="(value) => namespace = value"
+            >
+              <a-select-option
+                v-for="namespace of namespaces"
+                :key="namespace.uuid"
+                :value="namespace.uuid"
+              >
+                {{ namespace.title }}
+              </a-select-option>
+            </a-select>
+          </a-col>
+          <a-col v-if="plans.length > 1">
+            <a-select
+              style="width: 100%"
+              placeholder="plans"
+              @change="(value) => plan = value"
+            >
+              <a-select-option
+                v-for="plan of plans"
+                :key="plan.uuid"
+                :value="plan.uuid"
+              >
+                {{ plan.title }}
+              </a-select-option>
+            </a-select>
+          </a-col>
+        </a-row>
+        
+        <a-divider orientation="left" :style="{'margin-bottom': '0'}">
+          {{$t('Total')}}:
+        </a-divider>
 
-							<a-row style="margin-top: 20px">
-								<a-col>
-									<a-checkbox :checked="modal.goToInvoice" @change="(e) => modal.goToInvoice = e.target.checked"/> {{$t('go to invoice') | capitalize}}
-								</a-col>
-							</a-row>
-						</a-modal>
-					</a-col>
-				</a-row>
+        <a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
+          <a-col v-if="getProducts.prices">
+            <template v-if="!fetchLoading">
+              {{ getProducts.prices[options.period] }} {{ user.currency_code || 'USD' }}
+            </template>
+            <div v-else class="loadingLine loadingLine--total"></div>
+          </a-col>
+        </a-row>
+
+        <a-row type="flex" justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
+          <a-col :span="22">
+            <a-button type="primary" block shape="round" @click="orderConfirm">
+              {{$t("order") | capitalize}}
+            </a-button>
+            <a-modal
+              :title="$t('Confirm')"
+              :visible="modal.confirmCreate"
+              :confirm-loading="modal.confirmLoading"
+              :cancel-text="$t('Cancel')"
+              @ok="orderClickHandler"
+              @cancel="() => { modal.confirmCreate = false }"
+            >
+              <p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.product }}</p>
+            </a-modal>
+          </a-col>
+        </a-row>
 
 			</div>
 		</div>
@@ -112,28 +185,41 @@
 </template>
 
 <script>
+import passwordMeter from 'vue-simple-password-meter';
+import notification from '@/mixins/notification.js';
+import { countries } from '@/setup/countries.js';
+
 export default {
 	name: 'ssl-component',
-	data(){
-		return {
-			products: {},
-			fetchLoading: false,
-			sendloading: false,
-			options: {
-				provider: '',
-				tarif: '',
-				domain: '',
-				period: ''
-			},
-			modal: {
-				confirmCreate: false,
-				confirmLoading: false,
-				goToInvoice: true
-			}
-		}
-	},
+  mixins: [notification],
+  components: { passwordMeter },
+	data: () => ({
+    countries,
+    products: {},
+    currentStep: 0,
+    plan: null,
+    service: null,
+    namespace: null,
+    fetchLoading: false,
+
+    options: {
+      provider: '',
+      tarif: '',
+      domain: '',
+      period: ''
+    },
+    modal: {
+      confirmCreate: false,
+      confirmLoading: false
+    },
+
+    csr: {},
+    personal: {},
+    verification: {}
+	}),
 	methods: {
 		fetch(){
+      this.fetchLoading = true;
 			this.$api.post(`/sp/${this.sp.uuid}/invoke`, {
         method: 'get_certificate'
       })
@@ -154,14 +240,38 @@ export default {
 			})
 		},
 		orderClickHandler(){
-			this.sendloading = true;
-			const info = {
-				domain: this.options.domain,
-				billingcycle: 'annually',
-				pid: this.getProducts.id
-			}
+			const service = this.services.find(({ uuid }) => uuid === this.service);
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
 
-			if(!this.$store.getters.getUser){
+      const instances = [{
+        resources: {
+          id: this.getProducts.id,
+          user: this.personal,
+          domain: this.options.domain,
+          period: this.options.period,
+          dcv: this.verification.dcv,
+          approver_email: this.verification.email
+        },
+        title: this.options.tarif,
+        billing_plan: plan ?? {}
+      }];
+      const newGroup = {
+        title: this.user.fullname + Date.now(),
+        type: this.sp.type,
+        sp: this.sp.uuid,
+        instances
+      };
+
+      const info = (!this.service) ? newGroup : Object.assign(
+        { instances_groups: service.instancesGroups },
+        { ...service }
+      );
+      const group = info.instances_groups?.find(({ type }) => type === 'goget');
+
+      if (group) group.instances = [...group.instances, ...instances];
+      else if (this.service) info.instances_groups.push(newGroup);
+
+			if (!this.user) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
 				this.$store.commit('setOnloginInfo', {
 					type: 'SSL',
@@ -175,29 +285,89 @@ export default {
 				return
 			}
 
-			this.createSSL(info);
+      this.createSSL(info);
 		},
 		createSSL(info){
-			api.sendAsUser('createOrderSSL', info)
-			.then(result => {
-				if(this.modal.goToInvoice){
-					this.$router.push({name: 'invoiceFS', params: {pathMatch: result.invoiceid}});
-				} else {
-					this.$router.push({name: 'services'});
-				}
-			})
-			.catch(err => console.error(err))
-			.finally(()=>{
-				this.sendloading = false;
-			})
+			this.modal.confirmLoading = true;
+			const action = (this.service) ? 'update' : 'create';
+      const orderData = (this.service) ? info : {
+        namespace: this.namespace,
+        service: {
+          title: this.user.fullname,
+          context: {},
+          version: '1',
+          instances_groups: [info]
+        }
+      };
+
+      delete orderData.instancesGroups;
+      this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
+        .then(({ uuid }) => { this.deployService(uuid) })
+        .catch((err) => {
+          const config = { namespace: this.namespace, service: orderData };
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$api.services.testConfig(config)
+            .then(({ result, errors }) => {
+              if (!result) errors.forEach(({ error }) => {
+                this.openNotificationWithIcon('error', { message: error });
+              });
+            });
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
+          console.error(err);
+        });
 		},
-		orderConfirm(){
-			if(!this.options.domain.match(/.+\..+/)){
+		orderConfirm(order = true) {
+      const isValid = this.options.domain.match(/.+\..+/);
+
+			if (!isValid) {
 				this.$message.error('domain is wrong');
 				return
 			}
-			this.modal.confirmCreate = true;
-		}
+			if (order) this.modal.confirmCreate = true;
+
+      return isValid;
+		},
+    deployService(uuid) {
+      this.$api.services.up(uuid)
+        .then(() => {
+          this.openNotificationWithIcon('success', {
+            message: this.$t('SSL created successfully')
+          });
+          this.$router.push({ path: '/services' });
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
+        })
+        .finally(() => this.modal.confirmLoading = false);
+    },
+    handleClickPrev(data) {
+      if (data.csr) {
+        this.csr = data;
+      } else if (data.firstname) {
+        this.personal = data;
+      } else if (data.dcv) {
+        this.verification = data;
+      }
+      this.currentStep--;
+    },
+    handleClickNext(data) {
+      if (data.csr) {
+        this.csr = data;
+      } else if (data.firstname) {
+        this.personal = data;
+      }
+
+      if (this.orderConfirm(false)) {
+        this.currentStep++;
+      }
+    }
 	},
 	computed: {
 		getProducts() {
@@ -205,6 +375,16 @@ export default {
       return this.products[this.options.provider]
         .find(el => el.product === this.options.tarif);
 		},
+    template() {
+      switch (this.currentStep) {
+        case 1:
+          return () => import('@/components/services/ssl/csr.vue');
+        case 2:
+          return () => import('@/components/services/ssl/personal.vue');
+        case 3:
+          return () => import('@/components/services/ssl/verification.vue')
+      }
+    },
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
     },
@@ -215,19 +395,70 @@ export default {
     periods() {
       return Object.keys(this.getProducts.prices || {})
         .filter((el) => isFinite(+el));
+    },
+    services() {
+      return this.$store.getters['nocloud/vms/getServices']
+        .filter((el) => el.status !== 'DEL');
+    },
+    namespaces() {
+      return this.$store.getters['nocloud/namespaces/getNamespaces'] ?? [];
+    },
+    plans() {
+      return this.$store.getters['nocloud/plans/getPlans']
+        .filter(({ type }) => type === 'goget');
     }
 	},
 	created() {
-    this.fetchLoading = true;
     this.$store.dispatch('nocloud/auth/fetchBillingData');
     this.$store.dispatch('nocloud/sp/fetch').then(() => this.fetch());
+    this.$store.dispatch('nocloud/plans/fetch')
+      .then(() => {
+        if (this.plans.length === 1) this.plan = this.plans[0].uuid;
+      })
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
+        this.openNotificationWithIcon('error', {
+          message: this.$t(message)
+        });
+        console.error(err);
+      });
+
+    this.$store.dispatch('nocloud/namespaces/fetch')
+      .then(({ pool }) => {
+        if (pool.length === 1) this.namespace = pool[0].uuid;
+      })
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
+        this.openNotificationWithIcon('error', {
+          message: this.$t(message)
+        });
+        console.error(err);
+      });
+
+    this.$store.dispatch('nocloud/vms/fetch')
+      .then(() => {
+        if (this.services.length === 1) this.service = this.services[0].uuid;
+      })
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
+        this.openNotificationWithIcon('error', {
+          message: this.$t(message)
+        });
+        console.error(err);
+      });
 	},
 	watch: {
-		'options.provider'() {
-			this.options.tarif = this.products[this.options.provider][0].product;
+		'options.provider'(value) {
+			this.options.tarif = this.products[value][0].product;
 		},
     periods(value) {
       this.options.period = value[0];
+    },
+    currentStep(value) {
+      if (value === 1) this.csr.domain = this.options.domain;
     }
 	}
 }

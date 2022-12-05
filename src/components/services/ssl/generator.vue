@@ -141,15 +141,14 @@
   </div>
 </template>
 <script>
-import loading from "@/components/loading/loading";
 import { countries } from "@/setup/countries";
-import { mapGetters } from "vuex";
+import loading from "@/components/loading/loading";
 import api from "@/api.js";
+
 export default {
   name: "ssl-generator",
-  components: {
-    loading,
-  },
+  components: { loading },
+  props: { domain: { type: String, required: true } },
   data() {
     return {
       countries,
@@ -217,9 +216,9 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({
-      userData: "getUserData",
-    }),
+    userData() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    }
   },
   methods: {
     download(ext, text) {
@@ -237,21 +236,8 @@ export default {
       element.click();
       document.body.removeChild(element);
     },
-     fetchService() {
-      api
-        .sendAsUser("services.getInfo", {
-          serviceid: this.$route.params.id,
-        })
-        .then((res) => {
-          this.generate.csr_commonname = res.domain;
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    },
     fetchInfo() {
-      api
-        .sendAsUser("clientDetails")
+      this.$store.dispatch('nocloud/auth/fetchBillingData')
         .then((res) => {
           this.$store.commit("setUserData", res);
           this.installDataToBuffer();
@@ -307,7 +293,7 @@ export default {
     },
   },
   mounted() {
-     this.fetchService();
+    this.generate.csr_commonname = this.domain;
     this.fetchInfo();
   },
 };
