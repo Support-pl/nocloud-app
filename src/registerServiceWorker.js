@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 
 import store from './store/index.js'
-import config from '../public/config.json'
 
 if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
 	navigator.serviceWorker.register(`${process.env.BASE_URL}service-worker.js`)
@@ -12,16 +11,14 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
         console.log('New content is available; please refresh.')
         store.commit('app/setUpdate', { worker, status: true })
         caches.keys().then((cacheNames) =>
-          Promise.all(
-            cacheNames.map((cacheName) => {
-              if (expectedCacheNames.indexOf(cacheName) == -1) {
-                console.log('Deleting out of date cache:', cacheName);
+          Promise.all(cacheNames.map((cacheName) => {
+            if (expectedCacheNames.indexOf(cacheName) === -1) {
+              console.log('Deleting out of date cache:', cacheName)
 
-                return caches.delete(cacheName);
-              }
-            })
-          );
-        );
+              return caches.delete(cacheName)
+            }
+          }))
+        )
       }
 
       worker.addEventListener('updatefound', () => {
@@ -36,16 +33,14 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
 
               store.commit('app/setUpdate', { worker, status: true })
               caches.keys().then((cacheNames) =>
-                Promise.all(
-                  cacheNames.map((cacheName) => {
-                    if (expectedCacheNames.indexOf(cacheName) == -1) {
-                      console.log('Deleting out of date cache:', cacheName);
+                Promise.all(cacheNames.map((cacheName) => {
+                  if (expectedCacheNames.indexOf(cacheName) === -1) {
+                    console.log('Deleting out of date cache:', cacheName)
 
-                      return caches.delete(cacheName);
-                    }
-                  })
-                );
-              );
+                    return caches.delete(cacheName)
+                  }
+                }))
+              )
             } else {
 			        console.log('Content has been cached for offline use.')
             }

@@ -208,7 +208,7 @@
                     :title="$t('Access manager')"
                     :footer="null"
                   >
-                    <access-manager />
+                    <access-manager :VM="VM" />
                   </a-modal>
                 </div>
               </div>
@@ -319,6 +319,13 @@ export default {
           modules: ['ione'],
         },
         {
+          title: "Access manager",
+          onclick: this.changeModal,
+          params: ["accessManager"],
+          icon: "safety",
+          modules: ['ovh'],
+        },
+        {
           title: "Logs",
           onclick: this.getLogs,
           params: ["logs"],
@@ -368,6 +375,7 @@ export default {
         : this.VM.state.meta.lcm_state_str
 
       if (this.VM.state.meta.state === 1) return "PENDING";
+      if (this.VM.state.meta.state === 5) return "SUSPENDED";
       if (this.VM.state.meta.state === "BUILD") return "BUILD";
       switch (state) {
         case "LCM_INIT":
