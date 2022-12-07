@@ -40,6 +40,9 @@
     "vue-template-compiler": "^2.6.11",
     "error-stack-parser": "^2.0.6"
   },
+  "resolutions": {
+    "error-stack-parser": "2.0.6"
+  },
   "eslintConfig": {
     "globals": {
       "VUE_APP_BASE_URL": true
