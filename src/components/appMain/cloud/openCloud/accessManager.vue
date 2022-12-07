@@ -5,28 +5,18 @@
 				{{$t( 'clientinfo.password' )}}: 
 			</a-col>
 			<a-col :span="18">
-				<password :password="SingleCloud.TEMPLATE.CONTEXT.PASSWORD"/>
+				<password :password="VM.state.meta.password"/>
 			</a-col>
 		</a-row>
 	</div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import password from '@/components/password.vue';
+
 export default {
 	name: "access-manager",
-	components: {
-		password
-	},
-	computed: {
-		...mapGetters('cloud', {
-			SingleCloud: 'getOpenedCloud',
-		}),
-	}
+	components: { password },
+  props: { VM: { type: Object, required: true } }
 }
 </script>
-
-<style>
-
-</style>

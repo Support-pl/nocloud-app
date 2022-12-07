@@ -228,6 +228,12 @@
               {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}
             </div>
           </div>
+          <div class="block__column" v-if="VM.data.last_monitoring">
+            <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
+            <div class="block__value">
+              {{ new Intl.DateTimeFormat().format(VM.data.last_monitoring * 1000) }}
+            </div>
+          </div>
         </div>
       </div>
 
