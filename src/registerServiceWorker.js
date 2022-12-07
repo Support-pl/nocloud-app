@@ -11,7 +11,17 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
       if (worker.waiting) {
         console.log('New content is available; please refresh.')
         store.commit('app/setUpdate', { worker, status: true })
-        localStorage.setItem('globalConfig', JSON.stringify(config));
+        caches.keys().then((cacheNames) =>
+          Promise.all(
+            cacheNames.map((cacheName) => {
+              if (expectedCacheNames.indexOf(cacheName) == -1) {
+                console.log('Deleting out of date cache:', cacheName);
+
+                return caches.delete(cacheName);
+              }
+            })
+          );
+        );
       }
 
       worker.addEventListener('updatefound', () => {
@@ -25,7 +35,17 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
               console.log('New content is available; please refresh.')
 
               store.commit('app/setUpdate', { worker, status: true })
-              localStorage.setItem('globalConfig', JSON.stringify(config));
+              caches.keys().then((cacheNames) =>
+                Promise.all(
+                  cacheNames.map((cacheName) => {
+                    if (expectedCacheNames.indexOf(cacheName) == -1) {
+                      console.log('Deleting out of date cache:', cacheName);
+
+                      return caches.delete(cacheName);
+                    }
+                  })
+                );
+              );
             } else {
 			        console.log('Content has been cached for offline use.')
             }
