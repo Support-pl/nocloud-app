@@ -1,6 +1,12 @@
 <template>
 	<div>
 		<a-row>
+      <a-col :span="6">
+        {{$t('clientinfo.login') | capitalize}}:
+      </a-col>
+      <a-col :span="18">
+        {{ VM.state.meta.login }}
+      </a-col>
 			<a-col :span="6">
 				{{$t( 'clientinfo.password' )}}: 
 			</a-col>
