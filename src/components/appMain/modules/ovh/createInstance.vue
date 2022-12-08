@@ -321,18 +321,21 @@ export default {
         meta.plans.forEach(({ prices, planCode }) => {
           const i = products.findIndex((key) => key.includes(planCode));
 
-          if (i !== -1) plans.push({
-            value: planCode, label: planCode,
-            periods: prices.filter(({ pricingMode, duration }) => {
-              const productDuration = products[i].split(' ')[0];
-              const isMonthly = duration === productDuration && pricingMode === 'default';
-              const isYearly = duration === productDuration && pricingMode === 'upfront12';
+          if (i !== -1) {
+            const { title, price } = this.getPlan.products[products[i]];
 
-              return (isMonthly || isYearly);
-            }).map((period) => ({ ...period, price: {
-              ...period.price, value: this.getPlan.products[products[i]].price
-            }}))
-          });
+            plans.push({
+              value: planCode, label: title,
+              periods: prices.filter(({ pricingMode, duration }) => {
+                const productDuration = products[i].split(' ')[0];
+                const isMonthly = duration === productDuration && pricingMode === 'default';
+                const isYearly = duration === productDuration && pricingMode === 'upfront12';
+
+                return (isMonthly || isYearly);
+              })
+              .map((period) => ({ ...period, price: { ...period.price, value: price } }))
+            });
+          }
         });
         this.plans = plans;
 
@@ -380,12 +383,12 @@ export default {
       return { value: extra.region, title };
     },
     resources() {
-      const plans = new Set(this.plans.map(({ value }) => value.split('-')[1]));
+      const plans = new Set(this.plans.map(({ label }) => label.split(' ')[1]));
       const ram = new Set();
       const disk = new Set();
 
-      const filteredPlans = this.plans.filter(({ value }) =>
-        value.includes(this.plan)
+      const filteredPlans = this.plans.filter(({ label }) =>
+        label.includes(this.plan)
       );
 
       filteredPlans.forEach(({ value }) => {
@@ -438,12 +441,14 @@ export default {
     },
     planKey() {
       const { cpu, ram, disk } = this.options;
-      const drive = { ...disk };
-      drive.size /= 1024;
+      const drive = { size: disk.size / 1024 };
 
       const resources = [cpu, ram, drive].map(({ size }) => size);
+      const plan = this.plans.find(({ label }) =>
+        label.includes(`${this.plan} ${resources.join('-')}`)
+      );
 
-      return `${this.plan}-${resources.join('-')}`;
+      return plan?.value.slice(4);
     },
     planHeader() {
       if (this.itemSP) return this.plan && ` (${this.plan})`;
@@ -458,7 +463,9 @@ export default {
   watch: {
     tarification() { this.setData(this.planKey) },
     plan(value) {
-      this.setData(value);
+      const plan = this.plans.find(({ label }) => label.includes(value));
+
+      this.setData(plan.value);
       const { configurations } = this.meta.catalog.plans.find(
         ({ planCode }) => planCode.includes(this.planKey)
       );
@@ -485,8 +492,8 @@ export default {
       const plan = this.plans.find(({ value }) => value.includes(this.planKey));
 
       if (plan) return;
-      const regexp = new RegExp(`${this.plan}-\\d{1,4}-${size}`, 'gm');
-      const { value } = this.plans.find((el) => regexp.test(el.value));
+      const regexp = new RegExp(`${this.plan} \\d{1,4}-${size}`, 'gm');
+      const { value } = this.plans.find((el) => regexp.test(el.label));
 
       this.options.disk.size = value.split('-').at(-1) * 1024;
     },
@@ -494,8 +501,8 @@ export default {
       const plan = this.plans.find(({ value }) => value.includes(this.planKey));
 
       if (plan) return;
-      const regexp = new RegExp(`${this.plan}-\\d{1,4}-\\d{1,4}-${size / 1024}`, 'gm');
-      const { value } = this.plans.find((el) => regexp.test(el.value));
+      const regexp = new RegExp(`${this.plan} \\d{1,4}-\\d{1,4}-${size / 1024}`, 'gm');
+      const { value } = this.plans.find((el) => regexp.test(el.label));
 
       this.options.ram.size = value.split('-').at(-2);
     }

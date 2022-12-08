@@ -1,20 +1,18 @@
 <template>
-	<div>
-		<a-row>
-      <a-col :span="6">
-        {{$t('clientinfo.login') | capitalize}}:
-      </a-col>
-      <a-col :span="18">
-        {{ VM.state.meta.login }}
-      </a-col>
-			<a-col :span="6">
-				{{$t( 'clientinfo.password' )}}: 
-			</a-col>
-			<a-col :span="18">
-				<password :password="VM.state.meta.password"/>
-			</a-col>
-		</a-row>
-	</div>
+  <a-row>
+    <a-col style="margin-bottom: 10px" :span="6">
+      {{ $t('login') }}:
+    </a-col>
+    <a-col style="margin-bottom: 10px" :span="18">
+      {{ VM.state.meta.login }}
+    </a-col>
+    <a-col :span="6">
+      {{ $t('clientinfo.password') }}: 
+    </a-col>
+    <a-col :span="18">
+      <password :password="VM.state.meta.password"/>
+    </a-col>
+  </a-row>
 </template>
 
 <script>

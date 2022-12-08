@@ -81,11 +81,11 @@
                     :title="$t('Resize VM')"
                     @ok="ResizeVM"
                   >
-                    <template v-if="VM.state && VM.state.meta.snapshots && VM.state.meta.snapshots.length > 0">
+                    <template v-if="VM.state && Object.keys(VM.state.meta.snapshots).length > 0">
                       <p>{{ $t('You cannot change VM resources while you have a snapshot.') }}</p>
                       <p>{{ $t('Please delete snapshot and try again.') }}</p>
                     </template>
-                    <template>
+                    <template v-else>
                       <a-row
                         style="
                           display: flex;
@@ -444,7 +444,10 @@ export default {
       this.modal[name] = false;
     },
     ResizeVM() {
-      if (VM.state?.meta.snapshots?.length > 0) return;
+      if (Object.keys(this.VM.state?.meta.snapshots).length > 0) {
+        this.closeModal('expand');
+        return;
+      }
       let confirm = window.confirm("VM will be restarted");
       if (confirm) {
         this.isRenameLoading = true;
