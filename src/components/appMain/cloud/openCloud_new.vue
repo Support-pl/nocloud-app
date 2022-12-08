@@ -81,57 +81,63 @@
                     :title="$t('Resize VM')"
                     @ok="ResizeVM"
                   >
-                    <a-row
-                      style="
-                        display: flex;
-                        align-items: center;
-                        margin-bottom: 5px;
-                      "
-                    >
-                      <a-col  style="width: 75px"> CPU </a-col>
-                      <a-col style="width: 100%">
-                        <a-input-number
-                        style="width: 100%"
-                          v-model="resize.VCPU"
-                          :min="1"
-                          :max="32"
-                          default-value="1"
-                        />
-                      </a-col>
-                    </a-row>
-                    <a-row
-                      style="
-                        display: flex;
-                        align-items: center;
-                        margin-bottom: 5px;
-                        width: 100%
-                      "
-                    >
-                      <a-col style="width: 75px"> RAM (GB) </a-col>
-                      <a-col style="width: 100%">
-                        <a-input-number
+                    <template v-if="VM.state && VM.state.meta.snapshots && VM.state.meta.snapshots.length > 0">
+                      <p>{{ $t('You cannot change VM resources while you have a snapshot.') }}</p>
+                      <p>{{ $t('Please delete snapshot and try again.') }}</p>
+                    </template>
+                    <template>
+                      <a-row
+                        style="
+                          display: flex;
+                          align-items: center;
+                          margin-bottom: 5px;
+                        "
+                      >
+                        <a-col  style="width: 75px"> CPU </a-col>
+                        <a-col style="width: 100%">
+                          <a-input-number
                           style="width: 100%"
-                          v-model="resize.RAM"
-                          :min="1"
-                          :max="64"
-                          default-value="1"
-                        />
-                      </a-col>
-                    </a-row>
-                    <a-row style="display: flex; align-items: center; width: 100%">
-                      <a-col style="width: 75px; padding-top:20px"> {{ $t('disk') }} (GB) </a-col>
-                      <a-col style="width: 100%">
-                        <div :style="{ color: 'var(--err)', textAlign: 'center' }">
-                          {{ $t('Can\'t reduce disk size') }}
-                        </div>
-                        <a-input-number
-                          style="width: 100%"
-                          v-model="resize.size"
-                          :min="VM.resources && VM.resources.drive_size / 1024"
-                          default-value="1"
-                        />
-                      </a-col>
-                    </a-row>
+                            v-model="resize.VCPU"
+                            :min="1"
+                            :max="32"
+                            default-value="1"
+                          />
+                        </a-col>
+                      </a-row>
+                      <a-row
+                        style="
+                          display: flex;
+                          align-items: center;
+                          margin-bottom: 5px;
+                          width: 100%
+                        "
+                      >
+                        <a-col style="width: 75px"> RAM (GB) </a-col>
+                        <a-col style="width: 100%">
+                          <a-input-number
+                            style="width: 100%"
+                            v-model="resize.RAM"
+                            :min="1"
+                            :max="64"
+                            default-value="1"
+                          />
+                        </a-col>
+                      </a-row>
+                      <a-row style="display: flex; align-items: center; width: 100%">
+                        <a-col style="width: 75px; padding-top:20px"> {{ $t('disk') }} (GB) </a-col>
+                        <a-col style="width: 100%">
+                          <div :style="{ color: 'var(--err)', textAlign: 'center' }">
+                            {{ $t('Can\'t reduce disk size') }}
+                          </div>
+                          <a-input-number
+                            style="width: 100%"
+                            v-model="resize.size"
+                            :min="VM.resources && VM.resources.drive_size / 1024"
+                            default-value="1"
+                          />
+                        </a-col>
+                      </a-row>
+                    </template>
                   </a-modal>
                   <a-modal
                     v-model="modal.SSH"
@@ -438,6 +444,7 @@ export default {
       this.modal[name] = false;
     },
     ResizeVM() {
+      if (VM.state?.meta.snapshots?.length > 0) return;
       let confirm = window.confirm("VM will be restarted");
       if (confirm) {
         this.isRenameLoading = true;
