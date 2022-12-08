@@ -9,16 +9,15 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
 
       if (worker.waiting) {
         console.log('New content is available; please refresh.')
-        store.commit('app/setUpdate', { worker, status: true })
+
         caches.keys().then((cacheNames) =>
           Promise.all(cacheNames.map((cacheName) => {
-            if (expectedCacheNames.indexOf(cacheName) === -1) {
-              console.log('Deleting out of date cache:', cacheName)
+            console.log('Deleting out of date cache:', cacheName)
 
-              return caches.delete(cacheName)
-            }
+            return caches.delete(cacheName)
           }))
         )
+        .then(() => store.commit('app/setUpdate', { worker, status: true }))
       }
 
       worker.addEventListener('updatefound', () => {
@@ -31,16 +30,14 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
             if (navigator.serviceWorker.controller) {
               console.log('New content is available; please refresh.')
 
-              store.commit('app/setUpdate', { worker, status: true })
               caches.keys().then((cacheNames) =>
                 Promise.all(cacheNames.map((cacheName) => {
-                  if (expectedCacheNames.indexOf(cacheName) === -1) {
-                    console.log('Deleting out of date cache:', cacheName)
+                  console.log('Deleting out of date cache:', cacheName)
 
-                    return caches.delete(cacheName)
-                  }
+                  return caches.delete(cacheName)
                 }))
               )
+              .then(() => store.commit('app/setUpdate', { worker, status: true }))
             } else {
 			        console.log('Content has been cached for offline use.')
             }
