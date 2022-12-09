@@ -505,7 +505,7 @@ export default {
       if (newVal) {
         newVal = Math.round(newVal * 1000) / 1000;
       }
-      return `${newVal} ${range}`;
+      return `${newVal || ''} ${range}`;
     },
     checkRange(val) {
       let count = 0;
