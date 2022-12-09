@@ -20,6 +20,7 @@
             :verification_back="verification"
             @handleClickNext="handleClickNext"
             @handleClickPrev="handleClickPrev"
+            @getVerification="(data) => verification = data"
           />
 
           <template v-if="currentStep === 0">
@@ -163,7 +164,7 @@
 
         <a-row type="flex" justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
           <a-col :span="22">
-            <a-button type="primary" block shape="round" @click="orderConfirm">
+            <a-button type="primary" block shape="round" :disabled="currentStep !== 3" @click="orderConfirm">
               {{$t("order") | capitalize}}
             </a-button>
             <a-modal
@@ -249,6 +250,7 @@ export default {
           user: this.personal,
           domain: this.options.domain,
           period: this.options.period,
+          csr: this.csr.csr,
           dcv: this.verification.dcv,
           approver_email: this.verification.email
         },
