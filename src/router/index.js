@@ -48,15 +48,15 @@ const routes = [
     },
     component: () => import("../routes/login.vue"),
   },
-  {
-    path: "/register",
-    name: "register",
-    meta: {
-      mustBeLoggined: false,
-      mustBeUnloggined: true,
-    },
-    component: () => import("../routes/register.vue"),
-  },
+  // {
+  //   path: "/register",
+  //   name: "register",
+  //   meta: {
+  //     mustBeLoggined: false,
+  //     mustBeUnloggined: true,
+  //   },
+  //   component: () => import("../routes/register.vue"),
+  // },
   {
     path: "/",
     component: () => import("../routes/crm.vue"),

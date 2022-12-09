@@ -21,7 +21,7 @@
     </div>
     <div class="login__main login__layout">
       <div class="login__UI">
-        <div class="login__onlogin-action">
+        <!-- <div class="login__onlogin-action">
           <div v-if="!getOnlogin.info" class="login__see-services">
             <router-link :to="{ name: 'services' }">
               <a-icon type="shopping-cart" />
@@ -30,7 +30,7 @@
           </div>
 
           <div v-else class="login__action-info">
-            <!-- {{getOnlogin.info}} -->
+            {{getOnlogin.info}}
             your order:
             <div class="order__card">
               <div class="order__icon">
@@ -47,7 +47,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
 
         <div class="login__inputs">
           <div v-if="loginError" class="login__error">{{ $t(loginError) }}</div>
@@ -96,7 +96,7 @@
             </div>
           </template>
         </div>
-        <div class="login__forgot" style="margin-top: 40px">
+        <!-- <div class="login__forgot" style="margin-top: 40px">
           <a-dropdown :trigger="['click']" placement="bottomCenter">
             <a class="ant-dropdown-link" @click.prevent>
               {{ $t('advanced options') }}
@@ -109,22 +109,22 @@
                 </a-menu-item>
               </a-menu>
             </template>
-          </a-dropdown>
-        </div>
+          </a-dropdown> 
+        </div> -->
         <div class="login__forgot">
           <a href="#" @click="forgotPass()">{{
             remember ? $t("forgotPass") : $t("I have a password") | capitalize
           }}</a>
         </div>
-        <div class="login__forgot">
+        <!-- <div class="login__forgot">
           <router-link :to="{ name: 'register' }">{{
             $t("sign up") | capitalize
           }}</router-link>
-        </div>
-        <div id="qrcode" style="margin-top: 50px; text-align: center">
+        </div> -->
+        <!-- <div id="qrcode" style="margin-top: 50px; text-align: center">
           <p>{{ $t("Use on your phone:") }}</p>
           <qrcode-vue :value="selfUrl" size="150" level="M" renderAs="svg" />
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
@@ -145,7 +145,7 @@ export default {
       password: "",
       email: "",
       qrcode: null,
-      type: false
+      type: true
     };
   },
   components: { QrcodeVue },
