@@ -16,6 +16,9 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim())
+  event.waitUntil(caches.keys().then((cacheNames) =>
+    Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)))
+  ))
 });
 
 /**
