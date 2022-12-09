@@ -174,7 +174,7 @@ export default {
                 localStorage.removeItem("data");
               }
             } else {
-              this.$router.push({ name: "crm" });
+              this.$router.push({ name: "root" });
               this.$store.dispatch("nocloud/auth/fetchUserData");
             }
           })
