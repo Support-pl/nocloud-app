@@ -83,8 +83,8 @@ export default {
     };
   },
   mounted() {
-    if (!('dcv' in this.verification_back)) return;
-    this.verification = this.verification_back;
+    if (!('dcv' in this.verification_back)) this.$emit('getVerification', this.verification);
+    else this.verification = this.verification_back;
   }
 };
 </script>

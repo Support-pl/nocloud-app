@@ -22,6 +22,7 @@
           <a-col span="24">
             <a-slider
               style="margin-top: 10px"
+              v-if="resources.plans.length < 6"
               :marks="{ ...resources.plans }"
               :tip-formatter="null"
               :max="resources.plans.length - 1"
@@ -29,6 +30,18 @@
               :value="resources.plans.indexOf(plan)"
               @change="(i) => plan = resources.plans[i]"
             />
+            
+            <div v-else class="order__slider">
+              <div
+                class="order__slider-item"
+                v-for="provider of resources.plans"
+                :key="provider"
+                :class="{ 'order__slider-item--active': plan === provider }"
+                @click="() => plan = provider"
+              >
+                {{ provider }}
+              </div>
+            </div>
           </a-col>
         </a-row>
         <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
@@ -509,3 +522,39 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.order__slider{
+	display: flex;
+	overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.order__slider-item:not(:last-child){
+	margin-right: 10px;
+}
+
+.order__slider-item{
+	flex-shrink: 0;
+	/* border: 1px solid rgba(0, 0, 0, .15); */
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 150px;
+	height: 70px;
+	cursor: pointer;
+	border-radius: 15px;
+	font-size: 1.1rem;
+	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.order__slider-item:hover{
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+}
+
+.order__slider-item--active{
+	background-color: var(--main);
+	color: #fff;
+}
+</style>
