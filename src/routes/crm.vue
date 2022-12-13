@@ -29,7 +29,7 @@ export default {
         // api: baseURL,
         // vars: plugin.value.vars,
       };
-      const src = `${FRAME}/?a=${btoa(JSON.stringify(params))}&${this.makeid(
+      const src = `${CRM_API}/?a=${btoa(JSON.stringify(params))}&${this.makeid(
         6
       )}=${this.makeid(10)}`;
 
