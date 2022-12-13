@@ -115,7 +115,7 @@ export default {
 		subscribeWebSocket({ commit, state }, uuid) {
       const token = Cookies.get('noCloudinApp-token');
 
-			state.socket = new WebSocket(`wss://api.nocloud.ione-cloud.net/services/${uuid}/stream`, ['Bearer', token]);
+			state.socket = new WebSocket(`${VUE_APP_BASE_URL.replace('https', 'wss')}services/${uuid}/stream`, ['Bearer', token]);
 
 			state.socket.onopen = (event) => {
 				console.log(event)
