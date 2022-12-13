@@ -29,9 +29,9 @@ export default {
         // api: baseURL,
         // vars: plugin.value.vars,
       };
-      const src = `https://crm.nc-crm-test.nocloud.zone/cabinet/?a=${btoa(
-        JSON.stringify(params)
-      )}&${this.makeid(6)}=${this.makeid(10)}`;
+      const src = `${FRAME}/?a=${btoa(JSON.stringify(params))}&${this.makeid(
+        6
+      )}=${this.makeid(10)}`;
 
       return src;
     },
