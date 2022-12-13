@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import App from './App.vue'
 import Antd from 'ant-design-vue'
-import panZoom from 'vue-panzoom'
 import 'ant-design-vue/dist/antd.css'
 import VueGoogleCharts from 'vue-google-charts'
 import i18n from './i18n'
@@ -18,7 +17,6 @@ import maintanance from '@/components/maintanance.vue'
 
 Vue.config.productionTip = false
 Vue.use(Antd)
-Vue.use(panZoom);
 Vue.use(VueGoogleCharts)
 
 
