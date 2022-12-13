@@ -173,8 +173,8 @@ export default {
           sp: inst.sp,
           orderid: inst.uuid,
           groupname: (inst.type === 'opensrs')
-            ? 'Domains'
-            : 'Self-Service VDS SSD HC',
+            ? 'Domains' : (inst.type === 'goget')
+            ? 'SSL' : 'Self-Service VDS SSD HC',
           invoicestatus: null,
           domainstatus: inst.state?.meta?.state_str || 'DELETED',
           productname: inst.title,
@@ -184,7 +184,7 @@ export default {
           date: (inst.type === 'opensrs')
             ? inst.resources.period
             : inst.data.last_monitoring * 1000 || 0,
-          orderamount: 0,
+          orderamount: inst.billingPlan.products[inst.product]?.price || 0,
         }));
 
       return [...products, ...instances]
@@ -196,7 +196,7 @@ export default {
             case 'Name' :
               return a.productname.toLowerCase() < b.productname.toLowerCase();
             case 'Cost':
-              return parseFloat(a.orderamount) - parseFloat(a.orderamount);
+              return parseFloat(a.orderamount) - parseFloat(b.orderamount);
           }
         });
     },
@@ -234,7 +234,8 @@ export default {
   },
   methods: {
     productClickHandler({ groupname, orderid, hostingid }) {
-      if (groupname === 'Domains') {
+      if (groupname === 'SSL') return;
+      if (['Domains', 'SSL'].includes(groupname)) {
         this.$router.push({ name: 'service', params: { id: orderid } });
       } else if (groupname === 'Self-Service VDS SSD HC') {
         this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } });

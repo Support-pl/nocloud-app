@@ -1,6 +1,6 @@
 import axios from 'axios';
 import config from './appconfig.js'
-import https from 'https';
+// import https from 'https';
 
 import store from '@/store';
 
@@ -8,12 +8,12 @@ const axiosConfig = {
 	baseURL: config.WHMCSsiteurl + config.appFolder,
 };
 
-if(config.dangerModeNoSSLCheck){
-	axiosConfig.httpsAgent = new https.Agent
-	({
-		rejectUnauthorized: false
-	})
-}
+// if(config.dangerModeNoSSLCheck){
+// 	axiosConfig.httpsAgent = new https.Agent
+// 	({
+// 		rejectUnauthorized: false
+// 	})
+// }
 
 const ax = axios.create(axiosConfig);
 

@@ -16,9 +16,9 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim())
-  event.waitUntil(caches.keys().then((cacheNames) =>
-    Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)))
-  ))
+  // event.waitUntil(caches.keys().then((cacheNames) =>
+  //   Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)))
+  // ))
 });
 
 /**
@@ -26,5 +26,5 @@ self.addEventListener('activate', (event) => {
  * requests for URLs in the manifest.
  * See https://goo.gl/S9QRab
  */
-self.__precacheManifest = [].concat(self.__precacheManifest || []);
-workbox.precaching.precacheAndRoute(self.__precacheManifest, {});
+// self.__precacheManifest = [].concat(self.__precacheManifest || []);
+// workbox.precaching.precacheAndRoute(self.__precacheManifest, {});
