@@ -1,11 +1,17 @@
 {
-	"whmcs": { "site_url": "https://whmcs.demo.support.pl/" },
-	"app": {
+  "whmcs": { "site_url": "https://whmcs.demo.support.pl/" },
+  "app": {
     "folder": "app_back/v1",
-    "title": "support.pl",
+    "title": "biznesexpert",
     "logo": "",
     "logo_position": "",
     "colors": {
+      "primary": "#F85F6A",
+      "background": "#FFFFFF",
+      "surface": "#FFFFFF",
+      "secondary": "#03DAC6",
+      "error": "#DC143C",
+
       "main": "#427cf7",
       "success": "#0fd058",
       "warn": "#f9f038",
@@ -15,11 +21,11 @@
       "bright_bg": "#f7f7f7"
     }
   },
-	"currency": {
-		"prefix": "",
-		"suffix": "USD",
-		"code": "USD"
-	},
+  "currency": {
+    "prefix": "",
+    "suffix": "USD",
+    "code": "USD"
+  },
   "services": ["VM", "Domains", "Virtual", "SSL"],
-	"dangerModeNoSSLCheck": false
+  "dangerModeNoSSLCheck": false
 }
