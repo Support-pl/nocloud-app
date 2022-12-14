@@ -29,7 +29,7 @@ export default {
         // api: baseURL,
         // vars: plugin.value.vars,
       };
-      const src = `${"https://crm." + VUE_APP_BASE_URL}/?a=${btoa(
+      const src = `https://crm.nc-crm-test.nocloud.zone/?a=${btoa(
         JSON.stringify(params)
       )}&${this.makeid(6)}=${this.makeid(10)}`;
 
