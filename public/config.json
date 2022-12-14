@@ -6,16 +6,10 @@
     "logo": "",
     "logo_position": "",
     "colors": {
-      "primary": "#F85F6A",
-      "background": "#FFFFFF",
-      "surface": "#FFFFFF",
-      "secondary": "#03DAC6",
-      "error": "#DC143C",
-
-      "main": "#427cf7",
+      "main": "#F85F6A",
       "success": "#0fd058",
       "warn": "#f9f038",
-      "err": "#f9383b",
+      "err": "#DC143C",
       "gray": "#919191",
       "bright_font": "#fff",
       "bright_bg": "#f7f7f7"
