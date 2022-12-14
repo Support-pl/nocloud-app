@@ -7,7 +7,7 @@
     "logo_position": "",
     "colors": {
       "main": "#F85F6A",
-      "success": "#0fd058",
+      "success": "#F85F6A",
       "warn": "#f9f038",
       "err": "#DC143C",
       "gray": "#919191",
