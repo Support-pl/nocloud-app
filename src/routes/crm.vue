@@ -29,7 +29,7 @@ export default {
         // api: baseURL,
         // vars: plugin.value.vars,
       };
-      const src = `${VUE_APP_BASE_URL}/?a=${btoa(
+      const src = `${VUE_APP_BASE_URL}?a=${btoa(
         JSON.stringify(params)
       )}&${this.makeid(6)}=${this.makeid(10)}`;
 
