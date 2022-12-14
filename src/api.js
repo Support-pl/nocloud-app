@@ -1,6 +1,8 @@
 import Api from "nocloudjsrest";
 import vuex from "@/store/index.js";
 
+console.log(VUE_APP_BASE_URL);
+
 const api = new Api(VUE_APP_BASE_URL + "/api");
 
 api.axios.interceptors.response.use(
