@@ -341,6 +341,7 @@ export default {
         {
           title: "Delete",
           onclick: this.sendDelete,
+          params: ["delete"],
           icon: "delete",
           type: "danger",
           forVNC: true,
