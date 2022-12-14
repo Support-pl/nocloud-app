@@ -29,9 +29,9 @@ export default {
         // api: baseURL,
         // vars: plugin.value.vars,
       };
-      const src = `${CRM_API}/?a=${btoa(JSON.stringify(params))}&${this.makeid(
-        6
-      )}=${this.makeid(10)}`;
+      const src = `${VUE_APP_BASE_URL}/?a=${btoa(
+        JSON.stringify(params)
+      )}&${this.makeid(6)}=${this.makeid(10)}`;
 
       return src;
     },
