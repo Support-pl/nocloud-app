@@ -180,6 +180,12 @@
           </a-col>
         </a-row>
 
+      <add-funds
+        v-if="addfunds.visible"
+        :sum="addfunds.amount"
+        :modalVisible="addfunds.visible"
+        :hideModal="() => addfunds.visible = false"
+      />
 			</div>
 		</div>
 	</div>
@@ -187,13 +193,14 @@
 
 <script>
 import passwordMeter from 'vue-simple-password-meter';
+import addFunds from '@/components/balance/addFunds.vue';
 import notification from '@/mixins/notification.js';
 import { countries } from '@/setup/countries.js';
 
 export default {
 	name: 'ssl-component',
   mixins: [notification],
-  components: { passwordMeter },
+  components: { passwordMeter, addFunds },
 	data: () => ({
     countries,
     products: {},
@@ -213,6 +220,7 @@ export default {
       confirmCreate: false,
       confirmLoading: false
     },
+    addfunds: { visible: false, amount: 0 },
 
     csr: {},
     personal: {},
@@ -328,10 +336,29 @@ export default {
 				this.$message.error('domain is wrong');
 				return
 			}
+      if (!this.checkBalance()) return;
 			if (order) this.modal.confirmCreate = true;
 
       return isValid;
 		},
+    checkBalance() {
+      const sum = this.getProducts.prices[this.options.period];
+
+      if (this.user.balance < parseFloat(sum)) {
+        this.$confirm({
+          title: this.$t('You do not have enough funds on your balance.'),
+          content: () => (
+            <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
+          ),
+          onOk: () => {
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.user.balance);
+            this.addfunds.visible = true;
+          }
+        });
+        return false;
+      }
+      return true;
+    },
     deployService(uuid) {
       this.$api.services.up(uuid)
         .then(() => {

@@ -94,14 +94,23 @@
 					</a-col>
 				</a-row>
 
+        <add-funds
+          v-if="addfunds.visible"
+          :sum="addfunds.amount"
+          :modalVisible="addfunds.visible"
+          :hideModal="() => addfunds.visible = false"
+        />
 			</div>
 		</div>
 	</div>
 </template>
 
 <script>
+import addFunds from '@/components/balance/addFunds.vue';
+
 export default {
-	name: 'ssl-component',
+  name: 'ssl-component',
+  components: { addFunds },
 	data:() => ({
     sizes: [],
     products: [],
@@ -117,6 +126,7 @@ export default {
       confirmLoading: false,
       goToInvoice: true
     },
+    addfunds: { visible: false, amount: 0 },
     periods: []
 	}),
 	methods: {
@@ -180,8 +190,27 @@ export default {
 				this.$message.error(this.$t('domain is wrong'));
 				return
 			}
+      if (!this.checkBalance()) return;
 			this.modal.confirmCreate = true;
-		}
+		},
+    checkBalance() {
+      const sum = this.getProducts.pricing[this.options.period];
+
+      if (this.user.balance < parseFloat(sum)) {
+        this.$confirm({
+          title: this.$t('You do not have enough funds on your balance.'),
+          content: () => (
+            <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
+          ),
+          onOk: () => {
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.user.balance);
+            this.addfunds.visible = true;
+          }
+        });
+        return false;
+      }
+      return true;
+    }
 	},
 	computed: {
 		getProducts() {

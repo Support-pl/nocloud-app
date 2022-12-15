@@ -2,70 +2,63 @@
   <div class="newCloud_wrapper">
       <div class="newCloud">
         <div class="newCloud__inputs field">
-          <keep-alive>
-            <component
-              :is="template"
-              :activeKey="activeKey"
-              :itemSP="itemSP"
-              :getPlan="plan"
-              :options="options"
-              :getProducts="getProducts"
-              :productSize="productSize"
-              :tarification="tarification"
-              :vmName="vmName"
-              :password="password"
-              :sshKey="sshKey"
-              :locationId="locationId"
-              @score="onScore"
-              @setData="setData"
-            >
-              <template #location>
-                <a-row justify="space-between" style="margin-bottom: 10px">
-                  <a-alert
-                    show-icon
-                    type="warning"
-                    style="margin-bottom: 15px"
-                    :message="$t('Please select a suitable location')"
-                  />
+          <component
+            :is="template"
+            :activeKey="activeKey"
+            :itemSP="itemSP"
+            :getPlan="plan"
+            :options="options"
+            :getProducts="getProducts"
+            :productSize="productSize"
+            :tarification="tarification"
+            :vmName="vmName"
+            :password="password"
+            :sshKey="sshKey"
+            :locationId="locationId"
+            @score="onScore"
+            @setData="setData"
+          >
+            <template #location>
+              <a-row justify="space-between" style="margin-bottom: 10px">
+                <a-alert
+                  show-icon
+                  type="warning"
+                  style="margin-bottom: 15px"
+                  v-if="!locationId"
+                  :message="$t('Please select a suitable location')"
+                />
 
-                  <a-select
-                    v-model="locationId"
-                    :placeholder="$t('select location')"
-                    style="
-                      width: 180px;
-                      margin-left: 20px;
-                      position: relative;
-                      top: 30px;
-                      z-index: 4;
-                    "
+                <a-select
+                  v-model="locationId"
+                  :placeholder="$t('select location')"
+                  style="width: 180px; position: relative; z-index: 4"
+                >
+                  <a-select-option
+                    v-for="item in locations"
+                    :key="item.id"
+                    :value="item.id"
                   >
-                    <a-select-option
-                      v-for="item in locations"
-                      :key="item.id"
-                      :value="item.id"
-                    >
-                      {{ item.title }}
-                    </a-select-option>
-                  </a-select>
-                  <div style="overflow: hidden; margin-top: -15px">
-                    <a-spin :tip="$t('loading')" :spinning="isPlansLoading">
-                      <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
-                    </a-spin>
-                  </div>
-                  <!-- <a-radio-group v-model="location_uuid">
-                    <a-radio-button
-                      v-for="(sp, index) in getSP"
-                      :key="index"
-                      style="width: 130px; text-align: center"
-                      :value="sp.uuid"
-                    >
-                      {{ sp.title }}
-                    </a-radio-button>
-                  </a-radio-group> -->
-                </a-row>
-              </template>
-            </component>
-          </keep-alive>
+                    {{ item.title }}
+                  </a-select-option>
+                </a-select>
+                <div style="overflow: hidden; margin-top: 15px">
+                  <a-spin :tip="$t('loading')" :spinning="isPlansLoading">
+                    <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
+                  </a-spin>
+                </div>
+                <!-- <a-radio-group v-model="location_uuid">
+                  <a-radio-button
+                    v-for="(sp, index) in getSP"
+                    :key="index"
+                    style="width: 130px; text-align: center"
+                    :value="sp.uuid"
+                  >
+                    {{ sp.title }}
+                  </a-radio-button>
+                </a-radio-group> -->
+              </a-row>
+            </template>
+          </component>
         </div>
 
         <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
@@ -83,7 +76,7 @@
             >
               <a-col> {{ $t("location") | capitalize }}: </a-col>
               <a-col>
-                {{ this.itemSP.title }}
+                {{ locationTitle }}
               </a-col>
             </a-row>
           </transition>
@@ -400,6 +393,7 @@
           <a-row
             type="flex"
             justify="center"
+            ref="sum-order"
             :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
           >
             <a-col v-if="tarification === 'Annually'">
@@ -535,6 +529,12 @@
           </a-row>
         </div>
       </div>
+      <add-funds
+        v-if="addfunds.visible"
+        :sum="addfunds.amount"
+        :modalVisible="addfunds.visible"
+        :hideModal="() => addfunds.visible = false"
+      />
       <!-- <div v-else class="newCloud tariff">
         <div class="field field--fluid">
           <div class="tariff__header">Choose your tariff</div>
@@ -628,12 +628,13 @@
 import { mapGetters } from "vuex";
 import loading from "../loading/loading";
 import myMap from "../map/map.vue";
+import addFunds from '../balance/addFunds.vue';
 import notification from "@/mixins/notification.js";
 import api from "@/api.js";
 
 export default {
   name: "newPaaS",
-  components: { loading, myMap },
+  components: { loading, myMap, addFunds },
   mixins: [notification],
   data() {
     return {
@@ -654,6 +655,7 @@ export default {
       sshKey: undefined,
       score: null,
       product: {},
+      addfunds: { visible: false, amount: 0 },
       priceOVH: { value: 0, currency: 'USD', addons: {} },
       options: {
         // kind: "standart",
@@ -939,6 +941,13 @@ export default {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
+    },
+    locationTitle() {
+      if (this.itemSP?.type !== 'ovh') return this.itemSP.title;
+      const { datacenter } = this.options.config;
+      const { locations } = this.itemSP;
+
+      return locations?.find(({ extra }) => extra.region === datacenter)?.title;
     }
   },
   mounted() {
@@ -1020,7 +1029,7 @@ export default {
     },
     setData({ key, value, type }) {
       if (type === 'ovh') {
-        this.options.config[key] = value;
+        this.$set(this.options.config, key, value);
         return;
       }
       if (typeof value === 'object') this[key] = Object.assign({}, value);
@@ -1198,7 +1207,7 @@ export default {
               group.resources.ips_public = res.public;
 
               delete orderDataNew.instancesGroups;
-              this.updateVM(orderDataNew);
+              if (this.checkBalance()) this.updateVM(orderDataNew);
             }, 300);
           });
       } else {
@@ -1223,7 +1232,7 @@ export default {
             ],
           },
         };
-        this.orderVM(orderData);
+        if (this.checkBalance()) this.orderVM(orderData);
       }
     },
     orderVM(orderData) {
@@ -1273,6 +1282,24 @@ export default {
           });
           console.error(err);
         });
+    },
+    checkBalance() {
+      const sum = this.$refs['sum-order'].$el.firstElementChild.innerText;
+
+      if (this.userdata.balance < parseFloat(sum)) {
+        this.$confirm({
+          title: this.$t('You do not have enough funds on your balance.'),
+          content: () => (
+            <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
+          ),
+          onOk: () => {
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
+            this.addfunds.visible = true;
+          }
+        });
+        return false;
+      }
+      return true;
     },
     deployService(uuidService) {
       api.services

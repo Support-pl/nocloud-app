@@ -36,7 +36,7 @@
 <script>
 export default {
   name: "balance_addFunds",
-  props: ["modalVisible", "hideModal"],
+  props: ["modalVisible", "hideModal", "sum"],
   data() {
     return {
       confirmLoading: false,
@@ -80,6 +80,7 @@ export default {
       if (this.amount == "") this.amount = 0;
       this.amount += amount;
     },
-  }
+  },
+  mounted() { this.amount = this.sum }
 }
 </script>

@@ -368,8 +368,8 @@ export default {
         this.meta = meta;
 
         if (this.plan === '') {
-          this.plan = this.resources.plans[1];
-          this.setData(this.plans[1].value);
+          this.plan = this.resources.plans[0];
+          this.setData(this.plans[0].value);
         }
       })
       .catch((err) => {
@@ -479,6 +479,7 @@ export default {
       const plan = this.plans.find(({ label }) => label.includes(value));
 
       this.setData(plan.value);
+      this.$emit('setData', { key: 'productSize', value });
       const { configurations } = this.meta.catalog.plans.find(
         ({ planCode }) => planCode.includes(this.planKey)
       );
@@ -502,22 +503,22 @@ export default {
       });
     },
     'options.ram.size'(size) {
-      const plan = this.plans.find(({ value }) => value.includes(this.planKey));
+      const plan = this.plans?.find(({ value }) => value.includes(this.planKey));
 
       if (plan) return;
       const regexp = new RegExp(`${this.plan} \\d{1,4}-${size}`, 'gm');
-      const { value } = this.plans.find((el) => regexp.test(el.label));
+      const { value } = this.plans?.find((el) => regexp.test(el.label)) || {};
 
-      this.options.disk.size = value.split('-').at(-1) * 1024;
+      this.options.disk.size = value?.split('-').at(-1) * 1024;
     },
     'options.disk.size'(size) {
-      const plan = this.plans.find(({ value }) => value.includes(this.planKey));
+      const plan = this.plans?.find(({ value }) => value.includes(this.planKey));
 
       if (plan) return;
       const regexp = new RegExp(`${this.plan} \\d{1,4}-\\d{1,4}-${size / 1024}`, 'gm');
-      const { value } = this.plans.find((el) => regexp.test(el.label));
+      const { value } = this.plans?.find((el) => regexp.test(el.label)) || {};
 
-      this.options.ram.size = value.split('-').at(-2);
+      this.options.ram.size = value?.split('-').at(-2);
     }
   }
 }
