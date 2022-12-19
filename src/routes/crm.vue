@@ -1,5 +1,5 @@
 <template>
-  <iframe :src="src"></iframe>
+  <iframe allow="clipboard-read; clipboard-write" :src="src"></iframe>
 </template>
 
 <script>
