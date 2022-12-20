@@ -374,6 +374,7 @@
 		"companyname": "Название компании",
 		"countryname": "Страна",
 		"email": "Email",
+    "product": "Продукт",
 		"certificate configuration": "Конфигурация сертификата",
 		"personal data": "Персональные данные",
 		"verification": "Верификация",
@@ -382,7 +383,7 @@
 		"domain": "Домен",
 		"departament": "Департамент",
 		"order type": "Тип заказа",
-		"new order": "Новый заказ",
+		"new_order": "Новый заказ",
 		"renewal": "Продлить",
 		"any other": "Любой",
 		"webserver type": "Тип веб-сервера",
@@ -527,7 +528,8 @@
 		"POWEROFF":"ВЫКЛЮЧЕНО",
 		"SNAPSHOT":"СНАПШОТ",
 		"RUNNING":"ЗАПУЩЕНО",
-		"SUSPENDED":"ПРИОСТАНОВЛЕН"
+		"SUSPENDED":"ПРИОСТАНОВЛЕН",
+    "UNKNOWN": "НЕИЗВЕСТНО"
 	},
 	"public":"Публичный",
 

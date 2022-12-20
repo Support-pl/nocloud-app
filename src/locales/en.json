@@ -375,6 +375,7 @@
 		"companyname": "Company Name",
 		"countryname": "Country Name",
 		"email": "Email",
+    "product": "Product",
 		"certificate configuration": "Configure Certificate",
 		"personal data": "Personal / Company Details",
 		"verification": "Verification",
@@ -383,7 +384,7 @@
 		"domain": "Domain",
 		"departament": "Department",
 		"order type": "Order Type",
-		"new order": "New Order",
+		"new_order": "New Order",
 		"renewal": "Renewal",
 		"any other": "Any others",
 		"webserver type": "Webserver Type",
@@ -527,7 +528,8 @@
 		"POWEROFF":"POWEROFF",
 		"SNAPSHOT":"SNAPSHOT",
 		"RUNNING":"RUNNING",
-		"SUSPENDED":"SUSPENDED"
+		"SUSPENDED":"SUSPENDED",
+    "UNKNOWN": "UNKNOWN"
 	},
 	"public":"Public",
 

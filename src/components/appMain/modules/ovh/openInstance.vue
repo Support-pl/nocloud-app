@@ -163,6 +163,13 @@
               {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}
             </div>
           </div>
+          <div class="block__column" v-if="VM.data.expiration">
+            <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
+            <div class="block__value">
+              {{ VM.data.expiration }}
+              <a-icon type="sync" title="Renew" @click="sendAction('manual_renew')" />
+            </div>
+          </div>
         </div>
       </div>
 

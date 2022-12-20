@@ -279,7 +279,7 @@ export default {
 
       return codes.find((el) => keys.includes(el)) ?? '-1';
     },
-    setData(planKey) {
+    setData(planKey, changeTarifs = true) {
       const { periods, value } = this.plans.find((el) => el.value.includes(planKey)) ?? {};
       if (!value) return;
 
@@ -311,7 +311,7 @@ export default {
         addons: {}
       };
 
-      this.$emit('setData', { key: 'periods', value: tarifs });
+      if (changeTarifs) this.$emit('setData', { key: 'periods', value: tarifs });
       this.$emit('setData', { key: 'priceOVH', value: this.price });
       this.$emit('setData', { key: 'planCode', value, type: 'ovh' });
       this.$emit('setData', { key: 'duration', value: plan.duration, type: 'ovh' });
@@ -332,23 +332,24 @@ export default {
         const products = Object.keys(this.getPlan.products);
 
         meta.plans.forEach(({ prices, planCode }) => {
-          const i = products.findIndex((key) => key.includes(planCode));
+          const periods = [];
+          let label = '';
 
-          if (i !== -1) {
-            const { title, price } = this.getPlan.products[products[i]];
+          prices.forEach((period) => {
+            const i = products.indexOf(`${period.duration} ${planCode}`);
+            const isMonthly = period.pricingMode === 'default';
+            const isYearly = period.pricingMode === 'upfront12';
 
-            plans.push({
-              value: planCode, label: title,
-              periods: prices.filter(({ pricingMode, duration }) => {
-                const productDuration = products[i].split(' ')[0];
-                const isMonthly = duration === productDuration && pricingMode === 'default';
-                const isYearly = duration === productDuration && pricingMode === 'upfront12';
+            if (i !== -1 && (isMonthly || isYearly)) {
+              const { title, price } = this.getPlan.products[products[i]];
 
-                return (isMonthly || isYearly);
-              })
-              .map((period) => ({ ...period, price: { ...period.price, value: price } }))
-            });
-          }
+              period.price.value = price;
+              periods.push(period);
+              label = title;
+            }
+          });
+
+          if (periods.length > 0) plans.push({ value: planCode, label, periods });
         });
         this.plans = plans;
 
@@ -474,7 +475,7 @@ export default {
     }
   },
   watch: {
-    tarification() { this.setData(this.planKey) },
+    tarification() { this.setData(this.planKey, false) },
     plan(value) {
       const plan = this.plans.find(({ label }) => label.includes(value));
 

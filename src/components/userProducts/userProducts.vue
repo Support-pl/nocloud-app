@@ -234,7 +234,6 @@ export default {
   },
   methods: {
     productClickHandler({ groupname, orderid, hostingid }) {
-      if (groupname === 'SSL') return;
       if (['Domains', 'SSL'].includes(groupname)) {
         this.$router.push({ name: 'service', params: { id: orderid } });
       } else if (groupname === 'Self-Service VDS SSD HC') {
