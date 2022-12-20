@@ -4,11 +4,11 @@
 			<div class="order__inputs order__field">
 
 				<div class="order_option">
-          <a-steps size="small" :current="currentStep">
-            <a-step :title="$t('product') | capitalize" />
-            <a-step :title="$t('csr')" />
-            <a-step :title="$t('personal') | capitalize" />
-            <a-step :title="$t('verification') | capitalize" />
+          <a-steps class="order__steps" size="small" :current="currentStep">
+            <a-step :title="$t('ssl_product.product')" />
+            <a-step :title="$t('ssl_product.CSR')" />
+            <a-step :title="$t('ssl_product.personal data')" />
+            <a-step :title="$t('ssl_product.verification')" />
           </a-steps>
 
           <component
@@ -233,12 +233,25 @@ export default {
         method: 'get_certificate'
       })
 			.then(({ meta }) => {
+        const plan = this.plans.find(({ uuid }) => uuid === this.plan);
+
 				meta.cert.products.forEach((product) => {
-          if (!(product.brand in this.products)) {
-            this.products[product.brand] = [];
+          const prices = {};
+
+          Object.keys(product.prices).forEach((period) => {
+            const key = `${period} ${product.id}`;
+
+            if (plan.products[key]) prices[period] = plan.products[key].price;
+          });
+
+          if (Object.keys(prices).length > 0) {
+            if (!(product.brand in this.products)) {
+              this.products[product.brand] = [];
+            }
+            this.products[product.brand].push({ ...product, prices });
           }
-          this.products[product.brand].push(product);
         });
+
 				this.options.provider = meta.cert.products[0].brand;
 				this.options.tarif = this.products[this.options.provider][0].product;
         this.products = Object.assign({}, this.products);
@@ -528,6 +541,14 @@ export default {
 	padding: 20px;
 	background-color: #fff;
 	height: max-content;
+}
+
+.order__steps > .ant-steps-item {
+  flex: 1 1 auto;
+}
+
+.order__steps > .ant-steps-item:last-child {
+  flex: none;
 }
 
 .order__calculate{

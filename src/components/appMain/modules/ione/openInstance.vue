@@ -232,6 +232,7 @@
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.last_monitoring * 1000) }}
+              <a-icon type="sync" title="Renew" @click="sendAction('manual_renew')" />
             </div>
           </div>
         </div>

@@ -41,10 +41,10 @@
           </div>
 
           <!-- SSL -->
-          <div class="service-page__info" v-if="service.translated_groupname === 'SSL сертификаты'">
+          <div class="service-page__info" v-if="service.groupname === 'SSL'">
             <div
               class="service-page__info-title"
-              v-if="service.SSL.sslstatus === 'Completed'"
+              v-if="true || service.SSL.sslstatus === 'Completed'"
             >
               {{ $t("ssl_product.configuration status") }}:
               <a-tag :color="getTagColorSSL">
@@ -176,23 +176,35 @@ export default {
       .then(() => {
         const domain = this.$store.getters['nocloud/vms/getInstances']
           .find(({ uuid }) => uuid === this.$route.params.id);
+        let groupname = 'Domains';
+        let date = 'year';
 
         if (!domain) return new Promise((resolve) => resolve({ meta: null }));
+        if (domain.billingPlan.type === 'goget') {
+          domain.data.expiry = {
+            expiredate: '0000-00-00',
+            regdate: '0000-00-00'
+          };
+          groupname = 'SSL';
+          date = 'month';
+        } else {
+          const year = parseInt(expiredate) - period;
+
+          domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`;
+        }
+
         const { period } = domain.resources;
-        const { expiredate } = domain.data.expiry;
-        const year = parseInt(expiredate) - period;
-        const periodText = (period === 1) ? this.$t('year') : this.$t('years');
+        const { expiredate, regdate } = domain.data.expiry;
 
         this.service = {
           ...domain,
-          groupname: 'Domains',
+          groupname,
           name: domain.title,
-          status: `cloudStateItem.${domain.state?.state}`,
+          status: `cloudStateItem.${domain.state?.state || 'UNKNOWN'}`,
           domain: domain.resources.domain,
-          billingcycle: `${period} ${periodText}`,
+          billingcycle: this.$tc(date, period),
           recurringamount: '?',
-          regdate: `${year}${expiredate.slice(4)}`,
-          nextduedate: expiredate
+          regdate, nextduedate: expiredate
         };
         info[0].type = '';
 
@@ -242,7 +254,7 @@ export default {
       }
     },
     getTagColorSSL() {
-      switch (this.service.SSL.sslstatus) {
+      switch (this.service.SSL?.sslstatus) {
         case "Completed":
           return "green";
         case "Awaiting Configuration":
@@ -268,8 +280,7 @@ export default {
         ?.toLowerCase();
 
       if (serviceType === undefined) return;
-      if (!(status === 'Active' ||
-        state?.state === 'RUNNING')) return;
+      if (!(status === 'Active' || state?.state === 'RUNNING')) return;
       return () => import(`@/components/services/${serviceType}/draw`);
     },
   },

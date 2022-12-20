@@ -3,7 +3,7 @@
     <div class="container">
       <div class="ssl-page-card">
         <template v-if="data">
-          <div class="ssl__top">
+          <div class="ssl__top" v-if="data.name">
             <div class="ssl-page__info">
               <div class="ssl-page__info-title">
                 {{ $t("ssl_product.registration_date") }}
@@ -71,10 +71,10 @@
           </div>
 
           <div class="ssl__table">
-            <div class="ssl__table__item">
+            <!-- <div class="ssl__table__item">
               <div>{{ $t("ssl_product.status") }}</div>
               <div>{{ $t("ssl_product." + data.SSL.sslstatus) }}</div>
-            </div>
+            </div> -->
 
             <div class="ssl__table__item">
               <div>{{ $t("ssl_product.ssl_status") }}</div>
@@ -136,7 +136,7 @@
 
             <div class="ssl__table__item">
               <div>{{ $t("ssl_product.partner_order_id") }}</div>
-              <div>{{ data.SSL.configdata.partner_order_id }}</div>
+              <div>{{ data.SSL.configdata.order_id }}</div>
             </div>
 
             <div
@@ -432,6 +432,23 @@ export default {
     },
   },
   methods: {
+    fetch() {
+      const domain = this.$store.getters['nocloud/vms/getInstances']
+        .find(({ uuid }) => uuid === this.$route.params.id);
+
+      this.$store.dispatch("nocloud/vms/actionVMInvoke", {
+        uuid: domain.uuid,
+        uuidService: domain.uuidService,
+        action: 'monitoring',
+      })
+        .then(({ meta: { data } }) => {
+          this.data = { SSL: { configdata: data } };
+          this.$set(this.action_data, "email", `admin@${data.domain}`);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    },
     download(ext, text, fullname = null) {
       const domain = this.data.SSL.configdata.domain;
       let filename;
@@ -543,17 +560,9 @@ export default {
     },
   },
   created() {
-    api
-      .sendAsUser("services.getInfo", {
-        serviceid: this.$route.params.id,
-      })
-      .then((res) => {
-        this.data = res;
-        this.$set(this.action_data, "email", `admin@${res.domain}`);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+    if (this.$store.getters['nocloud/vms/getInstances'].length < 1) {
+      this.$store.dispatch('nocloud/vms/fetch').then(() => this.fetch());
+    } else this.fetch();
   },
 };
 </script>
