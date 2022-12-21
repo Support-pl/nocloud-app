@@ -1,7 +1,7 @@
 <template>
   <div class="Fcloud">
     <slot name="header" />
-    <div class="Fcloud__buttons" v-if="!VM.state">
+    <div class="Fcloud__buttons" v-if="!VM.state && false">
       <div class="Fcloud__button" @click="deployService()">
         <div class="Fcloud__BTN-icon">
           <a-icon type="deployment-unit" />
@@ -232,7 +232,7 @@
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.last_monitoring * 1000) }}
-              <a-icon type="sync" title="Renew" @click="sendAction('manual_renew')" />
+              <a-icon v-if="false" type="sync" title="Renew" @click="sendAction('manual_renew')" />
             </div>
           </div>
         </div>

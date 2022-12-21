@@ -1,7 +1,7 @@
 <template>
   <div class="Fcloud">
     <slot name="header" />
-    <div class="Fcloud__buttons" v-if="!VM.state">
+    <div class="Fcloud__buttons" v-if="!VM.state && false">
       <div class="Fcloud__button" @click="deployService()">
         <div class="Fcloud__BTN-icon">
           <a-icon type="deployment-unit" />
@@ -167,7 +167,7 @@
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
               {{ VM.data.expiration }}
-              <a-icon type="sync" title="Renew" @click="sendAction('manual_renew')" />
+              <a-icon type="sync" title="Renew" @click="sendRenew" />
             </div>
           </div>
         </div>
@@ -683,6 +683,17 @@ export default {
         onOk: () => {
           this.sendAction("recover");
           this.modal.recover = false;
+        },
+        onCancel() {},
+      });
+    },
+    sendRenew() {
+      this.$confirm({
+        title: this.$t("Do you want to renew payment?"),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        onOk: () => {
+          this.sendAction("manual_renew");
         },
         onCancel() {},
       });
