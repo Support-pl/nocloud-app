@@ -81,6 +81,6 @@ export default {
       this.amount += amount;
     },
   },
-  mounted() { this.amount = this.sum }
+  mounted() { this.amount = this.sum || 5 }
 }
 </script>

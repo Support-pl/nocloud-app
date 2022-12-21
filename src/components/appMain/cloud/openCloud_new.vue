@@ -671,10 +671,10 @@ export default {
     }
   },
   watch: {
-    "VM.uuidService"() {
-      if (!this.VM.uuidService) return;
+    "VM.uuidService"(value) {
+      if (!value) return;
       this.renameNewName = this.VM.title;
-      this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
+      this.$store.dispatch("nocloud/vms/subscribeWebSocket", value);
     },
   },
 };
