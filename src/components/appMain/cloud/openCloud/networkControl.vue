@@ -70,41 +70,43 @@ export default {
     },
   },
   mixins: [notification],
-  data: () => ({
-    isLoading: false,
-    columns: [
-      {
-        title: "№",
-        dataIndex: "id",
-        key: "id",
-        width: 50,
-        align: "center",
-      },
-      {
-        title: "IP",
-        dataIndex: "ip",
-        key: "ip",
-        scopedSlots: { customRender: "ip" },
-      },
-      {
-        title: "Type",
-        dataIndex: "type",
-        key: "type",
-      }
-    ],
-    networking: {
-      private: {
-        list: [],
-        status: false,
-        count: 0
-      },
-      public: {
-        list: [],
-        status: false,
-        count: 0
+  data() {
+    return {
+      isLoading: false,
+      columns: [
+        {
+          title: "№",
+          dataIndex: "id",
+          key: "id",
+          width: 50,
+          align: "center",
+        },
+        {
+          title: "IP",
+          dataIndex: "ip",
+          key: "ip",
+          scopedSlots: { customRender: "ip" },
+        },
+        {
+          title: this.$t("cloud_Type"),
+          dataIndex: "type",
+          key: "type",
+        }
+      ],
+      networking: {
+        private: {
+          list: [],
+          status: false,
+          count: 0
+        },
+        public: {
+          list: [],
+          status: false,
+          count: 0
+        }
       }
     }
-  }),
+  },
   computed: {
     networks() {
       const networks = [];

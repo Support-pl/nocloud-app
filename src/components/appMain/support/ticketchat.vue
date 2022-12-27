@@ -59,12 +59,12 @@
 
     <div class="chat__footer">
       <a-textarea
-        :disabled="this.status == 'Closed'"
+        :disabled="status == 'Closed'"
         allowClear
         :autoSize="{ minRows: 1, maxRows: 2 }"
         v-model="messageInput"
         v-on:keyup.shift.enter.exact="newLine"
-        v-on:keyup.enter.exact="sendMessage"
+        v-on:keydown.enter.exact.prevent="sendMessage"
         type="text"
         class="chat__input"
         name="message"
@@ -143,7 +143,7 @@ export default {
       return reply.requestor_type !== 'Owner';
     },
     sendMessage() {
-      if (this.messageInput.length < 1) return;
+      if (this.messageInput.trim().length < 1) return;
       if (this.status == "Closed") return;
       const message = {
         admin: "",
@@ -272,13 +272,12 @@ export default {
 }
 
 .chat__input {
-  max-width: 768px;
-  margin-left: auto;
+  max-width: 725px;
   border: 0;
   outline: 0;
   border-radius: 40px;
   flex: 1 0;
-  padding: 7px 10px;
+  padding: 7px 0;
 }
 
 .chat__send {
@@ -290,7 +289,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0 auto 0 10px;
+  margin-left: 10px;
   font-size: 1.2rem;
   transition: filter 0.2s ease;
   cursor: pointer;
@@ -394,11 +393,13 @@ export default {
 
 .chat__message--in {
   align-self: flex-start;
+  background: var(--bright_bg);
 }
 
 .chat__message--in::after {
   left: 0;
   transform: translateX(-50%);
+  border-bottom-color: var(--bright_bg);
 }
 
 .popover-link {

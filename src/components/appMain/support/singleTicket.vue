@@ -7,7 +7,7 @@
     <div class="ticket__content">
       <div class="ticket__upper">
         <div class="ticket__title">
-          <a-badge v-if="ticket.status == 'Answered'" dot>
+          <a-badge v-if="ticket.requestor_type !== 'Owner'" dot>
             #{{ ticket.tid }} - {{ titleDecoded }}
           </a-badge>
           <template v-else> #{{ ticket.tid }} - {{ titleDecoded }} </template>
@@ -56,22 +56,16 @@ export default {
   },
   computed: {
     statusColor() {
-      let color = "";
       switch (this.ticket.status.toLowerCase()) {
         case "open":
-          color = this.$config.colors.success;
-          break;
+          return this.$config.colors.success;
         case "customer-reply":
-          color = this.$config.colors.warn;
-          break;
+          return this.$config.colors.warn;
         case "closed":
-          color = this.$config.colors.err;
-          break;
+          return this.$config.colors.err;
         default:
-          color = this.$config.colors.warn;
-          break;
+          return this.$config.colors.gray;
       }
-      return color;
     },
     titleDecoded() {
       return this.decode(this.ticket.title);

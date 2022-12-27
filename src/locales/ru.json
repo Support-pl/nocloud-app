@@ -61,6 +61,7 @@
   "Drive size": "Размер диска",
 	"Drive type": "Тип диска",
 	"Public network": "Публичная сеть",
+  "Private network": "Приватная сеть",
 	"Local network": "Локальная сеть",
 	"Result": "Результат",
 	"Cost": "Стоимость",
@@ -97,6 +98,7 @@
 	"today": "сегодня",
 	"yesterday": "вчера",
 	"Send error": "Ошибка отправления",
+  "Click to copy": "Нажмите чтобы скопировать",
   "Text copied": "Текст скопирован",
   "Clipboard is not supported": "Буфер обмена не поддерживается!",
 	"turn on VM to create or load snapshots": "Включите VM чтобы создавать или загружать снапшоты",
@@ -111,6 +113,7 @@
 	"Network reserve 1":"Зарезервировать IPv4 для вашей VM для",
 	"Network reserve 2": "за IPv4. Вы можете выбрать любой неиспользуемый IP и 'Прикрепить к VM'.",
 	"Enter new VM name":"Введите новое имя VM",
+  "Menu": "Меню",
   "Reinstall": "Переустановить",
 	"Rename": "Переименовать",
 	"Access manager": "Менеджер доступа",
@@ -225,9 +228,9 @@
   "Order created successfully": "Заказ успешно создан.",
   "Order update successfully": "Заказ успешно обновлён.",
   "Ticket created successfully": "Обращение успешно создано.",
-  "VM created succefully": "VM успешно создан",
-  "VM resized successfully": "VM успешно изменён",
-  "VM deleted successfully": "VM успешно удален",
+  "VM created succefully": "VM успешно создана",
+  "VM resized successfully": "VM успешно изменёна",
+  "VM deleted successfully": "VM успешно удалена",
   "Can't VM resize to same size": "Нельзя изменить размер виртуальной машины до того же размера",
   "Failed to delete VM": "Не удалось удалить VM",
   "VM name changes successfully": "Имя VM успешно изменено",
@@ -330,7 +333,7 @@
 	"PaaS": {
 		"order_info": "Тут вы можете заказать сервера с помесячной оплатой.",
 		"description": "Выбери готовый тарифный план с предоплатой.",
-		"createButton": "готовые тарифы"
+		"createButton": "VM"
 	},
 	"virtual_product": {
 		"used space": "использовано места",

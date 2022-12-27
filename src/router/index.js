@@ -119,7 +119,7 @@ const routes = [
 				component: () => import('../routes/settings.vue')
 			},
 			{
-				path: 'cloud/newPaaS',
+				path: 'cloud/newVM',
 				name: 'newPaaS',
 				meta: {
 					footerTitle: 'cloud',

@@ -252,7 +252,7 @@ export default {
           }
         });
 
-				this.options.provider = meta.cert.products[0].brand;
+				this.options.provider = Object.keys(this.products)[0];
 				this.options.tarif = this.products[this.options.provider][0].product;
         this.products = Object.assign({}, this.products);
 			})

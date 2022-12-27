@@ -943,7 +943,7 @@ export default {
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
     },
     locationTitle() {
-      if (this.itemSP?.type !== 'ovh') return this.itemSP.title;
+      if (this.itemSP?.type !== 'ovh') return this.itemSP?.locations[0].title;
       const { datacenter } = this.options.config;
       const { locations } = this.itemSP;
 
@@ -976,7 +976,7 @@ export default {
 
     this.$router.beforeEach((to, from, next) => {
       if (
-        from.path === "/cloud/newPaaS" &&
+        from.path === "/cloud/newVM" &&
         localStorage.getItem("data") &&
         this.isLoggedIn
       ) {
@@ -1285,8 +1285,9 @@ export default {
     },
     checkBalance() {
       const sum = this.$refs['sum-order'].$el.firstElementChild.innerText;
+      const { balance = 0 } = this.userdata;
 
-      if (this.userdata.balance < parseFloat(sum)) {
+      if (balance < parseFloat(sum)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance.'),
           content: () => (
@@ -1321,7 +1322,7 @@ export default {
     },
     availableLogin() {
       const data = {
-        path: "/cloud/newPaaS",
+        path: "/cloud/newVM",
         titleSP: this.itemSP.title,
         plan: this.plan.kind,
         productSize: this.productSize,
@@ -1407,8 +1408,8 @@ export default {
       const { min_drive_size, max_drive_size } = this.itemSP.vars;
 
       if (!(min_drive_size || max_drive_size)) return;
-      this.options.disk.min = min_drive_size[type].default;
-      this.options.disk.max = max_drive_size[type].default;
+      this.options.disk.min = min_drive_size.value[type];
+      this.options.disk.max = max_drive_size.value[type];
     },
     'options.os.name'() {
       if (this.options.disk.min > 0) return;

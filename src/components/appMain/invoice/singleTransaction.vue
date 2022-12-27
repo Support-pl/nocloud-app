@@ -6,7 +6,7 @@
   >
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
-        {{ invoice.total.toFixed(2) }} {{ user.currency_code || 'USD' }}
+        {{ -invoice.total.toFixed(2) }} {{ user.currency_code || 'USD' }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -43,9 +43,9 @@ export default {
   },
   computed: {
     costColor() {
-      if (this.invoice?.total > 0) {
+      if (this.invoice?.total < 0) {
         return this.$config.colors.success;
-      } else if (this.invoice?.total < 0) {
+      } else if (this.invoice?.total > 0) {
         return this.$config.colors.err;
       } else {
         return null;

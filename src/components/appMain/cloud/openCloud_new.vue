@@ -29,7 +29,7 @@
               <div class="Fcloud__menu-wrapper">
                 <div class="Fcloud__menu-btn icon__wrapper">
                   <a-icon type="more" @click="changeModal('menu')" />
-                  <a-modal v-model="modal.menu" title="Menu" :footer="null">
+                  <a-modal v-model="modal.menu" :title="$t('Menu')" :footer="null">
                     <a-button
                       block
                       class="menu__button"
@@ -47,7 +47,7 @@
                   <a-modal
                     v-model="modal.rename"
                     :confirmLoading="isRenameLoading"
-                    title="rename"
+                    :title="$t('Rename')"
                     @ok="sendRename"
                   >
                     <p>{{ $t("Enter new VM name") }}</p>
@@ -59,7 +59,7 @@
                   </a-modal>
                   <a-modal
                     v-model="modal.reinstall"
-                    title="reinstall"
+                    :title="$t('Reinstall')"
                     @ok="sendReinstall"
                   >
                     <template v-if="!disabledMenu('reinstall')">
@@ -148,10 +148,10 @@
                       <span style="font-weight: 700">{{ $t('key') | capitalize }}: </span>
                       <span
                         class="ssh-text"
-                        title="Click to copy"
+                        :title="$t('Click to copy')"
                         @click="addToClipboard"
                       >
-                        {{ VM.config && VM.config.ssh_public_key || $t('none') }}
+                        {{ VM.config && VM.config.ssh_public_key || $t('ip.none') }}
                       </span>
                     </div>
                   </a-modal>
@@ -431,7 +431,12 @@ export default {
   },
   methods: {
     disabledMenu(menuName) {
+      const states = ["RUNNING", "STOPPED", "POWEROFF"];
+
       if (this.VM?.product && menuName === "resize") {
+        return true;
+      }
+      if (!states.find((state) => this.stateVM.includes(state))) {
         return true;
       }
     },
