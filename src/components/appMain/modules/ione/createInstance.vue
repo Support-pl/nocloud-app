@@ -7,7 +7,7 @@
   >
     <a-collapse-panel
       key="location"
-      :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${itemSP.title})`}`"
+      :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${itemSP.locations[0].title})`}`"
     >
       <slot name="location" />
     </a-collapse-panel>

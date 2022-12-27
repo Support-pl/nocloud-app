@@ -157,10 +157,11 @@
               {{ VM.billingPlan && VM.billingPlan.title || $t('No Data') }}
             </div>
           </div>
-          <div class="block__column" v-if="VM.product">
-            <div class="block__title">{{ $t('Product') }}</div>
+          <div class="block__column" v-if="VM.config.planCode">
+            <div class="block__title">{{ $t('Tariff') }}</div>
             <div class="block__value">
-              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}
+              {{ VM.config.planCode || $t('No Data') }}
+              <a-icon type="swap" title="Switch tariff" @click="openModal('switch')" />
             </div>
           </div>
           <div class="block__column" v-if="VM.data.expiration">
@@ -172,6 +173,21 @@
           </div>
         </div>
       </div>
+
+      <a-modal
+        v-model="modal.switch"
+        title="Switch tariff"
+        :ok-button-props="{ props: { disabled: planCode === '' } }"
+        :confirmLoading="isSwitchLoading"
+        @ok="sendNewTariff"
+      >
+        <span style="margin-right: 16px">{{ $t("Select new tariff") }}:</span>
+        <a-select style="width: 200px" v-model="planCode">
+          <a-select-option v-for="(item, key) in tariffs" :key="key">
+            {{ item.title }}
+          </a-select-option>
+        </a-select>
+      </a-modal>
 
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
@@ -297,10 +313,10 @@
               shape="round"
               block
               size="large"
-              :disabled="
+              :disabled="!(
                 VM.config.addons &&
-                !VM.config.addons.find((el) => el.includes('snapshot'))
-              "
+                VM.config.addons.find((el) => el.includes('snapshot'))
+              )"
               @click="openModal('snapshot')"
             >
               {{ $t("Snapshots") }}
@@ -436,10 +452,6 @@ export default {
   props: { VM: { type: Object, required: true } },
   mixins: [notification],
   data: () => ({
-    dates: [],
-    images: [],
-    config: {},
-
     chart1Data: [["Time", ""]],
     chart2Data: [["Time", ""]],
     chart3Data: [["Time", ""]],
@@ -461,7 +473,8 @@ export default {
       reboot: false,
       shutdown: false,
       recover: false,
-      snapshot: false
+      snapshot: false,
+      switch: false
     },
     snapshots: {
       modal: false,
@@ -481,9 +494,10 @@ export default {
       recover: 0
     },
 
-    date: "",
+    dates: [],
+    planCode: "",
     actionLoading: false,
-    deployLoading: false,
+    isSwitchLoading: false,
   }),
   methods: {
     deployService() {
@@ -692,13 +706,31 @@ export default {
         title: this.$t("Do you want to renew payment?"),
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
-        onOk: () => {
-          this.sendAction("manual_renew");
-        },
+        onOk: () => this.sendAction("manual_renew"),
         onCancel() {},
       });
     },
-    sendAction(action) {
+    sendNewTariff() {
+      this.isSwitchLoading = true;
+      this.sendAction("get_upgrade_price").then((res) => {
+        const { withTax } = res.meta.result.order.prices;
+
+        this.$confirm({
+          title: this.$t("Do you want to switch tariff?"),
+          content: () => (
+            <div>{ `${this.$t("invoice_Price")}: ${withTax.value} NCU` }</div>
+          ),
+          okText: this.$t("Yes"),
+          cancelText: this.$t("Cancel"),
+          onOk: () => {
+            return new Promise((resolve) => setTimeout(resolve, 1000));
+          },
+          onCancel() {},
+        });
+      })
+      .finally(() => this.isSwitchLoading = false);
+    },
+    async sendAction(action) {
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
@@ -709,13 +741,15 @@ export default {
         data.action = 'backup_restore';
         data.params = { type: 'full', restorePoint: this.option.recover };
       }
+      if (action === "get_upgrade_price") {
+        data.params = { newPlanCode: this.planCode };
+      }
 
-      this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
-        .then(() => {
-          const opts = {
-            message: `Done!`,
-          };
-          this.openNotificationWithIcon("success", opts);
+      return this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
+        .then((res) => {
+          this.openNotificationWithIcon("success", { message: `Done!` });
+
+          return res;
         })
         .catch((err) => {
           const opts = {
@@ -792,6 +826,25 @@ export default {
     },
     dataSP() {
       return this.getSP.find((el) => el.uuid === this.VM.sp);
+    },
+    tariffs() {
+      if (!this.VM?.billingPlan) return {};
+      const tariffs = {};
+      const { products } = this.VM.billingPlan;
+      const productKey = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const a = Object.values(products[productKey].resources)
+        .reduce((acc, curr) => +acc + +curr);
+
+      Object.keys(products).forEach((key) => {
+        const b = Object.values(products[key].resources)
+          .reduce((acc, curr) => +acc + +curr);
+
+        if (b > a && products[key].period === products[productKey].period) {
+          tariffs[key] = products[key];
+        }
+      });
+
+      return tariffs;
     },
 
     inbChartDataReady() {
