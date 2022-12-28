@@ -66,12 +66,13 @@
 							>
 							<span class="login__horisontal-line"></span>
 							<input
-								type="text"
+                v-phone
+								type="tel"
 								name="phone"
 								:placeholder="$t('clientinfo.phone number') + ' *' | capitalize"
 								v-model="userinfo.phonenumber"
-								readonly
-								onfocus="this.removeAttribute('readonly')"
+                autocomplete="tel"
+                maxlength="15"
 							>
 							<span class="login__horisontal-line"></span>
 							<input

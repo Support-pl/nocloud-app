@@ -104,7 +104,7 @@ export default {
         ?.toLowerCase();
 
 			if (serviceType === undefined) return;
-      if (this.status !== 'Active') return;
+      if (this.status.toLowerCase() !== 'active') return;
 			return () => import(`@/components/services/${serviceType}/lilbtn`);
 		}
 	},

@@ -168,7 +168,7 @@
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
               {{ VM.data.expiration }}
-              <a-icon type="sync" title="Renew" @click="sendRenew" />
+              <a-icon type="sync" :title="$t('renew')" @click="sendRenew" />
             </div>
           </div>
         </div>
@@ -722,9 +722,7 @@ export default {
           ),
           okText: this.$t("Yes"),
           cancelText: this.$t("Cancel"),
-          onOk: () => {
-            return new Promise((resolve) => setTimeout(resolve, 1000));
-          },
+          onOk: () => new Promise((resolve) => setTimeout(resolve, 1000)),
           onCancel() {},
         });
       })

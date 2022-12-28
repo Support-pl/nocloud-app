@@ -190,6 +190,9 @@
               <a-col> {{ $t("os") }}: </a-col>
               <a-col>
                 {{ options.os.name }}
+                <template v-if="priceOVH.addons.os">
+                  ({{ priceOVH.addons.os }} {{ priceOVH.currency }})
+                </template>
               </a-col>
             </a-row>
           </transition>
@@ -285,11 +288,11 @@
             <a-row
               type="flex"
               justify="space-between"
-              v-for="(addon, key) in priceOVH.addons"
+              v-for="(addon, key) in addons"
               :key="addon"
               :style="{ 'font-size': '1.1rem' }"
             >
-              <a-col> {{ $t(key) | capitalize }}: </a-col>
+              <a-col> {{ $t(key) | capitalize }} ({{ getAddonsValue(key) }}): </a-col>
               <a-col>
                 {{ addon }} {{ priceOVH.currency }}
               </a-col>
@@ -756,6 +759,12 @@ export default {
         return () => import('@/components/appMain/modules/ione/createInstance.vue');
       }
     },
+    addons() {
+      const addons = { ...this.priceOVH.addons };
+
+      delete addons.os;
+      return addons;
+    },
 
     //--------------Plans-----------------
     //UNKNOWN and STATIC
@@ -1116,6 +1125,11 @@ export default {
     getPopupContainer(trigger) {
       const elem = trigger.parentElement.parentElement.parentElement;
       return elem;
+    },
+    getAddonsValue(key) {
+      const addon = this.options.config.addons.find((el) => el.includes(key));
+
+      return `${parseFloat(addon.split('-').at(-1))} Gb`;
     },
     // URLparameter(obj, outer = "") {
     //   var str = "";

@@ -1,6 +1,6 @@
 <template>
 	<div class="btn">
-		<!-- <a-button block @click.stop="moduleEnter">{{$t('enter') | capitalize}}</a-button> -->
+		<a-button block @click.stop="moduleEnter">{{$t('renew') | capitalize}}</a-button>
 	</div>
 </template>
 
@@ -9,10 +9,25 @@ export default {
 	props: ['service'],
 	methods: {
 		moduleEnter(){
-			// console.log(this.service);
-			// const vms = this.$store.getters['cloud/getClouds']();
-			// const id = vms.find( vm => vm.id_service == service.id).ID;
-			// this.$router.push(`cloud-${id}`);
+			this.$confirm({
+        title: this.$t("Do you want to renew payment?"),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        onOk: () => {
+          const data = { uuid: this.service.orderid, action: "manual_renew" };
+
+          return this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
+            .then(() => {
+              this.openNotificationWithIcon("success", { message: `Done!` });
+            })
+            .catch((err) => {
+              this.openNotificationWithIcon("error", {
+                message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+              });
+            });
+        },
+        onCancel() {},
+      });
 		}
 	}
 }
