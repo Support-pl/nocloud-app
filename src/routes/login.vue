@@ -157,11 +157,13 @@ export default {
       this.send(this);
     },
     send() {
+      const formatedEmail = `${this.email[0].toLowerCase()} ${this.email.slice(1)}`;
+
       this.loginLoading = true;
       (this.isLoginFailed = false),
         this.$store
           .dispatch("nocloud/auth/login", {
-            login: this.email,
+            login: formatedEmail,
             password: this.password,
             type: (this.type) ? 'standard' : 'whmcs'
           })
@@ -194,7 +196,8 @@ export default {
       this.remember = !this.remember;
     },
     restorePass() {
-      const email = encodeURIComponent(this.email);
+      const formatedEmail = `${this.email[0].toLowerCase()} ${this.email.slice(1)}`;
+      const email = encodeURIComponent(formatedEmail);
 
       this.$api.get(`${this.baseURL}`, { params: {
         run: 'reset_password', email

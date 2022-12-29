@@ -490,7 +490,6 @@
                 type="primary"
                 shape="round"
                 :disabled="
-                  score < 4 ||
                   password.length === 0 ||
                   vmName == '' ||
                   namespace == '' ||
@@ -502,14 +501,21 @@
                 {{ $t("Create") }}
               </a-button>
               <a-modal
-                :title="$t('Confirm')"
+                :title="$t((score < 4) ? 'Week pass' : 'Confirm')"
                 :visible="modal.confirmCreate"
+                :ok-button-props="{ props: { disabled: score < 4 } }"
                 :confirm-loading="modal.confirmLoading"
                 :cancel-text="$t('Cancel')"
                 @ok="handleOkOnCreateOrder"
                 @cancel="() => (modal.confirmCreate = false)"
               >
-                {{ $t("Virtual machine will be available after paying the invoice") }}
+                <span style="color: var(--err)" v-if="score < 4">
+                  {{ $t("Password must contain uppercase letters, numbers and symbols") }}
+                </span>
+                <template v-else>
+                  {{ $t("Virtual machine will be available after paying the invoice") }}
+                </template>
+                
 
                 <!-- <a-row style="margin-top: 20px">
                   <a-col>

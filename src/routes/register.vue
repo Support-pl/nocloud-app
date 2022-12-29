@@ -95,9 +95,9 @@
 						</div>
 
 						<div class="inputs__log-pas">
-							<a-select name="country" id="country" v-model="userinfo.country">
+							<a-select show-search name="country" id="country" v-model="userinfo.country">
 								<a-select-option v-for="country in countries" :key="country.code" :value="country.code">
-                  {{country.title}}
+                  {{country.title}} ({{country.dial_code}})
                 </a-select-option>
 							</a-select>
 							<!-- <span class="login__horisontal-line"></span>
@@ -185,7 +185,8 @@ export default {
 			}
 
 			const temp = JSON.parse(JSON.stringify(this.userinfo));
-			temp.phonenumber = temp.phonenumber.replace("+", "")
+			temp.phonenumber = `${this.phonecode.replace(/[+\s]/g, "")}${temp.phonenumber}`;
+      temp.email = `${temp.email[0].toLowerCase()} ${temp.email.slice(1)}`;
 
 			this.registerLoading = true;
 			api.get(this.baseURL, {
@@ -235,6 +236,9 @@ export default {
 		},
     baseURL(){
       return this.$store.getters['support/getURL'];
+    },
+    phonecode(){
+      return countries.find(({ code }) => code === this.userinfo.country).dial_code;
     }
 	}
 }
@@ -372,6 +376,10 @@ export default {
 	border: none;
 	outline: none;
 	padding: 10px 15px;
+}
+
+.inputs__log-pas .ant-select-search__field {
+  padding-left: 0;
 }
 
 .inputs__log-pas input::placeholder{
