@@ -151,7 +151,7 @@
               <div class="newCloud__template-name">
                 {{ item.name }} <br>
                 <template v-if="item.prices">
-                  ({{ osPrice(item.prices) }} {{ price.currency }})
+                  ({{ osPrice(item.prices) }} {{ currency }})
                 </template>
               </div>
             </template>
@@ -305,11 +305,7 @@ export default {
             tarifs.push({ value: 'Monthly', label: 'ssl_product.Monthly' });
         }
       });
-      this.price = {
-        value: plan.price.value,
-        currency: 'NCU' || plan.price.currencyCode,
-        addons: {}
-      };
+      this.price = { value: plan.price.value, addons: {} };
 
       if (changeTarifs) this.$emit('setData', { key: 'periods', value: tarifs });
       this.$emit('setData', { key: 'priceOVH', value: this.price });
@@ -386,6 +382,9 @@ export default {
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
+    },
+    currency() {
+      return this.$store.getters['nocloud/auth/billingData'].currency_code;
     },
     region() {
       const location = this.locationId.split(' ').at(-1);

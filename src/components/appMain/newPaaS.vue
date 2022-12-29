@@ -191,7 +191,7 @@
               <a-col>
                 {{ options.os.name }}
                 <template v-if="priceOVH.addons.os">
-                  ({{ priceOVH.addons.os }} {{ priceOVH.currency }})
+                  ({{ priceOVH.addons.os }} {{ billingData.currency_code }})
                 </template>
               </a-col>
             </a-row>
@@ -294,7 +294,7 @@
             >
               <a-col> {{ $t(key) | capitalize }} ({{ getAddonsValue(key) }}): </a-col>
               <a-col>
-                {{ addon }} {{ priceOVH.currency }}
+                {{ addon }} {{ billingData.currency_code }}
               </a-col>
             </a-row>
           </transition-group>
@@ -401,12 +401,12 @@
           >
             <a-col v-if="tarification === 'Annually'">
               {{ calculatePrice(productFullPriceOVH, (period = "hour")).toFixed(2) }}
-              {{ priceOVH.currency || 'USD' }}/{{ $tc("year", 0) }}
+              {{ billingData.currency_code || 'USD' }}/{{ $tc("year", 0) }}
             </a-col>
 
             <a-col v-if="tarification === 'Biennially'">
               {{ calculatePrice(productFullPriceOVH, (period = "hour")).toFixed(2) }}
-              {{ priceOVH.currency || 'USD' }}/2 {{ $t("years") }}
+              {{ billingData.currency_code || 'USD' }}/2 {{ $t("years") }}
             </a-col>
 
             <a-col v-if="tarification === 'Monthly'">
@@ -416,9 +416,7 @@
                   (period = "month")
                 ).toFixed(2)
               }}
-              {{ ((plan.type === 'ovh')
-                ? priceOVH.currency
-                : billingData.currency_code) || 'USD' }}/{{ $tc("period.month") }}
+              {{ billingData.currency_code || 'USD' }}/{{ $tc("period.month") }}
             </a-col>
 
             <a-col v-if="tarification === 'Hourly'">
@@ -665,7 +663,7 @@ export default {
       score: null,
       product: {},
       addfunds: { visible: false, amount: 0 },
-      priceOVH: { value: 0, currency: 'USD', addons: {} },
+      priceOVH: { value: 0, addons: {} },
       options: {
         // kind: "standart",
 
@@ -1411,7 +1409,9 @@ export default {
       .then(({ pool }) => {
         pool.forEach((plan) => {
           if (plan.kind === 'STATIC') {
-            const { resources, title } = Object.values(plan.products)[0];
+            const { resources, title } = (plan.meta.product)
+              ? Object.values(plan.products).find((el) => el.title === plan.meta.product)
+              : Object.values(plan.products)[0];
 
             this.options.ram.size = resources.ram / 1024;
             this.options.cpu.size = resources.cpu;
