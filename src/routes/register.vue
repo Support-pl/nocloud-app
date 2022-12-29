@@ -186,7 +186,7 @@ export default {
 
 			const temp = JSON.parse(JSON.stringify(this.userinfo));
 			temp.phonenumber = `${this.phonecode.replace(/[+\s]/g, "")}${temp.phonenumber}`;
-      temp.email = `${temp.email[0].toLowerCase()} ${temp.email.slice(1)}`;
+      temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`;
 
 			this.registerLoading = true;
 			api.get(this.baseURL, {

@@ -157,7 +157,7 @@ export default {
       this.send(this);
     },
     send() {
-      const formatedEmail = `${this.email[0].toLowerCase()} ${this.email.slice(1)}`;
+      const formatedEmail = `${this.email[0].toLowerCase()}${this.email.slice(1)}`;
 
       this.loginLoading = true;
       (this.isLoginFailed = false),
@@ -196,7 +196,7 @@ export default {
       this.remember = !this.remember;
     },
     restorePass() {
-      const formatedEmail = `${this.email[0].toLowerCase()} ${this.email.slice(1)}`;
+      const formatedEmail = `${this.email[0].toLowerCase()}${this.email.slice(1)}`;
       const email = encodeURIComponent(formatedEmail);
 
       this.$api.get(`${this.baseURL}`, { params: {
