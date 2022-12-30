@@ -21,5 +21,6 @@
 		"code": "USD"
 	},
   "services": ["VM", "Domains", "Virtual", "SSL"],
+  "languages": ["en", "ru", "vi", "fr"],
 	"dangerModeNoSSLCheck": false
 }

@@ -60,10 +60,10 @@ export default {
 	cursor: pointer;
 	position: relative;
 	z-index: 2;
+  padding: 5px;
 }
 
 .button__title{
-	transform: translateY(20px);
 	transition: transform .2s .1s ease;
 }
 
@@ -73,7 +73,6 @@ export default {
 	position: relative;
 	z-index: 2;
 	translate: color .2s ease;
-	transform: translateY(10px);
 	transition: transform .2s ease;
 }
 
@@ -115,11 +114,9 @@ export default {
 
 .button.active .button__icon{
 	color: var(--bright_font);
-	transform: translateY(5px);
 }
 
 .button.active .button__title{
-	transform: none;
 	color: var(--bright_font);
 }
 </style>
