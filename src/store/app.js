@@ -26,7 +26,7 @@ export default {
 				theme: 'outlined'
 			},
 			{
-				icon: 'dollar',
+				icon: 'fund',
 				title: 'invoice',
 				theme: 'outlined'
 			},
