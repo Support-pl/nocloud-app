@@ -18,6 +18,15 @@ export default {
       }
       return result;
     },
+    logoutFormChild() {
+      this.$store.commit("logout");
+      this.$store.dispatch("nocloud/auth/logout");
+      this.$router.push({ name: "login" });
+      localStorage.removeItem("data");
+    },
+  },
+  mounted() {
+    window.document.addEventListener("logoutChild", this.logoutFormChild);
   },
   computed: {
     src() {
