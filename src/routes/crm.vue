@@ -26,7 +26,7 @@ export default {
     },
   },
   mounted() {
-    window.document.addEventListener("logoutChild", this.logoutFormChild);
+    window.addEventListener("logout", this.logoutFormChild, false);
   },
   computed: {
     src() {
