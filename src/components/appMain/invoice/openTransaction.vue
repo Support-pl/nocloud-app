@@ -133,31 +133,29 @@ export default {
   mounted() {
     const url = `/billing/transactions/${this.$route.params.uuid}`;
 
-    this.$store.dispatch('nocloud/vms/fetch');
-    setTimeout(() => {
-      this.$api.get(url)
-        .then(({ pool }) => {
-          const instances = {};
+    this.$store.dispatch('nocloud/vms/fetch')
+      .then(() => this.$api.get(url))
+      .then(({ pool }) => {
+        const instances = {};
 
-          this.services.forEach((service) => {
-            service.instancesGroups.forEach((group) => {
-              group.instances.forEach((inst) => {
-                instances[inst.uuid] = inst.title;
-              });
+        this.services.forEach((service) => {
+          service.instancesGroups.forEach((group) => {
+            group.instances.forEach((inst) => {
+              instances[inst.uuid] = inst.title;
             });
           });
-          this.records = pool.map((el) => ({
-            ...el, instance: instances[el.instance] ?? 'unknown'
-          }));
-          this.isLoading = false;
-
-          this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource';
-        })
-        .catch((err) => {
-          this.$router.push("/invoice");
-          console.error(err);
         });
-    }, 1000);
+        this.records = pool.map((el) => ({
+          ...el, instance: instances[el.instance] ?? 'unknown'
+        }));
+        this.isLoading = false;
+
+        this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource';
+      })
+      .catch((err) => {
+        this.$router.push("/invoice");
+        console.error(err);
+      });
   },
   computed: {
     user() {

@@ -460,6 +460,7 @@
                 type="primary"
                 shape="round"
                 v-if="
+                  activeKey &&
                   (activeKey !== 'addons' && itemSP.type === 'ovh') ||
                   (activeKey !== 'OS' && itemSP.type !== 'ovh')
                 "

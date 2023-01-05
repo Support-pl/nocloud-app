@@ -50,7 +50,7 @@
           <path
             v-for="country in mapData.countries"
             :key="country.id + country.title"
-            :class="{ 'map__part--selected': selected.split(' ').at(-1) == country.id }"
+            :class="{ 'map__part--selected': selected.split(' ').at(-1).includes(country.id) }"
             class="map__part"
             :id="country.id"
             :title="country.title"
@@ -65,11 +65,12 @@
         >
           <g v-for="marker in markerOrder" :key="marker.id + '_1'">
             <use
-              :href="`#${marker.svgId || 'marker'}`"
-              class="map__marker"
-              :data-id="marker.id"
               x="0"
               y="0"
+              class="map__marker"
+              :class="{ 'map__marker--active': selected == marker.id }"
+              :href="`#${marker.svgId || 'marker'}`"
+              :data-id="marker.id"
               :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${marker.x} ${marker.y})`"
               transform-origin="14 36"
               @mouseenter="(e) => mouseEnterHandler(marker.id, e)"
@@ -329,6 +330,9 @@ export default {
 } */
 .map__marker {
   cursor: pointer;
+}
+.map__marker--active {
+  filter: hue-rotate(125deg);
 }
 .map__popup {
   visibility: hidden;
