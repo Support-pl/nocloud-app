@@ -186,7 +186,7 @@
             >
               <a-select-option value="-1">{{ $t('none') }}</a-select-option>
               <a-select-option v-for="(a, id) in addon" :key="id">
-                {{ a.productName }}
+                {{ a.productName }} ({{ addonPrice(a) }})
               </a-select-option>
             </a-select>
           </a-col>
@@ -278,6 +278,11 @@ export default {
       const keys = Object.keys(addons);
 
       return codes.find((el) => keys.includes(el)) ?? '-1';
+    },
+    addonPrice({ periods }) {
+      const period = periods.find(({ pricingMode }) => pricingMode === this.mode);
+
+      return `${period.price.value} ${this.currency}`;
     },
     setData(planKey, changeTarifs = true) {
       const { periods, value } = this.plans.find((el) => el.value.includes(planKey)) ?? {};

@@ -41,7 +41,7 @@ export default {
 
 	autoTicketDepartment: 9,
 
-	languages: globalConfig.languages,
+	languages: globalConfig.languages ?? ['en'],
 	dangerModeNoSSLCheck: globalConfig.dangerModeNoSSLCheck ?? false,
 	WHMCSsiteurl: globalConfig.whmcs?.site_url ?? '',
 	sharedFolder: globalConfig.app?.shared_folder ?? 'virtualHosting',
