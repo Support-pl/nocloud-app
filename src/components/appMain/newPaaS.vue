@@ -500,15 +500,15 @@
                 {{ $t("Create") }}
               </a-button>
               <a-modal
-                :title="$t((score < 4) ? 'Week pass' : 'Confirm')"
+                :title="$t((score < 4 && itemSP.type !== 'ovh') ? 'Weak pass' : 'Confirm')"
                 :visible="modal.confirmCreate"
-                :ok-button-props="{ props: { disabled: score < 4 } }"
+                :ok-button-props="{ props: { disabled: (score < 4 && itemSP.type !== 'ovh') } }"
                 :confirm-loading="modal.confirmLoading"
                 :cancel-text="$t('Cancel')"
                 @ok="handleOkOnCreateOrder"
                 @cancel="() => (modal.confirmCreate = false)"
               >
-                <span style="color: var(--err)" v-if="score < 4">
+                <span style="color: var(--err)" v-if="score < 4 && itemSP.type !== 'ovh'">
                   {{ $t("Password must contain uppercase letters, numbers and symbols") }}
                 </span>
                 <template v-else>
@@ -1673,8 +1673,7 @@ export default {
   border-radius: 0 0 20px 20px;
 }
 .newCloud__template-item {
-  width: 124px;
-  margin-bottom: 10px;
+  width: 100px;
   background-color: #fff;
   box-shadow: 3px 2px 6px rgba(0, 0, 0, 0.08), 0px 0px 8px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
@@ -1695,6 +1694,11 @@ export default {
 }
 .newCloud__template-image {
   padding: 10px;
+}
+.newCloud__template-image img {
+  object-fit: cover;
+  max-width: 100%;
+  max-height: 80px;
 }
 .newCloud__template-name {
   padding: 10px;
