@@ -389,7 +389,7 @@ export default {
       return this.$store.getters['nocloud/auth/userdata'];
     },
     currency() {
-      return this.$store.getters['nocloud/auth/billingData'].currency_code;
+      return this.$store.getters['nocloud/auth/billingData'].currency_code || 'USD';
     },
     region() {
       const location = this.locationId.split(' ').at(-1);
