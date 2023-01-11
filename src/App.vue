@@ -19,6 +19,10 @@ export default {
   name: "app",
   components: { updateNotification },
   created() {
+    window.addEventListener('message', ({ data }) => {
+      this.$store.commit("nocloud/auth/setToken", data);
+    });
+
     this.$store.dispatch("nocloud/auth/load");
 
     this.$router.beforeEach((to, _, next) => {

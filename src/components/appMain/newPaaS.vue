@@ -1306,7 +1306,7 @@ export default {
       const sum = this.$refs['sum-order'].$el.firstElementChild.innerText;
       const { balance = 0 } = this.userdata;
 
-      if (balance < parseFloat(sum)) {
+      if (balance < parseFloat(sum.replace('~', ''))) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance.'),
           content: () => (

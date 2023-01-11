@@ -154,6 +154,9 @@
           </a-modal>
         </div>
 
+        <button class="settings__login" @click="loginToAdmin()">
+          {{ $t("Login to admin panel") }}
+        </button>
         <button class="settings__exit" @click="logoutFunc()">
           {{ $t("Exit") }}
         </button>
@@ -230,11 +233,20 @@ export default {
     //       this.isSendingInfo = false;
     //     });
     // },
+    loginToAdmin() {
+      const url = `https://api.${VUE_APP_BASE_URL.split('.').slice(1).join('.')}/admin`;
+      const win = window.open(url);
+      const token = this.$store.state.nocloud.auth.token;
+
+      win.postMessage(token, url);
+      // this.$store.dispatch('login', { uuid: this.userdata.uuid })
+      //   .then((res) => console.log(res))
+    },
     logoutFunc() {
       this.$store.commit("logout");
-      	this.$store.dispatch('nocloud/auth/logout')
+      this.$store.dispatch('nocloud/auth/logout')
       this.$router.push({ name: "login" });
-       localStorage.removeItem("data");
+      localStorage.removeItem("data");
     },
     URLparameter(obj, outer = "") {
       var str = "";
@@ -361,6 +373,7 @@ export default {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
+.settings__login,
 .settings__exit {
   background-color: #ee5854;
   /* background-color: var(--err); */
@@ -371,9 +384,14 @@ export default {
   width: 100%;
   padding: 12px 0;
   border-radius: 12px;
-  margin-top: 40px;
+  margin-top: 20px;
   cursor: pointer;
   transition: filter 0.2s ease;
+}
+
+.settings__login {
+  margin-top: 40px;
+  background-color: var(--main);
 }
 
 .settings__exit:hover {

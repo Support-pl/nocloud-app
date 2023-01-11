@@ -29,10 +29,10 @@ export default {
 		}
 	},
 	actions: {
-		login({ commit }, { login, password, type }) {
+		login({ commit }, { login, password, type, uuid }) {
       localStorage.removeItem('user');
 			return new Promise((resolve, reject) => {
-				api.authorizeCustom({ auth: { type, data: [login, password] } })
+				api.authorizeCustom({ auth: { type, data: [login, password] }, uuid })
 					.then(response => {
             api.applyToken(response.token);
 						Cookies.set(COOKIES_NAME, response.token);

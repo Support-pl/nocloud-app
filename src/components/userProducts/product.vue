@@ -105,6 +105,7 @@ export default {
 
 			if (serviceType === undefined) return;
       if (this.status.toLowerCase() !== 'active') return;
+      if (this.wholeProduct.date === 0) return;
 			return () => import(`@/components/services/${serviceType}/lilbtn`);
 		}
 	},

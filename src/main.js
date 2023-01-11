@@ -48,10 +48,13 @@ Vue.directive('phone', {
   componentUpdated(el) {
     if (!event.isTrusted) return
 
-    const x = el.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2})/)
+    const value = el.value.replace(/\D/g, '')
+    const num = (value.length > 8) ? value.length - 7 : 1
+    const regexp = new RegExp(`(\\d{0,${num}})(\\d{0,3})(\\d{0,2})(\\d{0,2})`)
+    const x = value.match(regexp)
 
     if (x[1] === '') el.value = ''
-    else if (x[1].length < 3) el.value = `(${x[1]}`
+    else if (x[1].length < num) el.value = `(${x[1]}`
     else if (x[2] === '') el.value = `(${x[1]})`
     else if (x[3] === '') el.value = `(${x[1]}) ${x[2]}`
     else if (x[4] === '') el.value = `(${x[1]}) ${x[2]}-${x[3]}`
