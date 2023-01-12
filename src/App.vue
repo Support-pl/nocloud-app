@@ -19,8 +19,12 @@ export default {
   name: "app",
   components: { updateNotification },
   created() {
-    window.addEventListener('message', ({ data }) => {
+    window.addEventListener('message', ({ data, origin }) => {
+      const url = `https://api.${location.host.split('.').slice(1).join('.')}`;
+
+      if (origin !== url) return;
       this.$store.commit("nocloud/auth/setToken", data);
+      this.$router.push({ name: "services" });
     });
 
     this.$store.dispatch("nocloud/auth/load");

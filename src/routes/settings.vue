@@ -234,11 +234,11 @@ export default {
     //     });
     // },
     loginToAdmin() {
-      const url = `https://api.${VUE_APP_BASE_URL.split('.').slice(1).join('.')}/admin`;
+      const url = `https://api.${location.host.split('.').slice(1).join('.')}/admin`;
       const win = window.open(url);
       const token = this.$store.state.nocloud.auth.token;
 
-      win.postMessage(token, url);
+      setTimeout(() => { win.postMessage(token, url) }, 100);
       // this.$store.dispatch('login', { uuid: this.userdata.uuid })
       //   .then((res) => console.log(res))
     },
