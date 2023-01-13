@@ -154,7 +154,11 @@
           </a-modal>
         </div>
 
-        <button class="settings__login" @click="loginToAdmin()">
+        <button
+          class="settings__login"
+          v-if="userdata.access && ['ROOT', 'ADMIN'].includes(userdata.access.level)"
+          @click="loginToAdmin()"
+        >
           {{ $t("Login to admin panel") }}
         </button>
         <button class="settings__exit" @click="logoutFunc()">
@@ -239,13 +243,9 @@ export default {
       const token = this.$store.state.nocloud.auth.token;
 
       setTimeout(() => { win.postMessage(token, url) }, 100);
-      // this.$store.dispatch('login', { uuid: this.userdata.uuid })
-      //   .then((res) => console.log(res))
     },
     logoutFunc() {
-      this.$store.commit("logout");
-      this.$store.dispatch('nocloud/auth/logout')
-      this.$router.push({ name: "login" });
+      this.$store.dispatch('nocloud/auth/logout');
       localStorage.removeItem("data");
     },
     URLparameter(obj, outer = "") {
