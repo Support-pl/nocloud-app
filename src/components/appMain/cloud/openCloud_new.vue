@@ -392,7 +392,7 @@ export default {
       }
     },
     stateColor() {
-      if (!this.VM.state) return "rgb(145, 145, 145)"
+      if (!this.VM.state) return "rgb(145, 145, 145)";
       const state = (this.VM?.config?.os)
         ? this.VM.state.state
         : this.VM.state.meta.lcm_state_str;
@@ -431,13 +431,15 @@ export default {
   },
   methods: {
     disabledMenu(menuName) {
-      const states = ["RUNNING", "STOPPED", "POWEROFF"];
+      const states = ["RUNNING", "STOPPED", "POWEROFF", "SUSPENDED"];
 
       if (this.VM?.product && menuName === "resize") {
         return true;
       }
-      if (!states.find((state) => this.stateVM.includes(state))) {
-        return true;
+      if (states.find((state) => this.stateVM.includes(state))) {
+        if (menuName === "delete") return false;
+        if (this.VM.billingPlan.kind === "DYNAMIC") return true;
+        return false;
       }
     },
     changeModal(name) {

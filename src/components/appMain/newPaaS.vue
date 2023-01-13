@@ -1176,9 +1176,7 @@ export default {
         },
       };
       //add key product in instance
-      const newInstance = (this.plan.kind === "STATIC")
-        ? Object.assign({}, { product: this.product.key }, instance)
-        : instance;
+      const newInstance = Object.assign({}, { product: this.product.key });
       const newGroup = {
         title: this.userdata.title + Date.now(),
         resources: {
