@@ -596,17 +596,9 @@ export default {
           <div style="color:red">{this.$t("All data will be deleted!")}</div>
         ),
         onOk: () => {
-          const group = this.itemService.instancesGroups.find(
-            (el) => el.uuid === this.VM.uuidInstancesGroups
-          );
-
           this.isDeleteLoading = true;
-          group.instances = group.instances.filter(
-            (inst) => inst.uuid !== this.VM.uuid
-          );
-          group.resources.ips_public = group.instances.length ;
           this.$store
-            .dispatch("nocloud/vms/updateService", this.itemService)
+            .dispatch("nocloud/vms/deleteInstance", this.VM.uuid)
             .then((result) => {
               if (result) {
                 this.openNotificationWithIcon("success", {

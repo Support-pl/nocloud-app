@@ -150,9 +150,17 @@ export default {
 					});
 			})
 		},
-
-
-
+    deleteInstance(_, uuid) {
+      return new Promise((resolve, reject) => {
+        api.delete(`/instances/${uuid}`)
+          .then((response) => {
+            resolve(response)
+          })
+          .catch((err) => {
+            reject(err)
+          })
+      })
+    }
 	},
 	getters: {
 		all(state) {
