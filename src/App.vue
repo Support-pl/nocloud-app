@@ -25,7 +25,7 @@ export default {
       if (origin !== url) return;
       this.$store.commit("nocloud/auth/setToken", data);
       localStorage.removeItem("user");
-      location.assign("/services");
+      location.assign("/");
     });
 
     this.$store.dispatch("nocloud/auth/load");
