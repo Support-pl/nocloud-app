@@ -231,7 +231,7 @@
                     }"
                     :offset="[10, 2]"
                   >
-                  
+
                   </a-badge>
                 </a-tooltip> -->
                 <template v-if="itemSP.type === 'ovh'">{{ $t("public") }} IPv4:</template>
@@ -272,7 +272,7 @@
                     }"
                     :offset="[10, 2]"
                   >
-                  
+
                   </a-badge>
                 </a-tooltip> -->
                 {{ $t("private") }} IPv4:
@@ -514,7 +514,7 @@
                 <template v-else>
                   {{ $t("Virtual machine will be available after paying the invoice") }}
                 </template>
-                
+
 
                 <!-- <a-row style="margin-top: 20px">
                   <a-col>
@@ -1153,7 +1153,7 @@ export default {
     // },
     handleOkOnCreateOrder() {
       // --------------------------------
-      const instance = {
+      const newInstance = {
         title: this.vmName,
         config: {
           template_id: this.options.os.id,
@@ -1174,9 +1174,9 @@ export default {
           type: this.plan.type,
           public: this.plan.public,
         },
+        product: this.product.key
       };
-      //add key product in instance
-      const newInstance = Object.assign({}, { product: this.product.key });
+
       const newGroup = {
         title: this.userdata.title + Date.now(),
         resources: {
@@ -1243,7 +1243,7 @@ export default {
                   ips_public: newInstance.resources.ips_public,
                 },
                 type: this.itemSP.type,
-                instances: [this.service ? instance : newInstance],
+                instances: [newInstance],
                 sp: this.itemSP.uuid,
               },
             ],
