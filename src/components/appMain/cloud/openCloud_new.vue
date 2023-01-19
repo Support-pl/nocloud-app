@@ -438,7 +438,7 @@ export default {
       }
       if (states.find((state) => this.stateVM.includes(state))) {
         if (menuName === "delete") return false;
-        if (this.VM.billingPlan.kind === "DYNAMIC") return true;
+        if (this.VM.billingPlan.kind === "DYNAMIC" && this.stateVM === "SUSPENDED") return true;
         return false;
       }
     },
