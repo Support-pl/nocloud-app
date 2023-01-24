@@ -579,7 +579,26 @@ export default {
           <div style="color:red;">{ this.$t("All data will be deleted!") }</div>
         ),
         onOk: () => {
-          this.sendAction("reinstall");
+          const data = {
+            uuid: this.VM.uuid,
+            uuidService: this.VM.uuidService,
+            action: "reinstall"
+          }
+
+          this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
+            .then(() => {
+              const opts = {
+                message: `${this.$t('Done')}!`,
+              };
+              this.openNotificationWithIcon("success", opts);
+            })
+            .catch((err) => {
+              const opts = {
+                message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+              };
+              this.openNotificationWithIcon("error", opts);
+            });
+
           this.modal.menu = false;
           this.modal.reinstall = false;
         },

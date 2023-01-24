@@ -238,10 +238,11 @@ export default {
     //     });
     // },
     loginToAdmin() {
-      const url = `https://api.${location.host.split('.').slice(1).join('.')}/admin`;
+      const url = `https://api.${location.host.split('.').slice(1).join('.')}/admin#`;
       const win = window.open(url);
       const token = this.$store.state.nocloud.auth.token;
 
+      console.log(win);
       setTimeout(() => { win.postMessage(token, url) }, 100);
     },
     logoutFunc() {
