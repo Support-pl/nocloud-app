@@ -22,7 +22,7 @@
 		</div>
 		<div class="login__main login__layout">
 			<div class="login__UI">
-		
+
 				<div v-if="getOnlogin.info" class="login__action-info">
 					{{getOnlogin.info}}
 				</div>
@@ -50,7 +50,7 @@
 							<input
 								type="text"
 								name="lastname"
-								:placeholder="$t('clientinfo.lastname') + ' *' | capitalize" 
+								:placeholder="$t('clientinfo.lastname') + ' *' | capitalize"
 								v-model="userinfo.lastname"
 								readonly
 								onfocus="this.removeAttribute('readonly')"
@@ -78,7 +78,7 @@
 							<input
 								type="password"
 								name="password"
-								:placeholder="$t('clientinfo.password') + ' *' | capitalize" 
+								:placeholder="$t('clientinfo.password') + ' *' | capitalize"
 								v-model="userinfo.password"
 								readonly
 								onfocus="this.removeAttribute('readonly')"
@@ -90,6 +90,14 @@
 							<a-select style="width: 100%; border: none" @change="(e) => $i18n.locale = e" :value="$i18n.locale">
 								<a-select-option v-for="lang in langs" :key="lang" :value="lang">
 									{{$t('localeLang', lang)}}
+								</a-select-option>
+							</a-select>
+						</div>
+
+            <div class="inputs__log-pas">
+							<a-select style="width: 100%; border: none" v-model="userinfo.currency">
+								<a-select-option v-for="currency in currencies" :key="currency.id" :value="currency.id">
+									{{currency.code}}
 								</a-select-option>
 							</a-select>
 						</div>
@@ -116,7 +124,7 @@
 
 						<template>
 							<button v-if="!registerLoading" @click.prevent="submitHandler()" class="login__submit">{{$t('clientinfo.register') | capitalize}}</button>
-								
+
 							<div v-else class="login__loading">
 								<span class="load__item"></span>
 								<span class="load__item"></span>
@@ -132,7 +140,7 @@
 			</div>
 		</div>
   	</div>
-  
+
 </template>
 
 <script>
@@ -146,6 +154,7 @@ export default {
 	data(){
 		return {
 			countries,
+      currencies: [],
 			registerLoading: false,
 			userinfo: {
 				firstname: '',
@@ -157,7 +166,8 @@ export default {
 				// state: '',
 				// postcode: '',
 				country: 'BY',
-				phonenumber: ''
+				phonenumber: '',
+        currency: 1
 			}
 		}
 	},
@@ -212,8 +222,20 @@ export default {
 			.finally(()=>{
 				this.registerLoading = false;
 			})
-		},	
+		},
 	},
+  created() {
+    api.get(this.baseURL, { params: { run: 'get_currencies' } })
+      .then((res) => { this.currencies = res.currency })
+			.catch(err => {
+        const message = err.response?.data?.message ?? err.message;
+
+				this.openNotificationWithIcon('error', {
+          message: this.$t(message)
+        });
+				console.error(err);
+			});
+  },
 	computed: {
 		getOnlogin(){
 			return this.$store.getters.getOnlogin;
