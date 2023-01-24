@@ -133,6 +133,12 @@ export default {
   mounted() {
     const url = `/billing/transactions/${this.$route.params.uuid}`;
 
+    setTimeout(() => {
+      const { uuid } = this.$route.params;
+
+      sessionStorage.setItem('invoice', uuid);
+    });
+
     this.$store.dispatch('nocloud/vms/fetch')
       .then(() => this.$api.get(url))
       .then(({ pool }) => {
@@ -156,6 +162,11 @@ export default {
         this.$router.push("/invoice");
         console.error(err);
       });
+  },
+  destroyed() {
+    if (!this.$route.name.includes('invoice')) {
+      sessionStorage.removeItem('invoice');
+    }
   },
   computed: {
     user() {
@@ -303,7 +314,7 @@ export default {
 
 .loading {
   position: absolute;
-  height: 100%; 
+  height: 100%;
   width: 100%;
 }
 

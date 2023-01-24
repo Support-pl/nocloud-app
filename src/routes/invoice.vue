@@ -2,12 +2,12 @@
   <div class="invoices">
     <loading v-if="isLoading || isInvoicesLoading" />
     <div class="container" v-else>
-      <div class="invoices__wrapper">
+      <div class="invoices__wrapper" ref="invoices">
         <a-radio-group default-value="Invoice" v-model="value" size="large">
           <a-radio-button value="Invoice"> {{ $t('Invoice') }} </a-radio-button>
           <a-radio-button value="Detail"> {{ $t('Detail') }} </a-radio-button>
         </a-radio-group>
-        <div v-if="value === 'Invoice'">
+        <template v-if="value === 'Invoice'">
           <empty style="margin-top:50px" v-if="invoices.length === 0" />
           <single-invoice
             v-else
@@ -15,8 +15,8 @@
             :key="index"
             :invoice="invoice"
           />
-        </div>
-        <div v-if="value === 'Detail'">
+        </template>
+        <template v-if="value === 'Detail'">
           <empty style="margin-top:50px" v-if="transactions.length === 0" />
           <single-transaction
             v-else
@@ -24,7 +24,7 @@
             :key="index"
             :invoice="invoice"
           />
-        </div>
+        </template>
       </div>
     </div>
   </div>
@@ -66,6 +66,18 @@ export default {
       return this.$store.getters["invoices/isLoading"];
     }
   },
+  methods: {
+    setCoordY() {
+      setTimeout(() => {
+        const items = (this.value === 'Invoice') ? this.invoices : this.transactions;
+        const id = sessionStorage.getItem('invoice');
+        const i = items.findIndex(({ uuid }) => uuid === id);
+
+        if (i === -1) return;
+        this.$refs.invoices?.children[i + 1]?.scrollIntoView();
+      }, 100);
+    }
+  },
   mounted() {
     if (this.isLogged) {
       this.$store.dispatch("invoices/autoFetch");
@@ -75,6 +87,11 @@ export default {
     } else {
       localStorage.setItem('order', this.value);
     }
+
+    this.setCoordY();
+  },
+  destroyed() {
+    sessionStorage.removeItem('invoice');
   },
   watch: {
     value() {
@@ -83,7 +100,9 @@ export default {
       if (this.transactions.length > 0) return;
 
       this.$store.dispatch("nocloud/transactions/fetch", this.user.uuid);
-    }
+    },
+    isLoading() { this.setCoordY() },
+    isInvoicesLoading() { this.setCoordY() }
   }
 };
 </script>
@@ -110,10 +129,10 @@ export default {
 /* .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled){
   border-top:none;
 } */
-/* 
+/*
 .invoices__wrapper  .card-container {
   overflow: hidden;
- 
+
 }
 .invoices__wrapper .card-container > .ant-tabs-card > .ant-tabs-content {
   margin-top: -16px;
