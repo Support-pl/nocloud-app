@@ -196,11 +196,22 @@ export default {
     },
   },
   mounted() {
+    setTimeout(() => {
+      const { uuid } = this.$route.params;
+
+      sessionStorage.setItem('invoice', uuid);
+    });
+
     this.$store.dispatch('invoices/autoFetch')
       .catch((err) => {
         this.$router.push("/invoice");
         console.error(err);
       });
+  },
+  destroyed() {
+    if (!this.$route.name.includes('invoice')) {
+      sessionStorage.removeItem('invoice');
+    }
   },
   computed: {
     user() {
@@ -210,7 +221,7 @@ export default {
       return this.$store.getters['invoices/getURL'];
     },
     invoice() {
-      const uuid = this.$route.params.uuid;
+      const { uuid } = this.$route.params;
 
       return this.$store.getters['invoices/getInvoices']
         .find((invoice) => invoice.id === +uuid);

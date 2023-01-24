@@ -176,7 +176,7 @@ export default {
 			this.send(this);
 		},
 		send(){
-			if(Object.keys(this.userinfo).some(key => !this.userinfo[key].length)){
+			if(Object.keys(this.userinfo).some(key => !`${this.userinfo[key]}`.length)){
 				this.$message.warn(this.$t('all fields are required'));
 				return
 			}
