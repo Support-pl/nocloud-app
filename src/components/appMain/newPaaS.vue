@@ -449,11 +449,7 @@
                 "
               >
                 {{ $t("unregistered.will be able after") }}
-                <router-link
-                  :to="{ name: 'login' }"
-                  @click.native="availableLogin"
-                  >{{ $t("unregistered.login") }}</router-link
-                >.
+                <a href="#" @click="availableLogin">{{ $t("unregistered.login") }}</a>.
               </div>
               <a-button
                 block
@@ -733,9 +729,7 @@ export default {
       return data;
     },
     services() {
-      return this.getServicesFull.filter((el) =>
-        el.status !== 'DEL'
-      );
+      return this.getServicesFull.filter((el) => el.status !== 'DEL');
     },
 
     locations() {
@@ -965,20 +959,28 @@ export default {
     }
   },
   mounted() {
-    if (localStorage.getItem("data")) {
-      try {
-        this.dataLocalStorage = JSON.parse(localStorage.getItem("data"));
-        this.tarification = this.dataLocalStorage.plan;
-        this.productSize = this.dataLocalStorage.productSize;
-        this.options.os.id = this.dataLocalStorage.config.template_id;
-        this.options.os.name = this.dataLocalStorage.config.template_name;
-        this.password = this.dataLocalStorage.config.password;
-        this.vmName = this.dataLocalStorage.titleVM;
-      } catch (e) {
-        localStorage.removeItem("data");
-      }
-    }
-    this.$store.dispatch("nocloud/sp/fetch");
+    this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
+      .then(() => {
+        if (localStorage.getItem("data")) {
+          try {
+            this.dataLocalStorage = JSON.parse(localStorage.getItem("data"));
+            this.tarification = this.dataLocalStorage.tarification;
+            this.options.os.id = this.dataLocalStorage.config.template_id;
+            this.options.os.name = this.dataLocalStorage.config.template_name;
+            this.password = this.dataLocalStorage.config.password;
+            this.vmName = this.dataLocalStorage.titleVM;
+            this.locationId = this.dataLocalStorage.locationId;
+
+            this.options.config = this.dataLocalStorage.ovhConfig;
+            this.options.disk.size = this.dataLocalStorage.resources.drive_size;
+            this.options.drive = this.dataLocalStorage.resources.drive_type;
+            this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize });
+            this.plan = this.dataLocalStorage.billing_plan;
+          } catch (e) {
+            localStorage.removeItem("data");
+          }
+        }
+      });
     this.$store.dispatch("nocloud/vms/fetch")
       .then(() => {
         setTimeout(this.setOneService, 300);
@@ -1341,13 +1343,14 @@ export default {
       const data = {
         path: "/cloud/newVM",
         titleSP: this.itemSP.title,
-        plan: this.plan.kind,
+        tarification: this.tarification,
         productSize: this.productSize,
         titleVM: this.vmName,
+        locationId: this.locationId,
         resources: {
           cpu: this.options.cpu.size,
           ram: this.options.ram.size * 1024,
-          drive_type: this.options.drive ? "SSD" : "HDD",
+          drive_type: this.options.drive,
           drive_size: this.options.disk.size,
           ips_private: this.options.network.private.count,
           ips_public: this.options.network.public.count,
@@ -1357,8 +1360,16 @@ export default {
           template_name: this.options.os.name,
           password: this.password,
         },
+        billing_plan: {
+          uuid: this.plan.uuid,
+          title: this.plan.title,
+          type: this.plan.type,
+          public: this.plan.public,
+        },
+        ovhConfig: this.options.config
       };
       localStorage.setItem("data", JSON.stringify(data));
+      this.$router.push({ name: "login" });
     },
     // setAddon(name, value) {
     //   if (name == "os") {
@@ -1403,11 +1414,13 @@ export default {
     locationId() {
       this.$store.dispatch("nocloud/plans/fetch", {
         sp_uuid: this.itemSP.uuid,
-        anonymously: false
+        anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
         pool.forEach((plan) => {
-          if (plan.kind === 'STATIC') {
+          const data = localStorage.getItem('data');
+
+          if (plan.kind === 'STATIC' && !data) {
             const { resources, title } = (plan.meta.product)
               ? Object.values(plan.products).find((el) => el.title === plan.meta.product)
               : Object.values(plan.products)[0];

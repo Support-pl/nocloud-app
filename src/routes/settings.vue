@@ -83,22 +83,12 @@
               v-if="userdata.data && userdata.data.ssh_keys.length"
             >
               <div
+                style="display: flex; align-items: center; margin-bottom: 20px"
                 v-for="(item, index) in userdata.data && userdata.data.ssh_keys"
                 :key="item.uuid"
-                style="
-                  display: flex;
-                  align-items: center;
-                  margin-bottom: 20px;
-                "
               >
                 <a-col style="width: 100%">
-                  <div
-                    style="
-                      display: flex;
-                      align-items: center;
-                      margin-right: 10px;
-                    "
-                  >
+                  <div style="display: flex; align-items: center; margin-right: 10px">
                     <div style="margin-right: 10px; width: 20%">
                       {{ index + 1 }}.{{ item.title }}
                     </div>
@@ -156,7 +146,7 @@
 
         <button
           class="settings__login"
-          v-if="userdata.access && ['ROOT', 'ADMIN'].includes(userdata.access.level)"
+          v-if="false && userdata.access && ['ROOT', 'ADMIN'].includes(userdata.access.level)"
           @click="loginToAdmin()"
         >
           {{ $t("Login to admin panel") }}
