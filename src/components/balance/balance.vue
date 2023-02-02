@@ -5,7 +5,7 @@
       @click="showModal"
       :class="{ clickable: clickable }"
     >
-      {{ currency.prefix }}{{ (user.balance || 0).toFixed(2) }}
+      {{ (user.balance || 0).toFixed(2) }}
 
       <span class="currency__suffix">{{ currency.suffix }}</span>
       <span class="badge" v-if="clickable">
