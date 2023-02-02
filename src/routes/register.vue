@@ -106,7 +106,7 @@
 							<span class="login__horisontal-line"></span>
 							<input :placeholder="$t('clientinfo.firstname') | capitalize" v-model="userinfo.name">
 							<span class="login__horisontal-line"></span>
-							<input :placeholder="$t('clientinfo.companyname') + ' *' | capitalize" v-model="userinfo.company">
+							<input :placeholder="$t('clientinfo.companyname') + ' *' | capitalize" v-model="userinfo.companyname">
 							<span class="login__horisontal-line"></span>
 							<input placeholder="VAT ID" v-model="userinfo.vatid">
 

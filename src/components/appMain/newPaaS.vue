@@ -294,7 +294,7 @@
             >
               <a-col> {{ $t(key) | capitalize }} ({{ getAddonsValue(key) }}): </a-col>
               <a-col>
-                {{ addon }} {{ billingData.currency_code }}
+                {{ addon }} {{ billingData.currency_code || 'USD' }}
               </a-col>
             </a-row>
           </transition-group>
@@ -441,15 +441,18 @@
                 class="products__unregistred"
                 style="margin-bottom: 10px; text-align: center"
                 v-if="
+                  (itemSP.type !== 'ovh' &&
                   score > 3 &&
-                  password.length > 0 &&
+                  password.length > 0) ||
                   options.os.name &&
                   vmName &&
                   !isLoggedIn
                 "
               >
                 {{ $t("unregistered.will be able after") }}
-                <a href="#" @click="availableLogin">{{ $t("unregistered.login") }}</a>.
+                <a href="#" @click.prevent="availableLogin">{{ $t("unregistered.login") }}</a>.
+                <br>
+                <a href="#" @click.prevent="availableLogin(false)">{{ $t("Copy link to share") }}</a>
               </div>
               <a-button
                 block
@@ -705,7 +708,7 @@ export default {
           },
           price: 0,
         },
-        config: {}
+        config: { addons: [] }
       },
       modal: {
         confirmCreate: false,
@@ -961,9 +964,15 @@ export default {
   mounted() {
     this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
       .then(() => {
-        if (localStorage.getItem("data")) {
+        const data = localStorage.getItem("data");
+        const { query } = this.$route;
+
+        if (data || ('data' in query)) {
           try {
-            this.dataLocalStorage = JSON.parse(localStorage.getItem("data"));
+            this.dataLocalStorage = (data)
+              ? JSON.parse(localStorage.getItem("data"))
+              : JSON.parse(query.data);
+
             this.tarification = this.dataLocalStorage.tarification;
             this.options.os.id = this.dataLocalStorage.config.template_id;
             this.options.os.name = this.dataLocalStorage.config.template_name;
@@ -974,8 +983,6 @@ export default {
             this.options.config = this.dataLocalStorage.ovhConfig;
             this.options.disk.size = this.dataLocalStorage.resources.drive_size;
             this.options.drive = this.dataLocalStorage.resources.drive_type;
-            this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize });
-            this.plan = this.dataLocalStorage.billing_plan;
           } catch (e) {
             localStorage.removeItem("data");
           }
@@ -1339,7 +1346,7 @@ export default {
           this.modal.confirmLoading = false;
         });
     },
-    availableLogin() {
+    availableLogin(isLogin) {
       const data = {
         path: "/cloud/newVM",
         titleSP: this.itemSP.title,
@@ -1360,16 +1367,36 @@ export default {
           template_name: this.options.os.name,
           password: this.password,
         },
-        billing_plan: {
-          uuid: this.plan.uuid,
-          title: this.plan.title,
-          type: this.plan.type,
-          public: this.plan.public,
-        },
+        billing_plan: { uuid: this.plan.uuid },
         ovhConfig: this.options.config
       };
-      localStorage.setItem("data", JSON.stringify(data));
-      this.$router.push({ name: "login" });
+
+      if (isLogin) {
+        localStorage.setItem("data", JSON.stringify(data));
+        this.$router.push({ name: "login" });
+      } else {
+        const link = location.href;
+
+        this.addToClipboard(`${link}?data=${JSON.stringify(data)}`);
+      }
+    },
+    addToClipboard(text) {
+      if (navigator?.clipboard) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            this.openNotificationWithIcon("success", {
+              message: this.$t('Link copied')
+            });
+          })
+          .catch((res) => {
+            console.error(res);
+          });
+      } else {
+        this.openNotificationWithIcon("error", {
+          message: this.$t('Clipboard is not supported')
+        });
+      }
     },
     // setAddon(name, value) {
     //   if (name == "os") {
@@ -1409,6 +1436,7 @@ export default {
       }
     },
     periods(periods) {
+      if (('data' in this.$route.query)) return;
       this.tarification = periods[0].value;
     },
     locationId() {
@@ -1419,8 +1447,9 @@ export default {
       .then(({ pool }) => {
         pool.forEach((plan) => {
           const data = localStorage.getItem('data');
+          const { query } = this.$route;
 
-          if (plan.kind === 'STATIC' && !data) {
+          if (plan.kind === 'STATIC' && !data && !('data' in query)) {
             const { resources, title } = (plan.meta.product)
               ? Object.values(plan.products).find((el) => el.title === plan.meta.product)
               : Object.values(plan.products)[0];
@@ -1432,6 +1461,11 @@ export default {
             this.plan = plan;
           }
         });
+
+        if (this.dataLocalStorage !== '') {
+          this.plan = pool.find(({ uuid }) => uuid === this.dataLocalStorage.billing_plan.uuid);
+          this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize });
+        }
         if (!('uuid' in this.plan)) this.plan = pool[0] ?? {};
         this.$store.commit('nocloud/plans/setPlans', pool);
       });

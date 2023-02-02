@@ -30,7 +30,7 @@
               :value="resources.plans.indexOf(plan)"
               @change="(i) => plan = resources.plans[i]"
             />
-            
+
             <div v-else class="order__slider">
               <div
                 class="order__slider-item"
@@ -186,7 +186,7 @@
             >
               <a-select-option value="-1">{{ $t('none') }}</a-select-option>
               <a-select-option v-for="(a, id) in addon" :key="id">
-                {{ a.productName }} ({{ addonPrice(a) }})
+                {{ a.title }} ({{ addonPrice(a) }})
               </a-select-option>
             </a-select>
           </a-col>
@@ -269,9 +269,10 @@ export default {
         this.price.addons[key] = period.price.value;
         this.$set(this.addonsCodes, key, planCode);
       }
+      const addons = Object.values(this.addonsCodes);
 
       this.$emit('setData', { key: 'priceOVH', value: this.price });
-      this.$emit('setData', { key: 'addons', value: this.addonsCodes, type: 'ovh' });
+      this.$emit('setData', { key: 'addons', value: addons, type: 'ovh' });
     },
     addonName(addons) {
       const codes = Object.values(this.addonsCodes);
@@ -324,65 +325,6 @@ export default {
       key: 'datacenter', type: 'ovh',
       value: this.region.value.replace(/\d/g, '')
     });
-    this.isFlavorsLoading = true;
-    this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
-      method: 'get_plans'
-    })
-      .then(({ meta }) => {
-        const plans = [];
-        const products = Object.keys(this.getPlan.products);
-
-        meta.plans.forEach(({ prices, planCode }) => {
-          const periods = [];
-          let label = '';
-
-          prices.forEach((period) => {
-            const i = products.indexOf(`${period.duration} ${planCode}`);
-            const isMonthly = period.pricingMode === 'default';
-            const isYearly = period.pricingMode === 'upfront12';
-
-            if (i !== -1 && (isMonthly || isYearly)) {
-              const { title, price } = this.getPlan.products[products[i]];
-
-              period.price.value = price;
-              periods.push(period);
-              label = title;
-            }
-          });
-
-          if (periods.length > 0) plans.push({ value: planCode, label, periods });
-        });
-        this.plans = plans;
-
-        this.plans.sort((a, b) => {
-          const resA = a.value.split('-');
-          const resB = b.value.split('-');
-
-          const isCpuEqual = resB.at(-3) === resA.at(-3);
-          const isRamEqual = resB.at(-2) === resA.at(-2);
-
-          if (isCpuEqual && isRamEqual) return resA.at(-1) - resB.at(-1);
-          if (isCpuEqual) return resA.at(-2) - resB.at(-2);
-          return resA.at(-3) - resB.at(-3);
-        });
-
-        this.setAddons(meta.catalog.plans);
-        this.meta = meta;
-
-        if (this.plan === '') {
-          this.plan = this.resources.plans[0];
-          this.setData(this.plans[0].value);
-        }
-      })
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
-
-        this.$message.error(message);
-        console.error(err);
-      })
-      .finally(() => {
-        this.isFlavorsLoading = false;
-      });
   },
   computed: {
     user() {
@@ -425,22 +367,23 @@ export default {
     addons() {
       const addons = { backup: {}, snapshot: {}, disk: {} };
 
-      Object.keys(addons).forEach((key) => {
-        this.meta[key].forEach(({ prices, planCode, productName }) => {
+      Object.keys(addons).forEach((addon) => {
+        this.getPlan.resources?.forEach(({ price, key }) => {
           const { value } = this.plans.find((el) => el.value.includes(this.planKey)) || {};
-          const i = this.getPlan.resources.findIndex((res) =>
-            res.key.includes(`${(this.mode === 'upfront12') ? 'P1Y' : 'P1M'} ${planCode}`)
-          );
-          const resourceDuration = this.getPlan.resources[i]?.key.split(' ')[0];
 
-          const periods = prices.filter(({ pricingMode, duration }) =>
-            duration === resourceDuration && pricingMode === this.mode
-          ).map((period) => ({ ...period, price: {
-            ...period.price, value: this.getPlan.resources[i]?.price
-          }}));
+          const addonKey = key.split(' ')[1];
+          const duration = key.split(' ')[0];
+          const period = {
+            price: { value: price },
+            duration,
+            pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
+          };
 
-          if (this.allAddons[value]?.includes(planCode) && periods.length > 0) {
-            addons[key][planCode] = { periods, productName };
+          const isInclude = this.allAddons[value]?.includes(addonKey);
+          const isEqualMode = period.pricingMode === this.mode;
+
+          if (isInclude && key.includes(addon) && isEqualMode) {
+            addons[addon][addonKey] = { periods: [period], title: addonKey };
           }
         });
       });
@@ -480,30 +423,68 @@ export default {
   },
   watch: {
     tarification() { this.setData(this.planKey, false) },
+    getPlan() {
+      const plans = [];
+      const products = Object.keys(this.getPlan.products);
+
+      products.forEach((key) => {
+        const { title, price, meta } = this.getPlan.products[key];
+        const label = title;
+        const value = key.split(' ')[1];
+
+        const i = plans.findIndex((plan) => plan.value === value);
+        const period = {
+          price: { value: price },
+          duration: key.split(' ')[0],
+          pricingMode: (key.split(' ')[0] === 'P1M') ? 'default' : 'upfront12'
+        };
+
+        this.$set(this.allAddons, value, meta.addons);
+
+        if (i === -1) plans.push({ value, label, periods: [period] });
+        else plans[i].periods.push(period);
+      });
+      this.plans = plans;
+
+      this.plans.sort((a, b) => {
+        const resA = a.value.split('-');
+        const resB = b.value.split('-');
+
+        const isCpuEqual = resB.at(-3) === resA.at(-3);
+        const isRamEqual = resB.at(-2) === resA.at(-2);
+
+        if (isCpuEqual && isRamEqual) return resA.at(-1) - resB.at(-1);
+        if (isCpuEqual) return resA.at(-2) - resB.at(-2);
+        return resA.at(-3) - resB.at(-3);
+      });
+
+      if (this.$route.query.data) {
+        const data = JSON.parse(this.$route.query.data);
+
+        this.plan = data.productSize;
+      } else if (this.plan === '') {
+        this.plan = this.resources.plans[0];
+      }
+    },
     plan(value) {
       const plan = this.plans.find(({ label }) => label.includes(value));
 
       this.setData(plan.value);
       this.$emit('setData', { key: 'productSize', value });
-      const { configurations } = this.meta.catalog.plans.find(
-        ({ planCode }) => planCode.includes(this.planKey)
+      const products = Object.entries(this.getPlan.products).filter(
+        ([key]) => key.includes(this.planKey)
       );
-      const os = configurations[1].values;
+      const { os } = products[0][1].meta;
 
       os.sort();
       this.images = os.map((el) => ({ name: el, desc: el }));
       this.images.forEach(({ name }, i, arr) => {
         if (name.toLowerCase().includes('windows')) {
-          const windows = this.meta.windows.find(
-            ({ planCode }) => planCode.includes(this.planKey)
-          );
-
-          arr[i].prices = windows.prices.filter(({ pricingMode, duration }) => {
-            const isMonthly = duration === 'P1M' && pricingMode === 'default';
-            const isYearly = duration === 'P1Y' && pricingMode === 'upfront12';
-
-            return (isMonthly || isYearly);
-          });
+          arr[i].prices = products.map(([key, { meta }]) => ({
+            price: { value: meta.windows },
+            duration: key.split(' ')[0],
+            pricingMode: (key.split(' ')[0] === 'P1Y') ? 'upfront12' : 'default'
+          }));
         }
       });
     },
