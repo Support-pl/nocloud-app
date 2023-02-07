@@ -169,23 +169,59 @@ export default {
     products() {
       const products = this.$store.getters["products/getProducts"];
       const instances = this.$store.getters["nocloud/vms/getInstances"]
-        .map((inst) => ({
-          sp: inst.sp,
-          orderid: inst.uuid,
-          groupname: (inst.type === 'opensrs')
-            ? 'Domains' : (inst.type === 'goget')
-            ? 'SSL' : 'Self-Service VDS SSD HC',
-          invoicestatus: null,
-          domainstatus: inst.state?.meta?.state_str || 'DELETED',
-          productname: inst.title,
-          domain: (inst.type === 'opensrs')
-            ? inst.resources.domain
-            : inst.state?.meta.networking?.public?.at(0),
-          date: (inst.type === 'opensrs')
-            ? inst.resources.period
-            : inst.data.last_monitoring * 1000 || 0,
-          orderamount: inst.billingPlan.products[inst.product]?.price || 0,
-        }));
+        .map((inst) => {
+          const res = {
+            ...inst,
+            sp: inst.sp,
+            orderid: inst.uuid,
+            groupname: 'Self-Service VDS SSD HC',
+            invoicestatus: null,
+            domainstatus: inst.state?.meta?.state_str || inst.state?.state || '',
+            productname: inst.title,
+            domain: inst.state?.meta.networking?.public?.at(0),
+            date: inst.data.last_monitoring * 1000 || 0,
+            orderamount: inst.billingPlan.products[inst.product]?.price || 0,
+          };
+
+          switch (inst.type) {
+            case 'opensrs':
+              res.groupname = 'Domains';
+              res.date = inst.data.expiry.expiredate;
+              res.domain = inst.resources.domain;
+              break;
+            case 'goget': {
+              const key = `${inst.resources.period} ${inst.resources.id}`;
+
+              res.groupname = 'SSL';
+              res.date = +`${inst.resources.period}`;
+              res.domain = inst.resources.domain;
+              res.orderamount = inst.billingPlan.products[key]?.price || 0;
+              break;
+            }
+            case 'ovh': {
+              const key = `${inst.config.duration} ${inst.config.planCode}`;
+
+              res.date = inst.data.expiration
+              res.orderamount = inst.billingPlan.products[key]?.price || 0;
+            }
+            case 'ione': {
+              if (inst.billingPlan.kind === "DYNAMIC") {
+                res.orderamount = inst.billingPlan.resources.reduce((prev, curr) => {
+                  if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
+                    return prev + curr.price / curr.period * 3600 * inst.resources.drive_size / 1024;
+                  } else if (curr.key === "ram") {
+                    return prev + curr.price / curr.period * 3600 * inst.resources.ram / 1024;
+                  } else if (inst.resources[curr.key]) {
+                    return prev + curr.price / curr.period * 3600 * inst.resources[curr.key];
+                  }
+                  return prev;
+                }, 0);
+              }
+            }
+          }
+
+          return res;
+        });
 
       return [...products, ...instances]
         .sort((a, b) => {
