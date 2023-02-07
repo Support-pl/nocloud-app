@@ -108,7 +108,7 @@
 							<span class="login__horisontal-line"></span>
 							<input :placeholder="$t('clientinfo.companyname') + ' *' | capitalize" v-model="userinfo.companyname">
 							<span class="login__horisontal-line"></span>
-							<input placeholder="VAT ID" v-model="userinfo.vatid">
+							<input placeholder="VAT ID" v-model="userinfo.tax_id">
 
 							<a-select
                 show-search
@@ -123,8 +123,8 @@
                 </a-select-option>
 							</a-select>
 
-							<span class="login__horisontal-line"></span>
-							<input :placeholder="$t('clientinfo.state') | capitalize" v-model="userinfo.state">
+							<!-- <span class="login__horisontal-line"></span>
+							<input :placeholder="$t('clientinfo.state') | capitalize" v-model="userinfo.state"> -->
 							<span class="login__horisontal-line"></span>
 							<input :placeholder="$t('clientinfo.city') + ' *' | capitalize" v-model="userinfo.city">
 							<span class="login__horisontal-line"></span>
@@ -132,10 +132,6 @@
 							<span class="login__horisontal-line"></span>
 							<input :placeholder="$t('clientinfo.address') + ' *' | capitalize"  v-model="userinfo.address1">
 						</div>
-
-						<!-- <div class="inputs__log-pas">
-							<input type="text" :placeholder="$t('clientinfo.phone number') | capitalize" v-model="userinfo.phonenumber">
-						</div> -->
 
 						<template>
 							<button v-if="!registerLoading" @click.prevent="submitHandler()" class="login__submit">{{$t('clientinfo.register') | capitalize}}</button>
@@ -190,8 +186,8 @@ export default {
 				phonenumber: '',
         currency: 1,
         name: '',
-        company: '',
-        vatid: ''
+        companyname: '',
+        tax_id: ''
 			}
 		}
 	},
@@ -200,12 +196,22 @@ export default {
 			this.send(this);
 		},
 		send(){
-			if(Object.keys(this.userinfo).some(key => !`${this.userinfo[key]}`.length)){
+      const info = (this.invoiceChecked) ? this.userinfo : {
+				firstname: '',
+				lastname: '',
+				email: '',
+				password: '',
+				country: 'BY',
+				phonenumber: '',
+        currency: 1,
+      };
+
+			if(Object.keys(info).some(key => !`${this.userinfo[key]}`.length)){
 				this.$message.warn(this.$t('all fields are required'));
 				return
 			}
 
-			for(let key in this.userinfo){
+			for(let key in info){
 				if(this.userinfo[key].length < 2){
 					this.$message.warn(key + ' ' + this.$t('field must contain more characters'));
 					return

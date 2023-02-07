@@ -45,7 +45,7 @@ Vue.filter('dateFormat', function (value) {
 })
 
 Vue.directive('phone', {
-  componentUpdated(el) {
+  update(el) {
     if (!event?.isTrusted) return
 
     const value = el.value.replace(/\D/g, '')
