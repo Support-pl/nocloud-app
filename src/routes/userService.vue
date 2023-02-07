@@ -188,6 +188,8 @@ export default {
           groupname = 'SSL';
           date = 'month';
         } else {
+          const { period } = domain.resources;
+          const { expiredate } = domain.data.expiry;
           const year = parseInt(expiredate) - period;
 
           domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`;
@@ -219,11 +221,10 @@ export default {
           const { period } = this.service.resources;
 
           this.service.recurringamount = meta.prices[period];
+        } else {
+          return this.$store.dispatch('nocloud/auth/fetchBillingData');
         }
       })
-      .catch((err) => console.error(err));
-
-    this.$store.dispatch('nocloud/auth/fetchBillingData')
       .then(({ client_id }) => {
         const serviceid = this.$route.params.id;
 
@@ -274,10 +275,9 @@ export default {
       }
     },
     getModuleButtons() {
+      if (!this.service.groupname) return;
       const { status, state } = this.service;
-      const serviceType = this.$config
-        .getServiceType(this.service.groupname)
-        ?.toLowerCase();
+      const serviceType = this.$config.getServiceType(this.service.groupname)?.toLowerCase();
 
       if (serviceType === undefined) return;
       if (!(status === 'Active' || state?.state === 'RUNNING')) return;

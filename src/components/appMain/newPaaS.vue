@@ -1449,7 +1449,7 @@ export default {
           const data = localStorage.getItem('data');
           const { query } = this.$route;
 
-          if (plan.kind === 'STATIC' && !data && !('data' in query)) {
+          if (plan.kind === 'STATIC' && !data && !('data' in query) || this.itemSP.type === 'ovh') {
             const { resources, title } = (plan.meta.product)
               ? Object.values(plan.products).find((el) => el.title === plan.meta.product)
               : Object.values(plan.products)[0];
