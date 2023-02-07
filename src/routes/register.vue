@@ -92,27 +92,18 @@
 									{{$t('localeLang', lang)}}
 								</a-select-option>
 							</a-select>
-						</div>
 
-            <div class="inputs__log-pas">
+              <span class="login__horisontal-line"></span>
 							<a-select style="width: 100%; border: none" v-model="userinfo.currency">
 								<a-select-option v-for="currency in currencies" :key="currency.id" :value="currency.id">
 									{{currency.code}}
 								</a-select-option>
 							</a-select>
-						</div>
 
-						<div class="inputs__log-pas" v-if="invoiceChecked">
-							<span class="login__horisontal-line"></span>
-							<input :placeholder="$t('clientinfo.firstname') | capitalize" v-model="userinfo.name">
-							<span class="login__horisontal-line"></span>
-							<input :placeholder="$t('clientinfo.companyname') + ' *' | capitalize" v-model="userinfo.companyname">
-							<span class="login__horisontal-line"></span>
-							<input placeholder="VAT ID" v-model="userinfo.tax_id">
-
+              <span class="login__horisontal-line"></span>
 							<a-select
                 show-search
-                first-active-value
+                :placeholder="$t('clientinfo.countryname') + ' *' | capitalize"
                 name="country"
                 id="country"
                 option-filter-prop="children"
@@ -122,7 +113,19 @@
                   {{country.title}} ({{country.dial_code}})
                 </a-select-option>
 							</a-select>
+						</div>
 
+            <div class="inputs__log-pas">
+              <a-select style="width: 100%; border: none" v-model="accountType">
+								<a-select-option value="user">User</a-select-option>
+                <a-select-option value="company">Company</a-select-option>
+							</a-select>
+            </div>
+
+						<div class="inputs__log-pas" v-if="accountType === 'company'">
+							<input :placeholder="$t('clientinfo.companyname') + ' *' | capitalize" v-model="userinfo.companyname">
+							<span class="login__horisontal-line"></span>
+							<input placeholder="VAT ID" v-model="userinfo.tax_id">
 							<!-- <span class="login__horisontal-line"></span>
 							<input :placeholder="$t('clientinfo.state') | capitalize" v-model="userinfo.state"> -->
 							<span class="login__horisontal-line"></span>
@@ -148,11 +151,6 @@
 				<div class="register__already-has" style="margin-top: 40px">
 					<router-link :to="{name: 'login'}">{{$t('clientinfo.already have account?') | capitalize}}</router-link>
 				</div>
-        <div class="register__already-has" style="margin-top: 10px">
-          <a-checkbox :checked="invoiceChecked" @change="onCheck">
-            {{$t('I want an invoice')}}
-          </a-checkbox>
-        </div>
 			</div>
 		</div>
   	</div>
@@ -172,7 +170,7 @@ export default {
 			countries,
       currencies: [],
 			registerLoading: false,
-      invoiceChecked: false,
+      accountType: 'user',
 			userinfo: {
 				firstname: '',
 				lastname: '',
@@ -180,12 +178,11 @@ export default {
 				password: '',
 				address1: '',
 				city: '',
-				state: '',
+				// state: '',
 				postcode: '',
-				country: 'BY',
+				country: undefined,
 				phonenumber: '',
         currency: 1,
-        name: '',
         companyname: '',
         tax_id: ''
 			}
@@ -196,7 +193,7 @@ export default {
 			this.send(this);
 		},
 		send(){
-      const info = (this.invoiceChecked) ? this.userinfo : {
+      const info = (this.accountType === 'company') ? this.userinfo : {
 				firstname: '',
 				lastname: '',
 				email: '',
@@ -253,10 +250,6 @@ export default {
 				this.registerLoading = false;
 			})
 		},
-    onCheck() {
-      this.invoiceChecked = !this.invoiceChecked;
-      this.userinfo.name = this.userinfo.firstname;
-    }
 	},
   created() {
     api.get(this.baseURL, { params: { run: 'get_currencies' } })

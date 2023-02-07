@@ -17,17 +17,17 @@
 
 		<div class="product__text">
 			<div class="product__column product__column--main-info">
-				<div class="product__title">
-					{{title}}
-				</div>
-				
+				<div class="product__title">{{ title }}</div>
+
 				<div v-if="domain !== null" class="product__domain">{{domain}}</div>
 			</div>
 			<component :service="wholeProduct" :is="getModuleProductBtn"></component>
 			<div class="product__column product__column--secondary-info">
-				<div class="product__date">{{localDate}}</div>
+				<div class="product__date" :class="{ 'product__date--expired': (isExpired) }">
+          {{ localDate }}
+        </div>
 				<div class="product__cost" v-if="user.currency_code">
-					{{ user.currency_code === 'USD' ? `$${price}` : `${price}${user.currency_code}` }}
+					{{ user.currency_code === 'USD' ? `$${price}` : `${price} ${user.currency_code}` }}
 				</div>
         <div class="product__cost" v-else>{{ `$${price}` }}</div>
 			</div>
@@ -67,37 +67,50 @@ export default {
 			return this.$store.getters['nocloud/auth/billingData'];
 		},
     price(){
-      return this.prices[this.date.getTime()] || this.cost;
+      return this.prices[this.wholeProduct.resources.period] || this.cost;
     },
 		localDate(){
       if (this.date.getTime() === 0) return 'none';
-      if (this.wholeProduct.groupname === 'Domains') {
+      // if (this.wholeProduct.groupname === 'Domains') {
+      //   const date = this.date.getTime();
+
+      //   return this.$tc('year', date);
+      // }
+      if (this.wholeProduct.groupname === 'SSL') {
         const date = this.date.getTime();
 
-        return (date === 1) ? `${date} year` : `${date} years`;
+        return this.$tc('month', date);
       }
 			return new Intl.DateTimeFormat().format(this.date);
 		},
 		iconColor(){
 			const status = this.status.toLowerCase();
-			let colorVariableName = '';
+
 			switch (status) {
 				case 'active':
-					colorVariableName = 'success';
-					break;
+        case 'running':
+					return 'success';
+
 				case 'suspended':
-					colorVariableName = 'warn';
-					break;
+        case 'poweroff':
+        case 'stopped':
+					return 'warn';
+
 				case 'cancelled':
-					colorVariableName = 'gray';
-					break;
-			
+					return 'error';
+
 				default:
-					colorVariableName = 'gray'
-					break;
+					return 'gray'
 			}
-			return colorVariableName;
 		},
+    isExpired(){
+      const timestamp = this.date.getTime() - Date.now();
+      const days = 7 * 24 * 3600 * 1000;
+
+      if (this.wholeProduct.groupname === 'SSL') return;
+      if (this.wholeProduct.date === 0) return;
+      return timestamp < days;
+    },
 		getModuleProductBtn(){
 			const serviceType = this.$config
         .getServiceType(this.wholeProduct.groupname)
@@ -191,6 +204,13 @@ export default {
 .product__date{
 	font-size: 12px;
 	color: #808080;
+}
+
+.product__date--expired {
+  padding: 2px 5px 0;
+  border-radius: 3px;
+  background: var(--err);
+  color: #fff;
 }
 
 .product__date,
