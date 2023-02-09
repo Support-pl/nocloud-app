@@ -81,63 +81,51 @@
                     :title="$t('Resize VM')"
                     @ok="ResizeVM"
                   >
-                    <template v-if="VM.state && Object.keys(VM.state.meta.snapshots || {}).length > 0">
-                      <p>{{ $t('You cannot change VM resources while you have a snapshot.') }}</p>
-                      <p>{{ $t('Please delete snapshot and try again.') }}</p>
-                    </template>
-                    <template v-else>
-                      <a-row
-                        style="
-                          display: flex;
-                          align-items: center;
-                          margin-bottom: 5px;
-                        "
-                      >
-                        <a-col  style="width: 75px"> CPU </a-col>
-                        <a-col style="width: 100%">
-                          <a-input-number
+                    <a-row style="margin-bottom: 5px">
+                      <a-col style="width: 75px"> CPU </a-col>
+                      <a-col style="width: 100%">
+                        <a-input-number
+                        style="width: 100%"
+                          v-model="resize.VCPU"
+                          :min="1"
+                          :max="32"
+                          default-value="1"
+                        />
+                      </a-col>
+                    </a-row>
+
+                    <a-row style="margin: 10px 0; width: 100%">
+                      <a-col style="width: 75px"> RAM (GB) </a-col>
+                      <a-col style="width: 100%">
+                        <a-input-number
                           style="width: 100%"
-                            v-model="resize.VCPU"
-                            :min="1"
-                            :max="32"
-                            default-value="1"
-                          />
-                        </a-col>
-                      </a-row>
-                      <a-row
-                        style="
-                          display: flex;
-                          align-items: center;
-                          margin-bottom: 5px;
-                          width: 100%
-                        "
-                      >
-                        <a-col style="width: 75px"> RAM (GB) </a-col>
-                        <a-col style="width: 100%">
-                          <a-input-number
-                            style="width: 100%"
-                            v-model="resize.RAM"
-                            :min="1"
-                            :max="64"
-                            default-value="1"
-                          />
-                        </a-col>
-                      </a-row>
-                      <a-row style="display: flex; align-items: center; width: 100%">
-                        <a-col style="width: 75px; padding-top:20px"> {{ $t('disk') }} (GB) </a-col>
-                        <a-col style="width: 100%">
-                          <div :style="{ color: 'var(--err)', textAlign: 'center' }">
-                            {{ $t('Can\'t reduce disk size') }}
-                          </div>
-                          <a-input-number
-                            style="width: 100%"
-                            v-model="resize.size"
-                            :min="VM.resources && VM.resources.drive_size / 1024"
-                            default-value="1"
-                          />
-                        </a-col>
-                      </a-row>
+                          v-model="resize.RAM"
+                          :min="1"
+                          :max="64"
+                          default-value="1"
+                        />
+                      </a-col>
+                    </a-row>
+
+                    <template v-if="VM.state && Object.keys(VM.state.meta.snapshots || {}).length > 0">
+                      <p>{{ $t('You cannot change disk size while you have a snapshot') }}</p>
+                      <p>{{ $t('Please delete snapshot and try again') }}</p>
                     </template>
+
+                    <a-row v-else>
+                      <a-col style="width: 75px"> {{ $t('disk') }} (GB) </a-col>
+                      <a-col style="width: 100%">
+                        <a-input-number
+                          style="width: 100%"
+                          v-model="resize.size"
+                          :min="VM.resources && VM.resources.drive_size / 1024"
+                          default-value="1"
+                        />
+                        <div :style="{ color: 'var(--err)', textAlign: 'center' }">
+                          {{ $t('Can\'t reduce disk size') }}
+                        </div>
+                      </a-col>
+                    </a-row>
                   </a-modal>
                   <a-modal
                     v-model="modal.SSH"
@@ -194,7 +182,12 @@
                     :title="$t('Network control')"
                     :footer="null"
                   >
+                    <template v-if="VM.state && Object.keys(VM.state.meta.snapshots || {}).length > 0">
+                      <p>{{ $t('You cannot change networks while you have a snapshot') }}</p>
+                      <p>{{ $t('Please delete snapshot and try again') }}</p>
+                    </template>
                     <network-control
+                      v-else
                       :itemService="itemService"
                       :VM="VM"
                       @closeModal="modal.networkControl = false"

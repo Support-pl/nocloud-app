@@ -159,10 +159,15 @@
             <!-- <a-form-model-item> -->
             <a-input
               style="margin-top: 10px"
+              :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
               :value="vmName"
               :placeholder="$t('VM name')"
               @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
             />
+            <div style="color: var(--err); margin-top: 5px" v-if="vmName.length < 2">
+              {{ $t('ssl_product.field is required') }}
+            </div>
+
             <password-meter
               style="height: 10px"
               :password="password"
@@ -397,13 +402,11 @@ export default {
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
     }
   },
-  watch: {
-    itemSP() {
-      this.$emit('setData', { key: 'periods', value: [
-        { value: 'Monthly', label: 'ssl_product.Monthly' },
-        { value: 'Hourly', label: 'ssl_product.Hourly' }
-      ] });
-    }
+  created() {
+    this.$emit('setData', { key: 'periods', value: [
+      { value: 'Monthly', label: 'ssl_product.Monthly' },
+      { value: 'Hourly', label: 'ssl_product.Hourly' }
+    ] });
   }
 }
 </script>

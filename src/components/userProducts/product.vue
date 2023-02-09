@@ -7,10 +7,7 @@
 						v-if="$config.getServiceType(wholeProduct.groupname)"
 						:type="$config.services[$config.getServiceType(wholeProduct.groupname)].icon"
 					/>
-					<a-icon
-						v-else
-						type="shopping-cart"
-					/>
+					<a-icon v-else type="shopping-cart" />
 				</div>
 			</a-badge>
 		</div>
@@ -117,7 +114,7 @@ export default {
         ?.toLowerCase();
 
 			if (serviceType === undefined) return;
-      if (this.status.toLowerCase() !== 'active') return;
+      if (!['active', 'running'].includes(this.status.toLowerCase())) return;
       if (this.wholeProduct.date === 0) return;
 			return () => import(`@/components/services/${serviceType}/lilbtn`);
 		}

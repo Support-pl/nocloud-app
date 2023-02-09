@@ -7,7 +7,7 @@
           {{ $t("Personal Area") }}
           <span class="content__small"> #{{ userData.id }} </span>
         </div>
-        <div class="content__fields-wrapper">
+        <div class="content__fields-wrapper" :style="{ margin: (!userData.firstname) ? 'auto' : null }">
           <a-form-model
             ref="form"
             :model="form"
@@ -115,6 +115,7 @@
 <script>
 import { mapGetters } from "vuex";
 import { countries } from "@/setup/countries";
+import notification from "@/mixins/notification"
 import loading from "@/components/loading/loading";
 import empty from '../components/empty/empty.vue';
 import api from "@/api.js";
@@ -122,6 +123,7 @@ import api from "@/api.js";
 export default {
   name: "userSettings-view",
   components: { loading, empty },
+  mixins: [notification],
   data() {
     return {
       form: {},
