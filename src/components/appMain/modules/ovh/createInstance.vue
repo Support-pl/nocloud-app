@@ -112,10 +112,15 @@
             <a-input
               :value="vmName"
               :placeholder="$t('VM name')"
+              :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length >= 2) ? '--main' : '--err'})` }"
               @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
             />
+            <div style="color: var(--err); margin-top: 5px" v-if="vmName.length < 2">
+              {{ $t('ssl_product.field is required') }}
+            </div>
             <password-meter
               style="height: 10px"
+              v-if="false"
               :password="password"
               @score="(value) => $emit('score', value)"
             />
@@ -237,7 +242,7 @@ export default {
         this.$emit('setData', { key: 'priceOVH', value: this.price });
       }
 
-      this.$emit('setData', { key: 'os', value: item.name, type: 'ovh' });
+      this.$emit('setData', { key: 'vps_os', value: item.name, type: 'ovh' });
     },
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
@@ -322,7 +327,7 @@ export default {
   },
   created() {
     this.$emit('setData', {
-      key: 'datacenter', type: 'ovh',
+      key: 'vps_datacenter', type: 'ovh',
       value: this.region.value.replace(/\d/g, '')
     });
   },

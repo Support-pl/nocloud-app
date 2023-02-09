@@ -62,316 +62,320 @@
         </div>
 
         <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
-          <!-- Location -->
-          <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              style="
-                font-size: 1.2rem;
-                padding-bottom: 5px;
-                margin-bottom: 10px;
-                border-bottom: 1px solid #e8e8e8;
-              "
-            >
-              <a-col> {{ $t("location") | capitalize }}: </a-col>
-              <a-col>
-                {{ locationTitle }}
-              </a-col>
-            </a-row>
-          </transition>
-          <!-- Tarif -->
-          <transition
-            name="networkApear"
-            v-if="true || getPlan.kind === 'STATIC'"
-          >
-            <a-row
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem' }"
-              v-if="options.size"
-            >
-              <a-col> {{ $t("tariff") | capitalize }}: </a-col>
-              <a-col>
-                {{ productSize }}
-              </a-col>
-            </a-row>
-          </transition>
+          <div ref="description" v-if="locationDescription && activeKey === 'location'" />
 
-          <!-- CPU -->
-          <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem', 'align-items': 'center' }"
-            >
-              <a-col> {{ $t("cpu") }}: </a-col>
-              <!-- <a-col
-                :style="{
-                  'font-size': '1rem',
-                  background: '#ccc',
-                  padding: '0 5px 0 5px',
-                }"
+          <template v-else>
+            <!-- Location -->
+            <transition name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                style="
+                  font-size: 1.2rem;
+                  padding-bottom: 5px;
+                  margin-bottom: 10px;
+                  border-bottom: 1px solid #e8e8e8;
+                "
               >
-                {{ $t("High speed") }}
-              </a-col> -->
-              <a-col v-if="options.cpu.size">
-                {{ options.cpu.size }} vCPU
-              </a-col>
-            </a-row>
-          </transition>
-
-          <!-- RAM -->
-          <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem' }"
+                <a-col> {{ $t("location") | capitalize }}: </a-col>
+                <a-col>
+                  {{ locationTitle }}
+                </a-col>
+              </a-row>
+            </transition>
+            <!-- Tarif -->
+            <transition
+              name="networkApear"
+              v-if="true || getPlan.kind === 'STATIC'"
             >
-              <a-col> {{ $t("ram") }}: </a-col>
-              <a-col v-if="options.ram.size">
-                {{ options.ram.size }} Gb
-              </a-col>
-            </a-row>
-          </transition>
-
-          <!-- Drive -->
-          <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem', 'margin-bottom': '5px' }"
-            >
-              <a-col> {{ $t("Drive") }}: </a-col>
-              <a-col>
-                {{ options.drive ? "SSD" : "HDD" }}
-                <span>{{ diskSize }}</span>
-              </a-col>
-            </a-row>
-          </transition>
-
-          <!-- Trafic -->
-          <!-- <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.1rem' }"
-              v-if="getCurrentProd.props.ram"
-            >
-              <a-col>
-                <span v-if="!options.addonsObjects.traffic">{{
-                  $t("under 3 Gb per month") | capitalize
-                }}</span>
-                <span v-else>
-                  {{
-                    $t(
-                      `newPaaSTrafficItem.${
-                        options.addonsObjects.traffic &&
-                        options.addonsObjects.traffic.description.TITLE.replace(
-                          "Безлимитный, скорость канала не менее",
-                          "Безлимит, от "
-                        )
-                      }`
-                    )
-                  }}
-                </span>
-              </a-col>
-            </a-row>
-          </transition> -->
-
-          <!-- os -->
-          <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.1rem' }"
-              v-if="options.os.name"
-            >
-              <a-col> {{ $t("os") }}: </a-col>
-              <a-col>
-                {{ options.os.name }}
-                <template v-if="priceOVH.addons.os">
-                  ({{ priceOVH.addons.os }} {{ billingData.currency_code }})
-                </template>
-              </a-col>
-            </a-row>
-          </transition>
-
-          <!-- network -->
-          <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.1rem' }"
-              v-if="
-                options.network.public.status &&
-                tarification !== 'Monthly' &&
-                itemSP.type !== 'ovh'
-              "
-            >
-              <a-col>
-                <!-- <a-tooltip>
-                  <template slot="title">
-                    {{
-                      $t(
-                        `Included in total by default ${
-                          options.network.price * options.network.public.count
-                        }`
-                      )
-                    }}
-                    {{ currency }}
-                  </template>
-                  <a-badge
-                    :style="{ 'font-size': '1.1rem' }"
-                    count="?"
-                    :number-style="{
-                      backgroundColor: '#fff',
-                      color: '#999',
-                      boxShadow: '0 0 0 1px #d9d9d9 inset',
-                    }"
-                    :offset="[10, 2]"
-                  >
-
-                  </a-badge>
-                </a-tooltip> -->
-                <template v-if="itemSP.type === 'ovh'">{{ $t("public") }} IPv4:</template>
-                <template v-else>{{ $t("public") }} IPv4*:</template>
-              </a-col>
-              <a-col>
-                {{ options.network.public.count }}
-              </a-col>
-            </a-row>
-          </transition>
-
-          <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.1rem' }"
-              v-if="options.network.private.status"
-            >
-              <a-col>
-                <!-- <a-tooltip>
-                  <template slot="title">
-                    {{
-                      $t(
-                        `Included in total by default ${
-                          options.network.price * options.network.public.count
-                        }`
-                      )
-                    }}
-                    {{ currency }}
-                  </template>
-                  <a-badge
-                    :style="{ 'font-size': '1.1rem' }"
-                    count="?"
-                    :number-style="{
-                      backgroundColor: '#fff',
-                      color: '#999',
-                      boxShadow: '0 0 0 1px #d9d9d9 inset',
-                    }"
-                    :offset="[10, 2]"
-                  >
-
-                  </a-badge>
-                </a-tooltip> -->
-                {{ $t("private") }} IPv4:
-              </a-col>
-              <a-col>
-                {{ options.network.private.count }}
-              </a-col>
-            </a-row>
-          </transition>
-
-          <!-- addons -->
-          <transition-group name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              v-for="(addon, key) in addons"
-              :key="addon"
-              :style="{ 'font-size': '1.1rem' }"
-            >
-              <a-col> {{ $t(key) | capitalize }} ({{ getAddonsValue(key) }}): </a-col>
-              <a-col>
-                {{ addon }} {{ billingData.currency_code || 'USD' }}
-              </a-col>
-            </a-row>
-          </transition-group>
-
-          <!-- Panel -->
-          <!-- <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.1rem' }"
-              v-if="options.addonsObjects.panel"
-            >
-              <a-col>{{
-                options.addonsObjects.panel.description.TITLE
-              }}</a-col>
-            </a-row>
-          </transition> -->
-
-          <!-- Backup -->
-          <!-- <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.1rem' }"
-              v-if="options.addonsObjects.backup"
-            >
-              <a-col> {{ $t("Backup") }}: </a-col>
-              <a-col>
-                {{ options.addonsObjects.backup.description.TITLE }}
-              </a-col>
-            </a-row>
-          </transition> -->
-          <!-- <a-skeleton :loading="getCurrentProd == null" :active="true"> -->
-
-          <a-row
-            type="flex"
-            justify="space-between"
-            style="width: 100%; margin-top: 10px"
-            v-if="services.length > 1"
-          >
-            <a-col style="width: 100%">
-              <a-select
-                placeholder="Services"
-                style="width: 100%"
-                @change="(item) => (service = item)"
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.2rem' }"
+                v-if="options.size"
               >
-                <a-select-option
-                  v-for="service in services"
-                  :key="service.uuid"
-                  :value="service.uuid"
-                  >{{ service.title }}
-                </a-select-option>
-              </a-select>
-            </a-col>
-          </a-row>
+                <a-col> {{ $t("tariff") | capitalize }}: </a-col>
+                <a-col>
+                  {{ productSize }}
+                </a-col>
+              </a-row>
+            </transition>
 
-          <a-row
-            type="flex"
-            justify="space-between"
-            style="width: 100%; margin-top: 10px"
-            v-if="getNameSpaces.length > 1"
-          >
-            <a-col style="width: 100%">
-              <a-select
-                style="width: 100%"
-                placeholder="Namespaces"
-                @change="(item) => (namespace = item)"
+            <!-- CPU -->
+            <transition name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.2rem', 'align-items': 'center' }"
               >
-                <a-select-option
-                  v-for="name in getNameSpaces"
-                  :key="name.uuid"
-                  :value="name.uuid"
-                  >{{ name.title }}</a-select-option
+                <a-col> {{ $t("cpu") }}: </a-col>
+                <!-- <a-col
+                  :style="{
+                    'font-size': '1rem',
+                    background: '#ccc',
+                    padding: '0 5px 0 5px',
+                  }"
                 >
-              </a-select>
-            </a-col>
-          </a-row>
+                  {{ $t("High speed") }}
+                </a-col> -->
+                <a-col v-if="options.cpu.size">
+                  {{ options.cpu.size }} vCPU
+                </a-col>
+              </a-row>
+            </transition>
+
+            <!-- RAM -->
+            <transition name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.2rem' }"
+              >
+                <a-col> {{ $t("ram") }}: </a-col>
+                <a-col v-if="options.ram.size">
+                  {{ options.ram.size }} Gb
+                </a-col>
+              </a-row>
+            </transition>
+
+            <!-- Drive -->
+            <transition name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.2rem', 'margin-bottom': '5px' }"
+              >
+                <a-col> {{ $t("Drive") }}: </a-col>
+                <a-col>
+                  {{ options.drive ? "SSD" : "HDD" }}
+                  <span>{{ diskSize }}</span>
+                </a-col>
+              </a-row>
+            </transition>
+
+            <!-- Trafic -->
+            <!-- <transition name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.1rem' }"
+                v-if="getCurrentProd.props.ram"
+              >
+                <a-col>
+                  <span v-if="!options.addonsObjects.traffic">{{
+                    $t("under 3 Gb per month") | capitalize
+                  }}</span>
+                  <span v-else>
+                    {{
+                      $t(
+                        `newPaaSTrafficItem.${
+                          options.addonsObjects.traffic &&
+                          options.addonsObjects.traffic.description.TITLE.replace(
+                            "Безлимитный, скорость канала не менее",
+                            "Безлимит, от "
+                          )
+                        }`
+                      )
+                    }}
+                  </span>
+                </a-col>
+              </a-row>
+            </transition> -->
+
+            <!-- os -->
+            <transition name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.1rem' }"
+                v-if="options.os.name"
+              >
+                <a-col> {{ $t("os") }}: </a-col>
+                <a-col>
+                  {{ options.os.name }}
+                  <template v-if="priceOVH.addons.os">
+                    ({{ priceOVH.addons.os }} {{ billingData.currency_code }})
+                  </template>
+                </a-col>
+              </a-row>
+            </transition>
+
+            <!-- network -->
+            <transition name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.1rem' }"
+                v-if="
+                  options.network.public.status &&
+                  tarification !== 'Monthly' &&
+                  itemSP.type !== 'ovh'
+                "
+              >
+                <a-col>
+                  <!-- <a-tooltip>
+                    <template slot="title">
+                      {{
+                        $t(
+                          `Included in total by default ${
+                            options.network.price * options.network.public.count
+                          }`
+                        )
+                      }}
+                      {{ currency }}
+                    </template>
+                    <a-badge
+                      :style="{ 'font-size': '1.1rem' }"
+                      count="?"
+                      :number-style="{
+                        backgroundColor: '#fff',
+                        color: '#999',
+                        boxShadow: '0 0 0 1px #d9d9d9 inset',
+                      }"
+                      :offset="[10, 2]"
+                    >
+
+                    </a-badge>
+                  </a-tooltip> -->
+                  <template v-if="itemSP.type === 'ovh'">{{ $t("public") }} IPv4:</template>
+                  <template v-else>{{ $t("public") }} IPv4*:</template>
+                </a-col>
+                <a-col>
+                  {{ options.network.public.count }}
+                </a-col>
+              </a-row>
+            </transition>
+
+            <transition name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.1rem' }"
+                v-if="options.network.private.status"
+              >
+                <a-col>
+                  <!-- <a-tooltip>
+                    <template slot="title">
+                      {{
+                        $t(
+                          `Included in total by default ${
+                            options.network.price * options.network.public.count
+                          }`
+                        )
+                      }}
+                      {{ currency }}
+                    </template>
+                    <a-badge
+                      :style="{ 'font-size': '1.1rem' }"
+                      count="?"
+                      :number-style="{
+                        backgroundColor: '#fff',
+                        color: '#999',
+                        boxShadow: '0 0 0 1px #d9d9d9 inset',
+                      }"
+                      :offset="[10, 2]"
+                    >
+
+                    </a-badge>
+                  </a-tooltip> -->
+                  {{ $t("private") }} IPv4:
+                </a-col>
+                <a-col>
+                  {{ options.network.private.count }}
+                </a-col>
+              </a-row>
+            </transition>
+
+            <!-- addons -->
+            <transition-group name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                v-for="(addon, key) in addons"
+                :key="addon"
+                :style="{ 'font-size': '1.1rem' }"
+              >
+                <a-col> {{ $t(key) | capitalize }} ({{ getAddonsValue(key) }}): </a-col>
+                <a-col>
+                  {{ addon }} {{ billingData.currency_code || 'USD' }}
+                </a-col>
+              </a-row>
+            </transition-group>
+
+            <!-- Panel -->
+            <!-- <transition name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.1rem' }"
+                v-if="options.addonsObjects.panel"
+              >
+                <a-col>{{
+                  options.addonsObjects.panel.description.TITLE
+                }}</a-col>
+              </a-row>
+            </transition> -->
+
+            <!-- Backup -->
+            <!-- <transition name="networkApear">
+              <a-row
+                type="flex"
+                justify="space-between"
+                :style="{ 'font-size': '1.1rem' }"
+                v-if="options.addonsObjects.backup"
+              >
+                <a-col> {{ $t("Backup") }}: </a-col>
+                <a-col>
+                  {{ options.addonsObjects.backup.description.TITLE }}
+                </a-col>
+              </a-row>
+            </transition> -->
+            <!-- <a-skeleton :loading="getCurrentProd == null" :active="true"> -->
+
+            <a-row
+              type="flex"
+              justify="space-between"
+              style="width: 100%; margin-top: 10px"
+              v-if="services.length > 1"
+            >
+              <a-col style="width: 100%">
+                <a-select
+                  placeholder="Services"
+                  style="width: 100%"
+                  @change="(item) => (service = item)"
+                >
+                  <a-select-option
+                    v-for="service in services"
+                    :key="service.uuid"
+                    :value="service.uuid"
+                    >{{ service.title }}
+                  </a-select-option>
+                </a-select>
+              </a-col>
+            </a-row>
+
+            <a-row
+              type="flex"
+              justify="space-between"
+              style="width: 100%; margin-top: 10px"
+              v-if="getNameSpaces.length > 1"
+            >
+              <a-col style="width: 100%">
+                <a-select
+                  style="width: 100%"
+                  placeholder="Namespaces"
+                  @change="(item) => (namespace = item)"
+                >
+                  <a-select-option
+                    v-for="name in getNameSpaces"
+                    :key="name.uuid"
+                    :value="name.uuid"
+                    >{{ name.title }}</a-select-option
+                  >
+                </a-select>
+              </a-col>
+            </a-row>
+          </template>
 
           <a-divider
             orientation="left"
@@ -749,6 +753,11 @@ export default {
 
       return locations;
     },
+    locationDescription() {
+      const locationItem = this.locations.find((el) => el.id === this.locationId);
+
+      return locationItem?.extra.description;
+    },
     itemSP() {
       const { sp } = this.locations.find((el) => el.id === this.locationId) || {};
 
@@ -1052,6 +1061,11 @@ export default {
     },
     setData({ key, value, type }) {
       if (type === 'ovh') {
+        if (key.includes('datacenter') || key.includes('os')) {
+          value = { [key]: value };
+          key = 'configuration';
+        }
+
         this.$set(this.options.config, key, value);
         return;
       }
@@ -1468,6 +1482,10 @@ export default {
         }
         if (!('uuid' in this.plan)) this.plan = pool[0] ?? {};
         this.$store.commit('nocloud/plans/setPlans', pool);
+
+        if (this.$refs.description) {
+          this.$refs.description.innerHTML = this.locationDescription;
+        }
       });
 
       const type = this.options.drive ? "SSD" : "HDD";
@@ -1494,6 +1512,13 @@ export default {
       } else {
         this.options.disk.step = 1;
       }
+    },
+    activeKey(value) {
+      setTimeout(() => {
+        if (value === 'location' && this.$refs.description) {
+          this.$refs.description.innerHTML = this.locationDescription;
+        }
+      });
     }
     // getAddons: function (newVal) {
     //   this.options.addons.os = +newVal.os[0].id;

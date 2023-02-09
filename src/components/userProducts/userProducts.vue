@@ -203,6 +203,7 @@ export default {
 
               res.date = inst.data.expiration
               res.orderamount = inst.billingPlan.products[key]?.price || 0;
+              break;
             }
             case 'ione': {
               if (inst.billingPlan.kind === "DYNAMIC") {
