@@ -11,6 +11,8 @@ export default {
 		token: '',
 		userdata: {},
     billingUser: {},
+    currencies: [],
+    defaultCurrency: 'USD',
     baseURL: `${config.WHMCSsiteurl}/modules/addons/nocloud/api/index.php`
 	},
 	mutations: {
@@ -25,9 +27,17 @@ export default {
       state.billingUser = data
       localStorage.setItem('user', JSON.stringify(data))
     },
-		setAddSSH(state, data) {
-			state.userdata = data
-		}
+    setCurrencies(state, rates) {
+      state.currencies = rates.map((el) => ({ ...el, id: `${el.from} ${el.to}` }));
+    },
+    setDefault(state, currencies) {
+      const currency = currencies.find((el) =>
+        el.rate === 1 && [el.from, el.to].includes('NCU')
+      );
+
+      if (!currency) return;
+      state.defaultCurrency = (currency.from === 'NCU') ? currency.to : currency.from;
+    }
 	},
 	actions: {
 		login({ commit }, { login, password, type, uuid }) {
@@ -90,13 +100,26 @@ export default {
           });
       })
     },
+    fetchCurrencies({ commit }) {
+      return new Promise((resolve, reject) => {
+        api.get('/billing/currencies/rates')
+          .then(response => {
+            commit('setCurrencies', response.rates)
+            commit('setDefault', response.rates)
+            resolve(response)
+          })
+          .catch(error => {
+            reject(error)
+          })
+      })
+    },
 		addSSH({ commit }, data) {
 			console.log(data.id, data.body)
 			return new Promise((resolve, reject) => {
 				// commit("setLoading", true);
 				api.accounts.update(data.id, data.body)
 					.then(response => {
-						commit('setAddSSH', response.pool)
+						commit('setUserdata', response.pool)
 						resolve(response)
 					})
 					.catch(error => {
@@ -117,6 +140,12 @@ export default {
 		},
     billingData(state) {
       return state.billingUser;
+    },
+    currencies(state) {
+      return state.currencies;
+    },
+    defaultCurrency(state) {
+      return state.defaultCurrency;
     },
     getURL(state) {
       return state.baseURL;

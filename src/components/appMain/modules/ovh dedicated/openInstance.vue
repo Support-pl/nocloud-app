@@ -703,7 +703,7 @@ export default {
     },
     sendRenew() {
       this.$confirm({
-        title: this.$t("Do you want to renew payment?"),
+        title: this.$t("Do you want to renew server?"),
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
         onOk: () => this.sendAction("manual_renew"),
