@@ -74,10 +74,19 @@ export default {
       return this.$store.getters["nocloud/vms/isLoading"];
     },
     networking() {
-      const net = this.instance?.state?.meta.networking;
+      const { networking } = this.instance?.state?.meta;
 
-      if (!net) return [];
-      return [...net?.public ?? [], ...net?.private ?? []];
+      if (!networking) return [];
+      const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
+
+      const publicIPs = (this.instance.type === 'ovh')
+        ? networking.public?.filter((el) => !regexp.test(el))
+        : networking.public;
+      const privateIPs = (this.instance.type === 'ovh')
+        ? networking.private?.filter((el) => !regexp.test(el))
+        : networking.private;
+
+      return [...publicIPs ?? [], ...privateIPs ?? []];
     },
     title() {
       return (!this.activeKey.includes('1')) ? `IP: ${this.networking[0]}` : 'IP\'s:';

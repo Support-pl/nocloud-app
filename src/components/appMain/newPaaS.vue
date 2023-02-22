@@ -18,7 +18,7 @@
             @score="onScore"
             @setData="setData"
           >
-            <template #location>
+            <template v-slot:location>
               <a-row justify="space-between" style="margin-bottom: 10px">
                 <a-alert
                   show-icon
@@ -295,7 +295,7 @@
                 :key="addon"
                 :style="{ 'font-size': '1.1rem' }"
               >
-                <a-col> {{ $t(key) | capitalize }} ({{ getAddonsValue(key) }}): </a-col>
+                <a-col> {{ $t(key) | capitalize }} {{ getAddonsValue(key) }}: </a-col>
                 <a-col>
                   {{ addon }} {{ billingData.currency_code || 'USD' }}
                 </a-col>
@@ -416,7 +416,7 @@
             <a-col v-if="tarification === 'Monthly'">
               {{
                 calculatePrice(
-                  (plan.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
                   (period = "month")
                 ).toFixed(2)
               }}
@@ -661,6 +661,7 @@ export default {
       namespace: "",
       tarification: "Monthly",
       locationId: "Location",
+      type: 'vps',
       vmName: "",
       password: "",
       sshKey: undefined,
@@ -764,8 +765,10 @@ export default {
       if (sp) return this.getSP.find((el) => el.uuid === sp);
     },
     template() {
-      if (this.itemSP?.type === 'ovh') {
-        return () => import('@/components/appMain/modules/ovh/createInstance.vue');
+      if (this.itemSP?.type.includes('ovh')) {
+        const type = `ovh ${this.type}`;
+
+        return () => import(`@/components/appMain/modules/${type}/createInstance.vue`);
       } else {
         return () => import('@/components/appMain/modules/ione/createInstance.vue');
       }
@@ -774,6 +777,8 @@ export default {
       const addons = { ...this.priceOVH.addons };
 
       delete addons.os;
+      delete addons.ram;
+      delete addons.disk;
       return addons;
     },
 
@@ -783,7 +788,6 @@ export default {
       const type = (this.tarification === 'Monthly') ? 'STATIC' : 'DYNAMIC';
       const item = this.getPlans.find((el) => el.kind === type);
 
-      if (item) this.plan = item;
       return item || {};
     },
 
@@ -964,10 +968,15 @@ export default {
     },
     locationTitle() {
       if (this.itemSP?.type !== 'ovh') return this.itemSP?.locations[0].title;
-      const { datacenter } = this.options.config;
+      const { configuration } = this.options.config;
       const { locations } = this.itemSP;
+      const key = Object.keys(configuration).find(
+        (el) => el.includes('datacenter')
+      );
 
-      return locations?.find(({ extra }) => extra.region === datacenter)?.title;
+      return locations?.find(({ extra }) =>
+        extra.region === configuration[key]
+      )?.title;
     }
   },
   mounted() {
@@ -1085,6 +1094,14 @@ export default {
           }
         }
       }
+
+      if (key === 'type') {
+        const plan = this.getPlans.find(({ type }) => type.includes(value));
+        const product = Object.values(plan.products)[0];
+
+        this.setData({ key: 'productSize', value: product.title });
+        this.plan = plan;
+      }
     },
     setOneService() {
       console.log(this.services);
@@ -1156,8 +1173,9 @@ export default {
     },
     getAddonsValue(key) {
       const addon = this.options.config.addons.find((el) => el.includes(key));
+      const value = parseFloat(addon.split('-').at(-1));
 
-      return `${parseFloat(addon.split('-').at(-1))} Gb`;
+      return isFinite(value) ? `(${value} Gb)` : '';
     },
     // URLparameter(obj, outer = "") {
     //   var str = "";
@@ -1213,7 +1231,7 @@ export default {
       // -------------------------------------
       //update service
       if (newGroup.type === 'ovh') {
-        newInstance.config = { type: 'vps', ...this.options.config };
+        newInstance.config = { type: this.plan.type.split(' ')[1], ...this.options.config };
       }
       if (this.itemService?.instancesGroups.length < 1) {
         this.itemService.instancesGroups = [newGroup];
@@ -1464,10 +1482,12 @@ export default {
           const { query } = this.$route;
 
           if (plan.kind === 'STATIC' && !data && !('data' in query) || this.itemSP.type === 'ovh') {
-            const { resources, title } = (plan.meta.product)
-              ? Object.values(plan.products).find((el) => el.title === plan.meta.product)
-              : Object.values(plan.products)[0];
+            const { resources, title } =
+              Object.values(plan.products).find((el) => el.title === plan.meta.product) ??
+              plan.products[plan.meta.product?.split(' ')[1]] ??
+              Object.values(plan.products)[0] ?? {};
 
+            if (!resources) return;
             this.options.ram.size = resources.ram / 1024;
             this.options.cpu.size = resources.cpu;
             this.options.disk.size = resources.disk ?? 20 * 1024;
@@ -1743,17 +1763,16 @@ export default {
   border-radius: 0 0 20px 20px;
 }
 .newCloud__template-item {
-  width: 100px;
   background-color: #fff;
   box-shadow: 3px 2px 6px rgba(0, 0, 0, 0.08), 0px 0px 8px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease, transform 0.2s ease;
   cursor: pointer;
-  text-align: center;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: max-content auto;
+  grid-template-columns: 30px 1fr;
+  align-items: center;
+  max-width: calc(50% - 9px);
 }
 .newCloud__template-item:hover {
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
@@ -1761,9 +1780,12 @@ export default {
 .newCloud__template-item.active {
   box-shadow: 5px 8px 12px rgba(0, 0, 0, 0.08), 0px 0px 13px rgba(0, 0, 0, 0.05);
   transform: scale(1.02);
+  background-color: var(--main);
+  color: var(--bright_font);
 }
 .newCloud__template-image {
-  padding: 10px;
+  padding: 5px 0 5px 10px;
+  overflow: hidden;
 }
 .newCloud__template-image img {
   object-fit: cover;
@@ -1774,9 +1796,11 @@ export default {
   padding: 10px;
   word-break: break-word;
 }
-.newCloud__template-item.active .newCloud__template-name {
-  background-color: var(--main);
-  color: var(--bright_font);
+.newCloud__template-item.active .newCloud__template-image img {
+  padding: 2px;
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.2s;
 }
 .ant-collapse > .ant-collapse-item:last-child {
   border-radius: 0 0 15px 15px;

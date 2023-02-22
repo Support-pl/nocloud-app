@@ -20,6 +20,13 @@
       <template v-if="!isFlavorsLoading">
         <a-row type="flex" align="middle" style="margin-bottom: 15px">
           <a-col span="24">
+            <a-radio-group v-model="type" @change="$emit('changeType', type)">
+              <a-radio-button v-for="value of ['vps', 'dedicated']" :key="value" :value="value">
+                {{ value }}
+              </a-radio-button>
+            </a-radio-group>
+          </a-col>
+          <a-col span="24">
             <a-slider
               style="margin-top: 10px"
               v-if="resources.plans.length < 6"
@@ -28,7 +35,7 @@
               :max="resources.plans.length - 1"
               :min="0"
               :value="resources.plans.indexOf(plan)"
-              @change="(i) => plan = resources.plans[i]"
+              @change="(i) => $emit('changePlan', resources.plans[i])"
             />
 
             <div v-else class="order__slider">
@@ -37,7 +44,7 @@
                 v-for="provider of resources.plans"
                 :key="provider"
                 :class="{ 'order__slider-item--active': plan === provider }"
-                @click="() => plan = provider"
+                @click="() => $emit('changePlan', provider)"
               >
                 {{ provider }}
               </div>
@@ -66,7 +73,7 @@
               :min="0"
               :value="resources.ram.indexOf(options.ram.size)"
               @change="(i) => options.ram.size = resources.ram[i]"
-              @afterChange="setData(planKey)"
+              @afterChange="setResource({ key: 'ram', value: options.ram.size })"
             />
           </a-col>
           <transition name="textchange" mode="out-in">
@@ -89,7 +96,7 @@
               :min="0"
               :value="resources.disk.indexOf(parseInt(diskSize))"
               @change="(i) => options.disk.size = resources.disk[i] * 1024"
-              @afterChange="setData(planKey)"
+              @afterChange="setResource({ key: 'disk', value: options.disk.size / 1024 })"
             />
           </a-col>
           <a-col class="changing__field" span="3" style="text-align: right">
@@ -112,7 +119,7 @@
             <a-input
               :value="vmName"
               :placeholder="$t('VM name')"
-              :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length >= 2) ? '--main' : '--err'})` }"
+              :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
               @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
             />
             <div style="color: var(--err); margin-top: 5px" v-if="vmName.length < 2">
@@ -206,7 +213,7 @@
 import passwordMeter from 'vue-simple-password-meter';
 
 export default {
-  name: 'createInstance-ovh',
+  name: 'ovh-creation-template',
   components: { passwordMeter },
   props: {
     getPlan: { type: Object, default: {} },
@@ -216,18 +223,20 @@ export default {
     tarification: { type: String, required: true },
     locationId: { type: String, required: true },
     vmName: { type: String, required: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+
+    resources: { type: Object, required: true },
+    addons: { type: Object, required: true },
+    setData: { type: Function, required: true },
+
+    plan: { type: String, required: true },
+    images: { type: Array, required: true },
+    plans: { type: Array, required: true },
+    allAddons: { type: Object, required: true },
+    addonsCodes: { type: Object, required: true },
+    price: { type: Object, required: true }
   },
-  data: () => ({
-    plan: '',
-    isFlavorsLoading: false,
-    images: [],
-    plans: [],
-    meta: {},
-    allAddons: {},
-    addonsCodes: {},
-    price: {}
-  }),
+  data: () => ({ isFlavorsLoading: false, type: '' }),
   methods: {
     setOS(item, index) {
       if (item.warning) return;
@@ -242,7 +251,7 @@ export default {
         this.$emit('setData', { key: 'priceOVH', value: this.price });
       }
 
-      this.$emit('setData', { key: 'vps_os', value: item.name, type: 'ovh' });
+      this.$emit('setData', { key: 'baremetal_os', value: item.name, type: 'ovh' });
     },
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
@@ -251,18 +260,6 @@ export default {
       const addon = prices.find(({ pricingMode }) => pricingMode === this.mode);
 
       return addon?.price.value ?? 0;
-    },
-    setAddons(plans) {
-      const resources = this.getPlan.resources.map(({ key }) => key.split(' ')[1]);
-
-      plans.forEach(({ planCode, addonFamilies }) => {
-        this.allAddons[planCode] = addonFamilies.reduce(
-          (res, { addons }) => [...res, ...addons], []
-        );
-
-        this.allAddons[planCode] = this.allAddons[planCode]
-          .filter((el) => resources.includes(el));
-      });
     },
     setAddon(planCode, addon, key) {
       if (planCode === '-1') {
@@ -290,110 +287,72 @@ export default {
 
       return `${period.price.value} ${this.currency}`;
     },
-    setData(planKey, changeTarifs = true) {
-      const { periods, value } = this.plans.find((el) => el.value.includes(planKey)) ?? {};
-      if (!value) return;
+    setResource(value) {
+      if (this.getPlan.type.includes('vps')) {
+        this.setData(this.planKey);
+      } else {
+        this.setData(value);
+      }
+    },
+    changePlans() {
+      const plans = [];
+      const products = Object.keys(this.getPlan.products);
 
-      const resources = value.split('-');
-      const tarifs = [];
-      let plan = periods[0];
+      products.forEach((key) => {
+        const { title, price, meta } = this.getPlan.products[key];
+        const label = title;
+        const value = key.split(' ')[1];
 
-      this.options.cpu.size = +resources.at(-3);
-      this.options.ram.size = +resources.at(-2);
-      this.options.disk.size = resources.at(-1) * 1024;
-      this.options.drive = true;
+        const i = plans.findIndex((plan) => plan.value === value);
+        const period = {
+          price: { value: price },
+          duration: key.split(' ')[0],
+          pricingMode: (key.split(' ')[0] === 'P1M') ? 'default' : 'upfront12'
+        };
 
-      periods.forEach((period) => {
-        if (period.pricingMode === this.mode) plan = period;
-        switch (period.pricingMode) {
-          case 'upfront12':
-            tarifs.push({ value: 'Annually', label: 'annually' });
-            break;
-          case 'upfront24':
-            tarifs.push({ value: 'Biennially', label: 'biennially' });
-            break;
-          case 'default':
-            tarifs.push({ value: 'Monthly', label: 'ssl_product.Monthly' });
-        }
+        this.$set(this.allAddons, value, meta.addons);
+
+        if (i === -1) plans.push({ value, label, periods: [period] });
+        else plans[i].periods.push(period);
       });
-      this.price = { value: plan.price.value, addons: {} };
 
-      if (changeTarifs) this.$emit('setData', { key: 'periods', value: tarifs });
-      this.$emit('setData', { key: 'priceOVH', value: this.price });
-      this.$emit('setData', { key: 'planCode', value, type: 'ovh' });
-      this.$emit('setData', { key: 'duration', value: plan.duration, type: 'ovh' });
-      this.$emit('setData', { key: 'pricingMode', value: plan.pricingMode, type: 'ovh' });
+      plans.sort((a, b) => {
+        const resA = a.value.split('-');
+        const resB = b.value.split('-');
+
+        const isCpuEqual = resB.at(-3) === resA.at(-3);
+        const isRamEqual = resB.at(-2) === resA.at(-2);
+
+        if (isCpuEqual && isRamEqual) return resA.at(-1) - resB.at(-1);
+        if (isCpuEqual) return resA.at(-2) - resB.at(-2);
+        return resA.at(-3) - resB.at(-3);
+      });
+      this.$emit('changePlans', plans);
+
+      if (this.$route.query.data) {
+        const data = JSON.parse(this.$route.query.data);
+
+        this.$emit('changePlan', data.productSize);
+      } else if (this.plan === '') {
+        setTimeout(() => { this.$emit('changePlan', this.resources.plans[0]) });
+      }
     }
   },
-  created() {
-    this.$emit('setData', {
-      key: 'vps_datacenter', type: 'ovh',
-      value: this.region.value.replace(/\d/g, '')
-    });
-  },
+  created() { this.type = this.getPlan.type?.split(' ')[1] ?? 'vps' },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
     currency() {
-      return this.$store.getters['nocloud/auth/billingData'].currency_code || 'USD';
+      return this.$store.getters['nocloud/auth/billingData'].currency_code ?? 'USD';
     },
     region() {
       const location = this.locationId.split(' ').at(-1);
-      const { extra, title } = this.itemSP?.locations.find(
-        ({ id }) => id === location
-      ) || {};
+      const { extra, title } = this.itemSP?.locations
+        .find(({ id }) => id === location) ?? {};
 
       if (!extra) return null;
       return { value: extra.region, title };
-    },
-    resources() {
-      const plans = new Set(this.plans.map(({ label }) => label.split(' ')[1]));
-      const ram = new Set();
-      const disk = new Set();
-
-      const filteredPlans = this.plans.filter(({ label }) =>
-        label.includes(this.plan)
-      );
-
-      filteredPlans.forEach(({ value }) => {
-        const resources = value.split('-');
-
-        ram.add(+resources.at(-2));
-        disk.add(+resources.at(-1));
-      });
-
-      return {
-        plans: Array.from(plans),
-        ram: Array.from(ram).sort((a, b) => a - b),
-        disk: Array.from(disk).sort((a, b) => a - b)
-      };
-    },
-    addons() {
-      const addons = { backup: {}, snapshot: {}, disk: {} };
-
-      Object.keys(addons).forEach((addon) => {
-        this.getPlan.resources?.forEach(({ price, key }) => {
-          const { value } = this.plans.find((el) => el.value.includes(this.planKey)) || {};
-
-          const addonKey = key.split(' ')[1];
-          const duration = key.split(' ')[0];
-          const period = {
-            price: { value: price },
-            duration,
-            pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
-          };
-
-          const isInclude = this.allAddons[value]?.includes(addonKey);
-          const isEqualMode = period.pricingMode === this.mode;
-
-          if (isInclude && key.includes(addon) && isEqualMode) {
-            addons[addon][addonKey] = { periods: [period], title: addonKey };
-          }
-        });
-      });
-
-      return addons;
     },
     mode() {
       switch (this.tarification) {
@@ -427,90 +386,8 @@ export default {
     }
   },
   watch: {
-    tarification() { this.setData(this.planKey, false) },
-    getPlan() {
-      const plans = [];
-      const products = Object.keys(this.getPlan.products);
-
-      products.forEach((key) => {
-        const { title, price, meta } = this.getPlan.products[key];
-        const label = title;
-        const value = key.split(' ')[1];
-
-        const i = plans.findIndex((plan) => plan.value === value);
-        const period = {
-          price: { value: price },
-          duration: key.split(' ')[0],
-          pricingMode: (key.split(' ')[0] === 'P1M') ? 'default' : 'upfront12'
-        };
-
-        this.$set(this.allAddons, value, meta.addons);
-
-        if (i === -1) plans.push({ value, label, periods: [period] });
-        else plans[i].periods.push(period);
-      });
-      this.plans = plans;
-
-      this.plans.sort((a, b) => {
-        const resA = a.value.split('-');
-        const resB = b.value.split('-');
-
-        const isCpuEqual = resB.at(-3) === resA.at(-3);
-        const isRamEqual = resB.at(-2) === resA.at(-2);
-
-        if (isCpuEqual && isRamEqual) return resA.at(-1) - resB.at(-1);
-        if (isCpuEqual) return resA.at(-2) - resB.at(-2);
-        return resA.at(-3) - resB.at(-3);
-      });
-
-      if (this.$route.query.data) {
-        const data = JSON.parse(this.$route.query.data);
-
-        this.plan = data.productSize;
-      } else if (this.plan === '') {
-        this.plan = this.resources.plans[0];
-      }
-    },
-    plan(value) {
-      const plan = this.plans.find(({ label }) => label.includes(value));
-
-      this.setData(plan.value);
-      this.$emit('setData', { key: 'productSize', value });
-      const products = Object.entries(this.getPlan.products).filter(
-        ([key]) => key.includes(this.planKey)
-      );
-      const { os } = products[0][1].meta;
-
-      os.sort();
-      this.images = os.map((el) => ({ name: el, desc: el }));
-      this.images.forEach(({ name }, i, arr) => {
-        if (name.toLowerCase().includes('windows')) {
-          arr[i].prices = products.map(([key, { meta }]) => ({
-            price: { value: meta.windows },
-            duration: key.split(' ')[0],
-            pricingMode: (key.split(' ')[0] === 'P1Y') ? 'upfront12' : 'default'
-          }));
-        }
-      });
-    },
-    'options.ram.size'(size) {
-      const plan = this.plans?.find(({ value }) => value.includes(this.planKey));
-
-      if (plan) return;
-      const regexp = new RegExp(`${this.plan} \\d{1,4}-${size}`, 'gm');
-      const { value } = this.plans?.find((el) => regexp.test(el.label)) || {};
-
-      this.options.disk.size = value?.split('-').at(-1) * 1024;
-    },
-    'options.disk.size'(size) {
-      const plan = this.plans?.find(({ value }) => value.includes(this.planKey));
-
-      if (plan) return;
-      const regexp = new RegExp(`${this.plan} \\d{1,4}-\\d{1,4}-${size / 1024}`, 'gm');
-      const { value } = this.plans?.find((el) => regexp.test(el.label)) || {};
-
-      this.options.ram.size = value?.split('-').at(-2);
-    }
+    getPlan() { this.changePlans() },
+    type() { this.changePlans() }
   }
 }
 </script>
@@ -520,6 +397,7 @@ export default {
 	display: flex;
 	overflow-x: auto;
   padding-bottom: 10px;
+  padding-top: 15px;
 }
 
 .order__slider-item:not(:last-child){
@@ -533,8 +411,7 @@ export default {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	width: 150px;
-	height: 70px;
+	padding: 10px 20px;
 	cursor: pointer;
 	border-radius: 15px;
 	font-size: 1.1rem;
@@ -548,5 +425,13 @@ export default {
 .order__slider-item--active{
 	background-color: var(--main);
 	color: #fff;
+}
+</style>
+
+<style>
+.ant-slider-mark-text:first-of-type {
+  width: auto !important;
+  left: 0% !important;
+  transform: translateX(-10px) !important;
 }
 </style>

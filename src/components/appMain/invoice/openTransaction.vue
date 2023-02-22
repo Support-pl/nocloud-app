@@ -32,7 +32,7 @@
                     dominant-baseline="middle"
                     text-anchor="middle"
                   >
-                    {{ total }} {{ user.currency_code || "USD" }}
+                    {{ total }} {{ currency.code }}
                   </text>
                 </svg>
               </div>
@@ -60,7 +60,7 @@
                       {{ date(record.exec) }}
                     </template>
                     <template slot="amount" slot-scope="text, record">
-                      {{ record.total.toFixed(2) }} {{ user.currency_code || 'USD' }}
+                      {{ +(record.total * currency.rate).toFixed(2) }} {{ currency.code }}
                     </template>
                     <template slot="product" slot-scope="text, record">
                       {{ (record.product)
@@ -130,8 +130,12 @@ export default {
       return `${day}.${month}.${year} ${time}`;
     }
   },
-  mounted() {
+  created() {
     const url = `/billing/transactions/${this.$route.params.uuid}`;
+
+    if (this.currency.code === '') {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+    }
 
     setTimeout(() => {
       const { uuid } = this.$route.params;
@@ -172,6 +176,19 @@ export default {
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
     },
+    currencies() {
+      return this.$store.getters['nocloud/auth/currencies'];
+    },
+    currency() {
+      const code = this.user.currency_code ?? 'USD';
+      const rate = this.currencies.find((el) => {
+        const arr = [el.from, el.to];
+
+        arr.includes(code) && arr.includes(this.invoice.currency)
+      }) ?? 1;
+
+      return { code, rate };
+    },
     statusColor() {
       return this.records[0].processed
         ? this.$config.colors.success
@@ -185,7 +202,9 @@ export default {
         .find((el) => el.uuid === this.$route.params.uuid);
     },
     total() {
-      return this.records?.reduce((prev, el) => +prev + +el.total, 0)?.toFixed(2);
+      const sum = this.records?.reduce((prev, el) => +prev + +el.total, 0);
+
+      return +(sum * this.currency.rate)?.toFixed(2);
     }
   },
   watch: {

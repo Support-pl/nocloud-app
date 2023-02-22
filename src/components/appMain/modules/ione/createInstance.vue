@@ -403,6 +403,7 @@ export default {
     }
   },
   created() {
+    this.options.drive = false;
     this.$emit('setData', { key: 'periods', value: [
       { value: 'Monthly', label: 'ssl_product.Monthly' },
       { value: 'Hourly', label: 'ssl_product.Hourly' }

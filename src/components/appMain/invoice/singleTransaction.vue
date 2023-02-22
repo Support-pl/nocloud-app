@@ -6,7 +6,7 @@
   >
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
-        {{ -invoice.total.toFixed(2) }} {{ user.currency_code || 'USD' }}
+        {{ -(invoice.total * currency.rate).toFixed(2) }} {{ currency.code }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -51,8 +51,18 @@ export default {
         return null;
       }
     },
-    user() {
-      return this.$store.getters['nocloud/auth/billingData'];
+    currencies() {
+      return this.$store.getters['nocloud/auth/currencies'];
+    },
+    currency() {
+      const code = this.$store.getters['nocloud/auth/billingData'].currency_code ?? 'USD';
+      const rate = this.currencies.find((el) => {
+        const arr = [el.from, el.to];
+
+        arr.includes(code) && arr.includes(this.invoice.currency)
+      }) ?? 1;
+
+      return { code, rate };
     }
   },
   methods: {
@@ -77,6 +87,11 @@ export default {
       return `${day}.${month}.${year} ${time}`;
     }
   },
+  created() {
+    if (this.currency.code === '') {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+    }
+  }
 };
 </script>
 
