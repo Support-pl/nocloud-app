@@ -134,7 +134,7 @@
               v-if="dataSP"
               style="font-size: 18px"
             >
-              {{ dataSP.title }}
+              {{ locationTitle }}
             </div>
           </div>
         </div>
@@ -151,16 +151,10 @@
               {{ VM.config.os || $t('No Data') }}
             </div>
           </div>
-          <div class="block__column">
-            <div class="block__title">{{ $t('Plan') }}</div>
-            <div class="block__value">
-              {{ VM.billingPlan && VM.billingPlan.title || $t('No Data') }}
-            </div>
-          </div>
           <div class="block__column" v-if="VM.config.planCode">
             <div class="block__title">{{ $t('Tariff') }}</div>
             <div class="block__value">
-              {{ VM.config.planCode || $t('No Data') }}
+              {{ tariffTitle || $t('No Data') }}
               <a-icon type="swap" title="Switch tariff" @click="openModal('switch')" />
             </div>
           </div>
@@ -824,6 +818,18 @@ export default {
     },
     dataSP() {
       return this.getSP.find((el) => el.uuid === this.VM.sp);
+    },
+    locationTitle() {
+      if (!this.VM?.config.configuration) return this.dataSP.title;
+      const type = this.VM.billingPlan.type.split(' ')[1];
+      const region = this.VM.config.configuration[`${type}_datacenter`];
+
+      return this.dataSP.locations.find((el) => el.extra.region === region);
+    },
+    tariffTitle() {
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+
+      return this.VM.billingPlan.products[key].title;
     },
     tariffs() {
       if (!this.VM?.billingPlan) return {};

@@ -130,7 +130,7 @@ export default {
   created() {
     this.$emit('setData', {
       key: 'baremetal_datacenter', type: 'ovh',
-      value: this.region.value.replace(/\d/g, '')
+      value: this.region.value.replace(/\d/g, '').toLowerCase()
     });
   },
   computed: {
@@ -145,6 +145,7 @@ export default {
         Object.values(this.getPlan.products)[0];
 
       addons?.forEach((addon) => {
+        if (!this.getPlan.resources.find(({ key }) => key === `${duration} ${addon}`)) return;
         if (addon.includes('ram')) {
           ram.add(parseInt(addon.split('-')[1]));
         }

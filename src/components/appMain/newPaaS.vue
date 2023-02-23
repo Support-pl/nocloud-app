@@ -447,7 +447,8 @@
                 v-if="
                   (itemSP.type !== 'ovh' &&
                   score > 3 &&
-                  password.length > 0) ||
+                  password.length > 0 &&
+                  !isLoggedIn) ||
                   options.os.name &&
                   vmName &&
                   !isLoggedIn
@@ -677,6 +678,7 @@ export default {
         size: "VDS L",
         isOnCalc: false,
         highCPU: false, // 1 highCPU, 0 basicCPU
+        drive: false,
         // slide: 1,
 
         cpu: {
@@ -975,7 +977,7 @@ export default {
       );
 
       return locations?.find(({ extra }) =>
-        extra.region === configuration[key]
+        extra.region.toLowerCase() === configuration[key].toLowerCase()
       )?.title;
     }
   },

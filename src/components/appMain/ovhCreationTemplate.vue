@@ -19,9 +19,9 @@
     >
       <template v-if="!isFlavorsLoading">
         <a-row type="flex" align="middle" style="margin-bottom: 15px">
-          <a-col span="24">
+          <a-col span="24" v-if="types.length > 1">
             <a-radio-group v-model="type" @change="$emit('changeType', type)">
-              <a-radio-button v-for="value of ['vps', 'dedicated']" :key="value" :value="value">
+              <a-radio-button v-for="value of types" :key="value" :value="value">
                 {{ value }}
               </a-radio-button>
             </a-radio-group>
@@ -291,7 +291,7 @@ export default {
       if (this.getPlan.type.includes('vps')) {
         this.setData(this.planKey);
       } else {
-        this.setData(value);
+        this.setData(value, false);
       }
     },
     changePlans() {
@@ -338,7 +338,7 @@ export default {
       }
     }
   },
-  created() { this.type = this.getPlan.type?.split(' ')[1] ?? 'vps' },
+  created() { this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps' },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
@@ -383,6 +383,11 @@ export default {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
+    },
+    types() {
+      const plans = this.$store.getters['nocloud/plans/getPlans'].map((el) => el.type);
+
+      return ['vps', 'dedicated'].filter((el) => plans.includes(`ovh ${el}`));
     }
   },
   watch: {

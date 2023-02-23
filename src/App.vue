@@ -20,9 +20,7 @@ export default {
   components: { updateNotification },
   created() {
     window.addEventListener('message', ({ data, origin }) => {
-      const url = `https://api.${location.host.split('.').slice(1).join('.')}`;
-
-      if (origin !== url) return;
+      if (!origin.includes('https://api.')) return;
       this.$store.commit("nocloud/auth/setToken", data);
       localStorage.removeItem("user");
       location.assign("/");
@@ -58,7 +56,7 @@ export default {
     });
 
     document.title = "Cloud";
-    document.body.setAttribute("style", 
+    document.body.setAttribute("style",
       Object.entries(this.cssVars).map(([k, v]) => `${k}:${v}`).join(";")
     );
   },
