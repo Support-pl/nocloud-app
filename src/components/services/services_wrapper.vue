@@ -1,10 +1,6 @@
 <template>
-	<div class="services__wrapper" :style="{
-    gridTemplateColumns: `repeat(${avaliableServices.length}, 1fr)`
-  }">
-		<template
-			v-for="service in avaliableServices"
-		>
+	<div class="services__wrapper" :style="{ gridTemplateColumns: `repeat(${columnsCount}, 1fr)` }">
+		<template v-for="service in avaliableServices">
 			<service-item
 				v-if="!service.needLogin || isLogged"
 				:key="service.title"
@@ -16,6 +12,7 @@
 
 <script>
 import serviceItem from './service_min.vue';
+
 export default {
 	name: "services-wrapper",
 	components: { serviceItem },
@@ -94,18 +91,36 @@ export default {
       });
     },
 	},
+  created() {
+    this.$store.dispatch('nocloud/sp/fetch')
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
+        this.$notification['error']({ message: this.$t(message) });
+      });
+  },
 	computed: {
-		user(){
-			return this.$store.getters.getUser;
+		sp(){
+			return this.$store.getters['nocloud/sp/getSP'];
 		},
 		isLogged(){
-			return this.$store.getters.isLogged;
+			return this.$store.getters['nocloud/auth/isLoggedIn'];
 		},
-		avaliableServices(){
-			const { avaliable = [] } = this.$store.getters['getDomainInfo'] || {};
 
-			return this.services.filter((el) => avaliable.includes(el.type)); 
-		}
+		avaliableServices(){
+      const services = [];
+
+			this.sp.forEach(({ meta: { service } }) => {
+        const item = this.services.find(({ type }) => type === service?.type);
+
+        if (item) services.push({ ...item, ...service });
+      });
+
+      return services;
+		},
+    columnsCount(){
+      return (this.avaliableServices.length < 5) ? this.avaliableServices.length : 5;
+    }
 	}
 }
 </script>
@@ -115,6 +130,6 @@ export default {
 	/* background-color: red; */
 	display: grid;
 	grid-gap: 5px;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(5, 1fr);
 }
 </style>

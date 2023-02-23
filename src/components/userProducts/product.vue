@@ -2,7 +2,7 @@
 	<div class="product">
 		<div class="product__icon-wrapper">
 			<a-badge dot :count="wholeProduct.invoicestatus == 'Unpaid' ? 1 : 0" :offset='[-10, 2]'>
-				<div class="product__icon" :style="{'background-color': `var(--${iconColor})`}">
+				<div class="product__icon" :title="status" :style="{'background-color': `var(--${iconColor})`}">
 					<a-icon
 						v-if="$config.getServiceType(wholeProduct.groupname)"
 						:type="$config.services[$config.getServiceType(wholeProduct.groupname)].icon"
@@ -14,10 +14,18 @@
 
 		<div class="product__text">
 			<div class="product__column product__column--main-info">
-				<div class="product__title">{{ title }}</div>
+				<div class="product__title">
+          {{ title }}
+          <span style="text-decoration: underline">
+            ({{ wholeProduct.billingPlan.kind === "STATIC" ? $t("PrePaid") : $t("PAYG") }})
+          </span>
+        </div>
 
 				<div v-if="domain !== null" class="product__domain">{{domain}}</div>
 			</div>
+      <div class="product__column product__column--secondary-info">
+        <div class="product__status">{{ status }}</div>
+      </div>
 			<component :service="wholeProduct" :is="getModuleProductBtn"></component>
 			<div class="product__column product__column--secondary-info">
 				<div class="product__date" :class="{ 'product__date--expired': (isExpired) }">
@@ -173,6 +181,13 @@ export default {
 	justify-content: space-between;
 	padding: 5px 0 5px;
 	min-width: 0;
+}
+
+.product__status {
+  margin: auto 20px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--main);
 }
 
 .product__column{

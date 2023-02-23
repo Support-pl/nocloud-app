@@ -199,7 +199,7 @@
               v-if="dataSP"
               style="font-size: 18px"
             >
-              {{ dataSP.title }}
+              {{ dataSP.locations[0].title }}
             </div>
           </div>
         </div>
@@ -214,12 +214,6 @@
             <div class="block__title">OS</div>
             <div class="block__value">
               {{ OSName || $t('No Data') }}
-            </div>
-          </div>
-          <div class="block__column">
-            <div class="block__title">{{ $t('Plan') }}</div>
-            <div class="block__value">
-              {{ VM.billingPlan && VM.billingPlan.title || $t('No Data') }}
             </div>
           </div>
           <div class="block__column" v-if="VM.product">
