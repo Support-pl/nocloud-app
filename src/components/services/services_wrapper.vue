@@ -92,7 +92,7 @@ export default {
     },
 	},
   created() {
-    this.$store.dispatch('nocloud/sp/fetch')
+    this.$store.dispatch('nocloud/sp/fetch', !this.isLogged)
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
 
