@@ -815,7 +815,7 @@ export default {
 
       for (let el of sort) {
         for (let prod of Object.values(this.getPlanOneStatic.products)) {
-          if (el === +prod.sorter) {
+          if (el === +prod.sorter && this.getTarification(+prod.period) === this.tarification) {
             planTitle.push(prod.title);
           }
         }
@@ -1076,6 +1076,12 @@ export default {
           value = { [key]: value };
           key = 'configuration';
         }
+        if (key.includes('datacenter')) {
+          const osKey = Object.keys(this.options.config.configuration)
+            .find((el) => el.includes('os'));
+
+          value[osKey] = this.options.config.configuration[osKey];
+        }
 
         this.$set(this.options.config, key, value);
         return;
@@ -1178,6 +1184,19 @@ export default {
       const value = parseFloat(addon.split('-').at(-1));
 
       return isFinite(value) ? `(${value} Gb)` : '';
+    },
+    getTarification(timestamp) {
+      const month = 3600 * 24 * 30;
+      const year = 3600 * 24 * 365;
+
+      switch (timestamp) {
+        case month:
+          return 'Monthly';
+        case year:
+          return 'Annually';
+        case year * 2:
+          return 'Biennially'
+      }
     },
     // URLparameter(obj, outer = "") {
     //   var str = "";
@@ -1463,15 +1482,22 @@ export default {
   },
 
   watch: {
-    tarification() {
+    tarification(value) {
       if (this.getPlan.kind == "STATIC") {
         this.options.ram.size = this.product.resources?.ram / 1024;
         this.options.cpu.size = this.product.resources?.cpu;
       }
+
+      if (this.plan.type === 'ione') {
+        const type = (value === 'Monthly') ? 'STATIC' : 'DYNAMIC';
+        const item = this.getPlans.find((el) => el.kind === type);
+
+        this.plan = item;
+      }
     },
     periods(periods) {
       if (('data' in this.$route.query)) return;
-      this.tarification = periods[0].value;
+      this.tarification = periods[0]?.value;
     },
     locationId() {
       this.$store.dispatch("nocloud/plans/fetch", {

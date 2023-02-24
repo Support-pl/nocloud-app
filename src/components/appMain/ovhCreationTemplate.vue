@@ -251,7 +251,10 @@ export default {
         this.$emit('setData', { key: 'priceOVH', value: this.price });
       }
 
-      this.$emit('setData', { key: 'baremetal_os', value: item.name, type: 'ovh' });
+      this.$emit('setData', {
+        key: `${(this.getPlan.type.includes('dedicated')) ? 'baremetal' : 'vps'}_os`,
+        value: item.name, type: 'ovh'
+      });
     },
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
