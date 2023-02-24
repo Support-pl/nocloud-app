@@ -23,9 +23,9 @@
 
 				<div v-if="domain !== null" class="product__domain">{{domain}}</div>
 			</div>
-      <div class="product__column product__column--secondary-info">
+      <!-- <div class="product__column product__column--secondary-info">
         <div class="product__status">{{ status }}</div>
-      </div>
+      </div> -->
 			<component :service="wholeProduct" :is="getModuleProductBtn"></component>
 			<div class="product__column product__column--secondary-info">
 				<div class="product__date" :class="{ 'product__date--expired': (isExpired) }">

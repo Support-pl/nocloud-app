@@ -17,9 +17,10 @@
       :header="`${$t('Plan')}: ${planHeader}`"
       :disabled="itemSP ? false : true"
     >
-      <template v-if="getProducts.length > 0">
+      <template v-if="getPlan">
         <a-slider
           style="margin-top: 10px"
+          v-if="isLinked"
           :marks="{ ...getProducts }"
           :tip-formatter="null"
           :max="getProducts.length - 1"
@@ -32,13 +33,16 @@
           justify="space-between"
           align="middle"
           class="newCloud__prop"
-          style="margin-top: 50px"
+          :style="{ marginTop: (!isLinked) ? null : '50px' }"
         >
           <a-col>
             <span style="display: inline-block; width: 70px">CPU:</span>
           </a-col>
           <a-col class="changing__field" span="6" style="text-align: right">
-            {{ options.cpu.size }} vCPU
+            <template v-if="isLinked">{{ options.cpu.size }} vCPU</template>
+            <template v-else>
+              <a-input-number allow-clear v-model="options.cpu.size" :min="0" :max="32" /> Gb
+            </template>
           </a-col>
         </a-row>
         <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
@@ -52,7 +56,10 @@
                   : 'DefaultKeyForRAM'
               " -->
             <a-col class="changing__field" span="6" style="text-align: right">
-              {{ options.ram.size }} Gb
+              <template v-if="isLinked">{{ options.ram.size }} Gb</template>
+              <template v-else>
+                <a-input-number allow-clear v-model="options.ram.size" :min="0" :max="64" /> Gb
+              </template>
             </a-col>
           </transition>
         </a-row>
@@ -69,10 +76,13 @@
             </a-switch>
           </a-col>
           <a-col class="changing__field" style="text-align: right" :sm="4" :xs="6">
-            {{ diskSize }}
+            <template v-if="isLinked">{{ diskSize }}</template>
+            <template v-else>
+              <a-input-number allow-clear v-model="options.disk.size" :min="0" :max="512 * 1024" /> Mb
+            </template>
           </a-col>
         </a-row>
-        <a-row class="newCloud__prop">
+        <a-row class="newCloud__prop" v-if="isLinked">
           <a-col>{{ $t("Drive size") }}:</a-col>
           <a-col>
             <a-slider
@@ -128,7 +138,7 @@
     <!-- OS -->
     <a-collapse-panel
       key="OS"
-      :disabled="!itemSP || getProducts.length < 1"
+      :disabled="!itemSP || !getPlan"
       :header="`${$t('os')}: ${(options.os.name == '') ? ' ' : ` (${options.os.name})`}`"
     >
       <div class="newCloud__option-field">
@@ -158,7 +168,7 @@
           <a-col :xs="24" :sm="10">
             <!-- <a-form-model-item> -->
             <a-input
-              style="margin-top: 10px"
+              style="margin-top: 15px"
               :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
               :value="vmName"
               :placeholder="$t('VM name')"
@@ -315,6 +325,7 @@ export default {
   props: {
     activeKey: { type: String, required: true },
     itemSP: { type: Object, default: null },
+    getPlan: { type: Object, required: true },
     options: { type: Object, required: true },
     getProducts: { type: Array, required: true },
     productSize: { type: String, required: true },
@@ -369,6 +380,13 @@ export default {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
+    plans() {
+      return this.$store.getters['nocloud/plans/getPlans'];
+    },
+    isLinked() {
+      return this.getProducts.length > 1 && this.tarification === 'Hourly' &&
+        this.getPlan?.meta?.linkedPlan || this.tarification !== 'Hourly';
+    },
     networkHeader() {
       const pub = this.options.network.public;
       const priv = this.options.network.private;
@@ -388,7 +406,7 @@ export default {
       return " ";
     },
     planHeader() {
-      if (this.itemSP && this.getProducts.length > 0) {
+      if (this.itemSP && this.getPlan) {
         return this.tarification === "Monthly"
           ? ` (VDS ${this.$t("Pre-Paid")})`
           : ` (VDC ${this.$t("Pay-as-you-Go")})`;
@@ -402,12 +420,36 @@ export default {
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
     }
   },
-  created() {
-    this.options.drive = false;
-    this.$emit('setData', { key: 'periods', value: [
-      { value: 'Monthly', label: 'ssl_product.Monthly' },
-      { value: 'Hourly', label: 'ssl_product.Hourly' }
-    ] });
+  watch: {
+    getProducts() {
+      const value = [];
+      const month = 3600 * 24 * 30;
+      const year = 3600 * 24 * 365;
+
+      this.plans.forEach((plan) => {
+        if (plan.kind === 'DYNAMIC') value.push(
+          { value: 'Hourly', label: 'ssl_product.Hourly' }
+        );
+
+        if (plan.kind !== 'STATIC') return;
+        const periods = Object.values(plan.products).map((el) => +el.period);
+
+        if (periods.includes(month)) value.push(
+          { value: 'Monthly', label: 'ssl_product.Monthly' }
+        );
+
+        if (periods.includes(year)) value.push(
+          { value: 'Annually', label: 'annually' }
+        );
+
+        if (periods.includes(year * 2)) value.push(
+          { value: 'Biennially', label: 'biennially' }
+        );
+      });
+
+      this.options.drive = false;
+      this.$emit('setData', { key: 'periods', value });
+    }
   }
 }
 </script>
