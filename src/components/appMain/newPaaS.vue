@@ -805,8 +805,9 @@ export default {
 
     getProducts() {
       const titles = [];
-      const products = this.getPlans.find(({ uuid }) => uuid === this.plan.meta?.linkedPlan)
-        ?.products ?? this.plan.products ?? {};
+      const products = (this.plan.kind === 'DYNAMIC')
+        ? this.getPlans.find(({ uuid }) => uuid === this.plan.meta?.linkedPlan)?.products
+        : this.plan.products ?? {};
 
       Object.values(products).forEach((product) => {
         titles.splice(product.sorter, 0, product.title);
@@ -1482,7 +1483,23 @@ export default {
 
       if (this.plan.type === 'ione') {
         const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC';
-        const item = this.getPlans.find((el) => el.kind === type);
+        const item = this.getPlans.find((el) => {
+          if (type === 'DYNAMIC') return el.kind === type;
+          let period = 0;
+
+          switch (value) {
+            case 'Annually':
+              period = 3600 * 24 * 365;
+              break;
+            case 'Biennially':
+              period = 3600 * 24 * 365 * 2;
+              break;
+            default:
+              period = 3600 * 24 * 30;
+          }
+
+          return el.kind === type && +Object.values(el.products)[0].period === period;
+        });
 
         this.plan = item;
       }
@@ -1513,7 +1530,6 @@ export default {
             this.options.cpu.size = resources.cpu;
             this.options.disk.size = resources.disk ?? 20 * 1024;
             this.setData({ key: 'productSize', value: title });
-            this.plan = plan;
           }
         });
 
