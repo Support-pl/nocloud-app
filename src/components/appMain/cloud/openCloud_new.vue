@@ -274,8 +274,8 @@ export default {
     ]),
     ...mapGetters("support", { baseURL: "getURL" }),
     template() {
-      if (this.VM.billingPlan.type === 'ovh') {
-        return () => import('@/components/appMain/modules/ovh vps/openInstance.vue');
+      if (this.VM.billingPlan.type.includes('ovh')) {
+        return () => import(`@/components/appMain/modules/${this.VM.billingPlan.type}/openInstance.vue`);
       } else {
         return () => import('@/components/appMain/modules/ione/openInstance.vue');
       }
