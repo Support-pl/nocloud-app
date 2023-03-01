@@ -1497,6 +1497,7 @@ export default {
         anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
+        this.$store.commit('nocloud/plans/setPlans', pool);
         pool.forEach((plan) => {
           const data = localStorage.getItem('data');
           const { query } = this.$route;
@@ -1521,7 +1522,7 @@ export default {
           this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize });
         }
         if (!('uuid' in this.plan)) this.plan = pool[0] ?? {};
-        this.$store.commit('nocloud/plans/setPlans', pool);
+        if (this.plan.type.includes('ovh')) this.type = this.plan.type.split(' ')[1];
 
         if (this.$refs.description) {
           this.$refs.description.innerHTML = this.locationDescription;
