@@ -404,27 +404,30 @@
             :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
           >
             <a-col v-if="tarification === 'Annually'">
-              {{ calculatePrice(productFullPriceOVH, (period = "hour")).toFixed(2) }}
+              {{ calculatePrice(
+                (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
               {{ billingData.currency_code || 'USD' }}/{{ $tc("year", 0) }}
             </a-col>
 
             <a-col v-if="tarification === 'Biennially'">
-              {{ calculatePrice(productFullPriceOVH, (period = "hour")).toFixed(2) }}
+              {{ calculatePrice(
+                (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
               {{ billingData.currency_code || 'USD' }}/2 {{ $t("years") }}
             </a-col>
 
             <a-col v-if="tarification === 'Monthly'">
               {{
                 calculatePrice(
-                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                  (period = "month")
+                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
                 ).toFixed(2)
               }}
               {{ billingData.currency_code || 'USD' }}/{{ $tc("period.month") }}
             </a-col>
 
             <a-col v-if="tarification === 'Hourly'">
-              ~{{ calculatePrice(productFullPriceCustom, (period = "hour")).toFixed(2) }}
+              ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
               {{ billingData.currency_code || 'USD' }}/{{ $t("hour") }}
             </a-col>
           </a-row>
@@ -817,8 +820,8 @@ export default {
     },
 
     productFullPriceStatic() {
-      if (!this.getPlanOneStatic) return 0;
-      const product = Object.values(this.getPlanOneStatic.products)
+      if (!this.plan) return 0;
+      const product = Object.values(this.plan.products ?? {})
         .find(({ title }) => title === this.productSize);
 
       if (!product) return 0;
@@ -1083,8 +1086,12 @@ export default {
       else this[key] = value;
 
       if (key === 'productSize') {
-        if (!this.getPlanOneStatic) return;
-        for (let [key, value] of Object.entries(this.getPlanOneStatic.products)) {
+        const plan = (this.plan.kind === 'DYNAMIC')
+          ? this.getPlans.find((el) => el.uuid === this.plan.meta.linkedPlan)
+          : this.plan;
+
+        if (!plan) return;
+        for (let [key, value] of Object.entries(plan.products)) {
           if (value.title === this.productSize) {
             const product = { ...value, key };
 
@@ -1161,9 +1168,9 @@ export default {
         case "month":
           return price + this.diskPrice;
         case "year":
-          return price * 12;
+          return (price / 30) * 365 + this.diskPrice;
         case "2 years":
-          return price * 24;
+          return (price / 30) * 365 * 2 + this.diskPrice;
         default:
           console.error("[VDC Calculator]: Wrong period in calc.", period);
       }
@@ -1502,6 +1509,7 @@ export default {
         });
 
         this.plan = item;
+        this.setData({ key: 'productSize', value: this.getProducts[0] });
       }
     },
     periods(periods) {
@@ -1520,7 +1528,7 @@ export default {
           const { query } = this.$route;
 
           if (plan.kind === 'STATIC' && !data && !('data' in query) || this.itemSP.type === 'ovh') {
-            const { resources, title } =
+            const { resources } =
               Object.values(plan.products).find((el) => el.title === plan.meta.product) ??
               plan.products[plan.meta.product?.split(' ')[1]] ??
               Object.values(plan.products)[0] ?? {};
@@ -1529,7 +1537,6 @@ export default {
             this.options.ram.size = resources.ram / 1024;
             this.options.cpu.size = resources.cpu;
             this.options.disk.size = resources.disk ?? 20 * 1024;
-            this.setData({ key: 'productSize', value: title });
           }
         });
 
