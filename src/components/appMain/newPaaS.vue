@@ -804,23 +804,15 @@ export default {
     //-------------------------------------
 
     getProducts() {
-      const planTitle = [];
-      const sort = [];
+      const titles = [];
+      const products = this.getPlans.find(({ uuid }) => uuid === this.plan.meta?.linkedPlan)
+        ?.products ?? this.plan.products ?? {};
 
-      if (!this.getPlanOneStatic) return planTitle;
-      for (let prod of Object.values(this.getPlanOneStatic.products)) {
-        sort.push(+prod.sorter);
-        sort.sort();
-      }
+      Object.values(products).forEach((product) => {
+        titles.splice(product.sorter, 0, product.title);
+      });
 
-      for (let el of sort) {
-        for (let prod of Object.values(this.getPlanOneStatic.products)) {
-          if (el === +prod.sorter && this.getTarification(+prod.period) === this.tarification) {
-            planTitle.push(prod.title);
-          }
-        }
-      }
-      return planTitle;
+      return titles;
     },
 
     productFullPriceStatic() {
@@ -1489,7 +1481,7 @@ export default {
       }
 
       if (this.plan.type === 'ione') {
-        const type = (value === 'Monthly') ? 'STATIC' : 'DYNAMIC';
+        const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC';
         const item = this.getPlans.find((el) => el.kind === type);
 
         this.plan = item;

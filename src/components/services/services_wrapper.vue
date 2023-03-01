@@ -110,10 +110,14 @@ export default {
 		avaliableServices(){
       const services = [];
 
-			this.sp.forEach(({ meta: { service } }) => {
-        const item = this.services.find(({ type }) => type === service?.type);
-
-        if (item) services.push({ ...item, ...service });
+			this.sp.forEach(({ meta: { service }, type }) => {
+        if (service.type) services.push({
+          ...service,
+          onclick: {
+            function: this.routeTo,
+            paramsArr: [{ name: service.type, type }]
+          }
+        });
       });
 
       return services;
