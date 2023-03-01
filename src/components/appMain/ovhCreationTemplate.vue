@@ -229,7 +229,7 @@ export default {
     addons: { type: Object, required: true },
     setData: { type: Function, required: true },
 
-    plan: { type: String, required: true },
+    plan: { type: String, required: true, default: '' },
     images: { type: Array, required: true },
     plans: { type: Array, required: true },
     allAddons: { type: Object, required: true },
@@ -299,7 +299,7 @@ export default {
     },
     changePlans() {
       const plans = [];
-      const products = Object.keys(this.getPlan.products);
+      const products = Object.keys(this.getPlan.products ?? {});
 
       products.forEach((key) => {
         const { title, price, meta } = this.getPlan.products[key];
@@ -315,6 +315,10 @@ export default {
 
         this.$set(this.allAddons, value, meta.addons);
 
+        const config = this.options.config.configuration
+        const datacenter = Object.keys(config).find((key) => key.includes('datacenter'));
+
+        if (!meta.datacenter.includes(config[datacenter])) return;
         if (i === -1) plans.push({ value, label, periods: [period] });
         else plans[i].periods.push(period);
       });

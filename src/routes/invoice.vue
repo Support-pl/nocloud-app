@@ -98,9 +98,11 @@ export default {
       localStorage.setItem('order', this.value);
       if (this.value === 'Invoice') return;
       if (this.transactions.length > 0) return;
+      if (!this.user.uuid) return;
 
       this.$store.dispatch("nocloud/transactions/fetch", this.user.uuid);
     },
+    user() { this.$store.dispatch("nocloud/transactions/fetch", this.user.uuid) },
     isLoading() { this.setCoordY() },
     isInvoicesLoading() { this.setCoordY() }
   }

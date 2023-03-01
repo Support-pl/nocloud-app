@@ -191,11 +191,13 @@ export default {
     plan(value) {
       const plan = this.plans.find(({ label }) => label.includes(value));
 
-      this.setData(plan.value);
+      this.setData(plan?.value);
       this.$emit('setData', { key: 'productSize', value });
-      const products = Object.entries(this.getPlan.products).filter(
+      const products = Object.entries(this.getPlan.products ?? {}).filter(
         ([key]) => key.includes(this.planKey)
       );
+
+      if (!products[0]) return;
       const { os } = products[0][1].meta;
 
       os.sort();

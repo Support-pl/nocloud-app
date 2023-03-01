@@ -60,15 +60,15 @@ export default {
 
       const product = Object.entries(this.getPlan.products).find(([key]) => key.includes(value));
       const { meta: { addons } } = this.getPlan.products[`${duration} ${value}`] ?? product[1];
+      let addonKey = addons?.find((addon) => addon.includes(resource.value));
       const tarifs = [];
-      if (!addons) {
+      if (!(addons && addonKey)) {
         this.options.cpu.size = 0;
         this.options.ram.size = 0;
         this.options.disk.size = 0;
         return;
       }
 
-      let addonKey = addons.find((addon) => addon.includes(resource.value));
       let plan = periods[0];
 
       this.options.cpu.size = 1;
@@ -163,7 +163,7 @@ export default {
       };
     },
     addons() {
-      const addons = { traffic: {}, vrack: {}, disk: {} };
+      const addons = { traffic: {}, vrack: {} };
 
       Object.keys(addons).forEach((addon) => {
         this.getPlan.resources?.forEach(({ price, key }) => {
