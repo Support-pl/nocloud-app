@@ -33,12 +33,12 @@
       <div v-else-if="user" class="products__control">
         <a-popover placement="bottomRight" arrow-point-at-center>
           <template slot="content">
-            <p v-for="(type, key) in $config.services" :key="key">
+            <p v-for="productType of types" :key="productType">
               <a-checkbox
-                :checked="!!~checkedTypes.indexOf(key)"
-                @click="filterElementClickHandler(key)"
+                :checked="!!~checkedTypes.indexOf(productType)"
+                @click="filterElementClickHandler(productType)"
               >
-                {{ key }}
+                {{ productType }}
               </a-checkbox>
             </p>
           </template>
@@ -242,6 +242,9 @@ export default {
       const instancesLoading = this.$store.getters["nocloud/vms/isLoading"];
 
       return productsLoading || instancesLoading;
+    },
+    types() {
+      return Array.from(new Set(this.products.map(({ type }) => type)));
     },
     checkedTypes() {
       return (

@@ -384,8 +384,7 @@ export default {
       return this.$store.getters['nocloud/plans/getPlans'];
     },
     isLinked() {
-      return this.getProducts.length > 1 && this.tarification === 'Hourly' &&
-        this.getPlan?.meta?.linkedPlan || this.tarification !== 'Hourly';
+      return this.getProducts.length > 1 && this.tarification === 'Hourly' || this.tarification !== 'Hourly';
     },
     networkHeader() {
       const pub = this.options.network.public;
@@ -421,7 +420,7 @@ export default {
     }
   },
   watch: {
-    getProducts() {
+    plans() {
       const value = [];
       const month = 3600 * 24 * 30;
       const year = 3600 * 24 * 365;
