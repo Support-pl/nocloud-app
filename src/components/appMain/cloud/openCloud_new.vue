@@ -370,9 +370,9 @@ export default {
     },
     stateVM() {
       if (!this.VM.state) return "UNKNOWN";
-      const state = (this.VM.config?.os)
-        ? this.VM.state.state
-        : this.VM.state.meta.lcm_state_str
+      const state = (this.VM?.billingPlan.type === 'ione')
+        ? this.VM.state.meta.lcm_state_str
+        : this.VM.state.state;
 
       if (this.VM.state.meta.state === 1) return "PENDING";
       if (this.VM.state.meta.state === 5) return "SUSPENDED";
@@ -386,9 +386,9 @@ export default {
     },
     stateColor() {
       if (!this.VM.state) return "rgb(145, 145, 145)";
-      const state = (this.VM?.config?.os)
-        ? this.VM.state.state
-        : this.VM.state.meta.lcm_state_str;
+      const state = (this.VM?.billingPlan.type === 'ione')
+        ? this.VM.state.meta.lcm_state_str
+        : this.VM.state.state;
 
       switch (state) {
         case "RUNNING":

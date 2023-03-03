@@ -148,21 +148,10 @@ export default {
     productsPrepared() {
       if (this.min) return this.products.slice(0, 5);
       else if (this.$route.query.type) {
-        const types = this.checkedTypes;
-        const result = this.products.filter((element) => {
+        return this.products.filter((element) =>
           //фильтруем по значениям из гет запроса
-          return types.some((type) => {
-            const groupname = this.$config.services[type].groupname;
-            if (typeof groupname == "string")
-              return groupname.toLowerCase() == element.groupname.toLowerCase();
-            else
-              return groupname.some(
-                (group) =>
-                  group.toLowerCase() == element.groupname.toLowerCase()
-              );
-          });
-        });
-        return result;
+          this.checkedTypes.some((type) => type === element.type)
+        );
       }
       return this.products;
     },
@@ -170,6 +159,9 @@ export default {
       const products = this.$store.getters["products/getProducts"];
       const instances = this.$store.getters["nocloud/vms/getInstances"]
         .map((inst) => {
+          const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
+
+          const publicIPs = inst.state?.meta.networking?.public?.filter((el) => !regexp.test(el));
           const res = {
             ...inst,
             sp: inst.sp,
@@ -178,7 +170,7 @@ export default {
             invoicestatus: null,
             domainstatus: inst.state?.meta?.state_str || inst.state?.state || '',
             productname: inst.title,
-            domain: inst.state?.meta.networking?.public?.at(0),
+            domain: publicIPs?.at(0),
             date: inst.data.last_monitoring * 1000 || 0,
             orderamount: inst.billingPlan.products[inst.product]?.price || 0,
           };
@@ -206,18 +198,16 @@ export default {
               break;
             }
             case 'ione': {
-              if (inst.billingPlan.kind === "DYNAMIC") {
-                res.orderamount = inst.billingPlan.resources.reduce((prev, curr) => {
-                  if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
-                    return prev + curr.price / curr.period * 3600 * inst.resources.drive_size / 1024;
-                  } else if (curr.key === "ram") {
-                    return prev + curr.price / curr.period * 3600 * inst.resources.ram / 1024;
-                  } else if (inst.resources[curr.key]) {
-                    return prev + curr.price / curr.period * 3600 * inst.resources[curr.key];
-                  }
-                  return prev;
-                }, 0);
-              }
+              res.orderamount += +inst.billingPlan.resources.reduce((prev, curr) => {
+                if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
+                  return prev + curr.price / curr.period * 3600 * 24 * 30 * inst.resources.drive_size / 1024;
+                } else if (curr.key === "ram") {
+                  return prev + curr.price / curr.period * 3600 * 24 * 30 * inst.resources.ram / 1024;
+                } else if (inst.resources[curr.key]) {
+                  return prev + curr.price / curr.period * 3600 * 24 * 30 * inst.resources[curr.key];
+                }
+                return prev;
+              }, 0)?.toFixed(2);
             }
           }
 
@@ -293,12 +283,20 @@ export default {
       this.$router.replace({ query: { type: newTypes } });
     },
     newProductHandle() {
-      const key = Object.keys(this.$config.services).find(
-        (key) => key.toLowerCase() === this.queryTypes[0]
-      );
-      const service = this.$config.services[key];
+      let name = 'service-virtual';
+      switch (this.queryTypes[0]) {
+        case 'opensrs':
+          name = 'service-domains';
+          break;
+        case 'goget':
+          name = 'service-ssl';
+          break;
+        case 'ione':
+        case 'ovh':
+          name = 'newPaaS';
+      }
 
-      this.$router.push({ name: service.creationRouteName });
+      this.$router.push({ name });
     },
   },
 };

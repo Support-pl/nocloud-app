@@ -169,16 +169,14 @@ export default {
 		isLoading: state => state.loading,
 
 		getInstances(state) {
-			const regexp = new RegExp(state.searchString, "i")
-
 			if (state.searchString) {
 				return state.instances.filter((inst) => {
           const net = inst.state?.meta?.networking
 					const rules = [
-						inst.title.search(regexp) !== -1,
-						inst.state && inst.state?.state.search(regexp) !== -1,
-						net?.private?.some((el) => el.search(regexp) !== -1),
-						net?.public?.some((el) => el.search(regexp) !== -1),
+						inst.title.toLowerCase().includes(state.searchString),
+						inst.state?.state.toLowerCase().includes(state.searchString),
+						net?.private?.some((el) => el.includes(state.searchString)),
+						net?.public?.some((el) => el.includes(state.searchString)),
 					]
 					return rules.some(el => !!el)
 				})
@@ -193,9 +191,7 @@ export default {
 			if (state.servicesFull.length < 0) return []
 			return state.servicesFull
 		},
-    getString(state) {
-      return state.searchString;
-    },
-		getActionLoadingInvoke: state => state.loadingInvoke,
+    getString: (state) => state.searchString,
+		getActionLoadingInvoke: (state) => state.loadingInvoke,
 	}
 }
