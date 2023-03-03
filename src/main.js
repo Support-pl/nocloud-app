@@ -45,8 +45,9 @@ Vue.filter('dateFormat', function (value) {
 })
 
 Vue.directive('phone', {
-  update(el) {
+  update(el, { value: code }) {
     if (!event?.isTrusted) return
+    el.value = el.value.replace(code, '')
 
     const value = el.value.replace(/\D/g, '')
     const num = (value.length > 8) ? value.length - 7 : 1
@@ -59,6 +60,8 @@ Vue.directive('phone', {
     else if (x[3] === '') el.value = `(${x[1]}) ${x[2]}`
     else if (x[4] === '') el.value = `(${x[1]}) ${x[2]}-${x[3]}`
     else el.value = `(${x[1]}) ${x[2]}-${x[3]}-${x[4]}`
+
+    if (code) el.value = `${code} ${el.value}`
   }
 })
 

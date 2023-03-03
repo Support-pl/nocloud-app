@@ -20,7 +20,7 @@
       <template v-if="getPlan">
         <a-slider
           style="margin-top: 10px"
-          v-if="isLinked"
+          v-if="getProducts.length > 1"
           :marks="{ ...getProducts }"
           :tip-formatter="null"
           :max="getProducts.length - 1"
@@ -33,13 +33,13 @@
           justify="space-between"
           align="middle"
           class="newCloud__prop"
-          :style="{ marginTop: (!isLinked) ? null : '50px' }"
+          :style="{ marginTop: (!getProducts.length < 2) ? null : '50px' }"
         >
           <a-col>
             <span style="display: inline-block; width: 70px">CPU:</span>
           </a-col>
           <a-col class="changing__field" span="6" style="text-align: right">
-            <template v-if="isLinked">{{ options.cpu.size }} vCPU</template>
+            <template v-if="isProductsExist">{{ options.cpu.size }} vCPU</template>
             <template v-else>
               <a-input-number allow-clear v-model="options.cpu.size" :min="0" :max="32" /> Gb
             </template>
@@ -56,7 +56,7 @@
                   : 'DefaultKeyForRAM'
               " -->
             <a-col class="changing__field" span="6" style="text-align: right">
-              <template v-if="isLinked">{{ options.ram.size }} Gb</template>
+              <template v-if="isProductsExist">{{ options.ram.size }} Gb</template>
               <template v-else>
                 <a-input-number allow-clear v-model="options.ram.size" :min="0" :max="64" /> Gb
               </template>
@@ -76,13 +76,13 @@
             </a-switch>
           </a-col>
           <a-col class="changing__field" style="text-align: right" :sm="4" :xs="6">
-            <template v-if="isLinked">{{ diskSize }}</template>
+            <template v-if="isProductsExist">{{ diskSize }}</template>
             <template v-else>
               <a-input-number allow-clear v-model="options.disk.size" :min="0" :max="512 * 1024" /> Mb
             </template>
           </a-col>
         </a-row>
-        <a-row class="newCloud__prop" v-if="isLinked">
+        <a-row class="newCloud__prop" v-if="isProductsExist">
           <a-col>{{ $t("Drive size") }}:</a-col>
           <a-col>
             <a-slider
@@ -383,8 +383,8 @@ export default {
     plans() {
       return this.$store.getters['nocloud/plans/getPlans'];
     },
-    isLinked() {
-      return this.getProducts.length > 1 && this.tarification === 'Hourly' || this.tarification !== 'Hourly';
+    isProductsExist() {
+      return this.getProducts.length > 0;
     },
     networkHeader() {
       const pub = this.options.network.public;
@@ -445,6 +445,7 @@ export default {
           { value: 'Biennially', label: 'biennially' }
         );
       });
+      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.value < b.value);
 
       this.options.drive = false;
       this.$emit('setData', { key: 'periods', value });

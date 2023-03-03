@@ -8,7 +8,7 @@
     :cancelText="$t('Cancel')"
   >
     <p v-if="isLogged">{{ $t("Enter value") }} ({{ user.currency_code || 'USD' }}):</p>
-    <a-input-number allow-clear style="width: 100%" v-model="amount" :min="0" />
+    <a-input allow-clear style="width: 100%" :value="amount" @change="onChange" />
     <a-row
       type="flex"
       justify="space-around"
@@ -57,7 +57,14 @@ export default {
     }
   },
   methods: {
+    onChange({ target }) {
+      const value = target.value.replace(/\D/g, '');
+
+      target.value = value;
+      this.amount = +value;
+    },
     handleOk() {
+      if (this.amount < 1) return;
       this.confirmLoading = true;
       this.$api.get(this.baseURL, { params: { run: 'add_func', sum: this.amount }})
         .then((res) => {
@@ -81,6 +88,6 @@ export default {
       this.amount += amount;
     },
   },
-  mounted() { this.amount = this.sum || 5 }
+  mounted() { this.amount = this.sum ?? 5 }
 }
 </script>

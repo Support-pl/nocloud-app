@@ -29,7 +29,7 @@
           <a-col span="24">
             <a-slider
               style="margin-top: 10px"
-              v-if="resources.plans.length < 6"
+              v-if="resources.plans.length < 6 && resources.plans.length > 1"
               :marks="{ ...resources.plans }"
               :tip-formatter="null"
               :max="resources.plans.length - 1"
@@ -399,7 +399,7 @@ export default {
   },
   watch: {
     getPlan() { this.changePlans() },
-    type() { this.changePlans() }
+    type() { if (this.getPlan.type.includes('ovh')) this.changePlans() }
   }
 }
 </script>

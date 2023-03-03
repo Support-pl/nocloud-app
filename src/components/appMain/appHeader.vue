@@ -151,6 +151,7 @@
 
 <script>
 import { mapActions, mapGetters, mapMutations } from "vuex";
+import user from "../../store/user";
 import balance from "../balance/balance.vue";
 
 export default {
@@ -229,7 +230,7 @@ export default {
               icon: "reload",
               onClickFuncion: () => {
                 this.fetchInvoices();
-                this.fetchTransactions()
+                this.fetchTransactions({ account: this.user.uuid })
                 this.fetchUserData();
               },
             },
@@ -406,6 +407,9 @@ export default {
     },
     isLogged() {
       return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
+    user() {
+      return this.$store.getters['nocloud/auth/userdata'];
     },
   }
 }
