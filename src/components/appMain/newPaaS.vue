@@ -92,7 +92,7 @@
                 type="flex"
                 justify="space-between"
                 :style="{ 'font-size': '1.2rem' }"
-                v-if="options.size"
+                v-if="productSize"
               >
                 <a-col> {{ $t("tariff") | capitalize }}: </a-col>
                 <a-col>
@@ -654,7 +654,7 @@ export default {
   data() {
     return {
       dataLocalStorage: "",
-      productSize: "VDS L",
+      productSize: "",
       activeKey: "location",
       plan: {},
       periods: [
@@ -663,7 +663,7 @@ export default {
       ],
       service: "",
       namespace: "",
-      tarification: "Monthly",
+      tarification: "",
       locationId: "Location",
       type: 'vps',
       vmName: "",
@@ -812,8 +812,12 @@ export default {
         ? this.getPlans.find(({ uuid }) => uuid === this.plan.meta?.linkedPlan)?.products
         : this.plan.products ?? {};
 
-      Object.values(products).forEach((product) => {
-        titles.splice(product.sorter, 0, product.title);
+      Object.values(products ?? {}).forEach((product) => {
+        const isEqual = this.tarification === this.getTarification(product.period);
+
+        if (isEqual || this.plan.kind === 'DYNAMIC') {
+          titles.splice(product.sorter, 0, product.title);
+        }
       });
 
       return titles;
@@ -1091,7 +1095,7 @@ export default {
           : this.plan;
 
         if (!plan) return;
-        for (let [key, value] of Object.entries(plan.products)) {
+        for (let [key, value] of Object.entries(plan.products ?? {})) {
           if (value.title === this.productSize) {
             const product = { ...value, key };
 
@@ -1107,8 +1111,8 @@ export default {
         const plan = this.getPlans.find(({ type }) => type.includes(value));
         const product = Object.values(plan.products)[0];
 
-        this.setData({ key: 'productSize', value: product.title });
         this.plan = plan;
+        this.setData({ key: 'productSize', value: product.title });
       }
     },
     setOneService() {
@@ -1189,7 +1193,7 @@ export default {
       const month = 3600 * 24 * 30;
       const year = 3600 * 24 * 365;
 
-      switch (timestamp) {
+      switch (+timestamp) {
         case month:
           return 'Monthly';
         case year:
@@ -1488,7 +1492,7 @@ export default {
         this.options.cpu.size = this.product.resources?.cpu;
       }
 
-      if (this.plan.type === 'ione') {
+      if (this.plan.type === 'ione' && value) {
         const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC';
         const item = this.getPlans.find((el) => {
           if (type === 'DYNAMIC') return el.kind === type;
@@ -1505,7 +1509,7 @@ export default {
               period = 3600 * 24 * 30;
           }
 
-          return el.kind === type && +Object.values(el.products)[0].period === period;
+          return el.kind === type && Object.values(el.products).find((el) => +el.period === period);
         });
 
         this.plan = item;
@@ -1514,7 +1518,11 @@ export default {
     },
     periods(periods) {
       if (('data' in this.$route.query)) return;
-      this.tarification = periods[0]?.value;
+      this.tarification = '';
+
+      setTimeout(() => {
+        this.tarification = periods[0]?.value;
+      });
     },
     locationId() {
       this.$store.dispatch("nocloud/plans/fetch", {
@@ -1527,8 +1535,8 @@ export default {
           const data = localStorage.getItem('data');
           const { query } = this.$route;
 
-          if (plan.kind === 'STATIC' && !data && !('data' in query) || this.itemSP.type === 'ovh') {
-            const { resources } =
+          if (!data && !('data' in query) && plan.type.includes(this.itemSP.type)) {
+            const { title, resources } =
               Object.values(plan.products).find((el) => el.title === plan.meta.product) ??
               plan.products[plan.meta.product?.split(' ')[1]] ??
               Object.values(plan.products)[0] ?? {};
@@ -1537,6 +1545,8 @@ export default {
             this.options.ram.size = resources.ram / 1024;
             this.options.cpu.size = resources.cpu;
             this.options.disk.size = resources.disk ?? 20 * 1024;
+            this.plan = plan;
+            this.setData({ key: 'productSize', value: title });
           }
         });
 
@@ -1836,6 +1846,21 @@ export default {
   max-width: 100%;
   max-height: 80px;
 }
+.newCloud__template-image img::before {
+  width: 16px;
+  display: inline-block;
+  overflow: hidden;
+  height: 15px;
+}
+.newCloud__template-image img::after {
+  content: url('/img/OS/default.png');
+  display: block;
+  position: absolute;
+  transform: translate(-36px, -59px) scale(0.21);
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.2s;
+}
 .newCloud__template-name {
   padding: 10px;
   word-break: break-word;
@@ -1845,6 +1870,10 @@ export default {
   background: #fff;
   border-radius: 50%;
   transition: 0.2s;
+}
+.newCloud__template-item.active .newCloud__template-image img::after {
+  transform: translate(-37px, -61px) scale(0.18);
+  padding: 2px;
 }
 .ant-collapse > .ant-collapse-item:last-child {
   border-radius: 0 0 15px 15px;
