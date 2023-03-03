@@ -64,15 +64,30 @@
 								readonly
 								onfocus="this.removeAttribute('readonly')"
 							>
+
+              <span class="login__horisontal-line"></span>
+							<a-select
+                show-search
+                :placeholder="$t('clientinfo.countryname') + ' *' | capitalize"
+                name="country"
+                id="country"
+                option-filter-prop="children"
+                v-model="userinfo.country"
+              >
+								<a-select-option v-for="country in countries" :key="country.code" :value="country.code">
+                  {{country.title}}
+                </a-select-option>
+							</a-select>
+
 							<span class="login__horisontal-line"></span>
 							<input
-                v-phone
+                v-phone="phonecode"
 								type="tel"
 								name="phone"
 								:placeholder="$t('clientinfo.phone number') + ' *' | capitalize"
 								v-model="userinfo.phonenumber"
                 autocomplete="tel"
-                maxlength="15"
+                maxlength="20"
 							>
 							<span class="login__horisontal-line"></span>
 							<input
@@ -98,20 +113,6 @@
 								<a-select-option v-for="currency in currencies" :key="currency.id" :value="currency.id">
 									{{currency.code}}
 								</a-select-option>
-							</a-select>
-
-              <span class="login__horisontal-line"></span>
-							<a-select
-                show-search
-                :placeholder="$t('clientinfo.countryname') + ' *' | capitalize"
-                name="country"
-                id="country"
-                option-filter-prop="children"
-                v-model="userinfo.country"
-              >
-								<a-select-option v-for="country in countries" :key="country.code" :value="country.code">
-                  {{country.title}} ({{country.dial_code}})
-                </a-select-option>
 							</a-select>
 						</div>
 
@@ -287,7 +288,7 @@ export default {
       return this.$store.getters['support/getURL'];
     },
     phonecode(){
-      return countries.find(({ code }) => code === this.userinfo.country).dial_code;
+      return countries.find(({ code }) => code === this.userinfo.country)?.dial_code;
     }
 	}
 }
