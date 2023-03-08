@@ -399,7 +399,7 @@ export default {
   },
   watch: {
     getPlan() { this.changePlans() },
-    type() { if (this.getPlan.type.includes('ovh')) this.changePlans() }
+    type() { if (this.getPlan.type?.includes('ovh')) this.changePlans() }
   }
 }
 </script>

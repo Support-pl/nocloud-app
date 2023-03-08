@@ -168,21 +168,7 @@ export default {
         cloud: {
           title: "Cloud",
           needBalance: true,
-          buttons: [
-            {
-              name: "cloud_search",
-              icon: "search",
-              popover: true,
-            },
-            {
-              name: "cloud_reload",
-              icon: "reload",
-              onClickFuncion: () => {
-                this.fetchClouds();
-                this.fetchUserData();
-              },
-            },
-          ],
+          buttons: [],
         },
         support: {
           title: "Support",
@@ -213,7 +199,22 @@ export default {
         services: {
           title: "services",
           needBalance: true,
-          buttons: [],
+          buttons: [
+            {
+              name: "cloud_search",
+              icon: "search",
+              popover: true,
+            },
+            {
+              name: "cloud_reload",
+              icon: "reload",
+              onClickFuncion: () => {
+                this.fetchClouds();
+                this.fetchProducts();
+                this.fetchUserData();
+              },
+            },
+          ],
         },
         invoice: {
           title: "Invoice",
@@ -258,6 +259,7 @@ export default {
   methods: {
     ...mapActions("support", { fetchTickets: "fetch" }),
     ...mapActions("invoices", { fetchInvoices: "fetch" }),
+    ...mapActions("products", { fetchProducts: "fetch" }),
     ...mapActions("nocloud/vms", { fetchClouds: "fetch" }),
     ...mapActions("nocloud/transactions", { fetchTransactions: "fetch" }),
     ...mapActions("nocloud/auth", ["fetchUserData"]),

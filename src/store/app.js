@@ -1,4 +1,4 @@
-import router from '../router/index.js'; 
+import router from '../router/index.js';
 /*
 ROUTER WORKS THERE!
 */
@@ -10,11 +10,11 @@ export default {
 		activeTabName: '',
 		activeTabNum: -1,
 		buttons: [
-			{
-				icon: 'database',
-				title: 'cloud',
-				theme: 'filled'
-			},
+			// {
+			// 	icon: 'database',
+			// 	title: 'cloud',
+			// 	theme: 'filled'
+			// },
 			{
 				icon: 'appstore',
 				title: 'services',
