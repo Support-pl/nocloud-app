@@ -31,16 +31,23 @@
                 <a-select
                   v-model="locationId"
                   :placeholder="$t('select location')"
-                  style="width: 180px; position: relative; z-index: 4"
+                  style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
                 >
-                  <a-select-option
-                    v-for="item in locations"
-                    :key="item.id"
-                    :value="item.id"
-                  >
+                  <a-select-option v-for="item in locations" :key="item.id" :value="item.id">
                     {{ item.title }}
                   </a-select-option>
                 </a-select>
+
+                <a-select
+                  v-model="servicesTitle"
+                  :placeholder="$t('select service')"
+                  style="width: 180px; position: relative; z-index: 4"
+                >
+                  <a-select-option v-for="item in servicesTitles" :key="item" :value="item">
+                    {{ item }}
+                  </a-select-option>
+                </a-select>
+
                 <div style="overflow: hidden; margin-top: 15px">
                   <a-spin :tip="$t('loading')" :spinning="isPlansLoading">
                     <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
@@ -375,62 +382,62 @@
                 </a-select>
               </a-col>
             </a-row>
+
+            <a-divider
+              orientation="left"
+              :style="{ 'margin-bottom': '0' }"
+            >
+              {{ $t("Total") }}:
+            </a-divider>
+            <a-row type="flex" justify="center" style="margin-top: 15px">
+              <a-col>
+                <a-radio-group default-value="Monthly" v-model="tarification">
+                  <a-radio-button
+                    v-for="period of periods"
+                    :key="period.value"
+                    :value="period.value"
+                  >
+                    {{ $t(period.label || period.value) | capitalize }}
+                  </a-radio-button>
+                </a-radio-group>
+              </a-col>
+            </a-row>
+            <!-- <transition name="textchange" mode="out-in"> -->
+            <a-row
+              type="flex"
+              justify="center"
+              ref="sum-order"
+              :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
+            >
+              <a-col v-if="tarification === 'Annually'">
+                {{ calculatePrice(
+                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                  (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
+                {{ billingData.currency_code || 'USD' }}/{{ $tc("year", 0) }}
+              </a-col>
+
+              <a-col v-if="tarification === 'Biennially'">
+                {{ calculatePrice(
+                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                  (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
+                {{ billingData.currency_code || 'USD' }}/2 {{ $t("years") }}
+              </a-col>
+
+              <a-col v-if="tarification === 'Monthly'">
+                {{
+                  calculatePrice(
+                    (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
+                  ).toFixed(2)
+                }}
+                {{ billingData.currency_code || 'USD' }}/{{ $tc("period.month") }}
+              </a-col>
+
+              <a-col v-if="tarification === 'Hourly'">
+                ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
+                {{ billingData.currency_code || 'USD' }}/{{ $t("hour") }}
+              </a-col>
+            </a-row>
           </template>
-
-          <a-divider
-            orientation="left"
-            :style="{ 'margin-bottom': '0' }"
-          >
-            {{ $t("Total") }}:
-          </a-divider>
-          <a-row type="flex" justify="center" style="margin-top: 15px">
-            <a-col>
-              <a-radio-group default-value="Monthly" v-model="tarification">
-                <a-radio-button
-                  v-for="period of periods"
-                  :key="period.value"
-                  :value="period.value"
-                >
-                  {{ $t(period.label || period.value) | capitalize }}
-                </a-radio-button>
-              </a-radio-group>
-            </a-col>
-          </a-row>
-          <!-- <transition name="textchange" mode="out-in"> -->
-          <a-row
-            type="flex"
-            justify="center"
-            ref="sum-order"
-            :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
-          >
-            <a-col v-if="tarification === 'Annually'">
-              {{ calculatePrice(
-                (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
-              {{ billingData.currency_code || 'USD' }}/{{ $tc("year", 0) }}
-            </a-col>
-
-            <a-col v-if="tarification === 'Biennially'">
-              {{ calculatePrice(
-                (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
-              {{ billingData.currency_code || 'USD' }}/2 {{ $t("years") }}
-            </a-col>
-
-            <a-col v-if="tarification === 'Monthly'">
-              {{
-                calculatePrice(
-                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
-                ).toFixed(2)
-              }}
-              {{ billingData.currency_code || 'USD' }}/{{ $tc("period.month") }}
-            </a-col>
-
-            <a-col v-if="tarification === 'Hourly'">
-              ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
-              {{ billingData.currency_code || 'USD' }}/{{ $t("hour") }}
-            </a-col>
-          </a-row>
           <!-- </transition> -->
           <!-- </a-skeleton> -->
           <a-row
@@ -664,6 +671,7 @@ export default {
       service: "",
       namespace: "",
       tarification: "",
+      servicesTitle: "all",
       locationId: "Location",
       type: 'vps',
       vmName: "",
@@ -718,7 +726,7 @@ export default {
           },
           price: 0,
         },
-        config: { addons: [] }
+        config: { addons: [], configuration: {} }
       },
       modal: {
         confirmCreate: false,
@@ -749,15 +757,26 @@ export default {
       const locations = [];
 
       this.getSP.forEach((sp) => {
+        if (sp.title !== this.servicesTitle && this.servicesTitle !== 'all') return;
+
         sp.locations.forEach((location) => {
-          locations.push({
-            ...location, sp: sp.uuid,
-            id: `${sp.title} ${location.id}`
-          });
+          const id = `${sp.title} ${location.id}`;
+
+          locations.push({ ...location, sp: sp.uuid, id });
         });
       });
 
       return locations;
+    },
+    servicesTitles() {
+      const titles = ['all'];
+
+      this.getSP.forEach(({ title, locations }) => {
+        if (locations.length < 1) return;
+        if (!titles.includes(title)) titles.push(title);
+      });
+
+      return titles;
     },
     locationDescription() {
       const locationItem = this.locations.find((el) => el.id === this.locationId);
@@ -982,6 +1001,7 @@ export default {
     }
   },
   mounted() {
+    this.servicesTitle = this.$route.query.service ?? "all";
     this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
       .then(() => {
         const data = localStorage.getItem("data");
@@ -1074,13 +1094,20 @@ export default {
       if (type === 'ovh') {
         if (key.includes('datacenter') || key.includes('os')) {
           value = { [key]: value };
-          key = 'configuration';
         }
         if (key.includes('datacenter')) {
-          const osKey = Object.keys(this.options.config.configuration)
+          const confKey = Object.keys(this.options.config.configuration)
             .find((el) => el.includes('os'));
 
-          value[osKey] = this.options.config.configuration[osKey];
+          value[confKey] = this.options.config.configuration[confKey];
+          key = 'configuration';
+        }
+        if (key.includes('os')) {
+          const confKey = Object.keys(this.options.config.configuration)
+            .find((el) => el.includes('datacenter'));
+
+          value[confKey] = this.options.config.configuration[confKey];
+          key = 'configuration';
         }
 
         this.$set(this.options.config, key, value);
@@ -1521,7 +1548,7 @@ export default {
       this.tarification = '';
 
       setTimeout(() => {
-        this.tarification = periods[0]?.value;
+        this.tarification = periods[0]?.value ?? '';
       });
     },
     locationId() {
@@ -1554,8 +1581,10 @@ export default {
           this.plan = pool.find(({ uuid }) => uuid === this.dataLocalStorage.billing_plan.uuid);
           this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize });
         }
-        if (!('uuid' in this.plan)) this.plan = pool[0] ?? {};
-        if (this.plan.type.includes('ovh')) this.type = this.plan.type.split(' ')[1];
+        if (!('uuid' in this.plan) || pool.length < 1) {
+          this.plan = pool.find(({ type }) => type.includes(this.itemSP.type)) ?? {};
+        }
+        if (this.plan.type?.includes('ovh')) this.type = this.plan.type?.split(' ')[1];
 
         if (this.$refs.description) {
           this.$refs.description.innerHTML = this.locationDescription;
