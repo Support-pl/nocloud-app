@@ -17,7 +17,7 @@
       :header="`${$t('Plan')}: ${planHeader}`"
       :disabled="itemSP ? false : true"
     >
-      <template v-if="getPlan">
+      <template v-if="getPlan && getPlan.uuid">
         <a-slider
           style="margin-top: 10px"
           v-if="getProducts.length > 1"

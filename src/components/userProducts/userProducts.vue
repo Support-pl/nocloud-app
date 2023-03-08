@@ -1,5 +1,5 @@
 <template>
-  <div class="products_wrapper">
+  <div class="products__wrapper">
     <div class="products__header">
       <div class="products__title">
         {{ $t("comp_services.Your orders") }}
@@ -7,11 +7,11 @@
         <transition name="header-transition" mode="out-in">
           <span
             class="header__animated"
-            :key="$route.query.type || 'emptyQuery'"
+            :key="$route.query.service || 'emptyQuery'"
           >
             <span v-if="isNeedFilterStringInHeader">
               {{ $t("comp_services.with filter") }}:
-              <b>{{ $route.query.type.replace(/,/g, ", ") }}</b>
+              <b>{{ $route.query.service.replace(/,/g, ", ") }}</b>
               <!-- по фильтру -->
             </span>
             <transition name="fade-in">
@@ -73,8 +73,7 @@
       </div>
     </div>
     <div
-      class="products__wrapper"
-      style="flex-direction: column"
+      class="products__inner"
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
       <div class="products__unregistred" v-if="!user">
@@ -86,16 +85,11 @@
       </div>
       <loading v-else-if="productsLoading" />
       <template v-else-if="productsPrepared.length > 0">
-        <product
+        <cloud-item
           v-for="product in productsPrepared"
-          @click.native="productClickHandler(product)"
           :key="product.orderid"
-          :title="product.productname"
-          :date="new Date(product.date)"
-          :cost="product.orderamount"
-          :domain="product.domain"
-          :status="product.domainstatus"
-          :wholeProduct="product"
+          :instance="product"
+          @click="productClickHandler(product)"
         />
       </template>
       <a-empty v-else />
@@ -117,19 +111,28 @@
 </template>
 
 <script>
-import product from "./product.vue";
+import cloudItem from "@/components/appMain/cloud/cloudItem.vue";
 import loading from "../loading/loading.vue";
 
 export default {
   name: "products-block",
-  components: { product, loading },
+  components: { cloudItem, loading },
   props: {
     min: { type: Boolean, default: true },
     count: { type: Number, default: 5 },
   },
   data: () => ({ sortBy: 'Date', sortType: 'sort-ascending' }),
-  mounted() {
+  created() {
     if (!this.isLogged) return;
+    if (this.sp.length < 1) {
+      this.$store.dispatch('nocloud/sp/fetch', !this.isLogged)
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$notification['error']({ message: this.$t(message) });
+        });
+    }
+
     this.$store.commit("products/setProductsLoading", true);
     this.$store.dispatch("nocloud/auth/fetchBillingData")
       .then((user) => {
@@ -147,11 +150,13 @@ export default {
     },
     productsPrepared() {
       if (this.min) return this.products.slice(0, 5);
-      else if (this.$route.query.type) {
-        return this.products.filter((element) =>
+      else if (this.$route.query.service) {
+        return this.products.filter(({ sp }) => {
           //фильтруем по значениям из гет запроса
-          this.checkedTypes.some((type) => type === element.type)
-        );
+          const { title } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+
+          return this.checkedTypes.some((service) => service === title);
+        });
       }
       return this.products;
     },
@@ -233,12 +238,15 @@ export default {
 
       return productsLoading || instancesLoading;
     },
+    sp() {
+      return this.$store.getters["nocloud/sp/getSP"];
+    },
     types() {
-      return Array.from(new Set(this.products.map(({ type }) => type)));
+      return this.sp.map(({ title }) => title);
     },
     checkedTypes() {
       return (
-        this.$route.query?.type?.split(",").filter((el) => el.length > 0) || []
+        this.$route.query?.service?.split(",").filter((el) => el.length > 0) ?? []
       );
     },
     productsCount() {
@@ -251,14 +259,11 @@ export default {
       }
     },
     isNeedFilterStringInHeader() {
-      return this.$route.name == "products" && this.$route.query.type;
+      return this.$route.name == "products" && this.$route.query.service;
     },
     queryTypes() {
-      if (this.$route.query.type) {
-        const ret = this.$route.query.type
-          .split(",")
-          .filter((el) => el.length > 0);
-        return ret;
+      if (this.$route.query.service) {
+        return this.$route.query.service.split(",").filter((el) => el.length > 0);
       } else return [];
     },
   },
@@ -280,11 +285,13 @@ export default {
         types.add(key);
       }
       const newTypes = Array.from(types).join(",");
-      this.$router.replace({ query: { type: newTypes } });
+      this.$router.replace({ query: { service: newTypes } });
     },
     newProductHandle() {
+      const { type } = this.sp.find(({ title }) => title === this.queryTypes[0]);
       let name = 'service-virtual';
-      switch (this.queryTypes[0]) {
+
+      switch (type) {
         case 'opensrs':
           name = 'service-domains';
           break;
@@ -296,7 +303,7 @@ export default {
           name = 'newPaaS';
       }
 
-      this.$router.push({ name });
+      this.$router.push({ name, query: { service: this.queryTypes[0] } });
     },
   },
 };
@@ -307,8 +314,7 @@ export default {
   display: inline-block;
 }
 
-.products_wrapper {
-  background: #fff;
+.products__wrapper {
   border-radius: 10px;
   padding: 10px 10px 15px 10px;
 }
@@ -317,8 +323,17 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 5px;
+  padding: 7px 15px;
   margin-bottom: 15px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
+}
+
+.products__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .products__wrapper--loading {

@@ -1,37 +1,29 @@
 <template>
   <div class="cloud__item-wrapper" @click="(e) => cloudClick(instance.uuid, e)">
     <div class="cloud__item">
-      <div class="cloud__upper">
-        <div
-          class="item__color"
-          :style="{ 'background-color': statusColor }"
-        ></div>
-        <!-- <div class="item__title">{{cloud.CUSTOM_VM_NAME ? cloud.CUSTOM_VM_NAME : cloud.NAME}}</div> -->
-        <!-- {{instance && instance}} -->
-        <div class="item__title">{{ instance.title }}</div>
+      <div class="item__color" :style="{ 'background-color': statusColor }"></div>
+      <div class="item__title">{{ instance.title }}</div>
+      <div class="item__status">{{ instance.state && instance.state.state }}</div>
+      <div class="item__date" :class="{ 'item__date--expired': (isExpired) }">{{ localDate }}</div>
 
-        <!-- <div class="item__status">{{ $t(`cloudStateItem.${cloud.STATE}`) }}</div> -->
-        <div class="item__status">
-          {{ instance.state && instance.state.state }}
-        </div>
+      <div class="item__status" v-if="!(instance.state && networking.length > 0)">
+        IP: {{ $t("ip.none") }}
       </div>
-      <!-- <div class="item_location">{{ location }}</div> -->
-      <div class="cloud__lower">
-        <div v-if="!(instance.state && networking.length > 0)">
-          IP: {{ $t("ip.none") }}
-        </div>
-        <a-collapse v-else v-model="activeKey" expandIconPosition="right" :bordered="false">
-          <a-collapse-panel key="1" :header="title">
-            <div
-              v-for="(item, index) in networking"
-              :key="index"
-            >
-              {{ item }}
-            </div>
-          </a-collapse-panel>
-        </a-collapse>
+
+      <a-collapse v-else v-model="activeKey" expandIconPosition="right" :bordered="false">
+        <a-collapse-panel key="1" :header="title">
+          <div v-for="(item, index) in networking" :key="index">
+            {{ item }}
+          </div>
+        </a-collapse-panel>
+      </a-collapse>
+
+      <div class="product__cost" v-if="user.currency_code">
+        {{ user.currency_code === 'USD' ? `$${price}` : `${price} ${user.currency_code}` }}
       </div>
+      <div class="product__cost" v-else-if="price">{{ `$${price}` }}</div>
     </div>
+
     <div class="cloud__label cloud__label__mainColor">
       {{ instance.billingPlan.kind === "STATIC" ? $t("PrePaid") : $t("PAYG") }}
     </div>
@@ -41,8 +33,10 @@
 <script>
 export default {
   name: "cloudItem",
-  props: { instance: { type: Object } },
-  data: () => ({ activeKey: [] }),
+  props: {
+    instance: { type: Object, required: true }
+  },
+  data: () => ({ activeKey: [], prices: {} }),
   computed: {
     statusColor() {
       if (!this.instance.state) return "rgb(145, 145, 145)"
@@ -64,6 +58,9 @@ export default {
           return "rgb(145, 145, 145)";
       }
     },
+    user() {
+      return this.$store.getters["nocloud/auth/billingData"];
+    },
     getSP() {
       return this.$store.getters["nocloud/sp/getSP"];
     },
@@ -72,6 +69,35 @@ export default {
     },
     isLoading() {
       return this.$store.getters["nocloud/vms/isLoading"];
+    },
+    price(){
+      return this.prices[this.instance.resources.period] || this.instance.orderamount;
+    },
+		localDate(){
+      const productDate = new Date(this.instance.date);
+
+      if (productDate.getTime() === 0) return 'none';
+      // if (this.wholeProduct.groupname === 'Domains') {
+      //   const date = productDate.getTime();
+
+      //   return this.$tc('year', date);
+      // }
+      if (this.instance.groupname === 'SSL') {
+        const date = productDate.getTime();
+
+        return this.$tc('month', date);
+      }
+			return new Intl.DateTimeFormat().format(productDate);
+		},
+
+    isExpired(){
+      const productDate = new Date(this.instance.date);
+      const timestamp = productDate.getTime() - Date.now();
+      const days = 7 * 24 * 3600 * 1000;
+
+      if (this.instance.groupname === 'SSL') return;
+      if (this.instance.date === 0) return;
+      return timestamp < days;
     },
     networking() {
       const { networking } = this.instance?.state?.meta;
@@ -99,9 +125,15 @@ export default {
     },
   },
   created() {
-    if (this.isLogged) {
-      this.$store.dispatch("nocloud/sp/fetch");
-    }
+    if (this.instance.groupname !== 'Domains') return;
+
+    this.$api.servicesProviders.action({
+      uuid: this.instance.sp,
+      action: 'get_domain_price',
+      params: { domain: this.domain },
+    })
+      .then(({ meta }) => this.prices = meta.prices)
+      .catch((err) => console.error(err));
   },
 };
 </script>
@@ -125,11 +157,10 @@ export default {
 }
 .cloud__item {
   position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr) auto;
+  gap: 7px;
   font-size: 16px;
-}
-.cloud__upper {
-  display: flex;
-  justify-content: space-between;
 }
 .item__color {
   width: 18px;
@@ -148,13 +179,20 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.cloud__lower {
-  padding-right: 50px;
-  margin-top: 7px;
-}
 .item__status,
-.cloud__lower {
+.item__date {
   color: rgba(0, 0, 0, 0.4);
+}
+.item__date {
+  padding: 3px 15px;
+  margin: -8px -20px 6px;
+  border-radius: 0 0 0 20px;
+  color: #fff;
+  background: var(--success);
+}
+.item__date--expired {
+  width: fit-content;
+  background: var(--err);
 }
 @media screen and (min-width: 768px) {
   .cloud__item-wrapper:not(:last-child) {
