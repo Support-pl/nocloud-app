@@ -184,7 +184,7 @@ export default {
       const rate = this.currencies.find((el) => {
         const arr = [el.from, el.to];
 
-        arr.includes(code) && arr.includes(this.invoice.currency)
+        return arr.includes(code) && arr.includes(this.invoice.currency)
       }) ?? 1;
 
       return { code, rate };
