@@ -215,7 +215,6 @@
                 :style="{ 'font-size': '1.1rem' }"
                 v-if="
                   options.network.public.status &&
-                  tarification !== 'Monthly' &&
                   itemSP.type !== 'ovh'
                 "
               >
@@ -244,7 +243,7 @@
 
                     </a-badge>
                   </a-tooltip> -->
-                  <template v-if="itemSP.type === 'ovh'">{{ $t("public") }} IPv4:</template>
+                  <template v-if="tarification !== 'Hourly'">{{ $t("public") }} IPv4:</template>
                   <template v-else>{{ $t("public") }} IPv4*:</template>
                 </a-col>
                 <a-col>
@@ -543,7 +542,7 @@
             </a-col>
             <a-col
               style="font-size: 14px; margin: 16px 16px 0"
-              v-if="itemSP.type !== 'ovh' && tarification !== 'Monthly'"
+              v-if="itemSP.type !== 'ovh' && tarification === 'Hourly'"
             >
               <span style="position: absolute; left: -8px">*</span>
               {{ $t('Payment will be made immediately after purchase') }}
@@ -851,10 +850,9 @@ export default {
       return product.price / product.period * 3600 * 24 * 30;
     },
     productFullPriceCustom() {
-      const plan = this.getPlans.find(({ kind }) => kind !== 'STATIC');
-      if (plan) {
+      if (this.plan) {
         const price = [];
-        for (let resource of plan.resources) {
+        for (let resource of this.plan.resources) {
           const key = resource.key.toLowerCase();
 
           if (key.includes('ip')) {
@@ -889,16 +887,6 @@ export default {
       }
 
       return value + addonsPrice * percent;
-    },
-    diskPrice() {
-      const { size } = this.options.disk;
-      const disk = this.getPlanOneStatic?.resources
-        .find(({ key }) => key === `drive_${this.options.drive ? 'ssd' : 'hdd'}`);
-
-      if (!disk) return 0;
-      return (this.tarification === 'Monthly')
-        ? disk.price / disk.period * 3600 * 24 * 30 * (size / 1024)
-        : disk.price / disk.period * 3600 * (size / 1024);
     },
     // passwordValid() {
     //   if (this.focused == true) {
@@ -1187,6 +1175,8 @@ export default {
       }
     },
     calculatePrice(price, period = this.period) {
+      const resourcesPrice = this.productFullPriceCustom * 24 * 30;
+
       switch (period) {
         case "minute":
           return price / 60;
@@ -1197,11 +1187,11 @@ export default {
         case "hour":
           return price;
         case "month":
-          return price + this.diskPrice;
+          return price + resourcesPrice;
         case "year":
-          return (price / 30) * 365 + this.diskPrice;
+          return ((price + resourcesPrice) / 30) * 365;
         case "2 years":
-          return (price / 30) * 365 * 2 + this.diskPrice;
+          return ((price + resourcesPrice) / 30) * 365 * 2;
         default:
           console.error("[VDC Calculator]: Wrong period in calc.", period);
       }
