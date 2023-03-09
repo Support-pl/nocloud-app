@@ -123,7 +123,6 @@ export default {
   },
   data: () => ({ sortBy: 'Date', sortType: 'sort-ascending' }),
   created() {
-    if (!this.isLogged) return;
     if (this.sp.length < 1) {
       this.$store.dispatch('nocloud/sp/fetch', !this.isLogged)
         .catch((err) => {
@@ -133,6 +132,7 @@ export default {
         });
     }
 
+    if (!this.isLogged) return;
     this.$store.commit("products/setProductsLoading", true);
     this.$store.dispatch("nocloud/auth/fetchBillingData")
       .then((user) => {
@@ -334,6 +334,14 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 15px;
+}
+
+.products__inner .ant-empty {
+  margin: 0;
+  padding: 15px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 5px 8px 10px rgba(0,0,0,.05);
 }
 
 .products__wrapper--loading {
