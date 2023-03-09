@@ -91,14 +91,6 @@ export default {
       });
     },
 	},
-  created() {
-    this.$store.dispatch('nocloud/sp/fetch', !this.isLogged)
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
-
-        this.$notification['error']({ message: this.$t(message) });
-      });
-  },
 	computed: {
 		sp(){
 			return this.$store.getters['nocloud/sp/getSP'];
@@ -110,12 +102,12 @@ export default {
 		avaliableServices(){
       const services = [];
 
-			this.sp.forEach(({ meta: { service }, type }) => {
-        if (service.type) services.push({
+			this.sp.forEach(({ meta: { service }, title }) => {
+        if (service.title) services.push({
           ...service,
           onclick: {
             function: this.routeTo,
-            paramsArr: [{ name: service.type, type }]
+            paramsArr: [{ name: 'products', query: { service: title } }]
           }
         });
       });
