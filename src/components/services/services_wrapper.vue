@@ -50,16 +50,6 @@ export default {
 						paramsArr: [{name: 'products', query: {type: 'ssl'}}],
 					}
 				},
-				{
-					title: 'Virtual',
-					translatable: true,
-					icon: 'solution',
-          type: 'virtual',
-					onclick: {
-						function: this.routeTo,
-						paramsArr: [{name: 'products', query: {type: 'virtual'}}],
-					}
-				},
         {
           title: 'Domains',
           translatable: true,
@@ -100,7 +90,16 @@ export default {
 		},
 
 		avaliableServices(){
-      const services = [];
+      const services = [{
+        title: 'Virtual',
+        translatable: true,
+        icon: 'solution',
+        type: 'virtual',
+        onclick: {
+          function: this.routeTo,
+          paramsArr: [{name: 'products', query: { service: 'Virtual' }}],
+        }
+      }];
 
 			this.sp.forEach(({ meta: { service }, title }) => {
         if (service.title) services.push({
