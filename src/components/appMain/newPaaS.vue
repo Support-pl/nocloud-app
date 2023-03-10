@@ -1407,7 +1407,7 @@ export default {
         .up(uuidService)
         .then(() => {
           this.$message.success("VM created succefully");
-          this.$router.push({ path: '/cloud' });
+          this.$router.push({ path: '/services' });
         })
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err;
