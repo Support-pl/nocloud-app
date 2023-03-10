@@ -2,9 +2,18 @@
   <div class="cloud__item-wrapper" @click="(e) => cloudClick(instance.uuid, e)">
     <div class="cloud__item">
       <div class="item__color" :style="{ 'background-color': statusColor }"></div>
-      <div class="item__title">{{ instance.title }}</div>
       <div class="item__status">{{ instance.state && instance.state.state }}</div>
       <div class="item__date" :class="{ 'item__date--expired': (isExpired) }">{{ localDate }}</div>
+      <div class="item__title" :style="{ gridColumn: (!getModuleProductBtn) ? '1 / 3' : null }">
+        {{ instance.title }}
+      </div>
+
+      <component :is="getModuleProductBtn" :service="instance" />
+
+      <div class="item__cost" v-if="user.currency_code">
+        {{ user.currency_code === 'USD' ? `$${price}` : `${price} ${user.currency_code}` }}
+      </div>
+      <div class="item__cost" v-else-if="price">{{ `$${price}` }}</div>
 
       <div class="item__status" v-if="!(instance.state && networking.length > 0)">
         IP: {{ $t("ip.none") }}
@@ -17,11 +26,6 @@
           </div>
         </a-collapse-panel>
       </a-collapse>
-
-      <div class="product__cost" v-if="user.currency_code">
-        {{ user.currency_code === 'USD' ? `$${price}` : `${price} ${user.currency_code}` }}
-      </div>
-      <div class="product__cost" v-else-if="price">{{ `$${price}` }}</div>
     </div>
 
     <div class="cloud__label cloud__label__mainColor">
@@ -116,7 +120,15 @@ export default {
     },
     title() {
       return (!this.activeKey.includes('1')) ? `IP: ${this.networking[0]}` : 'IP\'s:';
-    }
+    },
+		getModuleProductBtn() {
+			const serviceType = this.$config.getServiceType(this.instance.groupname)?.toLowerCase();
+
+			if (serviceType === undefined) return;
+      if (!['active', 'running'].includes(this.instance.domainstatus.toLowerCase())) return;
+      if (this.instance.date === 0) return;
+			return () => import(`@/components/services/${serviceType}/lilbtn.vue`);
+		}
   },
   methods: {
     cloudClick(uuid, { target }) {
@@ -183,6 +195,10 @@ export default {
 .item__date {
   color: rgba(0, 0, 0, 0.4);
 }
+.item__status {
+  grid-column: 1 / 3;
+  margin-top: 4px;
+}
 .item__date {
   padding: 3px 15px;
   margin: -8px -20px 6px;
@@ -193,6 +209,9 @@ export default {
 .item__date--expired {
   width: fit-content;
   background: var(--err);
+}
+.item__cost {
+  text-align: right;
 }
 @media screen and (min-width: 768px) {
   .cloud__item-wrapper:not(:last-child) {

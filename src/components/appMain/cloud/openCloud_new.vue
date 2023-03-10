@@ -685,7 +685,7 @@ export default {
     "VM.uuidService"(value) {
       if (!value) return;
       this.renameNewName = this.VM.title;
-      this.$store.dispatch("nocloud/vms/subscribeWebSocket", value);
+      // this.$store.dispatch("nocloud/vms/subscribeWebSocket", value);
     },
   },
 };

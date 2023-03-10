@@ -230,8 +230,14 @@ export default {
               name: "invoice_reload",
               icon: "reload",
               onClickFuncion: () => {
+                const params = {
+                  account: this.user.uuid,
+                  page: this.$store.getters["nocloud/transactions/page"],
+                  limit: this.$store.getters["nocloud/transactions/size"]
+                };
+
                 this.fetchInvoices();
-                this.fetchTransactions({ account: this.user.uuid })
+                this.fetchTransactions(params)
                 this.fetchUserData();
               },
             },
