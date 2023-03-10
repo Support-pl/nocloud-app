@@ -35,6 +35,7 @@ export default {
 
 <style scoped>
 .btn{
+  width: fit-content;
 	margin-right: 20px;
 }
 
