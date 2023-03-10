@@ -205,11 +205,11 @@ export default {
             case 'ione': {
               res.orderamount += +inst.billingPlan.resources.reduce((prev, curr) => {
                 if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
-                  return prev + curr.price / curr.period * 3600 * 24 * 30 * inst.resources.drive_size / 1024;
+                  return prev + curr.price * inst.resources.drive_size / 1024;
                 } else if (curr.key === "ram") {
-                  return prev + curr.price / curr.period * 3600 * 24 * 30 * inst.resources.ram / 1024;
+                  return prev + curr.price * inst.resources.ram / 1024;
                 } else if (inst.resources[curr.key]) {
-                  return prev + curr.price / curr.period * 3600 * 24 * 30 * inst.resources[curr.key];
+                  return prev + curr.price * inst.resources[curr.key];
                 }
                 return prev;
               }, 0)?.toFixed(2);
@@ -242,7 +242,7 @@ export default {
       return this.$store.getters["nocloud/sp/getSP"];
     },
     types() {
-      return this.sp.map(({ title }) => title);
+      return [...this.sp.map(({ title }) => title), 'Virtual'];
     },
     checkedTypes() {
       return (
@@ -288,8 +288,9 @@ export default {
       this.$router.replace({ query: { service: newTypes } });
     },
     newProductHandle() {
-      const { type } = this.sp.find(({ title }) => title === this.queryTypes[0]);
+      const { type } = this.sp.find(({ title }) => title === this.queryTypes[0]) ?? {};
       let name = 'service-virtual';
+      let query = {};
 
       switch (type) {
         case 'opensrs':
@@ -301,9 +302,10 @@ export default {
         case 'ione':
         case 'ovh':
           name = 'newPaaS';
+          query = { service: this.queryTypes[0] }
       }
 
-      this.$router.push({ name, query: { service: this.queryTypes[0] } });
+      this.$router.push({ name, query });
     },
   },
 };

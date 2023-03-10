@@ -4,7 +4,10 @@
       <div class="item__color" :style="{ 'background-color': statusColor }"></div>
       <div class="item__status">{{ instance.state && instance.state.state }}</div>
       <div class="item__date" :class="{ 'item__date--expired': (isExpired) }">{{ localDate }}</div>
-      <div class="item__title" :style="{ gridColumn: (!getModuleProductBtn) ? '1 / 3' : null }">
+      <div
+        class="item__title"
+        :style="{ gridColumn: (!getModuleProductBtn) ? '1 / 3' : null }"
+      >
         {{ instance.title }}
       </div>
 
@@ -203,6 +206,7 @@ export default {
   padding: 3px 15px;
   margin: -8px -20px 6px;
   border-radius: 0 0 0 20px;
+  text-align: center;
   color: #fff;
   background: var(--success);
 }
