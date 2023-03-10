@@ -173,7 +173,7 @@ export default {
             orderid: inst.uuid,
             groupname: 'Self-Service VDS SSD HC',
             invoicestatus: null,
-            domainstatus: inst.state?.meta?.state_str || inst.state?.state || '',
+            domainstatus: inst.state?.meta?.lcm_state_str || inst.state?.state || '',
             productname: inst.title,
             domain: publicIPs?.at(0),
             date: inst.data.last_monitoring * 1000 || 0,
