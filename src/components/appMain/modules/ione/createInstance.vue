@@ -406,9 +406,9 @@ export default {
     },
     planHeader() {
       if (this.itemSP && this.getPlan) {
-        return this.tarification === "Monthly"
-          ? ` (VDS ${this.$t("Pre-Paid")})`
-          : ` (VDC ${this.$t("Pay-as-you-Go")})`;
+        return this.tarification === "Hourly"
+          ? ` (VDC ${this.$t("Pay-as-you-Go")})`
+          : ` (VDS ${this.$t("Pre-Paid")})`;
       } else {
         return " ";
       }
@@ -422,8 +422,9 @@ export default {
   watch: {
     plans() {
       const value = [];
-      const month = 3600 * 24 * 30;
-      const year = 3600 * 24 * 365;
+      const day = 3600 * 24
+      const month = day * 30;
+      const year = day * 365;
 
       this.plans.forEach((plan) => {
         if (plan.kind === 'DYNAMIC') value.push(
@@ -432,6 +433,10 @@ export default {
 
         if (plan.kind !== 'STATIC') return;
         const periods = Object.values(plan.products).map((el) => +el.period);
+
+        if (periods.includes(day)) value.push(
+          { value: 'Daily', label: 'daily' }
+        );
 
         if (periods.includes(month)) value.push(
           { value: 'Monthly', label: 'ssl_product.Monthly' }

@@ -412,7 +412,7 @@ export default {
   created() {
     if (this.VM?.uuidService) {
       this.renameNewName = this.VM.title;
-      this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
+      // this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
     }
     if (this.isLogged) {
       this.$store.dispatch("nocloud/vms/fetch");
