@@ -35,6 +35,7 @@ const allServices = {
 const config = localStorage.getItem('globalConfig');
 
 if (config) globalThis.globalConfig = JSON.parse(config);
+if (globalConfig.services) globalConfig.services = ["VM", "Domains", "Virtual", "SSL"];
 
 export default {
 	colors: globalConfig.app?.colors,
