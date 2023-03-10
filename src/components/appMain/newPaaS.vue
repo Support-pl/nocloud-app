@@ -431,6 +431,11 @@
                 {{ billingData.currency_code || 'USD' }}/{{ $tc("period.month") }}
               </a-col>
 
+              <a-col v-if="tarification === 'Daily'">
+                {{ calculatePrice(productFullPriceStatic, "day").toFixed(2) }}
+                {{ billingData.currency_code || 'USD' }}/{{ $t("day") }}
+              </a-col>
+
               <a-col v-if="tarification === 'Hourly'">
                 ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
                 {{ billingData.currency_code || 'USD' }}/{{ $t("hour") }}
@@ -1180,12 +1185,12 @@ export default {
       switch (period) {
         case "minute":
           return price / 60;
-        case "day":
-          return price / 30;
         case "week":
           return (price / 30) * 7;
         case "hour":
           return price;
+        case "day":
+          return (price + resourcesPrice) / 30
         case "month":
           return price + resourcesPrice;
         case "year":
