@@ -435,22 +435,22 @@ export default {
         const periods = Object.values(plan.products).map((el) => +el.period);
 
         if (periods.includes(day)) value.push(
-          { value: 'Daily', label: 'daily' }
+          { value: 'Daily', label: 'daily', period: day }
         );
 
         if (periods.includes(month)) value.push(
-          { value: 'Monthly', label: 'ssl_product.Monthly' }
+          { value: 'Monthly', label: 'ssl_product.Monthly', period: month }
         );
 
         if (periods.includes(year)) value.push(
-          { value: 'Annually', label: 'annually' }
+          { value: 'Annually', label: 'annually', period: year }
         );
 
         if (periods.includes(year * 2)) value.push(
-          { value: 'Biennially', label: 'biennially' }
+          { value: 'Biennially', label: 'biennially', period: year * 2 }
         );
       });
-      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.value < b.value);
+      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period);
 
       this.options.drive = false;
       this.$emit('setData', { key: 'periods', value });

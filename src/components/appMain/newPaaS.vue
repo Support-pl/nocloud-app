@@ -390,7 +390,14 @@
             </a-divider>
             <a-row type="flex" justify="center" style="margin-top: 15px">
               <a-col>
-                <a-radio-group default-value="Monthly" v-model="tarification">
+                <a-radio-group
+                  default-value="Monthly"
+                  v-model="tarification"
+                  :style="{
+                    display: 'grid', textAlign: 'center',
+                    gridTemplateColumns: `repeat(${(periods.length < 3) ? periods.length : 3}, 1fr)`
+                  }"
+                >
                   <a-radio-button
                     v-for="period of periods"
                     :key="period.value"
@@ -1212,10 +1219,13 @@ export default {
       return isFinite(value) ? `(${value} Gb)` : '';
     },
     getTarification(timestamp) {
-      const month = 3600 * 24 * 30;
-      const year = 3600 * 24 * 365;
+      const day = 3600 * 24;
+      const month = day * 30;
+      const year = day * 365;
 
       switch (+timestamp) {
+        case day:
+          return 'Daily';
         case month:
           return 'Monthly';
         case year:
@@ -1521,6 +1531,9 @@ export default {
           let period = 0;
 
           switch (value) {
+            case 'Daily':
+              period = 3600 * 24;
+              break;
             case 'Annually':
               period = 3600 * 24 * 365;
               break;
