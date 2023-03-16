@@ -173,11 +173,11 @@ export default {
             orderid: inst.uuid,
             groupname: 'Self-Service VDS SSD HC',
             invoicestatus: null,
-            domainstatus: inst.state?.meta?.lcm_state_str || inst.state?.state || '',
+            domainstatus: inst.state?.meta?.lcm_state_str ?? inst.state?.state ?? 'UNKNOWN',
             productname: inst.title,
             domain: publicIPs?.at(0),
             date: inst.data.last_monitoring * 1000 || 0,
-            orderamount: inst.billingPlan.products[inst.product]?.price || 0,
+            orderamount: inst.billingPlan.products[inst.product]?.price ?? 0,
           };
 
           switch (inst.type) {
@@ -192,14 +192,14 @@ export default {
               res.groupname = 'SSL';
               res.date = +`${inst.resources.period}`;
               res.domain = inst.resources.domain;
-              res.orderamount = inst.billingPlan.products[key]?.price || 0;
+              res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
               break;
             }
             case 'ovh': {
               const key = `${inst.config.duration} ${inst.config.planCode}`;
 
               res.date = inst.data.expiration
-              res.orderamount = inst.billingPlan.products[key]?.price || 0;
+              res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
               break;
             }
             case 'ione': {

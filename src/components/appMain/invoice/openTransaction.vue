@@ -198,7 +198,7 @@ export default {
       return this.$store.getters['nocloud/vms/getServicesFull'];
     },
     invoice() {
-      return this.$store.getters['nocloud/transactions/getTransactions']
+      return this.$store.getters['nocloud/transactions/all']
         .find((el) => el.uuid === this.$route.params.uuid);
     },
     total() {

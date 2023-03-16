@@ -55,11 +55,10 @@ Vue.directive('phone', {
     const x = value.match(regexp)
 
     if (x[1] === '') el.value = ''
-    else if (x[1].length < num) el.value = `(${x[1]}`
-    else if (x[2] === '') el.value = `(${x[1]})`
-    else if (x[3] === '') el.value = `(${x[1]}) ${x[2]}`
-    else if (x[4] === '') el.value = `(${x[1]}) ${x[2]}-${x[3]}`
-    else el.value = `(${x[1]}) ${x[2]}-${x[3]}-${x[4]}`
+    else if (x[2] === '') el.value = `${x[1]}`
+    else if (x[3] === '') el.value = `${x[1]} ${x[2]}`
+    else if (x[4] === '') el.value = `${x[1]} ${x[2]}-${x[3]}`
+    else el.value = `${x[1]} ${x[2]}-${x[3]}-${x[4]}`
 
     if (code) el.value = `${code} ${el.value}`
   }

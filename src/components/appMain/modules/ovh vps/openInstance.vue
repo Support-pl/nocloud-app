@@ -140,7 +140,7 @@
           <div class="block__column">
             <div class="block__title">OS</div>
             <div class="block__value">
-              {{ VM.config.os || $t('No Data') }}
+              {{ osName || $t('No Data') }}
             </div>
           </div>
           <div class="block__column" v-if="VM.config.planCode">
@@ -811,12 +811,18 @@ export default {
     dataSP() {
       return this.getSP.find((el) => el.uuid === this.VM.sp);
     },
+    osName() {
+      const type = this.VM.billingPlan.type.split(' ')[1];
+
+      return this.VM.config.configuration[`${type}_os`];
+    },
     locationTitle() {
       if (!this.VM?.config.configuration) return this.dataSP.title;
       const type = this.VM.billingPlan.type.split(' ')[1];
       const region = this.VM.config.configuration[`${type}_datacenter`];
+      const locationItem = this.dataSP.locations.find((el) => el.extra.region === region);
 
-      return this.dataSP.locations.find((el) => el.extra.region === region);
+      return locationItem?.title ?? this.$t('No Data');
     },
     tariffTitle() {
       const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;

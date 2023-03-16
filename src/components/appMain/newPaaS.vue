@@ -393,10 +393,7 @@
                 <a-radio-group
                   default-value="Monthly"
                   v-model="tarification"
-                  :style="{
-                    display: 'grid', textAlign: 'center',
-                    gridTemplateColumns: `repeat(${(periods.length < 3) ? periods.length : 3}, 1fr)`
-                  }"
+                  :style="{ display: 'grid', textAlign: 'center', gridTemplateColumns: periodColumns }"
                 >
                   <a-radio-button
                     v-for="period of periods"
@@ -998,6 +995,11 @@ export default {
       return locations?.find(({ extra }) =>
         extra.region.toLowerCase() === configuration[key].toLowerCase()
       )?.title;
+    },
+    periodColumns() {
+      const { length } = Object.keys(this.periods);
+
+      return `repeat(${(length < 3) ? length : 3}, 1fr)`;
     }
   },
   mounted() {
@@ -1187,7 +1189,9 @@ export default {
       }
     },
     calculatePrice(price, period = this.period) {
-      const resourcesPrice = this.productFullPriceCustom * 24 * 30;
+      const resourcesPrice = (this.itemSP.type === 'ione')
+        ? this.productFullPriceCustom * 24 * 30
+        : 0;
 
       switch (period) {
         case "minute":

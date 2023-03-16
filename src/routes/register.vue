@@ -85,9 +85,10 @@
 								type="tel"
 								name="phone"
 								:placeholder="$t('clientinfo.phone number') + ' *' | capitalize"
+                :disabled="!userinfo.country"
 								v-model="userinfo.phonenumber"
                 autocomplete="tel"
-                maxlength="20"
+                maxlength="18"
 							>
 							<span class="login__horisontal-line"></span>
 							<input
