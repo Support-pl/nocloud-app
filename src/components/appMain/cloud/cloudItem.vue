@@ -1,22 +1,14 @@
 <template>
   <div class="cloud__item-wrapper" @click="(e) => cloudClick(instance.uuid, e)">
     <div class="cloud__item">
-      <div class="item__color" :style="{ 'background-color': statusColor }"></div>
-      <div class="item__status">{{ instance.state && instance.state.state }}</div>
-      <div class="item__date" :class="{ 'item__date--expired': (isExpired) }">{{ localDate }}</div>
       <div
-        class="item__title"
-        :style="{ gridColumn: (!getModuleProductBtn) ? '1 / 3' : null }"
-      >
-        {{ instance.title }}
-      </div>
-
-      <component :is="getModuleProductBtn" :service="instance" />
-
-      <div class="item__cost" v-if="user.currency_code">
-        {{ user.currency_code === 'USD' ? `$${price}` : `${price} ${user.currency_code}` }}
-      </div>
-      <div class="item__cost" v-else-if="price">{{ `$${price}` }}</div>
+        class="item__color"
+        :title="instance.domainstatus"
+        :style="{ 'background-color': statusColor }"
+      />
+      <!-- <div class="item__status">{{ instance.domainstatus }}</div> -->
+      <div class="item__title">{{ instance.title }}</div>
+      <div class="item__date" :class="{ 'item__date--expired': (isExpired) }">{{ localDate }}</div>
 
       <div class="item__status" v-if="!(instance.state && networking.length > 0)">
         IP: {{ $t("ip.none") }}
@@ -29,11 +21,19 @@
           </div>
         </a-collapse-panel>
       </a-collapse>
+
+      <div class="item__cost" v-if="user.currency_code">
+        {{ user.currency_code === 'USD' ? `$${price}` : `${price} ${user.currency_code}` }}
+      </div>
+      <div class="item__cost" v-else-if="price">
+        <component :is="getModuleProductBtn" :service="instance" />
+        {{ `$${price}` }}
+      </div>
     </div>
 
-    <div class="cloud__label cloud__label__mainColor">
+    <!-- <div class="cloud__label cloud__label__mainColor">
       {{ instance.billingPlan.kind === "STATIC" ? $t("PrePaid") : $t("PAYG") }}
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -81,7 +81,7 @@ export default {
       return this.prices[this.instance.resources.period] || this.instance.orderamount;
     },
 		localDate(){
-      const productDate = new Date(this.instance.date);
+      const productDate = new Date(this.instance.date ?? 0);
 
       if (productDate.getTime() === 0) return 'none';
       // if (this.wholeProduct.groupname === 'Domains') {
@@ -173,8 +173,8 @@ export default {
 .cloud__item {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(2, 1fr) auto;
-  gap: 7px;
+  grid-template-columns: 1fr auto;
+  gap: 7px 10px;
   font-size: 16px;
 }
 .item__color {
@@ -187,7 +187,7 @@ export default {
   top: 5px;
 }
 .item__title {
-  flex-grow: 1;
+  margin-top: 4px;
   padding-right: 10px;
   font-weight: bold;
   white-space: nowrap;
@@ -199,12 +199,13 @@ export default {
   color: rgba(0, 0, 0, 0.4);
 }
 .item__status {
-  grid-column: 1 / 3;
   margin-top: 4px;
 }
 .item__date {
+  justify-self: end;
+  width: fit-content;
   padding: 3px 15px;
-  margin: -8px -20px 6px;
+  margin: -8px -15px 6px;
   border-radius: 0 0 0 20px;
   text-align: center;
   color: #fff;

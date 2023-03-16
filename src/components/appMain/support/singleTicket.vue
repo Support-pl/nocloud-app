@@ -6,12 +6,7 @@
     ></div>
     <div class="ticket__content">
       <div class="ticket__upper">
-        <div class="ticket__title">
-          <a-badge v-if="ticket.requestor_type !== 'Owner'" dot>
-            #{{ ticket.tid }} - {{ titleDecoded }}
-          </a-badge>
-          <template v-else> #{{ ticket.tid }} - {{ titleDecoded }} </template>
-        </div>
+        <div class="ticket__title">#{{ ticket.tid }} - {{ titleDecoded }}</div>
         <div class="ticket__status-text">
           {{ $t(`ticketStatus.${ticket.status}`) }}
         </div>
