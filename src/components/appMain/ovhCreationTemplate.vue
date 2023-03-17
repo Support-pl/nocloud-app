@@ -158,7 +158,7 @@
             </template>
             <template v-else>
               <div class="newCloud__template-image">
-                <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" />
+                <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" @error="onError" />
               </div>
               <div class="newCloud__template-name">
                 {{ item.name }} <br>
@@ -264,6 +264,9 @@ export default {
 
       return addon?.price.value ?? 0;
     },
+    onError({ target }) {
+      target.src = '/img/OS/default.png';
+    },
     setAddon(planCode, addon, key) {
       if (planCode === '-1') {
         delete this.price.addons[key];
@@ -345,7 +348,9 @@ export default {
       }
     }
   },
-  created() { this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps' },
+  created() {
+    this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps';
+  },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
@@ -392,9 +397,9 @@ export default {
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
     },
     types() {
-      const plans = this.$store.getters['nocloud/plans/getPlans'].map((el) => el.type);
+      const plans = this.$store.getters['nocloud/plans/getPlans'].map(({ type }) => type);
 
-      return ['vps', 'dedicated'].filter((el) => plans.includes(`ovh ${el}`));
+      return ['vps', 'dedicated'].filter((type) => plans.includes(`ovh ${type}`));
     }
   },
   watch: {

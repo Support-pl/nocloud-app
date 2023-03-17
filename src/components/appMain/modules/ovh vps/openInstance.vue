@@ -59,18 +59,27 @@
           :title="$t('cloud_Recover_modal')"
           @ok="sendRecover"
         >
-          <p>{{ $t("cloud_Recover_invite_line1") }}</p>
-          <p>{{ $t("cloud_Recover_invite_line2") }}</p>
-          <p>{{ $t("cloud_Recover_invite_line3") }}</p>
-          <p>{{ $t("cloud_Recover_invite") }}</p>
-          <a-spin :tip="$t('loading')" :spinning="actionLoading">
-            <a-radio-group
-              name="recover"
-              v-model="option.recover"
-            >
-              <a-radio v-for="date of dates" :key="date" :value="date">{{ date }}</a-radio>
-            </a-radio-group>
-          </a-spin>
+          <template v-if="VM.config.addons?.find((el) => el.includes('backup'))">
+            <p>{{ $t("cloud_Recover_invite_line1") }}</p>
+            <p>{{ $t("cloud_Recover_invite_line2") }}</p>
+            <p>{{ $t("cloud_Recover_invite_line3") }}</p>
+            <p>{{ $t("cloud_Recover_invite") }}</p>
+            <a-spin :tip="$t('loading')" :spinning="actionLoading">
+              <a-radio-group name="recover" v-model="option.recover">
+                <a-radio v-for="date of dates" :key="date" :value="date">{{ date }}</a-radio>
+              </a-radio-group>
+            </a-spin>
+          </template>
+          <a-button
+            v-else
+            type="primary"
+            shape="round"
+            size="large"
+            :loading="actionLoading"
+            @click="sendAddingAddon('backup')"
+          >
+            {{ $t("Add recover") }}
+          </a-button>
         </a-modal>
       </div>
     </div>
@@ -299,10 +308,6 @@
               shape="round"
               block
               size="large"
-              :disabled="!(
-                VM.config.addons &&
-                VM.config.addons.find((el) => el.includes('snapshot'))
-              )"
               @click="openModal('snapshot')"
             >
               {{ $t("Snapshots") }}
@@ -352,16 +357,30 @@
                   type="primary"
                   shape="round"
                   size="large"
+                  v-if="(
+                    VM.config.addons &&
+                    VM.config.addons.find((el) => el.includes('snapshot'))
+                  )"
                   @click="openModal('createSnapshot')"
-                  >{{ $t("Take snapshot") }}</a-button
                 >
+                  {{ $t("Take snapshot") }}
+                </a-button>
+                <a-button
+                  v-else
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  :loading="actionLoading"
+                  @click="sendAddingAddon('snapshot')"
+                >
+                  {{ $t("Add snapshot") }}
+                </a-button>
               </div>
               <a-modal
                 v-model="snapshots.addSnap.modal"
                 :footer="null"
                 :title="$t('Create snapshot')"
               >
-                <p>{{ $t("You can only have 3 snapshots at a time.") }}</p>
                 <p>{{ $t("Each snapshot exists for 24 hours and is then deleted.") }}</p>
                 <p>{{ $t("Choose a name for the new snapshot:") }}</p>
                 <a-input
@@ -374,17 +393,19 @@
                     shape="round"
                     :style="{ 'margin-right': '10px' }"
                     @click="snapshots.addSnap.modal = false"
-                    >{{ $t("Cancel") }}</a-button
                   >
+                    {{ $t("Cancel") }}
+                  </a-button>
                   <a-button
                     icon="plus"
                     type="primary"
                     shape="round"
                     :disabled="snapshots.addSnap.snapname.length < 1"
                     :loading="snapshots.addSnap.loading"
-                    @click="createSnapshot()"
-                    >{{ $t("Take snapshot") }}</a-button
+                    @click="createSnapshot"
                   >
+                    {{ $t("Take snapshot") }}
+                  </a-button>
                 </div>
               </a-modal>
             </a-modal>
@@ -714,6 +735,37 @@ export default {
       })
       .finally(() => this.isSwitchLoading = false);
     },
+    sendAddingAddon(action) {
+      this.$confirm({
+        title: this.$t(`Do you want to add an ${action}?`),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        onOk: () => {
+          const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+          const planCode = this.VM.billingPlan.products[key].meta.addons
+            .find((addon) => addon.includes(action));
+
+          this.actionLoading = true;
+          this.$store.dispatch("nocloud/vms/actionVMInvoke", {
+            uuid: this.VM.uuid,
+            uuidService: this.VM.uuidService,
+            action: 'add_addon',
+            params: { planCode }
+          })
+            .then(() => {
+              this.openNotificationWithIcon("success", { message: `Done!` });
+            })
+            .catch((err) => {
+              console.error(err);
+              this.openNotificationWithIcon("error", {
+                message: `Error: ${err.response?.data?.message ?? "Unknown"}.`
+              });
+            })
+            .finally(() => this.actionLoading = false);
+        },
+        onCancel() {},
+      });
+    },
     async sendAction(action) {
       const data = {
         uuid: this.VM.uuid,
@@ -800,8 +852,7 @@ export default {
         start: this.VM.state.state !== 'RUNNING' &&
           this.VM.state.state !== 'STOPPED',
         recover: this.VM.state.state !== 'RUNNING' &&
-          this.VM.state.state !== 'STOPPED' ||
-          !this.VM.config.addons?.find((el) => el.includes('backup')),
+          this.VM.state.state !== 'STOPPED'
       };
     },
 

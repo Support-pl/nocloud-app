@@ -3,9 +3,7 @@
 		<div class="service__icon">
 			<a-icon :type="service.icon"></a-icon>
 		</div>
-		<div class="service__title">
-			    {{ translatedName }}
-		</div>
+		<div class="service__title">{{ translatedName }}</div>
 	</div>
 </template>
 

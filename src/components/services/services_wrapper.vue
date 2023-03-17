@@ -1,11 +1,24 @@
 <template>
 	<div class="services__wrapper" :style="{ gridTemplateColumns: `repeat(${columnsCount}, 1fr)` }">
 		<template v-for="service in avaliableServices">
-			<service-item
-				v-if="!service.needLogin || isLogged"
-				:key="service.title"
-				:service="service"
-			/>
+      <a-badge
+        count="+"
+        :number-style="{
+          fontSize: '20px',
+          transform: 'none',
+          backgroundColor: '#fff',
+          boxShadow: '0 0 0 1px var(--gray)',
+          color: 'var(--gray)',
+          cursor: 'pointer'
+        }"
+        @click="newProductHandler(service)"
+      >
+        <service-item
+          v-if="!service.needLogin || isLogged"
+          :key="service.title"
+          :service="service"
+        />
+      </a-badge>
 		</template>
 	</div>
 </template>
@@ -80,6 +93,27 @@ export default {
         },
       });
     },
+    newProductHandler(service) {
+      const provider = service.onclick.paramsArr[0].query.service;
+      const { type } = this.sp.find(({ title }) => title === provider) ?? {};
+      let name = 'service-virtual';
+      let query = {};
+
+      switch (type) {
+        case 'opensrs':
+          name = 'service-domains';
+          break;
+        case 'goget':
+          name = 'service-ssl';
+          break;
+        case 'ione':
+        case 'ovh':
+          name = 'newPaaS';
+          query = { service: provider }
+      }
+
+      this.$router.push({ name, query });
+    },
 	},
 	computed: {
 		sp(){
@@ -114,7 +148,10 @@ export default {
       return services;
 		},
     columnsCount(){
-      return (this.avaliableServices.length < 5) ? this.avaliableServices.length : 5;
+      let count = 5;
+      if (document.documentElement.clientWidth < 575) count = 3;
+
+      return (this.avaliableServices.length < count) ? this.avaliableServices.length : count;
     }
 	}
 }

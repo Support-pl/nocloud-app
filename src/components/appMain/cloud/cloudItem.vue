@@ -167,9 +167,6 @@ export default {
 .cloud__item-wrapper:hover {
   background-color: rgba(255, 255, 255, 0.55);
 }
-.cloud__item-wrapper:not(:last-child) {
-  margin-bottom: 20px;
-}
 .cloud__item {
   position: relative;
   display: grid;
@@ -187,7 +184,7 @@ export default {
   top: 5px;
 }
 .item__title {
-  margin-top: 4px;
+  margin-top: 2px;
   padding-right: 10px;
   font-weight: bold;
   white-space: nowrap;
@@ -217,14 +214,6 @@ export default {
 }
 .item__cost {
   text-align: right;
-}
-@media screen and (min-width: 768px) {
-  .cloud__item-wrapper:not(:last-child) {
-    margin-bottom: 0px;
-  }
-  .cloud__item-wrapper {
-    height: max-content;
-  }
 }
 .cloud__label {
   position: absolute;
