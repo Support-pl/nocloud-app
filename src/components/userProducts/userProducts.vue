@@ -222,6 +222,12 @@ export default {
       return [...products, ...instances]
         .sort((a, b) => {
           if (this.sortType === 'sort-ascending') [b, a] = [a, b];
+          if (this.min) {
+            if (this.isExpired(a) && !this.isExpired(b)) return 1;
+            else if (!this.isExpired(a) && this.isExpired(b)) return -1;
+            else 0;
+          }
+
           switch (this.sortBy) {
             case 'Date':
               return new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -306,6 +312,15 @@ export default {
       }
 
       this.$router.push({ name, query });
+    },
+    isExpired(instance){
+      const productDate = new Date(instance.date);
+      const timestamp = productDate.getTime() - Date.now();
+      const days = 7 * 24 * 3600 * 1000;
+
+      if (instance.groupname === 'SSL') return;
+      if (instance.date === 0) return;
+      return timestamp < days;
     },
   },
 };

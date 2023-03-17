@@ -151,7 +151,6 @@
 
 <script>
 import { mapActions, mapGetters, mapMutations } from "vuex";
-import user from "../../store/user";
 import balance from "../balance/balance.vue";
 
 export default {

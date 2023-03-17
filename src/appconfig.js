@@ -1,41 +1,6 @@
-const allServices = {
-  virtual: {
-    groupname: ['Виртуальный хостинг', 'Shared Hosting'],
-    creationRouteName: 'service-virtual',
-    icon: 'solution',
-  },
-  domains: {
-    groupname: ['Domains'],
-    creationRouteName: 'service-domains',
-    icon: 'solution',
-  },
-  ssl: {
-  	groupname: ['GoGet SSL 2.5.6', 'SSL', 'SSL сертификаты'],
-  	creationRouteName: 'service-ssl',
-  	icon: 'lock',
-  	additionalRoutes: [
-  		{
-  			path: 'SSL/generator/:id',
-  			name: `generator-SSL`,
-  			meta: {
-  				footerTitle: 'services',
-  				isNeedBackButton: true,
-  				headerTitle: 'CSR generator',
-  			},
-  			componentName: 'generator'
-  		}
-  	]
-  },
-  vm: {
-    groupname: ['Self-Service VDS (2018)', 'Self-Service VDS SSD HC', 'Self-Service VDS SSD (2018)'],
-    creationRouteName: 'newPaaS',
-    icon: 'database',
-  }
-};
 const config = localStorage.getItem('globalConfig');
 
 if (config) globalThis.globalConfig = JSON.parse(config);
-if (globalConfig.services) globalConfig.services = ["VM", "Domains", "Virtual", "SSL"];
 
 export default {
 	colors: globalConfig.app?.colors,
@@ -56,9 +21,40 @@ export default {
 		suffix: globalConfig?.currency?.suffix ?? 'USD',
 		code: globalConfig?.currency?.code ?? 'USD',
 	},
-	services: globalConfig.services?.reduce((services, key) => ({
-    ...services, [key.toLowerCase()]: allServices[key.toLowerCase()]
-  }), {}),
+  services: {
+    virtual: {
+      groupname: ['Виртуальный хостинг', 'Shared Hosting'],
+      creationRouteName: 'service-virtual',
+      icon: 'solution',
+    },
+    domains: {
+      groupname: ['Domains'],
+      creationRouteName: 'service-domains',
+      icon: 'solution',
+    },
+    ssl: {
+      groupname: ['GoGet SSL 2.5.6', 'SSL', 'SSL сертификаты'],
+      creationRouteName: 'service-ssl',
+      icon: 'lock',
+      additionalRoutes: [
+        {
+          path: 'SSL/generator/:id',
+          name: `generator-SSL`,
+          meta: {
+            footerTitle: 'services',
+            isNeedBackButton: true,
+            headerTitle: 'CSR generator',
+          },
+          componentName: 'generator'
+        }
+      ]
+    },
+    vm: {
+      groupname: ['Self-Service VDS (2018)', 'Self-Service VDS SSD HC', 'Self-Service VDS SSD (2018)'],
+      creationRouteName: 'newPaaS',
+      icon: 'database',
+    }
+  },
 	getServiceType(groupname){
 		const services = this.services;
 		for(let service in services){

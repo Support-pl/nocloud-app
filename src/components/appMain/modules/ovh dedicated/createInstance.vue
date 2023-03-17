@@ -61,33 +61,30 @@ export default {
       const product = Object.entries(this.getPlan.products).find(([key]) => key.includes(value));
       const { meta: { addons } } = this.getPlan.products[`${duration} ${value}`] ?? product[1];
       let addonKey = addons?.find((addon) => addon.includes(resource.value));
-      const tarifs = [];
-      if (!(addons && addonKey)) {
-        this.options.cpu.size = 0;
-        this.options.ram.size = 0;
-        this.options.disk.size = 0;
-        return;
-      }
-
       let plan = periods[0];
+      const tarifs = [];
 
       this.options.cpu.size = 1;
       if (resource.key === 'ram') {
-        this.options.ram.size = parseInt(addonKey.split('-')[1]);
+        this.options.ram.size = parseInt(addonKey?.split('-')[1] ?? 0);
       }
       if (resource.key === 'disk') {
-        addonKey = addons.find((addon) => {
+        addonKey = addons?.find((addon) => {
           const isDisk = addon.includes('raid');
           const [count, size] = addon.split('-')[1].split('x');
 
           return isDisk && (count * parseInt(size)) === resource.value;
         });
-        const [count, size] = addonKey.split('-')[1].split('x');
+        const [count, size] = addonKey?.split('-')[1].split('x') ?? ['0', '0'];
 
         this.options.disk.size = count * parseInt(size) * 1024;
-        if (addonKey.includes('hybrid')) this.options.drive = 'SSD + HDD';
+        if (addonKey?.includes('hybrid')) this.options.drive = 'SSD + HDD';
         else if (size.includes('sa')) this.options.drive = false;
         else this.options.drive = 'SSD';
+      }
+      if (!addons || !addonKey) {
+        this.options.cpu.size = 0;
+        return;
       }
 
       periods.forEach((period) => {
