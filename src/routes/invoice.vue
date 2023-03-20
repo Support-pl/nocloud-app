@@ -35,7 +35,7 @@
         <a-pagination
           show-size-changer
           style="width: fit-content; margin-left: auto"
-          v-if="value === 'Detail'"
+          v-if="value === 'Detail' && transactions.length > 0"
           :page-size-options="pageSizeOptions"
           :page-size="pageSize"
           :total="totalSize"
@@ -161,6 +161,7 @@ export default {
   watch: {
     value() {
       localStorage.setItem('order', this.value);
+      this.$store.commit('nocloud/transactions/setActiveTab', this.value);
       if (this.value === 'Invoice') return;
       if (this.transactions.length > 0) return;
       if (!this.user.uuid) return;

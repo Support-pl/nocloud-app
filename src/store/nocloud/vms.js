@@ -173,13 +173,13 @@ export default {
 				return state.instances.filter((inst) => {
           const net = inst.state?.meta?.networking
 					const rules = [
-            inst.state && inst.state.state !== 'DELETED',
             inst.title.toLowerCase().includes(state.searchString),
 						inst.state?.state.toLowerCase().includes(state.searchString),
 						net?.private?.some((el) => el.includes(state.searchString)),
 						net?.public?.some((el) => el.includes(state.searchString)),
 					]
-					return rules.some(el => !!el)
+
+					return rules.some(el => !!el) && inst.state?.state !== 'DELETED';
 				})
 			}
 			return state.instances.filter(({ state }) => state?.state !== 'DELETED');

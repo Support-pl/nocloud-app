@@ -5,10 +5,12 @@ export default {
   state: {
     allTransactions: {},
     transactions: [],
-    total: 5,
-    size: 5,
+    total: 10,
+    size: 10,
     page: 1,
-    loading: false
+    tab: 'Invoice',
+    loading: false,
+    filter: []
   },
   mutations: {
     setTransactions(state, data) {
@@ -28,8 +30,14 @@ export default {
     setPage(state, data) {
       state.page = data
     },
+    setActiveTab(state, data) {
+      state.tab = data
+    },
     setLoading(state, data) {
       state.loading = data
+    },
+    updateFilter(state, data) {
+      state.filter = data
     }
   },
   actions: {
@@ -69,10 +77,20 @@ export default {
     }
   },
   getters: {
-    all: state => state.transactions,
+    all(state) {
+      return state.transactions.filter(({ proc }) => {
+        if (state.filter.length < 1) return true
+
+        const startOf = state.filter[0]._d.getTime() / 1000
+        const endOf = state.filter[1]._d.getTime() / 1000
+
+        return proc > startOf && proc < endOf
+      })
+    },
     total: state => state.total,
     size: state => state.size,
     page: state => state.page,
+    activeTab: state => state.tab,
     isLoading: state => state.loading
   }
 }

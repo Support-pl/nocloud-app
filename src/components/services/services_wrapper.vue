@@ -5,18 +5,23 @@
         count="+"
         :number-style="{
           fontSize: '20px',
-          transform: 'none',
+          transform: (hovered === service.title) ? 'none' : 'scale(0) translate(-20px, -20px)',
           backgroundColor: '#fff',
-          boxShadow: '0 0 0 1px var(--gray)',
-          color: 'var(--gray)',
-          cursor: 'pointer'
+          boxShadow: '0 0 0 1px var(--main)',
+          color: 'var(--main)',
+          cursor: 'pointer',
+          transition: '0.3s'
         }"
         @click="newProductHandler(service)"
+        @mouseover.native="hovered = service.title"
+        @mouseleave.native="hovered = null"
       >
         <service-item
           v-if="!service.needLogin || isLogged"
           :key="service.title"
           :service="service"
+          @mouseover.native="hovered = service.title"
+          @mouseleave.native="hovered = null"
         />
       </a-badge>
 		</template>
@@ -31,6 +36,7 @@ export default {
 	components: { serviceItem },
 	data(){
 		return {
+      hovered: null,
 			services: [
 				{
 					title: 'Servers',

@@ -560,6 +560,7 @@
 		"Premium":"Premium",
 		"Business":"Business"
 	},
+  "PayG": "PayG",
 	"PAYG":"PAYG",
 	"PrePaid":"PrePaid",
 	"filterHeader":{

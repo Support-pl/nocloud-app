@@ -8,7 +8,13 @@
       />
       <!-- <div class="item__status">{{ instance.domainstatus }}</div> -->
       <div class="item__title">{{ instance.title }}</div>
-      <div class="item__date" :class="{ 'item__date--expired': (isExpired) }">{{ localDate }}</div>
+      <div
+        class="item__date"
+        :class="{ 'item__date--expired': (isExpired) }"
+        :style="{ background: (isPayg) ? 'var(--main)' : null }"
+      >
+        {{ localDate }}
+      </div>
 
       <div class="item__status" v-if="!(instance.state && networking.length > 0)">
         IP: {{ $t("ip.none") }}
@@ -83,6 +89,9 @@ export default {
 		localDate(){
       const productDate = new Date(this.instance.date ?? 0);
 
+      if (this.isPayg) {
+        return this.$t('PayG');
+      }
       if (productDate.getTime() === 0) return 'none';
       // if (this.wholeProduct.groupname === 'Domains') {
       //   const date = productDate.getTime();
@@ -97,6 +106,9 @@ export default {
 			return new Intl.DateTimeFormat().format(productDate);
 		},
 
+    isPayg(){
+      return this.instance.type === 'ione' && this.instance.billingPlan.kind === 'DYNAMIC';
+    },
     isExpired(){
       const productDate = new Date(this.instance.date);
       const timestamp = productDate.getTime() - Date.now();
