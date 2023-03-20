@@ -167,13 +167,29 @@ export default {
           const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
 
           const publicIPs = inst.state?.meta.networking?.public?.filter((el) => !regexp.test(el));
+          const state = (this.VM?.billingPlan.type === 'ione')
+            ? inst.state?.meta.lcm_state_str
+            : inst.state?.state;
+          let status = "UNKNOWN";
+
+          if (inst.state?.meta.state === 1) status = "PENDING";
+          if (inst.state?.meta.state === 5) status = "SUSPENDED";
+          if (inst.state?.meta.state === "BUILD") status = "BUILD";
+
+          switch (state) {
+            case "LCM_INIT":
+              status = "POWEROFF";
+            default:
+              status = state.replaceAll('_', ' ');
+          }
+
           const res = {
             ...inst,
             sp: inst.sp,
             orderid: inst.uuid,
             groupname: 'Self-Service VDS SSD HC',
             invoicestatus: null,
-            domainstatus: inst.state?.meta?.lcm_state_str ?? inst.state?.state ?? 'UNKNOWN',
+            domainstatus: status,
             productname: inst.title,
             domain: publicIPs?.at(0),
             date: inst.data.last_monitoring * 1000 || 0,
