@@ -29,6 +29,7 @@
       </a-collapse>
 
       <div class="item__cost" v-if="user.currency_code">
+        <component :is="getModuleProductBtn" :service="instance" />
         {{ user.currency_code === 'USD' ? `$${price}` : `${price} ${user.currency_code}` }}
       </div>
       <div class="item__cost" v-else-if="price">

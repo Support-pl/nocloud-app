@@ -6,23 +6,35 @@ export default {
 
 	state: {
 		products: [],
+    total: 10,
+    size: 10,
+    page: 1,
 		productsLoading: false,
     baseURL: `${config.WHMCSsiteurl}${config.sharedFolder}`
 	},
 	mutations: {
-		setProducts(state, data){
+		setProducts(state, data) {
 			state.products = data;
 		},
-		setProductsLoading(state, data){
+    setTotal(state, data) {
+      state.total = data;
+    },
+    setSize(state, data) {
+      state.size = data;
+    },
+    setPage(state, data) {
+      state.page = data;
+    },
+		setProductsLoading(state, data) {
 			state.productsLoading = data;
 		}
 	},
 	actions: {
-		fetch({ commit, dispatch }, userid){
+		fetch({ commit, dispatch }, userid) {
 			commit('setProductsLoading', true);
 			return dispatch('silentFetch', userid);
 		},
-		silentFetch({ state, commit }, userid){
+		silentFetch({ state, commit }, userid) {
 			return new Promise((resolve, reject) => {
 				api.get(`${state.baseURL}/get.user.products.php`, { params: { userid } })
           .then(res => {
@@ -33,8 +45,8 @@ export default {
           .catch(error => reject(error))
 			})
 		},
-		autoFetch({ dispatch, state }, userid){
-			if(state.products.length > 0){
+		autoFetch({ dispatch, state }, userid) {
+			if (state.products.length > 0) {
 				return dispatch('silentFetch', userid);
 			} else {
 				return dispatch('fetch', userid);
@@ -42,14 +54,11 @@ export default {
 		}
 	},
 	getters: {
-		getProducts(state){
-			return state.products;
-		},
-		getProductsLoading(state){
-			return state.productsLoading;
-		},
-    getURL(state){
-      return state.baseURL;
-    }
+		getProducts: state => state.products,
+    total: state => state.total,
+    size: state => state.size,
+    page: state => state.page,
+		getProductsLoading: state => state.productsLoading,
+    getURL: state => state.baseURL
 	}
 }

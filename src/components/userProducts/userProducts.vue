@@ -149,16 +149,24 @@ export default {
       return this.$store.getters["nocloud/auth/billingData"];
     },
     productsPrepared() {
+      const state = {
+        size: this.$store.getters["products/size"],
+        page: this.$store.getters["products/page"]
+      };
+      const start = state.size * (state.page - 1);
+      const end = start + state.size;
+      const products = this.products.slice(start, end);
+
       if (this.min) return this.products.slice(0, 5);
       else if (this.$route.query.service) {
-        return this.products.filter(({ sp }) => {
+        return products.filter(({ sp }) => {
           //фильтруем по значениям из гет запроса
           const { title } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
 
           return this.checkedTypes.some((service) => service === title);
         });
       }
-      return this.products;
+      return products;
     },
     products() {
       const products = this.$store.getters["products/getProducts"];
@@ -272,16 +280,19 @@ export default {
       );
     },
     productsCount() {
+      const total = this.$store.getters["products/total"];
+
+      if (total) return total;
       if (this.min) {
         return this.products.length;
-      } else if (this.$route.name == "products") {
+      } else if (this.$route.name == "services") {
         return this.productsPrepared.length;
       } else {
         return 0;
       }
     },
     isNeedFilterStringInHeader() {
-      return this.$route.name == "products" && this.$route.query.service;
+      return this.$route.name == "services" && this.$route.query.service;
     },
     queryTypes() {
       if (this.$route.query.service) {
