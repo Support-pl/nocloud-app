@@ -142,10 +142,12 @@ export default {
     if (this.isLogged) {
       this.$store.dispatch("invoices/autoFetch");
 
-      api.transactions.count({ account: this.user.uuid })
-        .then(({ total }) => {
-          this.$store.commit("nocloud/transactions/setTotal", +total);
-        });
+      if (this.user.uuid) {
+        api.transactions.count({ account: this.user.uuid })
+          .then(({ total }) => {
+            this.$store.commit("nocloud/transactions/setTotal", +total);
+          });
+      }
     }
     if (localStorage.getItem('order')) {
       this.value = localStorage.getItem('order');

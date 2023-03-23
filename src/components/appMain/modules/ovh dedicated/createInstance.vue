@@ -1,5 +1,6 @@
 <template>
   <ovh-creation-template
+    ref="template"
     :activeKey="activeKey"
     :itemSP="itemSP"
     :getPlan="getPlan"
@@ -122,6 +123,7 @@ export default {
 
       os.sort();
       this.images = os.map((el) => ({ name: el, desc: el }));
+      if (this.images.length === 1) this.$refs.template?.setOS(this.images[0], 0);
     }
   },
   created() {

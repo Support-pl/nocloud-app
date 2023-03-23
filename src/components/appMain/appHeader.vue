@@ -140,7 +140,16 @@
                   <template slot="title">
                     <span>{{ $t("filter") | capitalize }}</span>
                   </template>
-                  <a-icon class="header__icon" :type="button.icon" />
+                  <a-icon
+                    class="header__icon"
+                    :type="button.icon"
+                    :style="(checkedList.length > 0) ? {
+                      padding: '5px',
+                      borderRadius: '50%',
+                      background: 'var(--bright_bg)',
+                      color: 'var(--main)'
+                    } : null"
+                  />
                 </a-popover>
               </div>
             </div>
@@ -246,7 +255,9 @@ export default {
                 const params = {
                   account: this.user.uuid,
                   page: this.$store.getters["nocloud/transactions/page"],
-                  limit: this.$store.getters["nocloud/transactions/size"]
+                  limit: this.$store.getters["nocloud/transactions/size"],
+                  field: "proc",
+                  sort: "desc"
                 };
 
                 this.fetchInvoices();
@@ -312,9 +323,11 @@ export default {
       this.updateFilter(this.checkedList);
     },
     onChangeRange(range) {
+      this.checkedList = range;
       if (range.length < 1) {
         this.updateFilter(range);
         this.isVisible = false;
+        this.checkedList = [];
       }
     },
     openRange(value) {
@@ -450,6 +463,11 @@ export default {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
+  },
+  watch: {
+    activeInvoiceTab() {
+      this.checkedList = [];
+    }
   }
 }
 </script>

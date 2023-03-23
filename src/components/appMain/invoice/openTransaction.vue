@@ -81,6 +81,7 @@
 
 <script>
 import loading from "@/components/loading/loading.vue";
+import { async } from "q";
 
 export default {
   name: "openTransaction",
@@ -144,11 +145,12 @@ export default {
     });
 
     this.$store.dispatch('nocloud/vms/fetch')
-      .then(() => this.$api.get(url))
-      .then(({ pool }) => {
+      .then(({ pool }) => [pool, this.$api.get(url)])
+      .then(async ([services, promise]) => {
         const instances = {};
+        const { pool } = await promise;
 
-        this.services.forEach((service) => {
+        services.forEach((service) => {
           service.instancesGroups.forEach((group) => {
             group.instances.forEach((inst) => {
               instances[inst.uuid] = inst.title;
@@ -209,7 +211,13 @@ export default {
   },
   watch: {
     user() {
-      this.$store.dispatch('nocloud/transactions/fetch', this.user.uuid);
+      this.$store.dispatch('nocloud/transactions/fetch', {
+        account: this.user.uuid,
+        page: this.$store.getters["nocloud/transactions/page"],
+        limit: this.$store.getters["nocloud/transactions/size"],
+        field: "proc",
+        sort: "desc"
+      });
     }
   }
 };

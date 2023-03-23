@@ -7,7 +7,7 @@
         :style="{ 'background-color': statusColor }"
       />
       <!-- <div class="item__status">{{ instance.domainstatus }}</div> -->
-      <div class="item__title">{{ instance.title }}</div>
+      <div class="item__title">{{ instance.productname }}</div>
       <div
         class="item__date"
         :class="{ 'item__date--expired': (isExpired) }"
@@ -16,7 +16,8 @@
         {{ localDate }}
       </div>
 
-      <div class="item__status" v-if="!(instance.state && networking.length > 0)">
+      <div v-if="instance.domain" class="item__status">{{ instance.domain }}</div>
+      <div class="item__status" v-else-if="!(instance.state && networking.length > 0)">
         IP: {{ $t("ip.none") }}
       </div>
 
@@ -53,12 +54,7 @@ export default {
   data: () => ({ activeKey: [], prices: {} }),
   computed: {
     statusColor() {
-      if (!this.instance.state) return "rgb(145, 145, 145)"
-      const state = (this.instance?.billingPlan.type === 'ione')
-        ? this.instance.state.meta.lcm_state_str
-        : this.instance.state.state;
-
-      switch (state) {
+      switch (this.instance.domainstatus) {
         case "RUNNING":
           return "#0fd058";
         // останавливающийся и запускающийся
@@ -67,6 +63,8 @@ export default {
           return "#919191";
         case "LCM_INIT":
         case "STOPPED":
+        case "SUSPENDED":
+        case "Pending":
           return "#f9f038";
         default:
           return "rgb(145, 145, 145)";
@@ -85,7 +83,7 @@ export default {
       return this.$store.getters["nocloud/vms/isLoading"];
     },
     price(){
-      return this.prices[this.instance.resources.period] || this.instance.orderamount;
+      return this.prices[this.instance.resources?.period] || this.instance.orderamount;
     },
 		localDate(){
       const productDate = new Date(this.instance.date ?? 0);
