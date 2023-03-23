@@ -380,6 +380,7 @@
               <a-col>
                 <a-radio-group
                   default-value="Monthly"
+                  ref="periods-group"
                   v-model="tarification"
                   :style="{ display: 'grid', textAlign: 'center', gridTemplateColumns: periodColumns }"
                 >
@@ -981,6 +982,7 @@ export default {
     periodColumns() {
       const { length } = Object.keys(this.periods);
 
+      if (length === 4) return 'repeat(2, 1fr)';
       return `repeat(${(length < 3) ? length : 3}, 1fr)`;
     }
   },
@@ -997,22 +999,23 @@ export default {
               ? JSON.parse(localStorage.getItem("data"))
               : JSON.parse(query.data);
 
-            this.tarification = this.dataLocalStorage.tarification || '';
-            this.vmName = this.dataLocalStorage.titleVM || '';
-            this.locationId = this.dataLocalStorage.locationId || '';
+            this.tarification = this.dataLocalStorage.tarification ?? '';
+            this.vmName = this.dataLocalStorage.titleVM ?? '';
+            this.locationId = this.dataLocalStorage.locationId ?? '';
+            this.activeKey = this.dataLocalStorage.activeKey ?? 'location';
 
-            if(this.dataLocalStorage.config){
+            if (this.dataLocalStorage.config) {
               this.options.os.id = this.dataLocalStorage.config.template_id;
               this.options.os.name = this.dataLocalStorage.config.template_name;
               this.password = this.dataLocalStorage.config.password;
             }
             
-            if(this.dataLocalStorage.ovhConfig){
+            if (this.dataLocalStorage.ovhConfig) {
               this.options.config = this.dataLocalStorage.ovhConfig;
             }
 
             
-            if(this.dataLocalStorage.resources){
+            if (this.dataLocalStorage.resources) {
               this.options.disk.size = this.dataLocalStorage.resources.drive_size;
               this.options.drive = this.dataLocalStorage.resources.drive_type;
             }
@@ -1438,6 +1441,7 @@ export default {
         productSize: this.productSize,
         titleVM: this.vmName,
         locationId: this.locationId,
+        activeKey: this.activeKey,
         resources: {
           cpu: this.options.cpu.size,
           ram: this.options.ram.size * 1024,
@@ -1597,8 +1601,12 @@ export default {
     },
     activeKey(value) {
       setTimeout(() => {
+        const { $el } = this.$refs['periods-group']?.$children.at(-1);
+
         if (value === 'location' && this.$refs.description) {
           this.$refs.description.innerHTML = this.locationDescription;
+        } else if ($el.style.gridColumn === '' && Object.keys(this.periods).length > 4) {
+          if (Object.keys(this.periods).length % 3 === 1) $el.style.gridColumn = '2 / 3';
         }
       });
     }
@@ -1620,13 +1628,14 @@ export default {
   display: flex;
   justify-content: center;
 }
+.ant-slider-mark-text {
+  white-space: nowrap;
+}
 .ant-slider-mark-text:first-of-type {
-  width: 60px !important;
-  left: 2% !important;
+  transform: translateX(-10px) !important;
 }
 .ant-slider-mark-text:last-of-type {
-  width: 60px !important;
-  left: 98% !important;
+  transform: translateX(calc(-100% + 10px)) !important;
 }
 .newCloud__prop {
   margin-bottom: 15px;

@@ -111,32 +111,35 @@
     <a-collapse-panel
       key="OS"
       :disabled="!itemSP || isFlavorsLoading || !plan"
-      :header="`${$t('os')}: ${(options.os.name == '') ? ' ' : ` (${options.os.name})`}`"
+      :header="osHeader"
     >
       <div class="newCloud__option-field" v-if="images.length > 0">
-        <a-row style="margin-bottom: 20px">
+        <a-row>
           <a-col :xs="24" :sm="10">
-            <a-input
-              :value="vmName"
-              :placeholder="$t('VM name')"
-              :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
-              @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
-            />
-            <div style="color: var(--err); margin-top: 5px" v-if="vmName.length < 2">
-              {{ $t('ssl_product.field is required') }}
-            </div>
-            <password-meter
-              style="height: 10px"
-              v-if="false"
-              :password="password"
-              @score="(value) => $emit('score', value)"
-            />
+            <a-form-item :label="$t('VM name')">
+              <a-input
+                :value="vmName"
+                :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
+                @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
+              />
+              <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
+                {{ $t('ssl_product.field is required') }}
+              </div>
+            </a-form-item>
 
-            <a-form-item style="margin-bottom: 0px" v-if="false">
+            <a-form-item v-if="false" :label="$t('clientinfo.password')">
+              <password-meter
+                :style="{
+                  height: (password.length > 0) ? '10px' : '0',
+                  marginTop: (password.length < 1) ? '0' : null
+                }"
+                :password="password"
+                @score="(value) => $emit('score', value)"
+              />
+
               <a-input-password
                 class="password"
                 :value="password"
-                :placeholder="$t('clientinfo.password')"
                 @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
               />
             </a-form-item>
@@ -156,7 +159,7 @@
               </div>
               <div class="newCloud__template-name">{{ item.name }}</div>
             </template>
-            <template v-else>
+            <template v-else-if="!item.name.includes('none')">
               <div class="newCloud__template-image">
                 <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" @error="onError" />
               </div>
@@ -391,6 +394,12 @@ export default {
       if (this.itemSP) return this.plan && ` (${this.plan})`;
       else return ' ';
     },
+    osHeader() {
+      const { name } = this.options.os;
+      const osNotExist = name === '' || name.includes('none');
+
+      return `${this.$t('os')}: ${(osNotExist) ? ' ' : ` (${name})`}`;
+    },
     diskSize() {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
@@ -442,13 +451,5 @@ export default {
 .order__slider-item--active{
 	background-color: var(--main);
 	color: #fff;
-}
-</style>
-
-<style>
-.ant-slider-mark-text:first-of-type {
-  width: auto !important;
-  left: 0% !important;
-  transform: translateX(-10px) !important;
 }
 </style>

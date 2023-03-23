@@ -47,7 +47,11 @@
               {{ $t("filter") | capitalize }}
             </span>
           </template>
-          <a-icon class="products__control-item" type="filter" />
+          <a-icon
+            type="filter"
+            class="products__control-item"
+            :style="{ color: (checkedTypes.length > 0) ? 'var(--main)' : null }"
+          />
         </a-popover>
         <a-popover placement="bottomRight" arrow-point-at-center>
           <template slot="content">
@@ -94,6 +98,7 @@
       </template>
       <a-empty v-else />
       <a-button
+        ref="order-button"
         class="products__new"
         size="large"
         shape="round"
@@ -121,7 +126,7 @@ export default {
     min: { type: Boolean, default: true },
     count: { type: Number, default: 5 },
   },
-  data: () => ({ sortBy: 'Date', sortType: 'sort-ascending' }),
+  data: () => ({ sortBy: 'Date', sortType: 'sort-ascending', anchor: null }),
   created() {
     if (this.sp.length < 1) {
       this.$store.dispatch('nocloud/sp/fetch', !this.isLogged)
@@ -141,6 +146,12 @@ export default {
       })
       .catch((err) => console.error(err));
   },
+  mounted() { this.createObserver() },
+  beforeDestroy() {
+    const anchor = document.querySelector('#app').lastElementChild;
+
+    if (anchor) anchor.remove();
+  },
   computed: {
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
@@ -159,10 +170,11 @@ export default {
 
       if (this.min) return this.products.slice(0, 5);
       else if (this.$route.query.service) {
-        return products.filter(({ sp }) => {
+        return products.filter(({ sp, hostingid }) => {
           //фильтруем по значениям из гет запроса
-          const { title } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+          let { title } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
 
+          if (hostingid) title = 'Virtual';
           return this.checkedTypes.some((service) => service === title);
         });
       }
@@ -285,14 +297,14 @@ export default {
       if (total) return total;
       if (this.min) {
         return this.products.length;
-      } else if (this.$route.name == "services") {
+      } else if (["services", "root"].includes(this.$route.name)) {
         return this.productsPrepared.length;
       } else {
         return 0;
       }
     },
     isNeedFilterStringInHeader() {
-      return this.$route.name == "services" && this.$route.query.service;
+      return ["services", "root"].includes(this.$route.name) && this.$route.query.service;
     },
     queryTypes() {
       if (this.$route.query.service) {
@@ -349,7 +361,48 @@ export default {
       if (instance.date === 0) return;
       return timestamp < days;
     },
+    createObserver() {
+      const button = this.$refs['order-button']?.$el;
+
+      if (!button && !this.anchor) return;
+      else if (this.anchor) {
+        document.querySelector('#app').lastElementChild.remove();
+        this.anchor = null;
+        console.log(document.querySelector('#app'));
+        return;
+      }
+
+      const anchor = button.cloneNode(true);
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0].intersectionRatio < 0.2) {
+          button.style.visibility = 'hidden';
+          anchor.style.cssText = `
+            position: fixed;
+            right: 5vw;
+            bottom: 7vh;
+            display: block;
+            width: 50px;
+            height: 50px;
+            font-size: 25px;
+            overflow: hidden;
+          `;
+          anchor.firstElementChild.style.margin = '7px 20px 0 -7px';
+        } else if (entries[0].intersectionRatio === 1) {
+          button.style.visibility = '';
+          anchor.style.cssText = 'display: none';
+          anchor.firstElementChild.style.margin = '';
+        }
+      }, { root: null, threshold: [0.2, 1] });
+
+      observer.observe(button);
+      anchor.onclick = this.newProductHandle;
+      document.querySelector('#app').append(anchor);
+      this.anchor = anchor;
+    }
   },
+  watch: {
+    queryTypes() { setTimeout(this.createObserver) }
+  }
 };
 </script>
 

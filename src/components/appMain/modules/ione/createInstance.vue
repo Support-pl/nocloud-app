@@ -166,44 +166,42 @@
         </div>
         <a-row>
           <a-col :xs="24" :sm="10">
-            <!-- <a-form-model-item> -->
-            <a-input
-              style="margin-top: 15px"
-              :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
-              :value="vmName"
-              :placeholder="$t('VM name')"
-              @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
-            />
-            <div style="color: var(--err); margin-top: 5px" v-if="vmName.length < 2">
-              {{ $t('ssl_product.field is required') }}
-            </div>
+            <a-form-item style="margin-top: 15px" :label="$t('VM name')">
+              <a-input
+                :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
+                :value="vmName"
+                @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
+              />
+              <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
+                {{ $t('ssl_product.field is required') }}
+              </div>
+            </a-form-item>
 
-            <password-meter
-              style="height: 10px"
-              :password="password"
-              @score="(value) => $emit('score', value)"
-            />
+            <a-form-item :label="$t('clientinfo.password')">
+              <password-meter
+                :style="{
+                  height: (password.length > 0) ? '10px' : '0',
+                  marginTop: (password.length < 1) ? '0' : null
+                }"
+                :password="password"
+                @score="(value) => $emit('score', value)"
+              />
 
-            <!-- <span style="color: red">{{ textInvalid }}</span> -->
-            <!-- </a-form-model-item> -->
-            <!-- <a-form-model-item> -->
-
-            <a-form-item style="margin-bottom: 0px">
               <a-input-password
                 class="password"
                 :value="password"
-                :placeholder="$t('clientinfo.password')"
                 @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
               />
             </a-form-item>
-            <!-- </a-form-model-item> -->
-            <a-select
-              placeholder="SSH key"
-              style="width: 100%; margin-top: 18px"
-              :options="user.data && user.data.ssh_keys"
-              :value="sshKey"
-              @change="(value) => $emit('setData', { key: 'sshKey', value })"
-            />
+
+            <a-form-item :label="$t('SSH key')">
+              <a-select
+                style="width: 100%"
+                :options="user.data && user.data.ssh_keys"
+                :value="sshKey"
+                @change="(value) => $emit('setData', { key: 'sshKey', value })"
+              />
+            </a-form-item>
           </a-col>
         </a-row>
       </div>
@@ -375,6 +373,11 @@ export default {
         this.options.disk.min -= 128;
       }
     },
+  },
+  mounted() {
+    const images = Object.entries(this.itemSP?.publicData.templates ?? {});
+
+    if (images.length === 1) this.setOS(images[0][1], images[0][0]);
   },
   computed: {
     user() {
