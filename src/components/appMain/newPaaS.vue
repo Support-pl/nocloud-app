@@ -69,7 +69,11 @@
         </div>
 
         <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
-          <div ref="description" v-if="locationDescription && activeKey === 'location'" />
+          <div
+            ref="description"
+            style="white-space: break-spaces"
+            v-if="locationDescription && activeKey === 'location'"
+          />
 
           <template v-else>
             <!-- Location -->
@@ -486,7 +490,7 @@
                 shape="round"
                 :disabled="
                   vmName == '' ||
-                  namespace == '' ||
+                  !namespace ||
                   options.os.name == '' ||
                   !isLoggedIn
                 "
@@ -502,7 +506,7 @@
                 :disabled="
                   password.length === 0 ||
                   vmName == '' ||
-                  namespace == '' ||
+                  !namespace ||
                   options.os.name == '' ||
                   !isLoggedIn
                 "
@@ -999,17 +1003,24 @@ export default {
               ? JSON.parse(localStorage.getItem("data"))
               : JSON.parse(query.data);
 
-            this.tarification = this.dataLocalStorage.tarification;
-            this.options.os.id = this.dataLocalStorage.config.template_id;
-            this.options.os.name = this.dataLocalStorage.config.template_name;
-            this.password = this.dataLocalStorage.config.password;
-            this.vmName = this.dataLocalStorage.titleVM;
-            this.locationId = this.dataLocalStorage.locationId;
-            this.activeKey = this.dataLocalStorage.activeKey;
+              this.tarification = this.dataLocalStorage.tarification ?? '';
+              this.vmName = this.dataLocalStorage.titleVM ?? '';
+              this.locationId = this.dataLocalStorage.locationId ?? '';
+              this.activeKey = this.dataLocalStorage.activeKey ?? 'location';
+              if (this.dataLocalStorage.config) {
+                this.options.os.id = this.dataLocalStorage.config.template_id;
+                this.options.os.name = this.dataLocalStorage.config.template_name;
+                this.password = this.dataLocalStorage.config.password;
+              }
 
-            this.options.config = this.dataLocalStorage.ovhConfig;
-            this.options.disk.size = this.dataLocalStorage.resources.drive_size;
-            this.options.drive = this.dataLocalStorage.resources.drive_type;
+              if (this.dataLocalStorage.ovhConfig) {
+                this.options.config = this.dataLocalStorage.ovhConfig;
+              }
+
+              if (this.dataLocalStorage.resources) {
+                this.options.disk.size = this.dataLocalStorage.resources.drive_size;
+                this.options.drive = this.dataLocalStorage.resources.drive_type;
+              }
           } catch (e) {
             localStorage.removeItem("data");
           }
@@ -1279,10 +1290,10 @@ export default {
       if (newGroup.type === 'ovh') {
         newInstance.config = { type: this.getPlan.type.split(' ')[1], ...this.options.config };
       }
-      if (this.itemService?.instancesGroups.length < 1) {
+      if (this.itemService?.instancesGroups?.length < 1) {
         this.itemService.instancesGroups = [newGroup];
       }
-      if (this.service !== "") {
+      if (this.service) {
         this.$store.dispatch("nocloud/vms/fetch")
           .then(() => {
             setTimeout(() => {
@@ -1627,6 +1638,14 @@ export default {
 }
 .ant-slider-mark-text:last-of-type {
   transform: translateX(calc(-100% + 10px)) !important;
+}
+.ant-radio-button-wrapper {
+  margin: 1px;
+  border-radius: 4px !important;
+  border-left: 1px solid #d9d9d9;
+}
+.ant-radio-button-wrapper:not(:first-child)::before {
+  content: none;
 }
 .newCloud__prop {
   margin-bottom: 15px;

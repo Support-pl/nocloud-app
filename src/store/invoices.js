@@ -17,7 +17,7 @@ export default {
 		makeLoadingIs(state, value) {
 			state.loading = value;
 		},
-		updateFilter(state, value){
+		updateFilter(state, value) {
 			state.filter = value;
 		},
 	},

@@ -128,6 +128,9 @@ export default {
   },
   data: () => ({ sortBy: 'Date', sortType: 'sort-ascending', anchor: null }),
   created() {
+    if (localStorage.getItem('types')) {
+      this.$router.replace({ query: { service: localStorage.getItem('types') } });
+    }
     if (this.sp.length < 1) {
       this.$store.dispatch('nocloud/sp/fetch', !this.isLogged)
         .catch((err) => {
@@ -150,7 +153,7 @@ export default {
   beforeDestroy() {
     const anchor = document.querySelector('#app').lastElementChild;
 
-    if (anchor) anchor.remove();
+    if (this.anchor) anchor.remove();
   },
   computed: {
     isLogged() {
@@ -368,7 +371,6 @@ export default {
       else if (this.anchor) {
         document.querySelector('#app').lastElementChild.remove();
         this.anchor = null;
-        console.log(document.querySelector('#app'));
         return;
       }
 
@@ -401,7 +403,14 @@ export default {
     }
   },
   watch: {
-    queryTypes() { setTimeout(this.createObserver) }
+    queryTypes() { setTimeout(this.createObserver) },
+    checkedTypes() {
+      if (this.$route.query.service) {
+        localStorage.setItem('types', this.$route.query.service);
+      } else {
+        localStorage.removeItem('types');
+      }
+    }
   }
 };
 </script>

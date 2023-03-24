@@ -81,7 +81,6 @@
 
 <script>
 import loading from "@/components/loading/loading.vue";
-import { async } from "q";
 
 export default {
   name: "openTransaction",
@@ -182,14 +181,16 @@ export default {
       return this.$store.getters['nocloud/auth/currencies'];
     },
     currency() {
-      const code = this.user.currency_code ?? 'USD';
-      const rate = this.currencies.find((el) => {
-        const arr = [el.from, el.to];
+      const code = this.$store.getters['nocloud/auth/billingData'].currency_code ?? 'USD';
+      const { rate } = this.currencies.find((el) =>
+        el.from === code && el.to === this.invoice.currency
+      ) ?? {};
 
-        return arr.includes(code) && arr.includes(this.invoice.currency)
-      }) ?? 1;
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.to === code && el.from === this.invoice.currency
+      ) ?? { rate: 1 };
 
-      return { code, rate };
+      return { code, rate: (rate) ? rate : 1 / reverseRate };
     },
     statusColor() {
       return this.records[0].processed
