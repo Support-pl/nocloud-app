@@ -44,7 +44,10 @@ export default {
       });
 		},
     checkBalance() {
-      const sum = this.service.billingPlan?.products[this.service.product]?.price ?? 0;
+      const key = (this.service.billingPlan.type.includes('ovh'))
+        ? `${this.service.config.duration} ${this.service.config.planCode}`
+        : this.service.product;
+      const sum = this.service.billingPlan?.products[key]?.price ?? 0;
 
       if (this.user.balance < parseFloat(sum)) {
         this.$confirm({
