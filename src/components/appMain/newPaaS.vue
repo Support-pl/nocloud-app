@@ -1003,24 +1003,26 @@ export default {
               ? JSON.parse(localStorage.getItem("data"))
               : JSON.parse(query.data);
 
-              this.tarification = this.dataLocalStorage.tarification ?? '';
-              this.vmName = this.dataLocalStorage.titleVM ?? '';
-              this.locationId = this.dataLocalStorage.locationId ?? '';
-              this.activeKey = this.dataLocalStorage.activeKey ?? 'location';
-              if (this.dataLocalStorage.config) {
-                this.options.os.id = this.dataLocalStorage.config.template_id;
-                this.options.os.name = this.dataLocalStorage.config.template_name;
-                this.password = this.dataLocalStorage.config.password;
-              }
+            this.tarification = this.dataLocalStorage.tarification ?? '';
+            this.vmName = this.dataLocalStorage.titleVM ?? '';
+            this.locationId = this.dataLocalStorage.locationId ?? '';
+            this.activeKey = this.dataLocalStorage.activeKey ?? 'location';
 
-              if (this.dataLocalStorage.ovhConfig) {
-                this.options.config = this.dataLocalStorage.ovhConfig;
-              }
+            if (this.dataLocalStorage.config) {
+              this.options.os.id = this.dataLocalStorage.config.template_id;
+              this.options.os.name = this.dataLocalStorage.config.template_name;
+              this.password = this.dataLocalStorage.config.password;
+            }
+            
+            if (this.dataLocalStorage.ovhConfig) {
+              this.options.config = this.dataLocalStorage.ovhConfig;
+            }
 
-              if (this.dataLocalStorage.resources) {
-                this.options.disk.size = this.dataLocalStorage.resources.drive_size;
-                this.options.drive = this.dataLocalStorage.resources.drive_type;
-              }
+            
+            if (this.dataLocalStorage.resources) {
+              this.options.disk.size = this.dataLocalStorage.resources.drive_size;
+              this.options.drive = this.dataLocalStorage.resources.drive_type;
+            }
           } catch (e) {
             localStorage.removeItem("data");
           }

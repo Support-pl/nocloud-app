@@ -37,6 +37,9 @@
     "error-stack-parser": "^2.0.6",
     "vue-template-compiler": "^2.7.14"
   },
+  "resolutions": {
+    "error-stack-parser": "2.0.6"
+  },
   "eslintConfig": {
     "globals": {
       "VUE_APP_BASE_URL": true
