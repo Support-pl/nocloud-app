@@ -69,7 +69,11 @@
         </div>
 
         <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
-          <div ref="description" v-if="locationDescription && activeKey === 'location'" />
+          <div
+            ref="description"
+            style="white-space: break-spaces"
+            v-if="locationDescription && activeKey === 'location'"
+          />
 
           <template v-else>
             <!-- Location -->
@@ -486,7 +490,7 @@
                 shape="round"
                 :disabled="
                   vmName == '' ||
-                  namespace == '' ||
+                  !namespace ||
                   options.os.name == '' ||
                   !isLoggedIn
                 "
@@ -502,7 +506,7 @@
                 :disabled="
                   password.length === 0 ||
                   vmName == '' ||
-                  namespace == '' ||
+                  !namespace ||
                   options.os.name == '' ||
                   !isLoggedIn
                 "
@@ -1288,10 +1292,10 @@ export default {
       if (newGroup.type === 'ovh') {
         newInstance.config = { type: this.getPlan.type.split(' ')[1], ...this.options.config };
       }
-      if (this.itemService?.instancesGroups.length < 1) {
+      if (this.itemService?.instancesGroups?.length < 1) {
         this.itemService.instancesGroups = [newGroup];
       }
-      if (this.service !== "") {
+      if (this.service) {
         this.$store.dispatch("nocloud/vms/fetch")
           .then(() => {
             setTimeout(() => {
@@ -1636,6 +1640,14 @@ export default {
 }
 .ant-slider-mark-text:last-of-type {
   transform: translateX(calc(-100% + 10px)) !important;
+}
+.ant-radio-button-wrapper {
+  margin: 1px;
+  border-radius: 4px !important;
+  border-left: 1px solid #d9d9d9;
+}
+.ant-radio-button-wrapper:not(:first-child)::before {
+  content: none;
 }
 .newCloud__prop {
   margin-bottom: 15px;

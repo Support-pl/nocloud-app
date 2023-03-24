@@ -226,7 +226,7 @@
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.last_monitoring * 1000) }}
-              <a-icon v-if="false" type="sync" title="Renew" @click="sendAction('manual_renew')" />
+              <a-icon v-if="false" type="sync" title="Renew" @click="handleOk('renew')" />
             </div>
           </div>
         </div>
@@ -466,6 +466,9 @@
 
 <script>
 import notification from "@/mixins/notification";
+import addFunds from '@/components/balance/addFunds.vue';
+
+
 
 const columns = [
   {
@@ -489,8 +492,9 @@ const sizes = ["bytes", "KB", "MB", "GB", "TB", "PB"];
 
 export default {
   name: 'openInstance',
-  props: { VM: { type: Object, required: true } },
+  components: { addFunds },
   mixins: [notification],
+  props: { VM: { type: Object, required: true } },
   data: () => ({
     chart1Data: [["Time", ""]],
     chart2Data: [["Time", ""]],
@@ -535,6 +539,7 @@ export default {
     actionLoading: false,
     selectedSP: "",
     deployLoading: false,
+    addfunds: { visible: false, amount: 0 },
   }),
   methods: {
     deployService() {
@@ -596,7 +601,28 @@ export default {
             onCancel() {},
           });
           break;
+        case "renew":
+          if (this.checkBalance()) this.sendAction('manual_renew');
+          break;
       }
+    },
+    checkBalance() {
+      const sum = this.VM.billingPlan?.products[this.VM.product]?.price ?? 0;
+
+      if (this.user.balance < parseFloat(sum)) {
+        this.$confirm({
+          title: this.$t('You do not have enough funds on your balance.'),
+          content: () => (
+            <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
+          ),
+          onOk: () => {
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.user.balance);
+            this.addfunds.visible = true;
+          }
+        });
+        return false;
+      }
+      return true;
     },
     printWidthRange(value) {
       let range = this.checkRange(value);
@@ -947,6 +973,9 @@ export default {
       return data;
     },
 
+    user() {
+      return this.$store.getters['nocloud/auth/userdata'];
+    },
     getSP() {
       return this.$store.getters["nocloud/sp/getSP"];
     },

@@ -12,6 +12,7 @@
           cursor: 'pointer',
           transition: '0.3s'
         }"
+        @click="newProductHandler(service)"
         @mouseover.native="hovered = service.title"
         @mouseleave.native="hovered = null"
       >
@@ -98,8 +99,9 @@ export default {
         },
       });
     },
-    getProductParams(service) {
-      const { type } = this.sp.find(({ title }) => title === service) ?? {};
+    newProductHandler(service) {
+      const provider = service.onclick.paramsArr[0].query.service;
+      const { type } = this.sp.find(({ title }) => title === provider) ?? {};
       let name = 'service-virtual';
       let query = {};
 
@@ -113,10 +115,10 @@ export default {
         case 'ione':
         case 'ovh':
           name = 'newPaaS';
-          query = { service }
+          query = { service: provider }
       }
 
-      return [{ name, query }];
+      this.$router.push({ name, query });
     },
 	},
 	computed: {
@@ -135,7 +137,7 @@ export default {
         type: 'virtual',
         onclick: {
           function: this.routeTo,
-          paramsArr: this.getProductParams('Virtual')
+          paramsArr: [{name: 'products', query: { service: 'Virtual' }}],
         }
       }];
 
@@ -144,7 +146,7 @@ export default {
           ...service,
           onclick: {
             function: this.routeTo,
-            paramsArr: this.getProductParams(title)
+            paramsArr: [{ name: 'products', query: { service: title } }]
           }
         });
       });

@@ -343,6 +343,14 @@ export default {
     updateFilter(info) {
       if (this.active == "support") {
         const filtered = {};
+
+        if (!info) {
+          info = JSON.parse(localStorage.getItem("supportFilters"));
+          this.checkedList = info;
+        } else {
+          localStorage.setItem("supportFilters", JSON.stringify(info));
+        }
+
         this.getAllTickets.forEach((el) => {
           const key = this.$t(`filterHeader.${el.status}`);
 
@@ -352,11 +360,27 @@ export default {
       }
 
       if (this.active == "invoice" && this.activeInvoiceTab == "Detail") {
-        this.$store.commit("nocloud/transactions/updateFilter", info);
-      }
+        const dates = JSON.parse(localStorage.getItem("detailFilters"))
+          .map((el) => ({ _d: new Date(el) }));
 
-      if (this.active == "invoice") {
+        if (!info) {
+          info = dates;
+          this.checkedList = info;
+        } else {
+          localStorage.setItem("detailFilters", JSON.stringify(info));
+        }
+
+        this.$store.commit("nocloud/transactions/updateFilter", info);
+      } else if (this.active == "invoice") {
         const filtered = {};
+
+        if (!info) {
+          info = JSON.parse(localStorage.getItem("invoiceFilters"));
+          this.checkedList = info;
+        } else {
+          localStorage.setItem("invoiceFilters", JSON.stringify(info));
+        }
+
         this.getAllInvoices.forEach((el) => {
           const key = this.$t(`filterHeader.${el.status}`);
 
@@ -467,6 +491,7 @@ export default {
   watch: {
     activeInvoiceTab() {
       this.checkedList = [];
+      this.updateFilter();
     }
   }
 }

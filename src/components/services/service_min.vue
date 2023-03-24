@@ -1,5 +1,5 @@
 <template>
-	<div class="service__item" @click="service.onclick.function(...service.onclick.paramsArr)">
+	<div class="service__item" @click.stop="service.onclick.function(...service.onclick.paramsArr)">
 		<div class="service__icon">
 			<a-icon :type="service.icon"></a-icon>
 		</div>

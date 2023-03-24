@@ -154,6 +154,9 @@ export default {
     } else {
       localStorage.setItem('order', this.value);
     }
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+    }
 
     this.setCoordY();
   },
