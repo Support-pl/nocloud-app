@@ -68,7 +68,13 @@
               :label="$t('clientinfo.phonenumber') | capitalize"
               prop="phonenumber"
             >
-              <a-input v-model="form.phonenumber" />
+              <input
+                type="tel"
+                class="ant-input"
+                v-phone="phonecode"
+                v-model="form.phonenumber"
+                :disabled="!form.countryname"
+              />
             </a-form-model-item>
 
             <a-form-model-item>
@@ -76,7 +82,11 @@
                 :label="$t('clientinfo.countryname') | capitalize"
                 prop="countryname"
               >
-                <a-select v-model="form.countryname">
+                <a-select
+                  show-search
+                  option-filter-prop="children"
+                  v-model="form.countryname"
+                >
                   <a-select-option
                     v-for="country in Object.keys(countries)"
                     :key="country"
@@ -115,6 +125,7 @@
 <script>
 import { mapGetters } from "vuex";
 import { countries } from "@/setup/countries";
+import countriesWithDialCode from "@/countries.json";
 import notification from "@/mixins/notification"
 import loading from "@/components/loading/loading";
 import empty from '../components/empty/empty.vue';
@@ -279,11 +290,20 @@ export default {
       }
       return info;
     },
+    phonecode(){
+      return countriesWithDialCode.find(({ title }) => title === this.form.countryname)?.dial_code;
+    }
   },
   mounted() {
     if (!('firstname' in this.userData)) this.fetchInfo();
     else this.installDataToBuffer();
   },
+  watch: {
+    'form.countryname'() {
+      if (this.form.phonenumber.includes(this.phonecode)) return;
+      this.form.phonenumber = `+${this.form.phonenumber}`;
+    }
+  }
 };
 </script>
 

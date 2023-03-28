@@ -15,7 +15,7 @@
               <!-- по фильтру -->
             </span>
             <transition name="fade-in">
-              <span v-if="!productsLoading" class="products__count">
+              <span v-if="!productsLoading && isLogged" class="products__count">
                 {{ $t("comp_services.total") }}: {{ productsCount }}
                 <!-- всего -->
               </span>
@@ -47,7 +47,11 @@
               {{ $t("filter") | capitalize }}
             </span>
           </template>
-          <a-icon class="products__control-item" type="filter" />
+          <a-icon
+            type="filter"
+            class="products__control-item"
+            :style="{ color: (checkedTypes.length > 0) ? 'var(--main)' : null }"
+          />
         </a-popover>
         <a-popover placement="bottomRight" arrow-point-at-center>
           <template slot="content">
@@ -76,12 +80,9 @@
       class="products__inner"
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
-      <div class="products__unregistred" v-if="!user">
+      <div class="products__unregistred" v-if="!isLogged">
         {{ $t("unregistered.will be able after") }}
-        <router-link :to="{ name: 'login' }">{{
-          $t("unregistered.login")
-        }}</router-link
-        >.
+        <router-link :to="{ name: 'login' }">{{ $t("unregistered.login") }}</router-link>.
       </div>
       <loading v-else-if="productsLoading" />
       <template v-else-if="productsPrepared.length > 0">
@@ -94,12 +95,12 @@
       </template>
       <a-empty v-else />
       <a-button
+        ref="order-button"
         class="products__new"
         size="large"
         shape="round"
         icon="plus"
         type="primary"
-        style="margin-top: 15px"
         @click="newProductHandle"
         block
         v-if="queryTypes.length == 1"
@@ -121,8 +122,21 @@ export default {
     min: { type: Boolean, default: true },
     count: { type: Number, default: 5 },
   },
-  data: () => ({ sortBy: 'Date', sortType: 'sort-ascending' }),
+  data: () => ({ sortBy: 'Date', sortType: 'sort-ascending', anchor: null }),
   created() {
+    const service = localStorage.getItem('types');
+    const sorting = JSON.parse(localStorage.getItem('serviceSorting') ?? "false");
+    const isProductsRoute = service && this.$route.name !== 'products';
+    const isServicesSame = service === this.$route.query.service;
+
+    if (isProductsRoute && !isServicesSame) {
+      this.$router.replace({ query: { service } });
+    }
+    if (sorting) {
+      this.sortBy = sorting.sortBy;
+      this.sortType = sorting.sortType;
+    }
+
     if (this.sp.length < 1) {
       this.$store.dispatch('nocloud/sp/fetch', !this.isLogged)
         .catch((err) => {
@@ -141,6 +155,12 @@ export default {
       })
       .catch((err) => console.error(err));
   },
+  mounted() { this.createObserver() },
+  beforeDestroy() {
+    const anchor = document.querySelector('#app').lastElementChild;
+
+    if (this.anchor) anchor.remove();
+  },
   computed: {
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
@@ -149,16 +169,25 @@ export default {
       return this.$store.getters["nocloud/auth/billingData"];
     },
     productsPrepared() {
+      const state = {
+        size: this.$store.getters["products/size"],
+        page: this.$store.getters["products/page"]
+      };
+      const start = state.size * (state.page - 1);
+      const end = start + state.size;
+      const products = this.products.slice(start, end);
+
       if (this.min) return this.products.slice(0, 5);
       else if (this.$route.query.service) {
-        return this.products.filter(({ sp }) => {
+        return products.filter(({ sp, hostingid }) => {
           //фильтруем по значениям из гет запроса
-          const { title } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+          let { title } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
 
+          if (hostingid) title = 'Virtual';
           return this.checkedTypes.some((service) => service === title);
         });
       }
-      return this.products;
+      return products;
     },
     products() {
       const products = this.$store.getters["products/getProducts"];
@@ -167,17 +196,33 @@ export default {
           const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
 
           const publicIPs = inst.state?.meta.networking?.public?.filter((el) => !regexp.test(el));
+          const state = (this.VM?.billingPlan.type === 'ione')
+            ? inst.state?.meta.lcm_state_str
+            : inst.state?.state;
+          let status = "UNKNOWN";
+
+          if (inst.state?.meta.state === 1) status = "PENDING";
+          if (inst.state?.meta.state === 5) status = "SUSPENDED";
+          if (inst.state?.meta.state === "BUILD") status = "BUILD";
+
+          switch (state) {
+            case "LCM_INIT":
+              status = "POWEROFF";
+            default:
+              if (state) status = state.replaceAll('_', ' ');
+          }
+
           const res = {
             ...inst,
             sp: inst.sp,
             orderid: inst.uuid,
             groupname: 'Self-Service VDS SSD HC',
             invoicestatus: null,
-            domainstatus: inst.state?.meta?.lcm_state_str || inst.state?.state || '',
+            domainstatus: status,
             productname: inst.title,
             domain: publicIPs?.at(0),
             date: inst.data.last_monitoring * 1000 || 0,
-            orderamount: inst.billingPlan.products[inst.product]?.price || 0,
+            orderamount: inst.billingPlan.products[inst.product]?.price ?? 0,
           };
 
           switch (inst.type) {
@@ -192,14 +237,14 @@ export default {
               res.groupname = 'SSL';
               res.date = +`${inst.resources.period}`;
               res.domain = inst.resources.domain;
-              res.orderamount = inst.billingPlan.products[key]?.price || 0;
+              res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
               break;
             }
             case 'ovh': {
               const key = `${inst.config.duration} ${inst.config.planCode}`;
 
               res.date = inst.data.expiration
-              res.orderamount = inst.billingPlan.products[key]?.price || 0;
+              res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
               break;
             }
             case 'ione': {
@@ -222,6 +267,12 @@ export default {
       return [...products, ...instances]
         .sort((a, b) => {
           if (this.sortType === 'sort-ascending') [b, a] = [a, b];
+          if (this.min) {
+            if (this.isExpired(a) && !this.isExpired(b)) return 1;
+            else if (!this.isExpired(a) && this.isExpired(b)) return -1;
+            else 0;
+          }
+
           switch (this.sortBy) {
             case 'Date':
               return new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -250,16 +301,19 @@ export default {
       );
     },
     productsCount() {
+      const total = this.$store.getters["products/total"];
+
+      if (total) return total;
       if (this.min) {
         return this.products.length;
-      } else if (this.$route.name == "products") {
+      } else if (["services", "root"].includes(this.$route.name)) {
         return this.productsPrepared.length;
       } else {
         return 0;
       }
     },
     isNeedFilterStringInHeader() {
-      return this.$route.name == "products" && this.$route.query.service;
+      return ["services", "root"].includes(this.$route.name) && this.$route.query.service;
     },
     queryTypes() {
       if (this.$route.query.service) {
@@ -307,7 +361,71 @@ export default {
 
       this.$router.push({ name, query });
     },
+    isExpired(instance){
+      const productDate = new Date(instance.date);
+      const timestamp = productDate.getTime() - Date.now();
+      const days = 7 * 24 * 3600 * 1000;
+
+      if (instance.groupname === 'SSL') return;
+      if (instance.date === 0) return;
+      return timestamp < days;
+    },
+    createObserver() {
+      const button = this.$refs['order-button']?.$el;
+      if (!button && !this.anchor) return;
+      else if (this.anchor) {
+        document.querySelector('#app').lastElementChild.remove();
+        this.anchor = null;
+        return;
+      }
+      const anchor = button.cloneNode(true);
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0].intersectionRatio < 0.2) {
+          button.style.visibility = 'hidden';
+          anchor.style.cssText = `
+            position: fixed;
+            right: 5vw;
+            bottom: 7vh;
+            display: block;
+            width: 50px;
+            height: 50px;
+            font-size: 25px;
+            overflow: hidden;
+          `;
+          anchor.firstElementChild.style.margin = '7px 20px 0 -7px';
+        } else if (entries[0].intersectionRatio === 1) {
+          button.style.visibility = '';
+          anchor.style.cssText = 'display: none';
+          anchor.firstElementChild.style.margin = '';
+        }
+      }, { root: null, threshold: [0.2, 1] });
+
+      observer.observe(button);
+      anchor.onclick = this.newProductHandle;
+      document.querySelector('#app').append(anchor);
+      this.anchor = anchor;
+    }
   },
+  watch: {
+    queryTypes() { setTimeout(this.createObserver) },
+    checkedTypes() {
+      if (this.$route.query.service) {
+        localStorage.setItem('types', this.$route.query.service);
+      } else {
+        localStorage.removeItem('types');
+      }
+    },
+    sortBy(value) {
+      const sorting = { sortBy: value, sortType: this.sortType };
+
+      localStorage.setItem('serviceSorting', JSON.stringify(sorting));
+    },
+    sortType(value) {
+      const sorting = { sortBy: this.sortBy, sortType: value };
+
+      localStorage.setItem('serviceSorting', JSON.stringify(sorting));
+    }
+  }
 };
 </script>
 
@@ -354,11 +472,12 @@ export default {
 }
 
 .products__unregistred {
+  padding: 7px 10px;
   font-size: 1.5rem;
-}
-
-.products__unregistred {
   text-align: center;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 5px 8px 10px rgba(0,0,0,.05);
 }
 
 .products__title {
@@ -380,7 +499,7 @@ export default {
 }
 
 .products__new {
-  margin-right: 10px;
+  margin: 5px 10px 0 0;
   transform: translateY(-2px);
 }
 

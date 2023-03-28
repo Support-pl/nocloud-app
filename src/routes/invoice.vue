@@ -131,18 +131,31 @@ export default {
       }
 
       this.$store.dispatch("nocloud/transactions/fetch", {
-        account: this.user.uuid, page, limit
+        page, limit,
+        account: this.user.uuid,
+        field: "proc",
+        sort: "desc"
       });
     }
   },
   mounted() {
     if (this.isLogged) {
       this.$store.dispatch("invoices/autoFetch");
+
+      if (this.user.uuid) {
+        api.transactions.count({ account: this.user.uuid })
+          .then(({ total }) => {
+            this.$store.commit("nocloud/transactions/setTotal", +total);
+          });
+      }
     }
     if (localStorage.getItem('order')) {
       this.value = localStorage.getItem('order');
     } else {
       localStorage.setItem('order', this.value);
+    }
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
     }
 
     this.setCoordY();
@@ -153,6 +166,7 @@ export default {
   watch: {
     value() {
       localStorage.setItem('order', this.value);
+      this.$store.commit('nocloud/transactions/setActiveTab', this.value);
       if (this.value === 'Invoice') return;
       if (this.transactions.length > 0) return;
       if (!this.user.uuid) return;
@@ -160,7 +174,9 @@ export default {
       this.$store.dispatch("nocloud/transactions/fetch", {
         account: this.user.uuid,
         page: this.currentPage,
-        limit: this.pageSize
+        limit: this.pageSize,
+        field: "proc",
+        sort: "desc"
       });
     },
     user() {
@@ -168,7 +184,9 @@ export default {
       this.$store.dispatch("nocloud/transactions/fetch", {
         account: this.user.uuid,
         page: this.currentPage,
-        limit: this.pageSize
+        limit: this.pageSize,
+        field: "proc",
+        sort: "desc"
       });
 
       api.transactions.count({ account: this.user.uuid })

@@ -144,11 +144,12 @@ export default {
     });
 
     this.$store.dispatch('nocloud/vms/fetch')
-      .then(() => this.$api.get(url))
-      .then(({ pool }) => {
+      .then(({ pool }) => [pool, this.$api.get(url)])
+      .then(async ([services, promise]) => {
         const instances = {};
+        const { pool } = await promise;
 
-        this.services.forEach((service) => {
+        services.forEach((service) => {
           service.instancesGroups.forEach((group) => {
             group.instances.forEach((inst) => {
               instances[inst.uuid] = inst.title;
@@ -181,13 +182,15 @@ export default {
     },
     currency() {
       const code = this.user.currency_code ?? 'USD';
-      const rate = this.currencies.find((el) => {
-        const arr = [el.from, el.to];
+      const { rate } = this.currencies.find((el) =>
+        el.from === code && el.to === this.invoice.currency
+      ) ?? {};
 
-        return arr.includes(code) && arr.includes(this.invoice.currency)
-      }) ?? 1;
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.to === code && el.from === this.invoice.currency
+      ) ?? { rate: 1 };
 
-      return { code, rate };
+      return { code, rate: (rate) ? rate : 1 / reverseRate };
     },
     statusColor() {
       return this.records[0].processed
@@ -198,7 +201,7 @@ export default {
       return this.$store.getters['nocloud/vms/getServicesFull'];
     },
     invoice() {
-      return this.$store.getters['nocloud/transactions/getTransactions']
+      return this.$store.getters['nocloud/transactions/all']
         .find((el) => el.uuid === this.$route.params.uuid);
     },
     total() {
@@ -209,7 +212,13 @@ export default {
   },
   watch: {
     user() {
-      this.$store.dispatch('nocloud/transactions/fetch', this.user.uuid);
+      this.$store.dispatch('nocloud/transactions/fetch', {
+        account: this.user.uuid,
+        page: this.$store.getters["nocloud/transactions/page"],
+        limit: this.$store.getters["nocloud/transactions/size"],
+        field: "proc",
+        sort: "desc"
+      });
     }
   }
 };

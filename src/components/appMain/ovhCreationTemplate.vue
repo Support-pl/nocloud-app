@@ -26,10 +26,9 @@
               </a-radio-button>
             </a-radio-group>
           </a-col>
-          <a-col span="24">
+          <a-col span="24" v-if="resources.plans.length < 6 && resources.plans.length > 1">
             <a-slider
               style="margin-top: 10px"
-              v-if="resources.plans.length < 6 && resources.plans.length > 1"
               :marks="{ ...resources.plans }"
               :tip-formatter="null"
               :max="resources.plans.length - 1"
@@ -37,8 +36,9 @@
               :value="resources.plans.indexOf(plan)"
               @change="(i) => $emit('changePlan', resources.plans[i])"
             />
-
-            <div v-else class="order__slider">
+          </a-col>
+          <a-col v-else span="24">
+            <div class="order__slider">
               <div
                 class="order__slider-item"
                 v-for="provider of resources.plans"
@@ -55,7 +55,7 @@
           <a-col>
             <span style="display: inline-block; width: 70px">CPU:</span>
           </a-col>
-          <a-col class="changing__field" span="3" style="text-align: right">
+          <a-col class="changing__field" style="text-align: right">
             {{ options.cpu.size }} vCPU
           </a-col>
         </a-row>
@@ -63,10 +63,9 @@
           <a-col>
             <span style="display: inline-block; width: 70px">RAM:</span>
           </a-col>
-          <a-col span="18">
+          <a-col :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }"  v-if="resources.ram.length > 1">
             <a-slider
               style="margin-top: 10px"
-              v-if="resources.ram.length > 1"
               :marks="{ ...resources.ram }"
               :tip-formatter="null"
               :max="resources.ram.length - 1"
@@ -77,7 +76,7 @@
             />
           </a-col>
           <transition name="textchange" mode="out-in">
-            <a-col class="changing__field" span="3" style="text-align: right">
+            <a-col class="changing__field" :sm="3" :xs="18" style="text-align: right">
               {{ options.ram.size }} Gb
             </a-col>
           </transition>
@@ -86,10 +85,9 @@
           <a-col>
             <span style="display: inline-block; width: 70px">{{ $t("Drive") }}:</span>
           </a-col>
-          <a-col span="18">
+          <a-col :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }" v-if="resources.disk.length > 1">
             <a-slider
               style="margin-top: 10px"
-              v-if="resources.disk.length > 1"
               :marks="{ ...resources.disk }"
               :tip-formatter="null"
               :max="resources.disk.length - 1"
@@ -99,7 +97,7 @@
               @afterChange="setResource({ key: 'disk', value: options.disk.size / 1024 })"
             />
           </a-col>
-          <a-col class="changing__field" span="3" style="text-align: right">
+          <a-col class="changing__field" :sm="3" :xs="18" style="text-align: right">
             {{ diskSize }}
           </a-col>
         </a-row>
@@ -111,32 +109,35 @@
     <a-collapse-panel
       key="OS"
       :disabled="!itemSP || isFlavorsLoading || !plan"
-      :header="`${$t('os')}: ${(options.os.name == '') ? ' ' : ` (${options.os.name})`}`"
+      :header="osHeader"
     >
       <div class="newCloud__option-field" v-if="images.length > 0">
-        <a-row style="margin-bottom: 20px">
+        <a-row>
           <a-col :xs="24" :sm="10">
-            <a-input
-              :value="vmName"
-              :placeholder="$t('VM name')"
-              :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
-              @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
-            />
-            <div style="color: var(--err); margin-top: 5px" v-if="vmName.length < 2">
-              {{ $t('ssl_product.field is required') }}
-            </div>
-            <password-meter
-              style="height: 10px"
-              v-if="false"
-              :password="password"
-              @score="(value) => $emit('score', value)"
-            />
+            <a-form-item :label="$t('VM name')">
+              <a-input
+                :value="vmName"
+                :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
+                @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
+              />
+              <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
+                {{ $t('ssl_product.field is required') }}
+              </div>
+            </a-form-item>
 
-            <a-form-item style="margin-bottom: 0px" v-if="false">
+            <a-form-item v-if="false" :label="$t('clientinfo.password')">
+              <password-meter
+                :style="{
+                  height: (password.length > 0) ? '10px' : '0',
+                  marginTop: (password.length < 1) ? '0' : null
+                }"
+                :password="password"
+                @score="(value) => $emit('score', value)"
+              />
+
               <a-input-password
                 class="password"
                 :value="password"
-                :placeholder="$t('clientinfo.password')"
                 @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
               />
             </a-form-item>
@@ -156,9 +157,9 @@
               </div>
               <div class="newCloud__template-name">{{ item.name }}</div>
             </template>
-            <template v-else>
+            <template v-else-if="!item.name.includes('none')">
               <div class="newCloud__template-image">
-                <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" />
+                <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" @error="onError" />
               </div>
               <div class="newCloud__template-name">
                 {{ item.name }} <br>
@@ -264,6 +265,9 @@ export default {
 
       return addon?.price.value ?? 0;
     },
+    onError({ target }) {
+      target.src = '/img/OS/default.png';
+    },
     setAddon(planCode, addon, key) {
       if (planCode === '-1') {
         delete this.price.addons[key];
@@ -345,7 +349,9 @@ export default {
       }
     }
   },
-  created() { this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps' },
+  created() {
+    this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps';
+  },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
@@ -386,15 +392,21 @@ export default {
       if (this.itemSP) return this.plan && ` (${this.plan})`;
       else return ' ';
     },
+    osHeader() {
+      const { name } = this.options.os;
+      const osNotExist = name === '' || name.includes('none');
+
+      return `${this.$t('os')}: ${(osNotExist) ? ' ' : ` (${name})`}`;
+    },
     diskSize() {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
     },
     types() {
-      const plans = this.$store.getters['nocloud/plans/getPlans'].map((el) => el.type);
+      const plans = this.$store.getters['nocloud/plans/getPlans'].map(({ type }) => type);
 
-      return ['vps', 'dedicated'].filter((el) => plans.includes(`ovh ${el}`));
+      return ['vps', 'dedicated'].filter((type) => plans.includes(`ovh ${type}`));
     }
   },
   watch: {
@@ -437,13 +449,5 @@ export default {
 .order__slider-item--active{
 	background-color: var(--main);
 	color: #fff;
-}
-</style>
-
-<style>
-.ant-slider-mark-text:first-of-type {
-  width: auto !important;
-  left: 0% !important;
-  transform: translateX(-10px) !important;
 }
 </style>

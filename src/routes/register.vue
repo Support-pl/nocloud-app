@@ -85,9 +85,10 @@
 								type="tel"
 								name="phone"
 								:placeholder="$t('clientinfo.phone number') + ' *' | capitalize"
+                :disabled="!userinfo.country"
 								v-model="userinfo.phonenumber"
                 autocomplete="tel"
-                maxlength="20"
+                maxlength="18"
 							>
 							<span class="login__horisontal-line"></span>
 							<input
@@ -116,14 +117,7 @@
 							</a-select>
 						</div>
 
-            <div class="inputs__log-pas">
-              <a-select style="width: 100%; border: none" v-model="accountType">
-								<a-select-option value="user">User</a-select-option>
-                <a-select-option value="company">Company</a-select-option>
-							</a-select>
-            </div>
-
-						<div class="inputs__log-pas" v-if="accountType === 'company'">
+						<div class="inputs__log-pas" v-if="invoiceChecked">
 							<input :placeholder="$t('clientinfo.companyname') + ' *' | capitalize" v-model="userinfo.companyname">
 							<span class="login__horisontal-line"></span>
 							<input placeholder="VAT ID" v-model="userinfo.tax_id">
@@ -152,6 +146,9 @@
 				<div class="register__already-has" style="margin-top: 40px">
 					<router-link :to="{name: 'login'}">{{$t('clientinfo.already have account?') | capitalize}}</router-link>
 				</div>
+        <div class="register__already-has" style="margin-top: 10px">
+          <a-checkbox v-model="invoiceChecked">{{$t('Invoice is needed')}}</a-checkbox>
+        </div>
 			</div>
 		</div>
   	</div>
@@ -171,7 +168,7 @@ export default {
 			countries,
       currencies: [],
 			registerLoading: false,
-      accountType: 'user',
+      invoiceChecked: false,
 			userinfo: {
 				firstname: '',
 				lastname: '',
@@ -194,7 +191,7 @@ export default {
 			this.send(this);
 		},
 		send(){
-      const info = (this.accountType === 'company') ? this.userinfo : {
+      const info = (this.invoiceChecked) ? this.userinfo : {
 				firstname: '',
 				lastname: '',
 				email: '',

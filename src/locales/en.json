@@ -44,6 +44,7 @@
 	"dueDate": "Payment Date",
 	"Choice payment": "Choose payment",
 	"Information": "Information",
+  "Copy link to share": "Copy link to share",
 	"It’s empty...": "No information is available yet.",
 	"Unknown error.": "Unknown error.",
 	"Password is too short": "Password is too short",
@@ -116,9 +117,13 @@
   "You cannot change disk size while you have a snapshot": "You cannot change disk size while you have a snapshot.",
   "You cannot change networks while you have a snapshot": "You cannot change networks while you have a snapshot.",
   "Please delete snapshot and try again": "Please delete snapshot and try again.",
+  "Do you want to add an backup?": "Do you want to add an backup?",
+  "Do you want to add an snapshot?": "Do you want to add an snapshot?",
 	"Network reserve 1":"Reserve IPv4 for your VM for",
 	"Network reserve 2": "per IPv4. You can select any unused IP and 'Assign to VM'.",
 	"Enter new VM name":"Enter new VM name",
+  "Add recover": "Add recover",
+  "Add snapshot": "Add snapshot",
   "Menu": "Menu",
 	"Reinstall": "Reinstall",
 	"Rename": "Rename",
@@ -143,6 +148,7 @@
 	"sign up": "Sign up",
 	"High speed": "High speed",
 	"traffic": "traffic",
+  "vrack": "vrack",
 	"under 3 Gb per month": "under 3 Gb per month",
 	"panel": "panel",
   "key": "key",
@@ -270,6 +276,7 @@
 	"filter": "Filter",
 	"search": "Search",
   "cart": "Cart",
+  "daily": "Daily",
 	"monthly": "1-Monthly",
 	"quarterly": "3-Monthly",
 	"semiannually": "6-Monthly",
@@ -493,6 +500,7 @@
 	},
 	"product_name": "Product Name",
 	"VNDExcludeVAT": "Prices quoted in VND, subject to 10% VAT",
+  "Invoice is needed": "Invoice is needed",
 
 
   "reload": "reload",
@@ -553,6 +561,7 @@
 		"Premium":"Premium",
 		"Business":"Business"
 	},
+  "PayG": "PayG",
 	"PAYG":"PAYG",
 	"PrePaid":"PrePaid",
 	"filterHeader":{

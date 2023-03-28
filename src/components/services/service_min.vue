@@ -1,11 +1,9 @@
 <template>
-	<div class="service__item" @click="service.onclick.function(...service.onclick.paramsArr)">
+	<div class="service__item" @click.stop="service.onclick.function(...service.onclick.paramsArr)">
 		<div class="service__icon">
 			<a-icon :type="service.icon"></a-icon>
 		</div>
-		<div class="service__title">
-			    {{ translatedName }}
-		</div>
+		<div class="service__title">{{ translatedName }}</div>
 	</div>
 </template>
 

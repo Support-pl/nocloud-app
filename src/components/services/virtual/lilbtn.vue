@@ -60,7 +60,7 @@ export default {
 <style scoped>
 .btn{
   width: fit-content;
-	margin-right: 20px;
+	transform: translateX(10px);
 }
 
 .btn button{

@@ -113,20 +113,44 @@
                   class="header__icon"
                   :type="button.icon"
                 />
-                <a-popover v-else placement="bottomRight" arrow-point-at-center>
+                <a-popover
+                  v-else
+                  arrow-point-at-center
+                  placement="bottomRight"
+                  :visible="isVisible"
+                  @visibleChange="((isOpen) ? isVisible = true : isVisible = !isVisible)"
+                >
                   <template slot="content">
                     <div>
                       <a-checkbox-group
+                        v-if="activeInvoiceTab === 'Invoice'"
                         v-model="checkedList"
                         :options="plainOptions"
                         @change="onChange"
+                      />
+                      <a-range-picker
+                        v-else-if="active === 'invoice'"
+                        show-time
+                        :value="checkedList"
+                        @ok="updateFilter"
+                        @change="onChangeRange"
+                        @openChange="openRange"
                       />
                     </div>
                   </template>
                   <template slot="title">
                     <span>{{ $t("filter") | capitalize }}</span>
                   </template>
-                  <a-icon class="header__icon" :type="button.icon" />
+                  <a-icon
+                    class="header__icon"
+                    :type="button.icon"
+                    :style="(checkedList.length > 0) ? {
+                      padding: '5px',
+                      borderRadius: '50%',
+                      background: 'var(--bright_bg)',
+                      color: 'var(--main)'
+                    } : null"
+                  />
                 </a-popover>
               </div>
             </div>
@@ -139,9 +163,7 @@
 
           <div class="header__links" v-if="!isLogged">
             <router-link :to="{ name: 'login' }">{{ $t("login") }}</router-link>
-            <router-link :to="{ name: 'register' }">{{
-              $t("unregistered.sign up")
-            }}</router-link>
+            <router-link :to="{ name: 'register' }">{{ $t("unregistered.sign up") }}</router-link>
           </div>
         </div>
       </div>
@@ -151,8 +173,8 @@
 
 <script>
 import { mapActions, mapGetters, mapMutations } from "vuex";
-import user from "../../store/user";
 import balance from "../balance/balance.vue";
+import moment from "moment";
 
 export default {
   name: "appHeader",
@@ -161,6 +183,8 @@ export default {
   },
   data() {
     return {
+      isOpen: false,
+      isVisible: false,
       indeterminate: true,
       checkAll: false,
       checkedList: [],
@@ -233,7 +257,9 @@ export default {
                 const params = {
                   account: this.user.uuid,
                   page: this.$store.getters["nocloud/transactions/page"],
-                  limit: this.$store.getters["nocloud/transactions/size"]
+                  limit: this.$store.getters["nocloud/transactions/size"],
+                  field: "proc",
+                  sort: "desc"
                 };
 
                 this.fetchInvoices();
@@ -298,6 +324,18 @@ export default {
       });
       this.updateFilter(this.checkedList);
     },
+    onChangeRange(range) {
+      this.checkedList = range;
+      if (range.length < 1) {
+        this.updateFilter(range);
+        this.isVisible = false;
+        this.checkedList = [];
+      }
+    },
+    openRange(value) {
+      this.isOpen = value;
+      this.isVisible = true;
+    },
     routeBack() {
       this.$router.go(-1);
     },
@@ -313,8 +351,31 @@ export default {
           filtered[key] = el.status;
         });
         this.$store.commit("support/updateFilter", info.map((el) => filtered[el]));
+      }
+
+      if (this.active == "invoice" && this.activeInvoiceTab == "Detail") {
+        const dates = JSON.parse(
+          localStorage.getItem("detailFilters") ?? "[]"
+        ).map((el) => moment(el));
+
+        if (!info) {
+          info = dates;
+          this.checkedList = info;
+        } else {
+          localStorage.setItem("detailFilters", JSON.stringify(info));
+        }
+
+        this.$store.commit("nocloud/transactions/updateFilter", info);
       } else if (this.active == "invoice") {
         const filtered = {};
+
+        if (!info) {
+          info = JSON.parse(localStorage.getItem("invoiceFilters") ?? "[]");
+          this.checkedList = info;
+        } else {
+          localStorage.setItem("invoiceFilters", JSON.stringify(info));
+        }
+
         this.getAllInvoices.forEach((el) => {
           const key = this.$t(`filterHeader.${el.status}`);
 
@@ -340,15 +401,15 @@ export default {
     ...mapGetters("app", ["getActiveTab"]),
     ...mapGetters("nocloud/vms", { searchString: "getString" }),
     ...mapGetters("invoices", ["getInvoices", "getAllInvoices"]),
+    ...mapGetters("nocloud/transactions", {
+      transactions: "all",
+      activeInvoiceTab: "activeTab"
+    }),
     active() {
-      const headerTitle = this.$route.meta?.headerTitle;
-      const layoutTitle = this.$route.meta?.layoutTitle;
-      if (headerTitle) {
-        return headerTitle;
-      }
-      if (layoutTitle) {
-        return layoutTitle;
-      }
+      const { headerTitle, layoutTitle } = this.$route.meta;
+
+      if (headerTitle) return headerTitle;
+      if (layoutTitle) return layoutTitle;
       return this.getActiveTab.title;
     },
     isInSpecialType() {
@@ -363,7 +424,9 @@ export default {
       if (this.active == "support") {
         filterElem = this.getAllTickets;
       } else if (this.active == "invoice") {
-        filterElem = this.getAllInvoices;
+        const isInvoice = this.activeInvoiceTab === 'Invoice';
+
+        filterElem = (isInvoice) ? this.getAllInvoices : this.transactions;
       } else {
         filterElem = [];
       }
@@ -419,6 +482,12 @@ export default {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
+  },
+  watch: {
+    activeInvoiceTab() {
+      this.checkedList = [];
+      this.updateFilter();
+    }
   }
 }
 </script>

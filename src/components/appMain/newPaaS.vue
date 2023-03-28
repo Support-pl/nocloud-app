@@ -6,7 +6,7 @@
             :is="template"
             :activeKey="activeKey"
             :itemSP="itemSP"
-            :getPlan="plan"
+            :getPlan="getPlan"
             :options="options"
             :getProducts="getProducts"
             :productSize="productSize"
@@ -28,7 +28,7 @@
                   :message="$t('Please select a suitable location')"
                 />
 
-                <a-select
+                <!-- <a-select
                   v-model="locationId"
                   :placeholder="$t('select location')"
                   style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
@@ -36,7 +36,7 @@
                   <a-select-option v-for="item in locations" :key="item.id" :value="item.id">
                     {{ item.title }}
                   </a-select-option>
-                </a-select>
+                </a-select> -->
 
                 <a-select
                   v-model="servicesTitle"
@@ -53,23 +53,17 @@
                     <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
                   </a-spin>
                 </div>
-                <!-- <a-radio-group v-model="location_uuid">
-                  <a-radio-button
-                    v-for="(sp, index) in getSP"
-                    :key="index"
-                    style="width: 130px; text-align: center"
-                    :value="sp.uuid"
-                  >
-                    {{ sp.title }}
-                  </a-radio-button>
-                </a-radio-group> -->
               </a-row>
             </template>
           </component>
         </div>
 
         <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
-          <div ref="description" v-if="locationDescription && activeKey === 'location'" />
+          <div
+            ref="description"
+            style="white-space: break-spaces"
+            v-if="locationDescription && activeKey === 'location'"
+          />
 
           <template v-else>
             <!-- Location -->
@@ -91,10 +85,7 @@
               </a-row>
             </transition>
             <!-- Tarif -->
-            <transition
-              name="networkApear"
-              v-if="true || getPlan.kind === 'STATIC'"
-            >
+            <transition name="networkApear">
               <a-row
                 type="flex"
                 justify="space-between"
@@ -113,6 +104,7 @@
               <a-row
                 type="flex"
                 justify="space-between"
+                v-if="options.cpu.size"
                 :style="{ 'font-size': '1.2rem', 'align-items': 'center' }"
               >
                 <a-col> {{ $t("cpu") }}: </a-col>
@@ -125,9 +117,7 @@
                 >
                   {{ $t("High speed") }}
                 </a-col> -->
-                <a-col v-if="options.cpu.size">
-                  {{ options.cpu.size }} vCPU
-                </a-col>
+                <a-col>{{ options.cpu.size }} vCPU</a-col>
               </a-row>
             </transition>
 
@@ -136,12 +126,11 @@
               <a-row
                 type="flex"
                 justify="space-between"
+                v-if="options.ram.size"
                 :style="{ 'font-size': '1.2rem' }"
               >
                 <a-col> {{ $t("ram") }}: </a-col>
-                <a-col v-if="options.ram.size">
-                  {{ options.ram.size }} Gb
-                </a-col>
+                <a-col>{{ options.ram.size }} Gb</a-col>
               </a-row>
             </transition>
 
@@ -150,6 +139,7 @@
               <a-row
                 type="flex"
                 justify="space-between"
+                v-if="parseFloat(diskSize)"
                 :style="{ 'font-size': '1.2rem', 'margin-bottom': '5px' }"
               >
                 <a-col> {{ $t("Drive") }}: </a-col>
@@ -308,35 +298,28 @@
               </a-row>
             </transition-group>
 
-            <!-- Panel -->
-            <!-- <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                :style="{ 'font-size': '1.1rem' }"
-                v-if="options.addonsObjects.panel"
-              >
-                <a-col>{{
-                  options.addonsObjects.panel.description.TITLE
-                }}</a-col>
-              </a-row>
-            </transition> -->
 
-            <!-- Backup -->
-            <!-- <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                :style="{ 'font-size': '1.1rem' }"
-                v-if="options.addonsObjects.backup"
-              >
-                <a-col> {{ $t("Backup") }}: </a-col>
-                <a-col>
-                  {{ options.addonsObjects.backup.description.TITLE }}
-                </a-col>
-              </a-row>
-            </transition> -->
-            <!-- <a-skeleton :loading="getCurrentProd == null" :active="true"> -->
+            <a-row
+              type="flex"
+              justify="space-between"
+              style="width: 100%; margin-top: 10px"
+              v-if="getPlans.length > 1 && itemSP.type !== 'ione'"
+            >
+              <a-col style="width: 100%">
+                <a-select
+                  placeholder="Price models"
+                  style="width: 100%"
+                  v-model="plan"
+                >
+                  <a-select-option
+                    v-for="plan in getPlans"
+                    :key="plan.uuid"
+                    :value="plan.uuid"
+                    >{{ plan.title }}
+                  </a-select-option>
+                </a-select>
+              </a-col>
+            </a-row>
 
             <a-row
               type="flex"
@@ -348,7 +331,7 @@
                 <a-select
                   placeholder="Services"
                   style="width: 100%"
-                  @change="(item) => (service = item)"
+                  v-model="service"
                 >
                   <a-select-option
                     v-for="service in services"
@@ -370,7 +353,7 @@
                 <a-select
                   style="width: 100%"
                   placeholder="Namespaces"
-                  @change="(item) => (namespace = item)"
+                  v-model="namespace"
                 >
                   <a-select-option
                     v-for="name in getNameSpaces"
@@ -390,7 +373,12 @@
             </a-divider>
             <a-row type="flex" justify="center" style="margin-top: 15px">
               <a-col>
-                <a-radio-group default-value="Monthly" v-model="tarification">
+                <a-radio-group
+                  default-value="Monthly"
+                  ref="periods-group"
+                  v-model="tarification"
+                  :style="{ display: 'grid', textAlign: 'center', gridTemplateColumns: periodColumns }"
+                >
                   <a-radio-button
                     v-for="period of periods"
                     :key="period.value"
@@ -431,6 +419,11 @@
                 {{ billingData.currency_code || 'USD' }}/{{ $tc("period.month") }}
               </a-col>
 
+              <a-col v-if="tarification === 'Daily'">
+                {{ calculatePrice(productFullPriceStatic, "day").toFixed(2) }}
+                {{ billingData.currency_code || 'USD' }}/{{ $t("day") }}
+              </a-col>
+
               <a-col v-if="tarification === 'Hourly'">
                 ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
                 {{ billingData.currency_code || 'USD' }}/{{ $t("hour") }}
@@ -443,7 +436,7 @@
             type="flex"
             justify="space-around"
             style="
-              margin-top: 20px;
+              margin-top: 15px;
               margin-bottom: 10px;
               border-top: 1px solid #e8e8e8;
             "
@@ -488,7 +481,7 @@
                 shape="round"
                 :disabled="
                   vmName == '' ||
-                  namespace == '' ||
+                  !namespace ||
                   options.os.name == '' ||
                   !isLoggedIn
                 "
@@ -504,7 +497,7 @@
                 :disabled="
                   password.length === 0 ||
                   vmName == '' ||
-                  namespace == '' ||
+                  !namespace ||
                   options.os.name == '' ||
                   !isLoggedIn
                 "
@@ -662,13 +655,10 @@ export default {
       dataLocalStorage: "",
       productSize: "",
       activeKey: "location",
-      plan: {},
-      periods: [
-        { value: "Monthly", label: "ssl_product.Monthly" },
-        { value: "Hourly", label: "ssl_product.Hourly" }
-      ],
-      service: "",
-      namespace: "",
+      periods: [],
+      plan: undefined,
+      service: undefined,
+      namespace: undefined,
       tarification: "",
       servicesTitle: "all",
       locationId: "Location",
@@ -808,10 +798,7 @@ export default {
     //--------------Plans-----------------
     //UNKNOWN and STATIC
     getPlan() {
-      const type = (this.tarification === 'Monthly') ? 'STATIC' : 'DYNAMIC';
-      const item = this.getPlans.find((el) => el.kind === type);
-
-      return item || {};
+      return this.getPlans.find(({ uuid }) => uuid === this.plan) ?? {};
     },
 
     //STATIC
@@ -826,14 +813,14 @@ export default {
 
     getProducts() {
       const titles = [];
-      const products = (this.plan.kind === 'DYNAMIC')
-        ? this.getPlans.find(({ uuid }) => uuid === this.plan.meta?.linkedPlan)?.products
-        : this.plan.products ?? {};
+      const products = (this.getPlan.kind === 'DYNAMIC')
+        ? this.getPlans.find(({ uuid }) => uuid === this.getPlan.meta?.linkedPlan)?.products
+        : this.getPlan.products ?? {};
 
       Object.values(products ?? {}).forEach((product) => {
         const isEqual = this.tarification === this.getTarification(product.period);
 
-        if (isEqual || this.plan.kind === 'DYNAMIC') {
+        if (isEqual || this.getPlan.kind === 'DYNAMIC') {
           titles.splice(product.sorter, 0, product.title);
         }
       });
@@ -842,17 +829,17 @@ export default {
     },
 
     productFullPriceStatic() {
-      if (!this.plan) return 0;
-      const product = Object.values(this.plan.products ?? {})
+      if (!this.getPlan) return 0;
+      const product = Object.values(this.getPlan.products ?? {})
         .find(({ title }) => title === this.productSize);
 
       if (!product) return 0;
       return product.price / product.period * 3600 * 24 * 30;
     },
     productFullPriceCustom() {
-      if (this.plan) {
+      if (this.getPlan) {
         const price = [];
-        for (let resource of this.plan.resources) {
+        for (let resource of this.getPlan.resources ?? []) {
           const key = resource.key.toLowerCase();
 
           if (key.includes('ip')) {
@@ -876,11 +863,11 @@ export default {
     productFullPriceOVH() {
       const { value, addons } = this.priceOVH;
       const addonsPrice = Object.values(addons).reduce((a, b) => a + b, 0);
-      let percent = (this.plan.fee?.default ?? 0) / 100 + 1;
+      let percent = (this.getPlan.fee?.default ?? 0) / 100 + 1;
 
-      if (!this.plan.fee?.ranges) return value + addonsPrice;
+      if (!this.getPlan.fee?.ranges) return value + addonsPrice;
 
-      for (let range of this.plan.fee.ranges) {
+      for (let range of this.getPlan.fee.ranges) {
         if (value <= range.from) continue;
         if (value > range.to) continue;
         percent = range.factor / 100 + 1;
@@ -986,6 +973,12 @@ export default {
       return locations?.find(({ extra }) =>
         extra.region.toLowerCase() === configuration[key].toLowerCase()
       )?.title;
+    },
+    periodColumns() {
+      const { length } = Object.keys(this.periods);
+
+      if (length === 4) return 'repeat(2, 1fr)';
+      return `repeat(${(length < 3) ? length : 3}, 1fr)`;
     }
   },
   mounted() {
@@ -1001,16 +994,26 @@ export default {
               ? JSON.parse(localStorage.getItem("data"))
               : JSON.parse(query.data);
 
-            this.tarification = this.dataLocalStorage.tarification;
-            this.options.os.id = this.dataLocalStorage.config.template_id;
-            this.options.os.name = this.dataLocalStorage.config.template_name;
-            this.password = this.dataLocalStorage.config.password;
-            this.vmName = this.dataLocalStorage.titleVM;
-            this.locationId = this.dataLocalStorage.locationId;
+            this.tarification = this.dataLocalStorage.tarification ?? '';
+            this.vmName = this.dataLocalStorage.titleVM ?? '';
+            this.locationId = this.dataLocalStorage.locationId ?? '';
+            this.activeKey = this.dataLocalStorage.activeKey ?? 'location';
 
-            this.options.config = this.dataLocalStorage.ovhConfig;
-            this.options.disk.size = this.dataLocalStorage.resources.drive_size;
-            this.options.drive = this.dataLocalStorage.resources.drive_type;
+            if (this.dataLocalStorage.config) {
+              this.options.os.id = this.dataLocalStorage.config.template_id;
+              this.options.os.name = this.dataLocalStorage.config.template_name;
+              this.password = this.dataLocalStorage.config.password;
+            }
+
+            if (this.dataLocalStorage.ovhConfig) {
+              this.options.config = this.dataLocalStorage.ovhConfig;
+            }
+
+
+            if (this.dataLocalStorage.resources) {
+              this.options.disk.size = this.dataLocalStorage.resources.drive_size;
+              this.options.drive = this.dataLocalStorage.resources.drive_type;
+            }
           } catch (e) {
             localStorage.removeItem("data");
           }
@@ -1105,9 +1108,9 @@ export default {
       else this[key] = value;
 
       if (key === 'productSize') {
-        const plan = (this.plan.kind === 'DYNAMIC')
-          ? this.getPlans.find((el) => el.uuid === this.plan.meta.linkedPlan)
-          : this.plan;
+        const plan = (this.getPlan.kind === 'DYNAMIC')
+          ? this.getPlans.find((el) => el.uuid === this.getPlan.meta.linkedPlan)
+          : this.getPlan;
 
         if (!plan) return;
         for (let [key, value] of Object.entries(plan.products ?? {})) {
@@ -1116,7 +1119,7 @@ export default {
 
             this.options.ram.size = product.resources.ram / 1024;
             this.options.cpu.size = product.resources.cpu;
-            this.options.disk.size = product.resources.disk ?? this.options.disk.size;
+            this.options.disk.size = product.resources.disk ?? 20 * 1024;
             this.product = product;
           }
         }
@@ -1126,7 +1129,7 @@ export default {
         const plan = this.getPlans.find(({ type }) => type.includes(value));
         const product = Object.values(plan.products)[0];
 
-        this.plan = plan;
+        this.plan = plan.uuid;
         this.setData({ key: 'productSize', value: product.title });
       }
     },
@@ -1175,17 +1178,19 @@ export default {
       }
     },
     calculatePrice(price, period = this.period) {
-      const resourcesPrice = this.productFullPriceCustom * 24 * 30;
+      const resourcesPrice = (this.itemSP.type === 'ione')
+        ? this.productFullPriceCustom * 24 * 30
+        : 0;
 
       switch (period) {
         case "minute":
           return price / 60;
-        case "day":
-          return price / 30;
         case "week":
           return (price / 30) * 7;
         case "hour":
           return price;
+        case "day":
+          return (price + resourcesPrice) / 30
         case "month":
           return price + resourcesPrice;
         case "year":
@@ -1207,10 +1212,13 @@ export default {
       return isFinite(value) ? `(${value} Gb)` : '';
     },
     getTarification(timestamp) {
-      const month = 3600 * 24 * 30;
-      const year = 3600 * 24 * 365;
+      const day = 3600 * 24;
+      const month = day * 30;
+      const year = day * 365;
 
       switch (+timestamp) {
+        case day:
+          return 'Daily';
         case month:
           return 'Monthly';
         case year:
@@ -1252,10 +1260,10 @@ export default {
           ips_public: this.options.network.public.count,
         },
         billing_plan: {
-          uuid: this.plan.uuid,
-          title: this.plan.title,
-          type: this.plan.type,
-          public: this.plan.public,
+          uuid: this.getPlan.uuid,
+          title: this.getPlan.title,
+          type: this.getPlan.type,
+          public: this.getPlan.public,
         },
         product: this.product.key
       };
@@ -1273,12 +1281,12 @@ export default {
       // -------------------------------------
       //update service
       if (newGroup.type === 'ovh') {
-        newInstance.config = { type: this.plan.type.split(' ')[1], ...this.options.config };
+        newInstance.config = { type: this.getPlan.type.split(' ')[1], ...this.options.config };
       }
-      if (this.itemService?.instancesGroups.length < 1) {
+      if (this.itemService?.instancesGroups?.length < 1) {
         this.itemService.instancesGroups = [newGroup];
       }
-      if (this.service !== "") {
+      if (this.service) {
         this.$store.dispatch("nocloud/vms/fetch")
           .then(() => {
             setTimeout(() => {
@@ -1428,6 +1436,7 @@ export default {
         productSize: this.productSize,
         titleVM: this.vmName,
         locationId: this.locationId,
+        activeKey: this.activeKey,
         resources: {
           cpu: this.options.cpu.size,
           ram: this.options.ram.size * 1024,
@@ -1441,7 +1450,7 @@ export default {
           template_name: this.options.os.name,
           password: this.password,
         },
-        billing_plan: { uuid: this.plan.uuid },
+        billing_plan: { uuid: this.getPlan.uuid },
         ovhConfig: this.options.config
       };
 
@@ -1504,18 +1513,16 @@ export default {
 
   watch: {
     tarification(value) {
-      if (this.getPlan.kind == "STATIC") {
-        this.options.ram.size = this.product.resources?.ram / 1024;
-        this.options.cpu.size = this.product.resources?.cpu;
-      }
-
-      if (this.plan.type === 'ione' && value) {
+      if (this.getPlan.type === 'ione' && value) {
         const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC';
         const item = this.getPlans.find((el) => {
           if (type === 'DYNAMIC') return el.kind === type;
           let period = 0;
 
           switch (value) {
+            case 'Daily':
+              period = 3600 * 24;
+              break;
             case 'Annually':
               period = 3600 * 24 * 365;
               break;
@@ -1529,7 +1536,7 @@ export default {
           return el.kind === type && Object.values(el.products).find((el) => +el.period === period);
         });
 
-        this.plan = item;
+        this.plan = item.uuid;
         this.setData({ key: 'productSize', value: this.getProducts[0] });
       }
     },
@@ -1548,33 +1555,14 @@ export default {
       })
       .then(({ pool }) => {
         this.$store.commit('nocloud/plans/setPlans', pool);
-        pool.forEach((plan) => {
-          const data = localStorage.getItem('data');
-          const { query } = this.$route;
-
-          if (!data && !('data' in query) && plan.type.includes(this.itemSP.type)) {
-            const { title, resources } =
-              Object.values(plan.products).find((el) => el.title === plan.meta.product) ??
-              plan.products[plan.meta.product?.split(' ')[1]] ??
-              Object.values(plan.products)[0] ?? {};
-
-            if (!resources) return;
-            this.options.ram.size = resources.ram / 1024;
-            this.options.cpu.size = resources.cpu;
-            this.options.disk.size = resources.disk ?? 20 * 1024;
-            this.plan = plan;
-            this.setData({ key: 'productSize', value: title });
-          }
-        });
+        this.plan = pool[0]?.uuid ?? '';
 
         if (this.dataLocalStorage !== '') {
-          this.plan = pool.find(({ uuid }) => uuid === this.dataLocalStorage.billing_plan.uuid);
+          this.plan = this.dataLocalStorage.billing_plan.uuid;
           this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize });
         }
-        if (!('uuid' in this.plan) || pool.length < 1) {
-          this.plan = pool.find(({ type }) => type.includes(this.itemSP.type)) ?? {};
-        }
-        if (this.plan.type?.includes('ovh')) this.type = this.plan.type?.split(' ')[1];
+
+        if (this.getPlan.type?.includes('ovh')) this.type = this.getPlan.type?.split(' ')[1];
 
         if (this.$refs.description) {
           this.$refs.description.innerHTML = this.locationDescription;
@@ -1608,8 +1596,12 @@ export default {
     },
     activeKey(value) {
       setTimeout(() => {
+        const { $el } = this.$refs['periods-group']?.$children.at(-1) ?? {};
+
         if (value === 'location' && this.$refs.description) {
           this.$refs.description.innerHTML = this.locationDescription;
+        } else if ($el?.style.gridColumn === '' && Object.keys(this.periods).length > 4) {
+          if (Object.keys(this.periods).length % 3 === 1) $el.style.gridColumn = '2 / 3';
         }
       });
     }
@@ -1631,13 +1623,22 @@ export default {
   display: flex;
   justify-content: center;
 }
+.ant-slider-mark-text {
+  white-space: nowrap;
+}
 .ant-slider-mark-text:first-of-type {
-  width: 60px !important;
-  left: 2% !important;
+  transform: translateX(-10px) !important;
 }
 .ant-slider-mark-text:last-of-type {
-  width: 60px !important;
-  left: 98% !important;
+  transform: translateX(calc(-100% + 10px)) !important;
+}
+.newCloud_wrapper .ant-radio-button-wrapper {
+  margin: 1px;
+  border-radius: 4px !important;
+  border-left: 1px solid #d9d9d9;
+}
+.newCloud_wrapper .ant-radio-button-wrapper:not(:first-child)::before {
+  content: none;
 }
 .newCloud__prop {
   margin-bottom: 15px;
@@ -1924,39 +1925,16 @@ export default {
     flex-direction: column;
   }
 }
-@media screen and (max-width: 576px) {
-  .newCloud__template {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: stretch;
-  }
+@media screen and (max-width: 575px) {
   .newCloud__template-item {
-    grid-template-columns: max-content auto;
-    grid-template-rows: 1fr;
-    width: auto;
-    height: 50px;
-  }
-  .newCloud__template-item:not(:last-child) {
-    margin-right: 0px;
+    grid-template-columns: 40px 1fr;
   }
   .newCloud__template-image {
-    width: 50px;
-    height: 50px;
-    padding: 4px;
+    padding: 7px 0 7px 10px;
   }
   .newCloud__template-image__rate {
     line-height: 42px;
     font-size: 1.4rem;
-  }
-  .newCloud__template-image img {
-    object-fit: contain;
-    width: 100%;
-    height: 100%;
-  }
-  .newCloud__template-name {
-    text-align: left;
-    line-height: 30px;
-    display: flex;
   }
   .newCloud__template-type {
     width: 56px;
@@ -1969,6 +1947,9 @@ export default {
   }
   .newCloud__template-name ul li {
     margin-left: 20px;
+  }
+  .ant-form-item-label {
+    line-height: inherit;
   }
 }
 .networkApear-enter-active,

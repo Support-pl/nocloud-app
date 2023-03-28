@@ -1,11 +1,29 @@
 <template>
 	<div class="services__wrapper" :style="{ gridTemplateColumns: `repeat(${columnsCount}, 1fr)` }">
 		<template v-for="service in avaliableServices">
-			<service-item
-				v-if="!service.needLogin || isLogged"
-				:key="service.title"
-				:service="service"
-			/>
+			<a-badge
+        count="+"
+        :number-style="{
+          fontSize: '20px',
+          transform: (hovered === service.title) ? 'none' : 'scale(0) translate(-20px, -20px)',
+          backgroundColor: '#fff',
+          boxShadow: '0 0 0 1px var(--main)',
+          color: 'var(--main)',
+          cursor: 'pointer',
+          transition: '0.3s'
+        }"
+        @click="newProductHandler(service)"
+        @mouseover.native="hovered = service.title"
+        @mouseleave.native="hovered = null"
+      >
+        <service-item
+          v-if="!service.needLogin || isLogged"
+          :key="service.title"
+          :service="service"
+          @mouseover.native="hovered = service.title"
+          @mouseleave.native="hovered = null"
+        />
+      </a-badge>
 		</template>
 	</div>
 </template>
@@ -18,6 +36,7 @@ export default {
 	components: { serviceItem },
 	data(){
 		return {
+      hovered: null,
 			services: [
 				{
 					title: 'Servers',
@@ -80,6 +99,27 @@ export default {
         },
       });
     },
+    newProductHandler(service) {
+      const provider = service.onclick.paramsArr[0].query.service;
+      const { type } = this.sp.find(({ title }) => title === provider) ?? {};
+      let name = 'service-virtual';
+      let query = {};
+
+      switch (type) {
+        case 'opensrs':
+          name = 'service-domains';
+          break;
+        case 'goget':
+          name = 'service-ssl';
+          break;
+        case 'ione':
+        case 'ovh':
+          name = 'newPaaS';
+          query = { service: provider }
+      }
+
+      this.$router.push({ name, query });
+    },
 	},
 	computed: {
 		sp(){
@@ -90,7 +130,7 @@ export default {
 		},
 
 		avaliableServices(){
-      const services = [{
+      const services = (this.$config.sharedEnabled) ? [{
         title: 'Virtual',
         translatable: true,
         icon: 'solution',
@@ -99,7 +139,7 @@ export default {
           function: this.routeTo,
           paramsArr: [{name: 'products', query: { service: 'Virtual' }}],
         }
-      }];
+      }] : [];
 
 			this.sp.forEach(({ meta: { service }, title }) => {
         if (service.title) services.push({
@@ -114,7 +154,10 @@ export default {
       return services;
 		},
     columnsCount(){
-      return (this.avaliableServices.length < 5) ? this.avaliableServices.length : 5;
+      let count = 5;
+      if (document.documentElement.clientWidth < 575) count = 3;
+
+      return (this.avaliableServices.length < count) ? this.avaliableServices.length : count;
     }
 	}
 }

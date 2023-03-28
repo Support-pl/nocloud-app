@@ -274,11 +274,7 @@ export default {
     ]),
     ...mapGetters("support", { baseURL: "getURL" }),
     template() {
-      if (this.VM.billingPlan.type.includes('ovh')) {
-        return () => import(`@/components/appMain/modules/${this.VM.billingPlan.type}/openInstance.vue`);
-      } else {
-        return () => import('@/components/appMain/modules/ione/openInstance.vue');
-      }
+      return () => import(`@/components/appMain/modules/${this.VM.billingPlan.type}/openInstance.vue`);
     },
     menuOptions() {
       const options = [
@@ -685,7 +681,7 @@ export default {
     "VM.uuidService"(value) {
       if (!value) return;
       this.renameNewName = this.VM.title;
-      // this.$store.dispatch("nocloud/vms/subscribeWebSocket", value);
+      this.$store.dispatch("nocloud/vms/subscribeWebSocket", value);
     },
   },
 };

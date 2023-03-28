@@ -166,44 +166,42 @@
         </div>
         <a-row>
           <a-col :xs="24" :sm="10">
-            <!-- <a-form-model-item> -->
-            <a-input
-              style="margin-top: 15px"
-              :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
-              :value="vmName"
-              :placeholder="$t('VM name')"
-              @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
-            />
-            <div style="color: var(--err); margin-top: 5px" v-if="vmName.length < 2">
-              {{ $t('ssl_product.field is required') }}
-            </div>
+            <a-form-item style="margin-top: 15px" :label="$t('VM name')">
+              <a-input
+                :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
+                :value="vmName"
+                @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
+              />
+              <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
+                {{ $t('ssl_product.field is required') }}
+              </div>
+            </a-form-item>
 
-            <password-meter
-              style="height: 10px"
-              :password="password"
-              @score="(value) => $emit('score', value)"
-            />
+            <a-form-item :label="$t('clientinfo.password')">
+              <password-meter
+                :style="{
+                  height: (password.length > 0) ? '10px' : '0',
+                  marginTop: (password.length < 1) ? '0' : null
+                }"
+                :password="password"
+                @score="(value) => $emit('score', value)"
+              />
 
-            <!-- <span style="color: red">{{ textInvalid }}</span> -->
-            <!-- </a-form-model-item> -->
-            <!-- <a-form-model-item> -->
-
-            <a-form-item style="margin-bottom: 0px">
               <a-input-password
                 class="password"
                 :value="password"
-                :placeholder="$t('clientinfo.password')"
                 @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
               />
             </a-form-item>
-            <!-- </a-form-model-item> -->
-            <a-select
-              placeholder="SSH key"
-              style="width: 100%; margin-top: 18px"
-              :options="user.data && user.data.ssh_keys"
-              :value="sshKey"
-              @change="(value) => $emit('setData', { key: 'sshKey', value })"
-            />
+
+            <a-form-item :label="$t('SSH key')">
+              <a-select
+                style="width: 100%"
+                :options="user.data && user.data.ssh_keys"
+                :value="sshKey"
+                @change="(value) => $emit('setData', { key: 'sshKey', value })"
+              />
+            </a-form-item>
           </a-col>
         </a-row>
       </div>
@@ -376,6 +374,11 @@ export default {
       }
     },
   },
+  mounted() {
+    const images = Object.entries(this.itemSP?.publicData.templates ?? {});
+
+    if (images.length === 1) this.setOS(images[0][1], images[0][0]);
+  },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
@@ -406,9 +409,9 @@ export default {
     },
     planHeader() {
       if (this.itemSP && this.getPlan) {
-        return this.tarification === "Monthly"
-          ? ` (VDS ${this.$t("Pre-Paid")})`
-          : ` (VDC ${this.$t("Pay-as-you-Go")})`;
+        return this.tarification === "Hourly"
+          ? ` (VDC ${this.$t("Pay-as-you-Go")})`
+          : ` (VDS ${this.$t("Pre-Paid")})`;
       } else {
         return " ";
       }
@@ -422,8 +425,9 @@ export default {
   watch: {
     plans() {
       const value = [];
-      const month = 3600 * 24 * 30;
-      const year = 3600 * 24 * 365;
+      const day = 3600 * 24
+      const month = day * 30;
+      const year = day * 365;
 
       this.plans.forEach((plan) => {
         if (plan.kind === 'DYNAMIC') value.push(
@@ -433,19 +437,23 @@ export default {
         if (plan.kind !== 'STATIC') return;
         const periods = Object.values(plan.products).map((el) => +el.period);
 
+        if (periods.includes(day)) value.push(
+          { value: 'Daily', label: 'daily', period: day }
+        );
+
         if (periods.includes(month)) value.push(
-          { value: 'Monthly', label: 'ssl_product.Monthly' }
+          { value: 'Monthly', label: 'ssl_product.Monthly', period: month }
         );
 
         if (periods.includes(year)) value.push(
-          { value: 'Annually', label: 'annually' }
+          { value: 'Annually', label: 'annually', period: year }
         );
 
         if (periods.includes(year * 2)) value.push(
-          { value: 'Biennially', label: 'biennially' }
+          { value: 'Biennially', label: 'biennially', period: year * 2 }
         );
       });
-      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.value < b.value);
+      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period);
 
       this.options.drive = false;
       this.$emit('setData', { key: 'periods', value });
