@@ -1,7 +1,7 @@
 <template>
 	<div class="services__wrapper" :style="{ gridTemplateColumns: `repeat(${columnsCount}, 1fr)` }">
 		<template v-for="service in avaliableServices">
-      <a-badge
+			<a-badge
         count="+"
         :number-style="{
           fontSize: '20px',
@@ -130,7 +130,7 @@ export default {
 		},
 
 		avaliableServices(){
-      const services = [{
+      const services = (this.$config.sharedEnabled) ? [{
         title: 'Virtual',
         translatable: true,
         icon: 'solution',
@@ -139,7 +139,7 @@ export default {
           function: this.routeTo,
           paramsArr: [{name: 'products', query: { service: 'Virtual' }}],
         }
-      }];
+      }] : [];
 
 			this.sp.forEach(({ meta: { service }, title }) => {
         if (service.title) services.push({

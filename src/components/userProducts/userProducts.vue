@@ -15,7 +15,7 @@
               <!-- по фильтру -->
             </span>
             <transition name="fade-in">
-              <span v-if="!productsLoading" class="products__count">
+              <span v-if="!productsLoading && isLogged" class="products__count">
                 {{ $t("comp_services.total") }}: {{ productsCount }}
                 <!-- всего -->
               </span>
@@ -80,12 +80,9 @@
       class="products__inner"
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
-      <div class="products__unregistred" v-if="!user">
+      <div class="products__unregistred" v-if="!isLogged">
         {{ $t("unregistered.will be able after") }}
-        <router-link :to="{ name: 'login' }">{{
-          $t("unregistered.login")
-        }}</router-link
-        >.
+        <router-link :to="{ name: 'login' }">{{ $t("unregistered.login") }}</router-link>.
       </div>
       <loading v-else-if="productsLoading" />
       <template v-else-if="productsPrepared.length > 0">
@@ -104,7 +101,6 @@
         shape="round"
         icon="plus"
         type="primary"
-        style="margin-top: 15px"
         @click="newProductHandle"
         block
         v-if="queryTypes.length == 1"
@@ -128,9 +124,19 @@ export default {
   },
   data: () => ({ sortBy: 'Date', sortType: 'sort-ascending', anchor: null }),
   created() {
-    if (localStorage.getItem('types')) {
-      this.$router.replace({ query: { service: localStorage.getItem('types') } });
+    const service = localStorage.getItem('types');
+    const sorting = JSON.parse(localStorage.getItem('serviceSorting') ?? "false");
+    const isProductsRoute = service && this.$route.name !== 'products';
+    const isServicesSame = service === this.$route.query.service;
+
+    if (isProductsRoute && !isServicesSame) {
+      this.$router.replace({ query: { service } });
     }
+    if (sorting) {
+      this.sortBy = sorting.sortBy;
+      this.sortType = sorting.sortType;
+    }
+
     if (this.sp.length < 1) {
       this.$store.dispatch('nocloud/sp/fetch', !this.isLogged)
         .catch((err) => {
@@ -203,7 +209,7 @@ export default {
             case "LCM_INIT":
               status = "POWEROFF";
             default:
-              status = state.replaceAll('_', ' ');
+              if (state) status = state.replaceAll('_', ' ');
           }
 
           const res = {
@@ -410,6 +416,16 @@ export default {
       } else {
         localStorage.removeItem('types');
       }
+    },
+    sortBy(value) {
+      const sorting = { sortBy: value, sortType: this.sortType };
+
+      localStorage.setItem('serviceSorting', JSON.stringify(sorting));
+    },
+    sortType(value) {
+      const sorting = { sortBy: this.sortBy, sortType: value };
+
+      localStorage.setItem('serviceSorting', JSON.stringify(sorting));
     }
   }
 };
@@ -458,11 +474,12 @@ export default {
 }
 
 .products__unregistred {
+  padding: 7px 10px;
   font-size: 1.5rem;
-}
-
-.products__unregistred {
   text-align: center;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 5px 8px 10px rgba(0,0,0,.05);
 }
 
 .products__title {
@@ -484,7 +501,7 @@ export default {
 }
 
 .products__new {
-  margin-right: 10px;
+  margin: 5px 10px 0 0;
   transform: translateY(-2px);
 }
 

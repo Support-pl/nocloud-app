@@ -28,7 +28,7 @@
                   :message="$t('Please select a suitable location')"
                 />
 
-                <a-select
+                <!-- <a-select
                   v-model="locationId"
                   :placeholder="$t('select location')"
                   style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
@@ -36,7 +36,7 @@
                   <a-select-option v-for="item in locations" :key="item.id" :value="item.id">
                     {{ item.title }}
                   </a-select-option>
-                </a-select>
+                </a-select> -->
 
                 <a-select
                   v-model="servicesTitle"
@@ -53,16 +53,6 @@
                     <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
                   </a-spin>
                 </div>
-                <!-- <a-radio-group v-model="location_uuid">
-                  <a-radio-button
-                    v-for="(sp, index) in getSP"
-                    :key="index"
-                    style="width: 130px; text-align: center"
-                    :value="sp.uuid"
-                  >
-                    {{ sp.title }}
-                  </a-radio-button>
-                </a-radio-group> -->
               </a-row>
             </template>
           </component>
@@ -848,7 +838,7 @@ export default {
     productFullPriceCustom() {
       if (this.getPlan) {
         const price = [];
-        for (let resource of this.getPlan.resources) {
+        for (let resource of this.getPlan.resources ?? []) {
           const key = resource.key.toLowerCase();
 
           if (key.includes('ip')) {
@@ -1013,12 +1003,11 @@ export default {
               this.options.os.name = this.dataLocalStorage.config.template_name;
               this.password = this.dataLocalStorage.config.password;
             }
-            
+
             if (this.dataLocalStorage.ovhConfig) {
               this.options.config = this.dataLocalStorage.ovhConfig;
             }
 
-            
             if (this.dataLocalStorage.resources) {
               this.options.disk.size = this.dataLocalStorage.resources.drive_size;
               this.options.drive = this.dataLocalStorage.resources.drive_type;
@@ -1605,11 +1594,11 @@ export default {
     },
     activeKey(value) {
       setTimeout(() => {
-        const { $el } = this.$refs['periods-group']?.$children.at(-1);
+        const { $el } = this.$refs['periods-group']?.$children.at(-1) ?? {};
 
         if (value === 'location' && this.$refs.description) {
           this.$refs.description.innerHTML = this.locationDescription;
-        } else if ($el.style.gridColumn === '' && Object.keys(this.periods).length > 4) {
+        } else if ($el?.style.gridColumn === '' && Object.keys(this.periods).length > 4) {
           if (Object.keys(this.periods).length % 3 === 1) $el.style.gridColumn = '2 / 3';
         }
       });
@@ -1641,12 +1630,12 @@ export default {
 .ant-slider-mark-text:last-of-type {
   transform: translateX(calc(-100% + 10px)) !important;
 }
-.ant-radio-button-wrapper {
+.newCloud_wrapper .ant-radio-button-wrapper {
   margin: 1px;
   border-radius: 4px !important;
   border-left: 1px solid #d9d9d9;
 }
-.ant-radio-button-wrapper:not(:first-child)::before {
+.newCloud_wrapper .ant-radio-button-wrapper:not(:first-child)::before {
   content: none;
 }
 .newCloud__prop {
@@ -1934,39 +1923,16 @@ export default {
     flex-direction: column;
   }
 }
-@media screen and (max-width: 576px) {
-  .newCloud__template {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: stretch;
-  }
+@media screen and (max-width: 575px) {
   .newCloud__template-item {
-    grid-template-columns: max-content auto;
-    grid-template-rows: 1fr;
-    width: auto;
-    height: 50px;
-  }
-  .newCloud__template-item:not(:last-child) {
-    margin-right: 0px;
+    grid-template-columns: 40px 1fr;
   }
   .newCloud__template-image {
-    width: 50px;
-    height: 50px;
-    padding: 4px;
+    padding: 7px 0 7px 10px;
   }
   .newCloud__template-image__rate {
     line-height: 42px;
     font-size: 1.4rem;
-  }
-  .newCloud__template-image img {
-    object-fit: contain;
-    width: 100%;
-    height: 100%;
-  }
-  .newCloud__template-name {
-    text-align: left;
-    line-height: 30px;
-    display: flex;
   }
   .newCloud__template-type {
     width: 56px;
@@ -1979,6 +1945,9 @@ export default {
   }
   .newCloud__template-name ul li {
     margin-left: 20px;
+  }
+  .ant-form-item-label {
+    line-height: inherit;
   }
 }
 .networkApear-enter-active,

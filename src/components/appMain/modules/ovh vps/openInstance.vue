@@ -827,10 +827,10 @@ export default {
           }
         })
         .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.openNotificationWithIcon('error', { message: this.$t(message) });
           console.error(err);
-          this.openNotificationWithIcon("error", {
-            message: `Error: ${err.response?.data?.message ?? "Unknown"}.`
-          });
         });
     },
   },

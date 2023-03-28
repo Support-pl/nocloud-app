@@ -29,14 +29,12 @@
         </a-collapse-panel>
       </a-collapse>
 
+      <component :is="getModuleProductBtn" :service="instance" />
+
       <div class="item__cost" v-if="user.currency_code">
-        <component :is="getModuleProductBtn" :service="instance" />
         {{ user.currency_code === 'USD' ? `$${price}` : `${price} ${user.currency_code}` }}
       </div>
-      <div class="item__cost" v-else-if="price">
-        <component :is="getModuleProductBtn" :service="instance" />
-        {{ `$${price}` }}
-      </div>
+      <div class="item__cost" v-else-if="price">{{ `$${price}` }}</div>
     </div>
 
     <!-- <div class="cloud__label cloud__label__mainColor">
@@ -181,7 +179,7 @@ export default {
 .cloud__item {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 7fr auto 1fr;
   gap: 7px 10px;
   font-size: 16px;
 }
@@ -195,6 +193,7 @@ export default {
   top: 5px;
 }
 .item__title {
+  grid-column: 1 / 3;
   margin-top: 2px;
   padding-right: 10px;
   font-weight: bold;
@@ -205,9 +204,6 @@ export default {
 .item__status,
 .item__date {
   color: rgba(0, 0, 0, 0.4);
-}
-.item__status {
-  margin-top: 4px;
 }
 .item__date {
   justify-self: end;
@@ -224,6 +220,8 @@ export default {
   background: var(--err);
 }
 .item__cost {
+  grid-column: 3 / 4;
+  margin-left: 10px;
   text-align: right;
 }
 .cloud__label {

@@ -61,7 +61,7 @@ export default {
 .btn{
   display: inline-block;
   width: fit-content;
-	margin-right: 10px;
+	transform: translateX(10px);
 }
 
 .btn button{

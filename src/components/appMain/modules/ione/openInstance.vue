@@ -461,14 +461,19 @@
         </a-col>
       </a-row>
     </div>
+
+    <add-funds
+      v-if="addfunds.visible"
+      :sum="addfunds.amount"
+      :modalVisible="addfunds.visible"
+      :hideModal="() => addfunds.visible = false"
+    />
   </div>
 </template>
 
 <script>
 import notification from "@/mixins/notification";
 import addFunds from '@/components/balance/addFunds.vue';
-
-
 
 const columns = [
   {

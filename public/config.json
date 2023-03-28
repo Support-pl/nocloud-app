@@ -20,7 +20,7 @@
 		"suffix": "USD",
 		"code": "USD"
 	},
-  "services": ["VM", "Domains", "Virtual", "SSL"],
   "languages": ["en", "ru", "vi", "fr"],
+  "sharedEnabled": true,
 	"dangerModeNoSSLCheck": false
 }

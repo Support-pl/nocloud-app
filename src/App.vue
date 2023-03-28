@@ -42,6 +42,8 @@ export default {
     if (lang != undefined) this.$i18n.locale = lang;
     if (this.loggedIn) {
       this.$store.dispatch("nocloud/auth/fetchUserData");
+    } else {
+      localStorage.removeItem('user');
     }
   },
   mounted() {

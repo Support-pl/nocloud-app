@@ -44,6 +44,7 @@
 	"dueDate": "Payment Date",
 	"Choice payment": "Choose payment",
 	"Information": "Information",
+  "Copy link to share": "Copy link to share",
 	"It’s empty...": "No information is available yet.",
 	"Unknown error.": "Unknown error.",
 	"Password is too short": "Password is too short",
@@ -499,7 +500,7 @@
 	},
 	"product_name": "Product Name",
 	"VNDExcludeVAT": "Prices quoted in VND, subject to 10% VAT",
-  "I want an invoice": "I want an invoice",
+  "Invoice is needed": "Invoice is needed",
 
 
   "reload": "reload",

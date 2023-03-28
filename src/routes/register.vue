@@ -147,7 +147,7 @@
 					<router-link :to="{name: 'login'}">{{$t('clientinfo.already have account?') | capitalize}}</router-link>
 				</div>
         <div class="register__already-has" style="margin-top: 10px">
-          <a-checkbox v-model="invoiceChecked">{{$t('I want an invoice')}}</a-checkbox>
+          <a-checkbox v-model="invoiceChecked">{{$t('Invoice is needed')}}</a-checkbox>
         </div>
 			</div>
 		</div>

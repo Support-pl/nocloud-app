@@ -129,8 +129,9 @@
                         @change="onChange"
                       />
                       <a-range-picker
-                        v-else
                         show-time
+                        v-else-if="active === 'invoice'"
+                        :value="checkedList"
                         @ok="updateFilter"
                         @change="onChangeRange"
                         @openChange="openRange"
@@ -173,6 +174,7 @@
 <script>
 import { mapActions, mapGetters, mapMutations } from "vuex";
 import balance from "../balance/balance.vue";
+import moment from "moment";
 
 export default {
   name: "appHeader",
@@ -360,8 +362,9 @@ export default {
       }
 
       if (this.active == "invoice" && this.activeInvoiceTab == "Detail") {
-        const dates = JSON.parse(localStorage.getItem("detailFilters"))
-          .map((el) => ({ _d: new Date(el) }));
+        const dates = JSON.parse(
+          localStorage.getItem("detailFilters") ?? "[]"
+        ).map((el) => moment(el));
 
         if (!info) {
           info = dates;
@@ -375,7 +378,7 @@ export default {
         const filtered = {};
 
         if (!info) {
-          info = JSON.parse(localStorage.getItem("invoiceFilters"));
+          info = JSON.parse(localStorage.getItem("invoiceFilters") ?? "[]");
           this.checkedList = info;
         } else {
           localStorage.setItem("invoiceFilters", JSON.stringify(info));

@@ -8,6 +8,7 @@ export default {
 	autoTicketDepartment: 9,
 
 	languages: globalConfig.languages ?? ['en'],
+  sharedEnabled: globalConfig.sharedEnabled ?? false,
 	dangerModeNoSSLCheck: globalConfig.dangerModeNoSSLCheck ?? false,
 	WHMCSsiteurl: globalConfig.whmcs?.site_url ?? '',
 	sharedFolder: globalConfig.app?.shared_folder ?? 'virtualHosting',
@@ -21,7 +22,7 @@ export default {
 		suffix: globalConfig?.currency?.suffix ?? 'USD',
 		code: globalConfig?.currency?.code ?? 'USD',
 	},
-  services: {
+	services: {
     virtual: {
       groupname: ['Виртуальный хостинг', 'Shared Hosting'],
       creationRouteName: 'service-virtual',

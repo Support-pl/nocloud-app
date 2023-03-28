@@ -26,10 +26,9 @@
               </a-radio-button>
             </a-radio-group>
           </a-col>
-          <a-col span="24">
+          <a-col span="24" v-if="resources.plans.length < 6 && resources.plans.length > 1">
             <a-slider
               style="margin-top: 10px"
-              v-if="resources.plans.length < 6 && resources.plans.length > 1"
               :marks="{ ...resources.plans }"
               :tip-formatter="null"
               :max="resources.plans.length - 1"
@@ -37,8 +36,9 @@
               :value="resources.plans.indexOf(plan)"
               @change="(i) => $emit('changePlan', resources.plans[i])"
             />
-
-            <div v-else class="order__slider">
+          </a-col>
+          <a-col v-else span="24">
+            <div class="order__slider">
               <div
                 class="order__slider-item"
                 v-for="provider of resources.plans"
@@ -55,7 +55,7 @@
           <a-col>
             <span style="display: inline-block; width: 70px">CPU:</span>
           </a-col>
-          <a-col class="changing__field" span="3" style="text-align: right">
+          <a-col class="changing__field" style="text-align: right">
             {{ options.cpu.size }} vCPU
           </a-col>
         </a-row>
@@ -63,10 +63,9 @@
           <a-col>
             <span style="display: inline-block; width: 70px">RAM:</span>
           </a-col>
-          <a-col span="18">
+          <a-col :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }"  v-if="resources.ram.length > 1">
             <a-slider
               style="margin-top: 10px"
-              v-if="resources.ram.length > 1"
               :marks="{ ...resources.ram }"
               :tip-formatter="null"
               :max="resources.ram.length - 1"
@@ -77,7 +76,7 @@
             />
           </a-col>
           <transition name="textchange" mode="out-in">
-            <a-col class="changing__field" span="3" style="text-align: right">
+            <a-col class="changing__field" :sm="3" :xs="18" style="text-align: right">
               {{ options.ram.size }} Gb
             </a-col>
           </transition>
@@ -86,10 +85,9 @@
           <a-col>
             <span style="display: inline-block; width: 70px">{{ $t("Drive") }}:</span>
           </a-col>
-          <a-col span="18">
+          <a-col :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }" v-if="resources.disk.length > 1">
             <a-slider
               style="margin-top: 10px"
-              v-if="resources.disk.length > 1"
               :marks="{ ...resources.disk }"
               :tip-formatter="null"
               :max="resources.disk.length - 1"
@@ -99,7 +97,7 @@
               @afterChange="setResource({ key: 'disk', value: options.disk.size / 1024 })"
             />
           </a-col>
-          <a-col class="changing__field" span="3" style="text-align: right">
+          <a-col class="changing__field" :sm="3" :xs="18" style="text-align: right">
             {{ diskSize }}
           </a-col>
         </a-row>
