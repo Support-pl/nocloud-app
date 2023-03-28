@@ -744,6 +744,7 @@ export default {
           const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
           const planCode = this.VM.billingPlan.products[key].meta.addons
             .find((addon) => addon.includes(action));
+
           this.actionLoading = true;
           this.$store.dispatch("nocloud/vms/actionVMInvoke", {
             uuid: this.VM.uuid,
@@ -863,6 +864,7 @@ export default {
     },
     osName() {
       const type = this.VM.billingPlan.type.split(' ')[1];
+
       return this.VM.config.configuration[`${type}_os`];
     },
     locationTitle() {

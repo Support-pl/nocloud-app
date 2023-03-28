@@ -372,12 +372,14 @@ export default {
     },
     createObserver() {
       const button = this.$refs['order-button']?.$el;
+
       if (!button && !this.anchor) return;
       else if (this.anchor) {
         document.querySelector('#app').lastElementChild.remove();
         this.anchor = null;
         return;
       }
+
       const anchor = button.cloneNode(true);
       const observer = new IntersectionObserver((entries) => {
         if (entries[0].intersectionRatio < 0.2) {

@@ -35,7 +35,7 @@
         <a-pagination
           show-size-changer
           style="width: fit-content; margin-left: auto"
-          v-if="value === 'Detail'"
+          v-if="value === 'Detail' && transactions.length > 0"
           :page-size-options="pageSizeOptions"
           :page-size="pageSize"
           :total="totalSize"

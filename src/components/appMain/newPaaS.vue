@@ -298,7 +298,6 @@
               </a-row>
             </transition-group>
 
-
             <a-row
               type="flex"
               justify="space-between"
@@ -1008,7 +1007,6 @@ export default {
             if (this.dataLocalStorage.ovhConfig) {
               this.options.config = this.dataLocalStorage.ovhConfig;
             }
-
 
             if (this.dataLocalStorage.resources) {
               this.options.disk.size = this.dataLocalStorage.resources.drive_size;

@@ -613,6 +613,7 @@ export default {
     },
     checkBalance() {
       const sum = this.VM.billingPlan?.products[this.VM.product]?.price ?? 0;
+
       if (this.user.balance < parseFloat(sum)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance.'),

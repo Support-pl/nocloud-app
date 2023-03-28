@@ -59,6 +59,7 @@ export default {
 
 <style scoped>
 .btn{
+  display: inline-block;
   width: fit-content;
 	transform: translateX(10px);
 }

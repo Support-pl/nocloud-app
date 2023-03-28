@@ -129,8 +129,8 @@
                         @change="onChange"
                       />
                       <a-range-picker
-                        v-else-if="active === 'invoice'"
                         show-time
+                        v-else-if="active === 'invoice'"
                         :value="checkedList"
                         @ok="updateFilter"
                         @change="onChangeRange"
@@ -345,6 +345,14 @@ export default {
     updateFilter(info) {
       if (this.active == "support") {
         const filtered = {};
+
+        if (!info) {
+          info = JSON.parse(localStorage.getItem("supportFilters"));
+          this.checkedList = info;
+        } else {
+          localStorage.setItem("supportFilters", JSON.stringify(info));
+        }
+
         this.getAllTickets.forEach((el) => {
           const key = this.$t(`filterHeader.${el.status}`);
 
