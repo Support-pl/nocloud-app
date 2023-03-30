@@ -287,7 +287,7 @@ export default {
     if (this.scale > this.maxScale) this.scale = this.maxScale;
     if (xScale > yScale) right = 20 * xScale;
     if (yScale > xScale) down = 20 * yScale;
-    
+
     x = (min.x - 20) * this.scale - right;
     y = (min.y - 10) * this.scale - down;
 
@@ -374,4 +374,3 @@ export default {
   stroke-width: 1.5;
 }
 </style>
-

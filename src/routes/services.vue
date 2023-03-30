@@ -32,9 +32,11 @@ export default {
     products() {
       const products = this.$store.getters["products/getProducts"];
       const instances = this.$store.getters["nocloud/vms/getInstances"];
+
       if (this.$route.query.service) {
         return [...products, ...instances].filter(({ sp }) => {
           const { title } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+
           return this.checkedTypes.some((service) => service === title);
         });
       }
@@ -48,6 +50,7 @@ export default {
         this.$route.query?.service?.split(",").filter((el) => el.length > 0) ?? []
       );
     },
+
     currentPage() {
       return this.$store.getters["products/page"];
     },

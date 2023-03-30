@@ -16,7 +16,7 @@
         {{ localDate }}
       </div>
 
-      <div v-if="instance.domain" class="item__status">{{ instance.domain }}</div>
+      <div v-if="networking.length < 2" class="item__status">{{ instance.domain }}</div>
       <div class="item__status" v-else-if="!(instance.state && networking.length > 0)">
         IP: {{ $t("ip.none") }}
       </div>

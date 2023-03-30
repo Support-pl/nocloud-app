@@ -345,6 +345,16 @@ export default {
     updateFilter(info) {
       if (this.active == "support") {
         const filtered = {};
+
+        if (!info) {
+          info = JSON.parse(localStorage.getItem("supportFilters") ?? "[]");
+          this.checkedList = info;
+        } else {
+          const filters = info.map((el) => filtered[el]);
+
+          localStorage.setItem("supportFilters", JSON.stringify(filters));
+        }
+
         this.getAllTickets.forEach((el) => {
           const key = this.$t(`filterHeader.${el.status}`);
 
@@ -373,7 +383,9 @@ export default {
           info = JSON.parse(localStorage.getItem("invoiceFilters") ?? "[]");
           this.checkedList = info;
         } else {
-          localStorage.setItem("invoiceFilters", JSON.stringify(info));
+          const filters = info.map((el) => filtered[el]);
+
+          localStorage.setItem("invoiceFilters", JSON.stringify(filters));
         }
 
         this.getAllInvoices.forEach((el) => {

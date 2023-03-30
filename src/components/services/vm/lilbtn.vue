@@ -23,10 +23,39 @@ export default {
 	methods: {
 		moduleEnter() {
       if (!this.checkBalance()) return;
+
+      const key = (this.service.billingPlan.type.includes('ovh'))
+        ? `${this.service.config.duration} ${this.service.config.planCode}`
+        : this.service.product;
+      const { period } = this.service.billingPlan.products[key];
+
+      const currentPeriod = (this.service.billingPlan.type.includes('ovh'))
+        ? this.date(this.service.data.last_monitoring)
+        : this.service.data.expiration;
+      const newPeriod = (this.service.billingPlan.type.includes('ovh'))
+        ? this.date(this.service.data.last_monitoring + +period)
+        : this.date(this.service.data.expiration, +period);
+
 			this.$confirm({
         title: this.$t('Do you want to renew server?'),
+        content: () => (
+          <div>
+            <div style="font-weight: 700">{ `${this.service.title}` }</div>
+            <div>
+              { `${this.$t("from")} ` }
+              <span style="font-style: italic">{ `${currentPeriod}` }</span>
+            </div>
+            <div>
+              { `${this.$t("to")} ` }
+              <span style="font-style: italic">{ `${newPeriod}` }</span>
+            </div>
+          </div>
+        ),
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
+        okButtonProps: {
+          props: { disabled: (this.service.data.blocked) },
+        },
         onOk: async () => {
           const data = { uuid: this.service.orderid, action: 'manual_renew' };
 
@@ -63,6 +92,22 @@ export default {
         return false;
       }
       return true;
+    },
+    date(string, timestamp) {
+      if (timestamp < 1) return '-';
+
+      const stringDate = (string) ? new Date(string).getTime() : 0;
+      const date = new Date(timestamp * 1000 + stringDate);
+      const time =  date.toTimeString().split(' ')[0];
+
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
+
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
+
+      return `${day}.${month}.${year} ${time}`;
     }
 	},
   computed: {

@@ -293,7 +293,10 @@ export default {
       return this.$store.getters["nocloud/sp/getSP"];
     },
     types() {
-      return [...this.sp.map(({ title }) => title), 'Virtual'];
+      const result = [...this.sp.map(({ title }) => title)];
+
+      if (this.$config.sharedEnabled) result.push('Virtual');
+      return result;
     },
     checkedTypes() {
       return (
@@ -372,12 +375,14 @@ export default {
     },
     createObserver() {
       const button = this.$refs['order-button']?.$el;
+
       if (!button && !this.anchor) return;
       else if (this.anchor) {
         document.querySelector('#app').lastElementChild.remove();
         this.anchor = null;
         return;
       }
+
       const anchor = button.cloneNode(true);
       const observer = new IntersectionObserver((entries) => {
         if (entries[0].intersectionRatio < 0.2) {
