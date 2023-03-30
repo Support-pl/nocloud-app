@@ -696,10 +696,31 @@ export default {
       });
     },
     sendRenew() {
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const { period } = this.VM.billingPlan.products[key];
+      const currentPeriod = this.VM.data.expiration;
+      const newPeriod = this.date(this.VM.data.expiration, +period);
+
       this.$confirm({
         title: this.$t("Do you want to renew server?"),
+        content: () => (
+          <div>
+            <div style="font-weight: 700">{ `${this.VM.title}` }</div>
+            <div>
+              { `${this.$t("from")} ` }
+              <span style="font-style: italic">{ `${currentPeriod}` }</span>
+            </div>
+            <div>
+              { `${this.$t("to")} ` }
+              <span style="font-style: italic">{ `${newPeriod}` }</span>
+            </div>
+          </div>
+        ),
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
+        okButtonProps: {
+          props: { disabled: (this.VM.data.blocked) },
+        },
         onOk: () => this.sendAction("manual_renew"),
         onCancel() {},
       });
@@ -789,6 +810,22 @@ export default {
           });
         });
     },
+    date(string, timestamp) {
+      if (timestamp < 1) return '-';
+
+      const stringDate = new Date(string).getTime();
+      const date = new Date(timestamp * 1000 + stringDate);
+      const time =  date.toTimeString().split(' ')[0];
+
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
+
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
+
+      return `${day}.${month}.${year} ${time}`;
+    }
   },
   created() { this.fetchMonitoring() },
   computed: {

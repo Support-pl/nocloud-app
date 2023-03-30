@@ -347,10 +347,12 @@ export default {
         const filtered = {};
 
         if (!info) {
-          info = JSON.parse(localStorage.getItem("supportFilters"));
+          info = JSON.parse(localStorage.getItem("supportFilters") ?? "[]");
           this.checkedList = info;
         } else {
-          localStorage.setItem("supportFilters", JSON.stringify(info));
+          const filters = info.map((el) => filtered[el]);
+
+          localStorage.setItem("supportFilters", JSON.stringify(filters));
         }
 
         this.getAllTickets.forEach((el) => {
@@ -381,7 +383,9 @@ export default {
           info = JSON.parse(localStorage.getItem("invoiceFilters") ?? "[]");
           this.checkedList = info;
         } else {
-          localStorage.setItem("invoiceFilters", JSON.stringify(info));
+          const filters = info.map((el) => filtered[el]);
+
+          localStorage.setItem("invoiceFilters", JSON.stringify(filters));
         }
 
         this.getAllInvoices.forEach((el) => {

@@ -143,7 +143,7 @@ export default {
       sessionStorage.setItem('invoice', uuid);
     });
 
-    this.$store.dispatch('nocloud/vms/fetch')
+    this.$api.get('/services', { params: { show_deleted: true } })
       .then(({ pool }) => [pool, this.$api.get(url)])
       .then(async ([services, promise]) => {
         const instances = {};

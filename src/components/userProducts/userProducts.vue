@@ -293,7 +293,10 @@ export default {
       return this.$store.getters["nocloud/sp/getSP"];
     },
     types() {
-      return [...this.sp.map(({ title }) => title), 'Virtual'];
+      const result = [...this.sp.map(({ title }) => title)];
+
+      if (this.$config.sharedEnabled) result.push('Virtual');
+      return result;
     },
     checkedTypes() {
       return (

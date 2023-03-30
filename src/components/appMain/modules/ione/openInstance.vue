@@ -226,7 +226,7 @@
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.last_monitoring * 1000) }}
-              <a-icon v-if="false" type="sync" title="Renew" @click="handleOk('renew')" />
+              <a-icon type="sync" title="Renew" @click="handleOk('renew')" />
             </div>
           </div>
         </div>
@@ -607,7 +607,7 @@ export default {
           });
           break;
         case "renew":
-          if (this.checkBalance()) this.sendAction('manual_renew');
+          if (this.checkBalance()) this.sendRenew();
           break;
       }
     },
@@ -786,7 +786,36 @@ export default {
       newOpt.title = `${capitalized} (${range})`;
       return newOpt;
     },
-    sendAction(action) {
+    sendRenew() {
+      const { period } = this.VM.billingPlan.products[this.VM.product];
+      const currentPeriod = this.date(this.VM.data.last_monitoring);
+      const newPeriod = this.date(this.VM.data.last_monitoring + +period);
+
+      this.$confirm({
+        title: this.$t("Do you want to renew server?"),
+        content: () => (
+          <div>
+            <div style="font-weight: 700">{ `${this.VM.title}` }</div>
+            <div>
+              { `${this.$t("from")} ` }
+              <span style="font-style: italic">{ `${currentPeriod}` }</span>
+            </div>
+            <div>
+              { `${this.$t("to")} ` }
+              <span style="font-style: italic">{ `${newPeriod}` }</span>
+            </div>
+          </div>
+        ),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        okButtonProps: {
+          props: { disabled: (this.VM.data.blocked) },
+        },
+        onOk: () => this.sendAction("manual_renew"),
+        onCancel() {},
+      });
+    },
+    async sendAction(action) {
       const hard = this.option.reboot || action.includes('Hard');
       const data = {
         uuid: this.VM.uuid,
@@ -820,8 +849,7 @@ export default {
           });
         return;
       }
-      this.$store
-        .dispatch("nocloud/vms/actionVMInvoke", data)
+      return this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
           const opts = {
             message: `${this.$t('Done')}!`,
@@ -865,6 +893,21 @@ export default {
           });
         });
     },
+    date(timestamp) {
+      if (timestamp < 1) return '-';
+
+      const date = new Date(timestamp * 1000);
+      const time =  date.toTimeString().split(' ')[0];
+
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
+
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
+
+      return `${day}.${month}.${year} ${time}`;
+    }
   },
   created() { this.fetchMonitoring() },
   computed: {
