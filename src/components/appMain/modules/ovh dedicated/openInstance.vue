@@ -815,7 +815,6 @@ export default {
 
       const stringDate = new Date(string).getTime();
       const date = new Date(timestamp * 1000 + stringDate);
-      const time =  date.toTimeString().split(' ')[0];
 
       const year = date.getFullYear();
       let month = date.getMonth() + 1;
@@ -824,7 +823,7 @@ export default {
       if (`${month}`.length < 2) month = `0${month}`;
       if (`${day}`.length < 2) day = `0${day}`;
 
-      return `${day}.${month}.${year} ${time}`;
+      return `${year}-${month}-${day}`;
     }
   },
   created() { this.fetchMonitoring() },

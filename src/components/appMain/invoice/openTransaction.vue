@@ -54,7 +54,7 @@
                     </div>
                   </div>
 
-                <div class="info__main">
+                <div class="info__main" v-if="records.length > 0">
                   <a-table row-key="uuid" :data-source="records" :columns="columns">
                     <template slot="date" slot-scope="text, record">
                       {{ date(record.exec) }}
@@ -68,6 +68,29 @@
                         : record.resource.toUpperCase() }}
                     </template>
                   </a-table>
+                </div>
+
+                <div class="info__main" v-if="invoice">
+                  <a-card v-if="invoice.meta.message" :title="$t('message') | capitalize">
+                    <div>{{ invoice.meta.message }}</div>
+                  </a-card>
+
+                  <a-card
+                    v-if="invoice.meta.instances && invoice.meta.instances.length > 0"
+                    style="margin-top: 15px"
+                    :title="$t('services') | capitalize"
+                  >
+                    <template #extra>
+                      <router-link :to="{ name: 'services' }">{{ $t('comp_services.all') }}</router-link>
+                    </template>
+                    <router-link
+                      v-for="inst of invoice.meta.instances"
+                      :key="inst"
+                      :to="{ name: 'openCloud_new', params: { uuid: inst } }"
+                    >
+                      {{ instances[inst] }}
+                    </router-link>
+                  </a-card>
                 </div>
               </div>
             </div>
@@ -87,7 +110,8 @@ export default {
   components: { loading },
   data: () => ({
     isLoading: true,
-    records: null,
+    instances: {},
+    records: [],
     columns: [
       {
         title: 'Instance',
@@ -144,28 +168,29 @@ export default {
     });
 
     this.$api.get('/services', { params: { show_deleted: true } })
-      .then(({ pool }) => [pool, this.$api.get(url)])
-      .then(async ([services, promise]) => {
-        const instances = {};
-        const { pool } = await promise;
-
-        services.forEach((service) => {
+      .then(({ pool }) => {
+        pool.forEach((service) => {
           service.instancesGroups.forEach((group) => {
             group.instances.forEach((inst) => {
-              instances[inst.uuid] = inst.title;
+              this.$set(this.instances, inst.uuid, inst.title);
             });
           });
         });
+
+        return this.$api.get(url);
+      })
+      .then(({ pool }) => {
         this.records = pool.map((el) => ({
-          ...el, instance: instances[el.instance] ?? 'unknown'
+          ...el, instance: this.instances[el.instance] ?? 'unknown'
         }));
-        this.isLoading = false;
 
         this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource';
       })
       .catch((err) => {
-        this.$router.push("/invoice");
         console.error(err);
+      })
+      .finally(() => {
+        this.isLoading = false;
       });
   },
   destroyed() {
@@ -176,6 +201,9 @@ export default {
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
+    },
+    userdata() {
+      return this.$store.getters['nocloud/auth/userdata'];
     },
     currencies() {
       return this.$store.getters['nocloud/auth/currencies'];
@@ -193,7 +221,7 @@ export default {
       return { code, rate: (rate) ? rate : 1 / reverseRate };
     },
     statusColor() {
-      return this.records[0].processed
+      return this.records[0]?.processed
         ? this.$config.colors.success
         : this.$config.colors.err;
     },
@@ -205,15 +233,16 @@ export default {
         .find((el) => el.uuid === this.$route.params.uuid);
     },
     total() {
-      const sum = this.records?.reduce((prev, el) => +prev + +el.total, 0);
+      const sum = this.records?.reduce((prev, el) => +prev + +el.total, 0) ||
+        this.invoice?.total || 0;
 
       return +(sum * this.currency.rate)?.toFixed(2);
     }
   },
   watch: {
-    user() {
+    userdata() {
       this.$store.dispatch('nocloud/transactions/fetch', {
-        account: this.user.uuid,
+        account: this.userdata.uuid,
         page: this.$store.getters["nocloud/transactions/page"],
         limit: this.$store.getters["nocloud/transactions/size"],
         field: "proc",
