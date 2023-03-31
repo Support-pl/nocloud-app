@@ -30,11 +30,12 @@ export default {
       const { period } = this.service.billingPlan.products[key];
 
       const currentPeriod = (this.service.billingPlan.type.includes('ovh'))
-        ? this.date(this.service.data.last_monitoring)
-        : this.service.data.expiration;
+        ? this.service.data.expiration
+        : this.date(this.service.data.last_monitoring);
+
       const newPeriod = (this.service.billingPlan.type.includes('ovh'))
-        ? this.date(this.service.data.last_monitoring + +period)
-        : this.date(this.service.data.expiration, +period);
+        ? this.date(this.service.data.expiration, +period)
+        : this.date(this.service.data.last_monitoring + +period);
 
 			this.$confirm({
         title: this.$t('Do you want to renew server?'),
@@ -96,8 +97,8 @@ export default {
     date(string, timestamp) {
       if (timestamp < 1) return '-';
 
-      const stringDate = (string) ? new Date(string).getTime() : 0;
-      const date = new Date(timestamp * 1000 + stringDate);
+      const dateFromString = (string) ? new Date(string).getTime() : 0;
+      const date = new Date(timestamp * 1000 + dateFromString);
       const time =  date.toTimeString().split(' ')[0];
 
       const year = date.getFullYear();
@@ -107,6 +108,7 @@ export default {
       if (`${month}`.length < 2) month = `0${month}`;
       if (`${day}`.length < 2) day = `0${day}`;
 
+      if (string) return `${year}-${month}-${day}`;
       return `${day}.${month}.${year} ${time}`;
     }
 	},
