@@ -1,15 +1,12 @@
 version: "3.5"
 services:
   client:
-    image: nocloud
+    image: ghcr.io/support-pl/nocloud-app:latest
     container_name: nocloud-app
-    build:
-      dockerfile: Dockerfile
     ports:
       - 8080:8080
     environment: 
-      VUE_APP_BASE_URL: http://localhost/https://api.nocloud.ione-cloud.net/
-      PORT: 8080
+      BASE_URL: http://api.nocloud.local
     
 
 
