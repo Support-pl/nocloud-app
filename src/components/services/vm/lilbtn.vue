@@ -36,11 +36,11 @@ export default {
 
       const currentPeriod = (this.service.billingPlan.type.includes('ovh'))
         ? this.service.data.expiration
-        : this.date(this.service.data.last_monitoring);
+        : this.date(null, this.service.data.last_monitoring);
 
       const newPeriod = (this.service.billingPlan.type.includes('ovh'))
         ? this.date(this.service.data.expiration, +period)
-        : this.date(this.service.data.last_monitoring + +period);
+        : this.date(null, this.service.data.last_monitoring + +period);
 
 			this.$confirm({
         title: this.$t('Do you want to renew server?'),

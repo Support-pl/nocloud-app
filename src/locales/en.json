@@ -121,6 +121,7 @@
   "Do you want to add an snapshot?": "Do you want to add an snapshot?",
 	"Network reserve 1":"Reserve IPv4 for your VM for",
 	"Network reserve 2": "per IPv4. You can select any unused IP and 'Assign to VM'.",
+  "Service will be stopped after resize. Please restart manually!": "Service will be stopped after resize. Please restart manually!",
 	"Enter new VM name":"Enter new VM name",
   "Add recover": "Add recover",
   "Add snapshot": "Add snapshot",
