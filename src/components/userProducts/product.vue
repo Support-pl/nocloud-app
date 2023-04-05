@@ -31,8 +31,8 @@
 				<div class="product__date" :class="{ 'product__date--expired': (isExpired) }">
           {{ localDate }}
         </div>
-				<div class="product__cost" v-if="user.currency_code">
-					{{ user.currency_code === 'USD' ? `$${price}` : `${price} ${user.currency_code}` }}
+				<div class="product__cost" v-if="currency.code">
+					{{ user.currency_code === 'USD' ? `$${price}` : `${price} ${currency.code}` }}
 				</div>
         <div class="product__cost" v-else>{{ `$${price}` }}</div>
 			</div>
@@ -88,6 +88,11 @@ export default {
       }
 			return new Intl.DateTimeFormat().format(this.date);
 		},
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+
+      return { code: this.user.currency_code ?? defaultCurrency };
+    },
 		iconColor(){
 			const status = this.status.toLowerCase();
 
@@ -130,6 +135,10 @@ export default {
   created() {
     this.$store.dispatch('nocloud/auth/fetchBillingData')
       .catch((err) => console.error(err));
+
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+    }
 
     if (this.wholeProduct.groupname !== 'Domains') return;
     this.$api.servicesProviders.action({

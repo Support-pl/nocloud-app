@@ -29,7 +29,9 @@
     <div class="horisontal-line"></div>
     <div class="invoice__footer flex-between">
       <div class="invoice__id">#{{ invoice.id }}</div>
-      <div class="invoice__btn"><a-icon type="right" /></div>
+      <div class="invoice__btn">
+        <a-icon :type="(isLoading) ? 'loading' : 'right'" />
+      </div>
     </div>
   </div>
 </template>
@@ -38,7 +40,11 @@
 export default {
   name: "invoice",
   props: { invoice: Object },
+  data: () => ({ isLoading: false }),
   computed: {
+    baseURL() {
+      return this.$store.getters['invoices/getURL'];
+    },
     statusColor() {
       switch (this.invoice.status.toLowerCase()) {
         case 'paid':
@@ -64,7 +70,21 @@ export default {
   },
   methods: {
     clickOnInvoice(uuid) {
-      this.$router.push({ name: "invoiceFS", params: { uuid } });
+      if (this.invoice.status === "Unpaid") {
+        this.isLoading = true;
+        this.$api.get(this.baseURL, { params: {
+          run: 'get_pay_token',
+          invoice_id: this.invoice.id
+        }})
+        .then((res) => {
+          window.location.href = res;
+        })
+        .finally(() => {
+          this.isLoading = false;
+        });
+      } else {
+        this.$router.push({ name: "invoiceFS", params: { uuid } });
+      }
     },
   },
 };

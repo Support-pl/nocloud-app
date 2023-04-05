@@ -59,8 +59,9 @@ export default {
 
 <style scoped>
 .btn{
+  grid-column: 2 / 4;
+  justify-self: end;
   width: fit-content;
-	transform: translateX(10px);
 }
 
 .btn button{

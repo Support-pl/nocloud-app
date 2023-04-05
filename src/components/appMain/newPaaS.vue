@@ -293,7 +293,7 @@
               >
                 <a-col> {{ $t(key) | capitalize }} {{ getAddonsValue(key) }}: </a-col>
                 <a-col>
-                  {{ addon }} {{ billingData.currency_code || 'USD' }}
+                  {{ addon }} {{ currency.code }}
                 </a-col>
               </a-row>
             </transition-group>
@@ -399,14 +399,14 @@
                 {{ calculatePrice(
                   (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
                   (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
-                {{ billingData.currency_code || 'USD' }}/{{ $tc("year", 0) }}
+                {{ currency.code }}/{{ $tc("year", 0) }}
               </a-col>
 
               <a-col v-if="tarification === 'Biennially'">
                 {{ calculatePrice(
                   (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
                   (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
-                {{ billingData.currency_code || 'USD' }}/2 {{ $t("years") }}
+                {{ currency.code }}/2 {{ $t("years") }}
               </a-col>
 
               <a-col v-if="tarification === 'Monthly'">
@@ -415,17 +415,17 @@
                     (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
                   ).toFixed(2)
                 }}
-                {{ billingData.currency_code || 'USD' }}/{{ $tc("period.month") }}
+                {{ currency.code }}/{{ $tc("period.month") }}
               </a-col>
 
               <a-col v-if="tarification === 'Daily'">
                 {{ calculatePrice(productFullPriceStatic, "day").toFixed(2) }}
-                {{ billingData.currency_code || 'USD' }}/{{ $t("day") }}
+                {{ currency.code }}/{{ $t("day") }}
               </a-col>
 
               <a-col v-if="tarification === 'Hourly'">
                 ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
-                {{ billingData.currency_code || 'USD' }}/{{ $t("hour") }}
+                {{ currency.code }}/{{ $t("hour") }}
               </a-col>
             </a-row>
           </template>
@@ -954,7 +954,9 @@ export default {
       return this.options.slide > 0;
     },
     currency() {
-      return this.$config.currency.code;
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+
+      return { code: this.billingData.currency_code ?? defaultCurrency };
     },
     diskSize() {
       const size = (this.options.disk.size / 1024).toFixed(1);
@@ -980,7 +982,7 @@ export default {
       return `repeat(${(length < 3) ? length : 3}, 1fr)`;
     }
   },
-  mounted() {
+  created() {
     this.servicesTitle = this.$route.query.service ?? "all";
     this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
       .then(() => {
@@ -1026,6 +1028,10 @@ export default {
         setTimeout(this.setOneNameSpace, 300);
       });
 
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+    }
+
     this.$router.beforeEach((to, from, next) => {
       if (
         from.path === "/cloud/newVM" &&
@@ -1043,37 +1049,6 @@ export default {
         next();
       }
     });
-
-    // window.addEventListener("load", () => {
-    //   if (localStorage.getItem("data")) {
-    //     const answer = window.confirm(
-    //       "Do you really want to leave? you have unsaved changes!"
-    //     );
-    //     if (answer) {
-    //       localStorage.removeItem("data");
-    //     }
-    //   }
-    // });
-    // if (window.location.reload() && localStorage.getItem("data")) {
-    //   const answer = window.confirm(
-    //     "Do you really want to leave? you have unsaved changes!"
-    //   );
-    //   if (answer) {
-    //     localStorage.removeItem("data");
-    //   }
-    // }
-
-    // this.$store.dispatch("newPaaS/fetchProductsAuto");
-
-    // this.$axios
-    //   .get("getSettings.php?filter=cost,disktypes,minDisk,maxDisk")
-    //   .then((res) => {
-    //     this.options.network.price = res.data.PUBLIC_IP_COST;
-    //   })
-    //   .catch((err) => {
-    //     console.error(err);
-    //     this.$message.error("Can't load prices. Show saved ones.");
-    //   });
   },
   methods: {
     onScore({ score }) {
@@ -1634,6 +1609,11 @@ export default {
   margin: 1px;
   border-radius: 4px !important;
   border-left: 1px solid #d9d9d9;
+}
+.newCloud_wrapper .ant-radio-button-wrapper-checked:not(
+  .ant-radio-button-wrapper-disabled
+ ) {
+  border-left-color: #1890ff;
 }
 .newCloud_wrapper .ant-radio-button-wrapper:not(:first-child)::before {
   content: none;

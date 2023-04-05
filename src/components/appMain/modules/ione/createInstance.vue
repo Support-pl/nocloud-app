@@ -177,7 +177,7 @@
               </div>
             </a-form-item>
 
-            <a-form-item :label="$t('clientinfo.password')">
+            <a-form-item v-if="user.uuid" :label="$t('clientinfo.password')">
               <password-meter
                 :style="{
                   height: (password.length > 0) ? '10px' : '0',
@@ -194,7 +194,7 @@
               />
             </a-form-item>
 
-            <a-form-item :label="$t('SSH key')">
+            <a-form-item v-if="user.uuid" :label="$t('SSH key')">
               <a-select
                 style="width: 100%"
                 :options="user.data && user.data.ssh_keys"

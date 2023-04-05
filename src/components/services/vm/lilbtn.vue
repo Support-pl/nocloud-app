@@ -1,6 +1,11 @@
 <template>
 	<div class="btn">
-		<a-button block @click.stop="moduleEnter">{{$t('renew') | capitalize}}</a-button>
+		<a-button block @click.stop="moduleEnter">
+      {{ $t('renew') | capitalize }}
+      <template v-if="currency">
+        {{ (currency.code === 'USD') ? `$${slicedPrice}` : priceWithoutPrefix }}
+      </template>
+    </a-button>
 
     <add-funds
       v-if="addfunds.visible"
@@ -16,7 +21,7 @@ import addFunds from '@/components/balance/addFunds.vue';
 
 export default {
   components: { addFunds },
-	props: ['service'],
+	props: ['service', 'price', 'currency'],
   data: () => ({
     addfunds: { visible: false, amount: 0 }
   }),
@@ -74,19 +79,14 @@ export default {
       });
 		},
     checkBalance() {
-      const key = (this.service.billingPlan.type.includes('ovh'))
-        ? `${this.service.config.duration} ${this.service.config.planCode}`
-        : this.service.product;
-      const sum = this.service.billingPlan?.products[key]?.price ?? 0;
-
-      if (this.user.balance < parseFloat(sum)) {
+      if (this.user.balance < parseFloat(this.price)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance.'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
           onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.user.balance);
+            this.addfunds.amount = Math.ceil(parseFloat(this.price) - this.user.balance);
             this.addfunds.visible = true;
           }
         });
@@ -115,18 +115,33 @@ export default {
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
+    },
+    slicedPrice() {
+      if (`${this.price}`.replace('.').length > 3) {
+        return (`${this.price}`[2] === '.')
+          ? `${this.price.toString().slice(0, 4)}...`
+          : `${this.price.toString().slice(0, 3)}...`
+      } else {
+        return this.price;
+      }
+    },
+    priceWithoutPrefix() {
+      const code = (`${this.price}`.replace('.').length > 3) ? '' : this.currency.code;
+
+      return `${this.slicedPrice} ${code}`;
     }
   }
 }
 </script>
 
 <style scoped>
-.btn{
+.btn {
+  grid-column: 2 / 4;
+  justify-self: end;
   width: fit-content;
-	transform: translateX(10px);
 }
 
-.btn button{
+.btn button {
 	height: 100%;
 }
 </style>

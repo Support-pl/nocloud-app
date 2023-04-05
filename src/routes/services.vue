@@ -11,6 +11,7 @@
         :page-size-options="pageSizeOptions"
         :page-size="pageSize"
         :total="totalSize"
+        :current="currentPage"
         @showSizeChange="onShowSizeChange"
         @change="onShowSizeChange"
       />
@@ -69,7 +70,17 @@ export default {
       if (limit !== this.pageSize) {
         this.$store.commit("products/setSize", limit);
       }
+
+      localStorage.setItem("servicesPagination", JSON.stringify({ page, limit }));
     }
+  },
+  mounted() {
+    const pagination = localStorage.getItem("servicesPagination");
+
+    if (!pagination) return;
+    const { page, limit } = JSON.parse(pagination);
+
+    this.onShowSizeChange(page, limit);
   },
   watch: {
     products(value) {

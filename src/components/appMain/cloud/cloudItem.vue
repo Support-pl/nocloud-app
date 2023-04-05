@@ -6,19 +6,17 @@
         :title="instance.domainstatus"
         :style="{ 'background-color': statusColor }"
       />
-      <!-- <div class="item__status">{{ instance.domainstatus }}</div> -->
       <div class="item__title">{{ instance.productname }}</div>
-      <div
-        class="item__date"
-        :class="{ 'item__date--expired': (isExpired) }"
-        :style="{ background: (isPayg) ? 'var(--main)' : null }"
-      >
+      <div class="item__status" style="text-align: right">{{ locationTitle }}</div>
+      <div class="item__date" :style="{ background: dateColor }">
         {{ localDate }}
       </div>
 
-      <div v-if="networking.length < 2" class="item__status">{{ instance.domain }}</div>
-      <div class="item__status" v-else-if="!(instance.state && networking.length > 0)">
+      <div class="item__status" v-if="networking.length < 1">
         IP: {{ $t("ip.none") }}
+      </div>
+      <div class="item__status" v-else-if="networking.length < 2">
+        {{ instance.domain }}
       </div>
 
       <a-collapse v-else v-model="activeKey" expandIconPosition="right" :bordered="false">
@@ -29,10 +27,24 @@
         </a-collapse-panel>
       </a-collapse>
 
-      <component :is="getModuleProductBtn" :service="instance" />
+      <a-tooltip
+        placement="bottom"
+        v-if="getModuleProductBtn && `${price}`.replace('.').length > 3"
+        :title="`${price} ${currency.code}`"
+      >
+        <component :is="getModuleProductBtn" :service="instance" :price="price" :currency="currency" />
+      </a-tooltip>
 
-      <div class="item__cost" v-if="user.currency_code">
-        {{ user.currency_code === 'USD' ? `$${price}` : `${price} ${user.currency_code}` }}
+      <component
+        v-else-if="getModuleProductBtn"
+        :is="getModuleProductBtn"
+        :service="instance"
+        :price="price"
+        :currency="currency"
+      />
+
+      <div class="item__cost" v-else-if="currency.code && price">
+        {{ currency.code === 'USD' ? `$${price}` : `${price} ${currency.code}` }}
       </div>
       <div class="item__cost" v-else-if="price">{{ `$${price}` }}</div>
     </div>
@@ -68,6 +80,12 @@ export default {
           return "rgb(145, 145, 145)";
       }
     },
+    dateColor() {
+      if (this.isExpired) return "var(--err)";
+      if (this.isPayg) return "var(--main)";
+      if (this.localDate === "none") return "var(--gray)";
+      return null;
+    },
     user() {
       return this.$store.getters["nocloud/auth/billingData"];
     },
@@ -80,15 +98,30 @@ export default {
     isLoading() {
       return this.$store.getters["nocloud/vms/isLoading"];
     },
-    price(){
-      return this.prices[this.instance.resources?.period] || this.instance.orderamount;
+    locationTitle() {
+      const sp = this.getSP.find(({ uuid }) => uuid === this.instance.sp);
+      if (sp?.type !== 'ovh') return sp?.locations[0]?.title;
+
+      const { configuration } = this.options.config;
+      const { locations } = sp;
+      const key = Object.keys(configuration).find(
+        (el) => el.includes('datacenter')
+      );
+
+      return locations?.find(({ extra }) =>
+        extra.region.toLowerCase() === configuration[key].toLowerCase()
+      )?.title;
     },
-		localDate(){
+    price() {
+      const amount = this.prices[this.instance.resources?.period] ??
+        this.instance.orderamount;
+
+      return +amount.toFixed(2);
+    },
+		localDate() {
       const productDate = new Date(this.instance.date ?? 0);
 
-      if (this.isPayg) {
-        return this.$t('PayG');
-      }
+      if (this.isPayg) return this.$t('PayG');
       if (productDate.getTime() === 0) return 'none';
       // if (this.wholeProduct.groupname === 'Domains') {
       //   const date = productDate.getTime();
@@ -102,11 +135,16 @@ export default {
       }
 			return new Intl.DateTimeFormat().format(productDate);
 		},
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
-    isPayg(){
+      return { code: this.user.currency_code ?? defaultCurrency };
+    },
+
+    isPayg() {
       return this.instance.type === 'ione' && this.instance.billingPlan.kind === 'DYNAMIC';
     },
-    isExpired(){
+    isExpired() {
       const productDate = new Date(this.instance.date);
       const timestamp = productDate.getTime() - Date.now();
       const days = 7 * 24 * 3600 * 1000;
@@ -116,7 +154,7 @@ export default {
       return timestamp < days;
     },
     networking() {
-      const { networking } = this.instance?.state?.meta;
+      const { networking } = this.instance?.state?.meta ?? {};
 
       if (!networking) return [];
       const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
@@ -135,9 +173,10 @@ export default {
     },
 		getModuleProductBtn() {
 			const serviceType = this.$config.getServiceType(this.instance.groupname)?.toLowerCase();
+      const isActive = ['active', 'running'].includes(this.instance.domainstatus.toLowerCase());
 
 			if (serviceType === undefined) return;
-      if (!['active', 'running'].includes(this.instance.domainstatus.toLowerCase())) return;
+      if (!isActive && serviceType === 'virtual') return;
       if (this.instance.date === 0) return;
 			return () => import(`@/components/services/${serviceType}/lilbtn.vue`);
 		}
@@ -149,8 +188,11 @@ export default {
     },
   },
   created() {
-    if (this.instance.groupname !== 'Domains') return;
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+    }
 
+    if (this.instance.groupname !== 'Domains') return;
     this.$api.servicesProviders.action({
       uuid: this.instance.sp,
       action: 'get_domain_price',
@@ -179,7 +221,7 @@ export default {
 .cloud__item {
   position: relative;
   display: grid;
-  grid-template-columns: 7fr auto 1fr;
+  grid-template-columns: 1fr auto 95px;
   gap: 7px 10px;
   font-size: 16px;
 }
@@ -193,7 +235,6 @@ export default {
   top: 5px;
 }
 .item__title {
-  grid-column: 1 / 3;
   margin-top: 2px;
   padding-right: 10px;
   font-weight: bold;
@@ -209,20 +250,17 @@ export default {
   justify-self: end;
   width: fit-content;
   padding: 3px 15px;
-  margin: -8px -15px 6px;
+  margin: -8px -15px 6px 0;
   border-radius: 0 0 0 20px;
   text-align: center;
   color: #fff;
   background: var(--success);
 }
-.item__date--expired {
-  width: fit-content;
-  background: var(--err);
-}
 .item__cost {
   grid-column: 3 / 4;
-  margin-left: 10px;
+  margin-left: 15px;
   text-align: right;
+  white-space: nowrap;
 }
 .cloud__label {
   position: absolute;

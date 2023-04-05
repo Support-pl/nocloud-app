@@ -21,7 +21,7 @@
 							<!-- <router-link class="noVNC_button noVNC_button--goBack" :to="{path: `/cloud-${$route.params.pathMatch}`}" title="Go back">
 							<a-icon type="left"></a-icon>
 						</router-link> -->
-							<a class="noVNC_button noVNC_button--goBack" @click="$router.go(-1)" title="Go back">
+							<a class="noVNC_button noVNC_button--goBack" @click="goBack" title="Go back">
 								<a-icon type="left"></a-icon>
 							</a>
 						</div>
@@ -227,7 +227,7 @@
 			</main>
 		</template>
 	</div>
-		
+
 </template>
 
 <script>
@@ -254,6 +254,11 @@ export default {
 		this.getToken();
 	},
 	methods: {
+    goBack() {
+      const { pathMatch: uuid } = this.$route.params;
+
+      this.$router.push({ name: 'openCloud_new', params: { uuid } });
+    },
 		getToken() {
 			this.$store.dispatch('nocloud/vms/actionVMInvoke', {
         uuid: this.$route.params.pathMatch,

@@ -351,13 +351,20 @@ export default {
   },
   created() {
     this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps';
+
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+    }
   },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
     currency() {
-      return this.$store.getters['nocloud/auth/billingData'].currency_code ?? 'USD';
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+      const { currency_code } = this.$store.getters['nocloud/auth/billingData'];
+
+      return { code: currency_code ?? defaultCurrency };
     },
     region() {
       const location = this.locationId.split(' ').at(-1);

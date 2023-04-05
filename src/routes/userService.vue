@@ -98,7 +98,7 @@
                   v-if="elem.type == 'money'"
                   class="service-page__info-value"
                 >
-                  {{ service[elem.key] }} {{ user.currency_code || 'USD' }}
+                  {{ service[elem.key] }} {{ currency.code }}
                 </div>
                 <div
                   v-else-if="
@@ -234,6 +234,10 @@ export default {
       })
       .then((res) => this.service = res)
       .catch((err) => console.error(err));
+
+      if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+        this.$store.dispatch('nocloud/auth/fetchCurrencies');
+      }
   },
   computed: {
     user() {
@@ -241,6 +245,11 @@ export default {
     },
     baseURL() {
       return this.$store.getters['products/getURL'];
+    },
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+
+      return { code: this.user.currency_code ?? defaultCurrency };
     },
     getTagColor() {
       switch (this.service.status) {

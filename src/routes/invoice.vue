@@ -39,6 +39,7 @@
           :page-size-options="pageSizeOptions"
           :page-size="pageSize"
           :total="totalSize"
+          :current="currentPage"
           @showSizeChange="onShowSizeChange"
           @change="onShowSizeChange"
         />
@@ -122,6 +123,14 @@ export default {
 
       setTimeout(this.setLoading, 10);
     },
+    setPagination() {
+      const pagination = localStorage.getItem("transactionsPagination");
+
+      if (!pagination) return;
+      const { page, limit } = JSON.parse(pagination);
+
+      this.onShowSizeChange(page, limit);
+    },
     onShowSizeChange(page, limit) {
       if (page !== this.currentPage) {
         this.$store.commit("nocloud/transactions/setPage", page);
@@ -136,6 +145,7 @@ export default {
         field: "proc",
         sort: "desc"
       });
+      localStorage.setItem("transactionsPagination", JSON.stringify({ page, limit }));
     }
   },
   mounted() {
@@ -147,6 +157,8 @@ export default {
           .then(({ total }) => {
             this.$store.commit("nocloud/transactions/setTotal", +total);
           });
+
+        this.setPagination();
       }
     }
     if (localStorage.getItem('order')) {
@@ -193,6 +205,8 @@ export default {
         .then(({ total }) => {
           this.$store.commit("nocloud/transactions/setTotal", +total);
         });
+
+      this.setPagination();
     },
     isLoading() {
       this.percent = 0;
