@@ -318,7 +318,6 @@ export default {
           onclick: this.changeModal,
           params: ["accessManager"],
           icon: "safety",
-          modules: ['ovh'],
         },
         {
           title: "Logs",
@@ -445,13 +444,14 @@ export default {
         this.closeModal('expand');
         return;
       }
-      let confirm = window.confirm("VM will be restarted");
-      if (confirm) {
+
+      const onOk = () => {
         this.isRenameLoading = true;
         const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
         const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
         const cpuEqual = instance.resources.cpu === +this.resize.VCPU;
         const ramEqual = instance.resources.ram === this.resize.RAM * 1024;
+        const diskEqual = instance.resources.drive_size === this.resize.size * 1024;
 
         if (this.VM.billingPlan.kind === 'DYNAMIC') {
           instance.resources.cpu = +this.resize.VCPU;
@@ -478,6 +478,12 @@ export default {
               });
               console.error(err);
             });
+        }
+
+        if (!cpuEqual || !ramEqual || !diskEqual) {
+          this.closeModal('expand');
+          this.isRenameLoading = false;
+          return;
         }
         instance.resources.drive_size = this.resize.size * 1024;
 
@@ -509,6 +515,13 @@ export default {
             this.modal.confirmLoading = false;
           });
       }
+
+      this.$confirm({
+        title: this.$t('Service will be stopped after resize. Please restart manually!'),
+        okText: this.$t('Yes'),
+        cancelText: this.$t('Cancel'),
+        onOk, onCancel() {}
+      });
     },
     sendRename() {
       if (this.renameNewName !== "") {
@@ -564,6 +577,8 @@ export default {
       this.$confirm({
         title: this.$t("Do you want to reinstall this virtual machine?"),
         okType: "danger",
+        okText: this.$t('Yes'),
+        cancelText: this.$t('Cancel'),
         content: (h) => (
           <div style="color:red;">{ this.$t("All data will be deleted!") }</div>
         ),
@@ -600,6 +615,8 @@ export default {
       this.$confirm({
         title: this.$t("Do you want to delete this virtual machine?"),
         okType: "danger",
+        okText: this.$t('Yes'),
+        cancelText: this.$t('Cancel'),
         content: () => (
           <div style="color:red">{this.$t("All data will be deleted!")}</div>
         ),

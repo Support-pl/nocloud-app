@@ -456,9 +456,9 @@
                 "
               >
                 {{ $t("unregistered.will be able after") }}
-                <a href="#" @click.prevent="availableLogin">{{ $t("unregistered.login") }}</a>.
+                <a href="#" @click.prevent="availableLogin('login')">{{ $t("unregistered.login") }}</a>.
                 <br>
-                <a href="#" @click.prevent="availableLogin(false)">{{ $t("Copy link to share") }}</a>
+                <a href="#" @click.prevent="availableLogin('copy')">{{ $t("Copy link to share") }}</a>
               </div>
               <a-button
                 block
@@ -1003,7 +1003,6 @@ export default {
             if (this.dataLocalStorage.config) {
               this.options.os.id = this.dataLocalStorage.config.template_id;
               this.options.os.name = this.dataLocalStorage.config.template_name;
-              this.password = this.dataLocalStorage.config.password;
             }
 
             if (this.dataLocalStorage.ovhConfig) {
@@ -1029,7 +1028,7 @@ export default {
       });
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+      this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn });
     }
 
     this.$router.beforeEach((to, from, next) => {
@@ -1377,6 +1376,7 @@ export default {
           onOk: () => {
             this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
             this.addfunds.visible = true;
+            this.availableLogin();
           }
         });
         return false;
@@ -1401,7 +1401,7 @@ export default {
           this.modal.confirmLoading = false;
         });
     },
-    availableLogin(isLogin) {
+    availableLogin(mode) {
       const data = {
         path: "/cloud/newVM",
         titleSP: this.itemSP.title,
@@ -1421,19 +1421,20 @@ export default {
         config: {
           template_id: this.options.os.id,
           template_name: this.options.os.name,
-          password: this.password,
         },
         billing_plan: { uuid: this.getPlan.uuid },
         ovhConfig: this.options.config
       };
 
-      if (isLogin) {
+      if (mode === "login") {
         localStorage.setItem("data", JSON.stringify(data));
         this.$router.push({ name: "login" });
-      } else {
+      } else if (mode === "copy") {
         const link = location.href;
 
         this.addToClipboard(`${link}?data=${JSON.stringify(data)}`);
+      } else {
+        localStorage.setItem("data", JSON.stringify(data));
       }
     },
     addToClipboard(text) {
@@ -1530,9 +1531,11 @@ export default {
         this.$store.commit('nocloud/plans/setPlans', pool);
         this.plan = pool[0]?.uuid ?? '';
 
-        if (this.dataLocalStorage !== '') {
+        if (this.dataLocalStorage.billing_plan) {
           this.plan = this.dataLocalStorage.billing_plan.uuid;
           this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize });
+        } else if (this.dataLocalStorage.locationId) {
+          this.tarification = this.periods[0]?.value ?? '';
         }
 
         if (this.getPlan.type?.includes('ovh')) this.type = this.getPlan.type?.split(' ')[1];

@@ -353,12 +353,15 @@ export default {
     this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps';
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+      this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn });
     }
   },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
+    },
+    isLoggedIn() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
