@@ -15,12 +15,7 @@
       "bright_bg": "#f7f7f7"
     }
   },
-	"currency": {
-		"prefix": "",
-		"suffix": "USD",
-		"code": "USD"
-	},
-  "languages": ["en", "ru", "vi", "fr"],
+  "languages": ["en", "ru", "vi", "fr", "pl"],
   "sharedEnabled": true,
 	"dangerModeNoSSLCheck": false
 }

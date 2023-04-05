@@ -44,8 +44,12 @@
           </template>
           <template slot="title">
             <span>
-              {{ $t("filter") | capitalize }}
+              {{ $t("filter") | capitalize }} {{ $t("by") }}
             </span>
+            <span class="products__count">
+              {{ (isFilterByLocation) ? $t('location') : $t('provider') }}
+            </span>
+            <a-switch size="small" v-model="isFilterByLocation" />
           </template>
           <a-icon
             type="filter"
@@ -103,7 +107,7 @@
         type="primary"
         @click="newProductHandle"
         block
-        v-if="queryTypes.length == 1"
+        v-if="queryTypes.length === 1 && !isFilterByLocation"
       >
         {{ $t("Order") }}
       </a-button>
@@ -122,7 +126,12 @@ export default {
     min: { type: Boolean, default: true },
     count: { type: Number, default: 5 },
   },
-  data: () => ({ sortBy: 'Date', sortType: 'sort-ascending', anchor: null }),
+  data: () => ({
+    isFilterByLocation: false,
+    sortType: 'sort-ascending',
+    sortBy: 'Date',
+    anchor: null
+  }),
   created() {
     const service = localStorage.getItem('types');
     const sorting = JSON.parse(localStorage.getItem('serviceSorting') ?? "false");
@@ -131,6 +140,9 @@ export default {
 
     if (isProductsRoute && !isServicesSame) {
       this.$router.replace({ query: { service } });
+    }
+    if (localStorage.getItem('isFilterByLocation')) {
+      this.isFilterByLocation = JSON.parse(localStorage.getItem('isFilterByLocation'));
     }
     if (sorting) {
       this.sortBy = sorting.sortBy;
@@ -179,11 +191,18 @@ export default {
 
       if (this.min) return this.products.slice(0, 5);
       else if (this.$route.query.service) {
-        return products.filter(({ sp, hostingid }) => {
+        return products.filter(({ sp, hostingid, config }) => {
           //фильтруем по значениям из гет запроса
-          let { title } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+          let { title, locations } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
 
           if (hostingid) title = 'Virtual';
+          if (this.isFilterByLocation) {
+            const key = Object.keys(config).find((key) => key === 'datacenter');
+            const region = locations.find(({ extra }) => extra.region === config[key])?.title;
+
+            title = region ?? locations[0];
+          }
+
           return this.checkedTypes.some((service) => service === title);
         });
       }
@@ -295,6 +314,9 @@ export default {
     types() {
       const result = [...this.sp.map(({ title }) => title)];
 
+      if (this.isFilterByLocation) return this.sp.reduce((prev, curr) =>
+        [...prev, ...curr.locations.map(({ title }) => title)], []
+      );
       if (this.$config.sharedEnabled) result.push('Virtual');
       return result;
     },
@@ -429,6 +451,13 @@ export default {
       const sorting = { sortBy: this.sortBy, sortType: value };
 
       localStorage.setItem('serviceSorting', JSON.stringify(sorting));
+    },
+    isFilterByLocation(value) {
+      localStorage.setItem('isFilterByLocation', value);
+
+      if (this.$route.query.service) {
+        this.$router.replace({ query: {} });
+      }
     }
   }
 };

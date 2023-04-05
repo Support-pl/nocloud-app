@@ -850,6 +850,7 @@ export default {
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err;
 
+          if (message === 'HTTP Error 500: "Internal server error"') return;
           this.openNotificationWithIcon('error', { message: this.$t(message) });
           console.error(err);
         });

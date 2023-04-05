@@ -6,7 +6,7 @@
           <template #header>
             <div class="Fcloud__header">
               <div class="Fcloud__back-wrapper">
-                <div class="Fcloud__back icon__wrapper" @click="$router.go(-1)">
+                <div class="Fcloud__back icon__wrapper" @click="$router.push('/services')">
                   <a-icon type="left" />
                 </div>
               </div>

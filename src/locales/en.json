@@ -272,6 +272,7 @@
 	"chat_Delete_message": "Delete message",
   "from": "from",
   "to": "to",
+  "by": "by",
 	"sort": "Sort",
   "name": "name",
   "cost": "cost",
@@ -861,7 +862,7 @@
 	"Passwords do not match": "Passwords do not match",
 	"Successfully changed": "Successfully changed",
 	"Please enter a valid domain":"Please enter a valid domain",
-	"provider":"Provider",
+	"provider":"provider",
 	"newPaaSTrafficItem":{
 		"Безлимит, от  10Мбит/сек":"Unlimited, from 10Mbps",
 		"Безлимит, от  100Мбит/сек":"Unlimited, from 100Mbps",

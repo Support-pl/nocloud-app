@@ -30,7 +30,7 @@ export default {
     setCurrencies(state, rates) {
       state.currencies = rates.map((el) => ({ ...el, id: `${el.from} ${el.to}` }));
     },
-    setDefault(state, currencies) {
+    setDefaultCurrency(state, currencies) {
       const currency = currencies.find((el) =>
         el.rate === 1 && [el.from, el.to].includes('NCU')
       );
@@ -105,7 +105,7 @@ export default {
         api.get('/billing/currencies/rates')
           .then(response => {
             commit('setCurrencies', response.rates)
-            commit('setDefault', response.rates)
+            commit('setDefaultCurrency', response.rates)
             resolve(response)
           })
           .catch(error => {
