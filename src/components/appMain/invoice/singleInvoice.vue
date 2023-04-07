@@ -6,7 +6,7 @@
       </div>
     </div>
     <div class="invoice__middle">
-      <div class="invoice__cost" :style="{ color: costColor }">
+      <div class="invoice__cost" :style="{ color: statusColor }">
         {{ total }} {{ invoice.currencycode || 'USD' }}
       </div>
       <div class="invoice__date-item invoice__invDate">
@@ -22,7 +22,7 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ invoice.duedate }}
+          {{ (invoice.status === 'Unpaid') ? '-' : invoice.duedate }}
         </div>
       </div>
     </div>
@@ -30,7 +30,14 @@
     <div class="invoice__footer flex-between">
       <div class="invoice__id">#{{ invoice.id }}</div>
       <div class="invoice__btn">
-        <a-icon :type="(isLoading) ? 'loading' : 'right'" />
+        <span class="invoice__pay" v-if="invoice.status === 'Unpaid'">
+          {{ $t('Pay').toLowerCase() }}
+          <a-icon
+            color="success"
+            :type="(isLoading) ? 'loading' : 'right'"
+          />
+        </span>
+        <a-icon v-else :type="(isLoading) ? 'loading' : 'right'" />
       </div>
     </div>
   </div>
@@ -107,6 +114,18 @@ export default {
   color: var(--gray);
 }
 
+.invoice__pay {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 12px;
+  color: #fff;
+  background: var(--success);
+}
+
 .invoice__status {
   font-weight: 600;
 }
@@ -151,5 +170,9 @@ export default {
 .invoice__middle,
 .horisontal-line {
   margin-bottom: 2px;
+}
+
+.invoice__footer {
+  align-items: center;
 }
 </style>

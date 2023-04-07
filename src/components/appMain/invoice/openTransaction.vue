@@ -92,6 +92,14 @@
                     </router-link>
                   </a-card>
                 </div>
+
+                <div class="info__footer">
+                  <template v-if="invoice.exec == 0">
+                    <a-button class="info__button" :loading="isPayLoading" @click='payRequest'>
+                      {{ $t("Pay") }}
+                    </a-button>
+                  </template>
+                </div>
               </div>
             </div>
           </div>
@@ -110,6 +118,7 @@ export default {
   components: { loading },
   data: () => ({
     isLoading: true,
+    isPayLoading: false,
     instances: {},
     records: [],
     columns: [
@@ -152,6 +161,28 @@ export default {
       if (`${day}`.length < 2) day = `0${day}`;
 
       return `${day}.${month}.${year} ${time}`;
+    },
+    payRequest() {
+      this.isPayLoading = true;
+      this.$api.get(this.baseURL, { params: {
+        run: 'create_inv',
+        invoice_id: this.invoice.uuid,
+        product: this.invoice.meta.message ?? this.invoice.service,
+        sum: this.invoice.total
+      }})
+      .then((res) => {
+        this.$notification.success({ message: this.$t('Done') });
+        console.log(res);
+      })
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
+        this.$notification.error({ message: this.$t(message)});
+        console.error(err);
+      })
+      .finally(() => {
+        this.isPayLoading = false;
+      });
     }
   },
   created() {
@@ -204,6 +235,9 @@ export default {
     },
     userdata() {
       return this.$store.getters['nocloud/auth/userdata'];
+    },
+    baseURL() {
+      return this.$store.getters['invoices/getURL'];
     },
     currencies() {
       return this.$store.getters['nocloud/auth/currencies'];

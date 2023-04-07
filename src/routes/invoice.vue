@@ -10,8 +10,8 @@
       />
       <div class="invoices__wrapper" ref="invoices">
         <a-radio-group default-value="Invoice" v-model="value" size="large">
-          <a-radio-button value="Invoice"> {{ $t('Invoice') }} </a-radio-button>
-          <a-radio-button value="Detail"> {{ $t('Detail') }} </a-radio-button>
+          <a-radio-button value="Invoice"> {{ $t('Invoices') }} </a-radio-button>
+          <a-radio-button value="Detail"> {{ $t('Transactions') }} </a-radio-button>
         </a-radio-group>
         <template v-if="value === 'Invoice'">
           <empty style="margin: 50px 0" v-if="invoices.length === 0" />
