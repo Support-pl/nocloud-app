@@ -186,8 +186,6 @@ export default {
     }
   },
   created() {
-    const url = `/billing/transactions/${this.$route.params.uuid}`;
-
     if (this.currency.code === '') {
       this.$store.dispatch('nocloud/auth/fetchCurrencies');
     }
@@ -208,7 +206,7 @@ export default {
           });
         });
 
-        return this.$api.get(url);
+        return this.$api.transactions.records(this.$route.params.uuid);
       })
       .then(({ pool }) => {
         this.records = pool.map((el) => ({
@@ -401,6 +399,35 @@ export default {
   font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 20px;
+}
+
+.info__footer {
+  max-width: 400px;
+  margin: 0 auto;
+  display: flex;
+  height: 45px;
+  position: absolute;
+  bottom: 30px;
+  left: 20px;
+  right: 20px;
+  flex-direction: column;
+}
+
+.info__button {
+  flex: 1 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 24px;
+  font-weight: 600;
+  color: var(--bright_font);
+  cursor: pointer;
+  font-size: 16px;
+  transition: filter 0.2s ease;
+  background-color: var(--success);
+  background-size: 150% 200%;
+  background-position: 0 0;
+  animation: AnimationName 1s ease infinite;
 }
 
 .loading {

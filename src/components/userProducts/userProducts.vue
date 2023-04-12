@@ -1,8 +1,8 @@
 <template>
   <div class="products__wrapper">
-    <div class="products__header">
+    <div class="products__header" v-if="isLogged">
       <div class="products__title">
-        {{ $t("comp_services.Your orders") }}
+        {{ $t("comp_services.Your orders") }}{{ (isNeedFilterStringInHeader) ? '' : ':' }}
         <!-- Ваши услуги -->
         <transition name="header-transition" mode="out-in">
           <span
@@ -11,12 +11,12 @@
           >
             <span v-if="isNeedFilterStringInHeader">
               {{ $t("comp_services.with filter") }}:
-              <b>{{ $route.query.service.replace(/,/g, ", ") }}</b>
+              <b>{{ $route.query.service.replace(/,/g, ", ") }}:</b>
               <!-- по фильтру -->
             </span>
             <transition name="fade-in">
-              <span v-if="!productsLoading && isLogged" class="products__count">
-                {{ $t("comp_services.total") }}: {{ productsCount }}
+              <span v-if="!productsLoading" class="products__count">
+                {{ productsCount }}
                 <!-- всего -->
               </span>
             </transition>
@@ -328,13 +328,11 @@ export default {
     productsCount() {
       const total = this.$store.getters["products/total"];
 
-      if (total) return total;
+      if (total && this.$route.name !== "products") return total;
       if (this.min) {
         return this.products.length;
-      } else if (["services", "root"].includes(this.$route.name)) {
-        return this.productsPrepared.length;
       } else {
-        return 0;
+        return this.productsPrepared.length;
       }
     },
     isNeedFilterStringInHeader() {
@@ -464,10 +462,6 @@ export default {
 </script>
 
 <style scoped>
-.header__animated {
-  display: inline-block;
-}
-
 .products__wrapper {
   border-radius: 10px;
   padding: 10px 10px 15px 10px;
@@ -515,7 +509,14 @@ export default {
 }
 
 .products__title {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
   font-size: 18px;
+}
+
+.products__control {
+  flex-shrink: 0;
 }
 
 .products__count {

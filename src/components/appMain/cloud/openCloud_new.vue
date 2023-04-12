@@ -480,7 +480,7 @@ export default {
             });
         }
 
-        if (!cpuEqual || !ramEqual || !diskEqual) {
+        if (cpuEqual && ramEqual && diskEqual) {
           this.closeModal('expand');
           this.isRenameLoading = false;
           return;
