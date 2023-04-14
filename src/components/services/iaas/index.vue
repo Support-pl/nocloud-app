@@ -166,8 +166,9 @@ export default {
 		},
 		orderClickHandler(){
 			const info = {
+        run: 'add_product',
 				billingcycle: this.options.period,
-				product: this.getProducts.pid,
+				product: this.getProducts.id,
         paymentmethod: this.options.payment
 			}
 
