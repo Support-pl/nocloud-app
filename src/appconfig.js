@@ -54,6 +54,11 @@ export default {
       groupname: ['Self-Service VDS (2018)', 'Self-Service VDS SSD HC', 'Self-Service VDS SSD (2018)'],
       creationRouteName: 'newPaaS',
       icon: 'database',
+    },
+    iaas: {
+      groupname: ['VDS SSD', 'VDC IaaS'],
+      creationRouteName: 'service-iaas',
+      icon: 'shopping',
     }
   },
 	getServiceType(groupname){

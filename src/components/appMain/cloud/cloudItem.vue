@@ -1,5 +1,5 @@
 <template>
-  <div class="cloud__item-wrapper" @click="(e) => cloudClick(instance.uuid, e)">
+  <div class="cloud__item-wrapper" @click="(e) => cloudClick(instance, e)">
     <div class="cloud__item">
       <div
         class="item__color"
@@ -116,7 +116,7 @@ export default {
       const amount = this.prices[this.instance.resources?.period] ??
         this.instance.orderamount;
 
-      return +amount.toFixed(2);
+      return +(+amount)?.toFixed(2) ?? 0;
     },
 		localDate() {
       const productDate = new Date(this.instance.date ?? 0);
@@ -182,9 +182,15 @@ export default {
 		}
   },
   methods: {
-    cloudClick(uuid, { target }) {
+    cloudClick({ groupname, orderid, hostingid }, { target }) {
       if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return;
-      this.$router.push({ name: "openCloud_new", params: { uuid } });
+      if (['Domains', 'SSL'].includes(groupname)) {
+        this.$router.push({ name: 'service', params: { id: orderid } });
+      } else if (groupname === 'Self-Service VDS SSD HC') {
+        this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } });
+      } else {
+        this.$router.push({ name: 'service', params: { id: hostingid } });
+      }
     },
   },
   created() {
@@ -222,6 +228,7 @@ export default {
   position: relative;
   display: grid;
   grid-template-columns: 1fr auto 95px;
+  align-items: start;
   gap: 7px 10px;
   font-size: 16px;
 }

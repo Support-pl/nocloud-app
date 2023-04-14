@@ -13,7 +13,7 @@
           {{ $t("invoiceDate") }}
         </div>
         <div class="invoice__date">
-          {{ date(invoice.exec)  }}
+          {{ date(invoice.proc)  }}
         </div>
       </div>
       <div class="invoice__date-item invoice__dueDate">
@@ -21,7 +21,7 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ date(invoice.proc) }}
+          {{ date(invoice.exec) }}
         </div>
       </div>
     </div>
@@ -68,7 +68,7 @@ export default {
     },
     isClickable() {
       const isRecordsExist = this.invoice.records.length > 0;
-      const isMessageExist = this.invoice.meta.message;
+      const isMessageExist = this.invoice.meta.description;
       const isInstancesExist = this.invoice.meta.instances?.length > 0;
 
       return isRecordsExist || isMessageExist || isInstancesExist;

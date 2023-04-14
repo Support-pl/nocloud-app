@@ -43,13 +43,13 @@
                     <div class="info__date-item">
                       <div class="info__date-title">{{ $t("invoiceDate") }}</div>
                       <div class="info__date-value">
-                        {{ invoice && date(invoice.exec) }}
+                        {{ invoice && date(invoice.proc) }}
                       </div>
                     </div>
                     <div class="info__date-item">
                       <div class="info__date-title">{{ $t("dueDate") }}</div>
                       <div class="info__date-value">
-                        {{ invoice && date(invoice.proc) }}
+                        {{ invoice && date(invoice.exec) }}
                       </div>
                     </div>
                   </div>
@@ -71,8 +71,8 @@
                 </div>
 
                 <div class="info__main" v-if="invoice">
-                  <a-card v-if="invoice.meta.message" :title="$t('message') | capitalize">
-                    <div>{{ invoice.meta.message }}</div>
+                  <a-card v-if="invoice.meta.description" :title="$t('description') | capitalize">
+                    <div>{{ invoice.meta.description }}</div>
                   </a-card>
 
                   <a-card
@@ -167,12 +167,12 @@ export default {
       this.$api.get(this.baseURL, { params: {
         run: 'create_inv',
         invoice_id: this.invoice.uuid,
-        product: this.invoice.meta.message ?? this.invoice.service,
+        product: this.invoice.meta.description ?? this.invoice.service,
         sum: this.invoice.total
       }})
-      .then((res) => {
+      .then(({ invoiceid }) => {
         this.$notification.success({ message: this.$t('Done') });
-        console.log(res);
+        this.$router.push({ name: 'invoiceFS', params: { uuid: invoiceid } });
       })
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
