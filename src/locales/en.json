@@ -289,6 +289,7 @@
 	"semiannually": "6-Monthly",
 	"annually": "Yearly",
 	"biennially": "2-Yearly",
+  "triennially": "3-Yearly",
 	"free account": "Free Account",
 	"share app link": "Share App Link",
 	"copy link": "Copy Link",
@@ -518,6 +519,7 @@
  	"subject":"Subject",
 	"question":"Question",
 	"message":"Message",
+  "description": "Description",
 	"ticketStatus":{
 		"Closed":"Closed",
 		"Close-Ticket": "Close ticket",

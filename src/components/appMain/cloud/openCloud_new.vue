@@ -480,7 +480,7 @@ export default {
             });
         }
 
-        if (!cpuEqual || !ramEqual || !diskEqual) {
+        if (cpuEqual && ramEqual && diskEqual) {
           this.closeModal('expand');
           this.isRenameLoading = false;
           return;
@@ -505,9 +505,10 @@ export default {
             }
           })
           .catch((err) => {
-            // this.$message.error( "Can't resize to same size");
+            const message = err.response?.data?.message ?? err.message ?? err;
+
             this.openNotificationWithIcon("error", {
-              message: this.$t("Can't VM resize to same size"),
+              message: this.$t(`Can't VM resize to same size: [error] - ${message}`),
             });
             console.error(err);
           })
@@ -544,12 +545,14 @@ export default {
               });
             }
           })
-          .catch(() => {
-            this.openNotificationWithIcon("error", {
-              message: this.$t("Can't VM name changes"),
+          .catch((err) => {
+            const message = err.response?.data?.message ?? err.message ?? err;
+
+            this.openNotificationWithIcon('error', {
+              message: this.$t(message)
             });
           })
-          .finally((res) => {
+          .finally(() => {
             this.modal.confirmLoading = false;
           });
       }
@@ -597,10 +600,11 @@ export default {
               this.openNotificationWithIcon("success", opts);
             })
             .catch((err) => {
-              const opts = {
-                message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-              };
-              this.openNotificationWithIcon("error", opts);
+              const message = err.response?.data?.message ?? err.message ?? err;
+
+              this.openNotificationWithIcon('error', {
+                message: this.$t(message)
+              });
             });
 
           this.modal.menu = false;
@@ -637,9 +641,11 @@ export default {
                 });
               }
             })
-            .catch(() => {
-              this.openNotificationWithIcon("error", {
-                message: this.$t("Failed to delete VM"),
+            .catch((err) => {
+              const message = err.response?.data?.message ?? err.message ?? err;
+
+              this.openNotificationWithIcon('error', {
+                message: this.$t(message)
               });
             })
             .finally(() => {

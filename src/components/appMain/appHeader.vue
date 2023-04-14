@@ -285,6 +285,10 @@ export default {
           needBalance: true,
           buttons: [],
         },
+        iaas: {
+          title: this.$route.query.service,
+          buttons: []
+        }
       },
     };
   },

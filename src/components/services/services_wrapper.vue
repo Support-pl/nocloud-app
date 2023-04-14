@@ -82,6 +82,7 @@ export default {
           },
         }
 			],
+      products: {}
 		}
 	},
 	methods: {
@@ -118,9 +119,22 @@ export default {
           query = { service: provider }
       }
 
+      if (!type && this.products[provider]) {
+        name = 'service-iaas';
+        query = { service: provider }
+      }
+
       this.$router.push({ name, query });
     },
 	},
+  created() {
+    this.$api.get(this.baseURL, { params: { run: 'get_product_list' } })
+      .then((res) => {
+        Object.values(res).forEach(({ group_name, prod }) => {
+          this.$set(this.products, group_name, prod);
+        });
+      });
+  },
 	computed: {
 		sp(){
 			return this.$store.getters['nocloud/sp/getSP'];
@@ -128,6 +142,9 @@ export default {
 		isLogged(){
 			return this.$store.getters['nocloud/auth/isLoggedIn'];
 		},
+    baseURL() {
+      return this.$store.getters['nocloud/auth/getURL'];
+    },
 
 		avaliableServices(){
       const services = (this.$config.sharedEnabled) ? [{
@@ -140,6 +157,18 @@ export default {
           paramsArr: [{name: 'products', query: { service: 'Virtual' }}],
         }
       }] : [];
+
+      Object.keys(this.products).forEach((service) => {
+        services.push({
+          title: service,
+          icon: 'shopping',
+          type: service,
+          onclick: {
+            function: this.routeTo,
+            paramsArr: [{ name: 'products', query: { service } }]
+          }
+        })
+      });
 
 			this.sp.forEach(({ meta: { service }, title }) => {
         if (service.title) services.push({
