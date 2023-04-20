@@ -39,12 +39,12 @@
                 </a-select> -->
 
                 <a-select
-                  v-model="servicesTitle"
+                  v-model="showcase"
                   :placeholder="$t('select service')"
                   style="width: 180px; position: relative; z-index: 4"
                 >
-                  <a-select-option v-for="item in servicesTitles" :key="item" :value="item">
-                    {{ item }}
+                  <a-select-option v-for="item in showcases" :key="item.value" :value="item.value">
+                    {{ item.title }}
                   </a-select-option>
                 </a-select>
 
@@ -311,7 +311,7 @@
                   v-model="plan"
                 >
                   <a-select-option
-                    v-for="plan in getPlans"
+                    v-for="plan in filteredPlans"
                     :key="plan.uuid"
                     :value="plan.uuid"
                     >{{ plan.title }}
@@ -659,7 +659,7 @@ export default {
       service: undefined,
       namespace: undefined,
       tarification: "",
-      servicesTitle: "all",
+      showcase: "",
       locationId: "Location",
       type: 'vps',
       vmName: "",
@@ -745,7 +745,7 @@ export default {
       const locations = [];
 
       this.getSP.forEach((sp) => {
-        if (sp.title !== this.servicesTitle && this.servicesTitle !== 'all') return;
+        if (this.showcase && !(sp.meta.showcase ?? {})[this.showcase]) return;
 
         sp.locations.forEach((location) => {
           const id = `${sp.title} ${location.id}`;
@@ -756,12 +756,15 @@ export default {
 
       return locations;
     },
-    servicesTitles() {
-      const titles = ['all'];
+    showcases() {
+      const titles = [{ title: 'all', value: '' }];
 
-      this.getSP.forEach(({ title, locations }) => {
+      this.getSP.forEach(({ locations, meta: { showcase = {} } }) => {
         if (locations.length < 1) return;
-        if (!titles.includes(title)) titles.push(title);
+
+        Object.entries(showcase).forEach(([value, { title }]) => {
+          titles.push({ title, value });
+        });
       });
 
       return titles;
@@ -795,6 +798,12 @@ export default {
     },
 
     //--------------Plans-----------------
+    filteredPlans() {
+      const { billing_plans } = (this.itemSP.meta.showcase ?? {})[this.showcase];
+
+      if (billing_plans?.length < 1) return this.getPlans;
+      return this.getPlans.filter(({ uuid }) => billing_plans.includes(uuid));
+    },
     //UNKNOWN and STATIC
     getPlan() {
       return this.getPlans.find(({ uuid }) => uuid === this.plan) ?? {};
@@ -983,7 +992,7 @@ export default {
     }
   },
   created() {
-    this.servicesTitle = this.$route.query.service ?? "all";
+    this.showcase = this.$route.query.service ?? "";
     this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
       .then(() => {
         const data = localStorage.getItem("data");

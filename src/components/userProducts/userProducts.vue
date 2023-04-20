@@ -11,7 +11,7 @@
           >
             <span v-if="isNeedFilterStringInHeader">
               {{ $t("comp_services.with filter") }}:
-              <b>{{ $route.query.service.replace(/,/g, ", ") }}:</b>
+              <b>{{ checkedTypesString }}:</b>
               <!-- по фильтру -->
             </span>
             <transition name="fade-in">
@@ -33,12 +33,12 @@
       <div v-else-if="user" class="products__control">
         <a-popover placement="bottomRight" arrow-point-at-center>
           <template slot="content">
-            <p v-for="productType of types" :key="productType">
+            <p v-for="productType of types" :key="productType.value ?? productType">
               <a-checkbox
-                :checked="!!~checkedTypes.indexOf(productType)"
-                @click="filterElementClickHandler(productType)"
+                :checked="!!~checkedTypes.indexOf(productType.value ?? productType)"
+                @click="filterElementClickHandler(productType.value ?? productType)"
               >
-                {{ productType }}
+                {{ productType.title ?? productType }}
               </a-checkbox>
             </p>
           </template>
@@ -158,6 +158,15 @@ export default {
         });
     }
 
+    if (Object.keys(this.services).length < 1) {
+      this.$store.dispatch("products/fetchServices")
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$notification['error']({ message: this.$t(message) });
+        });
+    }
+
     if (!this.isLogged) return;
     this.$store.commit("products/setProductsLoading", true);
     this.$store.dispatch("nocloud/auth/fetchBillingData")
@@ -191,19 +200,37 @@ export default {
 
       if (this.min) return this.products.slice(0, 5);
       else if (this.$route.query.service) {
-        return products.filter(({ sp, hostingid, config }) => {
+        return products.filter(({ sp, hostingid, config, billingPlan, productname }) => {
           //фильтруем по значениям из гет запроса
-          let { title, locations } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+          let { title, locations, meta } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+          const service = Object.values(meta?.showcase ?? {}).find(
+            (el) => el.billing_plans.includes(billingPlan.uuid)
+          );
 
           if (hostingid) title = 'Virtual';
           if (this.isFilterByLocation) {
-            const key = Object.keys(config).find((key) => key === 'datacenter');
-            const region = locations.find(({ extra }) => extra.region === config[key])?.title;
+            const key = Object.keys(config.configuration ?? {}).find(
+              (key) => key.includes('datacenter')
+            );
+            const region = locations.find(({ extra }) =>
+              extra.region === (config.configuration ?? {})[key]
+            );
 
-            title = region ?? locations[0];
+            title = region?.title ?? locations[0];
           }
 
-          return this.checkedTypes.some((service) => service === title);
+          return this.checkedTypes.some((value) => {
+            if (this.services[value]) {
+              return this.services[value].find(({ name }) => name === productname);
+            }
+            if (!meta?.showcase) return value === title;
+
+            const { length = 0 } = meta?.showcase[value]?.billing_plans ?? {};
+
+            if (length > 0 && service) return true;
+            else if (length > 0) return false;
+            else return value === title || meta?.showcase[value];
+          });
         });
       }
       return products;
@@ -264,6 +291,14 @@ export default {
 
               res.date = inst.data.expiration
               res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
+
+              inst.config.addons.forEach((addon) => {
+                const { price } = inst.billingPlan.resources.find(
+                  ({ key }) => key === `${inst.config.duration} ${addon}`
+                );
+
+                res.orderamount += +price;
+              });
               break;
             }
             case 'ione': {
@@ -308,15 +343,29 @@ export default {
 
       return productsLoading || instancesLoading;
     },
+
+    services() {
+      return this.$store.getters['products/getServices'];
+    },
     sp() {
       return this.$store.getters["nocloud/sp/getSP"];
     },
     types() {
-      const result = [...this.sp.map(({ title }) => title)];
+      const result = this.sp.reduce((prev, curr) => {
+        const showcase = Object.entries(curr.meta.showcase ?? {})
+          .map(([value, { title }]) => ({ title, value }));
+
+        return [...prev, ...showcase];
+      }, []);
 
       if (this.isFilterByLocation) return this.sp.reduce((prev, curr) =>
         [...prev, ...curr.locations.map(({ title }) => title)], []
       );
+
+      Object.keys(this.services).forEach((key) => {
+        result.push(key);
+      });
+
       if (this.$config.sharedEnabled) result.push('Virtual');
       return result;
     },
@@ -324,6 +373,11 @@ export default {
       return (
         this.$route.query?.service?.split(",").filter((el) => el.length > 0) ?? []
       );
+    },
+    checkedTypesString() {
+      return this.checkedTypes.map((type) => this.types.find(
+        ({ value }) => value === type)?.title ?? type
+      ).join(', ');
     },
     productsCount() {
       const total = this.$store.getters["products/total"];
@@ -365,6 +419,7 @@ export default {
       this.$router.replace({ query: { service: newTypes } });
     },
     newProductHandle() {
+      const services = this.$store.getters['products/getServices'];
       const { type } = this.sp.find(({ title }) => title === this.queryTypes[0]) ?? {};
       let name = 'service-virtual';
       let query = {};
@@ -379,7 +434,12 @@ export default {
         case 'ione':
         case 'ovh':
           name = 'newPaaS';
-          query = { service: this.queryTypes[0] }
+          query = { service: this.queryTypes[0] };
+      }
+
+      if (!type && services[this.queryTypes[0]]) {
+        name = 'service-iaas';
+        query = { service: this.queryTypes[0] };
       }
 
       this.$router.push({ name, query });

@@ -266,6 +266,10 @@ export default {
   },
   created() {
     this.selected = this.value ?? this.selected;
+
+    if (this.markers.length === 1) {
+      this.$emit('input', this.markers[0].id);
+    }
   },
   mounted(){
     const container = this.$refs.viewport;

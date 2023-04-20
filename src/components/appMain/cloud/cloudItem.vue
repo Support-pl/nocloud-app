@@ -176,8 +176,8 @@ export default {
       const isActive = ['active', 'running'].includes(this.instance.domainstatus.toLowerCase());
 
 			if (serviceType === undefined) return;
-      if (!isActive && serviceType === 'virtual') return;
       if (this.instance.date === 0) return;
+      if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return;
 			return () => import(`@/components/services/${serviceType}/lilbtn.vue`);
 		}
   },
