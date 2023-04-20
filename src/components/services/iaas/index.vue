@@ -26,34 +26,22 @@
           </div>
 
           <transition name="specs" mode="out-in">
-            <table v-if="getProducts.description" class="product__specs">
+            <div
+              v-if="typeof getProducts.description === 'string'"
+              v-html="getProducts.description"
+            ></div>
+            <table v-else-if="getProducts.description" class="product__specs">
               <tr v-for="resource in getProducts.description" :key="resource.name">
                 <td>{{ resource.name }}</td>
                 <td>{{ resource.value }}</td>
               </tr>
             </table>
           </transition>
-
-					<a-row class="order__prop" type="flex" align="middle">
-						<a-col span="8" :xs="6">{{ $t('Payment method') | capitalize }}:</a-col>
-						<a-col span="16" :xs="18">
-							<a-select style="width: 100%" v-if="!fetchLoading" v-model="options.payment">
-                <a-select-option
-                  v-for="method of payMethods"
-                  :key="method.module"
-                  :value="method.module"
-                >
-                  {{ method.displayname }}
-                </a-select-option>
-              </a-select>
-							<div v-else class="loadingLine"></div>
-						</a-col>
-					</a-row>
 				</div>
 			</div>
 
 			<div class="order__calculate order__field">
-				<a-row style="margin-top: 20px" type="flex" justify="space-around">
+				<a-row style="margin-top: 20px" type="flex" justify="space-around" align="middle">
 					<a-col :xs="10" :sm="6" :lg='12' style="font-size: 1rem">
 						{{ $t('Pay period') }}:
 					</a-col>
@@ -67,6 +55,24 @@
 						<div v-else class="loadingLine"></div>
 					</a-col>
 				</a-row>
+
+        <a-row style="margin-top: 20px" type="flex" justify="space-around" align="middle">
+          <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
+            {{ $t('Payment method') | capitalize }}:
+          </a-col>
+          <a-col :xs="12" :sm="18" :lg="12">
+            <a-select style="width: 100%" v-if="!fetchLoading" v-model="options.payment">
+              <a-select-option
+                v-for="method of payMethods"
+                :key="method.module"
+                :value="method.module"
+              >
+                {{ method.displayname }}
+              </a-select-option>
+            </a-select>
+            <div v-else class="loadingLine"></div>
+          </a-col>
+        </a-row>
 
 				<a-divider orientation="left" style="margin-bottom: 0">
 					{{ $t('Total') }}:
@@ -83,7 +89,7 @@
 					</a-col>
 				</a-row>
 
-				<a-row type="flex" justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
+				<a-row type="flex" justify="space-around" style="margin: 10px 0">
 					<a-col :span="22">
 						<a-button type="primary" block shape="round" @click="orderConfirm">
 							{{ $t('order') | capitalize }}
@@ -143,7 +149,7 @@ export default {
 	methods: {
 		fetch(){
 			this.fetchLoading = true;
-			this.$api.get(this.baseURL, { params: { run: 'get_product_list' } })
+			this.$store.dispatch('products/fetchServices')
         .then((res) => {
           const { prod } = Object.values(res).find(({ group_name }) =>
             group_name === this.$route.query.service
@@ -236,13 +242,17 @@ export default {
       const product = this.products[this.sizes.indexOf(this.options.size)]
 
       if (typeof product.description !== 'string') return product
-      product.description = product.description.split('\r\n').map(
-        (res) => ({ name: res.split(': ')[0], value: res.split(': ')[1] })
-      )
-      product.description.pop()
+      if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
+        return product
+      } else {
+        product.description = product.description.split('\r\n').map(
+          (res) => ({ name: res.split(': ')[0], value: res.split(': ')[1] })
+        )
+        product.description.pop()
 
-      product.price = product.price.find(({ currency }) => currency === this.user.currency)
-      product.price.currency = this.user.currency_code
+        product.price = product.price.find(({ currency }) => currency === this.user.currency)
+        product.price.currency = this.user.currency_code
+      }
 
 			return product
 		},
@@ -255,7 +265,10 @@ export default {
 	},
 	created() {
     this.$api.get(this.baseURL, { params: { run: 'get_payment' } })
-      .then((res) => { this.payMethods = res.paymentmethod });
+      .then((res) => {
+        this.payMethods = res.paymentmethod;
+        this.options.payment = res.paymentmethod[0].module;
+      });
 
 		this.$store.dispatch('nocloud/auth/fetchBillingData');
 		this.fetch();
@@ -452,12 +465,9 @@ export default {
 
 .order__slider{
 	display: flex;
+  gap: 10px;
 	overflow-x: auto;
   padding-bottom: 10px;
-}
-
-.order__slider-item:not(:last-child){
-	margin-right: 10px;
 }
 
 .order__slider-item{
@@ -467,8 +477,7 @@ export default {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	width: 150px;
-	height: 70px;
+	padding: 7px 10px;
   text-align: center;
 	cursor: pointer;
 	border-radius: 15px;

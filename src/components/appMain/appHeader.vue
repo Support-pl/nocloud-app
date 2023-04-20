@@ -286,7 +286,7 @@ export default {
           buttons: [],
         },
         iaas: {
-          title: this.$route.query.service,
+          title: "Service",
           buttons: []
         }
       },
@@ -407,6 +407,11 @@ export default {
       this.$store.commit('nocloud/vms/setSearch', '');
     }
   },
+  mounted() {
+    if (this.$route.query.service) {
+      this.headers.iaas.title = this.$route.query.service;
+    }
+  },
   computed: {
     ...mapGetters("support", [
       "isAddTicketState",
@@ -500,6 +505,11 @@ export default {
     },
   },
   watch: {
+    active() {
+      if (this.$route.query.service) {
+        this.headers.iaas.title = this.$route.query.service;
+      }
+    },
     activeInvoiceTab() {
       this.checkedList = [];
       this.updateFilter();

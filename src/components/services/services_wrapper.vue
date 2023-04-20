@@ -37,7 +37,7 @@ export default {
 	data(){
 		return {
       hovered: null,
-			services: [
+			srvs: [
 				{
 					title: 'Servers',
 					translatable: true,
@@ -81,8 +81,7 @@ export default {
             paramsArr: [{name: 'products', query: {type: 'domains'}}],
           },
         }
-			],
-      products: {}
+			]
 		}
 	},
 	methods: {
@@ -102,7 +101,7 @@ export default {
     },
     newProductHandler(service) {
       const provider = service.onclick.paramsArr[0].query.service;
-      const { type } = this.sp.find(({ title }) => title === provider) ?? {};
+      const { type } = this.sp.find(({ meta }) => (meta.showcase ?? {})[provider]) ?? {};
       let name = 'service-virtual';
       let query = {};
 
@@ -119,7 +118,7 @@ export default {
           query = { service: provider }
       }
 
-      if (!type && this.products[provider]) {
+      if (!type && this.services[provider]) {
         name = 'service-iaas';
         query = { service: provider }
       }
@@ -127,26 +126,21 @@ export default {
       this.$router.push({ name, query });
     },
 	},
-  created() {
-    this.$api.get(this.baseURL, { params: { run: 'get_product_list' } })
-      .then((res) => {
-        Object.values(res).forEach(({ group_name, prod }) => {
-          this.$set(this.products, group_name, prod);
-        });
-      });
-  },
 	computed: {
-		sp(){
+		sp() {
 			return this.$store.getters['nocloud/sp/getSP'];
 		},
-		isLogged(){
+		isLogged() {
 			return this.$store.getters['nocloud/auth/isLoggedIn'];
 		},
     baseURL() {
       return this.$store.getters['nocloud/auth/getURL'];
     },
 
-		avaliableServices(){
+    services() {
+      return this.$store.getters['products/getServices'];
+    },
+		avaliableServices() {
       const services = (this.$config.sharedEnabled) ? [{
         title: 'Virtual',
         translatable: true,
@@ -158,7 +152,7 @@ export default {
         }
       }] : [];
 
-      Object.keys(this.products).forEach((service) => {
+      Object.keys(this.services).forEach((service) => {
         services.push({
           title: service,
           icon: 'shopping',
@@ -170,19 +164,21 @@ export default {
         })
       });
 
-			this.sp.forEach(({ meta: { service }, title }) => {
-        if (service.title) services.push({
-          ...service,
-          onclick: {
-            function: this.routeTo,
-            paramsArr: [{ name: 'products', query: { service: title } }]
-          }
+			this.sp.forEach(({ meta: { showcase = {} } }) => {
+        Object.entries(showcase).forEach(([key, value]) => {
+          services.push({
+            ...value,
+            onclick: {
+              function: this.routeTo,
+              paramsArr: [{ name: 'products', query: { service: key } }]
+            }
+          });
         });
       });
 
       return services;
 		},
-    columnsCount(){
+    columnsCount() {
       let count = 5;
       if (document.documentElement.clientWidth < 575) count = 3;
 
@@ -193,7 +189,7 @@ export default {
 </script>
 
 <style>
-.services__wrapper{
+.services__wrapper {
 	/* background-color: red; */
 	display: grid;
 	grid-gap: 5px;
