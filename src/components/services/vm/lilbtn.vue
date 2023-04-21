@@ -32,7 +32,7 @@ export default {
       const key = (this.service.billingPlan.type.includes('ovh'))
         ? `${this.service.config.duration} ${this.service.config.planCode}`
         : this.service.product;
-      const { period } = this.service.billingPlan.products[key];
+      const { period, price } = this.service.billingPlan.products[key];
 
       const currentPeriod = (this.service.billingPlan.type.includes('ovh'))
         ? this.service.data.expiration
@@ -55,6 +55,24 @@ export default {
               { `${this.$t("to")} ` }
               <span style="font-style: italic">{ `${newPeriod}` }</span>
             </div>
+
+            <div style="margin-top: 10px">
+              <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
+              { price } { this.currency.code }
+              <div>
+                <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
+                <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
+                  { ...Object.entries(this.addonsPrice).map(([key, value]) =>
+                    <li>{ key }: { value } { this.currency.code }</li>
+                  ) }
+                </ul>
+              </div>
+
+              <div>
+                <span style="font-weight: 700">{ this.$t('Total') }: </span>
+                { this.price } { this.currency.code }
+              </div>
+            </div>
           </div>
         ),
         okText: this.$t('Yes'),
@@ -68,6 +86,7 @@ export default {
           return this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
             .then(() => {
               this.$notification.success({ message: `Done!` });
+              this.service.data.blocked = true;
             })
             .catch((err) => {
               this.$notification.error({
@@ -129,6 +148,49 @@ export default {
       const code = (`${this.price}`.replace('.').length > 3) ? '' : this.currency.code;
 
       return `${this.slicedPrice} ${code}`;
+    },
+    addonsPrice() {
+      if (this.service.billingPlan.type.includes('ovh')) {
+        return this.service.config.addons.reduce((res, addon) => {
+          const { price } = this.service.billingPlan.resources.find(
+            ({ key }) => key === `${this.service.config.duration} ${addon}`
+          );
+          let key = '';
+
+          if (addon.includes('additional')) key = this.$t('adds drive');
+          if (addon.includes('snapshot')) key = this.$t('Snapshot');
+          if (addon.includes('backup')) key = this.$t('Backup');
+          if (addon.includes('windows')) key = this.$t('Windows');
+
+          return { ...res, [key]: +price };
+        }, {});
+      } else {
+        return this.service.billingPlan.resources.reduce((prev, curr) => {
+          if (curr.key === `drive_${this.service.resources.drive_type.toLowerCase()}`) {
+            const key = this.$t('Drive');
+
+            return {
+              ...prev,
+              [key]: curr.price * this.service.resources.drive_size / 1024
+            };
+          } else if (curr.key === "ram") {
+            const key = this.$t('ram');
+
+            return {
+              ...prev,
+              [key]: curr.price * this.service.resources.ram / 1024
+            };
+          } else if (this.service.resources[curr.key]) {
+            const key = this.$t(curr.key.replace('_', ' '));
+
+            return {
+              ...prev,
+              [key]: curr.price * this.service.resources[curr.key]
+            };
+          }
+          return prev;
+        }, {});
+      }
     }
   }
 }

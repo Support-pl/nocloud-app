@@ -153,7 +153,7 @@
             </div>
           </div>
           <div class="block__column" v-if="VM.config.planCode">
-            <div class="block__title">{{ $t('Tariff') }}</div>
+            <div class="block__title">{{ $t('tariff') | capitalize }}</div>
             <div class="block__value">
               {{ tariffTitle || $t('No Data') }}
               <a-icon type="swap" title="Switch tariff" @click="openModal('switch')" />

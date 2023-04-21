@@ -121,6 +121,7 @@ export default {
 		localDate() {
       const productDate = new Date(this.instance.date ?? 0);
 
+      if (this.instance.data?.blocked) return this.$t('filterHeader.In Progress');
       if (this.isPayg) return this.$t('PayG');
       if (productDate.getTime() === 0) return 'none';
       // if (this.wholeProduct.groupname === 'Domains') {
