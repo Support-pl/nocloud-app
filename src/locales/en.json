@@ -375,11 +375,11 @@
 		"bw": "Used Traffic",
 		"unlimited": "Unlimited",
 		"power": "Power",
-		"sites": "Websites",
+		"websites": "Websites",
 		"mysql": "MySQL Databases",
 		"email": "Email Accounts",
-		"hdd_shared": "Shared SSD Storage",
-		"traffic": "Bandwidth"
+		"ssd": "Shared SSD Storage",
+		"bandwidth": "Bandwidth"
 	},
 	"clientinfo": {
     "username": "Username",

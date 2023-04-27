@@ -340,11 +340,11 @@
 		"bw": "использовано трафика",
 		"unlimited": "неограниченно",
 		"power": "мощность",
-		"sites": "сайты",
+		"websites": "сайты",
 		"mysql": "базы данных",
 		"email": "email",
-		"hdd_shared": "объем hdd",
-		"traffic": "трафик"
+		"ssd": "объем hdd",
+		"bandwidth": "трафик"
 	},
 	"clientinfo": {
     "username": "Имя пользователя",
@@ -540,7 +540,7 @@
 		"Single": "Одиночный",
 		"Standard": "Стандартный",
 		"Deluxe": "Делюкс",
-		"Premium": "Премиум", 
+		"Premium": "Премиум",
 		"Business": "Бизнес"
 	},
 	"PAYG":"PAYG",
@@ -561,7 +561,7 @@
 	},
 	"virtual": "хостинг",
   "ssl": "SSL",
-	"input new name":"Введите новое имя",	
+	"input new name":"Введите новое имя",
 	"reserve public NIC":"Зарезервировать публичную NIC",
 	"used for this VM":"использовать для этой VM",
 	"attach new disk":"Прикрепить новый диск",

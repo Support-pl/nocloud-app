@@ -226,13 +226,15 @@ export default {
         }
       })
       .then(({ client_id }) => {
-        const serviceid = this.$route.params.id;
+        if (this.products.length < 1) {
+          return this.$store.dispatch('products/fetch', client_id);
+        }
 
-        return this.$api.get(`${this.baseURL}/services.getInfo.php`, {
-          params: { serviceid, userid: client_id }
-        });
+        this.service = this.products.find(({ id }) => id === this.$route.params.id);
       })
-      .then((res) => this.service = res)
+      .then((res) => {
+        this.service = this.products.find(({ id }) => id === this.$route.params.id);
+      })
       .catch((err) => console.error(err));
 
       if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
@@ -250,6 +252,9 @@ export default {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
       return { code: this.user.currency_code ?? defaultCurrency };
+    },
+    products() {
+      return this.$store.getters['products/getProducts'];
     },
     getTagColor() {
       switch (this.service.status) {

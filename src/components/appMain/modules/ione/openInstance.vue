@@ -204,6 +204,7 @@
           </div>
         </div>
       </div>
+
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
           <a-icon type="info-circle" />
@@ -228,6 +229,51 @@
               {{ new Intl.DateTimeFormat().format(VM.data.last_monitoring * 1000) }}
               <a-icon type="sync" title="Renew" @click="handleOk('renew')" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="Fcloud__info-block block">
+        <div class="Fcloud__block-header">
+          <a-icon type="credit-card" />
+          {{ $t("prices") | capitalize }}
+        </div>
+
+        <div class="Fcloud__block-content block-content_table">
+          <div class="block__column block__column_table">
+            <div class="block__title">{{ $t('tariff') | capitalize }}</div>
+          </div>
+          <div
+            class="block__column block__column_table block__column_price"
+            style="grid-column: 2 / 4"
+          >
+            <div class="block__title">
+              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}:
+            </div>
+            <div class="block__value">
+              {{ tariffPrice }} {{ currency.code }}
+            </div>
+          </div>
+
+          <div
+            class="block__column block__column_table"
+            style="grid-row: 2 / 4; align-self: self-start"
+          >
+            <div class="block__title">{{ $t('addons') | capitalize }}</div>
+          </div>
+          <div
+            class="block__column block__column_table block__column_price"
+            v-for="(price, addon) in addonsPrice"
+          >
+            <div class="block__title">{{ addon }}:</div>
+            <div class="block__value">
+              {{ price }} {{ currency.code }}
+            </div>
+          </div>
+
+          <div class="block__column block__column_table block__column_total">
+            <div class="block__title">{{ $t('Total') }}:</div>
+            <div class="block__value">{{ fullPrice }} {{ currency.code }}</div>
           </div>
         </div>
       </div>
@@ -944,6 +990,49 @@ export default {
             this.VM.state.meta.state == 3),
       };
     },
+
+    tariffPrice() {
+      const key = this.VM.product;
+
+      return this.VM.billingPlan.products[key].price;
+    },
+    addonsPrice() {
+      return this.VM.billingPlan.resources.reduce((prev, curr) => {
+        if (curr.key === `drive_${this.VM.resources.drive_type.toLowerCase()}`) {
+          const key = this.$t('Drive');
+
+          return {
+            ...prev,
+            [key]: curr.price * this.VM.resources.drive_size / 1024
+          };
+        } else if (curr.key === "ram") {
+          const key = this.$t('ram');
+
+          return {
+            ...prev,
+            [key]: curr.price * this.VM.resources.ram / 1024
+          };
+        } else if (this.VM.resources[curr.key]) {
+          const key = this.$t(curr.key.replace('_', ' '));
+
+          return {
+            ...prev,
+            [key]: curr.price * this.VM.resources[curr.key]
+          };
+        }
+        return prev;
+      }, {});
+    },
+    fullPrice() {
+      return this.tariffPrice + Object.values(this.addonsPrice)
+        .reduce((sum, curr) => sum + curr);
+    },
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+
+      return { code: this.user.currency_code ?? defaultCurrency };
+    },
+
     inbChartDataReady() {
       let data = this.chart1Data;
       if (data == undefined) {
@@ -1041,3 +1130,31 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.block-content_table {
+  display: grid;
+  grid-template-columns: repeat(3 , 1fr);
+  padding: 10px 15px;
+}
+
+.block__column_table {
+  flex-direction: row;
+  justify-content: start;
+  gap: 7px;
+}
+
+@media (max-width: 575px) {
+  .block__column_price {
+    grid-column: 2 / 4;
+    justify-content: end;
+  }
+}
+
+.block__column_total {
+  grid-column: 1 / 4;
+  justify-content: end;
+  padding-top: 5px;
+  border-top: 1px solid var(--gray);
+}
+</style>
