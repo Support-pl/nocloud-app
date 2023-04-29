@@ -358,11 +358,11 @@
 		"bw": "Używany Traffic",
 		"unlimited": "Nieograniczony",
 		"power": "Power",
-		"sites": "Websites",
+		"websites": "Websites",
 		"mysql": "Bazy danych MySQL",
 		"email": "Konta email",
-		"hdd_shared": "Współdzielona SSD",
-		"traffic": "Przepustowość łącza"
+		"ssd": "Współdzielona SSD",
+		"bandwidth": "Przepustowość łącza"
 	},
 	"clientinfo": {
     "username": "Nazwa użytkownika",

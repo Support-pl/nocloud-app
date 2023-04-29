@@ -140,6 +140,7 @@
           </div>
         </div>
       </div>
+
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
           <a-icon type="info-circle" />
@@ -153,7 +154,7 @@
             </div>
           </div>
           <div class="block__column" v-if="VM.config.planCode">
-            <div class="block__title">{{ $t('Tariff') }}</div>
+            <div class="block__title">{{ $t('tariff') | capitalize }}</div>
             <div class="block__value">
               {{ tariffTitle || $t('No Data') }}
               <a-icon type="swap" title="Switch tariff" @click="openModal('switch')" />
@@ -183,6 +184,51 @@
           </a-select-option>
         </a-select>
       </a-modal>
+
+      <div class="Fcloud__info-block block">
+        <div class="Fcloud__block-header">
+          <a-icon type="credit-card" />
+          {{ $t("prices") | capitalize }}
+        </div>
+
+        <div class="Fcloud__block-content block-content_table">
+          <div class="block__column block__column_table">
+            <div class="block__title">{{ $t('tariff') | capitalize }}</div>
+          </div>
+          <div
+            class="block__column block__column_table block__column_price"
+            style="grid-column: 2 / 4"
+          >
+            <div class="block__title">
+              {{ tariffTitle || $t('No Data') }}:
+            </div>
+            <div class="block__value">
+              {{ tariffPrice }} {{ currency.code }}
+            </div>
+          </div>
+
+          <div
+            class="block__column block__column_table"
+            style="grid-row: 2 / 4; align-self: self-start"
+          >
+            <div class="block__title">{{ $t('addons') | capitalize }}</div>
+          </div>
+          <div
+            class="block__column block__column_table block__column_price"
+            v-for="(price, addon) in addonsPrice"
+          >
+            <div class="block__title">{{ addon }}:</div>
+            <div class="block__value">
+              {{ price }} {{ currency.code }}
+            </div>
+          </div>
+
+          <div class="block__column block__column_table block__column_total">
+            <div class="block__title">{{ $t('Total') }}:</div>
+            <div class="block__value">{{ fullPrice }} {{ currency.code }}</div>
+          </div>
+        </div>
+      </div>
 
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
@@ -873,6 +919,9 @@ export default {
   },
   created() { this.fetchMonitoring() },
   computed: {
+    user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    },
     baseURL() {
       return this.$store.getters['support/getURL'];
     },
@@ -917,6 +966,36 @@ export default {
 
       return this.VM.billingPlan.products[key].title;
     },
+    tariffPrice() {
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+
+      return this.VM.billingPlan.products[key].price;
+    },
+    addonsPrice() {
+      return this.VM.config.addons.reduce((res, addon) => {
+        const { price } = this.VM.billingPlan.resources.find(
+          ({ key }) => key === `${this.VM.config.duration} ${addon}`
+        );
+        let key = '';
+
+        if (addon.includes('additional')) key = this.$t('adds drive');
+        if (addon.includes('snapshot')) key = this.$t('Snapshot');
+        if (addon.includes('backup')) key = this.$t('Backup');
+        if (addon.includes('windows')) key = this.$t('Windows');
+
+        return { ...res, [key]: +price };
+      }, {});
+    },
+    fullPrice() {
+      return this.tariffPrice + Object.values(this.addonsPrice)
+        .reduce((sum, curr) => sum + curr);
+    },
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+
+      return { code: this.user.currency_code ?? defaultCurrency };
+    },
+
     tariffs() {
       if (!this.VM?.billingPlan) return {};
       const tariffs = {};
@@ -1030,3 +1109,31 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.block-content_table {
+  display: grid;
+  grid-template-columns: repeat(3 , 1fr);
+  padding: 10px 15px;
+}
+
+.block__column_table {
+  flex-direction: row;
+  justify-content: start;
+  gap: 7px;
+}
+
+@media (max-width: 575px) {
+  .block__column_price {
+    grid-column: 2 / 4;
+    justify-content: end;
+  }
+}
+
+.block__column_total {
+  grid-column: 1 / 4;
+  justify-content: end;
+  padding-top: 5px;
+  border-top: 1px solid var(--gray);
+}
+</style>

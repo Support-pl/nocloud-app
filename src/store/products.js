@@ -38,13 +38,15 @@ export default {
 			commit('setProductsLoading', true);
 			return dispatch('silentFetch', userid);
 		},
-		silentFetch({ state, commit }, userid) {
+		silentFetch({ commit, rootState }, userid) {
 			return new Promise((resolve, reject) => {
-				api.get(`${state.baseURL}/get.user.products.php`, { params: { userid } })
+				api.get(rootState.nocloud.auth.baseURL, { params: { userid, run: 'get_active_products' } })
           .then(res => {
-            commit('setProducts', res);
+            const products = Object.values(res);
+
+            commit('setProducts', products);
             commit('setProductsLoading', false);
-            resolve(res);
+            resolve(products);
           })
           .catch(error => reject(error))
 			})

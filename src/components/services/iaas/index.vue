@@ -2,18 +2,27 @@
 	<div class="order_wrapper">
 		<div class="order">
 			<div class="order__inputs order__field">
-				<div class="order_option">
+				<div class="order__option">
 					<a-slider
             v-if="sizes.length < 6"
+            tooltip-placement="bottom"
 						:marks="{...sizes}"
 						:value="sizes.indexOf(options.size)"
-						:tip-formatter="null"
+            :tip-formatter="(value) => sizes[value]"
+						:tooltip-visible="true"
 						:max="sizes.length-1"
 						:min="0"
 						@change="(value) => options.size = sizes[value]"
 					/>
 
-          <div v-else class="order__slider">
+          <a-carousel
+            v-else
+            arrows
+            draggable
+            :dots="false"
+            :slides-to-show="3"
+            :slides-to-scroll="3"
+          >
             <div
               class="order__slider-item"
               v-for="size of sizes"
@@ -21,9 +30,21 @@
               :class="{ 'order__slider-item--active': options.size === size }"
               @click="options.size = size"
             >
-              {{ size }}
+              <span class="order__slider-name" v-html="size"></span>
             </div>
-          </div>
+
+            <template #prevArrow>
+              <div class="custom-slick-arrow" style="left: -35px;">
+                <a-icon type="left-circle" />
+              </div>
+            </template>
+
+            <template #nextArrow>
+              <div class="custom-slick-arrow" style="right: -35px">
+                <a-icon type="right-circle" />
+              </div>
+            </template>
+          </a-carousel>
 
           <transition name="specs" mode="out-in">
             <div
@@ -156,6 +177,14 @@ export default {
           );
 
           this.products = prod.sort((a, b) => b.name - a.name);
+          this.products.forEach(({ description }, i) => {
+            const desc = description.replace('/templates', `${this.$config.WHMCSsiteurl}$&`,);
+            const start = desc.indexOf('<img');
+            const end = desc.indexOf('">', start);
+
+            this.products[i].description = desc;
+            this.products[i].name = `${desc.slice(start, end + 2)} ${this.products[i].name}`;
+          });
 
           this.sizes = this.products.map((el) => el.name);
           this.options.size = this.sizes[0];
@@ -350,6 +379,49 @@ export default {
 .order__inputs{
 	margin-right: 20px;
 	width: 72%;
+}
+
+.order__option .ant-slider-mark {
+  display: none;
+}
+
+.order__option .order__slider-name {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+}
+
+.order__option .order__slider-name img {
+  max-height: 65px;
+}
+
+.order__option .ant-carousel {
+  width: calc(100% - 50px);
+  margin: 0 auto 5px;
+}
+
+.order__option .ant-carousel .slick-track {
+  display: flex;
+  align-items: center;
+}
+
+.order__option .ant-carousel .slick-slide > div {
+  margin: 0 5px;
+}
+
+.order__option .ant-carousel .custom-slick-arrow {
+  width: 25px;
+  height: 25px;
+  font-size: 25px;
+  color: var(--main);
+  opacity: 0.5;
+  transition: 0.3s;
+}
+.order__option .ant-carousel .custom-slick-arrow::before {
+  display: none;
+}
+.order__option .ant-carousel .custom-slick-arrow:hover {
+  opacity: 1;
 }
 
 .order__field{

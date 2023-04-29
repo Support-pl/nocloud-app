@@ -2,9 +2,7 @@
 	<div class="order_wrapper">
 		<div class="order">
 			<div class="order__inputs order__field">
-
 				<div class="order_option">
-
 					<a-slider
 						:marks="{...sizes}"
 						:value="sizes.indexOf(options.size)"
@@ -15,46 +13,120 @@
 					>
 					</a-slider>
 
-					<template>
-						
-						<transition name="specs" mode="out-in">
-							<table v-if="getProducts.description != undefined" class="product__specs" :key="getProducts.name">
-								<tr v-for="val in getProducts.description.properties" :key="val.GROUP">
-									<td>{{$t('virtual_product.'+val.GROUP) | capitalize}}</td>
-									<td>{{(val.TITLE === 'Не ограничен') ? $t('virtual_product.unlimited') : val.TITLE}}</td>
-								</tr>
-							</table>
-						</transition>
-					</template>
+          <transition name="specs" mode="out-in">
+            <table v-if="getProducts.resources" class="product__specs" :key="getProducts.title">
+              <tr v-for="(value, key) in getProducts.resources" :key="key">
+                <td>{{ $t('virtual_product.' + key) | capitalize }}</td>
+                <td>{{ (value === 'Не ограничен') ? $t('virtual_product.unlimited') : value }}</td>
+              </tr>
+            </table>
+          </transition>
 
 					<a-row class="order__prop">
-						<a-col span="8" :xs="6">{{$t('ssl_product.domain') | capitalize}}:</a-col>
+						<a-col span="8" :xs="6">{{ $t('ssl_product.domain') | capitalize }}:</a-col>
 						<a-col span="16" :xs="18">
-							<a-input v-if="!fetchLoading" v-model="options.domain" placeholder="example.com"></a-input>
+							<a-input
+                placeholder="example.com"
+                v-if="!fetchLoading"
+                v-model="config.domain"
+                :rules="rules.req"
+              />
 							<div v-else class="loadingLine"></div>
 						</a-col>
 					</a-row>
 
+					<a-row class="order__prop">
+						<a-col span="8" :xs="6">{{ $t('ssl_product.email') | capitalize }}:</a-col>
+						<a-col span="16" :xs="18">
+							<a-input
+                placeholder="email"
+                v-if="!fetchLoading"
+                v-model="config.mail"
+                :rules="rules.req"
+              />
+							<div v-else class="loadingLine"></div>
+						</a-col>
+					</a-row>
+
+					<a-row class="order__prop">
+						<a-col span="8" :xs="6">{{ $t('clientinfo.password') | capitalize }}:</a-col>
+						<a-col span="16" :xs="18">
+							<a-input
+                placeholder="password"
+                v-if="!fetchLoading"
+                v-model="config.password"
+                :rules="rules.req"
+              />
+							<div v-else class="loadingLine"></div>
+						</a-col>
+					</a-row>
 				</div>
 			</div>
-			
-			<div class="order__calculate order__field">
 
+			<div class="order__calculate order__field">
 				<a-row type="flex" justify="space-around" style="margin-top: 20px">
 					<a-col :xs="10" :sm="6" :lg='12' style="font-size: 1rem">
-						{{$t('Pay period')}}:
+						{{ $t('Pay period') }}:
 					</a-col>
 
 					<a-col :xs="12" :sm="18" :lg='12'>
 						<a-select v-if="!fetchLoading" v-model="options.period"  style="width: 100%">
-							<a-select-option v-for="period in periods" :key="period.title+period.count" :value='period'>
-								{{$t(period)}}
+							<a-select-option v-for="period in periods" :key="period" :value="period">
+								{{ $tc('month', period / 3600 / 24 / 30) }}
 							</a-select-option>
 						</a-select>
 						<div v-else class="loadingLine"></div>
 					</a-col>
 				</a-row>
-				
+
+        <a-row :gutter="[10, 10]" style="margin-top: 10px">
+          <a-col v-if="services.length > 1">
+            <a-select
+              style="width: 100%"
+              placeholder="services"
+              v-model="service"
+            >
+              <a-select-option
+                v-for="service of services"
+                :key="service.uuid"
+                :value="service.uuid"
+              >
+                {{ service.title }}
+              </a-select-option>
+            </a-select>
+          </a-col>
+          <a-col v-if="namespaces.length > 1">
+            <a-select
+              style="width: 100%"
+              placeholder="namespaces"
+              v-model="namespace"
+            >
+              <a-select-option
+                v-for="namespace of namespaces"
+                :key="namespace.uuid"
+                :value="namespace.uuid"
+              >
+                {{ namespace.title }}
+              </a-select-option>
+            </a-select>
+          </a-col>
+          <a-col v-if="plans.length > 1">
+            <a-select
+              style="width: 100%"
+              placeholder="plans"
+              v-model="plan"
+            >
+              <a-select-option
+                v-for="plan of plans"
+                :key="plan.uuid"
+                :value="plan.uuid"
+              >
+                {{ plan.title }}
+              </a-select-option>
+            </a-select>
+          </a-col>
+        </a-row>
+
 				<a-divider orientation="left" :style="{'margin-bottom': '0'}">
 					{{$t('Total')}}:
 				</a-divider>
@@ -63,17 +135,17 @@
 					<a-col>
 						<transition name="textchange" mode="out-in">
 							<div v-if="!fetchLoading">
-								{{getProducts.pricing[options.period]}} {{getProducts.pricing.suffix}}
+								{{ getProducts.price }} {{ currency.code }}
 							</div>
 							<div v-else class="loadingLine loadingLine--total"></div>
 						</transition>
 					</a-col>
 				</a-row>
 
-				<a-row type="flex" justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
+				<a-row type="flex" justify="space-around" style="margin: 10px 0">
 					<a-col :span="22">
 						<a-button type="primary" block shape="round" @click="orderConfirm">
-							{{$t("order") | capitalize}}
+							{{ $t("order") | capitalize }}
 						</a-button>
 						<a-modal
 							:title="$t('Confirm')"
@@ -83,13 +155,7 @@
 							@ok="orderClickHandler"
 							@cancel="() => {modal.confirmCreate = false}"
 						>
-							<p>{{$t('order_services.Do you want to order')}}: {{getProducts['name']}}</p>
-
-							<a-row style="margin-top: 20px">
-								<a-col>
-									<a-checkbox :checked="modal.goToInvoice" @change="(e) => modal.goToInvoice = e.target.checked"/> {{$t('go to invoice') | capitalize}}
-								</a-col>
-							</a-row>
+							<p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.title }}</p>
 						</a-modal>
 					</a-col>
 				</a-row>
@@ -109,57 +175,75 @@
 import addFunds from '@/components/balance/addFunds.vue';
 
 export default {
-  name: 'ssl-component',
+  name: 'virtual-component',
   components: { addFunds },
 	data:() => ({
-    sizes: [],
-    products: [],
+    plan: null,
+    service: null,
+    namespace: null,
+
     fetchLoading: false,
     sendloading: false,
-    options: {
-      size: '',
-      domain: '',
-      period: ''
-    },
-    modal: {
-      confirmCreate: false,
-      confirmLoading: false,
-      goToInvoice: true
-    },
+
+    options: { size: '', model: '', period: '' },
+    config: { domain: '', mail: '', password: '' },
+    modal: { confirmCreate: false, confirmLoading: false },
     addfunds: { visible: false, amount: 0 },
+
+    products: [],
+    sizes: [],
     periods: []
 	}),
 	methods: {
-		fetch(){
-			this.fetchLoading = true;
-			this.$api.get(`${this.baseURL}/products.get.virtual.php`)
-        .then(res => {
-          res = res.sort((a, b) => b.name - a.name)
-          this.products = res;
-          this.sizes = res.map(el => el.name.replace(/Виртуальный хостинг |Host /gi, ''));
-          this.options.size = this.sizes[1];
-          this.periods = Object.keys(res[0].pricing).filter(el => !el.match(/fix/));
-          this.options.period = this.periods[1];
-        })
-        .catch(err => console.error(err))
-        .finally(() => {
-          this.fetchLoading = false;
-        })
-		},
-		orderClickHandler(){
-			const info = {
-				domain: this.options.domain,
-				billingcycle: this.options.period,
-				pid: this.getProducts.pid,
-        userid: this.user.client_id
-			}
+    changeProducts(plan) {
+      const products = Object.values(plan.products ?? {});
 
-			if(!this.user){
+      products.sort((a, b) => b.title - a.title);
+      this.products = products;
+      this.plan = plan?.uuid;
+
+      this.sizes = Object.keys(plan.products ?? {});
+      this.options.size = this.sizes[0];
+      this.periods = [];
+
+      this.products.forEach(({ period }) => {
+        if (this.periods.includes(period)) return;
+        this.periods.push(period);
+      });
+      this.options.period = this.periods[0];
+    },
+		orderClickHandler() {
+      const service = this.services.find(({ uuid }) => uuid === this.service);
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
+
+      const instances = [{
+        config: { ...this.config },
+        resources: { plan: this.getProducts.resources.model },
+        title: this.getProducts.title,
+        billing_plan: plan ?? {}
+      }];
+      const newGroup = {
+        title: this.user.fullname + Date.now(),
+        type: this.sp.type,
+        sp: this.sp.uuid,
+        instances
+      };
+
+      const info = (!this.service) ? newGroup : Object.assign(
+        { instances_groups: service.instancesGroups },
+        { ...service }
+      );
+      const group = info.instances_groups?.find(({ type }) => type === 'cpanel');
+
+      if (group) group.instances = [...group.instances, ...instances];
+      else if (this.service) info.instances_groups.push(newGroup);
+
+			if (!this.user) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
 				this.$store.commit('setOnloginInfo', {
 					type: 'IaaS',
 					title: 'Virtual Hosting',
-					cost: this.getProducts.pricing[this.options.period]
+					cost: this.getProducts.price
 				});
 				this.$store.dispatch('setOnloginAction', () => {
 					this.createVirtual(info);
@@ -170,31 +254,57 @@ export default {
 
 			this.createVirtual(info);
 		},
-		createVirtual(info){
+		createVirtual(info) {
 			this.sendloading = true;
-			this.$api.get(`${this.baseURL}/createOrder.php`, { params: info })
-        .then((result) => {
-          if (this.modal.goToInvoice){
-            this.$router.push({ name: 'invoiceFS', params: { uuid: result.invoiceid } });
-          } else {
-            this.$router.push({ name: 'services' });
-          }
-        })
-        .catch(err => console.error(err))
-        .finally(() => {
-          this.sendloading = false;
+      const action = (this.service) ? 'update' : 'create';
+      const orderData = (this.service) ? info : {
+        namespace: this.namespace,
+        service: {
+          title: this.user.fullname,
+          context: {},
+          version: '1',
+          instances_groups: [info]
+        }
+      };
+
+      delete orderData.instancesGroups;
+      this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
+        .then(({ uuid }) => { this.deployService(uuid) })
+        .catch((err) => {
+          const config = { namespace: this.namespace, service: orderData };
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$api.services.testConfig(config)
+            .then(({ result, errors }) => {
+              if (!result) errors.forEach(({ error }) => {
+                this.$notification.error({ message: error });
+              });
+            });
+          this.$notification.error({ message: this.$t(message) });
+          console.error(err);
         });
 		},
-		orderConfirm(){
-			if(!this.options.domain.match(/.+\..+/)){
+		orderConfirm() {
+			if (!this.config.domain.match(/.+\..+/)) {
 				this.$message.error(this.$t('domain is wrong'));
-				return
+				return;
 			}
+
+      if (this.config.mail === '') {
+        this.$message.error(this.$t('email is not valid'));
+        return;
+      }
+
+      if (this.config.password === '') {
+        this.$message.error(thid.$t('Password is too short'));
+        return;
+      }
+
       if (!this.checkBalance()) return;
 			this.modal.confirmCreate = true;
 		},
     checkBalance() {
-      const sum = this.getProducts.pricing[this.options.period];
+      const sum = this.getProducts.price;
 
       if (this.user.balance < parseFloat(sum)) {
         this.$confirm({
@@ -210,23 +320,93 @@ export default {
         return false;
       }
       return true;
-    }
+    },
+    deployService(uuid) {
+      this.$api.services.up(uuid)
+        .then(() => {
+          this.$notification.success({ message: this.$t('Done') });
+          this.$router.push({ path: '/services' });
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$notification.error({ message: this.$t(message) });
+        })
+        .finally(() => this.sendloading = false);
+    },
 	},
 	computed: {
 		getProducts() {
-			if(Object.keys(this.products).length == 0) return "NAN"
-			return this.products[this.sizes.indexOf(this.options.size)]
+			if (Object.keys(this.products).length === 0) return "NAN";
+      const product = this.products[this.sizes.indexOf(this.options.size)];
+
+      delete product.resources.model;
+      if (product.resources.ssd.includes('Gb')) return product;
+      product.resources.ssd = `${product.resources.ssd / 1024} Gb`;
+
+			return product;
 		},
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
     },
-    baseURL() {
-      return this.$store.getters['products/getURL'];
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+
+      return { code: this.user.currency_code ?? defaultCurrency };
+    },
+    services() {
+      return this.$store.getters['nocloud/vms/getServices']
+        .filter((el) => el.status !== 'DEL');
+    },
+    namespaces() {
+      return this.$store.getters['nocloud/namespaces/getNamespaces'] ?? [];
+    },
+    plans() {
+      return this.$store.getters['nocloud/plans/getPlans']
+        .filter(({ type }) => type === 'cpanel');
+    },
+    sp() {
+      return this.$store.getters['nocloud/sp/getSP']
+        .find((sp) => sp.type === 'cpanel');
+    },
+    isLoading() {
+      return this.$store.getters['nocloud/plans/isLoading'];
+    },
+    rules() {
+      const message = this.$t('ssl_product.field is required');
+
+      return { req: [{ required: true, message }] };
     }
 	},
-	created(){
-		this.$store.dispatch('nocloud/auth/fetchBillingData');
-		this.fetch();
+  watch: {
+    namespaces(value) { this.namespace = value[0]?.uuid },
+    services(value) { this.service = value[0]?.uuid },
+		plans(value) { this.plan = value[0]?.uuid },
+    plan(value) {
+      const plan = this.plans.find(({ uuid }) => uuid === value);
+
+      this.changeProducts(plan);
+    }
+  },
+	created() {
+    const promises = [
+      this.$store.dispatch('nocloud/auth/fetchBillingData'),
+      this.$store.dispatch('nocloud/sp/fetch'),
+      this.$store.dispatch('nocloud/plans/fetch'),
+      this.$store.dispatch('nocloud/namespaces/fetch'),
+      this.$store.dispatch('nocloud/vms/fetch')
+    ];
+
+    Promise.all(promises).catch((err) => {
+      const message = err.response?.data?.message ?? err.message ?? err;
+
+      this.$notification.error({ message: this.$t(message) });
+      console.error(err);
+    });
+
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+    }
 	}
 }
 </script>
@@ -247,6 +427,18 @@ export default {
 	left: 50%;
 	transform: translateX(-50%);
 	display: flex;
+}
+
+.order .ant-slider-mark-text {
+  white-space: nowrap;
+}
+
+.order .ant-slider-mark-text:first-of-type {
+  transform: translateX(-10px) !important;
+}
+
+.order .ant-slider-mark-text:last-of-type {
+  transform: translateX(calc(-100% + 10px)) !important;
 }
 
 .product__specs{

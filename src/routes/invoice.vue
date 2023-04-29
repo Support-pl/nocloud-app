@@ -143,23 +143,22 @@ export default {
         page, limit,
         account: this.user.uuid,
         field: "proc",
-        sort: "desc"
+        sort: "desc",
+        type: "transaction"
       });
       localStorage.setItem("transactionsPagination", JSON.stringify({ page, limit }));
     }
   },
   mounted() {
-    if (this.isLogged) {
+    if (this.isLogged && this.user.uuid) {
       this.$store.dispatch("invoices/autoFetch");
 
-      if (this.user.uuid) {
-        api.transactions.count({ account: this.user.uuid })
-          .then(({ total }) => {
-            this.$store.commit("nocloud/transactions/setTotal", +total);
-          });
+      api.transactions.count({ account: this.user.uuid, type: "transaction" })
+        .then(({ total }) => {
+          this.$store.commit("nocloud/transactions/setTotal", +total);
+        });
 
-        this.setPagination();
-      }
+      this.setPagination();
     }
     if (localStorage.getItem('order')) {
       this.value = localStorage.getItem('order');
@@ -188,20 +187,24 @@ export default {
         page: this.currentPage,
         limit: this.pageSize,
         field: "proc",
-        sort: "desc"
+        sort: "desc",
+        type: "transaction"
       });
     },
     user() {
       if (this.isLoading) return;
+      this.$store.dispatch("invoices/autoFetch");
+
       this.$store.dispatch("nocloud/transactions/fetch", {
         account: this.user.uuid,
         page: this.currentPage,
         limit: this.pageSize,
         field: "proc",
-        sort: "desc"
+        sort: "desc",
+        type: "transaction"
       });
 
-      api.transactions.count({ account: this.user.uuid })
+      api.transactions.count({ account: this.user.uuid, type: "transaction" })
         .then(({ total }) => {
           this.$store.commit("nocloud/transactions/setTotal", +total);
         });

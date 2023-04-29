@@ -79,20 +79,33 @@ export default {
     clickOnInvoice(uuid) {
       if (this.invoice.status === "Unpaid") {
         this.isLoading = true;
-        this.$api.get(this.baseURL, { params: {
-          run: 'get_pay_token',
-          invoice_id: this.invoice.id
-        }})
+        if (this.invoice.meta) {
+          this.$api.get(this.baseURL, { params: {
+            run: 'create_inv',
+            invoice_id: uuid,
+            product: this.invoice.meta.description ?? this.invoice.service,
+            sum: this.invoice.total
+          }})
+          .then(({ invoiceid }) => {
+            this.$notification.success({ message: this.$t('Done') });
+            this.getPaytoken(invoiceid);
+          });
+        } else this.getPaytoken(uuid);
+      } else {
+        this.$router.push({ name: "invoiceFS", params: { uuid } });
+      }
+    },
+    getPaytoken(invoice_id) {
+      this.$api.get(this.baseURL, { params: {
+        run: 'get_pay_token', invoice_id
+      }})
         .then((res) => {
           window.location.href = res;
         })
         .finally(() => {
           this.isLoading = false;
         });
-      } else {
-        this.$router.push({ name: "invoiceFS", params: { uuid } });
-      }
-    },
+    }
   },
 };
 </script>
