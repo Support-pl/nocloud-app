@@ -63,6 +63,10 @@ export default {
 	position: relative;
 }
 
+.service__title{
+  text-align: center;
+}
+
 /* .service__icon::after{
 	color: var(--main);
 	font-size: 2.3rem;

@@ -427,7 +427,7 @@ export default {
     },
     newProductHandle() {
       const services = this.$store.getters['products/getServices'];
-      const { type } = this.sp.find(({ title }) => title === this.queryTypes[0]) ?? {};
+      const { type } = this.sp.find(({ meta }) => (meta.showcase ?? {})[this.queryTypes[0]]) ?? {};
       let name = 'service-virtual';
       let query = {};
 
