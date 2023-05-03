@@ -19,6 +19,8 @@
       :viewBox="`0 0 ${mapData.meta.width} ${mapData.meta.height}`"
       @click="mapClickHandler"
       @mousemove="drag"
+      @mousedown="beginDrag"
+      @mousewheel="zoom"
     >
       <defs>
         <g id="marker">
@@ -43,8 +45,6 @@
         class="map__viewport"
 				ref="viewport"
 				transform="matrix(1 0 0 1 0 0)"
-				@mousedown="beginDrag"
-				@mousewheel="zoom"
       >
         <g>
           <path
