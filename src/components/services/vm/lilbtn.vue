@@ -1,6 +1,6 @@
 <template>
 	<div class="btn">
-		<a-button block @click.stop="moduleEnter">
+		<a-button block :disabled="service.data.blocked" @click.stop="moduleEnter">
       {{ $t('renew') | capitalize }}
       <template v-if="currency">
         {{ (currency.code === 'USD') ? `$${slicedPrice}` : priceWithoutPrefix }}
@@ -86,7 +86,7 @@ export default {
           return this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
             .then(() => {
               this.$notification.success({ message: `Done!` });
-              this.service.data.blocked = true;
+              this.$set(this.service.data, 'blocked', true);
             })
             .catch((err) => {
               this.$notification.error({

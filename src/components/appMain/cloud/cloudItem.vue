@@ -174,7 +174,7 @@ export default {
     },
 		getModuleProductBtn() {
 			const serviceType = this.$config.getServiceType(this.instance.groupname)?.toLowerCase();
-      const isActive = ['active', 'running'].includes(this.instance.domainstatus.toLowerCase());
+      const isActive = ['active', 'running'].includes(this.instance.domainstatus?.toLowerCase());
 
 			if (serviceType === undefined) return;
       if (this.instance.date === 0) return;
@@ -195,10 +195,6 @@ export default {
     },
   },
   created() {
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies');
-    }
-
     if (this.instance.groupname !== 'Domains') return;
     this.$api.servicesProviders.action({
       uuid: this.instance.sp,

@@ -66,10 +66,10 @@ export default {
 		for(let service in services){
 			const serviceGroup = services[service].groupname;
 			if(typeof serviceGroup == 'object'){
-				const indexOf = serviceGroup.map(el=>el.toLowerCase()).indexOf(groupname.toLowerCase())
+				const indexOf = serviceGroup.map(el=>el.toLowerCase()).indexOf(groupname?.toLowerCase())
 				if(indexOf != -1) return service;
 			} else {
-				if(serviceGroup.toLowerCase() == groupname.toLowerCase()) return service;
+				if(serviceGroup.toLowerCase() == groupname?.toLowerCase()) return service;
 			}
 		}
 		return null;
