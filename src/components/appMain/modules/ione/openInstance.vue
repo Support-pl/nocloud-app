@@ -259,7 +259,7 @@
             class="block__column block__column_table"
             style="grid-row: 2 / 4; align-self: self-start"
           >
-            <div class="block__title">{{ $t('addons') | capitalize }}</div>
+            <div class="block__title">{{ $t('Addons') }}</div>
           </div>
           <div
             class="block__column block__column_table block__column_price"

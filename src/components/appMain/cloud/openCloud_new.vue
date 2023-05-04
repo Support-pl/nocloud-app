@@ -371,6 +371,7 @@ export default {
 
       if (this.VM.state.meta.state === 1) return "PENDING";
       if (this.VM.state.meta.state === 5) return "SUSPENDED";
+      if (this.VM.data.suspended_manually) return "SUSPENDED";
       if (this.VM.state.meta.state === "BUILD") return "BUILD";
       switch (state) {
         case "LCM_INIT":
@@ -381,6 +382,8 @@ export default {
     },
     stateColor() {
       if (!this.VM.state) return "rgb(145, 145, 145)";
+      if (this.VM.data.suspended_manually) return "#f9f038";
+
       const state = (this.VM?.billingPlan.type === 'ione')
         ? this.VM.state.meta.lcm_state_str
         : this.VM.state.state;
