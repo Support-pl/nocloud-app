@@ -17,7 +17,7 @@
         class="Fcloud__button"
         v-if="VM.state && VM.state.state !== 'STOPPED'"
         :class="{ disabled: statusVM.shutdown, }"
-        @click="sendAction('stop')"
+        @click="sendAction('poweroff')"
       >
         <div class="Fcloud__BTN-icon">
           <div class="cloud__icon cloud__icon--stop"></div>
@@ -28,7 +28,7 @@
         v-else
         class="Fcloud__button"
         :class="{ disabled: statusVM.start, }"
-        @click="sendAction('start')"
+        @click="sendAction('resume')"
       >
         <div class="Fcloud__BTN-icon">
           <a-icon type="caret-right" />
@@ -211,7 +211,7 @@
             class="block__column block__column_table"
             style="grid-row: 2 / 4; align-self: self-start"
           >
-            <div class="block__title">{{ $t('addons') | capitalize }}</div>
+            <div class="block__title">{{ $t('Addons') }}</div>
           </div>
           <div
             class="block__column block__column_table block__column_price"
@@ -926,9 +926,10 @@ export default {
     },
     statusVM() {
       if (!this.VM) return;
-      if (this.VM.state.state === 'PENDING') return {
-        shutdown: true, reboot: true, start: true, recover: true
+      if (this.VM.state.state === 'PENDING' || this.VM.data.suspended_manually) {
+        return { shutdown: true, reboot: true, start: true, recover: true };
       }
+
       return {
         shutdown: this.VM.state.state !== 'RUNNING' &&
           this.VM.state.state !== 'STOPPED',

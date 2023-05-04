@@ -237,12 +237,7 @@ export default {
     },
     products() {
       const products = this.$store.getters["products/getProducts"]
-        .map((el) => ({
-          ...el.ORDER_INFO,
-          groupname: el.translated_groupname,
-          productname: el.name,
-          orderamount: el.recurringamount
-        }));
+        .map((el) => ({ ...el.ORDER_INFO, groupname: el.groupname, productname: el.name }));
 
       const instances = this.$store.getters["nocloud/vms/getInstances"]
         .map((inst) => {
@@ -256,6 +251,7 @@ export default {
 
           if (inst.state?.meta.state === 1) status = "PENDING";
           if (inst.state?.meta.state === 5) status = "SUSPENDED";
+          if (inst.data.suspended_manually) status = "SUSPENDED";
           if (inst.state?.meta.state === "BUILD") status = "BUILD";
 
           switch (state) {
@@ -299,7 +295,7 @@ export default {
               res.date = inst.data.expiration
               res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
 
-              inst.config.addons.forEach((addon) => {
+              inst.config.addons?.forEach((addon) => {
                 const { price } = inst.billingPlan.resources.find(
                   ({ key }) => key === `${inst.config.duration} ${addon}`
                 );
