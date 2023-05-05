@@ -69,34 +69,38 @@
                   class="header__icon"
                   :type="button.icon"
                 />
-                <a-popover v-else placement="bottomRight" arrow-point-at-center>
+                <a-popover v-else placement="left" arrow-point-at-center>
                   <template slot="content">
-                    <div>
-                      <a-input-search
-                        placeholder="title/status/IP"
-                        enter-button
-                        :value="searchString"
-                        @input="(e) => $store.commit('nocloud/vms/setSearch', e.target.value)"
-                        @search="(text) => $store.commit('nocloud/vms/setSearch', text)"
-                        @keydown="updateSearch"
+                    <a-input-search
+                      placeholder="title/status/IP"
+                      enter-button
+                      :value="searchString"
+                      @input="(e) => $store.commit('nocloud/vms/setSearch', e.target.value)"
+                      @search="(text) => $store.commit('nocloud/vms/setSearch', text)"
+                      @keydown="updateSearch"
+                    >
+                      <div
+                        slot="suffix"
+                        @click="$store.commit('nocloud/vms/setSearch', '')"
+                        style="cursor: pointer"
                       >
-                        <div
-                          slot="suffix"
-                          @click="$store.commit('nocloud/vms/setSearch', '')"
-                          style="cursor: pointer"
-                        >
-                          <a-icon
-                            type="close"
-                            style="color: rgba(0, 0, 0, 0.45)"
-                          />
-                        </div>
-                      </a-input-search>
-                    </div>
+                        <a-icon
+                          type="close"
+                          style="color: rgba(0, 0, 0, 0.45)"
+                        />
+                      </div>
+                    </a-input-search>
                   </template>
-                  <template slot="title">
-                    <span>{{ $t("search") | capitalize }}</span>
-                  </template>
-                  <a-icon class="header__icon" :type="button.icon" />
+                  <a-icon
+                    class="header__icon"
+                    :type="button.icon"
+                    :style="(searchString.length > 0) ? {
+                      padding: '5px',
+                      borderRadius: '50%',
+                      background: 'var(--bright_bg)',
+                      color: 'var(--main)'
+                    } : null"
+                  />
                 </a-popover>
               </div>
 

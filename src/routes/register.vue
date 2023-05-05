@@ -191,7 +191,7 @@ export default {
 			this.send(this);
 		},
 		send(){
-      const info = (this.invoiceChecked) ? this.userinfo : {
+      const info = (this.invoiceChecked) ? { ...this.userinfo } : {
 				firstname: '',
 				lastname: '',
 				email: '',
@@ -200,6 +200,7 @@ export default {
 				phonenumber: '',
         currency: 1,
       };
+      delete info.tax_id;
 
 			if(Object.keys(info).some(key => !`${this.userinfo[key]}`.length)){
 				this.$message.warn(this.$t('all fields are required'));
@@ -246,7 +247,7 @@ export default {
 			})
 			.finally(()=>{
 				this.registerLoading = false;
-			})
+			});
 		},
 	},
   created() {

@@ -309,6 +309,8 @@ export default {
       ).map((el) => el[0]);
 
       this.options.period = this.periods[0];
+
+      // this.$api.get(this.baseURL, { params: { run: 'get_addons', productid: this.getProducts.id } });
     }
   }
 }
