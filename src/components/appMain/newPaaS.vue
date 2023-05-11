@@ -799,10 +799,10 @@ export default {
 
     //--------------Plans-----------------
     filteredPlans() {
-      const { billing_plans } = (this.itemSP.meta.showcase ?? {})[this.showcase];
+      const { billing_plans = [] } = (this.itemSP.meta.showcase ?? {})[this.showcase] ?? {};
 
-      if (billing_plans?.length < 1) return this.getPlans;
-      return this.getPlans.filter(({ uuid }) => billing_plans.includes(uuid));
+      if (billing_plans.length < 1) return this.getPlans;
+      return this.getPlans.filter(({ uuid }) => billing_plans?.includes(uuid));
     },
     //UNKNOWN and STATIC
     getPlan() {

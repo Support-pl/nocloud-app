@@ -22,8 +22,7 @@ export default {
     window.addEventListener('message', ({ data, origin }) => {
       if (!origin.includes('https://api.')) return;
       this.$store.commit("nocloud/auth/setToken", data);
-      localStorage.removeItem("user");
-      location.assign("/");
+      sessionStorage.removeItem("user");
     });
 
     this.$store.dispatch("nocloud/auth/load");
@@ -43,7 +42,7 @@ export default {
     if (this.loggedIn) {
       this.$store.dispatch("nocloud/auth/fetchUserData");
     } else {
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('user');
     }
   },
   mounted() {

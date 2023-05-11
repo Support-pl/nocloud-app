@@ -7,6 +7,7 @@
   >
     <a-collapse-panel
       key="location"
+      :style="{ minHeight: panelHeight }"
       :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${region.title})`}`"
     >
       <slot name="location" />
@@ -237,7 +238,7 @@ export default {
     addonsCodes: { type: Object, required: true },
     price: { type: Object, required: true }
   },
-  data: () => ({ isFlavorsLoading: false, type: '' }),
+  data: () => ({ isFlavorsLoading: false, type: '', panelHeight: null }),
   methods: {
     setOS(item, index) {
       if (item.warning) return;
@@ -347,6 +348,14 @@ export default {
       } else if (this.plan === '') {
         setTimeout(() => { this.$emit('changePlan', this.resources.plans[0]) });
       }
+    },
+    changePanelHeight() {
+      setTimeout(() => {
+        const panel = document.querySelector('.ant-collapse-content')?.lastElementChild;
+        const height = (panel) ? getComputedStyle(panel).height : null;
+
+        this.panelHeight = (this.activeKey === 'location') ? height : null;
+      });
     }
   },
   created() {
@@ -356,6 +365,7 @@ export default {
       this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn });
     }
   },
+  beforeMount() { this.changePanelHeight() },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
@@ -421,7 +431,8 @@ export default {
   },
   watch: {
     getPlan() { this.changePlans() },
-    type() { if (this.getPlan.type?.includes('ovh')) this.changePlans() }
+    type() { if (this.getPlan.type?.includes('ovh')) this.changePlans() },
+    activeKey() { this.changePanelHeight() }
   }
 }
 </script>
