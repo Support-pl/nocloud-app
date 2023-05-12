@@ -221,8 +221,9 @@ export default {
 			}
 
 			const temp = JSON.parse(JSON.stringify(this.userinfo));
-			temp.phonenumber = `${this.phonecode.replace(/[+\s]/g, "")}${temp.phonenumber}`;
+
       temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`;
+      temp.phonenumber = temp.phonenumber.replace(this.phonecode, '').replace(/[\s-]/g, '');
 
 			this.registerLoading = true;
 			api.get(this.baseURL, {

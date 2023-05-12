@@ -163,7 +163,7 @@ export default {
       (this.isLoginFailed = false),
         this.$store
           .dispatch("nocloud/auth/login", {
-            login: formatedEmail,
+            login: formatedEmail.trim(),
             password: this.password,
             type: (this.type) ? 'standard' : 'whmcs'
           })

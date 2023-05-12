@@ -7,6 +7,7 @@
   >
     <a-collapse-panel
       key="location"
+      :style="{ minHeight: panelHeight }"
       :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${itemSP.locations[0].title})`}`"
     >
       <slot name="location" />
@@ -332,6 +333,7 @@ export default {
     password: { type: String, required: true },
     sshKey: { type: String }
   },
+  data: () => ({ panelHeight: null }),
   methods: {
     setOS(item, index) {
       if (item.warning) return;
@@ -373,11 +375,20 @@ export default {
         this.options.disk.min -= 128;
       }
     },
+    changePanelHeight() {
+      setTimeout(() => {
+        const panel = document.querySelector('.ant-collapse-content')?.lastElementChild;
+        const height = (panel) ? getComputedStyle(panel).height : null;
+
+        this.panelHeight = (this.activeKey === 'location') ? height : null;
+      });
+    }
   },
-  mounted() {
+  beforeMount() {
     const images = Object.entries(this.itemSP?.publicData.templates ?? {});
 
     if (images.length === 1) this.setOS(images[0][1], images[0][0]);
+    this.changePanelHeight();
   },
   computed: {
     user() {
@@ -457,7 +468,8 @@ export default {
 
       this.options.drive = false;
       this.$emit('setData', { key: 'periods', value });
-    }
+    },
+    activeKey() { this.changePanelHeight() }
   }
 }
 </script>

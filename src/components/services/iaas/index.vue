@@ -20,7 +20,7 @@
             arrows
             draggable
             :dots="false"
-            :slides-to-show="3"
+            :slides-to-show="slides"
             :slides-to-scroll="3"
           >
             <div
@@ -35,13 +35,13 @@
 
             <template #prevArrow>
               <div class="custom-slick-arrow" style="left: -35px;">
-                <a-icon type="left-circle" />
+                <a-icon type="left-circle" @click="setCurrentPage('left')" />
               </div>
             </template>
 
             <template #nextArrow>
               <div class="custom-slick-arrow" style="right: -35px">
-                <a-icon type="right-circle" />
+                <a-icon type="right-circle" @click="setCurrentPage('right')" />
               </div>
             </template>
           </a-carousel>
@@ -58,6 +58,21 @@
               </tr>
             </table>
           </transition>
+
+          <a-card style="margin-top: 15px" :title="$t('Addons')" :loading="fetchLoading">
+            <a-card-grid
+              class="card-item"
+              v-for="addon of addons[getProducts.id]"
+              :key="addon.id"
+              :class="{ 'card-item--active': options.addons.includes(addon.id) }"
+              @click="changeAddons(addon.id)"
+            >
+              <div class="order__slider-name">
+                <span style="font-weight: 700; font-size: 16px" v-html="addon.name"></span>
+                <span v-html="addon.description"></span>
+              </div>
+            </a-card-grid>
+          </a-card>
 				</div>
 			</div>
 
@@ -103,7 +118,8 @@
 					<a-col>
 						<transition name="textchange" mode="out-in">
 							<div v-if="!fetchLoading">
-								{{ getProducts.price[options.period] }} {{ getProducts.price.currency }}
+								{{ +getProducts.price[options.period] + addonsPrice }}
+                {{ getProducts.price.currency }}
 							</div>
 							<div v-else class="loadingLine loadingLine--total"></div>
 						</transition>
@@ -158,14 +174,17 @@ export default {
     payMethods: [],
     fetchLoading: false,
     sendloading: false,
-    options: { size: '', payment: '', period: '' },
+    options: { size: '', payment: '', period: '', addons: [] },
     modal: {
       confirmCreate: false,
       confirmLoading: false,
       goToInvoice: true
     },
     addfunds: { visible: false, amount: 0 },
-    periods: []
+    addons: {},
+    periods: [],
+    currencies: [],
+    page: 1
 	}),
 	methods: {
 		fetch(){
@@ -199,12 +218,41 @@ export default {
           this.fetchLoading = false;
         });
 		},
+    setCurrentPage(moveTo) {
+      const lastPage = this.sizes.length / 3;
+
+      if (this.page === 1 && moveTo === 'left') {
+        this.page = Math.ceil(lastPage);
+        return;
+      }
+      if (this.page > lastPage && moveTo === 'right') {
+        this.page = 1;
+        return;
+      }
+
+      switch (moveTo) {
+        case 'left':
+          this.page--;
+          break;
+        case 'right':
+          this.page++;
+          break;
+      }
+    },
+    changeAddons(id) {
+      if (this.options.addons.includes(id)) {
+        this.options.addons = this.options.addons.filter((addon) => addon !== id);
+      } else {
+        this.options.addons.push(id);
+      }
+    },
 		orderClickHandler(){
 			const info = {
         run: 'add_product',
 				billingcycle: this.options.period,
 				product: this.getProducts.id,
-        paymentmethod: this.options.payment
+        paymentmethod: this.options.payment,
+        addons: this.options.addons
 			}
 
 			if(!this.user){
@@ -249,14 +297,14 @@ export default {
     checkBalance() {
       const sum = this.getProducts.price[this.options.period];
 
-      if (this.user.balance < parseFloat(sum)) {
+      if (this.userdata.balance < parseFloat(sum)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance.'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
           onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.user.balance);
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
             this.addfunds.visible = true;
           }
         });
@@ -272,6 +320,11 @@ export default {
 
       if (typeof product.description !== 'string') return product
       if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
+        if (typeof product.price.currency === 'string') return product
+
+        product.price = product.price.find(({ currency }) => currency === this.currency.id)
+        product.price.currency = this.currency.code
+
         return product
       } else {
         product.description = product.description.split('\r\n').map(
@@ -279,20 +332,53 @@ export default {
         )
         product.description.pop()
 
-        product.price = product.price.find(({ currency }) => currency === this.user.currency)
-        product.price.currency = this.user.currency_code
+        product.price = product.price.find(({ currency }) => currency === this.currency.id)
+        product.price.currency = this.currency.code
       }
 
 			return product
 		},
+    slides() {
+      const lastPage = Math.ceil(this.sizes.length / 3);
+
+      if (this.page === lastPage) return 1;
+      return 3;
+    },
+    addonsPrice() {
+      return this.options.addons.reduce((sum, curr) => {
+        const { prices } = this.addons[this.getProducts.id].find(({ id }) => id === curr);
+        const price = prices.find((el) => el.currency === this.currency.id);
+
+        return sum + +price[this.options.period];
+      }, 0);
+    },
+    userdata() {
+      return this.$store.getters['nocloud/auth/userdata'];
+    },
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
+    },
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+      const code = this.user.currency_code ?? defaultCurrency;
+      const { id } = this.currencies.find((currency) => currency.code === code);
+
+      return { code, id };
     },
     baseURL() {
       return this.$store.getters['nocloud/auth/getURL'];
     }
 	},
 	created() {
+    this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
+      .then((res) => { this.currencies = res.currency })
+			.catch(err => {
+        const message = err.response?.data?.message ?? err.message;
+
+				this.$notification.error({ message: this.$t(message) });
+				console.error(err);
+			});
+
     this.$api.get(this.baseURL, { params: { run: 'get_payment' } })
       .then((res) => {
         this.payMethods = res.paymentmethod;
@@ -310,7 +396,20 @@ export default {
 
       this.options.period = this.periods[0];
 
-      // this.$api.get(this.baseURL, { params: { run: 'get_addons', productid: this.getProducts.id } });
+      if (this.addons[this.getProducts.id]) {
+        this.options.addons = [];
+        return;
+      }
+
+      this.$api.get(this.baseURL, { params: {
+        run: 'get_addons',
+        productid: this.getProducts.id
+      }})
+        .then((res) => {
+          this.$set(this.addons, this.getProducts.id, res);
+          this.options.addons = [];
+        })
+        .catch((err) => console.error(err));
     }
   }
 }
@@ -383,6 +482,12 @@ export default {
 	width: 72%;
 }
 
+.order__option div > .img_prod {
+  display: block;
+  max-width: 50%;
+  margin: 0 auto 10px;
+}
+
 .order__option .ant-slider-mark {
   display: none;
 }
@@ -424,6 +529,22 @@ export default {
 }
 .order__option .ant-carousel .custom-slick-arrow:hover {
   opacity: 1;
+}
+
+.order__option .ant-card-body {
+  display: flex;
+  gap: 5px;
+}
+
+.card-item {
+  width: 50%;
+  cursor: pointer;
+  border: 0 solid transparent;
+}
+
+.card-item--active {
+  padding: 19px;
+  border: 5px solid var(--main);
 }
 
 .order__field{

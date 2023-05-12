@@ -31,8 +31,8 @@ export default {
   }),
   computed: {
     products() {
-      const products = this.$store.getters["products/getProducts"];
-      const instances = this.$store.getters["nocloud/vms/getInstances"];
+      const products = this.$store.getters["products/getProducts"] ?? [];
+      const instances = this.$store.getters["nocloud/vms/getInstances"] ?? [];
 
       if (this.$route.query.service) {
         return [...products, ...instances].filter(({ sp }) => {

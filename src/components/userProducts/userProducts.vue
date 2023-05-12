@@ -2,24 +2,32 @@
   <div class="products__wrapper">
     <div class="products__header" v-if="isLogged">
       <div class="products__title">
-        {{ $t("comp_services.Your orders") }}{{ (isNeedFilterStringInHeader) ? '' : ':' }}
         <!-- Ваши услуги -->
         <transition name="header-transition" mode="out-in">
           <span
             class="header__animated"
+            v-if="!productsLoading || isNeedFilterStringInHeader"
             :key="$route.query.service || 'emptyQuery'"
           >
-            <span v-if="isNeedFilterStringInHeader">
-              {{ $t("comp_services.with filter") }}:
-              <b>{{ checkedTypesString }}:</b>
-              <!-- по фильтру -->
+            {{ (isNeedFilterStringInHeader) ? '' : `${$t("comp_services.Your orders")}:` }}
+            <span class="products__count" v-if="!isNeedFilterStringInHeader">
+              {{ productsCount() }}
             </span>
-            <transition name="fade-in">
-              <span v-if="!productsLoading" class="products__count">
-                {{ productsCount }}
+
+            <transition-group name="fade-in" style="display: flex; flex-wrap: wrap; gap: 10px">
+              <a-badge class="products__filters" v-for="type of checkedTypesString" :key="type.value">
+                <template #count>
+                  <a-icon
+                    type="close-circle"
+                    theme="filled"
+                    style="color: var(--err)"
+                    @click="filterElementClickHandler(type.value)"
+                  />
+                </template>
+                {{ type.title }}: {{ productsCount(type.value) }}
                 <!-- всего -->
-              </span>
-            </transition>
+              </a-badge>
+            </transition-group>
           </span>
         </transition>
       </div>
@@ -200,38 +208,7 @@ export default {
 
       if (this.min) return this.products.slice(0, 5);
       else if (this.$route.query.service) {
-        return products.filter(({ sp, hostingid, config, billingPlan, productname }) => {
-          //фильтруем по значениям из гет запроса
-          let { title, locations, meta } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
-          const service = Object.values(meta?.showcase ?? {}).find(
-            (el) => el.billing_plans.includes(billingPlan.uuid)
-          );
-
-          if (hostingid) title = 'Virtual';
-          if (this.isFilterByLocation) {
-            const key = Object.keys(config.configuration ?? {}).find(
-              (key) => key.includes('datacenter')
-            );
-            const region = locations.find(({ extra }) =>
-              extra.region === (config.configuration ?? {})[key]
-            );
-
-            title = region?.title ?? locations[0];
-          }
-
-          return this.checkedTypes.some((value) => {
-            if (this.services[value]) {
-              return this.services[value].find(({ name }) => name === productname);
-            }
-            if (!meta?.showcase) return value === title;
-
-            const { length = 0 } = meta?.showcase[value]?.billing_plans ?? {};
-
-            if (length > 0 && service) return true;
-            else if (length > 0) return false;
-            else return value === title || meta?.showcase[value];
-          });
-        });
+        return this.filterProducts(products, this.checkedTypes);
       }
       return products;
     },
@@ -378,19 +355,12 @@ export default {
       );
     },
     checkedTypesString() {
-      return this.checkedTypes.map((type) => this.types.find(
-        ({ value }) => value === type)?.title ?? type
-      ).join(', ');
-    },
-    productsCount() {
-      const total = this.$store.getters["products/total"];
+      return this.checkedTypes.map((type) => {
+        const foundType = this.types.find(({ value }) => value === type);
 
-      if (total && this.$route.name !== "products") return total;
-      if (this.min) {
-        return this.products.length;
-      } else {
-        return this.productsPrepared.length;
-      }
+        if (foundType) return foundType;
+        else return { title: type, value: type };
+      });
     },
     isNeedFilterStringInHeader() {
       return ["services", "root"].includes(this.$route.name) && this.$route.query.service;
@@ -446,6 +416,54 @@ export default {
       }
 
       this.$router.push({ name, query });
+    },
+    filterProducts(products, types) {
+      return products.filter(({ sp, hostingid, config, billingPlan, productname }) => {
+          //фильтруем по значениям из гет запроса
+          let { title, locations = [], meta } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+          const service = Object.values(meta?.showcase ?? {}).find(
+            (el) => el.billing_plans.includes(billingPlan.uuid)
+          );
+
+          if (hostingid) title = 'Virtual';
+          if (this.isFilterByLocation) {
+            const key = Object.keys(config?.configuration ?? {}).find(
+              (key) => key.includes('datacenter')
+            );
+            const region = locations?.find(({ extra }) =>
+              extra.region === (config?.configuration ?? {})[key]
+            );
+
+            title = region?.title ?? locations[0];
+          }
+
+          return types.some((value) => {
+            if (this.services[value]) {
+              return this.services[value].find(({ name }) => name === productname);
+            }
+            if (!meta?.showcase) return value === title;
+
+            const { length = 0 } = meta?.showcase[value]?.billing_plans ?? {};
+
+            if (length > 0 && service) return true;
+            else if (length > 0) return false;
+            else return value === title || meta?.showcase[value];
+          });
+        });
+    },
+    productsCount(type) {
+      const total = this.$store.getters["products/total"];
+
+      if (this.checkedTypes.length > 0) {
+        return this.filterProducts(this.productsPrepared, [type]).length;
+      }
+
+      if (total && this.$route.name !== "products") return total;
+      if (this.min) {
+        return this.products.length;
+      } else {
+        return this.productsPrepared.length;
+      }
     },
     isExpired(instance){
       const productDate = new Date(instance.date);
@@ -533,7 +551,6 @@ export default {
 .products__header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding: 7px 15px;
   margin-bottom: 15px;
   background: #fff;
@@ -574,7 +591,15 @@ export default {
 .products__title {
   white-space: nowrap;
   text-overflow: ellipsis;
-  overflow: hidden;
+  font-size: 18px;
+}
+
+.products__filters {
+  padding: 5px 7px;
+  border-radius: 7px;
+  background: var(--main);
+  color: var(--bright_font);
+  font-weight: 700;
   font-size: 18px;
 }
 

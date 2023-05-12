@@ -78,13 +78,10 @@
             :title="$t('SSH keys')"
             :footer="null"
           >
-            <div
-              style="margin-bottom: 20px"
-              v-if="userdata.data && userdata.data.ssh_keys.length"
-            >
+            <div style="margin-bottom: 20px" v-if="sshKeys.length">
               <div
                 style="display: flex; align-items: center; margin-bottom: 20px"
-                v-for="(item, index) in userdata.data && userdata.data.ssh_keys"
+                v-for="(item, index) in sshKeys"
                 :key="item.uuid"
               >
                 <a-col style="width: 100%">
@@ -147,7 +144,7 @@
         <button
           class="settings__login"
           v-if="false && userdata.access && ['ROOT', 'ADMIN'].includes(userdata.access.level)"
-          @click="loginToAdmin()"
+          @click="loginToAdmin"
         >
           {{ $t("Login to admin panel") }}
         </button>
@@ -326,6 +323,9 @@ export default {
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
+    sshKeys() {
+      return this.userdata?.data?.ssh_keys ?? [];
+    }
   },
 };
 </script>

@@ -25,7 +25,7 @@ export default {
 		},
     setBillingUser(state, data) {
       state.billingUser = data
-      localStorage.setItem('user', JSON.stringify(data))
+      sessionStorage.setItem('user', JSON.stringify(data))
     },
     setCurrencies(state, rates) {
       state.currencies = rates.map((el) => ({ ...el, id: `${el.from} ${el.to}` }));
@@ -41,7 +41,7 @@ export default {
 	},
 	actions: {
 		login({ commit }, { login, password, type, uuid }) {
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('user');
 			return new Promise((resolve, reject) => {
 				api.authorizeCustom({ auth: { type, data: [login, password] }, uuid })
 					.then(response => {
@@ -82,7 +82,7 @@ export default {
 			})
 		},
     fetchBillingData({ state, commit }) {
-      const user = localStorage.getItem('user');
+      const user = sessionStorage.getItem('user');
 
       return new Promise((resolve, reject) => {
         if (user) {

@@ -253,7 +253,7 @@ export default {
             user: { ...this.userData, ...this.deltaInfo }
           }})
             .then(() => {
-              localStorage.removeItem('user');
+              sessionStorage.removeItem('user');
               this.$message.success("success");
               this.fetchInfo();
             })
@@ -315,8 +315,6 @@ export default {
 .content__wrapper {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 70vh;
   padding: 10px 10px 15px 10px;
   border-radius: 10px;
   background: #fff;
