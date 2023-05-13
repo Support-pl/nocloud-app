@@ -396,7 +396,7 @@ export default {
   methods: {
     fetch() {
       this.fetchLoading = true;
-      const promises = this.onCart.map(({ name }) => 
+      const promises = this.onCart.map(({ name }) =>
         this.$api.servicesProviders.action({
           uuid: this.sp.uuid,
           action: 'get_domain_price',
@@ -620,7 +620,7 @@ export default {
         .filter((el) => el.status !== 'DEL');
     },
     namespaces() {
-      return this.$store.getters['nocloud/namespaces/getNamespaces'] ?? [];
+      return this.$store.getters['nocloud/namespaces/getNameSpaces'] ?? [];
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']

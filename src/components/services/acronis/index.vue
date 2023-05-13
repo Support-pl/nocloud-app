@@ -15,16 +15,32 @@
             </div>
           </a-collapse-panel>
 
-          <a-collapse-panel key="adv" style="border-bottom: 0" :header="`${$t('Advanced')}:`">
+          <a-collapse-panel key="adv" :header="`${$t('Advanced')}:`">
             <div class="order_option">
               <a-row class="order__prop" v-for="(value, key) in getProducts.adv" :key="key">
-                <a-col span="6">{{ $t(value.title) | capitalize }}:</a-col>
+                <a-col span="6">{{ value.meta.edition || value.title | capitalize }}:</a-col>
                 <a-col span="18" style="text-align: right">
                   <a-input-number v-if="!fetchLoading" v-model="config[key]" :min="0" />
                   <div v-else class="loadingLine"></div>
                 </a-col>
               </a-row>
             </div>
+          </a-collapse-panel>
+
+          <a-collapse-panel key="personal" style="border-bottom: 0" :header="`${$t('Data')}:`">
+            <a-form-item :label="$t('login')">
+              <a-input
+                v-model="options.login"
+                :style="{ boxShadow: (options.login.length < 2) ? '0 0 2px 2px var(--err)' : null }"
+              />
+              <div style="line-height: 1.5; color: var(--err)" v-if="options.login.length < 2">
+                {{ $t('ssl_product.field is required') }}
+              </div>
+            </a-form-item>
+
+            <a-form-item v-if="user.uuid" :label="$t('clientinfo.password')">
+              <a-input-password class="password" v-model="options.password" />
+            </a-form-item>
           </a-collapse-panel>
         </a-collapse>
 			</div>
@@ -141,7 +157,7 @@ export default {
     fetchLoading: false,
     sendloading: false,
 
-    options: { title: '', period: '' },
+    options: { login: '', password: '', period: '' },
     modal: { confirmCreate: false, confirmLoading: false },
     addfunds: { visible: false, amount: 0 },
 
@@ -171,18 +187,25 @@ export default {
     },
 		orderClickHandler() {
       const service = this.services.find(({ uuid }) => uuid === this.service);
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
+      const items = {};
 
-      const instances = [{
-        config: { ...this.config },
-        title: this.options.title,
-        billing_plan: plan ?? {}
-      }];
+      Object.entries(this.config).forEach(([key, value]) => {
+        if (value > 0) items[key] = value;
+      });
+
       const newGroup = {
         title: this.user.fullname + Date.now(),
         type: this.sp.type,
         sp: this.sp.uuid,
-        instances
+        config: {
+          items,
+          first_name: this.user.firstname,
+          last_name: this.user.lastname,
+          mail: this.user.email,
+          login: this.options.login,
+          password: this.options.password
+        },
+        instances: []
       };
 
       const info = (!this.service) ? newGroup : Object.assign(
@@ -191,8 +214,7 @@ export default {
       );
       const group = info.instances_groups?.find(({ type }) => type === 'acronis');
 
-      if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instances_groups.push(newGroup);
+      if (!group && this.service) info.instances_groups.push(newGroup);
 
 			if (!this.user) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
@@ -290,13 +312,13 @@ export default {
       let price = 0;
 
       Object.entries(this.config).forEach(([key, value]) => {
-        console.log();
         const product = this.products[key];
 
         if (key.includes('_adv_')) adv[key] = product;
         else base[key] = product;
 
-        title.push(`${product.title}: ${value}`);
+        if (value === 0) return;
+        title.push(`${product.meta.edition ?? product.title}: ${value}`);
         price += product.price * value;
       });
 
@@ -315,7 +337,7 @@ export default {
         .filter((el) => el.status !== 'DEL');
     },
     namespaces() {
-      return this.$store.getters['nocloud/namespaces/getNamespaces'] ?? [];
+      return this.$store.getters['nocloud/namespaces/getNameSpaces'] ?? [];
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
@@ -339,10 +361,11 @@ export default {
       if (value.length === 1) this.service = value[0]?.uuid;
     },
     namespaces(value) { this.namespace = value[0]?.uuid },
-		plans(value) { this.plan = value[1]?.uuid },
+		plans(value) { this.plan = value[0]?.uuid },
     plan(value) {
       const plan = this.plans.find(({ uuid }) => uuid === value);
 
+      this.config = {};
       this.changeProducts(plan);
     }
   },

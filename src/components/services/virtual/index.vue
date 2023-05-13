@@ -359,7 +359,7 @@ export default {
         .filter((el) => el.status !== 'DEL');
     },
     namespaces() {
-      return this.$store.getters['nocloud/namespaces/getNamespaces'] ?? [];
+      return this.$store.getters['nocloud/namespaces/getNameSpaces'] ?? [];
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
