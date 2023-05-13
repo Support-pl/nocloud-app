@@ -112,6 +112,9 @@ export default {
         case 'goget':
           name = 'service-ssl';
           break;
+        case 'acronis':
+          name = 'service-acronis';
+          break;
         case 'ione':
         case 'ovh':
           name = 'newPaaS';

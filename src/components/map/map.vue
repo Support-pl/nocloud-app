@@ -50,7 +50,7 @@
           <path
             v-for="country in mapData.countries"
             :key="country.id + country.title"
-            :class="{ 'map__part--selected': selected.split(' ').at(-1).includes(country.id) }"
+            :class="{ 'map__part--selected': selected.split(' ').at(-1).split('-').includes(country.id) }"
             class="map__part"
             :id="country.id"
             :title="country.title"
@@ -138,7 +138,7 @@
 </template>
 
 <script>
-import mapData from "../../map.json";
+import mapData from "@/map.json";
 
 export default {
   name: "support-map",

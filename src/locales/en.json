@@ -81,6 +81,8 @@
 	"year": "year | {n} year | {n} years",
   "years": "years",
 	"Network": "Network",
+  "Base": "Base",
+  "Advanced": "Advanced",
 	"Total": "Total",
   "Windows": "Windows",
 	"Ready made servers": "VPS SSD Plans",
@@ -325,6 +327,7 @@
   "Add SSH key successfully": "Add SSH key successfully",
   "error delete SSH key": "Error delete SSH key",
   "Error adding SSH key": "Error adding SSH key",
+  "Please select at least one option": "Please select at least one option",
 	"advice": {
 		"look up": "look up",
 		"You have billed for the renewal of this virtual machine": "You have been billed for the renewal of this virtual machine.",

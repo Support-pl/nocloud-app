@@ -252,6 +252,9 @@ export default {
           };
 
           switch (inst.type) {
+            case 'acronis':
+              res.groupname = 'Acronis';
+              break;
             case 'opensrs':
               res.groupname = 'Domains';
               res.date = inst.data.expiry.expiredate;
@@ -363,7 +366,7 @@ export default {
       });
     },
     isNeedFilterStringInHeader() {
-      return ["services", "root"].includes(this.$route.name) && this.$route.query.service;
+      return ["services", "root", "products"].includes(this.$route.name) && this.$route.query.service;
     },
     queryTypes() {
       if (this.$route.query.service) {
@@ -403,6 +406,9 @@ export default {
           break;
         case 'goget':
           name = 'service-ssl';
+          break;
+        case 'acronis':
+          name = 'service-acronis';
           break;
         case 'ione':
         case 'ovh':
