@@ -323,6 +323,7 @@
   "renew": "renew",
 	"all fields are required": "Please fill in all fields",
 	"field must contain more characters": "Field must contain more characters",
+  "login is required": "Login is required",
   "email is not valid": "Email is not valid",
   "account created successfully": "Account created successfully.",
   "SSH key": "SSH key",
@@ -563,6 +564,7 @@
   "port": "port",
   "type": "type",
   "text": "text",
+  "data": "data",
 	"no data":"No information available",
 
 	"add funds": "Add funds",

@@ -150,7 +150,7 @@ export default {
     },
     mouseEnterHandler(id) {
       this.hovered = id;
-      this.$emit("pinHover", id.substring(0, id.indexOf("_")));
+      this.$emit("pinHover", id);
       clearInterval(this.leaveDelayInterval);
     },
     mouseLeaveHandler() {
@@ -367,6 +367,7 @@ export default {
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 4px;
   background: #fff;
+  cursor: pointer;
 }
 
 .map__button:not(:last-child) {
