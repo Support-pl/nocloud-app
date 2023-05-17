@@ -203,7 +203,7 @@
               {{ tariffTitle || $t('No Data') }}:
             </div>
             <div class="block__value">
-              {{ tariffPrice }} {{ currency.code }}
+              {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
             </div>
           </div>
 
@@ -219,13 +219,13 @@
           >
             <div class="block__title">{{ addon }}:</div>
             <div class="block__value">
-              {{ price }} {{ currency.code }}
+              {{ +price.toFixed(2) }} {{ currency.code }}
             </div>
           </div>
 
           <div class="block__column block__column_table block__column_total">
             <div class="block__title">{{ $t('Total') }}:</div>
-            <div class="block__value">{{ fullPrice }} {{ currency.code }}</div>
+            <div class="block__value">{{ +fullPrice.toFixed(2) }} {{ currency.code }}</div>
           </div>
         </div>
       </div>

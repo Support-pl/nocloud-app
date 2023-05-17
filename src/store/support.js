@@ -80,7 +80,7 @@ export default {
 		getTickets(state){
 			const order = ['open', 'closed', 'answered'];
 			const tickets = [...state.tickets].sort((a, b) =>
-        new Date(b.date) - new Date(a.date)
+        new Date(b.date).getTime() - new Date(a.date).getTime()
       );
       const filters = state.filter.map((el) => {
         if (!el.includes(' ')) return el;

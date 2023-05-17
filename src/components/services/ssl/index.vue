@@ -359,7 +359,7 @@ export default {
 
       if (this.user.balance < parseFloat(sum)) {
         this.$confirm({
-          title: this.$t('You do not have enough funds on your balance.'),
+          title: this.$t('You do not have enough funds on your balance'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
@@ -451,7 +451,7 @@ export default {
         .filter((el) => el.status !== 'DEL');
     },
     namespaces() {
-      return this.$store.getters['nocloud/namespaces/getNamespaces'] ?? [];
+      return this.$store.getters['nocloud/namespaces/getNameSpaces'] ?? [];
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']

@@ -252,6 +252,9 @@ export default {
           };
 
           switch (inst.type) {
+            case 'acronis':
+              res.groupname = 'Acronis';
+              break;
             case 'opensrs':
               res.groupname = 'Domains';
               res.date = inst.data.expiry.expiredate;
@@ -363,7 +366,7 @@ export default {
       });
     },
     isNeedFilterStringInHeader() {
-      return ["services", "root"].includes(this.$route.name) && this.$route.query.service;
+      return ["services", "root", "products"].includes(this.$route.name) && this.$route.query.service;
     },
     queryTypes() {
       if (this.$route.query.service) {
@@ -404,6 +407,9 @@ export default {
         case 'goget':
           name = 'service-ssl';
           break;
+        case 'acronis':
+          name = 'service-acronis';
+          break;
         case 'ione':
         case 'ovh':
           name = 'newPaaS';
@@ -443,10 +449,10 @@ export default {
             }
             if (!meta?.showcase) return value === title;
 
-            const { length = 0 } = meta?.showcase[value]?.billing_plans ?? {};
+            const plans = meta?.showcase[value]?.billing_plans ?? [];
 
-            if (length > 0 && service) return true;
-            else if (length > 0) return false;
+            if (plans?.includes(billingPlan.uuid) && service) return true;
+            else if (plans?.length > 0) return false;
             else return value === title || meta?.showcase[value];
           });
         });

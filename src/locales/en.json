@@ -81,6 +81,8 @@
 	"year": "year | {n} year | {n} years",
   "years": "years",
 	"Network": "Network",
+  "Base": "Base",
+  "Advanced": "Advanced",
 	"Total": "Total",
   "Windows": "Windows",
 	"Ready made servers": "VPS SSD Plans",
@@ -247,6 +249,8 @@
 	"Check all": "Check all",
 	"Parameters": "Parameters",
 	"Add Funds": "Add Funds",
+  "You do not have enough funds on your balance": "You do not have enough funds on your balance.",
+  "Click OK to replenish the account with the missing amount": "Click OK to replenish the account with the missing amount",
 	"have no": "have no",
 	"ip": {
 		"none": "none"
@@ -288,6 +292,7 @@
   "by": "by",
 	"sort": "Sort",
   "name": "name",
+  "count": "count",
   "cost": "cost",
   "date": "date",
 	"filter": "Filter",
@@ -309,6 +314,9 @@
 	"Virtual": "Web Hosting",
   "SSL": "SSL",
 	"info": "info",
+  "token": "token",
+  "Token expiration date": "Token expiration date",
+  "Refresh token": "Refresh token",
 	"enter": "Enter",
   "next": "next",
   "Done": "Done",
@@ -325,6 +333,7 @@
   "Add SSH key successfully": "Add SSH key successfully",
   "error delete SSH key": "Error delete SSH key",
   "Error adding SSH key": "Error adding SSH key",
+  "Please select at least one option": "Please select at least one option",
 	"advice": {
 		"look up": "look up",
 		"You have billed for the renewal of this virtual machine": "You have been billed for the renewal of this virtual machine.",

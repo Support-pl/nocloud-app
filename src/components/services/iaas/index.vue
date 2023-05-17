@@ -59,8 +59,15 @@
             </table>
           </transition>
 
-          <a-card style="margin-top: 15px" :title="$t('Addons')" :loading="fetchLoading">
+          <a-card
+            style="margin-top: 15px"
+            v-if="fetchLoading || addons[getProducts.id] && addons[getProducts.id].length > 0"
+            :title="$t('Addons')"
+            :loading="fetchLoading"
+          >
+            <div v-if="fetchLoading">Loading...</div>
             <a-card-grid
+              v-else
               class="card-item"
               v-for="addon of addons[getProducts.id]"
               :key="addon.id"
@@ -299,7 +306,7 @@ export default {
 
       if (this.userdata.balance < parseFloat(sum)) {
         this.$confirm({
-          title: this.$t('You do not have enough funds on your balance.'),
+          title: this.$t('You do not have enough funds on your balance'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
@@ -534,6 +541,10 @@ export default {
 .order__option .ant-card-body {
   display: flex;
   gap: 5px;
+}
+
+.order__option .ant-card-loading-content {
+  width: 100%;
 }
 
 .card-item {

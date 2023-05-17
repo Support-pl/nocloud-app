@@ -23,6 +23,7 @@ export default {
       if (!origin.includes('https://api.')) return;
       this.$store.commit("nocloud/auth/setToken", data);
       sessionStorage.removeItem("user");
+      location.reload();
     });
 
     this.$store.dispatch("nocloud/auth/load");

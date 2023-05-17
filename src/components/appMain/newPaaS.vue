@@ -60,9 +60,9 @@
 
         <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
           <div
-            ref="description"
             style="white-space: break-spaces"
             v-if="locationDescription && activeKey === 'location'"
+            v-html="locationDescription"
           />
 
           <template v-else>
@@ -1108,7 +1108,8 @@ export default {
 
       if (key === 'type') {
         const plan = this.getPlans.find(({ type }) => type.includes(value));
-        const product = Object.values(plan.products)[0];
+        const products = Object.values(plan.products);
+        const product = products[1] ?? products[0];
 
         this.plan = plan.uuid;
         this.setData({ key: 'productSize', value: product.title });
@@ -1378,7 +1379,7 @@ export default {
 
       if (balance < parseFloat(sum.replace('~', ''))) {
         this.$confirm({
-          title: this.$t('You do not have enough funds on your balance.'),
+          title: this.$t('You do not have enough funds on your balance'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
@@ -1520,11 +1521,11 @@ export default {
         });
 
         this.plan = item.uuid;
-        this.setData({ key: 'productSize', value: this.getProducts[0] });
+        this.setData({ key: 'productSize', value: this.getProducts[1] ?? this.getProducts[0] });
       }
     },
     periods(periods) {
-      if (('data' in this.$route.query)) return;
+      if ((this.$route.query.data?.includes('productSize'))) return;
       this.tarification = '';
 
       setTimeout(() => {
@@ -1532,6 +1533,7 @@ export default {
       });
     },
     locationId() {
+      this.options.os = { id: -1, name: "" };
       this.$store.dispatch("nocloud/plans/fetch", {
         sp_uuid: this.itemSP.uuid,
         anonymously: !this.isLoggedIn
@@ -1548,10 +1550,6 @@ export default {
         }
 
         if (this.getPlan.type?.includes('ovh')) this.type = this.getPlan.type?.split(' ')[1];
-
-        if (this.$refs.description) {
-          this.$refs.description.innerHTML = this.locationDescription;
-        }
       });
 
       const type = this.options.drive ? "SSD" : "HDD";
@@ -1579,13 +1577,11 @@ export default {
         this.options.disk.step = 1;
       }
     },
-    activeKey(value) {
+    activeKey() {
       setTimeout(() => {
         const { $el } = this.$refs['periods-group']?.$children.at(-1) ?? {};
 
-        if (value === 'location' && this.$refs.description) {
-          this.$refs.description.innerHTML = this.locationDescription;
-        } else if ($el?.style.gridColumn === '' && Object.keys(this.periods).length > 4) {
+        if ($el?.style.gridColumn === '' && Object.keys(this.periods).length > 4) {
           if (Object.keys(this.periods).length % 3 === 1) $el.style.gridColumn = '2 / 3';
         }
       });

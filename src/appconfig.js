@@ -59,6 +59,11 @@ export default {
       groupname: ['VDS SSD', 'VDC IaaS'],
       creationRouteName: 'service-iaas',
       icon: 'shopping',
+    },
+    acronis: {
+      groupname: ['Acronis'],
+      creationRouteName: 'service-acronis',
+      icon: 'shopping'
     }
   },
 	getServiceType(groupname){

@@ -62,7 +62,7 @@ export default {
             });
           });
 
-          invoices.sort((a, b) => new Date(b.date) - new Date(a.date));
+          invoices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
           if (!res[0]?.ERROR) commit('updateInvoices', invoices);
           else reject(res[0].ERROR);
 
