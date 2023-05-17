@@ -251,7 +251,7 @@
               {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}:
             </div>
             <div class="block__value">
-              {{ tariffPrice }} {{ currency.code }}
+              {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
             </div>
           </div>
 
@@ -267,13 +267,13 @@
           >
             <div class="block__title">{{ addon }}:</div>
             <div class="block__value">
-              {{ price }} {{ currency.code }}
+              {{ +price.toFixed(2) }} {{ currency.code }}
             </div>
           </div>
 
           <div class="block__column block__column_table block__column_total">
             <div class="block__title">{{ $t('Total') }}:</div>
-            <div class="block__value">{{ fullPrice }} {{ currency.code }}</div>
+            <div class="block__value">{{ +fullPrice.toFixed(2) }} {{ currency.code }}</div>
           </div>
         </div>
       </div>
@@ -662,7 +662,7 @@ export default {
 
       if (this.user.balance < parseFloat(sum)) {
         this.$confirm({
-          title: this.$t('You do not have enough funds on your balance.'),
+          title: this.$t('You do not have enough funds on your balance'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),

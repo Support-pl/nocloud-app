@@ -1,19 +1,14 @@
 <template>
   <div class="map">
     <div style="position: absolute; right: 25px; top: 13px">
-      <a-button
-        style="margin-right: 5px; font-size: 20px"
-        @click="(e) => zoom(e, 1)"
-      >
+      <button class="map__button" @click="(e) => zoom(e, 1)">
         +
-      </a-button>
-      <a-button
-        style="font-size: 20px"
-        @click="(e) => zoom(e, -1)"
-      >
+      </button>
+      <button class="map__button" @click="(e) => zoom(e, -1)">
         -
-      </a-button>
+      </button>
     </div>
+
     <svg
       ref="svgwrapper"
       :viewBox="`0 0 ${mapData.meta.width} ${mapData.meta.height}`"
@@ -29,6 +24,7 @@
               d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"
               id="Shape"
               fill="#FF6E6E"
+              style="fill: inherit"
             ></path>
             <circle
               id="elips"
@@ -50,7 +46,7 @@
           <path
             v-for="country in mapData.countries"
             :key="country.id + country.title"
-            :class="{ 'map__part--selected': selected.split(' ').at(-1).split('-').includes(country.id) }"
+            :style="{ fill: (selected.split(' ').at(-1).split('-').includes(country.id)) ? (mapActiveColor ?? 'var(--main)') : null }"
             class="map__part"
             :id="country.id"
             :title="country.title"
@@ -68,7 +64,7 @@
               x="0"
               y="0"
               class="map__marker"
-              :class="{ 'map__marker--active': selected == marker.id }"
+              :style="{ fill: (selected == marker.id) ? (markerActiveColor ?? 'var(--success)') : (markerColor ?? 'var(--err)') }"
               :href="`#${marker.svgId || 'marker'}`"
               :data-id="marker.id"
               :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${marker.x} ${marker.y})`"
@@ -81,18 +77,15 @@
             v-for="marker in markerOrder"
             :key="marker.id + '_2'"
             class="map__popup"
-            :class="{
-              'map__popup--active': selected == marker.id,
-              'map__popup--hovered': hovered == marker.id,
-            }"
+            :class="{ 'map__popup--hovered': hovered == marker.id }"
           >
             <!-- popup -->
             <rect
               x="0"
               y="0"
-              :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${Math.max(marker.x + 14 - popupWidth / 2, 1)} ${(marker.y - 45)})`"
-              :transform-origin="`${popupWidth/2} 80`"
-              :width="popupWidth"
+              :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${Math.max(marker.x + 14 - popupWidth[marker.id] / 2, 1)} ${(marker.y - 45)})`"
+              :transform-origin="`${popupWidth[marker.id]/2} 80`"
+              :width="popupWidth[marker.id]"
               height="40"
               fill="#fff"
               stroke-width="1"
@@ -101,23 +94,15 @@
               @mouseenter="(e) => mouseEnterHandler(marker.id, e)"
               @mouseleave="(e) => mouseLeaveHandler(marker.id, e)"
             ></rect>
-            <!-- <text
-            v-if="marker.title"
-            text-anchor="middle"
-            x="50%"
-            :y="marker.y - 25"
-          >
-            {{marker.title}}
-          </text> -->
 
             <!-- text -->
             <foreignObject
               v-if="marker.title"
               x="0"
               y="0"
-              :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${Math.max(marker.x + 14 - popupWidth / 2, 1)} ${(marker.y - 45)})`"
-              :transform-origin="`${popupWidth/2} 80`"
-              :width="popupWidth"
+              :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${Math.max(marker.x + 14 - popupWidth[marker.id] / 2, 1)} ${(marker.y - 45)})`"
+              :transform-origin="`${popupWidth[marker.id]/2} 80`"
+              :width="popupWidth[marker.id]"
               height="40"
               @mouseenter="(e) => mouseEnterHandler(marker.id, e)"
               @mouseleave="(e) => mouseLeaveHandler(marker.id, e)"
@@ -142,11 +127,11 @@ import mapData from "@/map.json";
 
 export default {
   name: "support-map",
-  props: ["value", "markers"],
+  props: ["value", "markers", "map-active-color", "marker-active-color", "marker-color"],
   data: () => ({
     selected: "",
     hovered: "",
-    popupWidth: 120,
+    popupWidth: {},
     leaveDelay: 300,
     leaveDelayInterval: -1,
     scale: 1,
@@ -165,6 +150,7 @@ export default {
     },
     mouseEnterHandler(id) {
       this.hovered = id;
+      this.$emit("pinHover", id.substring(0, id.indexOf("_")));
       clearInterval(this.leaveDelayInterval);
     },
     mouseLeaveHandler() {
@@ -172,7 +158,7 @@ export default {
         this.hovered = "";
       }, this.leaveDelay);
     },
-    beginDrag(e){
+    beginDrag(e) {
 			e.stopPropagation();
 			if(e.target.closest('.map_ui')) return
 			let target = e.target;
@@ -184,7 +170,7 @@ export default {
 			this.selectedDrag.dataset.startMouseX = e.clientX;
 			this.selectedDrag.dataset.startMouseY = e.clientY;
 		},
-		drag(e){
+		drag(e) {
 			if (!this.selectedDrag) return;
 			e.stopPropagation();
 			let startX = parseFloat(this.selectedDrag.dataset.startMouseX),
@@ -212,7 +198,7 @@ export default {
 			this.selectedDrag.dataset.startMouseX = dx + startX;
 			this.selectedDrag.dataset.startMouseY = dy + startY;
 		},
-		endDrag(e){
+		endDrag(e) {
 			e.stopPropagation();
 			if (this.selectedDrag) {
 				this.selectedDrag = undefined;
@@ -270,8 +256,12 @@ export default {
     if (this.markers.length === 1) {
       this.$emit('input', this.markers[0].id);
     }
+
+    this.markers.forEach(({ id, title }) => {
+      this.popupWidth[id] = title.length * 10 + 15;
+    });
   },
-  mounted(){
+  mounted() {
     const container = this.$refs.viewport;
     const min = { x: Infinity, y: Infinity };
     const max = { x: -Infinity, y: -Infinity };
@@ -317,6 +307,7 @@ export default {
   },
 };
 </script>
+
 <style>
 .map {
   /* width: 800px;
@@ -334,9 +325,6 @@ export default {
 } */
 .map__marker {
   cursor: pointer;
-}
-.map__marker--active {
-  filter: hue-rotate(125deg);
 }
 .map__popup {
   visibility: hidden;
@@ -372,9 +360,16 @@ export default {
   stroke-opacity: 1;
   stroke-width: 1;
 }
-.map__part--selected {
-  fill: #6755b1;
-  stroke: gray;
-  stroke-width: 1.5;
+
+.map__button {
+  padding: 0 15px;
+  font-size: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  background: #fff;
+}
+
+.map__button:not(:last-child) {
+  margin-right: 5px;
 }
 </style>

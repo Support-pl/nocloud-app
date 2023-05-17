@@ -449,10 +449,10 @@ export default {
             }
             if (!meta?.showcase) return value === title;
 
-            const { length = 0 } = meta?.showcase[value]?.billing_plans ?? {};
+            const plans = meta?.showcase[value]?.billing_plans ?? [];
 
-            if (length > 0 && service) return true;
-            else if (length > 0) return false;
+            if (plans?.includes(billingPlan.uuid) && service) return true;
+            else if (plans?.length > 0) return false;
             else return value === title || meta?.showcase[value];
           });
         });

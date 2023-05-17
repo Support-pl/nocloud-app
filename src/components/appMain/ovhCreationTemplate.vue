@@ -165,7 +165,7 @@
               <div class="newCloud__template-name">
                 {{ item.name }} <br>
                 <template v-if="item.prices">
-                  ({{ osPrice(item.prices) }} {{ currency }})
+                  ({{ osPrice(item.prices) }} {{ currency.code }})
                 </template>
               </div>
             </template>
@@ -293,7 +293,7 @@ export default {
     addonPrice({ periods }) {
       const period = periods.find(({ pricingMode }) => pricingMode === this.mode);
 
-      return `${period.price.value} ${this.currency}`;
+      return `${period.price.value} ${this.currency.code}`;
     },
     setResource(value) {
       if (this.getPlan.type.includes('vps')) {
@@ -341,12 +341,14 @@ export default {
       });
       this.$emit('changePlans', plans);
 
-      if (this.$route.query.data) {
+      if (this.$route.query.data?.includes('productSize')) {
         const data = JSON.parse(this.$route.query.data);
 
         this.$emit('changePlan', data.productSize);
       } else if (this.plan === '') {
-        setTimeout(() => { this.$emit('changePlan', this.resources.plans[0]) });
+        setTimeout(() => {
+          this.$emit('changePlan', this.resources.plans[1] ?? this.resources.plans[0]);
+        });
       }
     },
     changePanelHeight() {

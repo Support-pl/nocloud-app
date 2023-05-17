@@ -249,6 +249,8 @@
 	"Check all": "Check all",
 	"Parameters": "Parameters",
 	"Add Funds": "Add Funds",
+  "You do not have enough funds on your balance": "You do not have enough funds on your balance.",
+  "Click OK to replenish the account with the missing amount": "Click OK to replenish the account with the missing amount",
 	"have no": "have no",
 	"ip": {
 		"none": "none"
@@ -290,6 +292,7 @@
   "by": "by",
 	"sort": "Sort",
   "name": "name",
+  "count": "count",
   "cost": "cost",
   "date": "date",
 	"filter": "Filter",
@@ -311,6 +314,9 @@
 	"Virtual": "Web Hosting",
   "SSL": "SSL",
 	"info": "info",
+  "token": "token",
+  "Token expiration date": "Token expiration date",
+  "Refresh token": "Refresh token",
 	"enter": "Enter",
   "next": "next",
   "Done": "Done",

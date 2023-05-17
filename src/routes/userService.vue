@@ -187,12 +187,26 @@ export default {
           };
           groupname = 'SSL';
           date = 'month';
-        } else {
+        } else if (domain.billingPlan.type === 'opensrs') {
           const { period } = domain.resources;
           const { expiredate } = domain.data.expiry;
           const year = parseInt(expiredate) - period;
 
           domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`;
+        } else {
+          const key = Object.keys(domain.config.items)[0];
+          const { period } = domain.billingPlan.products[key];
+
+          domain.resources = {
+            period: this.date(period),
+            recurringamount: domain.config.items.reduce((sum, key) =>
+              sum + domain.billingPlan.products[key].price, 0
+            )
+          };
+          domain.data.expiry = {
+            expiredate: domain.data.expires_at.split('T')[0],
+            regdate: '?'
+          };
         }
 
         const { period } = domain.resources;

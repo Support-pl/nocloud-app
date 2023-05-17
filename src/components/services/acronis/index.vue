@@ -39,6 +39,14 @@
             </a-form-item>
 
             <a-form-item v-if="user.uuid" :label="$t('clientinfo.password')">
+              <password-meter
+                :style="{
+                  height: (password.length > 0) ? '10px' : '0',
+                  marginTop: (password.length < 1) ? '0' : null
+                }"
+                :password="password"
+                @score="(value) => score = value.score"
+              />
               <a-input-password class="password" v-model="options.password" />
             </a-form-item>
           </a-collapse-panel>
@@ -144,11 +152,12 @@
 </template>
 
 <script>
+import passwordMeter from "vue-simple-password-meter";
 import addFunds from '@/components/balance/addFunds.vue';
 
 export default {
   name: 'acronis-component',
-  components: { addFunds },
+  components: { addFunds, passwordMeter },
 	data:() => ({
     plan: undefined,
     service: undefined,
@@ -164,7 +173,8 @@ export default {
     config: {},
     products: [],
     periods: [],
-    activeKey: 'base'
+    activeKey: 'base',
+    score: 0
 	}),
 	methods: {
     changeProducts(plan) {
@@ -187,16 +197,9 @@ export default {
     },
 		orderClickHandler() {
       const service = this.services.find(({ uuid }) => uuid === this.service);
-      const items = {};
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
 
-      Object.entries(this.config).forEach(([key, value]) => {
-        if (value > 0) items[key] = value;
-      });
-
-      const newGroup = {
-        title: this.user.fullname + Date.now(),
-        type: this.sp.type,
-        sp: this.sp.uuid,
+      const instances = [{
         config: {
           items,
           first_name: this.user.firstname,
@@ -205,7 +208,23 @@ export default {
           login: this.options.login,
           password: this.options.password
         },
-        instances: []
+        title: this.getProducts.title,
+        billing_plan: plan ?? {}
+      }];
+      const items = { local_storage: 1 };
+
+      Object.entries(this.config).forEach(([key, value]) => {
+        const isNA = this.products[key].meta.measurement_unit === 'n/a';
+
+        if (isNA && value > 0) items[key] = 0;
+        else if (value > 0) items[key] = value;
+      });
+
+      const newGroup = {
+        title: this.user.fullname + Date.now(),
+        type: this.sp.type,
+        sp: this.sp.uuid,
+        instances
       };
 
       const info = (!this.service) ? newGroup : Object.assign(
@@ -214,7 +233,8 @@ export default {
       );
       const group = info.instances_groups?.find(({ type }) => type === 'acronis');
 
-      if (!group && this.service) info.instances_groups.push(newGroup);
+      if (group) group.instances = [...group.instances, ...instances];
+      else if (this.service) info.instances_groups.push(newGroup);
 
 			if (!this.user) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
@@ -224,15 +244,15 @@ export default {
 					cost: this.getProducts.price
 				});
 				this.$store.dispatch('setOnloginAction', () => {
-					this.createVirtual(info);
+					this.createAcronis(info);
 				});
 				this.$router.push({name: 'login'});
 				return
 			}
 
-			this.createVirtual(info);
+			this.createAcronis(info);
 		},
-		createVirtual(info) {
+		createAcronis(info) {
 			this.sendloading = true;
       const action = (this.service) ? 'update' : 'create';
       const orderData = (this.service) ? info : {
@@ -267,6 +287,9 @@ export default {
 				this.$message.error(this.$t('Please select at least one option'));
 				return;
 			}
+      if (this.score < 4) {
+        this.$message.error(this.$t('Weak pass'));
+      }
 
       if (!this.checkBalance()) return;
 			this.modal.confirmCreate = true;
@@ -276,7 +299,7 @@ export default {
 
       if (this.user.balance < parseFloat(sum)) {
         this.$confirm({
-          title: this.$t('You do not have enough funds on your balance.'),
+          title: this.$t('You do not have enough funds on your balance'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
@@ -314,8 +337,8 @@ export default {
       Object.entries(this.config).forEach(([key, value]) => {
         const product = this.products[key];
 
-        if (key.includes('_adv_')) adv[key] = product;
-        else base[key] = product;
+        if (key.includes('_adv_') && key !== 'local_storage') adv[key] = product;
+        else if (key !== 'local_storage') base[key] = product;
 
         if (value === 0) return;
         title.push(`${product.meta.edition ?? product.title}: ${value}`);
