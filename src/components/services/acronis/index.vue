@@ -27,7 +27,7 @@
             </div>
           </a-collapse-panel>
 
-          <a-collapse-panel key="personal" style="border-bottom: 0" :header="`${$t('Data')}:`">
+          <a-collapse-panel key="personal" style="border-bottom: 0" :header="`${$t('data')}:` | capitalize">
             <a-form-item :label="$t('login')">
               <a-input
                 v-model="options.login"
@@ -41,10 +41,10 @@
             <a-form-item v-if="user.uuid" :label="$t('clientinfo.password')">
               <password-meter
                 :style="{
-                  height: (password.length > 0) ? '10px' : '0',
-                  marginTop: (password.length < 1) ? '0' : null
+                  height: (options.password.length > 0) ? '10px' : '0',
+                  marginTop: (options.password.length < 1) ? '0' : null
                 }"
-                :password="password"
+                :password="options.password"
                 @score="(value) => score = value.score"
               />
               <a-input-password class="password" v-model="options.password" />
@@ -287,8 +287,13 @@ export default {
 				this.$message.error(this.$t('Please select at least one option'));
 				return;
 			}
+      if (this.options.login.length < 2) {
+        this.$message.error(this.$t('login is required'));
+        return;
+      }
       if (this.score < 4) {
         this.$message.error(this.$t('Weak pass'));
+        return;
       }
 
       if (!this.checkBalance()) return;
