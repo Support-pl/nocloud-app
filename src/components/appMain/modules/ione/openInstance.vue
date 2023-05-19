@@ -243,10 +243,7 @@
           <div class="block__column block__column_table">
             <div class="block__title">{{ $t('tariff') | capitalize }}</div>
           </div>
-          <div
-            class="block__column block__column_table block__column_price"
-            style="grid-column: 2 / 4"
-          >
+          <div class="block__column block__column_table block__column_price">
             <div class="block__title">
               {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}:
             </div>
@@ -255,10 +252,7 @@
             </div>
           </div>
 
-          <div
-            class="block__column block__column_table"
-            style="grid-row: 2 / 4; align-self: self-start"
-          >
+          <div class="block__column block__column_table">
             <div class="block__title">{{ $t('Addons') }}</div>
           </div>
           <div
@@ -1133,9 +1127,19 @@ export default {
 
 <style scoped>
 .block-content_table {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(3 , 1fr);
   padding: 10px 15px;
+}
+
+.block-content_table::before {
+  content: '';
+  position: absolute;
+  bottom: 40px;
+  left: 15px;
+  height: 1px;
+  width: calc(100% - 30px);
+  background: var(--gray);
 }
 
 .block__column_table {
@@ -1144,17 +1148,19 @@ export default {
   gap: 7px;
 }
 
-@media (max-width: 575px) {
-  .block__column_price {
-    grid-column: 2 / 4;
-    justify-content: end;
-  }
+.block__column_price {
+  justify-content: end;
 }
 
 .block__column_total {
-  grid-column: 1 / 4;
+  grid-column: 1 / 3;
   justify-content: end;
-  padding-top: 5px;
-  border-top: 1px solid var(--gray);
+  margin-top: 5px;
+}
+
+@media (max-width: 575px) {
+  .block-content_table {
+    justify-content: initial;
+  }
 }
 </style>

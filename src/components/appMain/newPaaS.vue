@@ -50,7 +50,7 @@
 
                 <div style="overflow: hidden; margin-top: 15px">
                   <a-spin :tip="$t('loading')" :spinning="isPlansLoading">
-                    <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
+                    <nc-map v-if="locations.length" v-model="locationId" :markers="locations" />
                   </a-spin>
                 </div>
               </a-row>
@@ -639,15 +639,15 @@
 
 <script>
 import { mapGetters } from "vuex";
+import { NcMap } from "nocloud-ui";
 import loading from "../loading/loading";
-import myMap from "../map/map.vue";
 import addFunds from '../balance/addFunds.vue';
 import notification from "@/mixins/notification.js";
 import api from "@/api.js";
 
 export default {
   name: "newPaaS",
-  components: { loading, myMap, addFunds },
+  components: { loading, NcMap, addFunds },
   mixins: [notification],
   data() {
     return {
