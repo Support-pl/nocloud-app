@@ -41,13 +41,13 @@ export default {
             ) ?? { rate: 1 };
 
             const resources = inst.billingPlan.resources.map((res) => ({
-              ...res, price: res.price * (rate ? rate : reverseRate)
+              ...res, price: +(res.price * (rate ? rate : reverseRate)).toFixed(2)
             }));
             const products = {};
 
             Object.entries(inst.billingPlan.products).forEach(([key, value]) => {
               products[key] = {
-                ...value, price: value.price * (rate ? rate : reverseRate)
+                ...value, price: +(value.price * (rate ? rate : reverseRate)).toFixed(2)
               };
             });
 
