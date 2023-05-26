@@ -57,11 +57,11 @@ export default {
     currency() {
       const code = this.$store.getters['nocloud/auth/billingData'].currency_code ?? 'USD';
       const { rate } = this.currencies.find((el) =>
-        el.from === code && el.to === this.invoice.currency
+        el.to === code && el.from === this.invoice.currency
       ) ?? {};
 
       const { rate: reverseRate } = this.currencies.find((el) =>
-        el.to === code && el.from === this.invoice.currency
+        el.from === code && el.to === this.invoice.currency
       ) ?? { rate: 1 };
 
       return { code, rate: (rate) ? rate : 1 / reverseRate };

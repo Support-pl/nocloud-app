@@ -21,7 +21,7 @@
             draggable
             :dots="false"
             :slides-to-show="slides"
-            :slides-to-scroll="3"
+            :slides-to-scroll="1"
           >
             <div
               class="order__slider-item"
@@ -30,18 +30,18 @@
               :class="{ 'order__slider-item--active': options.size === size }"
               @click="options.size = size"
             >
-              <span class="order__slider-name" v-html="size"></span>
+              <span class="order__slider-name" v-html="size" :title="size.split('> ').at(-1)"></span>
             </div>
 
             <template #prevArrow>
               <div class="custom-slick-arrow" style="left: -35px;">
-                <a-icon type="left-circle" @click="setCurrentPage('left')" />
+                <a-icon type="left-circle" />
               </div>
             </template>
 
             <template #nextArrow>
               <div class="custom-slick-arrow" style="right: -35px">
-                <a-icon type="right-circle" @click="setCurrentPage('right')" />
+                <a-icon type="right-circle" />
               </div>
             </template>
           </a-carousel>
@@ -84,17 +84,24 @@
 			</div>
 
 			<div class="order__calculate order__field">
-				<a-row style="margin-top: 20px" type="flex" justify="space-around" align="middle">
-					<a-col :xs="10" :sm="6" :lg='12' style="font-size: 1rem">
+				<a-row
+          style="margin-top: 20px"
+          type="flex"
+          justify="space-around"
+          align="middle"
+          v-if="fetchLoading || periods.length > 0"
+        >
+					<a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
 						{{ $t('Pay period') }}:
 					</a-col>
 
-					<a-col :xs="12" :sm="18" :lg='12'>
-						<a-select style="width: 100%" v-if="!fetchLoading" v-model="options.period">
+					<a-col :xs="12" :sm="18" :lg="12">
+						<a-select style="width: 100%" v-if="!fetchLoading && periods.length > 1" v-model="options.period">
 							<a-select-option v-for="period in periods" :key="period" :value='period'>
 								{{ $t(period) }}
 							</a-select-option>
 						</a-select>
+            <div v-else-if="periods.length === 1">{{ $t(periods[0]) }}</div>
 						<div v-else class="loadingLine"></div>
 					</a-col>
 				</a-row>
@@ -117,6 +124,25 @@
           </a-col>
         </a-row>
 
+        <a-row
+          style="margin-top: 20px"
+          type="flex"
+          justify="space-around"
+          align="middle"
+          v-if="addonsPrice.onetime > 0 || getProducts.paytype === 'onetype'"
+        >
+          <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
+            {{ $t('one time payment') | capitalize }}:
+          </a-col>
+          <a-col :xs="12" :sm="18" :lg="12">
+            <div v-if="!fetchLoading">
+              {{ addonsPrice.onetime + (+getProducts.price[options.period]?.monthly || 0) }}
+              {{ getProducts.price.currency }}
+            </div>
+            <div v-else class="loadingLine"></div>
+          </a-col>
+        </a-row>
+
 				<a-divider orientation="left" style="margin-bottom: 0">
 					{{ $t('Total') }}:
 				</a-divider>
@@ -125,7 +151,7 @@
 					<a-col>
 						<transition name="textchange" mode="out-in">
 							<div v-if="!fetchLoading">
-								{{ +getProducts.price[options.period] + addonsPrice }}
+								{{ (+getProducts.price[options.period] || getProducts.price.value) + addonsPrice.value }}
                 {{ getProducts.price.currency }}
 							</div>
 							<div v-else class="loadingLine loadingLine--total"></div>
@@ -146,7 +172,7 @@
 							@ok="orderClickHandler"
 							@cancel="() => {modal.confirmCreate = false}"
 						>
-							<p>{{ $t('order_services.Do you want to order') }}: {{ getProducts['name'] }}</p>
+							<p>{{ $t('order_services.Do you want to order') }}: {{ getProducts['name']?.split('"> ').at(-1) }}</p>
 
 							<a-row style="margin-top: 20px">
 								<a-col>
@@ -190,8 +216,7 @@ export default {
     addfunds: { visible: false, amount: 0 },
     addons: {},
     periods: [],
-    currencies: [],
-    page: 1
+    currencies: []
 	}),
 	methods: {
 		fetch(){
@@ -225,27 +250,6 @@ export default {
           this.fetchLoading = false;
         });
 		},
-    setCurrentPage(moveTo) {
-      const lastPage = this.sizes.length / 3;
-
-      if (this.page === 1 && moveTo === 'left') {
-        this.page = Math.ceil(lastPage);
-        return;
-      }
-      if (this.page > lastPage && moveTo === 'right') {
-        this.page = 1;
-        return;
-      }
-
-      switch (moveTo) {
-        case 'left':
-          this.page--;
-          break;
-        case 'right':
-          this.page++;
-          break;
-      }
-    },
     changeAddons(id) {
       if (this.options.addons.includes(id)) {
         this.options.addons = this.options.addons.filter((addon) => addon !== id);
@@ -256,7 +260,7 @@ export default {
 		orderClickHandler(){
 			const info = {
         run: 'add_product',
-				billingcycle: this.options.period,
+				billingcycle: (this.getProducts.paytype === ['free', 'onetime']) ? 'monthly' : this.options.period,
 				product: this.getProducts.id,
         paymentmethod: this.options.payment,
         addons: this.options.addons
@@ -267,7 +271,7 @@ export default {
 				this.$store.commit('setOnloginInfo', {
 					type: 'IaaS',
 					title: this.$route.query.service,
-					cost: this.getProducts.price[this.options.period]
+					cost: this.getProducts.price[this.options.period] ?? 0
 				});
 				this.$store.dispatch('setOnloginAction', () => {
 					this.createService(info);
@@ -329,7 +333,11 @@ export default {
       if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
         if (typeof product.price.currency === 'string') return product
 
-        product.price = product.price.find(({ currency }) => currency === this.currency.id)
+        if (['free', 'onetime'].includes(product.paytype)) {
+          product.price = { value: 0, currency: '' }
+        } else {
+          product.price = product.price.find(({ currency }) => currency === this.currency.id)
+        }
         product.price.currency = this.currency.code
 
         return product
@@ -339,25 +347,30 @@ export default {
         )
         product.description.pop()
 
-        product.price = product.price.find(({ currency }) => currency === this.currency.id)
+        if (['free', 'onetime'].includes(product.paytype)) {
+          product.price = { value: 0, currency: '' }
+        } else {
+          product.price = product.price.find(({ currency }) => currency === this.currency.id)
+        }
         product.price.currency = this.currency.code
       }
 
 			return product
 		},
     slides() {
-      const lastPage = Math.ceil(this.sizes.length / 3);
-
-      if (this.page === lastPage) return 1;
       return 3;
     },
     addonsPrice() {
-      return this.options.addons.reduce((sum, curr) => {
-        const { prices } = this.addons[this.getProducts.id].find(({ id }) => id === curr);
+      return this.options.addons.reduce((prev, curr) => {
+        const { prices, billingcycle } = this.addons[this.getProducts.id].find(({ id }) => id === curr);
         const price = prices.find((el) => el.currency === this.currency.id);
+        const value = (+price[this.options.period] === -1) ? 0 : +price[this.options.period];
 
-        return sum + +price[this.options.period];
-      }, 0);
+        return {
+          value: (billingcycle !== 'free') ? prev.value + (value || 0) : prev.value,
+          onetime: (billingcycle === 'onetime') ? prev.onetime + +price.monthly : prev.onetime
+        };
+      }, { value: 0, onetime: 0 });
     },
     userdata() {
       return this.$store.getters['nocloud/auth/userdata'];
@@ -491,7 +504,7 @@ export default {
 
 .order__option div > .img_prod {
   display: block;
-  max-width: 50%;
+  max-width: 200px;
   margin: 0 auto 10px;
 }
 
@@ -520,6 +533,7 @@ export default {
 }
 
 .order__option .ant-carousel .slick-slide > div {
+  height: 137px;
   margin: 0 5px;
 }
 
@@ -680,9 +694,7 @@ export default {
 	flex-shrink: 0;
 	/* border: 1px solid rgba(0, 0, 0, .15); */
 	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-	display: flex;
-	justify-content: center;
-	align-items: center;
+	height: 100%;
 	padding: 7px 10px;
   text-align: center;
 	cursor: pointer;

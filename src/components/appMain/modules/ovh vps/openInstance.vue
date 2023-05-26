@@ -195,10 +195,7 @@
           <div class="block__column block__column_table">
             <div class="block__title">{{ $t('tariff') | capitalize }}</div>
           </div>
-          <div
-            class="block__column block__column_table block__column_price"
-            style="grid-column: 2 / 4"
-          >
+          <div class="block__column block__column_table block__column_price">
             <div class="block__title">
               {{ tariffTitle || $t('No Data') }}:
             </div>
@@ -207,10 +204,7 @@
             </div>
           </div>
 
-          <div
-            class="block__column block__column_table"
-            style="grid-row: 2 / 4; align-self: self-start"
-          >
+          <div class="block__column block__column_table">
             <div class="block__title">{{ $t('Addons') }}</div>
           </div>
           <div
@@ -773,6 +767,24 @@ export default {
               { `${this.$t("to")} ` }
               <span style="font-style: italic">{ `${newPeriod}` }</span>
             </div>
+
+            <div style="margin-top: 10px">
+              <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
+              { this.tariffPrice } { this.currency.code }
+              <div>
+                <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
+                <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
+                  { ...Object.entries(this.addonsPrice).map(([key, value]) =>
+                    <li>{ key }: { value } { this.currency.code }</li>
+                  ) }
+                </ul>
+              </div>
+
+              <div>
+                <span style="font-weight: 700">{ this.$t('Total') }: </span>
+                { this.fullPrice } { this.currency.code }
+              </div>
+            </div>
           </div>
         ),
         okText: this.$t("Yes"),
@@ -1113,9 +1125,19 @@ export default {
 
 <style scoped>
 .block-content_table {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(3 , 1fr);
   padding: 10px 15px;
+}
+
+.block-content_table::before {
+  content: '';
+  position: absolute;
+  bottom: 40px;
+  left: 15px;
+  height: 1px;
+  width: calc(100% - 30px);
+  background: var(--gray);
 }
 
 .block__column_table {
@@ -1124,17 +1146,31 @@ export default {
   gap: 7px;
 }
 
-@media (max-width: 575px) {
-  .block__column_price {
-    grid-column: 2 / 4;
-    justify-content: end;
-  }
+.block__column_price {
+  grid-column: 2 / 3;
+  justify-content: end;
+  overflow: hidden;
+}
+
+.block__column_price .block__title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.block__column_price .block__value {
+  white-space: nowrap;
 }
 
 .block__column_total {
-  grid-column: 1 / 4;
+  grid-column: 1 / 3;
   justify-content: end;
-  padding-top: 5px;
-  border-top: 1px solid var(--gray);
+  margin-top: 5px;
+}
+
+@media (max-width: 575px) {
+  .block-content_table {
+    justify-content: initial;
+  }
 }
 </style>
