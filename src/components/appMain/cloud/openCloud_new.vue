@@ -1,7 +1,7 @@
 <template>
   <div class="cloud__fullscreen Fcloud">
     <transition name="opencloud" :duration="600">
-      <div v-if="!vmsLoading" class="cloud__container">
+      <div v-if="!vmsLoading || VM.billingPlan" class="cloud__container">
         <component :is="template" :VM="VM">
           <template #header>
             <div class="Fcloud__header">
@@ -215,7 +215,7 @@
           </template>
         </component>
       </div>
-      <loading v-else color="#fff" :style="{'position': 'absolute', 'height':
+      <loading v-else-if="vmsLoading" color="#fff" :style="{'position': 'absolute', 'height':
       '100%', 'width': '100%'}" key="loading" duration: />
     </transition>
   </div>
