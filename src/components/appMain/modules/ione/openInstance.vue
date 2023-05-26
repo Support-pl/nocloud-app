@@ -844,6 +844,24 @@ export default {
               { `${this.$t("to")} ` }
               <span style="font-style: italic">{ `${newPeriod}` }</span>
             </div>
+
+            <div style="margin-top: 10px">
+              <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
+              { this.tariffPrice } { this.currency.code }
+              <div>
+                <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
+                <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
+                  { ...Object.entries(this.addonsPrice).map(([key, value]) =>
+                    <li>{ key }: { value } { this.currency.code }</li>
+                  ) }
+                </ul>
+              </div>
+
+              <div>
+                <span style="font-weight: 700">{ this.$t('Total') }: </span>
+                { this.fullPrice } { this.currency.code }
+              </div>
+            </div>
           </div>
         ),
         okText: this.$t("Yes"),
@@ -1149,7 +1167,19 @@ export default {
 }
 
 .block__column_price {
+  grid-column: 2 / 3;
   justify-content: end;
+  overflow: hidden;
+}
+
+.block__column_price .block__title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.block__column_price .block__value {
+  white-space: nowrap;
 }
 
 .block__column_total {

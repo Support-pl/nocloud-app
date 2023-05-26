@@ -63,6 +63,11 @@
                 v-else-if="button.icon == 'search'"
                 class="icon__wrapper"
                 :class="[button.additionalClass]"
+                :style="(searchString.length > 0) ? {
+                  borderRadius: '50%',
+                  background: 'var(--bright_bg)',
+                  color: 'var(--main)'
+                } : null"
               >
                 <a-icon
                   v-if="!button.popover"
@@ -91,16 +96,7 @@
                       </div>
                     </a-input-search>
                   </template>
-                  <a-icon
-                    class="header__icon"
-                    :type="button.icon"
-                    :style="(searchString.length > 0) ? {
-                      padding: '5px',
-                      borderRadius: '50%',
-                      background: 'var(--bright_bg)',
-                      color: 'var(--main)'
-                    } : null"
-                  />
+                  <a-icon class="header__icon" :type="button.icon" />
                 </a-popover>
               </div>
 

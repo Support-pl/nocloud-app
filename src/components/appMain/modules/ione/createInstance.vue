@@ -65,12 +65,12 @@
           </transition>
         </a-row>
         <a-row class="newCloud__prop">
-          <a-col span="8" :xs="6">
-            <span style="display: inline-block; width: 70px"
-              >{{ $t("Drive") }}:</span
-            >
+          <a-col :sm="(driveTypes.length > 1) ? 6 : 20" :xs="(driveTypes.length > 1) ? 6 : 18">
+            <span style="display: inline-block; width: 70px">
+              {{ $t("Drive") }}:
+            </span>
           </a-col>
-          <a-col :xs="12" :sm="14">
+          <a-col :xs="12" :sm="14" v-if="driveTypes.length > 1">
             <a-switch v-model="options.drive" style="width: 60px">
               <span slot="checkedChildren">SSD</span>
               <span slot="unCheckedChildren">HDD</span>
@@ -431,6 +431,9 @@ export default {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
+    },
+    driveTypes() {
+      return this.getPlan.resources.filter(({ key }) => key.includes('drive'));
     }
   },
   watch: {

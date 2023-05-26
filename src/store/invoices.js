@@ -58,6 +58,7 @@ export default {
               status: 'Unpaid',
               credit: 0,
               service: el.service,
+              currencycode: el.currency,
               meta: el.meta
             });
           });

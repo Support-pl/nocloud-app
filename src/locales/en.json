@@ -45,6 +45,7 @@
 	"invoiceDate": "Order Date",
 	"dueDate": "Payment Date",
 	"Choice payment": "Choose payment",
+  "one time payment": "one time payment",
 	"Information": "Information",
   "Copy link to share": "Copy link to share",
 	"It’s empty...": "No information is available yet.",
