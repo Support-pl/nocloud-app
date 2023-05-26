@@ -61,7 +61,7 @@
         <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
           <div
             style="white-space: break-spaces"
-            v-if="locationDescription && activeKey === 'location'"
+            v-if="false && locationDescription && activeKey === 'location'"
             v-html="locationDescription"
           />
 
@@ -1539,8 +1539,13 @@ export default {
         anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
+        const showcase = Object.keys(this.itemSP.meta.showcase)
+          .find((key) => key === this.$route.query.service) ??
+          Object.keys(this.itemSP.meta.showcase)[0];
+        const uuid = this.itemSP.meta.showcase[showcase].billing_plans[0];
+
         this.$store.commit('nocloud/plans/setPlans', pool);
-        this.plan = pool[0]?.uuid ?? '';
+        this.plan = uuid ?? pool[0]?.uuid ?? '';
 
         if (this.dataLocalStorage.billing_plan) {
           this.plan = this.dataLocalStorage.billing_plan.uuid;

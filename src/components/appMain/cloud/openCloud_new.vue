@@ -274,7 +274,7 @@ export default {
     ]),
     ...mapGetters("support", { baseURL: "getURL" }),
     template() {
-      return () => import(`@/components/appMain/modules/${this.VM.billingPlan.type}/openInstance.vue`);
+      return () => import(`@/components/appMain/modules/${this.VM.billingPlan?.type ?? 'ione'}/openInstance.vue`);
     },
     menuOptions() {
       const options = [
