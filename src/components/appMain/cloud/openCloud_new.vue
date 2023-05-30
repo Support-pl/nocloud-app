@@ -1,7 +1,7 @@
 <template>
   <div class="cloud__fullscreen Fcloud">
     <transition name="opencloud" :duration="600">
-      <div v-if="!vmsLoading || VM.billingPlan" class="cloud__container">
+      <div v-if="!vmsLoading && VM.billingPlan" class="cloud__container">
         <component :is="template" :VM="VM">
           <template #header>
             <div class="Fcloud__header">

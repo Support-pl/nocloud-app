@@ -3,7 +3,7 @@
 		<div class="order">
 			<div class="order__inputs order__field">
 				<div class="order__option">
-					<a-slider
+					<!-- <a-slider
             v-if="sizes.length < 6"
             tooltip-placement="bottom"
 						:marks="{...sizes}"
@@ -13,25 +13,41 @@
 						:max="sizes.length-1"
 						:min="0"
 						@change="(value) => options.size = sizes[value]"
-					/>
+					/> -->
 
           <a-carousel
-            v-else
             arrows
             draggable
             :dots="false"
             :slides-to-show="slides"
             :slides-to-scroll="1"
           >
-            <div
-              class="order__slider-item"
-              v-for="size of sizes"
-              :key="size"
-              :class="{ 'order__slider-item--active': options.size === size }"
-              @click="options.size = size"
-            >
-              <span class="order__slider-name" v-html="size" :title="size.split('> ').at(-1)"></span>
-            </div>
+            <template v-if="!fetchLoading">
+              <div
+                class="order__slider-item"
+                v-for="size of sizes"
+                :key="size"
+                :class="{ 'order__slider-item--active': options.size === size }"
+                @click="options.size = size"
+              >
+                <span class="order__slider-name" v-html="size" :title="size.split('> ').at(-1)"></span>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="order__slider-item">
+                <div class="loadingLine loadingLine--image"></div>
+                <div class="loadingLine"></div>
+              </div>
+              <div class="order__slider-item">
+                <div class="loadingLine loadingLine--image"></div>
+                <div class="loadingLine"></div>
+              </div>
+              <div class="order__slider-item">
+                <div class="loadingLine loadingLine--image"></div>
+                <div class="loadingLine"></div>
+              </div>
+            </template>
 
             <template #prevArrow>
               <div class="custom-slick-arrow" style="left: -35px;">
@@ -101,7 +117,9 @@
 								{{ $t(period) }}
 							</a-select-option>
 						</a-select>
-            <div v-else-if="periods.length === 1">{{ $t(periods[0]) }}</div>
+            <div style="text-align: right" v-else-if="periods.length === 1">
+              {{ $t(periods[0]) }}
+            </div>
 						<div v-else class="loadingLine"></div>
 					</a-col>
 				</a-row>
@@ -135,8 +153,27 @@
             {{ $t('one time payment') | capitalize }}:
           </a-col>
           <a-col :xs="12" :sm="18" :lg="12">
-            <div v-if="!fetchLoading">
-              {{ addonsPrice.onetime + (+getProducts.price[options.period]?.monthly || 0) }}
+            <div v-if="!fetchLoading" style="text-align: right">
+              {{ addonsPrice.onetime + (+getProducts.price.value || 0) }}
+              {{ getProducts.price.currency }}
+            </div>
+            <div v-else class="loadingLine"></div>
+          </a-col>
+        </a-row>
+
+        <a-row
+          style="margin-top: 20px"
+          type="flex"
+          justify="space-around"
+          align="middle"
+          v-if="addonsPrice.value > 0 || getProducts.paytype === 'recurring'"
+        >
+          <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
+            {{ $t('recurring payment') | capitalize }}:
+          </a-col>
+          <a-col :xs="12" :sm="18" :lg="12">
+            <div v-if="!fetchLoading" style="text-align: right">
+              {{ addonsPrice.value + (+getProducts.price[options.period] || 0) }}
               {{ getProducts.price.currency }}
             </div>
             <div v-else class="loadingLine"></div>
@@ -151,7 +188,7 @@
 					<a-col>
 						<transition name="textchange" mode="out-in">
 							<div v-if="!fetchLoading">
-								{{ (+getProducts.price[options.period] || getProducts.price.value) + addonsPrice.value }}
+								{{ (+getProducts.price[options.period] || getProducts.price.value) + addonsPrice.total }}
                 {{ getProducts.price.currency }}
 							</div>
 							<div v-else class="loadingLine loadingLine--total"></div>
@@ -326,15 +363,17 @@ export default {
 	},
 	computed: {
 		getProducts() {
-			if(Object.keys(this.products).length == 0) return "NAN"
+			if (Object.keys(this.products).length == 0) return "NAN"
       const product = this.products[this.sizes.indexOf(this.options.size)]
 
       if (typeof product.description !== 'string') return product
       if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
         if (typeof product.price.currency === 'string') return product
 
-        if (['free', 'onetime'].includes(product.paytype)) {
+        if (product.paytype === 'free') {
           product.price = { value: 0, currency: '' }
+        } else if (product.paytype === 'onetime') {
+          product.price = { value: product.price.monthly, currency: '' }
         } else {
           product.price = product.price.find(({ currency }) => currency === this.currency.id)
         }
@@ -347,8 +386,10 @@ export default {
         )
         product.description.pop()
 
-        if (['free', 'onetime'].includes(product.paytype)) {
+        if (product.paytype === 'free') {
           product.price = { value: 0, currency: '' }
+        } else if (product.paytype === 'onetime') {
+          product.price = { value: product.price.monthly, currency: '' }
         } else {
           product.price = product.price.find(({ currency }) => currency === this.currency.id)
         }
@@ -362,15 +403,16 @@ export default {
     },
     addonsPrice() {
       return this.options.addons.reduce((prev, curr) => {
-        const { prices, billingcycle } = this.addons[this.getProducts.id].find(({ id }) => id === curr);
+        const { prices = [], billingcycle } = this.addons[this.getProducts.id]?.find(({ id }) => id === curr) ?? {};
         const price = prices.find((el) => el.currency === this.currency.id);
         const value = (+price[this.options.period] === -1) ? 0 : +price[this.options.period];
-
-        return {
+        const result = {
           value: (billingcycle !== 'free') ? prev.value + (value || 0) : prev.value,
           onetime: (billingcycle === 'onetime') ? prev.onetime + +price.monthly : prev.onetime
         };
-      }, { value: 0, onetime: 0 });
+
+        return { ...result, total: result.value + result.onetime };
+      }, { value: 0, onetime: 0, total: 0 });
     },
     userdata() {
       return this.$store.getters['nocloud/auth/userdata'];
@@ -739,6 +781,14 @@ export default {
 .loadingLine--total{
 	margin-top: 10px;
 	height: 26px;
+}
+
+.loadingLine--image{
+  min-width: 60px;
+  width: 60px;
+  height: 60px;
+  margin: auto;
+  margin-bottom: 15px;
 }
 
 @keyframes glowing {

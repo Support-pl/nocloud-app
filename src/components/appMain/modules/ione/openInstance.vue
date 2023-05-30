@@ -1041,8 +1041,9 @@ export default {
     },
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+      console.log(defaultCurrency, this.user.currency);
 
-      return { code: this.user.currency_code ?? defaultCurrency };
+      return { code: this.user.currency ?? defaultCurrency };
     },
 
     inbChartDataReady() {

@@ -364,7 +364,9 @@ export default {
     this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps';
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn });
+      this.$store.dispatch('nocloud/auth/fetchCurrencies', {
+        anonymously: !this.isLoggedIn
+      });
     }
   },
   beforeMount() { this.changePanelHeight() },
@@ -434,7 +436,22 @@ export default {
   watch: {
     getPlan() { this.changePlans() },
     type() { if (this.getPlan.type?.includes('ovh')) this.changePlans() },
-    activeKey() { this.changePanelHeight() }
+    activeKey() { this.changePanelHeight() },
+    addons(value) {
+      const data = (localStorage.getItem('data'))
+        ? JSON.parse(localStorage.getItem('data'))
+        : JSON.parse(this.$route.query.data);
+
+      if (data.ovhConfig.addons.length < 0) return;
+
+      this.options.config.addons.forEach((addon) => {
+        const keys = Object.keys(value);
+        const key = keys.find((el) => addon.includes(el));
+
+        if (!value[key][addon]) return;
+        this.setAddon(addon, value[key][addon], key);
+      });
+    }
   }
 }
 </script>

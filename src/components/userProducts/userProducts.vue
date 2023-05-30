@@ -226,17 +226,17 @@ export default {
             : inst.state?.state;
           let status = "UNKNOWN";
 
-          if (inst.state?.meta.state === 1) status = "PENDING";
-          if (inst.state?.meta.state === 5) status = "SUSPENDED";
-          if (inst.data.suspended_manually) status = "SUSPENDED";
-          if (inst.state?.meta.state === "BUILD") status = "BUILD";
-
           switch (state) {
             case "LCM_INIT":
               status = "POWEROFF";
             default:
               if (state) status = state.replaceAll('_', ' ');
           }
+
+          if (inst.state?.meta.state === 1) status = "PENDING";
+          if (inst.state?.meta.state === 5) status = "SUSPENDED";
+          if (inst.data.suspended_manually) status = "SUSPENDED";
+          if (inst.state?.meta.state === "BUILD") status = "BUILD";
 
           const res = {
             ...inst,

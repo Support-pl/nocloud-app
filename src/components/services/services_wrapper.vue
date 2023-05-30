@@ -179,6 +179,13 @@ export default {
         });
       });
 
+      services.sort((a, b) => {
+        if (a.icon === 'shopping' && b.icon !== 'shopping') return -1;
+        if (b.icon === 'shopping' && a.icon !== 'shopping') return 1;
+        if (a.icon === 'shopping' && b.icon === 'shopping') return 0;
+        return a.title > b.title;
+      });
+
       return services;
 		},
     columnsCount() {
