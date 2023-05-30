@@ -1,5 +1,5 @@
 <template>
-	<div class="service__item" @click.stop="service.onclick.function(...service.onclick.paramsArr)">
+	<div class="service__item" @click="onClick">
 		<div class="service__icon">
 			<a-icon :type="service.icon"></a-icon>
 		</div>
@@ -17,8 +17,19 @@ export default {
 				return this.$t(this.service.title);
 			}
 			return this.service.title
-		}
-	}
+		},
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    }
+	},
+  methods: {
+    onClick(e) {
+      if (this.isLogged) e.stopPropagation();
+      else return;
+
+      this.service.onclick.function(...this.service.onclick.paramsArr)
+    }
+  }
 }
 </script>
 
@@ -50,6 +61,10 @@ export default {
 	font-size: 2rem;
 	margin-bottom: 3px;
 	position: relative;
+}
+
+.service__title{
+  text-align: center;
 }
 
 /* .service__icon::after{

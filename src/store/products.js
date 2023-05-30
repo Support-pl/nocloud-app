@@ -6,6 +6,7 @@ export default {
 
 	state: {
 		products: [],
+    services: {},
     total: 10,
     size: 10,
     page: 1,
@@ -16,6 +17,9 @@ export default {
 		setProducts(state, data) {
 			state.products = data;
 		},
+    setServices(state, data) {
+      state.services = data;
+    },
     setTotal(state, data) {
       state.total = data;
     },
@@ -34,13 +38,15 @@ export default {
 			commit('setProductsLoading', true);
 			return dispatch('silentFetch', userid);
 		},
-		silentFetch({ state, commit }, userid) {
+		silentFetch({ commit, rootState }, userid) {
 			return new Promise((resolve, reject) => {
-				api.get(`${state.baseURL}/get.user.products.php`, { params: { userid } })
+				api.get(rootState.nocloud.auth.baseURL, { params: { userid, run: 'get_active_products' } })
           .then(res => {
-            commit('setProducts', res);
+            const products = Object.values(res ?? []);
+
+            commit('setProducts', products);
             commit('setProductsLoading', false);
-            resolve(res);
+            resolve(products);
           })
           .catch(error => reject(error))
 			})
@@ -51,10 +57,27 @@ export default {
 			} else {
 				return dispatch('fetch', userid);
 			}
-		}
+		},
+    fetchServices({ commit, rootState }) {
+      return new Promise((resolve, reject) => {
+        api.get(rootState.nocloud.auth.baseURL, { params: { run: 'get_product_list' } })
+          .then((res) => {
+            const services = {};
+
+            Object.values(res).forEach(({ group_name, prod }) => {
+              services[group_name] = prod;
+            });
+
+            commit('setServices', services);
+            resolve(res)
+          })
+          .catch((error) => reject(error));
+      });
+    }
 	},
 	getters: {
 		getProducts: state => state.products,
+    getServices: state => state.services,
     total: state => state.total,
     size: state => state.size,
     page: state => state.page,

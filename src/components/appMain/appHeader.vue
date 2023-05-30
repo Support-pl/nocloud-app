@@ -63,38 +63,38 @@
                 v-else-if="button.icon == 'search'"
                 class="icon__wrapper"
                 :class="[button.additionalClass]"
+                :style="(searchString.length > 0) ? {
+                  borderRadius: '50%',
+                  background: 'var(--bright_bg)',
+                  color: 'var(--main)'
+                } : null"
               >
                 <a-icon
                   v-if="!button.popover"
                   class="header__icon"
                   :type="button.icon"
                 />
-                <a-popover v-else placement="bottomRight" arrow-point-at-center>
+                <a-popover arrow-point-at-center v-else placement="left" :align="{ offset: [-10, 0] }">
                   <template slot="content">
-                    <div>
-                      <a-input-search
-                        placeholder="title/status/IP"
-                        enter-button
-                        :value="searchString"
-                        @input="(e) => $store.commit('nocloud/vms/setSearch', e.target.value)"
-                        @search="(text) => $store.commit('nocloud/vms/setSearch', text)"
-                        @keydown="updateSearch"
+                    <a-input-search
+                      placeholder="Title / Status / IP"
+                      enter-button
+                      :value="searchString"
+                      @input="(e) => $store.commit('nocloud/vms/setSearch', e.target.value)"
+                      @search="(text) => $store.commit('nocloud/vms/setSearch', text)"
+                      @keydown="updateSearch"
+                    >
+                      <div
+                        slot="suffix"
+                        @click="$store.commit('nocloud/vms/setSearch', '')"
+                        style="cursor: pointer"
                       >
-                        <div
-                          slot="suffix"
-                          @click="$store.commit('nocloud/vms/setSearch', '')"
-                          style="cursor: pointer"
-                        >
-                          <a-icon
-                            type="close"
-                            style="color: rgba(0, 0, 0, 0.45)"
-                          />
-                        </div>
-                      </a-input-search>
-                    </div>
-                  </template>
-                  <template slot="title">
-                    <span>{{ $t("search") | capitalize }}</span>
+                        <a-icon
+                          type="close"
+                          style="color: rgba(0, 0, 0, 0.45)"
+                        />
+                      </div>
+                    </a-input-search>
                   </template>
                   <a-icon class="header__icon" :type="button.icon" />
                 </a-popover>
@@ -285,6 +285,10 @@ export default {
           needBalance: true,
           buttons: [],
         },
+        iaas: {
+          title: "Service",
+          buttons: []
+        }
       },
     };
   },
@@ -347,10 +351,12 @@ export default {
         const filtered = {};
 
         if (!info) {
-          info = JSON.parse(localStorage.getItem("supportFilters"));
+          info = JSON.parse(localStorage.getItem("supportFilters") ?? "[]");
           this.checkedList = info;
         } else {
-          localStorage.setItem("supportFilters", JSON.stringify(info));
+          const filters = info.map((el) => filtered[el]);
+
+          localStorage.setItem("supportFilters", JSON.stringify(filters));
         }
 
         this.getAllTickets.forEach((el) => {
@@ -381,7 +387,9 @@ export default {
           info = JSON.parse(localStorage.getItem("invoiceFilters") ?? "[]");
           this.checkedList = info;
         } else {
-          localStorage.setItem("invoiceFilters", JSON.stringify(info));
+          const filters = info.map((el) => filtered[el]);
+
+          localStorage.setItem("invoiceFilters", JSON.stringify(filters));
         }
 
         this.getAllInvoices.forEach((el) => {
@@ -397,6 +405,11 @@ export default {
       if (target.value.length > 1) return;
 
       this.$store.commit('nocloud/vms/setSearch', '');
+    }
+  },
+  mounted() {
+    if (this.$route.query.service) {
+      this.headers.iaas.title = this.$route.query.service;
     }
   },
   computed: {
@@ -492,6 +505,11 @@ export default {
     },
   },
   watch: {
+    active() {
+      if (this.$route.query.service) {
+        this.headers.iaas.title = this.$route.query.service;
+      }
+    },
     activeInvoiceTab() {
       this.checkedList = [];
       this.updateFilter();

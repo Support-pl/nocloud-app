@@ -18,21 +18,49 @@ export default {
 		setServices(state, services) {
 			state.services = services;
 		},
-		setInstances(state, data) {
+		setInstances(state, { service, rootState, dispatch }) {
       state.instances = state.instances.filter(({ uuidService }) =>
-        uuidService !== data.uuid
+        uuidService !== service.uuid
       )
-			data.instancesGroups.forEach(group => {
-				group.instances.forEach(inst => {
-					state.instances.push({
-						...inst,
-						uuidService: data.uuid,
-						uuidInstancesGroups: group.uuid,
-						type: group.type,
-						sp: group.sp
-					})
-				})
-			})
+
+      dispatch('nocloud/auth/fetchCurrencies', null, { root: true }).then(() => {
+        service.instancesGroups.forEach(group => {
+          group.instances.forEach(inst => {
+            const {
+              currencies,
+              defaultCurrency,
+              billingUser: { currency_code = 'USD' }
+            } = rootState.nocloud.auth;
+
+            const { rate } = currencies.find((el) =>
+              el.to === defaultCurrency && el.from === currency_code
+            ) ?? {};
+
+            const { rate: reverseRate } = currencies.find((el) =>
+              el.from === defaultCurrency && el.to === currency_code
+            ) ?? { rate: 1 };
+
+            const resources = inst.billingPlan.resources.map((res) => ({
+              ...res, price: +(res.price * (rate ? rate : reverseRate)).toFixed(2)
+            }));
+            const products = {};
+
+            Object.entries(inst.billingPlan.products).forEach(([key, value]) => {
+              products[key] = {
+                ...value, price: +(value.price * (rate ? rate : reverseRate)).toFixed(2)
+              };
+            });
+
+            state.instances.push({
+              ...inst,
+              uuidService: service.uuid,
+              type: group.type,
+              sp: group.sp,
+              billingPlan: { ...inst.billingPlan, resources, products }
+            })
+          })
+        })
+      })
 		},
 		setServicesFull(state, data) {
 			if (state.servicesFull.length) {
@@ -53,7 +81,7 @@ export default {
 			const inst = state.instances.find(item => item.uuid === data.uuid);
 
       data.state.meta.networking = inst.state.meta.networking;
-			inst.state = data.state;
+			inst.state = JSON.parse(JSON.stringify(data.state));
 		},
 		setLoading(state, data) {
 			state.loading = data;
@@ -66,14 +94,14 @@ export default {
     }
 	},
 	actions: {
-		fetch({ commit }, silent) {
+		fetch({ dispatch, commit, rootState }, silent) {
 			return new Promise((resolve, reject) => {
-				commit("setLoading", (silent) ? false : true);
+				commit("setLoading", !silent);
 				api.services.list()
 					.then(response => {
 						commit('setServices', response.pool);
             response.pool.forEach((service) => {
-              commit("setInstances", service);
+              commit("setInstances", { service, rootState, dispatch });
               commit('setServicesFull', service);
             });
 						resolve(response);

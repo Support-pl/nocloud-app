@@ -7,6 +7,7 @@
   >
     <a-collapse-panel
       key="location"
+      :style="{ minHeight: panelHeight }"
       :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${region.title})`}`"
     >
       <slot name="location" />
@@ -164,7 +165,7 @@
               <div class="newCloud__template-name">
                 {{ item.name }} <br>
                 <template v-if="item.prices">
-                  ({{ osPrice(item.prices) }} {{ currency }})
+                  ({{ osPrice(item.prices) }} {{ currency.code }})
                 </template>
               </div>
             </template>
@@ -237,7 +238,7 @@ export default {
     addonsCodes: { type: Object, required: true },
     price: { type: Object, required: true }
   },
-  data: () => ({ isFlavorsLoading: false, type: '' }),
+  data: () => ({ isFlavorsLoading: false, type: '', panelHeight: null }),
   methods: {
     setOS(item, index) {
       if (item.warning) return;
@@ -292,7 +293,7 @@ export default {
     addonPrice({ periods }) {
       const period = periods.find(({ pricingMode }) => pricingMode === this.mode);
 
-      return `${period.price.value} ${this.currency}`;
+      return `${period.price.value} ${this.currency.code}`;
     },
     setResource(value) {
       if (this.getPlan.type.includes('vps')) {
@@ -340,24 +341,47 @@ export default {
       });
       this.$emit('changePlans', plans);
 
-      if (this.$route.query.data) {
+      if (this.$route.query.data?.includes('productSize')) {
         const data = JSON.parse(this.$route.query.data);
 
         this.$emit('changePlan', data.productSize);
       } else if (this.plan === '') {
-        setTimeout(() => { this.$emit('changePlan', this.resources.plans[0]) });
+        setTimeout(() => {
+          this.$emit('changePlan', this.resources.plans[1] ?? this.resources.plans[0]);
+        });
       }
+    },
+    changePanelHeight() {
+      setTimeout(() => {
+        const panel = document.querySelector('.ant-collapse-content')?.lastElementChild;
+        const height = (panel) ? getComputedStyle(panel).height : null;
+
+        this.panelHeight = (this.activeKey === 'location') ? height : null;
+      });
     }
   },
   created() {
     this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps';
+
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies', {
+        anonymously: !this.isLoggedIn
+      });
+    }
   },
+  beforeMount() { this.changePanelHeight() },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
+    isLoggedIn() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
     currency() {
-      return this.$store.getters['nocloud/auth/billingData'].currency_code ?? 'USD';
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+      const { currency_code } = this.$store.getters['nocloud/auth/billingData'];
+
+      return { code: currency_code ?? defaultCurrency };
     },
     region() {
       const location = this.locationId.split(' ').at(-1);
@@ -411,7 +435,23 @@ export default {
   },
   watch: {
     getPlan() { this.changePlans() },
-    type() { if (this.getPlan.type?.includes('ovh')) this.changePlans() }
+    type() { if (this.getPlan.type?.includes('ovh')) this.changePlans() },
+    activeKey() { this.changePanelHeight() },
+    addons(value) {
+      const data = (localStorage.getItem('data'))
+        ? JSON.parse(localStorage.getItem('data'))
+        : JSON.parse(this.$route.query.data);
+
+      if (data.ovhConfig.addons.length < 0) return;
+
+      this.options.config.addons.forEach((addon) => {
+        const keys = Object.keys(value);
+        const key = keys.find((el) => addon.includes(el));
+
+        if (!value[key][addon]) return;
+        this.setAddon(addon, value[key][addon], key);
+      });
+    }
   }
 }
 </script>

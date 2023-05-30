@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import ovhCreationTemplate from '@/components//appMain/ovhCreationTemplate.vue';
+import ovhCreationTemplate from '@/components/appMain/ovhCreationTemplate.vue';
 
 export default {
   name: 'createInstance-ovh',

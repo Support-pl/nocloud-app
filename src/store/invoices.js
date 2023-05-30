@@ -22,17 +22,55 @@ export default {
 		},
 	},
 	actions: {
-		silentFetch({state, commit}){
+		silentFetch({state, commit, rootState}){
 			return new Promise((resolve, reject) => {
-				api.get(state.baseURL, { params: { run: 'get_invoices' } })
-          .then(res => {
-					  const invoices = res?.invoices?.invoice ?? [];
+        const account = rootState.nocloud.auth.userdata.uuid;
+        const promises = [
+          api.get(state.baseURL, { params: { run: 'get_invoices' } }),
+          api.transactions.list({ account, type: 'invoice' })
+        ];
 
-            if (!res?.ERROR) commit('updateInvoices', invoices);
-            commit('makeLoadingIs', false);
-            resolve(invoices);
-          })
-          .catch(err => reject(err));
+        function date(timestamp) {
+          if (timestamp < 1) return '-';
+
+          const date = new Date(timestamp * 1000);
+
+          const year = date.getFullYear();
+          let month = date.getMonth() + 1;
+          let day = date.getDate();
+
+          if (`${month}`.length < 2) month = `0${month}`;
+          if (`${day}`.length < 2) day = `0${day}`;
+
+          return `${year}-${month}-${day}`;
+        }
+
+        Promise.all(promises).then(res => {
+          const invoices = res[0]?.invoices?.invoice ?? [];
+
+          res[1].pool.forEach((el) => {
+            if (+el.exec) return;
+            invoices.push({
+              id: el.uuid,
+              date: date(el.proc),
+              duedate: date(el.exec),
+              total: el.total,
+              status: 'Unpaid',
+              credit: 0,
+              service: el.service,
+              currencycode: el.currency,
+              meta: el.meta
+            });
+          });
+
+          invoices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          if (!res[0]?.ERROR) commit('updateInvoices', invoices);
+          else reject(res[0].ERROR);
+
+          commit('makeLoadingIs', false);
+          resolve(invoices);
+        })
+        .catch(err => reject(err));
 			});
 		},
 		fetch({dispatch, commit}){

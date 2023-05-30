@@ -7,6 +7,7 @@
   >
     <a-collapse-panel
       key="location"
+      :style="{ minHeight: panelHeight }"
       :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${itemSP.locations[0].title})`}`"
     >
       <slot name="location" />
@@ -64,12 +65,12 @@
           </transition>
         </a-row>
         <a-row class="newCloud__prop">
-          <a-col span="8" :xs="6">
-            <span style="display: inline-block; width: 70px"
-              >{{ $t("Drive") }}:</span
-            >
+          <a-col :sm="(driveTypes.length > 1) ? 6 : 20" :xs="(driveTypes.length > 1) ? 6 : 18">
+            <span style="display: inline-block; width: 70px">
+              {{ $t("Drive") }}:
+            </span>
           </a-col>
-          <a-col :xs="12" :sm="14">
+          <a-col :xs="12" :sm="14" v-if="driveTypes.length > 1">
             <a-switch v-model="options.drive" style="width: 60px">
               <span slot="checkedChildren">SSD</span>
               <span slot="unCheckedChildren">HDD</span>
@@ -177,7 +178,7 @@
               </div>
             </a-form-item>
 
-            <a-form-item :label="$t('clientinfo.password')">
+            <a-form-item v-if="user.uuid" :label="$t('clientinfo.password')">
               <password-meter
                 :style="{
                   height: (password.length > 0) ? '10px' : '0',
@@ -194,7 +195,7 @@
               />
             </a-form-item>
 
-            <a-form-item :label="$t('SSH key')">
+            <a-form-item v-if="user.uuid" :label="$t('SSH key')">
               <a-select
                 style="width: 100%"
                 :options="user.data && user.data.ssh_keys"
@@ -332,6 +333,7 @@ export default {
     password: { type: String, required: true },
     sshKey: { type: String }
   },
+  data: () => ({ panelHeight: null }),
   methods: {
     setOS(item, index) {
       if (item.warning) return;
@@ -373,11 +375,20 @@ export default {
         this.options.disk.min -= 128;
       }
     },
+    changePanelHeight() {
+      setTimeout(() => {
+        const panel = document.querySelector('.ant-collapse-content')?.lastElementChild;
+        const height = (panel) ? getComputedStyle(panel).height : null;
+
+        this.panelHeight = (this.activeKey === 'location') ? height : null;
+      });
+    }
   },
-  mounted() {
+  beforeMount() {
     const images = Object.entries(this.itemSP?.publicData.templates ?? {});
 
     if (images.length === 1) this.setOS(images[0][1], images[0][0]);
+    this.changePanelHeight();
   },
   computed: {
     user() {
@@ -420,6 +431,9 @@ export default {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
+    },
+    driveTypes() {
+      return this.getPlan.resources.filter(({ key }) => key.includes('drive'));
     }
   },
   watch: {
@@ -457,7 +471,8 @@ export default {
 
       this.options.drive = false;
       this.$emit('setData', { key: 'periods', value });
-    }
+    },
+    activeKey() { this.changePanelHeight() }
   }
 }
 </script>

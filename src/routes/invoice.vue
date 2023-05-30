@@ -10,8 +10,8 @@
       />
       <div class="invoices__wrapper" ref="invoices">
         <a-radio-group default-value="Invoice" v-model="value" size="large">
-          <a-radio-button value="Invoice"> {{ $t('Invoice') }} </a-radio-button>
-          <a-radio-button value="Detail"> {{ $t('Detail') }} </a-radio-button>
+          <a-radio-button value="Invoice"> {{ $t('Invoices') }} </a-radio-button>
+          <a-radio-button value="Detail"> {{ $t('Transactions') }} </a-radio-button>
         </a-radio-group>
         <template v-if="value === 'Invoice'">
           <empty style="margin: 50px 0" v-if="invoices.length === 0" />
@@ -39,6 +39,7 @@
           :page-size-options="pageSizeOptions"
           :page-size="pageSize"
           :total="totalSize"
+          :current="currentPage"
           @showSizeChange="onShowSizeChange"
           @change="onShowSizeChange"
         />
@@ -122,6 +123,14 @@ export default {
 
       setTimeout(this.setLoading, 10);
     },
+    setPagination() {
+      const pagination = localStorage.getItem("transactionsPagination");
+
+      if (!pagination) return;
+      const { page, limit } = JSON.parse(pagination);
+
+      this.onShowSizeChange(page, limit);
+    },
     onShowSizeChange(page, limit) {
       if (page !== this.currentPage) {
         this.$store.commit("nocloud/transactions/setPage", page);
@@ -134,20 +143,22 @@ export default {
         page, limit,
         account: this.user.uuid,
         field: "proc",
-        sort: "desc"
+        sort: "desc",
+        type: "transaction"
       });
+      localStorage.setItem("transactionsPagination", JSON.stringify({ page, limit }));
     }
   },
   mounted() {
-    if (this.isLogged) {
+    if (this.isLogged && this.user.uuid) {
       this.$store.dispatch("invoices/autoFetch");
 
-      if (this.user.uuid) {
-        api.transactions.count({ account: this.user.uuid })
-          .then(({ total }) => {
-            this.$store.commit("nocloud/transactions/setTotal", +total);
-          });
-      }
+      api.transactions.count({ account: this.user.uuid, type: "transaction" })
+        .then(({ total }) => {
+          this.$store.commit("nocloud/transactions/setTotal", +total);
+        });
+
+      this.setPagination();
     }
     if (localStorage.getItem('order')) {
       this.value = localStorage.getItem('order');
@@ -176,23 +187,29 @@ export default {
         page: this.currentPage,
         limit: this.pageSize,
         field: "proc",
-        sort: "desc"
+        sort: "desc",
+        type: "transaction"
       });
     },
     user() {
       if (this.isLoading) return;
+      this.$store.dispatch("invoices/autoFetch");
+
       this.$store.dispatch("nocloud/transactions/fetch", {
         account: this.user.uuid,
         page: this.currentPage,
         limit: this.pageSize,
         field: "proc",
-        sort: "desc"
+        sort: "desc",
+        type: "transaction"
       });
 
-      api.transactions.count({ account: this.user.uuid })
+      api.transactions.count({ account: this.user.uuid, type: "transaction" })
         .then(({ total }) => {
           this.$store.commit("nocloud/transactions/setTotal", +total);
         });
+
+      this.setPagination();
     },
     isLoading() {
       this.percent = 0;

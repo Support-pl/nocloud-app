@@ -6,7 +6,7 @@
       </div>
     </div>
     <div class="invoice__middle">
-      <div class="invoice__cost" :style="{ color: costColor }">
+      <div class="invoice__cost" :style="{ color: statusColor }">
         {{ total }} {{ invoice.currencycode || 'USD' }}
       </div>
       <div class="invoice__date-item invoice__invDate">
@@ -22,14 +22,23 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ invoice.duedate }}
+          {{ (invoice.status === 'Unpaid') ? '-' : invoice.duedate }}
         </div>
       </div>
     </div>
     <div class="horisontal-line"></div>
     <div class="invoice__footer flex-between">
       <div class="invoice__id">#{{ invoice.id }}</div>
-      <div class="invoice__btn"><a-icon type="right" /></div>
+      <div class="invoice__btn">
+        <span class="invoice__pay" v-if="invoice.status === 'Unpaid'">
+          {{ $t('Pay').toLowerCase() }}
+          <a-icon
+            color="success"
+            :type="(isLoading) ? 'loading' : 'right'"
+          />
+        </span>
+        <a-icon v-else :type="(isLoading) ? 'loading' : 'right'" />
+      </div>
     </div>
   </div>
 </template>
@@ -38,7 +47,11 @@
 export default {
   name: "invoice",
   props: { invoice: Object },
+  data: () => ({ isLoading: false }),
   computed: {
+    baseURL() {
+      return this.$store.getters['invoices/getURL'];
+    },
     statusColor() {
       switch (this.invoice.status.toLowerCase()) {
         case 'paid':
@@ -64,8 +77,35 @@ export default {
   },
   methods: {
     clickOnInvoice(uuid) {
-      this.$router.push({ name: "invoiceFS", params: { uuid } });
+      if (this.invoice.status === "Unpaid") {
+        this.isLoading = true;
+        if (this.invoice.meta) {
+          this.$api.get(this.baseURL, { params: {
+            run: 'create_inv',
+            invoice_id: uuid,
+            product: this.invoice.meta.description ?? this.invoice.service,
+            sum: this.invoice.total
+          }})
+          .then(({ invoiceid }) => {
+            this.$notification.success({ message: this.$t('Done') });
+            this.getPaytoken(invoiceid);
+          });
+        } else this.getPaytoken(uuid);
+      } else {
+        this.$router.push({ name: "invoiceFS", params: { uuid } });
+      }
     },
+    getPaytoken(invoice_id) {
+      this.$api.get(this.baseURL, { params: {
+        run: 'get_pay_token', invoice_id
+      }})
+        .then((res) => {
+          window.location.href = res;
+        })
+        .finally(() => {
+          this.isLoading = false;
+        });
+    }
   },
 };
 </script>
@@ -85,6 +125,18 @@ export default {
 .invoice__service {
   font-size: 12px;
   color: var(--gray);
+}
+
+.invoice__pay {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 12px;
+  color: #fff;
+  background: var(--success);
 }
 
 .invoice__status {
@@ -131,5 +183,9 @@ export default {
 .invoice__middle,
 .horisontal-line {
   margin-bottom: 2px;
+}
+
+.invoice__footer {
+  align-items: center;
 }
 </style>

@@ -337,11 +337,11 @@
       "bw":"Trafic utilisé",
       "unlimited":"Illimité",
       "power":"Du pouvoir",
-      "sites":"Sites Internet",
+      "websites":"Sites Internet",
       "mysql":"Bases de données MySQL",
       "email":"Comptes mail",
-      "hdd_shared":"Stockage SSD partagé",
-      "traffic":"Bande passante"
+      "ssd":"Stockage SSD partagé",
+      "bandwidth":"Bande passante"
    },
    "clientinfo":{
       "username":"Nom d'utilisateur",

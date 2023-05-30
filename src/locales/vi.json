@@ -265,11 +265,11 @@
 		"bw": "Lưu lượng truy cập đã sử dụng",
 		"unlimited": "Không giới hạn",
 		"power": "Nguồn",
-		"sites": "Trang web",
+		"websites": "Trang web",
 		"mysql": "Cơ sở dữ liệu MySQL",
 		"email": "Tài khoản email",
-		"hdd_shared": "Bộ nhớ SSD",
-		"traffic": "Băng thông"
+		"ssd": "Bộ nhớ SSD",
+		"bandwidth": "Băng thông"
 	},
 	"clientinfo": {
 		"password": "Mật khẩu",
@@ -391,7 +391,7 @@
 	},
 	"product_name": "Tên sản phẩm",
 	"VNDExcludeVAT": "Giá trên chưa bao gồm thuế VAT (10%)",
-	
+
 	"accept terms": "Vui lòng chấp nhận Điều khoản dịch vụ để tiếp tục",
 	"ask a question":"Gửi phiếu yêu cầu",
  	"department":"Bộ phận hỗ trợ",
@@ -416,25 +416,25 @@
 	"alias":"Bí danh",
 	"IP":"IP",
 	"Actions": "Hành động",
-	"cloudStateItem":{ 
+	"cloudStateItem":{
 		"BOOT":"BOOT",
 		"PENDING":"CHỜ THỰC HIỆN",
 		"POWEROFF":"TẮT NGUỒN",
 		"SNAPSHOT":"SNAPSHOT",
 		"RUNNING":"ĐANG CHẠY",
 		"SUSPENDED":"ĐÃ TẠM DỪNG"
-		}, 
+		},
 		"public":"Public",
-		"virtualSlider":{ 
+		"virtualSlider":{
 			"Single": "Single",
-			"Standard":"Standard", 
+			"Standard":"Standard",
 			"Deluxe":"Deluxe",
-			"Premium":"Premium", 
+			"Premium":"Premium",
 			"Business":"Business"
-		}, 
+		},
 		"PAYG":"PAYG",
 		"PrePaid":"Trả trước",
-		"filterHeader":{ 
+		"filterHeader":{
 			"Unpaid":"Chưa thanh toán",
 			"Paid":"Đã thanh toán",
 			"Refunded":"Đã hoàn lại",
@@ -446,11 +446,11 @@
 			"Open": "Đang mở",
 			"Answered":"Đã trả lời",
 			"Cancelled":"Cancelled"
-		}, 
+		},
 	"virtual":"ảo",
-	"input new name":"Nhập tên mới",	
+	"input new name":"Nhập tên mới",
 	"reserve public NIC":"Đặt NIC public",
-	"used for this VM":"sử dụng cho VM này",	
+	"used for this VM":"sử dụng cho VM này",
 	"attach new disk":"Thêm bộ nhớ mới",
 	"size":"Kích thước",
 	"disk":"Bộ nhớ",

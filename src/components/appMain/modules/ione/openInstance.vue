@@ -204,6 +204,7 @@
           </div>
         </div>
       </div>
+
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
           <a-icon type="info-circle" />
@@ -226,8 +227,47 @@
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.last_monitoring * 1000) }}
-              <a-icon v-if="false" type="sync" title="Renew" @click="handleOk('renew')" />
+              <a-icon type="sync" title="Renew" @click="handleOk('renew')" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="Fcloud__info-block block">
+        <div class="Fcloud__block-header">
+          <a-icon type="credit-card" />
+          {{ $t("prices") | capitalize }}
+        </div>
+
+        <div class="Fcloud__block-content block-content_table">
+          <div class="block__column block__column_table">
+            <div class="block__title">{{ $t('tariff') | capitalize }}</div>
+          </div>
+          <div class="block__column block__column_table block__column_price">
+            <div class="block__title">
+              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}:
+            </div>
+            <div class="block__value">
+              {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
+            </div>
+          </div>
+
+          <div class="block__column block__column_table">
+            <div class="block__title">{{ $t('Addons') }}</div>
+          </div>
+          <div
+            class="block__column block__column_table block__column_price"
+            v-for="(price, addon) in addonsPrice"
+          >
+            <div class="block__title">{{ addon }}:</div>
+            <div class="block__value">
+              {{ +price.toFixed(2) }} {{ currency.code }}
+            </div>
+          </div>
+
+          <div class="block__column block__column_table block__column_total">
+            <div class="block__title">{{ $t('Total') }}:</div>
+            <div class="block__value">{{ +fullPrice.toFixed(2) }} {{ currency.code }}</div>
           </div>
         </div>
       </div>
@@ -607,7 +647,7 @@ export default {
           });
           break;
         case "renew":
-          if (this.checkBalance()) this.sendAction('manual_renew');
+          if (this.checkBalance()) this.sendRenew();
           break;
       }
     },
@@ -616,7 +656,7 @@ export default {
 
       if (this.user.balance < parseFloat(sum)) {
         this.$confirm({
-          title: this.$t('You do not have enough funds on your balance.'),
+          title: this.$t('You do not have enough funds on your balance'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
@@ -786,7 +826,54 @@ export default {
       newOpt.title = `${capitalized} (${range})`;
       return newOpt;
     },
-    sendAction(action) {
+    sendRenew() {
+      const { period } = this.VM.billingPlan.products[this.VM.product];
+      const currentPeriod = this.date(this.VM.data.last_monitoring);
+      const newPeriod = this.date(this.VM.data.last_monitoring + +period);
+
+      this.$confirm({
+        title: this.$t("Do you want to renew server?"),
+        content: () => (
+          <div>
+            <div style="font-weight: 700">{ `${this.VM.title}` }</div>
+            <div>
+              { `${this.$t("from")} ` }
+              <span style="font-style: italic">{ `${currentPeriod}` }</span>
+            </div>
+            <div>
+              { `${this.$t("to")} ` }
+              <span style="font-style: italic">{ `${newPeriod}` }</span>
+            </div>
+
+            <div style="margin-top: 10px">
+              <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
+              { this.tariffPrice } { this.currency.code }
+              <div>
+                <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
+                <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
+                  { ...Object.entries(this.addonsPrice).map(([key, value]) =>
+                    <li>{ key }: { value } { this.currency.code }</li>
+                  ) }
+                </ul>
+              </div>
+
+              <div>
+                <span style="font-weight: 700">{ this.$t('Total') }: </span>
+                { this.fullPrice } { this.currency.code }
+              </div>
+            </div>
+          </div>
+        ),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        okButtonProps: {
+          props: { disabled: (this.VM.data.blocked) },
+        },
+        onOk: () => this.sendAction("manual_renew"),
+        onCancel() {},
+      });
+    },
+    async sendAction(action) {
       const hard = this.option.reboot || action.includes('Hard');
       const data = {
         uuid: this.VM.uuid,
@@ -820,8 +907,7 @@ export default {
           });
         return;
       }
-      this.$store
-        .dispatch("nocloud/vms/actionVMInvoke", data)
+      return this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
         .then(() => {
           const opts = {
             message: `${this.$t('Done')}!`,
@@ -865,6 +951,21 @@ export default {
           });
         });
     },
+    date(timestamp) {
+      if (timestamp < 1) return '-';
+
+      const date = new Date(timestamp * 1000);
+      const time =  date.toTimeString().split(' ')[0];
+
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
+
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
+
+      return `${day}.${month}.${year} ${time}`;
+    }
   },
   created() { this.fetchMonitoring() },
   computed: {
@@ -901,6 +1002,50 @@ export default {
             this.VM.state.meta.state == 3),
       };
     },
+
+    tariffPrice() {
+      const key = this.VM.product;
+
+      return this.VM.billingPlan.products[key].price;
+    },
+    addonsPrice() {
+      return this.VM.billingPlan.resources.reduce((prev, curr) => {
+        if (curr.key === `drive_${this.VM.resources.drive_type.toLowerCase()}`) {
+          const key = this.$t('Drive');
+
+          return {
+            ...prev,
+            [key]: curr.price * this.VM.resources.drive_size / 1024
+          };
+        } else if (curr.key === "ram") {
+          const key = this.$t('ram');
+
+          return {
+            ...prev,
+            [key]: curr.price * this.VM.resources.ram / 1024
+          };
+        } else if (this.VM.resources[curr.key]) {
+          const key = this.$t(curr.key.replace('_', ' '));
+
+          return {
+            ...prev,
+            [key]: curr.price * this.VM.resources[curr.key]
+          };
+        }
+        return prev;
+      }, {});
+    },
+    fullPrice() {
+      return this.tariffPrice + Object.values(this.addonsPrice)
+        .reduce((sum, curr) => sum + curr);
+    },
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+      console.log(defaultCurrency, this.user.currency);
+
+      return { code: this.user.currency ?? defaultCurrency };
+    },
+
     inbChartDataReady() {
       let data = this.chart1Data;
       if (data == undefined) {
@@ -998,3 +1143,55 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.block-content_table {
+  position: relative;
+  display: grid;
+  padding: 10px 15px;
+}
+
+.block-content_table::before {
+  content: '';
+  position: absolute;
+  bottom: 40px;
+  left: 15px;
+  height: 1px;
+  width: calc(100% - 30px);
+  background: var(--gray);
+}
+
+.block__column_table {
+  flex-direction: row;
+  justify-content: start;
+  gap: 7px;
+}
+
+.block__column_price {
+  grid-column: 2 / 3;
+  justify-content: end;
+  overflow: hidden;
+}
+
+.block__column_price .block__title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.block__column_price .block__value {
+  white-space: nowrap;
+}
+
+.block__column_total {
+  grid-column: 1 / 3;
+  justify-content: end;
+  margin-top: 5px;
+}
+
+@media (max-width: 575px) {
+  .block-content_table {
+    justify-content: initial;
+  }
+}
+</style>

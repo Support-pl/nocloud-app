@@ -58,7 +58,7 @@ export default {
         }
 
         commit("setLoading", true);
-        api.transactions.get(params)
+        api.transactions.list(params)
           .then(response => {
             response.page = params.page
             response.size = params.limit

@@ -43,18 +43,18 @@
                     <div class="info__date-item">
                       <div class="info__date-title">{{ $t("invoiceDate") }}</div>
                       <div class="info__date-value">
-                        {{ invoice && date(invoice.exec) }}
+                        {{ invoice && date(invoice.proc) }}
                       </div>
                     </div>
                     <div class="info__date-item">
                       <div class="info__date-title">{{ $t("dueDate") }}</div>
                       <div class="info__date-value">
-                        {{ invoice && date(invoice.proc) }}
+                        {{ invoice && date(invoice.exec) }}
                       </div>
                     </div>
                   </div>
 
-                <div class="info__main">
+                <div class="info__main" v-if="records.length > 0">
                   <a-table row-key="uuid" :data-source="records" :columns="columns">
                     <template slot="date" slot-scope="text, record">
                       {{ date(record.exec) }}
@@ -68,6 +68,37 @@
                         : record.resource.toUpperCase() }}
                     </template>
                   </a-table>
+                </div>
+
+                <div class="info__main" v-if="invoice">
+                  <a-card v-if="invoice.meta.description" :title="$t('description') | capitalize">
+                    <div>{{ invoice.meta.description }}</div>
+                  </a-card>
+
+                  <a-card
+                    v-if="invoice.meta.instances && invoice.meta.instances.length > 0"
+                    style="margin-top: 15px"
+                    :title="$t('services') | capitalize"
+                  >
+                    <template #extra>
+                      <router-link :to="{ name: 'services' }">{{ $t('comp_services.all') }}</router-link>
+                    </template>
+                    <router-link
+                      v-for="inst of invoice.meta.instances"
+                      :key="inst"
+                      :to="{ name: 'openCloud_new', params: { uuid: inst } }"
+                    >
+                      {{ instances[inst] }}
+                    </router-link>
+                  </a-card>
+                </div>
+
+                <div class="info__footer">
+                  <template v-if="invoice.exec == 0">
+                    <a-button class="info__button" :loading="isPayLoading" @click='payRequest'>
+                      {{ $t("Pay") }}
+                    </a-button>
+                  </template>
                 </div>
               </div>
             </div>
@@ -87,7 +118,9 @@ export default {
   components: { loading },
   data: () => ({
     isLoading: true,
-    records: null,
+    isPayLoading: false,
+    instances: {},
+    records: [],
     columns: [
       {
         title: 'Instance',
@@ -128,11 +161,31 @@ export default {
       if (`${day}`.length < 2) day = `0${day}`;
 
       return `${day}.${month}.${year} ${time}`;
+    },
+    payRequest() {
+      this.isPayLoading = true;
+      this.$api.get(this.baseURL, { params: {
+        run: 'create_inv',
+        invoice_id: this.invoice.uuid,
+        product: this.invoice.meta.description ?? this.invoice.service,
+        sum: this.invoice.total
+      }})
+      .then(({ invoiceid }) => {
+        this.$notification.success({ message: this.$t('Done') });
+        this.$router.push({ name: 'invoiceFS', params: { uuid: invoiceid } });
+      })
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
+        this.$notification.error({ message: this.$t(message)});
+        console.error(err);
+      })
+      .finally(() => {
+        this.isPayLoading = false;
+      });
     }
   },
   created() {
-    const url = `/billing/transactions/${this.$route.params.uuid}`;
-
     if (this.currency.code === '') {
       this.$store.dispatch('nocloud/auth/fetchCurrencies');
     }
@@ -143,29 +196,30 @@ export default {
       sessionStorage.setItem('invoice', uuid);
     });
 
-    this.$store.dispatch('nocloud/vms/fetch')
-      .then(({ pool }) => [pool, this.$api.get(url)])
-      .then(async ([services, promise]) => {
-        const instances = {};
-        const { pool } = await promise;
-
-        services.forEach((service) => {
+    this.$api.get('/services', { params: { show_deleted: true } })
+      .then(({ pool }) => {
+        pool.forEach((service) => {
           service.instancesGroups.forEach((group) => {
             group.instances.forEach((inst) => {
-              instances[inst.uuid] = inst.title;
+              this.$set(this.instances, inst.uuid, inst.title);
             });
           });
         });
+
+        return this.$api.transactions.records(this.$route.params.uuid);
+      })
+      .then(({ pool }) => {
         this.records = pool.map((el) => ({
-          ...el, instance: instances[el.instance] ?? 'unknown'
+          ...el, instance: this.instances[el.instance] ?? 'unknown'
         }));
-        this.isLoading = false;
 
         this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource';
       })
       .catch((err) => {
-        this.$router.push("/invoice");
         console.error(err);
+      })
+      .finally(() => {
+        this.isLoading = false;
       });
   },
   destroyed() {
@@ -176,6 +230,12 @@ export default {
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
+    },
+    userdata() {
+      return this.$store.getters['nocloud/auth/userdata'];
+    },
+    baseURL() {
+      return this.$store.getters['invoices/getURL'];
     },
     currencies() {
       return this.$store.getters['nocloud/auth/currencies'];
@@ -193,7 +253,7 @@ export default {
       return { code, rate: (rate) ? rate : 1 / reverseRate };
     },
     statusColor() {
-      return this.records[0].processed
+      return this.records[0]?.processed
         ? this.$config.colors.success
         : this.$config.colors.err;
     },
@@ -205,15 +265,16 @@ export default {
         .find((el) => el.uuid === this.$route.params.uuid);
     },
     total() {
-      const sum = this.records?.reduce((prev, el) => +prev + +el.total, 0);
+      const sum = this.records?.reduce((prev, el) => +prev + +el.total, 0) ||
+        this.invoice?.total || 0;
 
       return +(sum * this.currency.rate)?.toFixed(2);
     }
   },
   watch: {
-    user() {
+    userdata() {
       this.$store.dispatch('nocloud/transactions/fetch', {
-        account: this.user.uuid,
+        account: this.userdata.uuid,
         page: this.$store.getters["nocloud/transactions/page"],
         limit: this.$store.getters["nocloud/transactions/size"],
         field: "proc",
@@ -338,6 +399,35 @@ export default {
   font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 20px;
+}
+
+.info__footer {
+  max-width: 400px;
+  margin: 0 auto;
+  display: flex;
+  height: 45px;
+  position: absolute;
+  bottom: 30px;
+  left: 20px;
+  right: 20px;
+  flex-direction: column;
+}
+
+.info__button {
+  flex: 1 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 24px;
+  font-weight: 600;
+  color: var(--bright_font);
+  cursor: pointer;
+  font-size: 16px;
+  transition: filter 0.2s ease;
+  background-color: var(--success);
+  background-size: 150% 200%;
+  background-position: 0 0;
+  animation: AnimationName 1s ease infinite;
 }
 
 .loading {

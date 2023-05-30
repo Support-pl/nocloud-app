@@ -1,12 +1,12 @@
 <template>
   <div class="cloud__fullscreen Fcloud">
     <transition name="opencloud" :duration="600">
-      <div v-if="!vmsLoading" class="cloud__container">
+      <div v-if="!vmsLoading && VM.billingPlan" class="cloud__container">
         <component :is="template" :VM="VM">
           <template #header>
             <div class="Fcloud__header">
               <div class="Fcloud__back-wrapper">
-                <div class="Fcloud__back icon__wrapper" @click="$router.go(-1)">
+                <div class="Fcloud__back icon__wrapper" @click="$router.push('/services')">
                   <a-icon type="left" />
                 </div>
               </div>
@@ -215,7 +215,7 @@
           </template>
         </component>
       </div>
-      <loading v-else color="#fff" :style="{'position': 'absolute', 'height':
+      <loading v-else-if="vmsLoading" color="#fff" :style="{'position': 'absolute', 'height':
       '100%', 'width': '100%'}" key="loading" duration: />
     </transition>
   </div>
@@ -274,7 +274,7 @@ export default {
     ]),
     ...mapGetters("support", { baseURL: "getURL" }),
     template() {
-      return () => import(`@/components/appMain/modules/${this.VM.billingPlan.type}/openInstance.vue`);
+      return () => import(`@/components/appMain/modules/${this.VM.billingPlan?.type ?? 'ione'}/openInstance.vue`);
     },
     menuOptions() {
       const options = [
@@ -318,7 +318,6 @@ export default {
           onclick: this.changeModal,
           params: ["accessManager"],
           icon: "safety",
-          modules: ['ovh'],
         },
         {
           title: "Logs",
@@ -372,6 +371,7 @@ export default {
 
       if (this.VM.state.meta.state === 1) return "PENDING";
       if (this.VM.state.meta.state === 5) return "SUSPENDED";
+      if (this.VM.data.suspended_manually) return "SUSPENDED";
       if (this.VM.state.meta.state === "BUILD") return "BUILD";
       switch (state) {
         case "LCM_INIT":
@@ -382,6 +382,8 @@ export default {
     },
     stateColor() {
       if (!this.VM.state) return "rgb(145, 145, 145)";
+      if (this.VM.data.suspended_manually) return "#f9f038";
+
       const state = (this.VM?.billingPlan.type === 'ione')
         ? this.VM.state.meta.lcm_state_str
         : this.VM.state.state;
@@ -445,13 +447,14 @@ export default {
         this.closeModal('expand');
         return;
       }
-      let confirm = window.confirm("VM will be restarted");
-      if (confirm) {
+
+      const onOk = () => {
         this.isRenameLoading = true;
         const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
         const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
         const cpuEqual = instance.resources.cpu === +this.resize.VCPU;
         const ramEqual = instance.resources.ram === this.resize.RAM * 1024;
+        const diskEqual = instance.resources.drive_size === this.resize.size * 1024;
 
         if (this.VM.billingPlan.kind === 'DYNAMIC') {
           instance.resources.cpu = +this.resize.VCPU;
@@ -479,6 +482,12 @@ export default {
               console.error(err);
             });
         }
+
+        if (cpuEqual && ramEqual && diskEqual) {
+          this.closeModal('expand');
+          this.isRenameLoading = false;
+          return;
+        }
         instance.resources.drive_size = this.resize.size * 1024;
 
         this.$store
@@ -499,9 +508,10 @@ export default {
             }
           })
           .catch((err) => {
-            // this.$message.error( "Can't resize to same size");
+            const message = err.response?.data?.message ?? err.message ?? err;
+
             this.openNotificationWithIcon("error", {
-              message: this.$t("Can't VM resize to same size"),
+              message: this.$t(`Can't VM resize to same size: [error] - ${message}`),
             });
             console.error(err);
           })
@@ -509,6 +519,13 @@ export default {
             this.modal.confirmLoading = false;
           });
       }
+
+      this.$confirm({
+        title: this.$t('Service will be stopped after resize. Please restart manually!'),
+        okText: this.$t('Yes'),
+        cancelText: this.$t('Cancel'),
+        onOk, onCancel() {}
+      });
     },
     sendRename() {
       if (this.renameNewName !== "") {
@@ -531,12 +548,14 @@ export default {
               });
             }
           })
-          .catch(() => {
-            this.openNotificationWithIcon("error", {
-              message: this.$t("Can't VM name changes"),
+          .catch((err) => {
+            const message = err.response?.data?.message ?? err.message ?? err;
+
+            this.openNotificationWithIcon('error', {
+              message: this.$t(message)
             });
           })
-          .finally((res) => {
+          .finally(() => {
             this.modal.confirmLoading = false;
           });
       }
@@ -564,6 +583,8 @@ export default {
       this.$confirm({
         title: this.$t("Do you want to reinstall this virtual machine?"),
         okType: "danger",
+        okText: this.$t('Yes'),
+        cancelText: this.$t('Cancel'),
         content: (h) => (
           <div style="color:red;">{ this.$t("All data will be deleted!") }</div>
         ),
@@ -582,10 +603,11 @@ export default {
               this.openNotificationWithIcon("success", opts);
             })
             .catch((err) => {
-              const opts = {
-                message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-              };
-              this.openNotificationWithIcon("error", opts);
+              const message = err.response?.data?.message ?? err.message ?? err;
+
+              this.openNotificationWithIcon('error', {
+                message: this.$t(message)
+              });
             });
 
           this.modal.menu = false;
@@ -600,6 +622,8 @@ export default {
       this.$confirm({
         title: this.$t("Do you want to delete this virtual machine?"),
         okType: "danger",
+        okText: this.$t('Yes'),
+        cancelText: this.$t('Cancel'),
         content: () => (
           <div style="color:red">{this.$t("All data will be deleted!")}</div>
         ),
@@ -620,9 +644,11 @@ export default {
                 });
               }
             })
-            .catch(() => {
-              this.openNotificationWithIcon("error", {
-                message: this.$t("Failed to delete VM"),
+            .catch((err) => {
+              const message = err.response?.data?.message ?? err.message ?? err;
+
+              this.openNotificationWithIcon('error', {
+                message: this.$t(message)
               });
             })
             .finally(() => {

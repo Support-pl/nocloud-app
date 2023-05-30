@@ -37,7 +37,7 @@ export default {
 	data(){
 		return {
       hovered: null,
-			services: [
+			srvs: [
 				{
 					title: 'Servers',
 					translatable: true,
@@ -81,7 +81,7 @@ export default {
             paramsArr: [{name: 'products', query: {type: 'domains'}}],
           },
         }
-			],
+			]
 		}
 	},
 	methods: {
@@ -101,7 +101,7 @@ export default {
     },
     newProductHandler(service) {
       const provider = service.onclick.paramsArr[0].query.service;
-      const { type } = this.sp.find(({ title }) => title === provider) ?? {};
+      const { type } = this.sp.find(({ meta }) => (meta.showcase ?? {})[provider]) ?? {};
       let name = 'service-virtual';
       let query = {};
 
@@ -112,24 +112,38 @@ export default {
         case 'goget':
           name = 'service-ssl';
           break;
+        case 'acronis':
+          name = 'service-acronis';
+          break;
         case 'ione':
         case 'ovh':
           name = 'newPaaS';
           query = { service: provider }
       }
 
+      if (!type && this.services[provider]) {
+        name = 'service-iaas';
+        query = { service: provider }
+      }
+
       this.$router.push({ name, query });
     },
 	},
 	computed: {
-		sp(){
+		sp() {
 			return this.$store.getters['nocloud/sp/getSP'];
 		},
-		isLogged(){
+		isLogged() {
 			return this.$store.getters['nocloud/auth/isLoggedIn'];
 		},
+    baseURL() {
+      return this.$store.getters['nocloud/auth/getURL'];
+    },
 
-		avaliableServices(){
+    services() {
+      return this.$store.getters['products/getServices'];
+    },
+		avaliableServices() {
       const services = (this.$config.sharedEnabled) ? [{
         title: 'Virtual',
         translatable: true,
@@ -141,19 +155,40 @@ export default {
         }
       }] : [];
 
-			this.sp.forEach(({ meta: { service }, title }) => {
-        if (service.title) services.push({
-          ...service,
+      Object.keys(this.services).forEach((service) => {
+        services.push({
+          title: service,
+          icon: 'shopping',
+          type: service,
           onclick: {
             function: this.routeTo,
-            paramsArr: [{ name: 'products', query: { service: title } }]
+            paramsArr: [{ name: 'products', query: { service } }]
           }
+        })
+      });
+
+			this.sp.forEach(({ meta: { showcase = {} } }) => {
+        Object.entries(showcase).forEach(([key, value]) => {
+          services.push({
+            ...value,
+            onclick: {
+              function: this.routeTo,
+              paramsArr: [{ name: 'products', query: { service: key } }]
+            }
+          });
         });
+      });
+
+      services.sort((a, b) => {
+        if (a.icon === 'shopping' && b.icon !== 'shopping') return -1;
+        if (b.icon === 'shopping' && a.icon !== 'shopping') return 1;
+        if (a.icon === 'shopping' && b.icon === 'shopping') return 0;
+        return a.title > b.title;
       });
 
       return services;
 		},
-    columnsCount(){
+    columnsCount() {
       let count = 5;
       if (document.documentElement.clientWidth < 575) count = 3;
 
@@ -164,7 +199,7 @@ export default {
 </script>
 
 <style>
-.services__wrapper{
+.services__wrapper {
 	/* background-color: red; */
 	display: grid;
 	grid-gap: 5px;

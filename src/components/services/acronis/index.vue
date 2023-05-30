@@ -1,66 +1,56 @@
 <template>
-	<div class="order_wrapper">
+  <div class="order_wrapper">
 		<div class="order">
 			<div class="order__inputs order__field">
-				<div class="order_option">
-					<a-slider
-						:marks="{...sizes}"
-						:value="sizes.indexOf(options.size)"
-						:tip-formatter="null"
-						:max="sizes.length-1"
-						:min="0"
-						@change="(newval) => options.size = sizes[newval]"
-					>
-					</a-slider>
+        <a-collapse style="border-radius: 20px" v-model="activeKey">
+          <a-collapse-panel key="base" :header="`${$t('Base')}:`">
+            <div class="order_option">
+              <a-row class="order__prop" v-for="(value, key) in getProducts.base" :key="key">
+                <a-col span="18">{{ (value.meta.edition || value.title) | capitalize }}:</a-col>
+                <a-col span="6" style="text-align: right">
+                  <a-input-number v-if="!fetchLoading" v-model="config[key]" :min="0" />
+                  <div v-else class="loadingLine"></div>
+                </a-col>
+              </a-row>
+            </div>
+          </a-collapse-panel>
 
-          <transition name="specs" mode="out-in">
-            <table v-if="getProducts.resources" class="product__specs" :key="getProducts.title">
-              <tr v-for="(value, key) in getProducts.resources" :key="key">
-                <td>{{ $t('virtual_product.' + key) | capitalize }}</td>
-                <td>{{ (value === 'Не ограничен') ? $t('virtual_product.unlimited') : value }}</td>
-              </tr>
-            </table>
-          </transition>
+          <a-collapse-panel key="adv" :header="`${$t('Advanced')}:`">
+            <div class="order_option">
+              <a-row class="order__prop" v-for="(value, key) in getProducts.adv" :key="key">
+                <a-col span="6">{{ value.meta.edition || value.title | capitalize }}:</a-col>
+                <a-col span="18" style="text-align: right">
+                  <a-input-number v-if="!fetchLoading" v-model="config[key]" :min="0" />
+                  <div v-else class="loadingLine"></div>
+                </a-col>
+              </a-row>
+            </div>
+          </a-collapse-panel>
 
-					<a-row class="order__prop">
-						<a-col span="8" :xs="6">{{ $t('ssl_product.domain') | capitalize }}:</a-col>
-						<a-col span="16" :xs="18">
-							<a-input
-                placeholder="example.com"
-                v-if="!fetchLoading"
-                v-model="config.domain"
-                :rules="rules.req"
+          <a-collapse-panel key="personal" style="border-bottom: 0" :header="`${$t('data')}:` | capitalize">
+            <a-form-item :label="$t('login')">
+              <a-input
+                v-model="options.login"
+                :style="{ boxShadow: (options.login.length < 2) ? '0 0 2px 2px var(--err)' : null }"
               />
-							<div v-else class="loadingLine"></div>
-						</a-col>
-					</a-row>
+              <div style="line-height: 1.5; color: var(--err)" v-if="options.login.length < 2">
+                {{ $t('ssl_product.field is required') }}
+              </div>
+            </a-form-item>
 
-					<a-row class="order__prop">
-						<a-col span="8" :xs="6">{{ $t('ssl_product.email') | capitalize }}:</a-col>
-						<a-col span="16" :xs="18">
-							<a-input
-                placeholder="email"
-                v-if="!fetchLoading"
-                v-model="config.mail"
-                :rules="rules.req"
+            <a-form-item v-if="user.uuid" :label="$t('clientinfo.password')">
+              <password-meter
+                :style="{
+                  height: (options.password.length > 0) ? '10px' : '0',
+                  marginTop: (options.password.length < 1) ? '0' : null
+                }"
+                :password="options.password"
+                @score="(value) => score = value.score"
               />
-							<div v-else class="loadingLine"></div>
-						</a-col>
-					</a-row>
-
-					<a-row class="order__prop">
-						<a-col span="8" :xs="6">{{ $t('clientinfo.password') | capitalize }}:</a-col>
-						<a-col span="16" :xs="18">
-							<a-input
-                placeholder="password"
-                v-if="!fetchLoading"
-                v-model="config.password"
-                :rules="rules.req"
-              />
-							<div v-else class="loadingLine"></div>
-						</a-col>
-					</a-row>
-				</div>
+              <a-input-password class="password" v-model="options.password" />
+            </a-form-item>
+          </a-collapse-panel>
+        </a-collapse>
 			</div>
 
 			<div class="order__calculate order__field">
@@ -70,7 +60,7 @@
 					</a-col>
 
 					<a-col :xs="12" :sm="18" :lg='12'>
-						<a-select v-if="!fetchLoading" v-model="options.period"  style="width: 100%">
+						<a-select style="width: 100%" v-if="!fetchLoading" v-model="options.period">
 							<a-select-option v-for="period in periods" :key="period" :value="period">
 								{{ $tc('month', period / 3600 / 24 / 30) }}
 							</a-select-option>
@@ -79,13 +69,9 @@
 					</a-col>
 				</a-row>
 
-        <a-row :gutter="[10, 10]" style="margin-top: 10px">
+        <a-row style="margin-top: 10px" :gutter="[10, 10]">
           <a-col v-if="services.length > 1">
-            <a-select
-              style="width: 100%"
-              placeholder="services"
-              v-model="service"
-            >
+            <a-select style="width: 100%" placeholder="services" v-model="service">
               <a-select-option
                 v-for="service of services"
                 :key="service.uuid"
@@ -95,12 +81,9 @@
               </a-select-option>
             </a-select>
           </a-col>
+
           <a-col v-if="namespaces.length > 1">
-            <a-select
-              style="width: 100%"
-              placeholder="namespaces"
-              v-model="namespace"
-            >
+            <a-select style="width: 100%" placeholder="namespaces" v-model="namespace">
               <a-select-option
                 v-for="namespace of namespaces"
                 :key="namespace.uuid"
@@ -110,12 +93,9 @@
               </a-select-option>
             </a-select>
           </a-col>
+
           <a-col v-if="plans.length > 1">
-            <a-select
-              style="width: 100%"
-              placeholder="plans"
-              v-model="plan"
-            >
+            <a-select style="width: 100%" placeholder="plans" v-model="plan">
               <a-select-option
                 v-for="plan of plans"
                 :key="plan.uuid"
@@ -127,11 +107,11 @@
           </a-col>
         </a-row>
 
-				<a-divider orientation="left" :style="{'margin-bottom': '0'}">
-					{{$t('Total')}}:
+				<a-divider orientation="left" style="margin-bottom: 0">
+					{{ $t('Total') }}:
 				</a-divider>
 
-				<a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
+				<a-row type="flex" justify="space-around" style="font-size: 1.5rem">
 					<a-col>
 						<transition name="textchange" mode="out-in">
 							<div v-if="!fetchLoading">
@@ -145,7 +125,7 @@
 				<a-row type="flex" justify="space-around" style="margin: 10px 0">
 					<a-col :span="22">
 						<a-button type="primary" block shape="round" @click="orderConfirm">
-							{{ $t("order") | capitalize }}
+							{{ $t('order') | capitalize }}
 						</a-button>
 						<a-modal
 							:title="$t('Confirm')"
@@ -153,7 +133,7 @@
 							:confirm-loading="sendloading"
 							:cancel-text="$t('Cancel')"
 							@ok="orderClickHandler"
-							@cancel="() => {modal.confirmCreate = false}"
+							@cancel="modal.confirmCreate = false"
 						>
 							<p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.title }}</p>
 						</a-modal>
@@ -172,41 +152,44 @@
 </template>
 
 <script>
+import passwordMeter from "vue-simple-password-meter";
 import addFunds from '@/components/balance/addFunds.vue';
 
 export default {
-  name: 'virtual-component',
-  components: { addFunds },
+  name: 'acronis-component',
+  components: { addFunds, passwordMeter },
 	data:() => ({
-    plan: null,
-    service: null,
-    namespace: null,
+    plan: undefined,
+    service: undefined,
+    namespace: undefined,
 
     fetchLoading: false,
     sendloading: false,
 
-    options: { size: '', model: '', period: '' },
-    config: { domain: '', mail: '', password: '' },
+    options: { login: '', password: '', period: '' },
     modal: { confirmCreate: false, confirmLoading: false },
     addfunds: { visible: false, amount: 0 },
 
+    config: {},
     products: [],
-    sizes: [],
-    periods: []
+    periods: [],
+    activeKey: 'base',
+    score: 0
 	}),
 	methods: {
     changeProducts(plan) {
-      const products = Object.values(plan.products ?? {});
+      const products = [];
 
-      products.sort((a, b) => b.title - a.title);
-      this.products = products;
+      Object.entries(plan.products).forEach(([key, value]) => {
+        this.$set(this.config, key, 0);
+        products.push(value);
+      });
+
+      this.products = plan.products;
       this.plan = plan?.uuid;
 
-      this.sizes = Object.keys(plan.products ?? {});
-      this.options.size = this.sizes[0];
       this.periods = [];
-
-      this.products.forEach(({ period }) => {
+      products.forEach(({ period }) => {
         if (this.periods.includes(period)) return;
         this.periods.push(period);
       });
@@ -217,11 +200,26 @@ export default {
       const plan = this.plans.find(({ uuid }) => uuid === this.plan);
 
       const instances = [{
-        config: { ...this.config },
-        resources: { plan: this.getProducts.resources.model },
+        config: {
+          items,
+          first_name: this.user.firstname,
+          last_name: this.user.lastname,
+          mail: this.user.email,
+          login: this.options.login,
+          password: this.options.password
+        },
         title: this.getProducts.title,
         billing_plan: plan ?? {}
       }];
+      const items = { local_storage: 1 };
+
+      Object.entries(this.config).forEach(([key, value]) => {
+        const isNA = this.products[key].meta.measurement_unit === 'n/a';
+
+        if (isNA && value > 0) items[key] = 0;
+        else if (value > 0) items[key] = value;
+      });
+
       const newGroup = {
         title: this.user.fullname + Date.now(),
         type: this.sp.type,
@@ -233,7 +231,7 @@ export default {
         { instances_groups: service.instancesGroups },
         { ...service }
       );
-      const group = info.instances_groups?.find(({ type }) => type === 'cpanel');
+      const group = info.instances_groups?.find(({ type }) => type === 'acronis');
 
       if (group) group.instances = [...group.instances, ...instances];
       else if (this.service) info.instances_groups.push(newGroup);
@@ -241,20 +239,20 @@ export default {
 			if (!this.user) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
 				this.$store.commit('setOnloginInfo', {
-					type: 'IaaS',
-					title: 'Virtual Hosting',
+					type: 'Acronis',
+					title: 'Acronis',
 					cost: this.getProducts.price
 				});
 				this.$store.dispatch('setOnloginAction', () => {
-					this.createVirtual(info);
+					this.createAcronis(info);
 				});
 				this.$router.push({name: 'login'});
 				return
 			}
 
-			this.createVirtual(info);
+			this.createAcronis(info);
 		},
-		createVirtual(info) {
+		createAcronis(info) {
 			this.sendloading = true;
       const action = (this.service) ? 'update' : 'create';
       const orderData = (this.service) ? info : {
@@ -285,18 +283,16 @@ export default {
         });
 		},
 		orderConfirm() {
-			if (!this.config.domain.match(/.+\..+/)) {
-				this.$message.error(this.$t('domain is wrong'));
+			if (Object.values(this.config).every((value) => value === 0)) {
+				this.$message.error(this.$t('Please select at least one option'));
 				return;
 			}
-
-      if (this.config.mail === '') {
-        this.$message.error(this.$t('email is not valid'));
+      if (this.options.login.length < 2) {
+        this.$message.error(this.$t('login is required'));
         return;
       }
-
-      if (this.config.password === '') {
-        this.$message.error(thid.$t('Password is too short'));
+      if (this.score < 4) {
+        this.$message.error(this.$t('Weak pass'));
         return;
       }
 
@@ -338,13 +334,23 @@ export default {
 	computed: {
 		getProducts() {
 			if (Object.keys(this.products).length === 0) return "NAN";
-      const product = this.products[this.sizes.indexOf(this.options.size)];
+      const title = [];
+      const base = {};
+      const adv = {};
+      let price = 0;
 
-      delete product.resources.model;
-      if (product.resources.ssd.includes('Gb')) return product;
-      product.resources.ssd = `${product.resources.ssd / 1024} Gb`;
+      Object.entries(this.config).forEach(([key, value]) => {
+        const product = this.products[key];
 
-			return product;
+        if (key.includes('_adv_') && key !== 'local_storage') adv[key] = product;
+        else if (key !== 'local_storage') base[key] = product;
+
+        if (value === 0) return;
+        title.push(`${product.meta.edition ?? product.title}: ${value}`);
+        price += product.price * value;
+      });
+
+      return { title: title.join(', '), price, base, adv };
 		},
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
@@ -363,11 +369,11 @@ export default {
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type }) => type === 'cpanel');
+        .filter(({ type }) => type === 'acronis');
     },
     sp() {
       return this.$store.getters['nocloud/sp/getSP']
-        .find((sp) => sp.type === 'cpanel');
+        .find((sp) => sp.type === 'acronis');
     },
     isLoading() {
       return this.$store.getters['nocloud/plans/isLoading'];
@@ -379,12 +385,15 @@ export default {
     }
 	},
   watch: {
+    services(value) {
+      if (value.length === 1) this.service = value[0]?.uuid;
+    },
     namespaces(value) { this.namespace = value[0]?.uuid },
-    services(value) { this.service = value[0]?.uuid },
 		plans(value) { this.plan = value[0]?.uuid },
     plan(value) {
       const plan = this.plans.find(({ uuid }) => uuid === value);
 
+      this.config = {};
       this.changeProducts(plan);
     }
   },
@@ -495,7 +504,6 @@ export default {
 	box-shadow:
 		5px 8px 10px rgba(0, 0, 0, .08),
 		0px 0px 12px rgba(0, 0, 0, .05);
-	padding: 20px;
 	background-color: #fff;
 	height: max-content;
 }

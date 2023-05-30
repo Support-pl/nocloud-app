@@ -191,7 +191,7 @@ export default {
 			this.send(this);
 		},
 		send(){
-      const info = (this.invoiceChecked) ? this.userinfo : {
+      const info = (this.invoiceChecked) ? { ...this.userinfo } : {
 				firstname: '',
 				lastname: '',
 				email: '',
@@ -200,6 +200,7 @@ export default {
 				phonenumber: '',
         currency: 1,
       };
+      delete info.tax_id;
 
 			if(Object.keys(info).some(key => !`${this.userinfo[key]}`.length)){
 				this.$message.warn(this.$t('all fields are required'));
@@ -220,8 +221,9 @@ export default {
 			}
 
 			const temp = JSON.parse(JSON.stringify(this.userinfo));
-			temp.phonenumber = `${this.phonecode.replace(/[+\s]/g, "")}${temp.phonenumber}`;
+
       temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`;
+      temp.phonenumber = temp.phonenumber.replace(this.phonecode, '').replace(/[\s-]/g, '');
 
 			this.registerLoading = true;
 			api.get(this.baseURL, {
@@ -246,7 +248,7 @@ export default {
 			})
 			.finally(()=>{
 				this.registerLoading = false;
-			})
+			});
 		},
 	},
   created() {

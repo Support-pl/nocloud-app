@@ -27,7 +27,7 @@
             <a-row class="order__prop" style="margin-bottom: 5px">
               <a-col span="8" :xs="6">{{$t('provider') | capitalize}}:</a-col>
             </a-row>
-            
+
             <div class="order__slider">
               <template v-if="!fetchLoading">
                 <div
@@ -83,7 +83,7 @@
           </template>
         </div>
       </div>
-      
+
       <div class="order__calculate order__field">
 
         <a-row type="flex" justify="space-around" style="margin-top: 20px">
@@ -148,7 +148,7 @@
             </a-select>
           </a-col>
         </a-row>
-        
+
         <a-divider orientation="left" :style="{'margin-bottom': '0'}">
           {{$t('Total')}}:
         </a-divider>
@@ -156,7 +156,7 @@
         <a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
           <a-col v-if="getProducts.prices">
             <template v-if="!fetchLoading">
-              {{ getProducts.prices[options.period] }} {{ user.currency_code || 'USD' }}
+              {{ getProducts.prices[options.period] }} {{ currency.code }}
             </template>
             <div v-else class="loadingLine loadingLine--total"></div>
           </a-col>
@@ -359,7 +359,7 @@ export default {
 
       if (this.user.balance < parseFloat(sum)) {
         this.$confirm({
-          title: this.$t('You do not have enough funds on your balance.'),
+          title: this.$t('You do not have enough funds on your balance'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
@@ -430,6 +430,14 @@ export default {
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
     },
+    isLoggedIn() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+
+      return { code: this.user.currency_code ?? defaultCurrency };
+    },
     sp() {
       return this.$store.getters['nocloud/sp/getSP']
         .find(({ type }) => type === 'goget');
@@ -443,7 +451,7 @@ export default {
         .filter((el) => el.status !== 'DEL');
     },
     namespaces() {
-      return this.$store.getters['nocloud/namespaces/getNamespaces'] ?? [];
+      return this.$store.getters['nocloud/namespaces/getNameSpaces'] ?? [];
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
@@ -491,6 +499,10 @@ export default {
         });
         console.error(err);
       });
+
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn });
+    }
 	},
 	watch: {
 		'options.provider'(value) {

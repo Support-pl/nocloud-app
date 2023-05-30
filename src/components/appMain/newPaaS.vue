@@ -39,18 +39,18 @@
                 </a-select> -->
 
                 <a-select
-                  v-model="servicesTitle"
+                  v-model="showcase"
                   :placeholder="$t('select service')"
                   style="width: 180px; position: relative; z-index: 4"
                 >
-                  <a-select-option v-for="item in servicesTitles" :key="item" :value="item">
-                    {{ item }}
+                  <a-select-option v-for="item in showcases" :key="item.value" :value="item.value">
+                    {{ item.title }}
                   </a-select-option>
                 </a-select>
 
                 <div style="overflow: hidden; margin-top: 15px">
                   <a-spin :tip="$t('loading')" :spinning="isPlansLoading">
-                    <my-map v-if="locations.length" v-model="locationId" :markers="locations" />
+                    <nc-map v-if="locations.length" v-model="locationId" :markers="locations" />
                   </a-spin>
                 </div>
               </a-row>
@@ -60,9 +60,9 @@
 
         <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
           <div
-            ref="description"
             style="white-space: break-spaces"
-            v-if="locationDescription && activeKey === 'location'"
+            v-if="false && locationDescription && activeKey === 'location'"
+            v-html="locationDescription"
           />
 
           <template v-else>
@@ -293,7 +293,7 @@
               >
                 <a-col> {{ $t(key) | capitalize }} {{ getAddonsValue(key) }}: </a-col>
                 <a-col>
-                  {{ addon }} {{ billingData.currency_code || 'USD' }}
+                  {{ addon }} {{ currency.code }}
                 </a-col>
               </a-row>
             </transition-group>
@@ -311,7 +311,7 @@
                   v-model="plan"
                 >
                   <a-select-option
-                    v-for="plan in getPlans"
+                    v-for="plan in filteredPlans"
                     :key="plan.uuid"
                     :value="plan.uuid"
                     >{{ plan.title }}
@@ -388,49 +388,50 @@
                 </a-radio-group>
               </a-col>
             </a-row>
-            <!-- <transition name="textchange" mode="out-in"> -->
-            <a-row
-              type="flex"
-              justify="center"
-              ref="sum-order"
-              :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
-            >
-              <a-col v-if="tarification === 'Annually'">
-                {{ calculatePrice(
-                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                  (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
-                {{ billingData.currency_code || 'USD' }}/{{ $tc("year", 0) }}
-              </a-col>
 
-              <a-col v-if="tarification === 'Biennially'">
-                {{ calculatePrice(
-                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                  (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
-                {{ billingData.currency_code || 'USD' }}/2 {{ $t("years") }}
-              </a-col>
+              <a-row
+                type="flex"
+                justify="center"
+                ref="sum-order"
+                :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
+              >
+                <transition name="textchange" mode="out-in">
+                  <a-col v-if="tarification === 'Annually'" key="a">
+                    {{ calculatePrice(
+                      (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                      (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
+                    {{ currency.code }}/{{ $tc("year", 0) }}
+                  </a-col>
 
-              <a-col v-if="tarification === 'Monthly'">
-                {{
-                  calculatePrice(
-                    (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
-                  ).toFixed(2)
-                }}
-                {{ billingData.currency_code || 'USD' }}/{{ $tc("period.month") }}
-              </a-col>
+                  <a-col v-if="tarification === 'Biennially'" key="b">
+                    {{ calculatePrice(
+                      (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                      (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
+                    {{ currency.code }}/2 {{ $t("years") }}
+                  </a-col>
 
-              <a-col v-if="tarification === 'Daily'">
-                {{ calculatePrice(productFullPriceStatic, "day").toFixed(2) }}
-                {{ billingData.currency_code || 'USD' }}/{{ $t("day") }}
-              </a-col>
+                  <a-col v-if="tarification === 'Monthly'" key="m">
+                    {{
+                      calculatePrice(
+                        (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
+                      ).toFixed(2)
+                    }}
+                    {{ currency.code }}/{{ $tc("period.month") }}
+                  </a-col>
 
-              <a-col v-if="tarification === 'Hourly'">
-                ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
-                {{ billingData.currency_code || 'USD' }}/{{ $t("hour") }}
-              </a-col>
-            </a-row>
+                  <a-col v-if="tarification === 'Daily'" key="d">
+                    {{ calculatePrice(productFullPriceStatic, "day").toFixed(2) }}
+                    {{ currency.code }}/{{ $t("day") }}
+                  </a-col>
+
+                  <a-col v-if="tarification === 'Hourly'" key="h">
+                    ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
+                    {{ currency.code }}/{{ $t("hour") }}
+                  </a-col>
+                </transition>
+              </a-row>
           </template>
-          <!-- </transition> -->
-          <!-- </a-skeleton> -->
+
           <a-row
             type="flex"
             justify="space-around"
@@ -456,9 +457,9 @@
                 "
               >
                 {{ $t("unregistered.will be able after") }}
-                <a href="#" @click.prevent="availableLogin">{{ $t("unregistered.login") }}</a>.
+                <a href="#" @click.prevent="availableLogin('login')">{{ $t("unregistered.login") }}</a>.
                 <br>
-                <a href="#" @click.prevent="availableLogin(false)">{{ $t("Copy link to share") }}</a>
+                <a href="#" @click.prevent="availableLogin('copy')">{{ $t("Copy link to share") }}</a>
               </div>
               <a-button
                 block
@@ -639,15 +640,15 @@
 
 <script>
 import { mapGetters } from "vuex";
+import { NcMap } from "nocloud-ui";
 import loading from "../loading/loading";
-import myMap from "../map/map.vue";
 import addFunds from '../balance/addFunds.vue';
 import notification from "@/mixins/notification.js";
 import api from "@/api.js";
 
 export default {
   name: "newPaaS",
-  components: { loading, myMap, addFunds },
+  components: { loading, NcMap, addFunds },
   mixins: [notification],
   data() {
     return {
@@ -659,7 +660,7 @@ export default {
       service: undefined,
       namespace: undefined,
       tarification: "",
-      servicesTitle: "all",
+      showcase: "",
       locationId: "Location",
       type: 'vps',
       vmName: "",
@@ -745,7 +746,7 @@ export default {
       const locations = [];
 
       this.getSP.forEach((sp) => {
-        if (sp.title !== this.servicesTitle && this.servicesTitle !== 'all') return;
+        if (this.showcase && !(sp.meta.showcase ?? {})[this.showcase]) return;
 
         sp.locations.forEach((location) => {
           const id = `${sp.title} ${location.id}`;
@@ -756,12 +757,15 @@ export default {
 
       return locations;
     },
-    servicesTitles() {
-      const titles = ['all'];
+    showcases() {
+      const titles = [{ title: 'all', value: '' }];
 
-      this.getSP.forEach(({ title, locations }) => {
+      this.getSP.forEach(({ locations, meta: { showcase = {} } }) => {
         if (locations.length < 1) return;
-        if (!titles.includes(title)) titles.push(title);
+
+        Object.entries(showcase).forEach(([value, { title }]) => {
+          titles.push({ title, value });
+        });
       });
 
       return titles;
@@ -795,6 +799,12 @@ export default {
     },
 
     //--------------Plans-----------------
+    filteredPlans() {
+      const { billing_plans = [] } = (this.itemSP.meta.showcase ?? {})[this.showcase] ?? {};
+
+      if (billing_plans.length < 1) return this.getPlans;
+      return this.getPlans.filter(({ uuid }) => billing_plans?.includes(uuid));
+    },
     //UNKNOWN and STATIC
     getPlan() {
       return this.getPlans.find(({ uuid }) => uuid === this.plan) ?? {};
@@ -954,7 +964,9 @@ export default {
       return this.options.slide > 0;
     },
     currency() {
-      return this.$config.currency.code;
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+
+      return { code: this.billingData.currency_code ?? defaultCurrency };
     },
     diskSize() {
       const size = (this.options.disk.size / 1024).toFixed(1);
@@ -970,7 +982,7 @@ export default {
       );
 
       return locations?.find(({ extra }) =>
-        extra.region.toLowerCase() === configuration[key].toLowerCase()
+        extra.region.toLowerCase() === configuration[key]?.toLowerCase()
       )?.title;
     },
     periodColumns() {
@@ -980,8 +992,8 @@ export default {
       return `repeat(${(length < 3) ? length : 3}, 1fr)`;
     }
   },
-  mounted() {
-    this.servicesTitle = this.$route.query.service ?? "all";
+  created() {
+    this.showcase = this.$route.query.service ?? "";
     this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
       .then(() => {
         const data = localStorage.getItem("data");
@@ -1001,7 +1013,6 @@ export default {
             if (this.dataLocalStorage.config) {
               this.options.os.id = this.dataLocalStorage.config.template_id;
               this.options.os.name = this.dataLocalStorage.config.template_name;
-              this.password = this.dataLocalStorage.config.password;
             }
 
             if (this.dataLocalStorage.ovhConfig) {
@@ -1026,6 +1037,10 @@ export default {
         setTimeout(this.setOneNameSpace, 300);
       });
 
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn });
+    }
+
     this.$router.beforeEach((to, from, next) => {
       if (
         from.path === "/cloud/newVM" &&
@@ -1043,37 +1058,6 @@ export default {
         next();
       }
     });
-
-    // window.addEventListener("load", () => {
-    //   if (localStorage.getItem("data")) {
-    //     const answer = window.confirm(
-    //       "Do you really want to leave? you have unsaved changes!"
-    //     );
-    //     if (answer) {
-    //       localStorage.removeItem("data");
-    //     }
-    //   }
-    // });
-    // if (window.location.reload() && localStorage.getItem("data")) {
-    //   const answer = window.confirm(
-    //     "Do you really want to leave? you have unsaved changes!"
-    //   );
-    //   if (answer) {
-    //     localStorage.removeItem("data");
-    //   }
-    // }
-
-    // this.$store.dispatch("newPaaS/fetchProductsAuto");
-
-    // this.$axios
-    //   .get("getSettings.php?filter=cost,disktypes,minDisk,maxDisk")
-    //   .then((res) => {
-    //     this.options.network.price = res.data.PUBLIC_IP_COST;
-    //   })
-    //   .catch((err) => {
-    //     console.error(err);
-    //     this.$message.error("Can't load prices. Show saved ones.");
-    //   });
   },
   methods: {
     onScore({ score }) {
@@ -1125,7 +1109,8 @@ export default {
 
       if (key === 'type') {
         const plan = this.getPlans.find(({ type }) => type.includes(value));
-        const product = Object.values(plan.products)[0];
+        const products = Object.values(plan.products);
+        const product = products[1] ?? products[0];
 
         this.plan = plan.uuid;
         this.setData({ key: 'productSize', value: product.title });
@@ -1395,13 +1380,14 @@ export default {
 
       if (balance < parseFloat(sum.replace('~', ''))) {
         this.$confirm({
-          title: this.$t('You do not have enough funds on your balance.'),
+          title: this.$t('You do not have enough funds on your balance'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
           onOk: () => {
             this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
             this.addfunds.visible = true;
+            this.availableLogin();
           }
         });
         return false;
@@ -1426,7 +1412,7 @@ export default {
           this.modal.confirmLoading = false;
         });
     },
-    availableLogin(isLogin) {
+    availableLogin(mode) {
       const data = {
         path: "/cloud/newVM",
         titleSP: this.itemSP.title,
@@ -1446,19 +1432,20 @@ export default {
         config: {
           template_id: this.options.os.id,
           template_name: this.options.os.name,
-          password: this.password,
         },
         billing_plan: { uuid: this.getPlan.uuid },
         ovhConfig: this.options.config
       };
 
-      if (isLogin) {
+      if (mode === "login") {
         localStorage.setItem("data", JSON.stringify(data));
         this.$router.push({ name: "login" });
-      } else {
+      } else if (mode === "copy") {
         const link = location.href;
 
         this.addToClipboard(`${link}?data=${JSON.stringify(data)}`);
+      } else {
+        localStorage.setItem("data", JSON.stringify(data));
       }
     },
     addToClipboard(text) {
@@ -1535,11 +1522,11 @@ export default {
         });
 
         this.plan = item.uuid;
-        this.setData({ key: 'productSize', value: this.getProducts[0] });
+        this.setData({ key: 'productSize', value: this.getProducts[1] ?? this.getProducts[0] });
       }
     },
     periods(periods) {
-      if (('data' in this.$route.query)) return;
+      if ((this.$route.query.data?.includes('productSize'))) return;
       this.tarification = '';
 
       setTimeout(() => {
@@ -1547,24 +1534,32 @@ export default {
       });
     },
     locationId() {
+      if (!this.dataLocalStorage.config) {
+        this.options.os = { id: -1, name: "" };
+      }
+
       this.$store.dispatch("nocloud/plans/fetch", {
         sp_uuid: this.itemSP.uuid,
         anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
-        this.$store.commit('nocloud/plans/setPlans', pool);
-        this.plan = pool[0]?.uuid ?? '';
+        const showcase = Object.keys(this.itemSP.meta.showcase)
+          .find((key) => key === this.$route.query.service) ??
+          Object.keys(this.itemSP.meta.showcase)[0];
+        const plans = this.itemSP.meta.showcase[showcase].billing_plans;
+        const uuid = plans.find((el) => pool.find((plan) => el === plan.uuid));
 
-        if (this.dataLocalStorage !== '') {
+        this.$store.commit('nocloud/plans/setPlans', pool);
+        this.plan = uuid ?? pool[0]?.uuid ?? '';
+
+        if (this.dataLocalStorage.billing_plan) {
           this.plan = this.dataLocalStorage.billing_plan.uuid;
           this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize });
+        } else if (this.dataLocalStorage.locationId) {
+          this.tarification = this.periods[0]?.value ?? '';
         }
 
         if (this.getPlan.type?.includes('ovh')) this.type = this.getPlan.type?.split(' ')[1];
-
-        if (this.$refs.description) {
-          this.$refs.description.innerHTML = this.locationDescription;
-        }
       });
 
       const type = this.options.drive ? "SSD" : "HDD";
@@ -1592,13 +1587,11 @@ export default {
         this.options.disk.step = 1;
       }
     },
-    activeKey(value) {
+    activeKey() {
       setTimeout(() => {
         const { $el } = this.$refs['periods-group']?.$children.at(-1) ?? {};
 
-        if (value === 'location' && this.$refs.description) {
-          this.$refs.description.innerHTML = this.locationDescription;
-        } else if ($el?.style.gridColumn === '' && Object.keys(this.periods).length > 4) {
+        if ($el?.style.gridColumn === '' && Object.keys(this.periods).length > 4) {
           if (Object.keys(this.periods).length % 3 === 1) $el.style.gridColumn = '2 / 3';
         }
       });
@@ -1634,6 +1627,11 @@ export default {
   margin: 1px;
   border-radius: 4px !important;
   border-left: 1px solid #d9d9d9;
+}
+.newCloud_wrapper .ant-radio-button-wrapper-checked:not(
+  .ant-radio-button-wrapper-disabled
+ ) {
+  border-left-color: #1890ff;
 }
 .newCloud_wrapper .ant-radio-button-wrapper:not(:first-child)::before {
   content: none;
@@ -1959,5 +1957,20 @@ export default {
 .networkApear-leave-to {
   opacity: 0;
   height: 0;
+}
+
+.textchange-enter-active,
+.textchange-leave-active {
+  transition: all .15s ease;
+}
+
+.textchange-enter {
+  transform: translateY(-0.5em);
+  opacity: 0;
+}
+
+.textchange-leave-to {
+  transform: translateY(0.5em);
+  opacity: 0;
 }
 </style>

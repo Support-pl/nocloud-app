@@ -1,7 +1,7 @@
 <template>
   <div
     class="invoice"
-    :style="{ cursor: (invoice.records.length > 0) ? 'pointer': 'default' }"
+    :style="{ cursor: (isClickable) ? 'pointer': 'default' }"
     @click="clickOnInvoice(invoice.uuid)"
   >
     <div class="invoice__middle">
@@ -13,7 +13,7 @@
           {{ $t("invoiceDate") }}
         </div>
         <div class="invoice__date">
-          {{ date(invoice.exec)  }}
+          {{ date(invoice.proc)  }}
         </div>
       </div>
       <div class="invoice__date-item invoice__dueDate">
@@ -21,14 +21,14 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ date(invoice.proc) }}
+          {{ date(invoice.exec) }}
         </div>
       </div>
     </div>
     <div class="horisontal-line"></div>
     <div class="invoice__footer flex-between">
       <div class="invoice__id">#{{ invoice.uuid }}</div>
-      <div class="invoice__btn" v-if="invoice.records.length > 0">
+      <div class="invoice__btn" v-if="isClickable">
         <a-icon type="right" />
       </div>
     </div>
@@ -57,19 +57,26 @@ export default {
     currency() {
       const code = this.$store.getters['nocloud/auth/billingData'].currency_code ?? 'USD';
       const { rate } = this.currencies.find((el) =>
-        el.from === code && el.to === this.invoice.currency
+        el.to === code && el.from === this.invoice.currency
       ) ?? {};
 
       const { rate: reverseRate } = this.currencies.find((el) =>
-        el.to === code && el.from === this.invoice.currency
+        el.from === code && el.to === this.invoice.currency
       ) ?? { rate: 1 };
 
       return { code, rate: (rate) ? rate : 1 / reverseRate };
+    },
+    isClickable() {
+      const isRecordsExist = this.invoice.records.length > 0;
+      const isMessageExist = this.invoice.meta.description;
+      const isInstancesExist = this.invoice.meta.instances?.length > 0;
+
+      return isRecordsExist || isMessageExist || isInstancesExist;
     }
   },
   methods: {
     clickOnInvoice(uuid) {
-      if (this.invoice.records.length < 1) return;
+      if (!this.isClickable) return;
 
       this.$router.push({ name: "transaction", params: { uuid } });
     },

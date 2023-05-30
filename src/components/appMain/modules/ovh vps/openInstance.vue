@@ -17,7 +17,7 @@
         class="Fcloud__button"
         v-if="VM.state && VM.state.state !== 'STOPPED'"
         :class="{ disabled: statusVM.shutdown, }"
-        @click="sendAction('stop')"
+        @click="sendAction('poweroff')"
       >
         <div class="Fcloud__BTN-icon">
           <div class="cloud__icon cloud__icon--stop"></div>
@@ -28,7 +28,7 @@
         v-else
         class="Fcloud__button"
         :class="{ disabled: statusVM.start, }"
-        @click="sendAction('start')"
+        @click="sendAction('resume')"
       >
         <div class="Fcloud__BTN-icon">
           <a-icon type="caret-right" />
@@ -140,6 +140,7 @@
           </div>
         </div>
       </div>
+
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
           <a-icon type="info-circle" />
@@ -153,7 +154,7 @@
             </div>
           </div>
           <div class="block__column" v-if="VM.config.planCode">
-            <div class="block__title">{{ $t('Tariff') }}</div>
+            <div class="block__title">{{ $t('tariff') | capitalize }}</div>
             <div class="block__value">
               {{ tariffTitle || $t('No Data') }}
               <a-icon type="swap" title="Switch tariff" @click="openModal('switch')" />
@@ -183,6 +184,45 @@
           </a-select-option>
         </a-select>
       </a-modal>
+
+      <div class="Fcloud__info-block block">
+        <div class="Fcloud__block-header">
+          <a-icon type="credit-card" />
+          {{ $t("prices") | capitalize }}
+        </div>
+
+        <div class="Fcloud__block-content block-content_table">
+          <div class="block__column block__column_table">
+            <div class="block__title">{{ $t('tariff') | capitalize }}</div>
+          </div>
+          <div class="block__column block__column_table block__column_price">
+            <div class="block__title">
+              {{ tariffTitle || $t('No Data') }}:
+            </div>
+            <div class="block__value">
+              {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
+            </div>
+          </div>
+
+          <div class="block__column block__column_table">
+            <div class="block__title">{{ $t('Addons') }}</div>
+          </div>
+          <div
+            class="block__column block__column_table block__column_price"
+            v-for="(price, addon) in addonsPrice"
+          >
+            <div class="block__title">{{ addon }}:</div>
+            <div class="block__value">
+              {{ +price.toFixed(2) }} {{ currency.code }}
+            </div>
+          </div>
+
+          <div class="block__column block__column_table block__column_total">
+            <div class="block__title">{{ $t('Total') }}:</div>
+            <div class="block__value">{{ +fullPrice.toFixed(2) }} {{ currency.code }}</div>
+          </div>
+        </div>
+      </div>
 
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
@@ -709,10 +749,49 @@ export default {
       });
     },
     sendRenew() {
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const { period } = this.VM.billingPlan.products[key];
+      const currentPeriod = this.VM.data.expiration;
+      const newPeriod = this.date(this.VM.data.expiration, +period);
+
       this.$confirm({
         title: this.$t("Do you want to renew server?"),
+        content: () => (
+          <div>
+            <div style="font-weight: 700">{ `${this.VM.title}` }</div>
+            <div>
+              { `${this.$t("from")} ` }
+              <span style="font-style: italic">{ `${currentPeriod}` }</span>
+            </div>
+            <div>
+              { `${this.$t("to")} ` }
+              <span style="font-style: italic">{ `${newPeriod}` }</span>
+            </div>
+
+            <div style="margin-top: 10px">
+              <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
+              { this.tariffPrice } { this.currency.code }
+              <div>
+                <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
+                <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
+                  { ...Object.entries(this.addonsPrice).map(([key, value]) =>
+                    <li>{ key }: { value } { this.currency.code }</li>
+                  ) }
+                </ul>
+              </div>
+
+              <div>
+                <span style="font-weight: 700">{ this.$t('Total') }: </span>
+                { this.fullPrice } { this.currency.code }
+              </div>
+            </div>
+          </div>
+        ),
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
+        okButtonProps: {
+          props: { disabled: (this.VM.data.blocked) },
+        },
         onOk: () => this.sendAction("manual_renew"),
         onCancel() {},
       });
@@ -829,21 +908,41 @@ export default {
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err;
 
+          if (message === 'HTTP Error 500: "Internal server error"') return;
           this.openNotificationWithIcon('error', { message: this.$t(message) });
           console.error(err);
         });
     },
+    date(string, timestamp) {
+      if (timestamp < 1) return '-';
+
+      const stringDate = new Date(string).getTime();
+      const date = new Date(timestamp * 1000 + stringDate);
+
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
+
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
+
+      return `${year}-${month}-${day}`;
+    }
   },
   created() { this.fetchMonitoring() },
   computed: {
+    user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    },
     baseURL() {
       return this.$store.getters['support/getURL'];
     },
     statusVM() {
       if (!this.VM) return;
-      if (this.VM.state.state === 'PENDING') return {
-        shutdown: true, reboot: true, start: true, recover: true
+      if (this.VM.state.state === 'PENDING' || this.VM.data.suspended_manually) {
+        return { shutdown: true, reboot: true, start: true, recover: true };
       }
+
       return {
         shutdown: this.VM.state.state !== 'RUNNING' &&
           this.VM.state.state !== 'STOPPED',
@@ -880,6 +979,36 @@ export default {
 
       return this.VM.billingPlan.products[key].title;
     },
+    tariffPrice() {
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+
+      return this.VM.billingPlan.products[key].price;
+    },
+    addonsPrice() {
+      return this.VM.config.addons.reduce((res, addon) => {
+        const { price } = this.VM.billingPlan.resources.find(
+          ({ key }) => key === `${this.VM.config.duration} ${addon}`
+        );
+        let key = '';
+
+        if (addon.includes('additional')) key = this.$t('adds drive');
+        if (addon.includes('snapshot')) key = this.$t('Snapshot');
+        if (addon.includes('backup')) key = this.$t('Backup');
+        if (addon.includes('windows')) key = this.$t('Windows');
+
+        return { ...res, [key]: +price };
+      }, {});
+    },
+    fullPrice() {
+      return this.tariffPrice + Object.values(this.addonsPrice)
+        .reduce((sum, curr) => sum + curr);
+    },
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+
+      return { code: this.user.currency ?? defaultCurrency };
+    },
+
     tariffs() {
       if (!this.VM?.billingPlan) return {};
       const tariffs = {};
@@ -993,3 +1122,55 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.block-content_table {
+  position: relative;
+  display: grid;
+  padding: 10px 15px;
+}
+
+.block-content_table::before {
+  content: '';
+  position: absolute;
+  bottom: 40px;
+  left: 15px;
+  height: 1px;
+  width: calc(100% - 30px);
+  background: var(--gray);
+}
+
+.block__column_table {
+  flex-direction: row;
+  justify-content: start;
+  gap: 7px;
+}
+
+.block__column_price {
+  grid-column: 2 / 3;
+  justify-content: end;
+  overflow: hidden;
+}
+
+.block__column_price .block__title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.block__column_price .block__value {
+  white-space: nowrap;
+}
+
+.block__column_total {
+  grid-column: 1 / 3;
+  justify-content: end;
+  margin-top: 5px;
+}
+
+@media (max-width: 575px) {
+  .block-content_table {
+    justify-content: initial;
+  }
+}
+</style>

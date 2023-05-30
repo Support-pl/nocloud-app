@@ -54,6 +54,16 @@ export default {
       groupname: ['Self-Service VDS (2018)', 'Self-Service VDS SSD HC', 'Self-Service VDS SSD (2018)'],
       creationRouteName: 'newPaaS',
       icon: 'database',
+    },
+    iaas: {
+      groupname: ['VDS SSD', 'VDC IaaS'],
+      creationRouteName: 'service-iaas',
+      icon: 'shopping',
+    },
+    acronis: {
+      groupname: ['Acronis'],
+      creationRouteName: 'service-acronis',
+      icon: 'shopping'
     }
   },
 	getServiceType(groupname){
@@ -61,10 +71,10 @@ export default {
 		for(let service in services){
 			const serviceGroup = services[service].groupname;
 			if(typeof serviceGroup == 'object'){
-				const indexOf = serviceGroup.map(el=>el.toLowerCase()).indexOf(groupname.toLowerCase())
+				const indexOf = serviceGroup.map(el=>el.toLowerCase()).indexOf(groupname?.toLowerCase())
 				if(indexOf != -1) return service;
 			} else {
-				if(serviceGroup.toLowerCase() == groupname.toLowerCase()) return service;
+				if(serviceGroup.toLowerCase() == groupname?.toLowerCase()) return service;
 			}
 		}
 		return null;

@@ -1,25 +1,33 @@
 <template>
   <div class="products__wrapper">
-    <div class="products__header">
+    <div class="products__header" v-if="isLogged">
       <div class="products__title">
-        {{ $t("comp_services.Your orders") }}
         <!-- Ваши услуги -->
         <transition name="header-transition" mode="out-in">
           <span
             class="header__animated"
+            v-if="!productsLoading || isNeedFilterStringInHeader"
             :key="$route.query.service || 'emptyQuery'"
           >
-            <span v-if="isNeedFilterStringInHeader">
-              {{ $t("comp_services.with filter") }}:
-              <b>{{ $route.query.service.replace(/,/g, ", ") }}</b>
-              <!-- по фильтру -->
+            {{ (isNeedFilterStringInHeader) ? '' : `${$t("comp_services.Your orders")}:` }}
+            <span class="products__count" v-if="!isNeedFilterStringInHeader">
+              {{ productsCount() }}
             </span>
-            <transition name="fade-in">
-              <span v-if="!productsLoading && isLogged" class="products__count">
-                {{ $t("comp_services.total") }}: {{ productsCount }}
+
+            <transition-group name="fade-in" style="display: flex; flex-wrap: wrap; gap: 10px">
+              <a-badge class="products__filters" v-for="type of checkedTypesString" :key="type.value">
+                <template #count>
+                  <a-icon
+                    type="close-circle"
+                    theme="filled"
+                    style="color: var(--err)"
+                    @click="filterElementClickHandler(type.value)"
+                  />
+                </template>
+                {{ type.title }}: {{ productsCount(type.value) }}
                 <!-- всего -->
-              </span>
-            </transition>
+              </a-badge>
+            </transition-group>
           </span>
         </transition>
       </div>
@@ -33,19 +41,23 @@
       <div v-else-if="user" class="products__control">
         <a-popover placement="bottomRight" arrow-point-at-center>
           <template slot="content">
-            <p v-for="productType of types" :key="productType">
+            <p v-for="productType of types" :key="productType.value ?? productType">
               <a-checkbox
-                :checked="!!~checkedTypes.indexOf(productType)"
-                @click="filterElementClickHandler(productType)"
+                :checked="!!~checkedTypes.indexOf(productType.value ?? productType)"
+                @click="filterElementClickHandler(productType.value ?? productType)"
               >
-                {{ productType }}
+                {{ productType.title ?? productType }}
               </a-checkbox>
             </p>
           </template>
           <template slot="title">
             <span>
-              {{ $t("filter") | capitalize }}
+              {{ $t("filter") | capitalize }} {{ $t("by") }}
             </span>
+            <span class="products__count">
+              {{ (isFilterByLocation) ? $t('location') : $t('provider') }}
+            </span>
+            <a-switch size="small" v-model="isFilterByLocation" />
           </template>
           <a-icon
             type="filter"
@@ -103,7 +115,7 @@
         type="primary"
         @click="newProductHandle"
         block
-        v-if="queryTypes.length == 1"
+        v-if="queryTypes.length === 1 && !isFilterByLocation"
       >
         {{ $t("Order") }}
       </a-button>
@@ -122,7 +134,12 @@ export default {
     min: { type: Boolean, default: true },
     count: { type: Number, default: 5 },
   },
-  data: () => ({ sortBy: 'Date', sortType: 'sort-ascending', anchor: null }),
+  data: () => ({
+    isFilterByLocation: false,
+    sortType: 'sort-ascending',
+    sortBy: 'Date',
+    anchor: null
+  }),
   created() {
     const service = localStorage.getItem('types');
     const sorting = JSON.parse(localStorage.getItem('serviceSorting') ?? "false");
@@ -132,6 +149,9 @@ export default {
     if (isProductsRoute && !isServicesSame) {
       this.$router.replace({ query: { service } });
     }
+    if (localStorage.getItem('isFilterByLocation')) {
+      this.isFilterByLocation = JSON.parse(localStorage.getItem('isFilterByLocation'));
+    }
     if (sorting) {
       this.sortBy = sorting.sortBy;
       this.sortType = sorting.sortType;
@@ -139,6 +159,15 @@ export default {
 
     if (this.sp.length < 1) {
       this.$store.dispatch('nocloud/sp/fetch', !this.isLogged)
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$notification['error']({ message: this.$t(message) });
+        });
+    }
+
+    if (Object.keys(this.services).length < 1) {
+      this.$store.dispatch("products/fetchServices")
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err;
 
@@ -179,18 +208,14 @@ export default {
 
       if (this.min) return this.products.slice(0, 5);
       else if (this.$route.query.service) {
-        return products.filter(({ sp, hostingid }) => {
-          //фильтруем по значениям из гет запроса
-          let { title } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
-
-          if (hostingid) title = 'Virtual';
-          return this.checkedTypes.some((service) => service === title);
-        });
+        return this.filterProducts(products, this.checkedTypes);
       }
       return products;
     },
     products() {
-      const products = this.$store.getters["products/getProducts"];
+      const products = this.$store.getters["products/getProducts"]
+        .map((el) => ({ ...el.ORDER_INFO, groupname: el.groupname, productname: el.name }));
+
       const instances = this.$store.getters["nocloud/vms/getInstances"]
         .map((inst) => {
           const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
@@ -201,16 +226,17 @@ export default {
             : inst.state?.state;
           let status = "UNKNOWN";
 
-          if (inst.state?.meta.state === 1) status = "PENDING";
-          if (inst.state?.meta.state === 5) status = "SUSPENDED";
-          if (inst.state?.meta.state === "BUILD") status = "BUILD";
-
           switch (state) {
             case "LCM_INIT":
               status = "POWEROFF";
             default:
               if (state) status = state.replaceAll('_', ' ');
           }
+
+          if (inst.state?.meta.state === 1) status = "PENDING";
+          if (inst.state?.meta.state === 5) status = "SUSPENDED";
+          if (inst.data.suspended_manually) status = "SUSPENDED";
+          if (inst.state?.meta.state === "BUILD") status = "BUILD";
 
           const res = {
             ...inst,
@@ -226,6 +252,9 @@ export default {
           };
 
           switch (inst.type) {
+            case 'acronis':
+              res.groupname = 'Acronis';
+              break;
             case 'opensrs':
               res.groupname = 'Domains';
               res.date = inst.data.expiry.expiredate;
@@ -245,6 +274,14 @@ export default {
 
               res.date = inst.data.expiration
               res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
+
+              inst.config.addons?.forEach((addon) => {
+                const { price } = inst.billingPlan.resources.find(
+                  ({ key }) => key === `${inst.config.duration} ${addon}`
+                );
+
+                res.orderamount += +price;
+              });
               break;
             }
             case 'ione': {
@@ -289,31 +326,47 @@ export default {
 
       return productsLoading || instancesLoading;
     },
+
+    services() {
+      return this.$store.getters['products/getServices'];
+    },
     sp() {
       return this.$store.getters["nocloud/sp/getSP"];
     },
     types() {
-      return [...this.sp.map(({ title }) => title), 'Virtual'];
+      const result = this.sp.reduce((prev, curr) => {
+        const showcase = Object.entries(curr.meta.showcase ?? {})
+          .map(([value, { title }]) => ({ title, value }));
+
+        return [...prev, ...showcase];
+      }, []);
+
+      if (this.isFilterByLocation) return this.sp.reduce((prev, curr) =>
+        [...prev, ...curr.locations.map(({ title }) => title)], []
+      );
+
+      Object.keys(this.services).forEach((key) => {
+        result.push(key);
+      });
+
+      if (this.$config.sharedEnabled) result.push('Virtual');
+      return result;
     },
     checkedTypes() {
       return (
         this.$route.query?.service?.split(",").filter((el) => el.length > 0) ?? []
       );
     },
-    productsCount() {
-      const total = this.$store.getters["products/total"];
+    checkedTypesString() {
+      return this.checkedTypes.map((type) => {
+        const foundType = this.types.find(({ value }) => value === type);
 
-      if (total) return total;
-      if (this.min) {
-        return this.products.length;
-      } else if (["services", "root"].includes(this.$route.name)) {
-        return this.productsPrepared.length;
-      } else {
-        return 0;
-      }
+        if (foundType) return foundType;
+        else return { title: type, value: type };
+      });
     },
     isNeedFilterStringInHeader() {
-      return ["services", "root"].includes(this.$route.name) && this.$route.query.service;
+      return ["services", "root", "products"].includes(this.$route.name) && this.$route.query.service;
     },
     queryTypes() {
       if (this.$route.query.service) {
@@ -342,7 +395,8 @@ export default {
       this.$router.replace({ query: { service: newTypes } });
     },
     newProductHandle() {
-      const { type } = this.sp.find(({ title }) => title === this.queryTypes[0]) ?? {};
+      const services = this.$store.getters['products/getServices'];
+      const { type } = this.sp.find(({ meta }) => (meta.showcase ?? {})[this.queryTypes[0]]) ?? {};
       let name = 'service-virtual';
       let query = {};
 
@@ -353,13 +407,69 @@ export default {
         case 'goget':
           name = 'service-ssl';
           break;
+        case 'acronis':
+          name = 'service-acronis';
+          break;
         case 'ione':
         case 'ovh':
           name = 'newPaaS';
-          query = { service: this.queryTypes[0] }
+          query = { service: this.queryTypes[0] };
+      }
+
+      if (!type && services[this.queryTypes[0]]) {
+        name = 'service-iaas';
+        query = { service: this.queryTypes[0] };
       }
 
       this.$router.push({ name, query });
+    },
+    filterProducts(products, types) {
+      return products.filter(({ sp, hostingid, config, billingPlan, productname }) => {
+          //фильтруем по значениям из гет запроса
+          let { title, locations = [], meta } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+          const service = Object.values(meta?.showcase ?? {}).find(
+            (el) => el.billing_plans.includes(billingPlan.uuid)
+          );
+
+          if (hostingid) title = 'Virtual';
+          if (this.isFilterByLocation) {
+            const key = Object.keys(config?.configuration ?? {}).find(
+              (key) => key.includes('datacenter')
+            );
+            const region = locations?.find(({ extra }) =>
+              extra.region === (config?.configuration ?? {})[key]
+            );
+
+            title = region?.title ?? locations[0];
+          }
+
+          return types.some((value) => {
+            if (this.services[value]) {
+              return this.services[value].find(({ name }) => name === productname);
+            }
+            if (!meta?.showcase) return value === title;
+
+            const plans = meta?.showcase[value]?.billing_plans ?? [];
+
+            if (plans?.includes(billingPlan.uuid) && service) return true;
+            else if (plans?.length > 0) return false;
+            else return value === title || meta?.showcase[value];
+          });
+        });
+    },
+    productsCount(type) {
+      const total = this.$store.getters["products/total"];
+
+      if (this.checkedTypes.length > 0) {
+        return this.filterProducts(this.productsPrepared, [type]).length;
+      }
+
+      if (total && this.$route.name !== "products") return total;
+      if (this.min) {
+        return this.products.length;
+      } else {
+        return this.productsPrepared.length;
+      }
     },
     isExpired(instance){
       const productDate = new Date(instance.date);
@@ -426,16 +536,19 @@ export default {
       const sorting = { sortBy: this.sortBy, sortType: value };
 
       localStorage.setItem('serviceSorting', JSON.stringify(sorting));
+    },
+    isFilterByLocation(value) {
+      localStorage.setItem('isFilterByLocation', value);
+
+      if (this.$route.query.service) {
+        this.$router.replace({ query: {} });
+      }
     }
   }
 };
 </script>
 
 <style scoped>
-.header__animated {
-  display: inline-block;
-}
-
 .products__wrapper {
   border-radius: 10px;
   padding: 10px 10px 15px 10px;
@@ -444,7 +557,6 @@ export default {
 .products__header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding: 7px 15px;
   margin-bottom: 15px;
   background: #fff;
@@ -483,7 +595,22 @@ export default {
 }
 
 .products__title {
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: 18px;
+}
+
+.products__filters {
+  padding: 5px 7px;
+  border-radius: 7px;
+  background: var(--main);
+  color: var(--bright_font);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.products__control {
+  flex-shrink: 0;
 }
 
 .products__count {
