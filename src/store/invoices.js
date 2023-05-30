@@ -54,7 +54,7 @@ export default {
               id: el.uuid,
               date: date(el.proc),
               duedate: date(el.exec),
-              total: -el.total,
+              total: el.total,
               status: 'Unpaid',
               credit: 0,
               service: el.service,

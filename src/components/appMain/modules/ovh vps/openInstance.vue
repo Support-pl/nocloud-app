@@ -1006,7 +1006,7 @@ export default {
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
-      return { code: this.user.currency_code ?? defaultCurrency };
+      return { code: this.user.currency ?? defaultCurrency };
     },
 
     tariffs() {

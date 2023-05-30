@@ -388,49 +388,50 @@
                 </a-radio-group>
               </a-col>
             </a-row>
-            <!-- <transition name="textchange" mode="out-in"> -->
-            <a-row
-              type="flex"
-              justify="center"
-              ref="sum-order"
-              :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
-            >
-              <a-col v-if="tarification === 'Annually'">
-                {{ calculatePrice(
-                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                  (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
-                {{ currency.code }}/{{ $tc("year", 0) }}
-              </a-col>
 
-              <a-col v-if="tarification === 'Biennially'">
-                {{ calculatePrice(
-                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                  (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
-                {{ currency.code }}/2 {{ $t("years") }}
-              </a-col>
+              <a-row
+                type="flex"
+                justify="center"
+                ref="sum-order"
+                :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
+              >
+                <transition name="textchange" mode="out-in">
+                  <a-col v-if="tarification === 'Annually'" key="a">
+                    {{ calculatePrice(
+                      (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                      (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
+                    {{ currency.code }}/{{ $tc("year", 0) }}
+                  </a-col>
 
-              <a-col v-if="tarification === 'Monthly'">
-                {{
-                  calculatePrice(
-                    (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
-                  ).toFixed(2)
-                }}
-                {{ currency.code }}/{{ $tc("period.month") }}
-              </a-col>
+                  <a-col v-if="tarification === 'Biennially'" key="b">
+                    {{ calculatePrice(
+                      (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                      (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
+                    {{ currency.code }}/2 {{ $t("years") }}
+                  </a-col>
 
-              <a-col v-if="tarification === 'Daily'">
-                {{ calculatePrice(productFullPriceStatic, "day").toFixed(2) }}
-                {{ currency.code }}/{{ $t("day") }}
-              </a-col>
+                  <a-col v-if="tarification === 'Monthly'" key="m">
+                    {{
+                      calculatePrice(
+                        (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
+                      ).toFixed(2)
+                    }}
+                    {{ currency.code }}/{{ $tc("period.month") }}
+                  </a-col>
 
-              <a-col v-if="tarification === 'Hourly'">
-                ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
-                {{ currency.code }}/{{ $t("hour") }}
-              </a-col>
-            </a-row>
+                  <a-col v-if="tarification === 'Daily'" key="d">
+                    {{ calculatePrice(productFullPriceStatic, "day").toFixed(2) }}
+                    {{ currency.code }}/{{ $t("day") }}
+                  </a-col>
+
+                  <a-col v-if="tarification === 'Hourly'" key="h">
+                    ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
+                    {{ currency.code }}/{{ $t("hour") }}
+                  </a-col>
+                </transition>
+              </a-row>
           </template>
-          <!-- </transition> -->
-          <!-- </a-skeleton> -->
+
           <a-row
             type="flex"
             justify="space-around"
@@ -981,7 +982,7 @@ export default {
       );
 
       return locations?.find(({ extra }) =>
-        extra.region.toLowerCase() === configuration[key].toLowerCase()
+        extra.region.toLowerCase() === configuration[key]?.toLowerCase()
       )?.title;
     },
     periodColumns() {
@@ -1533,7 +1534,10 @@ export default {
       });
     },
     locationId() {
-      this.options.os = { id: -1, name: "" };
+      if (!this.dataLocalStorage.config) {
+        this.options.os = { id: -1, name: "" };
+      }
+
       this.$store.dispatch("nocloud/plans/fetch", {
         sp_uuid: this.itemSP.uuid,
         anonymously: !this.isLoggedIn
@@ -1542,7 +1546,8 @@ export default {
         const showcase = Object.keys(this.itemSP.meta.showcase)
           .find((key) => key === this.$route.query.service) ??
           Object.keys(this.itemSP.meta.showcase)[0];
-        const uuid = this.itemSP.meta.showcase[showcase].billing_plans[0];
+        const plans = this.itemSP.meta.showcase[showcase].billing_plans;
+        const uuid = plans.find((el) => pool.find((plan) => el === plan.uuid));
 
         this.$store.commit('nocloud/plans/setPlans', pool);
         this.plan = uuid ?? pool[0]?.uuid ?? '';
@@ -1952,5 +1957,20 @@ export default {
 .networkApear-leave-to {
   opacity: 0;
   height: 0;
+}
+
+.textchange-enter-active,
+.textchange-leave-active {
+  transition: all .15s ease;
+}
+
+.textchange-enter {
+  transform: translateY(-0.5em);
+  opacity: 0;
+}
+
+.textchange-leave-to {
+  transform: translateY(0.5em);
+  opacity: 0;
 }
 </style>

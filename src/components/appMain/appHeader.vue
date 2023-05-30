@@ -74,10 +74,10 @@
                   class="header__icon"
                   :type="button.icon"
                 />
-                <a-popover v-else placement="left" arrow-point-at-center>
+                <a-popover arrow-point-at-center v-else placement="left" :align="{ offset: [-10, 0] }">
                   <template slot="content">
                     <a-input-search
-                      placeholder="title/status/IP"
+                      placeholder="Title / Status / IP"
                       enter-button
                       :value="searchString"
                       @input="(e) => $store.commit('nocloud/vms/setSearch', e.target.value)"
