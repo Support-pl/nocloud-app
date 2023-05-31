@@ -115,6 +115,9 @@ export default {
         case 'acronis':
           name = 'service-acronis';
           break;
+        case 'virtual':
+          name = 'service-custom';
+          break;
         case 'ione':
         case 'ovh':
           name = 'newPaaS';

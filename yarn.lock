@@ -7442,10 +7442,10 @@ no-case@^2.2.0:
   dependencies:
     lower-case "^1.1.1"
 
-nocloud-ui@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/nocloud-ui/-/nocloud-ui-1.0.0.tgz"
-  integrity sha512-8nYzrQpgH+uQ9fQ8snZXKqkgYBi7aWVgg/xggPcwr4jmBPOpoelvQOMmEA8qQbNh//IcaDJAe1Lpu5zUoG6jVg==
+nocloud-ui@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.npmjs.org/nocloud-ui/-/nocloud-ui-1.0.3.tgz"
+  integrity sha512-u6xvf9nyIIp6Rd6GcEz0jxRo7IMjKwTWjP+3f8u0d+e5aUmhQrhizEy9/Cdgei6v18oL1LJ+a5OYO8Qq+xLUUw==
 
 nocloudjsrest@^1.5.2:
   version "1.5.3"

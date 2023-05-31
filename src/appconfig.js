@@ -64,6 +64,11 @@ export default {
       groupname: ['Acronis'],
       creationRouteName: 'service-acronis',
       icon: 'shopping'
+    },
+    custom: {
+      groupname: ['Custom'],
+      creationRouteName: 'service-custom',
+      icon: 'shopping'
     }
   },
 	getServiceType(groupname){
