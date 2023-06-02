@@ -352,6 +352,9 @@ export default {
 
       return { title: title.join(', '), price, base, adv };
 		},
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
     },
@@ -400,8 +403,8 @@ export default {
 	created() {
     const promises = [
       this.$store.dispatch('nocloud/auth/fetchBillingData'),
-      this.$store.dispatch('nocloud/sp/fetch'),
-      this.$store.dispatch('nocloud/plans/fetch'),
+      this.$store.dispatch('nocloud/sp/fetch', !this.isLogged),
+      this.$store.dispatch('nocloud/plans/fetch', { anonimously: !this.isLogged }),
       this.$store.dispatch('nocloud/namespaces/fetch'),
       this.$store.dispatch('nocloud/vms/fetch')
     ];

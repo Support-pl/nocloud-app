@@ -92,6 +92,7 @@ export default {
         }
       });
       this.price = { value: plan.price.value, addons: {} };
+      this.addonsCodes = {};
 
       if (changeTarifs) this.$emit('setData', { key: 'periods', value: tarifs });
       this.$emit('setData', { key: 'priceOVH', value: this.price });

@@ -3,15 +3,20 @@
 		<div class="order">
 			<div class="order__inputs order__field">
 				<div class="order__option">
-					<a-slider
-            v-if="sizes.length < 5 && !fetchLoading"
-						:marks="{ ...sizes }"
-						:value="sizes.findIndex(({ key }) => key === options.size)"
-						:tip-formatter="null"
-						:max="sizes.length - 1"
-						:min="0"
-						@change="(value) => options.size = sizes[value].key"
-					/>
+					<div class="order__slider" v-if="sizes.length < 5 && !fetchLoading">
+            <div
+              class="order__slider-item"
+              v-for="size of sizes"
+              :key="size.key"
+              :class="{ 'order__slider-item--active': options.size === size.key }"
+              @click="options.size = size.key"
+            >
+              <span class="order__slider-name" :title="size.label">
+                <img class="img_prod" :src="products[size.key].meta.image ?? '/'" :alt="size.key" @error="onError">
+                {{ size.label }}
+              </span>
+            </div>
+          </div>
 
 					<a-carousel
             v-else
@@ -66,11 +71,11 @@
 
           <transition name="specs" mode="out-in">
             <div
-              v-if="typeof getProducts.description === 'string'"
-              v-html="getProducts.description"
+              v-if="typeof getProducts.meta?.description === 'string'"
+              v-html="getProducts.meta?.description"
             ></div>
-            <table v-else-if="getProducts.description" class="product__specs">
-              <tr v-for="resource in getProducts.description" :key="resource.name">
+            <table v-else-if="getProducts.meta?.description" class="product__specs">
+              <tr v-for="resource in getProducts.meta?.description" :key="resource.name">
                 <td>{{ resource.name }}</td>
                 <td>{{ resource.value }}</td>
               </tr>
@@ -231,10 +236,7 @@ export default {
       const plan = this.plans.find(({ uuid }) => uuid === this.plan);
 
       const instances = [{
-        config: {
-          product: this.options.size,
-          period: this.options.period
-        },
+        config: {},
         title: this.getProducts.title,
         billing_plan: plan ?? {}
       }];
@@ -243,6 +245,12 @@ export default {
         type: this.sp.type,
         sp: this.sp.uuid,
         instances
+      };
+
+      if (plan.kind === 'STATIC') instances[0].product = this.options.size;
+      else instances[0].config = {
+        product: this.options.size,
+        period: +this.options.period
       };
 
       const info = (!this.service) ? newGroup : Object.assign(
@@ -346,6 +354,9 @@ export default {
 
 			return product;
 		},
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
     },
@@ -392,8 +403,8 @@ export default {
     this.fetchLoading = true;
     const promises = [
       this.$store.dispatch('nocloud/auth/fetchBillingData'),
-      this.$store.dispatch('nocloud/sp/fetch'),
-      this.$store.dispatch('nocloud/plans/fetch'),
+      this.$store.dispatch('nocloud/sp/fetch', !this.isLogged),
+      this.$store.dispatch('nocloud/plans/fetch', { anonimously: !this.isLogged }),
       this.$store.dispatch('nocloud/namespaces/fetch'),
       this.$store.dispatch('nocloud/vms/fetch')
     ];
@@ -653,6 +664,8 @@ export default {
 
 .order__slider{
 	display: flex;
+  justify-content: space-evenly;
+  margin-bottom: 10px;
 	overflow-x: auto;
 }
 

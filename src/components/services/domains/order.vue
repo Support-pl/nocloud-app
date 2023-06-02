@@ -612,6 +612,9 @@ export default {
     }
   },
   computed: {
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
     },
@@ -638,7 +641,7 @@ export default {
     }
   },
   created() {
-    this.$store.dispatch('nocloud/plans/fetch')
+    this.$store.dispatch('nocloud/plans/fetch', { anonimously: !this.isLogged })
       .then(() => {
         if (this.plans.length === 1) this.plan = this.plans[0].uuid;
       })
