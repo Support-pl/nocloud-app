@@ -460,8 +460,8 @@ export default {
 	},
 	created() {
     this.$store.dispatch('nocloud/auth/fetchBillingData');
-    this.$store.dispatch('nocloud/sp/fetch').then(() => this.fetch());
-    this.$store.dispatch('nocloud/plans/fetch')
+    this.$store.dispatch('nocloud/sp/fetch', !this.isLoggedIn).then(() => this.fetch());
+    this.$store.dispatch('nocloud/plans/fetch', { anonymously: !this.isLoggedIn })
       .then(() => {
         if (this.plans.length === 1) this.plan = this.plans[0].uuid;
       })

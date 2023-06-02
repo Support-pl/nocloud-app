@@ -52,6 +52,24 @@ export default {
     baseURL() {
       return this.$store.getters['invoices/getURL'];
     },
+    user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    },
+    currencies() {
+      return this.$store.getters['nocloud/auth/currencies'];
+    },
+    currency() {
+      const code = this.user.currency_code ?? 'USD';
+      const { rate } = this.currencies.find((el) =>
+        el.from === code && el.to === this.invoice.currencycode
+      ) ?? {};
+
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.to === code && el.from === this.invoice.currencycode
+      ) ?? { rate: 1 };
+
+      return { code, rate: (rate) ? rate : 1 / reverseRate };
+    },
     statusColor() {
       switch (this.invoice.status.toLowerCase()) {
         case 'paid':
@@ -72,7 +90,9 @@ export default {
       }
     },
     total() {
-      return (+this.invoice?.total + +this.invoice?.credit).toFixed(2);
+      const rate = this.currency.rate;
+
+      return ((+this.invoice?.total + +this.invoice?.credit) * rate).toFixed(2);
     }
   },
   methods: {
@@ -84,7 +104,7 @@ export default {
             run: 'create_inv',
             invoice_id: uuid,
             product: this.invoice.meta.description ?? this.invoice.service,
-            sum: this.invoice.total
+            sum: this.total
           }})
           .then(({ invoiceid }) => {
             this.$notification.success({ message: this.$t('Done') });

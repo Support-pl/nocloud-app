@@ -384,6 +384,9 @@ export default {
       });
     }
   },
+  created() {
+    if (!this.user?.uuid) this.$store.dispatch('nocloud/auth/fetchUserData');
+  },
   beforeMount() {
     const images = Object.entries(this.itemSP?.publicData.templates ?? {});
 

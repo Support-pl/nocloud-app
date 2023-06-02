@@ -440,9 +440,10 @@ export default {
     addons(value) {
       const data = (localStorage.getItem('data'))
         ? JSON.parse(localStorage.getItem('data'))
-        : JSON.parse(this.$route.query.data);
+        : JSON.parse(this.$route.query.data ?? '{}');
 
-      if (data.ovhConfig.addons.length < 0) return;
+      if (!data.ovhConfig) return;
+      if (data.ovhConfig.addons.length < 1) return;
 
       this.options.config.addons.forEach((addon) => {
         const keys = Object.keys(value);

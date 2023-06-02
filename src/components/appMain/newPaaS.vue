@@ -792,9 +792,9 @@ export default {
     addons() {
       const addons = { ...this.priceOVH.addons };
 
+      if (this.type === 'dedicated') delete addons.disk;
       delete addons.os;
       delete addons.ram;
-      delete addons.disk;
       return addons;
     },
 
@@ -822,7 +822,7 @@ export default {
 
     getProducts() {
       const titles = [];
-      const products = (this.getPlan.kind === 'DYNAMIC')
+      const products = (this.getPlan.kind === 'DYNAMIC' && this.getPlan.type === 'ione')
         ? this.getPlans.find(({ uuid }) => uuid === this.getPlan.meta?.linkedPlan)?.products
         : this.getPlan.products ?? {};
 
@@ -1038,7 +1038,9 @@ export default {
       });
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn });
+      this.$store.dispatch('nocloud/auth/fetchCurrencies', {
+        anonymously: !this.isLoggedIn
+      });
     }
 
     this.$router.beforeEach((to, from, next) => {
@@ -1047,12 +1049,17 @@ export default {
         localStorage.getItem("data") &&
         this.isLoggedIn
       ) {
-        const answer = window.confirm(this.$t("Data will be lost"));
+        const answer = (this.addfunds.amount === 0)
+          ? window.confirm(this.$t("Data will be lost"))
+          : false;
+
         if (answer) {
           localStorage.removeItem("data");
           next();
-        } else {
+        } else if (this.addfunds.amount === 0) {
           next(false);
+        } else {
+          next();
         }
       } else {
         next();
@@ -1090,7 +1097,7 @@ export default {
       else this[key] = value;
 
       if (key === 'productSize') {
-        const plan = (this.getPlan.kind === 'DYNAMIC')
+        const plan = (this.getPlan.kind === 'DYNAMIC' && this.getPlan.type === 'ione')
           ? this.getPlans.find((el) => el.uuid === this.getPlan.meta.linkedPlan)
           : this.getPlan;
 
@@ -1385,7 +1392,7 @@ export default {
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
           onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - (this.userdata.balance || 0));
             this.addfunds.visible = true;
             this.availableLogin();
           }
@@ -1526,7 +1533,7 @@ export default {
       }
     },
     periods(periods) {
-      if ((this.$route.query.data?.includes('productSize'))) return;
+      if (this.dataLocalStorage.productSize) return;
       this.tarification = '';
 
       setTimeout(() => {
