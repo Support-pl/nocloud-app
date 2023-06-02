@@ -71,11 +71,11 @@
 
           <transition name="specs" mode="out-in">
             <div
-              v-if="typeof getProducts.description === 'string'"
-              v-html="getProducts.description"
+              v-if="typeof getProducts.meta?.description === 'string'"
+              v-html="getProducts.meta?.description"
             ></div>
-            <table v-else-if="getProducts.description" class="product__specs">
-              <tr v-for="resource in getProducts.description" :key="resource.name">
+            <table v-else-if="getProducts.meta?.description" class="product__specs">
+              <tr v-for="resource in getProducts.meta?.description" :key="resource.name">
                 <td>{{ resource.name }}</td>
                 <td>{{ resource.value }}</td>
               </tr>
@@ -236,10 +236,7 @@ export default {
       const plan = this.plans.find(({ uuid }) => uuid === this.plan);
 
       const instances = [{
-        config: {
-          product: this.options.size,
-          period: this.options.period
-        },
+        config: {},
         title: this.getProducts.title,
         billing_plan: plan ?? {}
       }];
@@ -248,6 +245,12 @@ export default {
         type: this.sp.type,
         sp: this.sp.uuid,
         instances
+      };
+
+      if (plan.kind === 'STATIC') instances[0].product = this.options.size;
+      else instances[0].config = {
+        product: this.options.size,
+        period: +this.options.period
       };
 
       const info = (!this.service) ? newGroup : Object.assign(
@@ -662,6 +665,7 @@ export default {
 .order__slider{
 	display: flex;
   justify-content: space-evenly;
+  margin-bottom: 10px;
 	overflow-x: auto;
 }
 

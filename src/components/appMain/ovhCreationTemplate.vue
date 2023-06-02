@@ -340,9 +340,14 @@ export default {
         return resA.at(-3) - resB.at(-3);
       });
       this.$emit('changePlans', plans);
+      if (plans.length < 1) return;
 
-      if (this.$route.query.data?.includes('productSize')) {
-        const data = JSON.parse(this.$route.query.data);
+      const dataString = (localStorage.getItem('data'))
+        ? localStorage.getItem('data')
+        : this.$route.query.data ?? '{}'
+
+      if (dataString.includes('productSize')) {
+        const data = JSON.parse(dataString);
 
         this.$emit('changePlan', data.productSize);
       } else if (this.plan === '') {

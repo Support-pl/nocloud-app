@@ -459,7 +459,10 @@
                 {{ $t("unregistered.will be able after") }}
                 <a href="#" @click.prevent="availableLogin('login')">{{ $t("unregistered.login") }}</a>.
                 <br>
-                <a href="#" @click.prevent="availableLogin('copy')">{{ $t("Copy link to share") }}</a>
+                <a href="#" @click.prevent="availableLogin('copy')">
+                  {{ $t("Copy link") }}
+                  <a-icon type="copy" />
+                </a>
               </div>
               <a-button
                 block
