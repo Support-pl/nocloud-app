@@ -3,15 +3,20 @@
 		<div class="order">
 			<div class="order__inputs order__field">
 				<div class="order__option">
-					<a-slider
-            v-if="sizes.length < 5 && !fetchLoading"
-						:marks="{ ...sizes }"
-						:value="sizes.findIndex(({ key }) => key === options.size)"
-						:tip-formatter="null"
-						:max="sizes.length - 1"
-						:min="0"
-						@change="(value) => options.size = sizes[value].key"
-					/>
+					<div class="order__slider" v-if="sizes.length < 5 && !fetchLoading">
+            <div
+              class="order__slider-item"
+              v-for="size of sizes"
+              :key="size.key"
+              :class="{ 'order__slider-item--active': options.size === size.key }"
+              @click="options.size = size.key"
+            >
+              <span class="order__slider-name" :title="size.label">
+                <img class="img_prod" :src="products[size.key].meta.image ?? '/'" :alt="size.key" @error="onError">
+                {{ size.label }}
+              </span>
+            </div>
+          </div>
 
 					<a-carousel
             v-else
@@ -656,6 +661,7 @@ export default {
 
 .order__slider{
 	display: flex;
+  justify-content: space-evenly;
 	overflow-x: auto;
 }
 
