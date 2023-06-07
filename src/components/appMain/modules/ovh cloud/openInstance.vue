@@ -14,54 +14,21 @@
     </div>
     <div class="Fcloud__buttons" v-else>
       <div
-        v-if="
-          VM.state &&
-          VM.state.meta.state !== 8 &&
-          VM.state.meta.lcm_state !== 0
-        "
         class="Fcloud__button"
-        @click="openModal('shutdown')"
-        :class="{
-          disabled: statusVM.shutdown,
-        }"
+        v-if="VM.state && VM.state.state !== 'STOPPED'"
+        :class="{ disabled: statusVM.shutdown, }"
+        @click="sendAction('poweroff')"
       >
         <div class="Fcloud__BTN-icon">
           <div class="cloud__icon cloud__icon--stop"></div>
         </div>
         <div class="Fcloud__BTN-title">{{ $t("Power off") }}</div>
-        <a-modal
-          v-model="modal.shutdown"
-          :title="$t('cloud_Shutdown_modal')"
-          @ok="handleOk('shutdown')"
-        >
-          <p>{{ $t("cloud_Shutdown_invite") }}</p>
-          <a-radio-group
-            v-model="option.shutdown"
-            name="shutdownOption"
-            :default-value="1"
-          >
-            <a-radio :value="0" :style="{ 'margin-bottom': '10px' }">
-              <a-tag color="green" :style="{ margin: '0 2px 0 0' }">{{
-                $t("cloud_Regular")
-              }}</a-tag>
-              {{ $t("cloud_Shutdown") }}
-            </a-radio>
-            <a-radio :value="1">
-              <a-tag color="red" :style="{ margin: '0 2px 0 0' }">
-                HARD
-              </a-tag>
-              {{ $t("cloud_Shutdown") }}
-            </a-radio>
-          </a-radio-group>
-        </a-modal>
       </div>
       <div
         v-else
         class="Fcloud__button"
+        :class="{ disabled: statusVM.start, }"
         @click="sendAction('resume')"
-        :class="{
-          disabled: statusVM && statusVM.start,
-        }"
       >
         <div class="Fcloud__BTN-icon">
           <a-icon type="caret-right" />
@@ -69,47 +36,19 @@
         <div class="Fcloud__BTN-title">{{ $t("Start") }}</div>
       </div>
       <div
-        class="Fcloud__button"
-        @click="openModal('reboot')"
-        :class="{
-          disabled: statusVM && statusVM.reboot,
-          btn_disabled_wiggle: true,
-        }"
+        class="Fcloud__button btn_disabled_wiggle"
+        :class="{ disabled: statusVM.reboot }"
+        @click="sendAction('reboot')"
       >
         <div class="Fcloud__BTN-icon">
           <a-icon type="redo" />
         </div>
         <div class="Fcloud__BTN-title">{{ $t("Reboot") }}</div>
-        <a-modal
-          v-model="modal.reboot"
-          :title="$t('cloud_Reboot_modal')"
-          @ok="handleOk('reboot')"
-        >
-          <p>{{ $t("cloud_Reboot_invite") }}</p>
-          <a-radio-group
-            v-model="option.reboot"
-            name="rebootOption"
-            :default-value="1"
-          >
-            <a-radio :value="0">
-              <a-tag color="green" :style="{ 'margin-bottom': '10px' }">
-                {{ $t("cloud_Regular") }}
-              </a-tag>
-              {{ $t("cloud_Reboot_modal") }}
-            </a-radio>
-            <a-radio :value="1">
-              <a-tag color="red"> HARD </a-tag>
-              {{ $t("cloud_Reboot_modal") }}
-            </a-radio>
-          </a-radio-group>
-        </a-modal>
       </div>
       <div
         class="Fcloud__button"
         @click="openModal('recover')"
-        :class="{
-          disabled: statusVM && statusVM.recover,
-        }"
+        :class="{ disabled: statusVM.recover }"
       >
         <div class="Fcloud__BTN-icon">
           <a-icon type="backward" />
@@ -118,24 +57,29 @@
         <a-modal
           v-model="modal.recover"
           :title="$t('cloud_Recover_modal')"
-          @ok="handleOk('recover')"
+          @ok="sendRecover"
         >
-          <p>{{ $t("cloud_Recover_invite_line1") }}</p>
-          <p>{{ $t("cloud_Recover_invite_line2") }}</p>
-          <p>{{ $t("cloud_Recover_invite_line3") }}</p>
-          <p>{{ $t("cloud_Recover_invite") }}</p>
-          <a-radio-group
-            v-model="option.recover"
-            name="recover"
-            :default-value="1"
+          <template v-if="VM.config.addons?.find((el) => el.includes('backup'))">
+            <p>{{ $t("cloud_Recover_invite_line1") }}</p>
+            <p>{{ $t("cloud_Recover_invite_line2") }}</p>
+            <p>{{ $t("cloud_Recover_invite_line3") }}</p>
+            <p>{{ $t("cloud_Recover_invite") }}</p>
+            <a-spin :tip="$t('loading')" :spinning="actionLoading">
+              <a-radio-group name="recover" v-model="option.recover">
+                <a-radio v-for="date of dates" :key="date" :value="date">{{ date }}</a-radio>
+              </a-radio-group>
+            </a-spin>
+          </template>
+          <a-button
+            v-else
+            type="primary"
+            shape="round"
+            size="large"
+            :loading="actionLoading"
+            @click="sendAddingAddon('backup')"
           >
-            <a-radio :value="0">
-              {{ $t("yesterday") }}
-            </a-radio>
-            <a-radio :value="1">
-              {{ $t("today") }}
-            </a-radio>
-          </a-radio-group>
+            {{ $t("Add recover") }}
+          </a-button>
         </a-modal>
       </div>
     </div>
@@ -160,11 +104,7 @@
               class="block__value" v-if="dataSP" style="font-size: 18px">
               <table class="Fcloud__table">
                 <tbody>
-                  <tr
-                    v-for="nic in VM.state &&
-                    VM.state.meta.networking.public"
-                    :key="nic"
-                  >
+                  <tr v-for="nic in networking.public" :key="nic">
                     <td>{{ nic }}</td>
                   </tr>
                 </tbody>
@@ -173,11 +113,7 @@
             <div class="block__value" v-if="dataSP" style="font-size: 18px">
               <table class="Fcloud__table">
                 <tbody>
-                  <tr
-                    v-for="nic in VM.state &&
-                    VM.state.meta.networking.private"
-                    :key="nic"
-                  >
+                  <tr v-for="nic in networking.private" :key="nic">
                     <td>{{ nic }}</td>
                   </tr>
                 </tbody>
@@ -199,7 +135,7 @@
               v-if="dataSP"
               style="font-size: 18px"
             >
-              {{ dataSP.locations[0].title }}
+              {{ locationTitle }}
             </div>
           </div>
         </div>
@@ -214,24 +150,40 @@
           <div class="block__column">
             <div class="block__title">OS</div>
             <div class="block__value">
-              {{ OSName || $t('No Data') }}
+              {{ osName || $t('No Data') }}
             </div>
           </div>
-          <div class="block__column" v-if="VM.product">
-            <div class="block__title">{{ $t('Product') }}</div>
+          <div class="block__column" v-if="VM.config.planCode">
+            <div class="block__title">{{ $t('tariff') | capitalize }}</div>
             <div class="block__value">
-              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}
+              {{ tariffTitle || $t('No Data') }}
+              <a-icon type="swap" title="Switch tariff" @click="openModal('switch')" />
             </div>
           </div>
-          <div class="block__column" v-if="VM.data.last_monitoring">
+          <div class="block__column" v-if="VM.data.expiration">
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
-              {{ new Intl.DateTimeFormat().format(VM.data.last_monitoring * 1000) }}
-              <a-icon type="sync" title="Renew" @click="handleOk('renew')" />
+              {{ VM.data.expiration }}
+              <a-icon type="sync" :title="$t('renew')" @click="sendRenew" />
             </div>
           </div>
         </div>
       </div>
+
+      <a-modal
+        v-model="modal.switch"
+        title="Switch tariff"
+        :ok-button-props="{ props: { disabled: planCode === '' } }"
+        :confirmLoading="isSwitchLoading"
+        @ok="sendNewTariff"
+      >
+        <span style="margin-right: 16px">{{ $t("Select new tariff") }}:</span>
+        <a-select style="width: 200px" v-model="planCode">
+          <a-select-option v-for="(item, key) in tariffs" :key="key">
+            {{ item.title }}
+          </a-select-option>
+        </a-select>
+      </a-modal>
 
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
@@ -245,7 +197,7 @@
           </div>
           <div class="block__column block__column_table block__column_price">
             <div class="block__title">
-              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}:
+              {{ tariffTitle || $t('No Data') }}:
             </div>
             <div class="block__value">
               {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
@@ -281,13 +233,13 @@
           <div class="block__column">
             <div class="block__title">CPU</div>
             <div class="block__value">
-              {{ VM.resources && VM.resources.cpu }}
+              {{ VM.resources.cpu }}
             </div>
           </div>
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Memory") }}</div>
             <div class="block__value">
-              {{ VM.resources && VM.resources.ram / 1024 }} GB
+              {{ (VM.resources.ram / 1024).toFixed(2) }} GB
             </div>
           </div>
         </div>
@@ -301,13 +253,13 @@
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Type") }}</div>
             <div class="block__value">
-              {{ VM.resources && VM.resources.drive_type }}
+              {{ VM.resources.drive_type }}
             </div>
           </div>
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Size") }}</div>
             <div class="block__value">
-              {{ mbToGb(VM.resources && VM.resources.drive_size) }} GB
+              {{ (VM.resources.drive_size / 1024).toFixed(2) }} GB
             </div>
           </div>
         </div>
@@ -328,7 +280,7 @@
             </div>
             <div class="block__value">
               {{
-                printWidthRange(chart1Data[chart1Data.length - 1][1])
+                printWidthRange(chart1Data[chart1Data.length - 1].value)
               }}
             </div>
           </div>
@@ -338,7 +290,7 @@
             </div>
             <div class="block__value">
               {{
-                printWidthRange(chart2Data[chart2Data.length - 1][1])
+                printWidthRange(chart2Data[chart2Data.length - 1].value)
               }}
             </div>
           </div>
@@ -445,16 +397,30 @@
                   type="primary"
                   shape="round"
                   size="large"
+                  v-if="(
+                    VM.config.addons &&
+                    VM.config.addons.find((el) => el.includes('snapshot'))
+                  )"
                   @click="openModal('createSnapshot')"
-                  >{{ $t("Take snapshot") }}</a-button
                 >
+                  {{ $t("Take snapshot") }}
+                </a-button>
+                <a-button
+                  v-else
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  :loading="actionLoading"
+                  @click="sendAddingAddon('snapshot')"
+                >
+                  {{ $t("Add snapshot") }}
+                </a-button>
               </div>
               <a-modal
                 v-model="snapshots.addSnap.modal"
                 :footer="null"
                 :title="$t('Create snapshot')"
               >
-                <p>{{ $t("You can only have 3 snapshots at a time.") }}</p>
                 <p>{{ $t("Each snapshot exists for 24 hours and is then deleted.") }}</p>
                 <p>{{ $t("Choose a name for the new snapshot:") }}</p>
                 <a-input
@@ -467,17 +433,19 @@
                     shape="round"
                     :style="{ 'margin-right': '10px' }"
                     @click="snapshots.addSnap.modal = false"
-                    >{{ $t("Cancel") }}</a-button
                   >
+                    {{ $t("Cancel") }}
+                  </a-button>
                   <a-button
                     icon="plus"
                     type="primary"
                     shape="round"
                     :disabled="snapshots.addSnap.snapname.length < 1"
                     :loading="snapshots.addSnap.loading"
-                    @click="createSnapshot()"
-                    >{{ $t("Take snapshot") }}</a-button
+                    @click="createSnapshot"
                   >
+                    {{ $t("Take snapshot") }}
+                  </a-button>
                 </div>
               </a-modal>
             </a-modal>
@@ -491,29 +459,20 @@
               type="primary"
               shape="round"
               size="large"
-              :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3)"
+              :disabled="VM.state.state !== 'RUNNING'"
+              @click="openVNC"
             >
-              <router-link :to="{ path: `${$route.params.uuid}/vnc`, }">
-                VNC
-              </router-link>
+              VNC
             </a-button>
           </div>
         </a-col>
       </a-row>
     </div>
-
-    <add-funds
-      v-if="addfunds.visible"
-      :sum="addfunds.amount"
-      :modalVisible="addfunds.visible"
-      :hideModal="() => addfunds.visible = false"
-    />
   </div>
 </template>
 
 <script>
 import notification from "@/mixins/notification";
-import addFunds from '@/components/balance/addFunds.vue';
 
 const columns = [
   {
@@ -537,9 +496,8 @@ const sizes = ["bytes", "KB", "MB", "GB", "TB", "PB"];
 
 export default {
   name: 'openInstance',
-  components: { addFunds },
-  mixins: [notification],
   props: { VM: { type: Object, required: true } },
+  mixins: [notification],
   data: () => ({
     chart1Data: [["Time", ""]],
     chart2Data: [["Time", ""]],
@@ -557,11 +515,13 @@ export default {
         viewWindow: { min: 0 },
       },
     },
+
     modal: {
       reboot: false,
       shutdown: false,
       recover: false,
       snapshot: false,
+      switch: false
     },
     snapshots: {
       modal: false,
@@ -578,13 +538,13 @@ export default {
     option: {
       reboot: 0,
       shutdown: 0,
-      recover: 0,
+      recover: 0
     },
-    actualAction: "",
+
+    dates: [],
+    planCode: "",
     actionLoading: false,
-    selectedSP: "",
-    deployLoading: false,
-    addfunds: { visible: false, amount: 0 },
+    isSwitchLoading: false,
   }),
   methods: {
     deployService() {
@@ -593,7 +553,7 @@ export default {
         .up(this.VM.uuidService)
         .then(() => {
           const opts = {
-            message: `Done!`,
+            message: `${this.$t('Done')}!`,
           };
           this.openNotificationWithIcon("success", opts);
         })
@@ -607,75 +567,52 @@ export default {
           this.actionLoading = false;
         });
     },
-    mbToGb(mb) {
-      return (mb / 1024).toFixed(1);
-    },
-    handleOk(from) {
-      this.VM.state.meta.state = 0;
-
-      switch (from) {
-        case "reboot":
-          this.sendAction("reboot");
-          this.modal.reboot = false;
-          break;
-        case "shutdown":
-          if (this.option.shutdown) {
-            this.sendAction("poweroffHard");
-          } else {
-            this.sendAction("poweroff");
-          }
-          this.modal.shutdown = false;
-          break;
-        case "recover":
-          this.$confirm({
-            title: this.$t("Do you want to download a backup?"),
-            maskClosable: true,
-            content: () => {
-              return <div>{ this.$t("All unsaved progress will be lost, are you sure?") }</div>;
-            },
-            okText: this.$t("Yes"),
-            cancelText: this.$t("Cancel"),
-            onOk: () => {
-              if (this.option.recover) {
-                this.sendAction("recoverToday");
-              } else {
-                this.sendAction("recoverYesterday");
-              }
-              this.modal.recover = false;
-            },
-            onCancel() {},
-          });
-          break;
-        case "renew":
-          if (this.checkBalance()) this.sendRenew();
-          break;
-      }
-    },
-    checkBalance() {
-      const sum = this.VM.billingPlan?.products[this.VM.product]?.price ?? 0;
-
-      if (this.user.balance < parseFloat(sum)) {
-        this.$confirm({
-          title: this.$t('You do not have enough funds on your balance'),
-          content: () => (
-            <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
-          ),
-          onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.user.balance);
-            this.addfunds.visible = true;
-          }
-        });
-        return false;
-      }
-      return true;
-    },
     printWidthRange(value) {
       let range = this.checkRange(value);
       let newVal = this.fromBytesTo(value, range);
       if (newVal) {
         newVal = Math.round(newVal * 1000) / 1000;
       }
-      return `${newVal} ${range}`;
+      return `${newVal || ''} ${range}`;
+    },
+    checkRange(val) {
+      let count = 0;
+      for (let i = 0; val > 1024; count++) {
+        val = val / 1024;
+      }
+      return sizes[count];
+    },
+    fromBytesTo(val, newRange) {
+      let count = sizes.indexOf(newRange);
+      if (count == -1) {
+        console.log("can't get such range");
+        return;
+      }
+      while (count > 0) {
+        val = val / 1024;
+        count--;
+      }
+      return val;
+    },
+    chartOption(title) {
+      const newOpt = JSON.parse(JSON.stringify(this.chartOptions));
+      let range = "";
+      let capitalized = "";
+      if (title.toLowerCase() == "inbound") {
+        range = this.checkRange(this.chart1Data[this.chart1Data.length - 1].value);
+        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
+      } else if (title.toLowerCase() == "outgoing") {
+        range = this.checkRange(this.chart2Data[this.chart2Data.length - 1].value);
+        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
+      } else if (title.toLowerCase() == "cpu") {
+        range = "%"
+        capitalized = this.$t(title).toUpperCase();
+      } else if (title.toLowerCase() == "ram") {
+        range = this.checkRange(this.chart4Data[this.chart4Data.length - 1].value * 1048576);
+        capitalized = this.$t(title).toUpperCase();
+      }
+      newOpt.title = `${capitalized} (${range})`;
+      return newOpt;
     },
     createSnapshot() {
       // if (this.snapshots.data.lenght >= 3) {
@@ -688,7 +625,7 @@ export default {
       const data = {
         uuid: this.VM.uuid,
         params: { snap_name: this.snapshots.addSnap.snapname },
-        action: "snapcreate",
+        action: "snap_create",
       };
 
       this.snapshots.addSnap.loading = true;
@@ -715,7 +652,7 @@ export default {
       const data = {
         uuid: this.VM.uuid,
         params: { snap_id: +index },
-        action: "snapdelete",
+        action: "snap_delete",
       };
 
       this.snapshots.loading = true;
@@ -741,7 +678,7 @@ export default {
       const data = {
         uuid: this.VM.uuid,
         params: { snap_id: +index },
-        action: "snaprevert",
+        action: "snap_revert",
       };
 
       this.snapshots.addSnap.loading = true;
@@ -778,6 +715,14 @@ export default {
           break;
         case "recover":
           if (this.statusVM.recover) return;
+          this.actionLoading = true;
+          this.$store.dispatch("nocloud/vms/actionVMInvoke", {
+            uuid: this.VM.uuid,
+            uuidService: this.VM.uuidService,
+            action: 'backup_restore_points'
+          })
+            .then(({ meta }) => this.dates = meta.restorePoints)
+            .finally(() => this.actionLoading = false);
           break;
         case "snapshot":
           this.snapshots.modal = true;
@@ -787,49 +732,27 @@ export default {
       }
       this.modal[name] = true;
     },
-    checkRange(val) {
-      let count = 0;
-      for (let i = 0; val > 1024; count++) {
-        val = val / 1024;
-      }
-      return sizes[count];
-    },
-    fromBytesTo(val, newRange) {
-      let count = sizes.indexOf(newRange);
-      if (count == -1) {
-        console.log("can't get such range");
-        return;
-      }
-      while (count > 0) {
-        val = val / 1024;
-        count--;
-      }
-      return val;
-    },
-    chartOption(title) {
-      const newOpt = JSON.parse(JSON.stringify(this.chartOptions));
-      let range = "";
-      let capitalized = "";
-      if (title.toLowerCase() == "inbound") {
-        range = this.checkRange(this.chart1Data[this.chart1Data.length - 1][1]);
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
-      } else if (title.toLowerCase() == "outgoing") {
-        range = this.checkRange(this.chart2Data[this.chart2Data.length - 1][1]);
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
-      } else if (title.toLowerCase() == "cpu") {
-        range = "%"
-        capitalized = this.$t(title).toUpperCase();
-      } else if (title.toLowerCase() == "ram") {
-        range = this.checkRange(this.chart4Data[this.chart4Data.length - 1][1]);
-        capitalized = this.$t(title).toUpperCase();
-      }
-      newOpt.title = `${capitalized} (${range})`;
-      return newOpt;
+    sendRecover() {
+      this.$confirm({
+        title: this.$t("Do you want to download a backup?"),
+        maskClosable: true,
+        content: () => {
+          return <div>{ this.$t("All unsaved progress will be lost, are you sure?") }</div>;
+        },
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        onOk: () => {
+          this.sendAction("recover");
+          this.modal.recover = false;
+        },
+        onCancel() {},
+      });
     },
     sendRenew() {
-      const { period } = this.VM.billingPlan.products[this.VM.product];
-      const currentPeriod = this.date(this.VM.data.last_monitoring);
-      const newPeriod = this.date(this.VM.data.last_monitoring + +period);
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const { period } = this.VM.billingPlan.products[key];
+      const currentPeriod = this.VM.data.expiration;
+      const newPeriod = this.date(this.VM.data.expiration, +period);
 
       this.$confirm({
         title: this.$t("Do you want to renew server?"),
@@ -873,46 +796,74 @@ export default {
         onCancel() {},
       });
     },
+    sendNewTariff() {
+      this.isSwitchLoading = true;
+      this.sendAction("get_upgrade_price").then((res) => {
+        const { withTax } = res.meta.result.order.prices;
+
+        this.$confirm({
+          title: this.$t("Do you want to switch tariff?"),
+          content: () => (
+            <div>{ `${this.$t("invoice_Price")}: ${withTax.value} NCU` }</div>
+          ),
+          okText: this.$t("Yes"),
+          cancelText: this.$t("Cancel"),
+          onOk: () => new Promise((resolve) => setTimeout(resolve, 1000)),
+          onCancel() {},
+        });
+      })
+      .finally(() => this.isSwitchLoading = false);
+    },
+    sendAddingAddon(action) {
+      this.$confirm({
+        title: this.$t(`Do you want to add an ${action}?`),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        onOk: () => {
+          const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+          const planCode = this.VM.billingPlan.products[key].meta.addons
+            .find((addon) => addon.includes(action));
+          this.actionLoading = true;
+          this.$store.dispatch("nocloud/vms/actionVMInvoke", {
+            uuid: this.VM.uuid,
+            uuidService: this.VM.uuidService,
+            action: 'add_addon',
+            params: { planCode }
+          })
+            .then(() => {
+              this.openNotificationWithIcon("success", { message: `Done!` });
+            })
+            .catch((err) => {
+              console.error(err);
+              this.openNotificationWithIcon("error", {
+                message: `Error: ${err.response?.data?.message ?? "Unknown"}.`
+              });
+            })
+            .finally(() => this.actionLoading = false);
+        },
+        onCancel() {},
+      });
+    },
     async sendAction(action) {
-      const hard = this.option.reboot || action.includes('Hard');
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
-        action: action.replace('Hard', ''),
-        params: (hard) ? { hard: true } : {},
+        action
       }
 
-      if (action === 'recoverYesterday' || action === 'recoverToday') {
-        action = action.replace('recover', '');
-        this.$api.get(this.baseURL, { params: {
-          run: 'create_ticket',
-          subject: `Recover VM - ${this.VM.title}`,
-          message: `1. ID: ${this.VM.uuid}\n2. Date: ${action}`,
-          department: 1,
-        }})
-          .then((resp) => {
-            if (resp.result == "success") {
-              this.$message.success(this.$t("Ticket created successfully"));
-            } else {
-              throw resp;
-            }
-          })
-          .catch((err) => {
-            const message = err.response?.data?.message ?? err.message ?? err;
-
-            this.openNotificationWithIcon('error', {
-              message: this.$t(message)
-            });
-            console.error(err);
-          });
-        return;
+      if (action === "recover") {
+        data.action = 'backup_restore';
+        data.params = { type: 'full', restorePoint: this.option.recover };
       }
+      if (action === "get_upgrade_price") {
+        data.params = { newPlanCode: this.planCode };
+      }
+
       return this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
-        .then(() => {
-          const opts = {
-            message: `${this.$t('Done')}!`,
-          };
-          this.openNotificationWithIcon("success", opts);
+        .then((res) => {
+          this.openNotificationWithIcon("success", { message: `Done!` });
+
+          return res;
         })
         .catch((err) => {
           const opts = {
@@ -921,41 +872,51 @@ export default {
           this.openNotificationWithIcon("error", opts);
         });
     },
+    openVNC() {
+      this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+        uuid: this.$route.params.uuid,
+        action: 'start_vnc'
+      })
+				.then(({ meta }) => location.href = meta.url)
+        .catch((err) => console.error(err));
+    },
     fetchMonitoring() {
       if (!this.VM?.uuidService) return;
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
         action: 'monitoring',
+        params: { period: 'lastday' }
       };
 
       this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
         .then((res) => {
-          if (res.meta?.NETRX !== undefined) {
-            this.chart1Data = res.meta.NETRX;
+          if (res.meta['net:rx'] !== undefined) {
+            this.chart1Data = res.meta['net:rx'].values;
           }
-          if (res.meta?.NETTX !== undefined) {
-            this.chart2Data = res.meta.NETTX;
+          if (res.meta['net:tx'] !== undefined) {
+            this.chart2Data = res.meta['net:tx'].values;
           }
-          if (res.meta?.CPU !== undefined) {
-            this.chart3Data = res.meta.CPU;
+          if (res.meta?.cpu !== undefined) {
+            this.chart3Data = res.meta.cpu.values;
           }
-          if (res.meta?.MEMORY !== undefined) {
-            this.chart4Data = res.meta.MEMORY;
+          if (res.meta?.mem !== undefined) {
+            this.chart4Data = res.meta.mem.values;
           }
         })
         .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          if (message === 'HTTP Error 500: "Internal server error"') return;
+          this.openNotificationWithIcon('error', { message: this.$t(message) });
           console.error(err);
-          this.openNotificationWithIcon("error", {
-            message: `Error: ${err.response?.data?.message ?? "Unknown"}.`
-          });
         });
     },
-    date(timestamp) {
+    date(string, timestamp) {
       if (timestamp < 1) return '-';
 
-      const date = new Date(timestamp * 1000);
-      const time =  date.toTimeString().split(' ')[0];
+      const stringDate = new Date(string).getTime();
+      const date = new Date(timestamp * 1000 + stringDate);
 
       const year = date.getFullYear();
       let month = date.getMonth() + 1;
@@ -964,75 +925,77 @@ export default {
       if (`${month}`.length < 2) month = `0${month}`;
       if (`${day}`.length < 2) day = `0${day}`;
 
-      return `${day}.${month}.${year} ${time}`;
+      return `${year}-${month}-${day}`;
     }
   },
   created() { this.fetchMonitoring() },
   computed: {
+    user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    },
     baseURL() {
       return this.$store.getters['support/getURL'];
     },
     statusVM() {
       if (!this.VM) return;
-      if (this.VM.state.meta.state === 1) return {
-        start: true, shutdown: true, reboot: true, recover: true
+      if (this.VM.state.state === 'PENDING' || this.VM.data.suspended_manually) {
+        return { shutdown: true, reboot: true, start: true, recover: true };
       }
+
       return {
-        shutdown:
-          (this.VM.state.meta.lcm_state == 18 &&
-            this.VM.state.meta.state == 3) ||
-          (this.VM.state.meta.lcm_state == 20 &&
-            this.VM.state.meta.state == 3),
-        reboot:
-          (this.VM.state.meta.lcm_state == 18 &&
-            this.VM.state.meta.state == 3) ||
-          (this.VM.state.meta.lcm_state == 20 &&
-            this.VM.state.meta.state == 3) ||
-          (this.VM.state.meta.lcm_state == 0 &&
-            this.VM.state.meta.state == 8),
-        start:
-          (this.VM.state.meta.lcm_state == 18 &&
-            this.VM.state.meta.state == 3) ||
-          (this.VM.state.meta.lcm_state == 20 &&
-            this.VM.state.meta.state == 3),
-        recover:
-          (this.VM.state.meta.lcm_state == 18 &&
-            this.VM.state.meta.state == 3) ||
-          (this.VM.state.meta.lcm_state == 20 &&
-            this.VM.state.meta.state == 3),
+        shutdown: this.VM.state.state !== 'RUNNING' &&
+          this.VM.state.state !== 'STOPPED',
+        reboot: this.VM.state.meta.state === 'BUILD' ||
+          this.VM.state.state === 'STOPPED',
+        start: this.VM.state.state !== 'RUNNING' &&
+          this.VM.state.state !== 'STOPPED',
+        recover: this.VM.state.state !== 'RUNNING' &&
+          this.VM.state.state !== 'STOPPED'
       };
     },
 
+    getSP() {
+      return this.$store.getters["nocloud/sp/getSP"];
+    },
+    dataSP() {
+      return this.getSP.find((el) => el.uuid === this.VM.sp);
+    },
+    osName() {
+      const type = this.VM.billingPlan.type.split(' ')[1];
+
+      return this.VM.config.configuration[`${type}_os`];
+    },
+    locationTitle() {
+      if (!this.VM?.config.configuration) return this.dataSP.title;
+      const type = this.VM.billingPlan.type.split(' ')[1];
+      const region = this.VM.config.configuration[`${type}_datacenter`];
+      const locationItem = this.dataSP.locations.find((el) => el.extra.region === region);
+
+      return locationItem?.title ?? this.$t('No Data');
+    },
+    tariffTitle() {
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+
+      return this.VM.billingPlan.products[key].title;
+    },
     tariffPrice() {
-      const key = this.VM.product;
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
 
       return this.VM.billingPlan.products[key].price;
     },
     addonsPrice() {
-      return this.VM.billingPlan.resources.reduce((prev, curr) => {
-        if (curr.key === `drive_${this.VM.resources.drive_type.toLowerCase()}`) {
-          const key = this.$t('Drive');
+      return this.VM.config.addons.reduce((res, addon) => {
+        const { price } = this.VM.billingPlan.resources.find(
+          ({ key }) => key === `${this.VM.config.duration} ${addon}`
+        );
+        let key = '';
 
-          return {
-            ...prev,
-            [key]: curr.price * this.VM.resources.drive_size / 1024
-          };
-        } else if (curr.key === "ram") {
-          const key = this.$t('ram');
+        if (addon.includes('additional')) key = this.$t('adds drive');
+        if (addon.includes('snapshot')) key = this.$t('Snapshot');
+        if (addon.includes('backup')) key = this.$t('Backup');
+        if (addon.includes('windows')) key = this.$t('Windows');
 
-          return {
-            ...prev,
-            [key]: curr.price * this.VM.resources.ram / 1024
-          };
-        } else if (this.VM.resources[curr.key]) {
-          const key = this.$t(curr.key.replace('_', ' '));
-
-          return {
-            ...prev,
-            [key]: curr.price * this.VM.resources[curr.key]
-          };
-        }
-        return prev;
+        return { ...res, [key]: +price };
       }, {});
     },
     fullPrice() {
@@ -1043,6 +1006,37 @@ export default {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
       return { code: this.user.currency ?? defaultCurrency };
+    },
+
+    tariffs() {
+      if (!this.VM?.billingPlan) return {};
+      const tariffs = {};
+      const { products } = this.VM.billingPlan;
+      const productKey = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const a = Object.values(products[productKey].resources)
+        .reduce((acc, curr) => +acc + +curr);
+
+      Object.keys(products).forEach((key) => {
+        const b = Object.values(products[key].resources)
+          .reduce((acc, curr) => +acc + +curr);
+
+        if (b > a && products[key].period === products[productKey].period) {
+          tariffs[key] = products[key];
+        }
+      });
+
+      return tariffs;
+    },
+    networking() {
+      const { networking } = this.VM?.state?.meta;
+
+      if (!networking) return { public: [], private: [] };
+      const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
+
+      const publicIPs = networking.public?.filter((el) => !regexp.test(el));
+      const privateIPs = networking.private?.filter((el) => !regexp.test(el));
+
+      return { public: publicIPs ?? [], private: privateIPs ?? [] };
     },
 
     inbChartDataReady() {
@@ -1057,10 +1051,10 @@ export default {
           [0, 0],
         ];
       }
-      let range = this.checkRange(data[data.length - 1][1]);
+      let range = this.checkRange(data[data.length - 1].value);
       data = data.map((pair) => [
-        new Date(pair[0] * 1000),
-        this.fromBytesTo(parseInt(pair[1]), range),
+        new Date(pair.timestamp * 1000),
+        this.fromBytesTo(parseInt(pair.value), range),
       ]);
       data.unshift([this.chartHead[0], range]);
       return data;
@@ -1077,10 +1071,10 @@ export default {
           [0, 0],
         ];
       }
-      let range = this.checkRange(data[data.length - 1][1]);
+      let range = this.checkRange(data[data.length - 1].value);
       data = data.map((pair) => [
-        new Date(pair[0] * 1000),
-        this.fromBytesTo(parseInt(pair[1]), range),
+        new Date(pair.timestamp * 1000),
+        this.fromBytesTo(parseInt(pair.value), range),
       ]);
       data.unshift([this.chartHead[0], range]);
       return data;
@@ -1097,7 +1091,7 @@ export default {
           [0, 0],
         ];
       }
-      data = data.map((pair) => [new Date(pair[0] * 1000), parseInt(pair[1])]);
+      data = data.map((pair) => [new Date(pair.timestamp * 1000), parseInt(pair.value)]);
       data.unshift([this.chartHead[0], 'usage']);
       return data;
     },
@@ -1113,29 +1107,14 @@ export default {
           [0, 0],
         ];
       }
-      let range = this.checkRange(data[data.length - 1][1]);
+      let range = this.checkRange(data[data.length - 1].value * 1048576);
       data = data.map((pair) => [
-        new Date(pair[0] * 1000),
-        this.fromBytesTo(parseInt(pair[1]), range),
+        new Date(pair.timestamp * 1000),
+        this.fromBytesTo(parseInt(pair.value * 1048576), range),
       ]);
       data.unshift([this.chartHead[0], range]);
       return data;
     },
-
-    user() {
-      return this.$store.getters['nocloud/auth/userdata'];
-    },
-    getSP() {
-      return this.$store.getters["nocloud/sp/getSP"];
-    },
-    dataSP() {
-      return this.getSP.find((el) => el.uuid == this.VM.sp);
-    },
-    OSName() {
-      const i = this.VM?.config?.template_id;
-
-      return this.dataSP?.publicData.templates[i]?.name;
-    }
   },
   watch: {
     'VM.uuidService'() { this.fetchMonitoring() }

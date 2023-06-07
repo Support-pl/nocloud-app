@@ -411,11 +411,9 @@
                   </a-col>
 
                   <a-col v-if="tarification === 'Monthly'" key="m">
-                    {{
-                      calculatePrice(
+                    {{ calculatePrice(
                         (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
-                      ).toFixed(2)
-                    }}
+                      ).toFixed(2) }}
                     {{ currency.code }}/{{ $tc("period.month") }}
                   </a-col>
 
@@ -425,7 +423,9 @@
                   </a-col>
 
                   <a-col v-if="tarification === 'Hourly'" key="h">
-                    ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
+                    ~{{ calculatePrice(
+                          (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceCustom, "hour"
+                        ).toFixed(2) }}
                     {{ currency.code }}/{{ $t("hour") }}
                   </a-col>
                 </transition>
@@ -1113,6 +1113,11 @@ export default {
             this.options.cpu.size = product.resources.cpu;
             this.options.disk.size = product.resources.disk ?? 20 * 1024;
             this.product = product;
+          } else if (
+            value.title.includes(this.productSize) ||
+            key.includes(this.productSize)
+          ) {
+            this.product = { ...value, key };
           }
         }
       }
@@ -1275,6 +1280,10 @@ export default {
       //update service
       if (newGroup.type === 'ovh') {
         newInstance.config = { type: this.getPlan.type.split(' ')[1], ...this.options.config };
+        if (newInstance.config.type === 'cloud') {
+          delete newInstance.config.configuration;
+          delete newInstance.config.addons;
+        }
       }
       if (this.itemService?.instancesGroups?.length < 1) {
         this.itemService.instancesGroups = [newGroup];
