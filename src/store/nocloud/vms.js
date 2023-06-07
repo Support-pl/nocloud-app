@@ -38,11 +38,11 @@ export default {
             } = rootState.nocloud.auth;
 
             const { rate } = currencies.find((el) =>
-              el.to === defaultCurrency && el.from === currency_code
+              el.from === defaultCurrency && el.to === currency_code
             ) ?? {};
 
             const { rate: reverseRate } = currencies.find((el) =>
-              el.from === defaultCurrency && el.to === currency_code
+              el.to === defaultCurrency && el.from === currency_code
             ) ?? { rate: 1 };
 
             const resources = inst.billingPlan.resources.map((res) => ({

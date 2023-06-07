@@ -15,7 +15,7 @@
     "js-cookie": "^3.0.1",
     "latest-version": "^6.0.0",
     "md5": "^2.2.1",
-    "nocloud-ui": "^1.0.3",
+    "nocloud-ui": "^1.0.4",
     "nocloudjsrest": "^1.5.2",
     "qrcode.vue": "^1.7.0",
     "qrcodejs": "^1.0.0",

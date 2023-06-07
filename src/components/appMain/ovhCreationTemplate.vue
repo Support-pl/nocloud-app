@@ -184,6 +184,7 @@
     <!-- Addons -->
     <a-collapse-panel
       key="addons"
+      v-if="type !== 'cloud'"
       :disabled="!itemSP || isFlavorsLoading || !plan"
       :header="$t('Addons') + ':'"
       :style="{ 'border-radius': '0 0 20px 20px' }"
@@ -307,7 +308,7 @@ export default {
       const products = Object.keys(this.getPlan.products ?? {});
 
       products.forEach((key) => {
-        const { title, price, meta } = this.getPlan.products[key];
+        const { title, price, meta, resources } = this.getPlan.products[key];
         const label = title;
         const value = key.split(' ')[1];
 
@@ -320,11 +321,11 @@ export default {
 
         this.$set(this.allAddons, value, meta.addons);
 
-        const config = this.options.config.configuration
+        const config = this.options.config.configuration;
         const datacenter = Object.keys(config).find((key) => key.includes('datacenter'));
 
-        if (!meta.datacenter.includes(config[datacenter])) return;
-        if (i === -1) plans.push({ value, label, periods: [period] });
+        if (!meta.datacenter?.includes(config[datacenter])) return;
+        if (i === -1) plans.push({ value, label, resources, periods: [period] });
         else plans[i].periods.push(period);
       });
 
@@ -367,20 +368,11 @@ export default {
   },
   created() {
     this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps';
-
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies', {
-        anonymously: !this.isLoggedIn
-      });
-    }
   },
   beforeMount() { this.changePanelHeight() },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
-    },
-    isLoggedIn() {
-      return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
@@ -435,7 +427,7 @@ export default {
     types() {
       const plans = this.$store.getters['nocloud/plans/getPlans'].map(({ type }) => type);
 
-      return ['vps', 'dedicated'].filter((type) => plans.includes(`ovh ${type}`));
+      return ['vps', 'dedicated', 'cloud'].filter((type) => plans.includes(`ovh ${type}`));
     }
   },
   watch: {
