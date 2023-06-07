@@ -1,56 +1,87 @@
 <template>
-  <div class="order_wrapper">
+	<div class="order_wrapper">
 		<div class="order">
 			<div class="order__inputs order__field">
-        <a-collapse style="border-radius: 20px" v-model="activeKey">
-          <a-collapse-panel key="base" :header="`${$t('Base')}:`">
-            <div class="order_option">
-              <a-row class="order__prop" v-for="(value, key) in getProducts.base" :key="key">
-                <a-col span="18">{{ (value.meta.edition || value.title) | capitalize }}:</a-col>
-                <a-col span="6" style="text-align: right">
-                  <a-input-number v-if="!fetchLoading" v-model="config[key]" :min="0" />
-                  <div v-else class="loadingLine"></div>
-                </a-col>
-              </a-row>
+				<div class="order__option">
+					<div class="order__slider" v-if="sizes.length < 5 && !fetchLoading">
+            <div
+              class="order__slider-item"
+              v-for="size of sizes"
+              :key="size.key"
+              :class="{ 'order__slider-item--active': options.size === size.key }"
+              @click="options.size = size.key"
+            >
+              <span class="order__slider-name" :title="size.label">
+                <img class="img_prod" :src="products[size.key].meta.image ?? '/'" :alt="size.key" @error="onError">
+                {{ size.label }}
+              </span>
             </div>
-          </a-collapse-panel>
+          </div>
 
-          <a-collapse-panel key="adv" :header="`${$t('Advanced')}:`">
-            <div class="order_option">
-              <a-row class="order__prop" v-for="(value, key) in getProducts.adv" :key="key">
-                <a-col span="6">{{ value.meta.edition || value.title | capitalize }}:</a-col>
-                <a-col span="18" style="text-align: right">
-                  <a-input-number v-if="!fetchLoading" v-model="config[key]" :min="0" />
-                  <div v-else class="loadingLine"></div>
-                </a-col>
-              </a-row>
-            </div>
-          </a-collapse-panel>
-
-          <a-collapse-panel key="personal" style="border-bottom: 0" :header="`${$t('data')}:` | capitalize">
-            <a-form-item :label="$t('login')">
-              <a-input
-                v-model="options.login"
-                :style="{ boxShadow: (options.login.length < 2) ? '0 0 2px 2px var(--err)' : null }"
-              />
-              <div style="line-height: 1.5; color: var(--err)" v-if="options.login.length < 2">
-                {{ $t('ssl_product.field is required') }}
+					<a-carousel
+            v-else
+            arrows
+            draggable
+            :dots="false"
+            :slides-to-show="3"
+            :slides-to-scroll="1"
+          >
+            <template v-if="!fetchLoading">
+              <div
+                class="order__slider-item"
+                v-for="size of sizes"
+                :key="size.key"
+                :class="{ 'order__slider-item--active': options.size === size.key }"
+                @click="options.size = size.key"
+              >
+                <span class="order__slider-name" :title="size.label">
+                  <img class="img_prod" :src="products[size.key].meta.image ?? '/'" :alt="size.key" @error="onError">
+                  {{ size.label }}
+                </span>
               </div>
-            </a-form-item>
+            </template>
 
-            <a-form-item v-if="userdata.uuid" :label="$t('clientinfo.password')">
-              <password-meter
-                :style="{
-                  height: (options.password.length > 0) ? '10px' : '0',
-                  marginTop: (options.password.length < 1) ? '0' : null
-                }"
-                :password="options.password"
-                @score="(value) => score = value.score"
-              />
-              <a-input-password class="password" v-model="options.password" />
-            </a-form-item>
-          </a-collapse-panel>
-        </a-collapse>
+            <template v-else>
+              <div class="order__slider-item">
+                <div class="loadingLine loadingLine--image"></div>
+                <div class="loadingLine"></div>
+              </div>
+              <div class="order__slider-item">
+                <div class="loadingLine loadingLine--image"></div>
+                <div class="loadingLine"></div>
+              </div>
+              <div class="order__slider-item">
+                <div class="loadingLine loadingLine--image"></div>
+                <div class="loadingLine"></div>
+              </div>
+            </template>
+
+            <template #prevArrow>
+              <div class="custom-slick-arrow" style="left: -35px;">
+                <a-icon type="left-circle" />
+              </div>
+            </template>
+
+            <template #nextArrow>
+              <div class="custom-slick-arrow" style="right: -35px">
+                <a-icon type="right-circle" />
+              </div>
+            </template>
+          </a-carousel>
+
+          <transition name="specs" mode="out-in">
+            <div
+              v-if="typeof getProducts.meta?.description === 'string'"
+              v-html="getProducts.meta?.description"
+            ></div>
+            <table v-else-if="getProducts.meta?.description" class="product__specs">
+              <tr v-for="resource in getProducts.meta?.description" :key="resource.name">
+                <td>{{ resource.name }}</td>
+                <td>{{ resource.value }}</td>
+              </tr>
+            </table>
+          </transition>
+				</div>
 			</div>
 
 			<div class="order__calculate order__field">
@@ -60,7 +91,7 @@
 					</a-col>
 
 					<a-col :xs="12" :sm="18" :lg='12'>
-						<a-select style="width: 100%" v-if="!fetchLoading" v-model="options.period">
+						<a-select v-if="!fetchLoading" v-model="options.period"  style="width: 100%">
 							<a-select-option v-for="period in periods" :key="period" :value="period">
 								{{ $tc('month', period / 3600 / 24 / 30) }}
 							</a-select-option>
@@ -69,9 +100,13 @@
 					</a-col>
 				</a-row>
 
-        <a-row style="margin-top: 10px" :gutter="[10, 10]">
+        <a-row :gutter="[10, 10]" style="margin-top: 10px">
           <a-col v-if="services.length > 1">
-            <a-select style="width: 100%" placeholder="services" v-model="service">
+            <a-select
+              style="width: 100%"
+              placeholder="services"
+              v-model="service"
+            >
               <a-select-option
                 v-for="service of services"
                 :key="service.uuid"
@@ -81,9 +116,12 @@
               </a-select-option>
             </a-select>
           </a-col>
-
           <a-col v-if="namespaces.length > 1">
-            <a-select style="width: 100%" placeholder="namespaces" v-model="namespace">
+            <a-select
+              style="width: 100%"
+              placeholder="namespaces"
+              v-model="namespace"
+            >
               <a-select-option
                 v-for="namespace of namespaces"
                 :key="namespace.uuid"
@@ -93,9 +131,12 @@
               </a-select-option>
             </a-select>
           </a-col>
-
           <a-col v-if="plans.length > 1">
-            <a-select style="width: 100%" placeholder="plans" v-model="plan">
+            <a-select
+              style="width: 100%"
+              placeholder="plans"
+              v-model="plan"
+            >
               <a-select-option
                 v-for="plan of plans"
                 :key="plan.uuid"
@@ -107,11 +148,11 @@
           </a-col>
         </a-row>
 
-				<a-divider orientation="left" style="margin-bottom: 0">
-					{{ $t('Total') }}:
+				<a-divider orientation="left" :style="{'margin-bottom': '0'}">
+					{{$t('Total')}}:
 				</a-divider>
 
-				<a-row type="flex" justify="space-around" style="font-size: 1.5rem">
+				<a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
 					<a-col>
 						<transition name="textchange" mode="out-in">
 							<div v-if="!fetchLoading">
@@ -125,7 +166,7 @@
 				<a-row type="flex" justify="space-around" style="margin: 10px 0">
 					<a-col :span="22">
 						<a-button type="primary" block shape="round" @click="orderConfirm">
-							{{ $t('order') | capitalize }}
+							{{ $t("order") | capitalize }}
 						</a-button>
 						<a-modal
 							:title="$t('Confirm')"
@@ -133,7 +174,7 @@
 							:confirm-loading="sendloading"
 							:cancel-text="$t('Cancel')"
 							@ok="orderClickHandler"
-							@cancel="modal.confirmCreate = false"
+							@cancel="() => {modal.confirmCreate = false}"
 						>
 							<p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.title }}</p>
 						</a-modal>
@@ -152,44 +193,39 @@
 </template>
 
 <script>
-import passwordMeter from "vue-simple-password-meter";
 import addFunds from '@/components/balance/addFunds.vue';
 
 export default {
-  name: 'acronis-component',
-  components: { addFunds, passwordMeter },
+  name: 'custom-component',
+  components: { addFunds },
 	data:() => ({
-    plan: undefined,
-    service: undefined,
-    namespace: undefined,
+    plan: null,
+    service: null,
+    namespace: null,
 
     fetchLoading: false,
     sendloading: false,
 
-    options: { login: '', password: '', period: '' },
+    options: { size: '', period: '' },
     modal: { confirmCreate: false, confirmLoading: false },
     addfunds: { visible: false, amount: 0 },
 
-    config: {},
-    products: [],
-    periods: [],
-    activeKey: 'base',
-    score: 0
+    products: {},
+    sizes: [],
+    periods: []
 	}),
 	methods: {
     changeProducts(plan) {
-      const products = [];
-
-      Object.entries(plan.products).forEach(([key, value]) => {
-        this.$set(this.config, key, 0);
-        products.push(value);
-      });
-
-      this.products = plan.products;
+      this.products = plan.products ?? {};
       this.plan = plan?.uuid;
 
+      this.sizes = Object.entries(plan.products ?? {}).map(
+        ([key, value]) => ({ key, label: value.title })
+      );
+      this.options.size = this.sizes[0]?.key ?? '';
       this.periods = [];
-      products.forEach(({ period }) => {
+
+      Object.values(this.products).forEach(({ period }) => {
         if (this.periods.includes(period)) return;
         this.periods.push(period);
       });
@@ -200,26 +236,10 @@ export default {
       const plan = this.plans.find(({ uuid }) => uuid === this.plan);
 
       const instances = [{
-        config: {
-          items,
-          first_name: this.user.firstname,
-          last_name: this.user.lastname,
-          mail: this.user.email,
-          login: this.options.login,
-          password: this.options.password
-        },
+        config: {},
         title: this.getProducts.title,
         billing_plan: plan ?? {}
       }];
-      const items = { local_storage: 1 };
-
-      Object.entries(this.config).forEach(([key, value]) => {
-        const isNA = this.products[key].meta.measurement_unit === 'n/a';
-
-        if (isNA && value > 0) items[key] = 0;
-        else if (value > 0) items[key] = value;
-      });
-
       const newGroup = {
         title: this.user.fullname + Date.now(),
         type: this.sp.type,
@@ -227,11 +247,17 @@ export default {
         instances
       };
 
+      if (plan.kind === 'STATIC') instances[0].product = this.options.size;
+      else instances[0].config = {
+        product: this.options.size,
+        period: +this.options.period
+      };
+
       const info = (!this.service) ? newGroup : Object.assign(
         { instances_groups: service.instancesGroups },
         { ...service }
       );
-      const group = info.instances_groups?.find(({ type }) => type === 'acronis');
+      const group = info.instances_groups?.find(({ type }) => type === 'virtual');
 
       if (group) group.instances = [...group.instances, ...instances];
       else if (this.service) info.instances_groups.push(newGroup);
@@ -239,20 +265,20 @@ export default {
 			if (!this.user) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
 				this.$store.commit('setOnloginInfo', {
-					type: 'Acronis',
-					title: 'Acronis',
+					type: 'Custom',
+					title: 'Custom',
 					cost: this.getProducts.price
 				});
 				this.$store.dispatch('setOnloginAction', () => {
-					this.createAcronis(info);
+					this.createVirtual(info);
 				});
 				this.$router.push({name: 'login'});
 				return
 			}
 
-			this.createAcronis(info);
+			this.createVirtual(info);
 		},
-		createAcronis(info) {
+		createVirtual(info) {
 			this.sendloading = true;
       const action = (this.service) ? 'update' : 'create';
       const orderData = (this.service) ? info : {
@@ -283,19 +309,6 @@ export default {
         });
 		},
 		orderConfirm() {
-			if (Object.values(this.config).every((value) => value === 0)) {
-				this.$message.error(this.$t('Please select at least one option'));
-				return;
-			}
-      if (this.options.login.length < 2) {
-        this.$message.error(this.$t('login is required'));
-        return;
-      }
-      if (this.score < 4) {
-        this.$message.error(this.$t('Weak pass'));
-        return;
-      }
-
       if (!this.checkBalance()) return;
 			this.modal.confirmCreate = true;
 		},
@@ -330,27 +343,16 @@ export default {
         })
         .finally(() => this.sendloading = false);
     },
+    onError({ target }) {
+      target.src = '/img/OS/default.png';
+    }
 	},
 	computed: {
 		getProducts() {
 			if (Object.keys(this.products).length === 0) return "NAN";
-      const title = [];
-      const base = {};
-      const adv = {};
-      let price = 0;
+      const product = this.products[this.options.size];
 
-      Object.entries(this.config).forEach(([key, value]) => {
-        const product = this.products[key];
-
-        if (key.includes('_adv_') && key !== 'local_storage') adv[key] = product;
-        else if (key !== 'local_storage') base[key] = product;
-
-        if (value === 0) return;
-        title.push(`${product.meta.edition ?? product.title}: ${value}`);
-        price += product.price * value;
-      });
-
-      return { title: title.join(', '), price, base, adv };
+			return product;
 		},
     isLogged() {
       return this.$store.getters['nocloud/auth/isLoggedIn'];
@@ -375,11 +377,11 @@ export default {
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type }) => type === 'acronis');
+        .filter(({ type }) => type === 'virtual');
     },
     sp() {
       return this.$store.getters['nocloud/sp/getSP']
-        .find((sp) => sp.type === 'acronis');
+        .find((sp) => sp.type === 'virtual');
     },
     isLoading() {
       return this.$store.getters['nocloud/plans/isLoading'];
@@ -391,19 +393,17 @@ export default {
     }
 	},
   watch: {
-    services(value) {
-      if (value.length === 1) this.service = value[0]?.uuid;
-    },
     namespaces(value) { this.namespace = value[0]?.uuid },
+    services(value) { this.service = value[0]?.uuid },
 		plans(value) { this.plan = value[0]?.uuid },
     plan(value) {
       const plan = this.plans.find(({ uuid }) => uuid === value);
 
-      this.config = {};
       this.changeProducts(plan);
     }
   },
 	created() {
+    this.fetchLoading = true;
     const promises = [
       this.$store.dispatch('nocloud/auth/fetchBillingData'),
       this.$store.dispatch('nocloud/sp/fetch', !this.isLogged),
@@ -417,6 +417,9 @@ export default {
 
       this.$notification.error({ message: this.$t(message) });
       console.error(err);
+    })
+    .finally(() => {
+      this.fetchLoading = false;
     });
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
@@ -505,11 +508,58 @@ export default {
 	width: 72%;
 }
 
+.order__option div > .img_prod {
+  display: block;
+  max-width: 200px;
+  margin: 0 auto 10px;
+}
+
+.order__option .order__slider-name {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+}
+
+.order__option .order__slider-name img {
+  max-height: 65px;
+}
+
+.order__option .ant-carousel {
+  width: calc(100% - 50px);
+  margin: 0 auto 5px;
+}
+
+.order__option .ant-carousel .slick-track {
+  display: flex;
+  align-items: center;
+}
+
+.order__option .ant-carousel .slick-slide > div {
+  height: 137px;
+  margin: 0 5px;
+}
+
+.order__option .ant-carousel .custom-slick-arrow {
+  width: 25px;
+  height: 25px;
+  font-size: 25px;
+  color: var(--main);
+  opacity: 0.5;
+  transition: 0.3s;
+}
+.order__option .ant-carousel .custom-slick-arrow::before {
+  display: none;
+}
+.order__option .ant-carousel .custom-slick-arrow:hover {
+  opacity: 1;
+}
+
 .order__field{
 	border-radius: 20px;
 	box-shadow:
 		5px 8px 10px rgba(0, 0, 0, .08),
 		0px 0px 12px rgba(0, 0, 0, .05);
+	padding: 20px;
 	background-color: #fff;
 	height: max-content;
 }
@@ -617,6 +667,8 @@ export default {
 
 .order__slider{
 	display: flex;
+  justify-content: space-evenly;
+  margin-bottom: 10px;
 	overflow-x: auto;
 }
 
@@ -628,11 +680,8 @@ export default {
 	flex-shrink: 0;
 	/* border: 1px solid rgba(0, 0, 0, .15); */
 	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	width: 150px;
-	height: 70px;
+	height: 100%;
+  padding: 7px 10px;
 	cursor: pointer;
 	border-radius: 15px;
 	font-size: 1.1rem;
@@ -675,6 +724,14 @@ export default {
 .loadingLine--total{
 	margin-top: 10px;
 	height: 26px;
+}
+
+.loadingLine--image{
+  min-width: 60px;
+  width: 60px;
+  height: 60px;
+  margin: auto;
+  margin-bottom: 15px;
 }
 
 @keyframes glowing {

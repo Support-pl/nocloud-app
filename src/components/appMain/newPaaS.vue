@@ -411,11 +411,9 @@
                   </a-col>
 
                   <a-col v-if="tarification === 'Monthly'" key="m">
-                    {{
-                      calculatePrice(
+                    {{ calculatePrice(
                         (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
-                      ).toFixed(2)
-                    }}
+                      ).toFixed(2) }}
                     {{ currency.code }}/{{ $tc("period.month") }}
                   </a-col>
 
@@ -425,7 +423,9 @@
                   </a-col>
 
                   <a-col v-if="tarification === 'Hourly'" key="h">
-                    ~{{ calculatePrice(productFullPriceCustom, "hour").toFixed(2) }}
+                    ~{{ calculatePrice(
+                          (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceCustom, "hour"
+                        ).toFixed(2) }}
                     {{ currency.code }}/{{ $t("hour") }}
                   </a-col>
                 </transition>
@@ -459,7 +459,10 @@
                 {{ $t("unregistered.will be able after") }}
                 <a href="#" @click.prevent="availableLogin('login')">{{ $t("unregistered.login") }}</a>.
                 <br>
-                <a href="#" @click.prevent="availableLogin('copy')">{{ $t("Copy link to share") }}</a>
+                <a href="#" @click.prevent="availableLogin('copy')">
+                  {{ $t("Copy link") }}
+                  <a-icon type="copy" />
+                </a>
               </div>
               <a-button
                 block
@@ -792,9 +795,9 @@ export default {
     addons() {
       const addons = { ...this.priceOVH.addons };
 
+      if (this.type === 'dedicated') delete addons.disk;
       delete addons.os;
       delete addons.ram;
-      delete addons.disk;
       return addons;
     },
 
@@ -822,7 +825,7 @@ export default {
 
     getProducts() {
       const titles = [];
-      const products = (this.getPlan.kind === 'DYNAMIC')
+      const products = (this.getPlan.kind === 'DYNAMIC' && this.getPlan.type === 'ione')
         ? this.getPlans.find(({ uuid }) => uuid === this.getPlan.meta?.linkedPlan)?.products
         : this.getPlan.products ?? {};
 
@@ -1038,7 +1041,9 @@ export default {
       });
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn });
+      this.$store.dispatch('nocloud/auth/fetchCurrencies', {
+        anonymously: !this.isLoggedIn
+      });
     }
 
     this.$router.beforeEach((to, from, next) => {
@@ -1047,12 +1052,17 @@ export default {
         localStorage.getItem("data") &&
         this.isLoggedIn
       ) {
-        const answer = window.confirm(this.$t("Data will be lost"));
+        const answer = (this.addfunds.amount === 0)
+          ? window.confirm(this.$t("Data will be lost"))
+          : false;
+
         if (answer) {
           localStorage.removeItem("data");
           next();
-        } else {
+        } else if (this.addfunds.amount === 0) {
           next(false);
+        } else {
+          next();
         }
       } else {
         next();
@@ -1090,7 +1100,7 @@ export default {
       else this[key] = value;
 
       if (key === 'productSize') {
-        const plan = (this.getPlan.kind === 'DYNAMIC')
+        const plan = (this.getPlan.kind === 'DYNAMIC' && this.getPlan.type === 'ione')
           ? this.getPlans.find((el) => el.uuid === this.getPlan.meta.linkedPlan)
           : this.getPlan;
 
@@ -1103,6 +1113,11 @@ export default {
             this.options.cpu.size = product.resources.cpu;
             this.options.disk.size = product.resources.disk ?? 20 * 1024;
             this.product = product;
+          } else if (
+            value.title.includes(this.productSize) ||
+            key.includes(this.productSize)
+          ) {
+            this.product = { ...value, key };
           }
         }
       }
@@ -1265,6 +1280,10 @@ export default {
       //update service
       if (newGroup.type === 'ovh') {
         newInstance.config = { type: this.getPlan.type.split(' ')[1], ...this.options.config };
+        if (newInstance.config.type === 'cloud') {
+          delete newInstance.config.configuration;
+          delete newInstance.config.addons;
+        }
       }
       if (this.itemService?.instancesGroups?.length < 1) {
         this.itemService.instancesGroups = [newGroup];
@@ -1385,7 +1404,7 @@ export default {
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
           onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - (this.userdata.balance || 0));
             this.addfunds.visible = true;
             this.availableLogin();
           }
@@ -1526,7 +1545,7 @@ export default {
       }
     },
     periods(periods) {
-      if ((this.$route.query.data?.includes('productSize'))) return;
+      if (this.dataLocalStorage.productSize) return;
       this.tarification = '';
 
       setTimeout(() => {
@@ -1543,10 +1562,10 @@ export default {
         anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
-        const showcase = Object.keys(this.itemSP.meta.showcase)
+        const showcase = Object.keys(this.itemSP.meta.showcase ?? {})
           .find((key) => key === this.$route.query.service) ??
-          Object.keys(this.itemSP.meta.showcase)[0];
-        const plans = this.itemSP.meta.showcase[showcase].billing_plans;
+          Object.keys(this.itemSP.meta.showcase ?? {})[0];
+        const plans = this.itemSP.meta.showcase[showcase]?.billing_plans ?? [];
         const uuid = plans.find((el) => pool.find((plan) => el === plan.uuid));
 
         this.$store.commit('nocloud/plans/setPlans', pool);
@@ -1565,9 +1584,12 @@ export default {
       const type = this.options.drive ? "SSD" : "HDD";
       const { min_drive_size, max_drive_size } = this.itemSP.vars;
 
-      if (!(min_drive_size || max_drive_size)) return;
-      this.options.disk.min = min_drive_size.value[type];
-      this.options.disk.max = max_drive_size.value[type];
+      if (min_drive_size) {
+        this.options.disk.min = min_drive_size.value[type];
+      }
+      if (max_drive_size) {
+        this.options.disk.max = max_drive_size.value[type];
+      }
     },
     'options.os.name'() {
       if (this.options.disk.min > 0) return;

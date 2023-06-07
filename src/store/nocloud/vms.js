@@ -23,7 +23,12 @@ export default {
         uuidService !== service.uuid
       )
 
-      dispatch('nocloud/auth/fetchCurrencies', null, { root: true }).then(() => {
+      const { currencies } = rootState.nocloud.auth
+      const promise = (currencies.length < 1)
+        ? dispatch('nocloud/auth/fetchCurrencies', null, { root: true })
+        : new Promise((resolve) => resolve())
+
+      promise.then(() => {
         service.instancesGroups.forEach(group => {
           group.instances.forEach(inst => {
             const {
@@ -33,11 +38,11 @@ export default {
             } = rootState.nocloud.auth;
 
             const { rate } = currencies.find((el) =>
-              el.to === defaultCurrency && el.from === currency_code
+              el.from === defaultCurrency && el.to === currency_code
             ) ?? {};
 
             const { rate: reverseRate } = currencies.find((el) =>
-              el.from === defaultCurrency && el.to === currency_code
+              el.to === defaultCurrency && el.from === currency_code
             ) ?? { rate: 1 };
 
             const resources = inst.billingPlan.resources.map((res) => ({
@@ -114,11 +119,11 @@ export default {
 					})
 			})
 		},
-		createService({ commit }, data) {
+		createService({ dispatch, commit, rootState }, data) {
 			return new Promise((resolve, reject) => {
 				api.services._create(data)
 					.then(response => {
-						commit('setInstances', response)
+						commit('setInstances', { service: response, rootState, dispatch })
 						resolve(response)
 					})
 					.catch(error => {
@@ -128,11 +133,11 @@ export default {
 					})
 			})
 		},
-		updateService({ commit }, data) {
+		updateService({ dispatch, commit, rootState }, data) {
 			return new Promise((resolve, reject) => {
 				api.services._update(data)
           .then(response => {
-            commit('setInstances', response)
+            commit('setInstances', { service: response, rootState, dispatch })
             resolve(response)
           })
 					.catch(error => {

@@ -341,7 +341,29 @@ export default {
       this.isVisible = true;
     },
     routeBack() {
-      this.$router.go(-1);
+      if (this.getActiveTab.title.includes('service')) {
+        this.$router.push('/services');
+        return;
+      }
+      if (this.getActiveTab.title.includes('invoice')) {
+        this.$router.push('/invoice');
+        return;
+      }
+
+      switch (this.getActiveTab.title) {
+        case 'cabinet':
+          this.$router.push('/settings');
+          break;
+        case 'ticket':
+          this.$router.push('/support');
+          break;
+        case 'newPaaS':
+          this.$router.push('/services');
+          break;
+        default:
+          this.$router.go(-1);
+          break;
+      }
     },
     orderVM() {
       this.$router.push({ name: "newPaaS" });

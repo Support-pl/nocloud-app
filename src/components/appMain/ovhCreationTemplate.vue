@@ -142,6 +142,26 @@
                 @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
               />
             </a-form-item>
+
+            <a-form-item v-if="type === 'cloud'" :label="$t('SSH key')">
+              <a-select
+                style="width: 100%"
+                v-if="user.data?.ssh_keys?.length > 0"
+                :options="user.data?.ssh_keys"
+                :value="options.config.ssh"
+                @change="(value) => $emit('setData', { key: 'ssh', value, type: 'ovh' })"
+              />
+              <template v-else>
+                <a-input
+                  :value="options.config.ssh"
+                  :style="{ boxShadow: `0 0 2px 2px var(${(options.config.ssh?.length > 1) ? '--main' : '--err'})` }"
+                  @change="({ target: { value } }) => $emit('setData', { key: 'ssh', value, type: 'ovh' })"
+                />
+                <div style="line-height: 1.5; color: var(--err)" v-if="!(options.config.ssh?.length > 1)">
+                  {{ $t('ssl_product.field is required') }}
+                </div>
+              </template>
+            </a-form-item>
           </a-col>
         </a-row>
         <div class="newCloud__template" v-if="this.itemSP">
@@ -184,6 +204,7 @@
     <!-- Addons -->
     <a-collapse-panel
       key="addons"
+      v-if="type !== 'cloud'"
       :disabled="!itemSP || isFlavorsLoading || !plan"
       :header="$t('Addons') + ':'"
       :style="{ 'border-radius': '0 0 20px 20px' }"
@@ -253,6 +274,11 @@ export default {
         this.$emit('setData', { key: 'priceOVH', value: this.price });
       }
 
+      if (this.type === 'cloud') {
+        this.$emit('setData', { key: 'imageId', value: item.id, type: 'ovh' });
+        return;
+      }
+
       this.$emit('setData', {
         key: `${(this.getPlan.type.includes('dedicated')) ? 'baremetal' : 'vps'}_os`,
         value: item.name, type: 'ovh'
@@ -307,7 +333,7 @@ export default {
       const products = Object.keys(this.getPlan.products ?? {});
 
       products.forEach((key) => {
-        const { title, price, meta } = this.getPlan.products[key];
+        const { title, price, meta, resources } = this.getPlan.products[key];
         const label = title;
         const value = key.split(' ')[1];
 
@@ -315,16 +341,26 @@ export default {
         const period = {
           price: { value: price },
           duration: key.split(' ')[0],
-          pricingMode: (key.split(' ')[0] === 'P1M') ? 'default' : 'upfront12'
+          pricingMode: ''
         };
+
+        switch (key.split(' ')[0]) {
+          case 'hourly':
+            period.pricingMode = 'hourly';
+            break;
+          case 'P1Y':
+            period.pricingMode = 'upfront12';
+          default:
+            period.pricingMode = 'default';
+        }
 
         this.$set(this.allAddons, value, meta.addons);
 
-        const config = this.options.config.configuration
+        const config = this.options.config.configuration;
         const datacenter = Object.keys(config).find((key) => key.includes('datacenter'));
 
-        if (!meta.datacenter.includes(config[datacenter])) return;
-        if (i === -1) plans.push({ value, label, periods: [period] });
+        // if (!meta.datacenter?.includes(config[datacenter])) return;
+        if (i === -1) plans.push({ value, label, resources, periods: [period] });
         else plans[i].periods.push(period);
       });
 
@@ -340,9 +376,14 @@ export default {
         return resA.at(-3) - resB.at(-3);
       });
       this.$emit('changePlans', plans);
+      if (plans.length < 1) return;
 
-      if (this.$route.query.data?.includes('productSize')) {
-        const data = JSON.parse(this.$route.query.data);
+      const dataString = (localStorage.getItem('data'))
+        ? localStorage.getItem('data')
+        : this.$route.query.data ?? '{}'
+
+      if (dataString.includes('productSize')) {
+        const data = JSON.parse(dataString);
 
         this.$emit('changePlan', data.productSize);
       } else if (this.plan === '') {
@@ -362,20 +403,11 @@ export default {
   },
   created() {
     this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps';
-
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies', {
-        anonymously: !this.isLoggedIn
-      });
-    }
   },
   beforeMount() { this.changePanelHeight() },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
-    },
-    isLoggedIn() {
-      return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
@@ -397,6 +429,8 @@ export default {
           return 'upfront12';
         case 'Biennially':
           return 'upfront24';
+        case 'Hourly':
+          return 'hourly';
         default:
           return 'default';
       }
@@ -430,7 +464,7 @@ export default {
     types() {
       const plans = this.$store.getters['nocloud/plans/getPlans'].map(({ type }) => type);
 
-      return ['vps', 'dedicated'].filter((type) => plans.includes(`ovh ${type}`));
+      return ['vps', 'dedicated', 'cloud'].filter((type) => plans.includes(`ovh ${type}`));
     }
   },
   watch: {
@@ -440,9 +474,10 @@ export default {
     addons(value) {
       const data = (localStorage.getItem('data'))
         ? JSON.parse(localStorage.getItem('data'))
-        : JSON.parse(this.$route.query.data);
+        : JSON.parse(this.$route.query.data ?? '{}');
 
-      if (data.ovhConfig.addons.length < 0) return;
+      if (!data.ovhConfig) return;
+      if (data.ovhConfig.addons.length < 1) return;
 
       this.options.config.addons.forEach((addon) => {
         const keys = Object.keys(value);

@@ -49,7 +49,7 @@ export default {
           const invoices = res[0]?.invoices?.invoice ?? [];
 
           res[1].pool.forEach((el) => {
-            if (+el.exec) return;
+            if (el.meta.invoiceCreate) return;
             invoices.push({
               id: el.uuid,
               date: date(el.proc),

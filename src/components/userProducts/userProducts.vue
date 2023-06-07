@@ -252,6 +252,9 @@ export default {
           };
 
           switch (inst.type) {
+            case 'virtual':
+              res.groupname = 'Custom';
+              break;
             case 'acronis':
               res.groupname = 'Acronis';
               break;
@@ -409,6 +412,9 @@ export default {
           break;
         case 'acronis':
           name = 'service-acronis';
+          break;
+        case 'virtual':
+          name = 'service-custom';
           break;
         case 'ione':
         case 'ovh':
