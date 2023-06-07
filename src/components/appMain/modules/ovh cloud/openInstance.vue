@@ -823,7 +823,6 @@ export default {
           const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
           const planCode = this.VM.billingPlan.products[key].meta.addons
             .find((addon) => addon.includes(action));
-
           this.actionLoading = true;
           this.$store.dispatch("nocloud/vms/actionVMInvoke", {
             uuid: this.VM.uuid,
@@ -1006,7 +1005,7 @@ export default {
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
-      return { code: this.user.currency_code ?? defaultCurrency };
+      return { code: this.user.currency ?? defaultCurrency };
     },
 
     tariffs() {

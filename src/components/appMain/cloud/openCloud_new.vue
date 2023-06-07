@@ -413,8 +413,15 @@ export default {
       this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
     }
     if (this.isLogged) {
+      this.$store.dispatch("nocloud/auth/fetchBillingData");
       this.$store.dispatch("nocloud/vms/fetch");
       this.$store.dispatch("nocloud/sp/fetch");
+    }
+
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies', {
+        anonymously: !this.isLoggedIn
+      });
     }
   },
   destroyed() {

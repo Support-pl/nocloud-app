@@ -38,7 +38,7 @@
               </div>
             </a-form-item>
 
-            <a-form-item v-if="user.uuid" :label="$t('clientinfo.password')">
+            <a-form-item v-if="userdata.uuid" :label="$t('clientinfo.password')">
               <password-meter
                 :style="{
                   height: (options.password.length > 0) ? '10px' : '0',
@@ -302,14 +302,14 @@ export default {
     checkBalance() {
       const sum = this.getProducts.price;
 
-      if (this.user.balance < parseFloat(sum)) {
+      if (this.userdata.balance < parseFloat(sum)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
           onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.user.balance);
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
             this.addfunds.visible = true;
           }
         });
@@ -357,6 +357,9 @@ export default {
     },
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
+    },
+    userdata() {
+      return this.$store.getters['nocloud/auth/userdata'];
     },
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];

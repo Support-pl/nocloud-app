@@ -7,7 +7,7 @@
     </div>
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: statusColor }">
-        {{ total }} {{ invoice.currencycode || 'USD' }}
+        {{ total }} {{ user.currency_code }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -60,6 +60,8 @@ export default {
     },
     currency() {
       const code = this.user.currency_code ?? 'USD';
+      if (code === this.invoice.currencycode) return { code, rate: 1 };
+
       const { rate } = this.currencies.find((el) =>
         el.from === code && el.to === this.invoice.currencycode
       ) ?? {};
@@ -127,6 +129,11 @@ export default {
         });
     }
   },
+  created() {
+    if (this.invoice.currencycode === 'NCU') {
+      this.invoice.currencycode = this.$store.getters['nocloud/auth/defaultCurrency'];
+    }
+  }
 };
 </script>
 

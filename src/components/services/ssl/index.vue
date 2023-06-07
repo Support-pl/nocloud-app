@@ -357,14 +357,14 @@ export default {
     checkBalance() {
       const sum = this.getProducts.prices[this.options.period];
 
-      if (this.user.balance < parseFloat(sum)) {
+      if (this.userdata.balance < parseFloat(sum)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance'),
           content: () => (
             <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
           ),
           onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.user.balance);
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
             this.addfunds.visible = true;
           }
         });
@@ -429,6 +429,9 @@ export default {
     },
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
+    },
+    userdata() {
+      return this.$store.getters['nocloud/auth/userdata'];
     },
     isLoggedIn() {
       return this.$store.getters['nocloud/auth/isLoggedIn'];

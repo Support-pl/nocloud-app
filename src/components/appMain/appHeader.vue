@@ -341,11 +341,13 @@ export default {
       this.isVisible = true;
     },
     routeBack() {
-      if (this.getActiveTab.title.includes('service')){
+      if (this.getActiveTab.title.includes('service')) {
         this.$router.push('/services');
+        return;
       }
       if (this.getActiveTab.title.includes('invoice')) {
         this.$router.push('/invoice');
+        return;
       }
 
       switch (this.getActiveTab.title) {
