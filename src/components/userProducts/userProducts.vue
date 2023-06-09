@@ -544,10 +544,14 @@ export default {
       localStorage.setItem('serviceSorting', JSON.stringify(sorting));
     },
     isFilterByLocation(value) {
-      localStorage.setItem('isFilterByLocation', value);
+      if (this.$route.name === 'products') {
+        localStorage.setItem('isFilterByLocation', false);
+      } else {
+        localStorage.setItem('isFilterByLocation', value);
 
-      if (this.$route.query.service) {
-        this.$router.replace({ query: {} });
+        if (this.$route.query.service) {
+          this.$router.replace({ query: {} });
+        }
       }
     }
   }
