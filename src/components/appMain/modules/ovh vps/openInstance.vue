@@ -1140,6 +1140,16 @@ export default {
   background: var(--gray);
 }
 
+.block-content_table::after {
+  content: "";
+  position: absolute;
+  top: 35px;
+  left: calc(50% - 26.8vw);
+  height: 1px;
+  width: calc(100% - 44vw);
+  background: var(--gray);
+}
+
 .block__column_table {
   flex-direction: row;
   justify-content: start;
