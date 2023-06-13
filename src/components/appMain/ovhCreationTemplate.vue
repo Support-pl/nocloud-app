@@ -345,7 +345,7 @@ export default {
         };
 
         switch (key.split(' ')[0]) {
-          case 'hourly':
+          case 'P1H':
             period.pricingMode = 'hourly';
             break;
           case 'P1Y':

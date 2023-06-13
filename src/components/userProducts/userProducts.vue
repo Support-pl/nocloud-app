@@ -15,16 +15,16 @@
             </span>
 
             <transition-group name="fade-in" style="display: flex; flex-wrap: wrap; gap: 10px">
-              <a-badge class="products__filters" v-for="type of checkedTypesString" :key="type.value">
+              <a-badge class="products__filters" v-for="checkedType of checkedTypesString" :key="checkedType.value">
                 <template #count>
                   <a-icon
                     type="close-circle"
                     theme="filled"
                     style="color: var(--err)"
-                    @click="filterElementClickHandler(type.value)"
+                    @click="filterElementClickHandler(checkedType.value)"
                   />
                 </template>
-                {{ type.title }}: {{ productsCount(type.value) }}
+                {{ checkedType.title }}: {{ productsCount(checkedType.value) }}
                 <!-- всего -->
               </a-badge>
             </transition-group>
@@ -281,7 +281,7 @@ export default {
               inst.config.addons?.forEach((addon) => {
                 const { price } = inst.billingPlan.resources.find(
                   ({ key }) => key === `${inst.config.duration} ${addon}`
-                );
+                ) ?? { price: 0 };
 
                 res.orderamount += +price;
               });

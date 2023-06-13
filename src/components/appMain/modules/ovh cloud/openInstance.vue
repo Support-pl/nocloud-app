@@ -1,18 +1,7 @@
 <template>
   <div class="Fcloud">
     <slot name="header" />
-    <div class="Fcloud__buttons" v-if="!VM.state && false">
-      <div class="Fcloud__button" @click="deployService()">
-        <div class="Fcloud__BTN-icon">
-          <a-icon type="deployment-unit" />
-        </div>
-        <div class="Fcloud__BTN-title">
-          <!-- {{$t('Start')}} -->
-          {{ $t('Deploy') }}
-        </div>
-      </div>
-    </div>
-    <div class="Fcloud__buttons" v-else>
+    <div class="Fcloud__buttons">
       <div
         class="Fcloud__button"
         v-if="VM.state && VM.state.state !== 'STOPPED'"
@@ -1143,9 +1132,9 @@ export default {
   content: "";
   position: absolute;
   top: 35px;
-  left: calc(50% - 26.8vw);
+  left: 15px;
   height: 1px;
-  width: calc(100% - 44vw);
+  width: calc(100% - 30px);
   background: var(--gray);
 }
 

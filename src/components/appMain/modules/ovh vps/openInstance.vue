@@ -1144,9 +1144,9 @@ export default {
   content: "";
   position: absolute;
   top: 35px;
-  left: calc(50% - 26.8vw);
+  left: 15px;
   height: 1px;
-  width: calc(100% - 44vw);
+  width: calc(100% - 30px);
   background: var(--gray);
 }
 

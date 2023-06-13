@@ -55,7 +55,7 @@ export default {
   }),
   methods: {
     setData(planKey, changeTarifs = true) {
-      const { periods, value, resources } = this.plans.find((el) => el.value === planKey) ?? {};
+      const { periods, value, resources } = this.plans.find((el) => el.value.includes(planKey)) ?? {};
       if (!value) return;
 
       const tarifs = [];
@@ -89,24 +89,19 @@ export default {
       if (changeTarifs) this.$emit('setData', { key: 'periods', value: tarifs });
       this.$emit('setData', { key: 'priceOVH', value: this.price });
       this.$emit('setData', { key: 'flavorId', value, type: 'ovh' });
-      this.$emit('setData', { key: 'monthlyBilling', value: (plan.duration === 'monthly'), type: 'ovh' });
+      this.$emit('setData', { key: 'monthlyBilling', value: (plan.duration === 'P1M'), type: 'ovh' });
     }
   },
   created() {
     this.$emit('setData', { key: 'region', type: 'ovh', value: this.region.value });
-
-    const os = this.getPlan.meta.images['DE1' ?? this.region.value];
-
-    os?.sort((a, b) => a.name < b.name);
-    this.images = os?.map(({ name, id }) => ({ name, desc: name, id })) ?? [];
   },
   computed: {
     resources() {
-      const plans = new Set(this.plans.map(({ label }) => label.split(' ')[1]));
-      const ram = new Set();
-      const disk = new Set();
+      const plans = new Set(this.plans.map(({ label }) =>
+        label.split(' ')[1].replace(`-${this.region.value}`, '')
+      ));
 
-      return { plans: Array.from(plans), ram: Array.from(ram), disk: Array.from(disk) };
+      return { plans: Array.from(plans), ram: [], disk: [] };
     },
     region() {
       const location = this.locationId.split(' ').at(-1);
@@ -133,10 +128,17 @@ export default {
   watch: {
     tarification() { this.setData(this.plan, false) },
     plan(value) {
-      const plan = this.plans.find((el) => el.value === value);
+      const plan = this.plans.find((el) => el.value.includes(value));
+      const products = Object.entries(this.getPlan.products ?? {}).filter(
+        ([key]) => key.includes(value)
+      );
+      const { os } = products[0][1].meta;
 
       this.setData(plan?.value);
       this.$emit('setData', { key: 'productSize', value });
+
+      os?.sort((a, b) => a.name < b.name);
+      this.images = os?.map(({ name, id }) => ({ name, desc: name, id })) ?? [];
     }
   }
 }

@@ -398,7 +398,7 @@ export default {
     const promises = [
       this.$store.dispatch('nocloud/auth/fetchBillingData'),
       this.$store.dispatch('nocloud/sp/fetch', !this.isLogged),
-      this.$store.dispatch('nocloud/plans/fetch', { anonimously: !this.isLogged }),
+      this.$store.dispatch('nocloud/plans/fetch', { anonymously: !this.isLogged }),
       this.$store.dispatch('nocloud/namespaces/fetch'),
       this.$store.dispatch('nocloud/vms/fetch')
     ];
