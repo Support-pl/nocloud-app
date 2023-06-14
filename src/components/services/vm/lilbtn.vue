@@ -29,7 +29,7 @@ export default {
 		moduleEnter() {
       if (!this.checkBalance()) return;
 
-      const key = (this.service.billingPlan.type.includes('ovh'))
+      const key = (this.service.config.planCode)
         ? `${this.service.config.duration} ${this.service.config.planCode}`
         : this.service.product;
       const { period, price } = this.service.billingPlan.products[key];
@@ -59,14 +59,14 @@ export default {
             <div style="margin-top: 10px">
               <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
               { price } { this.currency.code }
-              <div>
+              { this.addonsPrice && <div>
                 <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
                 <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
                   { ...Object.entries(this.addonsPrice).map(([key, value]) =>
                     <li>{ key }: { value } { this.currency.code }</li>
                   ) }
                 </ul>
-              </div>
+              </div> }
 
               <div>
                 <span style="font-weight: 700">{ this.$t('Total') }: </span>
@@ -151,7 +151,7 @@ export default {
     },
     addonsPrice() {
       if (this.service.billingPlan.type.includes('ovh')) {
-        return this.service.config.addons.reduce((res, addon) => {
+        return this.service.config.addons?.reduce((res, addon) => {
           const { price } = this.service.billingPlan.resources.find(
             ({ key }) => key === `${this.service.config.duration} ${addon}`
           );

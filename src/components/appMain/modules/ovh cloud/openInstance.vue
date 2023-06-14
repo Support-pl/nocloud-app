@@ -196,14 +196,19 @@
           <div class="block__column block__column_table">
             <div class="block__title">{{ $t('Addons') }}</div>
           </div>
-          <div
-            class="block__column block__column_table block__column_price"
-            v-for="(price, addon) in addonsPrice"
-          >
-            <div class="block__title">{{ addon }}:</div>
-            <div class="block__value">
-              {{ +price.toFixed(2) }} {{ currency.code }}
+          <template v-if="Object.keys(addonsPrice ?? {}).length > 0">
+            <div
+              class="block__column block__column_table block__column_price"
+              v-for="(price, addon) in addonsPrice"
+            >
+              <div class="block__title">{{ addon }}:</div>
+              <div class="block__value">
+                {{ +price.toFixed(2) }} {{ currency.code }}
+              </div>
             </div>
+          </template>
+          <div class="block__column" style="align-items: flex-end">
+            <div class="block__value">0 {{ currency.code }}</div>
           </div>
 
           <div class="block__column block__column_table block__column_total">
@@ -738,7 +743,7 @@ export default {
       });
     },
     sendRenew() {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const key = this.VM.product;
       const { period } = this.VM.billingPlan.products[key];
       const currentPeriod = this.VM.data.expiration;
       const newPeriod = this.date(this.VM.data.expiration, +period);
@@ -760,14 +765,16 @@ export default {
             <div style="margin-top: 10px">
               <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
               { this.tariffPrice } { this.currency.code }
-              <div>
-                <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
-                <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
-                  { ...Object.entries(this.addonsPrice).map(([key, value]) =>
-                    <li>{ key }: { value } { this.currency.code }</li>
-                  ) }
-                </ul>
-              </div>
+              { Object.keys(this.addonsPrice ?? {}).length > 0 &&
+                <div>
+                  <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
+                  <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
+                    { ...Object.entries(this.addonsPrice).map(([key, value]) =>
+                      <li>{ key }: { value } { this.currency.code }</li>
+                    ) }
+                  </ul>
+                </div>
+              }
 
               <div>
                 <span style="font-weight: 700">{ this.$t('Total') }: </span>
@@ -809,7 +816,7 @@ export default {
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
         onOk: () => {
-          const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+          const key = this.VM.product;
           const planCode = this.VM.billingPlan.products[key].meta.addons
             .find((addon) => addon.includes(action));
           this.actionLoading = true;
@@ -870,7 +877,7 @@ export default {
         .catch((err) => console.error(err));
     },
     fetchMonitoring() {
-      if (!this.VM?.uuidService) return;
+      if (!this.VM?.uuidService || true) return;
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
@@ -963,17 +970,17 @@ export default {
       return locationItem?.title ?? this.$t('No Data');
     },
     tariffTitle() {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const key = this.VM.product;
 
       return this.VM.billingPlan.products[key].title;
     },
     tariffPrice() {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const key = this.VM.product;
 
       return this.VM.billingPlan.products[key].price;
     },
     addonsPrice() {
-      return this.VM.config.addons.reduce((res, addon) => {
+      return this.VM.config.addons?.reduce((res, addon) => {
         const { price } = this.VM.billingPlan.resources.find(
           ({ key }) => key === `${this.VM.config.duration} ${addon}`
         );
@@ -988,8 +995,8 @@ export default {
       }, {});
     },
     fullPrice() {
-      return this.tariffPrice + Object.values(this.addonsPrice)
-        .reduce((sum, curr) => sum + curr);
+      return this.tariffPrice + Object.values(this.addonsPrice ?? {})
+        .reduce((sum, curr) => sum + curr, 0);
     },
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
@@ -1001,13 +1008,13 @@ export default {
       if (!this.VM?.billingPlan) return {};
       const tariffs = {};
       const { products } = this.VM.billingPlan;
-      const productKey = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const productKey = this.VM.product;
       const a = Object.values(products[productKey].resources)
-        .reduce((acc, curr) => +acc + +curr);
+        .reduce((acc, curr) => +acc + +curr, 0);
 
       Object.keys(products).forEach((key) => {
         const b = Object.values(products[key].resources)
-          .reduce((acc, curr) => +acc + +curr);
+          .reduce((acc, curr) => +acc + +curr, 0);
 
         if (b > a && products[key].period === products[productKey].period) {
           tariffs[key] = products[key];

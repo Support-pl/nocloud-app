@@ -207,14 +207,19 @@
           <div class="block__column block__column_table">
             <div class="block__title">{{ $t('Addons') }}</div>
           </div>
-          <div
-            class="block__column block__column_table block__column_price"
-            v-for="(price, addon) in addonsPrice"
-          >
-            <div class="block__title">{{ addon }}:</div>
-            <div class="block__value">
-              {{ +price.toFixed(2) }} {{ currency.code }}
+          <template v-if="Object.keys(addonsPrice).length > 0">
+            <div
+              class="block__column block__column_table block__column_price"
+              v-for="(price, addon) in addonsPrice"
+            >
+              <div class="block__title">{{ addon }}:</div>
+              <div class="block__value">
+                {{ +price.toFixed(2) }} {{ currency.code }}
+              </div>
             </div>
+          </template>
+          <div v-else class="block__column" style="align-items: flex-end">
+            <div class="block__value">0 {{ currency.code }}</div>
           </div>
 
           <div class="block__column block__column_table block__column_total">
@@ -771,14 +776,16 @@ export default {
             <div style="margin-top: 10px">
               <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
               { this.tariffPrice } { this.currency.code }
-              <div>
-                <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
-                <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
-                  { ...Object.entries(this.addonsPrice).map(([key, value]) =>
-                    <li>{ key }: { value } { this.currency.code }</li>
-                  ) }
-                </ul>
-              </div>
+              { Object.keys(this.addonsPrice).length > 0 &&
+                <div>
+                  <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
+                  <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
+                    { ...Object.entries(this.addonsPrice).map(([key, value]) =>
+                      <li>{ key }: { value } { this.currency.code }</li>
+                    ) }
+                  </ul>
+                </div>
+              }
 
               <div>
                 <span style="font-weight: 700">{ this.$t('Total') }: </span>
