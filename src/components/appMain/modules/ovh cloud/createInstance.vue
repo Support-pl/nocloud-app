@@ -94,6 +94,8 @@ export default {
   },
   created() {
     this.$emit('setData', { key: 'region', type: 'ovh', value: this.region.value });
+
+    this.$emit('setData', { key: 'cloud_datacenter', type: 'ovh', value: this.region.value });
   },
   computed: {
     resources() {

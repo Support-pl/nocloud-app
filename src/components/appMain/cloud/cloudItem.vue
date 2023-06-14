@@ -102,11 +102,13 @@ export default {
       const sp = this.getSP.find(({ uuid }) => uuid === this.instance.sp);
       if (sp?.type !== 'ovh') return sp?.locations[0]?.title;
 
-      const { configuration } = this.instance.config;
+      const { configuration = {}, region } = this.instance.config;
       const { locations } = sp;
       const key = Object.keys(configuration).find(
         (el) => el.includes('datacenter')
-      );
+      ) ?? 'region';
+
+      if (key === 'region') configuration.region = region;
 
       return locations?.find(({ extra }) =>
         extra.region.toLowerCase() === configuration[key].toLowerCase()

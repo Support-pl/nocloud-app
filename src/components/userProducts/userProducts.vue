@@ -273,7 +273,9 @@ export default {
               break;
             }
             case 'ovh': {
-              const key = `${inst.config.duration} ${inst.config.planCode}`;
+              const key = (inst.config.planCode)
+                ? `${inst.config.duration} ${inst.config.planCode}`
+                : inst.product;
 
               res.date = inst.data.expiration
               res.orderamount = inst.billingPlan.products[key]?.price ?? 0;

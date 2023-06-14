@@ -335,7 +335,7 @@ export default {
       products.forEach((key) => {
         const { title, price, meta, resources } = this.getPlan.products[key];
         const label = title;
-        const value = key.split(' ')[1];
+        const value = key.split(' ')[1].replace(`-${meta.region}`, '');
 
         const i = plans.findIndex((plan) => plan.value === value);
         const period = {
@@ -359,7 +359,7 @@ export default {
         const config = this.options.config.configuration;
         const datacenter = Object.keys(config).find((key) => key.includes('datacenter'));
 
-        // if (!meta.datacenter?.includes(config[datacenter])) return;
+        if (!meta.datacenter?.includes(config[datacenter])) return;
         if (i === -1) plans.push({ value, label, resources, periods: [period] });
         else plans[i].periods.push(period);
       });
