@@ -1116,7 +1116,7 @@ export default {
             this.product = product;
           } else if (
             (value.title.includes(this.productSize) && this.type !== 'cloud') ||
-            key.includes(`${period} ${this.productSize}-${this.options.config.region}`)
+            (value.title.includes(this.productSize) && value.resources.period === period)
           ) {
             this.product = { ...value, key };
           }
@@ -1288,13 +1288,9 @@ export default {
         };
 
         if (newInstance.config.type === 'cloud') {
-          delete newInstance.config.configuration;
-          delete newInstance.config.addons;
-
-          const { resources, meta } = this.getPlan.products[newInstance.product];
+          const { resources } = this.getPlan.products[newInstance.product];
 
           newInstance.resources = { ...resources, ips_private: 0, ips_public: 1 };
-          newInstance.config.flavorId = meta.id;
         }
       }
       if (this.itemService?.instancesGroups?.length < 1) {
@@ -1329,7 +1325,7 @@ export default {
               group.resources.ips_public = res.public;
 
               delete orderDataNew.instancesGroups;
-              if (this.checkBalance()) this.updateVM(orderDataNew);
+              if (this.checkBalance()) console.log(orderDataNew); // this.updateVM(orderDataNew);
             }, 300);
           });
       } else {
@@ -1354,7 +1350,7 @@ export default {
             ],
           },
         };
-        if (this.checkBalance()) this.orderVM(orderData);
+        // if (this.checkBalance()) this.orderVM(orderData);
       }
     },
     orderVM(orderData) {

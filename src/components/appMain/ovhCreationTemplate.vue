@@ -274,15 +274,7 @@ export default {
         this.$emit('setData', { key: 'priceOVH', value: this.price });
       }
 
-      if (this.type === 'cloud') {
-        this.$emit('setData', { key: 'imageId', value: item.id, type: 'ovh' });
-        return;
-      }
-
-      this.$emit('setData', {
-        key: `${(this.getPlan.type.includes('dedicated')) ? 'baremetal' : 'vps'}_os`,
-        value: item.name, type: 'ovh'
-      });
+      this.$emit('setData', { key: `${this.type}_os`, value: item.name, type: 'ovh' });
     },
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
@@ -335,7 +327,7 @@ export default {
       products.forEach((key) => {
         const { title, price, meta, resources } = this.getPlan.products[key];
         const label = title;
-        const value = key.split(' ')[1].replace(`-${meta.region}`, '');
+        const value = key.split(' ')[1];
 
         const i = plans.findIndex((plan) => plan.value === value);
         const period = {

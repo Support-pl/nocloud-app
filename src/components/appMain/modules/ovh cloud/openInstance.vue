@@ -6,7 +6,7 @@
         class="Fcloud__button"
         v-if="VM.state && VM.state.state !== 'STOPPED'"
         :class="{ disabled: statusVM.shutdown, }"
-        @click="sendAction('poweroff')"
+        @click="sendAction('stop_vm')"
       >
         <div class="Fcloud__BTN-icon">
           <div class="cloud__icon cloud__icon--stop"></div>
@@ -17,7 +17,7 @@
         v-else
         class="Fcloud__button"
         :class="{ disabled: statusVM.start, }"
-        @click="sendAction('resume')"
+        @click="sendAction('start_vm')"
       >
         <div class="Fcloud__BTN-icon">
           <a-icon type="caret-right" />
@@ -27,14 +27,38 @@
       <div
         class="Fcloud__button btn_disabled_wiggle"
         :class="{ disabled: statusVM.reboot }"
-        @click="sendAction('reboot')"
+        @click="openModal('reboot')"
       >
         <div class="Fcloud__BTN-icon">
           <a-icon type="redo" />
         </div>
         <div class="Fcloud__BTN-title">{{ $t("Reboot") }}</div>
+        <a-modal
+          v-model="modal.reboot"
+          :title="$t('cloud_Reboot_modal')"
+          @ok="sendAction('reboot_vm')"
+        >
+          <p>{{ $t("cloud_Reboot_invite") }}</p>
+          <a-radio-group
+            v-model="option.reboot"
+            name="rebootOption"
+            default-value="soft"
+          >
+            <a-radio value="soft">
+              <a-tag color="green" :style="{ 'margin-bottom': '10px' }">
+                {{ $t("cloud_Regular") }}
+              </a-tag>
+              {{ $t("cloud_Reboot_modal") }}
+            </a-radio>
+            <a-radio value="hard">
+              <a-tag color="red"> HARD </a-tag>
+              {{ $t("cloud_Reboot_modal") }}
+            </a-radio>
+          </a-radio-group>
+        </a-modal>
       </div>
       <div
+        v-if="false"
         class="Fcloud__button"
         @click="openModal('recover')"
         :class="{ disabled: statusVM.recover }"
@@ -227,7 +251,7 @@
           <div class="block__column">
             <div class="block__title">CPU</div>
             <div class="block__value">
-              {{ VM.resources.cpu }}
+              {{ VM.resources.vcpus }}
             </div>
           </div>
           <div class="block__column">
@@ -247,13 +271,13 @@
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Type") }}</div>
             <div class="block__value">
-              {{ VM.resources.drive_type }}
+              {{ VM.resources.drive_type ?? 'SSD' }}
             </div>
           </div>
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Size") }}</div>
             <div class="block__value">
-              {{ (VM.resources.drive_size / 1024).toFixed(2) }} GB
+              {{ VM.resources.disk }} GB
             </div>
           </div>
         </div>
@@ -342,6 +366,7 @@
               shape="round"
               block
               size="large"
+              v-show="false"
               @click="openModal('snapshot')"
             >
               {{ $t("Snapshots") }}
@@ -530,7 +555,7 @@ export default {
       },
     },
     option: {
-      reboot: 0,
+      reboot: "soft",
       shutdown: 0,
       recover: 0
     },
@@ -854,6 +879,9 @@ export default {
       if (action === "get_upgrade_price") {
         data.params = { newPlanCode: this.planCode };
       }
+      if (action === "reboot_vm") {
+        data.params = { type: this.option.reboot };
+      }
 
       return this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
         .then((res) => {
@@ -871,7 +899,7 @@ export default {
     openVNC() {
       this.$store.dispatch('nocloud/vms/actionVMInvoke', {
         uuid: this.$route.params.uuid,
-        action: 'start_vnc'
+        action: 'start_vnc_vm'
       })
 				.then(({ meta }) => location.href = meta.url)
         .catch((err) => console.error(err));
@@ -957,9 +985,11 @@ export default {
       return this.getSP.find((el) => el.uuid === this.VM.sp);
     },
     osName() {
-      const type = this.VM.billingPlan.type.split(' ')[1];
+      const key = this.VM.product;
+      const { os } = this.VM.billingPlan.products[key].meta;
+      const { name } = os.find(({ id }) => id === this.VM.config.imageId) ?? {};
 
-      return this.VM.config.configuration[`${type}_os`];
+      return name ?? this.$t('No Data');
     },
     locationTitle() {
       if (!this.VM?.config.configuration) return this.dataSP.title;
@@ -1001,7 +1031,7 @@ export default {
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
-      return { code: this.user.currency ?? defaultCurrency };
+      return { code: this.user.currency_code ?? defaultCurrency };
     },
 
     tariffs() {
