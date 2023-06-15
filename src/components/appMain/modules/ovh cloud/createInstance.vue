@@ -88,19 +88,17 @@ export default {
 
       if (changeTarifs) this.$emit('setData', { key: 'periods', value: tarifs });
       this.$emit('setData', { key: 'priceOVH', value: this.price });
-      this.$emit('setData', { key: 'flavorId', value, type: 'ovh' });
+      this.$emit('setData', { key: 'planCode', value, type: 'ovh' });
       this.$emit('setData', { key: 'monthlyBilling', value: (plan.duration === 'P1M'), type: 'ovh' });
     }
   },
   created() {
-    this.$emit('setData', { key: 'region', type: 'ovh', value: this.region.value });
-
     this.$emit('setData', { key: 'cloud_datacenter', type: 'ovh', value: this.region.value });
   },
   computed: {
     resources() {
       const plans = new Set(this.plans.map(({ label }) =>
-        label.split(' ')[1].replace(`-${this.region.value}`, '')
+        label.split(' ').at(-1).replace(`-${this.region.value}`, '')
       ));
 
       return { plans: Array.from(plans), ram: [], disk: [] };
@@ -128,13 +126,18 @@ export default {
     },
   },
   watch: {
-    tarification() { this.setData(this.plan, false) },
+    tarification() {
+      const plan = this.plans.find((el) => el.label.includes(this.plan));
+
+      this.setData(plan.value, false);
+    },
     plan(value) {
-      const plan = this.plans.find((el) => el.value.includes(value));
-      const products = Object.entries(this.getPlan.products ?? {}).filter(
-        ([key]) => key.includes(value)
+      const plan = this.plans.find((el) => el.label.includes(value));
+      const period = (this.mode === 'default') ? 'P1M' : 'P1H';
+      const products = Object.values(this.getPlan.products ?? {}).filter((product) =>
+        product.title.includes(value) && product.resources.period === period
       );
-      const { os } = products[0][1].meta;
+      const { os } = products[0].meta;
 
       this.setData(plan?.value);
       this.$emit('setData', { key: 'productSize', value });
