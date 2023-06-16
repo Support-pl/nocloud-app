@@ -274,6 +274,10 @@ export default {
         this.$emit('setData', { key: 'priceOVH', value: this.price });
       }
 
+      if (this.type === 'cloud') {
+        this.$emit('setData', { key: 'cloud_os', value: item.id, type: 'ovh' });
+        return;
+      }
       this.$emit('setData', { key: `${this.type}_os`, value: item.name, type: 'ovh' });
     },
     osName(name) {
