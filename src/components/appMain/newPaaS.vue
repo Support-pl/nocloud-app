@@ -302,7 +302,7 @@
               type="flex"
               justify="space-between"
               style="width: 100%; margin-top: 10px"
-              v-if="getPlans.length > 1 && itemSP.type !== 'ione'"
+              v-if="filteredPlans.length > 1 && itemSP.type !== 'ione'"
             >
               <a-col style="width: 100%">
                 <a-select
@@ -1325,7 +1325,7 @@ export default {
               group.resources.ips_public = res.public;
 
               delete orderDataNew.instancesGroups;
-              if (this.checkBalance()) console.log(orderDataNew); // this.updateVM(orderDataNew);
+              if (this.checkBalance()) this.updateVM(orderDataNew);
             }, 300);
           });
       } else {
@@ -1350,7 +1350,7 @@ export default {
             ],
           },
         };
-        // if (this.checkBalance()) this.orderVM(orderData);
+        if (this.checkBalance()) this.orderVM(orderData);
       }
     },
     orderVM(orderData) {

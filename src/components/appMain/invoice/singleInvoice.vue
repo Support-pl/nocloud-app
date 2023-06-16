@@ -6,6 +6,7 @@
       </div>
     </div>
     <div class="invoice__middle">
+      <div class="invoice__prefix">{{ $t('net total') | capitalize }}:</div>
       <div class="invoice__cost" :style="{ color: statusColor }">
         {{ total }} {{ user.currency_code }}
       </div>
@@ -195,6 +196,11 @@ export default {
 }
 .invoice__middle {
   display: flex;
+  align-items: center;
+}
+.invoice__prefix {
+  margin-right: 5px;
+  color: var(--gray);
 }
 .invoice__cost {
   flex: 2 1 0;

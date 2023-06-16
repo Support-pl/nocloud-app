@@ -86,6 +86,7 @@
                   show-search
                   option-filter-prop="children"
                   v-model="form.countryname"
+                  :disabled="userData.country_stop === 1"
                 >
                   <a-select-option
                     v-for="country in Object.keys(countries)"
@@ -297,12 +298,6 @@ export default {
   mounted() {
     if (!('firstname' in this.userData)) this.fetchInfo();
     else this.installDataToBuffer();
-  },
-  watch: {
-    'form.countryname'() {
-      if (this.form.phonenumber.includes(this.phonecode)) return;
-      this.form.phonenumber = `+${this.form.phonenumber}`;
-    }
   }
 };
 </script>

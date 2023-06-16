@@ -187,12 +187,12 @@ export default {
   methods: {
     cloudClick({ groupname, orderid, hostingid }, { target }) {
       if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return;
-      if (['Domains', 'SSL'].includes(groupname)) {
-        this.$router.push({ name: 'service', params: { id: orderid } });
+      if (hostingid) {
+        this.$router.push({ name: 'service', params: { id: hostingid } });
       } else if (groupname === 'Self-Service VDS SSD HC') {
         this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } });
       } else {
-        this.$router.push({ name: 'service', params: { id: hostingid } });
+        this.$router.push({ name: 'service', params: { id: orderid } });
       }
     },
   },

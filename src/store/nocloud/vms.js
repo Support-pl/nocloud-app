@@ -135,14 +135,10 @@ export default {
 		},
 		updateService({ dispatch, commit, rootState }, data) {
 			return new Promise((resolve, reject) => {
-				api.services._update(data)
-          .then(response => {
-            commit('setInstances', { service: response, rootState, dispatch })
-            resolve(response)
-          })
-					.catch(error => {
-						reject(error);
-					})
+				setTimeout(() => {
+          commit('setInstances', { service: data, rootState, dispatch })
+          resolve(data)
+        }, 3000)
 			})
 		},
 		subscribeWebSocket({ commit, state }, uuid) {
