@@ -102,11 +102,13 @@ export default {
       const sp = this.getSP.find(({ uuid }) => uuid === this.instance.sp);
       if (sp?.type !== 'ovh') return sp?.locations[0]?.title;
 
-      const { configuration } = this.instance.config;
+      const { configuration = {}, region } = this.instance.config;
       const { locations } = sp;
       const key = Object.keys(configuration).find(
         (el) => el.includes('datacenter')
-      );
+      ) ?? 'region';
+
+      if (key === 'region') configuration.region = region;
 
       return locations?.find(({ extra }) =>
         extra.region.toLowerCase() === configuration[key].toLowerCase()
@@ -185,12 +187,12 @@ export default {
   methods: {
     cloudClick({ groupname, orderid, hostingid }, { target }) {
       if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return;
-      if (['Domains', 'SSL'].includes(groupname)) {
-        this.$router.push({ name: 'service', params: { id: orderid } });
+      if (hostingid) {
+        this.$router.push({ name: 'service', params: { id: hostingid } });
       } else if (groupname === 'Self-Service VDS SSD HC') {
         this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } });
       } else {
-        this.$router.push({ name: 'service', params: { id: hostingid } });
+        this.$router.push({ name: 'service', params: { id: orderid } });
       }
     },
   },

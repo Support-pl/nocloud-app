@@ -274,15 +274,7 @@ export default {
         this.$emit('setData', { key: 'priceOVH', value: this.price });
       }
 
-      if (this.type === 'cloud') {
-        this.$emit('setData', { key: 'imageId', value: item.id, type: 'ovh' });
-        return;
-      }
-
-      this.$emit('setData', {
-        key: `${(this.getPlan.type.includes('dedicated')) ? 'baremetal' : 'vps'}_os`,
-        value: item.name, type: 'ovh'
-      });
+      this.$emit('setData', { key: `${this.type}_os`, value: item.name, type: 'ovh' });
     },
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
@@ -345,11 +337,12 @@ export default {
         };
 
         switch (key.split(' ')[0]) {
-          case 'hourly':
+          case 'P1H':
             period.pricingMode = 'hourly';
             break;
           case 'P1Y':
             period.pricingMode = 'upfront12';
+            break;
           default:
             period.pricingMode = 'default';
         }
@@ -359,7 +352,7 @@ export default {
         const config = this.options.config.configuration;
         const datacenter = Object.keys(config).find((key) => key.includes('datacenter'));
 
-        // if (!meta.datacenter?.includes(config[datacenter])) return;
+        if (!meta.datacenter?.includes(config[datacenter])) return;
         if (i === -1) plans.push({ value, label, resources, periods: [period] });
         else plans[i].periods.push(period);
       });

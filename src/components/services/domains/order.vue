@@ -644,7 +644,7 @@ export default {
     }
   },
   created() {
-    this.$store.dispatch('nocloud/plans/fetch', { anonimously: !this.isLogged })
+    this.$store.dispatch('nocloud/plans/fetch', { anonymously: !this.isLogged })
       .then(() => {
         if (this.plans.length === 1) this.plan = this.plans[0].uuid;
       })

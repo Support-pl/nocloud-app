@@ -825,6 +825,7 @@ export default {
   opacity: 0.8;
   transform: scale(0.8);
   color: #c9c9c9;
+  pointer-events: none;
 }
 .Fcloud__button.disabled .Fcloud__BTN-title {
   color: var(--bright_font);

@@ -302,7 +302,7 @@
               type="flex"
               justify="space-between"
               style="width: 100%; margin-top: 10px"
-              v-if="getPlans.length > 1 && itemSP.type !== 'ione'"
+              v-if="filteredPlans.length > 1 && itemSP.type !== 'ione'"
             >
               <a-col style="width: 100%">
                 <a-select
@@ -470,8 +470,9 @@
                 shape="round"
                 v-if="
                   activeKey &&
-                  (activeKey !== 'addons' && itemSP.type === 'ovh') ||
-                  (activeKey !== 'OS' && itemSP.type !== 'ovh')
+                  (activeKey !== 'addons' && itemSP.type === 'ovh' && !getPlan.type?.includes('cloud')) ||
+                  (activeKey !== 'OS' && itemSP.type !== 'ovh') ||
+                  (activeKey !== 'OS' && getPlan.type?.includes('cloud'))
                 "
                 @click="nextStep"
               >
@@ -525,15 +526,12 @@
                 </template>
 
 
-                <!-- <a-row style="margin-top: 20px">
+                <a-row style="margin-top: 20px">
                   <a-col>
-                    <a-checkbox
-                      :checked="modal.goToInvoice"
-                      @change="(e) => (modal.goToInvoice = e.target.checked)"
-                    />
-                    {{ $t("go to invoice") | capitalize }}
+                    <a-checkbox v-model="modal.autoRenew" />
+                    {{ $t("renew automatically") | capitalize }}
                   </a-col>
-                </a-row> -->
+                </a-row>
               </a-modal>
             </a-col>
             <a-col
@@ -724,6 +722,7 @@ export default {
         confirmCreate: false,
         confirmLoading: false,
         goToInvoice: false,
+        autoRenew: true
       },
     };
   },
@@ -1106,6 +1105,8 @@ export default {
 
         if (!plan) return;
         for (let [key, value] of Object.entries(plan.products ?? {})) {
+          const period = (this.options.config.monthlyBilling) ? 'P1M' : 'P1H';
+
           if (value.title === this.productSize) {
             const product = { ...value, key };
 
@@ -1114,8 +1115,8 @@ export default {
             this.options.disk.size = product.resources.disk ?? 20 * 1024;
             this.product = product;
           } else if (
-            value.title.includes(this.productSize) ||
-            key.includes(this.productSize)
+            (value.title.includes(this.productSize) && this.type !== 'cloud') ||
+            (value.title.includes(this.productSize) && value.resources.period === period)
           ) {
             this.product = { ...value, key };
           }
@@ -1248,6 +1249,7 @@ export default {
           template_id: this.options.os.id,
           password: this.password,
           ssh_public_key: this.sshKey,
+          auto_renew: this.modal.autoRenew
         },
         resources: {
           cpu: this.options.cpu.size,
@@ -1279,10 +1281,16 @@ export default {
       // -------------------------------------
       //update service
       if (newGroup.type === 'ovh') {
-        newInstance.config = { type: this.getPlan.type.split(' ')[1], ...this.options.config };
+        newInstance.config = {
+          ...this.options.config,
+          type: this.getPlan.type.split(' ')[1],
+          auto_renew: this.modal.autoRenew
+        };
+
         if (newInstance.config.type === 'cloud') {
-          delete newInstance.config.configuration;
-          delete newInstance.config.addons;
+          const { resources } = this.getPlan.products[newInstance.product];
+
+          newInstance.resources = { ...resources, ips_private: 0, ips_public: 1 };
         }
       }
       if (this.itemService?.instancesGroups?.length < 1) {
@@ -1309,8 +1317,8 @@ export default {
               group.instances.push(newInstance);
 
               const res = group.instances.reduce((prev, curr) => ({
-                private: prev.private + curr.resources.ips_private,
-                public: prev.public + curr.resources.ips_public
+                private: prev.private + (curr.resources.ips_private ?? 0),
+                public: prev.public + (curr.resources.ips_public ?? 0)
               }), { private: 0, public: 0 });
 
               group.resources.ips_private = res.private;
