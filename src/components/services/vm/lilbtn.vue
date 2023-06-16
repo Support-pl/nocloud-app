@@ -23,7 +23,7 @@ export default {
   components: { addFunds },
 	props: ['service', 'price', 'currency'],
   data: () => ({
-    addfunds: { visible: false, amount: 0 }
+    addfunds: { visible: false, amount: 0, isLoading: false }
   }),
 	methods: {
 		moduleEnter() {
@@ -57,6 +57,17 @@ export default {
             </div>
 
             <div style="margin-top: 10px">
+              <span style="line-height: 1.7">{ this.$t('Automatic renewal') }: </span>
+              <a-switch
+                size="small"
+                loading={ this.isLoading }
+                checked={ this.service.data.auto_renew }
+                onChange={ this.onChange }
+              />
+            </div>
+
+            <div style="margin-top: 10px">
+              <div>{ this.$t('Manual renewal') }:</div>
               <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
               { price } { this.currency.code }
               { this.addonsPrice && <div>
@@ -97,6 +108,31 @@ export default {
         onCancel() {},
       });
 		},
+    onChange(value) {
+      const services = this.$store.getters['nocloud/vms/getServicesFull'];
+      const service = services.find(({ uuid }) => uuid === this.service.uuidService);
+      const instance = service.instancesGroups
+        .find(({ sp }) => sp === this.service.sp).instances
+        .find(({ uuid }) => uuid === this.service.uuid);
+
+      this.isLoading = true;
+      instance.data.auto_renew = value;
+      this.$store.dispatch('nocloud/vms/updateService', service)
+        .then(() => {
+          const message = this.$t('Done');
+
+          this.$notification.success({ message });
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
+
+          this.$notification.error({ message });
+          console.error(err);
+        })
+        .finally(() => {
+          this.isLoading = false;
+        });
+    },
     checkBalance() {
       if (this.user.balance < parseFloat(this.price)) {
         this.$confirm({

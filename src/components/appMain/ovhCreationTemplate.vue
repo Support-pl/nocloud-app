@@ -342,6 +342,7 @@ export default {
             break;
           case 'P1Y':
             period.pricingMode = 'upfront12';
+            break;
           default:
             period.pricingMode = 'default';
         }

@@ -277,7 +277,7 @@ export default {
                 ? `${inst.config.duration} ${inst.config.planCode}`
                 : inst.product;
 
-              res.date = inst.data.expiration
+              res.date = inst.data.expiration ?? inst.data.last_monitoring * 1000;
               res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
 
               inst.config.addons?.forEach((addon) => {

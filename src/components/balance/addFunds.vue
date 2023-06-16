@@ -71,7 +71,8 @@ export default {
           this.hideModal();
           this.confirmLoading = false;
           if (!this.stay) {
-            this.$router.push({ path: `/invoice/${res.invoiceid}` });
+            localStorage.setItem('order', 'Invoice');
+            this.$router.push('/invoice');
           } else {
             this.$message.success(`Now look invoice#${res.invoiceid}`);
           }
