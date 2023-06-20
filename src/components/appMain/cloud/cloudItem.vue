@@ -126,6 +126,7 @@ export default {
       if (this.instance.data?.blocked) return this.$t('filterHeader.In Progress');
       if (this.isPayg) return this.$t('PayG');
       if (productDate.getTime() === 0) return 'none';
+      if (this.instance.date === '0000-00-00') return 'none';
       // if (this.wholeProduct.groupname === 'Domains') {
       //   const date = productDate.getTime();
 
