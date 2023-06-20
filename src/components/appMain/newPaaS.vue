@@ -663,7 +663,6 @@ export default {
       tarification: "",
       showcase: "",
       locationId: "Location",
-      type: 'vps',
       vmName: "",
       password: "",
       sshKey: undefined,
@@ -784,7 +783,7 @@ export default {
     },
     template() {
       if (this.itemSP?.type.includes('ovh')) {
-        const type = `ovh ${this.type}`;
+        const { type = 'ovh vps' } = this.getPlan ?? {};
 
         return () => import(`@/components/appMain/modules/${type}/createInstance.vue`);
       } else {
@@ -794,7 +793,10 @@ export default {
     addons() {
       const addons = { ...this.priceOVH.addons };
 
-      if (this.type === 'dedicated') delete addons.disk;
+      if (this.getPlan.type?.includes('dedicated')) {
+        delete addons.disk;
+      }
+
       delete addons.os;
       delete addons.ram;
       return addons;
@@ -1115,7 +1117,7 @@ export default {
             this.options.disk.size = product.resources.disk ?? 20 * 1024;
             this.product = product;
           } else if (
-            (value.title.includes(this.productSize) && this.type !== 'cloud') ||
+            (value.title.includes(this.productSize) && !this.getPlan.type.includes('cloud')) ||
             (value.title.includes(this.productSize) && value.resources.period === period)
           ) {
             this.product = { ...value, key };
@@ -1216,6 +1218,8 @@ export default {
       const year = day * 365;
 
       switch (+timestamp) {
+        case 3600:
+          return 'Hourly';
         case day:
           return 'Daily';
         case month:
@@ -1550,6 +1554,16 @@ export default {
 
         this.plan = item.uuid;
         this.setData({ key: 'productSize', value: this.getProducts[1] ?? this.getProducts[0] });
+      } else if (this.getPlan.type.includes('cloud')) {
+        setTimeout(() => {
+          const period = (this.options.config.monthlyBilling) ? 'P1M' : 'P1H';
+          const { planCode } = this.options.config;
+
+          this.product = {
+            ...this.getPlan.products[`${period} ${planCode}`],
+            key : `${period} ${planCode}`
+          };
+        }, 100);
       }
     },
     periods(periods) {
@@ -1585,8 +1599,6 @@ export default {
         } else if (this.dataLocalStorage.locationId) {
           this.tarification = this.periods[0]?.value ?? '';
         }
-
-        if (this.getPlan.type?.includes('ovh')) this.type = this.getPlan.type?.split(' ')[1];
       });
 
       const type = this.options.drive ? "SSD" : "HDD";

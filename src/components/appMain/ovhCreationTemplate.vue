@@ -20,13 +20,6 @@
     >
       <template v-if="!isFlavorsLoading">
         <a-row type="flex" align="middle" style="margin-bottom: 15px">
-          <a-col span="24" v-if="types.length > 1">
-            <a-radio-group v-model="type" @change="$emit('changeType', type)">
-              <a-radio-button v-for="value of types" :key="value" :value="value">
-                {{ value }}
-              </a-radio-button>
-            </a-radio-group>
-          </a-col>
           <a-col span="24" v-if="resources.plans.length < 6 && resources.plans.length > 1">
             <a-slider
               style="margin-top: 10px"
@@ -143,7 +136,7 @@
               />
             </a-form-item>
 
-            <a-form-item v-if="type === 'cloud'" :label="$t('SSH key')">
+            <a-form-item v-if="getPlan.type?.includes('cloud')" :label="$t('SSH key')">
               <a-select
                 style="width: 100%"
                 v-if="user.data?.ssh_keys?.length > 0"
@@ -204,7 +197,7 @@
     <!-- Addons -->
     <a-collapse-panel
       key="addons"
-      v-if="type !== 'cloud'"
+      v-if="!getPlan.type?.includes('cloud')"
       :disabled="!itemSP || isFlavorsLoading || !plan"
       :header="$t('Addons') + ':'"
       :style="{ 'border-radius': '0 0 20px 20px' }"
@@ -259,7 +252,7 @@ export default {
     addonsCodes: { type: Object, required: true },
     price: { type: Object, required: true }
   },
-  data: () => ({ isFlavorsLoading: false, type: '', panelHeight: null }),
+  data: () => ({ isFlavorsLoading: false, panelHeight: null }),
   methods: {
     setOS(item, index) {
       if (item.warning) return;
@@ -274,11 +267,13 @@ export default {
         this.$emit('setData', { key: 'priceOVH', value: this.price });
       }
 
-      if (this.type === 'cloud') {
+      if (this.getPlan.type.includes('cloud')) {
         this.$emit('setData', { key: 'cloud_os', value: item.id, type: 'ovh' });
         return;
       }
-      this.$emit('setData', { key: `${this.type}_os`, value: item.name, type: 'ovh' });
+
+      const type = this.getPlan.type.split(' ')[1];
+      this.$emit('setData', { key: `${type}_os`, value: item.name, type: 'ovh' });
     },
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
@@ -398,9 +393,7 @@ export default {
       });
     }
   },
-  created() {
-    this.type = this.getPlan.type?.split(' ')[1] ?? this.types[0] ?? 'vps';
-  },
+  created() { this.changePlans() },
   beforeMount() { this.changePanelHeight() },
   computed: {
     user() {
@@ -457,16 +450,10 @@ export default {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
-    },
-    types() {
-      const plans = this.$store.getters['nocloud/plans/getPlans'].map(({ type }) => type);
-
-      return ['vps', 'dedicated', 'cloud'].filter((type) => plans.includes(`ovh ${type}`));
     }
   },
   watch: {
     getPlan() { this.changePlans() },
-    type() { if (this.getPlan.type?.includes('ovh')) this.changePlans() },
     activeKey() { this.changePanelHeight() },
     addons(value) {
       const data = (localStorage.getItem('data'))
