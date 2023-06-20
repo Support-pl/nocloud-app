@@ -15,7 +15,9 @@ export default {
 	},
 	mutations: {
 		setProducts(state, data) {
-			state.products = data;
+			state.products = data.map((product) => ({
+        ...product, nextduedate: product.ORDER_INFO?.date
+      }));
 		},
     setServices(state, data) {
       state.services = data;
