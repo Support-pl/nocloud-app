@@ -87,12 +87,12 @@
               class="card-item"
               v-for="addon of addons[getProducts.id]"
               :key="addon.id"
-              :class="{ 'card-item--active': options.addons.includes(addon.id) }"
               @click="changeAddons(addon.id)"
             >
-              <div class="order__slider-name">
+              <div class="order__slider-name" style="grid-template-columns: 1fr auto">
                 <span style="font-weight: 700; font-size: 16px" v-html="addon.name"></span>
-                <span v-html="addon.description"></span>
+                <a-checkbox :checked="options.addons.includes(addon.id)" />
+                <span style="grid-column: 1 / 3" v-html="addon.description"></span>
               </div>
             </a-card-grid>
           </a-card>
@@ -100,6 +100,24 @@
 			</div>
 
 			<div class="order__calculate order__field">
+        <a-row style="margin-top: 20px" type="flex" justify="space-around" align="middle">
+          <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
+            {{ $t('Payment method') | capitalize }}:
+          </a-col>
+          <a-col :xs="12" :sm="18" :lg="12">
+            <a-select style="width: 100%" v-if="!fetchLoading" v-model="options.payment">
+              <a-select-option
+                v-for="method of payMethods"
+                :key="method.module"
+                :value="method.module"
+              >
+                {{ method.displayname }}
+              </a-select-option>
+            </a-select>
+            <div v-else class="loadingLine"></div>
+          </a-col>
+        </a-row>
+
 				<a-row
           style="margin-top: 20px"
           type="flex"
@@ -123,24 +141,6 @@
 						<div v-else class="loadingLine"></div>
 					</a-col>
 				</a-row>
-
-        <a-row style="margin-top: 20px" type="flex" justify="space-around" align="middle">
-          <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
-            {{ $t('Payment method') | capitalize }}:
-          </a-col>
-          <a-col :xs="12" :sm="18" :lg="12">
-            <a-select style="width: 100%" v-if="!fetchLoading" v-model="options.payment">
-              <a-select-option
-                v-for="method of payMethods"
-                :key="method.module"
-                :value="method.module"
-              >
-                {{ method.displayname }}
-              </a-select-option>
-            </a-select>
-            <div v-else class="loadingLine"></div>
-          </a-col>
-        </a-row>
 
         <a-row
           style="margin-top: 20px"
@@ -269,9 +269,10 @@ export default {
             const desc = description.replace('/templates', `${this.$config.WHMCSsiteurl}$&`,);
             const start = desc.indexOf('<img');
             const end = desc.indexOf('">', start);
+            const image = desc.slice(start, end + 2);
 
-            this.products[i].description = desc;
-            this.products[i].name = `${desc.slice(start, end + 2)} ${this.products[i].name}`;
+            this.products[i].description = desc.replace(image, '');
+            this.products[i].name = `${image} ${this.products[i].name}`;
           });
 
           this.sizes = this.products.map((el) => el.name);
@@ -423,7 +424,7 @@ export default {
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
       const code = this.user.currency_code ?? defaultCurrency;
-      const { id } = this.currencies.find((currency) => currency.code === code);
+      const { id = -1 } = this.currencies?.find((currency) => currency.code === code) ?? {};
 
       return { code, id };
     },

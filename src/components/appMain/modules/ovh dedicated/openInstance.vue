@@ -238,13 +238,13 @@
           <div class="block__column">
             <div class="block__title">CPU</div>
             <div class="block__value">
-              {{ VM.resources.cpu }}
+              {{ VM.resources.cpu ?? $t('No Data') }}
             </div>
           </div>
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Memory") }}</div>
             <div class="block__value">
-              {{ (VM.resources.ram / 1024).toFixed(2) }} GB
+              {{ VM.resources.ram }} GB
             </div>
           </div>
         </div>
@@ -258,13 +258,13 @@
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Type") }}</div>
             <div class="block__value">
-              {{ VM.resources.drive_type }}
+              {{ VM.resources.drive }}
             </div>
           </div>
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Size") }}</div>
             <div class="block__value">
-              {{ (VM.resources.drive_size / 1024).toFixed(2) }} GB
+              {{ (VM.resources.disk / 1024).toFixed(2) }} GB
             </div>
           </div>
         </div>
@@ -997,10 +997,10 @@ export default {
         );
         let key = '';
 
-        if (addon.includes('additional')) key = this.$t('adds drive');
-        if (addon.includes('snapshot')) key = this.$t('Snapshot');
-        if (addon.includes('backup')) key = this.$t('Backup');
-        if (addon.includes('windows')) key = this.$t('Windows');
+        if (addon.includes('ram')) return res;
+        if (addon.includes('raid')) return res;
+        if (addon.includes('vrack')) key = this.$t('vrack');
+        if (addon.includes('bandwidth')) key = this.$t('traffic');
 
         return { ...res, [key]: +price };
       }, {});
