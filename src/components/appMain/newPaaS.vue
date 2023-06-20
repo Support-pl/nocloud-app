@@ -1295,6 +1295,8 @@ export default {
           const { resources } = this.getPlan.products[newInstance.product];
 
           newInstance.resources = { ...resources, ips_private: 0, ips_public: 1 };
+          newGroup.config = { ssh: newInstance.config.ssh };
+          delete newInstance.config.ssh;
         }
       }
       if (this.itemService?.instancesGroups?.length < 1) {
@@ -1317,6 +1319,9 @@ export default {
               if (!group) {
                 orderDataNew.instances_groups.push(newGroup);
                 group = orderDataNew.instances_groups.at(-1);
+              }
+              if (newInstance.config.type === 'cloud') {
+                group.config = { ssh: this.options.config.ssh };
               }
               group.instances.push(newInstance);
 
@@ -1354,6 +1359,10 @@ export default {
             ],
           },
         };
+
+        if (newInstance.config.type === 'cloud') {
+          orderData.service.instances_groups[0].config = this.options.config.ssh;
+        }
         if (this.checkBalance()) this.orderVM(orderData);
       }
     },
