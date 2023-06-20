@@ -18,51 +18,44 @@ export default {
 		setServices(state, services) {
 			state.services = services;
 		},
-		setInstances(state, { service, rootState, dispatch }) {
+		setInstances(state, { service, rootState }) {
       state.instances = state.instances.filter(({ uuidService }) =>
         uuidService !== service.uuid
       )
 
-      const { currencies } = rootState.nocloud.auth
-      const promise = (currencies.length < 1)
-        ? dispatch('nocloud/auth/fetchCurrencies', null, { root: true })
-        : new Promise((resolve) => resolve())
+      service.instancesGroups.forEach(group => {
+        group.instances.forEach(inst => {
+          const {
+            currencies,
+            defaultCurrency,
+            billingUser: { currency_code = 'USD' }
+          } = rootState.nocloud.auth;
 
-      promise.then(() => {
-        service.instancesGroups.forEach(group => {
-          group.instances.forEach(inst => {
-            const {
-              currencies,
-              defaultCurrency,
-              billingUser: { currency_code = 'USD' }
-            } = rootState.nocloud.auth;
+          const { rate } = currencies.find((el) =>
+            el.from === defaultCurrency && el.to === currency_code
+          ) ?? {};
 
-            const { rate } = currencies.find((el) =>
-              el.from === defaultCurrency && el.to === currency_code
-            ) ?? {};
+          const { rate: reverseRate } = currencies.find((el) =>
+            el.to === defaultCurrency && el.from === currency_code
+          ) ?? { rate: 1 };
 
-            const { rate: reverseRate } = currencies.find((el) =>
-              el.to === defaultCurrency && el.from === currency_code
-            ) ?? { rate: 1 };
+          const resources = inst.billingPlan.resources.map((res) => ({
+            ...res, price: +(res.price * (rate ? rate : reverseRate)).toFixed(2)
+          }));
+          const products = {};
 
-            const resources = inst.billingPlan.resources.map((res) => ({
-              ...res, price: +(res.price * (rate ? rate : reverseRate)).toFixed(2)
-            }));
-            const products = {};
+          Object.entries(inst.billingPlan.products).forEach(([key, value]) => {
+            products[key] = {
+              ...value, price: +(value.price * (rate ? rate : reverseRate)).toFixed(2)
+            };
+          });
 
-            Object.entries(inst.billingPlan.products).forEach(([key, value]) => {
-              products[key] = {
-                ...value, price: +(value.price * (rate ? rate : reverseRate)).toFixed(2)
-              };
-            });
-
-            state.instances.push({
-              ...inst,
-              uuidService: service.uuid,
-              type: group.type,
-              sp: group.sp,
-              billingPlan: { ...inst.billingPlan, resources, products }
-            })
+          state.instances.push({
+            ...inst,
+            uuidService: service.uuid,
+            type: group.type,
+            sp: group.sp,
+            billingPlan: { ...inst.billingPlan, resources, products }
           })
         })
       })
@@ -103,10 +96,14 @@ export default {
 			return new Promise((resolve, reject) => {
 				commit("setLoading", !silent);
 				api.services.list()
-					.then(response => {
+					.then(async (response) => {
+            if (rootState.nocloud.auth.currencies.length < 1) {
+              await dispatch('nocloud/auth/fetchCurrencies', null, { root: true })
+            }
+
 						commit('setServices', response.pool);
             response.pool.forEach((service) => {
-              commit("setInstances", { service, rootState, dispatch });
+              commit("setInstances", { service, rootState });
               commit('setServicesFull', service);
             });
 						resolve(response);
@@ -119,11 +116,11 @@ export default {
 					})
 			})
 		},
-		createService({ dispatch, commit, rootState }, data) {
+		createService({ commit, rootState }, data) {
 			return new Promise((resolve, reject) => {
 				api.services._create(data)
 					.then(response => {
-						commit('setInstances', { service: response, rootState, dispatch })
+						commit('setInstances', { service: response, rootState })
 						resolve(response)
 					})
 					.catch(error => {
@@ -133,11 +130,11 @@ export default {
 					})
 			})
 		},
-		updateService({ dispatch, commit, rootState }, data) {
+		updateService({ commit, rootState }, data) {
 			return new Promise((resolve, reject) => {
 				api.services._update(data)
           .then(response => {
-            commit('setInstances', { service: response, rootState, dispatch })
+            commit('setInstances', { service: response, rootState })
             resolve(response)
           })
 					.catch(error => {
