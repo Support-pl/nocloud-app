@@ -23,7 +23,8 @@ export default {
   components: { addFunds },
 	props: ['service', 'price', 'currency'],
   data: () => ({
-    addfunds: { visible: false, amount: 0, isLoading: false }
+    addfunds: { visible: false, amount: 0 },
+    isLoading: false
   }),
 	methods: {
 		moduleEnter() {

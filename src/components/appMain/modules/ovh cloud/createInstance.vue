@@ -20,7 +20,6 @@
     @setData="(value) => $emit('setData', value)"
     @changePlans="(value) => plans = value"
     @changePlan="(value) => plan = value"
-    @changeType="(value) => $emit('setData', { key: 'type', value })"
   >
     <template v-slot:location>
       <slot name="location"></slot>
@@ -137,7 +136,7 @@ export default {
       const products = Object.values(this.getPlan.products ?? {}).filter((product) =>
         product.title.includes(value) && product.resources.period === period
       );
-      const { os } = products[0].meta;
+      const { os } = products[0]?.meta ?? {};
 
       this.setData(plan?.value);
       this.$emit('setData', { key: 'productSize', value });

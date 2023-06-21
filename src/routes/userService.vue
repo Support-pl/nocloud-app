@@ -21,6 +21,20 @@
             </div>
           </div>
 
+          <div class="service-page__info">
+            <div class="service-page__info-title">
+              {{ $t('Actions') }}:
+              <div style="display: inline-flex; gap: 8px">
+                <a-button size="small" @click="sendRenew">
+                  {{ $t('renew') | capitalize }}
+                </a-button>
+                <a-button size="small" type="danger" @click="sendDelete">
+                  {{ $t('Delete') }}
+                </a-button>
+              </div>
+            </div>
+          </div>
+
           <div class="service-page__info" v-if="service.ORDER_INFO">
             <div class="service-page__info-title">
               {{ $t("invoice status") | capitalize }}:
@@ -171,6 +185,74 @@ export default {
   name: "user-service-view",
   components: { loading },
   data: () => ({ service: null, info }),
+  methods: {
+    sendRenew() {
+			this.$confirm({
+        title: this.$t('Do you want to renew service?'),
+        okText: this.$t('Yes'),
+        cancelText: this.$t('Cancel'),
+        okButtonProps: {
+          props: { disabled: (this.service.data.blocked) },
+        },
+        onOk: async () => {
+          const data = { uuid: this.service.uuid, action: 'manual_renew' };
+
+          return this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
+            .then(() => {
+              this.$notification.success({ message: `Done!` });
+              this.$set(this.service.data, 'blocked', true);
+            })
+            .catch((err) => {
+              this.$notification.error({
+                message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`,
+              });
+              console.error(err);
+            });
+        },
+        onCancel() {},
+      });
+		},
+    sendDelete() {
+      this.$confirm({
+        title: this.$t('Do you want to delete this service?'),
+        okType: 'danger',
+        okText: this.$t('Yes'),
+        cancelText: this.$t('Cancel'),
+        content: () => (
+          <div style="color:red">{ this.$t('All data will be deleted!') }</div>
+        ),
+        onOk: async () => {
+          return this.$store
+            .dispatch("nocloud/vms/deleteInstance", this.service.uuid)
+            .then(() => {
+              this.$notification.success({ message: `Done!` });
+              this.$router.push({ path: '/cloud' });
+            })
+            .catch((err) => {
+              this.$notification.error({
+                message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`,
+              });
+              console.error(err);
+            });
+        },
+        onCancel() {},
+      });
+    },
+    date(timestamp) {
+      if (timestamp < 1) return '-';
+
+      const date = new Date(timestamp * 1000);
+
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
+
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
+
+      return `${year}-${month}-${day}`;
+    }
+  },
   created() {
     this.$store.dispatch('nocloud/vms/fetch')
       .then(() => {
@@ -180,33 +262,50 @@ export default {
         let date = 'year';
 
         if (!domain) return new Promise((resolve) => resolve({ meta: null }));
-        if (domain.billingPlan.type === 'goget') {
-          domain.data.expiry = {
-            expiredate: '0000-00-00',
-            regdate: '0000-00-00'
-          };
-          groupname = 'SSL';
-          date = 'month';
-        } else if (domain.billingPlan.type === 'opensrs') {
-          const { period } = domain.resources;
-          const { expiredate } = domain.data.expiry;
-          const year = parseInt(expiredate) - period;
+        switch (domain.billingPlan.type) {
+          case 'virtual': {
+            domain.data.expiry = {
+              expiredate: this.date(domain.data.last_monitoring),
+              regdate: '0000-00-00'
+            };
+            groupname = 'Custom';
+            date = 'month';
+            break;
+          }
+          case 'goget': {
+            domain.data.expiry = {
+              expiredate: '0000-00-00',
+              regdate: '0000-00-00'
+            };
+            groupname = 'SSL';
+            date = 'month';
+            break;
+          }
 
-          domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`;
-        } else {
-          const key = Object.keys(domain.config.items)[0];
-          const { period } = domain.billingPlan.products[key];
+          case 'opensrs': {
+            const { period } = domain.resources;
+            const { expiredate } = domain.data.expiry;
+            const year = parseInt(expiredate) - period;
 
-          domain.resources = {
-            period: this.date(period),
-            recurringamount: domain.config.items.reduce((sum, key) =>
-              sum + domain.billingPlan.products[key].price, 0
-            )
-          };
-          domain.data.expiry = {
-            expiredate: domain.data.expires_at.split('T')[0],
-            regdate: '?'
-          };
+            domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`;
+            break;
+          }
+
+          default: {
+            const key = Object.keys(domain.config.items)[0];
+            const { period } = domain.billingPlan.products[key];
+
+            domain.resources = {
+              period: this.date(period),
+              recurringamount: domain.config.items.reduce((sum, key) =>
+                sum + domain.billingPlan.products[key].price, 0
+              )
+            };
+            domain.data.expiry = {
+              expiredate: domain.data.expires_at.split('T')[0],
+              regdate: '?'
+            };
+          }
         }
 
         const { period } = domain.resources;
@@ -215,20 +314,23 @@ export default {
         this.service = {
           ...domain,
           groupname,
+          regdate,
           name: domain.title,
           status: `cloudStateItem.${domain.state?.state || 'UNKNOWN'}`,
           domain: domain.resources.domain,
           billingcycle: this.$tc(date, period),
-          recurringamount: '?',
-          regdate, nextduedate: expiredate
+          recurringamount: domain.billingPlan.products[domain.product]?.price ?? '?',
+          nextduedate: expiredate
         };
         info[0].type = '';
 
-        return this.$api.servicesProviders.action({
-          uuid: domain.sp,
-          action: 'get_domain_price',
-          params: { domain: this.service.domain },
-        });
+        if (this.service.recurringamount === '?') {
+          return this.$api.servicesProviders.action({
+            uuid: domain.sp,
+            action: 'get_domain_price',
+            params: { domain: this.service.domain },
+          });
+        }
       })
       .then(({ meta }) => {
         if (meta) {
@@ -246,7 +348,7 @@ export default {
 
         this.service = this.products.find(({ id }) => id === this.$route.params.id);
       })
-      .then((res) => {
+      .then(() => {
         this.service = this.products.find(({ id }) => id === this.$route.params.id);
       })
       .catch((err) => console.error(err));
@@ -271,7 +373,8 @@ export default {
       return this.$store.getters['products/getProducts'];
     },
     getTagColor() {
-      switch (this.service.status) {
+      switch (this.service.status.replace('cloudStateItem.', '')) {
+        case "RUNNING":
         case "Active":
           return "green";
         case "Pending":
