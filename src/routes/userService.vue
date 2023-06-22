@@ -259,6 +259,7 @@ export default {
     }
   },
   created() {
+    this.$store.dispatch('nocloud/auth/fetchBillingData');
     this.$store.dispatch('nocloud/vms/fetch')
       .then(() => {
         const domain = this.$store.getters['nocloud/vms/getInstances']
@@ -351,10 +352,10 @@ export default {
           return this.$store.dispatch('products/fetch', client_id);
         }
 
-        this.service = this.products.find(({ id }) => id === this.$route.params.id);
+        this.service = this.products.find(({ id }) => id == this.$route.params.id);
       })
       .then(() => {
-        this.service = this.products.find(({ id }) => id === this.$route.params.id);
+        this.service = this.products.find(({ id }) => id == this.$route.params.id);
       })
       .catch((err) => console.error(err));
 
