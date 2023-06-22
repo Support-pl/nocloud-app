@@ -30,16 +30,16 @@ export default {
 		moduleEnter() {
       if (!this.checkBalance()) return;
 
-      const key = (this.service.config.planCode)
+      const key = (!this.service.product)
         ? `${this.service.config.duration} ${this.service.config.planCode}`
         : this.service.product;
       const { period, price } = this.service.billingPlan.products[key];
 
-      const currentPeriod = (this.service.billingPlan.type.includes('ovh'))
+      const currentPeriod = (this.service.data.expiration)
         ? this.service.data.expiration
         : this.date(null, this.service.data.last_monitoring);
 
-      const newPeriod = (this.service.billingPlan.type.includes('ovh'))
+      const newPeriod = (this.service.data.expiration)
         ? this.date(this.service.data.expiration, +period)
         : this.date(null, this.service.data.last_monitoring + +period);
 

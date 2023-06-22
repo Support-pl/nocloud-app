@@ -61,7 +61,7 @@ export default {
 
       const product = Object.entries(this.getPlan.products).find(([key]) => key.includes(value));
       const { meta: { addons } } = this.getPlan.products[`${duration} ${value}`] ?? product[1];
-      let addonKey = addons?.find(({ id }) => id.includes(resource.value));
+      let addonKey = addons?.find(({ id }) => id.includes(resource.value))?.id;
       let plan = periods[0];
       const tarifs = [];
 
@@ -75,7 +75,7 @@ export default {
           const [count, size] = id.split('-')[1].split('x');
 
           return isDisk && (count * parseInt(size)) === resource.value;
-        });
+        })?.id;
         const [count, size] = addonKey?.split('-')[1].split('x') ?? ['0', '0'];
 
         this.options.disk.size = count * parseInt(size) * 1024;

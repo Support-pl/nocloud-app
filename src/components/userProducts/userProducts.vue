@@ -273,7 +273,7 @@ export default {
               break;
             }
             case 'ovh': {
-              const key = (inst.config.planCode)
+              const key = (!inst.product)
                 ? `${inst.config.duration} ${inst.config.planCode}`
                 : inst.product;
 

@@ -277,7 +277,7 @@
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Size") }}</div>
             <div class="block__value">
-              {{ VM.resources.drive_size }} GB
+              {{ (VM.resources.drive_size / 1024).toFixed(2) }} GB
             </div>
           </div>
         </div>

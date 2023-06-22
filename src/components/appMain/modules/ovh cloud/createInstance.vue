@@ -18,7 +18,7 @@
     :addonsCodes="addonsCodes"
     :price="price"
     @setData="(value) => $emit('setData', value)"
-    @changePlans="(value) => plans = value"
+    @changePlans="setPlans"
     @changePlan="(value) => plan = value"
   >
     <template v-slot:location>
@@ -62,7 +62,7 @@ export default {
 
       this.options.cpu.size = +resources.cpu;
       this.options.ram.size = +(resources.ram / 1024).toFixed(2);
-      this.options.disk.size = resources.drive_size * 1024;
+      this.options.disk.size = resources.drive_size;
       this.options.drive = true;
 
       periods.forEach((period) => {
@@ -89,6 +89,11 @@ export default {
       this.$emit('setData', { key: 'priceOVH', value: this.price });
       this.$emit('setData', { key: 'planCode', value, type: 'ovh' });
       this.$emit('setData', { key: 'monthlyBilling', value: (plan.duration === 'P1M'), type: 'ovh' });
+    },
+    setPlans(value) {
+      this.plans = value.sort((a, b) =>
+        a.periods[0].price.value - b.periods[0].price.value
+      );
     }
   },
   created() {
@@ -126,23 +131,26 @@ export default {
   },
   watch: {
     tarification() {
-      const plan = this.plans.find((el) => el.label.includes(this.plan));
+      const plan = this.plans.find((el) => el.label === this.plan);
 
       this.setData(plan.value, false);
     },
     plan(value) {
-      const plan = this.plans.find((el) => el.label.includes(value));
-      const period = (this.mode === 'default') ? 'P1M' : 'P1H';
-      const products = Object.values(this.getPlan.products ?? {}).filter((product) =>
-        product.title.includes(value) && product.resources.period === period
-      );
-      const { os } = products[0]?.meta ?? {};
+      const plan = this.plans.find((el) => el.label === value);
 
       this.setData(plan?.value);
       this.$emit('setData', { key: 'productSize', value });
 
-      os?.sort((a, b) => a.name < b.name);
-      this.images = os?.map(({ name, id }) => ({ name, desc: name, id })) ?? [];
+      setTimeout(() => {
+        const period = (this.mode === 'default') ? 'P1M' : 'P1H';
+        const products = Object.values(this.getPlan.products ?? {}).filter((product) =>
+          product.title.includes(value) && product.resources.period === period
+        );
+        const { os } = products[0]?.meta ?? {};
+
+        os?.sort((a, b) => a.name < b.name);
+        this.images = os?.map(({ name, id }) => ({ name, desc: name, id })) ?? [];
+      }, 100);
     }
   }
 }
