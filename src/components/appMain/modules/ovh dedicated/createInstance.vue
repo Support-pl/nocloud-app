@@ -61,7 +61,7 @@ export default {
 
       const product = Object.entries(this.getPlan.products).find(([key]) => key.includes(value));
       const { meta: { addons } } = this.getPlan.products[`${duration} ${value}`] ?? product[1];
-      let addonKey = addons?.find((addon) => addon.includes(resource.value));
+      let addonKey = addons?.find(({ id }) => id.includes(resource.value));
       let plan = periods[0];
       const tarifs = [];
 
@@ -70,9 +70,9 @@ export default {
         this.options.ram.size = parseInt(addonKey?.split('-')[1] ?? 0);
       }
       if (resource.key === 'disk') {
-        addonKey = addons?.find((addon) => {
-          const isDisk = addon.includes('raid');
-          const [count, size] = addon.split('-')[1].split('x');
+        addonKey = addons?.find(({ id }) => {
+          const isDisk = id.includes('raid');
+          const [count, size] = id.split('-')[1].split('x');
 
           return isDisk && (count * parseInt(size)) === resource.value;
         });
@@ -143,13 +143,13 @@ export default {
       const { meta: { addons } } = this.getPlan.products[`${duration} ${value}`] ??
         Object.values(this.getPlan.products)[0];
 
-      addons?.forEach((addon) => {
-        if (!this.getPlan.resources.find(({ key }) => key === `${duration} ${addon}`)) return;
-        if (addon.includes('ram')) {
-          ram.add(parseInt(addon.split('-')[1]));
+      addons?.forEach(({ id }) => {
+        if (!this.getPlan.resources.find(({ key }) => key === `${duration} ${id}`)) return;
+        if (id.includes('ram')) {
+          ram.add(parseInt(id.split('-')[1]));
         }
-        if (addon.includes('raid')) {
-          const [count, size] = addon.split('-')[1].split('x');
+        if (id.includes('raid')) {
+          const [count, size] = id.split('-')[1].split('x');
 
           disk.add(count * parseInt(size));
         }

@@ -251,7 +251,7 @@
           <div class="block__column">
             <div class="block__title">CPU</div>
             <div class="block__value">
-              {{ VM.resources.vcpus }}
+              {{ VM.resources.cpu }}
             </div>
           </div>
           <div class="block__column">
@@ -277,7 +277,7 @@
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Size") }}</div>
             <div class="block__value">
-              {{ VM.resources.disk }} GB
+              {{ VM.resources.drive_size }} GB
             </div>
           </div>
         </div>

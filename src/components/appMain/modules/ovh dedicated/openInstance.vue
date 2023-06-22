@@ -258,13 +258,13 @@
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Type") }}</div>
             <div class="block__value">
-              {{ VM.resources.drive }}
+              {{ VM.resources.drive_type }}
             </div>
           </div>
           <div class="block__column">
             <div class="block__title">{{ $t("cloud_Size") }}</div>
             <div class="block__value">
-              {{ (VM.resources.disk / 1024).toFixed(2) }} GB
+              {{ (VM.resources.drive_size / 1024).toFixed(2) }} GB
             </div>
           </div>
         </div>
@@ -991,16 +991,16 @@ export default {
       return this.VM.billingPlan.products[key].price;
     },
     addonsPrice() {
-      return this.VM.config.addons?.reduce((res, addon) => {
+      return this.VM.config.addons?.reduce((res, { id }) => {
         const { price } = this.VM.billingPlan.resources.find(
-          ({ key }) => key === `${this.VM.config.duration} ${addon}`
+          ({ key }) => key === `${this.VM.config.duration} ${id}`
         );
         let key = '';
 
-        if (addon.includes('ram')) return res;
-        if (addon.includes('raid')) return res;
-        if (addon.includes('vrack')) key = this.$t('vrack');
-        if (addon.includes('bandwidth')) key = this.$t('traffic');
+        if (id.includes('ram')) return res;
+        if (id.includes('raid')) return res;
+        if (id.includes('vrack')) key = this.$t('vrack');
+        if (id.includes('bandwidth')) key = this.$t('traffic');
 
         return { ...res, [key]: +price };
       }, {});

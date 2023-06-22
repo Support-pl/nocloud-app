@@ -369,7 +369,7 @@ export default {
 
       if (typeof product.description !== 'string') return product
       if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
-        if (typeof product.price.currency === 'string') return product
+        if (typeof product.price?.currency === 'string') return product
 
         if (product.paytype === 'free') {
           product.price = { value: 0, currency: '' }
