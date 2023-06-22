@@ -60,9 +60,9 @@ export default {
       const tarifs = [];
       let plan = periods[0];
 
-      this.options.cpu.size = +resources.vcpus;
+      this.options.cpu.size = +resources.cpu;
       this.options.ram.size = +(resources.ram / 1024).toFixed(2);
-      this.options.disk.size = resources.disk * 1024;
+      this.options.disk.size = resources.drive_size * 1024;
       this.options.drive = true;
 
       periods.forEach((period) => {

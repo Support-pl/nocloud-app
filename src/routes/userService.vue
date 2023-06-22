@@ -4,11 +4,16 @@
       <div class="service-page-card">
         <template v-if="service">
           <div class="service-page__header">
-            <div class="service-page__title">
-              {{ service.name }}
-            </div>
-            <div v-if="service.domain" class="service-page__domain">
+            <div class="service-page__title">{{ service.name }}</div>
+            <!-- <div v-if="service.domain" class="service-page__domain">
               <a :href="service.domain">{{ service.domain }}</a>
+            </div> -->
+          </div>
+
+          <div class="service-page__info" v-if="service.domain">
+            <div class="service-page__info-title">
+              {{ $t('key') | capitalize }}:
+              <span style="font-weight: 400">{{ service.domain }}</span>
             </div>
           </div>
 
@@ -21,7 +26,7 @@
             </div>
           </div>
 
-          <div class="service-page__info">
+          <div class="service-page__info" v-if="!service.clientid">
             <div class="service-page__info-title">
               {{ $t('Actions') }}:
               <div style="display: inline-flex; gap: 8px">

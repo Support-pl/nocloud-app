@@ -109,7 +109,12 @@ export default {
   },
   computed: {
     resources() {
-      const plans = new Set(this.plans.map(({ label }) => label.split(' ')[1]));
+      const plans = new Set(this.plans.map(({ label }) => {
+        const array = label.split(' ');
+
+        return array.slice(1, array.length - 1).join(' ');
+      }));
+
       const ram = new Set();
       const disk = new Set();
 
