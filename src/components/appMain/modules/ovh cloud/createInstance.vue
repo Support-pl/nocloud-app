@@ -101,9 +101,7 @@ export default {
   },
   computed: {
     resources() {
-      const plans = new Set(this.plans.map(({ label }) =>
-        label.split(' ').at(-1).replace(`-${this.region.value}`, '')
-      ));
+      const plans = new Set(this.plans.map(({ label }) => label));
 
       return { plans: Array.from(plans), ram: [], disk: [] };
     },

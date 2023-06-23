@@ -46,16 +46,13 @@
               <a-tag :color="getInvoiceStatusColor">
                 {{ $t("invoice_" + service.ORDER_INFO.invoicestatus) }}
               </a-tag>
-              <router-link
-                :to="{
-                  name: 'invoiceFS',
-                  params: { uuid: service.ORDER_INFO.invoiceid },
-                }"
+              <a-button
+                size="small"
+                type="primary"
+                @click="clickOnInvoice(service.ORDER_INFO.invoiceid)"
               >
-                <a-button size="small" type="primary">
-                  {{ $t("open") }}
-                </a-button>
-              </router-link>
+                {{ $t("open") }}
+              </a-button>
             </div>
           </div>
 
@@ -191,6 +188,16 @@ export default {
   components: { loading },
   data: () => ({ service: null, info }),
   methods: {
+    clickOnInvoice(invoice_id) {
+      const url = this.$store.getters['nocloud/auth/getURL'];
+
+      this.$api.get(url, { params: {
+        run: 'get_pay_token', invoice_id
+      }})
+        .then((res) => {
+          window.location.href = res;
+        });
+    },
     sendRenew() {
 			this.$confirm({
         title: this.$t('Do you want to renew service?'),
