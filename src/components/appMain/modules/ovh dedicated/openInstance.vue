@@ -1,86 +1,14 @@
 <template>
   <div class="Fcloud">
     <slot name="header" />
-    <div class="Fcloud__buttons" v-if="!VM.state && false">
-      <div class="Fcloud__button" @click="deployService()">
+    <div class="Fcloud__buttons" v-if="VM.state">
+      <div class="Fcloud__button" @click="openActions">
         <div class="Fcloud__BTN-icon">
-          <a-icon type="deployment-unit" />
+          <a-icon :type="(actionLoading) ? 'loading' : 'deployment-unit'" />
         </div>
         <div class="Fcloud__BTN-title">
-          <!-- {{$t('Start')}} -->
-          {{ $t('Deploy') }}
+          {{ $t('open') | capitalize }}
         </div>
-      </div>
-    </div>
-    <div class="Fcloud__buttons" v-else>
-      <div
-        class="Fcloud__button"
-        v-if="VM.state && VM.state.state !== 'STOPPED'"
-        :class="{ disabled: statusVM.shutdown, }"
-        @click="sendAction('poweroff')"
-      >
-        <div class="Fcloud__BTN-icon">
-          <div class="cloud__icon cloud__icon--stop"></div>
-        </div>
-        <div class="Fcloud__BTN-title">{{ $t("Power off") }}</div>
-      </div>
-      <div
-        v-else
-        class="Fcloud__button"
-        :class="{ disabled: statusVM.start, }"
-        @click="sendAction('resume')"
-      >
-        <div class="Fcloud__BTN-icon">
-          <a-icon type="caret-right" />
-        </div>
-        <div class="Fcloud__BTN-title">{{ $t("Start") }}</div>
-      </div>
-      <div
-        class="Fcloud__button btn_disabled_wiggle"
-        :class="{ disabled: statusVM.reboot }"
-        @click="sendAction('reboot')"
-      >
-        <div class="Fcloud__BTN-icon">
-          <a-icon type="redo" />
-        </div>
-        <div class="Fcloud__BTN-title">{{ $t("Reboot") }}</div>
-      </div>
-      <div
-        class="Fcloud__button"
-        @click="openModal('recover')"
-        :class="{ disabled: statusVM.recover }"
-      >
-        <div class="Fcloud__BTN-icon">
-          <a-icon type="backward" />
-        </div>
-        <div class="Fcloud__BTN-title">{{ $t("Recover") }}</div>
-        <a-modal
-          v-model="modal.recover"
-          :title="$t('cloud_Recover_modal')"
-          @ok="sendRecover"
-        >
-          <template v-if="VM.config.addons?.find((el) => el.includes('backup'))">
-            <p>{{ $t("cloud_Recover_invite_line1") }}</p>
-            <p>{{ $t("cloud_Recover_invite_line2") }}</p>
-            <p>{{ $t("cloud_Recover_invite_line3") }}</p>
-            <p>{{ $t("cloud_Recover_invite") }}</p>
-            <a-spin :tip="$t('loading')" :spinning="actionLoading">
-              <a-radio-group name="recover" v-model="option.recover">
-                <a-radio v-for="date of dates" :key="date" :value="date">{{ date }}</a-radio>
-              </a-radio-group>
-            </a-spin>
-          </template>
-          <a-button
-            v-else
-            type="primary"
-            shape="round"
-            size="large"
-            :loading="actionLoading"
-            @click="sendAddingAddon('backup')"
-          >
-            {{ $t("Add recover") }}
-          </a-button>
-        </a-modal>
       </div>
     </div>
 
@@ -552,23 +480,33 @@ export default {
     isSwitchLoading: false,
   }),
   methods: {
-    deployService() {
+    async openActions() {
+      if (this.actionLoading) return;
       this.actionLoading = true;
-      this.$api.services
-        .up(this.VM.uuidService)
-        .then(() => {
-          const opts = {
-            message: `${this.$t('Done')}!`,
-          };
-          this.openNotificationWithIcon("success", opts);
+
+      const regexp = /[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}/;
+      const response = await fetch('https://www.cloudflare.com/cdn-cgi/trace');
+      const text = await response.text();
+      const ip = text.match(regexp)[0];
+
+      this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+        uuid: this.VM.uuid, action: 'ipmi', params: { ip }
+      })
+        .then(({ result, meta }) => {
+          if (result) location.assign(meta.url);
+          else {
+            this.openNotificationWithIcon("success", {
+              message: `${this.$t(meta.message)}`
+            });
+
+            setTimeout(this.openActions, 30 * 1000);
+          }
         })
         .catch((err) => {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
           this.openNotificationWithIcon("error", opts);
-        })
-        .finally(() => {
           this.actionLoading = false;
         });
     },
@@ -994,15 +932,16 @@ export default {
       return this.VM.config.addons?.reduce((res, { id }) => {
         const { price } = this.VM.billingPlan.resources.find(
           ({ key }) => key === `${this.VM.config.duration} ${id}`
-        );
+        ) ?? {};
         let key = '';
 
+        if (!id) return res;
         if (id.includes('ram')) return res;
         if (id.includes('raid')) return res;
         if (id.includes('vrack')) key = this.$t('vrack');
         if (id.includes('bandwidth')) key = this.$t('traffic');
 
-        return { ...res, [key]: +price };
+        return { ...res, [key]: +price || 0 };
       }, {});
     },
     fullPrice() {

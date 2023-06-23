@@ -325,7 +325,7 @@ export default {
 			this.$api.get(this.baseURL, { params: info })
         .then((result) => {
           if (this.modal.goToInvoice){
-            this.$router.push({ name: 'invoiceFS', params: { uuid: result.invoiceid } });
+            this.getPaytoken(result.invoiceid);
           } else {
             this.$router.push({ name: 'services' });
           }
@@ -360,6 +360,12 @@ export default {
         return false;
       }
       return true;
+    },
+    getPaytoken(invoice_id) {
+      this.$api.get(this.baseURL, { params: {
+        run: 'get_pay_token', invoice_id
+      }})
+        .then((res) => { window.location.href = res });
     }
 	},
 	computed: {

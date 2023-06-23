@@ -136,7 +136,10 @@
               />
             </a-form-item>
 
-            <a-form-item v-if="getPlan.type?.includes('cloud')" :label="$t('SSH key')">
+            <a-form-item
+              v-if="getPlan.type?.includes('cloud') && !options.isSSHExist"
+              :label="$t('SSH key')"
+            >
               <a-select
                 style="width: 100%"
                 v-if="user.data?.ssh_keys?.length > 0"

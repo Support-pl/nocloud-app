@@ -144,7 +144,7 @@ export default {
         Object.values(this.getPlan.products)[0];
 
       addons?.forEach(({ id }) => {
-        if (!this.getPlan.resources.find(({ key }) => key === `${duration} ${id}`)) return;
+        if (!this.getPlan.resources.find(({ key }) => key === `${duration} ${value} ${id}`)) return;
         if (id.includes('ram')) {
           ram.add(parseInt(id.split('-')[1]));
         }

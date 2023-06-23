@@ -681,6 +681,7 @@ export default {
         // period: "monthly",
         period: "1",
         size: "VDS L",
+        isSSHExist: false,
         isOnCalc: false,
         highCPU: false, // 1 highCPU, 0 basicCPU
         drive: false,
@@ -1601,6 +1602,14 @@ export default {
       setTimeout(() => {
         this.tarification = periods[0]?.value ?? '';
       });
+    },
+    itemService(service) {
+      const group = service.instancesGroups.find(({ type }) =>
+        this.getPlan.type.includes(type)
+      );
+
+      if (group.config.ssh) this.options.isSSHExist = true;
+      else this.options.isSSHExist = false;
     },
     locationId() {
       if (!this.dataLocalStorage.config) {

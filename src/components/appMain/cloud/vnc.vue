@@ -245,7 +245,7 @@ export default {
 
     this.$store.dispatch('nocloud/vms/fetch')
       .catch((err) => {
-        this.$router.replace('/cloud');
+        this.$router.replace('/services');
         alert(err);
       });
 	},

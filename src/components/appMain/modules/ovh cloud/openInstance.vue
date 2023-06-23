@@ -768,7 +768,7 @@ export default {
       });
     },
     sendRenew() {
-      const key = this.VM.product;
+      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`;
       const { period } = this.VM.billingPlan.products[key];
       const currentPeriod = this.VM.data.expiration;
       const newPeriod = this.date(this.VM.data.expiration, +period);
@@ -841,7 +841,7 @@ export default {
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
         onOk: () => {
-          const key = this.VM.product;
+          const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`;
           const planCode = this.VM.billingPlan.products[key].meta.addons
             .find((addon) => addon.includes(action));
           this.actionLoading = true;
@@ -985,9 +985,12 @@ export default {
       return this.getSP.find((el) => el.uuid === this.VM.sp);
     },
     osName() {
-      const key = this.VM.product;
+      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const type = this.VM.billingPlan.type.split(' ')[1];
+      const imageId = this.VM.config.configuration[`${type}_os`];
+
       const { os } = this.VM.billingPlan.products[key].meta;
-      const { name } = os.find(({ id }) => id === this.VM.config.imageId) ?? {};
+      const { name } = os.find(({ id }) => id === imageId) ?? {};
 
       return name ?? this.$t('No Data');
     },
@@ -1000,12 +1003,12 @@ export default {
       return locationItem?.title ?? this.$t('No Data');
     },
     tariffTitle() {
-      const key = this.VM.product;
+      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`;
 
       return this.VM.billingPlan.products[key].title;
     },
     tariffPrice() {
-      const key = this.VM.product;
+      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`;
 
       return this.VM.billingPlan.products[key].price;
     },
@@ -1038,7 +1041,7 @@ export default {
       if (!this.VM?.billingPlan) return {};
       const tariffs = {};
       const { products } = this.VM.billingPlan;
-      const productKey = this.VM.product;
+      const productKey = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`;
       const a = Object.values(products[productKey].resources)
         .reduce((acc, curr) => +acc + +curr, 0);
 

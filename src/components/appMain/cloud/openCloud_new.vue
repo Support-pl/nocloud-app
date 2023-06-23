@@ -644,7 +644,7 @@ export default {
                   message: this.$t("VM deleted successfully"),
                 });
 
-                this.$router.push({ path: '/cloud' });
+                this.$router.push({ path: '/services' });
               } else {
                 this.openNotificationWithIcon("error", {
                   message: this.$t("Failed to delete VM"),
