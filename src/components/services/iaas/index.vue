@@ -325,7 +325,7 @@ export default {
 			this.$api.get(this.baseURL, { params: info })
         .then((result) => {
           if (this.modal.goToInvoice){
-            this.$router.push({ name: 'invoiceFS', params: { uuid: result.invoiceid } });
+            this.getPaytoken(result.invoiceid);
           } else {
             this.$router.push({ name: 'services' });
           }
@@ -360,6 +360,12 @@ export default {
         return false;
       }
       return true;
+    },
+    getPaytoken(invoice_id) {
+      this.$api.get(this.baseURL, { params: {
+        run: 'get_pay_token', invoice_id
+      }})
+        .then((res) => { window.location.href = res });
     }
 	},
 	computed: {
@@ -369,7 +375,7 @@ export default {
 
       if (typeof product.description !== 'string') return product
       if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
-        if (typeof product.price.currency === 'string') return product
+        if (typeof product.price?.currency === 'string') return product
 
         if (product.paytype === 'free') {
           product.price = { value: 0, currency: '' }

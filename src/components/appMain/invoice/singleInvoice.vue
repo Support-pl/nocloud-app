@@ -115,7 +115,7 @@ export default {
           });
         } else this.getPaytoken(uuid);
       } else {
-        this.$router.push({ name: "invoiceFS", params: { uuid } });
+        this.getPaytoken(uuid);
       }
     },
     getPaytoken(invoice_id) {

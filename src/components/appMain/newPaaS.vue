@@ -49,7 +49,11 @@
                 </a-select>
 
                 <div style="overflow: hidden; margin-top: 15px">
-                  <a-spin :tip="$t('loading')" :spinning="isPlansLoading">
+                  <a-spin
+                    style="display: block; margin: 0 auto"
+                    :tip="$t('loading')"
+                    :spinning="isPlansLoading"
+                  >
                     <nc-map v-if="locations.length" v-model="locationId" :markers="locations" />
                   </a-spin>
                 </div>
@@ -657,6 +661,7 @@ export default {
       productSize: "",
       activeKey: "location",
       periods: [],
+      allPlans: [],
       plan: undefined,
       service: undefined,
       namespace: undefined,
@@ -676,6 +681,7 @@ export default {
         // period: "monthly",
         period: "1",
         size: "VDS L",
+        isSSHExist: false,
         isOnCalc: false,
         highCPU: false, // 1 highCPU, 0 basicCPU
         drive: false,
@@ -750,6 +756,17 @@ export default {
         if (this.showcase && !(sp.meta.showcase ?? {})[this.showcase]) return;
 
         sp.locations.forEach((location) => {
+          const plan = this.allPlans.find(({ type, uuid }) => {
+            if (this.showcase === '') return true;
+            const { billing_plans } = sp.meta.showcase[this.showcase];
+            const isTypesEqual = type === location.type;
+            const isPlanInclude = billing_plans?.includes(uuid);
+
+            if (location.type === '') return true;
+            return isTypesEqual && isPlanInclude;
+          });
+          if (!plan) return;
+
           const id = `${sp.title} ${location.id}`;
 
           locations.push({ ...location, sp: sp.uuid, id });
@@ -998,6 +1015,9 @@ export default {
   },
   created() {
     this.showcase = this.$route.query.service ?? "";
+    this.$store.dispatch("nocloud/plans/fetch", { anonymously: !this.isLoggedIn })
+      .then(({ pool }) => { this.allPlans = pool });
+
     this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
       .then(() => {
         const data = localStorage.getItem("data");
@@ -1563,7 +1583,7 @@ export default {
 
         this.plan = item.uuid;
         this.setData({ key: 'productSize', value: this.getProducts[1] ?? this.getProducts[0] });
-      } else if (this.getPlan.type.includes('cloud')) {
+      } else if (this.getPlan.type?.includes('cloud')) {
         setTimeout(() => {
           const period = (this.options.config.monthlyBilling) ? 'P1M' : 'P1H';
           const { planCode } = this.options.config;
@@ -1582,6 +1602,14 @@ export default {
       setTimeout(() => {
         this.tarification = periods[0]?.value ?? '';
       });
+    },
+    itemService(service) {
+      const group = service.instancesGroups.find(({ type }) =>
+        this.getPlan.type.includes(type)
+      );
+
+      if (group.config.ssh) this.options.isSSHExist = true;
+      else this.options.isSSHExist = false;
     },
     locationId() {
       if (!this.dataLocalStorage.config) {

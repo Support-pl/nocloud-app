@@ -68,14 +68,6 @@ const routes = [
 				component: () => import('../routes/services.vue')
 			},
 			{
-				path: 'cloud',
-				name: 'cloud',
-				meta: {
-					mustBeLoggined: false,
-				},
-				component: () => import('../routes/cloud.vue')
-			},
-			{
 				path: 'services',
 				name: 'services',
 				meta: {

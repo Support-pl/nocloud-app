@@ -172,7 +172,7 @@ export default {
       }})
       .then(({ invoiceid }) => {
         this.$notification.success({ message: this.$t('Done') });
-        this.$router.push({ name: 'invoiceFS', params: { uuid: invoiceid } });
+        this.getPaytoken(invoiceid);
       })
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
@@ -183,6 +183,12 @@ export default {
       .finally(() => {
         this.isPayLoading = false;
       });
+    },
+    getPaytoken(invoice_id) {
+      this.$api.get(this.baseURL, { params: {
+        run: 'get_pay_token', invoice_id
+      }})
+        .then((res) => { window.location.href = res });
     }
   },
   created() {

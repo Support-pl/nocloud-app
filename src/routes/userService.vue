@@ -4,11 +4,16 @@
       <div class="service-page-card">
         <template v-if="service">
           <div class="service-page__header">
-            <div class="service-page__title">
-              {{ service.name }}
-            </div>
-            <div v-if="service.domain" class="service-page__domain">
+            <div class="service-page__title">{{ service.name }}</div>
+            <!-- <div v-if="service.domain" class="service-page__domain">
               <a :href="service.domain">{{ service.domain }}</a>
+            </div> -->
+          </div>
+
+          <div class="service-page__info" v-if="service.domain">
+            <div class="service-page__info-title">
+              {{ $t('key') | capitalize }}:
+              <span style="font-weight: 400">{{ service.domain }}</span>
             </div>
           </div>
 
@@ -21,7 +26,7 @@
             </div>
           </div>
 
-          <div class="service-page__info">
+          <div class="service-page__info" v-if="!service.clientid">
             <div class="service-page__info-title">
               {{ $t('Actions') }}:
               <div style="display: inline-flex; gap: 8px">
@@ -41,16 +46,13 @@
               <a-tag :color="getInvoiceStatusColor">
                 {{ $t("invoice_" + service.ORDER_INFO.invoicestatus) }}
               </a-tag>
-              <router-link
-                :to="{
-                  name: 'invoiceFS',
-                  params: { uuid: service.ORDER_INFO.invoiceid },
-                }"
+              <a-button
+                size="small"
+                type="primary"
+                @click="clickOnInvoice(service.ORDER_INFO.invoiceid)"
               >
-                <a-button size="small" type="primary">
-                  {{ $t("open") }}
-                </a-button>
-              </router-link>
+                {{ $t("open") }}
+              </a-button>
             </div>
           </div>
 
@@ -186,6 +188,16 @@ export default {
   components: { loading },
   data: () => ({ service: null, info }),
   methods: {
+    clickOnInvoice(invoice_id) {
+      const url = this.$store.getters['nocloud/auth/getURL'];
+
+      this.$api.get(url, { params: {
+        run: 'get_pay_token', invoice_id
+      }})
+        .then((res) => {
+          window.location.href = res;
+        });
+    },
     sendRenew() {
 			this.$confirm({
         title: this.$t('Do you want to renew service?'),
@@ -254,6 +266,7 @@ export default {
     }
   },
   created() {
+    this.$store.dispatch('nocloud/auth/fetchBillingData');
     this.$store.dispatch('nocloud/vms/fetch')
       .then(() => {
         const domain = this.$store.getters['nocloud/vms/getInstances']
@@ -346,10 +359,10 @@ export default {
           return this.$store.dispatch('products/fetch', client_id);
         }
 
-        this.service = this.products.find(({ id }) => id === this.$route.params.id);
+        this.service = this.products.find(({ id }) => id == this.$route.params.id);
       })
       .then(() => {
-        this.service = this.products.find(({ id }) => id === this.$route.params.id);
+        this.service = this.products.find(({ id }) => id == this.$route.params.id);
       })
       .catch((err) => console.error(err));
 
