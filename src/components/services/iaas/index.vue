@@ -78,7 +78,7 @@
           <a-card
             style="margin-top: 15px"
             v-if="fetchLoading || addons[getProducts.id] && addons[getProducts.id].length > 0"
-            :title="$t('Addons')"
+            :title="`${$t('Addons')} (${$t('choose addons you want')})`"
             :loading="fetchLoading"
           >
             <div v-if="fetchLoading">Loading...</div>
@@ -376,8 +376,9 @@ export default {
       if (typeof product.description !== 'string') return product
       if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
         if (typeof product.price?.currency === 'string') return product
+        console.log(product);
 
-        if (product.paytype === 'free') {
+        if (product.paytype === 'free' || !product.price) {
           product.price = { value: 0, currency: '' }
         } else if (product.paytype === 'onetime') {
           product.price = { value: product.price.monthly, currency: '' }

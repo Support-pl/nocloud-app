@@ -66,6 +66,7 @@ export default {
     statusColor() {
       switch (this.instance.domainstatus) {
         case "RUNNING":
+        case "Active":
           return "#0fd058";
         // останавливающийся и запускающийся
         case "BOOT_POWEROFF":
@@ -178,7 +179,9 @@ export default {
 		getModuleProductBtn() {
 			const serviceType = this.$config.getServiceType(this.instance.groupname)?.toLowerCase();
       const isActive = ['active', 'running'].includes(this.instance.domainstatus?.toLowerCase());
+      const sp = this.getSP.find(({ uuid }) => uuid === this.instance.sp);
 
+      if (sp?.meta.renew === false) return;
 			if (serviceType === undefined) return;
       if (this.instance.date === 0) return;
       if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return;
