@@ -65,7 +65,6 @@ export default {
       let plan = periods[0];
       const tarifs = [];
 
-      this.options.cpu.size = 1;
       if (resource.key === 'ram') {
         this.options.ram.size = parseInt(addonKey?.split('-')[1] ?? 0);
       }
@@ -128,7 +127,7 @@ export default {
   },
   created() {
     this.$emit('setData', {
-      key: 'baremetal_datacenter', type: 'ovh',
+      key: 'dedicated_datacenter', type: 'ovh',
       value: this.region.value.replace(/\d/g, '').toLowerCase()
     });
   },
@@ -214,6 +213,39 @@ export default {
     plan(value) {
       this.price.addons = {};
       this.setResources(value);
+
+      setTimeout(() => {
+        const duration = (this.mode === 'upfront12') ? 'P1Y' : 'P1M';
+        const { value } = this.plans.find(({ label }) => label.includes(this.plan)) ?? {};
+        const { meta: { addons: allAddons } } = this.getPlan.products[`${duration} ${value}`] ??
+          Object.values(this.getPlan.products)[0];
+        const addons = [];
+
+        allAddons.forEach(({ id }) => {
+          const isRamExist = addons.find((addon) => addon.includes('ram'));
+          const isDiskExist = addons.find((addon) => addon.includes('raid'));
+
+          if (id.includes('ram') && !isRamExist) addons.push(id);
+          if (id.includes('raid') && !isDiskExist) addons.push(id);
+        });
+
+        this.options.cpu.size = 'loading';
+        this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
+          method: 'checkout_baremetal',
+          params: { ...this.options.config, addons }
+        })
+          .then(({ meta: { order: { details } } }) => {
+            const cpu = details.find(({ description }) =>
+              description.toLowerCase().includes('amd') ||
+              description.toLowerCase().includes('intel')
+            );
+
+            this.options.cpu.size = cpu?.description ?? this.$t('No Data');
+          })
+          .catch(() => {
+            this.options.cpu.size = this.$t('No Data');
+          });
+      });
     }
   }
 }

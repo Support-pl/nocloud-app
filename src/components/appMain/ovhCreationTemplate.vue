@@ -50,14 +50,17 @@
             <span style="display: inline-block; width: 70px">CPU:</span>
           </a-col>
           <a-col class="changing__field" style="text-align: right">
-            {{ options.cpu.size }} vCPU
+            <a-icon v-if="options.cpu.size === 'loading'" type="loading" />
+            <template v-else>
+              {{ options.cpu.size }} {{ (isNaN(+options.cpu.size)) ? '' : 'vCPU' }}
+            </template>
           </a-col>
         </a-row>
         <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
           <a-col>
             <span style="display: inline-block; width: 70px">RAM:</span>
           </a-col>
-          <a-col :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }"  v-if="resources.ram.length > 1">
+          <a-col :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }" v-if="resources.ram.length > 1">
             <a-slider
               style="margin-top: 10px"
               :marks="{ ...resources.ram }"

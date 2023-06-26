@@ -23,7 +23,7 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ (invoice.status === 'Unpaid') ? '-' : invoice.duedate }}
+          {{ (invoice.status === 'Unpaid') ? '-' : (invoice.datepaid ?? invoice.duedate) }}
         </div>
       </div>
     </div>

@@ -108,7 +108,7 @@
               <a-row
                 type="flex"
                 justify="space-between"
-                v-if="options.cpu.size"
+                v-if="options.cpu.size && options.cpu.size !== 'loading'"
                 :style="{ 'font-size': '1.2rem', 'align-items': 'center' }"
               >
                 <a-col> {{ $t("cpu") }}: </a-col>
@@ -121,7 +121,7 @@
                 >
                   {{ $t("High speed") }}
                 </a-col> -->
-                <a-col>{{ options.cpu.size }} vCPU</a-col>
+                <a-col>{{ options.cpu.size }} {{ (isNaN(+options.cpu.size)) ? '' : 'vCPU' }}</a-col>
               </a-row>
             </transition>
 
@@ -399,6 +399,9 @@
                 ref="sum-order"
                 :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
               >
+                <a-col style="margin-right: 4px" v-if="activeKey === 'location'">
+                  {{ $t('from') | capitalize }}:
+                </a-col>
                 <transition name="textchange" mode="out-in">
                   <a-col v-if="tarification === 'Annually'" key="a">
                     {{ calculatePrice(

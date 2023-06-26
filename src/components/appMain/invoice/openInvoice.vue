@@ -59,7 +59,7 @@
                     <div class="info__date-item">
                       <div class="info__date-title">{{ $t("dueDate") }}</div>
                       <div class="info__date-value">
-                        {{ invoice.duedate | dateFormat }}
+                        {{ (invoice.datepaid ?? invoice.duedate) | dateFormat }}
                       </div>
                     </div>
                   </div>
