@@ -442,11 +442,14 @@ export default {
   watch: {
     plans() {
       const value = [];
+      const types = new Set();
       const day = 3600 * 24
       const month = day * 30;
       const year = day * 365;
 
       this.plans.forEach((plan) => {
+        types.add(plan.type);
+
         if (plan.kind === 'DYNAMIC') value.push(
           { value: 'Hourly', label: 'ssl_product.Hourly' }
         );
@@ -470,6 +473,8 @@ export default {
           { value: 'Biennially', label: 'biennially', period: year * 2 }
         );
       });
+
+      if (types.size > 1) return;
       value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period);
 
       this.options.drive = false;

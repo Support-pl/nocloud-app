@@ -89,6 +89,8 @@ export default {
       this.$emit('setData', { key: 'priceOVH', value: this.price });
       this.$emit('setData', { key: 'planCode', value, type: 'ovh' });
       this.$emit('setData', { key: 'monthlyBilling', value: (plan.duration === 'P1M'), type: 'ovh' });
+      this.$emit('setData', { key: 'duration', value: plan.duration, type: 'ovh' });
+      this.$emit('setData', { key: 'pricingMode', value: plan.pricingMode, type: 'ovh' });
     },
     setPlans(value) {
       this.plans = value.sort((a, b) =>

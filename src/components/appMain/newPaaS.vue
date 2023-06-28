@@ -399,7 +399,7 @@
                 ref="sum-order"
                 :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
               >
-                <a-col style="margin-right: 4px" v-if="activeKey === 'location'">
+                <a-col style="margin-right: 4px" v-if="activeKey === 'location' && tarification">
                   {{ $t('from') | capitalize }}:
                 </a-col>
                 <transition name="textchange" mode="out-in">
@@ -824,10 +824,11 @@ export default {
 
     //--------------Plans-----------------
     filteredPlans() {
-      const { billing_plans = [] } = (this.itemSP.meta.showcase ?? {})[this.showcase] ?? {};
+      const locationItem = this.locations.find((el) => el.id === this.locationId);
 
-      if (billing_plans.length < 1) return this.getPlans;
-      return this.getPlans.filter(({ uuid }) => billing_plans?.includes(uuid));
+      return this.getPlans.filter(({ type }) =>
+        (locationItem.type) ? locationItem.type === type : true
+      );
     },
     //UNKNOWN and STATIC
     getPlan() {
@@ -1321,6 +1322,8 @@ export default {
           newGroup.config = { ssh: newInstance.config.ssh };
           delete newInstance.config.ssh;
         }
+
+        delete newInstance.product;
       }
       if (this.itemService?.instancesGroups?.length < 1) {
         this.itemService.instancesGroups = [newGroup];
@@ -1625,13 +1628,18 @@ export default {
         anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
-        const showcase = Object.keys(this.itemSP.meta.showcase ?? {})
-          .find((key) => key === this.$route.query.service) ??
-          Object.keys(this.itemSP.meta.showcase ?? {})[0];
-        const plans = this.itemSP.meta.showcase[showcase]?.billing_plans ?? [];
-        const uuid = plans.find((el) => pool.find((plan) => el === plan.uuid));
-
         this.$store.commit('nocloud/plans/setPlans', pool);
+
+        const keys = Object.entries(this.itemSP.meta.showcase ?? {});
+        const [showcase] = keys.find(([key, { billing_plans }]) => {
+          const plan = this.filteredPlans.find(({ uuid }) => billing_plans.includes(uuid));
+
+          return key === this.$route.query.service || plan;
+        }) ?? keys[0];
+
+        const plans = this.itemSP.meta.showcase[showcase]?.billing_plans ?? [];
+        const uuid = plans.find((el) => this.filteredPlans.find((plan) => el === plan.uuid));
+
         this.plan = uuid ?? pool[0]?.uuid ?? '';
 
         if (this.dataLocalStorage.billing_plan) {
