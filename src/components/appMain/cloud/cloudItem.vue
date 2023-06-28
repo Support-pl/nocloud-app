@@ -179,9 +179,10 @@ export default {
 		getModuleProductBtn() {
 			const serviceType = this.$config.getServiceType(this.instance.groupname)?.toLowerCase();
       const isActive = ['active', 'running'].includes(this.instance.domainstatus?.toLowerCase());
-      const sp = this.getSP.find(({ uuid }) => uuid === this.instance.sp);
+      const key = this.instance.product ?? this.instance.config?.product;
+      const { meta } = this.instance.billingPlan?.products[key] ?? {};
 
-      if (sp?.meta.renew === false) return;
+      if (meta?.renew === false) return;
 			if (serviceType === undefined) return;
       if (this.instance.date === 0) return;
       if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return;

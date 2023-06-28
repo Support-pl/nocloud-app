@@ -26,7 +26,7 @@
             </div>
           </div>
 
-          <div class="service-page__info" v-if="!service.clientid">
+          <div class="service-page__info" v-if="isActionsActive">
             <div class="service-page__info-title">
               {{ $t('Actions') }}:
               <div style="display: inline-flex; gap: 8px">
@@ -143,6 +143,16 @@
               </div>
             </a-col>
           </a-row>
+
+          <div class="service-page__info" v-if="description">
+            <div class="service-page__info-title">
+              {{ $t("description") | capitalize }}:
+            </div>
+            <div class="service-page__info-value">
+              <div v-html="description"></div>
+            </div>
+          </div>
+
           <component :is="getModuleButtons" :service="service" />
         </template>
 
@@ -427,6 +437,18 @@ export default {
       if (!(status === 'Active' || state?.state === 'RUNNING')) return;
       return () => import(`@/components/services/${serviceType}/draw`);
     },
+    isActionsActive() {
+      const key = this.service.product ?? this.service.config?.product;
+      const { meta } = this.service.billingPlan?.products[key] ?? {};
+
+      return !this.service.clientid && meta?.renew !== false;
+    },
+    description() {
+      const key = this.service.product ?? this.service.config.product;
+      const { meta } = this.service.billingPlan?.products[key] ?? {};
+
+      return meta?.description;
+    }
   },
 };
 </script>
