@@ -255,7 +255,7 @@ export default {
               icon: "reload",
               onClickFuncion: () => {
                 const params = {
-                  account: this.user.uuid,
+                  account: this.userdata.uuid,
                   page: this.$store.getters["nocloud/transactions/page"],
                   limit: this.$store.getters["nocloud/transactions/size"],
                   field: "proc",
@@ -496,7 +496,8 @@ export default {
       return conditions.some((el) => !!el);
     },
     isNeedBalance() {
-      if (this.headers[this.active])
+      if (this.user.paid_stop) return false;
+      else if (this.headers[this.active])
         return this.headers[this.active].needBalance;
       else if (this.$route.meta.isNeedBalance)
         return this.$route.meta.isNeedBalance;
@@ -522,9 +523,12 @@ export default {
     isLogged() {
       return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
-    user() {
+    userdata() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
+    user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    }
   },
   watch: {
     active() {

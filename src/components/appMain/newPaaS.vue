@@ -1614,11 +1614,12 @@ export default {
       if (group.config.ssh) this.options.isSSHExist = true;
       else this.options.isSSHExist = false;
     },
-    locationId() {
+    itemSP() {
       if (!this.dataLocalStorage.config) {
         this.options.os = { id: -1, name: "" };
       }
 
+      if (!this.itemSP?.uuid) return;
       this.$store.dispatch("nocloud/plans/fetch", {
         sp_uuid: this.itemSP.uuid,
         anonymously: !this.isLoggedIn
