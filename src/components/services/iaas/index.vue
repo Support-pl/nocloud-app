@@ -371,6 +371,7 @@ export default {
         } else if (product.paytype === 'onetime') {
           product.price = { value: product.price.monthly, currency: '' }
         } else {
+          console.log(product.price);
           product.price = product.price.find(({ currency }) => currency === this.currency.id)
         }
         product.price.currency = this.currency.code

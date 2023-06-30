@@ -111,7 +111,7 @@
       <div class="newCloud__option-field" v-if="images.length > 0">
         <a-row>
           <a-col :xs="24" :sm="10">
-            <a-form-item :label="$t('VM name')">
+            <a-form-item :label="$t('name') | capitalize">
               <a-input
                 :value="vmName"
                 :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"

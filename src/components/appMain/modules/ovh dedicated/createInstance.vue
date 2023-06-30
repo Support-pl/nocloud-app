@@ -51,7 +51,8 @@ export default {
     plans: [],
     allAddons: {},
     addonsCodes: {},
-    price: {}
+    price: {},
+    cpus: {}
   }),
   methods: {
     setData(resource, changeTarifs = true) {
@@ -229,7 +230,9 @@ export default {
           if (id.includes('raid') && !isDiskExist) addons.push(id);
         });
 
-        this.options.cpu.size = 'loading';
+        this.options.cpu.size = this.cpus[value] ?? 'loading';
+
+        if (this.cpus[value]) return;
         this.$api.post(`/sp/${this.itemSP.uuid}/invoke`, {
           method: 'checkout_baremetal',
           params: { ...this.options.config, addons }
@@ -240,6 +243,7 @@ export default {
               description.toLowerCase().includes('intel')
             );
 
+            this.cpus[value] = cpu?.description ?? this.$t('No Data');
             this.options.cpu.size = cpu?.description ?? this.$t('No Data');
           })
           .catch(() => {
