@@ -2,7 +2,15 @@
   <div class="newCloud_wrapper">
       <div class="newCloud">
         <div class="newCloud__inputs field">
+          <a-spin
+            style="display: block; margin: 15px auto"
+            v-if="isPlansLoading"
+            :tip="$t('loading')"
+            :spinning="isPlansLoading"
+          />
+
           <component
+            v-else
             :is="template"
             :activeKey="activeKey"
             :itemSP="itemSP"
@@ -49,13 +57,7 @@
                 </a-select>
 
                 <div style="overflow: hidden; margin-top: 15px">
-                  <a-spin
-                    style="display: block; margin: 0 auto"
-                    :tip="$t('loading')"
-                    :spinning="isPlansLoading"
-                  >
                     <nc-map v-if="locations.length" v-model="locationId" :markers="locations" />
-                  </a-spin>
                 </div>
               </a-row>
             </template>
@@ -765,6 +767,7 @@ export default {
             const isTypesEqual = type === location.type;
             const isPlanInclude = billing_plans?.includes(uuid);
 
+            if (billing_plans.length < 1) return true;
             if (location.type === '') return true;
             return isTypesEqual && isPlanInclude;
           });
@@ -1036,7 +1039,7 @@ export default {
             this.tarification = this.dataLocalStorage.tarification ?? '';
             this.vmName = this.dataLocalStorage.titleVM ?? '';
             this.locationId = this.dataLocalStorage.locationId ?? '';
-            this.activeKey = this.dataLocalStorage.activeKey ?? 'location';
+            this.activeKey = null;
 
             if (this.dataLocalStorage.config) {
               this.options.os.id = this.dataLocalStorage.config.template_id;
@@ -1647,6 +1650,10 @@ export default {
           this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize });
         } else if (this.dataLocalStorage.locationId) {
           this.tarification = this.periods[0]?.value ?? '';
+        }
+
+        if (this.dataLocalStorage) {
+          this.activeKey = this.dataLocalStorage.activeKey ?? 'location';
         }
       });
 
