@@ -281,9 +281,12 @@ export default {
               res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
 
               inst.config.addons?.forEach((addon) => {
-                const { price } = inst.billingPlan.resources.find(
-                  ({ key }) => key === `${inst.config.duration} ${addon}`
-                ) ?? { price: 0 };
+                const addonKey = (inst.billingPlan.type.includes('dedicated'))
+                  ? `${inst.config.duration} ${inst.config.planCode} ${addon}`
+                  : `${inst.config.duration} ${addon}`;
+
+                const { price } = inst.billingPlan.resources
+                  .find(({ key }) => key === addonKey) ?? { price: 0 };
 
                 res.orderamount += +price;
               });

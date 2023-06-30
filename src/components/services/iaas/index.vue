@@ -3,25 +3,15 @@
 		<div class="order">
 			<div class="order__inputs order__field">
 				<div class="order__option">
-					<!-- <a-slider
-            v-if="sizes.length < 6"
-            tooltip-placement="bottom"
-						:marks="{...sizes}"
-						:value="sizes.indexOf(options.size)"
-            :tip-formatter="(value) => sizes[value]"
-						:tooltip-visible="true"
-						:max="sizes.length-1"
-						:min="0"
-						@change="(value) => options.size = sizes[value]"
-					/> -->
+          <div class="order__product" v-if="$route.query.product">
+            <div
+              class="order__slider-name"
+              style="font-size: 20px; font-weight: 700; margin-bottom: 10px"
+              v-html="getProducts.name"
+            />
+          </div>
 
-          <a-carousel
-            arrows
-            draggable
-            :dots="false"
-            :slides-to-show="slides"
-            :slides-to-scroll="1"
-          >
+          <div v-else class="order__grid">
             <template v-if="!fetchLoading">
               <div
                 class="order__slider-item"
@@ -48,54 +38,44 @@
                 <div class="loadingLine"></div>
               </div>
             </template>
+          </div>
 
-            <template #prevArrow>
-              <div class="custom-slick-arrow" style="left: -35px;">
-                <a-icon type="left-circle" />
-              </div>
-            </template>
+          <template v-if="$route.query.product">
+            <transition name="specs" mode="out-in">
+              <div
+                v-if="typeof getProducts.description === 'string'"
+                v-html="getProducts.description"
+              ></div>
+              <table v-else-if="getProducts.description" class="product__specs">
+                <tr v-for="resource in getProducts.description" :key="resource.name">
+                  <td>{{ resource.name }}</td>
+                  <td>{{ resource.value }}</td>
+                </tr>
+              </table>
+            </transition>
 
-            <template #nextArrow>
-              <div class="custom-slick-arrow" style="right: -35px">
-                <a-icon type="right-circle" />
-              </div>
-            </template>
-          </a-carousel>
-
-          <transition name="specs" mode="out-in">
-            <div
-              v-if="typeof getProducts.description === 'string'"
-              v-html="getProducts.description"
-            ></div>
-            <table v-else-if="getProducts.description" class="product__specs">
-              <tr v-for="resource in getProducts.description" :key="resource.name">
-                <td>{{ resource.name }}</td>
-                <td>{{ resource.value }}</td>
-              </tr>
-            </table>
-          </transition>
-
-          <a-card
-            style="margin-top: 15px"
-            v-if="fetchLoading || addons[getProducts.id] && addons[getProducts.id].length > 0"
-            :title="`${$t('Addons')} (${$t('choose addons you want')})`"
-            :loading="fetchLoading"
-          >
-            <div v-if="fetchLoading">Loading...</div>
-            <a-card-grid
-              v-else
-              class="card-item"
-              v-for="addon of addons[getProducts.id]"
-              :key="addon.id"
-              @click="changeAddons(addon.id)"
+            <a-card
+              style="margin-top: 15px"
+              v-if="fetchLoading || addons[getProducts.id] && addons[getProducts.id].length > 0"
+              :title="`${$t('Addons')} (${$t('choose addons you want')})`"
+              :loading="fetchLoading"
             >
-              <div class="order__slider-name" style="grid-template-columns: 1fr auto">
-                <span style="font-weight: 700; font-size: 16px" v-html="addon.name"></span>
-                <a-checkbox :checked="options.addons.includes(addon.id)" />
-                <span style="grid-column: 1 / 3" v-html="addon.description"></span>
-              </div>
-            </a-card-grid>
-          </a-card>
+              <div v-if="fetchLoading">Loading...</div>
+              <a-card-grid
+                v-else
+                class="card-item"
+                v-for="addon of addons[getProducts.id]"
+                :key="addon.id"
+                @click="changeAddons(addon.id)"
+              >
+                <div class="order__slider-name" style="grid-template-columns: 1fr auto">
+                  <span style="font-weight: 700; font-size: 16px" v-html="addon.name"></span>
+                  <a-checkbox :checked="options.addons.includes(addon.id)" />
+                  <span style="grid-column: 1 / 3" v-html="addon.description"></span>
+                </div>
+              </a-card-grid>
+            </a-card>
+          </template>
 				</div>
 			</div>
 
@@ -199,7 +179,7 @@
 				<a-row type="flex" justify="space-around" style="margin: 10px 0">
 					<a-col :span="22">
 						<a-button type="primary" block shape="round" @click="orderConfirm">
-							{{ $t('order') | capitalize }}
+							{{ $t(($route.query.product) ? 'order' : 'next') | capitalize }}
 						</a-button>
 						<a-modal
 							:title="$t('Confirm')"
@@ -336,9 +316,17 @@ export default {
         });
 		},
 		orderConfirm(){
+      if (!this.$route.query.product) {
+        this.$router.push({ query: {
+          ...this.$route.query,
+          product: this.getProducts.id
+        } });
+        return;
+      }
+
 			if (this.options.payment === '') {
 				this.$message.error(this.$t('Choose your payment method'));
-				return
+				return;
 			}
       if (!this.checkBalance()) return;
 			this.modal.confirmCreate = true;
@@ -371,12 +359,12 @@ export default {
 	computed: {
 		getProducts() {
 			if (Object.keys(this.products).length == 0) return "NAN"
-      const product = this.products[this.sizes.indexOf(this.options.size)]
+      const product = this.products.find(({ id }) => id === +this.$route.query.product) ??
+        this.products[this.sizes.indexOf(this.options.size)]
 
       if (typeof product.description !== 'string') return product
       if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
         if (typeof product.price?.currency === 'string') return product
-        console.log(product);
 
         if (product.paytype === 'free' || !product.price) {
           product.price = { value: 0, currency: '' }
@@ -460,7 +448,7 @@ export default {
 	},
   watch: {
     'options.size'() {
-      this.periods = Object.entries(this.getProducts.price).filter(
+      this.periods = Object.entries(this.getProducts.price ?? {}).filter(
         ([key, value]) => key.match(/ly/) && value > -1
       ).map((el) => el[0]);
 
@@ -550,6 +538,13 @@ export default {
 .order__inputs{
 	margin-right: 20px;
 	width: 72%;
+}
+
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .order__option div > .img_prod {
