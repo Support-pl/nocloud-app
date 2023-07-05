@@ -465,9 +465,10 @@
               shape="round"
               size="large"
               :disabled="VM.state.state !== 'RUNNING'"
-              @click="openVNC"
             >
-              VNC
+              <router-link :to="{ path: `${$route.params.uuid}/vnc` }">
+                VNC
+              </router-link>
             </a-button>
           </div>
         </a-col>
@@ -946,7 +947,10 @@ export default {
     },
     statusVM() {
       if (!this.VM) return;
-      if (this.VM.state.state === 'PENDING' || this.VM.data.suspended_manually) {
+      const isPending =  ['PENDING', 'OPERATION'].includes(this.VM.state.state);
+      const isSuspended = this.VM.data.suspended_manually;
+
+      if (isPending || isSuspended) {
         return { shutdown: true, reboot: true, start: true, recover: true };
       }
 

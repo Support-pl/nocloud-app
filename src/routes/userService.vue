@@ -149,7 +149,7 @@
               {{ $t("description") | capitalize }}:
             </div>
             <div class="service-page__info-value">
-              <div v-html="description"></div>
+              <div :style="(service.desc_product) ? 'padding: 0 15px' : ''" v-html="description"></div>
             </div>
           </div>
 
@@ -444,10 +444,12 @@ export default {
       return !this.service.clientid && meta?.renew !== false;
     },
     description() {
-      const key = this.service.product ?? this.service.config.product;
+      const key = this.service.product ?? this.service.config?.product;
       const { meta } = this.service.billingPlan?.products[key] ?? {};
+      const description = this.service.desc_product
+        .replace('/templates', `${this.$config.WHMCSsiteurl}$&`);
 
-      return meta?.description;
+      return meta?.description ?? description;
     }
   },
 };
@@ -497,5 +499,11 @@ export default {
 
 .service-page__info-value {
   font-size: 1.1rem;
+}
+
+.service-page__info-value div > .img_prod {
+  display: block;
+  max-width: 200px;
+  margin: 0 auto 10px;
 }
 </style>

@@ -5,6 +5,13 @@
 			v-if="isMaintananceMode"
 			main-page-button
 		></maintanance-mode>
+
+    <iframe
+      frameborder="0"
+      style="width: 100%; height: 100%"
+      v-else-if="instance.billingPlan.type.includes('ovh')"
+      :src="url"
+    />
 		<template v-else>
 			<div id="noVNC_status"></div>
 
@@ -270,8 +277,13 @@ export default {
           baseURL.splice(0, 1);
 					this.token = res.meta.token;
 					this.desktopName = this.instance?.title ?? 'Unknown';
-					this.url = `wss://${this.instance.sp}.proxy.${baseURL.join('.')}socket?${res.meta.url}`;
-          this.connect(this.$store.state.nocloud.auth.token);
+
+          if (res.meta.info) {
+            this.url = `wss://${this.instance.sp}.proxy.${baseURL.join('.')}socket?${res.meta.url}`;
+            this.connect(this.$store.state.nocloud.auth.token);
+          } else {
+            this.url = res.meta.url;
+          }
 				})
 				.catch(err => console.error(err));
 		},

@@ -44,6 +44,7 @@ export default {
     this.$store.dispatch("nocloud/auth/fetchBillingData")
       .then((res) => {
         this.currency.suffix = res.currency_code ?? this.defaultCurrency;
+        this.currency = Object.assign({}, this.currency);
       })
       .catch((err) => console.error(err));
   },
@@ -114,13 +115,6 @@ export default {
       if (this.amount == "") this.amount = 0;
       this.amount += amount;
     },
-  },
-  watch: {
-    defaultCurrency(value) {
-      if (this.user.currency_code) return;
-      this.currency.suffix = value;
-      this.currency = Object.assign({}, this.currency);
-    }
   }
 };
 </script>

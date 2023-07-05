@@ -1631,8 +1631,6 @@ export default {
         anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
-        this.$store.commit('nocloud/plans/setPlans', pool);
-
         const keys = Object.entries(this.itemSP.meta.showcase ?? {});
         const [showcase] = keys.find(([key, { billing_plans }]) => {
           const plan = this.filteredPlans.find(({ uuid }) => billing_plans.includes(uuid));

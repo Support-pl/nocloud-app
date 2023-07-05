@@ -4,11 +4,7 @@
 			<div class="order__inputs order__field">
 				<div class="order__option">
           <div class="order__product" v-if="$route.query.product">
-            <div
-              class="order__slider-name"
-              style="font-size: 20px; font-weight: 700; margin-bottom: 10px"
-              v-html="getProducts.name"
-            />
+            <div class="order__product-name" v-html="getProducts.name" />
           </div>
 
           <div v-else class="order__grid">
@@ -246,7 +242,7 @@ export default {
 
           this.products = prod.sort((a, b) => b.name - a.name);
           this.products.forEach(({ description }, i) => {
-            const desc = description.replace('/templates', `${this.$config.WHMCSsiteurl}$&`,);
+            const desc = description.replace('/templates', `${this.$config.WHMCSsiteurl}$&`);
             const start = desc.indexOf('<img');
             const end = desc.indexOf('">', start);
             const image = desc.slice(start, end + 2);
@@ -548,6 +544,20 @@ export default {
   margin-bottom: 10px;
 }
 
+.order__product-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.order__product .order__product-name .img_prod {
+  max-height: 75px;
+  margin: 0;
+}
+
 .order__option div > .img_prod {
   display: block;
   max-width: 200px;
@@ -562,6 +572,10 @@ export default {
   display: grid;
   justify-items: center;
   gap: 5px;
+}
+
+.order__option .order__slider-name .ant-checkbox {
+  box-shadow: 0 0 5px var(--main);
 }
 
 .order__option .order__slider-name img {
@@ -598,8 +612,13 @@ export default {
   opacity: 1;
 }
 
+.order__option .ant-card-head {
+  background: var(--bright_bg);
+}
+
 .order__option .ant-card-body {
   display: flex;
+  flex-wrap: wrap;
   gap: 5px;
 }
 
@@ -608,9 +627,14 @@ export default {
 }
 
 .card-item {
-  width: 50%;
+  width: 100%;
   cursor: pointer;
   border: 0 solid transparent;
+  background: var(--bright_bg);
+}
+
+.card-item .order__slider-name {
+  justify-items: start;
 }
 
 .card-item--active {

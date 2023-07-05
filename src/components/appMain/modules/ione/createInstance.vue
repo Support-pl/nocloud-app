@@ -343,6 +343,46 @@ export default {
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
     },
+    changePeriods() {
+      const value = [];
+      const types = new Set();
+      const day = 3600 * 24
+      const month = day * 30;
+      const year = day * 365;
+
+      this.plans.forEach((plan) => {
+        types.add(plan.type);
+
+        if (plan.kind === 'DYNAMIC') value.push(
+          { value: 'Hourly', label: 'ssl_product.Hourly' }
+        );
+
+        if (plan.kind !== 'STATIC') return;
+        const periods = Object.values(plan.products).map((el) => +el.period);
+
+        if (periods.includes(day)) value.push(
+          { value: 'Daily', label: 'daily', period: day }
+        );
+
+        if (periods.includes(month)) value.push(
+          { value: 'Monthly', label: 'ssl_product.Monthly', period: month }
+        );
+
+        if (periods.includes(year)) value.push(
+          { value: 'Annually', label: 'annually', period: year }
+        );
+
+        if (periods.includes(year * 2)) value.push(
+          { value: 'Biennially', label: 'biennially', period: year * 2 }
+        );
+      });
+
+      if (types.size > 1) return;
+      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period);
+
+      this.options.drive = false;
+      this.$emit('setData', { key: 'periods', value });
+    },
     changeNetwork(type) {
       switch (type) {
         case 'public':
@@ -386,6 +426,7 @@ export default {
   },
   created() {
     if (!this.user?.uuid) this.$store.dispatch('nocloud/auth/fetchUserData');
+    this.changePeriods();
   },
   beforeMount() {
     const images = Object.entries(this.itemSP?.publicData.templates ?? {});
@@ -440,46 +481,7 @@ export default {
     }
   },
   watch: {
-    plans() {
-      const value = [];
-      const types = new Set();
-      const day = 3600 * 24
-      const month = day * 30;
-      const year = day * 365;
-
-      this.plans.forEach((plan) => {
-        types.add(plan.type);
-
-        if (plan.kind === 'DYNAMIC') value.push(
-          { value: 'Hourly', label: 'ssl_product.Hourly' }
-        );
-
-        if (plan.kind !== 'STATIC') return;
-        const periods = Object.values(plan.products).map((el) => +el.period);
-
-        if (periods.includes(day)) value.push(
-          { value: 'Daily', label: 'daily', period: day }
-        );
-
-        if (periods.includes(month)) value.push(
-          { value: 'Monthly', label: 'ssl_product.Monthly', period: month }
-        );
-
-        if (periods.includes(year)) value.push(
-          { value: 'Annually', label: 'annually', period: year }
-        );
-
-        if (periods.includes(year * 2)) value.push(
-          { value: 'Biennially', label: 'biennially', period: year * 2 }
-        );
-      });
-
-      if (types.size > 1) return;
-      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period);
-
-      this.options.drive = false;
-      this.$emit('setData', { key: 'periods', value });
-    },
+    plans() { this.changePeriods() },
     activeKey() { this.changePanelHeight() }
   }
 }

@@ -341,6 +341,13 @@ export default {
       this.isVisible = true;
     },
     routeBack() {
+      if (this.getActiveTab.title.includes('iaas') && this.$route.query.product) {
+        const query = { ...this.$route.query };
+
+        delete query.product;
+        this.$router.push({ path: '/iaas', query });
+        return;
+      }
       if (this.getActiveTab.title.includes('service')) {
         this.$router.push('/services');
         return;
