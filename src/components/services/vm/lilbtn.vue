@@ -117,7 +117,7 @@ export default {
         .find(({ uuid }) => uuid === this.service.uuid);
 
       this.isLoading = true;
-      instance.data.auto_renew = value;
+      this.$set(instance.data, 'auto_renew', value);
       this.$store.dispatch('nocloud/vms/updateService', service)
         .then(() => {
           const message = this.$t('Done');

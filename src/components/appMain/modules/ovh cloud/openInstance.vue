@@ -962,7 +962,10 @@ export default {
     },
     statusVM() {
       if (!this.VM) return;
-      if (this.VM.state.state === 'PENDING' || this.VM.data.suspended_manually) {
+      const isPending =  ['PENDING', 'OPERATION'].includes(this.VM.state.state);
+      const isSuspended = this.VM.data.suspended_manually;
+
+      if (isPending || isSuspended) {
         return { shutdown: true, reboot: true, start: true, recover: true };
       }
 

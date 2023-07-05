@@ -160,11 +160,6 @@ export default {
 
       this.setPagination();
     }
-    if (localStorage.getItem('order')) {
-      this.value = localStorage.getItem('order');
-    } else {
-      localStorage.setItem('order', this.value);
-    }
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
       this.$store.dispatch('nocloud/auth/fetchCurrencies');
     }
@@ -176,7 +171,6 @@ export default {
   },
   watch: {
     value() {
-      localStorage.setItem('order', this.value);
       this.$store.commit('nocloud/transactions/setActiveTab', this.value);
       if (this.value === 'Invoice') return;
       if (this.transactions.length > 0) return;
@@ -233,10 +227,12 @@ export default {
 .invoices__wrapper {
   padding: 20px 10px;
 }
+
 .invoices__wrapper .ant-radio-group {
   width: 100%;
   margin: 0 1px 20px;
 }
+
 .invoices__wrapper .ant-radio-button-wrapper {
   width: 50%;
   text-align: center;

@@ -12,11 +12,11 @@
         {{ localDate }}
       </div>
 
-      <div class="item__status" v-if="networking.length < 1">
+      <div class="item__status" v-if="networking.length < 1 && instance.groupname === 'Self-Service VDS SSD HC'">
         IP: {{ $t("ip.none") }}
       </div>
       <div class="item__status" v-else-if="networking.length < 2">
-        {{ instance.domain }}
+        {{ instance.domain ?? instance.groupname }}
       </div>
 
       <a-collapse v-else v-model="activeKey" expandIconPosition="right" :bordered="false">
