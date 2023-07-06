@@ -15,6 +15,7 @@ for (let service in servicesArray) {
 		meta: {
 			footerTitle: 'services',
 			isNeedBackButton: true,
+      isNeedBalance: true,
 			headerTitle: service,
 			componentName: service,
 			productsGroupName: servicesArray[service].groupname

@@ -9,7 +9,7 @@
   >
     <a-spin tip="Loading..." :spinning="isLoading">
       <a-form-model layout="vertical">
-        <a-form-model-item :label="$t('department')">
+        <a-form-model-item :label="$t('department')" v-if="false">
           <a-select v-model="ticketDepartment" placeholder="department">
             <a-select-option v-for="dep in departments" :key="dep.id" :value="dep.id" >
               {{ dep.name }}
@@ -31,6 +31,16 @@
 
 <script>
 import { mapGetters } from "vuex";
+import Markdown from "markdown-it";
+import emoji from "markdown-it-emoji"
+
+const md = new Markdown({
+  html: true,
+  linkify: true,
+  typographer: true
+});
+
+md.use(emoji);
 
 export default {
   name: "addTicket",
@@ -45,7 +55,7 @@ export default {
   },
   computed: {
     user() {
-      return this.$store.getters.getUser;
+      return this.$store.getters['nocloud/auth/userdata'];
     },
     ...mapGetters("support", {
       addTicketStatus: "isAddTicketState",
@@ -63,26 +73,40 @@ export default {
         return;
       }
 
-      if (this.ticketDepartment == -1) {
-        this.$message.warn(this.$t("departments are loading"));
-        return;
-      }
+      // if (this.ticketDepartment == -1) {
+      //   this.$message.warn(this.$t("departments are loading"));
+      //   return;
+      // }
 
       this.isSending = true;
-      this.$api.get(this.baseURL, { params: {
-        run: 'create_ticket',
+      // this.$api.get(this.baseURL, { params: {
+      //   run: 'create_ticket',
+      //   subject: this.ticketTitle,
+      //   message: this.ticketMessage,
+      //   department: this.ticketDepartment,
+      // }})
+      this.$store.dispatch('support/createChat', {
         subject: this.ticketTitle,
-        message: this.ticketMessage,
-        department: this.ticketDepartment,
-      }})
-        .then((resp) => {
-          if (resp.result == "success") {
+        message: md.render(this.ticketMessage).trim()
+      })
+        .then(async (resp) => {
+          if (resp.result === "success") {
             this.ticketTitle = "";
             this.ticketMessage = "";
             this.isSending = false;
 
             this.$store.dispatch("support/autoFetch");
             this.$store.commit("support/inverseAddTicketState");
+          } else if (resp.uuid) {
+            if (!resp.meta.lastMessage) {
+              await this.$store.dispatch('support/sendMessage', {
+                uuid: resp.uuid,
+                content: md.render(this.ticketMessage).trim(),
+                account: this.user.uuid,
+                date: BigInt(Date.now())
+              });
+            }
+            this.$router.push(`ticket-${resp.uuid}`);
           } else {
             throw resp;
           }
@@ -106,7 +130,7 @@ export default {
         this.ticketDepartment = this.departments[0].id;
       })
       .catch(() => {
-        this.$message.error(this.$t("departments not found"));
+        // this.$message.error(this.$t("departments not found"));
       })
       .finally(() => {
         this.isLoading = false;
