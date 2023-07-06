@@ -1,17 +1,19 @@
 <template>
   <div class="chat">
     <div class="chat__header">
-      <div class="chat__back">
-        <div class="icon__wrapper" @click="goBack()">
-          <a-icon type="left" />
+      <div class="chat__container">
+        <div class="chat__back">
+          <div class="icon__wrapper" @click="goBack()">
+            <a-icon type="left" />
+          </div>
         </div>
-      </div>
-      <div class="chat__title">
-        {{ titleDecoded }}
-      </div>
-      <div class="chat__reload">
-        <div class="icon__wrapper" @click="reload()">
-          <a-icon type="reload" />
+        <div class="chat__title">
+          {{ titleDecoded }}
+        </div>
+        <div class="chat__reload">
+          <div class="icon__wrapper" @click="reload()">
+            <a-icon type="reload" />
+          </div>
         </div>
       </div>
     </div>
@@ -83,7 +85,17 @@
 </template>
 
 <script>
+import Markdown from "markdown-it";
+import emoji from "markdown-it-emoji"
 import load from "@/components/loading/loading.vue";
+
+const md = new Markdown({
+  html: true,
+  linkify: true,
+  typographer: true
+});
+
+md.use(emoji);
 
 export default {
   name: "ticketChat",
@@ -150,8 +162,8 @@ export default {
         attachment: "",
         contactid: "0",
         date: new Date(),
-        email: this.user?.email || 'none',
-        message: this.messageInput.trim(),
+        email: this.user.data?.email ?? 'none',
+        message: md.render(this.messageInput).trim(),
         name: this.user.title,
         userid: this.user.uuid,
         sending: true,
@@ -161,20 +173,37 @@ export default {
       const { content } = this.$refs;
 
       this.replies.push({ ...message, date, requestor_type });
-
       setTimeout(() => { content.scrollTo(0, content.scrollHeight) }, 100);
+
+      if (this.replies[0].gateways) {
+        this.$store.dispatch('support/sendMessage', {
+          uuid: this.$route.params.pathMatch,
+          content: message.message,
+          account: message.userid,
+          date: BigInt(message.date.getTime())
+        })
+          .catch((err) => {
+            this.replies.at(-1).error = true;
+            console.error(err);
+          })
+          .finally(() => {
+            this.replies.at(-1).sending = false;
+          });
+        this.messageInput = '';
+        return;
+      }
+
       this.$api.get(this.baseURL, { params: {
         run: 'answer_ticket',
         id: this.$route.params.pathMatch,
         message: this.messageInput,
       }})
-        .then(() => {
-          this.replies.at(-1).sending = false;
-        })
         .catch((err) => {
-          console.error(err);
-          this.replies.at(-1).sending = false;
           this.replies.at(-1).error = true;
+          console.error(err);
+        })
+        .finally(() => {
+          this.replies.at(-1).sending = false;
         });
       this.messageInput = "";
     },
@@ -184,6 +213,13 @@ export default {
         run: 'get_ticket_full',
         ticket_id: this.chatid,
       }})
+        .then(async (resp) => {
+          if (resp.replies) return resp;
+          else {
+            await this.$store.dispatch('support/fetchChats');
+            return this.$store.dispatch('support/fetchMessages', this.chatid);
+          }
+        })
         .then((resp) => {
           this.status = resp.status;
           this.replies = resp.replies ?? [];
@@ -241,16 +277,30 @@ export default {
   line-height: 64px;
   background-color: var(--main);
   color: var(--bright_font);
+}
+
+.chat__container {
   padding: 0;
   display: grid;
   grid-template-columns: 20% 1fr 20%;
   justify-items: center;
   align-items: center;
+  max-width: 768px;
+  height: 100%;
+  margin: 0 auto;
 }
 
 .chat__title {
   font-weight: bold;
   line-height: 1.1rem;
+}
+
+.chat__back {
+  justify-self: start;
+}
+
+.chat__reload {
+  justify-self: end;
 }
 
 .chat__back,

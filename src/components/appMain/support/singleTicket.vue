@@ -6,9 +6,13 @@
     ></div>
     <div class="ticket__content">
       <div class="ticket__upper">
-        <div class="ticket__title">#{{ ticket.tid }} - {{ titleDecoded }}</div>
+        <div class="ticket__title">
+          #{{ ticket.tid }} - {{ titleDecoded }}
+        </div>
         <div class="ticket__status-text">
-          {{ $t(`ticketStatus.${ticket.status}`) }}
+          <a-badge :count="ticket.unread" :offset="[10, -15]">
+            {{ $t(`ticketStatus.${ticket.status}`) }}
+          </a-badge>
         </div>
       </div>
       <div class="ticket__lower">
@@ -34,7 +38,7 @@ export default {
       return message || 'empty';
     },
     formatDate(date) {
-      const d = new Date(date.replace(/-/g, "/"));
+      const d = new Date((date.replace) ? date.replace(/-/g, "/") : date);
       const ye = new Intl.DateTimeFormat("en", { year: "numeric" }).format(d);
       const mo = new Intl.DateTimeFormat("en", { month: "2-digit" }).format(d);
       const da = new Intl.DateTimeFormat("en", { day: "2-digit" }).format(d);

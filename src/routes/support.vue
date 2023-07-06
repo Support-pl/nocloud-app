@@ -16,10 +16,10 @@
 </template>
 
 <script>
-import singleTicket from "../components/appMain/support/singleTicket.vue";
-import loading from '../components/loading/loading.vue';
-import empty from '../components/empty/empty.vue';
-import addTicketField from '../components/appMain/support/addTicket.vue';
+import singleTicket from "@/components/appMain/support/singleTicket.vue";
+import loading from '@/components/loading/loading.vue';
+import empty from '@/components/empty/empty.vue';
+import addTicketField from '@/components/appMain/support/addTicket.vue';
 import { mapGetters } from 'vuex';
 
 export default {
@@ -37,8 +37,9 @@ export default {
 			addTicketStatus: 'isAddTicketState'
 		})
 	},
-	mounted(){
+	mounted() {
 		this.$store.dispatch("support/autoFetch");
+    this.$store.dispatch("support/fetchChats");
 	},
 }
 </script>
@@ -54,7 +55,7 @@ export default {
 	.ticket__wrapper{
 		height: 100%;
 		overflow: auto;
-		padding: 0 10px 20px;
+		padding: 6px 10px 20px;
 	}
 
 	.ticket__add-enter-active.addTicket__wrapper,
