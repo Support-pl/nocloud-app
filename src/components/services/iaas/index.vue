@@ -367,8 +367,7 @@ export default {
         } else if (product.paytype === 'onetime') {
           product.price = { value: product.price.monthly, currency: '' }
         } else {
-          console.log(product.price);
-          product.price = product.price.find(({ currency }) => currency === this.currency.id)
+          product.price = product.price.find(({ currency }) => currency === this.currency.id) ?? {}
         }
         product.price.currency = this.currency.code
 
@@ -425,6 +424,10 @@ export default {
     }
 	},
 	created() {
+    if (this.currencies.length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+    }
+
     this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
       .then((res) => { this.currencies = res.currency })
 			.catch(err => {
@@ -897,6 +900,15 @@ export default {
 	.order__template-name ul li{
 		margin-left: 20px;
 	}
+  .product__specs {
+    width: 100%;
+  }
+  .product__specs td {
+    padding: 3px 7px;
+  }
+  .product__specs td:last-child::before {
+    transform: translate(-10px, -50%);
+  }
 }
 
 .specs-enter-active,

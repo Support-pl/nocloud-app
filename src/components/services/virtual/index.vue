@@ -747,6 +747,15 @@ export default {
 	.order__template-name ul li{
 		margin-left: 20px;
 	}
+  .product__specs {
+    width: 100%;
+  }
+  .product__specs td {
+    padding: 3px 7px;
+  }
+  .product__specs td:last-child::before {
+    transform: translate(-10px, -50%);
+  }
 }
 
 .specs-enter-active,

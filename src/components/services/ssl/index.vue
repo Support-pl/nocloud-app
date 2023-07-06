@@ -458,7 +458,17 @@ export default {
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type }) => type === 'goget');
+        .filter(({ type, uuid }) => {
+          const provider = this.$store.getters['nocloud/sp/getSP'].find(
+            ({ meta }) => meta.showcase && meta.showcase[this.$route.query.service]
+          );
+
+          if (!provider) return type === 'goget';
+          const { billing_plans } = provider.meta.showcase[this.$route.query.service];
+
+          if (billing_plans.length < 1) return type === 'goget';
+          return type === 'goget' && billing_plans.includes(uuid);
+        });
     }
 	},
 	created() {
