@@ -406,7 +406,7 @@ export default {
       const services = this.$store.getters['products/getServices'];
       const { type } = this.sp.find(({ meta }) => (meta.showcase ?? {})[this.queryTypes[0]]) ?? {};
       let name = 'service-virtual';
-      let query = {};
+      let query = { service: this.queryTypes[0] };
 
       switch (type) {
         case 'opensrs':
@@ -424,12 +424,10 @@ export default {
         case 'ione':
         case 'ovh':
           name = 'newPaaS';
-          query = { service: this.queryTypes[0] };
       }
 
       if (!type && services[this.queryTypes[0]]) {
         name = 'service-iaas';
-        query = { service: this.queryTypes[0] };
       }
 
       this.$router.push({ name, query });

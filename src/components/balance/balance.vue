@@ -115,6 +115,13 @@ export default {
       if (this.amount == "") this.amount = 0;
       this.amount += amount;
     },
+  },
+  watch: {
+    defaultCurrency(value) {
+      if (this.user.currency_code) return;
+
+      this.$set(this.currency, 'suffix', value);
+    }
   }
 };
 </script>

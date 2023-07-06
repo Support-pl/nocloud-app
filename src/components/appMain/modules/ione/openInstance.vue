@@ -974,7 +974,7 @@ export default {
     },
     statusVM() {
       if (!this.VM) return;
-      if (this.VM.state.meta.state === 1) return {
+      if (this.VM.state.meta.state === 1 || this.VM.data.suspended_manually) return {
         start: true, shutdown: true, reboot: true, recover: true
       }
       return {

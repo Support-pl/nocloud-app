@@ -23,7 +23,7 @@
           <transition-group
             name="header__item-anim"
             class="header__buttons"
-            v-if="headers[active] && isLogged"
+            v-if="headers[active] && isLogged && isButtonsVisible"
             tag="div"
           >
             <div
@@ -155,6 +155,17 @@
               </div>
             </div>
           </transition-group>
+          <transition v-if="viewport < 576" name="header__item-anim">
+            <div class="header__button" @click="isButtonsVisible = !isButtonsVisible">
+              <div class="icon__wrapper" :style="(isButtonsVisible) ? {
+                borderRadius: '50%',
+                background: 'var(--bright_bg)',
+                color: 'var(--main)'
+              } : null">
+                <a-icon class="header__icon" type="down" />
+              </div>
+            </div>
+          </transition>
           <transition name="header__item-anim">
             <div v-if="isNeedBalance && isLogged" class="header__balance">
               <balance />
@@ -185,6 +196,7 @@ export default {
     return {
       isOpen: false,
       isVisible: false,
+      isButtonsVisible: true,
       indeterminate: true,
       checkAll: false,
       checkedList: [],
@@ -287,7 +299,8 @@ export default {
         },
         iaas: {
           title: "Service",
-          buttons: []
+          needBalance: true,
+          buttons: [],
         }
       },
     };
@@ -440,6 +453,10 @@ export default {
     if (this.$route.query.service) {
       this.headers.iaas.title = this.$route.query.service;
     }
+
+    if (this.viewport < 576) {
+      this.isButtonsVisible = false;
+    }
   },
   computed: {
     ...mapGetters("support", [
@@ -535,6 +552,9 @@ export default {
     },
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
+    },
+    viewport() {
+      return document.documentElement.offsetWidth;
     }
   },
   watch: {
@@ -697,5 +717,18 @@ export default {
 .header__item-anim-leave-to {
   opacity: 0;
   transform: translateY(30px);
+}
+
+@media screen and (max-width: 576px) {
+  .header__buttons {
+    position: absolute;
+    bottom: -35px;
+    left: 0;
+    z-index: 10;
+    width: 100%;
+    border-radius: 10px;
+    background: var(--main);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+  }
 }
 </style>

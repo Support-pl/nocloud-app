@@ -103,7 +103,7 @@ export default {
       const provider = service.onclick.paramsArr[0].query.service;
       const { type } = this.sp.find(({ meta }) => (meta.showcase ?? {})[provider]) ?? {};
       let name = 'service-virtual';
-      let query = {};
+      let query = { service: provider };
 
       switch (type) {
         case 'opensrs':
@@ -121,12 +121,10 @@ export default {
         case 'ione':
         case 'ovh':
           name = 'newPaaS';
-          query = { service: provider }
       }
 
       if (!type && this.services[provider]) {
         name = 'service-iaas';
-        query = { service: provider }
       }
 
       this.$router.push({ name, query });

@@ -377,7 +377,17 @@ export default {
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type }) => type === 'virtual');
+        .filter(({ type, uuid }) => {
+          const provider = this.$store.getters['nocloud/sp/getSP'].find(
+            ({ meta }) => meta.showcase && meta.showcase[this.$route.query.service]
+          );
+
+          if (!provider) return type === 'virtual';
+          const { billing_plans } = provider.meta.showcase[this.$route.query.service];
+
+          if (billing_plans.length < 1) return type === 'virtual';
+          return type === 'virtual' && billing_plans.includes(uuid);
+        });
     },
     sp() {
       return this.$store.getters['nocloud/sp/getSP']
@@ -812,6 +822,15 @@ export default {
 	.order__template-name ul li{
 		margin-left: 20px;
 	}
+  .product__specs {
+    width: 100%;
+  }
+  .product__specs td {
+    padding: 3px 7px;
+  }
+  .product__specs td:last-child::before {
+    transform: translate(-10px, -50%);
+  }
 }
 
 .specs-enter-active,

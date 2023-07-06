@@ -375,7 +375,17 @@ export default {
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type }) => type === 'acronis');
+        .filter(({ type, uuid }) => {
+          const provider = this.$store.getters['nocloud/sp/getSP'].find(
+            ({ meta }) => meta.showcase && meta.showcase[this.$route.query.service]
+          );
+
+          if (!provider) return type === 'acronis';
+          const { billing_plans } = provider.meta.showcase[this.$route.query.service];
+
+          if (billing_plans.length < 1) return type === 'acronis';
+          return type === 'acronis' && billing_plans.includes(uuid);
+        });
     },
     sp() {
       return this.$store.getters['nocloud/sp/getSP']

@@ -261,7 +261,7 @@ export default {
       });
     },
     date(timestamp) {
-      if (timestamp < 1) return '-';
+      if (timestamp < 1) return '0000-00-00';
 
       const date = new Date(timestamp * 1000);
 
@@ -288,7 +288,7 @@ export default {
         switch (domain.billingPlan.type) {
           case 'virtual': {
             domain.data.expiry = {
-              expiredate: this.date(domain.data.last_monitoring),
+              expiredate: this.date(domain.data.last_monitoring ?? 0),
               regdate: '0000-00-00'
             };
             groupname = 'Custom';
@@ -326,7 +326,7 @@ export default {
             };
             domain.data.expiry = {
               expiredate: domain.data.expires_at.split('T')[0],
-              regdate: '?'
+              regdate: '0000-00-00'
             };
           }
         }
@@ -447,7 +447,7 @@ export default {
       const key = this.service.product ?? this.service.config?.product;
       const { meta } = this.service.billingPlan?.products[key] ?? {};
       const description = this.service.desc_product
-        .replace('/templates', `${this.$config.WHMCSsiteurl}$&`);
+        ?.replace('/templates', `${this.$config.WHMCSsiteurl}$&`);
 
       return meta?.description ?? description;
     }

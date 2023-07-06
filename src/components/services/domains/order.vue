@@ -630,7 +630,17 @@ export default {
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type }) => type === 'opensrs');
+        .filter(({ type, uuid }) => {
+          const provider = this.$store.getters['nocloud/sp/getSP'].find(
+            ({ meta }) => meta.showcase && meta.showcase[this.$route.query.service]
+          );
+
+          if (!provider) return type === 'opensrs';
+          const { billing_plans } = provider.meta.showcase[this.$route.query.service];
+
+          if (billing_plans.length < 1) return type === 'opensrs';
+          return type === 'opensrs' && billing_plans.includes(uuid);
+        });
     },
     rules() {
       const message = this.$t('ssl_product.field is required');
