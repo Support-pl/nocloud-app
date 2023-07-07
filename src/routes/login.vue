@@ -116,7 +116,7 @@
             remember ? $t("forgotPass") : $t("I have a password") | capitalize
           }}</a>
         </div>
-        <div class="login__forgot">
+        <div class="login__forgot" style="margin-bottom: 30px">
           <router-link :to="{ name: 'register' }">{{
             $t("sign up") | capitalize
           }}</router-link>

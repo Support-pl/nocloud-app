@@ -289,7 +289,7 @@ export default {
           case 'virtual': {
             domain.data.expiry = {
               expiredate: this.date(domain.data.last_monitoring ?? 0),
-              regdate: '0000-00-00'
+              regdate: domain.data.creation ?? '0000-00-00'
             };
             groupname = 'Custom';
             date = 'month';
@@ -298,7 +298,7 @@ export default {
           case 'goget': {
             domain.data.expiry = {
               expiredate: '0000-00-00',
-              regdate: '0000-00-00'
+              regdate: domain.data.creation ?? '0000-00-00'
             };
             groupname = 'SSL';
             date = 'month';
@@ -326,7 +326,7 @@ export default {
             };
             domain.data.expiry = {
               expiredate: domain.data.expires_at.split('T')[0],
-              regdate: '0000-00-00'
+              regdate: domain.data.creation ?? '0000-00-00'
             };
           }
         }

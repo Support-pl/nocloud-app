@@ -155,7 +155,10 @@
               </div>
             </div>
           </transition-group>
-          <transition v-if="viewport < 576" name="header__item-anim">
+          <transition
+            name="header__item-anim"
+            v-if="viewport < 576 && headers[active]?.buttons.length > 0 && isLogged"
+          >
             <div class="header__button" @click="isButtonsVisible = !isButtonsVisible">
               <div class="icon__wrapper" :style="(isButtonsVisible) ? {
                 borderRadius: '50%',
@@ -361,7 +364,7 @@ export default {
         this.$router.push({ path: '/iaas', query });
         return;
       }
-      if (this.getActiveTab.title.includes('service')) {
+      if (this.getActiveTab.title.includes('service-')) {
         this.$router.push('/services');
         return;
       }
@@ -726,9 +729,14 @@ export default {
     left: 0;
     z-index: 10;
     width: 100%;
-    border-radius: 10px;
+    border-radius: 0 0 10px 10px;
     background: var(--main);
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .icon__wrapper {
+    width: 40px;
+    height: 40px;
   }
 }
 </style>

@@ -99,7 +99,7 @@ export default {
 
     createTransport({ state, rootState }) {
       const transport = createGrpcWebTransport({
-        baseUrl: 'https://api.nocloud.ione-cloud.net/',
+        baseUrl: VUE_APP_BASE_URL,
         interceptors: [
           (next) => async (req) => {
             const { token } = rootState.nocloud.auth;
