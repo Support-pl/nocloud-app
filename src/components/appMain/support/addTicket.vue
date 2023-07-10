@@ -85,7 +85,7 @@ export default {
       //   message: this.ticketMessage,
       //   department: this.ticketDepartment,
       // }})
-      this.$store.dispatch('support/createChat', {
+      this.$store.dispatch('nocloud/chats/createChat', {
         subject: this.ticketTitle,
         message: md.render(this.ticketMessage).trim()
       })
@@ -98,8 +98,8 @@ export default {
             this.$store.dispatch("support/autoFetch");
             this.$store.commit("support/inverseAddTicketState");
           } else if (resp.uuid) {
-            if (!resp.meta.lastMessage) {
-              await this.$store.dispatch('support/sendMessage', {
+            if (!resp.meta.lastMessage?.uuid) {
+              await this.$store.dispatch('nocloud/chats/sendMessage', {
                 uuid: resp.uuid,
                 content: md.render(this.ticketMessage).trim(),
                 account: this.user.uuid,

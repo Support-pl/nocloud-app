@@ -123,6 +123,11 @@ export default {
       txt.innerHTML = this.subject;
       return txt.value;
     },
+    messages() {
+      const chatMessages = this.$store.getters['nocloud/chats/getMessages'];
+
+      return [...this.replies, ...chatMessages];
+    },
   },
   methods: {
     goBack() {
@@ -176,7 +181,7 @@ export default {
       setTimeout(() => { content.scrollTo(0, content.scrollHeight) }, 100);
 
       if (this.replies[0].gateways) {
-        this.$store.dispatch('support/sendMessage', {
+        this.$store.dispatch('nocloud/chats/sendMessage', {
           uuid: this.$route.params.pathMatch,
           content: message.message,
           account: message.userid,
@@ -216,8 +221,8 @@ export default {
         .then(async (resp) => {
           if (resp.replies) return resp;
           else {
-            await this.$store.dispatch('support/fetchChats');
-            return this.$store.dispatch('support/fetchMessages', this.chatid);
+            await this.$store.dispatch('nocloud/chats/fetchChats');
+            return this.$store.dispatch('nocloud/chats/fetchMessages', this.chatid);
           }
         })
         .then((resp) => {
@@ -226,6 +231,9 @@ export default {
           this.subject = resp.subject;
         })
         .finally(() => {
+          setTimeout(() => {
+            this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight);
+          });
           this.loading = false;
         });
     },
@@ -248,6 +256,7 @@ export default {
     },
   },
   mounted() {
+    this.$store.dispatch('nocloud/chats/startStream');
     this.loadMessages();
   },
   beforeRouteUpdate(to, from, next) {
