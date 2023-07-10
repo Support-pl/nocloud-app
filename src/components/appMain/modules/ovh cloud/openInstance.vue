@@ -479,9 +479,10 @@
               shape="round"
               size="large"
               :disabled="VM.state.state !== 'RUNNING'"
-              @click="openVNC"
             >
-              VNC
+              <router-link :to="{ path: `${$route.params.uuid}/vnc` }">
+                VNC
+              </router-link>
             </a-button>
           </div>
         </a-col>

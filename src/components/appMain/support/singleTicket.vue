@@ -16,7 +16,7 @@
         </div>
       </div>
       <div class="ticket__lower">
-        <div class="ticket__message">{{ beauty(ticket.message) }}</div>
+        <div class="ticket__message" v-html="beauty(ticket.message)"></div>
         <div class="ticket__time">{{ formatDate(ticket.date) }}</div>
       </div>
     </div>
@@ -35,6 +35,7 @@ export default {
       message = this.decode(message);
       message = message.replace(/-{2,}.*/gi, "");
       message = message.replace(/IP Address.*/gi, "");
+      message = message.replace(/<\/?[a-z1-9 #-:=";_!]+>/gi, "");
       return message || 'empty';
     },
     formatDate(date) {
