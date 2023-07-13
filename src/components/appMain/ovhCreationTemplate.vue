@@ -18,8 +18,10 @@
       :header="`${$t('Plan')}: ${planHeader}`"
       :disabled="!itemSP || isFlavorsLoading"
     >
-      <template v-if="!isFlavorsLoading">
-        <a-row type="flex" align="middle" style="margin-bottom: 15px">
+      <a-spin v-if="isFlavorsLoading" style="display: block; margin: 0 auto" :tip="$t('loading')" />
+      <slot name="plan" v-else-if="getPlan.type?.includes('dedicated') && !$route.query.product" />
+      <template v-else-if="!isFlavorsLoading">
+        <a-row type="flex" align="middle" style="margin-bottom: 15px" v-if="!$route.query.product">
           <a-col span="24" v-if="resources.plans.length < 6 && resources.plans.length > 1">
             <a-slider
               style="margin-top: 10px"
@@ -45,6 +47,12 @@
             </div>
           </a-col>
         </a-row>
+        <a-icon
+          type="left"
+          style="margin-bottom: 10px; font-size: 20px"
+          v-else-if="$route.query.product"
+          @click="$router.go(-1)"
+        />
         <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
           <a-col>
             <span style="display: inline-block; width: 70px">CPU:</span>
@@ -99,7 +107,6 @@
           </a-col>
         </a-row>
       </template>
-      <a-spin v-else style="display: block; margin: 0 auto" :tip="$t('loading')" />
     </a-collapse-panel>
 
     <!-- OS -->

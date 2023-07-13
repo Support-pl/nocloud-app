@@ -267,9 +267,11 @@ export default {
       this.$router.push({ name: 'openCloud_new', params: { uuid } });
     },
 		getToken() {
+      const isCloud = this.instance.billingPlan.type.includes('cloud');
+      const action = (isCloud) ? 'start_vnc_vm' : 'start_vnc';
+
 			this.$store.dispatch('nocloud/vms/actionVMInvoke', {
-        uuid: this.$route.params.pathMatch,
-        action: 'start_vnc'
+        uuid: this.$route.params.pathMatch, action
       })
 				.then(res => {
           const baseURL = VUE_APP_BASE_URL.split('.');
