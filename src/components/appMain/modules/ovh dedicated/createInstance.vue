@@ -23,8 +23,46 @@
     @changePlan="(value) => plan = value"
     @changeType="(value) => $emit('setData', { key: 'type', value })"
   >
-    <template v-slot:location>
+    <template #location>
       <slot name="location"></slot>
+    </template>
+
+    <template #plan>
+      <a-checkbox-group v-model="checkedTypes" :options="typesOptions" />
+      <div class="order__grid">
+        <div
+          class="order__grid-item"
+          v-for="provider of resources.plans"
+          :key="provider"
+          :class="{ 'order__grid-item--active': plan === provider }"
+          @click="plan = provider"
+        >
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px">
+            <h1>{{ provider }}</h1>
+            <a-icon
+              type="right"
+              style="font-size: 20px"
+              @click.stop="$router.push({ query: { product: plan } })"
+            />
+          </div>
+          <div>
+            {{ $t('cpu') }}: {{ getCpu(provider) ?? '?' }}
+          </div>
+          <div>
+            {{ $t('ram') }}: {{ $t('from') }}
+            {{ allResources[provider]?.ram[0] ?? '?' }} GB
+          </div>
+          <div>
+            {{ $t('Drive') }}: {{ $t('from') }}
+            {{ allResources[provider]?.disk[0] ?? '?' }} GB
+          </div>
+          <div>
+            {{ $t('invoice_Price') }}: {{ $t('from') }}
+            {{ allResources[provider]?.price[0] ?? 0 }}
+            {{ currency.code }}
+          </div>
+        </div>
+      </div>
     </template>
   </ovh-creation-template>
 </template>
@@ -52,7 +90,8 @@ export default {
     allAddons: {},
     addonsCodes: {},
     price: {},
-    cpus: {}
+    cpus: {},
+    checkedTypes: []
   }),
   methods: {
     setData(resource, changeTarifs = true) {
@@ -124,6 +163,11 @@ export default {
       os.sort();
       this.images = os.map((el) => ({ name: el, desc: el }));
       if (this.images.length === 1) this.$refs.template?.setOS(this.images[0], 0);
+    },
+    getCpu(plan) {
+      const { value } = this.plans.find((el) => el.label.includes(plan)) ?? {};
+
+      return this.cpus[value];
     }
   },
   created() {
@@ -133,6 +177,14 @@ export default {
     });
   },
   computed: {
+    user() {
+      return this.$store.getters["nocloud/auth/billingData"];
+    },
+    currency() {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+
+      return { code: this.user.currency_code ?? defaultCurrency };
+    },
     resources() {
       const ram = new Set();
       const disk = new Set();
@@ -156,10 +208,77 @@ export default {
       });
 
       return {
-        plans: this.plans.map(({ label }) => label),
+        plans: this.plans.map(({ label }) => label).filter((label) => {
+          if (this.checkedTypes.length < 1) return true;
+          return this.checkedTypes.find((type) => label.includes(type));
+        }),
         ram: Array.from(ram).sort((a, b) => a - b),
         disk: Array.from(disk).sort((a, b) => a - b)
       };
+    },
+    allResources() {
+      if (!this.getPlan.products) return {};
+
+      return this.plans.reduce((result, { value, label, periods }) => {
+        const ram = new Set();
+        const disk = new Set();
+
+        const duration = (this.mode === 'upfront12') ? 'P1Y' : 'P1M';
+        const { meta: { addons } } = this.getPlan.products[`${duration} ${value}`] ??
+          Object.values(this.getPlan.products)[0];
+
+        addons?.forEach(({ id }) => {
+          if (!this.getPlan.resources.find(({ key }) => key === `${duration} ${value} ${id}`)) return;
+          if (id.includes('ram')) {
+            ram.add(parseInt(id.split('-')[1]));
+          }
+          if (id.includes('raid')) {
+            const [count, size] = id.split('-')[1].split('x');
+
+            disk.add(count * parseInt(size));
+          }
+        });
+
+        return {
+          ...result,
+          [label]: {
+            price: periods.map(({ price }) => price.value).sort((a, b) => a - b),
+            ram: Array.from(ram).sort((a, b) => a - b),
+            disk: Array.from(disk).sort((a, b) => a - b)
+          }
+        };
+      }, {});
+    },
+    typesOptions() {
+      const types = [];
+
+      this.plans.forEach(({ label }) => {
+        const value = label.split('-')[0];
+
+        if (types.find((type) => type.value.includes(value))) return;
+        if (label.includes('STOR') || label.includes('SDS')) {
+          return { value, label: 'Storage' };
+        }
+
+        switch (value) {
+          case 'HGR':
+            types.push({ value, label: 'High grade' });
+            break;
+          case 'HOST':
+            types.push({ value, label: 'Hosting' });
+            break;
+          case 'MG':
+            types.push({ value, label: 'Enterprise' });
+            break;
+          case 'FS':
+            types.push({ value, label: 'Storage' });
+            break;
+          default:
+            types.push({ value, label: this.$options.filters.capitalize(value) });
+        }
+      });
+
+      return types;
     },
     addons() {
       const addons = { traffic: {}, vrack: {} };
@@ -254,3 +373,34 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.order__grid-item {
+	padding: 10px 20px;
+	border-radius: 15px;
+	cursor: pointer;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.order__grid-item:hover {
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+}
+
+.order__grid-item h1 {
+  margin-bottom: 0;
+  color: inherit;
+}
+
+.order__grid-item--active {
+  background-color: var(--main);
+  color: #fff;
+}
+</style>

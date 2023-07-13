@@ -6,7 +6,7 @@ import {
 } from '@/libs/cc_connect/cc_connect';
 import {
   Empty, Chat, Message, ChatMeta, Role, Kind, EventType, Users, User
-} from '../../libs/cc_connect/cc_pb';
+} from '@/libs/cc_connect/cc_pb';
 
 function toDate(timestamp) {
   const date = new Date(timestamp);
@@ -19,6 +19,18 @@ function toDate(timestamp) {
   if (`${day}`.length < 2) day = `0${day}`;
 
   return `${year}-${month}-${day} ${time}`;
+}
+
+function changeMessage(message, user, uuid) {
+  return {
+    date: toDate(Number(message.sent)),
+    email: user.data?.email ?? 'none',
+    message: message.content.trim(),
+    name: user.title ?? 'anonymous',
+    userid: user.uuid,
+    requestor_type: (uuid === user.uuid) ? 'Owner' : 'Other',
+    gateways: message.gateways
+  };
 }
 
 export default {
@@ -41,6 +53,7 @@ export default {
       const { value: chat } = event.item;
 
       switch (event.type) {
+        case EventType.CHAT_READ:
         case EventType.CHAT_CREATED:
         case EventType.CHAT_UPDATED:
           state.chats.set(chat.uuid, chat);
@@ -54,13 +67,17 @@ export default {
     updateMessage(state, event) {
       const { value: message } = event.item;
       const i = state.messages.findIndex(({ id }) => id === message.uuid);
+      const user = state.accounts.users.find(
+        (account) => account.uuid === message.sender
+      ) ?? {};
+      const newMessage = changeMessage(message, user, event.uuid);
 
       if (event.item.case === 'chat') return;
       switch (event.type) {
         case EventType.MESSAGE_SENT: {
           const chat = state.chats.get(message.chat);
 
-          state.messages.push(message);
+          state.messages.push(newMessage);
           chat.meta = new ChatMeta({
             unread: chat.meta.unread + 1,
             lastMessage: message
@@ -68,7 +85,7 @@ export default {
           break;
         }
         case EventType.MESSAGE_UPDATED: {
-          state.messages[i] = message;
+          state.messages.splice(i, 1, newMessage);
           state.chats.get(message.chat).meta.unread++;
           break;
         }
@@ -131,22 +148,14 @@ export default {
 
         if (!state.accounts) state.accounts = accounts;
         messagesApi.get(chat)
-          .then(async ({ messages }) => {
+          .then(({ messages }) => {
+            const { uuid } = rootState.nocloud.auth.userdata;
             const replies = messages.map((message) => {
-              const { uuid } = rootState.nocloud.auth.userdata;
               const user = accounts.users.find(
                 (account) => account.uuid === message.sender
               ) ?? {};
 
-              return {
-                date: toDate(Number(message.sent)),
-                email: user.data?.email ?? 'none',
-                message: message.content.trim(),
-                name: user.title ?? 'anonymous',
-                userid: user.uuid,
-                requestor_type: (uuid === user.uuid) ? 'Owner' : 'Other',
-                gateways: message.gateways
-              };
+              return changeMessage(message, user, uuid);
             });
 
             commit('setMessages', replies);
@@ -154,7 +163,7 @@ export default {
           });
       })
     },
-    async startStream({ state, dispatch, commit }) {
+    async startStream({ state, dispatch, commit, rootState }) {
       if (state.stream) return;
 
       const transport = state.transport ?? await dispatch('createTransport');
@@ -167,7 +176,9 @@ export default {
         for await (const event of state.stream) {
           if (event.type === +EventType.PING) continue;
           else if (event.type >= EventType.MESSAGE_SENT) {
-            commit('updateMessage', event);
+            const { uuid } = rootState.nocloud.auth.userdata;
+
+            commit('updateMessage', { ...event, uuid });
           } else {
             commit('updateChat', event);
           }
