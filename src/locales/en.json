@@ -331,6 +331,7 @@
   "next": "next",
   "Done": "Done",
   "renew": "renew",
+  "config": "config",
 	"all fields are required": "Please fill in all fields",
 	"field must contain more characters": "Field must contain more characters",
   "login is required": "Login is required",

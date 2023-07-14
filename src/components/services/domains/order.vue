@@ -674,6 +674,7 @@ export default {
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
 
+        if (err.response?.data?.code === 16) return;
         this.openNotificationWithIcon('error', {
           message: this.$t(message)
         });
@@ -687,6 +688,7 @@ export default {
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
 
+        if (err.response?.data?.code === 16) return;
         this.openNotificationWithIcon('error', {
           message: this.$t(message)
         });

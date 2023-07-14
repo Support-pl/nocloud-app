@@ -122,6 +122,7 @@ export default {
         .then(() => {
           const message = this.$t('Done');
 
+          this.$destroyAll();
           this.$notification.success({ message });
         })
         .catch((err) => {

@@ -300,11 +300,12 @@ export default {
 	grid-gap: 15px
 }
 
+.logo__image {
+  max-width: 70%;
+}
+
 .logo__image img {
-  display: block;
-  max-width: 100vw;
-  max-height: 130px;
-  margin: 0 auto;
+  max-width: 100%;
 }
 
 .pos_top{
@@ -521,11 +522,6 @@ export default {
 	.login__forgot{
 		margin-top: 40px;
 	}
-
-  .logo__image img {
-    max-width: 50vw;
-    max-height: 50vh;
-  }
 
 	#qrcode{
 		display: inline-block;
