@@ -93,7 +93,7 @@
 					<a-col :xs="12" :sm="18" :lg='12'>
 						<a-select v-if="!fetchLoading" v-model="options.period"  style="width: 100%">
 							<a-select-option v-for="period in periods" :key="period" :value="period">
-								{{ $tc('month', period / 3600 / 24 / 30) }}
+								{{ getPeriod(period) }}
 							</a-select-option>
 						</a-select>
 						<div v-else class="loadingLine"></div>
@@ -345,6 +345,22 @@ export default {
     },
     onError({ target }) {
       target.src = '/img/OS/default.png';
+    },
+    getPeriod(timestamp) {
+      let period = '';
+      let count = 0;
+
+      if (timestamp / 3600 < 24 && timestamp >= 3600) {
+        period = 'hour';
+        count = timestamp / 3600;
+      } else if (timestamp / 3600 / 24 < 30 && timestamp >= 3600 * 24) {
+        period = 'day';
+        count = timestamp / 3600 / 24;
+      } else if (timestamp / 3600 / 24 / 30 && timestamp >= 3600 * 24 * 30) {
+        period = 'month';
+        count = timestamp / 3600 / 24 / 30;
+      }
+      return this.$tc(period, count);
     }
 	},
 	computed: {
@@ -425,6 +441,7 @@ export default {
     Promise.all(promises).catch((err) => {
       const message = err.response?.data?.message ?? err.message ?? err;
 
+      if (err.response?.data?.code === 16) return;
       this.$notification.error({ message: this.$t(message) });
       console.error(err);
     })

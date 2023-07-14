@@ -37,14 +37,7 @@
           :class="{ 'order__grid-item--active': plan === provider }"
           @click="plan = provider"
         >
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px">
-            <h1>{{ provider }}</h1>
-            <a-icon
-              type="right"
-              style="font-size: 20px"
-              @click.stop="$router.push({ query: { product: plan } })"
-            />
-          </div>
+          <h1>{{ provider }}</h1>
           <div>
             {{ $t('cpu') }}: {{ getCpu(provider) ?? '?' }}
           </div>
@@ -56,11 +49,25 @@
             {{ $t('Drive') }}: {{ $t('from') }}
             {{ allResources[provider]?.disk[0] ?? '?' }} GB
           </div>
-          <div>
-            {{ $t('invoice_Price') }}: {{ $t('from') }}
-            {{ allResources[provider]?.price[0] ?? 0 }}
-            {{ currency.code }}
+          <div style="margin-top: 5px">
+            {{ $t('from') | capitalize }}
+            <span :style="{
+              fontSize: '18px',
+              fontWeight: 700,
+              color: (plan === provider) ? null : 'var(--main)'
+            }">
+              {{ allResources[provider]?.price[0] ?? 0 }}
+              {{ currency.code }}
+            </span>
           </div>
+          <a-button
+            ghost
+            style="display: block; margin: 5px 0 0 auto"
+            v-if="plan === provider"
+            @click="$router.push({ query: { product: plan } })"
+          >
+            {{ $t('config') | capitalize }}
+          </a-button>
         </div>
       </div>
     </template>
@@ -287,19 +294,21 @@ export default {
         this.getPlan.resources?.forEach(({ price, key }) => {
           const { value } = this.plans.find((el) => el.label.includes(this.plan)) ?? {};
 
-          const addonKey = key.split(' ')[1];
-          const duration = key.split(' ')[0];
+          const addonKey = key.split(' ').at(-1);
+          const duration = key.split(' ').at(0);
           const period = {
             price: { value: price },
             duration,
             pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
           };
 
-          const isInclude = this.allAddons[value]?.includes(addonKey);
+          const { title } = this.allAddons[value]?.find(
+            ({ id }) => id.includes(addonKey)
+          ) ?? {};
           const isEqualMode = period.pricingMode === this.mode;
 
-          if (isInclude && key.includes(addon) && isEqualMode) {
-            addons[addon][addonKey] = { periods: [period], title: addonKey };
+          if (title?.includes(addon) && isEqualMode) {
+            addons[addon][addonKey] = { periods: [period], title };
           }
         });
       });
@@ -395,7 +404,7 @@ export default {
 }
 
 .order__grid-item h1 {
-  margin-bottom: 0;
+  margin-bottom: 5px;
   color: inherit;
 }
 
