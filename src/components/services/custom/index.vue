@@ -347,18 +347,26 @@ export default {
       target.src = '/img/OS/default.png';
     },
     getPeriod(timestamp) {
+      const hour = 3600;
+      const day = hour * 24;
+      const month = day * 30;
+      const year = month * 12;
+
       let period = '';
       let count = 0;
 
-      if (timestamp / 3600 < 24 && timestamp >= 3600) {
+      if (timestamp / hour < 24 && timestamp >= hour) {
         period = 'hour';
-        count = timestamp / 3600;
-      } else if (timestamp / 3600 / 24 < 30 && timestamp >= 3600 * 24) {
+        count = timestamp / hour;
+      } else if (timestamp / day < 30 && timestamp >= day) {
         period = 'day';
-        count = timestamp / 3600 / 24;
-      } else if (timestamp / 3600 / 24 / 30 && timestamp >= 3600 * 24 * 30) {
+        count = timestamp / day;
+      } else if (timestamp / month < 12 && timestamp >= month) {
         period = 'month';
-        count = timestamp / 3600 / 24 / 30;
+        count = timestamp / month;
+      } else {
+        period = 'year';
+        count = timestamp * year;
       }
       return this.$tc(period, count);
     }
