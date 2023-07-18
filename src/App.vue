@@ -1,99 +1,107 @@
 <template>
-  <div id="app" :style="false && cssVars" :class="{ 'block-page': notification }">
+  <div
+    id="app"
+    :style="false && cssVars"
+    :class="{ 'block-page': notification }"
+  >
     <transition name="slide">
-      <router-view :style="{
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        minHeight: (loggedIn) ? 'auto' : '100vh'
-      }" />
+      <router-view
+        :style="{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          minHeight: (loggedIn) ? 'auto' : '100vh'
+        }"
+      />
     </transition>
     <update-notification />
   </div>
 </template>
 
+<script setup>
+import { computed, onMounted, watch } from 'vue'
+import updateNotification from '@/widgets/updateNotification/index.vue'
+import store from '@/app/store'
+import router from '@/app/router'
+import i18n from '@/app/i18n'
+import config from '@/shared/config/appconfig'
+
+const notification = computed(() =>
+  store.getters['app/getNotification']
+)
+
+watch(notification, (value) => {
+  if (!value) return
+  setTimeout(() => {
+    const elements = document.querySelectorAll('.ant-notification-notice-close')
+    const closeIcons = Array.from(elements)
+
+    const open = () => {
+      if (closeIcons.length > 1) closeIcons.pop()
+      else store.commit('app/setNotification', false)
+    }
+
+    closeIcons.forEach((el) => { el.addEventListener('click', open) })
+  }, 100)
+})
+
+const loggedIn = computed(() =>
+  store.getters['nocloud/auth/isLoggedIn']
+)
+
+window.addEventListener('message', ({ data, origin }) => {
+  if (!origin.includes('https://api.')) return
+  store.commit('nocloud/auth/setToken', data)
+  sessionStorage.removeItem('user')
+  location.reload()
+})
+
+store.dispatch('nocloud/auth/load')
+router.beforeEach((to, _, next) => {
+  const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined)
+
+  if (mustBeLoggined && !loggedIn.value) {
+    next({ name: 'login' })
+  } else if (to.name === 'login' && loggedIn.value) next({ name: 'root' })
+  else next()
+})
+
+const lang = localStorage.getItem('lang')
+if (lang !== undefined) i18n.locale = lang
+if (loggedIn.value) {
+  store.dispatch('nocloud/auth/fetchUserData')
+} else {
+  sessionStorage.removeItem('user')
+}
+
+const cssVars = computed(() =>
+  Object.fromEntries(
+    Object.entries(config.colors).map(([key, val]) => [
+      `--${key}`,
+      val
+    ])
+  )
+)
+
+onMounted(() => {
+  router.onReady(() => {
+    const route = router.currentRoute
+    const mustBeLoggined = route.matched.some((el) => !!el.meta?.mustBeLoggined)
+
+    if (mustBeLoggined && !loggedIn.value) {
+      router.replace('login')
+    }
+  })
+
+  document.title = 'Cloud'
+  document.body.setAttribute('style',
+    Object.entries(cssVars.value).map(([k, v]) => `${k}:${v}`).join(';')
+  )
+})
+</script>
+
 <script>
-import updateNotification from "./components/updateNotification/index.vue";
-
-export default {
-  name: "app",
-  components: { updateNotification },
-  created() {
-    window.addEventListener('message', ({ data, origin }) => {
-      if (!origin.includes('https://api.')) return;
-      this.$store.commit("nocloud/auth/setToken", data);
-      sessionStorage.removeItem("user");
-      location.reload();
-    });
-
-    this.$store.dispatch("nocloud/auth/load");
-
-    this.$router.beforeEach((to, _, next) => {
-      const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined);
-
-      if (mustBeLoggined && !this.loggedIn) {
-        next({ name: "login" });
-      }
-      else if (to.name == "login" && this.loggedIn) next({ name: "root" });
-      else next();
-    });
-
-    const lang = localStorage.getItem("lang");
-    if (lang != undefined) this.$i18n.locale = lang;
-    if (this.loggedIn) {
-      this.$store.dispatch("nocloud/auth/fetchUserData");
-    } else {
-      sessionStorage.removeItem('user');
-    }
-  },
-  mounted() {
-    this.$router.onReady(() => {
-      const route = this.$router.currentRoute;
-      const isLogged = this.loggedIn;
-      const mustBeLoggined = route.matched.some((el) => !!el.meta?.mustBeLoggined);
-
-      if (mustBeLoggined && !isLogged) {
-        this.$router.replace("login");
-      }
-    });
-
-    document.title = "Cloud";
-    document.body.setAttribute("style",
-      Object.entries(this.cssVars).map(([k, v]) => `${k}:${v}`).join(";")
-    );
-  },
-  computed: {
-    cssVars() {
-      return Object.fromEntries(
-        Object.entries(this.$config.colors).map(([key, val]) => [
-          `--${key}`,
-          val,
-        ])
-      );
-    },
-    loggedIn() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
-    },
-    notification() {
-      return this.$store.getters["app/getNotification"];
-    }
-  },
-  watch: {
-    notification(value) {
-      if (!value) return;
-      setTimeout(() => {
-        const elements = document.querySelectorAll('.ant-notification-notice-close');
-        const close = Array.from(elements);
-        const open = () => {
-          if (close.length > 1) close.pop();
-          else this.$store.commit('app/setNotification', false);
-        }
-
-        close.forEach((el) => { el.addEventListener('click', open) });
-      }, 100);
-    }
-  }
-};
+export default { name: 'App' }
 </script>
 
 <style>

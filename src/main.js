@@ -1,28 +1,26 @@
 import Vue from 'vue'
-import App from './App.vue'
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/antd.css'
 import VueGoogleCharts from 'vue-google-charts'
-import i18n from './i18n'
-import store from './store'
-import router from './router'
-import './registerServiceWorker'
-import axios from './axios'
-import config from './appconfig'
-import api from "@/api.js"
-import './assets/style.css'
+import App from './App.vue'
+import i18n from './app/i18n'
+import store from './app/store'
+import router from './app/router'
+import './shared/config/registerServiceWorker'
+import axios from './shared/api/axios'
+import config from './shared/config/appconfig'
+import api from './shared/api/api.js'
+import './app/styles/style.css'
 
-
-import maintanance from '@/components/maintanance.vue'
+import maintanance from './widgets/maintanance.vue'
 
 Vue.config.productionTip = false
 Vue.use(Antd)
 Vue.use(VueGoogleCharts)
 
-
-Vue.prototype.$config = config;
-Vue.prototype.$axios = axios;
-Vue.prototype.$api = api;
+Vue.prototype.$config = config
+Vue.prototype.$axios = axios
+Vue.prototype.$api = api
 
 Vue.filter('capitalize', function (value) {
   if (!value) return ''
@@ -41,11 +39,11 @@ Vue.filter('dateFormat', function (value) {
   // return   new Intl.DateTimeFormat("en-GB", {
   //   dateStyle: "short",
   // }).format(new Date(value))
-  return   new Intl.DateTimeFormat().format(new Date(value))
+  return new Intl.DateTimeFormat().format(new Date(value))
 })
 
 Vue.directive('phone', {
-  update(el, { value: code }) {
+  update (el, { value: code }) {
     if (!event?.isTrusted) return
     el.value = el.value.replace(code, '')
 
@@ -64,11 +62,11 @@ Vue.directive('phone', {
   }
 })
 
-Vue.component('maintanance-mode', maintanance);
+Vue.component('MaintananceMode', maintanance)
 
 new Vue({
   i18n,
-	router,
-	store,
+  router,
+  store,
   render: h => h(App)
 }).$mount('#app')
