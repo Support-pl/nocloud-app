@@ -777,12 +777,12 @@ export default {
       return null
     },
     template () {
-      const components = import.meta.glob('@/widgets/appMain/modules/*/createInstance.vue')
-
       if (this.itemSP?.type.includes('ovh')) {
         const { type = 'ovh vps' } = this.getPlan ?? {}
+        const components = import.meta.glob('@/widgets/appMain/modules/*/createInstance.vue')
+        const component = Object.keys(components).find((key) => key.includes(`/${type}/`))
 
-        return () => components[`./modules/${type}/createInstance.vue`]()
+        return () => components[component]()
       } else {
         return () => import('@/widgets/appMain/modules/ione/createInstance.vue')
       }

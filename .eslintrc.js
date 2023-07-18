@@ -54,5 +54,8 @@ module.exports = {
     'vue/valid-v-slot': 'off',
     'no-unsafe-optional-chaining': 'off',
     'vue/no-v-html': 'off'
+  },
+  globals: {
+    VUE_APP_BASE_URL: true
   }
 }

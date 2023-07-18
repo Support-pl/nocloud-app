@@ -13,9 +13,10 @@
     <title>CloudApp</title>
     <script	src="/apiurl.js"></script>
     <script>
+      window.require = () => ({ register: () => ({}), unregister: () => ({}) })
       fetch('/config.json')
         .then((res) => res.json())
-        .then((res) => localStorage.setItem('globalConfig', JSON.stringify(res)));
+        .then((res) => localStorage.setItem('globalConfig', JSON.stringify(res)))
     </script>
 	</head>
 	<body>
