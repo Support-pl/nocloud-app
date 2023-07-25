@@ -9,7 +9,7 @@
   >
     <a-spin tip="Loading..." :spinning="isLoading">
       <a-form-model layout="vertical">
-        <a-form-model-item :label="$t('department')" v-if="false">
+        <a-form-model-item :label="$t('department')">
           <a-select v-model="ticketDepartment" placeholder="department">
             <a-select-option v-for="dep in departments" :key="dep.id" :value="dep.id" >
               {{ dep.name }}
@@ -73,22 +73,22 @@ export default {
         return;
       }
 
-      // if (this.ticketDepartment == -1) {
-      //   this.$message.warn(this.$t("departments are loading"));
-      //   return;
-      // }
+      if (this.ticketDepartment == -1) {
+        this.$message.warn(this.$t("departments are loading"));
+        return;
+      }
 
       this.isSending = true;
-      // this.$api.get(this.baseURL, { params: {
-      //   run: 'create_ticket',
-      //   subject: this.ticketTitle,
-      //   message: this.ticketMessage,
-      //   department: this.ticketDepartment,
-      // }})
-      this.$store.dispatch('nocloud/chats/createChat', {
+      this.$api.get(this.baseURL, { params: {
+        run: 'create_ticket',
         subject: this.ticketTitle,
-        message: md.render(this.ticketMessage).trim()
-      })
+        message: this.ticketMessage,
+        department: this.ticketDepartment,
+      }})
+      // this.$store.dispatch('nocloud/chats/createChat', {
+      //   subject: this.ticketTitle,
+      //   message: md.render(this.ticketMessage).trim()
+      // })
         .then(async (resp) => {
           if (resp.result === "success") {
             this.ticketTitle = "";
@@ -130,7 +130,7 @@ export default {
         this.ticketDepartment = this.departments[0].id;
       })
       .catch(() => {
-        // this.$message.error(this.$t("departments not found"));
+        this.$message.error(this.$t("departments not found"));
       })
       .finally(() => {
         this.isLoading = false;

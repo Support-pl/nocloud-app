@@ -145,7 +145,7 @@
       <div class="newCloud__option-field">
         <div class="newCloud__template" v-if="this.itemSP">
           <div
-            v-for="(item, index) in itemSP && itemSP.publicData.templates"
+            v-for="(item, index) in images"
             class="newCloud__template-item"
             :key="index"
             :class="{ active: options.os.name == item.name }"
@@ -172,6 +172,17 @@
                 :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
                 :value="vmName"
                 @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
+              />
+              <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
+                {{ $t('ssl_product.field is required') }}
+              </div>
+            </a-form-item>
+
+            <a-form-item style="margin-top: 15px" :label="$t('clientinfo.username') | capitalize">
+              <a-input
+                :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
+                :value="vmName"
+                @change="({ target: { value } }) => $emit('setData', { key: 'username', value })"
               />
               <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
                 {{ $t('ssl_product.field is required') }}
@@ -330,6 +341,7 @@ export default {
     productSize: { type: String, required: true },
     tarification: { type: String, required: true },
     vmName: { type: String, required: true },
+    username: { type: String, required: true },
     password: { type: String, required: true },
     sshKey: { type: String }
   },
@@ -443,6 +455,18 @@ export default {
     },
     isProductsExist() {
       return this.getProducts.length > 0;
+    },
+    images() {
+      const { templates } = this.itemSP.publicData;
+      const images = {};
+
+      Object.entries(templates).forEach(([key, value]) => {
+        if (value.is_public !== false) {
+          images[key] = value;
+        }
+      });
+
+      return images;
     },
     networkHeader() {
       const pub = this.options.network.public;

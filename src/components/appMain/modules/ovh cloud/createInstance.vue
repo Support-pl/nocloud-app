@@ -21,8 +21,84 @@
     @changePlans="setPlans"
     @changePlan="(value) => plan = value"
   >
-    <template v-slot:location>
+    <template #location>
       <slot name="location"></slot>
+    </template>
+
+    <template #plan>
+      <a-row type="flex" justify="space-between" align="middle" v-if="resources.cpu.length > 0">
+        <a-col>
+          <span style="display: inline-block">{{ $t('cpu') }}: (cores)</span>
+        </a-col>
+        <a-col :span="20">
+          <a-slider
+            range
+            style="margin-top: 10px"
+            :marks="{ ...resources.cpu }"
+            :tip-formatter="null"
+            :default-value="[0, resources.cpu.length - 1]"
+            :max="resources.cpu.length - 1"
+            :min="0"
+            @change="([i, j]) => filters.cpu = [resources.cpu[i], resources.cpu[j]]"
+          />
+        </a-col>
+      </a-row>
+      <a-row type="flex" justify="space-between" align="middle" v-if="resources.ram.length > 0">
+        <a-col>
+          <span style="display: inline-block">{{ $t('ram') }}: (Gb)</span>
+        </a-col>
+        <a-col :span="20">
+          <a-slider
+            range
+            style="margin-top: 10px"
+            :marks="{ ...resources.ram }"
+            :tip-formatter="null"
+            :default-value="[0, resources.ram.length - 1]"
+            :max="resources.ram.length - 1"
+            :min="0"
+            @change="([i, j]) => filters.ram = [resources.ram[i], resources.ram[j]]"
+          />
+        </a-col>
+      </a-row>
+      <a-row type="flex" justify="space-between" align="middle" v-if="resources.disk.length > 0">
+        <a-col>
+          <span style="display: inline-block">{{ $t("Drive") }}: (Gb)</span>
+        </a-col>
+        <a-col :span="20">
+          <a-slider
+            range
+            style="margin-top: 10px"
+            :marks="{ ...resources.disk }"
+            :tip-formatter="null"
+            :default-value="[0, resources.disk.length - 1]"
+            :max="resources.disk.length - 1"
+            :min="0"
+            @change="([i, j]) => filters.disk = [resources.disk[i], resources.disk[j]]"
+          />
+        </a-col>
+      </a-row>
+
+      <div class="order__grid" style="margin-top: 10px">
+        
+        <div
+          class="order__grid-item"
+          v-for="provider of filteredPlans"
+          :key="provider.label"
+          :class="{ 'order__grid-item--active': plan === provider.label }"
+          @click="plan = provider.label"
+        >
+          <h1>{{ provider.label }}</h1>
+          <div>
+            {{ $t('cpu') }}: {{ provider.resources.cpu ?? '?' }}
+          </div>
+          <div>
+            {{ $t('ram') }}: {{ provider.resources.ram / 1000 ?? '?' }} Gb
+          </div>
+          <div>
+            {{ $t('Drive') }}: {{ provider.resources.drive_size / 1024 ?? '?' }} Gb
+          </div>
+        </div>
+      </div>
     </template>
   </ovh-creation-template>
 </template>
@@ -50,7 +126,8 @@ export default {
     addons: {},
     allAddons: {},
     addonsCodes: {},
-    price: {}
+    price: {},
+    filters: { cpu: [], ram: [], disk: [] }
   }),
   methods: {
     setData(planKey, changeTarifs = true) {
@@ -102,10 +179,49 @@ export default {
     this.$emit('setData', { key: 'cloud_datacenter', type: 'ovh', value: this.region.value });
   },
   computed: {
-    resources() {
-      const plans = new Set(this.plans.map(({ label }) => label));
+    filteredPlans() {
+      const plans = [];
 
-      return { plans: Array.from(plans), ram: [], disk: [] };
+      this.plans.forEach(({ label, resources }) => {
+        const byCpu = resources.cpu >= this.filters.cpu.at(0) &&
+          resources.cpu <= this.filters.cpu.at(-1);
+
+        const byRam = resources.ram / 1024 >= this.filters.ram.at(0) &&
+          resources.ram / 1024 <= this.filters.ram.at(-1);
+
+        const byDisk = resources.drive_size / 1024 >= this.filters.disk.at(0) &&
+          resources.drive_size / 1024 <= this.filters.disk.at(-1);
+
+        if (byCpu && byRam && byDisk) {
+          plans.push({ label, resources });
+        }
+      });
+
+      return plans;
+    },
+    resources() {
+      const plans = this.plans.map(({ label }) => label);
+      const cpu = [];
+      const ram = [];
+      const disk = [];
+
+      this.plans.forEach(({ resources }) => {
+        if (!cpu.includes(resources.cpu)) {
+          cpu.push(resources.cpu);
+        }
+        if (!ram.includes(resources.ram / 1000)) {
+          ram.push(resources.ram / 1000);
+        }
+        if (!disk.includes(resources.drive_size / 1024)) {
+          disk.push(resources.drive_size / 1024);
+        }
+      });
+
+      cpu.sort((a, b) => a - b);
+      ram.sort((a, b) => a - b);
+      disk.sort((a, b) => a - b);
+
+      return { plans, cpu, ram, disk };
     },
     region() {
       const location = this.locationId.split(' ').at(-1);
@@ -151,7 +267,47 @@ export default {
         os?.sort((a, b) => a.name < b.name);
         this.images = os?.map(({ name, id }) => ({ name, desc: name, id })) ?? [];
       }, 100);
+    },
+    'resources.cpu'(value) {
+      this.filters.cpu = [value.at(0), value.at(-1)];
+    },
+    'resources.ram'(value) {
+      this.filters.ram = [value.at(0), value.at(-1)];
+    },
+    'resources.disk'(value) {
+      this.filters.disk = [value.at(0), value.at(-1)];
     }
   }
 }
 </script>
+
+<style scoped>
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.order__grid-item {
+	padding: 10px 20px;
+	border-radius: 15px;
+	cursor: pointer;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.order__grid-item:hover {
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+}
+
+.order__grid-item h1 {
+  margin-bottom: 5px;
+  color: inherit;
+}
+
+.order__grid-item--active {
+  background-color: var(--main);
+  color: #fff;
+}
+</style>

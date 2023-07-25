@@ -69,10 +69,10 @@
 	"Result": "Wynik",
 	"Cost": "Koszt",
 	"min": "min",
-	"hour": "godzina",
-	"day": "dzień",
+	"hour": "godzina | {n} godzina | {n} godziny",
+	"day": "dzień | {n} dzień | {n} dni",
 	"week": "tydzień",
-	"month": "no miesiąc | {n} month | {n} miesięcy",
+	"month": "miesiąc | {n} miesiąc | {n} miesięcy",
 	"year": "rok | {n} rok | {n} lata",
   "years": "lata",
 	"Network": "Sieć",
@@ -269,6 +269,9 @@
 	"turn of VM to resize it": "Wyłącz WM, aby zmienić jej rozmiar",
 	"chat_Resend_message": "Wyślij ponownie wiadomość",
 	"chat_Delete_message": "Usuń wiadomość",
+  "from": "od",
+  "to": "tę",
+  "by": "przez",
 	"sort": "Sortować",
   "name": "nazwa",
   "cost": "koszt",
@@ -491,7 +494,7 @@
 		"will be able after": "Dostępne po",
 		"login": "Zaloguj sie",
 		"sign up": "Rejestracja",
-		"see services": "Katalog serwisowy"
+		"see services": "Katalog"
 	},
 	"tos": {
 		"part1": "Tworząc konto, zgadzasz się z ",

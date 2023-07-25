@@ -19,7 +19,7 @@
       :disabled="!itemSP || isFlavorsLoading"
     >
       <a-spin v-if="isFlavorsLoading" style="display: block; margin: 0 auto" :tip="$t('loading')" />
-      <slot name="plan" v-else-if="getPlan.type?.includes('dedicated') && !$route.query.product" />
+      <slot name="plan" v-else-if="!$route.query.product" />
       <template v-else-if="!isFlavorsLoading">
         <a-row type="flex" align="middle" style="margin-bottom: 15px" v-if="!$route.query.product">
           <a-col span="24" v-if="resources.plans.length < 6 && resources.plans.length > 1">
@@ -34,7 +34,7 @@
             />
           </a-col>
           <a-col v-else span="24">
-            <div class="order__slider">
+            <div class="order__grid">
               <div
                 class="order__slider-item"
                 v-for="provider of resources.plans"
@@ -494,6 +494,13 @@ export default {
 	overflow-x: auto;
   padding-bottom: 10px;
   padding-top: 15px;
+}
+
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .order__slider-item:not(:last-child){

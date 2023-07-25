@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { proto3 } from "@bufbuild/protobuf";
+import { proto3, Value } from "@bufbuild/protobuf";
 
 /**
  * @generated from enum cc.Role
@@ -62,6 +62,7 @@ export const ChatMeta = proto3.makeMessageType(
   () => [
     { no: 1, name: "unread", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 2, name: "last_message", kind: "message", T: Message },
+    { no: 3, name: "data", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
   ],
 );
 
