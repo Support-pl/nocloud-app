@@ -43,11 +43,11 @@
           </div>
           <div>
             {{ $t('ram') }}: {{ $t('from') }}
-            {{ allResources[provider]?.ram[0] ?? '?' }} GB
+            {{ allResources[provider]?.ram[0] ?? '?' }} Gb
           </div>
           <div>
             {{ $t('Drive') }}: {{ $t('from') }}
-            {{ allResources[provider]?.disk[0] ?? '?' }} GB
+            {{ allResources[provider]?.disk[0] ?? '?' }} Gb
           </div>
           <div style="margin-top: 5px">
             {{ $t('from') | capitalize }}
