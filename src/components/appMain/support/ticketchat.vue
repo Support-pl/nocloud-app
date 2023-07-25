@@ -24,38 +24,47 @@
         <span class="chat__date" v-if="isDateVisible(replies, i)" :key="i">
           {{ reply.date.split(' ')[0] }}
         </span>
-        <div
-          class="chat__message"
-          :key="`${i}_message`"
-          :class="[
-            isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
-          ]"
+        <a-popover
+          overlayClassName="chat__tooltip"
+          :placement="(isAdminSent(reply)) ? 'rightBottom' : 'leftBottom'"
         >
-          <pre v-html="beauty(reply.message)" />
-          <div class="chat__info">
-            <span>{{ reply.name }}</span>
-            <span>{{ reply.date.slice(-8, -3) }}</span>
-          </div>
-          <a-icon v-if="reply.sending" type="loading" class="msgStatus loading" />
+          <template #content>
+            <a-icon type="copy" @click="addToClipboard(reply.message)" />
+          </template>
 
-          <a-popover v-if="reply.error" :title="$t('Send error')">
-            <template slot="content">
-              <a
-                class="popover-link"
-                slot="content"
-                @click="messageDelete(reply)"
-                >{{ $t("chat_Delete_message") }}</a
-              >
-              <a
-                class="popover-link"
-                slot="content"
-                @click="messageResend(reply)"
-                >{{ $t("chat_Resend_message") }}</a
-              >
-            </template>
-            <a-icon type="exclamation-circle" class="msgStatus error"></a-icon>
-          </a-popover>
-        </div>
+          <div
+            class="chat__message"
+            :key="`${i}_message`"
+            :class="[
+              isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
+            ]"
+          >
+            <pre v-html="beauty(reply.message)" />
+            <div class="chat__info">
+              <span>{{ reply.name }}</span>
+              <span>{{ reply.date.slice(-8, -3) }}</span>
+            </div>
+            <a-icon v-if="reply.sending" type="loading" class="msgStatus loading" />
+
+            <a-popover v-if="reply.error" :title="$t('Send error')">
+              <template slot="content">
+                <a
+                  class="popover-link"
+                  slot="content"
+                  @click="messageDelete(reply)"
+                  >{{ $t("chat_Delete_message") }}</a
+                >
+                <a
+                  class="popover-link"
+                  slot="content"
+                  @click="messageResend(reply)"
+                  >{{ $t("chat_Resend_message") }}</a
+                >
+              </template>
+              <a-icon type="exclamation-circle" class="msgStatus error"></a-icon>
+            </a-popover>
+          </div>
+        </a-popover>
       </template>
     </div>
 
@@ -126,6 +135,7 @@ export default {
     messages() {
       const chatMessages = this.$store.getters['nocloud/chats/getMessages'];
 
+      if (this.replies.at(-1).uuid) this.replies.pop();
       return [...this.replies, ...chatMessages];
     },
   },
@@ -187,6 +197,9 @@ export default {
           account: message.userid,
           date: BigInt(message.date.getTime())
         })
+          .then(({ uuid }) => {
+            this.replies.at(-1).uuid = uuid;
+          })
           .catch((err) => {
             this.replies.at(-1).error = true;
             console.error(err);
@@ -254,6 +267,24 @@ export default {
       this.messageInput = message.message;
       this.sendMessage();
     },
+    addToClipboard(text) {
+      if (navigator?.clipboard) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            this.$notification.success({
+              message: this.$t('Text copied')
+            });
+          })
+          .catch((res) => {
+            console.error(res);
+          });
+      } else {
+        this.$notification.error({
+          message: this.$t('Clipboard is not supported')
+        });
+      }
+    }
   },
   mounted() {
     this.$store.dispatch('nocloud/chats/startStream');
@@ -374,6 +405,10 @@ export default {
   padding: 6px 15px;
   overflow: auto;
   background: var(--bright_font);
+}
+
+.chat__tooltip .ant-popover-inner-content {
+  padding: 6px 8px;
 }
 
 .chat__message {

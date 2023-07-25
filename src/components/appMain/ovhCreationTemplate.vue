@@ -34,7 +34,7 @@
             />
           </a-col>
           <a-col v-else span="24">
-            <div class="order__slider">
+            <div class="order__grid">
               <div
                 class="order__slider-item"
                 v-for="provider of resources.plans"
@@ -494,6 +494,13 @@ export default {
 	overflow-x: auto;
   padding-bottom: 10px;
   padding-top: 15px;
+}
+
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .order__slider-item:not(:last-child){

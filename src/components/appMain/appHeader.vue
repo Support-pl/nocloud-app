@@ -386,6 +386,7 @@ export default {
         case 'ticket':
           this.$router.push('/support');
           break;
+        case 'products':
         case 'newPaaS':
           this.$router.push('/services');
           break;
