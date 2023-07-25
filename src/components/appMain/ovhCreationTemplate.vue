@@ -19,7 +19,7 @@
       :disabled="!itemSP || isFlavorsLoading"
     >
       <a-spin v-if="isFlavorsLoading" style="display: block; margin: 0 auto" :tip="$t('loading')" />
-      <slot name="plan" v-else-if="!$route.query.product" />
+      <slot name="plan" v-else-if="!getPlan.type.includes('vps') && !$route.query.product" />
       <template v-else-if="!isFlavorsLoading">
         <a-row type="flex" align="middle" style="margin-bottom: 15px" v-if="!$route.query.product">
           <a-col span="24" v-if="resources.plans.length < 6 && resources.plans.length > 1">
