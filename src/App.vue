@@ -38,7 +38,8 @@ export default {
       else next();
     });
 
-    const lang = localStorage.getItem("lang");
+    const lang = this.$route.query.lang ?? localStorage.getItem("lang");
+
     if (lang != undefined) this.$i18n.locale = lang;
     if (this.loggedIn) {
       this.$store.dispatch("nocloud/auth/fetchUserData");
