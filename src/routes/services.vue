@@ -1,8 +1,8 @@
 <template>
 	<div class="services">
 		<div class="container">
-			<services-wrapper class="services__block" />
-      <user-products class="services__block" :min="false" />
+			<services-wrapper class="services__block" :productsCount="productsCount" />
+      <user-products class="services__block" ref="products" :min="false" />
 
       <a-pagination
         show-size-changer
@@ -63,6 +63,9 @@ export default {
     }
   },
   methods: {
+    productsCount(type, filter) {
+      return this.$refs.products.productsCount(type, filter);
+    },
     onShowSizeChange(page, limit) {
       if (page !== this.currentPage) {
         this.$store.commit("products/setPage", page);

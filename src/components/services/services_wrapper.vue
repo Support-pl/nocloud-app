@@ -20,6 +20,7 @@
           v-if="!service.needLogin || isLogged"
           :key="service.title"
           :service="service"
+          :productsCount="productsCount"
           @mouseover.native="hovered = service.title"
           @mouseleave.native="hovered = null"
         />
@@ -34,6 +35,9 @@ import serviceItem from './service_min.vue';
 export default {
 	name: "services-wrapper",
 	components: { serviceItem },
+  props: {
+    productsCount: { type: Function, required: true }
+  },
 	data(){
 		return {
       hovered: null,
@@ -101,7 +105,12 @@ export default {
     },
     newProductHandler(service) {
       const provider = service.onclick.paramsArr[0].query.service;
-      const { type } = this.sp.find(({ meta }) => (meta.showcase ?? {})[provider]) ?? {};
+      const { type } = this.sp.find(({ uuid }) => {
+        const showcase = this.showcases.find(({ uuid }) => uuid === provider);
+
+        return showcase.servicesProviders?.includes(uuid);
+      }) ?? {};
+
       let name = 'service-virtual';
       let query = { service: provider };
 
@@ -134,6 +143,9 @@ export default {
 		sp() {
 			return this.$store.getters['nocloud/sp/getSP'];
 		},
+    showcases() {
+      return this.$store.getters['nocloud/sp/getShowcases'];
+    },
 		isLogged() {
 			return this.$store.getters['nocloud/auth/isLoggedIn'];
 		},
@@ -168,15 +180,13 @@ export default {
         })
       });
 
-			this.sp.forEach(({ meta: { showcase = {} } }) => {
-        Object.entries(showcase).forEach(([key, value]) => {
-          services.push({
-            ...value,
-            onclick: {
-              function: this.routeTo,
-              paramsArr: [{ name: 'products', query: { service: key } }]
-            }
-          });
+			this.showcases.forEach((showcase) => {
+        services.push({
+          ...showcase,
+          onclick: {
+            function: this.routeTo,
+            paramsArr: [{ name: 'products', query: { service: showcase.uuid } }]
+          }
         });
       });
 

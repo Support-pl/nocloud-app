@@ -402,15 +402,14 @@ export default {
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
         .filter(({ type, uuid }) => {
-          const provider = this.$store.getters['nocloud/sp/getSP'].find(
-            ({ meta }) => meta.showcase && meta.showcase[this.$route.query.service]
-          );
+          const { plans } = this.$store.getters['nocloud/sp/getShowcases'].find(
+            ({ uuid }) => uuid === this.$route.query.service
+          ) ?? {};
 
-          if (!provider) return type === 'virtual';
-          const { billing_plans } = provider.meta.showcase[this.$route.query.service];
+          if (!plans) return type === 'virtual';
 
-          if (billing_plans.length < 1) return type === 'virtual';
-          return type === 'virtual' && billing_plans.includes(uuid);
+          if (plans.length < 1) return type === 'virtual';
+          return type === 'virtual' && plans.includes(uuid);
         });
     },
     sp() {

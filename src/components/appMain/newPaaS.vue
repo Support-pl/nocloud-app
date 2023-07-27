@@ -52,7 +52,7 @@
                 :placeholder="$t('select service')"
                 style="width: 180px; position: relative; z-index: 4"
               >
-                <a-select-option v-for="item in showcases" :key="item.value" :value="item.value">
+                <a-select-option v-for="item in showcases" :key="item.uuid" :value="item.uuid">
                   {{ item.title }}
                 </a-select-option>
               </a-select>
@@ -672,7 +672,6 @@ export default {
       productSize: "",
       activeKey: "location",
       periods: [],
-      allPlans: [],
       plan: undefined,
       service: undefined,
       namespace: undefined,
@@ -714,7 +713,7 @@ export default {
           step: 1,
           size: 1,
           min: 20,
-          max: 500,
+          max: 480,
         },
         os: {
           id: -1,
@@ -765,38 +764,28 @@ export default {
       const locations = [];
 
       this.getSP.forEach((sp) => {
-        if (this.showcase && !(sp.meta.showcase ?? {})[this.showcase]) return;
-
         sp.locations.forEach((location) => {
-          const plan = this.allPlans.find(({ type, uuid }) => {
-            if (this.showcase === '') return true;
-            const { billing_plans } = sp.meta.showcase[this.showcase];
-            const isTypesEqual = type === location.type;
-            const isPlanInclude = billing_plans?.includes(uuid);
-
-            if (billing_plans.length < 1) return true;
-            if (location.type === '') return true;
-            return isTypesEqual && isPlanInclude;
-          });
-          if (!plan) return;
-
+          const showcase = this.showcases.find(({ uuid }) => uuid === this.showcase);
           const id = `${sp.title} ${location.id}`;
 
-          locations.push({ ...location, sp: sp.uuid, id });
+          if (this.showcase === '') {
+            locations.push({ ...location, sp: sp.uuid, id });
+          } else if (showcase?.locations.find(({ id }) => id === location.id)) {
+            locations.push({ ...location, sp: sp.uuid, id });
+          }
         });
       });
 
       return locations;
     },
     showcases() {
-      const titles = [{ title: 'all', value: '' }];
+      const showcases = this.$store.getters['nocloud/sp/getShowcases'];
+      const titles = [{ title: 'all', uuid: '' }];
 
-      this.getSP.forEach(({ locations, meta: { showcase = {} } }) => {
-        if (locations.length < 1) return;
+      showcases.forEach((showcase) => {
+        if (showcase.locations.length < 1) return;
 
-        Object.entries(showcase).forEach(([value, { title }]) => {
-          titles.push({ title, value });
-        });
+        titles.push(showcase);
       });
 
       return titles;
@@ -856,10 +845,15 @@ export default {
     //-------------------------------------
 
     getProducts() {
+      const isDynamic = this.getPlan.kind === 'DYNAMIC';
+      const isIone = this.getPlan.type === 'ione';
       const titles = [];
-      const products = (this.getPlan.kind === 'DYNAMIC' && this.getPlan.type === 'ione')
-        ? this.getPlans.find(({ uuid }) => uuid === this.getPlan.meta?.linkedPlan)?.products
-        : this.getPlan.products ?? {};
+
+      const { products } = (isDynamic && isIone)
+        ? this.getPlans.find(({ uuid }) =>
+            uuid === this.getPlan.meta?.linkedPlan
+          ) ?? {}
+        : this.getPlan ?? {};
 
       Object.values(products ?? {}).forEach((product) => {
         const isEqual = this.tarification === this.getTarification(product.period);
@@ -874,8 +868,10 @@ export default {
 
     productFullPriceStatic() {
       if (!this.getPlan) return 0;
-      const product = Object.values(this.getPlan.products ?? {})
-        .find(({ title }) => title === this.productSize);
+      const values = Object.values(this.getPlan.products ?? {});
+      const product = (this.activeKey !== 'location')
+        ? values.find(({ title }) => title === this.productSize)
+        : values.sort((a, b) => a.price - b.price)[0];
 
       if (!product) return 0;
       return product.price / product.period * 3600 * 24 * 30;
@@ -887,16 +883,22 @@ export default {
           const key = resource.key.toLowerCase();
 
           if (key.includes('ip')) {
-            const { count } = this.options.network.public;
+            const { count } = (this.activeKey !== 'location')
+              ? this.options.network.public
+              : { count: 1 };
 
             price.push(resource.price / resource.period * 3600 * count);
           } else if (key.includes('drive')) {
-            const { size } = this.options.disk;
+            const { size } = (this.activeKey === 'location')
+              ? { size: this.options.disk.min * 1024 }
+              : this.options.disk;
 
             if (key !== `drive_${this.options.drive ? 'ssd' : 'hdd'}`) continue;
             price.push(resource.price / resource.period * 3600 * (size / 1024));
           } else {
-            const { size } = this.options[key];
+            const { size } = (this.activeKey === 'location')
+              ? { size: this.options[key].min }
+              : this.options[key];
 
             price.push(resource.price / resource.period * 3600 * size);
           }
@@ -907,102 +909,25 @@ export default {
     productFullPriceOVH() {
       const { value, addons } = this.priceOVH;
       const addonsPrice = Object.values(addons).reduce((a, b) => a + b, 0);
-      let percent = (this.getPlan.fee?.default ?? 0) / 100 + 1;
+      // let percent = (this.getPlan.fee?.default ?? 0) / 100 + 1;
 
-      if (!this.getPlan.fee?.ranges) return value + addonsPrice;
+      return value + addonsPrice;
+      // if (!this.getPlan.fee?.ranges) return value + addonsPrice;
 
-      for (let range of this.getPlan.fee.ranges) {
-        if (value <= range.from) continue;
-        if (value > range.to) continue;
-        percent = range.factor / 100 + 1;
-      }
+      // for (let range of this.getPlan.fee.ranges) {
+      //   if (value <= range.from) continue;
+      //   if (value > range.to) continue;
+      //   percent = range.factor / 100 + 1;
+      // }
 
-      return value + addonsPrice * percent;
-    },
-    // passwordValid() {
-    //   if (this.focused == true) {
-    //     if (!this.password.match(/[A-Za-z]/)) {
-    //       this.textInvalid = "Password must contain at least one letter";
-    //       return false;
-    //     } else {
-    //       this.textInvalid = "";
-    //     }
-    //     if (!this.password.match(/[0-9]/)) {
-    //       this.textInvalid = "Password must contain at least one number";
-    //       return false;
-    //     } else {
-    //       this.textInvalid = "";
-    //     }
-    //     if (!this.password.match(/[\W_]/)) {
-    //       this.textInvalid =
-    //         "Password must contain at least one special symbol";
-    //       return false;
-    //     } else {
-    //       this.textInvalid = "";
-    //     }
-    //     if (this.password.length < 11) {
-    //       this.textInvalid = "Password is too short (at least 10 symbol)";
-    //       return false;
-    //     } else {
-    //       this.textInvalid = "";
-    //     }
-    //   } else {
-    //     this.textInvalid = "";
-    //     return false;
-    //   }
-    // },
-    // getCurrentProd() {
-    //   const o = this.options;
-    //   const path = [o.kind, o.size, +o.drive, +o.highCPU];
-
-    //   let current = this.getProducts;
-    //   if (current == undefined || current.length == 0) {
-    //     return null;
-    //   }
-    //   for (let index = 0; index < path.length; index++) {
-    //     if (current[path[index]] != undefined) {
-    //       // console.log(current[path[index]])
-    //       current = current[path[index]];
-    //     } else {
-    //       let pt = path.slice(0, index + 1).join("/");
-    //       console.error(
-    //         `there is no product with path: ${pt}, there is only: ${Object.keys(
-    //           current
-    //         ).join(", ")}`
-    //       );
-    //       return null;
-    //     }
-    //   }
-    //   return current;
-    // },
-    // getFullPrice() {
-    //   if (this.isAddonsLoading || this.isProductsLoading) {
-    //     return false;
-    //   }
-    //   const VMonly =
-    //     +this.getCurrentProd.pricing[this.currency][this.options.period];
-    //   const addonsName = ["drive", "traffic", "panel", "os", "backup"];
-    //   const addonsCosts = addonsName.map((name) => {
-    //     if (this.options.addonsObjects[name] == null) {
-    //       return 0;
-    //     }
-    //     return this.options.addonsObjects[name].pricing[this.options.period];
-    //   });
-    //   return [VMonly, ...addonsCosts]
-    //     .reduce((acc, val) => acc + val)
-    //     .toFixed(2);
-    // },
-    sliderIsCanNext() {
-      return this.options.slide < this.getProductsData.length - 1;
-    },
-    sliderIsCanPrev() {
-      return this.options.slide > 0;
+      // return value + addonsPrice * percent;
     },
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
       return { code: this.billingData.currency_code ?? defaultCurrency };
     },
+
     diskSize() {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
@@ -1025,13 +950,14 @@ export default {
 
       if (length === 4) return 'repeat(2, 1fr)';
       return `repeat(${(length < 3) ? length : 3}, 1fr)`;
+    },
+    isProductExist() {
+      return this.$route.query.product && this.getPlan.type?.includes('dedicated');
     }
   },
   created() {
     this.showcase = this.$route.query.service ?? "";
-    this.$store.dispatch("nocloud/plans/fetch", { anonymously: !this.isLoggedIn })
-      .then(({ pool }) => { this.allPlans = pool });
-
+    this.$store.dispatch("nocloud/sp/fetchShowcases");
     this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
       .then(() => {
         const data = localStorage.getItem("data");
@@ -1207,7 +1133,11 @@ export default {
       if (this.activeKey === 'location') {
         this.activeKey = 'plan';
       } else if (this.activeKey === 'plan') {
-        this.activeKey = 'OS';
+        if (this.isProductExist) {
+          this.activeKey = 'OS';
+          return;
+        }
+        this.$router.push({ query: { product: this.productSize } });
       } else if (this.activeKey === 'OS') {
         this.activeKey = 'addons';
       }
@@ -1639,15 +1569,13 @@ export default {
         anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
-        const keys = Object.entries(this.itemSP.meta.showcase ?? {});
-        const [showcase] = keys.find(([key, { billing_plans }]) => {
-          const plan = this.filteredPlans.find(({ uuid }) => billing_plans.includes(uuid));
-
-          return key === this.$route.query.service || plan;
-        }) ?? keys[0];
-
-        const plans = this.itemSP.meta.showcase[showcase]?.billing_plans ?? [];
-        const uuid = plans.find((el) => this.filteredPlans.find((plan) => el === plan.uuid));
+        const { plans } = this.showcases.find(({ uuid, locations }) => {
+          if (this.showcase === '') {
+            return locations?.find(({ id }) => id === this.locationId);
+          }
+          return uuid === this.showcase;
+        }) ?? { plans: pool.map(({ uuid }) => uuid) };
+        const uuid = plans?.find((el) => this.filteredPlans.find((plan) => el === plan.uuid));
 
         this.plan = uuid ?? pool[0]?.uuid ?? '';
 

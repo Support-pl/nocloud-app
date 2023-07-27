@@ -112,7 +112,7 @@
     <!-- OS -->
     <a-collapse-panel
       key="OS"
-      :disabled="!itemSP || isFlavorsLoading || !plan"
+      :disabled="!itemSP || isFlavorsLoading || !plan || !isProductExist"
       :header="osHeader"
     >
       <div class="newCloud__option-field" v-if="images.length > 0">
@@ -211,7 +211,7 @@
     <a-collapse-panel
       key="addons"
       v-if="!getPlan.type?.includes('cloud')"
-      :disabled="!itemSP || isFlavorsLoading || !plan"
+      :disabled="!itemSP || isFlavorsLoading || !plan || !isProductExist"
       :header="$t('Addons') + ':'"
       :style="{ 'border-radius': '0 0 20px 20px' }"
     >
@@ -463,6 +463,9 @@ export default {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
+    },
+    isProductExist() {
+      return this.$route.query.product && this.getPlan.type?.includes('dedicated');
     }
   },
   watch: {
