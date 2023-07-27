@@ -117,7 +117,7 @@ export default {
     },
     price() {
       const amount = this.prices[this.instance.resources?.period] ??
-        this.instance.orderamount;
+        this.instance.recurringamount ?? this.instance.orderamount;
 
       return +(+amount)?.toFixed(2) ?? 0;
     },

@@ -62,6 +62,7 @@
 	"Enter OS password again": "Enter OS password again",
 	"Password mismatch": "Password mismatch",
   "Weak pass": "Weak pass",
+  "server name": "server name",
 	"Enter VM name": "Enter VM name",
   "VM name": "VM name",
 	"VM create": "VM create",
@@ -527,7 +528,7 @@
     "more_national_domains": "more national domains"
   },
 	"unregistered": {
-		"will be able after": "Available after",
+		"will be able after": "Choose a service or",
 		"login": "Login",
 		"sign up": "Sign Up",
 		"see services": "Discover all services"
@@ -540,7 +541,6 @@
 	"product_name": "Product Name",
 	"VNDExcludeVAT": "Prices quoted in VND, subject to 10% VAT",
   "Invoice is needed": "Invoice is needed",
-
 
   "reload": "reload",
   "new content is avaliable": "New content is avaliable",

@@ -459,15 +459,14 @@ export default {
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
         .filter(({ type, uuid }) => {
-          const provider = this.$store.getters['nocloud/sp/getSP'].find(
-            ({ meta }) => meta.showcase && meta.showcase[this.$route.query.service]
-          );
+          const { plans } = this.$store.getters['nocloud/sp/getShowcases'].find(
+            ({ uuid }) => uuid === this.$route.query.service
+          ) ?? {};
 
-          if (!provider) return type === 'goget';
-          const { billing_plans } = provider.meta.showcase[this.$route.query.service];
+          if (!plans) return type === 'goget';
 
-          if (billing_plans.length < 1) return type === 'goget';
-          return type === 'goget' && billing_plans.includes(uuid);
+          if (plans.length < 1) return type === 'goget';
+          return type === 'goget' && plans.includes(uuid);
         });
     }
 	},

@@ -64,39 +64,33 @@
             </a-col>
           </transition>
         </a-row>
-        <a-row class="newCloud__prop">
-          <a-col :sm="(driveTypes.length > 1) ? 6 : 20" :xs="(driveTypes.length > 1) ? 6 : 18">
-            <span style="display: inline-block; width: 70px">
-              {{ $t("Drive") }}:
-            </span>
-          </a-col>
-          <a-col :xs="12" :sm="14" v-if="driveTypes.length > 1">
-            <a-switch v-model="options.drive" style="width: 60px">
-              <span slot="checkedChildren">SSD</span>
-              <span slot="unCheckedChildren">HDD</span>
-            </a-switch>
-          </a-col>
-          <a-col class="changing__field" style="text-align: right" :sm="4" :xs="6">
+        <div class="newCloud__drive">
+          <span
+            style="display: inline-block"
+            :style="{ gridColumn: (driveTypes.length < 2) ? '1 / 3' : null }"
+          >
+            {{ $t("Drive") }}:
+          </span>
+          <a-switch v-model="options.drive" v-if="driveTypes.length > 1">
+            <span slot="checkedChildren">SSD</span>
+            <span slot="unCheckedChildren">HDD</span>
+          </a-switch>
+          <a-slider
+            style="margin-top: 10px"
+            :tip-formatter="null"
+            :step="options.disk.step"
+            :max="options.disk.max"
+            :min="options.disk.min"
+            :value="parseFloat(diskSize)"
+            @change="(value) => (options.disk.size = value * 1024)"
+          />
+          <div class="changing__field" style="text-align: right">
             <template v-if="isProductsExist">{{ diskSize }}</template>
             <template v-else>
               <a-input-number allow-clear v-model="options.disk.size" :min="0" :max="512 * 1024" /> Mb
             </template>
-          </a-col>
-        </a-row>
-        <a-row class="newCloud__prop" v-if="isProductsExist">
-          <a-col>{{ $t("Drive size") }}:</a-col>
-          <a-col>
-            <a-slider
-              style="margin-top: 10px"
-              :tip-formatter="null"
-              :step="options.disk.step"
-              :max="options.disk.max"
-              :min="options.disk.min"
-              :value="parseFloat(diskSize)"
-              @change="(value) => (options.disk.size = value * 1024)"
-            />
-          </a-col>
-        </a-row>
+          </div>
+        </div>
       </template>
       <a-alert
         v-else
@@ -510,3 +504,12 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.newCloud__drive {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+</style>

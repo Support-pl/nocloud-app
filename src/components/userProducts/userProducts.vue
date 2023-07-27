@@ -157,23 +157,24 @@ export default {
       this.sortType = sorting.sortType;
     }
 
+    const promises = [];
+
+    if (this.showcases.length < 1) {
+      promises.push(this.$store.dispatch('nocloud/sp/fetchShowcases'));
+    }
     if (this.sp.length < 1) {
-      this.$store.dispatch('nocloud/sp/fetch', !this.isLogged)
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          this.$notification['error']({ message: this.$t(message) });
-        });
+      promises.push(this.$store.dispatch('nocloud/sp/fetch', !this.isLogged));
     }
-
     if (Object.keys(this.services).length < 1) {
-      this.$store.dispatch("products/fetchServices")
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          this.$notification['error']({ message: this.$t(message) });
-        });
+      promises.push(this.$store.dispatch("products/fetchServices"));
     }
+
+    Promise.all(promises)
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
+
+        this.$notification['error']({ message: this.$t(message) });
+      });
 
     if (!this.isLogged) return;
     this.$store.commit("products/setProductsLoading", true);
@@ -341,13 +342,11 @@ export default {
     sp() {
       return this.$store.getters["nocloud/sp/getSP"];
     },
+    showcases() {
+      return this.$store.getters['nocloud/sp/getShowcases'];
+    },
     types() {
-      const result = this.sp.reduce((prev, curr) => {
-        const showcase = Object.entries(curr.meta.showcase ?? {})
-          .map(([value, { title }]) => ({ title, value }));
-
-        return [...prev, ...showcase];
-      }, []);
+      const result = this.showcases.map(({ title, uuid: value }) => ({ title, value }));
 
       if (this.isFilterByLocation) return this.sp.reduce((prev, curr) =>
         [...prev, ...curr.locations.map(({ title }) => title)], []
@@ -404,7 +403,14 @@ export default {
     },
     newProductHandle() {
       const services = this.$store.getters['products/getServices'];
-      const { type } = this.sp.find(({ meta }) => (meta.showcase ?? {})[this.queryTypes[0]]) ?? {};
+      const { type } = this.sp.find(({ uuid }) => {
+        const { servicesProviders } = this.showcases.find(
+          ({ uuid }) => uuid === this.queryTypes[0]
+        );
+
+        return servicesProviders.includes(uuid);
+      }) ?? {};
+
       let name = 'service-virtual';
       let query = { service: this.queryTypes[0] };
 
@@ -434,42 +440,42 @@ export default {
     },
     filterProducts(products, types) {
       return products.filter(({ sp, hostingid, config, billingPlan, productname }) => {
-          //фильтруем по значениям из гет запроса
-          let { title, locations = [], meta } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
-          const service = Object.values(meta?.showcase ?? {}).find(
-            (el) => el.billing_plans.includes(billingPlan.uuid)
+        //фильтруем по значениям из гет запроса
+        let { title, locations = [] } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+
+        if (hostingid) title = 'Virtual';
+        if (this.isFilterByLocation) {
+          const key = Object.keys(config?.configuration ?? {}).find(
+            (key) => key.includes('datacenter')
+          );
+          const region = locations?.find(({ extra }) =>
+            extra.region === (config?.configuration ?? {})[key]
           );
 
-          if (hostingid) title = 'Virtual';
-          if (this.isFilterByLocation) {
-            const key = Object.keys(config?.configuration ?? {}).find(
-              (key) => key.includes('datacenter')
-            );
-            const region = locations?.find(({ extra }) =>
-              extra.region === (config?.configuration ?? {})[key]
-            );
+          title = region?.title ?? locations[0];
+        }
 
-            title = region?.title ?? locations[0];
+        return types.some((value) => {
+          if (this.services[value]) {
+            return this.services[value].find(({ name }) => name === productname);
           }
 
-          return types.some((value) => {
-            if (this.services[value]) {
-              return this.services[value].find(({ name }) => name === productname);
-            }
-            if (!meta?.showcase) return value === title;
+          const service = this.showcases.find(({ uuid }) => uuid === value);
 
-            const plans = meta?.showcase[value]?.billing_plans ?? [];
+          if (!service) return value === title;
+          else {
+            const isPlanIncluded = service.plans.includes(billingPlan?.uuid);
+            const isSpIncluded = service.servicesProviders.includes(sp);
 
-            if (plans?.includes(billingPlan.uuid) && service) return true;
-            else if (plans?.length > 0) return false;
-            else return value === title || meta?.showcase[value];
-          });
+            return isPlanIncluded && isSpIncluded;
+          };
         });
+      });
     },
-    productsCount(type) {
+    productsCount(type, filter) {
       const total = this.$store.getters["products/total"];
 
-      if (this.checkedTypes.length > 0) {
+      if (this.checkedTypes.length > 0 || filter) {
         return this.filterProducts(this.productsPrepared, [type]).length;
       }
 

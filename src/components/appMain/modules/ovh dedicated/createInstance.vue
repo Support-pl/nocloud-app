@@ -39,7 +39,9 @@
         >
           <h1>{{ provider }}</h1>
           <div>
-            {{ $t('cpu') }}: {{ getCpu(provider) ?? '?' }}
+            {{ $t('cpu') }}:
+            <a-icon type="loading" v-if="options.cpu.size === 'loading' && plan === provider" />
+            <template v-else>{{ getCpu(provider) ?? '?' }}</template>
           </div>
           <div>
             {{ $t('ram') }}: {{ $t('from') }}
