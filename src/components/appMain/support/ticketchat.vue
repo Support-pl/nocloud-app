@@ -134,9 +134,11 @@ export default {
     },
     messages() {
       const chatMessages = this.$store.getters['nocloud/chats/getMessages'];
+      const tickets = this.replies.filter(({ uuid }) =>
+        !chatMessages.find((message) => message.uuid === uuid)
+      );
 
-      if (this.replies.at(-1).uuid) this.replies.pop();
-      return [...this.replies, ...chatMessages];
+      return [...tickets, ...chatMessages];
     },
   },
   methods: {

@@ -818,6 +818,11 @@ export default {
     height: 40px;
   }
 
+  .header_back_btn,
+  .header__right-side .header__button {
+    margin-right: 5px;
+  }
+
   .header__selects {
     position: absolute;
     left: 0;
