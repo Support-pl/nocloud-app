@@ -680,11 +680,14 @@ export default {
       this.getSP.forEach((sp) => {
         sp.locations.forEach((location) => {
           const showcase = this.showcases.find(({ uuid }) => uuid === this.showcase);
+          const findedLocation = showcase?.locations.find(({ id }) =>
+            id.replace(`${showcase?.title}-`, '') === location.id
+          );
           const id = `${sp.title} ${location.id}`;
 
           if (this.showcase === '') {
             locations.push({ ...location, sp: sp.uuid, id });
-          } else if (showcase?.locations.find(({ id }) => id === location.id)) {
+          } else if (findedLocation) {
             locations.push({ ...location, sp: sp.uuid, id });
           }
         });
