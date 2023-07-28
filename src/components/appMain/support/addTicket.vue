@@ -78,17 +78,21 @@ export default {
         return;
       }
 
+      const request = (this.ticketDepartment === 'nocloud')
+        ? this.$store.dispatch('nocloud/chats/createChat', {
+            subject: this.ticketTitle,
+            message: md.render(this.ticketMessage).trim()
+          })
+        : this.$api.get(this.baseURL, { params: {
+            run: 'create_ticket',
+            subject: this.ticketTitle,
+            message: this.ticketMessage,
+            department: this.ticketDepartment,
+          }});
+
       this.isSending = true;
-      this.$api.get(this.baseURL, { params: {
-        run: 'create_ticket',
-        subject: this.ticketTitle,
-        message: this.ticketMessage,
-        department: this.ticketDepartment,
-      }})
-      // this.$store.dispatch('nocloud/chats/createChat', {
-      //   subject: this.ticketTitle,
-      //   message: md.render(this.ticketMessage).trim()
-      // })
+      
+      request
         .then(async (resp) => {
           if (resp.result === "success") {
             this.ticketTitle = "";
