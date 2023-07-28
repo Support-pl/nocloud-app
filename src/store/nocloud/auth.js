@@ -13,6 +13,7 @@ export default {
     billingUser: {},
     currencies: [],
     defaultCurrency: 'USD',
+    unloginedCurrency: 'USD',
     baseURL: `${config.WHMCSsiteurl}/modules/addons/nocloud/api/index.php`
 	},
 	mutations: {
@@ -37,6 +38,9 @@ export default {
 
       if (!currency) return;
       state.defaultCurrency = (currency.from === 'NCU') ? currency.to : currency.from;
+    },
+    setUnloginedCurrency(state, value) {
+      state.unloginedCurrency = value;
     }
 	},
 	actions: {
@@ -146,6 +150,9 @@ export default {
     },
     defaultCurrency(state) {
       return state.defaultCurrency;
+    },
+    unloginedCurrency(state) {
+      return state.unloginedCurrency;
     },
     getURL(state) {
       return state.baseURL;

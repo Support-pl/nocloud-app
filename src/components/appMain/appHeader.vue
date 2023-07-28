@@ -175,6 +175,19 @@
             </div>
           </transition>
 
+          <div class="header__selects" v-if="!isLogged">
+            <a-select style="width: 100%; border: none" v-model="$i18n.locale">
+              <a-select-option v-for="lang in langs" :key="lang" :value="lang">
+                {{ $t('localeLang', lang) }}
+              </a-select-option>
+            </a-select>
+
+            <a-select style="width: 100%; border: none" v-model="currencyCode">
+              <a-select-option v-for="currency in currencies" :key="currency.code" :value="currency.code">
+                {{ currency.code }}
+              </a-select-option>
+            </a-select>
+          </div>
           <div class="header__links" v-if="!isLogged">
             <router-link :to="{ name: 'login' }">{{ $t("login") }}</router-link>
             <router-link :to="{ name: 'register' }">{{ $t("unregistered.sign up") }}</router-link>
@@ -187,7 +200,7 @@
 
 <script>
 import { mapActions, mapGetters, mapMutations } from "vuex";
-import balance from "../balance/balance.vue";
+import balance from "@/components/balance/balance.vue";
 import moment from "moment";
 
 export default {
@@ -306,6 +319,9 @@ export default {
           buttons: [],
         }
       },
+      langs: this.$config.languages,
+      currencies: [],
+      currencyCode: ''
     };
   },
   methods: {
@@ -459,6 +475,18 @@ export default {
       this.$store.commit('nocloud/vms/setSearch', '');
     }
   },
+  created() {
+    this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
+      .then((res) => { this.currencies = res.currency })
+			.catch(err => {
+        const message = err.response?.data?.message ?? err.message;
+
+				this.openNotificationWithIcon('error', {
+          message: this.$t(message)
+        });
+				console.error(err);
+			});
+  },
   mounted() {
     if (this.$route.query.service) {
       this.headers.iaas.title = this.$route.query.service;
@@ -467,6 +495,8 @@ export default {
     if (this.viewport < 576) {
       this.isButtonsVisible = false;
     }
+
+    this.currencyCode = this.defaultCurrency;
   },
   computed: {
     ...mapGetters("support", [
@@ -557,11 +587,17 @@ export default {
     isLogged() {
       return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
+    baseURL(){
+      return this.$store.getters['support/getURL'];
+    },
     userdata() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
+    },
+    defaultCurrency() {
+      return this.$store.getters['nocloud/auth/defaultCurrency'];
     },
     viewport() {
       return document.documentElement.offsetWidth;
@@ -576,6 +612,9 @@ export default {
     activeInvoiceTab() {
       this.checkedList = [];
       this.updateFilter();
+    },
+    currencyCode(value) {
+      this.$store.commit('nocloud/auth/setUnloginedCurrency', value);
     }
   }
 }
@@ -712,6 +751,25 @@ export default {
 .header__right-side {
   display: flex;
   align-items: center;
+}
+
+.header__selects {
+  display: flex;
+  gap: 10px;
+  margin-right: 15px;
+}
+
+.header__selects .ant-select-selection {
+  background: transparent;
+  color: var(--bright_bg);
+}
+
+.header__selects .ant-select-selection__rendered {
+  margin-right: 30px;
+}
+
+.header__selects .ant-select-arrow {
+  color: inherit;
 }
 
 .header__balance {
