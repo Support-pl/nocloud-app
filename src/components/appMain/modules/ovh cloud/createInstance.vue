@@ -186,8 +186,8 @@ export default {
         const byCpu = resources.cpu >= this.filters.cpu.at(0) &&
           resources.cpu <= this.filters.cpu.at(-1);
 
-        const byRam = resources.ram / 1024 >= this.filters.ram.at(0) &&
-          resources.ram / 1024 <= this.filters.ram.at(-1);
+        const byRam = resources.ram / 1000 >= this.filters.ram.at(0) &&
+          resources.ram / 1000 <= this.filters.ram.at(-1);
 
         const byDisk = resources.drive_size / 1024 >= this.filters.disk.at(0) &&
           resources.drive_size / 1024 <= this.filters.disk.at(-1);

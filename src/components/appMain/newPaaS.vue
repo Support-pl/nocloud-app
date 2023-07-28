@@ -850,7 +850,7 @@ export default {
       ) ?? { rate: 1 };
 
       if (!this.isLoggedIn) return { rate: (rate) ? rate : 1 / reverseRate, code };
-      return { rate: 1, code: this.user.currency_code ?? defaultCurrency };
+      return { rate: 1, code: this.billingData.currency_code ?? defaultCurrency };
     },
 
     diskSize() {
