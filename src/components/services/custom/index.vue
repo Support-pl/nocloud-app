@@ -376,7 +376,7 @@ export default {
 			if (Object.keys(this.products).length === 0) return "NAN";
       const product = this.products[this.options.size];
 
-			return product;
+			return { ...product, price: +(product.price * this.currency.rate).toFixed(2) };
 		},
     isLogged() {
       return this.$store.getters['nocloud/auth/isLoggedIn'];
@@ -388,9 +388,20 @@ export default {
       return this.$store.getters['nocloud/auth/userdata'];
     },
     currency() {
+      const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
-      return { code: this.user.currency_code ?? defaultCurrency };
+      const code = this.$store.getters['nocloud/auth/unloginedCurrency'];
+      const { rate } = currencies.find((el) =>
+        el.to === code && el.from === defaultCurrency
+      ) ?? {};
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === code && el.to === defaultCurrency
+      ) ?? { rate: 1 };
+
+      if (!this.isLogged) return { rate: (rate) ? rate : 1 / reverseRate, code };
+      return { rate: 1, code: this.user.currency_code ?? defaultCurrency };
     },
     services() {
       return this.$store.getters['nocloud/vms/getServices']

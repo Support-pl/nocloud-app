@@ -388,16 +388,21 @@ export default {
         product.price.currency = this.currency.code
       }
 
-			return product
+			return { ...product, price: +(product.price * this.currency.rate).toFixed(2) }
 		},
     slides() {
       return 3;
     },
     addonsPrice() {
       return this.options.addons.reduce((prev, curr) => {
-        const { prices = [], billingcycle } = this.addons[this.getProducts.id]?.find(({ id }) => id === curr) ?? {};
+        const { prices = [], billingcycle } = this.addons[this.getProducts.id]
+          ?.find(({ id }) => id === curr) ?? {};
+
         const price = prices.find((el) => el.currency === this.currency.id);
-        const value = (+price[this.options.period] === -1) ? 0 : +price[this.options.period];
+        const value = (+price[this.options.period] !== -1)
+          ? +(price[this.options.period] * this.currency.rate).toFixed(2)
+          : 0;
+
         const result = {
           value: (billingcycle !== 'free') ? prev.value + (value || 0) : prev.value,
           onetime: (billingcycle === 'onetime') ? prev.onetime + +price.monthly : prev.onetime
@@ -412,12 +417,28 @@ export default {
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
     },
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
     currency() {
+      const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
-      const code = this.user.currency_code ?? defaultCurrency;
+
+      const code = (this.isLogged)
+        ? this.user.currency_code ?? defaultCurrency
+        : this.$store.getters['nocloud/auth/unloginedCurrency'];
       const { id = -1 } = this.currencies?.find((currency) => currency.code === code) ?? {};
 
-      return { code, id };
+      const { rate } = currencies.find((el) =>
+        el.to === defaultCurrency && el.from === code
+      ) ?? {};
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === defaultCurrency && el.to === code
+      ) ?? { rate: 1 };
+
+      if (!this.isLogged) return { rate: (rate) ? rate : 1 / reverseRate, code, id };
+      return { rate: 1, code, id };
     },
     baseURL() {
       return this.$store.getters['nocloud/auth/getURL'];

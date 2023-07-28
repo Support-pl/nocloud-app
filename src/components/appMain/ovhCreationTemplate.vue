@@ -112,7 +112,7 @@
     <!-- OS -->
     <a-collapse-panel
       key="OS"
-      :disabled="!itemSP || isFlavorsLoading || !plan || !isProductExist"
+      :disabled="!itemSP || isFlavorsLoading || !plan || isProductExist"
       :header="osHeader"
     >
       <div class="newCloud__option-field" v-if="images.length > 0">
@@ -211,7 +211,7 @@
     <a-collapse-panel
       key="addons"
       v-if="!getPlan.type?.includes('cloud')"
-      :disabled="!itemSP || isFlavorsLoading || !plan || !isProductExist"
+      :disabled="!itemSP || isFlavorsLoading || !plan || isProductExist"
       :header="$t('Addons') + ':'"
       :style="{ 'border-radius': '0 0 20px 20px' }"
     >
@@ -412,11 +412,25 @@ export default {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
     currency() {
+      const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
       const { currency_code } = this.$store.getters['nocloud/auth/billingData'];
 
-      return { code: currency_code ?? defaultCurrency };
+      const code = this.$store.getters['nocloud/auth/unloginedCurrency'];
+      const { rate } = currencies.find((el) =>
+        el.to === code && el.from === defaultCurrency
+      ) ?? {};
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === code && el.to === defaultCurrency
+      ) ?? { rate: 1 };
+
+      if (!this.isLogged) return { rate: (rate) ? rate : 1 / reverseRate, code };
+      return { rate: 1, code: currency_code ?? defaultCurrency };
     },
     region() {
       const location = this.locationId.split(' ').at(-1);
@@ -465,7 +479,7 @@ export default {
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
     },
     isProductExist() {
-      return this.$route.query.product && this.getPlan.type?.includes('dedicated');
+      return !this.$route.query.product && this.getPlan.type?.includes('dedicated');
     }
   },
   watch: {

@@ -414,8 +414,10 @@ export default {
 	computed: {
 		getProducts() {
 			if (Object.keys(this.products).length === 0) return "NAN";
-      return this.products[this.options.provider]
+      const product = this.products[this.options.provider]
         .find(el => el.product === this.options.tarif);
+
+      return { ...product, price:+(product.price * this.currency.rate).toFixed(2) };
 		},
     template() {
       switch (this.currentStep) {
@@ -437,9 +439,20 @@ export default {
       return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
     currency() {
+      const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
-      return { code: this.user.currency_code ?? defaultCurrency };
+      const code = this.$store.getters['nocloud/auth/unloginedCurrency'];
+      const { rate } = currencies.find((el) =>
+        el.to === defaultCurrency && el.from === code
+      ) ?? {};
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === defaultCurrency && el.to === code
+      ) ?? { rate: 1 };
+
+      if (!this.isLoggedIn) return { rate: (rate) ? rate : 1 / reverseRate, code };
+      return { rate: 1, code: this.user.currency_code ?? defaultCurrency };
     },
     sp() {
       return this.$store.getters['nocloud/sp/getSP']

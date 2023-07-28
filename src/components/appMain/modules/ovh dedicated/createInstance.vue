@@ -58,7 +58,7 @@
               fontWeight: 700,
               color: (plan === provider) ? null : 'var(--main)'
             }">
-              {{ allResources[provider]?.price[0] ?? 0 }}
+              {{ +((allResources[provider]?.price[0] ?? 0) * currency.rate).toFixed(2) }}
               {{ currency.code }}
             </span>
           </div>
@@ -189,10 +189,24 @@ export default {
     user() {
       return this.$store.getters["nocloud/auth/billingData"];
     },
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
     currency() {
+      const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
-      return { code: this.user.currency_code ?? defaultCurrency };
+      const code = this.$store.getters['nocloud/auth/unloginedCurrency'];
+      const { rate } = currencies.find((el) =>
+        el.to === code && el.from === defaultCurrency
+      ) ?? {};
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === code && el.to === defaultCurrency
+      ) ?? { rate: 1 };
+
+      if (!this.isLogged) return { rate: (rate) ? rate : 1 / reverseRate, code };
+      return { rate: 1, code: this.user.currency_code ?? defaultCurrency };
     },
     resources() {
       const ram = new Set();

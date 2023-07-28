@@ -565,92 +565,6 @@
       :modalVisible="addfunds.visible"
       :hideModal="() => addfunds.visible = false"
     />
-    <!-- <div v-else class="newCloud tariff">
-      <div class="field field--fluid">
-        <div class="tariff__header">Choose your tariff</div>
-
-        <div class="tariff__wrapper">
-          <div class="tariff__cards">
-            <div class="tariff__items">
-              <div
-                class="tariff__item"
-                v-for="tariff in tariffs"
-                :key="tariff"
-                @click="
-                  () => {
-                    options.isOnCalc = true;
-                    options.kind = tariff;
-                    options.size = getProductsData[options.slide];
-                  }
-                "
-              >
-                <div class="tariff__title">
-                  {{
-                    getProducts[tariff][getProductsData[options.slide]][0][0]
-                      .name | replace("SVDS", "")
-                  }}
-                </div>
-                <div class="tariff__body">
-                  <loading v-if="isProductsLoading" />
-                  <div v-else>
-                    <ul>
-                      <li class="tariff__property">
-                        <span class="tariff__body-value">
-                          {{
-                            getProducts[tariff][
-                              getProductsData[options.slide]
-                            ][0][0].pricing[currency].monthly
-                          }}
-                          <span class="tariff__currency">{{ currency }}</span>
-                        </span>
-                      </li>
-                      <li
-                        v-for="(spec, index) in ['cpu_core', 'ram']"
-                        :key="index"
-                        class="tariff__property"
-                      >
-                        <span class="tariff__body-value">
-                          {{
-                            getProducts[tariff][
-                              getProductsData[options.slide]
-                            ][0][0].props[spec].VALUE
-                          }}
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="tariff__nav">
-              <span
-                class="tariff__nav-item tariff__nav-item_prev"
-                :class="[
-                  sliderIsCanPrev
-                    ? 'tariff__nav-item_active'
-                    : 'tariff__nav-item_disabled',
-                ]"
-                @click="sliderNavPrev"
-              >
-                <a-icon type="left" />
-              </span>
-              <span
-                class="tariff__nav-item tariff__nav-item_next"
-                :class="[
-                  sliderIsCanNext
-                    ? 'tariff__nav-item_active'
-                    : 'tariff__nav-item_disabled',
-                ]"
-                @click="sliderNavNext"
-              >
-                <a-icon type="right" />
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div> -->
   </div>
 </template>
 
@@ -923,9 +837,20 @@ export default {
       // return value + addonsPrice * percent;
     },
     currency() {
+      const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
-      return { code: this.billingData.currency_code ?? defaultCurrency };
+      const code = this.$store.getters['nocloud/auth/unloginedCurrency'];
+      const { rate } = currencies.find((el) =>
+        el.to === code && el.from === defaultCurrency
+      ) ?? {};
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === code && el.to === defaultCurrency
+      ) ?? { rate: 1 };
+
+      if (!this.isLoggedIn) return { rate: (rate) ? rate : 1 / reverseRate, code };
+      return { rate: 1, code: this.user.currency_code ?? defaultCurrency };
     },
 
     diskSize() {
@@ -952,7 +877,7 @@ export default {
       return `repeat(${(length < 3) ? length : 3}, 1fr)`;
     },
     isProductExist() {
-      return this.$route.query.product && this.getPlan.type?.includes('dedicated');
+      return !this.$route.query.product && this.getPlan.type?.includes('dedicated');
     }
   },
   created() {
@@ -1133,7 +1058,7 @@ export default {
       if (this.activeKey === 'location') {
         this.activeKey = 'plan';
       } else if (this.activeKey === 'plan') {
-        if (this.isProductExist) {
+        if (!this.isProductExist) {
           this.activeKey = 'OS';
           return;
         }
@@ -1146,6 +1071,8 @@ export default {
       const resourcesPrice = (this.itemSP.type === 'ione')
         ? this.productFullPriceCustom * 24 * 30
         : 0;
+
+      price *= this.currency.rate;
 
       switch (period) {
         case "minute":
