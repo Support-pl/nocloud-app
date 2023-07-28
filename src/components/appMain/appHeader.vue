@@ -175,7 +175,21 @@
             </div>
           </transition>
 
-          <div class="header__selects" v-if="!isLogged">
+          <transition
+            name="header__item-anim"
+            v-if="viewport < 576 && !isLogged"
+          >
+            <div class="header__button" @click="isButtonsVisible = !isButtonsVisible">
+              <div class="icon__wrapper" :style="(isButtonsVisible) ? {
+                borderRadius: '50%',
+                background: 'var(--bright_bg)',
+                color: 'var(--main)'
+              } : null">
+                <a-icon class="header__icon" type="down" />
+              </div>
+            </div>
+          </transition>
+          <div class="header__selects" v-if="!isLogged && isButtonsVisible">
             <a-select style="width: 100%; border: none" v-model="$i18n.locale">
               <a-select-option v-for="lang in langs" :key="lang" :value="lang">
                 {{ $t('localeLang', lang) }}
@@ -802,6 +816,18 @@ export default {
   .icon__wrapper {
     width: 40px;
     height: 40px;
+  }
+
+  .header__selects {
+    position: absolute;
+    left: 0;
+    top: 62px;
+    z-index: 10;
+    width: 100%;
+    padding: 0 15px 15px;
+    border-radius: 0 0 10px 10px;
+    background: var(--main);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
   }
 }
 </style>
