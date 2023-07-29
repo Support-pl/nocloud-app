@@ -59,6 +59,7 @@ export default {
         this.$router.replace("login");
       }
 
+      if (!this.$route.query.lang) return;
       if (this.$route.query.lang !== this.$i18n.locale) {
         this.$i18n.locale = this.$route.query.lang;
       }
