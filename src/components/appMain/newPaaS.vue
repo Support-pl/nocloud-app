@@ -685,10 +685,8 @@ export default {
           );
           const id = `${sp.title} ${location.id}`;
 
-          if (this.showcase === '') {
-            locations.push({ ...location, sp: sp.uuid, id });
-          } else if (findedLocation) {
-            locations.push({ ...location, sp: sp.uuid, id });
+          if (this.showcase === '' || findedLocation) {
+            locations.push({ ...location, sp: sp.uuid, id, showcase: showcase.uuid });
           }
         });
       });
@@ -708,9 +706,11 @@ export default {
       return titles;
     },
     locationDescription() {
-      const locationItem = this.locations.find((el) => el.id === this.locationId);
+      const { showcase: showcaseUuid } = this.locations.find((el) => el.id === this.locationId) ?? {};
+      const showcase = this.showcases.find(({ uuid }) => uuid === showcaseUuid);
+      const { locale } = this.$i18n;
 
-      return locationItem?.extra.description;
+      return showcase?.promo[locale]?.service.description;
     },
     itemSP() {
       const { sp } = this.locations.find((el) => el.id === this.locationId) || {};
@@ -741,9 +741,16 @@ export default {
     //--------------Plans-----------------
     filteredPlans() {
       const locationItem = this.locations.find((el) => el.id === this.locationId);
+      const { plans } = this.showcases.find(({ uuid, locations }) => {
+        if (this.showcase === '') {
+          return locations?.find(({ id }) => id === this.locationId);
+        }
+        return uuid === this.showcase;
+      });
 
-      return this.getPlans.filter(({ type }) =>
-        (locationItem.type) ? locationItem.type === type : true
+      return this.getPlans.filter(({ uuid, type }) =>
+        ((locationItem.type) ? locationItem.type === type : true) &&
+        plans.includes(uuid)
       );
     },
     //UNKNOWN and STATIC
@@ -887,19 +894,25 @@ export default {
     this.showcase = this.$route.query.service ?? "";
     this.$store.dispatch("nocloud/sp/fetchShowcases");
     this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
-      .then(() => {
+      .then(async () => {
         const data = localStorage.getItem("data");
         const { query } = this.$route;
 
         if (data || ('data' in query)) {
           try {
+            await new Promise((resolve) => setTimeout(resolve, 100));
             this.dataLocalStorage = (data)
               ? JSON.parse(localStorage.getItem("data"))
               : JSON.parse(query.data);
 
             this.tarification = this.dataLocalStorage.tarification ?? '';
             this.vmName = this.dataLocalStorage.titleVM ?? '';
-            this.locationId = this.dataLocalStorage.locationId ?? '';
+            this.locationId = this.locations.find(({ id }) => {
+              const locationId = this.dataLocalStorage.locationId.split('-');
+
+              locationId.shift();
+              return id.includes(locationId.join('-'));
+            })?.id ?? '';
             this.activeKey = null;
 
             if (this.dataLocalStorage.config) {
@@ -1499,15 +1512,8 @@ export default {
         anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
-        const { plans } = this.showcases.find(({ uuid, locations }) => {
-          if (this.showcase === '') {
-            return locations?.find(({ id }) => id === this.locationId);
-          }
-          return uuid === this.showcase;
-        }) ?? { plans: pool.map(({ uuid }) => uuid) };
-        const uuid = plans?.find((el) => this.filteredPlans.find((plan) => el === plan.uuid));
 
-        this.plan = uuid ?? pool[0]?.uuid ?? '';
+        this.plan = this.filteredPlans[0]?.uuid ?? pool[0]?.uuid ?? '';
 
         if (this.dataLocalStorage.billing_plan) {
           this.plan = this.dataLocalStorage.billing_plan.uuid;
@@ -1558,12 +1564,6 @@ export default {
         }
       });
     }
-    // getAddons: function (newVal) {
-    //   this.options.addons.os = +newVal.os[0].id;
-    // },
-    // activeKey: function(){
-    //     this.activeKey.push('tarif')
-    // }
   },
 };
 </script>

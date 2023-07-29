@@ -495,9 +495,7 @@ export default {
 			.catch(err => {
         const message = err.response?.data?.message ?? err.message;
 
-				this.openNotificationWithIcon('error', {
-          message: this.$t(message)
-        });
+				this.$notification.error({ message: this.$t(message) });
 				console.error(err);
 			});
   },

@@ -21,9 +21,11 @@ export default {
   created() {
     window.addEventListener('message', ({ data, origin }) => {
       if (!origin.includes('https://api.')) return;
-      this.$store.commit("nocloud/auth/setToken", data);
+      this.$store.commit("nocloud/auth/setToken", data.token);
       sessionStorage.removeItem("user");
-      location.reload();
+
+      if (data.uuid) this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
+      else location.reload();
     });
 
     this.$store.dispatch("nocloud/auth/load");
@@ -55,6 +57,10 @@ export default {
 
       if (mustBeLoggined && !isLogged) {
         this.$router.replace("login");
+      }
+
+      if (this.$route.query.lang !== this.$i18n.locale) {
+        this.$i18n.locale = this.$route.query.lang;
       }
     });
 
