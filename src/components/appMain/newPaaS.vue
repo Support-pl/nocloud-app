@@ -680,8 +680,8 @@ export default {
       this.getSP.forEach((sp) => {
         sp.locations.forEach((location) => {
           const showcase = this.showcases.find(({ uuid }) => uuid === this.showcase);
-          const findedLocation = showcase?.locations.find(({ id }) =>
-            id.replace(`${showcase?.title}-`, '') === location.id
+          const findedLocation = showcase?.locations?.find(
+            ({ id }) => id.includes(location.id)
           );
           const id = `${sp.title} ${location.id}`;
 
