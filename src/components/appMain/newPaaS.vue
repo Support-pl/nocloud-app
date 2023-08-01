@@ -677,16 +677,16 @@ export default {
     locations() {
       const locations = [];
 
-      this.getSP.forEach((sp) => {
-        sp.locations.forEach((location) => {
-          const showcase = this.showcases.find(({ uuid }) => uuid === this.showcase);
-          const findedLocation = showcase?.locations?.find(
-            ({ id }) => id.includes(location.id)
+      this.showcases.forEach((showcase) => {
+        showcase.locations?.forEach((location) => {
+          const sp = this.getSP.find(({ locations, type }) =>
+            locations.find(({ id, type: locationType }) =>
+              location.id.includes(id) && locationType.includes(type)
+            )
           );
-          const id = `${sp.title} ${location.id}`;
 
-          if (this.showcase === '' || findedLocation) {
-            locations.push({ ...location, sp: sp.uuid, id, showcase: showcase.uuid });
+          if (this.showcase === '' || this.showcase === showcase.uuid) {
+            locations.push({ ...location, sp: sp?.uuid, showcase: showcase.uuid });
           }
         });
       });
@@ -710,6 +710,7 @@ export default {
       const showcase = this.showcases.find(({ uuid }) => uuid === showcaseUuid);
       const { locale } = this.$i18n;
 
+      if (!showcase?.promo) return;
       return showcase?.promo[locale]?.service.description;
     },
     itemSP() {
@@ -741,9 +742,9 @@ export default {
     //--------------Plans-----------------
     filteredPlans() {
       const locationItem = this.locations.find((el) => el.id === this.locationId);
-      const { plans } = this.showcases.find(({ uuid, locations }) => {
+      const { plans } = this.showcases.find(({ uuid }) => {
         if (this.showcase === '') {
-          return locations?.find(({ id }) => id === this.locationId);
+          return uuid === locationItem.showcase;
         }
         return uuid === this.showcase;
       });
@@ -1285,7 +1286,7 @@ export default {
             this.$message.success(this.$t("Order created successfully"));
             this.deployService(result.uuid);
             if (this.modal.goToInvoice) {
-              this.$router.push(`/invoice/${res.invoiceid}`);
+              this.$router.push(`/billing/${res.invoiceid}`);
             }
           } else {
             throw "error";
@@ -1309,7 +1310,7 @@ export default {
             this.$message.success(this.$t("Order update successfully"));
             this.deployService(result.uuid);
             if (this.modal.goToInvoice) {
-              this.$router.push(`/invoice/${result.invoiceid}`);
+              this.$router.push(`/billing/${result.invoiceid}`);
             }
           } else {
             throw "error";

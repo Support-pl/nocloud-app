@@ -20,12 +20,18 @@ export default {
   components: { updateNotification },
   created() {
     window.addEventListener('message', ({ data, origin }) => {
-      if (!origin.includes('https://api.')) return;
+      console.log(data, origin);
+      if (!origin.includes('8081')) return;
       this.$store.commit("nocloud/auth/setToken", data.token);
       sessionStorage.removeItem("user");
 
-      if (data.uuid) this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
-      else location.reload();
+      if (data.uuid) {
+        this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
+        setTimeout(() => { location.reload() }, 100);
+      } else if (this.$route.name.includes('login')) {
+        this.$router.replace({ name: 'root' });
+        location.reload();
+      }
     });
 
     this.$store.dispatch("nocloud/auth/load");

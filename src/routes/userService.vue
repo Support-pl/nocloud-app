@@ -260,6 +260,30 @@ export default {
         onCancel() {},
       });
     },
+    getPeriod(timestamp) {
+      const hour = 3600;
+      const day = hour * 24;
+      const month = day * 30;
+      const year = month * 12;
+
+      let period = '';
+      let count = 0;
+
+      if (timestamp / hour < 24 && timestamp >= hour) {
+        period = 'hour';
+        count = timestamp / hour;
+      } else if (timestamp / day < 30 && timestamp >= day) {
+        period = 'day';
+        count = timestamp / day;
+      } else if (timestamp / month < 12 && timestamp >= month) {
+        period = 'month';
+        count = timestamp / month;
+      } else {
+        period = 'year';
+        count = timestamp / year;
+      }
+      return this.$tc(period, count);
+    },
     date(timestamp) {
       if (timestamp < 1) return '0000-00-00';
 
@@ -287,12 +311,14 @@ export default {
         if (!domain) return new Promise((resolve) => resolve({ meta: null }));
         switch (domain.billingPlan.type) {
           case 'virtual': {
+            const { period } = domain.billingPlan.products[domain.product];
+
             domain.data.expiry = {
               expiredate: this.date(domain.data.last_monitoring ?? 0),
               regdate: domain.data.creation ?? '0000-00-00'
             };
+            domain.resources.period = this.getPeriod(period);
             groupname = 'Custom';
-            date = 'month';
             break;
           }
           case 'goget': {
@@ -319,7 +345,7 @@ export default {
             const { period } = domain.billingPlan.products[key];
 
             domain.resources = {
-              period: this.date(period),
+              period: this.getPeriod(period),
               recurringamount: domain.config.items.reduce((sum, key) =>
                 sum + domain.billingPlan.products[key].price, 0
               )
@@ -341,7 +367,7 @@ export default {
           name: domain.title,
           status: `cloudStateItem.${domain.state?.state || 'UNKNOWN'}`,
           domain: domain.resources.domain,
-          billingcycle: this.$tc(date, period),
+          billingcycle: (typeof period === 'string') ? period : this.$tc(date, period),
           recurringamount: domain.billingPlan.products[domain.product]?.price ?? '?',
           nextduedate: expiredate
         };

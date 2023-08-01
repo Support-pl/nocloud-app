@@ -157,7 +157,7 @@ export default {
   },
   methods: {
     goBack() {
-      this.$router.push("/invoice");
+      this.$router.push("/billing");
     },
     showfull() {
       this.showFullTable = true;
@@ -204,12 +204,12 @@ export default {
 
     this.$store.dispatch('invoices/autoFetch')
       .catch((err) => {
-        this.$router.push("/invoice");
+        this.$router.push("/billing");
         console.error(err);
       });
   },
   destroyed() {
-    if (!this.$route.name.includes('invoice')) {
+    if (!this.$route.name.includes('billing')) {
       sessionStorage.removeItem('invoice');
     }
   },

@@ -24,9 +24,11 @@ Vue.prototype.$config = config;
 Vue.prototype.$axios = axios;
 Vue.prototype.$api = api;
 
-Vue.filter('capitalize', function (value) {
+Vue.filter('capitalize', function (value, isLower) {
   if (!value) return ''
-  value = value.toString().toLowerCase()
+  value = value.toString()
+
+  if (isLower) value = value.toLowerCase()
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
 

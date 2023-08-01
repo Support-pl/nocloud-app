@@ -72,7 +72,7 @@ export default {
           this.confirmLoading = false;
           if (!this.stay) {
             localStorage.setItem('order', 'Invoice');
-            this.$router.push('/invoice');
+            this.$router.push('/billing');
           } else {
             this.$message.success(`Now look invoice#${res.invoiceid}`);
           }

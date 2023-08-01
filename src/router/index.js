@@ -96,8 +96,8 @@ const routes = [
 				component: () => import('../routes/support.vue')
 			},
 			{
-				path: 'invoice',
-				name: 'invoice',
+				path: 'billing',
+				name: 'billing',
 				meta: {
 					mustBeLoggined: true,
 				},
@@ -232,7 +232,7 @@ const routes = [
 		component: () => import('../components/appMain/support/ticketchat.vue')
 	},
 	{
-		path: '/invoice/:uuid',
+		path: '/billing/:uuid',
 		name: 'invoiceFS',
 		meta: {
 			mustBeLoggined: true,

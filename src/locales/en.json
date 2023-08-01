@@ -29,6 +29,7 @@
 	"cloud":"Cloud",
 	"support": "Support",
 	"invoice": "Orders",
+  "billing": "Billing",
 	"settings": "Settings",
 	"Balance": "Balance",
 	"Exit": "Exit",
@@ -265,6 +266,7 @@
 		"none": "none"
 	},
 	"os": "OS",
+  "Failed to load data": "Failed to load data",
   "Order created successfully": "Order created successfully.",
   "Order update successfully": "Order update successfully.",
   "Ticket created successfully": "Ticket created successfully.",
