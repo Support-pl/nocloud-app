@@ -118,7 +118,7 @@
       <div class="newCloud__option-field" v-if="images.length > 0">
         <a-row>
           <a-col :xs="24" :sm="10">
-            <a-form-item :label="$t('name') | capitalize">
+            <a-form-item :label="$t('server name') | capitalize">
               <a-input
                 :value="vmName"
                 :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
@@ -433,9 +433,8 @@ export default {
       return { rate: 1, code: currency_code ?? defaultCurrency };
     },
     region() {
-      const location = this.locationId.split(' ').at(-1);
       const { extra, title } = this.itemSP?.locations
-        .find(({ id }) => id === location) ?? {};
+        .find(({ id }) => this.locationId.includes(id)) ?? {};
 
       if (!extra) return null;
       return { value: extra.region, title };

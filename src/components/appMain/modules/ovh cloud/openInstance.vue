@@ -581,6 +581,10 @@ export default {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
+
+          if (err.response?.status >= 500) {
+            opts.message = this.$t('Error: Failed to load data');
+          }
           this.openNotificationWithIcon("error", opts);
         })
         .finally(() => {
@@ -856,10 +860,15 @@ export default {
               this.openNotificationWithIcon("success", { message: `Done!` });
             })
             .catch((err) => {
-              console.error(err);
-              this.openNotificationWithIcon("error", {
+              const opts = {
                 message: `Error: ${err.response?.data?.message ?? "Unknown"}.`
-              });
+              };
+
+              if (err.response?.status >= 500) {
+                opts.message = `Error: ${this.$t('Failed to load data')}`;
+              }
+              this.openNotificationWithIcon("error", opts);
+              console.error(err);
             })
             .finally(() => this.actionLoading = false);
         },
@@ -894,6 +903,10 @@ export default {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
+
+          if (err.response?.status >= 500) {
+            opts.message = `Error: ${this.$t('Failed to load data')}`;
+          }
           this.openNotificationWithIcon("error", opts);
         });
     },

@@ -99,7 +99,7 @@ export default {
           this.modalVisible = false;
           this.confirmLoading = false;
           if (!this.stay) {
-            this.$router.push({ path: `/invoice-${res.data.invoiceid}` });
+            this.$router.push({ path: `/billing-${res.data.invoiceid}` });
           } else {
             this.$message.success(`Now look invoice#${res.data.invoiceid}`);
           }

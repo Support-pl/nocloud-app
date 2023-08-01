@@ -161,7 +161,7 @@
         </div>
         <a-row>
           <a-col :xs="24" :sm="10">
-            <a-form-item style="margin-top: 15px" :label="$t('name') | capitalize">
+            <a-form-item style="margin-top: 15px" :label="$t('server name') | capitalize">
               <a-input
                 :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
                 :value="vmName"

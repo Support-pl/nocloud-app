@@ -224,9 +224,8 @@ export default {
       return { plans, cpu, ram, disk };
     },
     region() {
-      const location = this.locationId.split(' ').at(-1);
       const { extra, title } = this.itemSP?.locations.find(
-        ({ id }) => id === location
+        ({ id }) => this.locationId.includes(id)
       ) || {};
 
       if (!extra) return null;

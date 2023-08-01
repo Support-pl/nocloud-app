@@ -143,7 +143,7 @@ export default {
   }),
   methods: {
     goBack() {
-      this.$router.push("/invoice");
+      this.$router.push("/billing");
     },
     date(timestamp) {
       if (timestamp < 1) return '-';
@@ -227,7 +227,7 @@ export default {
       });
   },
   destroyed() {
-    if (!this.$route.name.includes('invoice')) {
+    if (!this.$route.name.includes('billing')) {
       sessionStorage.removeItem('invoice');
     }
   },
