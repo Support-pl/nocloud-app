@@ -21,7 +21,7 @@ export default {
   created() {
     window.addEventListener('message', ({ data, origin }) => {
       console.log(data, origin);
-      if (!origin.includes('8081')) return;
+      if (!origin.includes('https://api.')) return;
       this.$store.commit("nocloud/auth/setToken", data.token);
       sessionStorage.removeItem("user");
 
