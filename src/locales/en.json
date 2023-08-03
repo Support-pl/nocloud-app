@@ -593,6 +593,7 @@
 		"SNAPSHOT":"SNAPSHOT",
 		"RUNNING":"RUNNING",
 		"SUSPENDED":"SUSPENDED",
+    "OPERATION": "OPERATION",
     "UNKNOWN": "UNKNOWN"
 	},
 	"public":"Public",

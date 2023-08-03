@@ -1513,7 +1513,6 @@ export default {
         anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
-
         this.plan = this.filteredPlans[0]?.uuid ?? pool[0]?.uuid ?? '';
 
         if (this.dataLocalStorage.billing_plan) {

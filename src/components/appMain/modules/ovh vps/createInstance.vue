@@ -225,17 +225,23 @@ export default {
       if (!products[0]) return;
       const { os } = products[0][1].meta;
 
+      const changeOS = (images) => {
+        this.images = images.map((el) => ({ name: el, desc: el }));
+        this.images.forEach(({ name }, i, arr) => {
+          if (name.toLowerCase().includes('windows')) {
+            arr[i].prices = products.map(([key, { meta }]) => ({
+              price: { value: meta.windows },
+              duration: key.split(' ')[0],
+              pricingMode: (key.split(' ')[0] === 'P1Y') ? 'upfront12' : 'default'
+            }));
+          }
+        });
+      }
+
       os.sort();
-      this.images = this.filterImages(os).map((el) => ({ name: el, desc: el }));
-      this.images.forEach(({ name }, i, arr) => {
-        if (name.toLowerCase().includes('windows')) {
-          arr[i].prices = products.map(([key, { meta }]) => ({
-            price: { value: meta.windows },
-            duration: key.split(' ')[0],
-            pricingMode: (key.split(' ')[0] === 'P1Y') ? 'upfront12' : 'default'
-          }));
-        }
-      });
+      this.filterImages(os)
+        .then((filteredImages) => { changeOS(filteredImages) })
+        .catch(() => { changeOS(os) });
     },
     'options.ram.size'(size) {
       const plan = this.plans?.find(({ value }) => value.includes(this.planKey));
