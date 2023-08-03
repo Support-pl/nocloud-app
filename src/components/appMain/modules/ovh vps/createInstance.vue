@@ -50,7 +50,8 @@ export default {
     plans: [],
     allAddons: {},
     addonsCodes: {},
-    price: {}
+    price: {},
+    catalog: {}
   }),
   methods: {
     setAddons(plans) {
@@ -99,6 +100,25 @@ export default {
       this.$emit('setData', { key: 'planCode', value, type: 'ovh' });
       this.$emit('setData', { key: 'duration', value: plan.duration, type: 'ovh' });
       this.$emit('setData', { key: 'pricingMode', value: plan.pricingMode, type: 'ovh' });
+    },
+    async filterImages(images) {
+      let response = null;
+      if (this.catalog.plans) {
+        response = { meta: { catalog: this.catalog } };
+      } else {
+        response = await this.$api.servicesProviders.action(
+          { action: "get_plans", uuid: this.itemSP.uuid }
+        );
+
+        this.catalog = response.meta.catalog;
+      }
+      const { meta: { catalog } } = response;
+      const { configurations } = catalog.plans.find(
+        ({ planCode }) => planCode.includes(this.planKey)
+      );
+      const os = configurations[1].values;
+
+      return images.filter((image) => os.includes(image));
     }
   },
   created() {
@@ -162,9 +182,8 @@ export default {
       return addons;
     },
     region() {
-      const location = this.locationId.split(' ').at(-1);
       const { extra, title } = this.itemSP?.locations.find(
-        ({ id }) => id === location
+        ({ id }) => this.locationId.includes(id)
       ) || {};
 
       if (!extra) return null;
@@ -207,7 +226,7 @@ export default {
       const { os } = products[0][1].meta;
 
       os.sort();
-      this.images = os.map((el) => ({ name: el, desc: el }));
+      this.images = this.filterImages(os).map((el) => ({ name: el, desc: el }));
       this.images.forEach(({ name }, i, arr) => {
         if (name.toLowerCase().includes('windows')) {
           arr[i].prices = products.map(([key, { meta }]) => ({

@@ -332,9 +332,8 @@ export default {
       return addons;
     },
     region() {
-      const location = this.locationId.split(' ').at(-1);
       const { extra, title } = this.itemSP?.locations
-        .find(({ id }) => id === location) ?? {};
+        .find(({ id }) => id === this.locationId.includes(id)) ?? {};
 
       if (!extra) return null;
       return { value: extra.region, title };

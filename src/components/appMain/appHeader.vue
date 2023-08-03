@@ -16,7 +16,7 @@
             <a-icon type="left" />
           </div>
           <!-- {{$t(`headerTitle.${headerTitle}`)}} -->
-          {{ headerTitle }}
+          <span>{{ headerTitle }}</span>
         </div>
 
         <div class="header__right-side">
@@ -686,11 +686,24 @@ export default {
   font-size: 1.1rem;
   display: flex;
   align-items: center;
+  margin-right: 5px;
+  overflow: hidden;
+}
+
+.header__title > span {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .header_back_btn {
   font-size: 1.4rem;
   margin-right: 20px;
+}
+
+.header__links {
+  display: flex;
+  align-items: center;
 }
 
 .header__links a {
@@ -715,9 +728,13 @@ export default {
 }
 
 .header__links a:last-child {
-  box-shadow: 0px 0px 0px 1px #fff;
-  border-radius: 5px;
+  max-width: 100px;
   padding: 10px 15px;
+  border-radius: 5px;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0px 0px 0px 1px #fff;
 }
 
 .header__links a:last-child:hover {
@@ -859,6 +876,10 @@ export default {
     border-radius: 0 0 10px 10px;
     background: var(--main);
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .header__links a:not(:last-child) {
+    margin-right: 10px;
   }
 }
 </style>

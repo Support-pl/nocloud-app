@@ -70,17 +70,17 @@
 
     <div class="chat__footer">
       <a-textarea
-        :disabled="status == 'Closed'"
         allowClear
-        :autoSize="{ minRows: 1, maxRows: 2 }"
-        v-model="messageInput"
-        v-on:keyup.shift.enter.exact="newLine"
-        v-on:keydown.enter.exact.prevent="sendMessage"
         type="text"
         class="chat__input"
         name="message"
         id="message"
+        v-model="messageInput"
+        :disabled="status == 'Closed'"
+        :autoSize="{ minRows: 2, maxRows: 100 }"
         :placeholder="$t('message') + '...'"
+        @keyup.shift.enter.exact="newLine"
+        @keydown.enter.exact.prevent="sendMessage"
       >
       </a-textarea>
       <div class="chat__send" @click="sendMessage">
@@ -354,7 +354,7 @@ export default {
 .chat__footer {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: end;
   background-color: var(--bright_bg);
   padding: 10px;
   position: absolute;
@@ -372,6 +372,14 @@ export default {
   padding: 7px 0;
 }
 
+.chat__input textarea {
+  max-height: calc(50vh - 34px) !important;
+}
+
+.chat__input .ant-input-textarea-clear-icon {
+  margin: 9px 2px 0 0;
+}
+
 .chat__send {
   background-color: var(--main);
   color: var(--bright_font);
@@ -382,6 +390,7 @@ export default {
   justify-content: center;
   align-items: center;
   margin-left: 10px;
+  margin-bottom: 15px;
   font-size: 1.2rem;
   transition: filter 0.2s ease;
   cursor: pointer;
