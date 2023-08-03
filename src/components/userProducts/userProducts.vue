@@ -323,7 +323,7 @@ export default {
             case 'Date':
               return new Date(a.date).getTime() - new Date(b.date).getTime();
             case 'Name' :
-              return a.productname.toLowerCase() < b.productname.toLowerCase();
+              return a.productname?.toLowerCase() < b.productname?.toLowerCase();
             case 'Cost':
               return parseFloat(a.orderamount) - parseFloat(b.orderamount);
           }

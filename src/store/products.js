@@ -44,7 +44,7 @@ export default {
 			return new Promise((resolve, reject) => {
 				api.get(rootState.nocloud.auth.baseURL, { params: { userid, run: 'get_active_products' } })
           .then(res => {
-            const products = Object.values(res ?? []);
+            const products = Object.values((res.ERROR) ? {} : res);
 
             commit('setProducts', products);
             commit('setProductsLoading', false);

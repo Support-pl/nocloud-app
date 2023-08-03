@@ -427,4 +427,10 @@ export default {
   background-color: var(--main);
   color: #fff;
 }
+
+@media (max-width: 576px) {
+  .order__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
 </style>
