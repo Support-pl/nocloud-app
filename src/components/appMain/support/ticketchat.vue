@@ -354,7 +354,7 @@ export default {
 .chat__footer {
   display: flex;
   justify-content: center;
-  align-items: end;
+  align-items: flex-end;
   background-color: var(--bright_bg);
   padding: 10px;
   position: absolute;

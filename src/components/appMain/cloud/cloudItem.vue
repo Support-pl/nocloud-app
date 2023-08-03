@@ -67,18 +67,23 @@ export default {
       switch (this.instance.domainstatus) {
         case "RUNNING":
         case "Active":
-          return "#0fd058";
+          return "var(--success)";
         // останавливающийся и запускающийся
+        case "BOOT":
+        case "BUILD":
         case "BOOT_POWEROFF":
         case "SHUTDOWN_POWEROFF":
-          return "#919191";
+          return "var(--warn)";
         case "LCM_INIT":
         case "STOPPED":
         case "SUSPENDED":
+          return "#ff9140";
+        case "OPERATION":
+        case "PENDING":
         case "Pending":
-          return "#f9f038";
+          return "var(--main)";
         default:
-          return "rgb(145, 145, 145)";
+          return "var(--err)";
       }
     },
     dateColor() {

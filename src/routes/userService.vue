@@ -422,16 +422,21 @@ export default {
       return this.$store.getters['products/getProducts'];
     },
     getTagColor() {
-      switch (this.service.status.replace('cloudStateItem.', '')) {
-        case "RUNNING":
-        case "Active":
+      const status = this.service.status.replace('cloudStateItem.', '');
+
+      switch (status.toLowerCase()) {
+        case "running":
+        case "active":
           return "green";
-        case "Pending":
+        case "operation":
+        case "pending":
+          return "blue";
+        case "stopped":
+        case "suspended":
           return "orange";
-        case "Cancelled":
-          return "red";
+        case "cancelled":
         default:
-          return ""
+          return "red";
       }
     },
     getTagColorSSL() {
