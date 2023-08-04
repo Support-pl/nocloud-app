@@ -930,6 +930,9 @@ export default {
   .product__specs td:last-child::before {
     transform: translate(-10px, -50%);
   }
+  .order__grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .specs-enter-active,

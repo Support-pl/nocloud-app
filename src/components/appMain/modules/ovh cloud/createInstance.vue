@@ -30,7 +30,7 @@
         <a-col>
           <span style="display: inline-block">{{ $t('cpu') }}: (cores)</span>
         </a-col>
-        <a-col :span="20">
+        <a-col :span="24" :md="20">
           <a-slider
             range
             style="margin-top: 10px"
@@ -47,7 +47,7 @@
         <a-col>
           <span style="display: inline-block">{{ $t('ram') }}: (Gb)</span>
         </a-col>
-        <a-col :span="20">
+        <a-col :span="24" :md="20">
           <a-slider
             range
             style="margin-top: 10px"
@@ -64,7 +64,7 @@
         <a-col>
           <span style="display: inline-block">{{ $t("Drive") }}: (Gb)</span>
         </a-col>
-        <a-col :span="20">
+        <a-col :span="24" :md="20">
           <a-slider
             range
             style="margin-top: 10px"
@@ -308,5 +308,11 @@ export default {
 .order__grid-item--active {
   background-color: var(--main);
   color: #fff;
+}
+
+@media (max-width: 576px) {
+  .order__grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 </style>

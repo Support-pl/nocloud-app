@@ -519,10 +519,6 @@ export default {
 		justify-content: center;
 	}
 
-	.login__forgot{
-		margin-top: 40px;
-	}
-
 	#qrcode{
 		display: inline-block;
 	}

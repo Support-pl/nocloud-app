@@ -752,7 +752,7 @@ export default {
   display: grid;
   grid-template-columns: 20% 1fr 20%;
   justify-items: center;
-  align-items: center;
+  align-items: start;
 }
 .Fcloud__header-title {
   position: relative;
@@ -777,9 +777,8 @@ export default {
   width: 15px;
   background-color: var(--bright_font);
   border-radius: 50%;
-  top: 55%;
+  bottom: 5px;
   left: -25px;
-  transform: translateY(-50%);
 }
 .Fcloud__buttons {
   display: flex;

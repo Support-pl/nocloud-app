@@ -159,7 +159,7 @@ export default {
       const addons = { backup: {}, snapshot: {}, disk: {} };
 
       Object.keys(addons).forEach((addon) => {
-        this.getPlan.resources?.forEach(({ price, key }) => {
+        this.getPlan.resources?.forEach(({ price, key, title }) => {
           const { value } = this.plans.find((el) => el.value.includes(this.planKey)) || {};
 
           const addonKey = key.split(' ')[1];
@@ -173,8 +173,9 @@ export default {
           const isInclude = this.allAddons[value]?.includes(addonKey);
           const isEqualMode = period.pricingMode === this.mode;
 
+          if (title === '') title = addonKey;
           if (isInclude && key.includes(addon) && isEqualMode) {
-            addons[addon][addonKey] = { periods: [period], title: addonKey };
+            addons[addon][addonKey] = { periods: [period], title };
           }
         });
       });
