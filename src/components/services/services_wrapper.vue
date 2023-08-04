@@ -138,6 +138,9 @@ export default {
 
       this.$router.push({ name, query });
     },
+    toKebabCase(text) {
+      return text.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+    }
 	},
 	computed: {
 		sp() {
@@ -181,8 +184,20 @@ export default {
       });
 
 			this.showcases.forEach((showcase) => {
+        showcase.icon = this.toKebabCase(showcase.icon);
+        let theme = showcase.icon.split('-').at(-1);
+        let icon = showcase.icon.replace(`-${theme}`, '');
+
+        if (!['outlined', 'filled'].includes(theme)) {
+          icon = showcase.icon;
+          theme = null;
+        } else if (theme === 'tone') {
+          icon = icon.replace('-two');
+          theme = 'two-tone';
+        }
+
         services.push({
-          ...showcase,
+          ...showcase, icon, theme,
           onclick: {
             function: this.routeTo,
             paramsArr: [{ name: 'products', query: { service: showcase.uuid } }]

@@ -1,7 +1,7 @@
 <template>
 	<div class="service__item" @click="onClick">
 		<div class="service__icon">
-			<a-icon :type="service.icon"></a-icon>
+			<a-icon :type="service.icon" :theme="service.theme ?? 'outlined'"></a-icon>
 		</div>
 		<div class="service__title">{{ translatedName }}</div>
 	</div>
