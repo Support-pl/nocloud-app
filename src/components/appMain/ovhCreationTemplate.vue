@@ -322,8 +322,9 @@ export default {
     },
     addonPrice({ periods }) {
       const period = periods.find(({ pricingMode }) => pricingMode === this.mode);
+      const price = +(period.price.value * this.currency.rate).toFixed(2);
 
-      return `${period.price.value} ${this.currency.code}`;
+      return `${price} ${this.currency.code}`;
     },
     setResource(value) {
       if (this.getPlan.type.includes('vps')) {
