@@ -454,7 +454,7 @@ export default {
       const { templates } = this.itemSP.publicData;
       const images = {};
 
-      Object.entries(templates).forEach(([key, value]) => {
+      Object.entries(templates ?? {}).forEach(([key, value]) => {
         if (value.is_public !== false) {
           images[key] = value;
         }

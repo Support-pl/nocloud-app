@@ -444,6 +444,7 @@ export default {
       const plan = this.plans.find(({ uuid }) => uuid === value);
 
       this.changeProducts(plan);
+      this.fetchLoading = false;
     }
   },
 	created() {
@@ -462,9 +463,6 @@ export default {
       if (err.response?.data?.code === 16) return;
       this.$notification.error({ message: this.$t(message) });
       console.error(err);
-    })
-    .finally(() => {
-      this.fetchLoading = false;
     });
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {

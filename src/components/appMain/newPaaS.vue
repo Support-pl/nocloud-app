@@ -681,7 +681,7 @@ export default {
         showcase.locations?.forEach((location) => {
           const sp = this.getSP.find(({ locations, type }) =>
             locations.find(({ id, type: locationType }) =>
-              location.id.includes(id) && ((locationType === '') ? true : locationType.includes(type))
+              location.id.includes(id) && locationType.includes(type)
             )
           );
 
