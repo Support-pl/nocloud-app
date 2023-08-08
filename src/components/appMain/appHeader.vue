@@ -225,6 +225,9 @@
 
 <script>
 import { mapActions, mapGetters, mapMutations } from "vuex";
+import { createPromiseClient } from "@bufbuild/connect";
+import { HandsfreeService } from "infinimesh-proto/build/es/handsfree/handsfree_connect";
+import { ConnectionRequest } from "infinimesh-proto/build/es/handsfree/handsfree_pb";
 import balance from "@/components/balance/balance.vue";
 import moment from "moment";
 
@@ -259,10 +262,24 @@ export default {
             {
               name: "support_telegram",
               icon: "telegram",
-              onClickFuncion: () => {
+              onClickFuncion: async () => {
                 const { token } = this.$store.state.nocloud.auth;
+                const { transport } = this.$store.state.nocloud.chats;
+                const handsfree = createPromiseClient(HandsfreeService, transport);
 
-                window.open(`https://t.me/nocloud_telegram_bot?start=${token}`, '_blank')
+                try {
+                  const stream = handsfree.connect(new ConnectionRequest({ appId: token }));
+
+                  for await (const event of stream) {
+                    console.log(event);
+                  }
+                } catch (error) {
+                  this.$notification.error({
+                    message: this.$t(error.response?.data?.message ?? error.message ?? error)
+                  });
+                }
+
+                // window.open(`https://t.me/nocloud_telegram_bot?start=${token}`, '_blank');
               }
             },
             {

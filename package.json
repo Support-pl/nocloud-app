@@ -15,6 +15,7 @@
     "ant-design-vue": "^1.5.4",
     "axios": "^1.2.1",
     "core-js": "^3.26.0",
+    "infinimesh-proto": "^1.0.1",
     "js-cookie": "^3.0.1",
     "latest-version": "^6.0.0",
     "markdown-it": "^13.0.1",

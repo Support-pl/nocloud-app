@@ -355,8 +355,9 @@ export default {
 	computed: {
 		getProducts() {
 			if (Object.keys(this.products).length == 0) return "NAN"
-      const product = this.products.find(({ id }) => id === +this.$route.query.product) ??
+      const findedProduct = this.products.find(({ id }) => id === +this.$route.query.product) ??
         this.products[this.sizes.indexOf(this.options.size)]
+      const product = { ...findedProduct }
 
       if (typeof product.description !== 'string') return product
       if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
