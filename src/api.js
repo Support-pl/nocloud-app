@@ -7,7 +7,12 @@ const api = new Api(VUE_APP_BASE_URL);
 api.axios.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && [2, 7].includes(error.response?.data?.code)) {
+    if (
+      error.response && (
+        error.response?.data?.code === 7 ||
+        error.response?.data.message === 'Token is expired'
+      )
+    ) {
       console.log('credentials are not actual');
       vuex.dispatch("nocloud/auth/logout")
     }
