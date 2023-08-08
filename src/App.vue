@@ -29,7 +29,7 @@ export default {
         setTimeout(() => {
           this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
           location.reload();
-        }, 100);
+        }, 300);
       } else if (this.$route.name.includes('login')) {
         this.$router.replace({ name: 'root' });
         location.reload();

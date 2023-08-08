@@ -357,7 +357,7 @@ export default {
 			if (Object.keys(this.products).length == 0) return "NAN"
       const findedProduct = this.products.find(({ id }) => id === +this.$route.query.product) ??
         this.products[this.sizes.indexOf(this.options.size)]
-      const product = { ...findedProduct }
+      const product = JSON.parse(JSON.stringify(findedProduct))
 
       if (typeof product.description !== 'string') return product
       if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
@@ -389,7 +389,7 @@ export default {
         product.price.currency = this.currency.code
       }
 
-			return { ...product, price: +(product.price * this.currency.rate).toFixed(2) }
+			return { ...product, price: +product.price }
 		},
     slides() {
       return 3;
@@ -401,7 +401,7 @@ export default {
 
         const price = prices.find((el) => el.currency === this.currency.id);
         const value = (+price[this.options.period] !== -1)
-          ? +(price[this.options.period] * this.currency.rate).toFixed(2)
+          ? +price[this.options.period]
           : 0;
 
         const result = {
@@ -422,7 +422,6 @@ export default {
       return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
     currency() {
-      const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
       const code = (this.isLogged)
@@ -430,16 +429,7 @@ export default {
         : this.$store.getters['nocloud/auth/unloginedCurrency'];
       const { id = -1 } = this.currencies?.find((currency) => currency.code === code) ?? {};
 
-      const { rate } = currencies.find((el) =>
-        el.to === defaultCurrency && el.from === code
-      ) ?? {};
-
-      const { rate: reverseRate } = currencies.find((el) =>
-        el.from === defaultCurrency && el.to === code
-      ) ?? { rate: 1 };
-
-      if (!this.isLogged) return { rate: (rate) ? rate : 1 / reverseRate, code, id };
-      return { rate: 1, code, id };
+      return { code, id };
     },
     baseURL() {
       return this.$store.getters['nocloud/auth/getURL'];
