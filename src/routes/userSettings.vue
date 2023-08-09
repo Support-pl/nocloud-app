@@ -18,51 +18,51 @@
               :label="$t('clientinfo.firstname') | capitalize"
               prop="firstname"
             >
-              <a-input v-model="form.firstname" />
+              <a-input :disabled="isDisabled" v-model="form.firstname" />
             </a-form-model-item>
             <a-form-model-item
               :label="$t('clientinfo.lastname') | capitalize"
               prop="lastname"
             >
-              <a-input v-model="form.lastname" />
+              <a-input :disabled="isDisabled" v-model="form.lastname" />
             </a-form-model-item>
             <a-form-model-item
               :label="$t('clientinfo.companyname') | capitalize"
               prop="companyname"
             >
-              <a-input v-model="form.companyname" />
+              <a-input :disabled="isDisabled" v-model="form.companyname" />
             </a-form-model-item>
             <a-form-model-item
               :label="$t('clientinfo.email') | capitalize"
               prop="email"
             >
-              <a-input v-model="form.email" />
+              <a-input :disabled="isDisabled" v-model="form.email" />
             </a-form-model-item>
 
             <a-form-model-item
               :label="$t('clientinfo.address1') | capitalize"
               prop="address1"
             >
-              <a-input v-model="form.address1" />
+              <a-input :disabled="isDisabled" v-model="form.address1" />
             </a-form-model-item>
 
             <a-form-model-item
               :label="$t('clientinfo.city') | capitalize"
               prop="city"
             >
-              <a-input v-model="form.city" />
+              <a-input :disabled="isDisabled" v-model="form.city" />
             </a-form-model-item>
             <a-form-model-item
               :label="$t('clientinfo.state') | capitalize"
               prop="state"
             >
-              <a-input v-model="form.state" />
+              <a-input :disabled="isDisabled" v-model="form.state" />
             </a-form-model-item>
             <a-form-model-item
               :label="$t('clientinfo.postcode') | capitalize"
               prop="postcode"
             >
-              <a-input v-model="form.postcode" />
+              <a-input :disabled="isDisabled" v-model="form.postcode" />
             </a-form-model-item>
             <a-form-model-item
               :label="$t('clientinfo.phonenumber') | capitalize"
@@ -73,7 +73,7 @@
                 class="ant-input"
                 v-phone="phonecode"
                 v-model="form.phonenumber"
-                :disabled="!form.countryname"
+                :disabled="!form.countryname || isDisabled"
               />
             </a-form-model-item>
 
@@ -86,7 +86,7 @@
                   show-search
                   option-filter-prop="children"
                   v-model="form.countryname"
-                  :disabled="userData.country_stop === 1"
+                  :disabled="userData.country_stop === 1 || isDisabled"
                 >
                   <a-select-option
                     v-for="country in Object.keys(countries)"
@@ -101,13 +101,15 @@
               <a-button
                 class="user__button user__button--submit"
                 type="primary"
-                @click="sendInfo"
+                v-if="!isDisabled"
                 :loading="isSendingInfo"
+                @click="sendInfo"
               >
                 {{ $t("Submit") }}
               </a-button>
               <a-button
                 class="user__button user__button--cancel"
+                v-if="!isDisabled"
                 @click="installDataToBuffer"
               >
                 {{ $t("Cancel") }}
@@ -291,8 +293,11 @@ export default {
       }
       return info;
     },
-    phonecode(){
+    phonecode() {
       return countriesWithDialCode.find(({ title }) => title === this.form.countryname)?.dial_code;
+    },
+    isDisabled() {
+      return !this.userData.roles?.settings;
     }
   },
   mounted() {

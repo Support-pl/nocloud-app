@@ -2,7 +2,7 @@
 	<div class="footer">
 		<div class="container">
 			<div class="footer__content">
-				<div v-for="(button, index) in getButtons" :key="index" @click="setTabByName(button.title)" class="button" :class="{ active: button.title==active }">
+				<div v-for="(button, index) in filteredButtons" :key="index" @click="setTabByName(button.title)" class="button" :class="{ active: button.title==active }">
 					<div class="button__icon">
 						<a-icon :type="button.icon" :theme="button.theme" />
 					</div>
@@ -22,13 +22,31 @@ export default {
 	computed: {
 		...mapGetters('app', ['getButtons']),
 		...mapGetters('app', ['getActiveTab']),
-		active(){
+    user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    },
+		active() {
 			const footerTitle = this.$route.meta?.footerTitle;
 			const layoutTitle = this.$route.meta?.layoutTitle;
 			if(footerTitle) return footerTitle;
 			if(layoutTitle) return layoutTitle;
 			return this.getActiveTab.title;
-		}
+		},
+    filteredButtons() {
+      return this.getButtons.filter(({ title }) => {
+        if (!this.user.roles) return true;
+        switch (title) {
+          case 'billing':
+            return this.user.roles?.invoice;
+
+          case 'settings':
+            return true;
+        
+          default:
+            return this.user.roles[title];
+        }
+      });
+    }
 	},
 	methods: {
 		...mapActions('app', ['setTabByName'])
