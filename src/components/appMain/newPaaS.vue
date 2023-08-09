@@ -310,6 +310,20 @@
             </a-row>
           </transition-group>
 
+          <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              v-if="product.installationFee"
+              :style="{ 'font-size': '1.1rem' }"
+            >
+              <a-col> {{ $t('installation') | capitalize }}: </a-col>
+              <a-col>
+                {{ +(product.installationFee * currency.rate).toFixed(2) }} {{ currency.code }}
+              </a-col>
+            </a-row>
+          </transition>
+
           <a-row
             type="flex"
             justify="space-between"
@@ -679,9 +693,9 @@ export default {
 
       this.showcases.forEach((showcase) => {
         showcase.locations?.forEach((location) => {
-          const sp = this.getSP.find(({ locations, type }) =>
-            locations.find(({ id, type: locationType }) =>
-              location.id.includes(id) && locationType.includes(type)
+          const sp = this.getSP.find(({ locations }) =>
+            locations.find(({ id, type }) =>
+              location.id.includes(id) && location.type.includes(type)
             )
           );
 
@@ -750,8 +764,7 @@ export default {
       });
 
       return this.getPlans.filter(({ uuid, type }) =>
-        ((locationItem.type) ? locationItem.type === type : true) &&
-        plans.includes(uuid)
+        locationItem.type === type && plans.includes(uuid)
       );
     },
     //UNKNOWN and STATIC

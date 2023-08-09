@@ -58,7 +58,7 @@
           </a-modal>
         </div>
 
-        <div class="settings__item" @click="showModal('addFunds')">
+        <div class="settings__item" v-if="!user.paid_stop" @click="showModal('addFunds')">
           <div class="settings__logo">
             <a-icon type="dollar" />
           </div>
@@ -162,7 +162,6 @@ import balance from "@/components/balance/balance.vue";
 import addFunds from "@/components/balance/addFunds.vue";
 import addSSH from "@/components/appMain/cloud/openCloud/addSSH.vue";
 import QrcodeVue from "qrcode.vue";
-import { mapGetters } from "vuex";
 
 export default {
   name: "settings",
@@ -301,15 +300,20 @@ export default {
           });
           console.error(err);
         })
-        .finally((res) => {
+        .finally(() => {
           this.modal.confirmLoading = false;
         });
     },
   },
   computed: {
-    ...mapGetters("nocloud/auth", ["userdata"]),
+    userdata() {
+      return this.$store.getters["nocloud/auth/userdata"];
+    },
     user() {
-      return this.$store.getters.getUser;
+      return this.$store.getters["nocloud/auth/billingData"];
+    },
+    isLogged() {
+      return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
     langs() {
       return this.$config.languages;
@@ -319,9 +323,6 @@ export default {
     },
     selfHost() {
       return location.host;
-    },
-    isLogged() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
     sshKeys() {
       return this.userdata?.data?.ssh_keys ?? [];
