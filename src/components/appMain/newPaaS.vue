@@ -1,648 +1,570 @@
 <template>
   <div class="newCloud_wrapper">
-      <div class="newCloud">
-        <div class="newCloud__inputs field">
-          <component
-            :is="template"
-            :activeKey="activeKey"
-            :itemSP="itemSP"
-            :getPlan="getPlan"
-            :options="options"
-            :getProducts="getProducts"
-            :productSize="productSize"
-            :tarification="tarification"
-            :vmName="vmName"
-            :password="password"
-            :sshKey="sshKey"
-            :locationId="locationId"
-            @score="onScore"
-            @setData="setData"
-          >
-            <template v-slot:location>
-              <a-row justify="space-between" style="margin-bottom: 10px">
-                <a-alert
-                  show-icon
-                  type="warning"
-                  style="margin-bottom: 15px"
-                  v-if="!locationId"
-                  :message="$t('Please select a suitable location')"
-                />
+    <div class="newCloud">
+      <div class="newCloud__inputs field">
+        <a-spin
+          style="display: block; margin: 15px auto"
+          v-if="isPlansLoading"
+          :tip="$t('loading')"
+          :spinning="isPlansLoading"
+        />
 
-                <!-- <a-select
+        <component
+          v-else
+          :is="template"
+          :activeKey="activeKey"
+          :itemSP="itemSP"
+          :getPlan="getPlan"
+          :options="options"
+          :getProducts="getProducts"
+          :productSize="productSize"
+          :tarification="tarification"
+          :vmName="vmName"
+          :username="username"
+          :password="password"
+          :sshKey="sshKey"
+          :locationId="locationId"
+          @score="onScore"
+          @setData="setData"
+        >
+          <template #location>
+            <a-row justify="space-between" style="margin-bottom: 10px">
+              <a-alert
+                show-icon
+                type="warning"
+                style="margin-bottom: 15px"
+                v-if="!locationId"
+                :message="$t('Please select a suitable location')"
+              />
+
+              <!-- <a-select
+                v-model="locationId"
+                :placeholder="$t('select location')"
+                style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
+              >
+                <a-select-option v-for="item in locations" :key="item.id" :value="item.id">
+                  {{ item.title }}
+                </a-select-option>
+              </a-select> -->
+
+              <a-select
+                v-model="showcase"
+                :placeholder="$t('select service')"
+                style="width: 180px; position: relative; z-index: 4"
+              >
+                <a-select-option v-for="item in showcases" :key="item.uuid" :value="item.uuid">
+                  {{ item.title }}
+                </a-select-option>
+              </a-select>
+
+              <div style="overflow: hidden; margin-top: 15px">
+                <nc-map
+                  v-if="locations.length"
                   v-model="locationId"
-                  :placeholder="$t('select location')"
-                  style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
-                >
-                  <a-select-option v-for="item in locations" :key="item.id" :value="item.id">
-                    {{ item.title }}
-                  </a-select-option>
-                </a-select> -->
+                  :markers="locations"
+                  :markerColor="itemSP?.meta.markerColor"
+                  :markerUrl="itemSP?.meta.markerUrl"
+                />
+              </div>
+            </a-row>
+          </template>
+        </component>
+      </div>
 
-                <a-select
-                  v-model="showcase"
-                  :placeholder="$t('select service')"
-                  style="width: 180px; position: relative; z-index: 4"
-                >
-                  <a-select-option v-for="item in showcases" :key="item.value" :value="item.value">
-                    {{ item.title }}
-                  </a-select-option>
-                </a-select>
+      <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
+        <div
+          v-if="locationDescription && activeKey === 'location'"
+          v-html="locationDescription"
+        />
 
-                <div style="overflow: hidden; margin-top: 15px">
-                  <a-spin
-                    style="display: block; margin: 0 auto"
-                    :tip="$t('loading')"
-                    :spinning="isPlansLoading"
-                  >
-                    <nc-map v-if="locations.length" v-model="locationId" :markers="locations" />
-                  </a-spin>
-                </div>
-              </a-row>
-            </template>
-          </component>
-        </div>
+        <template v-else>
+          <!-- Location -->
+          <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              style="
+                font-size: 1.2rem;
+                padding-bottom: 5px;
+                margin-bottom: 10px;
+                border-bottom: 1px solid #e8e8e8;
+              "
+            >
+              <a-col> {{ $t("location") | capitalize }}: </a-col>
+              <a-col>
+                {{ locationTitle }}
+              </a-col>
+            </a-row>
+          </transition>
+          <!-- Tarif -->
+          <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              :style="{ 'font-size': '1.2rem' }"
+              v-if="productSize"
+            >
+              <a-col> {{ $t("tariff") | capitalize }}: </a-col>
+              <a-col>
+                {{ productSize }}
+              </a-col>
+            </a-row>
+          </transition>
 
-        <div class="newCloud__calculate field result" v-if="this.itemSP && getPlans.length > 0">
-          <div
-            style="white-space: break-spaces"
-            v-if="false && locationDescription && activeKey === 'location'"
-            v-html="locationDescription"
-          />
-
-          <template v-else>
-            <!-- Location -->
-            <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                style="
-                  font-size: 1.2rem;
-                  padding-bottom: 5px;
-                  margin-bottom: 10px;
-                  border-bottom: 1px solid #e8e8e8;
-                "
+          <!-- CPU -->
+          <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              v-if="options.cpu.size && options.cpu.size !== 'loading'"
+              :style="{ 'font-size': '1.2rem', 'align-items': 'center' }"
+            >
+              <a-col> {{ $t("cpu") }}: </a-col>
+              <!-- <a-col
+                :style="{
+                  'font-size': '1rem',
+                  background: '#ccc',
+                  padding: '0 5px 0 5px',
+                }"
               >
-                <a-col> {{ $t("location") | capitalize }}: </a-col>
-                <a-col>
-                  {{ locationTitle }}
-                </a-col>
-              </a-row>
-            </transition>
-            <!-- Tarif -->
-            <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                :style="{ 'font-size': '1.2rem' }"
-                v-if="productSize"
-              >
-                <a-col> {{ $t("tariff") | capitalize }}: </a-col>
-                <a-col>
-                  {{ productSize }}
-                </a-col>
-              </a-row>
-            </transition>
+                {{ $t("High speed") }}
+              </a-col> -->
+              <a-col>{{ options.cpu.size }} {{ (isNaN(+options.cpu.size)) ? '' : 'vCPU' }}</a-col>
+            </a-row>
+          </transition>
 
-            <!-- CPU -->
-            <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                v-if="options.cpu.size && options.cpu.size !== 'loading'"
-                :style="{ 'font-size': '1.2rem', 'align-items': 'center' }"
-              >
-                <a-col> {{ $t("cpu") }}: </a-col>
-                <!-- <a-col
-                  :style="{
-                    'font-size': '1rem',
-                    background: '#ccc',
-                    padding: '0 5px 0 5px',
-                  }"
-                >
-                  {{ $t("High speed") }}
-                </a-col> -->
-                <a-col>{{ options.cpu.size }} {{ (isNaN(+options.cpu.size)) ? '' : 'vCPU' }}</a-col>
-              </a-row>
-            </transition>
+          <!-- RAM -->
+          <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              v-if="options.ram.size"
+              :style="{ 'font-size': '1.2rem' }"
+            >
+              <a-col> {{ $t("ram") }}: </a-col>
+              <a-col>{{ options.ram.size }} Gb</a-col>
+            </a-row>
+          </transition>
 
-            <!-- RAM -->
-            <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                v-if="options.ram.size"
-                :style="{ 'font-size': '1.2rem' }"
-              >
-                <a-col> {{ $t("ram") }}: </a-col>
-                <a-col>{{ options.ram.size }} Gb</a-col>
-              </a-row>
-            </transition>
+          <!-- Drive -->
+          <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              v-if="parseFloat(diskSize)"
+              :style="{ 'font-size': '1.2rem', 'margin-bottom': '5px' }"
+            >
+              <a-col> {{ $t("Drive") }}: </a-col>
+              <a-col>
+                {{ options.drive ? "SSD" : "HDD" }}
+                <span>{{ diskSize }}</span>
+              </a-col>
+            </a-row>
+          </transition>
 
-            <!-- Drive -->
-            <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                v-if="parseFloat(diskSize)"
-                :style="{ 'font-size': '1.2rem', 'margin-bottom': '5px' }"
-              >
-                <a-col> {{ $t("Drive") }}: </a-col>
-                <a-col>
-                  {{ options.drive ? "SSD" : "HDD" }}
-                  <span>{{ diskSize }}</span>
-                </a-col>
-              </a-row>
-            </transition>
+          <!-- Trafic -->
+          <!-- <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              :style="{ 'font-size': '1.1rem' }"
+              v-if="getCurrentProd.props.ram"
+            >
+              <a-col>
+                <span v-if="!options.addonsObjects.traffic">{{
+                  $t("under 3 Gb per month") | capitalize
+                }}</span>
+                <span v-else>
+                  {{
+                    $t(
+                      `newPaaSTrafficItem.${
+                        options.addonsObjects.traffic &&
+                        options.addonsObjects.traffic.description.TITLE.replace(
+                          "Безлимитный, скорость канала не менее",
+                          "Безлимит, от "
+                        )
+                      }`
+                    )
+                  }}
+                </span>
+              </a-col>
+            </a-row>
+          </transition> -->
 
-            <!-- Trafic -->
-            <!-- <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                :style="{ 'font-size': '1.1rem' }"
-                v-if="getCurrentProd.props.ram"
-              >
-                <a-col>
-                  <span v-if="!options.addonsObjects.traffic">{{
-                    $t("under 3 Gb per month") | capitalize
-                  }}</span>
-                  <span v-else>
+          <!-- os -->
+          <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              :style="{ 'font-size': '1.1rem' }"
+              v-if="options.os.name"
+            >
+              <a-col> {{ $t("os") }}: </a-col>
+              <a-col>
+                {{ options.os.name }}
+                <template v-if="priceOVH.addons.os">
+                  ({{ priceOVH.addons.os }} {{ billingData.currency_code }})
+                </template>
+              </a-col>
+            </a-row>
+          </transition>
+
+          <!-- network -->
+          <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              :style="{ 'font-size': '1.1rem' }"
+              v-if="
+                options.network.public.status &&
+                itemSP.type !== 'ovh'
+              "
+            >
+              <a-col>
+                <!-- <a-tooltip>
+                  <template slot="title">
                     {{
                       $t(
-                        `newPaaSTrafficItem.${
-                          options.addonsObjects.traffic &&
-                          options.addonsObjects.traffic.description.TITLE.replace(
-                            "Безлимитный, скорость канала не менее",
-                            "Безлимит, от "
-                          )
+                        `Included in total by default ${
+                          options.network.price * options.network.public.count
                         }`
                       )
                     }}
-                  </span>
-                </a-col>
-              </a-row>
-            </transition> -->
-
-            <!-- os -->
-            <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                :style="{ 'font-size': '1.1rem' }"
-                v-if="options.os.name"
-              >
-                <a-col> {{ $t("os") }}: </a-col>
-                <a-col>
-                  {{ options.os.name }}
-                  <template v-if="priceOVH.addons.os">
-                    ({{ priceOVH.addons.os }} {{ billingData.currency_code }})
+                    {{ currency }}
                   </template>
-                </a-col>
-              </a-row>
-            </transition>
-
-            <!-- network -->
-            <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                :style="{ 'font-size': '1.1rem' }"
-                v-if="
-                  options.network.public.status &&
-                  itemSP.type !== 'ovh'
-                "
-              >
-                <a-col>
-                  <!-- <a-tooltip>
-                    <template slot="title">
-                      {{
-                        $t(
-                          `Included in total by default ${
-                            options.network.price * options.network.public.count
-                          }`
-                        )
-                      }}
-                      {{ currency }}
-                    </template>
-                    <a-badge
-                      :style="{ 'font-size': '1.1rem' }"
-                      count="?"
-                      :number-style="{
-                        backgroundColor: '#fff',
-                        color: '#999',
-                        boxShadow: '0 0 0 1px #d9d9d9 inset',
-                      }"
-                      :offset="[10, 2]"
-                    >
-
-                    </a-badge>
-                  </a-tooltip> -->
-                  <template v-if="tarification !== 'Hourly'">{{ $t("public") }} IPv4:</template>
-                  <template v-else>{{ $t("public") }} IPv4*:</template>
-                </a-col>
-                <a-col>
-                  {{ options.network.public.count }}
-                </a-col>
-              </a-row>
-            </transition>
-
-            <transition name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                :style="{ 'font-size': '1.1rem' }"
-                v-if="options.network.private.status"
-              >
-                <a-col>
-                  <!-- <a-tooltip>
-                    <template slot="title">
-                      {{
-                        $t(
-                          `Included in total by default ${
-                            options.network.price * options.network.public.count
-                          }`
-                        )
-                      }}
-                      {{ currency }}
-                    </template>
-                    <a-badge
-                      :style="{ 'font-size': '1.1rem' }"
-                      count="?"
-                      :number-style="{
-                        backgroundColor: '#fff',
-                        color: '#999',
-                        boxShadow: '0 0 0 1px #d9d9d9 inset',
-                      }"
-                      :offset="[10, 2]"
-                    >
-
-                    </a-badge>
-                  </a-tooltip> -->
-                  {{ $t("private") }} IPv4:
-                </a-col>
-                <a-col>
-                  {{ options.network.private.count }}
-                </a-col>
-              </a-row>
-            </transition>
-
-            <!-- addons -->
-            <transition-group name="networkApear">
-              <a-row
-                type="flex"
-                justify="space-between"
-                v-for="(addon, key) in addons"
-                :key="addon"
-                :style="{ 'font-size': '1.1rem' }"
-              >
-                <a-col> {{ $t(key) | capitalize }} {{ getAddonsValue(key) }}: </a-col>
-                <a-col>
-                  {{ addon }} {{ currency.code }}
-                </a-col>
-              </a-row>
-            </transition-group>
-
-            <a-row
-              type="flex"
-              justify="space-between"
-              style="width: 100%; margin-top: 10px"
-              v-if="filteredPlans.length > 1 && itemSP.type !== 'ione'"
-            >
-              <a-col style="width: 100%">
-                <a-select
-                  placeholder="Price models"
-                  style="width: 100%"
-                  v-model="plan"
-                >
-                  <a-select-option
-                    v-for="plan in filteredPlans"
-                    :key="plan.uuid"
-                    :value="plan.uuid"
-                    >{{ plan.title }}
-                  </a-select-option>
-                </a-select>
-              </a-col>
-            </a-row>
-
-            <a-row
-              type="flex"
-              justify="space-between"
-              style="width: 100%; margin-top: 10px"
-              v-if="services.length > 1"
-            >
-              <a-col style="width: 100%">
-                <a-select
-                  placeholder="Services"
-                  style="width: 100%"
-                  v-model="service"
-                >
-                  <a-select-option
-                    v-for="service in services"
-                    :key="service.uuid"
-                    :value="service.uuid"
-                    >{{ service.title }}
-                  </a-select-option>
-                </a-select>
-              </a-col>
-            </a-row>
-
-            <a-row
-              type="flex"
-              justify="space-between"
-              style="width: 100%; margin-top: 10px"
-              v-if="getNameSpaces.length > 1"
-            >
-              <a-col style="width: 100%">
-                <a-select
-                  style="width: 100%"
-                  placeholder="Namespaces"
-                  v-model="namespace"
-                >
-                  <a-select-option
-                    v-for="name in getNameSpaces"
-                    :key="name.uuid"
-                    :value="name.uuid"
-                    >{{ name.title }}</a-select-option
+                  <a-badge
+                    :style="{ 'font-size': '1.1rem' }"
+                    count="?"
+                    :number-style="{
+                      backgroundColor: '#fff',
+                      color: '#999',
+                      boxShadow: '0 0 0 1px #d9d9d9 inset',
+                    }"
+                    :offset="[10, 2]"
                   >
-                </a-select>
-              </a-col>
-            </a-row>
 
-            <a-divider
-              orientation="left"
-              :style="{ 'margin-bottom': '0' }"
-            >
-              {{ $t("Total") }}:
-            </a-divider>
-            <a-row type="flex" justify="center" style="margin-top: 15px">
+                  </a-badge>
+                </a-tooltip> -->
+                <template v-if="tarification !== 'Hourly'">{{ $t("public") }} IPv4:</template>
+                <template v-else>{{ $t("public") }} IPv4*:</template>
+              </a-col>
               <a-col>
-                <a-radio-group
-                  default-value="Monthly"
-                  ref="periods-group"
-                  v-model="tarification"
-                  :style="{ display: 'grid', textAlign: 'center', gridTemplateColumns: periodColumns }"
-                >
-                  <a-radio-button
-                    v-for="period of periods"
-                    :key="period.value"
-                    :value="period.value"
-                  >
-                    {{ $t(period.label || period.value) | capitalize }}
-                  </a-radio-button>
-                </a-radio-group>
+                {{ options.network.public.count }}
               </a-col>
             </a-row>
+          </transition>
 
-              <a-row
-                type="flex"
-                justify="center"
-                ref="sum-order"
-                :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
-              >
-                <a-col style="margin-right: 4px" v-if="activeKey === 'location'">
-                  {{ $t('from') | capitalize }}:
-                </a-col>
-                <transition name="textchange" mode="out-in">
-                  <a-col v-if="tarification === 'Annually'" key="a">
-                    {{ calculatePrice(
-                      (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                      (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
-                    {{ currency.code }}/{{ $tc("year", 0) }}
-                  </a-col>
+          <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              :style="{ 'font-size': '1.1rem' }"
+              v-if="options.network.private.status"
+            >
+              <a-col>
+                <!-- <a-tooltip>
+                  <template slot="title">
+                    {{
+                      $t(
+                        `Included in total by default ${
+                          options.network.price * options.network.public.count
+                        }`
+                      )
+                    }}
+                    {{ currency }}
+                  </template>
+                  <a-badge
+                    :style="{ 'font-size': '1.1rem' }"
+                    count="?"
+                    :number-style="{
+                      backgroundColor: '#fff',
+                      color: '#999',
+                      boxShadow: '0 0 0 1px #d9d9d9 inset',
+                    }"
+                    :offset="[10, 2]"
+                  >
 
-                  <a-col v-if="tarification === 'Biennially'" key="b">
-                    {{ calculatePrice(
-                      (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                      (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
-                    {{ currency.code }}/2 {{ $t("years") }}
-                  </a-col>
+                  </a-badge>
+                </a-tooltip> -->
+                {{ $t("private") }} IPv4:
+              </a-col>
+              <a-col>
+                {{ options.network.private.count }}
+              </a-col>
+            </a-row>
+          </transition>
 
-                  <a-col v-if="tarification === 'Monthly'" key="m">
-                    {{ calculatePrice(
-                        (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
-                      ).toFixed(2) }}
-                    {{ currency.code }}/{{ $tc("period.month") }}
-                  </a-col>
-
-                  <a-col v-if="tarification === 'Daily'" key="d">
-                    {{ calculatePrice(productFullPriceStatic, "day").toFixed(2) }}
-                    {{ currency.code }}/{{ $t("day") }}
-                  </a-col>
-
-                  <a-col v-if="tarification === 'Hourly'" key="h">
-                    ~{{ calculatePrice(
-                          (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceCustom, "hour"
-                        ).toFixed(2) }}
-                    {{ currency.code }}/{{ $t("hour") }}
-                  </a-col>
-                </transition>
-              </a-row>
-          </template>
+          <!-- addons -->
+          <transition-group name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              v-for="(addon, key) in addons"
+              :key="addon"
+              :style="{ 'font-size': '1.1rem' }"
+            >
+              <a-col> {{ $t(key) | capitalize }} {{ getAddonsValue(key) }}: </a-col>
+              <a-col>
+                {{ addon }} {{ currency.code }}
+              </a-col>
+            </a-row>
+          </transition-group>
 
           <a-row
             type="flex"
-            justify="space-around"
-            style="
-              margin-top: 15px;
-              margin-bottom: 10px;
-              border-top: 1px solid #e8e8e8;
-            "
+            justify="space-between"
+            style="width: 100%; margin-top: 10px"
+            v-if="filteredPlans.length > 1 && itemSP.type !== 'ione'"
           >
-            <a-col :span="22" style="margin-top: 20px">
-              <!-- :loading="getCurrentProd == null" -->
-              <div
-                class="products__unregistred"
-                style="margin-bottom: 10px; text-align: center"
-                v-if="
-                  (itemSP.type !== 'ovh' &&
-                  score > 3 &&
-                  password.length > 0 &&
-                  !isLoggedIn) ||
-                  options.os.name &&
-                  vmName &&
-                  !isLoggedIn
-                "
+            <a-col style="width: 100%">
+              <a-select
+                placeholder="Price models"
+                style="width: 100%"
+                v-model="plan"
               >
-                {{ $t("unregistered.will be able after") }}
-                <a href="#" @click.prevent="availableLogin('login')">{{ $t("unregistered.login") }}</a>.
-                <br>
-                <a href="#" @click.prevent="availableLogin('copy')">
-                  {{ $t("Copy link") }}
-                  <a-icon type="copy" />
-                </a>
-              </div>
-              <a-button
-                block
-                type="primary"
-                shape="round"
-                v-if="
-                  activeKey &&
-                  (activeKey !== 'addons' && itemSP.type === 'ovh' && !getPlan.type?.includes('cloud')) ||
-                  (activeKey !== 'OS' && itemSP.type !== 'ovh') ||
-                  (activeKey !== 'OS' && getPlan.type?.includes('cloud'))
-                "
-                @click="nextStep"
-              >
-                {{ $t("next") | capitalize }}
-              </a-button>
-              <a-button
-                block
-                v-else-if="itemSP.type === 'ovh'"
-                type="primary"
-                shape="round"
-                :disabled="
-                  vmName == '' ||
-                  !namespace ||
-                  options.os.name == '' ||
-                  !isLoggedIn
-                "
-                @click="() => (modal.confirmCreate = true)"
-              >
-                {{ $t("Create") }}
-              </a-button>
-              <a-button
-                block
-                v-else
-                type="primary"
-                shape="round"
-                :disabled="
-                  password.length === 0 ||
-                  vmName == '' ||
-                  !namespace ||
-                  options.os.name == '' ||
-                  !isLoggedIn
-                "
-                @click="() => (modal.confirmCreate = true)"
-              >
-                {{ $t("Create") }}
-              </a-button>
-              <a-modal
-                :title="$t((score < 4 && itemSP.type !== 'ovh') ? 'Weak pass' : 'Confirm')"
-                :visible="modal.confirmCreate"
-                :ok-button-props="{ props: { disabled: (score < 4 && itemSP.type !== 'ovh') } }"
-                :confirm-loading="modal.confirmLoading"
-                :cancel-text="$t('Cancel')"
-                @ok="handleOkOnCreateOrder"
-                @cancel="() => (modal.confirmCreate = false)"
-              >
-                <span style="color: var(--err)" v-if="score < 4 && itemSP.type !== 'ovh'">
-                  {{ $t("Password must contain uppercase letters, numbers and symbols") }}
-                </span>
-                <template v-else>
-                  {{ $t("Virtual machine will be available after paying the invoice") }}
-                </template>
-
-
-                <a-row style="margin-top: 20px">
-                  <a-col>
-                    <a-checkbox v-model="modal.autoRenew" />
-                    {{ $t("renew automatically") | capitalize }}
-                  </a-col>
-                </a-row>
-              </a-modal>
-            </a-col>
-            <a-col
-              style="font-size: 14px; margin: 16px 16px 0"
-              v-if="itemSP.type !== 'ovh' && tarification === 'Hourly'"
-            >
-              <span style="position: absolute; left: -8px">*</span>
-              {{ $t('Payment will be made immediately after purchase') }}
+                <a-select-option
+                  v-for="plan in filteredPlans"
+                  :key="plan.uuid"
+                  :value="plan.uuid"
+                  >{{ plan.title }}
+                </a-select-option>
+              </a-select>
             </a-col>
           </a-row>
-        </div>
-      </div>
-      <add-funds
-        v-if="addfunds.visible"
-        :sum="addfunds.amount"
-        :modalVisible="addfunds.visible"
-        :hideModal="() => addfunds.visible = false"
-      />
-      <!-- <div v-else class="newCloud tariff">
-        <div class="field field--fluid">
-          <div class="tariff__header">Choose your tariff</div>
 
-          <div class="tariff__wrapper">
-            <div class="tariff__cards">
-              <div class="tariff__items">
-                <div
-                  class="tariff__item"
-                  v-for="tariff in tariffs"
-                  :key="tariff"
-                  @click="
-                    () => {
-                      options.isOnCalc = true;
-                      options.kind = tariff;
-                      options.size = getProductsData[options.slide];
-                    }
-                  "
-                >
-                  <div class="tariff__title">
-                    {{
-                      getProducts[tariff][getProductsData[options.slide]][0][0]
-                        .name | replace("SVDS", "")
-                    }}
-                  </div>
-                  <div class="tariff__body">
-                    <loading v-if="isProductsLoading" />
-                    <div v-else>
-                      <ul>
-                        <li class="tariff__property">
-                          <span class="tariff__body-value">
-                            {{
-                              getProducts[tariff][
-                                getProductsData[options.slide]
-                              ][0][0].pricing[currency].monthly
-                            }}
-                            <span class="tariff__currency">{{ currency }}</span>
-                          </span>
-                        </li>
-                        <li
-                          v-for="(spec, index) in ['cpu_core', 'ram']"
-                          :key="index"
-                          class="tariff__property"
-                        >
-                          <span class="tariff__body-value">
-                            {{
-                              getProducts[tariff][
-                                getProductsData[options.slide]
-                              ][0][0].props[spec].VALUE
-                            }}
-                          </span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <a-row
+            type="flex"
+            justify="space-between"
+            style="width: 100%; margin-top: 10px"
+            v-if="services.length > 1"
+          >
+            <a-col style="width: 100%">
+              <a-select
+                placeholder="Services"
+                style="width: 100%"
+                v-model="service"
+              >
+                <a-select-option
+                  v-for="service in services"
+                  :key="service.uuid"
+                  :value="service.uuid"
+                  >{{ service.title }}
+                </a-select-option>
+              </a-select>
+            </a-col>
+          </a-row>
 
-              <div class="tariff__nav">
-                <span
-                  class="tariff__nav-item tariff__nav-item_prev"
-                  :class="[
-                    sliderIsCanPrev
-                      ? 'tariff__nav-item_active'
-                      : 'tariff__nav-item_disabled',
-                  ]"
-                  @click="sliderNavPrev"
+          <a-row
+            type="flex"
+            justify="space-between"
+            style="width: 100%; margin-top: 10px"
+            v-if="getNameSpaces.length > 1"
+          >
+            <a-col style="width: 100%">
+              <a-select
+                style="width: 100%"
+                placeholder="Namespaces"
+                v-model="namespace"
+              >
+                <a-select-option
+                  v-for="name in getNameSpaces"
+                  :key="name.uuid"
+                  :value="name.uuid"
+                  >{{ name.title }}</a-select-option
                 >
-                  <a-icon type="left" />
-                </span>
-                <span
-                  class="tariff__nav-item tariff__nav-item_next"
-                  :class="[
-                    sliderIsCanNext
-                      ? 'tariff__nav-item_active'
-                      : 'tariff__nav-item_disabled',
-                  ]"
-                  @click="sliderNavNext"
-                >
-                  <a-icon type="right" />
-                </span>
-              </div>
+              </a-select>
+            </a-col>
+          </a-row>
+        </template>
+
+        <a-divider
+          orientation="left"
+          :style="{ 'margin-bottom': '0' }"
+        >
+          {{ $t("Total") }}:
+        </a-divider>
+        <a-row type="flex" justify="center" style="margin-top: 15px">
+          <a-col>
+            <a-radio-group
+              default-value="Monthly"
+              ref="periods-group"
+              v-model="tarification"
+              :style="{ display: 'grid', textAlign: 'center', gridTemplateColumns: periodColumns }"
+            >
+              <a-radio-button
+                v-for="period of periods"
+                :key="period.value"
+                :value="period.value"
+              >
+                {{ $t(period.label || period.value) | capitalize }}
+              </a-radio-button>
+            </a-radio-group>
+          </a-col>
+        </a-row>
+
+        <a-row
+          type="flex"
+          justify="center"
+          ref="sum-order"
+          :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
+        >
+          <a-col style="margin-right: 4px" v-if="activeKey === 'location' && tarification">
+            {{ $t('from') | capitalize }}:
+          </a-col>
+          <transition name="textchange" mode="out-in">
+            <a-col v-if="tarification === 'Annually'" key="a">
+              {{ calculatePrice(
+                (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
+              {{ currency.code }}/{{ $tc("year", 0) }}
+            </a-col>
+
+            <a-col v-if="tarification === 'Biennially'" key="b">
+              {{ calculatePrice(
+                (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
+                (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
+              {{ currency.code }}/2 {{ $t("years") }}
+            </a-col>
+
+            <a-col v-if="tarification === 'Monthly'" key="m">
+              {{ calculatePrice(
+                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
+                ).toFixed(2) }}
+              {{ currency.code }}/{{ $tc("period.month") }}
+            </a-col>
+
+            <a-col v-if="tarification === 'Daily'" key="d">
+              {{ calculatePrice(productFullPriceStatic, "day").toFixed(2) }}
+              {{ currency.code }}/{{ $tc("day", 0) }}
+            </a-col>
+
+            <a-col v-if="tarification === 'Hourly'" key="h">
+              ~{{ calculatePrice(
+                    (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceCustom, "hour"
+                  ).toFixed(2) }}
+              {{ currency.code }}/{{ $tc("hour", 0) }}
+            </a-col>
+          </transition>
+        </a-row>
+
+        <a-row
+          type="flex"
+          justify="space-around"
+          style="
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-top: 1px solid #e8e8e8;
+          "
+        >
+          <a-col :span="22" style="margin-top: 20px">
+            <!-- :loading="getCurrentProd == null" -->
+            <div
+              class="products__unregistred"
+              style="margin-bottom: 10px; text-align: center"
+              v-if="
+                (itemSP.type !== 'ovh' &&
+                score > 3 &&
+                password.length > 0 &&
+                !isLoggedIn) ||
+                options.os.name &&
+                vmName &&
+                !isLoggedIn
+              "
+            >
+              {{ $t("unregistered.will be able after") }}
+              <a href="#" @click.prevent="availableLogin('login')">{{ $t("unregistered.login") }}</a>.
+              <br>
+              <a href="#" @click.prevent="availableLogin('copy')">
+                {{ $t("Copy link") }}
+                <a-icon type="copy" />
+              </a>
             </div>
-          </div>
-        </div>
-      </div> -->
+            <a-button
+              block
+              type="primary"
+              shape="round"
+              v-if="
+                activeKey &&
+                (activeKey !== 'addons' && itemSP.type === 'ovh' && !getPlan.type?.includes('cloud')) ||
+                (activeKey !== 'OS' && itemSP.type !== 'ovh') ||
+                (activeKey !== 'OS' && getPlan.type?.includes('cloud'))
+              "
+              @click="nextStep"
+            >
+              {{ $t("next") | capitalize }}
+            </a-button>
+            <a-button
+              block
+              v-else-if="itemSP.type === 'ovh'"
+              type="primary"
+              shape="round"
+              :disabled="
+                vmName == '' ||
+                !namespace ||
+                options.os.name == '' ||
+                !isLoggedIn
+              "
+              @click="() => (modal.confirmCreate = true)"
+            >
+              {{ $t("Create") }}
+            </a-button>
+            <a-button
+              block
+              v-else
+              type="primary"
+              shape="round"
+              :disabled="
+                password.length === 0 ||
+                vmName == '' ||
+                !namespace ||
+                options.os.name == '' ||
+                !isLoggedIn
+              "
+              @click="() => (modal.confirmCreate = true)"
+            >
+              {{ $t("Create") }}
+            </a-button>
+            <a-modal
+              :title="$t((score < 4 && itemSP.type !== 'ovh') ? 'Weak pass' : 'Confirm')"
+              :visible="modal.confirmCreate"
+              :ok-button-props="{ props: { disabled: (score < 4 && itemSP.type !== 'ovh') } }"
+              :confirm-loading="modal.confirmLoading"
+              :cancel-text="$t('Cancel')"
+              @ok="handleOkOnCreateOrder"
+              @cancel="() => (modal.confirmCreate = false)"
+            >
+              <span style="color: var(--err)" v-if="score < 4 && itemSP.type !== 'ovh'">
+                {{ $t("Password must contain uppercase letters, numbers and symbols") }}
+              </span>
+              <template v-else>
+                {{ $t("Virtual machine will be available after paying the invoice") }}
+              </template>
+
+
+              <a-row style="margin-top: 20px">
+                <a-col>
+                  <a-checkbox v-model="modal.autoRenew" />
+                  {{ $t("renew automatically") | capitalize }}
+                </a-col>
+              </a-row>
+            </a-modal>
+          </a-col>
+          <a-col
+            style="font-size: 14px; margin: 16px 16px 0"
+            v-if="itemSP.type !== 'ovh' && tarification === 'Hourly'"
+          >
+            <span style="position: absolute; left: -8px">*</span>
+            {{ $t('Payment will be made immediately after purchase') }}
+          </a-col>
+        </a-row>
+      </div>
+    </div>
+    <add-funds
+      v-if="addfunds.visible"
+      :sum="addfunds.amount"
+      :modalVisible="addfunds.visible"
+      :hideModal="() => addfunds.visible = false"
+    />
   </div>
 </template>
 
@@ -664,7 +586,6 @@ export default {
       productSize: "",
       activeKey: "location",
       periods: [],
-      allPlans: [],
       plan: undefined,
       service: undefined,
       namespace: undefined,
@@ -672,6 +593,7 @@ export default {
       showcase: "",
       locationId: "Location",
       vmName: "",
+      username: "",
       password: "",
       sshKey: undefined,
       score: null,
@@ -705,7 +627,7 @@ export default {
           step: 1,
           size: 1,
           min: 20,
-          max: 500,
+          max: 480,
         },
         os: {
           id: -1,
@@ -755,46 +677,41 @@ export default {
     locations() {
       const locations = [];
 
-      this.getSP.forEach((sp) => {
-        if (this.showcase && !(sp.meta.showcase ?? {})[this.showcase]) return;
+      this.showcases.forEach((showcase) => {
+        showcase.locations?.forEach((location) => {
+          const sp = this.getSP.find(({ locations, type }) =>
+            locations.find(({ id, type: locationType }) =>
+              location.id.includes(id) && locationType.includes(type)
+            )
+          );
 
-        sp.locations.forEach((location) => {
-          const plan = this.allPlans.find(({ type, uuid }) => {
-            if (this.showcase === '') return true;
-            const { billing_plans } = sp.meta.showcase[this.showcase];
-            const isTypesEqual = type === location.type;
-            const isPlanInclude = billing_plans?.includes(uuid);
-
-            if (location.type === '') return true;
-            return isTypesEqual && isPlanInclude;
-          });
-          if (!plan) return;
-
-          const id = `${sp.title} ${location.id}`;
-
-          locations.push({ ...location, sp: sp.uuid, id });
+          if (this.showcase === '' || this.showcase === showcase.uuid) {
+            locations.push({ ...location, sp: sp?.uuid, showcase: showcase.uuid });
+          }
         });
       });
 
       return locations;
     },
     showcases() {
-      const titles = [{ title: 'all', value: '' }];
+      const showcases = this.$store.getters['nocloud/sp/getShowcases'];
+      const titles = [{ title: 'all', uuid: '' }];
 
-      this.getSP.forEach(({ locations, meta: { showcase = {} } }) => {
-        if (locations.length < 1) return;
+      showcases.forEach((showcase) => {
+        if (showcase.locations.length < 1) return;
 
-        Object.entries(showcase).forEach(([value, { title }]) => {
-          titles.push({ title, value });
-        });
+        titles.push(showcase);
       });
 
       return titles;
     },
     locationDescription() {
-      const locationItem = this.locations.find((el) => el.id === this.locationId);
+      const { showcase: showcaseUuid } = this.locations.find((el) => el.id === this.locationId) ?? {};
+      const showcase = this.showcases.find(({ uuid }) => uuid === showcaseUuid);
+      const { locale } = this.$i18n;
 
-      return locationItem?.extra.description;
+      if (!showcase?.promo) return;
+      return showcase?.promo[locale]?.service.description;
     },
     itemSP() {
       const { sp } = this.locations.find((el) => el.id === this.locationId) || {};
@@ -824,10 +741,18 @@ export default {
 
     //--------------Plans-----------------
     filteredPlans() {
-      const { billing_plans = [] } = (this.itemSP.meta.showcase ?? {})[this.showcase] ?? {};
+      const locationItem = this.locations.find((el) => el.id === this.locationId);
+      const { plans } = this.showcases.find(({ uuid }) => {
+        if (this.showcase === '') {
+          return uuid === locationItem.showcase;
+        }
+        return uuid === this.showcase;
+      });
 
-      if (billing_plans.length < 1) return this.getPlans;
-      return this.getPlans.filter(({ uuid }) => billing_plans?.includes(uuid));
+      return this.getPlans.filter(({ uuid, type }) =>
+        ((locationItem.type) ? locationItem.type === type : true) &&
+        plans.includes(uuid)
+      );
     },
     //UNKNOWN and STATIC
     getPlan() {
@@ -845,10 +770,15 @@ export default {
     //-------------------------------------
 
     getProducts() {
+      const isDynamic = this.getPlan.kind === 'DYNAMIC';
+      const isIone = this.getPlan.type === 'ione';
       const titles = [];
-      const products = (this.getPlan.kind === 'DYNAMIC' && this.getPlan.type === 'ione')
-        ? this.getPlans.find(({ uuid }) => uuid === this.getPlan.meta?.linkedPlan)?.products
-        : this.getPlan.products ?? {};
+
+      const { products } = (isDynamic && isIone)
+        ? this.getPlans.find(({ uuid }) =>
+            uuid === this.getPlan.meta?.linkedPlan
+          ) ?? {}
+        : this.getPlan ?? {};
 
       Object.values(products ?? {}).forEach((product) => {
         const isEqual = this.tarification === this.getTarification(product.period);
@@ -863,8 +793,10 @@ export default {
 
     productFullPriceStatic() {
       if (!this.getPlan) return 0;
-      const product = Object.values(this.getPlan.products ?? {})
-        .find(({ title }) => title === this.productSize);
+      const values = Object.values(this.getPlan.products ?? {});
+      const product = (this.activeKey !== 'location')
+        ? values.find(({ title }) => title === this.productSize)
+        : values.sort((a, b) => a.price - b.price)[0];
 
       if (!product) return 0;
       return product.price / product.period * 3600 * 24 * 30;
@@ -876,16 +808,22 @@ export default {
           const key = resource.key.toLowerCase();
 
           if (key.includes('ip')) {
-            const { count } = this.options.network.public;
+            const { count } = (this.activeKey !== 'location')
+              ? this.options.network.public
+              : { count: 1 };
 
             price.push(resource.price / resource.period * 3600 * count);
           } else if (key.includes('drive')) {
-            const { size } = this.options.disk;
+            const { size } = (this.activeKey === 'location')
+              ? { size: this.options.disk.min * 1024 }
+              : this.options.disk;
 
             if (key !== `drive_${this.options.drive ? 'ssd' : 'hdd'}`) continue;
             price.push(resource.price / resource.period * 3600 * (size / 1024));
           } else {
-            const { size } = this.options[key];
+            const { size } = (this.activeKey === 'location')
+              ? { size: this.options[key].min }
+              : this.options[key];
 
             price.push(resource.price / resource.period * 3600 * size);
           }
@@ -896,102 +834,36 @@ export default {
     productFullPriceOVH() {
       const { value, addons } = this.priceOVH;
       const addonsPrice = Object.values(addons).reduce((a, b) => a + b, 0);
-      let percent = (this.getPlan.fee?.default ?? 0) / 100 + 1;
+      // let percent = (this.getPlan.fee?.default ?? 0) / 100 + 1;
 
-      if (!this.getPlan.fee?.ranges) return value + addonsPrice;
+      return value + addonsPrice;
+      // if (!this.getPlan.fee?.ranges) return value + addonsPrice;
 
-      for (let range of this.getPlan.fee.ranges) {
-        if (value <= range.from) continue;
-        if (value > range.to) continue;
-        percent = range.factor / 100 + 1;
-      }
+      // for (let range of this.getPlan.fee.ranges) {
+      //   if (value <= range.from) continue;
+      //   if (value > range.to) continue;
+      //   percent = range.factor / 100 + 1;
+      // }
 
-      return value + addonsPrice * percent;
-    },
-    // passwordValid() {
-    //   if (this.focused == true) {
-    //     if (!this.password.match(/[A-Za-z]/)) {
-    //       this.textInvalid = "Password must contain at least one letter";
-    //       return false;
-    //     } else {
-    //       this.textInvalid = "";
-    //     }
-    //     if (!this.password.match(/[0-9]/)) {
-    //       this.textInvalid = "Password must contain at least one number";
-    //       return false;
-    //     } else {
-    //       this.textInvalid = "";
-    //     }
-    //     if (!this.password.match(/[\W_]/)) {
-    //       this.textInvalid =
-    //         "Password must contain at least one special symbol";
-    //       return false;
-    //     } else {
-    //       this.textInvalid = "";
-    //     }
-    //     if (this.password.length < 11) {
-    //       this.textInvalid = "Password is too short (at least 10 symbol)";
-    //       return false;
-    //     } else {
-    //       this.textInvalid = "";
-    //     }
-    //   } else {
-    //     this.textInvalid = "";
-    //     return false;
-    //   }
-    // },
-    // getCurrentProd() {
-    //   const o = this.options;
-    //   const path = [o.kind, o.size, +o.drive, +o.highCPU];
-
-    //   let current = this.getProducts;
-    //   if (current == undefined || current.length == 0) {
-    //     return null;
-    //   }
-    //   for (let index = 0; index < path.length; index++) {
-    //     if (current[path[index]] != undefined) {
-    //       // console.log(current[path[index]])
-    //       current = current[path[index]];
-    //     } else {
-    //       let pt = path.slice(0, index + 1).join("/");
-    //       console.error(
-    //         `there is no product with path: ${pt}, there is only: ${Object.keys(
-    //           current
-    //         ).join(", ")}`
-    //       );
-    //       return null;
-    //     }
-    //   }
-    //   return current;
-    // },
-    // getFullPrice() {
-    //   if (this.isAddonsLoading || this.isProductsLoading) {
-    //     return false;
-    //   }
-    //   const VMonly =
-    //     +this.getCurrentProd.pricing[this.currency][this.options.period];
-    //   const addonsName = ["drive", "traffic", "panel", "os", "backup"];
-    //   const addonsCosts = addonsName.map((name) => {
-    //     if (this.options.addonsObjects[name] == null) {
-    //       return 0;
-    //     }
-    //     return this.options.addonsObjects[name].pricing[this.options.period];
-    //   });
-    //   return [VMonly, ...addonsCosts]
-    //     .reduce((acc, val) => acc + val)
-    //     .toFixed(2);
-    // },
-    sliderIsCanNext() {
-      return this.options.slide < this.getProductsData.length - 1;
-    },
-    sliderIsCanPrev() {
-      return this.options.slide > 0;
+      // return value + addonsPrice * percent;
     },
     currency() {
+      const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
-      return { code: this.billingData.currency_code ?? defaultCurrency };
+      const code = this.$store.getters['nocloud/auth/unloginedCurrency'];
+      const { rate } = currencies.find((el) =>
+        el.to === code && el.from === defaultCurrency
+      ) ?? {};
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === code && el.to === defaultCurrency
+      ) ?? { rate: 1 };
+
+      if (!this.isLoggedIn) return { rate: (rate) ? rate : 1 / reverseRate, code };
+      return { rate: 1, code: this.billingData.currency_code ?? defaultCurrency };
     },
+
     diskSize() {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
@@ -1014,28 +886,35 @@ export default {
 
       if (length === 4) return 'repeat(2, 1fr)';
       return `repeat(${(length < 3) ? length : 3}, 1fr)`;
+    },
+    isProductExist() {
+      return !this.$route.query.product && this.getPlan.type?.includes('dedicated');
     }
   },
   created() {
     this.showcase = this.$route.query.service ?? "";
-    this.$store.dispatch("nocloud/plans/fetch", { anonymously: !this.isLoggedIn })
-      .then(({ pool }) => { this.allPlans = pool });
-
+    this.$store.dispatch("nocloud/sp/fetchShowcases");
     this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
-      .then(() => {
+      .then(async () => {
         const data = localStorage.getItem("data");
         const { query } = this.$route;
 
         if (data || ('data' in query)) {
           try {
+            await new Promise((resolve) => setTimeout(resolve, 100));
             this.dataLocalStorage = (data)
               ? JSON.parse(localStorage.getItem("data"))
               : JSON.parse(query.data);
 
             this.tarification = this.dataLocalStorage.tarification ?? '';
             this.vmName = this.dataLocalStorage.titleVM ?? '';
-            this.locationId = this.dataLocalStorage.locationId ?? '';
-            this.activeKey = this.dataLocalStorage.activeKey ?? 'location';
+            this.locationId = this.locations.find(({ id }) => {
+              const locationId = this.dataLocalStorage.locationId.split('-');
+
+              locationId.shift();
+              return id.includes(locationId.join('-'));
+            })?.id ?? '';
+            this.activeKey = null;
 
             if (this.dataLocalStorage.config) {
               this.options.os.id = this.dataLocalStorage.config.template_id;
@@ -1196,7 +1075,11 @@ export default {
       if (this.activeKey === 'location') {
         this.activeKey = 'plan';
       } else if (this.activeKey === 'plan') {
-        this.activeKey = 'OS';
+        if (!this.isProductExist) {
+          this.activeKey = 'OS';
+          return;
+        }
+        this.$router.push({ query: { product: this.productSize } });
       } else if (this.activeKey === 'OS') {
         this.activeKey = 'addons';
       }
@@ -1205,6 +1088,8 @@ export default {
       const resourcesPrice = (this.itemSP.type === 'ione')
         ? this.productFullPriceCustom * 24 * 30
         : 0;
+
+      price *= this.currency.rate;
 
       switch (period) {
         case "minute":
@@ -1274,6 +1159,7 @@ export default {
         title: this.vmName,
         config: {
           template_id: this.options.os.id,
+          username: this.username,
           password: this.password,
           ssh_public_key: this.sshKey,
           auto_renew: this.modal.autoRenew
@@ -1321,6 +1207,8 @@ export default {
           newGroup.config = { ssh: newInstance.config.ssh };
           delete newInstance.config.ssh;
         }
+
+        delete newInstance.product;
       }
       if (this.itemService?.instancesGroups?.length < 1) {
         this.itemService.instancesGroups = [newGroup];
@@ -1398,7 +1286,7 @@ export default {
             this.$message.success(this.$t("Order created successfully"));
             this.deployService(result.uuid);
             if (this.modal.goToInvoice) {
-              this.$router.push(`/invoice/${res.invoiceid}`);
+              this.$router.push(`/billing/${res.invoiceid}`);
             }
           } else {
             throw "error";
@@ -1422,7 +1310,7 @@ export default {
             this.$message.success(this.$t("Order update successfully"));
             this.deployService(result.uuid);
             if (this.modal.goToInvoice) {
-              this.$router.push(`/invoice/${result.invoiceid}`);
+              this.$router.push(`/billing/${result.invoiceid}`);
             }
           } else {
             throw "error";
@@ -1625,20 +1513,17 @@ export default {
         anonymously: !this.isLoggedIn
       })
       .then(({ pool }) => {
-        const showcase = Object.keys(this.itemSP.meta.showcase ?? {})
-          .find((key) => key === this.$route.query.service) ??
-          Object.keys(this.itemSP.meta.showcase ?? {})[0];
-        const plans = this.itemSP.meta.showcase[showcase]?.billing_plans ?? [];
-        const uuid = plans.find((el) => pool.find((plan) => el === plan.uuid));
-
-        this.$store.commit('nocloud/plans/setPlans', pool);
-        this.plan = uuid ?? pool[0]?.uuid ?? '';
+        this.plan = this.filteredPlans[0]?.uuid ?? pool[0]?.uuid ?? '';
 
         if (this.dataLocalStorage.billing_plan) {
           this.plan = this.dataLocalStorage.billing_plan.uuid;
           this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize });
         } else if (this.dataLocalStorage.locationId) {
           this.tarification = this.periods[0]?.value ?? '';
+        }
+
+        if (this.dataLocalStorage) {
+          this.activeKey = this.dataLocalStorage.activeKey ?? 'location';
         }
       });
 
@@ -1679,12 +1564,6 @@ export default {
         }
       });
     }
-    // getAddons: function (newVal) {
-    //   this.options.addons.os = +newVal.os[0].id;
-    // },
-    // activeKey: function(){
-    //     this.activeKey.push('tarif')
-    // }
   },
 };
 </script>

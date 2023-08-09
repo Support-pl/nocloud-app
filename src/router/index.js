@@ -15,6 +15,7 @@ for (let service in servicesArray) {
 		meta: {
 			footerTitle: 'services',
 			isNeedBackButton: true,
+      isNeedBalance: true,
 			headerTitle: service,
 			componentName: service,
 			productsGroupName: servicesArray[service].groupname
@@ -95,8 +96,8 @@ const routes = [
 				component: () => import('../routes/support.vue')
 			},
 			{
-				path: 'invoice',
-				name: 'invoice',
+				path: 'billing',
+				name: 'billing',
 				meta: {
 					mustBeLoggined: true,
 				},
@@ -231,7 +232,7 @@ const routes = [
 		component: () => import('../components/appMain/support/ticketchat.vue')
 	},
 	{
-		path: '/invoice/:uuid',
+		path: '/billing/:uuid',
 		name: 'invoiceFS',
 		meta: {
 			mustBeLoggined: true,

@@ -27,7 +27,7 @@ export default {
 			},
 			{
 				icon: 'fund',
-				title: 'invoice',
+				title: 'billing',
 				theme: 'outlined'
 			},
 			{

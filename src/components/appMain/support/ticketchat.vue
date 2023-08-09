@@ -1,17 +1,19 @@
 <template>
   <div class="chat">
     <div class="chat__header">
-      <div class="chat__back">
-        <div class="icon__wrapper" @click="goBack()">
-          <a-icon type="left" />
+      <div class="chat__container">
+        <div class="chat__back">
+          <div class="icon__wrapper" @click="goBack()">
+            <a-icon type="left" />
+          </div>
         </div>
-      </div>
-      <div class="chat__title">
-        {{ titleDecoded }}
-      </div>
-      <div class="chat__reload">
-        <div class="icon__wrapper" @click="reload()">
-          <a-icon type="reload" />
+        <div class="chat__title">
+          {{ titleDecoded }}
+        </div>
+        <div class="chat__reload">
+          <div class="icon__wrapper" @click="reload()">
+            <a-icon type="reload" />
+          </div>
         </div>
       </div>
     </div>
@@ -22,54 +24,63 @@
         <span class="chat__date" v-if="isDateVisible(replies, i)" :key="i">
           {{ reply.date.split(' ')[0] }}
         </span>
-        <div
-          class="chat__message"
-          :key="`${i}_message`"
-          :class="[
-            isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
-          ]"
+        <a-popover
+          overlayClassName="chat__tooltip"
+          :placement="(isAdminSent(reply)) ? 'rightBottom' : 'leftBottom'"
         >
-          <pre v-html="beauty(reply.message)" />
-          <div class="chat__info">
-            <span>{{ reply.name }}</span>
-            <span>{{ reply.date.slice(-8, -3) }}</span>
-          </div>
-          <a-icon v-if="reply.sending" type="loading" class="msgStatus loading" />
+          <template #content>
+            <a-icon type="copy" @click="addToClipboard(reply.message)" />
+          </template>
 
-          <a-popover v-if="reply.error" :title="$t('Send error')">
-            <template slot="content">
-              <a
-                class="popover-link"
-                slot="content"
-                @click="messageDelete(reply)"
-                >{{ $t("chat_Delete_message") }}</a
-              >
-              <a
-                class="popover-link"
-                slot="content"
-                @click="messageResend(reply)"
-                >{{ $t("chat_Resend_message") }}</a
-              >
-            </template>
-            <a-icon type="exclamation-circle" class="msgStatus error"></a-icon>
-          </a-popover>
-        </div>
+          <div
+            class="chat__message"
+            :key="`${i}_message`"
+            :class="[
+              isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
+            ]"
+          >
+            <pre v-html="beauty(reply.message)" />
+            <div class="chat__info">
+              <span>{{ reply.name }}</span>
+              <span>{{ reply.date.slice(-8, -3) }}</span>
+            </div>
+            <a-icon v-if="reply.sending" type="loading" class="msgStatus loading" />
+
+            <a-popover v-if="reply.error" :title="$t('Send error')">
+              <template slot="content">
+                <a
+                  class="popover-link"
+                  slot="content"
+                  @click="messageDelete(reply)"
+                  >{{ $t("chat_Delete_message") }}</a
+                >
+                <a
+                  class="popover-link"
+                  slot="content"
+                  @click="messageResend(reply)"
+                  >{{ $t("chat_Resend_message") }}</a
+                >
+              </template>
+              <a-icon type="exclamation-circle" class="msgStatus error"></a-icon>
+            </a-popover>
+          </div>
+        </a-popover>
       </template>
     </div>
 
     <div class="chat__footer">
       <a-textarea
-        :disabled="status == 'Closed'"
         allowClear
-        :autoSize="{ minRows: 1, maxRows: 2 }"
-        v-model="messageInput"
-        v-on:keyup.shift.enter.exact="newLine"
-        v-on:keydown.enter.exact.prevent="sendMessage"
         type="text"
         class="chat__input"
         name="message"
         id="message"
+        v-model="messageInput"
+        :disabled="status == 'Closed'"
+        :autoSize="{ minRows: 2, maxRows: 100 }"
         :placeholder="$t('message') + '...'"
+        @keyup.shift.enter.exact="newLine"
+        @keydown.enter.exact.prevent="sendMessage"
       >
       </a-textarea>
       <div class="chat__send" @click="sendMessage">
@@ -83,7 +94,17 @@
 </template>
 
 <script>
+import Markdown from "markdown-it";
+import emoji from "markdown-it-emoji"
 import load from "@/components/loading/loading.vue";
+
+const md = new Markdown({
+  html: true,
+  linkify: true,
+  typographer: true
+});
+
+md.use(emoji);
 
 export default {
   name: "ticketChat",
@@ -110,6 +131,14 @@ export default {
       var txt = document.createElement("textarea");
       txt.innerHTML = this.subject;
       return txt.value;
+    },
+    messages() {
+      const chatMessages = this.$store.getters['nocloud/chats/getMessages'];
+      const tickets = this.replies.filter(({ uuid }) =>
+        !chatMessages.find((message) => message.uuid === uuid)
+      );
+
+      return [...tickets, ...chatMessages];
     },
   },
   methods: {
@@ -150,8 +179,8 @@ export default {
         attachment: "",
         contactid: "0",
         date: new Date(),
-        email: this.user?.email || 'none',
-        message: this.messageInput.trim(),
+        email: this.user.data?.email ?? 'none',
+        message: md.render(this.messageInput).trim(),
         name: this.user.title,
         userid: this.user.uuid,
         sending: true,
@@ -161,20 +190,40 @@ export default {
       const { content } = this.$refs;
 
       this.replies.push({ ...message, date, requestor_type });
-
       setTimeout(() => { content.scrollTo(0, content.scrollHeight) }, 100);
+
+      if (this.replies[0].gateways) {
+        this.$store.dispatch('nocloud/chats/sendMessage', {
+          uuid: this.$route.params.pathMatch,
+          content: message.message,
+          account: message.userid,
+          date: BigInt(message.date.getTime())
+        })
+          .then(({ uuid }) => {
+            this.replies.at(-1).uuid = uuid;
+          })
+          .catch((err) => {
+            this.replies.at(-1).error = true;
+            console.error(err);
+          })
+          .finally(() => {
+            this.replies.at(-1).sending = false;
+          });
+        this.messageInput = '';
+        return;
+      }
+
       this.$api.get(this.baseURL, { params: {
         run: 'answer_ticket',
         id: this.$route.params.pathMatch,
         message: this.messageInput,
       }})
-        .then(() => {
-          this.replies.at(-1).sending = false;
-        })
         .catch((err) => {
-          console.error(err);
-          this.replies.at(-1).sending = false;
           this.replies.at(-1).error = true;
+          console.error(err);
+        })
+        .finally(() => {
+          this.replies.at(-1).sending = false;
         });
       this.messageInput = "";
     },
@@ -184,12 +233,22 @@ export default {
         run: 'get_ticket_full',
         ticket_id: this.chatid,
       }})
+        .then(async (resp) => {
+          if (resp.replies) return resp;
+          else {
+            await this.$store.dispatch('nocloud/chats/fetchChats');
+            return this.$store.dispatch('nocloud/chats/fetchMessages', this.chatid);
+          }
+        })
         .then((resp) => {
           this.status = resp.status;
           this.replies = resp.replies ?? [];
           this.subject = resp.subject;
         })
         .finally(() => {
+          setTimeout(() => {
+            this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight);
+          });
           this.loading = false;
         });
     },
@@ -210,8 +269,27 @@ export default {
       this.messageInput = message.message;
       this.sendMessage();
     },
+    addToClipboard(text) {
+      if (navigator?.clipboard) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            this.$notification.success({
+              message: this.$t('Text copied')
+            });
+          })
+          .catch((res) => {
+            console.error(res);
+          });
+      } else {
+        this.$notification.error({
+          message: this.$t('Clipboard is not supported')
+        });
+      }
+    }
   },
   mounted() {
+    this.$store.dispatch('nocloud/chats/startStream');
     this.loadMessages();
   },
   beforeRouteUpdate(to, from, next) {
@@ -241,16 +319,30 @@ export default {
   line-height: 64px;
   background-color: var(--main);
   color: var(--bright_font);
+}
+
+.chat__container {
   padding: 0;
   display: grid;
   grid-template-columns: 20% 1fr 20%;
   justify-items: center;
   align-items: center;
+  max-width: 768px;
+  height: 100%;
+  margin: 0 auto;
 }
 
 .chat__title {
   font-weight: bold;
   line-height: 1.1rem;
+}
+
+.chat__back {
+  justify-self: start;
+}
+
+.chat__reload {
+  justify-self: end;
 }
 
 .chat__back,
@@ -262,7 +354,7 @@ export default {
 .chat__footer {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-end;
   background-color: var(--bright_bg);
   padding: 10px;
   position: absolute;
@@ -280,6 +372,14 @@ export default {
   padding: 7px 0;
 }
 
+.chat__input textarea {
+  max-height: calc(50vh - 34px) !important;
+}
+
+.chat__input .ant-input-textarea-clear-icon {
+  margin: 9px 2px 0 0;
+}
+
 .chat__send {
   background-color: var(--main);
   color: var(--bright_font);
@@ -290,6 +390,7 @@ export default {
   justify-content: center;
   align-items: center;
   margin-left: 10px;
+  margin-bottom: 15px;
   font-size: 1.2rem;
   transition: filter 0.2s ease;
   cursor: pointer;
@@ -315,6 +416,10 @@ export default {
   padding: 6px 15px;
   overflow: auto;
   background: var(--bright_font);
+}
+
+.chat__tooltip .ant-popover-inner-content {
+  padding: 6px 8px;
 }
 
 .chat__message {

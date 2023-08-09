@@ -31,6 +31,16 @@
 
 <script>
 import { mapGetters } from "vuex";
+import Markdown from "markdown-it";
+import emoji from "markdown-it-emoji"
+
+const md = new Markdown({
+  html: true,
+  linkify: true,
+  typographer: true
+});
+
+md.use(emoji);
 
 export default {
   name: "addTicket",
@@ -45,7 +55,7 @@ export default {
   },
   computed: {
     user() {
-      return this.$store.getters.getUser;
+      return this.$store.getters['nocloud/auth/userdata'];
     },
     ...mapGetters("support", {
       addTicketStatus: "isAddTicketState",
@@ -68,21 +78,39 @@ export default {
         return;
       }
 
+      const request = (this.ticketDepartment === 'nocloud')
+        ? this.$store.dispatch('nocloud/chats/createChat', {
+            subject: this.ticketTitle,
+            message: md.render(this.ticketMessage).trim()
+          })
+        : this.$api.get(this.baseURL, { params: {
+            run: 'create_ticket',
+            subject: this.ticketTitle,
+            message: this.ticketMessage,
+            department: this.ticketDepartment,
+          }});
+
       this.isSending = true;
-      this.$api.get(this.baseURL, { params: {
-        run: 'create_ticket',
-        subject: this.ticketTitle,
-        message: this.ticketMessage,
-        department: this.ticketDepartment,
-      }})
-        .then((resp) => {
-          if (resp.result == "success") {
+      
+      request
+        .then(async (resp) => {
+          if (resp.result === "success") {
             this.ticketTitle = "";
             this.ticketMessage = "";
             this.isSending = false;
 
             this.$store.dispatch("support/autoFetch");
             this.$store.commit("support/inverseAddTicketState");
+          } else if (resp.uuid) {
+            if (!resp.meta.lastMessage?.uuid) {
+              await this.$store.dispatch('nocloud/chats/sendMessage', {
+                uuid: resp.uuid,
+                content: md.render(this.ticketMessage).trim(),
+                account: this.user.uuid,
+                date: BigInt(Date.now())
+              });
+            }
+            this.$router.push(`ticket-${resp.uuid}`);
           } else {
             throw resp;
           }

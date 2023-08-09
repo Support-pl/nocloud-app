@@ -72,7 +72,7 @@
 					<a-col :xs="12" :sm="18" :lg='12'>
 						<a-select v-if="!fetchLoading" v-model="options.period"  style="width: 100%">
 							<a-select-option v-for="period in periods" :key="period" :value="period">
-								{{ $tc('month', period / 3600 / 24 / 30) }}
+								{{ getPeriod(period) }}
 							</a-select-option>
 						</a-select>
 						<div v-else class="loadingLine"></div>
@@ -135,7 +135,7 @@
 					<a-col>
 						<transition name="textchange" mode="out-in">
 							<div v-if="!fetchLoading">
-								{{ getProducts.price }} {{ currency.code }}
+								{{ getProducts.price * currency.rate }} {{ currency.code }}
 							</div>
 							<div v-else class="loadingLine loadingLine--total"></div>
 						</transition>
@@ -334,6 +334,30 @@ export default {
         })
         .finally(() => this.sendloading = false);
     },
+    getPeriod(timestamp) {
+      const hour = 3600;
+      const day = hour * 24;
+      const month = day * 30;
+      const year = month * 12;
+
+      let period = '';
+      let count = 0;
+
+      if (timestamp / hour < 24 && timestamp >= hour) {
+        period = 'hour';
+        count = timestamp / hour;
+      } else if (timestamp / day < 30 && timestamp >= day) {
+        period = 'day';
+        count = timestamp / day;
+      } else if (timestamp / month < 12 && timestamp >= month) {
+        period = 'month';
+        count = timestamp / month;
+      } else {
+        period = 'year';
+        count = timestamp * year;
+      }
+      return this.$tc(period, count);
+    },
 	},
 	computed: {
 		getProducts() {
@@ -356,9 +380,20 @@ export default {
       return this.$store.getters['nocloud/auth/userdata'];
     },
     currency() {
+      const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
 
-      return { code: this.user.currency_code ?? defaultCurrency };
+      const code = this.$config.currency.code;
+      const { rate } = currencies.find((el) =>
+        el.to === defaultCurrency && el.from === code
+      ) ?? {};
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === defaultCurrency && el.to === code
+      ) ?? { rate: 1 };
+
+      if (!this.isLogged) return { rate: (rate) ? rate : 1 / reverseRate, code };
+      return { rate: 1, code: this.user.currency_code ?? defaultCurrency };
     },
     services() {
       return this.$store.getters['nocloud/vms/getServices']
@@ -406,6 +441,7 @@ export default {
     Promise.all(promises).catch((err) => {
       const message = err.response?.data?.message ?? err.message ?? err;
 
+      if (err.response?.data?.code === 16) return;
       this.$notification.error({ message: this.$t(message) });
       console.error(err);
     });
@@ -747,6 +783,15 @@ export default {
 	.order__template-name ul li{
 		margin-left: 20px;
 	}
+  .product__specs {
+    width: 100%;
+  }
+  .product__specs td {
+    padding: 3px 7px;
+  }
+  .product__specs td:last-child::before {
+    transform: translate(-10px, -50%);
+  }
 }
 
 .specs-enter-active,

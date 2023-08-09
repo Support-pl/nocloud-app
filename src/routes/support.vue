@@ -3,12 +3,10 @@
 		<loading v-if="isLoading" />
 		<div v-else class="container">
 
-			<template>
-				<empty v-if="tickets.length == 0"/>
-				<div class="ticket__wrapper">
-					<singleTicket v-for='(ticket, index) in tickets' :key='index' :ticket='ticket'/>
-				</div>
-			</template>
+      <empty v-if="chats.length === 0"/>
+      <div class="ticket__wrapper">
+        <singleTicket v-for='(ticket, index) in chats' :key='index' :ticket='ticket'/>
+      </div>
 
 			<addTicketField v-if="addTicketStatus"/>
 		</div>
@@ -16,11 +14,11 @@
 </template>
 
 <script>
-import singleTicket from "../components/appMain/support/singleTicket.vue";
-import loading from '../components/loading/loading.vue';
-import empty from '../components/empty/empty.vue';
-import addTicketField from '../components/appMain/support/addTicket.vue';
 import { mapGetters } from 'vuex';
+import singleTicket from "@/components/appMain/support/singleTicket.vue";
+import addTicketField from '@/components/appMain/support/addTicket.vue';
+import loading from '@/components/loading/loading.vue';
+import empty from '@/components/empty/empty.vue';
 
 export default {
 	name: 'support',
@@ -35,10 +33,39 @@ export default {
 			isLoading: 'isLoading',
 			tickets: 'getTickets',
 			addTicketStatus: 'isAddTicketState'
-		})
+		}),
+    user() {
+      return this.$store.getters['nocloud/auth/userdata'];
+    },
+    chats() {
+      const chats = this.$store.getters['nocloud/chats/getChats'];
+      const result = [];
+      const { uuid } = this.user;
+
+      chats.forEach((ticket) => {
+        const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
+        const value = {
+          id: ticket.uuid,
+          tid: `${ticket.uuid.slice(0, 8)}...`,
+          title: ticket.topic,
+          date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
+          message: ticket.meta.lastMessage?.content ?? '',
+          status: 'Open',
+          unread: (isReaded) ? 0 : ticket.meta.unread
+        };
+
+        result.push(value);
+      });
+
+      result.sort((a, b) => b.date - a.date);
+
+      return [...result, ...this.tickets];
+    }
 	},
-	mounted(){
+	mounted() {
 		this.$store.dispatch("support/autoFetch");
+    this.$store.dispatch("nocloud/chats/fetchChats");
+    this.$store.dispatch('nocloud/chats/startStream');
 	},
 }
 </script>
@@ -54,7 +81,7 @@ export default {
 	.ticket__wrapper{
 		height: 100%;
 		overflow: auto;
-		padding: 0 10px 20px;
+		padding: 6px 10px 20px;
 	}
 
 	.ticket__add-enter-active.addTicket__wrapper,

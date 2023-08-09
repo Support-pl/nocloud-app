@@ -20,6 +20,7 @@
           v-if="!service.needLogin || isLogged"
           :key="service.title"
           :service="service"
+          :productsCount="productsCount"
           @mouseover.native="hovered = service.title"
           @mouseleave.native="hovered = null"
         />
@@ -34,6 +35,9 @@ import serviceItem from './service_min.vue';
 export default {
 	name: "services-wrapper",
 	components: { serviceItem },
+  props: {
+    productsCount: { type: Function, required: true }
+  },
 	data(){
 		return {
       hovered: null,
@@ -101,9 +105,14 @@ export default {
     },
     newProductHandler(service) {
       const provider = service.onclick.paramsArr[0].query.service;
-      const { type } = this.sp.find(({ meta }) => (meta.showcase ?? {})[provider]) ?? {};
+      const { type } = this.sp.find(({ uuid }) => {
+        const showcase = this.showcases.find(({ uuid }) => uuid === provider);
+
+        return showcase?.servicesProviders?.includes(uuid);
+      }) ?? {};
+
       let name = 'service-virtual';
-      let query = {};
+      let query = { service: provider };
 
       switch (type) {
         case 'opensrs':
@@ -121,21 +130,25 @@ export default {
         case 'ione':
         case 'ovh':
           name = 'newPaaS';
-          query = { service: provider }
       }
 
       if (!type && this.services[provider]) {
         name = 'service-iaas';
-        query = { service: provider }
       }
 
       this.$router.push({ name, query });
     },
+    toKebabCase(text) {
+      return text.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+    }
 	},
 	computed: {
 		sp() {
 			return this.$store.getters['nocloud/sp/getSP'];
 		},
+    showcases() {
+      return this.$store.getters['nocloud/sp/getShowcases'];
+    },
 		isLogged() {
 			return this.$store.getters['nocloud/auth/isLoggedIn'];
 		},
@@ -170,15 +183,25 @@ export default {
         })
       });
 
-			this.sp.forEach(({ meta: { showcase = {} } }) => {
-        Object.entries(showcase).forEach(([key, value]) => {
-          services.push({
-            ...value,
-            onclick: {
-              function: this.routeTo,
-              paramsArr: [{ name: 'products', query: { service: key } }]
-            }
-          });
+			this.showcases.forEach((showcase) => {
+        showcase.icon = this.toKebabCase(showcase.icon);
+        let theme = showcase.icon.split('-').at(-1);
+        let icon = showcase.icon.replace(`-${theme}`, '');
+
+        if (!['outlined', 'filled'].includes(theme)) {
+          icon = showcase.icon;
+          theme = null;
+        } else if (theme === 'tone') {
+          icon = icon.replace('-two');
+          theme = 'two-tone';
+        }
+
+        services.push({
+          ...showcase, icon, theme,
+          onclick: {
+            function: this.routeTo,
+            paramsArr: [{ name: 'products', query: { service: showcase.uuid } }]
+          }
         });
       });
 

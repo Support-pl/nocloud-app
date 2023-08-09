@@ -5,7 +5,7 @@
       @click="showModal"
       :class="{ clickable: clickable }"
     >
-      {{ (user.balance || 0).toFixed(2) }}
+      {{ (userdata.balance || 0).toFixed(2) }}
 
       <span class="currency__suffix">{{ currency.suffix }}</span>
       <span class="badge" v-if="clickable">
@@ -41,19 +41,25 @@ export default {
     };
   },
   mounted() {
-    this.currency = { ...this.$config.currency, suffix: '' };
     this.$store.dispatch("nocloud/auth/fetchBillingData")
       .then((res) => {
-        this.currency.suffix = res.currency_code ?? 'USD';
+        this.currency.suffix = res.currency_code ?? this.defaultCurrency;
+        this.currency = Object.assign({}, this.currency);
       })
       .catch((err) => console.error(err));
   },
   computed: {
     user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    },
+    userdata() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
     isLogged() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
+    },
+    defaultCurrency() {
+      return this.$store.getters['nocloud/auth/defaultCurrency'];
     },
   },
   methods: {
@@ -93,7 +99,7 @@ export default {
           this.modalVisible = false;
           this.confirmLoading = false;
           if (!this.stay) {
-            this.$router.push({ path: `/invoice-${res.data.invoiceid}` });
+            this.$router.push({ path: `/billing-${res.data.invoiceid}` });
           } else {
             this.$message.success(`Now look invoice#${res.data.invoiceid}`);
           }
@@ -110,6 +116,13 @@ export default {
       this.amount += amount;
     },
   },
+  watch: {
+    defaultCurrency(value) {
+      if (this.user.currency_code) return;
+
+      this.$set(this.currency, 'suffix', value);
+    }
+  }
 };
 </script>
 

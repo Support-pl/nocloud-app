@@ -20,10 +20,20 @@ export default {
   components: { updateNotification },
   created() {
     window.addEventListener('message', ({ data, origin }) => {
+      console.log(data, origin);
       if (!origin.includes('https://api.')) return;
-      this.$store.commit("nocloud/auth/setToken", data);
+      this.$store.commit("nocloud/auth/setToken", data.token);
       sessionStorage.removeItem("user");
-      location.reload();
+
+      if (data.uuid) {
+        setTimeout(() => {
+          this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
+          location.reload();
+        }, 300);
+      } else if (this.$route.name.includes('login')) {
+        this.$router.replace({ name: 'root' });
+        location.reload();
+      }
     });
 
     this.$store.dispatch("nocloud/auth/load");
@@ -38,7 +48,8 @@ export default {
       else next();
     });
 
-    const lang = localStorage.getItem("lang");
+    const lang = this.$route.query.lang ?? localStorage.getItem("lang");
+
     if (lang != undefined) this.$i18n.locale = lang;
     if (this.loggedIn) {
       this.$store.dispatch("nocloud/auth/fetchUserData");
@@ -54,6 +65,11 @@ export default {
 
       if (mustBeLoggined && !isLogged) {
         this.$router.replace("login");
+      }
+
+      if (!this.$route.query.lang) return;
+      if (this.$route.query.lang !== this.$i18n.locale) {
+        this.$i18n.locale = this.$route.query.lang;
       }
     });
 

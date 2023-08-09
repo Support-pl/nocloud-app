@@ -29,6 +29,7 @@
 	"cloud":"Cloud",
 	"support": "Support",
 	"invoice": "Orders",
+  "billing": "Billing",
 	"settings": "Settings",
 	"Balance": "Balance",
 	"Exit": "Exit",
@@ -62,6 +63,7 @@
 	"Enter OS password again": "Enter OS password again",
 	"Password mismatch": "Password mismatch",
   "Weak pass": "Weak pass",
+  "server name": "server name",
 	"Enter VM name": "Enter VM name",
   "VM name": "VM name",
 	"VM create": "VM create",
@@ -77,10 +79,10 @@
 	"Result": "Result",
 	"Cost": "Cost",
 	"min": "min",
-	"hour": "hour",
-	"day": "day",
+	"hour": "hour | {n} hour | {n} hours",
+	"day": "day | {n} day | {n} days",
 	"week": "week",
-	"month": "no months | {n} month | {n} months",
+	"month": "month | {n} month | {n} months",
 	"year": "year | {n} year | {n} years",
   "years": "years",
 	"Network": "Network",
@@ -264,6 +266,7 @@
 		"none": "none"
 	},
 	"os": "OS",
+  "Failed to load data": "Failed to load data",
   "Order created successfully": "Order created successfully.",
   "Order update successfully": "Order update successfully.",
   "Ticket created successfully": "Ticket created successfully.",
@@ -331,6 +334,7 @@
   "next": "next",
   "Done": "Done",
   "renew": "renew",
+  "config": "config",
 	"all fields are required": "Please fill in all fields",
 	"field must contain more characters": "Field must contain more characters",
   "login is required": "Login is required",
@@ -526,7 +530,7 @@
     "more_national_domains": "more national domains"
   },
 	"unregistered": {
-		"will be able after": "Available after",
+		"will be able after": "Choose a service or",
 		"login": "Login",
 		"sign up": "Sign Up",
 		"see services": "Discover all services"
@@ -539,7 +543,6 @@
 	"product_name": "Product Name",
 	"VNDExcludeVAT": "Prices quoted in VND, subject to 10% VAT",
   "Invoice is needed": "Invoice is needed",
-
 
   "reload": "reload",
   "new content is avaliable": "New content is avaliable",
@@ -590,6 +593,7 @@
 		"SNAPSHOT":"SNAPSHOT",
 		"RUNNING":"RUNNING",
 		"SUSPENDED":"SUSPENDED",
+    "OPERATION": "OPERATION",
     "UNKNOWN": "UNKNOWN"
 	},
 	"public":"Public",

@@ -6,13 +6,17 @@
     ></div>
     <div class="ticket__content">
       <div class="ticket__upper">
-        <div class="ticket__title">#{{ ticket.tid }} - {{ titleDecoded }}</div>
+        <div class="ticket__title">
+          #{{ ticket.tid }} - {{ titleDecoded }}
+        </div>
         <div class="ticket__status-text">
-          {{ $t(`ticketStatus.${ticket.status}`) }}
+          <a-badge :count="ticket.unread" :offset="[10, -15]">
+            {{ $t(`ticketStatus.${ticket.status}`) }}
+          </a-badge>
         </div>
       </div>
       <div class="ticket__lower">
-        <div class="ticket__message">{{ beauty(ticket.message) }}</div>
+        <div class="ticket__message" v-html="beauty(ticket.message)"></div>
         <div class="ticket__time">{{ formatDate(ticket.date) }}</div>
       </div>
     </div>
@@ -31,10 +35,11 @@ export default {
       message = this.decode(message);
       message = message.replace(/-{2,}.*/gi, "");
       message = message.replace(/IP Address.*/gi, "");
+      message = message.replace(/<\/?[a-z1-9 #-:=";_!]+>/gi, "");
       return message || 'empty';
     },
     formatDate(date) {
-      const d = new Date(date.replace(/-/g, "/"));
+      const d = new Date((date.replace) ? date.replace(/-/g, "/") : date);
       const ye = new Intl.DateTimeFormat("en", { year: "numeric" }).format(d);
       const mo = new Intl.DateTimeFormat("en", { month: "2-digit" }).format(d);
       const da = new Intl.DateTimeFormat("en", { day: "2-digit" }).format(d);

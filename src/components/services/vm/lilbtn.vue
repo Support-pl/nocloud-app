@@ -117,11 +117,12 @@ export default {
         .find(({ uuid }) => uuid === this.service.uuid);
 
       this.isLoading = true;
-      instance.data.auto_renew = value;
+      this.$set(instance.data, 'auto_renew', value);
       this.$store.dispatch('nocloud/vms/updateService', service)
         .then(() => {
           const message = this.$t('Done');
 
+          this.$destroyAll();
           this.$notification.success({ message });
         })
         .catch((err) => {
@@ -189,11 +190,17 @@ export default {
     addonsPrice() {
       if (this.service.billingPlan.type.includes('ovh')) {
         return this.service.config.addons?.reduce((res, addon) => {
-          const { price } = this.service.billingPlan.resources.find(
-            ({ key }) => key === `${this.service.config.duration} ${addon}`
-          );
+          const { billingPlan, config } = this.service;
+          const addonKey = (billingPlan.type.includes('dedicated'))
+            ? `${config.duration} ${config.planCode} ${addon}`
+            : `${config.duration} ${addon}`;
+
+          const { price } = this.service.billingPlan.resources
+            .find(({ key }) => key === addonKey);
           let key = '';
 
+          if (addon.includes('ram')) key = this.$t('ram');
+          if (addon.includes('raid')) key = this.$t('Drive');
           if (addon.includes('additional')) key = this.$t('adds drive');
           if (addon.includes('snapshot')) key = this.$t('Snapshot');
           if (addon.includes('backup')) key = this.$t('Backup');

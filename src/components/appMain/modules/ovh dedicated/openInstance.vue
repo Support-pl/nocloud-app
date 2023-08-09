@@ -198,81 +198,6 @@
         </div>
       </div>
 
-      <div
-        class="Fcloud__info-block block"
-        v-if="!(chart1Data.length == 0 || chart2Data.length == 0)"
-      >
-        <div class="Fcloud__block-header">
-          <a-icon type="apartment" />
-          {{ $t("Network") }}
-        </div>
-        <div class="Fcloud__block-content">
-          <div class="block__column">
-            <div class="block__title">
-              {{ $t("inbound") | capitalize }}
-            </div>
-            <div class="block__value">
-              {{
-                printWidthRange(chart1Data[chart1Data.length - 1].value)
-              }}
-            </div>
-          </div>
-          <div class="block__column">
-            <div class="block__title">
-              {{ $t("outgoing") | capitalize }}
-            </div>
-            <div class="block__value">
-              {{
-                printWidthRange(chart2Data[chart2Data.length - 1].value)
-              }}
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="Fcloud__info-block block"
-        v-if="!(chart1Data.length == 0 || chart2Data.length == 0)"
-      >
-        <div class="Fcloud__block-header">
-          <a-icon type="line-chart" />
-          {{ $t("graphs") | capitalize }}
-        </div>
-        <div
-          class="Fcloud__block-content Fcloud__block-content--charts"
-        >
-          <a-row type="flex" justify="space-around" style="width: 100%">
-            <a-col>
-              <GChart
-                type="LineChart"
-                :data="inbChartDataReady"
-                :options="chartOption('inbound')"
-              />
-            </a-col>
-            <a-col>
-              <GChart
-                type="LineChart"
-                :data="outChartDataReady"
-                :options="chartOption('outgoing')"
-              />
-            </a-col>
-            <a-col>
-              <GChart
-                type="LineChart"
-                :data="cpuChartDataReady"
-                :options="chartOption('cpu')"
-              />
-            </a-col>
-            <a-col>
-              <GChart
-                type="LineChart"
-                :data="ramChartDataReady"
-                :options="chartOption('ram')"
-              />
-            </a-col>
-          </a-row>
-        </div>
-      </div>
-
       <a-row :gutter="[15, 15]" style="margin-top: 20px" v-if="VM.state && false">
         <a-col :span="24" :md="12">
           <div class="button">
@@ -432,23 +357,6 @@ export default {
   props: { VM: { type: Object, required: true } },
   mixins: [notification],
   data: () => ({
-    chart1Data: [["Time", ""]],
-    chart2Data: [["Time", ""]],
-    chart3Data: [["Time", ""]],
-    chart4Data: [["Time", ""]],
-    chartHead: ["Timestamp"],
-    chartOptions: {
-      title: "network",
-      curveType: "function",
-      legend: "none",
-      width: 300,
-      height: 150,
-      vAxis: {
-        viewWindowMode: "explicit",
-        viewWindow: { min: 0 },
-      },
-    },
-
     modal: {
       reboot: false,
       shutdown: false,
@@ -484,10 +392,8 @@ export default {
       if (this.actionLoading) return;
       this.actionLoading = true;
 
-      const regexp = /[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}/;
-      const response = await fetch('https://www.cloudflare.com/cdn-cgi/trace');
-      const text = await response.text();
-      const ip = text.match(regexp)[0];
+      const response = await fetch('http://geoplugin.net/json.gp');
+      const { geoplugin_request: ip } = await response.json();
 
       this.$store.dispatch('nocloud/vms/actionVMInvoke', {
         uuid: this.VM.uuid, action: 'ipmi', params: { ip }
@@ -506,6 +412,10 @@ export default {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
+
+          if (err.response?.status >= 500) {
+            opts.message = `Error: ${this.$t('Failed to load data')}`;
+          }
           this.openNotificationWithIcon("error", opts);
           this.actionLoading = false;
         });
@@ -536,26 +446,6 @@ export default {
         count--;
       }
       return val;
-    },
-    chartOption(title) {
-      const newOpt = JSON.parse(JSON.stringify(this.chartOptions));
-      let range = "";
-      let capitalized = "";
-      if (title.toLowerCase() == "inbound") {
-        range = this.checkRange(this.chart1Data[this.chart1Data.length - 1].value);
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
-      } else if (title.toLowerCase() == "outgoing") {
-        range = this.checkRange(this.chart2Data[this.chart2Data.length - 1].value);
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
-      } else if (title.toLowerCase() == "cpu") {
-        range = "%"
-        capitalized = this.$t(title).toUpperCase();
-      } else if (title.toLowerCase() == "ram") {
-        range = this.checkRange(this.chart4Data[this.chart4Data.length - 1].value * 1048576);
-        capitalized = this.$t(title).toUpperCase();
-      }
-      newOpt.title = `${capitalized} (${range})`;
-      return newOpt;
     },
     createSnapshot() {
       // if (this.snapshots.data.lenght >= 3) {
@@ -779,10 +669,15 @@ export default {
               this.openNotificationWithIcon("success", { message: `Done!` });
             })
             .catch((err) => {
-              console.error(err);
-              this.openNotificationWithIcon("error", {
+              const opts = {
                 message: `Error: ${err.response?.data?.message ?? "Unknown"}.`
-              });
+              };
+
+              if (err.response?.status >= 500) {
+                opts.message = `Error: ${this.$t('Failed to load data')}`;
+              }
+              this.openNotificationWithIcon("error", opts);
+              console.error(err);
             })
             .finally(() => this.actionLoading = false);
         },
@@ -814,6 +709,10 @@ export default {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
+
+          if (err.response?.status >= 500) {
+            opts.message = `Error: ${this.$t('Failed to load data')}`;
+          }
           this.openNotificationWithIcon("error", opts);
         });
     },
@@ -824,38 +723,6 @@ export default {
       })
 				.then(({ meta }) => location.href = meta.url)
         .catch((err) => console.error(err));
-    },
-    fetchMonitoring() {
-      if (!this.VM?.uuidService || true) return;
-      const data = {
-        uuid: this.VM.uuid,
-        uuidService: this.VM.uuidService,
-        action: 'monitoring',
-        params: { period: 'lastday' }
-      };
-
-      this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
-        .then((res) => {
-          if (res.meta['net:rx'] !== undefined) {
-            this.chart1Data = res.meta['net:rx'].values;
-          }
-          if (res.meta['net:tx'] !== undefined) {
-            this.chart2Data = res.meta['net:tx'].values;
-          }
-          if (res.meta?.cpu !== undefined) {
-            this.chart3Data = res.meta.cpu.values;
-          }
-          if (res.meta?.mem !== undefined) {
-            this.chart4Data = res.meta.mem.values;
-          }
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          if (message === 'HTTP Error 500: "Internal server error"') return;
-          this.openNotificationWithIcon('error', { message: this.$t(message) });
-          console.error(err);
-        });
     },
     date(string, timestamp) {
       if (timestamp < 1) return '-';
@@ -873,7 +740,6 @@ export default {
       return `${year}-${month}-${day}`;
     }
   },
-  created() { this.fetchMonitoring() },
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
@@ -929,15 +795,15 @@ export default {
       return this.VM.billingPlan.products[key].price;
     },
     addonsPrice() {
-      return this.VM.config.addons?.reduce((res, { id }) => {
+      return this.VM.config.addons?.reduce((res, id) => {
         const { price } = this.VM.billingPlan.resources.find(
-          ({ key }) => key === `${this.VM.config.duration} ${id}`
+          ({ key }) => key === `${this.VM.config.duration} ${this.VM.config.planCode} ${id}`
         ) ?? {};
         let key = '';
 
         if (!id) return res;
-        if (id.includes('ram')) return res;
-        if (id.includes('raid')) return res;
+        if (id.includes('ram')) key = this.$t('ram');
+        if (id.includes('raid')) key = this.$t('Drive');
         if (id.includes('vrack')) key = this.$t('vrack');
         if (id.includes('bandwidth')) key = this.$t('traffic');
 
@@ -984,86 +850,6 @@ export default {
 
       return { public: publicIPs ?? [], private: privateIPs ?? [] };
     },
-
-    inbChartDataReady() {
-      let data = this.chart1Data;
-      if (data == undefined) {
-        console.error("can't get chart1");
-        return [[0], [0]];
-      }
-      if (data[0] == undefined || data[1] == undefined) {
-        return [
-          [this.chartHead[0], "bytes"],
-          [0, 0],
-        ];
-      }
-      let range = this.checkRange(data[data.length - 1].value);
-      data = data.map((pair) => [
-        new Date(pair.timestamp * 1000),
-        this.fromBytesTo(parseInt(pair.value), range),
-      ]);
-      data.unshift([this.chartHead[0], range]);
-      return data;
-    },
-    outChartDataReady() {
-      let data = this.chart2Data;
-      if (data == undefined) {
-        console.error("can't get chart2");
-        return [[0], [0]];
-      }
-      if (data[0] == undefined || data[1] == undefined) {
-        return [
-          [this.chartHead[0], "bytes"],
-          [0, 0],
-        ];
-      }
-      let range = this.checkRange(data[data.length - 1].value);
-      data = data.map((pair) => [
-        new Date(pair.timestamp * 1000),
-        this.fromBytesTo(parseInt(pair.value), range),
-      ]);
-      data.unshift([this.chartHead[0], range]);
-      return data;
-    },
-    cpuChartDataReady() {
-      let data = this.chart3Data;
-      if (data == undefined) {
-        console.error("can't get chart3");
-        return [[0], [0]];
-      }
-      if (data[0] == undefined || data[1] == undefined) {
-        return [
-          [this.chartHead[0], "%"],
-          [0, 0],
-        ];
-      }
-      data = data.map((pair) => [new Date(pair.timestamp * 1000), parseInt(pair.value)]);
-      data.unshift([this.chartHead[0], 'usage']);
-      return data;
-    },
-    ramChartDataReady() {
-      let data = this.chart4Data;
-      if (data == undefined) {
-        console.error("can't get chart4");
-        return [[0], [0]];
-      }
-      if (data[0] == undefined || data[1] == undefined) {
-        return [
-          [this.chartHead[0], "mb"],
-          [0, 0],
-        ];
-      }
-      let range = this.checkRange(data[data.length - 1].value * 1048576);
-      data = data.map((pair) => [
-        new Date(pair.timestamp * 1000),
-        this.fromBytesTo(parseInt(pair.value * 1048576), range),
-      ]);
-      data.unshift([this.chartHead[0], range]);
-      return data;
-    },
-  },
-  watch: {
-    'VM.uuidService'() { this.fetchMonitoring() }
   }
 }
 </script>

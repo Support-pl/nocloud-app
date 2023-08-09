@@ -18,8 +18,10 @@
       :header="`${$t('Plan')}: ${planHeader}`"
       :disabled="!itemSP || isFlavorsLoading"
     >
-      <template v-if="!isFlavorsLoading">
-        <a-row type="flex" align="middle" style="margin-bottom: 15px">
+      <a-spin v-if="isFlavorsLoading" style="display: block; margin: 0 auto" :tip="$t('loading')" />
+      <slot name="plan" v-else-if="!getPlan.type.includes('vps') && !$route.query.product" />
+      <template v-else-if="!isFlavorsLoading">
+        <a-row type="flex" align="middle" style="margin-bottom: 15px" v-if="!$route.query.product">
           <a-col span="24" v-if="resources.plans.length < 6 && resources.plans.length > 1">
             <a-slider
               style="margin-top: 10px"
@@ -32,7 +34,7 @@
             />
           </a-col>
           <a-col v-else span="24">
-            <div class="order__slider">
+            <div class="order__grid">
               <div
                 class="order__slider-item"
                 v-for="provider of resources.plans"
@@ -45,6 +47,12 @@
             </div>
           </a-col>
         </a-row>
+        <a-icon
+          type="left"
+          style="margin-bottom: 10px; font-size: 20px"
+          v-else-if="$route.query.product"
+          @click="$router.go(-1)"
+        />
         <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
           <a-col>
             <span style="display: inline-block; width: 70px">CPU:</span>
@@ -99,19 +107,18 @@
           </a-col>
         </a-row>
       </template>
-      <a-spin v-else style="display: block; margin: 0 auto" :tip="$t('loading')" />
     </a-collapse-panel>
 
     <!-- OS -->
     <a-collapse-panel
       key="OS"
-      :disabled="!itemSP || isFlavorsLoading || !plan"
+      :disabled="!itemSP || isFlavorsLoading || !plan || isProductExist"
       :header="osHeader"
     >
       <div class="newCloud__option-field" v-if="images.length > 0">
         <a-row>
           <a-col :xs="24" :sm="10">
-            <a-form-item :label="$t('VM name')">
+            <a-form-item :label="$t('server name') | capitalize">
               <a-input
                 :value="vmName"
                 :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
@@ -204,7 +211,7 @@
     <a-collapse-panel
       key="addons"
       v-if="!getPlan.type?.includes('cloud')"
-      :disabled="!itemSP || isFlavorsLoading || !plan"
+      :disabled="!itemSP || isFlavorsLoading || !plan || isProductExist"
       :header="$t('Addons') + ':'"
       :style="{ 'border-radius': '0 0 20px 20px' }"
     >
@@ -315,8 +322,9 @@ export default {
     },
     addonPrice({ periods }) {
       const period = periods.find(({ pricingMode }) => pricingMode === this.mode);
+      const price = +(period.price.value * this.currency.rate).toFixed(2);
 
-      return `${period.price.value} ${this.currency.code}`;
+      return `${price} ${this.currency.code}`;
     },
     setResource(value) {
       if (this.getPlan.type.includes('vps')) {
@@ -405,16 +413,29 @@ export default {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
     currency() {
+      const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
       const { currency_code } = this.$store.getters['nocloud/auth/billingData'];
 
-      return { code: currency_code ?? defaultCurrency };
+      const code = this.$store.getters['nocloud/auth/unloginedCurrency'];
+      const { rate } = currencies.find((el) =>
+        el.to === code && el.from === defaultCurrency
+      ) ?? {};
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === code && el.to === defaultCurrency
+      ) ?? { rate: 1 };
+
+      if (!this.isLogged) return { rate: (rate) ? rate : 1 / reverseRate, code };
+      return { rate: 1, code: currency_code ?? defaultCurrency };
     },
     region() {
-      const location = this.locationId.split(' ').at(-1);
       const { extra, title } = this.itemSP?.locations
-        .find(({ id }) => id === location) ?? {};
+        .find(({ id }) => this.locationId.includes(id)) ?? {};
 
       if (!extra) return null;
       return { value: extra.region, title };
@@ -456,6 +477,9 @@ export default {
       const size = (this.options.disk.size / 1024).toFixed(1);
 
       return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
+    },
+    isProductExist() {
+      return !this.$route.query.product && this.getPlan.type?.includes('dedicated');
     }
   },
   watch: {
@@ -489,6 +513,13 @@ export default {
   padding-top: 15px;
 }
 
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
 .order__slider-item:not(:last-child){
 	margin-right: 10px;
 }
@@ -514,5 +545,11 @@ export default {
 .order__slider-item--active{
 	background-color: var(--main);
 	color: #fff;
+}
+
+@media (max-width: 576px) {
+  .order__grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 </style>

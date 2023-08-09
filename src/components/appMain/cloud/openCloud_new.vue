@@ -381,8 +381,8 @@ export default {
       }
     },
     stateColor() {
-      if (!this.VM.state) return "rgb(145, 145, 145)";
-      if (this.VM.data.suspended_manually) return "#f9f038";
+      if (!this.VM.state) return "var(--err)";
+      if (this.VM.data.suspended_manually) return "#ff9140";
 
       const state = (this.VM?.billingPlan.type === 'ione')
         ? this.VM.state.meta.lcm_state_str
@@ -390,17 +390,22 @@ export default {
 
       switch (state) {
         case "RUNNING":
-          return "#0fd058";
+          return "var(--success)";
         // останавливающийся и запускающийся
+        case "BOOT":
         case "BUILD":
         case "BOOT_POWEROFF":
         case "SHUTDOWN_POWEROFF":
-          return "#919191";
+          return "var(--warn)";
         case "LCM_INIT":
         case "STOPPED":
-          return "#f9f038";
+          return "#ff9140";
+        case "OPERATION":
+        case "PENDING":
+        case "Pending":
+          return "var(--main)";
         default:
-          return "rgb(145, 145, 145)";
+          return "var(--err)";
       }
     },
     isLogged() {
@@ -747,7 +752,7 @@ export default {
   display: grid;
   grid-template-columns: 20% 1fr 20%;
   justify-items: center;
-  align-items: center;
+  align-items: start;
 }
 .Fcloud__header-title {
   position: relative;
@@ -757,6 +762,7 @@ export default {
   font-weight: bold;
   font-size: 24px;
   line-height: 1;
+  word-wrap: anywhere;
 }
 .Fcloud__status {
   text-transform: uppercase;
@@ -771,9 +777,8 @@ export default {
   width: 15px;
   background-color: var(--bright_font);
   border-radius: 50%;
-  top: 55%;
+  bottom: 5px;
   left: -25px;
-  transform: translateY(-50%);
 }
 .Fcloud__buttons {
   display: flex;

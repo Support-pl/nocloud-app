@@ -43,7 +43,7 @@
       </a-col>
     </a-row>
 
-    <div style="display: flex; justify-content: flex-end; gap: 10px">
+    <div style="display: flex; justify-content: right; gap: 10px">
       <a-button @click="$emit('closeModal')">
         {{ $t('Cancel') }}
       </a-button>

@@ -28,7 +28,7 @@ export default {
           const {
             currencies,
             defaultCurrency,
-            billingUser: { currency_code = 'USD' }
+            billingUser: { currency_code = defaultCurrency }
           } = rootState.nocloud.auth;
 
           const { rate } = currencies.find((el) =>

@@ -54,7 +54,7 @@
                     </div>
                   </div>
 
-                <div class="info__main" v-if="records.length > 0">
+                <div class="info__main" style="overflow-x: auto" v-if="records.length > 0">
                   <a-table row-key="uuid" :data-source="records" :columns="columns">
                     <template slot="date" slot-scope="text, record">
                       {{ date(record.exec) }}
@@ -70,8 +70,8 @@
                   </a-table>
                 </div>
 
-                <div class="info__main" v-if="invoice">
-                  <a-card v-if="invoice.meta.description" :title="$t('description') | capitalize">
+                <div class="info__main" v-if="invoice?.meta.description">
+                  <a-card :title="$t('description') | capitalize">
                     <div>{{ invoice.meta.description }}</div>
                   </a-card>
 
@@ -93,12 +93,10 @@
                   </a-card>
                 </div>
 
-                <div class="info__footer">
-                  <template v-if="invoice.exec == 0">
-                    <a-button class="info__button" :loading="isPayLoading" @click='payRequest'>
-                      {{ $t("Pay") }}
-                    </a-button>
-                  </template>
+                <div class="info__footer" v-if="invoice.exec == 0">
+                  <a-button class="info__button" :loading="isPayLoading" @click='payRequest'>
+                    {{ $t("Pay") }}
+                  </a-button>
                 </div>
               </div>
             </div>
@@ -145,7 +143,7 @@ export default {
   }),
   methods: {
     goBack() {
-      this.$router.push("/invoice");
+      this.$router.push("/billing");
     },
     date(timestamp) {
       if (timestamp < 1) return '-';
@@ -229,7 +227,7 @@ export default {
       });
   },
   destroyed() {
-    if (!this.$route.name.includes('invoice')) {
+    if (!this.$route.name.includes('billing')) {
       sessionStorage.removeItem('invoice');
     }
   },
@@ -391,7 +389,7 @@ export default {
 .info__date-value {
   font-weight: bold;
   font-size: 16px;
-  line-height: 10px;
+  line-height: 1.2;
   padding: 0;
 }
 

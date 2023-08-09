@@ -3,7 +3,6 @@ import config from '@/appconfig'
 
 export default {
 	namespaced: true,
-
 	state: {
 		loading: false,
 		tickets: [],
@@ -14,64 +13,67 @@ export default {
     baseURL: `${config.WHMCSsiteurl}modules/addons/nocloud/api/index.php`,
 	},
 	mutations: {
-		updateTickets(state, value){
+		updateTickets(state, value) {
 			state.tickets = value;
 		},
-		updateFilter(state, value){
+		updateFilter(state, value) {
 			state.filter = value;
 		},
-		makeLoadingIs(state, value){
+		makeLoadingIs(state, value) {
 			state.loading = value;
 		},
-		makeOnlyClosedTicketsIs(state, value){
+		makeOnlyClosedTicketsIs(state, value) {
 			state.onlyClosedTickets = value
 		},
-		inverseAddTicketState(state){
+		inverseAddTicketState(state) {
 			state.addTicketState = !state.addTicketState;
 		},
-		setDepartments(state, data){
-			state.departments = data;
-		}
+		setDepartments(state, data) {
+			state.departments = [...data, { name: 'NoCloud Bot', id: 'nocloud' }];
+		},
 	},
 	actions: {
-		silentFetch({state, commit}){
+		silentFetch({ state, commit }) {
 			return new Promise((resolve, reject) => {
-				api.get(state.baseURL, { params: { run: "get_tickets" } })
+				api.get(state.baseURL, { params: { run: 'get_tickets' } })
           .then((res) => {
             if (res?.ERROR) throw res.ERROR.toLowerCase();
             if (!res) throw 'tickets not found';
-            commit("updateTickets", res);
+            commit('updateTickets', res);
             resolve(res);
           })
           .catch((err) => reject(err))
-          .finally(() => commit("makeLoadingIs", false));
+          .finally(() => commit('makeLoadingIs', false));
 			});
 		},
-		fetch({dispatch, commit}){
+		fetch({ dispatch, commit }) {
 			commit('makeLoadingIs', true);
 			return dispatch('silentFetch');
 		},
 		autoFetch({state, dispatch}){
-			if(state.tickets.length > 0){
+			if (state.tickets.length > 0) {
 				return dispatch('silentFetch');
 			} else {
 				return dispatch('fetch');
 			}
 		},
-		fetchDepartments({state, commit}){
+		fetchDepartments({ state, commit }) {
 			return new Promise((resolve, reject) => {
 				api.get(state.baseURL, { params: { run: 'get_dept' } })
-				.then(res => {
-          if (res?.ERROR) throw res.ERROR.toLowerCase();
-          commit('setDepartments', res);
-          resolve(res);
-				})
-				.catch(err => {
-					console.error(err);
-					reject(err);
-				})
-			})
-		}
+          .then(res => {
+            if (res?.ERROR) {
+              commit('setDepartments', []);
+              throw res.ERROR.toLowerCase();
+            }
+            commit('setDepartments', res);
+            resolve(res);
+          })
+          .catch(err => {
+            console.error(err);
+            reject(err);
+          });
+			});
+		},
 	},
 	getters: {
 		getAllTickets(state){

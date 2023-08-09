@@ -16,14 +16,14 @@
             <a-icon type="left" />
           </div>
           <!-- {{$t(`headerTitle.${headerTitle}`)}} -->
-          {{ headerTitle }}
+          <span>{{ headerTitle }}</span>
         </div>
 
         <div class="header__right-side">
           <transition-group
             name="header__item-anim"
             class="header__buttons"
-            v-if="headers[active] && isLogged"
+            v-if="headers[active] && isLogged && isButtonsVisible"
             tag="div"
           >
             <div
@@ -32,7 +32,7 @@
               :key="button.icon"
             >
               <div
-                v-if="button.onClickFuncion && button.type == undefined"
+                v-if="button.onClickFuncion && button.type == undefined && button.icon != 'telegram'"
                 class="icon__wrapper"
                 :class="[
                   { active__btn: getState(button.name) },
@@ -57,6 +57,17 @@
                 @click="button.onClickFuncion"
               >
                 <div class="header__btn--no-image">{{ button.name }}</div>
+              </div>
+
+              <div
+                v-else-if="button.icon === 'telegram'"
+                class="icon__wrapper"
+                :class="[button.additionalClass]"
+                @click="button.onClickFuncion"
+              >
+                <svg fill="currentColor" width="30px" height="30px" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M 26.070313 3.996094 C 25.734375 4.011719 25.417969 4.109375 25.136719 4.21875 L 25.132813 4.21875 C 24.847656 4.332031 23.492188 4.902344 21.433594 5.765625 C 19.375 6.632813 16.703125 7.757813 14.050781 8.875 C 8.753906 11.105469 3.546875 13.300781 3.546875 13.300781 L 3.609375 13.277344 C 3.609375 13.277344 3.25 13.394531 2.875 13.652344 C 2.683594 13.777344 2.472656 13.949219 2.289063 14.21875 C 2.105469 14.488281 1.957031 14.902344 2.011719 15.328125 C 2.101563 16.050781 2.570313 16.484375 2.90625 16.722656 C 3.246094 16.964844 3.570313 17.078125 3.570313 17.078125 L 3.578125 17.078125 L 8.460938 18.722656 C 8.679688 19.425781 9.949219 23.597656 10.253906 24.558594 C 10.433594 25.132813 10.609375 25.492188 10.828125 25.765625 C 10.933594 25.90625 11.058594 26.023438 11.207031 26.117188 C 11.265625 26.152344 11.328125 26.179688 11.390625 26.203125 C 11.410156 26.214844 11.429688 26.21875 11.453125 26.222656 L 11.402344 26.210938 C 11.417969 26.214844 11.429688 26.226563 11.441406 26.230469 C 11.480469 26.242188 11.507813 26.246094 11.558594 26.253906 C 12.332031 26.488281 12.953125 26.007813 12.953125 26.007813 L 12.988281 25.980469 L 15.871094 23.355469 L 20.703125 27.0625 L 20.8125 27.109375 C 21.820313 27.550781 22.839844 27.304688 23.378906 26.871094 C 23.921875 26.433594 24.132813 25.875 24.132813 25.875 L 24.167969 25.785156 L 27.902344 6.65625 C 28.007813 6.183594 28.035156 5.742188 27.917969 5.3125 C 27.800781 4.882813 27.5 4.480469 27.136719 4.265625 C 26.769531 4.046875 26.40625 3.980469 26.070313 3.996094 Z M 25.96875 6.046875 C 25.964844 6.109375 25.976563 6.101563 25.949219 6.222656 L 25.949219 6.234375 L 22.25 25.164063 C 22.234375 25.191406 22.207031 25.25 22.132813 25.308594 C 22.054688 25.371094 21.992188 25.410156 21.667969 25.28125 L 15.757813 20.75 L 12.1875 24.003906 L 12.9375 19.214844 C 12.9375 19.214844 22.195313 10.585938 22.59375 10.214844 C 22.992188 9.84375 22.859375 9.765625 22.859375 9.765625 C 22.886719 9.3125 22.257813 9.632813 22.257813 9.632813 L 10.082031 17.175781 L 10.078125 17.15625 L 4.242188 15.191406 L 4.242188 15.1875 C 4.238281 15.1875 4.230469 15.183594 4.226563 15.183594 C 4.230469 15.183594 4.257813 15.171875 4.257813 15.171875 L 4.289063 15.15625 L 4.320313 15.144531 C 4.320313 15.144531 9.53125 12.949219 14.828125 10.71875 C 17.480469 9.601563 20.152344 8.476563 22.207031 7.609375 C 24.261719 6.746094 25.78125 6.113281 25.867188 6.078125 C 25.949219 6.046875 25.910156 6.046875 25.96875 6.046875 Z" />
+                </svg>
               </div>
 
               <div
@@ -130,7 +141,7 @@
                       />
                       <a-range-picker
                         show-time
-                        v-else-if="active === 'invoice'"
+                        v-else-if="active === 'billing'"
                         :value="checkedList"
                         @ok="updateFilter"
                         @change="onChangeRange"
@@ -155,12 +166,53 @@
               </div>
             </div>
           </transition-group>
+          <transition
+            name="header__item-anim"
+            v-if="viewport < 576 && headers[active]?.buttons.length > 0 && isLogged"
+          >
+            <div class="header__button" @click="isButtonsVisible = !isButtonsVisible">
+              <div class="icon__wrapper" :style="(isButtonsVisible) ? {
+                borderRadius: '50%',
+                background: 'var(--bright_bg)',
+                color: 'var(--main)'
+              } : null">
+                <a-icon class="header__icon" type="down" />
+              </div>
+            </div>
+          </transition>
           <transition name="header__item-anim">
             <div v-if="isNeedBalance && isLogged" class="header__balance">
               <balance />
             </div>
           </transition>
 
+          <transition
+            name="header__item-anim"
+            v-if="viewport < 576 && !isLogged"
+          >
+            <div class="header__button" @click="isButtonsVisible = !isButtonsVisible">
+              <div class="icon__wrapper" :style="(isButtonsVisible) ? {
+                borderRadius: '50%',
+                background: 'var(--bright_bg)',
+                color: 'var(--main)'
+              } : null">
+                <a-icon class="header__icon" type="down" />
+              </div>
+            </div>
+          </transition>
+          <div class="header__selects" v-if="!isLogged && isButtonsVisible">
+            <a-select style="width: 100%; border: none" v-model="$i18n.locale">
+              <a-select-option v-for="lang in langs" :key="lang" :value="lang">
+                {{ $t('localeLang', lang) }}
+              </a-select-option>
+            </a-select>
+
+            <a-select style="width: 100%; border: none" v-model="currencyCode">
+              <a-select-option v-for="currency in currencies" :key="currency.code" :value="currency.code">
+                {{ currency.code }}
+              </a-select-option>
+            </a-select>
+          </div>
           <div class="header__links" v-if="!isLogged">
             <router-link :to="{ name: 'login' }">{{ $t("login") }}</router-link>
             <router-link :to="{ name: 'register' }">{{ $t("unregistered.sign up") }}</router-link>
@@ -173,7 +225,10 @@
 
 <script>
 import { mapActions, mapGetters, mapMutations } from "vuex";
-import balance from "../balance/balance.vue";
+import { createPromiseClient } from "@bufbuild/connect";
+import { HandsfreeService } from "infinimesh-proto/build/es/handsfree/handsfree_connect";
+import { ConnectionRequest } from "infinimesh-proto/build/es/handsfree/handsfree_pb";
+import balance from "@/components/balance/balance.vue";
 import moment from "moment";
 
 export default {
@@ -185,6 +240,7 @@ export default {
     return {
       isOpen: false,
       isVisible: false,
+      isButtonsVisible: true,
       indeterminate: true,
       checkAll: false,
       checkedList: [],
@@ -202,6 +258,29 @@ export default {
               name: "support_filter",
               icon: "filter",
               popover: true,
+            },
+            {
+              name: "support_telegram",
+              icon: "telegram",
+              onClickFuncion: async () => {
+                const { token } = this.$store.state.nocloud.auth;
+                const { transport } = this.$store.state.nocloud.chats;
+                const handsfree = createPromiseClient(HandsfreeService, transport);
+
+                try {
+                  const stream = handsfree.connect(new ConnectionRequest({ appId: token }));
+
+                  for await (const event of stream) {
+                    console.log(event);
+                  }
+                } catch (error) {
+                  this.$notification.error({
+                    message: this.$t(error.response?.data?.message ?? error.message ?? error)
+                  });
+                }
+
+                // window.open(`https://t.me/nocloud_telegram_bot?start=${token}`, '_blank');
+              }
             },
             {
               name: "support_plus",
@@ -240,8 +319,8 @@ export default {
             },
           ],
         },
-        invoice: {
-          title: "Invoice",
+        billing: {
+          title: "billing",
           needBalance: true,
           buttons: [
             {
@@ -287,9 +366,13 @@ export default {
         },
         iaas: {
           title: "Service",
-          buttons: []
+          needBalance: true,
+          buttons: [],
         }
       },
+      langs: this.$config.languages,
+      currencies: [],
+      currencyCode: ''
     };
   },
   methods: {
@@ -341,12 +424,25 @@ export default {
       this.isVisible = true;
     },
     routeBack() {
-      if (this.getActiveTab.title.includes('service')) {
-        this.$router.push('/services');
+      if (this.getActiveTab.title.includes('iaas') && this.$route.query.product) {
+        const query = { ...this.$route.query };
+
+        delete query.product;
+        this.$router.push({ path: '/iaas', query });
+        return;
+      }
+      if (this.getActiveTab.title.includes('service-')) {
+        if (this.$route.query.service) {
+          const { service } = this.$route.query;
+
+          this.$router.push({ name: 'products', query: { service } });
+        } else {
+          this.$router.push('/services');
+        }
         return;
       }
       if (this.getActiveTab.title.includes('invoice')) {
-        this.$router.push('/invoice');
+        this.$router.push('/billing');
         return;
       }
 
@@ -357,6 +453,7 @@ export default {
         case 'ticket':
           this.$router.push('/support');
           break;
+        case 'products':
         case 'newPaaS':
           this.$router.push('/services');
           break;
@@ -389,7 +486,7 @@ export default {
         this.$store.commit("support/updateFilter", info.map((el) => filtered[el]));
       }
 
-      if (this.active == "invoice" && this.activeInvoiceTab == "Detail") {
+      if (this.active == "billing" && this.activeInvoiceTab == "Detail") {
         const dates = JSON.parse(
           localStorage.getItem("detailFilters") ?? "[]"
         ).map((el) => moment(el));
@@ -402,7 +499,7 @@ export default {
         }
 
         this.$store.commit("nocloud/transactions/updateFilter", info);
-      } else if (this.active == "invoice") {
+      } else if (this.active == "billing") {
         const filtered = {};
 
         if (!info) {
@@ -429,10 +526,31 @@ export default {
       this.$store.commit('nocloud/vms/setSearch', '');
     }
   },
+  created() {
+    this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
+      .then((res) => { this.currencies = res.currency })
+			.catch(err => {
+        const message = err.response?.data?.message ?? err.message;
+
+				this.$notification.error({ message: this.$t(message) });
+				console.error(err);
+			});
+  },
   mounted() {
     if (this.$route.query.service) {
       this.headers.iaas.title = this.$route.query.service;
     }
+
+    if (this.viewport < 576) {
+      this.isButtonsVisible = false;
+    }
+
+    const lang = navigator.language.replace(/-[a-z]{2}/i, '');
+
+    if (this.langs.includes(lang) && !localStorage.getItem('lang')) {
+      this.$i18n.locale = lang;
+    }
+    this.currencyCode = this.defaultCurrency;
   },
   computed: {
     ...mapGetters("support", [
@@ -466,7 +584,7 @@ export default {
       let filterElem;
       if (this.active == "support") {
         filterElem = this.getAllTickets;
-      } else if (this.active == "invoice") {
+      } else if (this.active == "billing") {
         const isInvoice = this.activeInvoiceTab === 'Invoice';
 
         filterElem = (isInvoice) ? this.getAllInvoices : this.transactions;
@@ -523,11 +641,20 @@ export default {
     isLogged() {
       return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
+    baseURL(){
+      return this.$store.getters['support/getURL'];
+    },
     userdata() {
       return this.$store.getters['nocloud/auth/userdata'];
     },
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
+    },
+    defaultCurrency() {
+      return this.$store.getters['nocloud/auth/defaultCurrency'];
+    },
+    viewport() {
+      return document.documentElement.offsetWidth;
     }
   },
   watch: {
@@ -539,6 +666,12 @@ export default {
     activeInvoiceTab() {
       this.checkedList = [];
       this.updateFilter();
+    },
+    currencyCode(value) {
+      this.$store.commit('nocloud/auth/setUnloginedCurrency', value);
+    },
+    '$i18n.locale'(value) {
+      localStorage.setItem('lang', value);
     }
   }
 }
@@ -570,11 +703,24 @@ export default {
   font-size: 1.1rem;
   display: flex;
   align-items: center;
+  margin-right: 5px;
+  overflow: hidden;
+}
+
+.header__title > span {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .header_back_btn {
   font-size: 1.4rem;
   margin-right: 20px;
+}
+
+.header__links {
+  display: flex;
+  align-items: center;
 }
 
 .header__links a {
@@ -599,9 +745,13 @@ export default {
 }
 
 .header__links a:last-child {
-  box-shadow: 0px 0px 0px 1px #fff;
-  border-radius: 5px;
+  max-width: 100px;
   padding: 10px 15px;
+  border-radius: 5px;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0px 0px 0px 1px #fff;
 }
 
 .header__links a:last-child:hover {
@@ -677,6 +827,25 @@ export default {
   align-items: center;
 }
 
+.header__selects {
+  display: flex;
+  gap: 10px;
+  margin-right: 15px;
+}
+
+.header__selects .ant-select-selection {
+  background: transparent;
+  color: var(--bright_bg);
+}
+
+.header__selects .ant-select-selection__rendered {
+  margin-right: 30px;
+}
+
+.header__selects .ant-select-arrow {
+  color: inherit;
+}
+
 .header__balance {
   margin-left: 10px;
   padding-right: 10px;
@@ -690,5 +859,44 @@ export default {
 .header__item-anim-leave-to {
   opacity: 0;
   transform: translateY(30px);
+}
+
+@media screen and (max-width: 576px) {
+  .header__buttons {
+    position: absolute;
+    bottom: -35px;
+    left: 0;
+    z-index: 10;
+    width: 100%;
+    border-radius: 0 0 10px 10px;
+    background: var(--main);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .icon__wrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .header_back_btn,
+  .header__right-side .header__button {
+    margin-right: 5px;
+  }
+
+  .header__selects {
+    position: absolute;
+    left: 0;
+    top: 62px;
+    z-index: 10;
+    width: 100%;
+    padding: 0 15px 15px;
+    border-radius: 0 0 10px 10px;
+    background: var(--main);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .header__links a:not(:last-child) {
+    margin-right: 10px;
+  }
 }
 </style>

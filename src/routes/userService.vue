@@ -149,7 +149,7 @@
               {{ $t("description") | capitalize }}:
             </div>
             <div class="service-page__info-value">
-              <div v-html="description"></div>
+              <div :style="(service.desc_product) ? 'padding: 0 15px' : ''" v-html="description"></div>
             </div>
           </div>
 
@@ -260,8 +260,32 @@ export default {
         onCancel() {},
       });
     },
+    getPeriod(timestamp) {
+      const hour = 3600;
+      const day = hour * 24;
+      const month = day * 30;
+      const year = month * 12;
+
+      let period = '';
+      let count = 0;
+
+      if (timestamp / hour < 24 && timestamp >= hour) {
+        period = 'hour';
+        count = timestamp / hour;
+      } else if (timestamp / day < 30 && timestamp >= day) {
+        period = 'day';
+        count = timestamp / day;
+      } else if (timestamp / month < 12 && timestamp >= month) {
+        period = 'month';
+        count = timestamp / month;
+      } else {
+        period = 'year';
+        count = timestamp / year;
+      }
+      return this.$tc(period, count);
+    },
     date(timestamp) {
-      if (timestamp < 1) return '-';
+      if (timestamp < 1) return '0000-00-00';
 
       const date = new Date(timestamp * 1000);
 
@@ -287,18 +311,20 @@ export default {
         if (!domain) return new Promise((resolve) => resolve({ meta: null }));
         switch (domain.billingPlan.type) {
           case 'virtual': {
+            const { period } = domain.billingPlan.products[domain.product];
+
             domain.data.expiry = {
-              expiredate: this.date(domain.data.last_monitoring),
-              regdate: '0000-00-00'
+              expiredate: this.date(domain.data.last_monitoring ?? 0),
+              regdate: domain.data.creation ?? '0000-00-00'
             };
+            domain.resources.period = this.getPeriod(period);
             groupname = 'Custom';
-            date = 'month';
             break;
           }
           case 'goget': {
             domain.data.expiry = {
               expiredate: '0000-00-00',
-              regdate: '0000-00-00'
+              regdate: domain.data.creation ?? '0000-00-00'
             };
             groupname = 'SSL';
             date = 'month';
@@ -319,14 +345,14 @@ export default {
             const { period } = domain.billingPlan.products[key];
 
             domain.resources = {
-              period: this.date(period),
+              period: this.getPeriod(period),
               recurringamount: domain.config.items.reduce((sum, key) =>
                 sum + domain.billingPlan.products[key].price, 0
               )
             };
             domain.data.expiry = {
               expiredate: domain.data.expires_at.split('T')[0],
-              regdate: '?'
+              regdate: domain.data.creation ?? '0000-00-00'
             };
           }
         }
@@ -341,7 +367,7 @@ export default {
           name: domain.title,
           status: `cloudStateItem.${domain.state?.state || 'UNKNOWN'}`,
           domain: domain.resources.domain,
-          billingcycle: this.$tc(date, period),
+          billingcycle: (typeof period === 'string') ? period : this.$tc(date, period),
           recurringamount: domain.billingPlan.products[domain.product]?.price ?? '?',
           nextduedate: expiredate
         };
@@ -396,16 +422,21 @@ export default {
       return this.$store.getters['products/getProducts'];
     },
     getTagColor() {
-      switch (this.service.status.replace('cloudStateItem.', '')) {
-        case "RUNNING":
-        case "Active":
+      const status = this.service.status.replace('cloudStateItem.', '');
+
+      switch (status.toLowerCase()) {
+        case "running":
+        case "active":
           return "green";
-        case "Pending":
+        case "operation":
+        case "pending":
+          return "blue";
+        case "stopped":
+        case "suspended":
           return "orange";
-        case "Cancelled":
-          return "red";
+        case "cancelled":
         default:
-          return ""
+          return "red";
       }
     },
     getTagColorSSL() {
@@ -444,10 +475,12 @@ export default {
       return !this.service.clientid && meta?.renew !== false;
     },
     description() {
-      const key = this.service.product ?? this.service.config.product;
+      const key = this.service.product ?? this.service.config?.product;
       const { meta } = this.service.billingPlan?.products[key] ?? {};
+      const description = this.service.desc_product
+        ?.replace('/templates', `${this.$config.WHMCSsiteurl}$&`);
 
-      return meta?.description;
+      return meta?.description ?? description;
     }
   },
 };
@@ -497,5 +530,11 @@ export default {
 
 .service-page__info-value {
   font-size: 1.1rem;
+}
+
+.service-page__info-value div > .img_prod {
+  display: block;
+  max-width: 200px;
+  margin: 0 auto 10px;
 }
 </style>

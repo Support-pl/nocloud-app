@@ -3,25 +3,11 @@
 		<div class="order">
 			<div class="order__inputs order__field">
 				<div class="order__option">
-					<!-- <a-slider
-            v-if="sizes.length < 6"
-            tooltip-placement="bottom"
-						:marks="{...sizes}"
-						:value="sizes.indexOf(options.size)"
-            :tip-formatter="(value) => sizes[value]"
-						:tooltip-visible="true"
-						:max="sizes.length-1"
-						:min="0"
-						@change="(value) => options.size = sizes[value]"
-					/> -->
+          <div class="order__product" v-if="$route.query.product">
+            <div class="order__product-name" v-html="getProducts.name" />
+          </div>
 
-          <a-carousel
-            arrows
-            draggable
-            :dots="false"
-            :slides-to-show="slides"
-            :slides-to-scroll="1"
-          >
+          <div v-else class="order__grid">
             <template v-if="!fetchLoading">
               <div
                 class="order__slider-item"
@@ -48,54 +34,44 @@
                 <div class="loadingLine"></div>
               </div>
             </template>
+          </div>
 
-            <template #prevArrow>
-              <div class="custom-slick-arrow" style="left: -35px;">
-                <a-icon type="left-circle" />
-              </div>
-            </template>
+          <template v-if="$route.query.product">
+            <transition name="specs" mode="out-in">
+              <div
+                v-if="typeof getProducts.description === 'string'"
+                v-html="getProducts.description"
+              ></div>
+              <table v-else-if="getProducts.description" class="product__specs">
+                <tr v-for="resource in getProducts.description" :key="resource.name">
+                  <td>{{ resource.name }}</td>
+                  <td>{{ resource.value }}</td>
+                </tr>
+              </table>
+            </transition>
 
-            <template #nextArrow>
-              <div class="custom-slick-arrow" style="right: -35px">
-                <a-icon type="right-circle" />
-              </div>
-            </template>
-          </a-carousel>
-
-          <transition name="specs" mode="out-in">
-            <div
-              v-if="typeof getProducts.description === 'string'"
-              v-html="getProducts.description"
-            ></div>
-            <table v-else-if="getProducts.description" class="product__specs">
-              <tr v-for="resource in getProducts.description" :key="resource.name">
-                <td>{{ resource.name }}</td>
-                <td>{{ resource.value }}</td>
-              </tr>
-            </table>
-          </transition>
-
-          <a-card
-            style="margin-top: 15px"
-            v-if="fetchLoading || addons[getProducts.id] && addons[getProducts.id].length > 0"
-            :title="`${$t('Addons')} (${$t('choose addons you want')})`"
-            :loading="fetchLoading"
-          >
-            <div v-if="fetchLoading">Loading...</div>
-            <a-card-grid
-              v-else
-              class="card-item"
-              v-for="addon of addons[getProducts.id]"
-              :key="addon.id"
-              @click="changeAddons(addon.id)"
+            <a-card
+              style="margin-top: 15px"
+              v-if="fetchLoading || addons[getProducts.id] && addons[getProducts.id].length > 0"
+              :title="`${$t('Addons')} (${$t('choose addons you want')})`"
+              :loading="fetchLoading"
             >
-              <div class="order__slider-name" style="grid-template-columns: 1fr auto">
-                <span style="font-weight: 700; font-size: 16px" v-html="addon.name"></span>
-                <a-checkbox :checked="options.addons.includes(addon.id)" />
-                <span style="grid-column: 1 / 3" v-html="addon.description"></span>
-              </div>
-            </a-card-grid>
-          </a-card>
+              <div v-if="fetchLoading">Loading...</div>
+              <a-card-grid
+                v-else
+                class="card-item"
+                v-for="addon of addons[getProducts.id]"
+                :key="addon.id"
+                @click="changeAddons(addon.id)"
+              >
+                <div class="order__slider-name" style="grid-template-columns: 1fr auto">
+                  <span style="font-weight: 700; font-size: 16px" v-html="addon.name"></span>
+                  <a-checkbox :checked="options.addons.includes(addon.id)" />
+                  <span style="grid-column: 1 / 3" v-html="addon.description"></span>
+                </div>
+              </a-card-grid>
+            </a-card>
+          </template>
 				</div>
 			</div>
 
@@ -199,7 +175,7 @@
 				<a-row type="flex" justify="space-around" style="margin: 10px 0">
 					<a-col :span="22">
 						<a-button type="primary" block shape="round" @click="orderConfirm">
-							{{ $t('order') | capitalize }}
+							{{ $t(($route.query.product) ? 'order' : 'next') | capitalize }}
 						</a-button>
 						<a-modal
 							:title="$t('Confirm')"
@@ -266,7 +242,7 @@ export default {
 
           this.products = prod.sort((a, b) => b.name - a.name);
           this.products.forEach(({ description }, i) => {
-            const desc = description.replace('/templates', `${this.$config.WHMCSsiteurl}$&`,);
+            const desc = description.replace('/templates', `${this.$config.WHMCSsiteurl}$&`);
             const start = desc.indexOf('<img');
             const end = desc.indexOf('">', start);
             const image = desc.slice(start, end + 2);
@@ -336,9 +312,17 @@ export default {
         });
 		},
 		orderConfirm(){
+      if (!this.$route.query.product) {
+        this.$router.push({ query: {
+          ...this.$route.query,
+          product: this.getProducts.id
+        } });
+        return;
+      }
+
 			if (this.options.payment === '') {
 				this.$message.error(this.$t('Choose your payment method'));
-				return
+				return;
 			}
       if (!this.checkBalance()) return;
 			this.modal.confirmCreate = true;
@@ -371,19 +355,20 @@ export default {
 	computed: {
 		getProducts() {
 			if (Object.keys(this.products).length == 0) return "NAN"
-      const product = this.products[this.sizes.indexOf(this.options.size)]
+      const findedProduct = this.products.find(({ id }) => id === +this.$route.query.product) ??
+        this.products[this.sizes.indexOf(this.options.size)]
+      const product = JSON.parse(JSON.stringify(findedProduct))
 
       if (typeof product.description !== 'string') return product
       if (/<\/?[a-z][\s\S]*>/i.test(product.description)) {
         if (typeof product.price?.currency === 'string') return product
-        console.log(product);
 
         if (product.paytype === 'free' || !product.price) {
           product.price = { value: 0, currency: '' }
         } else if (product.paytype === 'onetime') {
           product.price = { value: product.price.monthly, currency: '' }
         } else {
-          product.price = product.price.find(({ currency }) => currency === this.currency.id)
+          product.price = product.price.find(({ currency }) => currency === this.currency.id) ?? {}
         }
         product.price.currency = this.currency.code
 
@@ -404,16 +389,21 @@ export default {
         product.price.currency = this.currency.code
       }
 
-			return product
+			return { ...product, price: +product.price }
 		},
     slides() {
       return 3;
     },
     addonsPrice() {
       return this.options.addons.reduce((prev, curr) => {
-        const { prices = [], billingcycle } = this.addons[this.getProducts.id]?.find(({ id }) => id === curr) ?? {};
+        const { prices = [], billingcycle } = this.addons[this.getProducts.id]
+          ?.find(({ id }) => id === curr) ?? {};
+
         const price = prices.find((el) => el.currency === this.currency.id);
-        const value = (+price[this.options.period] === -1) ? 0 : +price[this.options.period];
+        const value = (+price[this.options.period] !== -1)
+          ? +price[this.options.period]
+          : 0;
+
         const result = {
           value: (billingcycle !== 'free') ? prev.value + (value || 0) : prev.value,
           onetime: (billingcycle === 'onetime') ? prev.onetime + +price.monthly : prev.onetime
@@ -428,9 +418,15 @@ export default {
     user() {
       return this.$store.getters['nocloud/auth/billingData'];
     },
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
     currency() {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
-      const code = this.user.currency_code ?? defaultCurrency;
+
+      const code = (this.isLogged)
+        ? this.user.currency_code ?? defaultCurrency
+        : this.$store.getters['nocloud/auth/unloginedCurrency'];
       const { id = -1 } = this.currencies?.find((currency) => currency.code === code) ?? {};
 
       return { code, id };
@@ -440,6 +436,10 @@ export default {
     }
 	},
 	created() {
+    if (this.currencies.length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+    }
+
     this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
       .then((res) => { this.currencies = res.currency })
 			.catch(err => {
@@ -460,7 +460,7 @@ export default {
 	},
   watch: {
     'options.size'() {
-      this.periods = Object.entries(this.getProducts.price).filter(
+      this.periods = Object.entries(this.getProducts.price ?? {}).filter(
         ([key, value]) => key.match(/ly/) && value > -1
       ).map((el) => el[0]);
 
@@ -552,6 +552,27 @@ export default {
 	width: 72%;
 }
 
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.order__product-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.order__product .order__product-name .img_prod {
+  max-height: 75px;
+  margin: 0;
+}
+
 .order__option div > .img_prod {
   display: block;
   max-width: 200px;
@@ -566,6 +587,10 @@ export default {
   display: grid;
   justify-items: center;
   gap: 5px;
+}
+
+.order__option .order__slider-name .ant-checkbox {
+  box-shadow: 0 0 5px var(--main);
 }
 
 .order__option .order__slider-name img {
@@ -602,8 +627,13 @@ export default {
   opacity: 1;
 }
 
+.order__option .ant-card-head {
+  background: var(--bright_bg);
+}
+
 .order__option .ant-card-body {
   display: flex;
+  flex-wrap: wrap;
   gap: 5px;
 }
 
@@ -612,9 +642,14 @@ export default {
 }
 
 .card-item {
-  width: 50%;
+  width: 100%;
   cursor: pointer;
   border: 0 solid transparent;
+  background: var(--bright_bg);
+}
+
+.card-item .order__slider-name {
+  justify-items: start;
 }
 
 .card-item--active {
@@ -877,6 +912,18 @@ export default {
 	.order__template-name ul li{
 		margin-left: 20px;
 	}
+  .product__specs {
+    width: 100%;
+  }
+  .product__specs td {
+    padding: 3px 7px;
+  }
+  .product__specs td:last-child::before {
+    transform: translate(-10px, -50%);
+  }
+  .order__grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .specs-enter-active,

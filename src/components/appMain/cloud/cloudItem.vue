@@ -12,11 +12,11 @@
         {{ localDate }}
       </div>
 
-      <div class="item__status" v-if="networking.length < 1">
+      <div class="item__status" v-if="networking.length < 1 && instance.groupname === 'Self-Service VDS SSD HC'">
         IP: {{ $t("ip.none") }}
       </div>
       <div class="item__status" v-else-if="networking.length < 2">
-        {{ instance.domain }}
+        {{ instance.domain ?? instance.groupname }}
       </div>
 
       <a-collapse v-else v-model="activeKey" expandIconPosition="right" :bordered="false">
@@ -67,18 +67,23 @@ export default {
       switch (this.instance.domainstatus) {
         case "RUNNING":
         case "Active":
-          return "#0fd058";
+          return "var(--success)";
         // останавливающийся и запускающийся
+        case "BOOT":
+        case "BUILD":
         case "BOOT_POWEROFF":
         case "SHUTDOWN_POWEROFF":
-          return "#919191";
+          return "var(--warn)";
         case "LCM_INIT":
         case "STOPPED":
         case "SUSPENDED":
+          return "#ff9140";
+        case "OPERATION":
+        case "PENDING":
         case "Pending":
-          return "#f9f038";
+          return "var(--main)";
         default:
-          return "rgb(145, 145, 145)";
+          return "var(--err)";
       }
     },
     dateColor() {
@@ -117,7 +122,7 @@ export default {
     },
     price() {
       const amount = this.prices[this.instance.resources?.period] ??
-        this.instance.orderamount;
+        this.instance.recurringamount ?? this.instance.orderamount;
 
       return +(+amount)?.toFixed(2) ?? 0;
     },

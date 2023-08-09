@@ -11,7 +11,9 @@ import network from './network'
 import products from './products'
 import utils from './utils'
 import nocloud from './nocloud'
+import chats from './nocloud/chats'
 
+nocloud.modules.chats = chats;
 Vue.use(vuex)
 
 export default new vuex.Store({

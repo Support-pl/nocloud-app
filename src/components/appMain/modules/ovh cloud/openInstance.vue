@@ -479,9 +479,10 @@
               shape="round"
               size="large"
               :disabled="VM.state.state !== 'RUNNING'"
-              @click="openVNC"
             >
-              VNC
+              <router-link :to="{ path: `${$route.params.uuid}/vnc` }">
+                VNC
+              </router-link>
             </a-button>
           </div>
         </a-col>
@@ -580,6 +581,10 @@ export default {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
+
+          if (err.response?.status >= 500) {
+            opts.message = this.$t('Error: Failed to load data');
+          }
           this.openNotificationWithIcon("error", opts);
         })
         .finally(() => {
@@ -855,10 +860,15 @@ export default {
               this.openNotificationWithIcon("success", { message: `Done!` });
             })
             .catch((err) => {
-              console.error(err);
-              this.openNotificationWithIcon("error", {
+              const opts = {
                 message: `Error: ${err.response?.data?.message ?? "Unknown"}.`
-              });
+              };
+
+              if (err.response?.status >= 500) {
+                opts.message = `Error: ${this.$t('Failed to load data')}`;
+              }
+              this.openNotificationWithIcon("error", opts);
+              console.error(err);
             })
             .finally(() => this.actionLoading = false);
         },
@@ -893,6 +903,10 @@ export default {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
+
+          if (err.response?.status >= 500) {
+            opts.message = `Error: ${this.$t('Failed to load data')}`;
+          }
           this.openNotificationWithIcon("error", opts);
         });
     },
@@ -962,7 +976,10 @@ export default {
     },
     statusVM() {
       if (!this.VM) return;
-      if (this.VM.state.state === 'PENDING' || this.VM.data.suspended_manually) {
+      const isPending =  ['PENDING', 'OPERATION'].includes(this.VM.state.state);
+      const isSuspended = this.VM.data.suspended_manually;
+
+      if (isPending || isSuspended) {
         return { shutdown: true, reboot: true, start: true, recover: true };
       }
 

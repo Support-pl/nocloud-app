@@ -146,7 +146,7 @@
 				<div class="register__already-has" style="margin-top: 40px">
 					<router-link :to="{name: 'login'}">{{$t('clientinfo.already have account?') | capitalize}}</router-link>
 				</div>
-        <div class="register__already-has" style="margin-top: 10px">
+        <div class="register__already-has" style="margin: 10px 0 30px">
           <a-checkbox v-model="invoiceChecked">{{$t('Invoice is needed')}}</a-checkbox>
         </div>
 			</div>
@@ -298,6 +298,14 @@ export default {
 .logo{
 	display: flex;
 	grid-gap: 15px
+}
+
+.logo__image {
+  max-width: 70%;
+}
+
+.logo__image img {
+  max-width: 100%;
 }
 
 .pos_top{
@@ -509,10 +517,6 @@ export default {
 
 	.login__UI{
 		justify-content: center;
-	}
-
-	.login__forgot{
-		margin-top: 40px;
 	}
 
 	#qrcode{

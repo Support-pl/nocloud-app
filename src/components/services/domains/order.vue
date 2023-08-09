@@ -630,7 +630,16 @@ export default {
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type }) => type === 'opensrs');
+        .filter(({ type, uuid }) => {
+          const { plans } = this.$store.getters['nocloud/sp/getShowcases'].find(
+            ({ uuid }) => uuid === this.$route.query.service
+          ) ?? {};
+
+          if (!plans) return type === 'opensrs';
+
+          if (plans.length < 1) return type === 'opensrs';
+          return type === 'opensrs' && plans.includes(uuid);
+        });
     },
     rules() {
       const message = this.$t('ssl_product.field is required');
@@ -664,6 +673,7 @@ export default {
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
 
+        if (err.response?.data?.code === 16) return;
         this.openNotificationWithIcon('error', {
           message: this.$t(message)
         });
@@ -677,6 +687,7 @@ export default {
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
 
+        if (err.response?.data?.code === 16) return;
         this.openNotificationWithIcon('error', {
           message: this.$t(message)
         });

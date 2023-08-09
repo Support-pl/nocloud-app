@@ -1,7 +1,7 @@
 <template>
 	<div class="service__item" @click="onClick">
 		<div class="service__icon">
-			<a-icon :type="service.icon"></a-icon>
+			<a-icon :type="service.icon" :theme="service.theme ?? 'outlined'"></a-icon>
 		</div>
 		<div class="service__title">{{ translatedName }}</div>
 	</div>
@@ -10,7 +10,10 @@
 <script>
 export default {
 	name: 'service-item',
-	props: ['service'],
+	props: {
+    service: { type: Object, required: true },
+    productsCount: { type: Function, required: true }
+  },
 	computed: {
 		translatedName(){
 			if(this.service.translatable){
@@ -24,7 +27,10 @@ export default {
 	},
   methods: {
     onClick(e) {
-      if (this.isLogged) e.stopPropagation();
+      const type = this.service.onclick.paramsArr[0].query.service;
+      const isCountZero = this.productsCount(type, true) === 0;
+
+      if (this.isLogged && !isCountZero) e.stopPropagation();
       else return;
 
       this.service.onclick.function(...this.service.onclick.paramsArr)

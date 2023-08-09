@@ -64,39 +64,33 @@
             </a-col>
           </transition>
         </a-row>
-        <a-row class="newCloud__prop">
-          <a-col :sm="(driveTypes.length > 1) ? 6 : 20" :xs="(driveTypes.length > 1) ? 6 : 18">
-            <span style="display: inline-block; width: 70px">
-              {{ $t("Drive") }}:
-            </span>
-          </a-col>
-          <a-col :xs="12" :sm="14" v-if="driveTypes.length > 1">
-            <a-switch v-model="options.drive" style="width: 60px">
-              <span slot="checkedChildren">SSD</span>
-              <span slot="unCheckedChildren">HDD</span>
-            </a-switch>
-          </a-col>
-          <a-col class="changing__field" style="text-align: right" :sm="4" :xs="6">
+        <div class="newCloud__drive">
+          <span
+            style="display: inline-block"
+            :style="{ gridColumn: (driveTypes.length < 2) ? '1 / 3' : null }"
+          >
+            {{ $t("Drive") }}:
+          </span>
+          <a-switch v-model="options.drive" v-if="driveTypes.length > 1">
+            <span slot="checkedChildren">SSD</span>
+            <span slot="unCheckedChildren">HDD</span>
+          </a-switch>
+          <a-slider
+            style="margin-top: 10px"
+            :tip-formatter="null"
+            :step="options.disk.step"
+            :max="options.disk.max"
+            :min="options.disk.min"
+            :value="parseFloat(diskSize)"
+            @change="(value) => (options.disk.size = value * 1024)"
+          />
+          <div class="changing__field" style="text-align: right">
             <template v-if="isProductsExist">{{ diskSize }}</template>
             <template v-else>
               <a-input-number allow-clear v-model="options.disk.size" :min="0" :max="512 * 1024" /> Mb
             </template>
-          </a-col>
-        </a-row>
-        <a-row class="newCloud__prop" v-if="isProductsExist">
-          <a-col>{{ $t("Drive size") }}:</a-col>
-          <a-col>
-            <a-slider
-              style="margin-top: 10px"
-              :tip-formatter="null"
-              :step="options.disk.step"
-              :max="options.disk.max"
-              :min="options.disk.min"
-              :value="parseFloat(diskSize)"
-              @change="(value) => (options.disk.size = value * 1024)"
-            />
-          </a-col>
-        </a-row>
+          </div>
+        </div>
       </template>
       <a-alert
         v-else
@@ -145,7 +139,7 @@
       <div class="newCloud__option-field">
         <div class="newCloud__template" v-if="this.itemSP">
           <div
-            v-for="(item, index) in itemSP && itemSP.publicData.templates"
+            v-for="(item, index) in images"
             class="newCloud__template-item"
             :key="index"
             :class="{ active: options.os.name == item.name }"
@@ -167,11 +161,22 @@
         </div>
         <a-row>
           <a-col :xs="24" :sm="10">
-            <a-form-item style="margin-top: 15px" :label="$t('VM name')">
+            <a-form-item style="margin-top: 15px" :label="$t('server name') | capitalize">
               <a-input
                 :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
                 :value="vmName"
                 @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
+              />
+              <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
+                {{ $t('ssl_product.field is required') }}
+              </div>
+            </a-form-item>
+
+            <a-form-item style="margin-top: 15px" :label="$t('clientinfo.username') | capitalize">
+              <a-input
+                :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
+                :value="vmName"
+                @change="({ target: { value } }) => $emit('setData', { key: 'username', value })"
               />
               <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
                 {{ $t('ssl_product.field is required') }}
@@ -330,6 +335,7 @@ export default {
     productSize: { type: String, required: true },
     tarification: { type: String, required: true },
     vmName: { type: String, required: true },
+    username: { type: String, required: true },
     password: { type: String, required: true },
     sshKey: { type: String }
   },
@@ -342,6 +348,46 @@ export default {
     },
     osName(name) {
       return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
+    },
+    changePeriods() {
+      const value = [];
+      const types = new Set();
+      const day = 3600 * 24
+      const month = day * 30;
+      const year = day * 365;
+
+      this.plans.forEach((plan) => {
+        types.add(plan.type);
+
+        if (plan.kind === 'DYNAMIC') value.push(
+          { value: 'Hourly', label: 'ssl_product.Hourly' }
+        );
+
+        if (plan.kind !== 'STATIC') return;
+        const periods = Object.values(plan.products).map((el) => +el.period);
+
+        if (periods.includes(day)) value.push(
+          { value: 'Daily', label: 'daily', period: day }
+        );
+
+        if (periods.includes(month)) value.push(
+          { value: 'Monthly', label: 'ssl_product.Monthly', period: month }
+        );
+
+        if (periods.includes(year)) value.push(
+          { value: 'Annually', label: 'annually', period: year }
+        );
+
+        if (periods.includes(year * 2)) value.push(
+          { value: 'Biennially', label: 'biennially', period: year * 2 }
+        );
+      });
+
+      if (types.size > 1) return;
+      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period);
+
+      this.options.drive = false;
+      this.$emit('setData', { key: 'periods', value });
     },
     changeNetwork(type) {
       switch (type) {
@@ -386,6 +432,7 @@ export default {
   },
   created() {
     if (!this.user?.uuid) this.$store.dispatch('nocloud/auth/fetchUserData');
+    this.changePeriods();
   },
   beforeMount() {
     const images = Object.entries(this.itemSP?.publicData.templates ?? {});
@@ -402,6 +449,18 @@ export default {
     },
     isProductsExist() {
       return this.getProducts.length > 0;
+    },
+    images() {
+      const { templates } = this.itemSP.publicData;
+      const images = {};
+
+      Object.entries(templates ?? {}).forEach(([key, value]) => {
+        if (value.is_public !== false) {
+          images[key] = value;
+        }
+      });
+
+      return images;
     },
     networkHeader() {
       const pub = this.options.network.public;
@@ -440,42 +499,17 @@ export default {
     }
   },
   watch: {
-    plans() {
-      const value = [];
-      const day = 3600 * 24
-      const month = day * 30;
-      const year = day * 365;
-
-      this.plans.forEach((plan) => {
-        if (plan.kind === 'DYNAMIC') value.push(
-          { value: 'Hourly', label: 'ssl_product.Hourly' }
-        );
-
-        if (plan.kind !== 'STATIC') return;
-        const periods = Object.values(plan.products).map((el) => +el.period);
-
-        if (periods.includes(day)) value.push(
-          { value: 'Daily', label: 'daily', period: day }
-        );
-
-        if (periods.includes(month)) value.push(
-          { value: 'Monthly', label: 'ssl_product.Monthly', period: month }
-        );
-
-        if (periods.includes(year)) value.push(
-          { value: 'Annually', label: 'annually', period: year }
-        );
-
-        if (periods.includes(year * 2)) value.push(
-          { value: 'Biennially', label: 'biennially', period: year * 2 }
-        );
-      });
-      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period);
-
-      this.options.drive = false;
-      this.$emit('setData', { key: 'periods', value });
-    },
+    plans() { this.changePeriods() },
     activeKey() { this.changePanelHeight() }
   }
 }
 </script>
+
+<style scoped>
+.newCloud__drive {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+</style>
