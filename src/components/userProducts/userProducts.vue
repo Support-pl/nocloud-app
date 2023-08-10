@@ -406,9 +406,9 @@ export default {
       const { type } = this.sp.find(({ uuid }) => {
         const { servicesProviders } = this.showcases.find(
           ({ uuid }) => uuid === this.queryTypes[0]
-        );
+        ) ?? {};
 
-        return servicesProviders.includes(uuid);
+        return servicesProviders?.includes(uuid);
       }) ?? {};
 
       let name = 'service-virtual';
