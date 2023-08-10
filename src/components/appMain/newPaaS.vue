@@ -14,6 +14,7 @@
           :is="template"
           :activeKey="activeKey"
           :itemSP="itemSP"
+          :plans="filteredPlans"
           :getPlan="getPlan"
           :options="options"
           :getProducts="getProducts"
@@ -758,13 +759,14 @@ export default {
       const locationItem = this.locations.find((el) => el.id === this.locationId);
       const { plans } = this.showcases.find(({ uuid }) => {
         if (this.showcase === '') {
-          return uuid === locationItem.showcase;
+          return uuid === locationItem?.showcase;
         }
         return uuid === this.showcase;
-      });
+      }) ?? { plan: '' };
 
+      if (plans === '') return this.getPlans;
       return this.getPlans.filter(({ uuid, type }) =>
-        locationItem.type === type && plans.includes(uuid)
+        locationItem?.type === type && plans.includes(uuid)
       );
     },
     //UNKNOWN and STATIC

@@ -26,10 +26,8 @@ export default {
       sessionStorage.removeItem("user");
 
       if (data.uuid) {
-        setTimeout(() => {
-          this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
-          location.reload();
-        }, 300);
+        this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
+        setTimeout(() => { location.reload() }, 100);
       } else if (this.$route.name.includes('login')) {
         this.$router.replace({ name: 'root' });
         location.reload();
