@@ -413,13 +413,13 @@ export default {
         return;
       }
       if (this.getActiveTab.title.includes('service-')) {
-        if (this.$route.query.service) {
-          const { service } = this.$route.query;
+        // if (this.$route.query.service) {
+        //   const { service } = this.$route.query;
 
-          this.$router.push({ name: 'products', query: { service } });
-        } else {
+        //   this.$router.push({ name: 'products', query: { service } });
+        // } else {
           this.$router.push('/services');
-        }
+        // }
         return;
       }
       if (this.getActiveTab.title.includes('invoice')) {

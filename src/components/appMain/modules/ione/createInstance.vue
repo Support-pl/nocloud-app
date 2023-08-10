@@ -329,6 +329,7 @@ export default {
   props: {
     activeKey: { type: String, required: true },
     itemSP: { type: Object, default: null },
+    plans: { type: Array, required: true },
     getPlan: { type: Object, required: true },
     options: { type: Object, required: true },
     getProducts: { type: Array, required: true },
@@ -443,9 +444,6 @@ export default {
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
-    },
-    plans() {
-      return this.$store.getters['nocloud/plans/getPlans'];
     },
     isProductsExist() {
       return this.getProducts.length > 0;
