@@ -27,12 +27,12 @@ export default {
       const handsfree = createPromiseClient(HandsfreeService, transport);
 
       try {
-        const { code, appId } = await handsfree.send(new ControlPacket({ payload: [this.code, token] }));
-          
+        const { appId } = await handsfree.send(new ControlPacket({ payload: [this.code, token] }));
+
         if (appId !== 'core-chatting.telegram-bot') {
           throw new Error('[Error]: Failed to connect');
         }
-        window.open(`https://t.me/nocloud_telegram_bot?start=${code}`, '_blank');
+        window.open('https://t.me/nocloud_telegram_bot', '_blank');
       } catch (error) {
         this.$notification.error({
           message: this.$t(error.response?.data?.message ?? error.message ?? error)
@@ -42,6 +42,7 @@ export default {
     },
     formatText({ target }) {
       target.value = target.value.replace(/[^a-f0-9]/gm, '');
+      this.code = target.value;
     }
   },
   mounted() {
