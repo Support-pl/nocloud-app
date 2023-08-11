@@ -333,7 +333,7 @@ export default {
     },
     region() {
       const { extra, title } = this.itemSP?.locations
-        .find(({ id }) => id === this.locationId.includes(id)) ?? {};
+        .find(({ id }) => this.locationId.includes(id)) ?? {};
 
       if (!extra) return null;
       return { value: extra.region, title };

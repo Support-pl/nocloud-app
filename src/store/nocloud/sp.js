@@ -68,7 +68,9 @@ export default {
           const { plans = [] } = showcases[item.servicesProvider] ?? {};
 
           showcases[item.servicesProvider] = {
-            locations: item.locations,
+            locations: showcase.locations.filter((location) =>
+              item.locations.includes(location.id)
+            ),
             plans: [...plans, item.plan],
             title: showcase.title,
             uuid: showcase.uuid,
