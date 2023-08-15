@@ -18,20 +18,33 @@ import updateNotification from "./components/updateNotification/index.vue";
 export default {
   name: "app",
   components: { updateNotification },
+  methods: {
+    isRouteExist(name) {
+      if (!this.user.roles || name === 'root') return true;
+      switch (name) {
+        case 'billing':
+          return this.user.roles?.invoice;
+
+        case 'settings':
+          return true;
+      
+        default:
+          return this.user.roles[name];
+      }
+    }
+  },
   created() {
     window.addEventListener('message', ({ data, origin }) => {
       console.log(data, origin);
       if (!origin.includes('https://api.')) return;
       this.$store.commit("nocloud/auth/setToken", data.token);
-      sessionStorage.removeItem("user");
 
       if (data.uuid) {
         this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
-        setTimeout(() => { location.reload() }, 100);
       } else if (this.$route.name.includes('login')) {
         this.$router.replace({ name: 'root' });
-        location.reload();
       }
+      setTimeout(() => { location.reload() }, 100);
     });
 
     this.$store.dispatch("nocloud/auth/load");
@@ -41,8 +54,15 @@ export default {
 
       if (mustBeLoggined && !this.loggedIn) {
         next({ name: "login" });
+      } else if (!this.isRouteExist(to.name)) {
+        if (!this.user.roles?.services) {
+          next({ name: "settings" });
+        }
+        next({ name: "root" });
       }
-      else if (to.name == "login" && this.loggedIn) next({ name: "root" });
+      else if (to.name == "login" && this.loggedIn) {
+        next({ name: "root" });
+      }
       else next();
     });
 
@@ -51,8 +71,6 @@ export default {
     if (lang != undefined) this.$i18n.locale = lang;
     if (this.loggedIn) {
       this.$store.dispatch("nocloud/auth/fetchUserData");
-    } else {
-      sessionStorage.removeItem('user');
     }
   },
   mounted() {
@@ -84,6 +102,9 @@ export default {
           val,
         ])
       );
+    },
+    user() {
+      return this.$store.getters["nocloud/auth/billingData"];
     },
     loggedIn() {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
