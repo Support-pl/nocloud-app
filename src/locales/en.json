@@ -266,6 +266,7 @@
 		"none": "none"
 	},
 	"os": "OS",
+  "installation": "installation",
   "Failed to load data": "Failed to load data",
   "Order created successfully": "Order created successfully.",
   "Order update successfully": "Order update successfully.",

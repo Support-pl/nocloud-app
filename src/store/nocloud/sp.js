@@ -65,9 +65,10 @@ export default {
 
       state.showcases.forEach((showcase) => {
         showcase.items.forEach((item) => {
-          const { plans = [] } = showcases[item.servicesProvider] ?? {};
+          const key = `${showcase.uuid}-${item.servicesProvider}`;
+          const { plans = [] } = showcases[key] ?? {};
 
-          showcases[item.servicesProvider] = {
+          showcases[key] = {
             locations: showcase.locations.filter((location) =>
               item.locations.includes(location.id)
             ),

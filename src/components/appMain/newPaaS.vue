@@ -696,7 +696,7 @@ export default {
         showcase.locations?.forEach((location) => {
           const sp = this.getSP.find(({ locations }) =>
             locations.find(({ id, type }) =>
-              location.id.includes(id) && location.type.includes(type)
+              location.id.includes(id) && location.type === type
             )
           );
 
@@ -762,7 +762,7 @@ export default {
           return uuid === locationItem?.showcase;
         }
         return uuid === this.showcase;
-      }) ?? { plan: '' };
+      }) ?? { plans: '' };
 
       if (plans === '') return this.getPlans;
       return this.getPlans.filter(({ uuid, type }) =>
