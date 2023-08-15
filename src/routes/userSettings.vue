@@ -256,7 +256,6 @@ export default {
             user: { ...this.userData, ...this.deltaInfo }
           }})
             .then(() => {
-              sessionStorage.removeItem('user');
               this.$message.success("success");
               this.fetchInfo();
             })

@@ -404,11 +404,11 @@ export default {
     newProductHandle() {
       const services = this.$store.getters['products/getServices'];
       const { type } = this.sp.find(({ uuid }) => {
-        const { servicesProviders } = this.showcases.find(
+        const { servicesProvider } = this.showcases.find(
           ({ uuid }) => uuid === this.queryTypes[0]
-        );
+        ) ?? {};
 
-        return servicesProviders.includes(uuid);
+        return servicesProvider?.includes(uuid);
       }) ?? {};
 
       let name = 'service-virtual';
@@ -465,7 +465,7 @@ export default {
           if (!service) return value === title;
           else {
             const isPlanIncluded = service.plans.includes(billingPlan?.uuid);
-            const isSpIncluded = service.servicesProviders.includes(sp);
+            const isSpIncluded = service.servicesProvider.includes(sp);
 
             return isPlanIncluded && isSpIncluded;
           };

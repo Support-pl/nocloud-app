@@ -12,7 +12,7 @@ export default {
 		setServicesProviders(state, servicesProviders) {
 			state.servicesProviders = servicesProviders;
 		},
-    setShocases(state, showcases) {
+    setShowcases(state, showcases) {
       state.showcases = showcases;
     },
 		setLoading(state, data) {
@@ -44,7 +44,7 @@ export default {
       return new Promise((resolve, reject) => {
         api.showcases.list()
           .then((response) => {
-            commit("setShocases", response.showcases);
+            commit("setShowcases", response.showcases);
             resolve(response);
           })
           .catch((error) => {
@@ -61,7 +61,29 @@ export default {
 			return state.servicesProviders;
 		},
     getShowcases(state) {
-      return state.showcases;
+      const showcases = {};
+
+      state.showcases.forEach((showcase) => {
+        showcase.items.forEach((item) => {
+          const key = `${showcase.uuid}-${item.servicesProvider}`;
+          const { plans = [] } = showcases[key] ?? {};
+
+          showcases[key] = {
+            locations: showcase.locations.filter((location) =>
+              item.locations.includes(location.id)
+            ),
+            plans: [...plans, item.plan],
+            title: showcase.title,
+            uuid: showcase.uuid,
+            icon: showcase.icon,
+            promo: showcase.promo
+          };
+        });
+      });
+
+      return Object.entries(showcases).map(([key, showcase]) =>
+        ({ ...showcase, servicesProvider: key })
+      );
     },
 		isLoading(state) {
 			return state.loading;
