@@ -1287,7 +1287,7 @@ export default {
         };
 
         if (newInstance.config.type === 'cloud') {
-          orderData.service.instances_groups[0].config = this.options.config.ssh;
+          orderData.service.instances_groups[0].config = { ssh: this.options.config.ssh };
         }
         if (this.checkBalance()) this.orderVM(orderData);
       }
