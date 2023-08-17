@@ -39,10 +39,10 @@ export default {
           });
 			});
 		},
-    fetchShowcases({ commit }) {
+    fetchShowcases({ commit }, anonymously) {
       commit("setShowcasesLoading", true);
       return new Promise((resolve, reject) => {
-        api.showcases.list()
+        api.showcases.list(anonymously)
           .then((response) => {
             commit("setShowcases", response.showcases);
             resolve(response);

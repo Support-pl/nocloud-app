@@ -20,7 +20,8 @@ export default {
   components: { updateNotification },
   methods: {
     isRouteExist(name) {
-      if (!this.user.roles || name === 'root') return true;
+      if (!this.user.roles) return true;
+      if (!(name in this.user.roles)) return true;
       switch (name) {
         case 'billing':
           return this.user.roles?.invoice;
@@ -41,8 +42,11 @@ export default {
 
       if (data.uuid) {
         this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
+        console.log(`Instance uuid: ${data.uuid}`);
+        return;
       } else if (this.$route.name.includes('login')) {
         this.$router.replace({ name: 'root' });
+        console.log('Login page');
       }
       setTimeout(() => { location.reload() }, 100);
     });
@@ -54,11 +58,13 @@ export default {
 
       if (mustBeLoggined && !this.loggedIn) {
         next({ name: "login" });
-      } else if (!this.isRouteExist(to.name)) {
+      }
+      else if (!this.isRouteExist(to.name)) {
         if (!this.user.roles?.services) {
           next({ name: "settings" });
+        } else {
+          next({ name: "root" });
         }
-        next({ name: "root" });
       }
       else if (to.name == "login" && this.loggedIn) {
         next({ name: "root" });

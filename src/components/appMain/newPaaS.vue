@@ -311,20 +311,6 @@
             </a-row>
           </transition-group>
 
-          <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              v-if="product.installationFee"
-              :style="{ 'font-size': '1.1rem' }"
-            >
-              <a-col> {{ $t('installation') | capitalize }}: </a-col>
-              <a-col>
-                {{ +(product.installationFee * currency.rate).toFixed(2) }} {{ currency.code }}
-              </a-col>
-            </a-row>
-          </transition>
-
           <a-row
             type="flex"
             justify="space-between"
@@ -392,9 +378,46 @@
           </a-row>
         </template>
 
+        <transition name="networkApear">
+          <a-row
+            type="flex"
+            justify="space-between"
+            v-if="product.installationFee"
+            style="
+              font-size: 1.2rem;
+              padding-top: 5px;
+              margin-top: 10px;
+              border-top: 1px solid #e8e8e8;
+            "
+          >
+            <a-col> {{ $t('installation') | capitalize }}: </a-col>
+            <a-col style="margin-left: auto">
+              {{ +(product.installationFee * currency.rate).toFixed(2) }} {{ currency.code }}
+            </a-col>
+          </a-row>
+        </transition>
+
+        <transition name="networkApear">
+          <a-row
+            type="flex"
+            justify="space-between"
+            style="font-size: 1.2rem; gap: 5px"
+            :style="(!product.installationFee) ? {
+              paddingTop: '5px',
+              marginTop: '10px',
+              borderTop: '1px solid #e8e8e8'
+            } : null"
+          >
+            <a-col> {{ $t('recurring payment') | capitalize }}: </a-col>
+            <a-col style="margin-left: auto">
+              {{ +(productFullPrice - (product.installationFee ?? 0)).toFixed(2) }} {{ currency.code }}
+            </a-col>
+          </a-row>
+        </transition>
+
         <a-divider
           orientation="left"
-          :style="{ 'margin-bottom': '0' }"
+          style="margin-bottom: 0; margin-top: 0"
         >
           {{ $t("Total") }}:
         </a-divider>
@@ -427,37 +450,8 @@
             {{ $t('from') | capitalize }}:
           </a-col>
           <transition name="textchange" mode="out-in">
-            <a-col v-if="tarification === 'Annually'" key="a">
-              {{ calculatePrice(
-                (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                (itemSP.type === 'ovh') ? "hour" : "year").toFixed(2) }}
-              {{ currency.code }}/{{ $tc("year", 0) }}
-            </a-col>
-
-            <a-col v-if="tarification === 'Biennially'" key="b">
-              {{ calculatePrice(
-                (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic,
-                (itemSP.type === 'ovh') ? "hour" : "2 years").toFixed(2) }}
-              {{ currency.code }}/2 {{ $t("years") }}
-            </a-col>
-
-            <a-col v-if="tarification === 'Monthly'" key="m">
-              {{ calculatePrice(
-                  (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceStatic, "month"
-                ).toFixed(2) }}
-              {{ currency.code }}/{{ $tc("period.month") }}
-            </a-col>
-
-            <a-col v-if="tarification === 'Daily'" key="d">
-              {{ calculatePrice(productFullPriceStatic, "day").toFixed(2) }}
-              {{ currency.code }}/{{ $tc("day", 0) }}
-            </a-col>
-
-            <a-col v-if="tarification === 'Hourly'" key="h">
-              ~{{ calculatePrice(
-                    (itemSP.type === 'ovh') ? productFullPriceOVH : productFullPriceCustom, "hour"
-                  ).toFixed(2) }}
-              {{ currency.code }}/{{ $tc("hour", 0) }}
+            <a-col>
+              {{ +(productFullPrice).toFixed(2) }} {{ currency.code }}
             </a-col>
           </transition>
         </a-row>
@@ -862,6 +856,60 @@ export default {
 
       // return value + addonsPrice * percent;
     },
+    productFullPrice() {
+      const resourcesPrice = (this.itemSP.type === "ione")
+        ? +(this.productFullPriceCustom * 24 * 30 * this.currency.rate).toFixed(2)
+        : 0;
+      let price = 0;
+      let period = "";
+
+      switch (this.tarification) {
+        case 'Annually':
+          period = "year";
+          break;
+        case 'Biennially':
+          period = "2 years";
+          break;
+        case 'Monthly':
+          period = "month";
+          break;
+        case 'Daily':
+          period = "day";
+          break;
+        case 'Hourly':
+          period = "hour";
+          price = this.productFullPriceCustom;
+      }
+
+      if (this.itemSP.type === "ovh") {
+        price = this.productFullPriceOVH;
+      } else {
+        price = this.productFullPriceStatic;
+      }
+
+      price += this.product.installationFee ?? 0;
+      price *= this.currency.rate;
+
+      switch (period) {
+        case "minute":
+          return price / 60;
+        case "week":
+          return (price / 30) * 7;
+        case "hour":
+          return price;
+        case "day":
+          return (price + resourcesPrice) / 30
+        case "month":
+          return price + resourcesPrice;
+        case "year":
+          return ((price + resourcesPrice) / 30) * 365;
+        case "2 years":
+          return ((price + resourcesPrice) / 30) * 365 * 2;
+        default:
+          console.error("[VDC Calculator]: Wrong period in calc.", period);
+          return 0;
+      }
+    },
     currency() {
       const currencies = this.$store.getters['nocloud/auth/currencies'];
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
@@ -908,7 +956,7 @@ export default {
   },
   created() {
     this.showcase = this.$route.query.service ?? "";
-    this.$store.dispatch("nocloud/sp/fetchShowcases");
+    this.$store.dispatch("nocloud/sp/fetchShowcases", !this.isLoggedIn);
     this.$store.dispatch("nocloud/sp/fetch", !this.isLoggedIn)
       .then(async () => {
         const data = localStorage.getItem("data");
@@ -1097,32 +1145,6 @@ export default {
         this.$router.push({ query: { product: this.productSize } });
       } else if (this.activeKey === 'OS') {
         this.activeKey = 'addons';
-      }
-    },
-    calculatePrice(price, period = this.period) {
-      const resourcesPrice = (this.itemSP.type === 'ione')
-        ? this.productFullPriceCustom * 24 * 30
-        : 0;
-
-      price *= this.currency.rate;
-
-      switch (period) {
-        case "minute":
-          return price / 60;
-        case "week":
-          return (price / 30) * 7;
-        case "hour":
-          return price;
-        case "day":
-          return (price + resourcesPrice) / 30
-        case "month":
-          return price + resourcesPrice;
-        case "year":
-          return ((price + resourcesPrice) / 30) * 365;
-        case "2 years":
-          return ((price + resourcesPrice) / 30) * 365 * 2;
-        default:
-          console.error("[VDC Calculator]: Wrong period in calc.", period);
       }
     },
     getPopupContainer(trigger) {
@@ -1511,10 +1533,10 @@ export default {
     },
     itemService(service) {
       const group = service.instancesGroups.find(({ type }) =>
-        this.getPlan.type.includes(type)
-      );
+        this.getPlan.type?.includes(type)
+      ) ?? {};
 
-      if (group.config.ssh) this.options.isSSHExist = true;
+      if (group.config?.ssh) this.options.isSSHExist = true;
       else this.options.isSSHExist = false;
     },
     itemSP() {
