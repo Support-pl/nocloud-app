@@ -17,7 +17,10 @@
         </a-col>
       </a-row>
     </a-modal>
-    <a-button @click="showModal">{{ $t('Add') }} SSH</a-button>
+
+    <slot name="actions" :showModal="showModal">
+      <a-button @click="showModal">{{ $t('Add') }} SSH</a-button>
+    </slot>
   </div>
 </template>
 <script>
