@@ -95,6 +95,13 @@
             {{ $t('ram') }}: {{ provider.resources.ram / 1000 ?? '?' }} Gb
           </div>
           <div>
+            {{ $t('gpu') }}:
+            <template v-if="provider.resources.gpu_name !== ''">
+              {{ provider.resources.gpu_name }} (x{{ provider.resources.gpu_count }})
+            </template>
+            <template v-else>{{ $t('ip.none') }}</template>
+          </div>
+          <div>
             {{ $t('Drive') }}: {{ provider.resources.drive_size / 1024 ?? '?' }} Gb
           </div>
         </div>
