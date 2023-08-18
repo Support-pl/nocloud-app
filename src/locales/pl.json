@@ -644,6 +644,7 @@
   "Add funds": "Dodać środki",
   "cpu": "CPU",
   "ram": "RAM",
+  "gpu": "GPU",
   "country": {
     "VN": "Vietnam",
     "BY": "Belarus",

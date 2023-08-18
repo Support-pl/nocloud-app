@@ -147,6 +147,19 @@
             </a-row>
           </transition>
 
+          <!-- GPU -->
+          <transition name="networkApear">
+            <a-row
+              type="flex"
+              justify="space-between"
+              v-if="product.resources?.gpu_name"
+              :style="{ 'font-size': '1.2rem' }"
+            >
+              <a-col> {{ $t("gpu") }}: </a-col>
+              <a-col>{{ product.resources.gpu_name }} (x{{ product.resources.gpu_count }})</a-col>
+            </a-row>
+          </transition>
+
           <!-- Drive -->
           <transition name="networkApear">
             <a-row
@@ -417,7 +430,7 @@
 
         <a-divider
           orientation="left"
-          style="margin-bottom: 0; margin-top: 0"
+          style="margin-bottom: 0; margin-top: 5px"
         >
           {{ $t("Total") }}:
         </a-divider>
@@ -883,7 +896,7 @@ export default {
 
       if (this.itemSP.type === "ovh") {
         price = this.productFullPriceOVH;
-      } else {
+      } else if (this.getPlan.kind === "STATIC") {
         price = this.productFullPriceStatic;
       }
 
