@@ -9,7 +9,12 @@
         :show-info="false"
       />
       <div class="invoices__wrapper" ref="invoices">
-        <a-radio-group default-value="Invoice" v-model="value" size="large">
+        <a-radio-group
+          size="large"
+          default-value="Invoice"
+          v-model="value"
+          v-if="!user.paid_stop"
+        >
           <a-radio-button value="Invoice"> {{ $t('Invoices') }} </a-radio-button>
           <a-radio-button value="Detail"> {{ $t('Transactions') }} </a-radio-button>
         </a-radio-group>

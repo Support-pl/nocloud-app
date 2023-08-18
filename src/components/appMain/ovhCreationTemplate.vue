@@ -150,23 +150,28 @@
               v-if="getPlan.type?.includes('cloud') && !options.isSSHExist"
               :label="$t('SSH key')"
             >
-              <a-select
-                style="width: 100%"
-                v-if="user.data?.ssh_keys?.length > 0"
-                :options="user.data?.ssh_keys"
-                :value="options.config.ssh"
-                @change="(value) => $emit('setData', { key: 'ssh', value, type: 'ovh' })"
-              />
-              <template v-else>
-                <a-input
+              <div style="display: flex; align-items: center; gap: 10px">
+                <a-select
+                  style="width: 100%"
+                  :options="user.data?.ssh_keys"
                   :value="options.config.ssh"
                   :style="{ boxShadow: `0 0 2px 2px var(${(options.config.ssh?.length > 1) ? '--main' : '--err'})` }"
-                  @change="({ target: { value } }) => $emit('setData', { key: 'ssh', value, type: 'ovh' })"
+                  @change="(value) => $emit('setData', { key: 'ssh', value, type: 'ovh' })"
                 />
-                <div style="line-height: 1.5; color: var(--err)" v-if="!(options.config.ssh?.length > 1)">
-                  {{ $t('ssl_product.field is required') }}
-                </div>
-              </template>
+
+                <add-ssh>
+                  <template v-slot:actions="{ showModal }">
+                    <a-icon
+                      type="plus"
+                      style="color: var(--main); font-size: 20px; vertical-align: middle"
+                      @click="showModal"
+                    />
+                  </template>
+                </add-ssh>
+              </div>
+              <div style="line-height: 1.5; color: var(--err)" v-if="!(options.config.ssh?.length > 1)">
+                {{ $t('ssl_product.field is required') }}
+              </div>
             </a-form-item>
           </a-col>
         </a-row>
@@ -240,10 +245,11 @@
 
 <script>
 import passwordMeter from 'vue-simple-password-meter';
+import addSsh from '@/components/appMain/cloud/openCloud/addSSH.vue';
 
 export default {
   name: 'ovh-creation-template',
-  components: { passwordMeter },
+  components: { passwordMeter, addSsh },
   props: {
     getPlan: { type: Object, default: {} },
     itemSP: { type: Object, default: null },

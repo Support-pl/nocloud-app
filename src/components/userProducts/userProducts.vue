@@ -160,7 +160,7 @@ export default {
     const promises = [];
 
     if (this.showcases.length < 1) {
-      promises.push(this.$store.dispatch('nocloud/sp/fetchShowcases'));
+      promises.push(this.$store.dispatch('nocloud/sp/fetchShowcases', !this.isLogged));
     }
     if (this.sp.length < 1) {
       promises.push(this.$store.dispatch('nocloud/sp/fetch', !this.isLogged));
@@ -171,6 +171,7 @@ export default {
 
     Promise.all(promises)
       .catch((err) => {
+        if (err.code === 12) return;
         const message = err.response?.data?.message ?? err.message ?? err;
 
         this.$notification['error']({ message: this.$t(message) });

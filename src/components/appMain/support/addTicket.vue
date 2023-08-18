@@ -11,7 +11,7 @@
       <a-form-model layout="vertical">
         <a-form-model-item :label="$t('department')">
           <a-select v-model="ticketDepartment" placeholder="department">
-            <a-select-option v-for="dep in departments" :key="dep.id" :value="dep.id" >
+            <a-select-option v-for="dep in filteredDepartments" :key="dep.id" :value="dep.id" >
               {{ dep.name }}
             </a-select-option>
           </a-select>
@@ -55,7 +55,15 @@ export default {
   },
   computed: {
     user() {
+      return this.$store.getters['nocloud/auth/billingData'];
+    },
+    userdata() {
       return this.$store.getters['nocloud/auth/userdata'];
+    },
+    filteredDepartments() {
+      return this.departments.filter(({ id }) =>
+        (id === 'nocloud' && this.user.only_tickets) ? false : true
+      );
     },
     ...mapGetters("support", {
       addTicketStatus: "isAddTicketState",
@@ -106,7 +114,7 @@ export default {
               await this.$store.dispatch('nocloud/chats/sendMessage', {
                 uuid: resp.uuid,
                 content: md.render(this.ticketMessage).trim(),
-                account: this.user.uuid,
+                account: this.userdata.uuid,
                 date: BigInt(Date.now())
               });
             }
@@ -129,14 +137,12 @@ export default {
   created() {
     this.isLoading = true;
     this.$store.dispatch("support/fetchDepartments")
-      .then(() => {
-        if (this.departments.length < 1) return;
-        this.ticketDepartment = this.departments[0].id;
-      })
       .catch(() => {
         this.$message.error(this.$t("departments not found"));
       })
       .finally(() => {
+        if (this.filteredDepartments.length < 1) return;
+        this.ticketDepartment = this.filteredDepartments[0].id;
         this.isLoading = false;
       });
   },

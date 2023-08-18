@@ -526,6 +526,12 @@ export default {
       this.isButtonsVisible = false;
     }
 
+    if (this.user.only_tickets) {
+      const i = this.headers.support.buttons.findIndex(({ icon }) => icon === 'telegram');
+
+      this.headers.support.buttons.splice(i, 1);
+    }
+
     const lang = navigator.language.replace(/-[a-z]{2}/i, '');
 
     if (this.langs.includes(lang) && !localStorage.getItem('lang')) {
