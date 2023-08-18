@@ -171,7 +171,7 @@ export default {
 
     Promise.all(promises)
       .catch((err) => {
-        if (err.code === 12) return;
+        if (err.response?.data?.code === 12) return;
         const message = err.response?.data?.message ?? err.message ?? err;
 
         this.$notification['error']({ message: this.$t(message) });

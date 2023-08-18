@@ -296,7 +296,8 @@ export default {
       return countriesWithDialCode.find(({ title }) => title === this.form.countryname)?.dial_code;
     },
     isDisabled() {
-      return !this.userData.roles?.settings;
+      if (!this.userData.roles) return;
+      return !this.userData.roles.settings;
     }
   },
   mounted() {
