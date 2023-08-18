@@ -571,6 +571,7 @@
    "Add funds":"Ajouter des fonds",
    "cpu":"CPU",
    "ram":"RAM",
+   "gpu": "GPU",
    "country":{
       "VN":"Viêt Nam",
       "BY":"Biélorussie",
