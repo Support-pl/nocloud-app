@@ -38,7 +38,7 @@
                     dominant-baseline="middle"
                     text-anchor="middle"
                   >
-                    {{ (+invoice.total || total).toFixed(2) }}
+                    {{ (+invoice.subtotal || total).toFixed(2) }}
                     {{ invoice.currencycode || "USD" }}
                   </text>
                 </svg>
