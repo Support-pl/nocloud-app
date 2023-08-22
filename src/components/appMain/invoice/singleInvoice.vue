@@ -84,9 +84,9 @@ export default {
       }
     },
     costColor() {
-      if (this.invoice?.total > 0) {
+      if (this.invoice?.subtotal > 0) {
         return this.$config.colors.success;
-      } else if (this.invoice?.total < 0) {
+      } else if (this.invoice?.subtotal < 0) {
         return this.$config.colors.err;
       } else {
         return null;
@@ -95,7 +95,7 @@ export default {
     total() {
       const rate = this.currency.rate;
 
-      return ((+this.invoice?.total + +this.invoice?.credit) * rate).toFixed(2);
+      return ((+this.invoice?.subtotal + +this.invoice?.credit) * rate).toFixed(2);
     }
   },
   methods: {
