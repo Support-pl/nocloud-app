@@ -29,7 +29,7 @@ export default {
 			state.addTicketState = !state.addTicketState;
 		},
 		setDepartments(state, data) {
-			state.departments = [...data, { name: 'NoCloud Bot', id: 'nocloud' }];
+			state.departments = data;
 		},
 	},
 	actions: {

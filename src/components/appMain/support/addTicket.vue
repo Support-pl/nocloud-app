@@ -61,9 +61,10 @@ export default {
       return this.$store.getters['nocloud/auth/userdata'];
     },
     filteredDepartments() {
-      return this.departments.filter(({ id }) =>
-        (id === 'nocloud' && this.user.only_tickets) ? false : true
-      );
+      const { departments } = this.$store.getters['nocloud/chats/getDefaults'];
+
+      if (this.user.only_tickets) return this.departments;
+      else return [...this.departments, ...departments];
     },
     ...mapGetters("support", {
       addTicketStatus: "isAddTicketState",
@@ -86,10 +87,16 @@ export default {
         return;
       }
 
-      const request = (this.ticketDepartment === 'nocloud')
+      const { departments } = this.$store.getters['nocloud/chats/getDefaults'];
+      const ids = departments.map(({ id }) => id);
+
+      const request = (ids.includes(this.ticketDepartment))
         ? this.$store.dispatch('nocloud/chats/createChat', {
-            subject: this.ticketTitle,
-            message: md.render(this.ticketMessage).trim()
+            department: this.ticketDepartment,
+            chat: {
+              subject: this.ticketTitle,
+              message: md.render(this.ticketMessage).trim()
+            }
           })
         : this.$api.get(this.baseURL, { params: {
             run: 'create_ticket',
@@ -99,7 +106,6 @@ export default {
           }});
 
       this.isSending = true;
-      
       request
         .then(async (resp) => {
           if (resp.result === "success") {
@@ -136,7 +142,10 @@ export default {
   },
   created() {
     this.isLoading = true;
-    this.$store.dispatch("support/fetchDepartments")
+    Promise.all([
+      this.$store.dispatch("nocloud/chats/fetchDefaults"),
+      this.$store.dispatch("support/fetchDepartments")
+    ])
       .catch(() => {
         this.$message.error(this.$t("departments not found"));
       })
