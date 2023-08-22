@@ -266,7 +266,7 @@ export default {
       setTimeout(() => {
         const period = (this.mode === 'default') ? 'P1M' : 'P1H';
         const products = Object.values(this.getPlan.products ?? {}).filter((product) =>
-          product.title.includes(value) && product.resources.period === period
+          product.title === value && product.resources.period === period
         );
         const { os } = products[0]?.meta ?? {};
 
@@ -309,6 +309,7 @@ export default {
 
 .order__grid-item h1 {
   margin-bottom: 5px;
+  word-break: break-all;
   color: inherit;
 }
 

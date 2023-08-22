@@ -659,6 +659,13 @@ export default {
     },
     '$i18n.locale'(value) {
       localStorage.setItem('lang', value);
+    },
+    user(value) {
+      if (value.only_tickets) {
+      const i = this.headers.support.buttons.findIndex(({ icon }) => icon === 'telegram');
+
+      this.headers.support.buttons.splice(i, 1);
+    }
     }
   }
 }
