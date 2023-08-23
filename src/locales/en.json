@@ -1,6 +1,7 @@
 {
 	"localePrefix": "en",
 	"localeLang": "English",
+  "locale": "english",
 	"coming soon": "Coming soon",
 	"Settings": "Settings",
 	"Buy a license": "Buy a license",
