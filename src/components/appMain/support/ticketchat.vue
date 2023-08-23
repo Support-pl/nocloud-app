@@ -306,7 +306,7 @@ export default {
   flex-direction: column;
   position: relative;
   padding-top: 64px;
-  padding-bottom: 55px;
+  padding-bottom: 86px;
   background: var(--bright_bg);
 }
 

@@ -221,17 +221,14 @@ export default {
 			}
 
 			const temp = JSON.parse(JSON.stringify(this.userinfo));
+      const { locale } = this.$i18n.getLocaleMessage(this.$i18n.locale);
 
       temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`;
       temp.phonenumber = temp.phonenumber.replace(this.phonecode, '').replace(/[\s-]/g, '');
 
 			this.registerLoading = true;
 			api.get(this.baseURL, {
-        params: {
-          ...temp,
-          language: this.$i18n.locale,
-          run: 'create_user'
-        }
+        params: { ...temp, language: locale, run: 'create_user' }
       })
 			.then((res) => {
         if (res.result === 'error') this.$message.error(res.message);

@@ -39,15 +39,19 @@ export default {
     transport: null,
     accounts: null,
     stream: null,
+    defaults: {},
     messages: [],
     chats: new Map()
   },
   mutations: {
-    setChats(state, value ) {
+    setChats(state, value) {
       state.chats = new Map(value);
     },
     setMessages(state, value) {
       state.messages = value;
+    },
+    setDefaults(state, value) {
+      state.defaults = value;
     },
     updateChat(state, event) {
       const { value: chat } = event.item;
@@ -100,7 +104,7 @@ export default {
   actions: {
     createTransport({ state, rootState }) {
       const transport = createGrpcWebTransport({
-        baseUrl: 'https://api.nocloud.ione-cloud.net/',
+        baseUrl: (VUE_APP_BASE_URL.endsWith('/') ? VUE_APP_BASE_URL : `${VUE_APP_BASE_URL}/`),
         interceptors: [
           (next) => async (req) => {
             const { token } = rootState.nocloud.auth;
@@ -187,16 +191,21 @@ export default {
         console.debug(error);
       }
     },
-    async createChat({ state, dispatch, rootState }, chat) {
+    async fetchDefaults({ state, dispatch, commit }) {
       const transport = state.transport ?? await dispatch('createTransport');
-      const chatsApi = createPromiseClient(ChatsAPI, transport);
       const usersApi = createPromiseClient(UsersAPI, transport);
       const defaults = await usersApi.fetchDefaults(new Empty());
+      
+      commit('setDefaults', defaults);
+    },
+    async createChat({ state, dispatch, rootState }, { chat, department }) {
+      const transport = state.transport ?? await dispatch('createTransport');
+      const chatsApi = createPromiseClient(ChatsAPI, transport);
 
       const { uuid } = rootState.nocloud.auth.userdata;
       const newChat = new Chat({
-        gateways: defaults.gateways,
-        admins: defaults.admins,
+        gateways: state.defaults.gateways,
+        admins: state.defaults.admins.filter((uuid) => uuid === department),
         users: [uuid],
         topic: chat.subject,
         role: Role.OWNER,
@@ -226,6 +235,12 @@ export default {
   },
   getters: {
     getChats: (state) => state.chats,
-    getMessages: (state) => state.messages
+    getMessages: (state) => state.messages,
+    getDefaults: (state) => ({
+      ...state.defaults,
+      departments: state.defaults.departments?.map(
+        ({ admin, title }) => ({ id: admin, name: title })
+      ) ?? []
+    })
   }
 }

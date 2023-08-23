@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { proto3, Value } from "@bufbuild/protobuf";
+import { proto3, Struct, Value } from "@bufbuild/protobuf";
 
 /**
  * @generated from enum cc.Role
@@ -95,6 +95,17 @@ export const Chats = proto3.makeMessageType(
 );
 
 /**
+ * @generated from message cc.GetawayRequest
+ */
+export const GetawayRequest = proto3.makeMessageType(
+  "cc.GetawayRequest",
+  () => [
+    { no: 1, name: "gateway", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "gateway_id", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+  ],
+);
+
+/**
  * @generated from message cc.Attachment
  */
 export const Attachment = proto3.makeMessageType(
@@ -122,6 +133,7 @@ export const Message = proto3.makeMessageType(
     { no: 9, name: "edited", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 10, name: "under_review", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 11, name: "readers", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 12, name: "meta", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
   ],
 );
 
@@ -143,6 +155,19 @@ export const User = proto3.makeMessageType(
   () => [
     { no: 1, name: "uuid", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "data", kind: "message", T: Struct },
+  ],
+);
+
+/**
+ * @generated from message cc.Department
+ */
+export const Department = proto3.makeMessageType(
+  "cc.Department",
+  () => [
+    { no: 1, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "admin", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ],
 );
 
@@ -154,6 +179,7 @@ export const Defaults = proto3.makeMessageType(
   () => [
     { no: 1, name: "gateways", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 2, name: "admins", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 3, name: "departments", kind: "message", T: Department, repeated: true },
   ],
 );
 

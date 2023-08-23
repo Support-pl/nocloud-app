@@ -844,7 +844,7 @@ export default {
             price.push(resource.price / resource.period * 3600 * (size / 1024));
           } else {
             const { size } = (this.activeKey === 'location')
-              ? { size: this.options[key].min }
+              ? { size: this.options[key]?.min ?? 0 }
               : this.options[key];
 
             price.push(resource.price / resource.period * 3600 * size);
@@ -1467,24 +1467,15 @@ export default {
         });
       }
     },
-    // setAddon(name, value) {
-    //   if (name == "os") {
-    //     const data = this.getAddons[name];
-    //     this.options.os.name = data.find(
-    //       (el) => el.id == value
-    //     ).description.TITLE;
-    //   }
+    setDefaultLocation() {
+      const item = this.showcases.find(({ uuid }) => uuid === this.showcase);
+      const locationItem = this.locations.find(({ id }) =>
+        id.includes(item?.promo.main?.default)
+      );
 
-    //   this.options.addons[name] = value;
-    //   let addons = [];
-    //   if (name == "drive") {
-    //     addons = this.getAddons[this.options.drive ? "ssd" : "hdd"];
-    //   } else {
-    //     addons = this.getAddons[name];
-    //   }
-    //   const addon = addons.find((el) => el.id == value);
-    //   this.options.addonsObjects[name] = addon !== undefined ? addon : null;
-    // },
+      if (!locationItem) return;
+      this.locationId = locationItem.id;
+    },
     sliderNavNext() {
       if (this.sliderIsCanNext) {
         this.options.slide += 1;
@@ -1613,7 +1604,9 @@ export default {
           if (Object.keys(this.periods).length % 3 === 1) $el.style.gridColumn = '2 / 3';
         }
       });
-    }
+    },
+    showcase() { this.setDefaultLocation() },
+    locations() { this.setDefaultLocation() }
   },
 };
 </script>
