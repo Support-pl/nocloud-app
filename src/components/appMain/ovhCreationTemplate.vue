@@ -327,7 +327,8 @@ export default {
       return codes.find((el) => keys.includes(el)) ?? '-1';
     },
     addonPrice({ periods }) {
-      const period = periods.find(({ pricingMode }) => pricingMode === this.mode);
+      const period = periods.find(({ pricingMode }) => pricingMode === this.mode) ??
+        { price: { value: 0 } };
       const price = +(period.price.value * this.currency.rate).toFixed(2);
 
       return `${price} ${this.currency.code}`;
