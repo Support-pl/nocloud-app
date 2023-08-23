@@ -7,7 +7,21 @@
         </a-button>
       </template>
 
-      <a-input :value="code" :max-length="6" @input="formatText" />
+      <a-list size="small" :data-source="data">
+        <template #renderItem="item, index">
+          <a-list-item style="padding: 12px 0 0" v-if="item === 'input'">
+            <a-input :value="code" :max-length="6" @input="formatText" />
+          </a-list-item>
+
+          <a-list-item v-else>
+            {{ `${index + 1}. ${$t(item)}` }}
+
+            <template v-if="index === 0">
+              <a :href="link" target="_blank">link</a>
+            </template>
+          </a-list-item>
+        </template>
+      </a-list>
     </a-card>
   </div>
 </template>
@@ -19,7 +33,17 @@ import { ControlPacket } from "infinimesh-proto/build/es/handsfree/handsfree_pb"
 
 export default {
   name: 'handsfree-view',
-  data: () => ({ code: '' }),
+  data: () => ({
+    code: '',
+    link: 'https://t.me/nocloud_telegram_bot',
+    data: [
+      'Go to the telegram bot using the',
+      'Press the start button or type /start',
+      'Enter the code received by the bot',
+      'Click on send button',
+      'input'
+    ]
+  }),
   methods: {
     async sendCode() {
       const { token } = this.$store.state.nocloud.auth;
@@ -32,7 +56,7 @@ export default {
         if (appId !== 'core-chatting.telegram-bot') {
           throw new Error('[Error]: Failed to connect');
         }
-        window.open('https://t.me/nocloud_telegram_bot', '_blank');
+        window.open(this.link, '_blank');
       } catch (error) {
         this.$notification.error({
           message: this.$t(error.response?.data?.message ?? error.message ?? error)

@@ -22,7 +22,7 @@
     "markdown-it-emoji": "^2.0.2",
     "md5": "^2.2.1",
     "nocloud-ui": "^1.0.7",
-    "nocloudjsrest": "^1.5.11",
+    "nocloudjsrest": "^1.5.12",
     "qrcode.vue": "^1.7.0",
     "qrcodejs": "^1.0.0",
     "vnc-ui-vue": "^1.0.0",
