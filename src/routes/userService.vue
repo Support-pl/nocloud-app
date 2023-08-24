@@ -248,7 +248,7 @@ export default {
             .dispatch("nocloud/vms/deleteInstance", this.service.uuid)
             .then(() => {
               this.$notification.success({ message: `Done!` });
-              this.$router.push({ path: '/cloud' });
+              this.$router.push({ path: '/services' });
             })
             .catch((err) => {
               this.$notification.error({

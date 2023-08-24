@@ -23,6 +23,7 @@ function toDate(timestamp) {
 
 function changeMessage(message, user, uuid) {
   return {
+    uuid: message.uuid,
     date: toDate(Number(message.sent)),
     email: user.data?.email ?? 'none',
     message: message.content.trim(),
@@ -41,7 +42,8 @@ export default {
     stream: null,
     defaults: {},
     messages: [],
-    chats: new Map()
+    chats: new Map(),
+    rawMessages: new Map()
   },
   mutations: {
     setChats(state, value) {
@@ -49,6 +51,9 @@ export default {
     },
     setMessages(state, value) {
       state.messages = value;
+    },
+    setRawMessages(state, value) {
+      state.rawMessages = value;
     },
     setDefaults(state, value) {
       state.defaults = value;
@@ -81,7 +86,7 @@ export default {
         case EventType.MESSAGE_SENT: {
           const chat = state.chats.get(message.chat);
 
-          state.messages.push(newMessage);
+          // state.messages.push(newMessage);
           chat.meta = new ChatMeta({
             unread: chat.meta.unread + 1,
             lastMessage: message
@@ -163,6 +168,7 @@ export default {
             });
 
             commit('setMessages', replies);
+            commit('setRawMessages', messages);
             resolve({ status: 'Open', subject: chat.topic, replies });
           });
       })
@@ -234,6 +240,18 @@ export default {
       });
 
       messagesApi.send(newMessage);
+      return newMessage;
+    },
+    async editMessage({ state, dispatch }, message) {
+      const transport = state.transport ?? await dispatch('createTransport');
+      const messagesApi = createPromiseClient(MessagesAPI, transport);
+
+      const newMessage = new Message({
+        ...state.rawMessages.find(({ uuid }) => uuid === message.uuid),
+        content: message.content
+      });
+
+      messagesApi.update(newMessage);
       return newMessage;
     }
   },

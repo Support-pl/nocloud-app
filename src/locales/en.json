@@ -337,6 +337,8 @@
   "Done": "Done",
   "renew": "renew",
   "config": "config",
+  "copy": "copy",
+  "edit": "edit",
 	"all fields are required": "Please fill in all fields",
 	"field must contain more characters": "Field must contain more characters",
   "login is required": "Login is required",
