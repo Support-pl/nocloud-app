@@ -192,20 +192,24 @@ export default {
       }
     },
     async fetchDefaults({ state, dispatch, commit }) {
-      const transport = state.transport ?? await dispatch('createTransport');
-      const usersApi = createPromiseClient(UsersAPI, transport);
-      const defaults = await usersApi.fetchDefaults(new Empty());
-      
-      commit('setDefaults', defaults);
+      try {
+        const transport = state.transport ?? await dispatch('createTransport');
+        const usersApi = createPromiseClient(UsersAPI, transport);
+        const defaults = await usersApi.fetchDefaults(new Empty());
+        
+        commit('setDefaults', defaults);
+      } catch (error) {
+        console.debug(error);
+      }
     },
-    async createChat({ state, dispatch, rootState }, { chat, department }) {
+    async createChat({ state, dispatch, rootState }, { chat, departments }) {
       const transport = state.transport ?? await dispatch('createTransport');
       const chatsApi = createPromiseClient(ChatsAPI, transport);
 
       const { uuid } = rootState.nocloud.auth.userdata;
       const newChat = new Chat({
         gateways: state.defaults.gateways,
-        admins: state.defaults.admins.filter((uuid) => uuid === department),
+        admins: departments,
         users: [uuid],
         topic: chat.subject,
         role: Role.OWNER,
@@ -239,7 +243,7 @@ export default {
     getDefaults: (state) => ({
       ...state.defaults,
       departments: state.defaults.departments?.map(
-        ({ admin, title }) => ({ id: admin, name: title })
+        ({ admins, title }) => ({ id: Math.random(), admins, name: title })
       ) ?? []
     })
   }

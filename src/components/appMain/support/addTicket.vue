@@ -89,10 +89,11 @@ export default {
 
       const { departments } = this.$store.getters['nocloud/chats/getDefaults'];
       const ids = departments.map(({ id }) => id);
+      const { admins } = departments.find(({ id }) => id === this.ticketDepartment) ?? {};
 
       const request = (ids.includes(this.ticketDepartment))
         ? this.$store.dispatch('nocloud/chats/createChat', {
-            department: this.ticketDepartment,
+            departments: admins,
             chat: {
               subject: this.ticketTitle,
               message: md.render(this.ticketMessage).trim()
@@ -150,9 +151,10 @@ export default {
         this.$message.error(this.$t("departments not found"));
       })
       .finally(() => {
+        this.isLoading = false;
+
         if (this.filteredDepartments.length < 1) return;
         this.ticketDepartment = this.filteredDepartments[0].id;
-        this.isLoading = false;
       });
   },
 };
