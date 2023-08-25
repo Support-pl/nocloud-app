@@ -225,39 +225,39 @@ export default {
       this.replies.push({ ...message, date, requestor_type });
       setTimeout(() => { content.scrollTo(0, content.scrollHeight) }, 100);
 
-      // if (this.replies[0].gateways) {
-      //   this.$store.dispatch('nocloud/chats/sendMessage', {
-      //     uuid: this.$route.params.pathMatch,
-      //     content: message.message,
-      //     account: message.userid,
-      //     date: BigInt(message.date.getTime())
-      //   })
-      //     .then(({ uuid }) => {
-      //       this.replies.at(-1).uuid = uuid;
-      //     })
-      //     .catch((err) => {
-      //       this.replies.at(-1).error = true;
-      //       console.error(err);
-      //     })
-      //     .finally(() => {
-      //       this.replies.at(-1).sending = false;
-      //     });
-      //   this.messageInput = '';
-      //   return;
-      // }
+      if (this.replies[0].gateways) {
+        this.$store.dispatch('nocloud/chats/sendMessage', {
+          uuid: this.$route.params.pathMatch,
+          content: message.message,
+          account: message.userid,
+          date: BigInt(message.date.getTime())
+        })
+          .then(({ uuid }) => {
+            this.replies.at(-1).uuid = uuid;
+          })
+          .catch((err) => {
+            this.replies.at(-1).error = true;
+            console.error(err);
+          })
+          .finally(() => {
+            this.replies.at(-1).sending = false;
+          });
+        this.messageInput = '';
+        return;
+      }
 
-      // this.$api.get(this.baseURL, { params: {
-      //   run: 'answer_ticket',
-      //   id: this.$route.params.pathMatch,
-      //   message: this.messageInput,
-      // }})
-      //   .catch((err) => {
-      //     this.replies.at(-1).error = true;
-      //     console.error(err);
-      //   })
-      //   .finally(() => {
-      //     this.replies.at(-1).sending = false;
-      //   });
+      this.$api.get(this.baseURL, { params: {
+        run: 'answer_ticket',
+        id: this.$route.params.pathMatch,
+        message: this.messageInput,
+      }})
+        .catch((err) => {
+          this.replies.at(-1).error = true;
+          console.error(err);
+        })
+        .finally(() => {
+          this.replies.at(-1).sending = false;
+        });
       this.messageInput = "";
     },
     loadMessages() {
