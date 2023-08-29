@@ -564,7 +564,10 @@
 		"In Progress":"In progress",
 		"On Hold": "On hold",
 		"Open": "Open",
-		"Answered":"Answered"
+		"Answered":"Answered",
+    "New": "New",
+    "Resolve": "Resolved",
+    "Close": "Closed"
 	},
   "Domains": "Domains",
   "domains": "domains",
@@ -624,7 +627,12 @@
 		"On Hold": "On hold",
 		"Answered":"Answered",
 		"Cancelled":"Cancelled",
-    "Draft": "Draft"
+    "Draft": "Draft",
+    "0": "New",
+    "1": "Open",
+    "3": "In progress",
+    "4": "Resolved",
+    "5": "Closed"
 	},
 	"virtual":"virtual",
   "ssl": "SSL",

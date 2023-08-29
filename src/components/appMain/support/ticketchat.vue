@@ -75,39 +75,43 @@
     </div>
 
     <div class="chat__footer">
-      <a-tag
-        closable
-        color="blue"
-        style="font-size: 18px; padding: 5px 7px; transform: translate(50px, -70px)"
-        v-model="editing"
-        @close="changeEditing()"
-      >
-        {{ $t('editing') | capitalize }}
-      </a-tag>
-      <a-textarea
-        allowClear
-        type="text"
-        class="chat__input"
-        name="message"
-        id="message"
-        v-model="messageInput"
-        :style="(editing) ? 'transform: translateX(-50px)' : null"
-        :disabled="status == 'Closed'"
-        :autoSize="{ minRows: 2, maxRows: 100 }"
-        :placeholder="$t('message') + '...'"
-        @keyup.shift.enter.exact="newLine"
-        @keydown.enter.exact.prevent="sendMessage"
-      >
-      </a-textarea>
       <div
-        class="chat__send"
-        :style="(editing) ? 'transform: translateX(-50px)' : null"
-        @click="sendMessage"
+        class="chat__container"
+        style="grid-template-columns: 1fr auto; align-items: end"
       >
-        <a-icon type="arrow-up" />
-      </div>
-      <div v-if="showSendFiles" class="chat__send">
-        <a-icon type="plus" />
+        <a-tag
+          closable
+          color="blue"
+          class="chat__tag"
+          :visible="!!editing"
+          @close="changeEditing()"
+        >
+          <span style="margin-bottom: 7px">{{ $t('editing') | capitalize }}:</span>
+          <span style="font-size: 14px; grid-column: 1 / 3; order: 1; white-space: normal">
+            {{ getMessage(editing) }}
+          </span>
+        </a-tag>
+
+        <a-textarea
+          allowClear
+          type="text"
+          class="chat__input"
+          name="message"
+          id="message"
+          v-model="messageInput"
+          :disabled="status == 'Closed'"
+          :autoSize="{ minRows: 2, maxRows: 100 }"
+          :placeholder="$t('message') + '...'"
+          @keyup.shift.enter.exact="newLine"
+          @keydown.enter.exact.prevent="sendMessage"
+        >
+        </a-textarea>
+        <div class="chat__send" @click="sendMessage">
+          <a-icon type="arrow-up" />
+        </div>
+        <div v-if="showSendFiles" class="chat__send">
+          <a-icon type="plus" />
+        </div>
       </div>
     </div>
   </div>
@@ -277,6 +281,8 @@ export default {
           this.status = resp.status;
           this.replies = resp.replies ?? [];
           this.subject = resp.subject;
+
+          this.replies.sort((a, b) => Number(a.sent - b.sent));
         })
         .finally(() => {
           setTimeout(() => {
@@ -303,8 +309,6 @@ export default {
       this.sendMessage();
     },
     editMessage(uuid) {
-      this.editing = null;
-      this.messageInput = '';
       this.$store.dispatch('nocloud/chats/editMessage', {
         content: this.messageInput, uuid
       })
@@ -314,11 +318,17 @@ export default {
           this.$notification.error({ message: this.$t(message) });
           console.error(err);
         });
+
+      this.editing = null;
+      this.messageInput = '';
     },
     changeEditing(message = {}) {
       this.editing = message.uuid ?? null;
       this.messageInput = message.message ?? '';
       document.getElementById('message').focus();
+    },
+    getMessage(uuid) {
+      return this.replies?.find((reply) => reply.uuid === uuid)?.message;
     },
     addToClipboard(text) {
       if (navigator?.clipboard) {
@@ -357,7 +367,6 @@ export default {
   flex-direction: column;
   position: relative;
   padding-top: 64px;
-  padding-bottom: 86px;
   background: var(--bright_bg);
 }
 
@@ -380,7 +389,17 @@ export default {
   align-items: center;
   max-width: 768px;
   height: 100%;
+  width: 100%;
   margin: 0 auto;
+}
+
+.chat__tag {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-column: 1 / 3;
+  padding: 5px 7px;
+  margin-right: auto;
+  font-size: 18px;
 }
 
 .chat__title {
@@ -408,10 +427,6 @@ export default {
   align-items: flex-end;
   background-color: var(--bright_bg);
   padding: 10px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
 }
 
 .chat__input {

@@ -19,6 +19,20 @@ export const Role = proto3.makeEnum(
 );
 
 /**
+ * @generated from enum cc.Status
+ */
+export const Status = proto3.makeEnum(
+  "cc.Status",
+  [
+    {no: 0, name: "NEW"},
+    {no: 1, name: "OPEN"},
+    {no: 3, name: "IN_PROGRESS"},
+    {no: 4, name: "RESOLVE"},
+    {no: 5, name: "CLOSE"},
+  ],
+);
+
+/**
  * @generated from enum cc.Kind
  */
 export const Kind = proto3.makeEnum(
@@ -81,6 +95,7 @@ export const Chat = proto3.makeMessageType(
     { no: 7, name: "topic", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 8, name: "meta", kind: "message", T: ChatMeta, opt: true },
     { no: 9, name: "created", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 10, name: "status", kind: "enum", T: proto3.getEnumType(Status) },
   ],
 );
 

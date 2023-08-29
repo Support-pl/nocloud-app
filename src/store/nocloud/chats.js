@@ -5,7 +5,7 @@ import {
   ChatsAPI, MessagesAPI, StreamService, UsersAPI
 } from '@/libs/cc_connect/cc_connect';
 import {
-  Empty, Chat, Message, ChatMeta, Role, Kind, EventType, Users, User
+  Empty, Chat, Message, ChatMeta, Role, Kind, EventType, Users, User, Status
 } from '@/libs/cc_connect/cc_pb';
 
 function toDate(timestamp) {
@@ -25,6 +25,7 @@ function changeMessage(message, user, uuid) {
   return {
     uuid: message.uuid,
     date: toDate(Number(message.sent)),
+    sent: message.sent,
     email: user.data?.email ?? 'none',
     message: message.content.trim(),
     name: user.title ?? 'anonymous',
@@ -75,7 +76,7 @@ export default {
     },
     updateMessage(state, event) {
       const { value: message } = event.item;
-      const i = state.messages.findIndex(({ id }) => id === message.uuid);
+      const i = state.messages.findIndex(({ uuid }) => uuid === message.uuid);
       const user = state.accounts.users.find(
         (account) => account.uuid === message.sender
       ) ?? {};
@@ -169,7 +170,7 @@ export default {
 
             commit('setMessages', replies);
             commit('setRawMessages', messages);
-            resolve({ status: 'Open', subject: chat.topic, replies });
+            resolve({ status: chat.status, subject: chat.topic, replies });
           });
       })
     },
@@ -256,7 +257,31 @@ export default {
     }
   },
   getters: {
-    getChats: (state) => state.chats,
+    getAllChats: (state) => state.chats,
+    getChats(state, _, { support }) {
+			if (support.filter[0] == 'all' || support.filter.length == 0) {
+        return state.chats;
+			} else {
+        const filters = support.filter.map((el) => {
+          if (!el.includes(' ')) return el;
+          return el.split(' ').map((el) =>
+            `${el[0].toUpperCase()}${el.slice(1)}`
+          ).join('-');
+        });
+        const result = [];
+
+				state.chats.forEach((chat) => {
+          const status = Status[chat.status].toLowerCase();
+          const capitalized = `${status[0].toUpperCase()}${status.slice(1)}`;
+
+          if (filters.includes(capitalized)) {
+            result.push(chat);
+          }
+        });
+
+        return result;
+			}
+    },
     getMessages: (state) => state.messages,
     getDefaults: (state) => ({
       ...state.defaults,
