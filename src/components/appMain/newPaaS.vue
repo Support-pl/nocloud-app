@@ -1269,18 +1269,14 @@ export default {
           .then(() => {
             setTimeout(() => {
               this.setOneService();
-              const orderDataNew = Object.assign(
-                {},
-                { instances_groups: this.itemService.instancesGroups },
-                { ...this.itemService }
-              );
-              let group = orderDataNew.instances_groups.find(
+              const orderDataNew = Object.assign({}, this.itemService);
+              let group = orderDataNew.instancesGroups.find(
                 (el) => el.sp === this.itemSP.uuid
               );
 
               if (!group) {
-                orderDataNew.instances_groups.push(newGroup);
-                group = orderDataNew.instances_groups.at(-1);
+                orderDataNew.instancesGroups.push(newGroup);
+                group = orderDataNew.instancesGroups.at(-1);
               }
               if (newInstance.config.type === 'cloud') {
                 group.config = { ssh: this.options.config.ssh };
@@ -1295,7 +1291,6 @@ export default {
               group.resources.ips_private = res.private;
               group.resources.ips_public = res.public;
 
-              delete orderDataNew.instancesGroups;
               if (this.checkBalance()) this.updateVM(orderDataNew);
             }, 300);
           });
@@ -1307,7 +1302,7 @@ export default {
             title: this.userdata.title,
             context: {},
             version: "1",
-            instances_groups: [
+            instancesGroups: [
               {
                 title: this.userdata.title + Date.now(),
                 resources: {
@@ -1323,7 +1318,7 @@ export default {
         };
 
         if (newInstance.config.type === 'cloud') {
-          orderData.service.instances_groups[0].config = { ssh: this.options.config.ssh };
+          orderData.service.instancesGroups[0].config = { ssh: this.options.config.ssh };
         }
         if (this.checkBalance()) this.orderVM(orderData);
       }

@@ -174,11 +174,11 @@
 
             <a-form-item style="margin-top: 15px" :label="$t('clientinfo.username') | capitalize">
               <a-input
-                :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
-                :value="vmName"
+                :style="{ boxShadow: (username.length < 2) ? '0 0 2px 2px var(--err)' : null }"
+                :value="username"
                 @change="({ target: { value } }) => $emit('setData', { key: 'username', value })"
               />
-              <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
+              <div style="line-height: 1.5; color: var(--err)" v-if="username.length < 2">
                 {{ $t('ssl_product.field is required') }}
               </div>
             </a-form-item>
