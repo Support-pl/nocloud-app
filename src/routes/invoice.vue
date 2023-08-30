@@ -76,6 +76,9 @@ export default {
       return this.$store.getters["nocloud/auth/isLoggedIn"];
     },
     user() {
+      return this.$store.getters["nocloud/auth/billingData"];
+    },
+    userdata() {
       return this.$store.getters["nocloud/auth/userdata"];
     },
     transactions() {
@@ -146,7 +149,7 @@ export default {
 
       this.$store.dispatch("nocloud/transactions/fetch", {
         page, limit,
-        account: this.user.uuid,
+        account: this.userdata.uuid,
         field: "proc",
         sort: "desc",
         type: "transaction"
@@ -155,10 +158,10 @@ export default {
     }
   },
   mounted() {
-    if (this.isLogged && this.user.uuid) {
+    if (this.isLogged && this.userdata.uuid) {
       this.$store.dispatch("invoices/autoFetch");
 
-      api.transactions.count({ account: this.user.uuid, type: "transaction" })
+      api.transactions.count({ account: this.userdata.uuid, type: "transaction" })
         .then(({ total }) => {
           this.$store.commit("nocloud/transactions/setTotal", +total);
         });
@@ -179,10 +182,10 @@ export default {
       this.$store.commit('nocloud/transactions/setActiveTab', this.value);
       if (this.value === 'Invoice') return;
       if (this.transactions.length > 0) return;
-      if (!this.user.uuid) return;
+      if (!this.userdata.uuid) return;
 
       this.$store.dispatch("nocloud/transactions/fetch", {
-        account: this.user.uuid,
+        account: this.userdata.uuid,
         page: this.currentPage,
         limit: this.pageSize,
         field: "proc",
@@ -190,12 +193,12 @@ export default {
         type: "transaction"
       });
     },
-    user() {
+    userdata() {
       if (this.isLoading) return;
       this.$store.dispatch("invoices/autoFetch");
 
       this.$store.dispatch("nocloud/transactions/fetch", {
-        account: this.user.uuid,
+        account: this.userdata.uuid,
         page: this.currentPage,
         limit: this.pageSize,
         field: "proc",
@@ -203,7 +206,7 @@ export default {
         type: "transaction"
       });
 
-      api.transactions.count({ account: this.user.uuid, type: "transaction" })
+      api.transactions.count({ account: this.userdata.uuid, type: "transaction" })
         .then(({ total }) => {
           this.$store.commit("nocloud/transactions/setTotal", +total);
         });

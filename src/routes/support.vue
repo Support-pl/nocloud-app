@@ -19,6 +19,7 @@ import singleTicket from "@/components/appMain/support/singleTicket.vue";
 import addTicketField from '@/components/appMain/support/addTicket.vue';
 import loading from '@/components/loading/loading.vue';
 import empty from '@/components/empty/empty.vue';
+import { Status } from '@/libs/cc_connect/cc_pb';
 
 export default {
 	name: 'support',
@@ -44,13 +45,15 @@ export default {
 
       chats.forEach((ticket) => {
         const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
+        const status = Status[ticket.status].toLowerCase();
+
         const value = {
           id: ticket.uuid,
           tid: `${ticket.uuid.slice(0, 8)}...`,
           title: ticket.topic,
           date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
           message: ticket.meta.lastMessage?.content ?? '',
-          status: 'Open',
+          status: `${status[0].toUpperCase()}${status.slice(1)}`,
           unread: (isReaded) ? 0 : ticket.meta.unread
         };
 

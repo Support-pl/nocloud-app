@@ -57,10 +57,13 @@ export default {
   computed: {
     statusColor() {
       switch (this.ticket.status.toLowerCase()) {
+        case "new":
+          return this.$config.colors.main;
         case "open":
           return this.$config.colors.success;
         case "customer-reply":
           return this.$config.colors.warn;
+        case "close":
         case "closed":
           return this.$config.colors.err;
         default:

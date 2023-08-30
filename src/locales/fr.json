@@ -495,7 +495,10 @@
       "In Progress":"En cours",
       "On Hold":"En attente",
       "Open":"Ouvrir",
-      "Answered":"Répondu"
+      "Answered":"Répondu",
+      "New": "New",
+      "Resolve": "Resolved",
+      "Close": "Closed"
    },
    "Domains":"Domaines",
    "domains":"domaines",
@@ -547,7 +550,12 @@
       "On Hold":"En attente",
       "Answered":"Répondu",
       "Cancelled":"Annulé",
-      "Draft":"Brouillon"
+      "Draft":"Brouillon",
+      "0": "New",
+      "1": "Open",
+      "3": "In progress",
+      "4": "Resolved",
+      "5": "Closed"
    },
    "virtual":"virtuel",
    "input new name":"Saisir un nouveau nom",
