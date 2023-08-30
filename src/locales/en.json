@@ -555,6 +555,7 @@
  	"department":"Department",
  	"subject":"Subject",
 	"question":"Question",
+  "gateways": "Gateways",
 	"message":"Message",
   "description": "Description",
 	"ticketStatus":{

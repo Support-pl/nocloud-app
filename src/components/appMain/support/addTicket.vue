@@ -11,7 +11,11 @@
       <a-form-model layout="vertical">
         <a-form-model-item :label="$t('department')">
           <a-select v-model="ticketDepartment" placeholder="department">
-            <a-select-option v-for="dep in filteredDepartments" :key="dep.id" :value="dep.id" >
+            <a-select-option
+              v-for="dep of filteredDepartments"
+              :key="dep.id"
+              :value="dep.id"
+            >
               {{ dep.name }}
             </a-select-option>
           </a-select>
@@ -23,6 +27,18 @@
 
         <a-form-model-item :label="$t('question')">
           <a-textarea v-model="ticketMessage" rows="10" />
+        </a-form-model-item>
+
+        <a-form-model-item :label="$t('gateways')">
+          <a-select v-model="gateway" placeholder="gateways" mode="tags">
+            <a-select-option
+              v-for="gateway of gateways"
+              :key="gateway.id"
+              :value="gateway.id"
+            >
+              {{ gateway.name }}
+            </a-select-option>
+          </a-select>
         </a-form-model-item>
       </a-form-model>
     </a-spin>
@@ -46,6 +62,7 @@ export default {
   name: "addTicket",
   data() {
     return {
+      gateway: [],
       ticketDepartment: -1,
       ticketTitle: "",
       ticketMessage: "",
@@ -65,6 +82,14 @@ export default {
 
       if (this.user.only_tickets) return this.departments;
       else return [...this.departments, ...departments];
+    },
+    gateways() {
+      const { gateways = [] } = this.$store.getters['nocloud/chats/getDefaults'] ?? {};
+
+      return gateways.map((gateway) => ({
+        id: gateway,
+        name: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`
+      }));
     },
     ...mapGetters("support", {
       addTicketStatus: "isAddTicketState",
@@ -94,6 +119,7 @@ export default {
       const request = (ids.includes(this.ticketDepartment))
         ? this.$store.dispatch('nocloud/chats/createChat', {
             departments: admins,
+            gateways: this.gateways,
             chat: {
               subject: this.ticketTitle,
               message: md.render(this.ticketMessage).trim()

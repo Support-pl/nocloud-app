@@ -20,6 +20,7 @@ export default {
   components: { updateNotification },
   methods: {
     isRouteExist(name) {
+      if (name === 'root') name = 'services';
       if (!this.user.roles) return true;
       if (!(name in this.user.roles)) return true;
       switch (name) {
@@ -43,7 +44,6 @@ export default {
       if (data.uuid) {
         this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
         console.log(`Instance uuid: ${data.uuid}`);
-        return;
       } else if (this.$route.name.includes('login')) {
         this.$router.replace({ name: 'root' });
         console.log('Login page');
@@ -132,6 +132,13 @@ export default {
 
         close.forEach((el) => { el.addEventListener('click', open) });
       }, 100);
+    },
+    user(value) {
+      const isServicesExist = value.roles && !value.roles.services;
+
+      if (isServicesExist && ['root', 'services'].includes(this.$route.name)) {
+        this.$router.replace("settings");
+      }
     }
   }
 };

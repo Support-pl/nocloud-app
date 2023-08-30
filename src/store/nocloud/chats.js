@@ -209,20 +209,28 @@ export default {
         console.debug(error);
       }
     },
-    async createChat({ state, dispatch, rootState }, { chat, departments }) {
+    async createChat({ state, dispatch, rootState }, data) {
       const transport = state.transport ?? await dispatch('createTransport');
       const chatsApi = createPromiseClient(ChatsAPI, transport);
 
       const { uuid } = rootState.nocloud.auth.userdata;
       const newChat = new Chat({
-        gateways: state.defaults.gateways,
-        admins: departments,
+        gateways: data.gateways ?? state.defaults.gateways,
+        admins: data.departments ?? state.defaults.departments,
         users: [uuid],
-        topic: chat.subject,
+        topic: data.chat.subject,
         role: Role.OWNER,
-        meta: new ChatMeta({ lastMessage: chat.message })
+        meta: new ChatMeta({ lastMessage: data.chat.message })
       });
       const createdChat = await chatsApi.create(newChat);
+
+      state.chats.set(createdChat.uuid, createdChat);
+      return createdChat;
+    },
+    async updateChat({ state, dispatch, rootState }, chat) {
+      const transport = state.transport ?? await dispatch('createTransport');
+      const chatsApi = createPromiseClient(ChatsAPI, transport);
+      const createdChat = await chatsApi.update(chat);
 
       state.chats.set(createdChat.uuid, createdChat);
       return createdChat;

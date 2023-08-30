@@ -18,6 +18,26 @@
       </div>
     </div>
 
+    <a-alert
+      closable
+      type="info"
+      class="chat__notification"
+      message="You can also choose another way of communication"
+      v-if="!loading "
+    >
+      <template #description>
+        <a-checkbox-group :options="options" v-model="gateways" />
+        <a-button
+          type="primary"
+          size="small"
+          style="display: block; margin-top: 10px"
+          @click="updateChat"
+        >
+          {{ $t('Send') }}
+        </a-button>
+      </template>
+    </a-alert>
+
     <load v-if="loading" />
     <div v-else class="chat__content" ref="content">
       <template v-for="(reply, i) in replies">
@@ -142,7 +162,8 @@ export default {
       loading: true,
       chatid: this.$route.params.pathMatch,
       showSendFiles: false,
-      editing: null
+      editing: null,
+      gateways: []
     };
   },
   computed: {
@@ -157,6 +178,11 @@ export default {
       txt.innerHTML = this.subject;
       return txt.value;
     },
+    chat() {
+      const chats = this.$store.getters['nocloud/chats/getAllChats'];
+
+      return chats.get(this.chatid);
+    },
     messages() {
       const chatMessages = this.$store.getters['nocloud/chats/getMessages'];
       const tickets = this.replies.filter(({ uuid }) =>
@@ -164,6 +190,14 @@ export default {
       );
 
       return [...tickets, ...chatMessages];
+    },
+    options() {
+      const { gateways = [] } = this.$store.getters['nocloud/chats/getDefaults'] ?? {};
+
+      return gateways.map((gateway) => ({
+        value: gateway,
+        label: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`
+      }));
     },
   },
   methods: {
@@ -330,6 +364,11 @@ export default {
     getMessage(uuid) {
       return this.replies?.find((reply) => reply.uuid === uuid)?.message;
     },
+    updateChat() {
+      this.$store.dispatch('nocloud/chats/updateChat', {
+        ...this.chat, gateways: this.gateways
+      });
+    },
     addToClipboard(text) {
       if (navigator?.clipboard) {
         navigator.clipboard
@@ -350,13 +389,20 @@ export default {
     }
   },
   mounted() {
+    this.$store.dispatch('nocloud/chats/fetchChats');
     this.$store.dispatch('nocloud/chats/startStream');
+    this.$store.dispatch('nocloud/chats/fetchDefaults');
     this.loadMessages();
   },
   beforeRouteUpdate(to, from, next) {
     this.chatid = to.params.pathMatch;
     this.loadMessages();
   },
+  watch: {
+    chat(value) {
+      this.gateways = value.gateways ?? [];
+    }
+  }
 };
 </script>
 
@@ -400,6 +446,19 @@ export default {
   padding: 5px 7px;
   margin-right: auto;
   font-size: 18px;
+}
+
+.chat__notification {
+  position: absolute;
+  left: 50%;
+  z-index: 10;
+  width: 100%;
+  max-width: calc(768px - 30px);
+  transform: translate(-50%, 15px);
+}
+
+.chat__notification .ant-alert-message {
+  margin-right: 20px;
 }
 
 .chat__title {
@@ -585,5 +644,12 @@ export default {
 
 .popover-link {
   display: block;
+}
+
+@media (max-width: 768px) {
+  .chat__notification {
+    max-width: calc(100% - 30px);
+    transform: translate(-50%, 15px);
+  }
 }
 </style>
