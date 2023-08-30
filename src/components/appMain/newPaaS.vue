@@ -895,6 +895,7 @@ export default {
       }
 
       if (this.itemSP.type === "ovh") {
+        period = "hour";
         price = this.productFullPriceOVH;
       } else if (this.getPlan.kind === "STATIC") {
         price = this.productFullPriceStatic;
