@@ -18,6 +18,26 @@
       </div>
     </div>
 
+    <a-alert
+      closable
+      type="info"
+      class="chat__notification"
+      message="You can also choose another way of communication"
+      v-if="!loading "
+    >
+      <template #description>
+        <a-checkbox-group :options="options" v-model="gateways" />
+        <a-button
+          type="primary"
+          size="small"
+          style="display: block; margin-top: 10px"
+          @click="updateChat"
+        >
+          {{ $t('Send') }}
+        </a-button>
+      </template>
+    </a-alert>
+
     <load v-if="loading" />
     <div v-else class="chat__content" ref="content">
       <template v-for="(reply, i) in replies">
@@ -25,11 +45,35 @@
           {{ reply.date.split(' ')[0] }}
         </span>
         <a-popover
-          overlayClassName="chat__tooltip"
+          :overlayClassName="(reply.error) ? 'chat__tooltip error' : 'chat__tooltip'"
+          :trigger="(reply.error) ? 'click' : 'hover'"
           :placement="(isAdminSent(reply)) ? 'rightBottom' : 'leftBottom'"
         >
           <template #content>
-            <a-icon type="copy" @click="addToClipboard(reply.message)" />
+            <a-popover v-if="reply.error" :title="$t('Send error')">
+              <template #content>
+                <a class="popover-link" @click="deleteMessage(reply)">
+                  {{ $t("chat_Delete_message") }}
+                </a>
+                <a class="popover-link" @click="resendMessage(reply)">
+                  {{ $t("chat_Resend_message") }}
+                </a>
+              </template>
+              <a-icon type="exclamation-circle" class="msgStatus error" />
+            </a-popover>
+
+            <template v-else>
+              <div style="cursor: pointer" @click="addToClipboard(reply.message)">
+                <a-icon type="copy" /> {{ $t('copy') | capitalize }}
+              </div>
+              <div
+                style="cursor: pointer; margin-top: 5px"
+                v-if="isEditable(reply)"
+                @click="changeEditing(reply)"
+              >
+                <a-icon type="edit" /> {{ $t('edit') | capitalize }}
+              </div>
+            </template>
           </template>
 
           <div
@@ -45,49 +89,49 @@
               <span>{{ reply.date.slice(-8, -3) }}</span>
             </div>
             <a-icon v-if="reply.sending" type="loading" class="msgStatus loading" />
-
-            <a-popover v-if="reply.error" :title="$t('Send error')">
-              <template slot="content">
-                <a
-                  class="popover-link"
-                  slot="content"
-                  @click="messageDelete(reply)"
-                  >{{ $t("chat_Delete_message") }}</a
-                >
-                <a
-                  class="popover-link"
-                  slot="content"
-                  @click="messageResend(reply)"
-                  >{{ $t("chat_Resend_message") }}</a
-                >
-              </template>
-              <a-icon type="exclamation-circle" class="msgStatus error"></a-icon>
-            </a-popover>
           </div>
         </a-popover>
       </template>
     </div>
 
     <div class="chat__footer">
-      <a-textarea
-        allowClear
-        type="text"
-        class="chat__input"
-        name="message"
-        id="message"
-        v-model="messageInput"
-        :disabled="status == 'Closed'"
-        :autoSize="{ minRows: 2, maxRows: 100 }"
-        :placeholder="$t('message') + '...'"
-        @keyup.shift.enter.exact="newLine"
-        @keydown.enter.exact.prevent="sendMessage"
+      <div
+        class="chat__container"
+        style="grid-template-columns: 1fr auto; align-items: end"
       >
-      </a-textarea>
-      <div class="chat__send" @click="sendMessage">
-        <a-icon type="arrow-up" />
-      </div>
-      <div v-if="showSendFiles" class="chat__send">
-        <a-icon type="plus" />
+        <a-tag
+          closable
+          color="blue"
+          class="chat__tag"
+          :visible="!!editing"
+          @close="changeEditing()"
+        >
+          <span style="margin-bottom: 7px">{{ $t('editing') | capitalize }}:</span>
+          <span style="font-size: 14px; grid-column: 1 / 3; order: 1; white-space: normal">
+            {{ getMessage(editing) }}
+          </span>
+        </a-tag>
+
+        <a-textarea
+          allowClear
+          type="text"
+          class="chat__input"
+          name="message"
+          id="message"
+          v-model="messageInput"
+          :disabled="status == 'Closed'"
+          :autoSize="{ minRows: 2, maxRows: 100 }"
+          :placeholder="$t('message') + '...'"
+          @keyup.shift.enter.exact="newLine"
+          @keydown.enter.exact.prevent="sendMessage"
+        >
+        </a-textarea>
+        <div class="chat__send" @click="sendMessage">
+          <a-icon type="arrow-up" />
+        </div>
+        <div v-if="showSendFiles" class="chat__send">
+          <a-icon type="plus" />
+        </div>
       </div>
     </div>
   </div>
@@ -118,6 +162,8 @@ export default {
       loading: true,
       chatid: this.$route.params.pathMatch,
       showSendFiles: false,
+      editing: null,
+      gateways: []
     };
   },
   computed: {
@@ -132,6 +178,11 @@ export default {
       txt.innerHTML = this.subject;
       return txt.value;
     },
+    chat() {
+      const chats = this.$store.getters['nocloud/chats/getAllChats'];
+
+      return chats.get(this.chatid);
+    },
     messages() {
       const chatMessages = this.$store.getters['nocloud/chats/getMessages'];
       const tickets = this.replies.filter(({ uuid }) =>
@@ -140,15 +191,26 @@ export default {
 
       return [...tickets, ...chatMessages];
     },
+    options() {
+      const { gateways = [] } = this.$store.getters['nocloud/chats/getDefaults'] ?? {};
+
+      return gateways.map((gateway) => ({
+        value: gateway,
+        label: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`
+      }));
+    },
   },
   methods: {
     goBack() {
       this.$router.push("support");
     },
     beauty(message) {
+      message = md.render(message).trim();
       message = message.replace(/\n/g, "<br>");
       message = message.replace(/[\s\uFEFF\xA0]{2,}/g, " ");
-      return message.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, "");
+      message = message.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, "");
+
+      return message.replace(/^<p>/, '').replace(/<\/p>$/, '');
     },
     isDateVisible(replies, i) {
       if (i === 0) return true;
@@ -171,20 +233,29 @@ export default {
     isAdminSent(reply) {
       return reply.requestor_type !== 'Owner';
     },
+    isEditable(reply) {
+      return reply.userid === this.user.uuid;
+    },
     sendMessage() {
       if (this.messageInput.trim().length < 1) return;
       if (this.status == "Closed") return;
+      if (this.editing) {
+        this.editMessage(this.editing);
+        return;
+      }
+
       const message = {
         admin: "",
         attachment: "",
         contactid: "0",
         date: new Date(),
         email: this.user.data?.email ?? 'none',
-        message: md.render(this.messageInput).trim(),
+        message: md.render(this.messageInput).trim().replace(/^<p>/, '').replace(/<\/p>$/, ''),
         name: this.user.title,
         userid: this.user.uuid,
-        sending: true,
+        error: true,
       };
+
       const requestor_type = 'Owner';
       const date = this.date(message.date);
       const { content } = this.$refs;
@@ -244,6 +315,8 @@ export default {
           this.status = resp.status;
           this.replies = resp.replies ?? [];
           this.subject = resp.subject;
+
+          this.replies.sort((a, b) => Number(a.sent - b.sent));
         })
         .finally(() => {
           setTimeout(() => {
@@ -261,13 +334,40 @@ export default {
         .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
         .join("&");
     },
-    messageDelete(message) {
+    deleteMessage(message) {
       this.replies.splice(this.replies.indexOf(message), 1);
     },
-    messageResend(message) {
-      this.messageDelete(message);
+    resendMessage(message) {
+      this.deleteMessage(message);
       this.messageInput = message.message;
       this.sendMessage();
+    },
+    editMessage(uuid) {
+      this.$store.dispatch('nocloud/chats/editMessage', {
+        content: this.messageInput, uuid
+      })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message;
+
+          this.$notification.error({ message: this.$t(message) });
+          console.error(err);
+        });
+
+      this.editing = null;
+      this.messageInput = '';
+    },
+    changeEditing(message = {}) {
+      this.editing = message.uuid ?? null;
+      this.messageInput = message.message ?? '';
+      document.getElementById('message').focus();
+    },
+    getMessage(uuid) {
+      return this.replies?.find((reply) => reply.uuid === uuid)?.message;
+    },
+    updateChat() {
+      this.$store.dispatch('nocloud/chats/updateChat', {
+        ...this.chat, gateways: this.gateways
+      });
     },
     addToClipboard(text) {
       if (navigator?.clipboard) {
@@ -289,13 +389,20 @@ export default {
     }
   },
   mounted() {
+    this.$store.dispatch('nocloud/chats/fetchChats');
     this.$store.dispatch('nocloud/chats/startStream');
+    this.$store.dispatch('nocloud/chats/fetchDefaults');
     this.loadMessages();
   },
   beforeRouteUpdate(to, from, next) {
     this.chatid = to.params.pathMatch;
     this.loadMessages();
   },
+  watch: {
+    chat(value) {
+      this.gateways = value.gateways ?? [];
+    }
+  }
 };
 </script>
 
@@ -306,7 +413,6 @@ export default {
   flex-direction: column;
   position: relative;
   padding-top: 64px;
-  padding-bottom: 86px;
   background: var(--bright_bg);
 }
 
@@ -329,7 +435,30 @@ export default {
   align-items: center;
   max-width: 768px;
   height: 100%;
+  width: 100%;
   margin: 0 auto;
+}
+
+.chat__tag {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-column: 1 / 3;
+  padding: 5px 7px;
+  margin-right: auto;
+  font-size: 18px;
+}
+
+.chat__notification {
+  position: absolute;
+  left: 50%;
+  z-index: 10;
+  width: 100%;
+  max-width: calc(768px - 30px);
+  transform: translate(-50%, 15px);
+}
+
+.chat__notification .ant-alert-message {
+  margin-right: 20px;
 }
 
 .chat__title {
@@ -357,10 +486,6 @@ export default {
   align-items: flex-end;
   background-color: var(--bright_bg);
   padding: 10px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
 }
 
 .chat__input {
@@ -422,6 +547,12 @@ export default {
   padding: 6px 8px;
 }
 
+.chat__tooltip.error .ant-popover-inner,
+.chat__tooltip.error .ant-popover-arrow {
+  background: transparent;
+  box-shadow: none;
+}
+
 .chat__message {
   background: #dcfdbe;
   font-weight: 500;
@@ -436,7 +567,12 @@ export default {
 }
 
 .chat__message pre {
+  font-size: 14px;
   white-space: pre-wrap;
+}
+
+.chat__message pre img {
+  width: 100%;
 }
 
 .chat__date {
@@ -466,16 +602,15 @@ export default {
 }
 
 .msgStatus.error {
-  left: -20px;
-  bottom: 5px;
-  transform: translateY(-50%);
-  background: var(--err);
-  border-radius: 50%;
-  color: #fff;
+  position: static;
   width: 20px;
   height: 20px;
-  line-height: 22px;
+  line-height: 1.9;
+  border-radius: 50%;
+  background: var(--err);
+  color: #fff;
   cursor: pointer;
+  transform: translate(15px, 5px);
 }
 
 .chat__message::after {
@@ -509,5 +644,12 @@ export default {
 
 .popover-link {
   display: block;
+}
+
+@media (max-width: 768px) {
+  .chat__notification {
+    max-width: calc(100% - 30px);
+    transform: translate(-50%, 15px);
+  }
 }
 </style>

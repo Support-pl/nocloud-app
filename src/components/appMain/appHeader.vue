@@ -131,25 +131,23 @@
                   :visible="isVisible"
                   @visibleChange="((isOpen) ? isVisible = true : isVisible = !isVisible)"
                 >
-                  <template slot="content">
-                    <div>
-                      <a-checkbox-group
-                        v-if="activeInvoiceTab === 'Invoice'"
-                        v-model="checkedList"
-                        :options="plainOptions"
-                        @change="onChange"
-                      />
-                      <a-range-picker
-                        show-time
-                        v-else-if="active === 'billing'"
-                        :value="checkedList"
-                        @ok="updateFilter"
-                        @change="onChangeRange"
-                        @openChange="openRange"
-                      />
-                    </div>
+                  <template #content>
+                    <a-range-picker
+                      show-time
+                      v-if="active === 'billing' && activeInvoiceTab === 'Detail'"
+                      :value="checkedList"
+                      @ok="updateFilter"
+                      @change="onChangeRange"
+                      @openChange="openRange"
+                    />
+                    <a-checkbox-group
+                      v-else
+                      v-model="checkedList"
+                      :options="plainOptions"
+                      @change="onChange"
+                    />
                   </template>
-                  <template slot="title">
+                  <template #title>
                     <span>{{ $t("filter") | capitalize }}</span>
                   </template>
                   <a-icon
@@ -226,6 +224,7 @@
 <script>
 import { mapActions, mapGetters, mapMutations } from "vuex";
 import balance from "@/components/balance/balance.vue";
+import { Status } from "@/libs/cc_connect/cc_pb.js";
 import moment from "moment";
 
 export default {
@@ -459,10 +458,14 @@ export default {
           localStorage.setItem("supportFilters", JSON.stringify(filters));
         }
 
-        this.getAllTickets.forEach((el) => {
+        [...this.getAllTickets, ...this.chats.values()].forEach((el) => {
+          const status = (typeof el.status === 'number')
+            ? Status[el.status].toLowerCase()
+            : el.status;
+          const capitalized = `${status[0].toUpperCase()}${status.slice(1)}`;
           const key = this.$t(`filterHeader.${el.status}`);
 
-          filtered[key] = el.status;
+          filtered[key] = capitalized;
         });
         this.$store.commit("support/updateFilter", info.map((el) => filtered[el]));
       }
@@ -546,6 +549,7 @@ export default {
       "getTickets",
       "getAllTickets",
     ]),
+    ...mapGetters("nocloud/chats", { chats: "getAllChats" }),
     ...mapGetters("app", ["getActiveTab"]),
     ...mapGetters("nocloud/vms", { searchString: "getString" }),
     ...mapGetters("invoices", ["getInvoices", "getAllInvoices"]),
@@ -570,7 +574,7 @@ export default {
 
       let filterElem;
       if (this.active == "support") {
-        filterElem = this.getAllTickets;
+        filterElem = [...this.getAllTickets, ...this.chats.values()];
       } else if (this.active == "billing") {
         const isInvoice = this.activeInvoiceTab === 'Invoice';
 

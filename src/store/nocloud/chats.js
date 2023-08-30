@@ -5,7 +5,7 @@ import {
   ChatsAPI, MessagesAPI, StreamService, UsersAPI
 } from '@/libs/cc_connect/cc_connect';
 import {
-  Empty, Chat, Message, ChatMeta, Role, Kind, EventType, Users, User
+  Empty, Chat, Message, ChatMeta, Role, Kind, EventType, Users, User, Status
 } from '@/libs/cc_connect/cc_pb';
 
 function toDate(timestamp) {
@@ -23,7 +23,9 @@ function toDate(timestamp) {
 
 function changeMessage(message, user, uuid) {
   return {
+    uuid: message.uuid,
     date: toDate(Number(message.sent)),
+    sent: message.sent,
     email: user.data?.email ?? 'none',
     message: message.content.trim(),
     name: user.title ?? 'anonymous',
@@ -41,7 +43,8 @@ export default {
     stream: null,
     defaults: {},
     messages: [],
-    chats: new Map()
+    chats: new Map(),
+    rawMessages: new Map()
   },
   mutations: {
     setChats(state, value) {
@@ -49,6 +52,9 @@ export default {
     },
     setMessages(state, value) {
       state.messages = value;
+    },
+    setRawMessages(state, value) {
+      state.rawMessages = value;
     },
     setDefaults(state, value) {
       state.defaults = value;
@@ -70,7 +76,7 @@ export default {
     },
     updateMessage(state, event) {
       const { value: message } = event.item;
-      const i = state.messages.findIndex(({ id }) => id === message.uuid);
+      const i = state.messages.findIndex(({ uuid }) => uuid === message.uuid);
       const user = state.accounts.users.find(
         (account) => account.uuid === message.sender
       ) ?? {};
@@ -81,7 +87,7 @@ export default {
         case EventType.MESSAGE_SENT: {
           const chat = state.chats.get(message.chat);
 
-          state.messages.push(newMessage);
+          // state.messages.push(newMessage);
           chat.meta = new ChatMeta({
             unread: chat.meta.unread + 1,
             lastMessage: message
@@ -163,7 +169,8 @@ export default {
             });
 
             commit('setMessages', replies);
-            resolve({ status: 'Open', subject: chat.topic, replies });
+            commit('setRawMessages', messages);
+            resolve({ status: chat.status, subject: chat.topic, replies });
           });
       })
     },
@@ -192,26 +199,38 @@ export default {
       }
     },
     async fetchDefaults({ state, dispatch, commit }) {
-      const transport = state.transport ?? await dispatch('createTransport');
-      const usersApi = createPromiseClient(UsersAPI, transport);
-      const defaults = await usersApi.fetchDefaults(new Empty());
-      
-      commit('setDefaults', defaults);
+      try {
+        const transport = state.transport ?? await dispatch('createTransport');
+        const usersApi = createPromiseClient(UsersAPI, transport);
+        const defaults = await usersApi.fetchDefaults(new Empty());
+        
+        commit('setDefaults', defaults);
+      } catch (error) {
+        console.debug(error);
+      }
     },
-    async createChat({ state, dispatch, rootState }, { chat, department }) {
+    async createChat({ state, dispatch, rootState }, data) {
       const transport = state.transport ?? await dispatch('createTransport');
       const chatsApi = createPromiseClient(ChatsAPI, transport);
 
       const { uuid } = rootState.nocloud.auth.userdata;
       const newChat = new Chat({
-        gateways: state.defaults.gateways,
-        admins: state.defaults.admins.filter((uuid) => uuid === department),
+        gateways: data.gateways ?? state.defaults.gateways,
+        admins: data.departments ?? state.defaults.departments,
         users: [uuid],
-        topic: chat.subject,
+        topic: data.chat.subject,
         role: Role.OWNER,
-        meta: new ChatMeta({ lastMessage: chat.message })
+        meta: new ChatMeta({ lastMessage: data.chat.message })
       });
       const createdChat = await chatsApi.create(newChat);
+
+      state.chats.set(createdChat.uuid, createdChat);
+      return createdChat;
+    },
+    async updateChat({ state, dispatch, rootState }, chat) {
+      const transport = state.transport ?? await dispatch('createTransport');
+      const chatsApi = createPromiseClient(ChatsAPI, transport);
+      const createdChat = await chatsApi.update(chat);
 
       state.chats.set(createdChat.uuid, createdChat);
       return createdChat;
@@ -231,15 +250,51 @@ export default {
 
       messagesApi.send(newMessage);
       return newMessage;
+    },
+    async editMessage({ state, dispatch }, message) {
+      const transport = state.transport ?? await dispatch('createTransport');
+      const messagesApi = createPromiseClient(MessagesAPI, transport);
+
+      const newMessage = new Message({
+        ...state.rawMessages.find(({ uuid }) => uuid === message.uuid),
+        content: message.content
+      });
+
+      messagesApi.update(newMessage);
+      return newMessage;
     }
   },
   getters: {
-    getChats: (state) => state.chats,
+    getAllChats: (state) => state.chats,
+    getChats(state, _, { support }) {
+			if (support.filter[0] == 'all' || support.filter.length == 0) {
+        return state.chats;
+			} else {
+        const filters = support.filter.map((el) => {
+          if (!el.includes(' ')) return el;
+          return el.split(' ').map((el) =>
+            `${el[0].toUpperCase()}${el.slice(1)}`
+          ).join('-');
+        });
+        const result = [];
+
+				state.chats.forEach((chat) => {
+          const status = Status[chat.status].toLowerCase();
+          const capitalized = `${status[0].toUpperCase()}${status.slice(1)}`;
+
+          if (filters.includes(capitalized)) {
+            result.push(chat);
+          }
+        });
+
+        return result;
+			}
+    },
     getMessages: (state) => state.messages,
     getDefaults: (state) => ({
       ...state.defaults,
       departments: state.defaults.departments?.map(
-        ({ admin, title }) => ({ id: admin, name: title })
+        ({ admins, title }) => ({ id: Math.random(), admins, name: title })
       ) ?? []
     })
   }

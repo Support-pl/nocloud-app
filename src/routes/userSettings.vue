@@ -297,7 +297,7 @@ export default {
     },
     isDisabled() {
       if (!this.userData.roles) return;
-      return !this.userData.roles.settings;
+      return !!this.userData.roles.settings;
     }
   },
   mounted() {
