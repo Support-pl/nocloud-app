@@ -30,15 +30,21 @@
         </a-form-model-item>
 
         <a-form-model-item :label="$t('gateways')">
-          <a-select v-model="gateway" placeholder="gateways" mode="tags">
-            <a-select-option
-              v-for="gateway of gateways"
-              :key="gateway.id"
-              :value="gateway.id"
+          <div class="order__grid">
+            <div
+              class="order__slider-item"
+              v-for="gate of gateways"
+              :key="gate.id"
+              :value="gate.id"
+              :class="{ 'order__slider-item--active': gateway === gate.id }"
+              @click="changeGateway(gate.id)"
             >
-              {{ gateway.name }}
-            </a-select-option>
-          </a-select>
+              <span class="order__slider-name" :title="gate.name">
+                <img class="img_prod" :src="`/img/icons/${gate.id}.png`" :alt="gate.id" @error="onError">
+                {{ gate.name }}
+              </span>
+            </div>
+          </div>
         </a-form-model-item>
       </a-form-model>
     </a-spin>
@@ -62,7 +68,7 @@ export default {
   name: "addTicket",
   data() {
     return {
-      gateway: [],
+      gateway: "",
       ticketDepartment: -1,
       ticketTitle: "",
       ticketMessage: "",
@@ -119,7 +125,7 @@ export default {
       const request = (ids.includes(this.ticketDepartment))
         ? this.$store.dispatch('nocloud/chats/createChat', {
             departments: admins,
-            gateways: this.gateways,
+            gateways: [this.gateway],
             chat: {
               subject: this.ticketTitle,
               message: md.render(this.ticketMessage).trim()
@@ -165,6 +171,16 @@ export default {
         .finally(() => {
           this.isSending = false;
         });
+    },
+    changeGateway(value) {
+      if (this.gateway === value) {
+        this.gateway = "";
+      } else {
+        this.gateway = value;
+      }
+    },
+    onError({ target }) {
+      target.src = '/img/OS/default.png';
     },
   },
   created() {
@@ -274,5 +290,66 @@ export default {
 .addTicket__button--send {
   background-color: var(--success);
   border-radius: 0 0 25px 0;
+}
+
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.order__slider {
+	display: flex;
+  justify-content: space-evenly;
+  margin-bottom: 10px;
+	overflow-x: auto;
+}
+
+.order__slider-item:not(:last-child) {
+	margin-right: 10px;
+}
+
+.order__slider-item {
+	flex-shrink: 0;
+	/* border: 1px solid rgba(0, 0, 0, .15); */
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+	height: 100%;
+  padding: 7px 10px;
+	cursor: pointer;
+	border-radius: 15px;
+	font-size: 1.1rem;
+	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.order__slider-item:hover {
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+}
+
+.order__slider-item--active {
+	background-color: #1045b4;
+	color: #fff;
+}
+
+.order__grid .order__slider-name > .img_prod {
+  display: block;
+  max-width: 200px;
+  margin: 0 auto 10px;
+}
+
+.order__grid .order__slider-name {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+}
+
+.order__grid .order__slider-name img {
+  max-height: 65px;
+}
+
+@media screen and (max-width: 576px) {
+.order__grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 </style>

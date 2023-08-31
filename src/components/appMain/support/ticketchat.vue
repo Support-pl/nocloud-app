@@ -19,18 +19,37 @@
     </div>
 
     <a-alert
-      closable
       type="info"
       class="chat__notification"
-      message="You can also choose another way of communication"
-      v-if="!loading "
+      v-if="!loading"
     >
-      <template #description>
-        <a-checkbox-group :options="options" v-model="gateways" />
+      <template #message>
+        {{ $t('You can also choose another way of communication') }}
+        <a-icon type="close" v-if="isVisible" @click="isVisible = false" />
+        <a-icon v-else type="down" @click="isVisible = true" />
+      </template>
+
+      <template #description v-if="isVisible">
+        <div class="order__grid">
+          <div
+            class="order__slider-item"
+            v-for="gate of options"
+            :key="gate.id"
+            :value="gate.id"
+            :class="{ 'order__slider-item--active': gateway === gate.id }"
+            @click="changeGateway(gate.id)"
+          >
+            <span class="order__slider-name" :title="gate.name">
+              <img class="img_prod" :src="`/img/icons/${gate.id}.png`" :alt="gate.id" @error="onError">
+              {{ gate.name }}
+            </span>
+          </div>
+        </div>
+
         <a-button
           type="primary"
-          size="small"
           style="display: block; margin-top: 10px"
+          :loading="isEditLoading"
           @click="updateChat"
         >
           {{ $t('Send') }}
@@ -163,7 +182,9 @@ export default {
       chatid: this.$route.params.pathMatch,
       showSendFiles: false,
       editing: null,
-      gateways: []
+      gateway: "",
+      isVisible: true,
+      isEditLoading: false
     };
   },
   computed: {
@@ -195,8 +216,8 @@ export default {
       const { gateways = [] } = this.$store.getters['nocloud/chats/getDefaults'] ?? {};
 
       return gateways.map((gateway) => ({
-        value: gateway,
-        label: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`
+        id: gateway,
+        name: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`
       }));
     },
   },
@@ -365,9 +386,32 @@ export default {
       return this.replies?.find((reply) => reply.uuid === uuid)?.message;
     },
     updateChat() {
+      this.isEditLoading = true;
       this.$store.dispatch('nocloud/chats/updateChat', {
-        ...this.chat, gateways: this.gateways
-      });
+        ...this.chat, gateways: [this.gateway]
+      })
+        .then(() => {
+          this.$notification.success({ message: this.$t('Done') });
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message;
+
+          this.$notification.error({ message: this.$t(message) });
+          console.error(err);
+        })
+        .finally(() => {
+          this.isEditLoading = false;
+        });
+    },
+    changeGateway(value) {
+      if (this.gateway === value) {
+        this.gateway = "";
+      } else {
+        this.gateway = value;
+      }
+    },
+    onError({ target }) {
+      target.src = '/img/OS/default.png';
     },
     addToClipboard(text) {
       if (navigator?.clipboard) {
@@ -400,7 +444,7 @@ export default {
   },
   watch: {
     chat(value) {
-      this.gateways = value.gateways ?? [];
+      this.gateway = value.gateways[0] ?? '';
     }
   }
 };
@@ -455,10 +499,58 @@ export default {
   width: 100%;
   max-width: calc(768px - 30px);
   transform: translate(-50%, 15px);
+  transition: .3s;
 }
 
 .chat__notification .ant-alert-message {
-  margin-right: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.order__slider {
+	display: flex;
+  justify-content: space-evenly;
+  margin-bottom: 10px;
+	overflow-x: auto;
+}
+
+.order__slider-item {
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+	height: 100%;
+  padding: 7px 10px;
+	cursor: pointer;
+	border-radius: 15px;
+	font-size: 1.1rem;
+	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.order__slider-item:hover {
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+}
+
+.order__slider-item--active {
+	background-color: #1045b4;
+	color: #fff;
+}
+
+.order__grid .order__slider-name > .img_prod {
+  display: block;
+  max-height: 30px;
+}
+
+.order__grid .order__slider-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 
 .chat__title {
@@ -538,7 +630,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 6px 15px;
+  padding: 55px 15px 6px;
   overflow: auto;
   background: var(--bright_font);
 }
@@ -650,6 +742,12 @@ export default {
   .chat__notification {
     max-width: calc(100% - 30px);
     transform: translate(-50%, 15px);
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .order__grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 </style>
