@@ -128,7 +128,7 @@ export default {
             gateways: [this.gateway],
             chat: {
               subject: this.ticketTitle,
-              message: md.render(this.ticketMessage).trim()
+              message: md.render(this.ticketMessage).trim().replace(/^<p>/, '').replace(/<\/p>$/, '')
             }
           })
         : this.$api.get(this.baseURL, { params: {
@@ -202,7 +202,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .addTicket__wrapper {
   position: absolute;
   top: 0;
@@ -311,14 +311,12 @@ export default {
 }
 
 .order__slider-item {
-	flex-shrink: 0;
-	/* border: 1px solid rgba(0, 0, 0, .15); */
 	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
 	height: 100%;
   padding: 7px 10px;
 	cursor: pointer;
 	border-radius: 15px;
-	font-size: 1.1rem;
+	font-size: 1rem;
 	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
@@ -333,18 +331,14 @@ export default {
 
 .order__grid .order__slider-name > .img_prod {
   display: block;
-  max-width: 200px;
-  margin: 0 auto 10px;
+  max-height: 20px;
 }
 
 .order__grid .order__slider-name {
-  display: grid;
-  justify-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 5px;
-}
-
-.order__grid .order__slider-name img {
-  max-height: 65px;
 }
 
 @media screen and (max-width: 576px) {

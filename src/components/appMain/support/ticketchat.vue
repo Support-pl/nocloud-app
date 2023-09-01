@@ -183,7 +183,7 @@ export default {
       showSendFiles: false,
       editing: null,
       gateway: "",
-      isVisible: true,
+      isVisible: false,
       isEditLoading: false
     };
   },
@@ -506,6 +506,7 @@ export default {
   display: flex;
   justify-content: space-between;
   gap: 10px;
+  font-size: 14px;
 }
 
 .order__grid {
@@ -528,7 +529,7 @@ export default {
   padding: 7px 10px;
 	cursor: pointer;
 	border-radius: 15px;
-	font-size: 1.1rem;
+	font-size: 1rem;
 	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
@@ -543,14 +544,14 @@ export default {
 
 .order__grid .order__slider-name > .img_prod {
   display: block;
-  max-height: 30px;
+  max-height: 20px;
 }
 
 .order__grid .order__slider-name {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 10px;
 }
 
 .chat__title {
