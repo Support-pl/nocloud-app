@@ -45,7 +45,10 @@ export default {
 
       chats.forEach((ticket) => {
         const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
-        const status = Status[ticket.status].toLowerCase();
+        const status = Status[ticket.status].toLowerCase().split('_');
+        const capitalized = status.map((el) =>
+          `${el[0].toUpperCase()}${el.slice(1)}`
+        ).join(' ');
 
         const value = {
           id: ticket.uuid,
@@ -53,7 +56,7 @@ export default {
           title: ticket.topic,
           date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
           message: ticket.meta.lastMessage?.content ?? '',
-          status: `${status[0].toUpperCase()}${status.slice(1)}`,
+          status: capitalized,
           unread: (isReaded) ? 0 : ticket.meta.unread
         };
 

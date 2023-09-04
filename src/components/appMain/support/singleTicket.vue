@@ -46,6 +46,8 @@ export default {
       const ho = new Intl.DateTimeFormat("en", { hour: "2-digit", hour12: false }).format(d);
       const mi = new Intl.DateTimeFormat("en", { minute: "2-digit" }).format(d);
 
+      if (`${ho}`.length < 2) ho = `${ho}0`;
+      if (`${mi}`.length < 2) mi = `${mi}0`;
       return `${da}/${mo}/${ye} ${ho}:${mi}`;
     },
     decode(text) {
@@ -61,6 +63,7 @@ export default {
           return this.$config.colors.main;
         case "open":
           return this.$config.colors.success;
+        case "in progress":
         case "customer-reply":
           return this.$config.colors.warn;
         case "close":
