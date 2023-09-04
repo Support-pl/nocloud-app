@@ -546,7 +546,7 @@
 	},
 	"product_name": "Product Name",
 	"VNDExcludeVAT": "Prices quoted in VND, subject to 10% VAT",
-  "Company Details": "Company Details",
+  "Company Details": "Use company details (for invoices)",
 
   "reload": "reload",
   "new content is avaliable": "New content is avaliable",
