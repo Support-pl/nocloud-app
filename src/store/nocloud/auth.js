@@ -18,8 +18,10 @@ export default {
 	},
 	mutations: {
 		setToken(state, token) {
+      const expires = new Date(Date.now() + 7776e6);
+
 			state.token = token
-      Cookies.set(COOKIES_NAME, token)
+      Cookies.set(COOKIES_NAME, token, { expires })
 		},
 		setUserdata(state, data) {
 			state.userdata = data
@@ -45,7 +47,11 @@ export default {
 	actions: {
 		login({ commit }, { login, password, type, uuid }) {
 			return new Promise((resolve, reject) => {
-				api.authorizeCustom({ auth: { type, data: [login, password] }, uuid })
+				api.authorizeCustom({
+          auth: { type, data: [login, password] },
+          exp: Math.round((Date.now() + 7776e6) / 1000),
+          uuid
+        })
 					.then(response => {
             api.applyToken(response.token);
 						commit('setToken', response.token);

@@ -21,7 +21,7 @@
       <template v-if="getPlan && getPlan.uuid">
         <a-slider
           style="margin-top: 10px"
-          v-if="getProducts.length > 1"
+          v-if="getProducts.length > 1 && getProducts.length < 6"
           :marks="{ ...getProducts }"
           :tip-formatter="null"
           :max="getProducts.length - 1"
@@ -29,33 +29,56 @@
           :value="getProducts.indexOf(productSize)"
           @change="(value) => $emit('setData', { key: 'productSize', value: getProducts[value] })"
         />
+        <div v-else class="order__grid">
+          <div
+            class="order__grid-item"
+            v-for="product of getProducts"
+            :key="product"
+            :class="{ 'order__grid-item--active': productSize === product }"
+            @click="$emit('setData', { key: 'productSize', value: product })"
+          >
+            <h1>{{ product }}</h1>
+            <div>
+              {{ $t('cpu') }}: {{ getProduct(product)?.cpu ?? '?' }} vCPU
+            </div>
+            <div>
+              {{ $t('ram') }}: {{ getProduct(product)?.ram / 1024 ?? '?' }} Gb
+            </div>
+          </div>
+        </div>
+
         <a-row
           type="flex"
           justify="space-between"
           align="middle"
           class="newCloud__prop"
+          v-if="getProducts.length > 1 && getProducts.length < 6"
           :style="{ marginTop: (!getProducts.length < 2) ? null : '50px' }"
         >
           <a-col>
             <span style="display: inline-block; width: 70px">CPU:</span>
           </a-col>
-          <a-col class="changing__field" span="6" style="text-align: right">
-            <template v-if="isProductsExist">{{ options.cpu.size }} vCPU</template>
-            <template v-else>
-              <a-input-number allow-clear v-model="options.cpu.size" :min="0" :max="32" /> Gb
-            </template>
-          </a-col>
+          <transition name="textchange" mode="out-in">
+            <a-col class="changing__field" span="6" style="text-align: right">
+              <template v-if="isProductsExist">{{ options.cpu.size }} vCPU</template>
+              <template v-else>
+                <a-input-number allow-clear v-model="options.cpu.size" :min="0" :max="32" /> Gb
+              </template>
+            </a-col>
+          </transition>
         </a-row>
-        <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
+
+        <a-row
+          type="flex"
+          justify="space-between"
+          align="middle"
+          class="newCloud__prop"
+          v-if="getProducts.length < 6"
+        >
           <a-col>
             <span style="display: inline-block; width: 70px">RAM:</span>
           </a-col>
           <transition name="textchange" mode="out-in">
-            <!-- :key="
-                getCurrentProd != null
-                  ? getCurrentProd.props.ram.TITLE
-                  : 'DefaultKeyForRAM'
-              " -->
             <a-col class="changing__field" span="6" style="text-align: right">
               <template v-if="isProductsExist">{{ options.ram.size }} Gb</template>
               <template v-else>
@@ -64,6 +87,7 @@
             </a-col>
           </transition>
         </a-row>
+
         <div class="newCloud__drive">
           <span
             style="display: inline-block"
@@ -174,11 +198,11 @@
 
             <a-form-item style="margin-top: 15px" :label="$t('clientinfo.username') | capitalize">
               <a-input
-                :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
-                :value="vmName"
+                :style="{ boxShadow: (username.length < 2) ? '0 0 2px 2px var(--err)' : null }"
+                :value="username"
                 @change="({ target: { value } }) => $emit('setData', { key: 'username', value })"
               />
-              <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
+              <div style="line-height: 1.5; color: var(--err)" v-if="username.length < 2">
                 {{ $t('ssl_product.field is required') }}
               </div>
             </a-form-item>
@@ -342,6 +366,11 @@ export default {
   },
   data: () => ({ panelHeight: null }),
   methods: {
+    getProduct(product) {
+      const products = Object.values(this.getPlan.products);
+
+      return products.find(({ title }) => title === product)?.resources;
+    },
     setOS(item, index) {
       if (item.warning) return;
       this.options.os.id = +index;
@@ -432,7 +461,9 @@ export default {
     }
   },
   created() {
-    if (!this.user?.uuid) this.$store.dispatch('nocloud/auth/fetchUserData');
+    if (!this.user?.uuid && this.isLogged) {
+      this.$store.dispatch('nocloud/auth/fetchUserData');
+    }
     this.changePeriods();
   },
   beforeMount() {
@@ -444,6 +475,9 @@ export default {
   computed: {
     user() {
       return this.$store.getters['nocloud/auth/userdata'];
+    },
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
     },
     isProductsExist() {
       return this.getProducts.length > 0;
@@ -509,5 +543,41 @@ export default {
   grid-template-columns: auto auto 1fr auto;
   align-items: center;
   gap: 10px;
+}
+
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.order__grid-item {
+	padding: 10px 20px;
+	border-radius: 15px;
+	cursor: pointer;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.order__grid-item:hover {
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+}
+
+.order__grid-item h1 {
+  margin-bottom: 5px;
+  word-break: break-all;
+  color: inherit;
+}
+
+.order__grid-item--active {
+  background-color: var(--main);
+  color: #fff;
+}
+
+@media (max-width: 576px) {
+  .order__grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 </style>

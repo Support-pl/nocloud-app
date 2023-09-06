@@ -102,20 +102,9 @@
 							<span class="login__horisontal-line"></span>
 						</div>
 
-						<div class="inputs__log-pas">
-							<a-select style="width: 100%; border: none" @change="(e) => $i18n.locale = e" :value="$i18n.locale">
-								<a-select-option v-for="lang in langs" :key="lang" :value="lang">
-									{{$t('localeLang', lang)}}
-								</a-select-option>
-							</a-select>
-
-              <span class="login__horisontal-line"></span>
-							<a-select style="width: 100%; border: none" v-model="userinfo.currency">
-								<a-select-option v-for="currency in currencies" :key="currency.id" :value="currency.id">
-									{{currency.code}}
-								</a-select-option>
-							</a-select>
-						</div>
+            <div class="inputs__log-pas" style="padding: 8px 16px">
+              <a-checkbox v-model="invoiceChecked">{{$t('Company Details')}}</a-checkbox>
+            </div>
 
 						<div class="inputs__log-pas" v-if="invoiceChecked">
 							<input :placeholder="$t('clientinfo.companyname') + ' *' | capitalize" v-model="userinfo.companyname">
@@ -129,6 +118,21 @@
 							<input :placeholder="$t('clientinfo.postcode') + ' *' | capitalize" v-model="userinfo.postcode">
 							<span class="login__horisontal-line"></span>
 							<input :placeholder="$t('clientinfo.address') + ' *' | capitalize"  v-model="userinfo.address1">
+						</div>
+
+						<div class="inputs__log-pas">
+							<a-select style="width: 100%; border: none" @change="(e) => $i18n.locale = e" :value="$i18n.locale">
+								<a-select-option v-for="lang in langs" :key="lang" :value="lang">
+									{{$t('localeLang', lang)}}
+								</a-select-option>
+							</a-select>
+
+              <span class="login__horisontal-line"></span>
+							<a-select style="width: 100%; border: none" v-model="userinfo.currency">
+								<a-select-option v-for="currency in currencies" :key="currency.id" :value="currency.id">
+									{{currency.code}}
+								</a-select-option>
+							</a-select>
 						</div>
 
 						<template>
@@ -146,9 +150,6 @@
 				<div class="register__already-has" style="margin-top: 40px">
 					<router-link :to="{name: 'login'}">{{$t('clientinfo.already have account?') | capitalize}}</router-link>
 				</div>
-        <div class="register__already-has" style="margin: 10px 0 30px">
-          <a-checkbox v-model="invoiceChecked">{{$t('Company Details')}}</a-checkbox>
-        </div>
 			</div>
 		</div>
   	</div>

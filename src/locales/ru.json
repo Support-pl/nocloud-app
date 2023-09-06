@@ -485,7 +485,7 @@
 	},
 	"product_name": "Имя продукта",
 	"VNDExcludeVAT": "Цены указаны в VND с учетом 10% НДС.",
-
+  "Company Details": "Использовать данные компании (для счетов)",
 
   "reload": "перезагрузка",
   "new content is avaliable": "Доступен новый контент",

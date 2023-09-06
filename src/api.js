@@ -9,7 +9,7 @@ api.axios.interceptors.response.use(
   (error) => {
     if (
       error.response && (
-        error.response?.data?.code === 7 ||
+        [7, 16].includes(error.response?.data?.code) ||
         error.response?.data.message === 'Token is expired'
       )
     ) {
