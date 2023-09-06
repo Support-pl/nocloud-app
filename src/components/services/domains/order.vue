@@ -666,33 +666,35 @@ export default {
         console.error(err);
       });
 
-    this.$store.dispatch('nocloud/namespaces/fetch')
-      .then(({ pool }) => {
-        if (pool.length === 1) this.namespace = pool[0].uuid;
-      })
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
+    if (this.isLogged) {
+      this.$store.dispatch('nocloud/namespaces/fetch')
+        .then(({ pool }) => {
+          if (pool.length === 1) this.namespace = pool[0].uuid;
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
 
-        if (err.response?.data?.code === 16) return;
-        this.openNotificationWithIcon('error', {
-          message: this.$t(message)
+          if (err.response?.data?.code === 16) return;
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
+          console.error(err);
         });
-        console.error(err);
-      });
 
-    this.$store.dispatch('nocloud/vms/fetch')
-      .then(() => {
-        if (this.services.length === 1) this.service = this.services[0].uuid;
-      })
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
+      this.$store.dispatch('nocloud/vms/fetch')
+        .then(() => {
+          if (this.services.length === 1) this.service = this.services[0].uuid;
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err;
 
-        if (err.response?.data?.code === 16) return;
-        this.openNotificationWithIcon('error', {
-          message: this.$t(message)
+          if (err.response?.data?.code === 16) return;
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          });
+          console.error(err);
         });
-        console.error(err);
-      });
+    }
 
     this.fetch();
     if ('form' in this.data) {

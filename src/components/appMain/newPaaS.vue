@@ -771,7 +771,7 @@ export default {
         return uuid === this.showcase;
       }) ?? { plans: '' };
 
-      if (plans === '') return this.getPlans;
+      if (plans === '' || plans.length < 1) return this.getPlans;
       return this.getPlans.filter(({ uuid, type }) =>
         locationItem?.type === type && plans.includes(uuid)
       );
@@ -1011,14 +1011,17 @@ export default {
           }
         }
       });
-    this.$store.dispatch("nocloud/vms/fetch")
-      .then(() => {
-        setTimeout(this.setOneService, 300);
-      });
-    this.$store.dispatch("nocloud/namespaces/fetch")
-      .then(() => {
-        setTimeout(this.setOneNameSpace, 300);
-      });
+
+    if (this.isLoggedIn) {
+      Promise.all([
+        this.$store.dispatch("nocloud/vms/fetch"),
+        this.$store.dispatch("nocloud/namespaces/fetch")
+      ])
+        .then(() => {
+          setTimeout(this.setOneService, 300);
+          setTimeout(this.setOneNameSpace, 300);
+        });
+    }
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
       this.$store.dispatch('nocloud/auth/fetchCurrencies', {
@@ -1488,7 +1491,7 @@ export default {
     tarification(value) {
       if (this.getPlan.type === 'ione' && value) {
         const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC';
-        const item = this.getPlans.find((el) => {
+        const item = this.filteredPlans.find((el) => {
           if (type === 'DYNAMIC') return el.kind === type;
           let period = 0;
 
