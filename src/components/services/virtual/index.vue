@@ -365,7 +365,7 @@ export default {
       const product = this.products[this.sizes.indexOf(this.options.size)];
 
       delete product.resources.model;
-      if (product.resources.ssd.includes('Gb')) return product;
+      if (product.resources.ssd?.includes('Gb')) return product;
       product.resources.ssd = `${product.resources.ssd / 1024} Gb`;
 
 			return product;
@@ -404,7 +404,16 @@ export default {
     },
     plans() {
       return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type }) => type === 'cpanel');
+        .filter(({ type, uuid }) => {
+          const { plans } = this.$store.getters['nocloud/sp/getShowcases'].find(
+            ({ uuid }) => uuid === this.$route.query.service
+          ) ?? {};
+
+          if (!plans) return type === 'cpanel';
+
+          if (plans.length < 1) return type === 'cpanel';
+          return type === 'cpanel' && plans.includes(uuid);
+        });
     },
     sp() {
       return this.$store.getters['nocloud/sp/getSP']
@@ -433,10 +442,15 @@ export default {
     const promises = [
       this.$store.dispatch('nocloud/auth/fetchBillingData'),
       this.$store.dispatch('nocloud/sp/fetch', !this.isLogged),
-      this.$store.dispatch('nocloud/plans/fetch', { anonymously: !this.isLogged }),
-      this.$store.dispatch('nocloud/namespaces/fetch'),
-      this.$store.dispatch('nocloud/vms/fetch')
+      this.$store.dispatch('nocloud/plans/fetch', { anonymously: !this.isLogged })
     ];
+
+    if (this.isLogged) {
+      promises.push(
+        this.$store.dispatch('nocloud/namespaces/fetch'),
+        this.$store.dispatch('nocloud/vms/fetch')
+      );
+    }
 
     Promise.all(promises).catch((err) => {
       const message = err.response?.data?.message ?? err.message ?? err;
