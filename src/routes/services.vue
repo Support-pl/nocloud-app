@@ -1,7 +1,7 @@
 <template>
 	<div class="services">
 		<div class="container">
-			<services-wrapper class="services__block" :productsCount="productsCount" />
+			<services-wrapper class="services__block" v-if="!user.non_buyer" :productsCount="productsCount" />
       <user-products class="services__block" ref="products" :min="false" />
 
       <a-pagination
@@ -30,6 +30,9 @@ export default {
     pageSizeOptions: ['5', '10', '25', '50', '100']
   }),
   computed: {
+    user() {
+      return this.$store.getters["nocloud/auth/billingData"];
+    },
     products() {
       const products = this.$store.getters["products/getProducts"] ?? [];
       const instances = this.$store.getters["nocloud/vms/getInstances"] ?? [];
