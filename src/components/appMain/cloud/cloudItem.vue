@@ -190,14 +190,17 @@ export default {
       if (meta?.renew === false) return;
 			if (serviceType === undefined) return;
       if (this.instance.date === 0) return;
+      if (this.instance.server_on) return;
       if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return;
 			return () => import(`@/components/services/${serviceType}/lilbtn.vue`);
 		}
   },
   methods: {
-    cloudClick({ groupname, orderid, hostingid }, { target }) {
+    cloudClick({ groupname, orderid, hostingid, server_on, id }, { target }) {
       if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return;
-      if (hostingid) {
+      if (id && server_on) {
+        this.$router.push({ name: 'openCloud_new', params: { uuid: id } });
+      } else if (hostingid) {
         this.$router.push({ name: 'service', params: { id: hostingid } });
       } else if (groupname === 'Self-Service VDS SSD HC') {
         this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } });

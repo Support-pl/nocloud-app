@@ -1,7 +1,7 @@
 <template>
   <div class="cloud__fullscreen Fcloud">
     <transition name="opencloud" :duration="600">
-      <div v-if="!vmsLoading && VM.billingPlan" class="cloud__container">
+      <div v-if="!vmsLoading && (VM.uuid || VM.id)" class="cloud__container">
         <component :is="template" :VM="VM">
           <template #header>
             <div class="Fcloud__header">
@@ -17,7 +17,7 @@
                   :style="{ 'background-color': stateColor }"
                 ></div>
                 <div class="Fcloud__title">
-                  {{ VM.title }}
+                  {{ VM.title ?? VM.resources.NAME }}
                 </div>
                 <div
                   class="Fcloud__status"
@@ -235,6 +235,7 @@ export default {
   components: { loading, diskControl, bootOrder, networkControl, accessManager },
   mixins: [notification],
   data: () => ({
+    isLoading: false,
     isDeleteLoading: false,
     isRenameLoading: false,
     isLogsLoading: false,
@@ -265,6 +266,7 @@ export default {
       scale: "GB",
     },
     logs: [],
+    resources: {}
   }),
   computed: {
     ...mapGetters("nocloud/vms", [
@@ -272,9 +274,12 @@ export default {
       "getServicesFull",
       "getInstances",
     ]),
+    ...mapGetters("products", ['getProducts']),
     ...mapGetters("support", { baseURL: "getURL" }),
     template() {
-      return () => import(`@/components/appMain/modules/${this.VM.billingPlan?.type ?? 'ione'}/openInstance.vue`);
+      const type = (this.VM.server_on) ? 'whmcs' : this.VM.billingPlan?.type ?? 'ione';
+
+      return () => import(`@/components/appMain/modules/${type}/openInstance.vue`);
     },
     menuOptions() {
       const options = [
@@ -350,21 +355,29 @@ export default {
       return data;
     },
     VM() {
-      for (let instance of this.getInstances) {
+      const vms = [...this.getInstances, ...this.getProducts];
+
+      for (let instance of vms) {
         if (instance.uuid === this.$route.params.uuid) {
           this.resize.VCPU = instance.resources.cpu;
           this.resize.RAM = instance.resources.ram / 1024;
           this.resize.size = Math.ceil(instance.resources.drive_size / 1024);
           return instance;
+        } else if (`${instance.id}` === this.$route.params.uuid) {
+          return { ...instance, resources: this.resources };
         }
       }
       return {};
     },
     vmsLoading() {
-      return this.$store.getters["nocloud/vms/isLoading"];
+      return this.$store.getters["nocloud/vms/isLoading"] || this.isLoading;
     },
     stateVM() {
+      if (this.VM.server_on) {
+        return this.VM.resources?.STATE.replaceAll('_', ' ');
+      }
       if (!this.VM.state) return "UNKNOWN";
+
       const state = (this.VM?.billingPlan.type === 'ione')
         ? this.VM.state.meta.lcm_state_str
         : this.VM.state.state;
@@ -381,28 +394,36 @@ export default {
       }
     },
     stateColor() {
-      if (!this.VM.state) return "var(--err)";
-      if (this.VM.data.suspended_manually) return "#ff9140";
+      if (!this.VM.state && !this.VM.resources?.STATE) return "var(--err)";
+      if (this.VM.data?.suspended_manually) return "#ff9140";
 
-      const state = (this.VM?.billingPlan.type === 'ione')
-        ? this.VM.state.meta.lcm_state_str
-        : this.VM.state.state;
+      let state;
+      if (this.VM?.billingPlan?.type === 'ione') {
+        state = this.VM.state.meta.lcm_state_str;
+      } else if (this.VM.server_on) {
+        state = this.VM.resources.STATE;
+      } else {
+        state = this.VM.state.state;
+      }
 
-      switch (state) {
-        case "RUNNING":
+      switch (state.toLowerCase()) {
+        case "active":
+        case "running":
           return "var(--success)";
         // останавливающийся и запускающийся
-        case "BOOT":
-        case "BUILD":
-        case "BOOT_POWEROFF":
-        case "SHUTDOWN_POWEROFF":
+        case "boot":
+        case "build":
+        case "boot_poweroff":
+        case "shutdown_poweroff":
           return "var(--warn)";
-        case "LCM_INIT":
-        case "STOPPED":
+        case "lcm_init":
+        case "stopped":
+        case "poweroff":
           return "#ff9140";
-        case "OPERATION":
-        case "PENDING":
-        case "Pending":
+        case "operation":
+        case "suspended":
+        case "suspend":
+        case "pending":
           return "var(--main)";
         default:
           return "var(--err)";
@@ -420,6 +441,7 @@ export default {
     if (this.isLogged) {
       this.$store.dispatch("nocloud/auth/fetchBillingData");
       this.$store.dispatch("nocloud/vms/fetch");
+      this.$store.dispatch("products/fetch");
       this.$store.dispatch("nocloud/sp/fetch");
     }
 
@@ -428,6 +450,14 @@ export default {
         anonymously: !this.isLoggedIn
       });
     }
+
+    this.isLoading = true;
+    this.$api.get(this.baseURL, { params: {
+      run: 'on_info',
+      server_id: this.$route.params.uuid
+    }})
+      .then((response) => { this.resources = response })
+      .finally(() => { this.isLoading = false });
   },
   destroyed() {
     this.$store.state.nocloud.vms.socket.close(1000, 'Work is done');
@@ -441,7 +471,7 @@ export default {
       }
       if (states.find((state) => this.stateVM.includes(state))) {
         if (menuName === "delete") return false;
-        if (this.VM.billingPlan.kind === "DYNAMIC" && this.stateVM === "SUSPENDED") return true;
+        if (this.VM.billingPlan?.kind === "DYNAMIC" && this.stateVM === "SUSPENDED") return true;
         return false;
       }
     },

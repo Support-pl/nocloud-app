@@ -805,6 +805,7 @@ export default {
       Object.values(products ?? {}).forEach((product) => {
         const isEqual = this.tarification === this.getTarification(product.period);
 
+        if (!product.public) return;
         if (isEqual || this.getPlan.kind === 'DYNAMIC') {
           titles.splice(product.sorter, 0, product.title);
         }
@@ -1093,10 +1094,11 @@ export default {
 
           if (value.title === this.productSize) {
             const product = { ...value, key };
+            const minDisk = plan.meta.minDisk * 1024;
 
             this.options.ram.size = product.resources.ram / 1024;
             this.options.cpu.size = product.resources.cpu;
-            this.options.disk.size = product.resources.disk ?? 20 * 1024;
+            this.options.disk.size = product.resources.disk ?? minDisk ?? 20 * 1024;
             this.product = product;
           } else if (
             (value.title.includes(this.productSize) && !this.getPlan.type.includes('cloud')) ||
@@ -1575,6 +1577,14 @@ export default {
       }
       if (max_drive_size) {
         this.options.disk.max = max_drive_size.value[type];
+      }
+    },
+    getPlan(value) {
+      if (value.meta?.minDisk) {
+        this.options.disk.min = +value.meta.minDisk;
+      }
+      if (value.meta?.maxDisk) {
+        this.options.disk.max = +value.meta.maxDisk;
       }
     },
     'options.os.name'() {
