@@ -216,7 +216,13 @@ export default {
     },
     products() {
       const products = this.$store.getters["products/getProducts"]
-        .map((el) => ({ ...el.ORDER_INFO, groupname: el.groupname, productname: el.name }));
+        .map((el) => ({
+          ...el.ORDER_INFO,
+          groupname: el.groupname,
+          productname: el.name,
+          server_on: el.server_on,
+          id: el.id
+        }));
 
       const instances = this.$store.getters["nocloud/vms/getInstances"]
         .map((inst) => {
