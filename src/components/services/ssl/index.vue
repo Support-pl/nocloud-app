@@ -297,9 +297,10 @@ export default {
 			if (!this.user) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
 				this.$store.commit('setOnloginInfo', {
-					type: 'SSL',
+					type: 'ssl',
 					title: 'SSL Certificate',
-					cost: this.getProducts.prices[this.options.period]
+					cost: this.getProducts.prices[this.options.period],
+          currency: this.currency.code
 				});
 				this.$store.dispatch('setOnloginAction', () => {
 					this.createSSL(info);
@@ -411,6 +412,14 @@ export default {
       }
     }
 	},
+  mounted() {
+    const { action } = this.$store.getters['getOnlogin'];
+
+    if (typeof action !== 'function') return;
+    this.modal.confirmCreate = true;
+    this.modal.confirmLoading = true;
+    action();
+  },
 	computed: {
 		getProducts() {
 			if (Object.keys(this.products).length === 0) return "NAN";
