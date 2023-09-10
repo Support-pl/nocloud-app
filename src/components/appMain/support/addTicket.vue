@@ -3,9 +3,8 @@
     :title="$t('ask a question')"
     :visible="addTicketStatus"
     :confirmLoading="isSending"
-    @cancel="closeFields"
-    @ok="sendNewTicket"
     :cancelText="$t('Cancel')"
+    :footer="null"
   >
     <a-spin tip="Loading..." :spinning="isLoading">
       <a-form-model layout="vertical">
@@ -37,7 +36,7 @@
               :key="gate.id"
               :value="gate.id"
               :class="{ 'order__slider-item--active': gateway === gate.id }"
-              @click="changeGateway(gate.id)"
+              @click="sendNewTicket(gate.id)"
             >
               <span class="order__slider-name" :title="gate.name">
                 <img class="img_prod" :src="`/img/icons/${gate.id}.png`" :alt="gate.id" @error="onError">

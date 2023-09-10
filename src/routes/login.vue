@@ -30,16 +30,15 @@
           </div>
 
           <div v-else class="login__action-info">
-            <!-- {{getOnlogin.info}} -->
-            your order:
+            {{ $t('comp_services.Your orders') }}:
             <div class="order__card">
               <div class="order__icon">
-                <a-icon :type="$config.services[getOnlogin.info.type].icon" />
+                <a-icon :type="$config.services[getOnlogin.info.type]?.icon" />
               </div>
               <div class="order__info">
                 <div class="order__title">{{ getOnlogin.info.title }}</div>
                 <div class="order__cost">
-                  {{ getOnlogin.info.cost }} {{ $config.currency.suffix }}
+                  {{ getOnlogin.info.cost }} {{ getOnlogin.info.currency }}
                 </div>
               </div>
               <div class="order__remove" @click="$store.commit('clearOnlogin')">
@@ -175,6 +174,11 @@ export default {
               } catch {
                 localStorage.removeItem("data");
               }
+            } else if (this.getOnlogin.redirect) {
+              const name = this.getOnlogin.redirect;
+              const service = this.getOnlogin.info.title;
+
+              this.$router.replace({ name, query: { service } });
             } else {
               this.$router.push({ name: "root" });
               this.$store.dispatch("nocloud/auth/fetchUserData");

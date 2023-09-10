@@ -103,7 +103,7 @@ export default {
     },
     async filterImages(images) {
       let response = null;
-      if (this.catalog.plans) {
+      if (this.catalog.plans || !this.isLogged) {
         response = { meta: { catalog: this.catalog } };
       } else {
         response = await this.$api.servicesProviders.action(
@@ -128,6 +128,9 @@ export default {
     });
   },
   computed: {
+    isLogged() {
+      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    },
     resources() {
       const plans = new Set(this.plans.map(({ label }) => {
         const array = label.split(' ');
