@@ -225,14 +225,13 @@ export default {
         instances
       };
 
-      const info = (!this.service) ? newGroup : Object.assign(
-        { instances_groups: service.instancesGroups },
-        { ...service }
-      );
-      const group = info.instances_groups?.find(({ type }) => type === 'acronis');
+      if (plan.kind === 'STATIC') instances[0].product = this.options.size;
+
+      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service));
+      const group = info.instancesGroups?.find(({ type }) => type === 'acronis');
 
       if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instances_groups.push(newGroup);
+      else if (this.service) info.instancesGroups.push(newGroup);
 
 			if (!this.userdata.uuid) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
@@ -246,8 +245,9 @@ export default {
 				this.$store.dispatch('setOnloginAction', () => {
 					this.createAcronis(info);
 				});
-				this.$router.push({name: 'login'});
-				return
+
+				this.$router.push({ name: 'login' });
+				return;
 			}
 
 			this.createAcronis(info);
@@ -261,11 +261,10 @@ export default {
           title: this.user.fullname,
           context: {},
           version: '1',
-          instances_groups: [info]
+          instancesGroups: [info]
         }
       };
 
-      delete orderData.instancesGroups;
       this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {

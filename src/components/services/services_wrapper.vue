@@ -127,6 +127,9 @@ export default {
         case 'virtual':
           name = 'service-custom';
           break;
+        case 'openai':
+          name = 'service-openai';
+          break;
         case 'ione':
         case 'ovh':
           name = 'newPaaS';

@@ -310,6 +310,22 @@ export default {
 
         if (!domain) return new Promise((resolve) => resolve({ meta: null }));
         switch (domain.billingPlan.type) {
+          case 'openai': {
+            domain.resources = {
+              period: this.$t('PayG'),
+              recurringamount: domain.billingPlan.resources.reduce(
+                (sum, { price }) => sum + price, 0
+              )
+            };
+
+            domain.data.expiry = {
+              expiredate: this.date(domain.data.last_monitoring ?? 0),
+              regdate: domain.data.creation ?? '0000-00-00'
+            };
+            groupname = 'OpenAI';
+            break;
+          }
+
           case 'virtual': {
             const { period } = domain.billingPlan.products[domain.product];
 
@@ -321,6 +337,7 @@ export default {
             groupname = 'Custom';
             break;
           }
+
           case 'goget': {
             domain.data.expiry = {
               expiredate: '0000-00-00',
@@ -357,7 +374,7 @@ export default {
           }
         }
 
-        const { period } = domain.resources;
+        const { period, recurringamount } = domain.resources;
         const { expiredate, regdate } = domain.data.expiry;
 
         this.service = {
@@ -368,7 +385,7 @@ export default {
           status: `cloudStateItem.${domain.state?.state || 'UNKNOWN'}`,
           domain: domain.resources.domain,
           billingcycle: (typeof period === 'string') ? period : this.$tc(date, period),
-          recurringamount: domain.billingPlan.products[domain.product]?.price ?? '?',
+          recurringamount: recurringamount ?? domain.billingPlan.products[domain.product]?.price ?? '?',
           nextduedate: expiredate
         };
         info[0].type = '';

@@ -223,7 +223,13 @@ export default {
   },
   methods: {
     goBack() {
-      this.$router.push("support");
+      if (this.$route.query.from) {
+        const params = { id: this.$route.query.from };
+
+        this.$router.push({ name: 'service', params });
+      } else {
+        this.$router.push("support");
+      }
     },
     beauty(message) {
       message = md.render(message).trim();
