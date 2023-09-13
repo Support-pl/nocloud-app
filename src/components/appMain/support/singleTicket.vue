@@ -26,10 +26,15 @@
 <script>
 export default {
   name: "ticket",
-  props: { ticket: Object },
+  props: {
+    ticket: { type: Object, required: true },
+    instanceId: { type: String, default: null }
+  },
   methods: {
     ticketClick(id) {
-      this.$router.push("ticket-" + id);
+      const query = { from: this.instanceId };
+
+      this.$router.push({ path: `/ticket-${id}`, query });
     },
     beauty(message) {
       message = this.decode(message);

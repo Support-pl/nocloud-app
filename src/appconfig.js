@@ -63,12 +63,17 @@ export default {
     acronis: {
       groupname: ['Acronis'],
       creationRouteName: 'service-acronis',
-      icon: 'shopping'
+      icon: 'rollback'
     },
     custom: {
       groupname: ['Custom'],
       creationRouteName: 'service-custom',
-      icon: 'shopping'
+      icon: 'appstore'
+    },
+    openai: {
+      groupname: ['OpenAI'],
+      creationRouteName: 'service-openai',
+      icon: 'robot'
     }
   },
 	getServiceType(groupname){

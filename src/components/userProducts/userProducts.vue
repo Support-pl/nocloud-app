@@ -260,6 +260,12 @@ export default {
           };
 
           switch (inst.type) {
+            case 'openai':
+              res.groupname = 'OpenAI';
+              res.orderamount = inst.billingPlan.resources.reduce(
+                (sum, { price }) => sum + price, 0
+              );
+              break;
             case 'virtual':
               res.groupname = 'Custom';
               break;

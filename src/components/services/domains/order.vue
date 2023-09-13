@@ -420,7 +420,7 @@ export default {
             message: this.$t(message)
           });
         })
-        .finally(() => this.fetchLoading = false);
+        .finally(() => { this.fetchLoading = false });
     },
     installDataToBuffer() {
       const interestedKeys = [
@@ -474,14 +474,11 @@ export default {
         instances
       };
 
-      const info = (!this.service) ? newGroup : Object.assign(
-        { instances_groups: service.instancesGroups },
-        { ...service }
-      );
-      const group = info.instances_groups?.find(({ type }) => type === 'opensrs');
+      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service));
+      const group = info.instancesGroups?.find(({ type }) => type === 'opensrs');
 
       if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instances_groups.push(newGroup);
+      else if (this.service) info.instancesGroups.push(newGroup);
 
       if (!this.userdata.uuid) {
         this.$store.commit('setOnloginRedirect', this.$route.name);
@@ -494,9 +491,11 @@ export default {
         this.$store.dispatch('setOnloginAction', () => {
           this.createDomains(info);
         });
+
         this.$router.push({ name: 'login' });
         return;
       }
+
       this.$refs.form.validate((isValid) => {
         if (isValid) this.createDomains(info);
         else this.openNotificationWithIcon('error', {
@@ -513,11 +512,10 @@ export default {
           title: this.user.fullname,
           context: {},
           version: '1',
-          instances_groups: [info]
+          instancesGroups: [info]
         }
       };
 
-      delete orderData.instancesGroups;
       this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
@@ -585,7 +583,7 @@ export default {
             message: this.$t(message)
           });
         })
-        .finally(() => this.modal.confirmLoading = false);
+        .finally(() => { this.modal.confirmLoading = false });
     },
     getProducts() {
       const prices = { suffix: this.user.currency_code };
