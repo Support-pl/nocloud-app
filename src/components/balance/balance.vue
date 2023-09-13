@@ -18,7 +18,7 @@
 
 <script>
 import addFunds from "./addFunds.vue";
-import md5 from "md5";
+
 export default {
   name: "balance_item",
   components: {
@@ -84,31 +84,6 @@ export default {
       }
     },
     hideModal() {
-      this.modalVisible = false;
-    },
-    handleOk(e) {
-      this.confirmLoading = true;
-      let userinfo = {
-        userid: this.user.id,
-        amount: this.amount,
-        secret: md5("addFunds" + this.user.id + this.user.secret),
-      };
-      this.$axios
-        .get("addFunds.php?" + this.URLparameter(userinfo))
-        .then((res) => {
-          this.modalVisible = false;
-          this.confirmLoading = false;
-          if (!this.stay) {
-            this.$router.push({ path: `/billing-${res.data.invoiceid}` });
-          } else {
-            this.$message.success(`Now look invoice#${res.data.invoiceid}`);
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    },
-    handleCancel(e) {
       this.modalVisible = false;
     },
     addAmount(amount) {

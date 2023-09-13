@@ -187,12 +187,17 @@ export default {
       const key = this.instance.product ?? this.instance.config?.product;
       const { meta } = this.instance.billingPlan?.products[key] ?? {};
 
+      const components = import.meta.glob('@/components/services/*/lilbtn.vue')
+      const component = Object.keys(components).find((key) =>
+        key.includes(`/${serviceType}/lilbtn.vue`)
+      )
+
       if (meta?.renew === false) return;
 			if (serviceType === undefined) return;
       if (this.instance.date === 0) return;
       if (this.instance.server_on) return;
       if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return;
-			return () => import(`@/components/services/${serviceType}/lilbtn.vue`);
+			return () => components[component]();
 		}
   },
   methods: {

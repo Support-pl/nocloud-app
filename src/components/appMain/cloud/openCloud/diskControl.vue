@@ -107,7 +107,6 @@
 </template>
 
 <script>
-import md5 from "md5";
 import { mapGetters } from "vuex";
 
 export default {
@@ -198,7 +197,7 @@ export default {
     const user = this.user;
     const vmid = this.SingleCloud.ID;
 
-    const close_your_eyes = md5("getImages" + user.id + user.secret);
+    const close_your_eyes = btoa("getImages" + user.id + user.secret);
 
     let query = {
       userid: user.id,
@@ -266,7 +265,7 @@ export default {
       const user = this.user;
       const vmid = this.SingleCloud.ID;
 
-      const close_your_eyes = md5("VMDiskResize" + user.id + user.secret);
+      const close_your_eyes = btoa("VMDiskResize" + user.id + user.secret);
 
       let query = {
         userid: user.id,
@@ -319,7 +318,7 @@ export default {
       const user = this.user;
       const vmid = this.SingleCloud.ID;
 
-      const close_your_eyes = md5("VMDiskAttach" + user.id + user.secret);
+      const close_your_eyes = btoa("VMDiskAttach" + user.id + user.secret);
       const auth = {
         userid: user.id,
         vmid,
@@ -373,7 +372,7 @@ export default {
       const user = this.user;
       const vmid = this.SingleCloud.ID;
 
-      const close_your_eyes = md5("VMDiskDetach" + user.id + user.secret);
+      const close_your_eyes = btoa("VMDiskDetach" + user.id + user.secret);
       const auth = {
         userid: user.id,
         vmid,

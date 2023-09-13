@@ -1,7 +1,5 @@
-import md5 from 'md5';
 import axios from '../axios';
 import api from '@/api'
-
 
 export default {
 	namespaced: true,
@@ -98,7 +96,7 @@ export default {
 			ctx.commit('makeSingleLoadingIs', true);
 			const user = ctx.rootGetters.getUser;
 
-			const close_your_eyes = md5('getVmHash' + user.id + user.secret);
+			const close_your_eyes = btoa('getVmHash' + user.id + user.secret);
 
 			const url = `/getVmHash.php?vmid=${vmid}&userid=${user.id}&secret=${close_your_eyes}`;
 
@@ -126,7 +124,7 @@ export default {
 		silentUpdate(ctx, vmid) {
 			ctx.commit('makeUpdatingIs', true)
 			const user = ctx.rootGetters.getUser;
-			const close_your_eyes = md5('getVmHash' + user.id + user.secret);
+			const close_your_eyes = btoa('getVmHash' + user.id + user.secret);
 			const url = `/getVmHash.php?vmid=${vmid}&userid=${user.id}&secret=${close_your_eyes}`;
 
 			axios.get(url)
@@ -142,7 +140,7 @@ export default {
 		},
 		fetchAnsible(ctx, id) {
 			const user = ctx.rootGetters.getUser;
-			const close_your_eyes = md5('ansibleTestForErrors' + user.id + user.secret);
+			const close_your_eyes = btoa('ansibleTestForErrors' + user.id + user.secret);
 			const url = `/ansibleTestForErrors.php?procId=${id}&userid=${user.id}&secret=${close_your_eyes}`;
 
 			return new Promise( (resolve, reject) => {

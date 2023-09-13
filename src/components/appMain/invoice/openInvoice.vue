@@ -180,13 +180,7 @@ export default {
       this.$confirm({
         title: this.$t("Do you want to defer payment?"),
         maskClosable: true,
-        content: () => (
-          <div>
-            {this.$t(
-              "The payment can be postponed only once. The payment is postponed for 5 days."
-            )}
-          </div>
-        ),
+        content: this.$t("The payment can be postponed only once. The payment is postponed for 5 days."),
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
         onOk() {},

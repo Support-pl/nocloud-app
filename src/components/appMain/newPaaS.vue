@@ -593,8 +593,8 @@
 <script>
 import { mapGetters } from "vuex";
 import { NcMap } from "nocloud-ui";
-import loading from "../loading/loading";
-import addFunds from '../balance/addFunds.vue';
+import loading from "@/components/loading/loading.vue";
+import addFunds from '@/components/balance/addFunds.vue';
 import notification from "@/mixins/notification.js";
 import api from "@/api.js";
 
@@ -743,8 +743,10 @@ export default {
     template() {
       if (this.itemSP?.type.includes('ovh')) {
         const { type = 'ovh vps' } = this.getPlan ?? {};
+        const components = import.meta.glob('@/components/appMain/modules/*/createInstance.vue')
+        const component = Object.keys(components).find((key) => key.includes(`/${type}/`))
 
-        return () => import(`@/components/appMain/modules/${type}/createInstance.vue`);
+        return () => components[component]()
       } else {
         return () => import('@/components/appMain/modules/ione/createInstance.vue');
       }
@@ -1383,9 +1385,7 @@ export default {
       if (balance < parseFloat(sum.replace('~', ''))) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance'),
-          content: () => (
-            <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
-          ),
+          content: this.$t('Click OK to replenish the account with the missing amount'),
           onOk: () => {
             this.addfunds.amount = Math.ceil(parseFloat(sum) - (this.userdata.balance || 0));
             this.addfunds.visible = true;

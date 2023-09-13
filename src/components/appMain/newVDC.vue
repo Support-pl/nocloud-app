@@ -562,7 +562,6 @@
 </template>
 
 <script>
-import md5 from "md5";
 import { mapGetters } from "vuex";
 
 export default {
@@ -656,10 +655,10 @@ export default {
 
     const user = this.user;
     if (user) {
-      let userinfo = {
-        userid: user.id,
-        secret: md5("createVDC" + user.id + user.secret),
-      };
+      // let userinfo = {
+      //   userid: user.id,
+      //   secret: md5("createVDC" + user.id + user.secret),
+      // };
       // this.$axios.get("createVDC.php?" + this.URLparameter(userinfo) );
     }
     this.$axios

@@ -240,8 +240,10 @@ export default {
         okType: 'danger',
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
-        content: () => (
-          <div style="color:red">{ this.$t('All data will be deleted!') }</div>
+        content: (h) => h(
+          'div',
+          { attrs: { style: 'color: red' } },
+          this.$t('All data will be deleted!')
         ),
         onOk: async () => {
           return this.$store
@@ -481,9 +483,14 @@ export default {
       const { status, state } = this.service;
       const serviceType = this.$config.getServiceType(this.service.groupname)?.toLowerCase();
 
+      const components = import.meta.glob('@/components/services/*/draw.vue')
+      const component = Object.keys(components).find((key) =>
+        key.includes(`/${serviceType}/draw.vue`)
+      )
+
       if (serviceType === undefined) return;
       if (!(status === 'Active' || state?.state === 'RUNNING')) return;
-      return () => import(`@/components/services/${serviceType}/draw`);
+      return () => components[component]();
     },
     isActionsActive() {
       const key = this.service.product ?? this.service.config?.product;

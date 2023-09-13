@@ -48,8 +48,8 @@ export default {
       const ye = new Intl.DateTimeFormat("en", { year: "numeric" }).format(d);
       const mo = new Intl.DateTimeFormat("en", { month: "2-digit" }).format(d);
       const da = new Intl.DateTimeFormat("en", { day: "2-digit" }).format(d);
-      const ho = new Intl.DateTimeFormat("en", { hour: "2-digit", hour12: false }).format(d);
-      const mi = new Intl.DateTimeFormat("en", { minute: "2-digit" }).format(d);
+      let ho = new Intl.DateTimeFormat("en", { hour: "2-digit", hour12: false }).format(d);
+      let mi = new Intl.DateTimeFormat("en", { minute: "2-digit" }).format(d);
 
       if (`${ho}`.length < 2) ho = `${ho}0`;
       if (`${mi}`.length < 2) mi = `${mi}0`;

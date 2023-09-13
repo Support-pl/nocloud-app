@@ -16,10 +16,11 @@
 	</div>
 </template>
 
-<script>
+<script lang="jsx">
+import { defineComponent } from 'vue';
 import addFunds from '@/components/balance/addFunds.vue';
 
-export default {
+export default defineComponent({
   components: { addFunds },
 	props: ['service', 'price', 'currency'],
   data: () => ({
@@ -139,9 +140,7 @@ export default {
       if (this.user.balance < parseFloat(this.price)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance'),
-          content: () => (
-            <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
-          ),
+          content: this.$t('Click OK to replenish the account with the missing amount'),
           onOk: () => {
             this.addfunds.amount = Math.ceil(parseFloat(this.price) - this.user.balance);
             this.addfunds.visible = true;
@@ -237,7 +236,7 @@ export default {
       }
     }
   }
-}
+})
 </script>
 
 <style scoped>

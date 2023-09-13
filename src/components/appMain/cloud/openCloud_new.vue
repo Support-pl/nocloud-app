@@ -224,11 +224,11 @@
 <script>
 import { mapGetters } from "vuex";
 import loading from "@/components/loading/loading.vue";
-import diskControl from "./openCloud/diskControl";
-import bootOrder from "./openCloud/bootOrder";
-import networkControl from "./openCloud/networkControl";
-import accessManager from "./openCloud/accessManager";
-import notification from "@/mixins/notification";
+import diskControl from "./openCloud/diskControl.vue";
+import bootOrder from "./openCloud/bootOrder.vue";
+import networkControl from "./openCloud/networkControl.vue";
+import accessManager from "./openCloud/accessManager.vue";
+import notification from "@/mixins/notification.js";
 
 export default {
   name: "openCloud",
@@ -277,9 +277,11 @@ export default {
     ...mapGetters("products", ['getProducts']),
     ...mapGetters("support", { baseURL: "getURL" }),
     template() {
-      const type = (this.VM.server_on) ? 'whmcs' : this.VM.billingPlan?.type ?? 'ione';
+      const type = (this.VM.server_on) ? 'whmcs' : this.VM.billingPlan?.type ?? 'ione'
+      const components = import.meta.glob('@/components/appMain/modules/*/openInstance.vue')
+      const component = Object.keys(components).find((key) => key.includes(`/${type}/`))
 
-      return () => import(`@/components/appMain/modules/${type}/openInstance.vue`);
+      return () => components[component]()
     },
     menuOptions() {
       const options = [
@@ -627,8 +629,10 @@ export default {
         okType: "danger",
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
-        content: (h) => (
-          <div style="color:red;">{ this.$t("All data will be deleted!") }</div>
+        content: (h) => h(
+          'div',
+          { attrs: { style: 'color: red' } },
+          this.$t('All data will be deleted!')
         ),
         onOk: () => {
           const data = {
@@ -666,8 +670,10 @@ export default {
         okType: "danger",
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
-        content: () => (
-          <div style="color:red">{this.$t("All data will be deleted!")}</div>
+        content: (h) => h(
+          'div',
+          { attrs: { style: 'color: red' } },
+          this.$t('All data will be deleted!')
         ),
         onOk: () => {
           this.isDeleteLoading = true;

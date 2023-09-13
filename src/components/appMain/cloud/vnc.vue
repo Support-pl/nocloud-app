@@ -34,42 +34,42 @@
 						</div>
 
 						<!-- Drag/Pan the viewport -->
-						<input type="image" alt="Drag" src="img/images/drag.svg" id="noVNC_view_drag_button"
+						<input type="image" alt="Drag" src="/img/images/drag.svg" id="noVNC_view_drag_button"
 							class="noVNC_button noVNC_hidden" title="Move/Drag Viewport">
 
 						<!--noVNC Touch Device only buttons-->
 						<div id="noVNC_mobile_buttons">
-							<input type="image" alt="Keyboard" src="img/images/keyboard.svg" id="noVNC_keyboard_button"
+							<input type="image" alt="Keyboard" src="/img/images/keyboard.svg" id="noVNC_keyboard_button"
 								class="noVNC_button" title="Show Keyboard">
 						</div>
 
 						<!-- Extra manual keys -->
-						<input type="image" alt="Extra keys" src="img/images/toggleextrakeys.svg" id="noVNC_toggle_extra_keys_button"
+						<input type="image" alt="Extra keys" src="/img/images/toggleextrakeys.svg" id="noVNC_toggle_extra_keys_button"
 							class="noVNC_button" title="Show Extra Keys">
 						<div class="noVNC_vcenter">
 							<div id="noVNC_modifiers" class="noVNC_panel">
-								<input type="image" alt="Ctrl" src="img/images/ctrl.svg" id="noVNC_toggle_ctrl_button"
+								<input type="image" alt="Ctrl" src="/img/images/ctrl.svg" id="noVNC_toggle_ctrl_button"
 									class="noVNC_button" title="Toggle Ctrl">
-								<input type="image" alt="Alt" src="img/images/alt.svg" id="noVNC_toggle_alt_button" class="noVNC_button"
+								<input type="image" alt="Alt" src="/img/images/alt.svg" id="noVNC_toggle_alt_button" class="noVNC_button"
 									title="Toggle Alt">
-								<input type="image" alt="Windows" src="img/images/windows.svg" id="noVNC_toggle_windows_button"
+								<input type="image" alt="Windows" src="/img/images/windows.svg" id="noVNC_toggle_windows_button"
 									class="noVNC_button" title="Toggle Windows">
-								<input type="image" alt="Tab" src="img/images/tab.svg" id="noVNC_send_tab_button" class="noVNC_button"
+								<input type="image" alt="Tab" src="/img/images/tab.svg" id="noVNC_send_tab_button" class="noVNC_button"
 									title="Send Tab">
-								<input type="image" alt="Esc" src="img/images/esc.svg" id="noVNC_send_esc_button" class="noVNC_button"
+								<input type="image" alt="Esc" src="/img/images/esc.svg" id="noVNC_send_esc_button" class="noVNC_button"
 									title="Send Escape">
-								<input type="image" alt="Ctrl+Alt+Del" src="img/images/ctrlaltdel.svg" id="noVNC_send_ctrl_alt_del_button"
+								<input type="image" alt="Ctrl+Alt+Del" src="/img/images/ctrlaltdel.svg" id="noVNC_send_ctrl_alt_del_button"
 									class="noVNC_button" title="Send Ctrl-Alt-Del">
 							</div>
 						</div>
 
 						<!-- Shutdown/Reboot -->
-						<input type="image" alt="Shutdown/Reboot" src="img/images/power.svg" id="noVNC_power_button"
+						<input type="image" alt="Shutdown/Reboot" src="/img/images/power.svg" id="noVNC_power_button"
 							class="noVNC_button" title="Shutdown/Reboot...">
 						<div class="noVNC_vcenter">
 							<div id="noVNC_power" class="noVNC_panel">
 								<div class="noVNC_heading">
-									<img alt="" src="img/images/power.svg"> Power
+									<img alt="" src="/img/images/power.svg"> Power
 								</div>
 								<input type="button" id="noVNC_shutdown_button" value="Shutdown">
 								<input type="button" id="noVNC_reboot_button" value="Reboot">
@@ -78,12 +78,12 @@
 						</div>
 
 						<!-- Clipboard -->
-						<input type="image" alt="Clipboard" src="img/images/clipboard.svg" id="noVNC_clipboard_button"
+						<input type="image" alt="Clipboard" src="/img/images/clipboard.svg" id="noVNC_clipboard_button"
 							class="noVNC_button" title="Clipboard">
 						<div class="noVNC_vcenter">
 							<div id="noVNC_clipboard" class="noVNC_panel">
 								<div class="noVNC_heading">
-									<img alt="" src="img/images/clipboard.svg"> Clipboard
+									<img alt="" src="/img/images/clipboard.svg"> Clipboard
 								</div>
 								<textarea id="noVNC_clipboard_text" rows=5></textarea>
 								<br>
@@ -92,17 +92,17 @@
 						</div>
 
 						<!-- Toggle fullscreen -->
-						<input type="image" alt="Fullscreen" src="img/images/fullscreen.svg" id="noVNC_fullscreen_button"
+						<input type="image" alt="Fullscreen" src="/img/images/fullscreen.svg" id="noVNC_fullscreen_button"
 							class="noVNC_button noVNC_hidden" title="Fullscreen">
 
 						<!-- Settings -->
-						<input type="image" alt="Settings" src="img/images/settings.svg" id="noVNC_settings_button"
+						<input type="image" alt="Settings" src="/img/images/settings.svg" id="noVNC_settings_button"
 							class="noVNC_button" title="Settings">
 						<div class="noVNC_vcenter">
 							<div id="noVNC_settings" class="noVNC_panel">
 								<ul>
 									<li class="noVNC_heading">
-										<img alt="" src="img/images/settings.svg"> Settings
+										<img alt="" src="/img/images/settings.svg"> Settings
 									</li>
 									<template v-if="instance && !isLoading">
 										<li>
@@ -780,7 +780,7 @@ export default {
 		cursor: pointer;
 		border-radius: 5px;
 		background-color: rgb(83, 99, 122);
-		background-image: url("/public/img/images/handle_bg.svg");
+		background-image: url("/img/images/handle_bg.svg");
 		background-repeat: no-repeat;
 		background-position: right;
 		box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
@@ -789,7 +789,7 @@ export default {
 	#noVNC_control_bar_handle:after {
 		content: "";
 		transition: transform 0.5s ease-in-out;
-		background: url("/public/img/images/handle.svg");
+		background: url("/img/images/handle.svg");
 		position: absolute;
 		top: 22px;
 		/* (50px-6px)/2 */
@@ -1003,7 +1003,7 @@ export default {
 	}
 
 	.noVNC_expander::before {
-		content: url("/public/img/images/expander.svg");
+		content: url("/img/images/expander.svg");
 		display: inline-block;
 		margin-right: 5px;
 		transition: 0.2s ease-in-out;
@@ -1166,7 +1166,7 @@ export default {
 	}
 
 	#noVNC_status.noVNC_status_normal::before {
-		content: url("/public/img/images/info.svg") " ";
+		content: url("/img/images/info.svg") " ";
 	}
 
 	#noVNC_status.noVNC_status_error {
@@ -1174,7 +1174,7 @@ export default {
 	}
 
 	#noVNC_status.noVNC_status_error::before {
-		content: url("/public/img/images/error.svg") " ";
+		content: url("/img/images/error.svg") " ";
 	}
 
 	#noVNC_status.noVNC_status_warn {
@@ -1182,7 +1182,7 @@ export default {
 	}
 
 	#noVNC_status.noVNC_status_warn::before {
-		content: url("/public/img/images/warning.svg") " ";
+		content: url("/img/images/warning.svg") " ";
 	}
 
 	/* ----------------------------------------

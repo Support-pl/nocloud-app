@@ -334,9 +334,7 @@ export default {
       if (this.userdata.balance < parseFloat(sum)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance'),
-          content: () => (
-            <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
-          ),
+          content: this.$t('Click OK to replenish the account with the missing amount'),
           onOk: () => {
             this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
             this.addfunds.visible = true;

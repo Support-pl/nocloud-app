@@ -335,11 +335,12 @@
   </div>
 </template>
 
-<script>
+<script lang="jsx">
+import { defineComponent } from "vue";
 import notification from "@/mixins/notification";
 import addFunds from '@/components/balance/addFunds.vue';
 
-export default {
+export default defineComponent({
   name: 'openInstance',
   components: { addFunds },
   mixins: [notification],
@@ -389,9 +390,7 @@ export default {
           this.$confirm({
             title: this.$t("Do you want to download a backup?"),
             maskClosable: true,
-            content: () => {
-              return <div>{ this.$t("All unsaved progress will be lost, are you sure?") }</div>;
-            },
+            content: this.$t("All unsaved progress will be lost, are you sure?"),
             okText: this.$t("Yes"),
             cancelText: this.$t("Cancel"),
             onOk: () => {
@@ -412,9 +411,7 @@ export default {
       if (this.user.balance < parseFloat(sum)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance'),
-          content: () => (
-            <div>{ this.$t('Click OK to replenish the account with the missing amount') }</div>
-          ),
+          content: this.$t('Click OK to replenish the account with the missing amount'),
           onOk: () => {
             this.addfunds.amount = Math.ceil(parseFloat(sum) - this.user.balance);
             this.addfunds.visible = true;
@@ -635,7 +632,7 @@ export default {
       };
     }
   }
-}
+})
 </script>
 
 <style scoped>

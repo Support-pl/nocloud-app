@@ -131,7 +131,7 @@
 </template>
 
 <script>
-import empty from "@/components/empty/empty";
+import empty from "@/components/empty/empty.vue";
 import { countries } from "@/setup/countries";
 
 const interestedKeys = [

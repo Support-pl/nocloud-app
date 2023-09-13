@@ -130,7 +130,7 @@ import { mapGetters } from "vuex";
 import { countries } from "@/setup/countries";
 import countriesWithDialCode from "@/countries.json";
 import notification from "@/mixins/notification"
-import loading from "@/components/loading/loading";
+import loading from "@/components/loading/loading.vue";
 import empty from '../components/empty/empty.vue';
 import api from "@/api.js";
 

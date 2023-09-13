@@ -477,7 +477,8 @@
   </div>
 </template>
 
-<script>
+<script lang="jsx">
+import { defineComponent } from "vue";
 import notification from "@/mixins/notification";
 
 const columns = [
@@ -500,7 +501,7 @@ const columns = [
 ];
 const sizes = ["bytes", "KB", "MB", "GB", "TB", "PB"];
 
-export default {
+export default defineComponent({
   name: 'openInstance',
   props: { VM: { type: Object, required: true } },
   mixins: [notification],
@@ -742,9 +743,7 @@ export default {
       this.$confirm({
         title: this.$t("Do you want to download a backup?"),
         maskClosable: true,
-        content: () => {
-          return <div>{ this.$t("All unsaved progress will be lost, are you sure?") }</div>;
-        },
+        content: this.$t("All unsaved progress will be lost, are you sure?"),
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
         onOk: () => {
@@ -811,9 +810,7 @@ export default {
 
         this.$confirm({
           title: this.$t("Do you want to switch tariff?"),
-          content: () => (
-            <div>{ `${this.$t("invoice_Price")}: ${withTax.value} NCU` }</div>
-          ),
+          content: `${this.$t("invoice_Price")}: ${withTax.value} NCU`,
           okText: this.$t("Yes"),
           cancelText: this.$t("Cancel"),
           onOk: () => new Promise((resolve) => setTimeout(resolve, 1000)),
@@ -1139,7 +1136,7 @@ export default {
   watch: {
     'VM.uuidService'() { this.fetchMonitoring() }
   }
-}
+})
 </script>
 
 <style scoped>
