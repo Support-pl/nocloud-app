@@ -5,143 +5,148 @@
         position: 'absolute',
         width: '100%',
         height: '100%',
-        minHeight: (loggedIn) ? 'auto' : '100vh'
+        minHeight: (isLogged) ? 'auto' : '100vh'
       }" />
     </transition>
     <update-notification />
   </div>
 </template>
 
-<script>
-import updateNotification from "./components/updateNotification/index.vue";
+<script setup>
+import { computed, onMounted, watch } from 'vue';
+import store from '@/store';
+import router from '@/router';
+import i18n from '@/i18n.js';
+import config from '@/appconfig.js';
+import updateNotification from '@/components/updateNotification/index.vue';
 
-export default {
-  name: "app",
-  components: { updateNotification },
-  methods: {
-    isRouteExist(name) {
-      if (name === 'root') name = 'services';
-      if (!this.user.roles) return true;
-      if (!(name in this.user.roles)) return true;
-      switch (name) {
-        case 'billing':
-          return this.user.roles?.invoice;
+const route = router.currentRoute;
 
-        case 'settings':
-          return true;
-      
-        default:
-          return this.user.roles[name];
-      }
-    }
-  },
-  created() {
-    window.addEventListener('message', ({ data, origin }) => {
-      console.log(data, origin);
-      if (!origin.includes('https://api.')) return;
-      this.$store.commit("nocloud/auth/setToken", data.token);
+const user = computed(() =>
+  store.getters["nocloud/auth/billingData"]
+);
 
-      if (data.uuid) {
-        this.$router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
-        console.log(`Instance uuid: ${data.uuid}`);
-      } else if (this.$route.name.includes('login')) {
-        this.$router.replace({ name: 'root' });
-        console.log('Login page');
-      }
-      setTimeout(() => { location.reload() }, 100);
-    });
+watch(user, (value) => {
+  const isServicesExist = value.roles && !value.roles.services;
 
-    this.$store.dispatch("nocloud/auth/load");
+  if (isServicesExist && ['root', 'services'].includes(route.name)) {
+    router.replace('settings');
+  }
+});
 
-    this.$router.beforeEach((to, _, next) => {
-      const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined);
+const isLogged = computed(() =>
+  store.getters['nocloud/auth/isLoggedIn']
+);
 
-      if (mustBeLoggined && !this.loggedIn) {
-        next({ name: "login" });
-      }
-      else if (!this.isRouteExist(to.name)) {
-        if (!this.user.roles?.services) {
-          next({ name: "settings" });
-        } else {
-          next({ name: "root" });
-        }
-      }
-      else if (to.name == "login" && this.loggedIn) {
-        next({ name: "root" });
-      }
-      else next();
-    });
+function isRouteExist(name) {
+  if (name === 'root') name = 'services';
+  if (!user.value.roles) return true;
 
-    const lang = this.$route.query.lang ?? localStorage.getItem("lang");
+  switch (name) {
+    case 'billing':
+      return user.value.roles?.invoice;
 
-    if (lang != undefined) this.$i18n.locale = lang;
-    if (this.loggedIn) {
-      this.$store.dispatch("nocloud/auth/fetchUserData");
-    }
-  },
-  mounted() {
-    this.$router.onReady(() => {
-      const route = this.$router.currentRoute;
-      const isLogged = this.loggedIn;
-      const mustBeLoggined = route.matched.some((el) => !!el.meta?.mustBeLoggined);
+    case 'settings':
+      return true;
+  
+    default:
+      if (!(name in user.value.roles)) return true;
+      return user.value.roles[name];
+  }
+}
 
-      if (mustBeLoggined && !isLogged) {
-        this.$router.replace("login");
-      }
+window.addEventListener('message', ({ data, origin }) => {
+  console.log(data, origin);
+  if (!origin.includes('https://api.')) return;
+  store.commit("nocloud/auth/setToken", data.token);
 
-      if (!this.$route.query.lang) return;
-      if (this.$route.query.lang !== this.$i18n.locale) {
-        this.$i18n.locale = this.$route.query.lang;
-      }
-    });
+  if (data.uuid) {
+    router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } });
+    console.log(`Instance uuid: ${data.uuid}`);
+  } else if (route.name.includes('login')) {
+    router.replace({ name: 'root' });
+    console.log('Login page');
+  }
+  setTimeout(() => { location.reload() }, 100);
+});
 
-    document.title = "Cloud";
-    document.body.setAttribute("style",
-      Object.entries(this.cssVars).map(([k, v]) => `${k}:${v}`).join(";")
-    );
-  },
-  computed: {
-    cssVars() {
-      return Object.fromEntries(
-        Object.entries(this.$config.colors).map(([key, val]) => [
-          `--${key}`,
-          val,
-        ])
-      );
-    },
-    user() {
-      return this.$store.getters["nocloud/auth/billingData"];
-    },
-    loggedIn() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
-    },
-    notification() {
-      return this.$store.getters["app/getNotification"];
-    }
-  },
-  watch: {
-    notification(value) {
-      if (!value) return;
-      setTimeout(() => {
-        const elements = document.querySelectorAll('.ant-notification-notice-close');
-        const close = Array.from(elements);
-        const open = () => {
-          if (close.length > 1) close.pop();
-          else this.$store.commit('app/setNotification', false);
-        }
+store.dispatch('nocloud/auth/load');
 
-        close.forEach((el) => { el.addEventListener('click', open) });
-      }, 100);
-    },
-    user(value) {
-      const isServicesExist = value.roles && !value.roles.services;
+router.beforeEach((to, _, next) => {
+  const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined);
 
-      if (isServicesExist && ['root', 'services'].includes(this.$route.name)) {
-        this.$router.replace("settings");
-      }
+  if (mustBeLoggined && !isLogged.value) {
+    next({ name: "login" });
+  }
+  else if (!isRouteExist(to.name)) {
+    if (!user.value.roles?.services) {
+      next({ name: "settings" });
+    } else {
+      next({ name: "root" });
     }
   }
-};
+  else if (to.name === "login" && isLogged.value) {
+    next({ name: "root" });
+  }
+  else next();
+});
+
+const lang = route.query.lang ?? localStorage.getItem("lang");
+
+if (lang) i18n.locale = lang;
+if (isLogged.value) {
+  store.dispatch("nocloud/auth/fetchUserData");
+}
+
+onMounted(() => {
+  router.onReady(() => {
+    const mustBeLoggined = route.matched.some((el) => !!el.meta?.mustBeLoggined);
+
+    if (mustBeLoggined && !isLogged.value) {
+      router.replace("login");
+    }
+
+    if (!route.query.lang) return;
+    if (route.query.lang !== i18n.locale) {
+      i18n.locale = route.query.lang;
+    }
+  });
+
+  document.title = "Cloud";
+  document.body.setAttribute("style",
+    Object.entries(cssVars.value).map(([k, v]) => `${k}:${v}`).join(";")
+  );
+});
+
+const notification = computed(() =>
+  store.getters["app/getNotification"]
+);
+
+watch(notification, (value) => {
+  if (!value) return;
+  setTimeout(() => {
+    const elements = document.querySelectorAll('.ant-notification-notice-close');
+    const close = Array.from(elements);
+    const open = () => {
+      if (close.length > 1) close.pop();
+      else store.commit('app/setNotification', false);
+    }
+
+    close.forEach((el) => { el.addEventListener('click', open) });
+  }, 100);
+});
+
+const cssVars = computed(() =>
+  Object.fromEntries(
+    Object.entries(config.colors).map(
+      ([key, value]) => [`--${key}`, value]
+    )
+  )
+);
+</script>
+
+<script>
+export default { name: 'app' }
 </script>
 
 <style>

@@ -7,6 +7,7 @@ import {
 import {
   Empty, Chat, Message, ChatMeta, Role, Kind, EventType, Users, User, Status
 } from '@/libs/cc_connect/cc_pb';
+import { Value } from '@bufbuild/protobuf';
 
 function toDate(timestamp) {
   const date = new Date(timestamp);
@@ -215,12 +216,18 @@ export default {
 
       const { uuid } = rootState.nocloud.auth.userdata;
       const newChat = new Chat({
+        department: data.department,
         gateways: data.gateways ?? state.defaults.gateways,
-        admins: data.departments ?? state.defaults.departments,
+        admins: data.admins ?? state.defaults.admins,
         users: [uuid],
         topic: data.chat.subject,
         role: Role.OWNER,
-        meta: new ChatMeta({ lastMessage: data.chat.message })
+        meta: new ChatMeta({
+          lastMessage: data.chat.message,
+          data: { instance: new Value({
+            kind: { case: 'stringValue', value: data.chat.instanceId }
+          }) }
+        })
       });
       const createdChat = await chatsApi.create(newChat);
 
@@ -294,7 +301,7 @@ export default {
     getDefaults: (state) => ({
       ...state.defaults,
       departments: state.defaults.departments?.map(
-        ({ admins, title }) => ({ id: Math.random(), admins, name: title })
+        ({ admins, title, key }) => ({ id: key, admins, name: title })
       ) ?? []
     })
   }

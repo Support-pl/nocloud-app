@@ -3,9 +3,8 @@
     :title="$t('ask a question')"
     :visible="addTicketStatus"
     :confirmLoading="isSending"
+    :footer="null"
     @cancel="closeFields"
-    @ok="sendNewTicket"
-    :cancelText="$t('Cancel')"
   >
     <a-spin tip="Loading..." :spinning="isLoading">
       <a-form-model layout="vertical">
@@ -37,7 +36,7 @@
               :key="gate.id"
               :value="gate.id"
               :class="{ 'order__slider-item--active': gateway === gate.id }"
-              @click="changeGateway(gate.id)"
+              @click="sendNewTicket(gate.id)"
             >
               <span class="order__slider-name" :title="gate.name">
                 <img class="img_prod" :src="`/img/icons/${gate.id}.png`" :alt="gate.id" @error="onError">
@@ -66,6 +65,9 @@ md.use(emoji);
 
 export default {
   name: "addTicket",
+  props: {
+    instanceId: { type: String, default: null }
+  },
   data() {
     return {
       gateway: "",
@@ -94,7 +96,7 @@ export default {
 
       return gateways.map((gateway) => ({
         id: gateway,
-        name: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`
+        name: `${gateway[0].toUpperCase()}${gateway.slice(1)}`
       }));
     },
     ...mapGetters("support", {
@@ -120,15 +122,17 @@ export default {
 
       const { departments } = this.$store.getters['nocloud/chats/getDefaults'];
       const ids = departments.map(({ id }) => id);
-      const { admins } = departments.find(({ id }) => id === this.ticketDepartment) ?? {};
+      const { admins, id: key } = departments.find(({ id }) => id === this.ticketDepartment) ?? {};
 
       const request = (ids.includes(this.ticketDepartment))
         ? this.$store.dispatch('nocloud/chats/createChat', {
-            departments: admins,
+            admins,
+            department: key,
             gateways: [this.gateway],
             chat: {
               subject: this.ticketTitle,
-              message: md.render(this.ticketMessage).trim().replace(/^<p>/, '').replace(/<\/p>$/, '')
+              message: md.render(this.ticketMessage).trim().replace(/^<p>/, '').replace(/<\/p>$/, ''),
+              instanceId: this.instanceId
             }
           })
         : this.$api.get(this.baseURL, { params: {
@@ -157,7 +161,10 @@ export default {
                 date: BigInt(Date.now())
               });
             }
-            this.$router.push(`ticket-${resp.uuid}`);
+
+            const query = { from: this.instanceId };
+
+            this.$router.push({ path:`/ticket-${resp.uuid}`, query });
           } else {
             throw resp;
           }
@@ -304,10 +311,6 @@ export default {
   justify-content: space-evenly;
   margin-bottom: 10px;
 	overflow-x: auto;
-}
-
-.order__slider-item:not(:last-child) {
-	margin-right: 10px;
 }
 
 .order__slider-item {

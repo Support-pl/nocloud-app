@@ -285,27 +285,28 @@ export default {
         instances
       };
 
-      const info = (!this.service) ? newGroup : Object.assign(
-        { instances_groups: service.instancesGroups },
-        { ...service }
-      );
-      const group = info.instances_groups?.find(({ type }) => type === 'goget');
+      if (plan.kind === 'STATIC') instances[0].product = this.options.provider;
+
+      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service));
+      const group = info.instancesGroups?.find(({ type }) => type === 'goget');
 
       if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instances_groups.push(newGroup);
+      else if (this.service) info.instancesGroups.push(newGroup);
 
 			if (!this.user) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
 				this.$store.commit('setOnloginInfo', {
-					type: 'SSL',
+					type: 'ssl',
 					title: 'SSL Certificate',
-					cost: this.getProducts.prices[this.options.period]
+					cost: this.getProducts.prices[this.options.period],
+          currency: this.currency.code
 				});
 				this.$store.dispatch('setOnloginAction', () => {
 					this.createSSL(info);
 				});
-				this.$router.push({name: 'login'});
-				return
+
+				this.$router.push({ name: 'login' });
+				return;
 			}
 
       this.createSSL(info);
@@ -319,11 +320,10 @@ export default {
           title: this.user.fullname,
           context: {},
           version: '1',
-          instances_groups: [info]
+          instancesGroups: [info]
         }
       };
 
-      delete orderData.instancesGroups;
       this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
@@ -411,6 +411,14 @@ export default {
       }
     }
 	},
+  mounted() {
+    const { action } = this.$store.getters['getOnlogin'];
+
+    if (typeof action !== 'function') return;
+    this.modal.confirmCreate = true;
+    this.modal.confirmLoading = true;
+    action();
+  },
 	computed: {
 		getProducts() {
 			if (Object.keys(this.products).length === 0) return "NAN";

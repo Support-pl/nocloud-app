@@ -326,7 +326,7 @@
             <a-modal
               :title="$t('Confirm')"
               :visible="modal.confirmCreate"
-              :confirm-loading="sendloading"
+              :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
               @cancel="modal.confirmCreate = false"
@@ -373,7 +373,6 @@ export default {
     service: null,
     namespace: null,
     fetchLoading: false,
-    sendloading: false,
     modal: {
       confirmCreate: false,
       confirmLoading: false
@@ -421,7 +420,7 @@ export default {
             message: this.$t(message)
           });
         })
-        .finally(() => this.fetchLoading = false);
+        .finally(() => { this.fetchLoading = false });
     },
     installDataToBuffer() {
       const interestedKeys = [
@@ -475,28 +474,28 @@ export default {
         instances
       };
 
-      const info = (!this.service) ? newGroup : Object.assign(
-        { instances_groups: service.instancesGroups },
-        { ...service }
-      );
-      const group = info.instances_groups?.find(({ type }) => type === 'opensrs');
+      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service));
+      const group = info.instancesGroups?.find(({ type }) => type === 'opensrs');
 
       if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instances_groups.push(newGroup);
+      else if (this.service) info.instancesGroups.push(newGroup);
 
-      if (!this.user) {
+      if (!this.userdata.uuid) {
         this.$store.commit('setOnloginRedirect', this.$route.name);
         this.$store.commit('setOnloginInfo', {
-          type: 'Domains',
+          type: 'domains',
           title: 'Domains',
-          cost: this.getProducts().pricing[this.resources.period]
+          cost: this.getProducts().pricing[this.resources.period],
+          currency: this.currency.code
         });
         this.$store.dispatch('setOnloginAction', () => {
           this.createDomains(info);
         });
+
         this.$router.push({ name: 'login' });
         return;
       }
+
       this.$refs.form.validate((isValid) => {
         if (isValid) this.createDomains(info);
         else this.openNotificationWithIcon('error', {
@@ -505,7 +504,7 @@ export default {
       });
     },
     createDomains(info) {
-      this.sendloading = true;
+      this.modal.confirmLoading = true;
       const action = (this.service) ? 'update' : 'create';
       const orderData = (this.service) ? info : {
         namespace: this.namespace,
@@ -513,11 +512,10 @@ export default {
           title: this.user.fullname,
           context: {},
           version: '1',
-          instances_groups: [info]
+          instancesGroups: [info]
         }
       };
 
-      delete orderData.instancesGroups;
       this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
@@ -585,7 +583,7 @@ export default {
             message: this.$t(message)
           });
         })
-        .finally(() => this.sendloading = false);
+        .finally(() => { this.modal.confirmLoading = false });
     },
     getProducts() {
       const prices = { suffix: this.user.currency_code };
@@ -610,6 +608,14 @@ export default {
       };
       // return this.products[this.options.provider].find(el => el.tarif == this.options.tarif);
     }
+  },
+  mounted() {
+    const { action } = this.$store.getters['getOnlogin'];
+
+    if (typeof action !== 'function') return;
+    this.modal.confirmCreate = true;
+    this.modal.confirmLoading = true;
+    action();
   },
   computed: {
     isLogged() {

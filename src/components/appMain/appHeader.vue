@@ -411,6 +411,7 @@ export default {
         this.$router.push({ path: '/iaas', query });
         return;
       }
+
       if (this.getActiveTab.title.includes('service-')) {
         // if (this.$route.query.service) {
         //   const { service } = this.$route.query;
@@ -421,6 +422,7 @@ export default {
         // }
         return;
       }
+
       if (this.getActiveTab.title.includes('invoice')) {
         this.$router.push('/billing');
         return;

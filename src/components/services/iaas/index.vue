@@ -180,7 +180,7 @@
 						<a-modal
 							:title="$t('Confirm')"
 							:visible="modal.confirmCreate"
-							:confirm-loading="sendloading"
+							:confirm-loading="modal.confirmLoading"
 							:cancel-text="$t('Cancel')"
 							@ok="orderClickHandler"
 							@cancel="() => {modal.confirmCreate = false}"
@@ -219,7 +219,6 @@ export default {
     products: [],
     payMethods: [],
     fetchLoading: false,
-    sendloading: false,
     options: { size: '', payment: '', period: '', addons: [] },
     modal: {
       confirmCreate: false,
@@ -280,24 +279,26 @@ export default {
         addons: this.options.addons
 			}
 
-			if(!this.user){
+			if (!this.userdata.uuid) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
 				this.$store.commit('setOnloginInfo', {
-					type: 'IaaS',
+					type: 'iaas',
 					title: this.$route.query.service,
-					cost: this.getProducts.price[this.options.period] ?? 0
+					cost: this.getProducts.price[this.options.period] ?? 0,
+          currency: this.currency.code,
+          goToInvoice: this.modal.goToInvoice
 				});
 				this.$store.dispatch('setOnloginAction', () => {
 					this.createService(info);
 				});
-				this.$router.push({name: 'login'});
-				return
+				this.$router.push({ name: 'login' });
+				return;
 			}
 
 			this.createService(info);
 		},
 		createService(info){
-			this.sendloading = true;
+			this.modal.confirmLoading = true;
 			this.$api.get(this.baseURL, { params: info })
         .then((result) => {
           if (this.modal.goToInvoice){
@@ -308,7 +309,7 @@ export default {
         })
         .catch((err) => console.error(err))
         .finally(() => {
-          this.sendloading = false;
+          this.modal.confirmLoading = false;
         });
 		},
 		orderConfirm(){
@@ -458,6 +459,15 @@ export default {
 		this.$store.dispatch('nocloud/auth/fetchBillingData');
 		this.fetch();
 	},
+  mounted() {
+    const { action, info } = this.$store.getters['getOnlogin'];
+
+    if (typeof action !== 'function') return;
+    this.modal.goToInvoice = info.goToInvoice;
+    this.modal.confirmCreate = true;
+    this.modal.confirmLoading = true;
+    action();
+  },
   watch: {
     'options.size'() {
       this.periods = Object.entries(this.getProducts.price ?? {}).filter(

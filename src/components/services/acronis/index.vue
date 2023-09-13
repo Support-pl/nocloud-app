@@ -130,7 +130,7 @@
 						<a-modal
 							:title="$t('Confirm')"
 							:visible="modal.confirmCreate"
-							:confirm-loading="sendloading"
+							:confirm-loading="modal.confirmLoading"
 							:cancel-text="$t('Cancel')"
 							@ok="orderClickHandler"
 							@cancel="modal.confirmCreate = false"
@@ -162,9 +162,7 @@ export default {
     plan: undefined,
     service: undefined,
     namespace: undefined,
-
     fetchLoading: false,
-    sendloading: false,
 
     options: { login: '', password: '', period: '' },
     modal: { confirmCreate: false, confirmLoading: false },
@@ -227,33 +225,35 @@ export default {
         instances
       };
 
-      const info = (!this.service) ? newGroup : Object.assign(
-        { instances_groups: service.instancesGroups },
-        { ...service }
-      );
-      const group = info.instances_groups?.find(({ type }) => type === 'acronis');
+      if (plan.kind === 'STATIC') instances[0].product = this.options.size;
+
+      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service));
+      const group = info.instancesGroups?.find(({ type }) => type === 'acronis');
 
       if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instances_groups.push(newGroup);
+      else if (this.service) info.instancesGroups.push(newGroup);
 
-			if (!this.user) {
+			if (!this.userdata.uuid) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
 				this.$store.commit('setOnloginInfo', {
-					type: 'Acronis',
+					type: 'acronis',
 					title: 'Acronis',
-					cost: this.getProducts.price
+					cost: this.getProducts.price,
+          currency: this.currency.code,
+          goToInvoice: this.modal.goToInvoice
 				});
 				this.$store.dispatch('setOnloginAction', () => {
 					this.createAcronis(info);
 				});
-				this.$router.push({name: 'login'});
-				return
+
+				this.$router.push({ name: 'login' });
+				return;
 			}
 
 			this.createAcronis(info);
 		},
 		createAcronis(info) {
-			this.sendloading = true;
+			this.modal.confirmLoading = true;
       const action = (this.service) ? 'update' : 'create';
       const orderData = (this.service) ? info : {
         namespace: this.namespace,
@@ -261,11 +261,10 @@ export default {
           title: this.user.fullname,
           context: {},
           version: '1',
-          instances_groups: [info]
+          instancesGroups: [info]
         }
       };
 
-      delete orderData.instancesGroups;
       this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
@@ -328,7 +327,7 @@ export default {
 
           this.$notification.error({ message: this.$t(message) });
         })
-        .finally(() => this.sendloading = false);
+        .finally(() => this.modal.confirmLoading = false);
     },
     getPeriod(timestamp) {
       const hour = 3600;
@@ -355,6 +354,15 @@ export default {
       return this.$tc(period, count);
     },
 	},
+  mounted() {
+    const { action, info } = this.$store.getters['getOnlogin'];
+
+    if (typeof action !== 'function') return;
+    this.modal.goToInvoice = info.goToInvoice;
+    this.modal.confirmCreate = true;
+    this.modal.confirmLoading = true;
+    action();
+  },
 	computed: {
 		getProducts() {
 			if (Object.keys(this.products).length === 0) return "NAN";

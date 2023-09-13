@@ -4,14 +4,13 @@
 			<div class="order__inputs order__field">
 				<div class="order_option">
 					<a-slider
-						:marks="{...sizes}"
+						:marks="{ ...sizes }"
 						:value="sizes.indexOf(options.size)"
 						:tip-formatter="null"
-						:max="sizes.length-1"
+						:max="sizes.length - 1"
 						:min="0"
-						@change="(newval) => options.size = sizes[newval]"
-					>
-					</a-slider>
+						@change="(value) => options.size = sizes[value]"
+					/>
 
           <transition name="specs" mode="out-in">
             <table v-if="getProducts.resources" class="product__specs" :key="getProducts.title">
@@ -41,7 +40,7 @@
 							<a-input
                 placeholder="email"
                 v-if="!fetchLoading"
-                v-model="config.mail"
+                v-model="config.email"
                 :rules="rules.req"
               />
 							<div v-else class="loadingLine"></div>
@@ -150,7 +149,7 @@
 						<a-modal
 							:title="$t('Confirm')"
 							:visible="modal.confirmCreate"
-							:confirm-loading="sendloading"
+							:confirm-loading="modal.confirmLoading"
 							:cancel-text="$t('Cancel')"
 							@ok="orderClickHandler"
 							@cancel="() => {modal.confirmCreate = false}"
@@ -181,12 +180,10 @@ export default {
     plan: null,
     service: null,
     namespace: null,
-
     fetchLoading: false,
-    sendloading: false,
 
     options: { size: '', model: '', period: '' },
-    config: { domain: '', mail: '', password: '' },
+    config: { domain: '', email: '', password: '' },
     modal: { confirmCreate: false, confirmLoading: false },
     addfunds: { visible: false, amount: 0 },
 
@@ -218,7 +215,12 @@ export default {
 
       const instances = [{
         config: { ...this.config },
-        resources: { plan: this.getProducts.resources.model },
+        resources: {
+          ...this.getProducts.resources,
+          ssd: `${parseFloat(this.getProducts.resources.ssd) * 1024}`,
+          model: this.options.model,
+          plan: this.options.model
+        },
         title: this.getProducts.title,
         billing_plan: plan ?? {}
       }];
@@ -229,33 +231,34 @@ export default {
         instances
       };
 
-      const info = (!this.service) ? newGroup : Object.assign(
-        { instances_groups: service.instancesGroups },
-        { ...service }
-      );
-      const group = info.instances_groups?.find(({ type }) => type === 'cpanel');
+      if (plan.kind === 'STATIC') instances[0].product = this.options.size;
+
+      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service));
+      const group = info.instancesGroups?.find(({ type }) => type === 'cpanel');
 
       if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instances_groups.push(newGroup);
+      else if (this.service) info.instancesGroups.push(newGroup);
 
-			if (!this.user) {
+			if (!this.userdata.uuid) {
 				this.$store.commit('setOnloginRedirect', this.$route.name);
 				this.$store.commit('setOnloginInfo', {
-					type: 'IaaS',
+					type: 'virtual',
 					title: 'Virtual Hosting',
-					cost: this.getProducts.price
+					cost: this.getProducts.price,
+          currency: this.currency.code
 				});
 				this.$store.dispatch('setOnloginAction', () => {
 					this.createVirtual(info);
 				});
-				this.$router.push({name: 'login'});
-				return
+
+				this.$router.push({ name: 'login' });
+				return;
 			}
 
 			this.createVirtual(info);
 		},
 		createVirtual(info) {
-			this.sendloading = true;
+			this.modal.confirmLoading = true;
       const action = (this.service) ? 'update' : 'create';
       const orderData = (this.service) ? info : {
         namespace: this.namespace,
@@ -263,11 +266,10 @@ export default {
           title: this.user.fullname,
           context: {},
           version: '1',
-          instances_groups: [info]
+          instancesGroups: [info]
         }
       };
 
-      delete orderData.instancesGroups;
       this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
@@ -290,7 +292,7 @@ export default {
 				return;
 			}
 
-      if (this.config.mail === '') {
+      if (this.config.email === '') {
         this.$message.error(this.$t('email is not valid'));
         return;
       }
@@ -332,7 +334,9 @@ export default {
 
           this.$notification.error({ message: this.$t(message) });
         })
-        .finally(() => this.sendloading = false);
+        .finally(() => {
+          this.modal.confirmLoading = false;
+        });
     },
     getPeriod(timestamp) {
       const hour = 3600;
@@ -359,10 +363,20 @@ export default {
       return this.$tc(period, count);
     },
 	},
+  mounted() {
+    const { action } = this.$store.getters['getOnlogin'];
+
+    if (typeof action !== 'function') return;
+    this.modal.confirmCreate = true;
+    this.modal.confirmLoading = true;
+    action();
+  },
 	computed: {
 		getProducts() {
 			if (Object.keys(this.products).length === 0) return "NAN";
-      const product = this.products[this.sizes.indexOf(this.options.size)];
+      const product = JSON.parse(JSON.stringify(
+        this.products[this.sizes.indexOf(this.options.size)]
+      ));
 
       delete product.resources.model;
       if (product.resources.ssd?.includes('Gb')) return product;
@@ -436,6 +450,11 @@ export default {
       const plan = this.plans.find(({ uuid }) => uuid === value);
 
       this.changeProducts(plan);
+    },
+    getProducts() {
+      const product = this.products[this.sizes.indexOf(this.options.size)];
+
+      this.options.model = product?.resources.model ?? '';
     }
   },
 	created() {
