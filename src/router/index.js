@@ -66,8 +66,8 @@ const routes = [
     component: () => import('@/routes/register.vue')
   },
   {
-    path: "/handsfree",
-    name: "handsfree",
+    path: '/handsfree',
+    name: 'handsfree',
     meta: {
       mustBeLoggined: true
     },
@@ -114,8 +114,8 @@ const routes = [
         component: () => import('@/routes/support.vue')
       },
       {
-        path: 'invoice',
-        name: 'invoice',
+        path: 'billing',
+        name: 'billing',
         meta: {
           mustBeLoggined: true
         },

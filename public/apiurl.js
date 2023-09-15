@@ -1,1 +1,1 @@
-globalThis.VUE_APP_BASE_URL = '';
+globalThis.VUE_APP_BASE_URL = ''

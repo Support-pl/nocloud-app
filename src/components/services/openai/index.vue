@@ -1,13 +1,13 @@
 <template>
-	<div class="order_wrapper">
-		<div class="order">
-			<div class="order__inputs order__field">
-				<div class="order__option">
+  <div class="order_wrapper">
+    <div class="order">
+      <div class="order__inputs order__field">
+        <div class="order__option">
           <transition name="specs" mode="out-in">
             <div
               v-if="typeof getProducts.description === 'string'"
               v-html="getProducts.description"
-            ></div>
+            />
             <table v-else-if="getProducts.description" class="product__specs">
               <tr v-for="resource in getProducts.description" :key="resource.name">
                 <td>{{ resource.name }}</td>
@@ -15,25 +15,25 @@
               </tr>
             </table>
           </transition>
-				</div>
-			</div>
+        </div>
+      </div>
 
-			<div class="order__calculate order__field">
+      <div class="order__calculate order__field">
         <a-row :gutter="[10, 10]" style="margin-bottom: 10px">
           <a-col v-if="services.length > 1">
-            <a-select style="width: 100%" placeholder="services" v-model="service">
+            <a-select v-model="service" style="width: 100%" placeholder="services">
               <a-select-option
-                v-for="service of services"
-                :key="service.uuid"
-                :value="service.uuid"
+                v-for="item of services"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ service.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
 
           <a-col v-if="namespaces.length > 1">
-            <a-select style="width: 100%" placeholder="namespaces" v-model="namespace">
+            <a-select v-model="namespace" style="width: 100%" placeholder="namespaces">
               <a-select-option
                 v-for="name of namespaces"
                 :key="name.uuid"
@@ -45,23 +45,23 @@
           </a-col>
 
           <a-col v-if="plans.length > 1">
-            <a-select style="width: 100%" placeholder="plans" v-model="plan">
+            <a-select v-model="plan" style="width: 100%" placeholder="plans">
               <a-select-option
-                v-for="plan of plans"
-                :key="plan.uuid"
-                :value="plan.uuid"
+                v-for="item of plans"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ plan.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
         </a-row>
 
         <a-row
+          v-if="getProducts.inputKilotoken > 0"
           type="flex"
           justify="space-around"
           align="middle"
-          v-if="getProducts.inputKilotoken > 0"
         >
           <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
             Input kilotoken:
@@ -70,16 +70,16 @@
             <div v-if="!fetchLoading" style="text-align: right">
               {{ getProducts.inputKilotoken }} {{ currency.code }}
             </div>
-            <div v-else class="loadingLine"></div>
+            <div v-else class="loadingLine" />
           </a-col>
         </a-row>
 
         <a-row
+          v-if="getProducts.outputKilotoken > 0"
           style="margin-top: 10px"
           type="flex"
           justify="space-around"
           align="middle"
-          v-if="getProducts.outputKilotoken > 0"
         >
           <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
             Output kilotoken:
@@ -88,82 +88,60 @@
             <div v-if="!fetchLoading" style="text-align: right">
               {{ getProducts.outputKilotoken }} {{ currency.code }}
             </div>
-            <div v-else class="loadingLine"></div>
+            <div v-else class="loadingLine" />
           </a-col>
         </a-row>
 
-				<a-divider orientation="left" :style="{ 'margin-bottom': '0' }">
-					{{ $t('Total') }}:
-				</a-divider>
-
-				<a-row type="flex" justify="space-around" :style="{ 'font-size': '1.5rem' }">
-					<a-col>
-            <template v-if="!fetchLoading">
-              {{ getProducts.price }} {{ currency.code }}
-            </template>
-            <div v-else class="loadingLine loadingLine--total"></div>
-					</a-col>
-				</a-row>
-
-				<a-row type="flex" justify="space-around" style="margin: 10px 0">
-					<a-col :span="22">
-						<a-button type="primary" block shape="round" @click="orderConfirm">
-							{{ $t("order") | capitalize }}
-						</a-button>
-						<a-modal
-							:title="$t('Confirm')"
-							:visible="modal.confirmCreate"
-							:confirm-loading="modal.confirmLoading"
-							:cancel-text="$t('Cancel')"
-							@ok="orderClickHandler"
-							@cancel="() => { modal.confirmCreate = false }"
-						>
-							<p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.title }}</p>
-						</a-modal>
-					</a-col>
-				</a-row>
-
-        <add-funds
-          v-if="addfunds.visible"
-          :sum="addfunds.amount"
-          :modalVisible="addfunds.visible"
-          :hideModal="() => addfunds.visible = false"
-        />
-			</div>
-		</div>
-	</div>
+        <a-row type="flex" justify="space-around" style="margin: 10px 0">
+          <a-col :span="22">
+            <a-button type="primary" block shape="round" @click="orderConfirm">
+              {{ $t("order") | capitalize }}
+            </a-button>
+            <a-modal
+              :title="$t('Confirm')"
+              :visible="modal.confirmCreate"
+              :confirm-loading="modal.confirmLoading"
+              :cancel-text="$t('Cancel')"
+              @ok="orderClickHandler"
+              @cancel="() => { modal.confirmCreate = false }"
+            >
+              <p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.title }}</p>
+            </a-modal>
+          </a-col>
+        </a-row>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
-import { notification, Modal } from 'ant-design-vue';
-import store from '@/store';
-import router from '@/router';
-import i18n from '@/i18n.js';
-import api from '@/api.js';
-import addFunds from '@/components/balance/addFunds.vue';
+import { computed, onMounted, ref, watch } from 'vue'
+import { notification } from 'ant-design-vue'
+import store from '@/store'
+import router from '@/router'
+import i18n from '@/i18n.js'
+import api from '@/api.js'
 
-const route = router.currentRoute;
+const route = router.currentRoute
 
-const plan = ref(null);
-const service = ref(null);
-const namespace = ref(null);
-const fetchLoading = ref(false);
+const plan = ref(null)
+const service = ref(null)
+const namespace = ref(null)
+const fetchLoading = ref(false)
 
-const modal = ref({ confirmCreate: false, confirmLoading: false });
-const addfunds = ref({ visible: false, amount: 0 });
+const modal = ref({ confirmCreate: false, confirmLoading: false })
 
 const getProducts = computed(() => {
-  const { resources, title } = plans.value.find(({ uuid }) => uuid === plan.value) ?? {};
-  if (!resources) return "NAN";
+  const { resources, title } = plans.value.find(({ uuid }) => uuid === plan.value) ?? {}
+  if (!resources) return 'NAN'
 
   const products = Object.values(resources).reduce(
     (result, resource) => ({
       ...result, [resource.key]: resource.price
     }), {}
-  );
-  const inputKilotoken = +(products.input_kilotoken * currency.value.rate).toFixed(2);
-  const outputKilotoken = +(products.output_kilotoken * currency.value.rate).toFixed(2);
+  )
+  const inputKilotoken = +(products.input_kilotoken * currency.value.rate).toFixed(2)
+  const outputKilotoken = +(products.output_kilotoken * currency.value.rate).toFixed(2)
 
   return {
     title,
@@ -173,231 +151,217 @@ const getProducts = computed(() => {
     description: `<span style="font-size: 18px">
       You can think of tokens as pieces of words used for natural language processing. For English text, 1 token is approximately 4 characters or 0.75 words.
     </span>`
-  };
-});
+  }
+})
 
 const isLogged = computed(() =>
   store.getters['nocloud/auth/isLoggedIn']
-);
+)
 
 const user = computed(() =>
   store.getters['nocloud/auth/billingData']
-);
+)
 
 const userdata = computed(() =>
   store.getters['nocloud/auth/userdata']
-);
+)
 
 const currency = computed(() => {
-  const currencies = store.getters['nocloud/auth/currencies'];
-  const defaultCurrency = store.getters['nocloud/auth/defaultCurrency'];
+  const currencies = store.getters['nocloud/auth/currencies']
+  const defaultCurrency = store.getters['nocloud/auth/defaultCurrency']
 
-  const code = store.getters['nocloud/auth/unloginedCurrency'];
+  const code = store.getters['nocloud/auth/unloginedCurrency']
   const { rate } = currencies.find((el) =>
     el.to === code && el.from === defaultCurrency
-  ) ?? {};
+  ) ?? {}
 
   const { rate: reverseRate } = currencies.find((el) =>
     el.from === code && el.to === defaultCurrency
-  ) ?? { rate: 1 };
+  ) ?? { rate: 1 }
 
-  if (!isLogged.value) return { rate: (rate) ? rate : 1 / reverseRate, code };
-  return { rate: 1, code: user.value.currency_code ?? defaultCurrency };
-});
+  if (!isLogged.value) return { rate: (rate) || 1 / reverseRate, code }
+  return { rate: 1, code: user.value.currency_code ?? defaultCurrency }
+})
 
 const services = computed(() =>
   store.getters['nocloud/vms/getServices'].filter((el) => el.status !== 'DEL')
-);
+)
 
 const namespaces = computed(() =>
   store.getters['nocloud/namespaces/getNameSpaces'] ?? []
-);
+)
 
 const plans = computed(() =>
   store.getters['nocloud/plans/getPlans']
     .filter(({ type, uuid }) => {
       const { plans } = store.getters['nocloud/sp/getShowcases'].find(
         ({ uuid }) => uuid === route.query.service
-      ) ?? {};
+      ) ?? {}
 
-      if (!plans) return type === 'openai';
+      if (!plans) return type === 'openai'
 
-      if (plans.length < 1) return type === 'openai';
-      return type === 'openai' && plans.includes(uuid);
+      if (plans.length < 1) return type === 'openai'
+      return type === 'openai' && plans.includes(uuid)
     })
-);
+)
 
 watch(namespaces, (value) => {
   namespace.value = value[0]?.uuid
-});
+})
 
 watch(services, (value) => {
   service.value = value[0]?.uuid
-});
+})
 
 watch(plans, (value) => {
   plan.value = value[0]?.uuid
-});
+})
 
 const sp = computed(() =>
   store.getters['nocloud/sp/getSP'].find((sp) => sp.type === 'openai')
-);
+)
 
-function orderClickHandler() {
-  const serviceItem = services.value.find(({ uuid }) => uuid === service.value);
-  const planItem = plans.value.find(({ uuid }) => uuid === plan.value);
+function orderClickHandler () {
+  const serviceItem = services.value.find(({ uuid }) => uuid === service.value)
+  const planItem = plans.value.find(({ uuid }) => uuid === plan.value)
 
   const instances = [{
     config: { user: userdata.value.uuid },
     title: getProducts.value.title,
     billing_plan: planItem ?? {}
-  }];
+  }]
   const newGroup = {
     title: user.value.fullname + Date.now(),
     type: sp.value.type,
     sp: sp.value.uuid,
     instances
-  };
+  }
 
-  if (planItem.kind === 'STATIC') instances[0].product = '';
+  if (planItem.kind === 'STATIC') instances[0].product = ''
 
-  const info = (!service.value) ? newGroup : JSON.parse(JSON.stringify(serviceItem));
-  const group = info.instancesGroups?.find(({ type }) => type === 'openai');
+  const info = (!service.value) ? newGroup : JSON.parse(JSON.stringify(serviceItem))
+  const group = info.instancesGroups?.find(({ type }) => type === 'openai')
 
-  if (group) group.instances = [...group.instances, ...instances];
-  else if (service.value) info.instancesGroups.push(newGroup);
+  if (group) group.instances = [...group.instances, ...instances]
+  else if (service.value) info.instancesGroups.push(newGroup)
 
   if (!userdata.value.uuid) {
-    store.commit('setOnloginRedirect', route.name);
+    store.commit('setOnloginRedirect', route.name)
     store.commit('setOnloginInfo', {
       type: 'openai',
       title: 'OpenAI',
       cost: getProducts.value.price,
       currency: currency.value.code
-    });
+    })
     store.dispatch('setOnloginAction', () => {
-      createOpenAI(info);
-    });
+      createOpenAI(info)
+    })
 
-    router.push({ name: 'login' });
-    return;
+    router.push({ name: 'login' })
+    return
   }
 
-  createOpenAI(info);
+  createOpenAI(info)
 }
 
-function createOpenAI(info) {
-  modal.value.confirmLoading = true;
-  const action = (service.value) ? 'update' : 'create';
-  const orderData = (service.value) ? info : {
-    namespace: namespace.value,
-    service: {
-      title: user.value.fullname,
-      context: {},
-      version: '1',
-      instancesGroups: [info]
-    }
-  };
+function createOpenAI (info) {
+  modal.value.confirmLoading = true
+  const action = (service.value) ? 'update' : 'create'
+  const orderData = (service.value)
+    ? info
+    : {
+        namespace: namespace.value,
+        service: {
+          title: user.value.fullname,
+          context: {},
+          version: '1',
+          instancesGroups: [info]
+        }
+      }
 
   store.dispatch(`nocloud/vms/${action}Service`, orderData)
     .then(({ uuid }) => { deployService(uuid) })
     .catch((err) => {
-      const config = { namespace: namespace.value, service: orderData };
-      const message = err.response?.data?.message ?? err.message ?? err;
+      const config = { namespace: namespace.value, service: orderData }
+      const message = err.response?.data?.message ?? err.message ?? err
 
       api.services.testConfig(config)
         .then(({ result, errors }) => {
-          if (!result) errors.forEach(({ error }) => {
-            notification.error({ message: error });
-          });
-        });
-      notification.error({ message: i18n.$t(message) });
-      console.error(err);
-    });
+          if (!result) {
+            errors.forEach(({ error }) => {
+              notification.error({ message: error })
+            })
+          }
+        })
+      notification.error({ message: i18n.t(message) })
+      console.error(err)
+    })
 }
 
-function orderConfirm() {
-  if (!checkBalance()) return;
-  modal.value.confirmCreate = true;
+function orderConfirm () {
+  modal.value.confirmCreate = true
 }
 
-function checkBalance() {
-  const sum = getProducts.value.price;
-
-  if (userdata.value.balance < parseFloat(sum)) {
-    Modal.confirm({
-      title: i18n.$t('You do not have enough funds on your balance'),
-      content: i18n.$t('Click OK to replenish the account with the missing amount'),
-      onOk: () => {
-        addfunds.value.amount = Math.ceil(parseFloat(sum) - userdata.value.balance);
-        addfunds.value.visible = true;
-      }
-    });
-    return false;
-  }
-  return true;
-}
-
-function deployService(uuid) {
+function deployService (uuid) {
   api.services.up(uuid)
     .then(() => {
-      notification.success({ message: i18n.$t('Done') });
-      router.push({ path: '/services' });
+      notification.success({ message: i18n.t('Done') })
+      router.push({ path: '/services' })
     })
     .catch((err) => {
-      const message = err.response?.data?.message ?? err.message ?? err;
+      const message = err.response?.data?.message ?? err.message ?? err
 
-      notification.error({ message: i18n.$t(message) });
+      notification.error({ message: i18n.t(message) })
     })
     .finally(() => {
-      modal.value.confirmLoading = false;
-    });
+      modal.value.confirmLoading = false
+    })
 }
 
 onMounted(() => {
-  const { action } = store.getters['getOnlogin'];
+  const { action } = store.getters.getOnlogin
 
-  if (typeof action !== 'function') return;
-  modal.value.confirmCreate = true;
-  modal.value.confirmLoading = true;
-  action();
-});
+  if (typeof action !== 'function') return
+  modal.value.confirmCreate = true
+  modal.value.confirmLoading = true
+  action()
+})
 
 function fetch () {
-  fetchLoading.value = true;
+  fetchLoading.value = true
   const promises = [
     store.dispatch('nocloud/auth/fetchBillingData'),
     store.dispatch('nocloud/sp/fetch', !isLogged.value),
     store.dispatch('nocloud/plans/fetch', { anonymously: !isLogged.value })
-  ];
+  ]
 
   if (isLogged.value) {
     promises.push(
       store.dispatch('nocloud/namespaces/fetch'),
       store.dispatch('nocloud/vms/fetch')
-    );
+    )
   }
 
   Promise.all(promises).catch((err) => {
-    const message = err.response?.data?.message ?? err.message ?? err;
+    const message = err.response?.data?.message ?? err.message ?? err
 
-    if (err.response?.data?.code === 16) return;
-    notification.error({ message: i18n.$t(message) });
-    console.error(err);
+    if (err.response?.data?.code === 16) return
+    notification.error({ message: i18n.t(message) })
+    console.error(err)
   }).finally(() => {
-    fetchLoading.value = false;
-  });
+    fetchLoading.value = false
+  })
 
   if (store.getters['nocloud/auth/currencies'].length < 1) {
-    store.dispatch('nocloud/auth/fetchCurrencies');
+    store.dispatch('nocloud/auth/fetchCurrencies')
   }
 }
 
-fetch();
+fetch()
 </script>
 
 <script>
-export default { name: 'openai-component' }
+export default { name: 'OpenaiComponent' }
 </script>
 
 <style>

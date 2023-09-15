@@ -1,3 +1,6 @@
+// const path = require('path')
+// const createAliasSetting = require('@vue/eslint-config-standard/createAliasSetting')
+
 /** Разрешенные импорты (с публичными API) */
 const ALLOWED_PATH_GROUPS = [
   'pages/**',
@@ -48,11 +51,21 @@ module.exports = {
       }
     ],
     'no-restricted-imports': [2, { patterns: DENIED_PATH_GROUPS }],
-    // 'camelcase': [1, { ignoreDestructuring: true, ignoreImports: true, properties: 'never' }],
+    camelcase: [1, { ignoreDestructuring: true, ignoreImports: true, properties: 'never' }],
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-    'vue/valid-v-slot': 'off',
     'no-unsafe-optional-chaining': 'off',
-    'vue/no-v-html': 'off'
+    // 'import/no-unresolved': 'error',
+    'vue/valid-v-slot': 'off',
+    'vue/no-v-html': 'off',
+    'vue/max-attributes-per-line': 'off'
+  // },
+  // settings: {
+  //   ...createAliasSetting({
+  //     '@': `${path.resolve(__dirname, 'src')}`
+  //   })
+  },
+  globals: {
+    VUE_APP_BASE_URL: 'readonly'
   }
 }

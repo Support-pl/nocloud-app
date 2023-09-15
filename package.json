@@ -23,6 +23,7 @@
     "moment": "^2.29.4",
     "nocloud-ui": "^1.0.7",
     "nocloudjsrest": "^1.5.14",
+    "pinia": "^2.1.6",
     "qrcode.vue": "^1.7.0",
     "vnc-ui-vue": "^1.0.0",
     "vue": "^2.7.14",
@@ -41,9 +42,10 @@
     "standard": "^17.1.0",
     "vite": "^4.4.9"
   },
-  "eslintConfig": {
-    "globals": {
-      "VUE_APP_BASE_URL": true
-    }
+  "standard": {
+    "globals": [
+      "VUE_APP_BASE_URL",
+      "WebSocket"
+    ]
   }
 }

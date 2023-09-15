@@ -1,21 +1,31 @@
 <template>
   <div class="products__wrapper">
-    <div class="products__header" v-if="isLogged">
+    <div v-if="isLogged" class="products__header">
       <div class="products__title">
         <!-- Ваши услуги -->
         <transition name="header-transition" mode="out-in">
           <span
-            class="header__animated"
             v-if="!productsLoading || isNeedFilterStringInHeader"
             :key="$route.query.service || 'emptyQuery'"
+            class="header__animated"
           >
             {{ (isNeedFilterStringInHeader) ? '' : `${$t("comp_services.Your orders")}:` }}
-            <span class="products__count" v-if="!isNeedFilterStringInHeader">
+            <span
+              v-if="!isNeedFilterStringInHeader"
+              class="products__count"
+            >
               {{ productsCount() }}
             </span>
 
-            <transition-group name="fade-in" style="display: flex; flex-wrap: wrap; gap: 10px">
-              <a-badge class="products__filters" v-for="checkedType of checkedTypesString" :key="checkedType.value">
+            <transition-group
+              name="fade-in"
+              style="display: flex; flex-wrap: wrap; gap: 10px"
+            >
+              <a-badge
+                v-for="checkedType of checkedTypesString"
+                :key="checkedType.value"
+                class="products__filters"
+              >
                 <template #count>
                   <a-icon
                     type="close-circle"
@@ -32,16 +42,28 @@
         </transition>
       </div>
 
-      <div v-if="min && user" class="products__all">
+      <div
+        v-if="min && user"
+        class="products__all"
+      >
         <router-link :to="{ name: 'products' }">
           {{ $t("comp_services.all") }}
           <!-- все -->
         </router-link>
       </div>
-      <div v-else-if="user" class="products__control">
-        <a-popover placement="bottomRight" arrow-point-at-center>
+      <div
+        v-else-if="user"
+        class="products__control"
+      >
+        <a-popover
+          placement="bottomRight"
+          arrow-point-at-center
+        >
           <template slot="content">
-            <p v-for="productType of types" :key="productType.value ?? productType">
+            <p
+              v-for="productType of types"
+              :key="productType.value ?? productType"
+            >
               <a-checkbox
                 :checked="!!~checkedTypes.indexOf(productType.value ?? productType)"
                 @click="filterElementClickHandler(productType.value ?? productType)"
@@ -57,7 +79,10 @@
             <span class="products__count">
               {{ (isFilterByLocation) ? $t('location') : $t('provider') }}
             </span>
-            <a-switch size="small" v-model="isFilterByLocation" />
+            <a-switch
+              v-model="isFilterByLocation"
+              size="small"
+            />
           </template>
           <a-icon
             type="filter"
@@ -65,12 +90,21 @@
             :style="{ color: (checkedTypes.length > 0) ? 'var(--main)' : null }"
           />
         </a-popover>
-        <a-popover placement="bottomRight" arrow-point-at-center>
+        <a-popover
+          placement="bottomRight"
+          arrow-point-at-center
+        >
           <template slot="content">
             <a-radio-group v-model="sortBy">
-              <a-radio value="Name">{{ $t('name') | capitalize }}</a-radio>
-              <a-radio value="Cost">{{ $t('cost') | capitalize }}</a-radio>
-              <a-radio value="Date">{{ $t('date') | capitalize }}</a-radio>
+              <a-radio value="Name">
+                {{ $t('name') | capitalize }}
+              </a-radio>
+              <a-radio value="Cost">
+                {{ $t('cost') | capitalize }}
+              </a-radio>
+              <a-radio value="Date">
+                {{ $t('date') | capitalize }}
+              </a-radio>
             </a-radio-group>
           </template>
           <template slot="title">
@@ -92,9 +126,14 @@
       class="products__inner"
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
-      <div class="products__unregistred" v-if="!isLogged">
+      <div
+        v-if="!isLogged"
+        class="products__unregistred"
+      >
         {{ $t("unregistered.will be able after") }}
-        <router-link :to="{ name: 'login' }">{{ $t("unregistered.login") }}</router-link>.
+        <router-link :to="{ name: 'login' }">
+          {{ $t("unregistered.login") }}
+        </router-link>.
       </div>
       <loading v-else-if="productsLoading" />
       <template v-else-if="productsPrepared.length > 0">
@@ -107,15 +146,15 @@
       </template>
       <a-empty v-else />
       <a-button
+        v-if="queryTypes.length === 1 && !isFilterByLocation"
         ref="order-button"
         class="products__new"
         size="large"
         shape="round"
         icon="plus"
         type="primary"
-        @click="newProductHandle"
         block
-        v-if="queryTypes.length === 1 && !isFilterByLocation"
+        @click="newProductHandle"
       >
         {{ $t("Order") }}
       </a-button>
@@ -124,15 +163,15 @@
 </template>
 
 <script>
-import cloudItem from "@/components/appMain/cloud/cloudItem.vue";
-import loading from "../loading/loading.vue";
+import loading from '../loading/loading.vue'
+import cloudItem from '@/components/appMain/cloud/cloudItem.vue'
 
 export default {
-  name: "products-block",
+  name: 'ProductsBlock',
   components: { cloudItem, loading },
   props: {
     min: { type: Boolean, default: true },
-    count: { type: Number, default: 5 },
+    count: { type: Number, default: 5 }
   },
   data: () => ({
     isFilterByLocation: false,
@@ -140,111 +179,60 @@ export default {
     sortBy: 'Date',
     anchor: null
   }),
-  created() {
-    const service = localStorage.getItem('types');
-    const sorting = JSON.parse(localStorage.getItem('serviceSorting') ?? "false");
-    const isProductsRoute = service && this.$route.name !== 'products';
-    const isServicesSame = service === this.$route.query.service;
-
-    if (isProductsRoute && !isServicesSame) {
-      this.$router.replace({ query: { service } });
-    }
-    if (localStorage.getItem('isFilterByLocation')) {
-      this.isFilterByLocation = JSON.parse(localStorage.getItem('isFilterByLocation'));
-    }
-    if (sorting) {
-      this.sortBy = sorting.sortBy;
-      this.sortType = sorting.sortType;
-    }
-
-    const promises = [];
-
-    if (this.showcases.length < 1) {
-      promises.push(this.$store.dispatch('nocloud/sp/fetchShowcases', !this.isLogged));
-    }
-    if (this.sp.length < 1) {
-      promises.push(this.$store.dispatch('nocloud/sp/fetch', !this.isLogged));
-    }
-    if (Object.keys(this.services).length < 1) {
-      promises.push(this.$store.dispatch("products/fetchServices"));
-    }
-
-    Promise.all(promises)
-      .catch((err) => {
-        if (err.response?.data?.code === 12) return;
-        const message = err.response?.data?.message ?? err.message ?? err;
-
-        this.$notification['error']({ message: this.$t(message) });
-      });
-
-    if (!this.isLogged) return;
-    this.$store.commit("products/setProductsLoading", true);
-    this.$store.dispatch("nocloud/auth/fetchBillingData")
-      .then((user) => {
-        this.$store.dispatch("nocloud/vms/fetch");
-        this.$store.dispatch("products/fetch", user.client_id);
-      })
-      .catch((err) => console.error(err));
-  },
-  mounted() { this.createObserver() },
-  beforeDestroy() {
-    const anchor = document.querySelector('#app').lastElementChild;
-
-    if (this.anchor) anchor.remove();
-  },
   computed: {
-    isLogged() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
+    isLogged () {
+      return this.$store.getters['nocloud/auth/isLoggedIn']
     },
-    user() {
-      return this.$store.getters["nocloud/auth/billingData"];
+    user () {
+      return this.$store.getters['nocloud/auth/billingData']
     },
-    productsPrepared() {
+    productsPrepared () {
       const state = {
-        size: this.$store.getters["products/size"],
-        page: this.$store.getters["products/page"]
-      };
-      const start = state.size * (state.page - 1);
-      const end = start + state.size;
-      const products = this.products.slice(start, end);
-
-      if (this.min) return this.products.slice(0, 5);
-      else if (this.$route.query.service) {
-        return this.filterProducts(products, this.checkedTypes);
+        size: this.$store.getters['products/size'],
+        page: this.$store.getters['products/page']
       }
-      return products;
+      const start = state.size * (state.page - 1)
+      const end = start + state.size
+      const products = this.products.slice(start, end)
+
+      if (this.min) return this.products.slice(0, 5)
+      else if (this.$route.query.service) {
+        return this.filterProducts(products, this.checkedTypes)
+      }
+      return products
     },
-    products() {
-      const products = this.$store.getters["products/getProducts"]
+    products () {
+      const products = this.$store.getters['products/getProducts']
         .map((el) => ({
           ...el.ORDER_INFO,
           groupname: el.groupname,
           productname: el.name,
           server_on: el.server_on,
           id: el.id
-        }));
+        }))
 
-      const instances = this.$store.getters["nocloud/vms/getInstances"]
+      const instances = this.$store.getters['nocloud/vms/getInstances']
         .map((inst) => {
-          const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
+          const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
 
-          const publicIPs = inst.state?.meta.networking?.public?.filter((el) => !regexp.test(el));
+          const publicIPs = inst.state?.meta.networking?.public?.filter((el) => !regexp.test(el))
           const state = (this.VM?.billingPlan.type === 'ione')
             ? inst.state?.meta.lcm_state_str
-            : inst.state?.state;
-          let status = "UNKNOWN";
+            : inst.state?.state
+          let status = 'UNKNOWN'
 
           switch (state) {
-            case "LCM_INIT":
-              status = "POWEROFF";
+            case 'LCM_INIT':
+              status = 'POWEROFF'
+              break
             default:
-              if (state) status = state.replaceAll('_', ' ');
+              if (state) status = state.replaceAll('_', ' ')
           }
 
-          if (inst.state?.meta.state === 1) status = "PENDING";
-          if (inst.state?.meta.state === 5) status = "SUSPENDED";
-          if (inst.data.suspended_manually) status = "SUSPENDED";
-          if (inst.state?.meta.state === "BUILD") status = "BUILD";
+          if (inst.state?.meta.state === 1) status = 'PENDING'
+          if (inst.state?.meta.state === 5) status = 'SUSPENDED'
+          if (inst.data.suspended_manually) status = 'SUSPENDED'
+          if (inst.state?.meta.state === 'BUILD') status = 'BUILD'
 
           const res = {
             ...inst,
@@ -256,272 +244,359 @@ export default {
             productname: inst.title,
             domain: publicIPs?.at(0),
             date: inst.data.last_monitoring * 1000 || 0,
-            orderamount: inst.billingPlan.products[inst.product]?.price ?? 0,
-          };
+            orderamount: inst.billingPlan.products[inst.product]?.price ?? 0
+          }
 
           switch (inst.type) {
             case 'openai':
-              res.groupname = 'OpenAI';
-              res.orderamount = inst.billingPlan.resources.reduce(
-                (sum, { price }) => sum + price, 0
-              );
-              break;
+              res.groupname = 'OpenAI'
+              break
             case 'virtual':
-              res.groupname = 'Custom';
-              break;
+              res.groupname = 'Custom'
+              break
             case 'acronis':
-              res.groupname = 'Acronis';
-              break;
+              res.groupname = 'Acronis'
+              break
             case 'opensrs':
-              res.groupname = 'Domains';
-              res.date = inst.data.expiry.expiredate;
-              res.domain = inst.resources.domain;
-              break;
+              res.groupname = 'Domains'
+              res.date = inst.data.expiry.expiredate
+              res.domain = inst.resources.domain
+              break
             case 'goget': {
-              const key = `${inst.resources.period} ${inst.resources.id}`;
+              const key = `${inst.resources.period} ${inst.resources.id}`
 
-              res.groupname = 'SSL';
-              res.date = +`${inst.resources.period}`;
-              res.domain = inst.resources.domain;
-              res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
-              break;
+              res.groupname = 'SSL'
+              res.date = +`${inst.resources.period}`
+              res.domain = inst.resources.domain
+              res.orderamount = inst.billingPlan.products[key]?.price ?? 0
+              break
             }
             case 'ovh': {
               const key = (!inst.product)
                 ? `${inst.config.duration} ${inst.config.planCode}`
-                : inst.product;
+                : inst.product
 
-              res.date = inst.data.expiration ?? (inst.data.last_monitoring * 1000 || 0);
-              res.orderamount = inst.billingPlan.products[key]?.price ?? 0;
+              res.date = inst.data.expiration ?? (inst.data.last_monitoring * 1000 || 0)
+              res.orderamount = inst.billingPlan.products[key]?.price ?? 0
 
               inst.config.addons?.forEach((addon) => {
                 const addonKey = (inst.billingPlan.type.includes('dedicated'))
                   ? `${inst.config.duration} ${inst.config.planCode} ${addon}`
-                  : `${inst.config.duration} ${addon}`;
+                  : `${inst.config.duration} ${addon}`
 
                 const { price } = inst.billingPlan.resources
-                  .find(({ key }) => key === addonKey) ?? { price: 0 };
+                  .find(({ key }) => key === addonKey) ?? { price: 0 }
 
-                res.orderamount += +price;
-              });
-              break;
+                res.orderamount += +price
+              })
+              break
             }
             case 'ione': {
               res.orderamount += +inst.billingPlan.resources.reduce((prev, curr) => {
                 if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
-                  return prev + curr.price * inst.resources.drive_size / 1024;
-                } else if (curr.key === "ram") {
-                  return prev + curr.price * inst.resources.ram / 1024;
+                  return prev + curr.price * inst.resources.drive_size / 1024
+                } else if (curr.key === 'ram') {
+                  return prev + curr.price * inst.resources.ram / 1024
                 } else if (inst.resources[curr.key]) {
-                  return prev + curr.price * inst.resources[curr.key];
+                  return prev + curr.price * inst.resources[curr.key]
                 }
-                return prev;
-              }, 0)?.toFixed(2);
+                return prev
+              }, 0)?.toFixed(2)
             }
           }
 
-          return res;
-        });
+          return res
+        })
 
       return [...products, ...instances]
         .sort((a, b) => {
-          if (this.sortType === 'sort-ascending') [b, a] = [a, b];
+          if (this.sortType === 'sort-ascending') [b, a] = [a, b]
           if (this.min) {
-            if (this.isExpired(a) && !this.isExpired(b)) return 1;
-            else if (!this.isExpired(a) && this.isExpired(b)) return -1;
-            else 0;
+            if (this.isExpired(a) && !this.isExpired(b)) return 1
+            else if (!this.isExpired(a) && this.isExpired(b)) return -1
+            else return 0
           }
 
           switch (this.sortBy) {
             case 'Date':
-              return new Date(a.date).getTime() - new Date(b.date).getTime();
+              return new Date(a.date).getTime() - new Date(b.date).getTime()
             case 'Name' :
-              return a.productname?.toLowerCase() < b.productname?.toLowerCase();
+              return a.productname?.toLowerCase() < b.productname?.toLowerCase()
             case 'Cost':
-              return parseFloat(a.orderamount) - parseFloat(b.orderamount);
+              return parseFloat(a.orderamount) - parseFloat(b.orderamount)
+            default:
+              return 0
           }
-        });
+        })
     },
-    productsLoading() {
-      const productsLoading = this.$store.getters["products/getProductsLoading"];
-      const instancesLoading = this.$store.getters["nocloud/vms/isLoading"];
+    productsLoading () {
+      const productsLoading = this.$store.getters['products/getProductsLoading']
+      const instancesLoading = this.$store.getters['nocloud/vms/isLoading']
 
-      return productsLoading || instancesLoading;
+      return productsLoading || instancesLoading
     },
 
-    services() {
-      return this.$store.getters['products/getServices'];
+    services () {
+      return this.$store.getters['products/getServices']
     },
-    sp() {
-      return this.$store.getters["nocloud/sp/getSP"];
+    sp () {
+      return this.$store.getters['nocloud/sp/getSP']
     },
-    showcases() {
-      return this.$store.getters['nocloud/sp/getShowcases'];
+    showcases () {
+      return this.$store.getters['nocloud/sp/getShowcases']
     },
-    types() {
-      const result = this.showcases.map(({ title, uuid: value }) => ({ title, value }));
+    types () {
+      const result = this.showcases.map(({ title, uuid: value }) => ({ title, value }))
 
-      if (this.isFilterByLocation) return this.sp.reduce((prev, curr) =>
-        [...prev, ...curr.locations.map(({ title }) => title)], []
-      );
+      if (this.isFilterByLocation) {
+        return this.sp.reduce((prev, curr) =>
+          [...prev, ...curr.locations.map(({ title }) => title)], []
+        )
+      }
 
       Object.keys(this.services).forEach((key) => {
-        result.push(key);
-      });
+        result.push(key)
+      })
 
-      if (this.$config.sharedEnabled) result.push('Virtual');
-      return result;
+      if (this.$config.sharedEnabled) result.push('Virtual')
+      return result
     },
-    checkedTypes() {
+    checkedTypes () {
       return (
-        this.$route.query?.service?.split(",").filter((el) => el.length > 0) ?? []
-      );
+        this.$route.query?.service?.split(',').filter((el) => el.length > 0) ?? []
+      )
     },
-    checkedTypesString() {
+    checkedTypesString () {
       return this.checkedTypes.map((type) => {
-        const foundType = this.types.find(({ value }) => value === type);
+        const foundType = this.types.find(({ value }) => value === type)
 
-        if (foundType) return foundType;
-        else return { title: type, value: type };
-      });
+        if (foundType) return foundType
+        else return { title: type, value: type }
+      })
     },
-    isNeedFilterStringInHeader() {
-      return ["services", "root", "products"].includes(this.$route.name) && this.$route.query.service;
+    isNeedFilterStringInHeader () {
+      return ['services', 'root', 'products'].includes(this.$route.name) && this.$route.query.service
     },
-    queryTypes() {
+    queryTypes () {
       if (this.$route.query.service) {
-        return this.$route.query.service.split(",").filter((el) => el.length > 0);
-      } else return [];
+        return this.$route.query.service.split(',').filter((el) => el.length > 0)
+      } else return []
+    }
+  },
+  watch: {
+    queryTypes () { setTimeout(this.createObserver) },
+    checkedTypes () {
+      if (this.$route.query.service) {
+        localStorage.setItem('types', this.$route.query.service)
+      } else {
+        localStorage.removeItem('types')
+      }
     },
+    sortBy (value) {
+      const sorting = { sortBy: value, sortType: this.sortType }
+
+      localStorage.setItem('serviceSorting', JSON.stringify(sorting))
+    },
+    sortType (value) {
+      const sorting = { sortBy: this.sortBy, sortType: value }
+
+      localStorage.setItem('serviceSorting', JSON.stringify(sorting))
+    },
+    isFilterByLocation (value) {
+      if (this.$route.name === 'products') {
+        localStorage.setItem('isFilterByLocation', false)
+      } else {
+        localStorage.setItem('isFilterByLocation', value)
+
+        if (this.$route.query.service) {
+          this.$router.replace({ query: {} })
+        }
+      }
+    }
+  },
+  created () {
+    const service = localStorage.getItem('types')
+    const sorting = JSON.parse(localStorage.getItem('serviceSorting') ?? 'false')
+    const isProductsRoute = service && this.$route.name !== 'products'
+    const isServicesSame = service === this.$route.query.service
+
+    if (isProductsRoute && !isServicesSame) {
+      this.$router.replace({ query: { service } })
+    }
+    if (localStorage.getItem('isFilterByLocation')) {
+      this.isFilterByLocation = JSON.parse(localStorage.getItem('isFilterByLocation'))
+    }
+    if (sorting) {
+      this.sortBy = sorting.sortBy
+      this.sortType = sorting.sortType
+    }
+
+    const promises = []
+
+    if (this.showcases.length < 1) {
+      promises.push(this.$store.dispatch('nocloud/sp/fetchShowcases', !this.isLogged))
+    }
+    if (this.sp.length < 1) {
+      promises.push(this.$store.dispatch('nocloud/sp/fetch', !this.isLogged))
+    }
+    if (Object.keys(this.services).length < 1) {
+      promises.push(this.$store.dispatch('products/fetchServices'))
+    }
+
+    Promise.all(promises)
+      .catch((err) => {
+        if (err.response?.data?.code === 12) return
+        const message = err.response?.data?.message ?? err.message ?? err
+
+        this.$notification.error({ message: this.$t(message) })
+      })
+
+    if (!this.isLogged) return
+    this.$store.commit('products/setProductsLoading', true)
+    this.$store.dispatch('nocloud/auth/fetchBillingData')
+      .then((user) => {
+        this.$store.dispatch('nocloud/vms/fetch')
+        this.$store.dispatch('products/fetch', user.client_id)
+      })
+      .catch((err) => console.error(err))
+  },
+  mounted () { this.createObserver() },
+  beforeDestroy () {
+    const anchor = document.querySelector('#app').lastElementChild
+
+    if (this.anchor) anchor.remove()
   },
   methods: {
-    productClickHandler({ groupname, orderid, hostingid }) {
+    productClickHandler ({ groupname, orderid, hostingid }) {
       if (['Domains', 'SSL'].includes(groupname)) {
-        this.$router.push({ name: 'service', params: { id: orderid } });
+        this.$router.push({ name: 'service', params: { id: orderid } })
       } else if (groupname === 'Self-Service VDS SSD HC') {
-        this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } });
+        this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } })
       } else {
-        this.$router.push({ name: 'service', params: { id: hostingid } });
+        this.$router.push({ name: 'service', params: { id: hostingid } })
       }
     },
-    filterElementClickHandler(key) {
-      const types = new Set(this.checkedTypes);
+    filterElementClickHandler (key) {
+      const types = new Set(this.checkedTypes)
       if (types.has(key)) {
-        types.delete(key);
+        types.delete(key)
       } else {
-        types.add(key);
+        types.add(key)
       }
-      const newTypes = Array.from(types).join(",");
-      this.$router.replace({ query: { service: newTypes } });
+      const newTypes = Array.from(types).join(',')
+      this.$router.replace({ query: { service: newTypes } })
     },
-    newProductHandle() {
-      const services = this.$store.getters['products/getServices'];
+    newProductHandle () {
+      const services = this.$store.getters['products/getServices']
       const { type } = this.sp.find(({ uuid }) => {
         const { servicesProvider } = this.showcases.find(
           ({ uuid }) => uuid === this.queryTypes[0]
-        ) ?? {};
+        ) ?? {}
 
-        return servicesProvider?.includes(uuid);
-      }) ?? {};
+        return servicesProvider?.includes(uuid)
+      }) ?? {}
 
-      let name = 'service-virtual';
-      let query = { service: this.queryTypes[0] };
+      let name = 'service-virtual'
+      const query = { service: this.queryTypes[0] }
 
       switch (type) {
         case 'opensrs':
-          name = 'service-domains';
-          break;
+          name = 'service-domains'
+          break
         case 'goget':
-          name = 'service-ssl';
-          break;
+          name = 'service-ssl'
+          break
         case 'acronis':
-          name = 'service-acronis';
-          break;
+          name = 'service-acronis'
+          break
         case 'virtual':
-          name = 'service-custom';
-          break;
+          name = 'service-custom'
+          break
+        case 'openai':
+          name = 'service-openai'
+          break
         case 'ione':
         case 'ovh':
-          name = 'newPaaS';
+          name = 'newPaaS'
       }
 
       if (!type && services[this.queryTypes[0]]) {
-        name = 'service-iaas';
+        name = 'service-iaas'
       }
 
-      this.$router.push({ name, query });
+      this.$router.push({ name, query })
     },
-    filterProducts(products, types) {
+    filterProducts (products, types) {
       return products.filter(({ sp, hostingid, config, billingPlan, productname }) => {
-        //фильтруем по значениям из гет запроса
-        let { title, locations = [] } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+        // фильтруем по значениям из гет запроса
+        let { title, locations = [] } = this.sp.find(({ uuid }) => uuid === sp) ?? {}
 
-        if (hostingid) title = 'Virtual';
+        if (hostingid) title = 'Virtual'
         if (this.isFilterByLocation) {
           const key = Object.keys(config?.configuration ?? {}).find(
             (key) => key.includes('datacenter')
-          );
+          )
           const region = locations?.find(({ extra }) =>
             extra.region === (config?.configuration ?? {})[key]
-          );
+          )
 
-          title = region?.title ?? locations[0];
+          title = region?.title ?? locations[0]
         }
 
         return types.some((value) => {
           if (this.services[value]) {
-            return this.services[value].find(({ name }) => name === productname);
+            return this.services[value].find(({ name }) => name === productname)
           }
 
-          const service = this.showcases.find(({ uuid }) => uuid === value);
+          const service = this.showcases.find(({ uuid }) => uuid === value)
 
-          if (!service) return value === title;
+          if (!service) return value === title
           else {
-            const isPlanIncluded = service.plans.includes(billingPlan?.uuid);
-            const isSpIncluded = service.servicesProvider.includes(sp);
+            const isPlanIncluded = service.plans.includes(billingPlan?.uuid)
+            const isSpIncluded = service.servicesProvider.includes(sp)
 
-            return isPlanIncluded && isSpIncluded;
-          };
-        });
-      });
+            return isPlanIncluded && isSpIncluded
+          }
+        })
+      })
     },
-    productsCount(type, filter) {
-      const total = this.$store.getters["products/total"];
+    productsCount (type, filter) {
+      const total = this.$store.getters['products/total']
 
       if (this.checkedTypes.length > 0 || filter) {
-        return this.filterProducts(this.productsPrepared, [type]).length;
+        return this.filterProducts(this.productsPrepared, [type]).length
       }
 
-      if (total && this.$route.name !== "products") return total;
+      if (total && this.$route.name !== 'products') return total
       if (this.min) {
-        return this.products.length;
+        return this.products.length
       } else {
-        return this.productsPrepared.length;
+        return this.productsPrepared.length
       }
     },
-    isExpired(instance){
-      const productDate = new Date(instance.date);
-      const timestamp = productDate.getTime() - Date.now();
-      const days = 7 * 24 * 3600 * 1000;
+    isExpired (instance) {
+      const productDate = new Date(instance.date)
+      const timestamp = productDate.getTime() - Date.now()
+      const days = 7 * 24 * 3600 * 1000
 
-      if (instance.groupname === 'SSL') return;
-      if (instance.date === 0) return;
-      return timestamp < days;
+      if (instance.groupname === 'SSL') return
+      if (instance.date === 0) return
+      return timestamp < days
     },
-    createObserver() {
-      const button = this.$refs['order-button']?.$el;
+    createObserver () {
+      const button = this.$refs['order-button']?.$el
 
-      if (!button && !this.anchor) return;
+      if (!button && !this.anchor) return
       else if (this.anchor) {
-        document.querySelector('#app').lastElementChild.remove();
-        this.anchor = null;
-        return;
+        document.querySelector('#app').lastElementChild.remove()
+        this.anchor = null
+        return
       }
 
-      const anchor = button.cloneNode(true);
+      const anchor = button.cloneNode(true)
       const observer = new IntersectionObserver((entries) => {
         if (entries[0].intersectionRatio < 0.2) {
-          button.style.visibility = 'hidden';
+          button.style.visibility = 'hidden'
           anchor.style.cssText = `
             position: fixed;
             right: 5vw;
@@ -531,53 +606,22 @@ export default {
             height: 50px;
             font-size: 25px;
             overflow: hidden;
-          `;
-          anchor.firstElementChild.style.margin = '7px 20px 0 -7px';
+          `
+          anchor.firstElementChild.style.margin = '7px 20px 0 -7px'
         } else if (entries[0].intersectionRatio === 1) {
-          button.style.visibility = '';
-          anchor.style.cssText = 'display: none';
-          anchor.firstElementChild.style.margin = '';
+          button.style.visibility = ''
+          anchor.style.cssText = 'display: none'
+          anchor.firstElementChild.style.margin = ''
         }
-      }, { root: null, threshold: [0.2, 1] });
+      }, { root: null, threshold: [0.2, 1] })
 
-      observer.observe(button);
-      anchor.onclick = this.newProductHandle;
-      document.querySelector('#app').append(anchor);
-      this.anchor = anchor;
-    }
-  },
-  watch: {
-    queryTypes() { setTimeout(this.createObserver) },
-    checkedTypes() {
-      if (this.$route.query.service) {
-        localStorage.setItem('types', this.$route.query.service);
-      } else {
-        localStorage.removeItem('types');
-      }
-    },
-    sortBy(value) {
-      const sorting = { sortBy: value, sortType: this.sortType };
-
-      localStorage.setItem('serviceSorting', JSON.stringify(sorting));
-    },
-    sortType(value) {
-      const sorting = { sortBy: this.sortBy, sortType: value };
-
-      localStorage.setItem('serviceSorting', JSON.stringify(sorting));
-    },
-    isFilterByLocation(value) {
-      if (this.$route.name === 'products') {
-        localStorage.setItem('isFilterByLocation', false);
-      } else {
-        localStorage.setItem('isFilterByLocation', value);
-
-        if (this.$route.query.service) {
-          this.$router.replace({ query: {} });
-        }
-      }
+      observer.observe(button)
+      anchor.onclick = this.newProductHandle
+      document.querySelector('#app').append(anchor)
+      this.anchor = anchor
     }
   }
-};
+}
 </script>
 
 <style scoped>
