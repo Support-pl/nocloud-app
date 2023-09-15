@@ -248,6 +248,9 @@ export default {
           }
 
           switch (inst.type) {
+            case 'cpanel':
+              res.groupname = 'Shared Hosting'
+              break
             case 'openai':
               res.groupname = 'OpenAI'
               break

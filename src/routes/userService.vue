@@ -297,6 +297,17 @@ export default {
 
         if (!domain) return new Promise((resolve) => resolve({ meta: null }))
         switch (domain.billingPlan.type) {
+          case 'cpanel': {
+            const { period } = domain.billingPlan.products[domain.product]
+
+            domain.data.expiry = {
+              expiredate: this.date(domain.data.last_monitoring ?? 0),
+              regdate: domain.data.creation ?? '0000-00-00'
+            }
+            domain.resources.period = this.getPeriod(period)
+            groupname = 'Shared Hosting'
+            break
+          }
           case 'openai': {
             const products = Object.values(domain.billingPlan.resources).reduce(
               (result, resource) => ({

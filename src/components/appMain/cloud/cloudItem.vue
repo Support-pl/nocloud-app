@@ -214,13 +214,15 @@ export default {
       action: 'get_domain_price',
       params: { domain: this.domain }
     })
-      .then(({ meta }) => this.prices = meta.prices)
-      .catch((err) => console.error(err))
+      .then(({ meta }) => { this.prices = meta.prices })
+      .catch((err) => { console.error(err) })
   },
   methods: {
-    cloudClick ({ groupname, orderid, hostingid, server_on, id }, { target }) {
+    cloudClick (service, { target }) {
+      const { groupname, orderid, hostingid, server_on: isServer, id } = service
+
       if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return
-      if (id && server_on) {
+      if (id && isServer) {
         this.$router.push({ name: 'openCloud_new', params: { uuid: id } })
       } else if (hostingid) {
         this.$router.push({ name: 'service', params: { id: hostingid } })
