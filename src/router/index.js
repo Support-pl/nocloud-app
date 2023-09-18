@@ -81,7 +81,6 @@ const routes = [
         path: '/',
         name: 'root',
         meta: {
-          layoutTitle: 'services',
           mustBeLoggined: true
         },
         component: () => import('@/routes/services.vue')
@@ -259,6 +258,10 @@ const routes = [
   }
 ]
 
-const router = new VueRouter({ mode: 'history', routes })
+const router = new VueRouter({
+  routes,
+  mode: 'history',
+  base: import.meta.env.BASE_URL
+})
 
 export default router

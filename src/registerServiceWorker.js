@@ -1,11 +1,13 @@
 /* eslint-disable no-console */
 
-import store from './store/index.js'
+import { useAppStore } from './stores/app.js'
 
-if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
-	navigator.serviceWorker.register(`${process.env.BASE_URL}service-worker.js`)
-		.then ((worker) => {
-			console.log('Service worker has been registered.')
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  const appStore = useAppStore()
+
+  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}service-worker.js`)
+    .then((worker) => {
+      console.log('Service worker has been registered.')
 
       if (worker.waiting) {
         console.log('New content is available; please refresh.')
@@ -17,13 +19,13 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
             return caches.delete(cacheName)
           }))
         )
-        .then(() => store.commit('app/setUpdate', { worker, status: true }))
+          .then(() => { appStore.update = { worker, status: true } })
       }
 
       worker.addEventListener('updatefound', () => {
         const newWorker = worker.installing
 
-			  console.log('New content is downloading.')
+        console.log('New content is downloading.')
 
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed') {
@@ -37,19 +39,19 @@ if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
                   return caches.delete(cacheName)
                 }))
               )
-              .then(() => store.commit('app/setUpdate', { worker, status: true }))
+                .then(() => { appStore.update = { worker, status: true } })
             } else {
-			        console.log('Content has been cached for offline use.')
+              console.log('Content has been cached for offline use.')
             }
           }
-        });
-      });
-		})
-		.catch ((error) => {
-			if (navigator.onLine) {
+        })
+      })
+    })
+    .catch((error) => {
+      if (navigator.onLine) {
         console.error('Error during service worker registration:', error)
       } else {
         console.log('No internet connection found. App is running in offline mode.')
       }
-		})
+    })
 }

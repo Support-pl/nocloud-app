@@ -2,7 +2,7 @@
   <div
     id="app"
     :style="false && cssVars"
-    :class="{ 'block-page': notification }"
+    :class="{ 'block-page': appStore.notification }"
   >
     <transition name="slide">
       <router-view
@@ -24,9 +24,11 @@ import store from '@/store'
 import router from '@/router'
 import i18n from '@/i18n.js'
 import config from '@/appconfig.js'
+import { useAppStore } from '@/stores/app.js'
 import updateNotification from '@/components/updateNotification/index.vue'
 
 const route = router.currentRoute
+const appStore = useAppStore()
 
 const user = computed(() =>
   store.getters['nocloud/auth/billingData']
@@ -121,18 +123,14 @@ onMounted(() => {
   )
 })
 
-const notification = computed(() =>
-  store.getters['app/getNotification']
-)
-
-watch(notification, (value) => {
+watch(() => appStore.notification, (value) => {
   if (!value) return
   setTimeout(() => {
     const elements = document.querySelectorAll('.ant-notification-notice-close')
     const close = Array.from(elements)
     const open = () => {
       if (close.length > 1) close.pop()
-      else store.commit('app/setNotification', false)
+      else appStore.notification = false
     }
 
     close.forEach((el) => { el.addEventListener('click', open) })

@@ -1,7 +1,7 @@
 <template>
   <a-collapse
     accordion
-    :activeKey="activeKey"
+    :active-key="activeKey"
     :style="{ 'border-radius': '20px' }"
     @change="(value) => $emit('setData', { key: 'activeKey', value })"
   >
@@ -19,10 +19,10 @@
       :disabled="!itemSP || isFlavorsLoading"
     >
       <a-spin v-if="isFlavorsLoading" style="display: block; margin: 0 auto" :tip="$t('loading')" />
-      <slot name="plan" v-else-if="!getPlan.type.includes('vps') && !$route.query.product" />
+      <slot v-else-if="!getPlan.type.includes('vps') && !$route.query.product" name="plan" />
       <template v-else-if="!isFlavorsLoading">
-        <a-row type="flex" align="middle" style="margin-bottom: 15px" v-if="!$route.query.product">
-          <a-col span="24" v-if="resources.plans.length < 6 && resources.plans.length > 1">
+        <a-row v-if="!$route.query.product" type="flex" align="middle" style="margin-bottom: 15px">
+          <a-col v-if="resources.plans.length < 6 && resources.plans.length > 1" span="24">
             <a-slider
               style="margin-top: 10px"
               :marks="{ ...resources.plans }"
@@ -36,9 +36,9 @@
           <a-col v-else span="24">
             <div class="order__grid">
               <div
-                class="order__slider-item"
                 v-for="provider of resources.plans"
                 :key="provider"
+                class="order__slider-item"
                 :class="{ 'order__slider-item--active': plan === provider }"
                 @click="() => $emit('changePlan', provider)"
               >
@@ -48,9 +48,9 @@
           </a-col>
         </a-row>
         <a-icon
+          v-else-if="$route.query.product"
           type="left"
           style="margin-bottom: 10px; font-size: 20px"
-          v-else-if="$route.query.product"
           @click="$router.go(-1)"
         />
         <a-row type="flex" justify="space-between" align="middle" class="newCloud__prop">
@@ -68,7 +68,7 @@
           <a-col>
             <span style="display: inline-block; width: 70px">RAM:</span>
           </a-col>
-          <a-col :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }" v-if="resources.ram.length > 1">
+          <a-col v-if="resources.ram.length > 1" :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }">
             <a-slider
               style="margin-top: 10px"
               :marks="{ ...resources.ram }"
@@ -90,7 +90,7 @@
           <a-col>
             <span style="display: inline-block; width: 70px">{{ $t("Drive") }}:</span>
           </a-col>
-          <a-col :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }" v-if="resources.disk.length > 1">
+          <a-col v-if="resources.disk.length > 1" :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }">
             <a-slider
               style="margin-top: 10px"
               :marks="{ ...resources.disk }"
@@ -115,7 +115,7 @@
       :disabled="!itemSP || isFlavorsLoading || !plan || isProductExist"
       :header="osHeader"
     >
-      <div class="newCloud__option-field" v-if="images.length > 0">
+      <div v-if="images.length > 0" class="newCloud__option-field">
         <a-row>
           <a-col :xs="24" :sm="10">
             <a-form-item :label="$t('server name') | capitalize">
@@ -124,7 +124,7 @@
                 :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
                 @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
               />
-              <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
+              <div v-if="vmName.length < 2" style="line-height: 1.5; color: var(--err)">
                 {{ $t('ssl_product.field is required') }}
               </div>
             </a-form-item>
@@ -160,7 +160,7 @@
                 />
 
                 <add-ssh>
-                  <template v-slot:actions="{ showModal }">
+                  <template #actions="{ showModal }">
                     <a-icon
                       type="plus"
                       style="color: var(--main); font-size: 20px; vertical-align: middle"
@@ -169,29 +169,31 @@
                   </template>
                 </add-ssh>
               </div>
-              <div style="line-height: 1.5; color: var(--err)" v-if="!(options.config.ssh?.length > 1)">
+              <div v-if="!(options.config.ssh?.length > 1)" style="line-height: 1.5; color: var(--err)">
                 {{ $t('ssl_product.field is required') }}
               </div>
             </a-form-item>
           </a-col>
         </a-row>
-        <div class="newCloud__template" v-if="this.itemSP">
+        <div v-if="itemSP" class="newCloud__template">
           <div
             v-for="(item, index) in images"
-            class="newCloud__template-item"
             :key="index"
+            class="newCloud__template-item"
             :class="{ active: options.os.name === item.name }"
             @click="setOS(item, index)"
           >
             <template v-if="item.warning">
               <div class="newCloud__template-image">
-                <img src="/img/OS/default.png" :alt="item.desc" />
+                <img src="/img/OS/default.png" :alt="item.desc">
               </div>
-              <div class="newCloud__template-name">{{ item.name }}</div>
+              <div class="newCloud__template-name">
+                {{ item.name }}
+              </div>
             </template>
             <template v-else-if="!item.name.includes('none')">
               <div class="newCloud__template-image">
-                <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" @error="onError" />
+                <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" @error="onError">
               </div>
               <div class="newCloud__template-name">
                 {{ item.name }} <br>
@@ -214,15 +216,17 @@
 
     <!-- Addons -->
     <a-collapse-panel
-      key="addons"
       v-if="!getPlan.type?.includes('cloud')"
+      key="addons"
       :disabled="!itemSP || isFlavorsLoading || !plan || isProductExist"
       :header="$t('Addons') + ':'"
       :style="{ 'border-radius': '0 0 20px 20px' }"
     >
       <template v-if="!isFlavorsLoading">
-        <a-row class="newCloud__prop" v-for="(addon, key) in addons" :key="key">
-          <a-col span="8" :xs="6">{{ $t(key) | capitalize }}:</a-col>
+        <a-row v-for="(addon, key) in addons" :key="key" class="newCloud__prop">
+          <a-col span="8" :xs="6">
+            {{ $t(key) | capitalize }}:
+          </a-col>
           <a-col span="16" :xs="18">
             <a-select
               default-value="-1"
@@ -230,7 +234,9 @@
               :value="addonName(addon)"
               @change="(value) => setAddon(value, addon[value], key)"
             >
-              <a-select-option value="-1">{{ $t('none') }}</a-select-option>
+              <a-select-option value="-1">
+                {{ $t('none') }}
+              </a-select-option>
               <a-select-option v-for="(a, id) in addon" :key="id">
                 {{ a.title }} ({{ addonPrice(a) }})
               </a-select-option>
@@ -244,11 +250,11 @@
 </template>
 
 <script>
-import passwordMeter from 'vue-simple-password-meter';
-import addSsh from '@/components/appMain/cloud/openCloud/addSSH.vue';
+import passwordMeter from 'vue-simple-password-meter'
+import addSsh from '@/components/appMain/cloud/openCloud/addSSH.vue'
 
 export default {
-  name: 'ovh-creation-template',
+  name: 'OvhCreationTemplate',
   components: { passwordMeter, addSsh },
   props: {
     getPlan: { type: Object, default: {} },
@@ -272,241 +278,241 @@ export default {
     price: { type: Object, required: true }
   },
   data: () => ({ isFlavorsLoading: false, panelHeight: null }),
+  computed: {
+    user () {
+      return this.$store.getters['nocloud/auth/userdata']
+    },
+    isLogged () {
+      return this.$store.getters['nocloud/auth/isLoggedIn']
+    },
+    currency () {
+      const currencies = this.$store.getters['nocloud/auth/currencies']
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
+      const { currency_code } = this.$store.getters['nocloud/auth/billingData']
+
+      const code = this.$store.getters['nocloud/auth/unloginedCurrency']
+      const { rate } = currencies.find((el) =>
+        el.to === code && el.from === defaultCurrency
+      ) ?? {}
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === code && el.to === defaultCurrency
+      ) ?? { rate: 1 }
+
+      if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
+      return { rate: 1, code: currency_code ?? defaultCurrency }
+    },
+    region () {
+      const { extra, title } = this.itemSP?.locations
+        .find(({ id }) => this.locationId.includes(id)) ?? {}
+
+      if (!extra) return null
+      return { value: extra.region, title }
+    },
+    mode () {
+      switch (this.tarification) {
+        case 'Annually':
+          return 'upfront12'
+        case 'Biennially':
+          return 'upfront24'
+        case 'Hourly':
+          return 'hourly'
+        default:
+          return 'default'
+      }
+    },
+    planKey () {
+      const { cpu, ram, disk } = this.options
+      const drive = { size: disk.size / 1024 }
+
+      const resources = [cpu, ram, drive].map(({ size }) => size)
+      const plan = this.plans.find(({ label }) =>
+        label.includes(`${this.plan} ${resources.join('-')}`)
+      )
+
+      return plan?.value.slice(4)
+    },
+    planHeader () {
+      if (this.itemSP) return this.plan && ` (${this.plan})`
+      else return ' '
+    },
+    osHeader () {
+      const { name } = this.options.os
+      const osNotExist = name === '' || name.includes('none')
+
+      return `${this.$t('os')}: ${(osNotExist) ? ' ' : ` (${name})`}`
+    },
+    diskSize () {
+      const size = (this.options.disk.size / 1024).toFixed(1)
+
+      return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`
+    },
+    isProductExist () {
+      return !this.$route.query.product && this.getPlan.type?.includes('dedicated')
+    }
+  },
+  watch: {
+    getPlan () { this.changePlans() },
+    activeKey () { this.changePanelHeight() },
+    addons (value) {
+      const data = (localStorage.getItem('data'))
+        ? JSON.parse(localStorage.getItem('data'))
+        : JSON.parse(this.$route.query.data ?? '{}')
+
+      if (!data.ovhConfig) return
+      if (data.ovhConfig.addons.length < 1) return
+
+      this.options.config.addons.forEach((addon) => {
+        const keys = Object.keys(value)
+        const key = keys.find((el) => addon.includes(el))
+
+        if (!value[key][addon]) return
+        this.setAddon(addon, value[key][addon], key)
+      })
+    }
+  },
+  created () { this.changePlans() },
+  beforeMount () { this.changePanelHeight() },
   methods: {
-    setOS(item, index) {
-      if (item.warning) return;
-      this.options.os.id = +index;
-      this.options.os.name = item.name;
+    setOS (item, index) {
+      if (item.warning) return
+      this.options.os.id = +index
+      this.options.os.name = item.name
 
       if (item.prices) {
-        this.price.addons.os = this.osPrice(item.prices);
-        this.$emit('setData', { key: 'priceOVH', value: this.price });
+        this.price.addons.os = this.osPrice(item.prices)
+        this.$emit('setData', { key: 'priceOVH', value: this.price })
       } else if (this.price.addons.os !== 0) {
-        this.price.addons.os = 0;
-        this.$emit('setData', { key: 'priceOVH', value: this.price });
+        this.price.addons.os = 0
+        this.$emit('setData', { key: 'priceOVH', value: this.price })
       }
 
       if (this.getPlan.type.includes('cloud')) {
-        this.$emit('setData', { key: 'cloud_os', value: item.id, type: 'ovh' });
-        return;
+        this.$emit('setData', { key: 'cloud_os', value: item.id, type: 'ovh' })
+        return
       }
 
-      const type = this.getPlan.type.split(' ')[1];
-      this.$emit('setData', { key: `${type}_os`, value: item.name, type: 'ovh' });
+      const type = this.getPlan.type.split(' ')[1]
+      this.$emit('setData', { key: `${type}_os`, value: item.name, type: 'ovh' })
     },
-    osName(name) {
-      return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
+    osName (name) {
+      return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0]
     },
-    osPrice(prices) {
-      const addon = prices.find(({ pricingMode }) => pricingMode === this.mode);
+    osPrice (prices) {
+      const addon = prices.find(({ pricingMode }) => pricingMode === this.mode)
 
-      return addon?.price.value ?? 0;
+      return addon?.price.value ?? 0
     },
-    onError({ target }) {
-      target.src = '/img/OS/default.png';
+    onError ({ target }) {
+      target.src = '/img/OS/default.png'
     },
-    setAddon(planCode, addon, key) {
+    setAddon (planCode, addon, key) {
       if (planCode === '-1') {
-        delete this.price.addons[key];
-        this.$delete(this.addonsCodes, key);
+        delete this.price.addons[key]
+        this.$delete(this.addonsCodes, key)
       } else {
-        const period = addon.periods.find(({ pricingMode }) => pricingMode === this.mode);
+        const period = addon.periods.find(({ pricingMode }) => pricingMode === this.mode)
 
-        this.price.addons[key] = period.price.value;
-        this.$set(this.addonsCodes, key, planCode);
+        this.price.addons[key] = period.price.value
+        this.$set(this.addonsCodes, key, planCode)
       }
-      const addons = Object.values(this.addonsCodes);
+      const addons = Object.values(this.addonsCodes)
 
-      this.$emit('setData', { key: 'priceOVH', value: this.price });
-      this.$emit('setData', { key: 'addons', value: addons, type: 'ovh' });
+      this.$emit('setData', { key: 'priceOVH', value: this.price })
+      this.$emit('setData', { key: 'addons', value: addons, type: 'ovh' })
     },
-    addonName(addons) {
-      const codes = Object.values(this.addonsCodes);
-      const keys = Object.keys(addons);
+    addonName (addons) {
+      const codes = Object.values(this.addonsCodes)
+      const keys = Object.keys(addons)
 
-      return codes.find((el) => keys.includes(el)) ?? '-1';
+      return codes.find((el) => keys.includes(el)) ?? '-1'
     },
-    addonPrice({ periods }) {
+    addonPrice ({ periods }) {
       const period = periods.find(({ pricingMode }) => pricingMode === this.mode) ??
-        { price: { value: 0 } };
-      const price = +(period.price.value * this.currency.rate).toFixed(2);
+        { price: { value: 0 } }
+      const price = +(period.price.value * this.currency.rate).toFixed(2)
 
-      return `${price} ${this.currency.code}`;
+      return `${price} ${this.currency.code}`
     },
-    setResource(value) {
+    setResource (value) {
       if (this.getPlan.type.includes('vps')) {
-        this.setData(this.planKey);
+        this.setData(this.planKey)
       } else {
-        this.setData(value, false);
+        this.setData(value, false)
       }
     },
-    changePlans() {
-      const plans = [];
-      const products = Object.keys(this.getPlan.products ?? {});
+    changePlans () {
+      const plans = []
+      const products = Object.keys(this.getPlan.products ?? {})
 
       products.forEach((key) => {
-        const { title, price, meta, resources } = this.getPlan.products[key];
-        const label = title;
-        const value = key.split(' ')[1];
+        const { title, price, meta, resources } = this.getPlan.products[key]
+        const label = title
+        const value = key.split(' ')[1]
 
-        const i = plans.findIndex((plan) => plan.value === value);
+        const i = plans.findIndex((plan) => plan.value === value)
         const period = {
           price: { value: price },
           duration: key.split(' ')[0],
           pricingMode: ''
-        };
+        }
 
         switch (key.split(' ')[0]) {
           case 'P1H':
-            period.pricingMode = 'hourly';
-            break;
+            period.pricingMode = 'hourly'
+            break
           case 'P1Y':
-            period.pricingMode = 'upfront12';
-            break;
+            period.pricingMode = 'upfront12'
+            break
           default:
-            period.pricingMode = 'default';
+            period.pricingMode = 'default'
         }
 
-        this.$set(this.allAddons, value, meta.addons);
+        this.$set(this.allAddons, value, meta.addons)
 
-        const config = this.options.config.configuration;
-        const datacenter = Object.keys(config).find((key) => key.includes('datacenter'));
+        const config = this.options.config.configuration
+        const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))
 
-        if (!meta.datacenter?.includes(config[datacenter])) return;
-        if (i === -1) plans.push({ value, label, resources, periods: [period] });
-        else plans[i].periods.push(period);
-      });
+        if (!meta.datacenter?.includes(config[datacenter])) return
+        if (i === -1) plans.push({ value, label, resources, periods: [period] })
+        else plans[i].periods.push(period)
+      })
 
       plans.sort((a, b) => {
-        const resA = a.value.split('-');
-        const resB = b.value.split('-');
+        const resA = a.value.split('-')
+        const resB = b.value.split('-')
 
-        const isCpuEqual = resB.at(-3) === resA.at(-3);
-        const isRamEqual = resB.at(-2) === resA.at(-2);
+        const isCpuEqual = resB.at(-3) === resA.at(-3)
+        const isRamEqual = resB.at(-2) === resA.at(-2)
 
-        if (isCpuEqual && isRamEqual) return resA.at(-1) - resB.at(-1);
-        if (isCpuEqual) return resA.at(-2) - resB.at(-2);
-        return resA.at(-3) - resB.at(-3);
-      });
-      this.$emit('changePlans', plans);
-      if (plans.length < 1) return;
+        if (isCpuEqual && isRamEqual) return resA.at(-1) - resB.at(-1)
+        if (isCpuEqual) return resA.at(-2) - resB.at(-2)
+        return resA.at(-3) - resB.at(-3)
+      })
+      this.$emit('changePlans', plans)
+      if (plans.length < 1) return
 
       const dataString = (localStorage.getItem('data'))
         ? localStorage.getItem('data')
         : this.$route.query.data ?? '{}'
 
       if (dataString.includes('productSize')) {
-        const data = JSON.parse(dataString);
+        const data = JSON.parse(dataString)
 
-        this.$emit('changePlan', data.productSize);
+        this.$emit('changePlan', data.productSize)
       } else if (this.plan === '') {
         setTimeout(() => {
-          this.$emit('changePlan', this.resources.plans[1] ?? this.resources.plans[0]);
-        });
+          this.$emit('changePlan', this.resources.plans[1] ?? this.resources.plans[0])
+        })
       }
     },
-    changePanelHeight() {
+    changePanelHeight () {
       setTimeout(() => {
-        const panel = document.querySelector('.ant-collapse-content')?.lastElementChild;
-        const height = (panel) ? getComputedStyle(panel).height : null;
+        const panel = document.querySelector('.ant-collapse-content')?.lastElementChild
+        const height = (panel) ? getComputedStyle(panel).height : null
 
-        this.panelHeight = (this.activeKey === 'location') ? height : null;
-      });
-    }
-  },
-  created() { this.changePlans() },
-  beforeMount() { this.changePanelHeight() },
-  computed: {
-    user() {
-      return this.$store.getters['nocloud/auth/userdata'];
-    },
-    isLogged() {
-      return this.$store.getters['nocloud/auth/isLoggedIn'];
-    },
-    currency() {
-      const currencies = this.$store.getters['nocloud/auth/currencies'];
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
-      const { currency_code } = this.$store.getters['nocloud/auth/billingData'];
-
-      const code = this.$store.getters['nocloud/auth/unloginedCurrency'];
-      const { rate } = currencies.find((el) =>
-        el.to === code && el.from === defaultCurrency
-      ) ?? {};
-
-      const { rate: reverseRate } = currencies.find((el) =>
-        el.from === code && el.to === defaultCurrency
-      ) ?? { rate: 1 };
-
-      if (!this.isLogged) return { rate: (rate) ? rate : 1 / reverseRate, code };
-      return { rate: 1, code: currency_code ?? defaultCurrency };
-    },
-    region() {
-      const { extra, title } = this.itemSP?.locations
-        .find(({ id }) => this.locationId.includes(id)) ?? {};
-
-      if (!extra) return null;
-      return { value: extra.region, title };
-    },
-    mode() {
-      switch (this.tarification) {
-        case 'Annually':
-          return 'upfront12';
-        case 'Biennially':
-          return 'upfront24';
-        case 'Hourly':
-          return 'hourly';
-        default:
-          return 'default';
-      }
-    },
-    planKey() {
-      const { cpu, ram, disk } = this.options;
-      const drive = { size: disk.size / 1024 };
-
-      const resources = [cpu, ram, drive].map(({ size }) => size);
-      const plan = this.plans.find(({ label }) =>
-        label.includes(`${this.plan} ${resources.join('-')}`)
-      );
-
-      return plan?.value.slice(4);
-    },
-    planHeader() {
-      if (this.itemSP) return this.plan && ` (${this.plan})`;
-      else return ' ';
-    },
-    osHeader() {
-      const { name } = this.options.os;
-      const osNotExist = name === '' || name.includes('none');
-
-      return `${this.$t('os')}: ${(osNotExist) ? ' ' : ` (${name})`}`;
-    },
-    diskSize() {
-      const size = (this.options.disk.size / 1024).toFixed(1);
-
-      return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
-    },
-    isProductExist() {
-      return !this.$route.query.product && this.getPlan.type?.includes('dedicated');
-    }
-  },
-  watch: {
-    getPlan() { this.changePlans() },
-    activeKey() { this.changePanelHeight() },
-    addons(value) {
-      const data = (localStorage.getItem('data'))
-        ? JSON.parse(localStorage.getItem('data'))
-        : JSON.parse(this.$route.query.data ?? '{}');
-
-      if (!data.ovhConfig) return;
-      if (data.ovhConfig.addons.length < 1) return;
-
-      this.options.config.addons.forEach((addon) => {
-        const keys = Object.keys(value);
-        const key = keys.find((el) => addon.includes(el));
-
-        if (!value[key][addon]) return;
-        this.setAddon(addon, value[key][addon], key);
-      });
+        this.panelHeight = (this.activeKey === 'location') ? height : null
+      })
     }
   }
 }

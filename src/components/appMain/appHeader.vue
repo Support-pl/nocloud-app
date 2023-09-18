@@ -234,6 +234,8 @@
 <script>
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 import moment from 'moment'
+import { mapState } from 'pinia'
+import { useAppStore } from '@/stores/app.js'
 import balance from '@/components/balance/balance.vue'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
 
@@ -414,7 +416,7 @@ export default {
       this.isVisible = true
     },
     routeBack () {
-      if (this.getActiveTab.title.includes('iaas') && this.$route.query.product) {
+      if (this.activeTab.title.includes('iaas') && this.$route.query.product) {
         const query = { ...this.$route.query }
 
         delete query.product
@@ -422,7 +424,7 @@ export default {
         return
       }
 
-      if (this.getActiveTab.title.includes('service-')) {
+      if (this.activeTab.title.includes('service-')) {
         // if (this.$route.query.service) {
         //   const { service } = this.$route.query;
 
@@ -433,12 +435,12 @@ export default {
         return
       }
 
-      if (this.getActiveTab.title.includes('invoice')) {
+      if (this.activeTab.title.includes('invoice')) {
         this.$router.push('/billing')
         return
       }
 
-      switch (this.getActiveTab.title) {
+      switch (this.activeTab.title) {
         case 'cabinet':
           this.$router.push('/settings')
           break
@@ -563,7 +565,7 @@ export default {
       'getAllTickets'
     ]),
     ...mapGetters('nocloud/chats', { chats: 'getAllChats' }),
-    ...mapGetters('app', ['getActiveTab']),
+    ...mapState(useAppStore, ['activeTab']),
     ...mapGetters('nocloud/vms', { searchString: 'getString' }),
     ...mapGetters('invoices', ['getInvoices', 'getAllInvoices']),
     ...mapGetters('nocloud/transactions', {
@@ -575,7 +577,7 @@ export default {
 
       if (headerTitle) return headerTitle
       if (layoutTitle) return layoutTitle
-      return this.getActiveTab.title
+      return this.activeTab.title
     },
     isInSpecialType () {
       return this.$route.query?.type !== undefined

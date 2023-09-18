@@ -22,9 +22,9 @@ const SystemLangs = navigator.languages
 const lang = AppLangs.find(el => ~SystemLangs.map(el => el.replace(/-[a-z]{2}/i, '')).indexOf(el))
 
 export default new VueI18n({
-  // locale: process.env.VUE_APP_I18N_LOCALE || 'en',
+  // locale: import.meta.env.VUE_APP_I18N_LOCALE ?? 'en',
   locale: lang,
-  fallbackLocale: import.meta.env.VUE_APP_I18N_FALLBACK_LOCALE || 'en',
+  fallbackLocale: import.meta.env.VUE_APP_I18N_FALLBACK_LOCALE ?? 'en',
   messages: loadLocaleMessages(),
   pluralizationRules: {
     ru: function (choice, choicesLength) {
