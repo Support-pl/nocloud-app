@@ -95,7 +95,7 @@ window.addEventListener('message', ({ data, origin }) => {
   }
 })
 
-window.addEventListener('DOMContentLoaded', () => {
+onMounted(() => {
   console.log(window.opener)
   if (!window.opener) return
   window.opener.postMessage('ready', '*')
