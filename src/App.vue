@@ -79,14 +79,13 @@ function redirectByType ({ uuid, type }) {
 }
 
 window.addEventListener('message', ({ data, origin }) => {
-  console.log(data, origin)
   if (!origin.includes('https://api.')) return
   api.applyToken(data.token)
   store.commit('nocloud/auth/setToken', data.token)
   store.dispatch('nocloud/auth/load')
 
   if (data.uuid) redirectByType(data)
-  else if (router.currentRoute.name.includes('login')) {
+  else if (router.currentRoute.name?.includes('login')) {
     router.replace({ name: 'root' }).then(() => {
       location.reload()
     })
@@ -96,7 +95,6 @@ window.addEventListener('message', ({ data, origin }) => {
 })
 
 onMounted(() => {
-  console.log(window.opener)
   if (!window.opener) return
   window.opener.postMessage('ready', '*')
   window.opener = null
