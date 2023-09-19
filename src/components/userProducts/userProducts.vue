@@ -163,7 +163,8 @@
 </template>
 
 <script>
-import loading from '../loading/loading.vue'
+import config from '@/appconfig.js'
+import loading from '@/components/loading/loading.vue'
 import cloudItem from '@/components/appMain/cloud/cloudItem.vue'
 
 export default {
@@ -361,7 +362,7 @@ export default {
         result.push(key)
       })
 
-      if (this.$config.sharedEnabled) result.push('Virtual')
+      if (config.sharedEnabled) result.push('Virtual')
       return result
     },
     checkedTypes () {

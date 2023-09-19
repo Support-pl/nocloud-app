@@ -9,7 +9,6 @@ import store from './store'
 import router from './router'
 import './registerServiceWorker'
 import axios from './axios'
-import config from './appconfig'
 import api from '@/api.js'
 import './assets/style.css'
 
@@ -20,7 +19,6 @@ Vue.use(Antd)
 Vue.use(VueGoogleCharts)
 Vue.use(PiniaVuePlugin)
 
-Vue.prototype.$config = config
 Vue.prototype.$axios = axios
 Vue.prototype.$api = api
 

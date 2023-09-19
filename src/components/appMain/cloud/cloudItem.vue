@@ -62,6 +62,8 @@
 </template>
 
 <script>
+import config from '@/appconfig.js'
+
 export default {
   name: 'CloudItem',
   props: {
@@ -189,7 +191,7 @@ export default {
       return (!this.activeKey.includes('1')) ? `IP: ${this.networking[0]}` : 'IP\'s:'
     },
     getModuleProductBtn () {
-      const serviceType = this.$config.getServiceType(this.instance.groupname)?.toLowerCase()
+      const serviceType = config.getServiceType(this.instance.groupname)?.toLowerCase()
       const isActive = ['active', 'running'].includes(this.instance.domainstatus?.toLowerCase())
       const key = this.instance.product ?? this.instance.config?.product
       const { meta } = this.instance.billingPlan?.products[key] ?? {}

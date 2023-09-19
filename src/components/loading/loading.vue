@@ -1,24 +1,24 @@
 <template>
   <div class="loading" :class="{'ha': ha}" :style="{'color': color}">
-		<a-icon type="loading" />
+    <a-icon type="loading" />
   </div>
 </template>
 
 <script>
+import config from '@/appconfig.js'
+
 export default {
-	name: 'loading',
-	props: {
-		color: {
-			type: String,
-			default: function() {
-				return this.$config.colors.main
-			}
-		},
-		ha: {
-			type: Boolean,
-			default: false
-		}
-	}
+  name: 'Loading',
+  props: {
+    color: {
+      type: String,
+      default: () => config.colors.main
+    },
+    ha: {
+      type: Boolean,
+      default: false
+    }
+  }
 }
 </script>
 

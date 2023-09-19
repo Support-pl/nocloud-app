@@ -116,7 +116,7 @@ export default {
     filteredDepartments (value) {
       if (value.length < 1) return
       if (this.instanceId) {
-        const result = value.find(({ id }) => id.includes('openai'))
+        const result = value.find(({ id }) => `${id}`.includes('openai'))
 
         this.ticketDepartment = result?.id ?? value[0]?.id ?? -1
         return

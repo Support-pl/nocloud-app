@@ -48,6 +48,7 @@
     "globals": [
       "VUE_APP_BASE_URL",
       "WebSocket",
+      "localStorage",
       "caches"
     ]
   }

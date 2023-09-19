@@ -3,7 +3,7 @@
     <div
       class="ticket__status"
       :style="{ 'background-color': statusColor }"
-    ></div>
+    />
     <div class="ticket__content">
       <div class="ticket__upper">
         <div class="ticket__title">
@@ -16,71 +16,75 @@
         </div>
       </div>
       <div class="ticket__lower">
-        <div class="ticket__message" v-html="beauty(ticket.message)"></div>
-        <div class="ticket__time">{{ formatDate(ticket.date) }}</div>
+        <div class="ticket__message" v-html="beauty(ticket.message)" />
+        <div class="ticket__time">
+          {{ formatDate(ticket.date) }}
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import config from '@/appconfig.js'
+
 export default {
-  name: "ticket",
+  name: 'Ticket',
   props: {
     ticket: { type: Object, required: true },
     instanceId: { type: String, default: null }
   },
-  methods: {
-    ticketClick(id) {
-      const query = { from: this.instanceId };
-
-      this.$router.push({ path: `/ticket-${id}`, query });
-    },
-    beauty(message) {
-      message = this.decode(message);
-      message = message.replace(/-{2,}.*/gi, "");
-      message = message.replace(/IP Address.*/gi, "");
-      message = message.replace(/<\/?[a-z1-9 #-:=";_!]+>/gi, "");
-      return message || 'empty';
-    },
-    formatDate(date) {
-      const d = new Date((date.replace) ? date.replace(/-/g, "/") : date);
-      const ye = new Intl.DateTimeFormat("en", { year: "numeric" }).format(d);
-      const mo = new Intl.DateTimeFormat("en", { month: "2-digit" }).format(d);
-      const da = new Intl.DateTimeFormat("en", { day: "2-digit" }).format(d);
-      let ho = new Intl.DateTimeFormat("en", { hour: "2-digit", hour12: false }).format(d);
-      let mi = new Intl.DateTimeFormat("en", { minute: "2-digit" }).format(d);
-
-      if (`${ho}`.length < 2) ho = `${ho}0`;
-      if (`${mi}`.length < 2) mi = `${mi}0`;
-      return `${da}/${mo}/${ye} ${ho}:${mi}`;
-    },
-    decode(text) {
-      var txt = document.createElement("textarea");
-      txt.innerHTML = text;
-      return txt.value;
-    },
-  },
   computed: {
-    statusColor() {
+    statusColor () {
       switch (this.ticket.status.toLowerCase()) {
-        case "new":
-          return this.$config.colors.main;
-        case "open":
-          return this.$config.colors.success;
-        case "in progress":
-        case "customer-reply":
-          return this.$config.colors.warn;
-        case "close":
-        case "closed":
-          return this.$config.colors.err;
+        case 'new':
+          return config.colors.main
+        case 'open':
+          return config.colors.success
+        case 'in progress':
+        case 'customer-reply':
+          return config.colors.warn
+        case 'close':
+        case 'closed':
+          return config.colors.err
         default:
-          return this.$config.colors.gray;
+          return config.colors.gray
       }
     },
-    titleDecoded() {
-      return this.decode(this.ticket.title);
+    titleDecoded () {
+      return this.decode(this.ticket.title)
+    }
+  },
+  methods: {
+    ticketClick (id) {
+      const query = { from: this.instanceId }
+
+      this.$router.push({ path: `/ticket-${id}`, query })
     },
+    beauty (message) {
+      message = this.decode(message)
+      message = message.replace(/-{2,}.*/gi, '')
+      message = message.replace(/IP Address.*/gi, '')
+      message = message.replace(/<\/?[a-z1-9 #-:=";_!]+>/gi, '')
+      return message || 'empty'
+    },
+    formatDate (date) {
+      const d = new Date((date.replace) ? date.replace(/-/g, '/') : date)
+      const ye = new Intl.DateTimeFormat('en', { year: 'numeric' }).format(d)
+      const mo = new Intl.DateTimeFormat('en', { month: '2-digit' }).format(d)
+      const da = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(d)
+      let ho = new Intl.DateTimeFormat('en', { hour: '2-digit', hour12: false }).format(d)
+      let mi = new Intl.DateTimeFormat('en', { minute: '2-digit' }).format(d)
+
+      if (`${ho}`.length < 2) ho = `${ho}0`
+      if (`${mi}`.length < 2) mi = `${mi}0`
+      return `${da}/${mo}/${ye} ${ho}:${mi}`
+    },
+    decode (text) {
+      const txt = document.createElement('textarea')
+      txt.innerHTML = text
+      return txt.value
+    }
   }
 }
 </script>

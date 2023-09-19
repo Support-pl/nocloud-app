@@ -170,6 +170,7 @@
 </template>
 
 <script>
+import config from '@/appconfig.js'
 import loading from '@/components/loading/loading.vue'
 
 const info = [
@@ -260,7 +261,7 @@ export default {
     getModuleButtons () {
       if (!this.service.groupname) return
       const { status, state } = this.service
-      const serviceType = this.$config.getServiceType(this.service.groupname)?.toLowerCase()
+      const serviceType = config.getServiceType(this.service.groupname)?.toLowerCase()
 
       const components = import.meta.glob('@/components/services/*/draw.vue')
       const component = Object.keys(components).find((key) =>
@@ -281,7 +282,7 @@ export default {
       const key = this.service.product ?? this.service.config?.product
       const { meta } = this.service.billingPlan?.products[key] ?? {}
       const description = this.service.desc_product
-        ?.replace('/templates', `${this.$config.WHMCSsiteurl}$&`)
+        ?.replace('/templates', `${config.WHMCSsiteurl}$&`)
 
       return meta?.description ?? description
     }

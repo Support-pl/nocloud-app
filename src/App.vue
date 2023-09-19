@@ -23,6 +23,7 @@ import { computed, onMounted, watch } from 'vue'
 import store from '@/store'
 import router from '@/router'
 import i18n from '@/i18n.js'
+import api from '@/api.js'
 import config from '@/appconfig.js'
 import { useAppStore } from '@/stores/app.js'
 import updateNotification from '@/components/updateNotification/index.vue'
@@ -63,19 +64,42 @@ function isRouteExist (name) {
   }
 }
 
+function redirectByType ({ uuid, type }) {
+  switch (type) {
+    case 'ovh':
+    case 'ione':
+      router.replace({ name: 'openCloud_new', params: { uuid } })
+        .then(() => { location.reload() })
+      break
+
+    default:
+      router.replace({ name: 'service', params: { id: uuid } })
+      break
+  }
+}
+
 window.addEventListener('message', ({ data, origin }) => {
   console.log(data, origin)
   if (!origin.includes('https://api.')) return
+  api.applyToken(data.token)
   store.commit('nocloud/auth/setToken', data.token)
+  store.dispatch('nocloud/auth/load')
 
-  if (data.uuid) {
-    router.replace({ name: 'openCloud_new', params: { uuid: data.uuid } })
-    console.log(`Instance uuid: ${data.uuid}`)
-  } else if (route.name.includes('login')) {
-    router.replace({ name: 'root' })
-    console.log('Login page')
+  if (data.uuid) redirectByType(data)
+  else if (router.currentRoute.name.includes('login')) {
+    router.replace({ name: 'root' }).then(() => {
+      location.reload()
+    })
+  } else {
+    setTimeout(() => { location.reload() }, 300)
   }
-  setTimeout(() => { location.reload() }, 100)
+})
+
+window.addEventListener('DOMContentLoaded', () => {
+  console.log(window.opener)
+  if (!window.opener) return
+  window.opener.postMessage('ready', '*')
+  window.opener = null
 })
 
 store.dispatch('nocloud/auth/load')

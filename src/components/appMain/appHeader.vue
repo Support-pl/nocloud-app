@@ -236,6 +236,7 @@ import { mapActions, mapGetters, mapMutations } from 'vuex'
 import moment from 'moment'
 import { mapState } from 'pinia'
 import { useAppStore } from '@/stores/app.js'
+import config from '@/appconfig.js'
 import balance from '@/components/balance/balance.vue'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
 
@@ -362,7 +363,7 @@ export default {
           buttons: []
         }
       },
-      langs: this.$config.languages,
+      langs: config.languages,
       currencies: [],
       currencyCode: ''
     }

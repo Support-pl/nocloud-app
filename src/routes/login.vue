@@ -33,7 +33,7 @@
             {{ $t('comp_services.Your orders') }}:
             <div class="order__card">
               <div class="order__icon">
-                <a-icon :type="$config.services[getOnlogin.info.type]?.icon" />
+                <a-icon :type="config.services[getOnlogin.info.type]?.icon" />
               </div>
               <div class="order__info">
                 <div class="order__title">
