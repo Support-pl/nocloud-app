@@ -14,7 +14,9 @@ api.axios.interceptors.response.use(
       )
     ) {
       console.log('credentials are not actual')
-      vuex.dispatch('nocloud/auth/logout')
+      setTimeout(() => {
+        vuex.dispatch('nocloud/auth/logout')
+      }, 2000)
     }
     return Promise.reject(error) // this is the important part
   })

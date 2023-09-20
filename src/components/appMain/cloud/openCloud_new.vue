@@ -15,7 +15,7 @@
                   class="Fcloud__status-color"
                   :class="{ 'glowing-animations': getActionLoadingInvoke }"
                   :style="{ 'background-color': stateColor }"
-                ></div>
+                />
                 <div class="Fcloud__title">
                   {{ VM.title ?? VM.resources.NAME }}
                 </div>
@@ -31,10 +31,10 @@
                   <a-icon type="more" @click="changeModal('menu')" />
                   <a-modal v-model="modal.menu" :title="$t('Menu')" :footer="null">
                     <a-button
-                      block
-                      class="menu__button"
                       v-for="btn in menuOptions"
                       :key="btn.title"
+                      block
+                      class="menu__button"
                       :icon="btn.icon"
                       :type="btn.type || 'default'"
                       :disabled="disabledMenu(btn.title.toLowerCase())"
@@ -46,7 +46,7 @@
                   </a-modal>
                   <a-modal
                     v-model="modal.rename"
-                    :confirmLoading="isRenameLoading"
+                    :confirm-loading="isRenameLoading"
                     :title="$t('Rename')"
                     @ok="sendRename"
                   >
@@ -54,8 +54,7 @@
                     <a-input
                       v-model="renameNewName"
                       :placeholder="$t('input new name')"
-                    >
-                    </a-input>
+                    />
                   </a-modal>
                   <a-modal
                     v-model="modal.reinstall"
@@ -67,8 +66,7 @@
                       <a-input-password
                         v-model="reinstallPass"
                         :placeholder="$t('input password')"
-                      >
-                      </a-input-password>
+                      />
                     </template>
                     <template v-else>
                       <p>{{ $t('We can\'t do it automaticly. Presss OK to create a ticket') }}</p>
@@ -76,17 +74,19 @@
                     </template>
                   </a-modal>
                   <a-modal
-                    :confirm-loading="loadingResizeVM"
                     v-model="modal.expand"
+                    :confirm-loading="loadingResizeVM"
                     :title="$t('Resize VM')"
                     @ok="ResizeVM"
                   >
                     <a-row style="margin-bottom: 5px">
-                      <a-col style="width: 75px"> CPU </a-col>
+                      <a-col style="width: 75px">
+                        CPU
+                      </a-col>
                       <a-col style="width: 100%">
                         <a-input-number
-                        style="width: 100%"
                           v-model="resize.VCPU"
+                          style="width: 100%"
                           :min="1"
                           :max="32"
                           default-value="1"
@@ -95,11 +95,13 @@
                     </a-row>
 
                     <a-row style="margin: 10px 0; width: 100%">
-                      <a-col style="width: 75px"> RAM (GB) </a-col>
+                      <a-col style="width: 75px">
+                        RAM (GB)
+                      </a-col>
                       <a-col style="width: 100%">
                         <a-input-number
-                          style="width: 100%"
                           v-model="resize.RAM"
+                          style="width: 100%"
                           :min="1"
                           :max="64"
                           default-value="1"
@@ -113,11 +115,13 @@
                     </template>
 
                     <a-row v-else>
-                      <a-col style="width: 75px"> {{ $t('disk') }} (GB) </a-col>
+                      <a-col style="width: 75px">
+                        {{ $t('disk') }} (GB)
+                      </a-col>
                       <a-col style="width: 100%">
                         <a-input-number
-                          style="width: 100%"
                           v-model="resize.size"
+                          style="width: 100%"
                           :min="VM.resources && VM.resources.drive_size / 1024"
                           default-value="1"
                         />
@@ -150,10 +154,10 @@
                   >
                     <a-spin style="display: block; margin: 0 auto" :tip="$t('loading')" :spinning="isLogsLoading">
                       <a-card
-                        size="small"
                         v-for="(log, i) of logs"
                         :key="log.date"
-                        :bodyStyle="{ display: 'flex' }"
+                        size="small"
+                        :body-style="{ display: 'flex' }"
                         :style="{ marginBottom: (logs.length - 1 !== i) ? '24px' : null }"
                       >
                         <template #extra>
@@ -177,8 +181,8 @@
                   </a-modal>
 
                   <a-modal
-                    width="600px"
                     v-model="modal.networkControl"
+                    width="600px"
                     :title="$t('Network control')"
                     :footer="null"
                   >
@@ -188,7 +192,7 @@
                     </template>
                     <network-control
                       v-else
-                      :itemService="itemService"
+                      :item-service="itemService"
                       :VM="VM"
                       @closeModal="modal.networkControl = false"
                     />
@@ -215,23 +219,25 @@
           </template>
         </component>
       </div>
-      <loading v-else-if="vmsLoading" color="#fff" :style="{'position': 'absolute', 'height':
-      '100%', 'width': '100%'}" key="loading" duration: />
+      <loading
+        v-else-if="vmsLoading" key="loading" color="#fff" :style="{'position': 'absolute', 'height':
+          '100%', 'width': '100%'}" duration:
+      />
     </transition>
   </div>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import loading from "@/components/loading/loading.vue";
-import diskControl from "./openCloud/diskControl.vue";
-import bootOrder from "./openCloud/bootOrder.vue";
-import networkControl from "./openCloud/networkControl.vue";
-import accessManager from "./openCloud/accessManager.vue";
-import notification from "@/mixins/notification.js";
+import { mapGetters } from 'vuex'
+import diskControl from './openCloud/diskControl.vue'
+import bootOrder from './openCloud/bootOrder.vue'
+import networkControl from './openCloud/networkControl.vue'
+import accessManager from './openCloud/accessManager.vue'
+import loading from '@/components/loading/loading.vue'
+import notification from '@/mixins/notification.js'
 
 export default {
-  name: "openCloud",
+  name: 'OpenCloud',
   components: { loading, diskControl, bootOrder, networkControl, accessManager },
   mixins: [notification],
   data: () => ({
@@ -239,8 +245,8 @@ export default {
     isDeleteLoading: false,
     isRenameLoading: false,
     isLogsLoading: false,
-    reinstallPass: "",
-    renameNewName: "",
+    reinstallPass: '',
+    renameNewName: '',
     loadingResizeVM: false,
     modal: {
       menu: false,
@@ -254,379 +260,419 @@ export default {
       networkControl: false,
       accessManager: false,
       rename: false,
-      resize: false,
+      resize: false
     },
     bootOrder: {
-      loading: false,
+      loading: false
     },
     resize: {
       VCPU: 0,
       RAM: 0,
       size: 0,
-      scale: "GB",
+      scale: 'GB'
     },
     logs: [],
-    resources: {}
+    resources: {},
+    type: ''
   }),
   computed: {
-    ...mapGetters("nocloud/vms", [
-      "getActionLoadingInvoke",
-      "getServicesFull",
-      "getInstances",
+    ...mapGetters('nocloud/vms', [
+      'getActionLoadingInvoke',
+      'getServicesFull',
+      'getInstances'
     ]),
-    ...mapGetters("products", ['getProducts']),
-    ...mapGetters("support", { baseURL: "getURL" }),
-    template() {
-      const type = (this.VM.server_on) ? 'whmcs' : this.VM.billingPlan?.type ?? 'ione'
+    ...mapGetters('products', ['getProducts']),
+    ...mapGetters('support', { baseURL: 'getURL' }),
+    template () {
       const components = import.meta.glob('@/components/appMain/modules/*/openInstance.vue')
-      const component = Object.keys(components).find((key) => key.includes(`/${type}/`))
+      const component = Object.keys(components).find((key) => key.includes(`/${this.type}/`))
 
+      if (!component) return () => ({})
       return () => components[component]()
     },
-    menuOptions() {
+    menuOptions () {
       const options = [
         {
-          title: "Reinstall",
+          title: 'Reinstall',
           onclick: this.sendReinstall,
           params: [],
-          icon: "exclamation",
-          modules: ['ione'],
+          icon: 'exclamation',
+          modules: ['ione']
         },
         {
-          title: "Rename",
+          title: 'Rename',
           onclick: this.changeModal,
-          params: ["rename"],
-          icon: "tag",
+          params: ['rename'],
+          icon: 'tag'
         },
         {
-          title: "Resize VM",
+          title: 'Resize VM',
           onclick: this.changeModal,
-          params: ["expand"],
-          icon: "arrows-alt",
+          params: ['expand'],
+          icon: 'arrows-alt',
           forVNC: true,
-          modules: ['ione'],
+          modules: ['ione']
         },
         {
-          title: "SSH key",
+          title: 'SSH key',
           onclick: this.changeModal,
-          params: ["SSH"],
-          icon: "safety",
+          params: ['SSH'],
+          icon: 'safety'
         },
         {
-          title: "Network control",
+          title: 'Network control',
           onclick: this.changeModal,
-          params: ["networkControl"],
-          icon: "global",
+          params: ['networkControl'],
+          icon: 'global',
           forVNC: true,
-          modules: ['ione'],
+          modules: ['ione']
         },
         {
-          title: "Access manager",
+          title: 'Access manager',
           onclick: this.changeModal,
-          params: ["accessManager"],
-          icon: "safety",
+          params: ['accessManager'],
+          icon: 'safety'
         },
         {
-          title: "Logs",
+          title: 'Logs',
           onclick: this.getLogs,
-          params: ["logs"],
-          icon: "code",
-          modules: ['ovh'],
+          params: ['logs'],
+          icon: 'code',
+          modules: ['ovh']
         },
         {
-          title: "Delete",
+          title: 'Delete',
           onclick: this.sendDelete,
-          params: ["delete"],
-          icon: "delete",
-          type: "danger",
-          forVNC: true,
-        },
-      ];
-      const sp = this.$store.getters['nocloud/sp/getSP'];
-      const { type } = sp?.find(({ uuid }) => uuid === this.VM.sp) || {};
+          params: ['delete'],
+          icon: 'delete',
+          type: 'danger',
+          forVNC: true
+        }
+      ]
+      const sp = this.$store.getters['nocloud/sp/getSP']
+      const { type } = sp?.find(({ uuid }) => uuid === this.VM.sp) || {}
 
       return options.filter((el) =>
         (el.modules) ? el.modules.includes(type) : true
-      );
+      )
     },
 
-    itemService() {
+    itemService () {
       const data = this.getServicesFull.find((el) => {
-        return this.VM.uuidService === el.uuid;
-      });
-      return data;
+        return this.VM.uuidService === el.uuid
+      })
+      return data
     },
-    VM() {
-      const vms = [...this.getInstances, ...this.getProducts];
+    VM () {
+      const vms = [...this.getInstances, ...this.getProducts]
 
-      for (let instance of vms) {
+      for (const instance of vms) {
         if (instance.uuid === this.$route.params.uuid) {
-          this.resize.VCPU = instance.resources.cpu;
-          this.resize.RAM = instance.resources.ram / 1024;
-          this.resize.size = Math.ceil(instance.resources.drive_size / 1024);
-          return instance;
+          return instance
         } else if (`${instance.id}` === this.$route.params.uuid) {
-          return { ...instance, resources: this.resources };
+          return { ...instance, resources: this.resources }
         }
       }
-      return {};
+      return {}
     },
-    vmsLoading() {
-      return this.$store.getters["nocloud/vms/isLoading"] || this.isLoading;
+    vmsLoading () {
+      return this.$store.getters['nocloud/vms/isLoading'] || this.isLoading
     },
-    stateVM() {
+    stateVM () {
       if (this.VM.server_on) {
-        return this.VM.resources?.STATE.replaceAll('_', ' ');
+        return this.VM.resources?.STATE.replaceAll('_', ' ')
       }
-      if (!this.VM.state) return "UNKNOWN";
+      if (!this.VM.state) return 'UNKNOWN'
 
       const state = (this.VM?.billingPlan.type === 'ione')
         ? this.VM.state.meta.lcm_state_str
-        : this.VM.state.state;
+        : this.VM.state.state
 
-      if (this.VM.state.meta.state === 1) return "PENDING";
-      if (this.VM.state.meta.state === 5) return "SUSPENDED";
-      if (this.VM.data.suspended_manually) return "SUSPENDED";
-      if (this.VM.state.meta.state === "BUILD") return "BUILD";
+      if (this.VM.state.meta.state === 1) return 'PENDING'
+      if (this.VM.state.meta.state === 5) return 'SUSPENDED'
+      if (this.VM.data.suspended_manually) return 'SUSPENDED'
+      if (this.VM.state.meta.state === 'BUILD') return 'BUILD'
       switch (state) {
-        case "LCM_INIT":
-          return "POWEROFF";
+        case 'LCM_INIT':
+          return 'POWEROFF'
         default:
-          return state.replaceAll('_', ' ');
+          return state.replaceAll('_', ' ')
       }
     },
-    stateColor() {
-      if (!this.VM.state && !this.VM.resources?.STATE) return "var(--err)";
-      if (this.VM.data?.suspended_manually) return "#ff9140";
+    stateColor () {
+      if (!this.VM.state && !this.VM.resources?.STATE) return 'var(--err)'
+      if (this.VM.data?.suspended_manually) return '#ff9140'
 
-      let state;
+      let state
       if (this.VM?.billingPlan?.type === 'ione') {
-        state = this.VM.state.meta.lcm_state_str;
+        state = this.VM.state.meta.lcm_state_str
       } else if (this.VM.server_on) {
-        state = this.VM.resources.STATE;
+        state = this.VM.resources.STATE
       } else {
-        state = this.VM.state.state;
+        state = this.VM.state.state
       }
 
       switch (state.toLowerCase()) {
-        case "active":
-        case "running":
-          return "var(--success)";
+        case 'active':
+        case 'running':
+          return 'var(--success)'
         // останавливающийся и запускающийся
-        case "boot":
-        case "build":
-        case "boot_poweroff":
-        case "shutdown_poweroff":
-          return "var(--warn)";
-        case "lcm_init":
-        case "stopped":
-        case "poweroff":
-          return "#ff9140";
-        case "operation":
-        case "suspended":
-        case "suspend":
-        case "pending":
-          return "var(--main)";
+        case 'boot':
+        case 'build':
+        case 'boot_poweroff':
+        case 'shutdown_poweroff':
+          return 'var(--warn)'
+        case 'lcm_init':
+        case 'stopped':
+        case 'poweroff':
+          return '#ff9140'
+        case 'operation':
+        case 'suspended':
+        case 'suspend':
+        case 'pending':
+          return 'var(--main)'
         default:
-          return "var(--err)";
+          return 'var(--err)'
       }
     },
-    isLogged() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
-    },
-  },
-  created() {
-    if (this.VM?.uuidService) {
-      this.renameNewName = this.VM.title;
-      this.$store.dispatch("nocloud/vms/subscribeWebSocket", this.VM.uuidService);
+    isLogged () {
+      return this.$store.getters['nocloud/auth/isLoggedIn']
     }
+  },
+  watch: {
+    'VM.uuidService': {
+      handler (value) {
+        if (!value) return
+        this.resize.VCPU = this.VM.resources.cpu
+        this.resize.RAM = this.VM.resources.ram / 1024
+        this.resize.size = Math.ceil(this.VM.resources.drive_size / 1024)
+
+        this.renameNewName = this.VM.title
+        if (!this.$store.state.nocloud.vms.socket) {
+          this.$store.dispatch('nocloud/vms/subscribeWebSocket', value)
+        }
+
+        if (this.type === '') {
+          this.type = this.VM.billingPlan?.type ?? 'ione'
+        }
+      },
+      immediate: true
+    },
+    getInstances (value) {
+      const inst = value.find(({ uuid }) => uuid === this.$route.params.uuid)
+
+      if (inst) return
+
+      this.isLoading = true
+      this.$api.get(this.baseURL, {
+        params: {
+          run: 'on_info',
+          server_id: this.$route.params.uuid
+        }
+      })
+        .then((response) => { this.resources = response })
+        .finally(() => { this.isLoading = false })
+    },
+    'VM.server_on': {
+      handler (value) {
+        if (!value) return
+        this.type = 'whmcs'
+      },
+      immediate: true
+    }
+  },
+  created () {
+    this.renameNewName = this.VM.title ?? ''
+
+    if (!this.$store.state.nocloud.vms.socket) {
+      if (this.VM.uuidService) {
+        this.$store.dispatch('nocloud/vms/subscribeWebSocket', this.VM.uuidService)
+      }
+    }
+
     if (this.isLogged) {
-      this.$store.dispatch("nocloud/auth/fetchBillingData");
-      this.$store.dispatch("nocloud/vms/fetch");
-      this.$store.dispatch("products/fetch");
-      this.$store.dispatch("nocloud/sp/fetch");
+      this.$store.dispatch('nocloud/auth/fetchBillingData')
+      this.$store.dispatch('nocloud/vms/fetch')
+      this.$store.dispatch('products/fetch')
+      this.$store.dispatch('nocloud/sp/fetch')
     }
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
       this.$store.dispatch('nocloud/auth/fetchCurrencies', {
         anonymously: !this.isLoggedIn
-      });
+      })
     }
-
-    this.isLoading = true;
-    this.$api.get(this.baseURL, { params: {
-      run: 'on_info',
-      server_id: this.$route.params.uuid
-    }})
-      .then((response) => { this.resources = response })
-      .finally(() => { this.isLoading = false });
   },
-  destroyed() {
-    this.$store.state.nocloud.vms.socket.close(1000, 'Work is done');
+  destroyed () {
+    if (!this.$store.state.nocloud.vms.socket) return
+    this.$store.state.nocloud.vms.socket.close(1000, 'Work is done')
   },
   methods: {
-    disabledMenu(menuName) {
-      const states = ["RUNNING", "STOPPED", "POWEROFF", "SUSPENDED"];
+    disabledMenu (menuName) {
+      const states = ['RUNNING', 'STOPPED', 'POWEROFF', 'SUSPENDED']
 
-      if (this.VM?.product && menuName === "resize") {
-        return true;
+      if (this.VM?.product && menuName === 'resize') {
+        return true
       }
       if (states.find((state) => this.stateVM.includes(state))) {
-        if (menuName === "delete") return false;
-        if (this.VM.billingPlan?.kind === "DYNAMIC" && this.stateVM === "SUSPENDED") return true;
-        return false;
+        if (menuName === 'delete') return false
+        if (this.VM.billingPlan?.kind === 'DYNAMIC' && this.stateVM === 'SUSPENDED') return true
+        return false
       }
     },
-    changeModal(name) {
-      for (let key in this.modal) {
-        this.modal[key] = false;
+    changeModal (name) {
+      for (const key in this.modal) {
+        this.modal[key] = false
       }
-      this.modal[name] = true;
+      this.modal[name] = true
     },
-    closeModal(name) {
-      this.modal[name] = false;
+    closeModal (name) {
+      this.modal[name] = false
     },
-    ResizeVM() {
+    ResizeVM () {
       if (Object.keys(this.VM.state?.meta?.snapshots || {}).length > 0) {
-        this.closeModal('expand');
-        return;
+        this.closeModal('expand')
+        return
       }
 
       const onOk = () => {
-        this.isRenameLoading = true;
-        const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
-        const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
-        const cpuEqual = instance.resources.cpu === +this.resize.VCPU;
-        const ramEqual = instance.resources.ram === this.resize.RAM * 1024;
-        const diskEqual = instance.resources.drive_size === this.resize.size * 1024;
+        this.isRenameLoading = true
+        const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp)
+        const instance = group.instances.find((el) => el.uuid === this.VM.uuid)
+        const cpuEqual = instance.resources.cpu === +this.resize.VCPU
+        const ramEqual = instance.resources.ram === this.resize.RAM * 1024
+        const diskEqual = instance.resources.drive_size === this.resize.size * 1024
 
         if (this.VM.billingPlan.kind === 'DYNAMIC') {
-          instance.resources.cpu = +this.resize.VCPU;
-          instance.resources.ram = this.resize.RAM * 1024;
+          instance.resources.cpu = +this.resize.VCPU
+          instance.resources.ram = this.resize.RAM * 1024
         } else if (!cpuEqual || !ramEqual) {
-          this.$api.get(this.baseURL, { params: {
-            run: 'create_ticket',
-            subject: `Resize VM - ${this.VM.title}`,
-            message: `1. ID: ${this.VM.uuid}\n2. Resources:\n - cpu: ${this.resize.VCPU}\n - ram: ${this.resize.RAM * 1024}`,
-            department: 1,
-          }})
+          this.$api.get(this.baseURL, {
+            params: {
+              run: 'create_ticket',
+              subject: `Resize VM - ${this.VM.title}`,
+              message: `1. ID: ${this.VM.uuid}\n2. Resources:\n - cpu: ${this.resize.VCPU}\n - ram: ${this.resize.RAM * 1024}`,
+              department: 1
+            }
+          })
             .then((resp) => {
-              if (resp.result == "success") {
-                this.$message.success(this.$t("Ticket created successfully"));
+              if (resp.result === 'success') {
+                this.$message.success(this.$t('Ticket created successfully'))
               } else {
-                throw resp;
+                throw resp
               }
             })
             .catch((err) => {
-              const message = err.response?.data?.message ?? err.message ?? err;
+              const message = err.response?.data?.message ?? err.message ?? err
 
               this.openNotificationWithIcon('error', {
                 message: this.$t(message)
-              });
-              console.error(err);
-            });
+              })
+              console.error(err)
+            })
         }
 
         if (cpuEqual && ramEqual && diskEqual) {
-          this.closeModal('expand');
-          this.isRenameLoading = false;
-          return;
+          this.closeModal('expand')
+          this.isRenameLoading = false
+          return
         }
-        instance.resources.drive_size = this.resize.size * 1024;
+        instance.resources.drive_size = this.resize.size * 1024
 
         this.$store
-          .dispatch("nocloud/vms/updateService", this.itemService)
+          .dispatch('nocloud/vms/updateService', this.itemService)
           .then((result) => {
             if (result) {
               // this.$message.success(this.$t("VM resized successfully"));
-              this.openNotificationWithIcon("success", {
-                message: this.$t("VM resized successfully"),
-              });
-              this.isRenameLoading = false;
-              this.closeModal("expand");
+              this.openNotificationWithIcon('success', {
+                message: this.$t('VM resized successfully')
+              })
+              this.isRenameLoading = false
+              this.closeModal('expand')
             } else {
-              this.openNotificationWithIcon("error", {
-                message: this.$t("Can't VM resize to same size"),
-              });
+              this.openNotificationWithIcon('error', {
+                message: this.$t("Can't VM resize to same size")
+              })
               // this.$message.error("Can't resize to same size");
             }
           })
           .catch((err) => {
-            const message = err.response?.data?.message ?? err.message ?? err;
+            const message = err.response?.data?.message ?? err.message ?? err
 
-            this.openNotificationWithIcon("error", {
-              message: this.$t(`Can't VM resize to same size: [error] - ${message}`),
-            });
-            console.error(err);
+            this.openNotificationWithIcon('error', {
+              message: this.$t(`Can't VM resize to same size: [error] - ${message}`)
+            })
+            console.error(err)
           })
           .finally(() => {
-            this.modal.confirmLoading = false;
-          });
+            this.modal.confirmLoading = false
+          })
       }
 
       this.$confirm({
         title: this.$t('Service will be stopped after resize. Please restart manually!'),
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
-        onOk, onCancel() {}
-      });
+        onOk,
+        onCancel () {}
+      })
     },
-    sendRename() {
-      if (this.renameNewName !== "") {
-        const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
-        const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
+    sendRename () {
+      if (this.renameNewName !== '') {
+        const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp)
+        const instance = group.instances.find((el) => el.uuid === this.VM.uuid)
 
-        this.isRenameLoading = true;
-        instance.title = this.renameNewName;
+        this.isRenameLoading = true
+        instance.title = this.renameNewName
         this.$store
-          .dispatch("nocloud/vms/updateService", this.itemService)
+          .dispatch('nocloud/vms/updateService', this.itemService)
           .then((result) => {
             if (result) {
-              this.$message.success(this.$t("VM name changes successfully"));
-              this.isRenameLoading = false;
-              this.closeModal("rename");
-              this.closeModal("menu");
+              this.$message.success(this.$t('VM name changes successfully'))
+              this.isRenameLoading = false
+              this.closeModal('rename')
+              this.closeModal('menu')
             } else {
-              this.openNotificationWithIcon("error", {
-                message: this.$t("Can't VM name changes"),
-              });
+              this.openNotificationWithIcon('error', {
+                message: this.$t("Can't VM name changes")
+              })
             }
           })
           .catch((err) => {
-            const message = err.response?.data?.message ?? err.message ?? err;
+            const message = err.response?.data?.message ?? err.message ?? err
 
             this.openNotificationWithIcon('error', {
               message: this.$t(message)
-            });
+            })
           })
           .finally(() => {
-            this.modal.confirmLoading = false;
-          });
+            this.modal.confirmLoading = false
+          })
       }
     },
-    sendReinstall() {
-      if (this.disabledMenu("reinstall")) {
+    sendReinstall () {
+      if (this.disabledMenu('reinstall')) {
         this.$store
-          .dispatch("utils/createTicket", {
+          .dispatch('utils/createTicket', {
             subject: `[generated]: Reinstall VM#${this.$route.params.pathMatch}`,
-            message: `VM#${this.$route.params.pathMatch} имеет аддон, запрещающий автопереустановку. Необходимо выполнить перустановку вручную.`,
+            message: `VM#${this.$route.params.pathMatch} имеет аддон, запрещающий автопереустановку. Необходимо выполнить перустановку вручную.`
           })
           .then(() => {
-            this.$message.success(this.$t("Order created successfully"));
-            this.closeModal("reinstall");
+            this.$message.success(this.$t('Order created successfully'))
+            this.closeModal('reinstall')
           })
           .catch((err) => {
-            const message = err.response?.data?.message ?? err.message ?? err;
+            const message = err.response?.data?.message ?? err.message ?? err
 
             this.openNotificationWithIcon('error', {
               message: this.$t(message)
-            });
-          });
-        return;
+            })
+          })
+        return
       }
       this.$confirm({
-        title: this.$t("Do you want to reinstall this virtual machine?"),
-        okType: "danger",
+        title: this.$t('Do you want to reinstall this virtual machine?'),
+        okType: 'danger',
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
         content: (h) => h(
@@ -638,36 +684,36 @@ export default {
           const data = {
             uuid: this.VM.uuid,
             uuidService: this.VM.uuidService,
-            action: "reinstall"
+            action: 'reinstall'
           }
 
-          this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
+          this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
             .then(() => {
               const opts = {
-                message: `${this.$t('Done')}!`,
-              };
-              this.openNotificationWithIcon("success", opts);
+                message: `${this.$t('Done')}!`
+              }
+              this.openNotificationWithIcon('success', opts)
             })
             .catch((err) => {
-              const message = err.response?.data?.message ?? err.message ?? err;
+              const message = err.response?.data?.message ?? err.message ?? err
 
               this.openNotificationWithIcon('error', {
                 message: this.$t(message)
-              });
-            });
+              })
+            })
 
-          this.modal.menu = false;
-          this.modal.reinstall = false;
+          this.modal.menu = false
+          this.modal.reinstall = false
         },
         onCancel: () => {
-          this.modal.reinstall = false;
-        },
-      });
+          this.modal.reinstall = false
+        }
+      })
     },
-    sendDelete() {
+    sendDelete () {
       this.$confirm({
-        title: this.$t("Do you want to delete this virtual machine?"),
-        okType: "danger",
+        title: this.$t('Do you want to delete this virtual machine?'),
+        okType: 'danger',
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
         content: (h) => h(
@@ -676,89 +722,82 @@ export default {
           this.$t('All data will be deleted!')
         ),
         onOk: () => {
-          this.isDeleteLoading = true;
+          this.isDeleteLoading = true
           this.$store
-            .dispatch("nocloud/vms/deleteInstance", this.VM.uuid)
+            .dispatch('nocloud/vms/deleteInstance', this.VM.uuid)
             .then((result) => {
               if (result) {
-                this.openNotificationWithIcon("success", {
-                  message: this.$t("VM deleted successfully"),
-                });
+                this.openNotificationWithIcon('success', {
+                  message: this.$t('VM deleted successfully')
+                })
 
-                this.$router.push({ path: '/services' });
+                this.$router.push({ path: '/services' })
               } else {
-                this.openNotificationWithIcon("error", {
-                  message: this.$t("Failed to delete VM"),
-                });
+                this.openNotificationWithIcon('error', {
+                  message: this.$t('Failed to delete VM')
+                })
               }
             })
             .catch((err) => {
-              const message = err.response?.data?.message ?? err.message ?? err;
+              const message = err.response?.data?.message ?? err.message ?? err
 
               this.openNotificationWithIcon('error', {
                 message: this.$t(message)
-              });
+              })
             })
             .finally(() => {
-              this.isDeleteLoading = false;
-            });
+              this.isDeleteLoading = false
+            })
         },
         onCancel: () => {
-          this.modal.delete = false;
-        },
-      });
+          this.modal.delete = false
+        }
+      })
     },
-    getLogs() {
-      this.isLogsLoading = true;
-      this.changeModal('logs');
+    getLogs () {
+      this.isLogsLoading = true
+      this.changeModal('logs')
       this.$store.dispatch('nocloud/vms/actionVMInvoke', {
         uuid: this.$route.params.uuid,
         action: 'get_logs'
       })
         .then(({ meta: { logs } }) => {
-          logs?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          this.logs = logs;
+          logs?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          this.logs = logs
         })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
+          const message = err.response?.data?.message ?? err.message ?? err
 
-          console.error(err);
+          console.error(err)
           this.openNotificationWithIcon('error', {
             message: this.$t(message)
-          });
+          })
         })
-        .finally(() => this.isLogsLoading = false);
+        .finally(() => { this.isLogsLoading = false })
     },
-    bootOrderNewState() {
-      this.closeModal("bootOrder");
+    bootOrderNewState () {
+      this.closeModal('bootOrder')
     },
-    addToClipboard({ target }) {
+    addToClipboard ({ target }) {
       if (navigator?.clipboard) {
         navigator.clipboard
           .writeText(target.innerText)
           .then(() => {
-            this.openNotificationWithIcon("success", {
+            this.openNotificationWithIcon('success', {
               message: this.$t('Text copied')
-            });
+            })
           })
           .catch((res) => {
-            console.error(res);
-          });
+            console.error(res)
+          })
       } else {
-        this.openNotificationWithIcon("error", {
+        this.openNotificationWithIcon('error', {
           message: this.$t('Clipboard is not supported')
-        });
+        })
       }
     }
-  },
-  watch: {
-    "VM.uuidService"(value) {
-      if (!value) return;
-      this.renameNewName = this.VM.title;
-      this.$store.dispatch("nocloud/vms/subscribeWebSocket", value);
-    },
-  },
-};
+  }
+}
 </script>
 <style>
 .cloud__container {

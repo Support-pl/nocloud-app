@@ -69,7 +69,6 @@ function redirectByType ({ uuid, type }) {
     case 'ovh':
     case 'ione':
       router.replace({ name: 'openCloud_new', params: { uuid } })
-        .then(() => { location.reload() })
       break
 
     default:
@@ -86,12 +85,11 @@ window.addEventListener('message', ({ data, origin }) => {
 
   if (data.uuid) redirectByType(data)
   else if (router.currentRoute.name?.includes('login')) {
-    router.replace({ name: 'root' }).then(() => {
-      location.reload()
-    })
-  } else {
-    setTimeout(() => { location.reload() }, 300)
+    router.replace({ name: 'root' })
   }
+
+  store.dispatch('nocloud/auth/fetchUserData')
+  store.dispatch('nocloud/auth/fetchBillingData')
 })
 
 onMounted(() => {

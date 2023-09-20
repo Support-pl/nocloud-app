@@ -1,6 +1,6 @@
 <template>
 	<div class="btn">
-		<a-button block :disabled="service.data.blocked" @click.stop="moduleEnter">
+		<a-button block :disabled="service.data?.blocked" @click.stop="moduleEnter">
       {{ $t('renew') | capitalize }}
       <template v-if="currency">
         {{ (currency.code === 'USD') ? `$${slicedPrice}` : priceWithoutPrefix }}
