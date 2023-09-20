@@ -27,7 +27,7 @@ func StaticHandler(dir string) http.HandlerFunc {
 			return
 		}
 
-		http.FileServer(http.Dir("/dist")).ServeHTTP(w, r)
+		http.FileServer(http.Dir(dir)).ServeHTTP(w, r)
 	}
 }
 
