@@ -4,7 +4,7 @@
       <div class="settings__content">
         <div class="settings__info">
           <div class="settings__user">
-            <div class="settings__name" v-if="isLogged">
+            <div v-if="isLogged" class="settings__name">
               <!-- нету юзера -->
               <!-- {{ user.firstname }} {{ user.lastname }} -->
             </div>
@@ -13,7 +13,7 @@
               <balance style="display: inline-block" :clickable="false" />
             </div>
           </div>
-          <div class="settings__user-btn" v-if="user_btn">
+          <div v-if="user_btn" class="settings__user-btn">
             <a-icon type="right" />
           </div>
         </div>
@@ -44,8 +44,8 @@
             <div
               v-for="lang in langs"
               :key="lang"
-              @click="changeLocale(lang)"
               class="singleLang"
+              @click="changeLocale(lang)"
             >
               <span class="singleLang__title">
                 {{ $t("localeLang", lang) }}
@@ -53,36 +53,38 @@
               <span
                 v-if="$i18n.locale == lang"
                 class="singleLang__current-marker"
-              ></span>
+              />
             </div>
           </a-modal>
         </div>
 
-        <div class="settings__item" v-if="!user.paid_stop" @click="showModal('addFunds')">
+        <div v-if="!user.paid_stop" class="settings__item" @click="showModal('addFunds')">
           <div class="settings__logo">
             <a-icon type="dollar" />
           </div>
           <div class="settings__title">
             {{ $t("Add Funds") }}
           </div>
-          <add-funds :modalVisible="modal.addFunds" :hideModal="hideFunds" />
+          <add-funds :modal-visible="modal.addFunds" :hide-modal="hideFunds" />
         </div>
 
         <div class="settings__item" @click="showModal('SSH')">
           <div class="settings__logo">
             <a-icon type="safety" />
           </div>
-          <div class="settings__title">SSH</div>
+          <div class="settings__title">
+            SSH
+          </div>
           <a-modal
             v-model="modal.SSH"
             :title="$t('SSH keys')"
             :footer="null"
           >
-            <div style="margin-bottom: 20px" v-if="sshKeys.length">
+            <div v-if="sshKeys.length" style="margin-bottom: 20px">
               <div
-                style="display: flex; align-items: center; margin-bottom: 20px"
                 v-for="(item, index) in sshKeys"
                 :key="item.uuid"
+                style="display: flex; align-items: center; margin-bottom: 20px"
               >
                 <a-col style="width: 100%">
                   <div style="display: flex; align-items: center; margin-right: 10px">
@@ -96,13 +98,15 @@
                   </div>
                 </a-col>
                 <a-col style="margin-left: auto">
-                  <a-button type="danger" @click="deleteSSH(index)"
-                    ><a-icon type="close"
-                  /></a-button>
+                  <a-button type="danger" @click="deleteSSH(index)">
+                    <a-icon type="close" />
+                  </a-button>
                 </a-col>
               </div>
             </div>
-            <p v-else>{{ $t('while here is not one SSH key') }}</p>
+            <p v-else>
+              {{ $t('while here is not one SSH key') }}
+            </p>
             <addSSH />
           </a-modal>
         </div>
@@ -123,9 +127,7 @@
           >
             <h3 style="text-align: center">
               {{ $t("copy link") | capitalize }}:
-              <span class="link--clickable" @click="copyLink"
-                ><a-icon type="copy" /> {{ selfHost }}</span
-              >
+              <span class="link--clickable" @click="copyLink"><a-icon type="copy" /> {{ selfHost }}</span>
             </h3>
             <h3 style="text-align: center">
               {{ $t("your QR code") | capitalize }}:
@@ -135,15 +137,15 @@
                 :value="selfUrl"
                 size="150"
                 level="M"
-                renderAs="svg"
+                render-as="svg"
               />
             </div>
           </a-modal>
         </div>
 
         <button
-          class="settings__login"
           v-if="false && userdata.access && ['ROOT', 'ADMIN'].includes(userdata.access.level)"
+          class="settings__login"
           @click="loginToAdmin"
         >
           {{ $t("Login to admin panel") }}
@@ -157,17 +159,18 @@
 </template>
 
 <script>
-import notification from "@/mixins/notification.js";
-import balance from "@/components/balance/balance.vue";
-import addFunds from "@/components/balance/addFunds.vue";
-import addSSH from "@/components/appMain/cloud/openCloud/addSSH.vue";
-import QrcodeVue from "qrcode.vue";
+import QrcodeVue from 'qrcode.vue'
+import config from '@/appconfig.js'
+import notification from '@/mixins/notification.js'
+import balance from '@/components/balance/balance.vue'
+import addFunds from '@/components/balance/addFunds.vue'
+import addSSH from '@/components/appMain/cloud/openCloud/addSSH.vue'
 
 export default {
-  name: "settings",
+  name: 'Settings',
   components: { balance, addFunds, QrcodeVue, addSSH },
   mixins: [notification],
-  data() {
+  data () {
     return {
       confirmLoading: false,
       user_btn: false,
@@ -175,30 +178,53 @@ export default {
         language: false,
         addFunds: false,
         SSH: false,
-        QR: false,
-      },
-    };
+        QR: false
+      }
+    }
+  },
+  computed: {
+    userdata () {
+      return this.$store.getters['nocloud/auth/userdata']
+    },
+    user () {
+      return this.$store.getters['nocloud/auth/billingData']
+    },
+    isLogged () {
+      return this.$store.getters['nocloud/auth/isLoggedIn']
+    },
+    langs () {
+      return config.languages
+    },
+    selfUrl () {
+      return location.href
+    },
+    selfHost () {
+      return location.host
+    },
+    sshKeys () {
+      return this.userdata?.data?.ssh_keys ?? []
+    }
   },
   methods: {
-    exit() {
-      this.$router.push("login");
+    exit () {
+      this.$router.push('login')
     },
-    showModal(name) {
-      this.modal[name] = true;
+    showModal (name) {
+      this.modal[name] = true
     },
-    closeModal(name) {
-      this.modal[name] = false;
+    closeModal (name) {
+      this.modal[name] = false
     },
-    hideFunds() {
-      this.closeModal("addFunds");
+    hideFunds () {
+      this.closeModal('addFunds')
     },
-    changeLanguage() {
-      this.showModal("language");
+    changeLanguage () {
+      this.showModal('language')
     },
-    changeLocale(lang){
-    	this.closeModal('language');
-    	this.$i18n.locale = lang;
-    	localStorage.setItem("lang", this.$i18n.locale);
+    changeLocale (lang) {
+    	this.closeModal('language')
+    	this.$i18n.locale = lang
+    	localStorage.setItem('lang', this.$i18n.locale)
     },
     // changeLocale(lang) {
     //   this.closeModal("language");
@@ -223,112 +249,89 @@ export default {
     //       this.isSendingInfo = false;
     //     });
     // },
-    loginToAdmin() {
-      const url = `https://api.${location.host.split('.').slice(1).join('.')}/admin#`;
-      const win = window.open(url);
-      const token = this.$store.state.nocloud.auth.token;
+    loginToAdmin () {
+      const url = `https://api.${location.host.split('.').slice(1).join('.')}/admin#`
+      const win = window.open(url)
+      const token = this.$store.state.nocloud.auth.token
 
-      console.log(win);
-      setTimeout(() => { win.postMessage(token, url) }, 100);
+      console.log(win)
+      setTimeout(() => { win.postMessage(token, url) }, 100)
     },
-    logoutFunc() {
-      this.$store.dispatch('nocloud/auth/logout');
-      localStorage.removeItem("data");
+    logoutFunc () {
+      this.$store.dispatch('nocloud/auth/logout')
+      localStorage.removeItem('data')
     },
-    URLparameter(obj, outer = "") {
-      var str = "";
-      for (var key in obj) {
-        if (key == "price") continue;
-        if (str != "") {
-          str += "&";
+    URLparameter (obj, outer = '') {
+      let str = ''
+      for (const key in obj) {
+        if (key == 'price') continue
+        if (str != '') {
+          str += '&'
         }
-        if (typeof obj[key] == "object") {
-          str += this.URLparameter(obj[key], outer + key);
+        if (typeof obj[key] === 'object') {
+          str += this.URLparameter(obj[key], outer + key)
         } else {
-          str += outer + key + "=" + encodeURIComponent(obj[key]);
+          str += outer + key + '=' + encodeURIComponent(obj[key])
         }
       }
-      return str;
+      return str
     },
-    addAmount(amount) {
-      if (this.amount == "") this.amount = 0;
-      this.amount += amount;
+    addAmount (amount) {
+      if (this.amount == '') this.amount = 0
+      this.amount += amount
     },
-    GoToPersonalArea() {
-      this.$router.push({ name: "cabinet" });
+    GoToPersonalArea () {
+      this.$router.push({ name: 'cabinet' })
       // const close_your_eyes = md5('openWHMCSclientDetails'+this.user.id+this.user.secret);
       // window.open(config.WHMCSsiteurl + config.appFolder + `/openWHMCSclientDetails.php?userid=${this.user.id}&secret=${close_your_eyes}`);
     },
-    copyLink() {
+    copyLink () {
       navigator.clipboard
-        .writeText(location.href.replace("settings", ""))
+        .writeText(location.href.replace('settings', ''))
         .then(() => {
-          this.$message.success(this.$t("Link copyed successfully"));
+          this.$message.success(this.$t('Link copyed successfully'))
         })
         .catch(() => {
-          this.$message.success(this.$t("Some error. Copy link manually"));
-        });
+          this.$message.success(this.$t('Some error. Copy link manually'))
+        })
     },
-    deleteSSH(index) {
-      for (let item in this.userdata.data.ssh_keys) {
+    deleteSSH (index) {
+      for (const item in this.userdata.data.ssh_keys) {
         if (+item === index) {
-          this.userdata.data.ssh_keys.splice(item, 1);
+          this.userdata.data.ssh_keys.splice(item, 1)
         }
       }
       const dataSSH = {
         id: this.userdata.uuid,
-        body: { data: this.userdata.data },
-      };
+        body: { data: this.userdata.data }
+      }
 
       this.$store
-        .dispatch("nocloud/auth/addSSH", dataSSH)
+        .dispatch('nocloud/auth/addSSH', dataSSH)
         .then((result) => {
           if (result) {
-            this.openNotificationWithIcon("success", {
-              message: this.$t("delete SSH key successfully"),
-            });
-            this.$store.dispatch("nocloud/auth/fetchUserData");
+            this.openNotificationWithIcon('success', {
+              message: this.$t('delete SSH key successfully')
+            })
+            this.$store.dispatch('nocloud/auth/fetchUserData')
           } else {
-            this.openNotificationWithIcon("error", {
-              message: this.$t("error delete SSH key"),
-            });
+            this.openNotificationWithIcon('error', {
+              message: this.$t('error delete SSH key')
+            })
           }
         })
         .catch((err) => {
-          this.openNotificationWithIcon("error", {
-            message: this.$t("error delete SSH key"),
-          });
-          console.error(err);
+          this.openNotificationWithIcon('error', {
+            message: this.$t('error delete SSH key')
+          })
+          console.error(err)
         })
         .finally(() => {
-          this.modal.confirmLoading = false;
-        });
-    },
-  },
-  computed: {
-    userdata() {
-      return this.$store.getters["nocloud/auth/userdata"];
-    },
-    user() {
-      return this.$store.getters["nocloud/auth/billingData"];
-    },
-    isLogged() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
-    },
-    langs() {
-      return this.$config.languages;
-    },
-    selfUrl() {
-      return location.href;
-    },
-    selfHost() {
-      return location.host;
-    },
-    sshKeys() {
-      return this.userdata?.data?.ssh_keys ?? [];
+          this.modal.confirmLoading = false
+        })
     }
-  },
-};
+  }
+}
 </script>
 
 <style>

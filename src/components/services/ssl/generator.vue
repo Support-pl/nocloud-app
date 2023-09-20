@@ -142,7 +142,7 @@
 </template>
 <script>
 import { countries } from "@/setup/countries";
-import loading from "@/components/loading/loading";
+import loading from "@/components/loading/loading.vue";
 import api from "@/api.js";
 
 export default {

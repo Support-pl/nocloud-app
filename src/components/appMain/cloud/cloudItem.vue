@@ -6,20 +6,24 @@
         :title="instance.domainstatus"
         :style="{ 'background-color': statusColor }"
       />
-      <div class="item__title">{{ instance.productname }}</div>
-      <div class="item__status" style="text-align: right">{{ locationTitle }}</div>
+      <div class="item__title">
+        {{ instance.productname }}
+      </div>
+      <div class="item__status" style="text-align: right">
+        {{ locationTitle }}
+      </div>
       <div class="item__date" :style="{ background: dateColor }">
         {{ localDate }}
       </div>
 
-      <div class="item__status" v-if="networking.length < 1 && instance.groupname === 'Self-Service VDS SSD HC'">
+      <div v-if="networking.length < 1 && instance.groupname === 'Self-Service VDS SSD HC'" class="item__status">
         IP: {{ $t("ip.none") }}
       </div>
-      <div class="item__status" v-else-if="networking.length < 2">
+      <div v-else-if="networking.length < 2" class="item__status">
         {{ instance.domain ?? instance.groupname }}
       </div>
 
-      <a-collapse v-else v-model="activeKey" expandIconPosition="right" :bordered="false">
+      <a-collapse v-else v-model="activeKey" expand-icon-position="right" :bordered="false">
         <a-collapse-panel key="1" :header="title">
           <div v-for="(item, index) in networking" :key="index">
             {{ item }}
@@ -28,25 +32,27 @@
       </a-collapse>
 
       <a-tooltip
-        placement="bottom"
         v-if="getModuleProductBtn && `${price}`.replace('.').length > 3"
+        placement="bottom"
         :title="`${price} ${currency.code}`"
       >
         <component :is="getModuleProductBtn" :service="instance" :price="price" :currency="currency" />
       </a-tooltip>
 
       <component
-        v-else-if="getModuleProductBtn"
         :is="getModuleProductBtn"
+        v-else-if="getModuleProductBtn"
         :service="instance"
         :price="price"
         :currency="currency"
       />
 
-      <div class="item__cost" v-else-if="currency.code && price">
+      <div v-else-if="currency.code && price" class="item__cost">
         {{ currency.code === 'USD' ? `$${price}` : `${price} ${currency.code}` }}
       </div>
-      <div class="item__cost" v-else-if="price">{{ `$${price}` }}</div>
+      <div v-else-if="price" class="item__cost">
+        {{ `$${price}` }}
+      </div>
     </div>
 
     <!-- <div class="cloud__label cloud__label__mainColor">
@@ -56,170 +62,180 @@
 </template>
 
 <script>
+import config from '@/appconfig.js'
+
 export default {
-  name: "cloudItem",
+  name: 'CloudItem',
   props: {
     instance: { type: Object, required: true }
   },
   data: () => ({ activeKey: [], prices: {} }),
   computed: {
-    statusColor() {
+    statusColor () {
       switch (this.instance.domainstatus) {
-        case "RUNNING":
-        case "Active":
-          return "var(--success)";
+        case 'RUNNING':
+        case 'Active':
+          return 'var(--success)'
         // останавливающийся и запускающийся
-        case "BOOT":
-        case "BUILD":
-        case "BOOT_POWEROFF":
-        case "SHUTDOWN_POWEROFF":
-          return "var(--warn)";
-        case "LCM_INIT":
-        case "STOPPED":
-        case "SUSPENDED":
-          return "#ff9140";
-        case "OPERATION":
-        case "PENDING":
-        case "Pending":
-          return "var(--main)";
+        case 'BOOT':
+        case 'BUILD':
+        case 'BOOT_POWEROFF':
+        case 'SHUTDOWN_POWEROFF':
+          return 'var(--warn)'
+        case 'LCM_INIT':
+        case 'STOPPED':
+        case 'SUSPENDED':
+          return '#ff9140'
+        case 'OPERATION':
+        case 'PENDING':
+        case 'Pending':
+          return 'var(--main)'
         default:
-          return "var(--err)";
+          return 'var(--err)'
       }
     },
-    dateColor() {
-      if (this.isExpired) return "var(--err)";
-      if (this.isPayg) return "var(--main)";
-      if (this.localDate === "none") return "var(--gray)";
-      return null;
+    dateColor () {
+      if (this.isExpired) return 'var(--err)'
+      if (this.isPayg) return 'var(--main)'
+      if (this.localDate === 'none') return 'var(--gray)'
+      return null
     },
-    user() {
-      return this.$store.getters["nocloud/auth/billingData"];
+    user () {
+      return this.$store.getters['nocloud/auth/billingData']
     },
-    getSP() {
-      return this.$store.getters["nocloud/sp/getSP"];
+    getSP () {
+      return this.$store.getters['nocloud/sp/getSP']
     },
-    isLogged() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
+    isLogged () {
+      return this.$store.getters['nocloud/auth/isLoggedIn']
     },
-    isLoading() {
-      return this.$store.getters["nocloud/vms/isLoading"];
+    isLoading () {
+      return this.$store.getters['nocloud/vms/isLoading']
     },
-    locationTitle() {
-      const sp = this.getSP.find(({ uuid }) => uuid === this.instance.sp);
-      if (sp?.type !== 'ovh') return sp?.locations[0]?.title;
+    locationTitle () {
+      const sp = this.getSP.find(({ uuid }) => uuid === this.instance.sp)
+      if (sp?.type !== 'ovh') return sp?.locations[0]?.title
 
-      const { configuration = {}, region } = this.instance.config;
-      const { locations } = sp;
+      const { configuration = {}, region } = this.instance.config
+      const { locations } = sp
       const key = Object.keys(configuration).find(
         (el) => el.includes('datacenter')
-      ) ?? 'region';
+      ) ?? 'region'
 
-      if (key === 'region') configuration.region = region;
+      if (key === 'region') configuration.region = region
 
       return locations?.find(({ extra }) =>
         extra.region.toLowerCase() === configuration[key].toLowerCase()
-      )?.title;
+      )?.title
     },
-    price() {
+    price () {
       const amount = this.prices[this.instance.resources?.period] ??
-        this.instance.recurringamount ?? this.instance.orderamount;
+        this.instance.recurringamount ?? this.instance.orderamount
 
-      return +(+amount)?.toFixed(2) ?? 0;
+      return +(+amount)?.toFixed(2) ?? 0
     },
-		localDate() {
-      const productDate = new Date(this.instance.date ?? 0);
+    localDate () {
+      const productDate = new Date(this.instance.date ?? 0)
 
-      if (this.instance.data?.blocked) return this.$t('filterHeader.In Progress');
-      if (this.isPayg) return this.$t('PayG');
-      if (productDate.getTime() === 0) return 'none';
-      if (this.instance.date === '0000-00-00') return 'none';
+      if (this.instance.data?.blocked) return this.$t('filterHeader.In Progress')
+      if (this.isPayg) return this.$t('PayG')
+      if (productDate.getTime() === 0) return 'none'
+      if (this.instance.date === '0000-00-00') return 'none'
       // if (this.wholeProduct.groupname === 'Domains') {
       //   const date = productDate.getTime();
 
       //   return this.$tc('year', date);
       // }
       if (this.instance.groupname === 'SSL') {
-        const date = productDate.getTime();
+        const date = productDate.getTime()
 
-        return this.$tc('month', date);
+        return this.$tc('month', date)
       }
-			return new Intl.DateTimeFormat().format(productDate);
-		},
-    currency() {
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+      return new Intl.DateTimeFormat().format(productDate)
+    },
+    currency () {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
 
-      return { code: this.user.currency_code ?? defaultCurrency };
+      return { code: this.user.currency_code ?? defaultCurrency }
     },
 
-    isPayg() {
-      return this.instance.type === 'ione' && this.instance.billingPlan.kind === 'DYNAMIC';
+    isPayg () {
+      if (this.instance.groupname === 'OpenAI') return true
+      return this.instance.type === 'ione' && this.instance.billingPlan.kind === 'DYNAMIC'
     },
-    isExpired() {
-      const productDate = new Date(this.instance.date);
-      const timestamp = productDate.getTime() - Date.now();
-      const days = 7 * 24 * 3600 * 1000;
+    isExpired () {
+      const productDate = new Date(this.instance.date)
+      const timestamp = productDate.getTime() - Date.now()
+      const days = 7 * 24 * 3600 * 1000
 
-      if (this.instance.groupname === 'SSL') return;
-      if (this.instance.date === 0) return;
-      return timestamp < days;
+      if (this.instance.groupname === 'SSL') return
+      if (this.instance.date === 0) return
+      return timestamp < days
     },
-    networking() {
-      const { networking } = this.instance?.state?.meta ?? {};
+    networking () {
+      const { networking } = this.instance?.state?.meta ?? {}
 
-      if (!networking) return [];
-      const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
+      if (!networking) return []
+      const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
 
       const publicIPs = (this.instance.type === 'ovh')
         ? networking.public?.filter((el) => !regexp.test(el))
-        : networking.public;
+        : networking.public
       const privateIPs = (this.instance.type === 'ovh')
         ? networking.private?.filter((el) => !regexp.test(el))
-        : networking.private;
+        : networking.private
 
-      return [...publicIPs ?? [], ...privateIPs ?? []];
+      return [...publicIPs ?? [], ...privateIPs ?? []]
     },
-    title() {
-      return (!this.activeKey.includes('1')) ? `IP: ${this.networking[0]}` : 'IP\'s:';
+    title () {
+      return (!this.activeKey.includes('1')) ? `IP: ${this.networking[0]}` : 'IP\'s:'
     },
-		getModuleProductBtn() {
-			const serviceType = this.$config.getServiceType(this.instance.groupname)?.toLowerCase();
-      const isActive = ['active', 'running'].includes(this.instance.domainstatus?.toLowerCase());
-      const key = this.instance.product ?? this.instance.config?.product;
-      const { meta } = this.instance.billingPlan?.products[key] ?? {};
+    getModuleProductBtn () {
+      const serviceType = config.getServiceType(this.instance.groupname)?.toLowerCase()
+      const isActive = ['active', 'running'].includes(this.instance.domainstatus?.toLowerCase())
+      const key = this.instance.product ?? this.instance.config?.product
+      const { meta } = this.instance.billingPlan?.products[key] ?? {}
 
-      if (meta?.renew === false) return;
-			if (serviceType === undefined) return;
-      if (this.instance.date === 0) return;
-      if (this.instance.server_on) return;
-      if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return;
-			return () => import(`@/components/services/${serviceType}/lilbtn.vue`);
-		}
+      const components = import.meta.glob('@/components/services/*/lilbtn.vue')
+      const component = Object.keys(components).find((key) =>
+        key.includes(`/${serviceType}/lilbtn.vue`)
+      )
+
+      if (meta?.renew === false) return
+      if (serviceType === undefined) return
+      if (this.instance.date === 0) return
+      if (this.instance.server_on) return
+      if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return
+      return () => components[component]()
+    }
   },
-  methods: {
-    cloudClick({ groupname, orderid, hostingid, server_on, id }, { target }) {
-      if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return;
-      if (id && server_on) {
-        this.$router.push({ name: 'openCloud_new', params: { uuid: id } });
-      } else if (hostingid) {
-        this.$router.push({ name: 'service', params: { id: hostingid } });
-      } else if (groupname === 'Self-Service VDS SSD HC') {
-        this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } });
-      } else {
-        this.$router.push({ name: 'service', params: { id: orderid } });
-      }
-    },
-  },
-  created() {
-    if (this.instance.groupname !== 'Domains') return;
+  created () {
+    if (this.instance.groupname !== 'Domains') return
     this.$api.servicesProviders.action({
       uuid: this.instance.sp,
       action: 'get_domain_price',
-      params: { domain: this.domain },
+      params: { domain: this.domain }
     })
-      .then(({ meta }) => this.prices = meta.prices)
-      .catch((err) => console.error(err));
+      .then(({ meta }) => { this.prices = meta.prices })
+      .catch((err) => { console.error(err) })
   },
-};
+  methods: {
+    cloudClick (service, { target }) {
+      const { groupname, orderid, hostingid, server_on: isServer, id } = service
+
+      if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return
+      if (id && isServer) {
+        this.$router.push({ name: 'openCloud_new', params: { uuid: id } })
+      } else if (hostingid) {
+        this.$router.push({ name: 'service', params: { id: hostingid } })
+      } else if (groupname === 'Self-Service VDS SSD HC') {
+        this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } })
+      } else {
+        this.$router.push({ name: 'service', params: { id: orderid } })
+      }
+    }
+  }
+}
 </script>
 
 <style>

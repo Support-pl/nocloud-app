@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import order from '@/components/services/domains/order';
+import order from '@/components/services/domains/order.vue';
 import loading from '@/components/loading/loading.vue';
 import notification from '@/mixins/notification.js';
 

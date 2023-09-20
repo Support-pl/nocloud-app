@@ -1,4 +1,3 @@
-import md5 from 'md5';
 import axios from '../axios';
 import api from '@/api.js'
 export default {
@@ -96,7 +95,7 @@ export default {
 		sendOrder(ctx, orderData) {
 			return new Promise((resolve, reject) => {
 				const user = ctx.rootGetters.getUser;
-				const close_your_eyes = md5('createOrder' + user.id + user.secret);
+				const close_your_eyes = btoa('createOrder' + user.id + user.secret);
 				const auth = {
 					userid: user.id,
 					secret: close_your_eyes,

@@ -1,293 +1,298 @@
 <template>
-	<div class="login">
-		<div class="login__title login__layout">
-			<div class="logo" :class="['pos_'+companyLogoPos]">
-				<div class="logo__title" v-if="companyName">
-					{{companyName}}
-				</div>
-				<div class="logo__image" v-if="companyLogo">
-					<img :src="companyLogo" alt="logo">
-				</div>
+  <div class="login">
+    <div class="login__title login__layout">
+      <div class="logo" :class="['pos_'+companyLogoPos]">
+        <div v-if="companyName" class="logo__title">
+          {{ companyName }}
+        </div>
+        <div v-if="companyLogo" class="logo__image">
+          <img :src="companyLogo" alt="logo">
+        </div>
+      </div>
+      <svg class="clipPathSvg" width="0" height="0">
+        <defs>
+          <clipPath id="myCurve" clipPathUnits="objectBoundingBox">
+            <path
+              d="M0.000,0.000 L1,-0.000 L1,0.743 C1,0.7 1,0.806 0.846,0.806 C0.728,0.806 0.635,0.791 0.400,0.791 C0.130,0.791 0.022,0.976 0.000,1 L0.000,-0.000 Z"
+            />
+          </clipPath>
+        </defs>
+      </svg>
+    </div>
+    <div class="login__main login__layout">
+      <div class="login__UI">
+        <div v-if="getOnlogin.info" class="login__action-info">
+          {{ getOnlogin.info }}
+        </div>
 
-			</div>
-			<svg class="clipPathSvg" width="0" height="0">
-				<defs>
-					<clipPath id="myCurve" clipPathUnits="objectBoundingBox">
-					<path
-						d="M0.000,0.000 L1,-0.000 L1,0.743 C1,0.7 1,0.806 0.846,0.806 C0.728,0.806 0.635,0.791 0.400,0.791 C0.130,0.791 0.022,0.976 0.000,1 L0.000,-0.000 Z"
-					/>
-					</clipPath>
-				</defs>
-			</svg>
-		</div>
-		<div class="login__main login__layout">
-			<div class="login__UI">
+        <div class="login__inputs">
+          <form>
+            <!-- <div v-if="loginError" class="login__error">{{loginError}}</div> -->
 
-				<div v-if="getOnlogin.info" class="login__action-info">
-					{{getOnlogin.info}}
-				</div>
-
-				<div class="login__inputs">
-					<form>
-					<!-- <div v-if="loginError" class="login__error">{{loginError}}</div> -->
-
-						<!-- <div class="inputs__log-pas">
+            <!-- <div class="inputs__log-pas">
 							<input type="text" placeholder="Email" v-model="userinfo.email">
 							<span class="login__horisontal-line"></span>
 							<input type="password" :placeholder="$t('clientinfo.password') | capitalize"  v-model="userinfo.password">
 						</div> -->
 
-						<div class="inputs__log-pas">
-							<input
-								type="text"
-								name="firstname"
-								:placeholder="$t('clientinfo.firstname') + ' *' | capitalize"
-								v-model="userinfo.firstname"
-								readonly
-								onfocus="this.removeAttribute('readonly')"
-							>
-							<span class="login__horisontal-line"></span>
-							<input
-								type="text"
-								name="lastname"
-								:placeholder="$t('clientinfo.lastname') + ' *' | capitalize"
-								v-model="userinfo.lastname"
-								readonly
-								onfocus="this.removeAttribute('readonly')"
-							>
-							<span class="login__horisontal-line"></span>
-							<input
-								type="email"
-								name="email"
-								:placeholder="$t('clientinfo.email') + ' *' | capitalize"
-								v-model="userinfo.email"
-								readonly
-								onfocus="this.removeAttribute('readonly')"
-							>
+            <div class="inputs__log-pas">
+              <input
+                v-model="userinfo.firstname"
+                type="text"
+                name="firstname"
+                :placeholder="$t('clientinfo.firstname') + ' *' | capitalize"
+                readonly
+                onfocus="this.removeAttribute('readonly')"
+              >
+              <span class="login__horisontal-line" />
+              <input
+                v-model="userinfo.lastname"
+                type="text"
+                name="lastname"
+                :placeholder="$t('clientinfo.lastname') + ' *' | capitalize"
+                readonly
+                onfocus="this.removeAttribute('readonly')"
+              >
+              <span class="login__horisontal-line" />
+              <input
+                v-model="userinfo.email"
+                type="email"
+                name="email"
+                :placeholder="$t('clientinfo.email') + ' *' | capitalize"
+                readonly
+                onfocus="this.removeAttribute('readonly')"
+              >
 
-              <span class="login__horisontal-line"></span>
-							<a-select
+              <span class="login__horisontal-line" />
+              <a-select
+                id="country"
+                v-model="userinfo.country"
                 show-search
                 :placeholder="$t('clientinfo.countryname') + ' *' | capitalize"
                 name="country"
-                id="country"
                 option-filter-prop="children"
-                v-model="userinfo.country"
               >
-								<a-select-option v-for="country in countries" :key="country.code" :value="country.code">
-                  {{country.title}}
+                <a-select-option v-for="country in countries" :key="country.code" :value="country.code">
+                  {{ country.title }}
                 </a-select-option>
-							</a-select>
+              </a-select>
 
-							<span class="login__horisontal-line"></span>
-							<input
+              <span class="login__horisontal-line" />
+              <input
+                v-model="userinfo.phonenumber"
                 v-phone="phonecode"
-								type="tel"
-								name="phone"
-								:placeholder="$t('clientinfo.phone number') + ' *' | capitalize"
+                type="tel"
+                name="phone"
+                :placeholder="$t('clientinfo.phone number') + ' *' | capitalize"
                 :disabled="!userinfo.country"
-								v-model="userinfo.phonenumber"
                 autocomplete="tel"
                 maxlength="18"
-							>
-							<span class="login__horisontal-line"></span>
-							<input
-								type="password"
-								name="password"
-								:placeholder="$t('clientinfo.password') + ' *' | capitalize"
-								v-model="userinfo.password"
-								readonly
-								onfocus="this.removeAttribute('readonly')"
-							>
-							<span class="login__horisontal-line"></span>
-						</div>
-
-            <div class="inputs__log-pas" style="padding: 8px 16px">
-              <a-checkbox v-model="invoiceChecked">{{$t('Company Details')}}</a-checkbox>
+              >
+              <span class="login__horisontal-line" />
+              <input
+                v-model="userinfo.password"
+                type="password"
+                name="password"
+                :placeholder="$t('clientinfo.password') + ' *' | capitalize"
+                readonly
+                onfocus="this.removeAttribute('readonly')"
+              >
+              <span class="login__horisontal-line" />
             </div>
 
-						<div class="inputs__log-pas" v-if="invoiceChecked">
-							<input :placeholder="$t('clientinfo.companyname') + ' *' | capitalize" v-model="userinfo.companyname">
-							<span class="login__horisontal-line"></span>
-							<input placeholder="VAT ID" v-model="userinfo.tax_id">
-							<!-- <span class="login__horisontal-line"></span>
+            <div class="inputs__log-pas" style="padding: 8px 16px">
+              <a-checkbox v-model="invoiceChecked">
+                {{ $t('Company Details') }}
+              </a-checkbox>
+            </div>
+
+            <div v-if="invoiceChecked" class="inputs__log-pas">
+              <input v-model="userinfo.companyname" :placeholder="$t('clientinfo.companyname') + ' *' | capitalize">
+              <span class="login__horisontal-line" />
+              <input v-model="userinfo.tax_id" placeholder="VAT ID">
+              <!-- <span class="login__horisontal-line"></span>
 							<input :placeholder="$t('clientinfo.state') | capitalize" v-model="userinfo.state"> -->
-							<span class="login__horisontal-line"></span>
-							<input :placeholder="$t('clientinfo.city') + ' *' | capitalize" v-model="userinfo.city">
-							<span class="login__horisontal-line"></span>
-							<input :placeholder="$t('clientinfo.postcode') + ' *' | capitalize" v-model="userinfo.postcode">
-							<span class="login__horisontal-line"></span>
-							<input :placeholder="$t('clientinfo.address') + ' *' | capitalize"  v-model="userinfo.address1">
-						</div>
+              <span class="login__horisontal-line" />
+              <input v-model="userinfo.city" :placeholder="$t('clientinfo.city') + ' *' | capitalize">
+              <span class="login__horisontal-line" />
+              <input v-model="userinfo.postcode" :placeholder="$t('clientinfo.postcode') + ' *' | capitalize">
+              <span class="login__horisontal-line" />
+              <input v-model="userinfo.address1" :placeholder="$t('clientinfo.address') + ' *' | capitalize">
+            </div>
 
-						<div class="inputs__log-pas">
-							<a-select style="width: 100%; border: none" @change="(e) => $i18n.locale = e" :value="$i18n.locale">
-								<a-select-option v-for="lang in langs" :key="lang" :value="lang">
-									{{$t('localeLang', lang)}}
-								</a-select-option>
-							</a-select>
+            <div class="inputs__log-pas">
+              <a-select style="width: 100%; border: none" :value="$i18n.locale" @change="(e) => $i18n.locale = e">
+                <a-select-option v-for="lang in langs" :key="lang" :value="lang">
+                  {{ $t('localeLang', lang) }}
+                </a-select-option>
+              </a-select>
 
-              <span class="login__horisontal-line"></span>
-							<a-select style="width: 100%; border: none" v-model="userinfo.currency">
-								<a-select-option v-for="currency in currencies" :key="currency.id" :value="currency.id">
-									{{currency.code}}
-								</a-select-option>
-							</a-select>
-						</div>
+              <span class="login__horisontal-line" />
+              <a-select v-model="userinfo.currency" style="width: 100%; border: none">
+                <a-select-option v-for="currency in currencies" :key="currency.id" :value="currency.id">
+                  {{ currency.code }}
+                </a-select-option>
+              </a-select>
+            </div>
 
-						<template>
-							<button v-if="!registerLoading" @click.prevent="submitHandler()" class="login__submit">{{$t('clientinfo.register') | capitalize}}</button>
+            <template>
+              <button v-if="!registerLoading" class="login__submit" @click.prevent="submitHandler()">
+                {{ $t('clientinfo.register') | capitalize }}
+              </button>
 
-							<div v-else class="login__loading">
-								<span class="load__item"></span>
-								<span class="load__item"></span>
-								<span class="load__item"></span>
-							</div>
-						</template>
-
-					</form>
-				</div>
-				<div class="register__already-has" style="margin-top: 40px">
-					<router-link :to="{name: 'login'}">{{$t('clientinfo.already have account?') | capitalize}}</router-link>
-				</div>
-			</div>
-		</div>
-  	</div>
-
+              <div v-else class="login__loading">
+                <span class="load__item" />
+                <span class="load__item" />
+                <span class="load__item" />
+              </div>
+            </template>
+          </form>
+        </div>
+        <div class="register__already-has" style="margin-top: 40px">
+          <router-link :to="{name: 'login'}">
+            {{ $t('clientinfo.already have account?') | capitalize }}
+          </router-link>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-import api from '@/api.js';
-import countries from '@/countries.json';
-import notification from '@/mixins/notification.js';
+import api from '@/api.js'
+import config from '@/appconfig.js'
+import countries from '@/countries.json'
+import notification from '@/mixins/notification.js'
 
 export default {
-	name: "register-view",
+  name: 'RegisterView',
   mixins: [notification],
-	data(){
-		return {
-			countries,
+  data () {
+    return {
+      countries,
       currencies: [],
-			registerLoading: false,
+      registerLoading: false,
       invoiceChecked: false,
-			userinfo: {
-				firstname: '',
-				lastname: '',
-				email: '',
-				password: '',
-				address1: '',
-				city: '',
-				// state: '',
-				postcode: '',
-				country: undefined,
-				phonenumber: '',
+      userinfo: {
+        firstname: '',
+        lastname: '',
+        email: '',
+        password: '',
+        address1: '',
+        city: '',
+        // state: '',
+        postcode: '',
+        country: undefined,
+        phonenumber: '',
         currency: 1,
         companyname: '',
         tax_id: ''
-			}
-		}
-	},
-	methods: {
-		submitHandler(){
-			this.send(this);
-		},
-		send(){
-      const info = (this.invoiceChecked) ? { ...this.userinfo } : {
-				firstname: '',
-				lastname: '',
-				email: '',
-				password: '',
-				country: 'BY',
-				phonenumber: '',
-        currency: 1,
-      };
-      delete info.tax_id;
-
-			if(Object.keys(info).some(key => !`${this.userinfo[key]}`.length)){
-				this.$message.warn(this.$t('all fields are required'));
-				return
-			}
-
-			for(let key in info){
-				if(this.userinfo[key].length < 2){
-					this.$message.warn(key + ' ' + this.$t('field must contain more characters'));
-					return
-				}
-			}
-
-			let regexEmail = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,15})+$/;
-			if(!this.userinfo.email.match(regexEmail)){
-				this.$message.warn(this.$t('email is not valid'));
-				return
-			}
-
-			const temp = JSON.parse(JSON.stringify(this.userinfo));
-      const { locale } = this.$i18n.getLocaleMessage(this.$i18n.locale);
-
-      temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`;
-      temp.phonenumber = temp.phonenumber.replace(this.phonecode, '').replace(/[\s-]/g, '');
-
-			this.registerLoading = true;
-			api.get(this.baseURL, {
-        params: { ...temp, language: locale, run: 'create_user' }
-      })
-			.then((res) => {
-        if (res.result === 'error') this.$message.error(res.message);
-        else this.$message.success(this.$t('account created successfully'));
-        this.$router.push({name: 'login'});
-			})
-			.catch(err => {
-        const message = err.response?.data?.message ?? err.message;
-
-				this.openNotificationWithIcon('error', {
-          message: this.$t(message)
-        });
-				console.error(err);
-			})
-			.finally(()=>{
-				this.registerLoading = false;
-			});
-		},
-	},
-  created() {
+      }
+    }
+  },
+  computed: {
+    getOnlogin () {
+      return this.$store.getters.getOnlogin
+    },
+    companyName () {
+      return this.$store.getters.getDomainInfo.name ?? config.appTitle
+    },
+    companyLogo () {
+      const settings = this.$store.getters.getDomainInfo
+      if (settings.logo && typeof settings.logo === 'string') {
+        return settings.logo
+      }
+      return config.appLogo.path
+    },
+    langs () {
+      return config.languages
+    },
+    companyLogoPos () {
+      return config.appLogo.pos
+    },
+    baseURL () {
+      return this.$store.getters['support/getURL']
+    },
+    phonecode () {
+      return countries.find(({ code }) => code === this.userinfo.country)?.dial_code
+    }
+  },
+  created () {
     api.get(this.baseURL, { params: { run: 'get_currencies' } })
       .then((res) => { this.currencies = res.currency })
-			.catch(err => {
-        const message = err.response?.data?.message ?? err.message;
+      .catch(err => {
+        const message = err.response?.data?.message ?? err.message
 
-				this.openNotificationWithIcon('error', {
+        this.openNotificationWithIcon('error', {
           message: this.$t(message)
-        });
-				console.error(err);
-			});
+        })
+        console.error(err)
+      })
   },
-	computed: {
-		getOnlogin(){
-			return this.$store.getters.getOnlogin;
-		},
-		companyName(){
-			return this.$store.getters['getDomainInfo'].name ?? this.$config.appTitle
-		},
-		companyLogo(){
-			const settings = this.$store.getters['getDomainInfo'];
-			if(settings.logo && typeof settings.logo == 'string'){
-				return settings.logo;
-			}
-			return this.$config.appLogo.path;
-		},
-		langs(){
-			return this.$config.languages;
-		},
-		companyLogoPos(){
-			return this.$config.appLogo.pos;
-		},
-    baseURL(){
-      return this.$store.getters['support/getURL'];
+  methods: {
+    submitHandler () {
+      this.send(this)
     },
-    phonecode(){
-      return countries.find(({ code }) => code === this.userinfo.country)?.dial_code;
+    send () {
+      const info = (this.invoiceChecked)
+        ? { ...this.userinfo }
+        : {
+            firstname: '',
+            lastname: '',
+            email: '',
+            password: '',
+            country: 'BY',
+            phonenumber: '',
+            currency: 1
+          }
+      delete info.tax_id
+
+      if (Object.keys(info).some(key => !`${this.userinfo[key]}`.length)) {
+        this.$message.warn(this.$t('all fields are required'))
+        return
+      }
+
+      for (const key in info) {
+        if (this.userinfo[key].length < 2) {
+          this.$message.warn(key + ' ' + this.$t('field must contain more characters'))
+          return
+        }
+      }
+
+      const regexEmail = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,15})+$/
+      if (!this.userinfo.email.match(regexEmail)) {
+        this.$message.warn(this.$t('email is not valid'))
+        return
+      }
+
+      const temp = JSON.parse(JSON.stringify(this.userinfo))
+      const { locale } = this.$i18n.getLocaleMessage(this.$i18n.locale)
+
+      temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`
+      temp.phonenumber = temp.phonenumber.replace(this.phonecode, '').replace(/[\s-]/g, '')
+
+      this.registerLoading = true
+      api.get(this.baseURL, {
+        params: { ...temp, language: locale, run: 'create_user' }
+      })
+        .then((res) => {
+          if (res.result === 'error') this.$message.error(res.message)
+          else this.$message.success(this.$t('account created successfully'))
+          this.$router.push({ name: 'login' })
+        })
+        .catch(err => {
+          const message = err.response?.data?.message ?? err.message
+
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          })
+          console.error(err)
+        })
+        .finally(() => {
+          this.registerLoading = false
+        })
     }
-	}
+  }
 }
 </script>
 
@@ -502,7 +507,6 @@ export default {
 	transform: translateX(-50%);
 	width: 90%;
 }
-
 
 @media screen and (min-width: 1024px){
 	.login{

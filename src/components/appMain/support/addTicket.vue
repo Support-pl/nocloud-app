@@ -1,14 +1,14 @@
 <template>
   <a-modal
-    :title="$t('ask a question')"
+    :title="(instanceId) ? $t('new chat') : $t('ask a question') | capitalize"
     :visible="addTicketStatus"
-    :confirmLoading="isSending"
+    :confirm-loading="isSending"
     :footer="null"
     @cancel="closeFields"
   >
     <a-spin tip="Loading..." :spinning="isLoading">
       <a-form-model layout="vertical">
-        <a-form-model-item :label="$t('department')">
+        <a-form-model-item v-if="!instanceId" :label="$t('department')">
           <a-select v-model="ticketDepartment" placeholder="department">
             <a-select-option
               v-for="dep of filteredDepartments"
@@ -24,16 +24,20 @@
           <a-input v-model="ticketTitle" placeholder="" />
         </a-form-model-item>
 
-        <a-form-model-item :label="$t('question')">
-          <a-textarea v-model="ticketMessage" rows="10" />
+        <a-form-model-item :label="(instanceId) ? null : $t('question')">
+          <a-textarea
+            v-model="ticketMessage"
+            rows="10"
+            :placeholder="(instanceId) ? $t('input text') : null"
+          />
         </a-form-model-item>
 
         <a-form-model-item :label="$t('gateways')">
           <div class="order__grid">
             <div
-              class="order__slider-item"
               v-for="gate of gateways"
               :key="gate.id"
+              class="order__slider-item"
               :value="gate.id"
               :class="{ 'order__slider-item--active': gateway === gate.id }"
               @click="sendNewTicket(gate.id)"
@@ -51,107 +55,137 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import Markdown from "markdown-it";
-import emoji from "markdown-it-emoji"
+import { mapGetters } from 'vuex'
+import Markdown from 'markdown-it'
+import emoji from 'markdown-it-emoji'
 
 const md = new Markdown({
   html: true,
   linkify: true,
   typographer: true
-});
+})
 
-md.use(emoji);
+md.use(emoji)
 
 export default {
-  name: "addTicket",
+  name: 'AddTicket',
   props: {
     instanceId: { type: String, default: null }
   },
-  data() {
+  data () {
     return {
-      gateway: "",
+      gateway: '',
       ticketDepartment: -1,
-      ticketTitle: "",
-      ticketMessage: "",
+      ticketTitle: '',
+      ticketMessage: '',
       isSending: false,
       isLoading: false
-    };
+    }
   },
   computed: {
-    user() {
-      return this.$store.getters['nocloud/auth/billingData'];
+    user () {
+      return this.$store.getters['nocloud/auth/billingData']
     },
-    userdata() {
-      return this.$store.getters['nocloud/auth/userdata'];
+    userdata () {
+      return this.$store.getters['nocloud/auth/userdata']
     },
-    filteredDepartments() {
-      const { departments } = this.$store.getters['nocloud/chats/getDefaults'];
+    filteredDepartments () {
+      const { departments } = this.$store.getters['nocloud/chats/getDefaults']
 
-      if (this.user.only_tickets) return this.departments;
-      else return [...this.departments, ...departments];
+      if (this.user.only_tickets) return this.departments
+      else return [...this.departments, ...departments]
     },
-    gateways() {
-      const { gateways = [] } = this.$store.getters['nocloud/chats/getDefaults'] ?? {};
-
-      return gateways.map((gateway) => ({
+    gateways () {
+      const { gateways = [] } = this.$store.getters['nocloud/chats/getDefaults'] ?? {}
+      const result = gateways.map((gateway) => ({
         id: gateway,
         name: `${gateway[0].toUpperCase()}${gateway.slice(1)}`
-      }));
+      }))
+      const i = result.findIndex(({ id }) => id.includes('email'))
+
+      if (this.instanceId) result.splice(i, 1)
+      return result
     },
-    ...mapGetters("support", {
-      addTicketStatus: "isAddTicketState",
-      departments: "getDepartments",
-      baseURL: "getURL",
-    }),
+    ...mapGetters('support', {
+      addTicketStatus: 'isAddTicketState',
+      departments: 'getDepartments',
+      baseURL: 'getURL'
+    })
+  },
+  watch: {
+    filteredDepartments (value) {
+      if (value.length < 1) return
+      if (this.instanceId) {
+        const result = value.find(({ id }) => `${id}`.includes('openai'))
+
+        this.ticketDepartment = result?.id ?? value[0]?.id ?? -1
+        return
+      }
+      this.ticketDepartment = value[0]?.id ?? -1
+    }
+  },
+  created () {
+    this.isLoading = true
+    Promise.all([
+      this.$store.dispatch('nocloud/chats/fetchDefaults'),
+      this.$store.dispatch('support/fetchDepartments')
+    ])
+      .catch(() => {
+        this.$message.error(this.$t('departments not found'))
+      })
+      .finally(() => {
+        this.isLoading = false
+      })
   },
   methods: {
-    closeFields() {
-      this.$store.commit("support/inverseAddTicketState");
+    closeFields () {
+      this.$store.commit('support/inverseAddTicketState')
     },
-    sendNewTicket() {
+    sendNewTicket () {
       if (this.ticketTitle.length < 3 || this.ticketMessage.length < 3) {
-        this.$message.warn(this.$t("ticket subject or message is too short"));
-        return;
+        this.$message.warn(this.$t('ticket subject or message is too short'))
+        return
       }
 
-      if (this.ticketDepartment == -1) {
-        this.$message.warn(this.$t("departments are loading"));
-        return;
+      if (this.ticketDepartment === -1) {
+        this.$message.warn(this.$t('departments are loading'))
+        return
       }
 
-      const { departments } = this.$store.getters['nocloud/chats/getDefaults'];
-      const ids = departments.map(({ id }) => id);
-      const { admins, id: key } = departments.find(({ id }) => id === this.ticketDepartment) ?? {};
+      const { departments } = this.$store.getters['nocloud/chats/getDefaults']
+      const ids = departments.map(({ id }) => id)
+      const { admins, id: key } = departments.find(({ id }) => id === this.ticketDepartment) ?? {}
 
       const request = (ids.includes(this.ticketDepartment))
         ? this.$store.dispatch('nocloud/chats/createChat', {
-            admins,
-            department: key,
-            gateways: [this.gateway],
-            chat: {
-              subject: this.ticketTitle,
-              message: md.render(this.ticketMessage).trim().replace(/^<p>/, '').replace(/<\/p>$/, ''),
-              instanceId: this.instanceId
-            }
-          })
-        : this.$api.get(this.baseURL, { params: {
+          admins,
+          department: key,
+          gateways: [this.gateway],
+          chat: {
+            subject: this.ticketTitle,
+            message: md.render(this.ticketMessage).trim().replace(/^<p>/, '').replace(/<\/p>$/, ''),
+            instanceId: this.instanceId
+          }
+        })
+        : this.$api.get(this.baseURL, {
+          params: {
             run: 'create_ticket',
             subject: this.ticketTitle,
             message: this.ticketMessage,
-            department: this.ticketDepartment,
-          }});
+            department: this.ticketDepartment
+          }
+        })
 
-      this.isSending = true;
+      this.isSending = true
       request
         .then(async (resp) => {
-          if (resp.result === "success") {
-            this.ticketTitle = "";
-            this.ticketMessage = "";
-            this.isSending = false;
+          if (resp.result === 'success') {
+            this.ticketTitle = ''
+            this.ticketMessage = ''
+            this.isSending = false
 
-            this.$store.dispatch("support/autoFetch");
-            this.$store.commit("support/inverseAddTicketState");
+            this.$store.dispatch('support/autoFetch')
+            this.$store.commit('support/inverseAddTicketState')
           } else if (resp.uuid) {
             if (!resp.meta.lastMessage?.uuid) {
               await this.$store.dispatch('nocloud/chats/sendMessage', {
@@ -159,54 +193,38 @@ export default {
                 content: md.render(this.ticketMessage).trim(),
                 account: this.userdata.uuid,
                 date: BigInt(Date.now())
-              });
+              })
             }
 
-            const query = { from: this.instanceId };
+            const query = { from: this.instanceId }
 
-            this.$router.push({ path:`/ticket-${resp.uuid}`, query });
+            this.$router.push({ path: `/ticket-${resp.uuid}`, query })
           } else {
-            throw resp;
+            throw resp
           }
         })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
+          const message = err.response?.data?.message ?? err.message ?? err
 
-          this.$message.error(this.$t(message));
-          console.error(err);
+          this.$message.error(this.$t(message))
+          console.error(err)
         })
         .finally(() => {
-          this.isSending = false;
-        });
+          this.isSending = false
+        })
     },
-    changeGateway(value) {
+    changeGateway (value) {
       if (this.gateway === value) {
-        this.gateway = "";
+        this.gateway = ''
       } else {
-        this.gateway = value;
+        this.gateway = value
       }
     },
-    onError({ target }) {
-      target.src = '/img/OS/default.png';
-    },
-  },
-  created() {
-    this.isLoading = true;
-    Promise.all([
-      this.$store.dispatch("nocloud/chats/fetchDefaults"),
-      this.$store.dispatch("support/fetchDepartments")
-    ])
-      .catch(() => {
-        this.$message.error(this.$t("departments not found"));
-      })
-      .finally(() => {
-        this.isLoading = false;
-
-        if (this.filteredDepartments.length < 1) return;
-        this.ticketDepartment = this.filteredDepartments[0].id;
-      });
-  },
-};
+    onError ({ target }) {
+      target.src = '/img/OS/default.png'
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -307,29 +325,29 @@ export default {
 }
 
 .order__slider {
-	display: flex;
+  display: flex;
   justify-content: space-evenly;
   margin-bottom: 10px;
-	overflow-x: auto;
+  overflow-x: auto;
 }
 
 .order__slider-item {
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-	height: 100%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  height: 100%;
   padding: 7px 10px;
-	cursor: pointer;
-	border-radius: 15px;
-	font-size: 1rem;
-	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  cursor: pointer;
+  border-radius: 15px;
+  font-size: 1rem;
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
 .order__slider-item:hover {
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
 }
 
 .order__slider-item--active {
-	background-color: #1045b4;
-	color: #fff;
+  background-color: #1045b4;
+  color: #fff;
 }
 
 .order__grid .order__slider-name > .img_prod {

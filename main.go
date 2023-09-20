@@ -13,13 +13,21 @@ import (
 var ETAG = uuid.New().String()
 
 func StaticHandler(dir string) http.HandlerFunc {
-	fs := http.FileServer(http.Dir(dir))
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		r.Header.Del("If-Modified-Since")
 		w.Header().Set("Etag", ETAG)
 
-		fs.ServeHTTP(w, r)
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		if path.Ext(r.URL.Path) == "" {
+			http.ServeFile(w, r, "/dist/index.html")
+			return
+		}
+
+		http.FileServer(http.Dir("/dist")).ServeHTTP(w, r)
 	}
 }
 

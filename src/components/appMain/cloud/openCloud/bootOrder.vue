@@ -37,8 +37,8 @@
 </template>
 
 <script>
-import {mapGetters} from 'vuex'
-import md5 from 'md5'
+import { mapGetters } from 'vuex'
+
 export default {
 	name: 'BootOrder',
 	data(){
@@ -95,7 +95,7 @@ export default {
 			const user = this.user;
 			const vmid = this.SingleCloud.ID;
 
-			const close_your_eyes = md5('VMChangeBootOrder' + user.id + user.secret);
+			const close_your_eyes = btoa('VMChangeBootOrder' + user.id + user.secret);
 			const auth = {
 				userid: user.id,
 				vmid,

@@ -15,7 +15,7 @@
                   class="openInvoice__title-color"
                   :style="{ 'background-color': statusColor }"
                 />
-                {{ `${$t("singleInvoice")} #${this.$route.params.uuid}` }}
+                {{ `${$t("singleInvoice")} #${$route.params.uuid}` }}
               </div>
             </div>
           </div>
@@ -37,24 +37,30 @@
                 </svg>
               </div>
               <div class="openInvoice__info">
-                <div class="info__header-title">{{ $t("Information") }}</div>
+                <div class="info__header-title">
+                  {{ $t("Information") }}
+                </div>
 
-                  <div class="info__dates">
-                    <div class="info__date-item">
-                      <div class="info__date-title">{{ $t("invoiceDate") }}</div>
-                      <div class="info__date-value">
-                        {{ invoice && date(invoice.proc) }}
-                      </div>
+                <div class="info__dates">
+                  <div class="info__date-item">
+                    <div class="info__date-title">
+                      {{ $t("invoiceDate") }}
                     </div>
-                    <div class="info__date-item">
-                      <div class="info__date-title">{{ $t("dueDate") }}</div>
-                      <div class="info__date-value">
-                        {{ invoice && date(invoice.exec) }}
-                      </div>
+                    <div class="info__date-value">
+                      {{ invoice && date(invoice.proc) }}
                     </div>
                   </div>
+                  <div class="info__date-item">
+                    <div class="info__date-title">
+                      {{ $t("dueDate") }}
+                    </div>
+                    <div class="info__date-value">
+                      {{ invoice && date(invoice.exec) }}
+                    </div>
+                  </div>
+                </div>
 
-                <div class="info__main" style="overflow-x: auto" v-if="records.length > 0">
+                <div v-if="records.length > 0" class="info__main" style="overflow-x: auto">
                   <a-table row-key="uuid" :data-source="records" :columns="columns">
                     <template slot="date" slot-scope="text, record">
                       {{ date(record.exec) }}
@@ -70,7 +76,7 @@
                   </a-table>
                 </div>
 
-                <div class="info__main" v-if="invoice?.meta.description">
+                <div v-if="invoice?.meta.description" class="info__main">
                   <a-card :title="$t('description') | capitalize">
                     <div>{{ invoice.meta.description }}</div>
                   </a-card>
@@ -81,7 +87,9 @@
                     :title="$t('services') | capitalize"
                   >
                     <template #extra>
-                      <router-link :to="{ name: 'services' }">{{ $t('comp_services.all') }}</router-link>
+                      <router-link :to="{ name: 'services' }">
+                        {{ $t('comp_services.all') }}
+                      </router-link>
                     </template>
                     <router-link
                       v-for="inst of invoice.meta.instances"
@@ -93,8 +101,8 @@
                   </a-card>
                 </div>
 
-                <div class="info__footer" v-if="invoice.exec == 0">
-                  <a-button class="info__button" :loading="isPayLoading" @click='payRequest'>
+                <div v-if="invoice.exec == 0" class="info__footer">
+                  <a-button class="info__button" :loading="isPayLoading" @click="payRequest">
                     {{ $t("Pay") }}
                   </a-button>
                 </div>
@@ -103,16 +111,17 @@
           </div>
         </div>
       </div>
-      <loading v-else class="loading" color="#fff" key="loading" duration: />
+      <loading v-else key="loading" class="loading" color="#fff" duration: />
     </transition>
   </div>
 </template>
 
 <script>
-import loading from "@/components/loading/loading.vue";
+import config from '@/appconfig.js'
+import loading from '@/components/loading/loading.vue'
 
 export default {
-  name: "openTransaction",
+  name: 'OpenTransaction',
   components: { loading },
   data: () => ({
     isLoading: true,
@@ -138,155 +147,159 @@ export default {
         title: 'Amount',
         dataIndex: 'total',
         scopedSlots: { customRender: 'amount' }
-      },
-    ],
+      }
+    ]
   }),
-  methods: {
-    goBack() {
-      this.$router.push("/billing");
+  computed: {
+    user () {
+      return this.$store.getters['nocloud/auth/billingData']
     },
-    date(timestamp) {
-      if (timestamp < 1) return '-';
-
-      const date = new Date(timestamp * 1000);
-      const time =  date.toTimeString().split(' ')[0];
-
-      const year = date.getFullYear();
-      let month = date.getMonth() + 1;
-      let day = date.getDate();
-
-      if (`${month}`.length < 2) month = `0${month}`;
-      if (`${day}`.length < 2) day = `0${day}`;
-
-      return `${day}.${month}.${year} ${time}`;
+    userdata () {
+      return this.$store.getters['nocloud/auth/userdata']
     },
-    payRequest() {
-      this.isPayLoading = true;
-      this.$api.get(this.baseURL, { params: {
-        run: 'create_inv',
-        invoice_id: this.invoice.uuid,
-        product: this.invoice.meta.description ?? this.invoice.service,
-        sum: this.invoice.total
-      }})
-      .then(({ invoiceid }) => {
-        this.$notification.success({ message: this.$t('Done') });
-        this.getPaytoken(invoiceid);
-      })
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
-
-        this.$notification.error({ message: this.$t(message)});
-        console.error(err);
-      })
-      .finally(() => {
-        this.isPayLoading = false;
-      });
+    baseURL () {
+      return this.$store.getters['invoices/getURL']
     },
-    getPaytoken(invoice_id) {
-      this.$api.get(this.baseURL, { params: {
-        run: 'get_pay_token', invoice_id
-      }})
-        .then((res) => { window.location.href = res });
+    currencies () {
+      return this.$store.getters['nocloud/auth/currencies']
+    },
+    currency () {
+      const code = this.user.currency_code ?? 'USD'
+      const { rate } = this.currencies.find((el) =>
+        el.from === code && el.to === this.invoice.currency
+      ) ?? {}
+
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.to === code && el.from === this.invoice.currency
+      ) ?? { rate: 1 }
+
+      return { code, rate: (rate) || 1 / reverseRate }
+    },
+    statusColor () {
+      return this.records[0]?.processed
+        ? config.colors.success
+        : config.colors.err
+    },
+    services () {
+      return this.$store.getters['nocloud/vms/getServicesFull']
+    },
+    invoice () {
+      return this.$store.getters['nocloud/transactions/all']
+        .find((el) => el.uuid === this.$route.params.uuid)
+    },
+    total () {
+      const sum = this.records?.reduce((prev, el) => +prev + +el.total, 0) ||
+        this.invoice?.total || 0
+
+      return +(sum * this.currency.rate)?.toFixed(2)
     }
   },
-  created() {
+  watch: {
+    userdata () {
+      this.$store.dispatch('nocloud/transactions/fetch', {
+        account: this.userdata.uuid,
+        page: this.$store.getters['nocloud/transactions/page'],
+        limit: this.$store.getters['nocloud/transactions/size'],
+        field: 'proc',
+        sort: 'desc'
+      })
+    }
+  },
+  created () {
     if (this.currency.code === '') {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+      this.$store.dispatch('nocloud/auth/fetchCurrencies')
     }
 
     setTimeout(() => {
-      const { uuid } = this.$route.params;
+      const { uuid } = this.$route.params
 
-      sessionStorage.setItem('invoice', uuid);
-    });
+      sessionStorage.setItem('invoice', uuid)
+    })
 
     this.$api.get('/services', { params: { show_deleted: true } })
       .then(({ pool }) => {
         pool.forEach((service) => {
           service.instancesGroups.forEach((group) => {
             group.instances.forEach((inst) => {
-              this.$set(this.instances, inst.uuid, inst.title);
-            });
-          });
-        });
+              this.$set(this.instances, inst.uuid, inst.title)
+            })
+          })
+        })
 
-        return this.$api.transactions.records(this.$route.params.uuid);
+        return this.$api.transactions.records(this.$route.params.uuid)
       })
       .then(({ pool }) => {
         this.records = pool.map((el) => ({
           ...el, instance: this.instances[el.instance] ?? 'unknown'
-        }));
+        }))
 
-        this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource';
+        this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource'
       })
       .catch((err) => {
-        console.error(err);
+        console.error(err)
       })
       .finally(() => {
-        this.isLoading = false;
-      });
+        this.isLoading = false
+      })
   },
-  destroyed() {
+  destroyed () {
     if (!this.$route.name.includes('billing')) {
-      sessionStorage.removeItem('invoice');
+      sessionStorage.removeItem('invoice')
     }
   },
-  computed: {
-    user() {
-      return this.$store.getters['nocloud/auth/billingData'];
+  methods: {
+    goBack () {
+      this.$router.push('/billing')
     },
-    userdata() {
-      return this.$store.getters['nocloud/auth/userdata'];
-    },
-    baseURL() {
-      return this.$store.getters['invoices/getURL'];
-    },
-    currencies() {
-      return this.$store.getters['nocloud/auth/currencies'];
-    },
-    currency() {
-      const code = this.user.currency_code ?? 'USD';
-      const { rate } = this.currencies.find((el) =>
-        el.from === code && el.to === this.invoice.currency
-      ) ?? {};
+    date (timestamp) {
+      if (timestamp < 1) return '-'
 
-      const { rate: reverseRate } = this.currencies.find((el) =>
-        el.to === code && el.from === this.invoice.currency
-      ) ?? { rate: 1 };
+      const date = new Date(timestamp * 1000)
+      const time = date.toTimeString().split(' ')[0]
 
-      return { code, rate: (rate) ? rate : 1 / reverseRate };
-    },
-    statusColor() {
-      return this.records[0]?.processed
-        ? this.$config.colors.success
-        : this.$config.colors.err;
-    },
-    services() {
-      return this.$store.getters['nocloud/vms/getServicesFull'];
-    },
-    invoice() {
-      return this.$store.getters['nocloud/transactions/all']
-        .find((el) => el.uuid === this.$route.params.uuid);
-    },
-    total() {
-      const sum = this.records?.reduce((prev, el) => +prev + +el.total, 0) ||
-        this.invoice?.total || 0;
+      const year = date.getFullYear()
+      let month = date.getMonth() + 1
+      let day = date.getDate()
 
-      return +(sum * this.currency.rate)?.toFixed(2);
-    }
-  },
-  watch: {
-    userdata() {
-      this.$store.dispatch('nocloud/transactions/fetch', {
-        account: this.userdata.uuid,
-        page: this.$store.getters["nocloud/transactions/page"],
-        limit: this.$store.getters["nocloud/transactions/size"],
-        field: "proc",
-        sort: "desc"
-      });
+      if (`${month}`.length < 2) month = `0${month}`
+      if (`${day}`.length < 2) day = `0${day}`
+
+      return `${day}.${month}.${year} ${time}`
+    },
+    payRequest () {
+      this.isPayLoading = true
+      this.$api.get(this.baseURL, {
+        params: {
+          run: 'create_inv',
+          invoice_id: this.invoice.uuid,
+          product: this.invoice.meta.description ?? this.invoice.service,
+          sum: this.invoice.total
+        }
+      })
+        .then(({ invoiceid }) => {
+          this.$notification.success({ message: this.$t('Done') })
+          this.getPaytoken(invoiceid)
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err
+
+          this.$notification.error({ message: this.$t(message) })
+          console.error(err)
+        })
+        .finally(() => {
+          this.isPayLoading = false
+        })
+    },
+    getPaytoken (invoiceId) {
+      this.$api.get(this.baseURL, {
+        params: {
+          run: 'get_pay_token', invoice_id: invoiceId
+        }
+      })
+        .then((res) => { window.location.href = res })
     }
   }
-};
+}
 </script>
 
 <style>
