@@ -99,9 +99,10 @@ export default {
       }
     },
     total () {
+      const total = this.invoice?.subtotal ?? this.invoice.total
       const rate = this.currency.rate
 
-      return ((+this.invoice?.subtotal + +this.invoice?.credit) * rate).toFixed(2)
+      return ((+total + +this.invoice?.credit) * rate).toFixed(2)
     }
   },
   created () {
