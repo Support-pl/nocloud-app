@@ -600,7 +600,6 @@
 
 <script>
 import { mapGetters } from "vuex";
-import md5 from "md5";
 import loading from "@/components/loading/loading.vue";
 import config from "@/appconfig";
 import api from "@/api";
@@ -917,13 +916,13 @@ export default {
 
       let lowerAct = action.toLowerCase();
 
-      let close_your_eyes = md5("vmaction" + userid + user.secret);
+      let close_your_eyes = btoa("vmaction" + userid + user.secret);
       let url = `/vmaction.php?userid=${userid}&action=${action}&vmid=${vmid}&secret=${close_your_eyes}`;
       if (lowerAct == "reinstall") {
         url = `/vm.recreate_new.php?userid=${userid}&action=${action}&vmid=${vmid}&secret=${close_your_eyes}&passwd=${this.reinstallPass}`;
       }
       if (lowerAct == "delete") {
-        close_your_eyes = md5("VMremove" + userid + user.secret);
+        close_your_eyes = btoa("VMremove" + userid + user.secret);
         url = `/VMremove.php?userid=${userid}&action=${action}&vmid=${vmid}&secret=${close_your_eyes}&passwd=${this.reinstallPass}`;
       }
       if (lowerAct == "recovertoday" || lowerAct == "recoveryesterday") {
@@ -1075,7 +1074,7 @@ export default {
       const vmid = this.SingleCloud.ID;
       const snapname = encodeURI(this.snapshots.addSnap.snapname);
 
-      const close_your_eyes = md5("vmaction" + userid + user.secret);
+      const close_your_eyes = btoa("vmaction" + userid + user.secret);
       const url = `/vmaction.php?userid=${userid}&action=newSnapshot&snapname=${snapname}&vmid=${vmid}&secret=${close_your_eyes}`;
       this.snapshots.addSnap.loading = true;
       this.$axios.get(url).then((res) => {
@@ -1163,7 +1162,7 @@ export default {
       const userid = user.id;
       const vmid = this.SingleCloud.ID;
 
-      const close_your_eyes = md5("VMresize" + userid + user.secret);
+      const close_your_eyes = btoa("VMresize" + userid + user.secret);
 
       let query = {
         userid,
@@ -1221,7 +1220,7 @@ export default {
       const snapid = object.SNAPSHOT_ID;
       this.$store.dispatch("cloud/silentUpdate", this.$route.params.pathMatch);
 
-      const close_your_eyes = md5("vmaction" + userid + user.secret);
+      const close_your_eyes = btoa("vmaction" + userid + user.secret);
       const url = `/vmaction.php?userid=${userid}&action=RMSnapshot&snapid=${snapid}&vmid=${vmid}&secret=${close_your_eyes}`;
       this.snapshots.data.find((el) => el.SNAPSHOT_ID == snapid).loading = true;
       this.snapshots.loadingSnaps.push(snapid);
@@ -1246,7 +1245,7 @@ export default {
 
       this.$store.dispatch("cloud/silentUpdate", this.$route.params.pathMatch);
 
-      const close_your_eyes = md5("vmaction" + userid + user.secret);
+      const close_your_eyes = btoa("vmaction" + userid + user.secret);
       const url = `/vmaction.php?userid=${userid}&action=RevSnapshot&snapid=${snapid}&vmid=${vmid}&secret=${close_your_eyes}`;
       this.snapshots.data.find((el) => el.SNAPSHOT_ID == snapid).loading = true;
       this.snapshots.loadingSnaps.push(snapid);
@@ -1270,7 +1269,7 @@ export default {
       const userid = user.id;
       const vmid = this.SingleCloud.ID;
 
-      const close_your_eyes = md5("getSnapshots" + userid + user.secret);
+      const close_your_eyes = btoa("getSnapshots" + userid + user.secret);
       const url = `/getSnapshots.php?userid=${userid}&vmid=${vmid}&secret=${close_your_eyes}`;
       this.$axios.get(url).then((res) => {
         // console.log(res);

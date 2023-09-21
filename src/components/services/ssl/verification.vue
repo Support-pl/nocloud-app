@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import loading from "@/components/loading/loading";
+import loading from "@/components/loading/loading.vue";
 
 export default {
   name: "Verification",

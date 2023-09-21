@@ -1,9 +1,9 @@
-FROM node:16-alpine3.12 AS ui-builder
+FROM node:latest AS ui-builder
 
 WORKDIR /app
 
 COPY . .
-RUN yarn && yarn build
+RUN yarn install && yarn build
 
 FROM golang:1.19-alpine as server-builder
 
@@ -21,5 +21,7 @@ COPY --from=server-builder /go/src/github.com/support-pl/nocloud-app/app /app
 
 LABEL org.opencontainers.image.source https://github.com/support-pl/nocloud-app
 LABEL nocloud.update "true"
+
+EXPOSE 8080
 
 ENTRYPOINT ["/app" ]

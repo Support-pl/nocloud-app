@@ -1,28 +1,26 @@
 import Vue from 'vue'
-import App from './App.vue'
 import Antd from 'ant-design-vue'
-import 'ant-design-vue/dist/antd.css'
+import { PiniaVuePlugin, createPinia } from 'pinia'
 import VueGoogleCharts from 'vue-google-charts'
+import App from './App.vue'
+import 'ant-design-vue/dist/antd.css'
 import i18n from './i18n'
 import store from './store'
 import router from './router'
 import './registerServiceWorker'
 import axios from './axios'
-import config from './appconfig'
-import api from "@/api.js"
+import api from '@/api.js'
 import './assets/style.css'
-
 
 import maintanance from '@/components/maintanance.vue'
 
 Vue.config.productionTip = false
 Vue.use(Antd)
 Vue.use(VueGoogleCharts)
+Vue.use(PiniaVuePlugin)
 
-
-Vue.prototype.$config = config;
-Vue.prototype.$axios = axios;
-Vue.prototype.$api = api;
+Vue.prototype.$axios = axios
+Vue.prototype.$api = api
 
 Vue.filter('capitalize', function (value, isLower) {
   if (!value) return ''
@@ -43,11 +41,11 @@ Vue.filter('dateFormat', function (value) {
   // return   new Intl.DateTimeFormat("en-GB", {
   //   dateStyle: "short",
   // }).format(new Date(value))
-  return   new Intl.DateTimeFormat().format(new Date(value))
+  return new Intl.DateTimeFormat().format(new Date(value))
 })
 
 Vue.directive('phone', {
-  update(el, { value: code }) {
+  update (el, { value: code }) {
     if (!event?.isTrusted) return
     el.value = el.value.replace(code, '')
 
@@ -66,11 +64,14 @@ Vue.directive('phone', {
   }
 })
 
-Vue.component('maintanance-mode', maintanance);
+Vue.component('MaintananceMode', maintanance)
+
+const pinia = createPinia()
 
 new Vue({
   i18n,
-	router,
-	store,
+  router,
+  store,
+  pinia,
   render: h => h(App)
 }).$mount('#app')

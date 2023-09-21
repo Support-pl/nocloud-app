@@ -1,153 +1,159 @@
 <template>
-	<div class="product">
-		<div class="product__icon-wrapper">
-			<a-badge dot :count="wholeProduct.invoicestatus == 'Unpaid' ? 1 : 0" :offset='[-10, 2]'>
-				<div class="product__icon" :title="status" :style="{'background-color': `var(--${iconColor})`}">
-					<a-icon
-						v-if="$config.getServiceType(wholeProduct.groupname)"
-						:type="$config.services[$config.getServiceType(wholeProduct.groupname)].icon"
-					/>
-					<a-icon v-else type="shopping-cart" />
-				</div>
-			</a-badge>
-		</div>
+  <div class="product">
+    <div class="product__icon-wrapper">
+      <a-badge dot :count="wholeProduct.invoicestatus == 'Unpaid' ? 1 : 0" :offset="[-10, 2]">
+        <div class="product__icon" :title="status" :style="{'background-color': `var(--${iconColor})`}">
+          <a-icon
+            v-if="config.getServiceType(wholeProduct.groupname)"
+            :type="config.services[config.getServiceType(wholeProduct.groupname)].icon"
+          />
+          <a-icon v-else type="shopping-cart" />
+        </div>
+      </a-badge>
+    </div>
 
-		<div class="product__text">
-			<div class="product__column product__column--main-info">
-				<div class="product__title">
+    <div class="product__text">
+      <div class="product__column product__column--main-info">
+        <div class="product__title">
           {{ title }}
           <span style="text-decoration: underline">
             ({{ wholeProduct.billingPlan.kind === "STATIC" ? $t("PrePaid") : $t("PAYG") }})
           </span>
         </div>
 
-				<div v-if="domain !== null" class="product__domain">{{domain}}</div>
-			</div>
+        <div v-if="domain !== null" class="product__domain">
+          {{ domain }}
+        </div>
+      </div>
       <!-- <div class="product__column product__column--secondary-info">
         <div class="product__status">{{ status }}</div>
       </div> -->
-			<component :service="wholeProduct" :is="getModuleProductBtn"></component>
-			<div class="product__column product__column--secondary-info">
-				<div class="product__date" :class="{ 'product__date--expired': (isExpired) }">
+      <component :is="getModuleProductBtn" :service="wholeProduct" />
+      <div class="product__column product__column--secondary-info">
+        <div class="product__date" :class="{ 'product__date--expired': (isExpired) }">
           {{ localDate }}
         </div>
-				<div class="product__cost" v-if="currency.code">
-					{{ user.currency_code === 'USD' ? `$${price}` : `${price} ${currency.code}` }}
-				</div>
-        <div class="product__cost" v-else>{{ `$${price}` }}</div>
-			</div>
-		</div>
-	</div>
+        <div v-if="currency.code" class="product__cost">
+          {{ user.currency_code === 'USD' ? `$${price}` : `${price} ${currency.code}` }}
+        </div>
+        <div v-else class="product__cost">
+          {{ `$${price}` }}
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
+import config from '@/appconfig.js'
+
 export default {
-	name: 'product',
-	props: {
-		title: {
+  name: 'Product',
+  props: {
+    title: {
       type: String,
       required: true
-		},
-		date: {
+    },
+    date: {
       type: [String, Date],
       required: true
-		},
-		cost: {
+    },
+    cost: {
       type: [String, Number],
       required: true
-		},
-		status: {
+    },
+    status: {
       type: [String],
       required: true
-		},
-		domain: {
-			type: String,
-			default: null
-		},
-		wholeProduct: Object
-	},
-  data: () => ({ prices: {} }),
-	computed: {
-		user(){
-			return this.$store.getters['nocloud/auth/billingData'];
-		},
-    price(){
-      return this.prices[this.wholeProduct.resources.period] || this.cost;
     },
-		localDate(){
-      if (this.date.getTime() === 0) return 'none';
+    domain: {
+      type: String,
+      default: null
+    },
+    wholeProduct: Object
+  },
+  data: () => ({ prices: {}, config }),
+  computed: {
+    user () {
+      return this.$store.getters['nocloud/auth/billingData']
+    },
+    price () {
+      return this.prices[this.wholeProduct.resources.period] || this.cost
+    },
+    localDate () {
+      if (this.date.getTime() === 0) return 'none'
       // if (this.wholeProduct.groupname === 'Domains') {
       //   const date = this.date.getTime();
 
       //   return this.$tc('year', date);
       // }
       if (this.wholeProduct.groupname === 'SSL') {
-        const date = this.date.getTime();
+        const date = this.date.getTime()
 
-        return this.$tc('month', date);
+        return this.$tc('month', date)
       }
-			return new Intl.DateTimeFormat().format(this.date);
-		},
-    currency() {
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
-
-      return { code: this.user.currency_code ?? defaultCurrency };
+      return new Intl.DateTimeFormat().format(this.date)
     },
-		iconColor(){
-			const status = this.status.toLowerCase();
+    currency () {
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
 
-			switch (status) {
-				case 'active':
+      return { code: this.user.currency_code ?? defaultCurrency }
+    },
+    iconColor () {
+      const status = this.status.toLowerCase()
+
+      switch (status) {
+        case 'active':
         case 'running':
-					return 'success';
+          return 'success'
 
-				case 'suspended':
+        case 'suspended':
         case 'poweroff':
         case 'stopped':
-					return 'warn';
+          return 'warn'
 
-				case 'cancelled':
-					return 'error';
+        case 'cancelled':
+          return 'error'
 
-				default:
-					return 'gray'
-			}
-		},
-    isExpired(){
-      const timestamp = this.date.getTime() - Date.now();
-      const days = 7 * 24 * 3600 * 1000;
-
-      if (this.wholeProduct.groupname === 'SSL') return;
-      if (this.wholeProduct.date === 0) return;
-      return timestamp < days;
+        default:
+          return 'gray'
+      }
     },
-		getModuleProductBtn(){
-			const serviceType = this.$config
-        .getServiceType(this.wholeProduct.groupname)
-        ?.toLowerCase();
+    isExpired () {
+      const timestamp = this.date.getTime() - Date.now()
+      const days = 7 * 24 * 3600 * 1000
 
-			if (serviceType === undefined) return;
-      if (!['active', 'running'].includes(this.status.toLowerCase())) return;
-      if (this.wholeProduct.date === 0) return;
-			return () => import(`@/components/services/${serviceType}/lilbtn`);
-		}
-	},
-  created() {
+      if (this.wholeProduct.groupname === 'SSL') return
+      if (this.wholeProduct.date === 0) return
+      return timestamp < days
+    },
+    getModuleProductBtn () {
+      const serviceType = config
+        .getServiceType(this.wholeProduct.groupname)
+        ?.toLowerCase()
+
+      if (serviceType === undefined) return
+      if (!['active', 'running'].includes(this.status.toLowerCase())) return
+      if (this.wholeProduct.date === 0) return
+      return () => import(`@/components/services/${serviceType}/lilbtn`)
+    }
+  },
+  created () {
     this.$store.dispatch('nocloud/auth/fetchBillingData')
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies');
+      this.$store.dispatch('nocloud/auth/fetchCurrencies')
     }
 
-    if (this.wholeProduct.groupname !== 'Domains') return;
+    if (this.wholeProduct.groupname !== 'Domains') return
     this.$api.servicesProviders.action({
       uuid: this.wholeProduct.sp,
       action: 'get_domain_price',
-      params: { domain: this.domain },
+      params: { domain: this.domain }
     })
       .then(({ meta }) => this.prices = meta.prices)
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
   }
 }
 </script>

@@ -1,27 +1,27 @@
-import api from "@/api.js"
-import config from "@/appconfig.js"
+import api from '@/api.js'
+import config from '@/appconfig.js'
 export default {
-	namespaced: true,
-	state: {
+  namespaced: true,
+  state: {
 
-	},
-	mutations: {
+  },
+  mutations: {
 
-	},
-	actions: {
-		createTicket(ctx, {subject, message}){
-			return new Promise((resolve, reject) => {
-				api.sendAsUser('openticket', {
-					subject,
-					message,
-					department: config.autoTicketDepartment
-				})
-				.then(resolve)
-				.catch(reject)
-			})
-		},
-	},
-	getters: {
+  },
+  actions: {
+    createTicket (ctx, { subject, message }) {
+      return new Promise((resolve, reject) => {
+        api.sendAsUser('openticket', {
+          subject,
+          message,
+          department: config.autoTicketDepartment
+        })
+          .then(resolve)
+          .catch(reject)
+      })
+    }
+  },
+  getters: {
 
-	}
+  }
 }

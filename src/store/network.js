@@ -1,4 +1,3 @@
-import md5 from 'md5';
 import axios from '../axios';
 
 export default {
@@ -22,7 +21,7 @@ export default {
 	actions: {
 		silentFetchNICs(ctx){
 			const user = ctx.rootGetters.getUser;
-			const close_your_eyes = md5('userGetNICs' + user.id + user.secret);
+			const close_your_eyes = btoa('userGetNICs' + user.id + user.secret);
 			const auth = {
 				userid: user.id,
 				secret: close_your_eyes,

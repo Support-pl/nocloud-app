@@ -6,7 +6,7 @@
 
 
 <script>
-import loading from "@/components/loading/loading";
+import loading from "@/components/loading/loading.vue";
 import generator from "@/components/services/ssl/generator.vue";
 export default {
   name: "certificate",

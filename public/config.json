@@ -1,6 +1,6 @@
 {
-	"whmcs": { "site_url": "https://whmcs.demo.support.pl/" },
-	"app": {
+  "whmcs": { "site_url": "https://whmcs.demo.support.pl/" },
+  "app": {
     "shared_folder": "virtualHosting",
     "title": "support.pl",
     "logo": "",
@@ -17,5 +17,5 @@
   },
   "languages": ["en", "ru", "vi", "fr", "pl"],
   "sharedEnabled": true,
-	"dangerModeNoSSLCheck": false
+  "dangerModeNoSSLCheck": false
 }

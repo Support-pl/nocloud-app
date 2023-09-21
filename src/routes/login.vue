@@ -2,11 +2,11 @@
   <div class="login">
     <div class="login__title login__layout">
       <div class="logo" :class="['pos_' + companyLogoPos]">
-        <div class="logo__title" v-if="companyName">
+        <div v-if="companyName" class="logo__title">
           {{ companyName }}
         </div>
-        <div class="logo__image" v-if="companyLogo">
-          <img :src="companyLogo" alt="logo" />
+        <div v-if="companyLogo" class="logo__image">
+          <img :src="companyLogo" alt="logo">
         </div>
       </div>
       <svg class="clipPathSvg" width="0" height="0">
@@ -33,10 +33,12 @@
             {{ $t('comp_services.Your orders') }}:
             <div class="order__card">
               <div class="order__icon">
-                <a-icon :type="$config.services[getOnlogin.info.type]?.icon" />
+                <a-icon :type="config.services[getOnlogin.info.type]?.icon" />
               </div>
               <div class="order__info">
-                <div class="order__title">{{ getOnlogin.info.title }}</div>
+                <div class="order__title">
+                  {{ getOnlogin.info.title }}
+                </div>
                 <div class="order__cost">
                   {{ getOnlogin.info.cost }} {{ getOnlogin.info.currency }}
                 </div>
@@ -49,51 +51,53 @@
         </div>
 
         <div class="login__inputs">
-          <div v-if="loginError" class="login__error">{{ $t(loginError) }}</div>
-          <div v-on:keyup.enter="submitHandler()" class="inputs__log-pas">
-            <input type="text" placeholder="Email" v-model="email" />
+          <div v-if="loginError" class="login__error">
+            {{ $t(loginError) }}
+          </div>
+          <div class="inputs__log-pas" @keyup.enter="submitHandler()">
+            <input v-model="email" type="text" placeholder="Email">
             <template v-if="remember">
-              <span class="login__horisontal-line"></span>
+              <span class="login__horisontal-line" />
               <a-input-password
-                placeholder="Password"
                 v-model="password"
+                placeholder="Password"
               />
             </template>
           </div>
-          <template>
-            <template v-if="!tryingLogin">
-              <div class="login__button">
-                <button
-                  v-if="remember"
-                  @click="submitHandler()"
-                  class="login__submit"
+
+          <template v-if="!tryingLogin">
+            <div class="login__button">
+              <button
+                v-if="remember"
+                class="login__submit"
+                @click="submitHandler()"
+              >
+                {{ $t("login") | capitalize }}
+              </button>
+              <button v-else class="login__submit" @click="restorePass()">
+                {{ $t("restore") | capitalize }}
+              </button>
+              <a-select
+                style="width: 70px"
+                :value="$i18n.locale.replace(/-[a-z]{2}/i, '')"
+                @change="(lang) => changeLocale(lang)"
+              >
+                <a-select-option
+                  v-for="lang in langs"
+                  :key="lang"
+                  :value="lang"
                 >
-                  {{ $t("login") | capitalize }}
-                </button>
-                <button v-else @click="restorePass()" class="login__submit">
-                  {{ $t("restore") | capitalize }}
-                </button>
-                <a-select
-                  style="width: 70px"
-                  :value="$i18n.locale.replace(/-[a-z]{2}/i, '')"
-                  @change="(lang) => changeLocale(lang)"
-                >
-                  <a-select-option
-                    v-for="lang in langs"
-                    :key="lang"
-                    :value="lang"
-                  >
-                    {{ lang.toUpperCase() }}
-                  </a-select-option>
-                </a-select>
-              </div>
-            </template>
-            <div v-else class="login__loading">
-              <span class="load__item"></span>
-              <span class="load__item"></span>
-              <span class="load__item"></span>
+                  {{ lang.toUpperCase() }}
+                </a-select-option>
+              </a-select>
             </div>
           </template>
+
+          <div v-else class="login__loading">
+            <span class="load__item" />
+            <span class="load__item" />
+            <span class="load__item" />
+          </div>
         </div>
         <div class="login__forgot" style="margin-top: 40px">
           <a-dropdown :trigger="['click']" placement="bottomCenter">
@@ -104,165 +108,154 @@
             <template #overlay>
               <a-menu>
                 <a-menu-item key="0">
-                  <a-checkbox v-model="type">{{ $t('use standard credentials') }}</a-checkbox>
+                  <a-checkbox v-model="type">
+                    {{ $t('use standard credentials') }}
+                  </a-checkbox>
                 </a-menu-item>
               </a-menu>
             </template>
           </a-dropdown>
         </div>
         <div class="login__forgot">
-          <a href="#" @click="forgotPass()">{{
+          <a href="#" @click.prevent="forgotPass">{{
             remember ? $t("forgotPass") : $t("I have a password") | capitalize
           }}</a>
         </div>
         <div class="login__forgot" style="margin-bottom: 30px">
-          <router-link :to="{ name: 'register' }">{{
-            $t("sign up") | capitalize
-          }}</router-link>
+          <router-link :to="{ name: 'register' }">
+            {{
+              $t("sign up") | capitalize
+            }}
+          </router-link>
         </div>
         <div id="qrcode" style="margin-top: 50px; text-align: center">
           <p>{{ $t("Use on your phone:") }}</p>
-          <qrcode-vue :value="selfUrl" size="150" level="M" renderAs="svg" />
+          <qrcode-vue :value="selfUrl" size="150" level="M" render-as="svg" />
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import { mapGetters } from "vuex";
-import notification from "@/mixins/notification.js";
-import QrcodeVue from "qrcode.vue";
+<script setup>
+import { computed, ref } from 'vue'
+import { notification } from 'ant-design-vue'
+import QrcodeVue from 'qrcode.vue'
+import store from '@/store'
+import router from '@/router'
+import i18n from '@/i18n.js'
+import config from '@/appconfig.js'
+import api from '@/api.js'
 
-export default {
-  name: "login",
-  data() {
-    return {
-      tryingLogin: false,
-      loginError: "",
-      remember: true,
-      password: "",
-      email: "",
-      qrcode: null,
-      type: false
-    };
-  },
-  components: { QrcodeVue },
-  mixins: [notification],
-  props: { getUser: Function },
-  methods: {
-    submitHandler() {
-      this.tryingLogin = true;
-      this.send(this);
-    },
-    send() {
-      const formatedEmail = `${this.email[0].toLowerCase()}${this.email.slice(1)}`;
+const tryingLogin = ref(false)
+const loginError = ref('')
+const remember = ref(true)
+const password = ref('')
+const email = ref('')
+const type = ref(false)
 
-      this.loginLoading = true;
-      (this.isLoginFailed = false),
-        this.$store
-          .dispatch("nocloud/auth/login", {
-            login: formatedEmail.trim(),
-            password: this.password,
-            type: (this.type) ? 'standard' : 'whmcs'
-          })
-          .then(() => {
-            if (localStorage.getItem("data")) {
-              try {
-                const data = JSON.parse(localStorage.getItem("data"));
-                this.$router.push({ path: data.path });
-              } catch {
-                localStorage.removeItem("data");
-              }
-            } else if (this.getOnlogin.redirect) {
-              const name = this.getOnlogin.redirect;
-              const service = this.getOnlogin.info.title;
+const baseURL = computed(() =>
+  store.getters['nocloud/auth/getURL']
+)
+const getOnlogin = computed(() =>
+  store.getters.getOnlogin
+)
+const companyName = computed(() =>
+  store.getters.getDomainInfo.name ?? config.appTitle
+)
+const companyLogo = computed(() =>
+  config.appLogo.path
+)
+const companyLogoPos = computed(() =>
+  config.appLogo.pos
+)
+const selfUrl = computed(() =>
+  location.href
+)
+const langs = computed(() =>
+  config.languages
+)
 
-              this.$router.replace({ name, query: { service } });
-            } else {
-              this.$router.push({ name: "root" });
-              this.$store.dispatch("nocloud/auth/fetchUserData");
-            }
-          })
-          .catch((error) => {
-            if (error.response && error.response.status == 401) {
-              this.openNotificationWithIcon('error', {
-                message: this.$t(error.response.data.message)
-              });
-            }
-          })
-          .finally(() => {
-            this.loginLoading = false;
-            this.tryingLogin = false;
-          });
-    },
-    forgotPass() {
-      this.remember = !this.remember;
-    },
-    restorePass() {
-      const formatedEmail = `${this.email[0].toLowerCase()}${this.email.slice(1)}`;
-      const email = encodeURIComponent(formatedEmail);
+function submitHandler () {
+  tryingLogin.value = true
+  send()
+}
 
-      this.$api.get(`${this.baseURL}`, { params: {
-        run: 'reset_password', email
-      }})
-        .then(({ result, message }) => {
-          if (result == "success") {
-            this.$message.success(this.$t('Done'));
-          } else if (result == "error") {
-            this.loginError = this.$t(message);
-            this.tryingLogin = false;
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          this.openNotificationWithIcon('error', {
-            message: this.$t("Can't connect to the server")
-          });
-        })
-        .finally(() => {
-          this.tryingLogin = false;
-        });
-    },
-    changeLocale(lang) {
-    	this.$i18n.locale = lang;
-    	localStorage.setItem("lang", this.$i18n.locale);
-    },
-  },
-  computed: {
-    ...mapGetters("nocloud/auth/", ["userdata", "isLoggedIn"]),
-    ...mapGetters("nocloud/app/", ["getFromRoute"]),
-    baseURL() {
-      return this.$store.getters["nocloud/auth/getURL"];
-    },
-    getOnlogin() {
-      return this.$store.getters.getOnlogin;
-    },
-    companyName() {
-      return this.$store.getters["getDomainInfo"].name ?? this.$config.appTitle;
-    },
-    companyLogo() {
-      return this.$config.appLogo.path;
-    },
-    companyLogoPos() {
-      return this.$config.appLogo.pos;
-    },
-    selfUrl() {
-      return location.href;
-    },
-    langs() {
-      return this.$config.languages;
-    },
-  },
-  created() {
-    this.$router.beforeEach((to, from, next) => {
-      if (from.meta.isFromRoute && !this.isLoggedIn) {
-        this.$store.dispatch("nocloud/app/fromRoute", from.path);
+async function send () {
+  try {
+    const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(1)}`
+
+    await store.dispatch('nocloud/auth/login', {
+      login: formatedEmail.trim(),
+      password: password.value,
+      type: (type.value) ? 'standard' : 'whmcs'
+    })
+
+    if (localStorage.getItem('data')) {
+      try {
+        const data = JSON.parse(localStorage.getItem('data'))
+        router.push({ path: data.path })
+      } catch {
+        localStorage.removeItem('data')
       }
-      next();
-    });
-  },
-};
+    } else if (getOnlogin.value.redirect) {
+      const name = getOnlogin.value.redirect
+      const service = getOnlogin.value.info.title
+
+      router.replace({ name, query: { service } })
+    } else {
+      router.push({ name: 'root' })
+      store.dispatch('nocloud/auth/fetchUserData')
+    }
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      notification.error({
+        message: i18n.t(error.response.data.message)
+      })
+    }
+  } finally {
+    tryingLogin.value = false
+  }
+}
+
+function forgotPass () {
+  remember.value = !remember.value
+}
+
+async function restorePass () {
+  try {
+    const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(1)}`
+
+    const { result, message } = api.get(baseURL.value, {
+      params: {
+        run: 'reset_password', email: encodeURIComponent(formatedEmail)
+      }
+    })
+
+    if (result === 'success') {
+      notification.success({ message: i18n.t('Done') })
+    } else if (result === 'error') {
+      loginError.value = i18n.t(message)
+      tryingLogin.value = false
+    }
+  } catch (error) {
+    notification.error({
+      message: i18n.t("Can't connect to the server")
+    })
+    console.error(error)
+  } finally {
+    tryingLogin.value = false
+  }
+}
+
+function changeLocale (lang) {
+  i18n.locale = lang
+  localStorage.setItem('lang', i18n.locale)
+}
+</script>
+
+<script>
+export default { name: 'LoginView' }
 </script>
 
 <style>

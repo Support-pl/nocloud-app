@@ -14,12 +14,12 @@
                 <div
                   class="openInvoice__title-color"
                   :style="{ 'background-color': statusColor }"
-                ></div>
+                />
                 {{
                   $t("singleInvoice") +
-                  " " +
-                  "#" +
-                  parseInt(this.$route.params.uuid, 10)
+                    " " +
+                    "#" +
+                    parseInt($route.params.uuid, 10)
                 }}
               </div>
             </div>
@@ -44,7 +44,9 @@
                 </svg>
               </div>
               <div class="openInvoice__info">
-                <div class="info__header-title">{{ $t("Information") }}</div>
+                <div class="info__header-title">
+                  {{ $t("Information") }}
+                </div>
 
                 <div class="info__main">
                   <div class="info__dates">
@@ -57,7 +59,9 @@
                       </div>
                     </div>
                     <div class="info__date-item">
-                      <div class="info__date-title">{{ $t("dueDate") }}</div>
+                      <div class="info__date-title">
+                        {{ $t("dueDate") }}
+                      </div>
                       <div class="info__date-value">
                         {{ (invoice.datepaid ?? invoice.duedate) | dateFormat }}
                       </div>
@@ -84,7 +88,9 @@
                             >
                               {{ $t("Add funds") }}
                             </td>
-                            <td v-else>{{ invoice.items.item[0].description }}</td>
+                            <td v-else>
+                              {{ invoice.items.item[0].description }}
+                            </td>
                             <td>
                               {{ total.toFixed(2) }}
                               {{ invoice.currencycode || "USD" }}
@@ -107,8 +113,8 @@
                     </div>
                     <div
                       v-if="invoice.items.item.length > 1 && !showFullTable"
-                      @click="showfull"
                       class="table__show-full"
+                      @click="showfull"
                     >
                       {{ $t("Show full list") }} ({{ invoice.items.item.length }})
                     </div>
@@ -124,9 +130,9 @@
                     </div> -->
 
                     <!-- <div class="info__button info__button--pay"> -->
-                      <a-button class="info__button" :loading="confirmLoading" @click='showPayModal'>
-                        {{ $t("Pay") }}
-                      </a-button>
+                    <a-button class="info__button" :loading="confirmLoading" @click="showPayModal">
+                      {{ $t("Pay") }}
+                    </a-button>
                     <!-- </div> -->
                   </template>
                 </div>
@@ -135,110 +141,109 @@
           </div>
         </div>
       </div>
-      <loading v-else color="#fff" :style="{'position': 'absolute', 'height':
-      '100%', 'width': '100%'}" key="loading" duration: />
+      <loading
+        v-else key="loading" color="#fff" :style="{'position': 'absolute', 'height':
+          '100%', 'width': '100%'}" duration:
+      />
     </transition>
   </div>
 </template>
 
 <script>
-import loading from "@/components/loading/loading.vue";
+import config from '@/appconfig.js'
+import loading from '@/components/loading/loading.vue'
 
 export default {
-  name: "openInvoice",
+  name: 'OpenInvoice',
   components: { loading },
-  data() {
+  data () {
     return {
-      payment: ["visa", "mastercard", "yandex.money"],
+      payment: ['visa', 'mastercard', 'yandex.money'],
       showFullTable: false,
       confirmLoading: false,
-      elem: "",
-    };
-  },
-  methods: {
-    goBack() {
-      this.$router.push("/billing");
-    },
-    showfull() {
-      this.showFullTable = true;
-    },
-    showPayModal() {
-      this.confirmLoading = true;
-      this.$api.get(this.baseURL, { params: {
-        run: 'get_pay_token',
-        invoice_id: this.invoice.id
-      }})
-      .then((res) => {
-        window.location.href = res;
-      })
-      .finally(() => {
-        this.confirmLoading = false;
-      });
-      // window.location.href = this.invoice.paytoken.checkout.redirect_url;
-    },
-    showConfirm() {
-      this.$confirm({
-        title: this.$t("Do you want to defer payment?"),
-        maskClosable: true,
-        content: () => (
-          <div>
-            {this.$t(
-              "The payment can be postponed only once. The payment is postponed for 5 days."
-            )}
-          </div>
-        ),
-        okText: this.$t("Yes"),
-        cancelText: this.$t("Cancel"),
-        onOk() {},
-        onCancel() {},
-        class: "test",
-      });
-    },
-  },
-  mounted() {
-    setTimeout(() => {
-      const { uuid } = this.$route.params;
-
-      sessionStorage.setItem('invoice', uuid);
-    });
-
-    this.$store.dispatch('invoices/autoFetch')
-      .catch((err) => {
-        this.$router.push("/billing");
-        console.error(err);
-      });
-  },
-  destroyed() {
-    if (!this.$route.name.includes('billing')) {
-      sessionStorage.removeItem('invoice');
+      elem: ''
     }
   },
   computed: {
-    user() {
-      return this.$store.getters['nocloud/auth/userdata'];
+    user () {
+      return this.$store.getters['nocloud/auth/userdata']
     },
-    baseURL() {
-      return this.$store.getters['invoices/getURL'];
+    baseURL () {
+      return this.$store.getters['invoices/getURL']
     },
-    invoice() {
-      const { uuid } = this.$route.params;
+    invoice () {
+      const { uuid } = this.$route.params
 
       return this.$store.getters['invoices/getInvoices']
-        .find((invoice) => invoice.id === +uuid);
+        .find((invoice) => invoice.id === +uuid)
     },
-    isLoading() {
-      return this.$store.getters['invoices/isLoading'];
+    isLoading () {
+      return this.$store.getters['invoices/isLoading']
     },
-    statusColor() {
-      return this.invoice?.status.toLowerCase() == "paid"
-        ? this.$config.colors.success
-        : this.$config.colors.err;
+    statusColor () {
+      return this.invoice?.status.toLowerCase() === 'paid'
+        ? config.colors.success
+        : config.colors.err
     },
-    total() {
-      return this.invoice.items.item.reduce((a, b) => a + +b.amount, 0);
-    },
+    total () {
+      return this.invoice.items.item.reduce((a, b) => a + +b.amount, 0)
+    }
   },
-};
+  mounted () {
+    setTimeout(() => {
+      const { uuid } = this.$route.params
+
+      sessionStorage.setItem('invoice', uuid)
+    })
+
+    this.$store.dispatch('invoices/autoFetch')
+      .catch((err) => {
+        this.$router.push('/billing')
+        console.error(err)
+      })
+  },
+  destroyed () {
+    if (!this.$route.name.includes('billing')) {
+      sessionStorage.removeItem('invoice')
+    }
+  },
+  methods: {
+    goBack () {
+      this.$router.push('/billing')
+    },
+    showfull () {
+      this.showFullTable = true
+    },
+    showPayModal () {
+      this.confirmLoading = true
+      this.$api.get(this.baseURL, {
+        params: {
+          run: 'get_pay_token',
+          invoice_id: this.invoice.id
+        }
+      })
+        .then((res) => {
+          window.location.href = res
+        })
+        .finally(() => {
+          this.confirmLoading = false
+        })
+      // window.location.href = this.invoice.paytoken.checkout.redirect_url;
+    },
+    showConfirm () {
+      this.$confirm({
+        title: this.$t('Do you want to defer payment?'),
+        maskClosable: true,
+        content: this.$t('The payment can be postponed only once. The payment is postponed for 5 days.'),
+        okText: this.$t('Yes'),
+        cancelText: this.$t('Cancel'),
+        onOk () {},
+        onCancel () {},
+        class: 'test'
+      })
+    }
+  }
+}
 </script>
 
 <style>
