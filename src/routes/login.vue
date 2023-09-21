@@ -77,6 +77,7 @@
               <button v-else class="login__submit" @click="restorePass()">
                 {{ $t("restore") | capitalize }}
               </button>
+
               <a-select
                 style="width: 70px"
                 :value="$i18n.locale.replace(/-[a-z]{2}/i, '')"
@@ -98,6 +99,16 @@
             <span class="load__item" />
             <span class="load__item" />
           </div>
+
+          <button
+            v-for="text of loginButtons"
+            :key="text"
+            class="login__submit"
+            style="margin-top: 10px"
+            @click="login(text)"
+          >
+            {{ `${$t("login")} ${text}` | capitalize }}
+          </button>
         </div>
         <div class="login__forgot" style="margin-top: 40px">
           <a-dropdown :trigger="['click']" placement="bottomCenter">
@@ -138,7 +149,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { notification } from 'ant-design-vue'
 import QrcodeVue from 'qrcode.vue'
 import store from '@/store'
@@ -252,6 +263,27 @@ function changeLocale (lang) {
   i18n.locale = lang
   localStorage.setItem('lang', i18n.locale)
 }
+
+const loginButtons = ref([])
+
+api.get('/oauth').then((response) => {
+  loginButtons.value = response
+})
+
+function login (type) {
+  api.get(`/oauth/${type}/sign_in`, {
+    params: {
+      state: Math.random().toString(16).slice(2),
+      redirect: `${VUE_APP_BASE_URL}/login`
+    }
+  })
+}
+
+onMounted(() => {
+  if (router.currentRoute.query.token) {
+    store.commit('nocloud/auth/setToken', router.currentRoute.query.token)
+  }
+})
 </script>
 
 <script>
