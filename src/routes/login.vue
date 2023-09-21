@@ -99,18 +99,22 @@
             <span class="load__item" />
             <span class="load__item" />
           </div>
+        </div>
 
-          <button
+        <p v-if="loginButtons.length > 0" style="margin: 20px 0 0">
+          {{ $t('login') }} {{ $t('with') }}:
+        </p>
+        <div style="display: flex; justify-content: center">
+          <img
             v-for="text of loginButtons"
             :key="text"
-            class="login__submit"
-            style="margin-top: 10px"
+            :src="`/img/icons/${text}24.png`"
+            style="width: 32px; cursor: pointer"
             @click="login(text)"
           >
-            {{ `${$t("login")} ${text}` | capitalize }}
-          </button>
         </div>
-        <div class="login__forgot" style="margin-top: 40px">
+
+        <div class="login__forgot" style="margin-top: 30px">
           <a-dropdown :trigger="['click']" placement="bottomCenter">
             <a class="ant-dropdown-link" @click.prevent>
               {{ $t('advanced options') }}
@@ -139,6 +143,7 @@
             }}
           </router-link>
         </div>
+
         <div id="qrcode" style="margin-top: 50px; text-align: center">
           <p>{{ $t("Use on your phone:") }}</p>
           <qrcode-vue :value="selfUrl" size="150" level="M" render-as="svg" />
@@ -270,18 +275,23 @@ api.get('/oauth').then((response) => {
   loginButtons.value = response
 })
 
-function login (type) {
-  api.get(`/oauth/${type}/sign_in`, {
+async function login (type) {
+  const { url } = await api.get(`/oauth/${type}/sign_in`, {
     params: {
       state: Math.random().toString(16).slice(2),
-      redirect: `${VUE_APP_BASE_URL}/login`
+      redirect: `https://${location.host}/login`
     }
   })
+
+  location.assign(url)
 }
 
 onMounted(() => {
   if (router.currentRoute.query.token) {
     store.commit('nocloud/auth/setToken', router.currentRoute.query.token)
+    router.replace({ name: 'root' }).then(() =>
+      location.reload()
+    )
   }
 })
 </script>
