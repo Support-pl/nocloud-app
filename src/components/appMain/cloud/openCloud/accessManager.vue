@@ -16,16 +16,16 @@
 </template>
 
 <script>
-import passwordView from '@/components/password.vue';
+import passwordView from '@/components/password.vue'
 
 export default {
-	name: "access-manager",
-	components: { passwordView },
+  name: 'AccessManager',
+  components: { passwordView },
   props: { VM: { type: Object, required: true } },
   computed: {
-    password() {
-      if (this.VM.server_on) return this.VM.password ?? '-';
-      return this.VM.state.meta.password ?? this.VM.config.password;
+    password () {
+      if (this.VM.server_on) return this.VM.resources.password ?? '-'
+      return this.VM.state.meta.password ?? this.VM.config.password
     }
   }
 }
