@@ -6,7 +6,7 @@
     />
 
     <iframe
-      v-else-if="instance.billingPlan.type.includes('ovh')"
+      v-else-if="instance?.billingPlan?.type.includes('ovh')"
       frameborder="0"
       style="width: 100%; height: 100%"
       :src="url"
@@ -132,7 +132,7 @@
                       password:
                     </li>
                     <li>
-                      <password :password="instance.config.password" />
+                      <password :password="instance.config?.password" />
                     </li>
                   </template>
                   <li>
@@ -282,9 +282,12 @@ export default {
     ...mapState(useAppStore, ['isMaintananceMode']),
     instance () {
       const uuid = this.$route.params.pathMatch
+      const instances = this.$store.getters['nocloud/vms/getInstances']
+      const products = this.$store.getters['products/getProducts']
 
-      return this.$store.getters['nocloud/vms/getInstances']
-        .find((inst) => inst.uuid === uuid)
+      return [...instances, ...products].find((inst) =>
+        `${(inst.uuid ?? inst.id)}` === uuid
+      )
     },
     isLoading () {
       return this.$store.getters['nocloud/vms/isLoading']
@@ -314,8 +317,16 @@ export default {
       this.$router.push({ name: 'openCloud_new', params: { uuid } })
     },
     getToken () {
-      const isCloud = this.instance.billingPlan.type.includes('cloud')
+      const isCloud = this.instance.billingPlan?.type.includes('cloud')
       const action = (isCloud) ? 'start_vnc_vm' : 'start_vnc'
+
+      if (this.instance.server_on) {
+        this.url = this.$route.query.url
+        this.desktopName = this.instance?.name ?? 'Unknown'
+
+        this.connect()
+        return
+      }
 
       this.$store.dispatch('nocloud/vms/actionVMInvoke', {
         uuid: this.$route.params.pathMatch, action

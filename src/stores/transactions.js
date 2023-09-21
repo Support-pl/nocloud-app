@@ -60,7 +60,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
       try {
         isLoading.value = true
-        const response = await api.transactions.list(params)
+        const response = await api.post('/billing/reports', params)
 
         response.page = params.page
         response.size = params.limit

@@ -2,7 +2,13 @@
   <div class="cloud__fullscreen Fcloud">
     <transition name="opencloud" :duration="600">
       <div v-if="!vmsLoading && (VM.uuid || VM.id)" class="cloud__container">
-        <component :is="template" :VM="VM">
+        <component
+          :is="template"
+          ref="open-instance"
+          :VM="VM"
+          @update:password="(value) => resources.password = value"
+          @update:vnc="(value) => resources.vnc = value"
+        >
           <template #header>
             <div class="Fcloud__header">
               <div class="Fcloud__back-wrapper">
@@ -297,7 +303,7 @@ export default {
           onclick: this.sendReinstall,
           params: [],
           icon: 'exclamation',
-          modules: ['ione']
+          modules: ['ione', 'custom']
         },
         {
           title: 'Rename',
@@ -317,7 +323,8 @@ export default {
           title: 'SSH key',
           onclick: this.changeModal,
           params: ['SSH'],
-          icon: 'safety'
+          icon: 'safety',
+          modules: ['ione', 'ovh']
         },
         {
           title: 'Network control',
@@ -346,12 +353,14 @@ export default {
           params: ['delete'],
           icon: 'delete',
           type: 'danger',
-          forVNC: true
+          forVNC: true,
+          modules: ['ione', 'ovh']
         }
       ]
       const sp = this.$store.getters['nocloud/sp/getSP']
-      const { type } = sp?.find(({ uuid }) => uuid === this.VM.sp) || {}
+      let { type } = sp?.find(({ uuid }) => uuid === this.VM.sp) || {}
 
+      if (this.VM.server_on) type = 'custom'
       return options.filter((el) =>
         (el.modules) ? el.modules.includes(type) : true
       )
@@ -369,7 +378,7 @@ export default {
       for (const instance of vms) {
         if (instance.uuid === this.$route.params.uuid) {
           return instance
-        } else if (`${instance.id}` === this.$route.params.uuid) {
+        } else if (`${instance.id}` === `${this.$route.params.uuid}`) {
           return { ...instance, resources: this.resources }
         }
       }
@@ -470,7 +479,10 @@ export default {
           server_id: this.$route.params.uuid
         }
       })
-        .then((response) => { this.resources = response })
+        .then((response) => {
+          this.resources = response
+          this.renameNewName = response.NAME
+        })
         .finally(() => { this.isLoading = false })
     },
     'VM.server_on': {
@@ -619,13 +631,15 @@ export default {
     },
     sendRename () {
       if (this.renameNewName !== '') {
-        const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp)
-        const instance = group.instances.find((el) => el.uuid === this.VM.uuid)
+        const group = this.itemService?.instancesGroups.find((el) => el.sp === this.VM.sp)
+        const instance = group?.instances.find((el) => el.uuid === this.VM.uuid)
+        const promise = (this.VM.server_on)
+          ? this.$refs['open-instance'].sendAction('rename_vm', { vm_name: this.renameNewName })
+          : this.$store.dispatch('nocloud/vms/updateService', this.itemService)
 
         this.isRenameLoading = true
         instance.title = this.renameNewName
-        this.$store
-          .dispatch('nocloud/vms/updateService', this.itemService)
+        promise
           .then((result) => {
             if (result) {
               this.$message.success(this.$t('VM name changes successfully'))
@@ -686,8 +700,11 @@ export default {
             uuidService: this.VM.uuidService,
             action: 'reinstall'
           }
+          const promise = (this.VM.server_on)
+            ? this.$refs['open-instance'].sendAction('on_reinstall')
+            : this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
 
-          this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
+          promise
             .then(() => {
               const opts = {
                 message: `${this.$t('Done')}!`

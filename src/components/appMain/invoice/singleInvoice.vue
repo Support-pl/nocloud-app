@@ -102,7 +102,7 @@ export default {
       const total = this.invoice?.subtotal ?? this.invoice.total
       const rate = this.currency.rate
 
-      return ((+total + +this.invoice?.credit) * rate).toFixed(2)
+      return Math.abs(((+total + +this.invoice?.credit) * rate)).toFixed(2)
     }
   },
   created () {
@@ -115,11 +115,14 @@ export default {
       if (this.invoice.status === 'Unpaid') {
         this.isLoading = true
         if (this.invoice.meta) {
+          const type = (this.invoice.total > 0) ? 'debit' : 'top-up'
+
           this.$api.get(this.baseURL, {
             params: {
               run: 'create_inv',
               invoice_id: uuid,
               product: this.invoice.meta.description ?? this.invoice.service,
+              invoice_type: this.invoice.meta.invoiceType ?? type,
               sum: this.total
             }
           })

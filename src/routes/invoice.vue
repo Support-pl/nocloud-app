@@ -2,45 +2,49 @@
   <div class="invoices">
     <div class="container">
       <a-progress
+        v-if="isLoading || isInvoicesLoading"
         ref="loading"
         status="active"
-        v-if="isLoading || isInvoicesLoading"
         :percent="percent"
         :show-info="false"
       />
-      <div class="invoices__wrapper" ref="invoices">
+      <div ref="invoices" class="invoices__wrapper">
         <a-radio-group
+          v-if="!user.paid_stop"
+          v-model="value"
           size="large"
           default-value="Invoice"
-          v-model="value"
-          v-if="!user.paid_stop"
         >
-          <a-radio-button value="Invoice"> {{ $t('Invoices') }} </a-radio-button>
-          <a-radio-button value="Detail"> {{ $t('Transactions') }} </a-radio-button>
+          <a-radio-button value="Invoice">
+            {{ $t('Invoices') }}
+          </a-radio-button>
+          <a-radio-button value="Detail">
+            {{ $t('Transactions') }}
+          </a-radio-button>
         </a-radio-group>
         <template v-if="value === 'Invoice'">
-          <empty style="margin: 50px 0" v-if="invoices.length === 0" />
+          <empty v-if="invoices.length === 0" style="margin: 50px 0" />
           <single-invoice
-            v-else
             v-for="(invoice, index) in invoices"
+            v-else
             :key="index"
             :invoice="invoice"
           />
         </template>
         <template v-if="value === 'Detail'">
-          <empty style="margin: 50px 0" v-if="transactions.length === 0" />
+          <empty v-if="transactions.length === 0" style="margin: 50px 0" />
           <single-transaction
-            v-else
             v-for="(invoice, index) in transactions"
+            v-else
             :key="index"
             :invoice="invoice"
           />
         </template>
 
         <a-pagination
+          v-if="value === 'Detail'"
           show-size-changer
           style="width: fit-content; margin-left: auto"
-          v-if="value === 'Detail'"
           :page-size-options="pageSizeOptions"
           :page-size="pageSize"
           :total="totalSize"
@@ -54,175 +58,178 @@
 </template>
 
 <script>
-import api from "@/api.js";
-import singleInvoice from "@/components/appMain/invoice/singleInvoice.vue";
-import singleTransaction from '@/components/appMain/invoice/singleTransaction.vue';
-import empty from "@/components/empty/empty.vue";
+import api from '@/api.js'
+import singleInvoice from '@/components/appMain/invoice/singleInvoice.vue'
+import singleTransaction from '@/components/appMain/invoice/singleTransaction.vue'
+import empty from '@/components/empty/empty.vue'
 
 export default {
-  name: "invoices",
+  name: 'InvoicesView',
   components: {
     singleInvoice,
     singleTransaction,
-    empty,
+    empty
   },
   data: () => ({
-    value: "Invoice",
+    value: 'Invoice',
     percent: 0,
     pageSizeOptions: ['5', '10', '25', '50', '100']
   }),
   computed: {
-    isLogged() {
-      return this.$store.getters["nocloud/auth/isLoggedIn"];
+    isLogged () {
+      return this.$store.getters['nocloud/auth/isLoggedIn']
     },
-    user() {
-      return this.$store.getters["nocloud/auth/billingData"];
+    user () {
+      return this.$store.getters['nocloud/auth/billingData']
     },
-    userdata() {
-      return this.$store.getters["nocloud/auth/userdata"];
+    userdata () {
+      return this.$store.getters['nocloud/auth/userdata']
     },
-    transactions() {
-      return this.$store.getters["nocloud/transactions/all"]
-        .sort((a, b) => b.proc - a.proc);
+    transactions () {
+      const result = this.$store.getters['nocloud/transactions/all']
+
+      result.sort((a, b) => b.proc - a.proc)
+      return result
     },
-    isLoading() {
-      return this.$store.getters["nocloud/transactions/isLoading"];
+    isLoading () {
+      return this.$store.getters['nocloud/transactions/isLoading']
     },
-    invoices() {
-      return this.$store.getters["invoices/getInvoices"];
+    invoices () {
+      return this.$store.getters['invoices/getInvoices']
     },
-    isInvoicesLoading() {
-      return this.$store.getters["invoices/isLoading"];
+    isInvoicesLoading () {
+      return this.$store.getters['invoices/isLoading']
     },
-    currentPage() {
-      return this.$store.getters["nocloud/transactions/page"];
+    currentPage () {
+      return this.$store.getters['nocloud/transactions/page']
     },
-    pageSize() {
-      return this.$store.getters["nocloud/transactions/size"];
+    pageSize () {
+      return this.$store.getters['nocloud/transactions/size']
     },
-    totalSize() {
-      return this.$store.getters["nocloud/transactions/total"];
+    totalSize () {
+      return this.$store.getters['nocloud/transactions/total']
     }
-  },
-  methods: {
-    setCoordY() {
-      setTimeout(() => {
-        const items = (this.value === 'Invoice') ? this.invoices : this.transactions;
-        const id = sessionStorage.getItem('invoice');
-        const i = items.findIndex(({ uuid }) => uuid === id);
-
-        if (i === -1) return;
-        this.$refs.invoices?.children[i + 1]?.scrollIntoView();
-      }, 100);
-    },
-    setLoading() {
-      if (this.percent > 99) {
-        this.percent = 0;
-        if (this.$refs.loading?.$el.style.transform ?? true) return;
-
-        this.$refs.loading.$el.style.transform = 'rotate(180deg)';
-        setTimeout(this.setLoading, 1000);
-        return;
-      }
-      if (this.$refs.loading?.$el.style.transform) {
-        this.$refs.loading.$el.style.transform = '';
-      }
-      this.percent += 1;
-
-      setTimeout(this.setLoading, 10);
-    },
-    setPagination() {
-      const pagination = localStorage.getItem("transactionsPagination");
-
-      if (!pagination) return;
-      const { page, limit } = JSON.parse(pagination);
-
-      this.onShowSizeChange(page, limit);
-    },
-    onShowSizeChange(page, limit) {
-      if (page !== this.currentPage) {
-        this.$store.commit("nocloud/transactions/setPage", page);
-      }
-      if (limit !== this.pageSize) {
-        this.$store.commit("nocloud/transactions/setSize", limit);
-      }
-
-      this.$store.dispatch("nocloud/transactions/fetch", {
-        page, limit,
-        account: this.userdata.uuid,
-        field: "proc",
-        sort: "desc",
-        type: "transaction"
-      });
-      localStorage.setItem("transactionsPagination", JSON.stringify({ page, limit }));
-    }
-  },
-  mounted() {
-    if (this.isLogged && this.userdata.uuid) {
-      this.$store.dispatch("invoices/autoFetch");
-
-      api.transactions.count({ account: this.userdata.uuid, type: "transaction" })
-        .then(({ total }) => {
-          this.$store.commit("nocloud/transactions/setTotal", +total);
-        });
-
-      this.setPagination();
-    }
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies');
-    }
-
-    this.setCoordY();
-  },
-  destroyed() {
-    sessionStorage.removeItem('invoice');
   },
   watch: {
-    value() {
-      this.$store.commit('nocloud/transactions/setActiveTab', this.value);
-      if (this.value === 'Invoice') return;
-      if (this.transactions.length > 0) return;
-      if (!this.userdata.uuid) return;
+    value () {
+      this.$store.commit('nocloud/transactions/setActiveTab', this.value)
+      if (this.value === 'Invoice') return
+      if (this.transactions.length > 0) return
+      if (!this.userdata.uuid) return
 
-      this.$store.dispatch("nocloud/transactions/fetch", {
+      this.$store.dispatch('nocloud/transactions/fetch', {
         account: this.userdata.uuid,
         page: this.currentPage,
         limit: this.pageSize,
-        field: "proc",
-        sort: "desc",
-        type: "transaction"
-      });
+        field: 'proc',
+        sort: 'desc',
+        type: 'transaction'
+      })
     },
-    userdata() {
-      if (this.isLoading) return;
-      this.$store.dispatch("invoices/autoFetch");
+    userdata () {
+      if (this.isLoading) return
+      this.$store.dispatch('invoices/autoFetch')
 
-      this.$store.dispatch("nocloud/transactions/fetch", {
+      this.$store.dispatch('nocloud/transactions/fetch', {
         account: this.userdata.uuid,
         page: this.currentPage,
         limit: this.pageSize,
-        field: "proc",
-        sort: "desc",
-        type: "transaction"
-      });
+        field: 'proc',
+        sort: 'desc',
+        type: 'transaction'
+      })
 
-      api.transactions.count({ account: this.userdata.uuid, type: "transaction" })
+      api.transactions.count({ account: this.userdata.uuid, type: 'transaction' })
         .then(({ total }) => {
-          this.$store.commit("nocloud/transactions/setTotal", +total);
-        });
+          this.$store.commit('nocloud/transactions/setTotal', +total)
+        })
 
-      this.setPagination();
+      this.setPagination()
     },
-    isLoading() {
-      this.percent = 0;
-      this.setCoordY();
-      this.setLoading();
+    isLoading () {
+      this.percent = 0
+      this.setCoordY()
+      this.setLoading()
     },
-    isInvoicesLoading() {
-      this.setCoordY();
+    isInvoicesLoading () {
+      this.setCoordY()
+    }
+  },
+  mounted () {
+    if (this.isLogged && this.userdata.uuid) {
+      this.$store.dispatch('invoices/autoFetch')
+
+      api.transactions.count({ account: this.userdata.uuid, type: 'transaction' })
+        .then(({ total }) => {
+          this.$store.commit('nocloud/transactions/setTotal', +total)
+        })
+
+      this.setPagination()
+    }
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies')
+    }
+
+    this.setCoordY()
+  },
+  destroyed () {
+    sessionStorage.removeItem('invoice')
+  },
+  methods: {
+    setCoordY () {
+      setTimeout(() => {
+        const items = (this.value === 'Invoice') ? this.invoices : this.transactions
+        const id = sessionStorage.getItem('invoice')
+        const i = items.findIndex(({ uuid }) => uuid === id)
+
+        if (i === -1) return
+        this.$refs.invoices?.children[i + 1]?.scrollIntoView()
+      }, 100)
+    },
+    setLoading () {
+      if (this.percent > 99) {
+        this.percent = 0
+        if (this.$refs.loading?.$el.style.transform ?? true) return
+
+        this.$refs.loading.$el.style.transform = 'rotate(180deg)'
+        setTimeout(this.setLoading, 1000)
+        return
+      }
+      if (this.$refs.loading?.$el.style.transform) {
+        this.$refs.loading.$el.style.transform = ''
+      }
+      this.percent += 1
+
+      setTimeout(this.setLoading, 10)
+    },
+    setPagination () {
+      const pagination = localStorage.getItem('transactionsPagination')
+
+      if (!pagination) return
+      const { page, limit } = JSON.parse(pagination)
+
+      this.onShowSizeChange(page, limit)
+    },
+    onShowSizeChange (page, limit) {
+      if (page !== this.currentPage) {
+        this.$store.commit('nocloud/transactions/setPage', page)
+      }
+      if (limit !== this.pageSize) {
+        this.$store.commit('nocloud/transactions/setSize', limit)
+      }
+
+      this.$store.dispatch('nocloud/transactions/fetch', {
+        page,
+        limit,
+        account: this.userdata.uuid,
+        field: 'proc',
+        sort: 'desc',
+        type: 'transaction'
+      })
+      localStorage.setItem('transactionsPagination', JSON.stringify({ page, limit }))
     }
   }
-};
+}
 </script>
 
 <style>
