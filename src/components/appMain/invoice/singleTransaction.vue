@@ -13,7 +13,7 @@
           {{ $t("invoiceDate") }}
         </div>
         <div class="invoice__date">
-          {{ date(invoice.proc) }}
+          {{ date(invoice.start) }}
         </div>
       </div>
       <div class="invoice__date-item invoice__dueDate">
@@ -21,14 +21,24 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ date(invoice.exec) }}
+          {{ date(invoice.end) }}
         </div>
       </div>
     </div>
     <div class="horisontal-line" />
     <div class="invoice__footer flex-between">
       <div class="invoice__id">
-        #{{ invoice.uuid }}
+        Instance: {{ getInstance(invoice.instance) }}
+        <template v-if="invoice.product || invoice.resource">
+          -
+        </template>
+
+        <template v-if="invoice.product">
+          {{ $t('Product') }}: {{ invoice.product }}
+        </template>
+        <template v-if="invoice.resource">
+          {{ $t('Resource') }}: {{ invoice.resource }}
+        </template>
       </div>
       <div v-if="isClickable" class="invoice__btn">
         <a-icon type="right" />
@@ -37,70 +47,71 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
+import store from '@/store'
+import router from '@/router'
 import config from '@/appconfig.js'
+import { useAppStore } from '@/stores/app.js'
 
-export default {
-  name: 'Invoice',
-  props: {
-    invoice: Object
-  },
-  computed: {
-    costColor () {
-      if (this.invoice?.total < 0) {
-        return config.colors.success
-      } else if (this.invoice?.total > 0) {
-        return config.colors.err
-      } else {
-        return null
-      }
-    },
-    currencies () {
-      return this.$store.getters['nocloud/auth/currencies']
-    },
-    currency () {
-      const code = this.$store.getters['nocloud/auth/billingData'].currency_code ?? 'USD'
-      const { rate } = this.currencies.find((el) =>
-        el.to === code && el.from === this.invoice.currency
-      ) ?? {}
+const props = defineProps({
+  invoice: { type: Object, required: true }
+})
+const { date } = useAppStore()
 
-      const { rate: reverseRate } = this.currencies.find((el) =>
-        el.from === code && el.to === this.invoice.currency
-      ) ?? { rate: 1 }
-
-      return { code, rate: (rate) || 1 / reverseRate }
-    },
-    isClickable () {
-      const isRecordsExist = this.invoice.records.length > 0
-      const isMessageExist = this.invoice.meta.description
-      const isInstancesExist = this.invoice.meta.instances?.length > 0
-
-      return isRecordsExist || isMessageExist || isInstancesExist
-    }
-  },
-  methods: {
-    clickOnInvoice (uuid) {
-      if (!this.isClickable) return
-
-      this.$router.push({ name: 'transaction', params: { uuid } })
-    },
-    date (timestamp) {
-      if (timestamp < 1) return '-'
-
-      const date = new Date(timestamp * 1000)
-      const time = date.toTimeString().split(' ')[0]
-
-      const year = date.getFullYear()
-      let month = date.getMonth() + 1
-      let day = date.getDate()
-
-      if (`${month}`.length < 2) month = `0${month}`
-      if (`${day}`.length < 2) day = `0${day}`
-
-      return `${day}.${month}.${year} ${time}`
-    }
+const costColor = computed(() => {
+  if (props.invoice?.total < 0) {
+    return config.colors.success
+  } else if (props.invoice?.total > 0) {
+    return config.colors.err
+  } else {
+    return null
   }
+})
+
+const currencies = computed(() =>
+  store.getters['nocloud/auth/currencies']
+)
+const currency = computed(() => {
+  const code = store.getters['nocloud/auth/billingData'].currency_code ?? 'USD'
+  const { rate } = currencies.value.find((el) =>
+    el.to === code && el.from === props.invoice.currency
+  ) ?? {}
+
+  const { rate: reverseRate } = currencies.value.find((el) =>
+    el.from === code && el.to === props.invoice.currency
+  ) ?? { rate: 1 }
+
+  return { code, rate: (rate) || 1 / reverseRate }
+})
+
+const isClickable = computed(() => {
+  const isRecordsExist = props.invoice.records?.length > 0
+  const isMessageExist = props.invoice.meta.description
+  const isInstancesExist = props.invoice.meta.instances?.length > 0
+
+  return isRecordsExist || isMessageExist || isInstancesExist
+})
+
+function clickOnInvoice (uuid) {
+  console.log(props.invoice)
+  if (!isClickable.value) return
+
+  router.push({ name: 'transaction', params: { uuid } })
 }
+
+const instances = computed(() =>
+  store.getters['nocloud/vms/getInstances']
+)
+
+function getInstance (uuid) {
+  if (!uuid) return 'none'
+  return instances.value.find((inst) => inst.uuid === uuid)?.title ?? uuid
+}
+</script>
+
+<script>
+export default { name: 'SingleInvoice' }
 </script>
 
 <style>

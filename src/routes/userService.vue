@@ -516,7 +516,7 @@ export default {
         period = 'year'
         count = timestamp / year
       }
-      return this.$tc(period, count)
+      return this.$tc(period, Math.round(count))
     },
     date (timestamp) {
       if (timestamp < 1) return '0000-00-00'
