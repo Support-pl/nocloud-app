@@ -111,6 +111,44 @@
           </a-modal>
         </div>
 
+        <div class="settings__item" @click="showModal('login')">
+          <div class="settings__logo">
+            <a-icon type="login" />
+          </div>
+          <div class="settings__title">
+            {{ $t('link') | capitalize }} {{ $t('account') }}
+          </div>
+
+          <a-modal
+            :title="$t('link') | capitalize"
+            :visible="modal.login"
+            :footer="false"
+            @cancel="closeModal('login')"
+          >
+            <div
+              v-for="text in authStore.loginButtons"
+              :key="text"
+              :class="{ disabled: userdata.data?.auth_types?.includes(text) }"
+              class="singleLang"
+              @click="authStore.linkAccount(text)"
+            >
+              <span class="singleLang__title">
+                <img
+                  :key="text"
+                  :alt="text"
+                  :src="`/img/icons/${text}24.png`"
+                  style="width: 32px; margin-right: 5px"
+                >
+                {{ text | capitalize }}
+              </span>
+              <span
+                v-if="userdata.data?.auth_types?.includes(text)"
+                class="singleLang__current-marker"
+              />
+            </div>
+          </a-modal>
+        </div>
+
         <div class="settings__item" @click="showModal('QR')">
           <div class="settings__logo">
             <a-icon type="qrcode" />
@@ -177,6 +215,7 @@ export default {
       confirmLoading: false,
       user_btn: false,
       modal: {
+        login: false,
         language: false,
         addFunds: false,
         SSH: false,
@@ -213,6 +252,10 @@ export default {
       this.$router.push('login')
     },
     showModal (name) {
+      if (name === 'login' && this.authStore.loginButtons.length < 1) {
+        this.authStore.fetchAuth()
+      }
+
       this.modal[name] = true
     },
     closeModal (name) {
@@ -430,6 +473,11 @@ export default {
 
 .singleLang:last-of-type {
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.singleLang.disabled {
+  background: #ddd;
+  color: var(--gray);
 }
 
 .settings__item {

@@ -251,6 +251,7 @@ export default {
           switch (inst.type) {
             case 'cpanel':
               res.groupname = 'Shared Hosting'
+              res.domain = inst.config.domain
               break
             case 'openai':
               res.groupname = 'OpenAI'

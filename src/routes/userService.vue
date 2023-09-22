@@ -14,7 +14,9 @@
 
           <div v-if="service.domain" class="service-page__info">
             <div class="service-page__info-title">
-              {{ $t('key') | capitalize }}:
+              {{ (/^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i.test(service.domain)
+                ? $t('ssl_product.domain')
+                : $t('key')) | capitalize }}:
               <span style="font-weight: 400">{{ service.domain }}</span>
             </div>
           </div>
@@ -387,7 +389,7 @@ export default {
           regdate,
           name: domain.title,
           status: `cloudStateItem.${domain.state?.state || 'UNKNOWN'}`,
-          domain: domain.resources.domain,
+          domain: domain.resources.domain ?? domain.config.domain,
           billingcycle: (typeof period === 'string') ? period : this.$tc(date, period),
           recurringamount: recurringamount ?? domain.billingPlan.products[domain.product]?.price ?? '?',
           nextduedate: expiredate
