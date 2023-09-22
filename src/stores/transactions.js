@@ -14,20 +14,20 @@ export const useTransactionsStore = defineStore('transactions', () => {
   const isLoading = ref(false)
   const filter = ref([])
 
-  const filteredTransactions = computed(() => {
-    return transactions.value.filter(({ proc }) => {
+  const filteredTransactions = computed(() =>
+    transactions.value.filter(({ exec }) => {
       if (filter.value.length < 1) return true
 
       const startOf = filter.value[0]._d.getTime() / 1000
       const endOf = filter.value[1]._d.getTime() / 1000
 
-      return proc > startOf && proc < endOf
+      return exec > startOf && exec < endOf
     })
-  })
+  )
 
-  function setAll ({ pool, page, size }) {
+  function setAll ({ records, page, size }) {
     for (let i = page; i <= size / 5 * page; i++) {
-      allTransactions.value[i] = pool.slice(i * 5 / page - 5, i * 5 / page)
+      allTransactions.value[i] = records.slice(i * 5 / page - 5, i * 5 / page)
     }
   }
 
@@ -45,17 +45,17 @@ export const useTransactionsStore = defineStore('transactions', () => {
     setAll,
 
     async fetch (params) {
-      const pool = []
+      const records = []
 
       for (let i = params.limit / 5 * params.page; i >= params.page; i--) {
         if (!allTransactions.value[i]) break
 
-        pool.push(...allTransactions.value[i])
+        records.push(...allTransactions.value[i])
       }
 
-      if (pool.length > 0) {
-        transactions.value = pool
-        return { pool }
+      if (records.length > 0) {
+        transactions.value = records
+        return { records }
       }
 
       try {
@@ -65,7 +65,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         response.page = params.page
         response.size = params.limit
 
-        transactions.value = response.pool
+        transactions.value = response.records
         setAll(response)
 
         return response
@@ -73,6 +73,16 @@ export const useTransactionsStore = defineStore('transactions', () => {
         return error
       } finally {
         isLoading.value = false
+      }
+    },
+
+    async fetchCount (params) {
+      try {
+        const response = await api.post('/billing/count/reports', params)
+
+        total.value = +response.total
+      } catch (error) {
+        return error
       }
     }
   }

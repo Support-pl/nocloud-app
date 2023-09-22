@@ -1,5 +1,5 @@
 import Api from 'nocloudjsrest'
-import vuex from '@/store/index.js'
+import { useAuthStore } from '@/stores/auth.js'
 
 // const api = new Api()
 const api = new Api(VUE_APP_BASE_URL)
@@ -15,7 +15,9 @@ api.axios.interceptors.response.use(
     ) {
       console.log('credentials are not actual')
       setTimeout(() => {
-        vuex.dispatch('nocloud/auth/logout')
+        const store = useAuthStore()
+
+        store.logout()
       }, 2000)
     }
     return Promise.reject(error) // this is the important part

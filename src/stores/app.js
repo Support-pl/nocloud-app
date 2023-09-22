@@ -47,10 +47,11 @@ export const useAppStore = defineStore('app', () => {
     }
   ]
 
-  function date (timestamp) {
+  function date (timestamp, sep = '.', withTime = true, reverse) {
     if (timestamp < 1) return '-'
 
     const date = new Date(timestamp * 1000)
+    const time = date.toTimeString().split(' ')[0]
 
     const year = date.getFullYear()
     let month = date.getMonth() + 1
@@ -59,7 +60,14 @@ export const useAppStore = defineStore('app', () => {
     if (`${month}`.length < 2) month = `0${month}`
     if (`${day}`.length < 2) day = `0${day}`
 
-    return `${year}-${month}-${day}`
+    let result = `${day}${sep}${month}${sep}${year}`
+
+    if (reverse) {
+      result = `${year}${sep}${month}${sep}${day}`
+    }
+    if (withTime) result += ` ${time}`
+
+    return result
   }
 
   return {

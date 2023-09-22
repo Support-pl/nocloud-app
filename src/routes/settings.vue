@@ -159,15 +159,17 @@
 </template>
 
 <script>
+import { mapStores } from 'pinia'
 import QrcodeVue from 'qrcode.vue'
 import config from '@/appconfig.js'
+import { useAuthStore } from '@/stores/auth.js'
 import notification from '@/mixins/notification.js'
 import balance from '@/components/balance/balance.vue'
 import addFunds from '@/components/balance/addFunds.vue'
 import addSSH from '@/components/appMain/cloud/openCloud/addSSH.vue'
 
 export default {
-  name: 'Settings',
+  name: 'SettingsView',
   components: { balance, addFunds, QrcodeVue, addSSH },
   mixins: [notification],
   data () {
@@ -183,6 +185,7 @@ export default {
     }
   },
   computed: {
+    ...mapStores(useAuthStore),
     userdata () {
       return this.$store.getters['nocloud/auth/userdata']
     },
@@ -222,9 +225,9 @@ export default {
       this.showModal('language')
     },
     changeLocale (lang) {
-    	this.closeModal('language')
-    	this.$i18n.locale = lang
-    	localStorage.setItem('lang', this.$i18n.locale)
+      this.closeModal('language')
+      this.$i18n.locale = lang
+      localStorage.setItem('lang', this.$i18n.locale)
     },
     // changeLocale(lang) {
     //   this.closeModal("language");
@@ -250,7 +253,7 @@ export default {
     //     });
     // },
     loginToAdmin () {
-      const url = `https://api.${location.host.split('.').slice(1).join('.')}/admin#`
+      const url = `https://api.${location.host.split('.').slice(1).join('.')}/admin`
       const win = window.open(url)
       const token = this.$store.state.nocloud.auth.token
 
@@ -258,14 +261,14 @@ export default {
       setTimeout(() => { win.postMessage(token, url) }, 100)
     },
     logoutFunc () {
-      this.$store.dispatch('nocloud/auth/logout')
+      this.authStore.logout()
       localStorage.removeItem('data')
     },
     URLparameter (obj, outer = '') {
       let str = ''
       for (const key in obj) {
-        if (key == 'price') continue
-        if (str != '') {
+        if (key === 'price') continue
+        if (str !== '') {
           str += '&'
         }
         if (typeof obj[key] === 'object') {
@@ -277,7 +280,7 @@ export default {
       return str
     },
     addAmount (amount) {
-      if (this.amount == '') this.amount = 0
+      if (this.amount === '') this.amount = 0
       this.amount += amount
     },
     GoToPersonalArea () {

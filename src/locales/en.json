@@ -118,6 +118,8 @@
     "OS type": "OS type",
     "Location": "Location",
     "location": "location",
+    "net total": "net total",
+    "Resource": "Resource",
     "Plan": "Plan",
     "Product": "Product",
     "Addons": "Addons",

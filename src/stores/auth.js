@@ -44,9 +44,11 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     userdata,
     billingUser,
+
     currencies,
     defaultCurrency,
     unloginedCurrency,
+
     baseURL,
     isLoggedIn,
 
@@ -73,6 +75,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     logout () {
       setToken('')
+      const config = localStorage.getItem('globalConfig')
+      const lang = localStorage.getItem('lang')
+
+      localStorage.clear()
+      localStorage.setItem('globalConfig', config)
+      localStorage.setItem('lang', lang)
+
       cookies.remove(COOKIES_NAME)
       location.reload()
     },

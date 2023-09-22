@@ -126,9 +126,12 @@ if (isLogged.value) {
 onMounted(() => {
   router.onReady(() => {
     const route = router.currentRoute
+    const mustUnloggined = route.meta?.mustBeUnloggined && isLogged.value
 
     if (route.meta?.mustBeLoggined && !isLogged.value) {
       router.replace('login')
+    } else if (mustUnloggined) {
+      router.replace('/')
     }
 
     if (!route.query.lang) return
