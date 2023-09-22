@@ -233,18 +233,17 @@
 
 <script>
 import { mapActions, mapGetters, mapMutations } from 'vuex'
+import { mapState, mapWritableState } from 'pinia'
 import moment from 'moment'
-import { mapState } from 'pinia'
 import { useAppStore } from '@/stores/app.js'
+import { useTransactionsStore } from '@/stores/transactions.js'
 import config from '@/appconfig.js'
 import balance from '@/components/balance/balance.vue'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
 
 export default {
   name: 'AppHeader',
-  components: {
-    balance
-  },
+  components: { balance },
   data () {
     return {
       isOpen: false,
@@ -328,9 +327,9 @@ export default {
               onClickFuncion: () => {
                 const params = {
                   account: this.userdata.uuid,
-                  page: this.$store.getters['nocloud/transactions/page'],
-                  limit: this.$store.getters['nocloud/transactions/size'],
-                  field: 'proc',
+                  page: this.currentPage,
+                  limit: this.pageSize,
+                  field: 'exec',
                   sort: 'desc'
                 }
 
@@ -373,7 +372,6 @@ export default {
     ...mapActions('invoices', { fetchInvoices: 'fetch' }),
     ...mapActions('products', { fetchProducts: 'fetch' }),
     ...mapActions('nocloud/vms', { fetchClouds: 'fetch' }),
-    ...mapActions('nocloud/transactions', { fetchTransactions: 'fetch' }),
     ...mapActions('nocloud/auth', ['fetchUserData']),
     ...mapMutations('support', ['inverseAddTicketState']),
     getState (name) {
@@ -462,7 +460,7 @@ export default {
       this.$router.push({ name: 'newPaaS' })
     },
     updateFilter (info) {
-      if (this.active == 'support') {
+      if (this.active === 'support') {
         const filtered = {}
 
         if (!info) {
@@ -486,7 +484,7 @@ export default {
         this.$store.commit('support/updateFilter', info.map((el) => filtered[el]))
       }
 
-      if (this.active == 'billing' && this.activeInvoiceTab == 'Detail') {
+      if (this.active === 'billing' && this.activeInvoiceTab === 'Detail') {
         const dates = JSON.parse(
           localStorage.getItem('detailFilters') ?? '[]'
         ).map((el) => moment(el))
@@ -498,8 +496,8 @@ export default {
           localStorage.setItem('detailFilters', JSON.stringify(info))
         }
 
-        this.$store.commit('nocloud/transactions/updateFilter', info)
-      } else if (this.active == 'billing') {
+        this.filter = info
+      } else if (this.active === 'billing') {
         const filtered = {}
 
         if (!info) {
@@ -565,14 +563,18 @@ export default {
       'getTickets',
       'getAllTickets'
     ]),
-    ...mapGetters('nocloud/chats', { chats: 'getAllChats' }),
     ...mapState(useAppStore, ['activeTab']),
+    ...mapState(useTransactionsStore, {
+      transactions: 'filteredTransactions',
+      activeInvoiceTab: 'tab',
+      currentPage: 'page',
+      pageSize: 'size',
+      fetchTransactions: 'fetch'
+    }),
+    ...mapWritableState(useTransactionsStore, ['filter']),
+    ...mapGetters('nocloud/chats', { chats: 'getAllChats' }),
     ...mapGetters('nocloud/vms', { searchString: 'getString' }),
     ...mapGetters('invoices', ['getInvoices', 'getAllInvoices']),
-    ...mapGetters('nocloud/transactions', {
-      transactions: 'all',
-      activeInvoiceTab: 'activeTab'
-    }),
     active () {
       const { headerTitle, layoutTitle } = this.$route.meta
 

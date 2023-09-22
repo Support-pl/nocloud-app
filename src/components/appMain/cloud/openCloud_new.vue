@@ -23,7 +23,7 @@
                   :style="{ 'background-color': stateColor }"
                 />
                 <div class="Fcloud__title">
-                  {{ VM.title ?? VM.resources.NAME }}
+                  {{ VM.title ?? VM.resources.NAME ?? '-' }}
                 </div>
                 <div
                   class="Fcloud__status"
@@ -389,7 +389,7 @@ export default {
     },
     stateVM () {
       if (this.VM.server_on) {
-        return this.VM.resources?.STATE.replaceAll('_', ' ')
+        return this.VM.resources?.STATE?.replaceAll('_', ' ') ?? 'UNKNOWN'
       }
       if (!this.VM.state) return 'UNKNOWN'
 
@@ -401,6 +401,7 @@ export default {
       if (this.VM.state.meta.state === 5) return 'SUSPENDED'
       if (this.VM.data.suspended_manually) return 'SUSPENDED'
       if (this.VM.state.meta.state === 'BUILD') return 'BUILD'
+
       switch (state) {
         case 'LCM_INIT':
           return 'POWEROFF'
@@ -467,24 +468,6 @@ export default {
       },
       immediate: true
     },
-    getInstances (value) {
-      const inst = value.find(({ uuid }) => uuid === this.$route.params.uuid)
-
-      if (inst) return
-
-      this.isLoading = true
-      this.$api.get(this.baseURL, {
-        params: {
-          run: 'on_info',
-          server_id: this.$route.params.uuid
-        }
-      })
-        .then((response) => {
-          this.resources = response
-          this.renameNewName = response.NAME
-        })
-        .finally(() => { this.isLoading = false })
-    },
     'VM.server_on': {
       handler (value) {
         if (!value) return
@@ -504,9 +487,27 @@ export default {
 
     if (this.isLogged) {
       this.$store.dispatch('nocloud/auth/fetchBillingData')
-      this.$store.dispatch('nocloud/vms/fetch')
       this.$store.dispatch('products/fetch')
       this.$store.dispatch('nocloud/sp/fetch')
+      this.$store.dispatch('nocloud/vms/fetch')
+        .then(() => {
+          const inst = this.getInstances.find(({ uuid }) => uuid === this.$route.params.uuid)
+
+          if (inst) return
+
+          this.isLoading = true
+          this.$api.get(this.baseURL, {
+            params: {
+              run: 'on_info',
+              server_id: this.$route.params.uuid
+            }
+          })
+            .then((response) => {
+              this.resources = response
+              this.renameNewName = response.NAME
+            })
+            .finally(() => { this.isLoading = false })
+        })
     }
 
     if (this.$store.getters['nocloud/auth/currencies'].length < 1) {

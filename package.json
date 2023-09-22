@@ -49,6 +49,7 @@
       "VUE_APP_BASE_URL",
       "WebSocket",
       "localStorage",
+      "location",
       "caches"
     ]
   }

@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth.js'
 import { useAppStore } from './app.js'
-import api from '@/api'
+import api from '@/api.js'
 
 export const useInvoicesStore = defineStore('invoices', () => {
   const auth = useAuthStore()
@@ -60,8 +60,8 @@ export const useInvoicesStore = defineStore('invoices', () => {
           if (el.meta.invoiceCreate) return
           result.push({
             id: el.uuid,
-            date: app.date(el.proc),
-            duedate: app.date(el.exec),
+            date: app.date(el.proc, '-', false, true),
+            duedate: app.date(el.exec, '-', false, true),
             total: el.total,
             status: 'Unpaid',
             credit: 0,

@@ -3,6 +3,7 @@ FROM node:latest AS ui-builder
 WORKDIR /app
 
 COPY . .
+RUN yarn set version latest
 RUN yarn install && yarn build
 
 FROM golang:1.19-alpine as server-builder
