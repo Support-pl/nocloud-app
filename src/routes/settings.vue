@@ -128,7 +128,7 @@
             <div
               v-for="text in authStore.loginButtons"
               :key="text"
-              :class="{ disabled: userdata.data?.auth_types?.includes(text) }"
+              :class="{ disabled: userdata.data?.oauth_types?.includes(text) }"
               class="singleLang"
               @click="authStore.linkAccount(text)"
             >
@@ -142,7 +142,7 @@
                 {{ text | capitalize }}
               </span>
               <span
-                v-if="userdata.data?.auth_types?.includes(text)"
+                v-if="userdata.data?.oauth_types?.includes(text)"
                 class="singleLang__current-marker"
               />
             </div>
@@ -478,6 +478,7 @@ export default {
 .singleLang.disabled {
   background: #ddd;
   color: var(--gray);
+  pointer-events: none;
 }
 
 .settings__item {

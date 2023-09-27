@@ -561,7 +561,7 @@ export default {
       this.sendAction('on_snapshot_delete', { snap_id })
         .then(({ response }) => {
           if (response?.error) throw response?.error
-          const i = this.snapshots.find(({ SNAPSHOT_ID }) => SNAPSHOT_ID === snap_id)
+          const i = this.snapshots.data.find(({ SNAPSHOT_ID }) => SNAPSHOT_ID === snap_id)
 
           this.snapshots.data.splice(i, 1)
           this.openNotificationWithIcon('success', {

@@ -304,7 +304,7 @@ export default {
             const { period } = domain.billingPlan.products[domain.product]
 
             domain.data.expiry = {
-              expiredate: this.date(domain.data.last_monitoring ?? 0),
+              expiredate: this.date(domain.data.next_payment_date ?? 0),
               regdate: domain.data.creation ?? '0000-00-00'
             }
             domain.resources.period = this.getPeriod(period)
@@ -325,7 +325,7 @@ export default {
             }
 
             domain.data.expiry = {
-              expiredate: this.date(domain.data.last_monitoring ?? 0),
+              expiredate: this.date(domain.data.next_payment_date ?? 0),
               regdate: domain.data.creation ?? '0000-00-00'
             }
             groupname = 'OpenAI'
@@ -336,7 +336,7 @@ export default {
             const { period } = domain.billingPlan.products[domain.product]
 
             domain.data.expiry = {
-              expiredate: this.date(domain.data.last_monitoring ?? 0),
+              expiredate: this.date(domain.data.next_payment_date ?? 0),
               regdate: domain.data.creation ?? '0000-00-00'
             }
             domain.resources.period = this.getPeriod(period)

@@ -56,7 +56,17 @@
               {{ $t('clientinfo.password') | capitalize }}:
             </a-col>
             <a-col span="16" :xs="18">
-              <a-input
+              <password-meter
+                :style="{
+                  height: (config.password.length > 0) ? '10px' : '0',
+                  marginBottom: (config.password.length < 1) ? null : '5px',
+                  marginTop: 0
+                }"
+                :password="config.password"
+                @score="(value) => score = value.score"
+              />
+
+              <a-input-password
                 v-if="!fetchLoading"
                 v-model="config.password"
                 placeholder="password"
@@ -149,7 +159,13 @@
 
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
-            <a-button type="primary" block shape="round" @click="orderConfirm">
+            <a-button
+              block
+              shape="round"
+              type="primary"
+              :disabled="score < 4"
+              @click="orderConfirm"
+            >
               {{ $t("order") | capitalize }}
             </a-button>
             <a-modal
@@ -177,17 +193,19 @@
 </template>
 
 <script>
+import passwordMeter from 'vue-simple-password-meter'
 import config from '@/appconfig.js'
 import addFunds from '@/components/balance/addFunds.vue'
 
 export default {
   name: 'VirtualComponent',
-  components: { addFunds },
+  components: { addFunds, passwordMeter },
   data: () => ({
     plan: null,
     service: null,
     namespace: null,
     fetchLoading: false,
+    score: 0,
 
     options: { size: '', model: '', period: '' },
     config: { domain: '', email: '', password: '' },

@@ -223,10 +223,10 @@
               {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}
             </div>
           </div>
-          <div class="block__column" v-if="VM.data.last_monitoring">
+          <div class="block__column" v-if="VM.data.next_payment_date">
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
-              {{ new Intl.DateTimeFormat().format(VM.data.last_monitoring * 1000) }}
+              {{ new Intl.DateTimeFormat().format(VM.data.next_payment_date * 1000) }}
               <a-icon type="sync" title="Renew" @click="handleOk('renew')" />
             </div>
           </div>
@@ -825,8 +825,8 @@ export default defineComponent({
     },
     sendRenew() {
       const { period } = this.VM.billingPlan.products[this.VM.product];
-      const currentPeriod = this.date(this.VM.data.last_monitoring);
-      const newPeriod = this.date(this.VM.data.last_monitoring + +period);
+      const currentPeriod = this.date(this.VM.data.next_payment_date);
+      const newPeriod = this.date(this.VM.data.next_payment_date + +period);
 
       this.$confirm({
         title: this.$t("Do you want to renew server?"),
