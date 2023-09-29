@@ -610,6 +610,7 @@ export default {
   mixins: [notification],
   data () {
     return {
+      isPlansLoading: true,
       dataLocalStorage: '',
       productSize: '',
       activeKey: 'location',
@@ -687,7 +688,7 @@ export default {
 
   computed: {
     ...mapGetters('nocloud/namespaces', ['getNameSpaces']),
-    ...mapGetters('nocloud/plans', ['getPlans', 'isPlansLoading']),
+    ...mapGetters('nocloud/plans', ['getPlans']),
     ...mapGetters('nocloud/sp', ['getSP']),
     ...mapGetters('nocloud/auth', ['userdata', 'billingData', 'isLoggedIn']),
     ...mapGetters('nocloud/vms', ['getServicesFull']),
@@ -1032,6 +1033,7 @@ export default {
       }
 
       if (!this.itemSP?.uuid) return
+      this.isPlansLoading = true
       this.$store.dispatch('nocloud/plans/fetch', {
         sp_uuid: this.itemSP.uuid,
         anonymously: !this.isLoggedIn
@@ -1049,6 +1051,9 @@ export default {
           if (this.dataLocalStorage) {
             this.activeKey = this.dataLocalStorage.activeKey ?? 'location'
           }
+        })
+        .finally(() => {
+          this.isPlansLoading = false
         })
 
       const type = this.options.drive ? 'SSD' : 'HDD'
@@ -1227,7 +1232,7 @@ export default {
 
             this.options.ram.size = product.resources.ram / 1024
             this.options.cpu.size = product.resources.cpu
-            this.options.disk.size = product.resources.disk ?? this.options.disk.size
+            this.options.disk.size = product.resources.disk ?? plan.meta.minDisk ?? 20 * 1024
             this.product = product
           } else if (
             (value.title.includes(this.productSize) && !this.getPlan.type.includes('cloud')) ||

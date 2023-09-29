@@ -30,10 +30,10 @@
             <!-- <div v-if="loginError" class="login__error">{{loginError}}</div> -->
 
             <!-- <div class="inputs__log-pas">
-							<input type="text" placeholder="Email" v-model="userinfo.email">
-							<span class="login__horisontal-line"></span>
-							<input type="password" :placeholder="$t('clientinfo.password') | capitalize"  v-model="userinfo.password">
-						</div> -->
+              <input type="text" placeholder="Email" v-model="userinfo.email">
+              <span class="login__horisontal-line"></span>
+              <input type="password" :placeholder="$t('clientinfo.password') | capitalize"  v-model="userinfo.password">
+            </div> -->
 
             <div class="inputs__log-pas">
               <input
@@ -111,7 +111,7 @@
               <span class="login__horisontal-line" />
               <input v-model="userinfo.tax_id" placeholder="VAT ID">
               <!-- <span class="login__horisontal-line"></span>
-							<input :placeholder="$t('clientinfo.state') | capitalize" v-model="userinfo.state"> -->
+              <input :placeholder="$t('clientinfo.state') | capitalize" v-model="userinfo.state"> -->
               <span class="login__horisontal-line" />
               <input v-model="userinfo.city" :placeholder="$t('clientinfo.city') + ' *' | capitalize">
               <span class="login__horisontal-line" />
@@ -135,17 +135,15 @@
               </a-select>
             </div>
 
-            <template>
-              <button v-if="!registerLoading" class="login__submit" @click.prevent="submitHandler()">
-                {{ $t('clientinfo.register') | capitalize }}
-              </button>
+            <button v-if="!registerLoading" class="login__submit" @click.prevent="submitHandler">
+              {{ $t('clientinfo.register') | capitalize }}
+            </button>
 
-              <div v-else class="login__loading">
-                <span class="load__item" />
-                <span class="load__item" />
-                <span class="load__item" />
-              </div>
-            </template>
+            <div v-else class="login__loading">
+              <span class="load__item" />
+              <span class="load__item" />
+              <span class="load__item" />
+            </div>
           </form>
         </div>
         <div class="register__already-has" style="margin-top: 40px">
@@ -231,9 +229,6 @@ export default {
   },
   methods: {
     submitHandler () {
-      this.send(this)
-    },
-    send () {
       const info = (this.invoiceChecked)
         ? { ...this.userinfo }
         : {
@@ -259,7 +254,7 @@ export default {
         }
       }
 
-      const regexEmail = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,15})+$/
+      const regexEmail = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
       if (!this.userinfo.email.match(regexEmail)) {
         this.$message.warn(this.$t('email is not valid'))
         return
@@ -273,7 +268,7 @@ export default {
 
       this.registerLoading = true
       api.get(this.baseURL, {
-        params: { ...temp, language: locale, run: 'create_user' }
+        params: { ...temp, app_language: locale, run: 'create_user' }
       })
         .then((res) => {
           if (res.result === 'error') this.$message.error(res.message)
@@ -298,9 +293,9 @@ export default {
 
 <style>
 
-.logo{
-	display: flex;
-	grid-gap: 15px
+.logo {
+  display: flex;
+  grid-gap: 15px
 }
 
 .logo__image {
@@ -311,118 +306,118 @@ export default {
   max-width: 100%;
 }
 
-.pos_top{
-	flex-direction: column-reverse;
+.pos_top {
+  flex-direction: column-reverse;
 }
 
-.pos_bottom{
-	flex-direction: column;
+.pos_bottom {
+  flex-direction: column;
 }
 
-.pos_left{
-	flex-direction: row-reverse;
+.pos_left {
+  flex-direction: row-reverse;
 }
 
-.pos_right{
-	flex-direction: row;
+.pos_right {
+  flex-direction: row;
 }
 
-.logo__title{
-	text-align: center;
+.logo__title {
+  text-align: center;
 }
 
-.clipPathSvg{
-	height: 0;
-	width: 0;
+.clipPathSvg {
+  height: 0;
+  width: 0;
 }
 
-.login{
-	height: 100%;
-	display: flex;
-	flex-direction: column;
+.login {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.login__layout{
-	flex: 1 0;
+.login__layout {
+  flex: 1 0;
 }
 
-.login__title{
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	background: var(--main);
-	clip-path: url(#myCurve);
-	color: var(--bright_font);
-	font-size: 36px;
-	font-weight: bold;
-	flex-shrink: 0;
-	min-height: 50%;
+.login__title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--main);
+  clip-path: url(#myCurve);
+  color: var(--bright_font);
+  font-size: 36px;
+  font-weight: bold;
+  flex-shrink: 0;
+  min-height: 50%;
 }
 
-.login__title::selection{
-	color: var(--main);
-	background: var(--bright_font);
+.login__title::selection {
+  color: var(--main);
+  background: var(--bright_font);
 }
-.login__title::moz-selection{
-	color: var(--main);
-	background: var(--bright_font);
-}
-
-.login__UI{
-	position: relative;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: space-around;
-	overflow-y: auto;
+.login__title::moz-selection {
+  color: var(--main);
+  background: var(--bright_font);
 }
 
-.login__inputs{
-	display: flex;
-	flex-direction: column;
-	width: 80%;
-	max-width: 500px;
-	position: relative;
+.login__UI {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  overflow-y: auto;
 }
 
-.login__horisontal-line{
-	display: block;
-	width: 95%;
-	height: 1px;
-	margin: auto;
-	background: #f4f4f4;
+.login__inputs {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  max-width: 500px;
+  position: relative;
 }
 
-.inputs__log-pas{
-	display: flex;
-	flex-direction: column;
-	border-radius: 10px;
-	overflow: hidden;
-	box-shadow: 3px 8px 20px rgba(164, 180, 244, .5);
-	margin-bottom: 25px;
+.login__horisontal-line {
+  display: block;
+  width: 95%;
+  height: 1px;
+  margin: auto;
+  background: #f4f4f4;
 }
 
-.login__submit{
-	border: none;
-	outline: none;
-	color: #fff;
-	font-weight: 600;
-	border-radius: 10px;
-	padding: 7px 20px;
-	background: linear-gradient(90deg, #427cf7, #8baef2);
-	background-size: 150% 200%;
-	background-position: 0 0;
-	/* animation: AnimationName 1s ease infinite; */
-	cursor: pointer;
-	width: 100%;
-}
-#qrcode{
-	display: none;
+.inputs__log-pas {
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 3px 8px 20px rgba(164, 180, 244, .5);
+  margin-bottom: 25px;
 }
 
-.login__submit:hover{
-	animation: gradient 2s ease infinite;
+.login__submit {
+  border: none;
+  outline: none;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 7px 20px;
+  background: linear-gradient(90deg, #427cf7, #8baef2);
+  background-size: 150% 200%;
+  background-position: 0 0;
+  /* animation: AnimationName 1s ease infinite; */
+  cursor: pointer;
+  width: 100%;
+}
+#qrcode {
+  display: none;
+}
+
+.login__submit:hover {
+  animation: gradient 2s ease infinite;
 }
 
 @keyframes gradient {
@@ -432,26 +427,26 @@ export default {
 }
 
 .inputs__log-pas input,
-.inputs__log-pas select{
-	border: none;
-	outline: none;
-	padding: 10px 15px;
+.inputs__log-pas select {
+  border: none;
+  outline: none;
+  padding: 10px 15px;
 }
 
 .inputs__log-pas .ant-select-search__field {
   padding-left: 0;
 }
 
-.inputs__log-pas input::placeholder{
-	opacity: .5;
+.inputs__log-pas input::placeholder {
+  opacity: .5;
 }
 
-.register__already-has a{
-	text-decoration: none;
+.register__already-has a {
+  text-decoration: none;
 }
 
-.register__already-has a:hover{
-	text-decoration: underline;
+.register__already-has a:hover {
+  text-decoration: underline;
 }
 
 .inputs__log-pas
@@ -460,70 +455,70 @@ export default {
   margin-left: 15px;
 }
 
-.login__loading{
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: 35px;
+.login__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 35px;
 }
 
 .load__item:not(:first-child){
-	margin-left: 10px;
+  margin-left: 10px;
 }
 
-.load__item{
-	display: block;
-	width: 25px;
-	height: 25px;
-	background: #437dfb;
-	border-radius: 50%;
+.load__item {
+  display: block;
+  width: 25px;
+  height: 25px;
+  background: #437dfb;
+  border-radius: 50%;
 }
 
 .load__item:nth-child(1){
-	animation: loading 1.4s .2s ease infinite;
+  animation: loading 1.4s .2s ease infinite;
 }
 .load__item:nth-child(2){
-	animation: loading 1.4s .4s ease infinite;
+  animation: loading 1.4s .4s ease infinite;
 }
 .load__item:nth-child(3){
-	animation: loading 1.4s .6s ease infinite;
+  animation: loading 1.4s .6s ease infinite;
 }
 
-.inputs__log-pas .ant-select-selection{
-	border: none;
+.inputs__log-pas .ant-select-selection {
+  border: none;
 }
 
 @keyframes loading {
-	from, to {transform: scale(1)}
-	50% {transform: scale(.2);}
+  from, to {transform: scale(1)}
+  50% {transform: scale(.2);}
 }
 
-.login__error{
-	color: tomato;
-	text-align: center;
-	position: absolute;
-	top: -35px;
-	left: 50%;
-	transform: translateX(-50%);
-	width: 90%;
+.login__error {
+  color: tomato;
+  text-align: center;
+  position: absolute;
+  top: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
 }
 
 @media screen and (min-width: 1024px){
-	.login{
-		flex-direction: row;
-	}
+  .login {
+    flex-direction: row;
+  }
 
-	.login__title{
-		clip-path: none;
-	}
+  .login__title {
+    clip-path: none;
+  }
 
-	.login__UI{
-		justify-content: center;
-	}
+  .login__UI {
+    justify-content: center;
+  }
 
-	#qrcode{
-		display: inline-block;
-	}
+  #qrcode {
+    display: inline-block;
+  }
 }
 
 </style>

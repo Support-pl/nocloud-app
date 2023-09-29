@@ -1,7 +1,7 @@
 <template>
   <a-collapse
     accordion
-    :activeKey="activeKey"
+    :active-key="activeKey"
     :style="{ 'border-radius': '20px' }"
     @change="(value) => $emit('setData', { key: 'activeKey', value })"
   >
@@ -19,9 +19,77 @@
       :disabled="itemSP ? false : true"
     >
       <template v-if="getPlan && getPlan.uuid">
+        <a-row v-if="resources.cpu.length > 0" type="flex" justify="space-between" align="middle">
+          <a-col>
+            <span style="display: inline-block">{{ $t('cpu') }}: (cores)</span>
+          </a-col>
+          <a-col :span="24" :md="20">
+            <a-slider
+              range
+              style="margin-top: 10px"
+              :marks="{ ...resources.cpu }"
+              :tip-formatter="null"
+              :default-value="[0, resources.cpu.length - 1]"
+              :max="resources.cpu.length - 1"
+              :min="0"
+              @change="([i, j]) => filters.cpu = [resources.cpu[i], resources.cpu[j]]"
+            />
+          </a-col>
+        </a-row>
+
+        <a-row v-if="resources.ram.length > 0" type="flex" justify="space-between" align="middle">
+          <a-col>
+            <span style="display: inline-block">{{ $t('ram') }}: (Gb)</span>
+          </a-col>
+          <a-col :span="24" :md="20">
+            <a-slider
+              range
+              style="margin-top: 10px"
+              :marks="{ ...resources.ram }"
+              :tip-formatter="null"
+              :default-value="[0, resources.ram.length - 1]"
+              :max="resources.ram.length - 1"
+              :min="0"
+              @change="([i, j]) => filters.ram = [resources.ram[i], resources.ram[j]]"
+            />
+          </a-col>
+        </a-row>
+
+        <a-divider style="margin: 10px 0" />
+
+        <div v-if="getProducts.length > 5" class="newCloud__drive">
+          <span
+            style="display: inline-block"
+            :style="{ gridColumn: (driveTypes.length < 2) ? '1 / 3' : null }"
+          >
+            {{ $t("Drive") }}:
+          </span>
+          <a-switch v-if="driveTypes.length > 1" v-model="options.drive">
+            <span slot="checkedChildren">SSD</span>
+            <span slot="unCheckedChildren">HDD</span>
+          </a-switch>
+          <a-slider
+            style="margin-top: 10px"
+            :tip-formatter="null"
+            :step="options.disk.step"
+            :max="options.disk.max"
+            :min="options.disk.min"
+            :value="parseFloat(diskSize)"
+            @change="(value) => (options.disk.size = value * 1024)"
+          />
+          <div class="changing__field" style="text-align: right">
+            <template v-if="isProductsExist">
+              {{ diskSize }}
+            </template>
+            <template v-else>
+              <a-input-number v-model="options.disk.size" allow-clear :min="0" :max="512 * 1024" /> Mb
+            </template>
+          </div>
+        </div>
+
         <a-slider
-          style="margin-top: 10px"
           v-if="getProducts.length > 1 && getProducts.length < 6"
+          style="margin-top: 10px"
           :marks="{ ...getProducts }"
           :tip-formatter="null"
           :max="getProducts.length - 1"
@@ -29,11 +97,12 @@
           :value="getProducts.indexOf(productSize)"
           @change="(value) => $emit('setData', { key: 'productSize', value: getProducts[value] })"
         />
+
         <div v-else class="order__grid">
           <div
-            class="order__grid-item"
-            v-for="product of getProducts"
+            v-for="product of filteredProducts"
             :key="product"
+            class="order__grid-item"
             :class="{ 'order__grid-item--active': productSize === product }"
             @click="$emit('setData', { key: 'productSize', value: product })"
           >
@@ -48,11 +117,11 @@
         </div>
 
         <a-row
+          v-if="getProducts.length > 1 && getProducts.length < 6"
           type="flex"
           justify="space-between"
           align="middle"
           class="newCloud__prop"
-          v-if="getProducts.length > 1 && getProducts.length < 6"
           :style="{ marginTop: (!getProducts.length < 2) ? null : '50px' }"
         >
           <a-col>
@@ -60,42 +129,46 @@
           </a-col>
           <transition name="textchange" mode="out-in">
             <a-col class="changing__field" span="6" style="text-align: right">
-              <template v-if="isProductsExist">{{ options.cpu.size }} vCPU</template>
+              <template v-if="isProductsExist">
+                {{ options.cpu.size }} vCPU
+              </template>
               <template v-else>
-                <a-input-number allow-clear v-model="options.cpu.size" :min="0" :max="32" /> Gb
+                <a-input-number v-model="options.cpu.size" allow-clear :min="0" :max="32" /> Gb
               </template>
             </a-col>
           </transition>
         </a-row>
 
         <a-row
+          v-if="getProducts.length < 6"
           type="flex"
           justify="space-between"
           align="middle"
           class="newCloud__prop"
-          v-if="getProducts.length < 6"
         >
           <a-col>
             <span style="display: inline-block; width: 70px">RAM:</span>
           </a-col>
           <transition name="textchange" mode="out-in">
             <a-col class="changing__field" span="6" style="text-align: right">
-              <template v-if="isProductsExist">{{ options.ram.size }} Gb</template>
+              <template v-if="isProductsExist">
+                {{ options.ram.size.toFixed(0) }} Gb
+              </template>
               <template v-else>
-                <a-input-number allow-clear v-model="options.ram.size" :min="0" :max="64" /> Gb
+                <a-input-number v-model="options.ram.size" allow-clear :min="0" :max="64" /> Gb
               </template>
             </a-col>
           </transition>
         </a-row>
 
-        <div class="newCloud__drive">
+        <div v-if="getProducts.length < 6" class="newCloud__drive">
           <span
             style="display: inline-block"
             :style="{ gridColumn: (driveTypes.length < 2) ? '1 / 3' : null }"
           >
             {{ $t("Drive") }}:
           </span>
-          <a-switch v-model="options.drive" v-if="driveTypes.length > 1">
+          <a-switch v-if="driveTypes.length > 1" v-model="options.drive">
             <span slot="checkedChildren">SSD</span>
             <span slot="unCheckedChildren">HDD</span>
           </a-switch>
@@ -109,9 +182,11 @@
             @change="(value) => (options.disk.size = value * 1024)"
           />
           <div class="changing__field" style="text-align: right">
-            <template v-if="isProductsExist">{{ diskSize }}</template>
+            <template v-if="isProductsExist">
+              {{ diskSize }}
+            </template>
             <template v-else>
-              <a-input-number allow-clear v-model="options.disk.size" :min="0" :max="512 * 1024" /> Mb
+              <a-input-number v-model="options.disk.size" allow-clear :min="0" :max="512 * 1024" /> Mb
             </template>
           </div>
         </div>
@@ -161,25 +236,29 @@
       :header="`${$t('os')}: ${(options.os.name == '') ? ' ' : ` (${options.os.name})`}`"
     >
       <div class="newCloud__option-field">
-        <div class="newCloud__template" v-if="this.itemSP">
+        <div v-if="itemSP" class="newCloud__template">
           <div
             v-for="(item, index) in images"
-            class="newCloud__template-item"
             :key="index"
+            class="newCloud__template-item"
             :class="{ active: options.os.name == item.name }"
             @click="setOS(item, index)"
           >
             <template v-if="item.warning">
               <div class="newCloud__template-image">
-                <img src="/img/OS/default.png" :alt="item.desc" />
+                <img src="/img/OS/default.png" :alt="item.desc">
               </div>
-              <div class="newCloud__template-name">{{ item.name }}</div>
+              <div class="newCloud__template-name">
+                {{ item.name }}
+              </div>
             </template>
             <template v-else>
               <div class="newCloud__template-image">
-                <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc" />
+                <img :src="`/img/OS/${osName(item.name)}.png`" :alt="item.desc">
               </div>
-              <div class="newCloud__template-name">{{ item.name }}</div>
+              <div class="newCloud__template-name">
+                {{ item.name }}
+              </div>
             </template>
           </div>
         </div>
@@ -191,7 +270,7 @@
                 :value="vmName"
                 @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
               />
-              <div style="line-height: 1.5; color: var(--err)" v-if="vmName.length < 2">
+              <div v-if="vmName.length < 2" style="line-height: 1.5; color: var(--err)">
                 {{ $t('ssl_product.field is required') }}
               </div>
             </a-form-item>
@@ -202,7 +281,7 @@
                 :value="username"
                 @change="({ target: { value } }) => $emit('setData', { key: 'username', value })"
               />
-              <div style="line-height: 1.5; color: var(--err)" v-if="username.length < 2">
+              <div v-if="username.length < 2" style="line-height: 1.5; color: var(--err)">
                 {{ $t('ssl_product.field is required') }}
               </div>
             </a-form-item>
@@ -345,10 +424,10 @@
 </template>
 
 <script>
-import passwordMeter from "vue-simple-password-meter";
+import passwordMeter from 'vue-simple-password-meter'
 
 export default {
-  name: 'createInstance-ione',
+  name: 'CreateInstanceIone',
   components: { passwordMeter },
   props: {
     activeKey: { type: String, required: true },
@@ -362,177 +441,236 @@ export default {
     vmName: { type: String, required: true },
     username: { type: String, required: true },
     password: { type: String, required: true },
-    sshKey: { type: String }
+    sshKey: { type: String, default: null }
   },
-  data: () => ({ panelHeight: null }),
-  methods: {
-    getProduct(product) {
-      const products = Object.values(this.getPlan.products);
-
-      return products.find(({ title }) => title === product)?.resources;
-    },
-    setOS(item, index) {
-      if (item.warning) return;
-      this.options.os.id = +index;
-      this.options.os.name = item.name;
-    },
-    osName(name) {
-      return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0];
-    },
-    changePeriods() {
-      const value = [];
-      const types = new Set();
-      const day = 3600 * 24
-      const month = day * 30;
-      const year = day * 365;
-
-      this.plans.forEach((plan) => {
-        types.add(plan.type);
-
-        if (plan.kind === 'DYNAMIC') value.push(
-          { value: 'Hourly', label: 'ssl_product.Hourly' }
-        );
-
-        if (plan.kind !== 'STATIC') return;
-        const periods = Object.values(plan.products).map((el) => +el.period);
-
-        if (periods.includes(day)) value.push(
-          { value: 'Daily', label: 'daily', period: day }
-        );
-
-        if (periods.includes(month)) value.push(
-          { value: 'Monthly', label: 'ssl_product.Monthly', period: month }
-        );
-
-        if (periods.includes(year)) value.push(
-          { value: 'Annually', label: 'annually', period: year }
-        );
-
-        if (periods.includes(year * 2)) value.push(
-          { value: 'Biennially', label: 'biennially', period: year * 2 }
-        );
-      });
-
-      if (types.size > 1) return;
-      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period);
-
-      this.options.drive = false;
-      this.$emit('setData', { key: 'periods', value });
-    },
-    changeNetwork(type) {
-      switch (type) {
-        case 'public':
-          if (!this.options.network.public.status) {
-            this.options.network.private.status = true;
-            this.options.network.public.count = 0;
-          }
-          break;
-        case 'private':
-          if (!this.options.network.private.status) {
-            this.options.network.public.status = true;
-            this.options.network.private.count = 0;
-          }
-          break;
-      }
-    },
-    changeMinMax(value) {
-      const { max, min } = this.options.disk;
-
-      if (value === 128 && max === 128) this.options.disk.min -= 20;
-      if (max === value) {
-        if (max >= 512) return;
-        this.options.disk.max += 128;
-        this.options.disk.min += 128;
-      }
-      if (min === 128 && value === 128) this.options.disk.min += 20;
-      if (min === value) {
-        if (min <= 20) return;
-        this.options.disk.max -= 128;
-        this.options.disk.min -= 128;
-      }
-    },
-    changePanelHeight() {
-      setTimeout(() => {
-        const panel = document.querySelector('.ant-collapse-content')?.lastElementChild;
-        const height = (panel) ? getComputedStyle(panel).height : null;
-
-        this.panelHeight = (this.activeKey === 'location') ? height : null;
-      });
-    }
-  },
-  created() {
-    if (!this.user?.uuid && this.isLogged) {
-      this.$store.dispatch('nocloud/auth/fetchUserData');
-    }
-    this.changePeriods();
-  },
-  beforeMount() {
-    const images = Object.entries(this.itemSP?.publicData.templates ?? {});
-
-    if (images.length === 1) this.setOS(images[0][1], images[0][0]);
-    this.changePanelHeight();
-  },
+  data: () => ({
+    panelHeight: null,
+    filters: { cpu: [], ram: [] }
+  }),
   computed: {
-    user() {
-      return this.$store.getters['nocloud/auth/userdata'];
+    user () {
+      return this.$store.getters['nocloud/auth/userdata']
     },
-    isLogged() {
-      return this.$store.getters['nocloud/auth/isLoggedIn'];
+    isLogged () {
+      return this.$store.getters['nocloud/auth/isLoggedIn']
     },
-    isProductsExist() {
-      return this.getProducts.length > 0;
+    isProductsExist () {
+      return this.getProducts.length > 0
     },
-    images() {
-      const { templates } = this.itemSP.publicData;
-      const images = {};
+    images () {
+      const { templates } = this.itemSP.publicData
+      const images = {}
 
       Object.entries(templates ?? {}).forEach(([key, value]) => {
         if (value.is_public !== false) {
-          images[key] = value;
+          images[key] = value
         }
-      });
+      })
 
-      return images;
+      return images
     },
-    networkHeader() {
-      const pub = this.options.network.public;
-      const priv = this.options.network.private;
+    resources () {
+      const cpu = []
+      const ram = []
+
+      if (this.getProducts.length < 6) return { cpu, ram }
+      this.plans.forEach(({ products }) => {
+        Object.values(products).forEach(({ resources, title }) => {
+          if (!this.getProducts.includes(title)) return
+          if (!cpu.includes(resources.cpu)) {
+            cpu.push(resources.cpu)
+          }
+          if (!ram.includes(Math.round(resources.ram / 1024))) {
+            ram.push(Math.round(resources.ram / 1024))
+          }
+        })
+      })
+
+      cpu.sort((a, b) => a - b)
+      ram.sort((a, b) => a - b)
+
+      return { cpu, ram }
+    },
+    filteredProducts () {
+      const result = []
+
+      this.plans.forEach(({ products }) => {
+        Object.values(products).forEach(({ resources, title }) => {
+          if (!this.getProducts.includes(title)) return
+          const byCpu = resources.cpu >= this.filters.cpu.at(0) &&
+            resources.cpu <= this.filters.cpu.at(-1)
+
+          const byRam = Math.round(resources.ram / 1024) >= this.filters.ram.at(0) &&
+            Math.round(resources.ram / 1024) <= this.filters.ram.at(-1)
+
+          if (byCpu && byRam && !result.includes(title)) result.push(title)
+        })
+      })
+
+      return result
+    },
+    networkHeader () {
+      const pub = this.options.network.public
+      const priv = this.options.network.private
 
       if (!this.itemSP) {
-        return " ";
+        return ' '
       }
       if (pub.status && priv.status) {
-        return ` (Public - ${pub.count}, Private - ${priv.count})`;
+        return ` (Public - ${pub.count}, Private - ${priv.count})`
       }
       if (pub.status) {
-        return ` (Public - ${pub.count})`;
+        return ` (Public - ${pub.count})`
       }
       if (priv.status) {
-        return ` (Private - ${priv.count})`;
+        return ` (Private - ${priv.count})`
       }
-      return " ";
+      return ' '
     },
-    planHeader() {
+    planHeader () {
       if (this.itemSP && this.getPlan) {
-        return this.tarification === "Hourly"
-          ? ` (VDC ${this.$t("Pay-as-you-Go")})`
-          : ` (VDS ${this.$t("Pre-Paid")})`;
+        return this.tarification === 'Hourly'
+          ? ` (VDC ${this.$t('Pay-as-you-Go')})`
+          : ` (VDS ${this.$t('Pre-Paid')})`
       } else {
-        return " ";
+        return ' '
       }
     },
-    diskSize() {
-      const size = (this.options.disk.size / 1024).toFixed(1);
+    diskSize () {
+      const size = (this.options.disk.size / 1024).toFixed(1)
 
-      return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`;
+      return (size >= 1) ? `${size} Gb` : `${this.options.disk.size} Mb`
     },
-    driveTypes() {
-      return this.getPlan.resources.filter(({ key }) => key.includes('drive'));
+    driveTypes () {
+      return this.getPlan.resources.filter(({ key }) => key.includes('drive'))
     }
   },
   watch: {
-    plans() { this.changePeriods() },
-    activeKey() { this.changePanelHeight() }
+    plans () { this.changePeriods() },
+    activeKey () { this.changePanelHeight() },
+    'resources.cpu' (value) {
+      this.filters.cpu = [value.at(0), value.at(-1)]
+    },
+    'resources.ram' (value) {
+      this.filters.ram = [value.at(0), value.at(-1)]
+    }
+  },
+  created () {
+    if (!this.user?.uuid && this.isLogged) {
+      this.$store.dispatch('nocloud/auth/fetchUserData')
+    }
+    this.changePeriods()
+  },
+  beforeMount () {
+    const images = Object.entries(this.itemSP?.publicData.templates ?? {})
+
+    if (images.length === 1) this.setOS(images[0][1], images[0][0])
+    this.changePanelHeight()
+  },
+  methods: {
+    getProduct (product) {
+      const products = Object.values(this.getPlan.products)
+
+      return products.find(({ title }) => title === product)?.resources
+    },
+    setOS (item, index) {
+      if (item.warning) return
+      this.options.os.id = +index
+      this.options.os.name = item.name
+    },
+    osName (name) {
+      return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0]
+    },
+    changePeriods () {
+      const value = []
+      const types = new Set()
+      const day = 3600 * 24
+      const month = day * 30
+      const year = day * 365
+
+      this.plans.forEach((plan) => {
+        types.add(plan.type)
+
+        if (plan.kind === 'DYNAMIC') {
+          value.push(
+            { value: 'Hourly', label: 'ssl_product.Hourly' }
+          )
+        }
+
+        if (plan.kind !== 'STATIC') return
+        const periods = Object.values(plan.products).map((el) => +el.period)
+
+        if (periods.includes(day)) {
+          value.push(
+            { value: 'Daily', label: 'daily', period: day }
+          )
+        }
+
+        if (periods.includes(month)) {
+          value.push(
+            { value: 'Monthly', label: 'ssl_product.Monthly', period: month }
+          )
+        }
+
+        if (periods.includes(year)) {
+          value.push(
+            { value: 'Annually', label: 'annually', period: year }
+          )
+        }
+
+        if (periods.includes(year * 2)) {
+          value.push(
+            { value: 'Biennially', label: 'biennially', period: year * 2 }
+          )
+        }
+      })
+
+      if (types.size > 1) return
+      value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period)
+
+      this.options.drive = false
+      this.$emit('setData', { key: 'periods', value })
+    },
+    changeNetwork (type) {
+      switch (type) {
+        case 'public':
+          if (!this.options.network.public.status) {
+            this.options.network.private.status = true
+            this.options.network.public.count = 0
+          }
+          break
+        case 'private':
+          if (!this.options.network.private.status) {
+            this.options.network.public.status = true
+            this.options.network.private.count = 0
+          }
+          break
+      }
+    },
+    changeMinMax (value) {
+      const { max, min } = this.options.disk
+
+      if (value === 128 && max === 128) this.options.disk.min -= 20
+      if (max === value) {
+        if (max >= 512) return
+        this.options.disk.max += 128
+        this.options.disk.min += 128
+      }
+      if (min === 128 && value === 128) this.options.disk.min += 20
+      if (min === value) {
+        if (min <= 20) return
+        this.options.disk.max -= 128
+        this.options.disk.min -= 128
+      }
+    },
+    changePanelHeight () {
+      setTimeout(() => {
+        const panel = document.querySelector('.ant-collapse-content')?.lastElementChild
+        const height = (panel) ? getComputedStyle(panel).height : null
+
+        this.panelHeight = (this.activeKey === 'location') ? height : null
+      })
+    }
   }
 }
 </script>
@@ -549,7 +687,7 @@ export default {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin-bottom: 10px;
+  margin: 10px 0;
 }
 
 .order__grid-item {

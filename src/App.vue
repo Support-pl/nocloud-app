@@ -127,9 +127,12 @@ onMounted(() => {
   router.onReady(() => {
     const route = router.currentRoute
     const mustUnloggined = route.meta?.mustBeUnloggined && isLogged.value
+    const isIncluded = ['cabinet', 'settings'].includes(route.name)
 
     if (route.meta?.mustBeLoggined && !isLogged.value) {
       router.replace('login')
+    } else if (localStorage.getItem('oauth') && !isIncluded) {
+      router.replace('cabinet')
     } else if (mustUnloggined) {
       router.replace('/')
     }

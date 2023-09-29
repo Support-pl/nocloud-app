@@ -58,7 +58,11 @@
           </a-modal>
         </div>
 
-        <div v-if="!user.paid_stop" class="settings__item" @click="showModal('addFunds')">
+        <div
+          v-if="!user.paid_stop && isVisible"
+          class="settings__item"
+          @click="showModal('addFunds')"
+        >
           <div class="settings__logo">
             <a-icon type="dollar" />
           </div>
@@ -111,7 +115,7 @@
           </a-modal>
         </div>
 
-        <div class="settings__item" @click="showModal('login')">
+        <div v-if="isVisible" class="settings__item" @click="showModal('login')">
           <div class="settings__logo">
             <a-icon type="login" />
           </div>
@@ -233,6 +237,9 @@ export default {
     },
     isLogged () {
       return this.$store.getters['nocloud/auth/isLoggedIn']
+    },
+    isVisible () {
+      return !localStorage.getItem('oauth')
     },
     langs () {
       return config.languages

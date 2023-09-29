@@ -224,8 +224,9 @@ async function send () {
 
       router.replace({ name, query: { service } })
     } else {
-      router.push({ name: 'root' })
       store.dispatch('nocloud/auth/fetchUserData')
+      store.dispatch('nocloud/auth/fetchBillingData')
+      router.push({ name: 'root' })
     }
   } catch (error) {
     if (error.response && error.response.status === 401) {
@@ -283,6 +284,7 @@ async function login (type) {
     }
   })
 
+  localStorage.setItem('oauth', type)
   location.assign(url)
 }
 
