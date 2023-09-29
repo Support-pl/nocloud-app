@@ -244,13 +244,14 @@ export default {
             domainstatus: status,
             productname: inst.title,
             domain: publicIPs?.at(0),
-            date: inst.data.last_monitoring * 1000 || 0,
+            date: inst.data.next_payment_date * 1000 || 0,
             orderamount: inst.billingPlan.products[inst.product]?.price ?? 0
           }
 
           switch (inst.type) {
             case 'cpanel':
               res.groupname = 'Shared Hosting'
+              res.domain = inst.config.domain
               break
             case 'openai':
               res.groupname = 'OpenAI'
@@ -280,7 +281,7 @@ export default {
                 ? `${inst.config.duration} ${inst.config.planCode}`
                 : inst.product
 
-              res.date = inst.data.expiration ?? (inst.data.last_monitoring * 1000 || 0)
+              res.date = inst.data.expiration ?? (inst.data.next_payment_date * 1000 || 0)
               res.orderamount = inst.billingPlan.products[key]?.price ?? 0
 
               inst.config.addons?.forEach((addon) => {

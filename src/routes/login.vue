@@ -101,13 +101,14 @@
           </div>
         </div>
 
-        <p v-if="loginButtons.length > 0" style="margin: 20px 0 0">
+        <p v-if="authStore.loginButtons.length > 0" style="margin: 20px 0 0">
           {{ $t('login') }} {{ $t('with') }}:
         </p>
         <div style="display: flex; justify-content: center">
           <img
-            v-for="text of loginButtons"
+            v-for="text of authStore.loginButtons"
             :key="text"
+            :alt="text"
             :src="`/img/icons/${text}24.png`"
             style="width: 32px; cursor: pointer"
             @click="login(text)"
@@ -162,6 +163,9 @@ import router from '@/router'
 import i18n from '@/i18n.js'
 import config from '@/appconfig.js'
 import api from '@/api.js'
+import { useAuthStore } from '@/stores/auth.js'
+
+const authStore = useAuthStore()
 
 const tryingLogin = ref(false)
 const loginError = ref('')
@@ -220,8 +224,9 @@ async function send () {
 
       router.replace({ name, query: { service } })
     } else {
-      router.push({ name: 'root' })
       store.dispatch('nocloud/auth/fetchUserData')
+      store.dispatch('nocloud/auth/fetchBillingData')
+      router.push({ name: 'root' })
     }
   } catch (error) {
     if (error.response && error.response.status === 401) {
@@ -269,20 +274,17 @@ function changeLocale (lang) {
   localStorage.setItem('lang', i18n.locale)
 }
 
-const loginButtons = ref([])
-
-api.get('/oauth').then((response) => {
-  loginButtons.value = response
-})
+authStore.fetchAuth()
 
 async function login (type) {
   const { url } = await api.get(`/oauth/${type}/sign_in`, {
     params: {
       state: Math.random().toString(16).slice(2),
-      redirect: `https://${location.host}/login`
+      redirect: 'https://app.nocloud.ione-cloud.net/login'
     }
   })
 
+  localStorage.setItem('oauth', type)
   location.assign(url)
 }
 

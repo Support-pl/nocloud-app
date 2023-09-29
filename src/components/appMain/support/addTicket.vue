@@ -40,7 +40,7 @@
               class="order__slider-item"
               :value="gate.id"
               :class="{ 'order__slider-item--active': gateway === gate.id }"
-              @click="sendNewTicket(gate.id)"
+              @click="changeGateway(gate.id)"
             >
               <span class="order__slider-name" :title="gate.name">
                 <img class="img_prod" :src="`/img/icons/${gate.id}.png`" :alt="gate.id" @error="onError">
@@ -215,7 +215,7 @@ export default {
     },
     changeGateway (value) {
       if (this.gateway === value) {
-        this.gateway = ''
+        this.sendNewTicket()
       } else {
         this.gateway = value
       }

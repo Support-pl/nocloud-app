@@ -42,6 +42,8 @@
     "singleInvoice": "Order",
     "status": "Status",
     "invoice status": "Order Status",
+    "disabled": "disabled",
+    "enabled": "enabled",
     "payed": "Paid",
     "unpaid": "Unpaid",
     "service": "Service",
@@ -332,6 +334,9 @@
     "copy link": "Copy Link",
     "your QR code": "Your QR code",
     "share": "Share",
+    "link": "link",
+    "account": "account",
+    "with": "with",
     "Servers": "Virtual Servers",
     "Virtual": "Web Hosting",
     "SSL": "SSL",
@@ -387,7 +392,8 @@
       "billing cycle": "billing cycle",
       "renewal amount": "renewal amount",
       "registration date": "registration date",
-      "next payment date": "next payment date"
+      "next payment date": "next payment date",
+      "auto renew": "auto renew"
     },
     "comp_services": {
       "Your orders": "Your orders",

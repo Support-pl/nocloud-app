@@ -528,6 +528,7 @@ export default {
         return true
       }
       if (states.find((state) => this.stateVM.includes(state))) {
+        if (this.VM.data.lock) return true
         if (menuName === 'delete') return false
         if (this.VM.billingPlan?.kind === 'DYNAMIC' && this.stateVM === 'SUSPENDED') return true
         return false

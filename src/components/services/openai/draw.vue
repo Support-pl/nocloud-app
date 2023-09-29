@@ -15,15 +15,14 @@
         {{ service.resources.outputKilotoken }} {{ currency.code }}
       </a-col>
 
-      <a-col style="font-weight: 700">
-        Chats:
+      <a-col>
         <a-button
           size="small"
           type="primary"
           :disabled="!service.status.includes('RUNNING')"
           @click="moduleEnter"
         >
-          {{ $t('ticketStatus.New') }}
+          {{ $t('new chat') | capitalize }}
         </a-button>
       </a-col>
 

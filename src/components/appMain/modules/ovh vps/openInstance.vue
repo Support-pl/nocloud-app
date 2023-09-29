@@ -153,6 +153,7 @@
               {{ osName || $t('No Data') }}
             </div>
           </div>
+
           <div class="block__column" v-if="VM.config.planCode">
             <div class="block__title">{{ $t('tariff') | capitalize }}</div>
             <div class="block__value">
@@ -160,11 +161,19 @@
               <a-icon type="swap" title="Switch tariff" @click="openModal('switch')" />
             </div>
           </div>
+
           <div class="block__column" v-if="VM.data.expiration">
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
               {{ VM.data.expiration }}
               <a-icon type="sync" :title="$t('renew')" @click="sendRenew" />
+            </div>
+          </div>
+
+          <div class="block__column">
+            <div class="block__title">{{ $t('userService.auto renew') | capitalize }}</div>
+            <div class="block__value">
+              {{ VM.data.auto_renew ? $t('enabled') : $t('disabled') }}
             </div>
           </div>
         </div>
@@ -353,6 +362,7 @@
               shape="round"
               block
               size="large"
+              :disabled="VM.data.lock"
               @click="openModal('snapshot')"
             >
               {{ $t("Snapshots") }}
@@ -464,7 +474,7 @@
               type="primary"
               shape="round"
               size="large"
-              :disabled="VM.state.state !== 'RUNNING'"
+              :disabled="VM.state.state !== 'RUNNING' || VM.data.lock"
             >
               <router-link :to="{ path: `${$route.params.uuid}/vnc` }">
                 VNC
@@ -956,7 +966,7 @@ export default defineComponent({
       const isPending =  ['PENDING', 'OPERATION'].includes(this.VM.state.state);
       const isSuspended = this.VM.data.suspended_manually;
 
-      if (isPending || isSuspended) {
+      if (isPending || isSuspended || this.VM.data.lock) {
         return { shutdown: true, reboot: true, start: true, recover: true };
       }
 

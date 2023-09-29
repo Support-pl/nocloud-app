@@ -166,6 +166,7 @@
               {{ osName || $t('No Data') }}
             </div>
           </div>
+
           <div class="block__column" v-if="VM.config.planCode">
             <div class="block__title">{{ $t('tariff') | capitalize }}</div>
             <div class="block__value">
@@ -173,11 +174,19 @@
               <a-icon type="swap" title="Switch tariff" @click="openModal('switch')" />
             </div>
           </div>
+
           <div class="block__column" v-if="VM.data.expiration">
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
               {{ VM.data.expiration }}
               <a-icon type="sync" :title="$t('renew')" @click="sendRenew" />
+            </div>
+          </div>
+
+          <div class="block__column">
+            <div class="block__title">{{ $t('userService.auto renew') | capitalize }}</div>
+            <div class="block__value">
+              {{ VM.data.auto_renew ? $t('enabled') : $t('disabled') }}
             </div>
           </div>
         </div>
@@ -367,6 +376,7 @@
               block
               size="large"
               v-show="false"
+              :disabled="Vm.data.lock"
               @click="openModal('snapshot')"
             >
               {{ $t("Snapshots") }}
@@ -478,7 +488,7 @@
               type="primary"
               shape="round"
               size="large"
-              :disabled="VM.state.state !== 'RUNNING'"
+              :disabled="VM.state.state !== 'RUNNING' || VM.data.lock"
             >
               <router-link :to="{ path: `${$route.params.uuid}/vnc` }">
                 VNC
@@ -917,35 +927,6 @@ export default defineComponent({
     },
     fetchMonitoring() {
       if (!this.VM?.uuidService || true) return;
-      const data = {
-        uuid: this.VM.uuid,
-        uuidService: this.VM.uuidService,
-        action: 'monitoring',
-        params: { period: 'lastday' }
-      };
-
-      this.$store.dispatch("nocloud/vms/actionVMInvoke", data)
-        .then((res) => {
-          if (res.meta['net:rx'] !== undefined) {
-            this.chart1Data = res.meta['net:rx'].values;
-          }
-          if (res.meta['net:tx'] !== undefined) {
-            this.chart2Data = res.meta['net:tx'].values;
-          }
-          if (res.meta?.cpu !== undefined) {
-            this.chart3Data = res.meta.cpu.values;
-          }
-          if (res.meta?.mem !== undefined) {
-            this.chart4Data = res.meta.mem.values;
-          }
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          if (message === 'HTTP Error 500: "Internal server error"') return;
-          this.openNotificationWithIcon('error', { message: this.$t(message) });
-          console.error(err);
-        });
     },
     date(string, timestamp) {
       if (timestamp < 1) return '-';
@@ -976,7 +957,7 @@ export default defineComponent({
       const isPending =  ['PENDING', 'OPERATION'].includes(this.VM.state.state);
       const isSuspended = this.VM.data.suspended_manually;
 
-      if (isPending || isSuspended) {
+      if (isPending || isSuspended || this.VM.data.lock) {
         return { shutdown: true, reboot: true, start: true, recover: true };
       }
 

@@ -610,6 +610,7 @@ export default {
   mixins: [notification],
   data () {
     return {
+      isPlansLoading: true,
       dataLocalStorage: '',
       productSize: '',
       activeKey: 'location',
@@ -687,7 +688,7 @@ export default {
 
   computed: {
     ...mapGetters('nocloud/namespaces', ['getNameSpaces']),
-    ...mapGetters('nocloud/plans', ['getPlans', 'isPlansLoading']),
+    ...mapGetters('nocloud/plans', ['getPlans']),
     ...mapGetters('nocloud/sp', ['getSP']),
     ...mapGetters('nocloud/auth', ['userdata', 'billingData', 'isLoggedIn']),
     ...mapGetters('nocloud/vms', ['getServicesFull']),
@@ -745,6 +746,7 @@ export default {
       const { sp } = this.locations.find((el) => el.id === this.locationId) || {}
 
       if (sp) return this.getSP.find((el) => el.uuid === sp)
+      else return null
     },
     template () {
       if (this.itemSP?.type.includes('ovh')) {
@@ -784,18 +786,8 @@ export default {
         locationItem?.type === type && plans.includes(uuid)
       )
     },
-    // UNKNOWN and STATIC
     getPlan () {
       return this.getPlans.find(({ uuid }) => uuid === this.plan) ?? {}
-    },
-
-    // STATIC
-    getPlanOneStatic () {
-      for (const planStatic of this.getPlans || {}) {
-        if (planStatic.kind === 'STATIC') {
-          return planStatic
-        }
-      }
     },
     // -------------------------------------
 
@@ -861,6 +853,8 @@ export default {
         }
         return price.reduce((accum, item) => accum + item, 0)
       }
+
+      return 0
     },
     productFullPriceOVH () {
       const { value, addons } = this.priceOVH
@@ -880,7 +874,7 @@ export default {
     },
     productFullPrice () {
       const resourcesPrice = (this.itemSP.type === 'ione')
-        ? +(this.productFullPriceCustom * 24 * 30 * this.currency.rate).toFixed(2)
+        ? this.productFullPriceCustom * 24 * 30 * this.currency.rate
         : 0
       let price = 0
       let period = ''
@@ -1039,6 +1033,7 @@ export default {
       }
 
       if (!this.itemSP?.uuid) return
+      this.isPlansLoading = true
       this.$store.dispatch('nocloud/plans/fetch', {
         sp_uuid: this.itemSP.uuid,
         anonymously: !this.isLoggedIn
@@ -1056,6 +1051,9 @@ export default {
           if (this.dataLocalStorage) {
             this.activeKey = this.dataLocalStorage.activeKey ?? 'location'
           }
+        })
+        .finally(() => {
+          this.isPlansLoading = false
         })
 
       const type = this.options.drive ? 'SSD' : 'HDD'
@@ -1231,11 +1229,10 @@ export default {
 
           if (value.title === this.productSize) {
             const product = { ...value, key }
-            const minDisk = plan.meta.minDisk * 1024
 
             this.options.ram.size = product.resources.ram / 1024
             this.options.cpu.size = product.resources.cpu
-            this.options.disk.size = product.resources.disk ?? minDisk ?? 20 * 1024
+            this.options.disk.size = product.resources.disk ?? plan.meta.minDisk ?? 20 * 1024
             this.product = product
           } else if (
             (value.title.includes(this.productSize) && !this.getPlan.type.includes('cloud')) ||
@@ -1264,30 +1261,6 @@ export default {
     setOneNameSpace () {
       if (this.getNameSpaces.length === 1) {
         this.namespace = this.getNameSpaces[0].uuid
-      }
-    },
-    changeValuePlus (variable) {
-      if (variable == 'cpu') {
-        this.options.cpu.size < this.options.cpu.max && this.options.cpu.size++
-      }
-      if (variable == 'ram') {
-        this.options.ram.size < this.options.ram.max && this.options.ram.size++
-      }
-      if (variable == 'ip') {
-        this.options.network.public.count < this.options.network.public.max &&
-          this.options.network.public.count++
-      }
-    },
-    changeValueMinus (variable) {
-      if (variable == 'cpu') {
-        this.options.cpu.size > this.options.cpu.min && this.options.cpu.size--
-      }
-      if (variable == 'ram') {
-        this.options.ram.size > this.options.ram.min && this.options.ram.size--
-      }
-      if (variable == 'ip') {
-        this.options.network.public.count > this.options.network.public.min &&
-          this.options.network.public.count--
       }
     },
     nextStep () {
@@ -1474,10 +1447,10 @@ export default {
             this.$message.success(this.$t('Order created successfully'))
             this.deployService(result.uuid)
             if (this.modal.goToInvoice) {
-              this.$router.push(`/billing/${res.invoiceid}`)
+              this.$router.push(`/billing/${result.invoiceid}`)
             }
           } else {
-            throw 'error'
+            throw new Error('error')
           }
         })
         .catch((err) => {
@@ -1501,7 +1474,7 @@ export default {
               this.$router.push(`/billing/${result.invoiceid}`)
             }
           } else {
-            throw 'error'
+            throw new Error('error')
           }
         })
         .catch((err) => {

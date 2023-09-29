@@ -15,6 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
   const defaultCurrency = ref('USD')
   const unloginedCurrency = ref('USD')
 
+  const loginButtons = ref([])
   const baseURL = `${config.WHMCSsiteurl}/modules/addons/nocloud/api/index.php`
   const isLoggedIn = computed(() =>
     token.value.length > 0
@@ -51,6 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     baseURL,
     isLoggedIn,
+    loginButtons,
 
     setToken,
     setCurrencies,
@@ -76,7 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout () {
       setToken('')
       const config = localStorage.getItem('globalConfig')
-      const lang = localStorage.getItem('lang')
+      const lang = localStorage.getItem('lang') ?? 'en'
 
       localStorage.clear()
       localStorage.setItem('globalConfig', config)
@@ -145,6 +147,33 @@ export const useAuthStore = defineStore('auth', () => {
         const response = await api.accounts.update(data.id, data.body)
 
         userdata.value = response.pool
+        return response
+      } catch (error) {
+        return error
+      }
+    },
+
+    async fetchAuth () {
+      try {
+        const response = await api.get('/oauth')
+
+        loginButtons.value = response
+        return response
+      } catch (error) {
+        return error
+      }
+    },
+
+    async linkAccount (type) {
+      try {
+        const { url } = await api.get(`/oauth/${type}/link`, {
+          params: {
+            state: Math.random().toString(16).slice(2),
+            redirect: `https://${location.host}/login`
+          }
+        })
+
+        location.assign(url)
       } catch (error) {
         return error
       }
