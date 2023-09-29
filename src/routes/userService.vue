@@ -200,6 +200,11 @@ const info = [
     title: 'next payment date',
     key: 'nextduedate',
     type: 'date'
+  },
+  {
+    title: 'auto renew',
+    key: 'autorenew',
+    type: 'text'
   }
 ]
 
@@ -270,6 +275,7 @@ export default {
         key.includes(`/${serviceType}/draw.vue`)
       )
 
+      if (!components[component]) return
       if (serviceType === undefined) return
       if (!(status === 'Active' || state?.state === 'RUNNING')) return
       return () => components[component]()
@@ -298,7 +304,7 @@ export default {
         let groupname = 'Domains'
         let date = 'year'
 
-        if (!domain) return new Promise((resolve) => resolve({ meta: null }))
+        if (!domain) return { meta: null }
         switch (domain.billingPlan.type) {
           case 'cpanel': {
             const { period } = domain.billingPlan.products[domain.product]
@@ -329,6 +335,8 @@ export default {
               regdate: domain.data.creation ?? '0000-00-00'
             }
             groupname = 'OpenAI'
+
+            this.$store.dispatch('mocloud/chats/startStream')
             break
           }
 
@@ -390,6 +398,7 @@ export default {
           name: domain.title,
           status: `cloudStateItem.${domain.state?.state || 'UNKNOWN'}`,
           domain: domain.resources.domain ?? domain.config.domain,
+          autorenew: (domain.data.auto_renew) ? 'enabled' : 'disabled',
           billingcycle: (typeof period === 'string') ? period : this.$tc(date, period),
           recurringamount: recurringamount ?? domain.billingPlan.products[domain.product]?.price ?? '?',
           nextduedate: expiredate
@@ -402,25 +411,29 @@ export default {
             action: 'get_domain_price',
             params: { domain: this.service.domain }
           })
+        } else {
+          return { meta: 'done' }
         }
       })
       .then(({ meta }) => {
-        if (meta) {
+        if (meta === null) {
           const { period } = this.service.resources
 
           this.service.recurringamount = meta.prices[period]
-        } else {
+        } else if (meta !== 'done') {
           return this.$store.dispatch('nocloud/auth/fetchBillingData')
+        } else {
+          return { client_id: null }
         }
       })
-      .then(({ client_id }) => {
+      .then(({ client_id: id }) => {
+        if (!id) return 'done'
         if (this.products.length < 1) {
-          return this.$store.dispatch('products/fetch', client_id)
+          return this.$store.dispatch('products/fetch', id)
         }
-
-        this.service = this.products.find(({ id }) => id === this.$route.params.id)
       })
-      .then(() => {
+      .then((result) => {
+        if (result === 'done') return
         this.service = this.products.find(({ id }) => id === this.$route.params.id)
       })
       .catch((err) => console.error(err))

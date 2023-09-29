@@ -209,7 +209,11 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('nocloud/auth', { baseURL: 'getURL', userData: 'billingData' }),
+    ...mapGetters('nocloud/auth', {
+      baseURL: 'getURL',
+      user: 'userdata',
+      userData: 'billingData'
+    }),
     deltaInfo () {
       const info = { ...this.form, country: this.form.countryname }
       for (const key in info) {
@@ -277,7 +281,12 @@ export default {
         if (valid) {
           const { locale } = this.$i18n.getLocaleMessage(this.$i18n.locale)
           const params = (localStorage.getItem('oauth'))
-            ? { ...this.deltaInfo, app_language: locale, run: 'create_user' }
+            ? {
+                ...this.deltaInfo,
+                app_language: locale,
+                uuid: this.user.uuid,
+                run: 'create_user_active'
+              }
             : {
                 run: 'update_client',
                 user: { ...this.userData, ...this.deltaInfo }

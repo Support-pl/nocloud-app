@@ -217,17 +217,26 @@
               {{ OSName || $t('No Data') }}
             </div>
           </div>
+
           <div class="block__column" v-if="VM.product">
             <div class="block__title">{{ $t('Product') }}</div>
             <div class="block__value">
               {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}
             </div>
           </div>
+
           <div class="block__column" v-if="VM.data.next_payment_date">
             <div class="block__title">{{ $t("userService.next payment date") | capitalize }}</div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.next_payment_date * 1000) }}
               <a-icon type="sync" title="Renew" @click="handleOk('renew')" />
+            </div>
+          </div>
+
+          <div class="block__column">
+            <div class="block__title">{{ $t('userService.auto renew') | capitalize }}</div>
+            <div class="block__value">
+              {{ VM.data.auto_renew ? $t('enabled') : $t('disabled') }}
             </div>
           </div>
         </div>
@@ -396,6 +405,7 @@
               shape="round"
               block
               size="large"
+              :disabled="VM.data.lock"
               @click="openModal('snapshot')"
             >
               {{ $t("Snapshots") }}
@@ -491,7 +501,7 @@
               type="primary"
               shape="round"
               size="large"
-              :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3)"
+              :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3) || VM.data.lock"
             >
               <router-link :to="{ path: `${$route.params.uuid}/vnc`, }">
                 VNC
@@ -971,7 +981,9 @@ export default defineComponent({
     },
     statusVM() {
       if (!this.VM) return;
-      if (this.VM.state.meta.state === 1 || this.VM.data.suspended_manually) return {
+      const isSuspended = this.VM.state.meta.state === 1 || this.VM.data.suspended_manually
+
+      if (isSuspended || this.VM.data.lock) return {
         start: true, shutdown: true, reboot: true, recover: true
       }
       return {

@@ -280,7 +280,7 @@ async function login (type) {
   const { url } = await api.get(`/oauth/${type}/sign_in`, {
     params: {
       state: Math.random().toString(16).slice(2),
-      redirect: `https://${location.host}/login`
+      redirect: 'https://app.nocloud.ione-cloud.net/login'
     }
   })
 

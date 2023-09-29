@@ -42,6 +42,8 @@
     "singleInvoice": "Order",
     "status": "Status",
     "invoice status": "Order Status",
+    "disabled": "disabled",
+    "enabled": "enabled",
     "payed": "Paid",
     "unpaid": "Unpaid",
     "service": "Service",
@@ -390,7 +392,8 @@
       "billing cycle": "billing cycle",
       "renewal amount": "renewal amount",
       "registration date": "registration date",
-      "next payment date": "next payment date"
+      "next payment date": "next payment date",
+      "auto renew": "auto renew"
     },
     "comp_services": {
       "Your orders": "Your orders",
