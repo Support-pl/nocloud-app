@@ -63,7 +63,7 @@ export default defineComponent({
               <a-switch
                 size="small"
                 loading={ this.isLoading }
-                checked={ this.service.data.auto_renew }
+                checked={ this.service.config.auto_renew }
                 onChange={ this.onChange }
               />
             </div>

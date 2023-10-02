@@ -1,13 +1,13 @@
 <template>
   <div class="tickets">
-    <loading v-if="isLoading" />
+    <loading v-if="supportStore.isLoading" />
     <div v-else class="container">
       <empty v-if="chats.length === 0" />
       <div class="ticket__wrapper">
         <single-ticket v-for="(ticket, index) in chats" :key="index" :ticket="ticket" />
       </div>
 
-      <add-ticket-field v-if="addTicketStatus" />
+      <add-ticket-field v-if="supportStore.isAddingTicket" />
     </div>
   </div>
 </template>
@@ -15,32 +15,26 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import store from '@/store'
+import { useChatsStore } from '@/stores/chats.js'
+import { useSupportStore } from '@/stores/support.js'
 import singleTicket from '@/components/appMain/support/singleTicket.vue'
 import addTicketField from '@/components/appMain/support/addTicket.vue'
 import loading from '@/components/loading/loading.vue'
 import empty from '@/components/empty/empty.vue'
 import { Status } from '@/libs/cc_connect/cc_pb'
 
-const isLoading = computed(() =>
-  store.getters['support/isLoading']
-)
-const tickets = computed(() =>
-  store.getters['support/getTickets']
-)
-const addTicketStatus = computed(() =>
-  store.getters['support/isAddTicketState']
-)
+const chatsStore = useChatsStore()
+const supportStore = useSupportStore()
 
 const user = computed(() =>
   store.getters['nocloud/auth/userdata']
 )
 
 const chats = computed(() => {
-  const chats = store.getters['nocloud/chats/getChats']
   const result = []
   const { uuid } = user.value
 
-  chats.forEach((ticket) => {
+  chatsStore.getChats.forEach((ticket) => {
     const isReaded = ticket.meta.lastMessage?.readers.includes(uuid)
     const status = Status[ticket.status].toLowerCase().split('_')
     const capitalized = status.map((el) =>
@@ -62,13 +56,13 @@ const chats = computed(() => {
 
   result.sort((a, b) => b.date - a.date)
 
-  return [...result, ...tickets.value]
+  return [...result, ...supportStore.getTickets]
 })
 
 onMounted(() => {
-  store.dispatch('support/autoFetch')
-  store.dispatch('nocloud/chats/fetchChats')
-  store.dispatch('nocloud/chats/startStream')
+  supportStore.fetch(supportStore.tickets.length > 0)
+  chatsStore.fetchChats()
+  chatsStore.startStream()
 })
 </script>
 

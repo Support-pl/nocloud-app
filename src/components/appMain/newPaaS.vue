@@ -610,7 +610,7 @@ export default {
   mixins: [notification],
   data () {
     return {
-      isPlansLoading: true,
+      isPlansLoading: false,
       dataLocalStorage: '',
       productSize: '',
       activeKey: 'location',
