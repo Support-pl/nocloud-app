@@ -172,7 +172,9 @@
 </template>
 
 <script>
+import { mapStores } from 'pinia'
 import config from '@/appconfig.js'
+import { useChatsStore } from '@/stores/chats.js'
 import loading from '@/components/loading/loading.vue'
 
 const info = [
@@ -213,6 +215,7 @@ export default {
   components: { loading },
   data: () => ({ service: null, info }),
   computed: {
+    ...mapStores(useChatsStore),
     user () {
       return this.$store.getters['nocloud/auth/billingData']
     },
@@ -336,7 +339,7 @@ export default {
             }
             groupname = 'OpenAI'
 
-            this.$store.dispatch('mocloud/chats/startStream')
+            this.chatsStore.startStream()
             break
           }
 
@@ -398,7 +401,7 @@ export default {
           name: domain.title,
           status: `cloudStateItem.${domain.state?.state || 'UNKNOWN'}`,
           domain: domain.resources.domain ?? domain.config.domain,
-          autorenew: (domain.data.auto_renew) ? 'enabled' : 'disabled',
+          autorenew: (domain.config.auto_renew) ? 'enabled' : 'disabled',
           billingcycle: (typeof period === 'string') ? period : this.$tc(date, period),
           recurringamount: recurringamount ?? domain.billingPlan.products[domain.product]?.price ?? '?',
           nextduedate: expiredate

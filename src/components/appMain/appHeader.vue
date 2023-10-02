@@ -232,14 +232,17 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapMutations } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import { mapState, mapWritableState } from 'pinia'
 import moment from 'moment'
 import { useAppStore } from '@/stores/app.js'
+import { useChatsStore } from '@/stores/chats.js'
+import { useSupportStore } from '@/stores/support.js'
 import { useTransactionsStore } from '@/stores/transactions.js'
 import config from '@/appconfig.js'
 import balance from '@/components/balance/balance.vue'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
   name: 'AppHeader',
@@ -277,8 +280,8 @@ export default {
             {
               name: 'support_plus',
               icon: 'plus',
-              onClickFuncion: this.inverseAddTicketState,
-              isActiveState: this.isAddTicketState,
+              onClickFuncion: () => { this.isAddingTicket = !this.isAddingTicket },
+              isActiveState: this.isAddingTicket,
               additionalClass: ['active-rotate']
             },
             {
@@ -367,19 +370,188 @@ export default {
       currencyCode: ''
     }
   },
+  computed: {
+    ...mapState(useAppStore, ['activeTab']),
+    ...mapState(useAuthStore, ['baseURL']),
+    ...mapState(useSupportStore, {
+      tickets: 'tickets',
+      isAddingTicket: 'isAddingTicket',
+      isOnlyClosedTickets: 'isOnlyClosedTickets',
+      fetchTickets: 'fetch'
+    }),
+    ...mapState(useTransactionsStore, {
+      transactions: 'filteredTransactions',
+      activeInvoiceTab: 'tab',
+      currentPage: 'page',
+      pageSize: 'size',
+      fetchTransactions: 'fetch'
+    }),
+    ...mapWritableState(useSupportStore, {
+      supportFilter: 'filter'
+    }),
+    ...mapWritableState(useTransactionsStore, {
+      transactionsFilter: 'filter'
+    }),
+    ...mapState(useChatsStore, ['chats']),
+    ...mapGetters('nocloud/vms', { searchString: 'getString' }),
+    ...mapGetters('invoices', ['getInvoices', 'getAllInvoices']),
+    active () {
+      const { headerTitle, layoutTitle } = this.$route.meta
+
+      if (headerTitle) return headerTitle
+      if (layoutTitle) return layoutTitle
+      return this.activeTab.title
+    },
+    isInSpecialType () {
+      return this.$route.query?.type !== undefined
+    },
+    plainOptions () {
+      function arrayUnique (arr) {
+        return arr.filter((e, i, a) => a.indexOf(e) === i)
+      }
+
+      let filterElem
+      if (this.active === 'support') {
+        filterElem = [...this.tickets, ...this.chats.values()]
+      } else if (this.active === 'billing') {
+        const isInvoice = this.activeInvoiceTab === 'Invoice'
+
+        filterElem = (isInvoice) ? this.getAllInvoices : this.transactions
+      } else {
+        filterElem = []
+      }
+      let statuses = filterElem.map((el) =>
+        this.$t(`filterHeader.${el.status}`)
+      )
+
+      statuses = arrayUnique(statuses)
+
+      Object.assign(this, {
+        checkedList: statuses,
+        indeterminate: false,
+        checkAll: true
+      })
+
+      return statuses
+    },
+    isNeedHeader () {
+      const conditions = [
+        this.headers[this.active],
+        this.isInSpecialType,
+        this.$route.meta.headerTitle
+      ]
+      return conditions.some((el) => !!el)
+    },
+    isNeedBalance () {
+      if (this.user.paid_stop) return false
+      else if (this.headers[this.active]) {
+        return this.headers[this.active].needBalance
+      } else if (this.$route.meta.isNeedBalance) {
+        return this.$route.meta.isNeedBalance
+      }
+      return true
+    },
+    headerTitle () {
+      if (this.headers[this.active] && this.$route.query.type === 'PaaS') {
+        return this.$options.filters.capitalize(this.$t('Servers'))
+      }
+
+      if (this.headers[this.active]) {
+        return this.$options.filters.capitalize(
+          this.$t(this.headers[this.active].title)
+        )
+      } else if (this.$route.meta.headerTitle) {
+        // console.log(this.$route.meta.headerTitle);
+        // console.log(this.$t(this.$route.meta.headerTitle));
+        // return this.$route.meta.headerTitle
+        return this.$options.filters.capitalize(
+          this.$t(this.$route.meta.headerTitle)
+        )
+      } else return ''
+    },
+    isLogged () {
+      return this.$store.getters['nocloud/auth/isLoggedIn']
+    },
+    userdata () {
+      return this.$store.getters['nocloud/auth/userdata']
+    },
+    user () {
+      return this.$store.getters['nocloud/auth/billingData']
+    },
+    defaultCurrency () {
+      return this.$store.getters['nocloud/auth/defaultCurrency']
+    },
+    viewport () {
+      return document.documentElement.offsetWidth
+    }
+  },
+  watch: {
+    active () {
+      if (this.$route.query.service) {
+        this.headers.iaas.title = this.$route.query.service
+      }
+    },
+    activeInvoiceTab () {
+      this.checkedList = []
+      this.updateFilter()
+    },
+    currencyCode (value) {
+      this.$store.commit('nocloud/auth/setUnloginedCurrency', value)
+    },
+    '$i18n.locale' (value) {
+      localStorage.setItem('lang', value)
+    },
+    user (value) {
+      if (value.only_tickets) {
+        const i = this.headers.support.buttons.findIndex(({ icon }) => icon === 'telegram')
+
+        this.headers.support.buttons.splice(i, 1)
+      }
+    }
+  },
+  created () {
+    this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
+      .then((res) => { this.currencies = res.currency })
+      .catch(err => {
+        const message = err.response?.data?.message ?? err.message
+
+        this.$notification.error({ message: this.$t(message) })
+        console.error(err)
+      })
+  },
+  mounted () {
+    if (this.$route.query.service) {
+      this.headers.iaas.title = this.$route.query.service
+    }
+
+    if (this.viewport < 576) {
+      this.isButtonsVisible = false
+    }
+
+    if (this.user.only_tickets) {
+      const i = this.headers.support.buttons.findIndex(({ icon }) => icon === 'telegram')
+
+      this.headers.support.buttons.splice(i, 1)
+    }
+
+    const lang = navigator.language.replace(/-[a-z]{2}/i, '')
+
+    if (this.langs.includes(lang) && !localStorage.getItem('lang')) {
+      this.$i18n.locale = lang
+    }
+    this.currencyCode = this.defaultCurrency
+  },
   methods: {
-    ...mapActions('support', { fetchTickets: 'fetch' }),
     ...mapActions('invoices', { fetchInvoices: 'fetch' }),
     ...mapActions('products', { fetchProducts: 'fetch' }),
     ...mapActions('nocloud/vms', { fetchClouds: 'fetch' }),
     ...mapActions('nocloud/auth', ['fetchUserData']),
-    ...mapMutations('support', ['inverseAddTicketState']),
     getState (name) {
       switch (name) {
         case 'support_filter':
           return this.isOnlyClosedTickets
         case 'support_plus':
-          return this.isAddTicketState
+          return this.isAddingTicket
         case 'cloud_plus':
           return false
       }
@@ -472,7 +644,7 @@ export default {
           localStorage.setItem('supportFilters', JSON.stringify(filters))
         }
 
-        [...this.getAllTickets, ...this.chats.values()].forEach((el) => {
+        [...this.tickets, ...this.chats.values()].forEach((el) => {
           const status = (typeof el.status === 'number')
             ? Status[el.status].toLowerCase()
             : el.status
@@ -481,7 +653,7 @@ export default {
 
           filtered[key] = capitalized
         })
-        this.$store.commit('support/updateFilter', info.map((el) => filtered[el]))
+        this.supportFilter = info.map((el) => filtered[el])
       }
 
       if (this.active === 'billing' && this.activeInvoiceTab === 'Detail') {
@@ -496,7 +668,7 @@ export default {
           localStorage.setItem('detailFilters', JSON.stringify(info))
         }
 
-        this.filter = info
+        this.transactionsFilter = info
       } else if (this.active === 'billing') {
         const filtered = {}
 
@@ -522,169 +694,6 @@ export default {
       if (target.value.length > 1) return
 
       this.$store.commit('nocloud/vms/setSearch', '')
-    }
-  },
-  created () {
-    this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
-      .then((res) => { this.currencies = res.currency })
-      .catch(err => {
-        const message = err.response?.data?.message ?? err.message
-
-        this.$notification.error({ message: this.$t(message) })
-        console.error(err)
-      })
-  },
-  mounted () {
-    if (this.$route.query.service) {
-      this.headers.iaas.title = this.$route.query.service
-    }
-
-    if (this.viewport < 576) {
-      this.isButtonsVisible = false
-    }
-
-    if (this.user.only_tickets) {
-      const i = this.headers.support.buttons.findIndex(({ icon }) => icon === 'telegram')
-
-      this.headers.support.buttons.splice(i, 1)
-    }
-
-    const lang = navigator.language.replace(/-[a-z]{2}/i, '')
-
-    if (this.langs.includes(lang) && !localStorage.getItem('lang')) {
-      this.$i18n.locale = lang
-    }
-    this.currencyCode = this.defaultCurrency
-  },
-  computed: {
-    ...mapGetters('support', [
-      'isAddTicketState',
-      'isOnlyClosedTickets',
-      'getTickets',
-      'getAllTickets'
-    ]),
-    ...mapState(useAppStore, ['activeTab']),
-    ...mapState(useTransactionsStore, {
-      transactions: 'filteredTransactions',
-      activeInvoiceTab: 'tab',
-      currentPage: 'page',
-      pageSize: 'size',
-      fetchTransactions: 'fetch'
-    }),
-    ...mapWritableState(useTransactionsStore, ['filter']),
-    ...mapGetters('nocloud/chats', { chats: 'getAllChats' }),
-    ...mapGetters('nocloud/vms', { searchString: 'getString' }),
-    ...mapGetters('invoices', ['getInvoices', 'getAllInvoices']),
-    active () {
-      const { headerTitle, layoutTitle } = this.$route.meta
-
-      if (headerTitle) return headerTitle
-      if (layoutTitle) return layoutTitle
-      return this.activeTab.title
-    },
-    isInSpecialType () {
-      return this.$route.query?.type !== undefined
-    },
-    plainOptions () {
-      function arrayUnique (arr) {
-        return arr.filter((e, i, a) => a.indexOf(e) == i)
-      }
-
-      let filterElem
-      if (this.active == 'support') {
-        filterElem = [...this.getAllTickets, ...this.chats.values()]
-      } else if (this.active == 'billing') {
-        const isInvoice = this.activeInvoiceTab === 'Invoice'
-
-        filterElem = (isInvoice) ? this.getAllInvoices : this.transactions
-      } else {
-        filterElem = []
-      }
-      let statuses = filterElem.map((el) =>
-        this.$t(`filterHeader.${el.status}`)
-      )
-
-      statuses = arrayUnique(statuses)
-
-      Object.assign(this, {
-        checkedList: statuses,
-        indeterminate: false,
-        checkAll: true
-      })
-
-      return statuses
-    },
-    isNeedHeader () {
-      const conditions = [
-        this.headers[this.active],
-        this.isInSpecialType,
-        this.$route.meta.headerTitle
-      ]
-      return conditions.some((el) => !!el)
-    },
-    isNeedBalance () {
-      if (this.user.paid_stop) return false
-      else if (this.headers[this.active]) { return this.headers[this.active].needBalance } else if (this.$route.meta.isNeedBalance) { return this.$route.meta.isNeedBalance }
-    },
-    headerTitle () {
-      if (this.headers[this.active] && this.$route.query.type == 'PaaS') {
-        return this.$options.filters.capitalize(this.$t('Servers'))
-      }
-
-      if (this.headers[this.active]) {
-        return this.$options.filters.capitalize(
-          this.$t(this.headers[this.active].title)
-        )
-      } else if (this.$route.meta.headerTitle) {
-        // console.log(this.$route.meta.headerTitle);
-        // console.log(this.$t(this.$route.meta.headerTitle));
-        // return this.$route.meta.headerTitle
-        return this.$options.filters.capitalize(
-          this.$t(this.$route.meta.headerTitle)
-        )
-      } else return ''
-    },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
-    baseURL () {
-      return this.$store.getters['support/getURL']
-    },
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    defaultCurrency () {
-      return this.$store.getters['nocloud/auth/defaultCurrency']
-    },
-    viewport () {
-      return document.documentElement.offsetWidth
-    }
-  },
-  watch: {
-    active () {
-      if (this.$route.query.service) {
-        this.headers.iaas.title = this.$route.query.service
-      }
-    },
-    activeInvoiceTab () {
-      this.checkedList = []
-      this.updateFilter()
-    },
-    currencyCode (value) {
-      this.$store.commit('nocloud/auth/setUnloginedCurrency', value)
-    },
-    '$i18n.locale' (value) {
-      localStorage.setItem('lang', value)
-    },
-    user (value) {
-      if (value.only_tickets) {
-        const i = this.headers.support.buttons.findIndex(({ icon }) => icon === 'telegram')
-
-        this.headers.support.buttons.splice(i, 1)
-      }
     }
   }
 }

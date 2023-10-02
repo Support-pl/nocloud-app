@@ -186,7 +186,7 @@
           <div class="block__column">
             <div class="block__title">{{ $t('userService.auto renew') | capitalize }}</div>
             <div class="block__value">
-              {{ VM.data.auto_renew ? $t('enabled') : $t('disabled') }}
+              {{ VM.config.auto_renew ? $t('enabled') : $t('disabled') }}
             </div>
           </div>
         </div>
