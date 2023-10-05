@@ -178,6 +178,28 @@ export const Department = proto3.makeMessageType(
 );
 
 /**
+ * @generated from message cc.Option
+ */
+export const Option = proto3.makeMessageType(
+  "cc.Option",
+  () => [
+    { no: 1, name: "key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "value", kind: "scalar", T: 2 /* ScalarType.FLOAT */ },
+  ],
+);
+
+/**
+ * @generated from message cc.Metric
+ */
+export const Metric = proto3.makeMessageType(
+  "cc.Metric",
+  () => [
+    { no: 1, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "options", kind: "message", T: Option, repeated: true },
+  ],
+);
+
+/**
  * @generated from message cc.Defaults
  */
 export const Defaults = proto3.makeMessageType(
@@ -186,6 +208,7 @@ export const Defaults = proto3.makeMessageType(
     { no: 1, name: "gateways", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 2, name: "admins", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 3, name: "departments", kind: "message", T: Department, repeated: true },
+    { no: 4, name: "metrics", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Metric} },
   ],
 );
 

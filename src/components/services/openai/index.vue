@@ -32,10 +32,10 @@
             </a-select>
           </a-col>
 
-          <a-col v-if="namespaces.length > 1">
+          <a-col v-if="namespacesStore.namespaces.length > 1">
             <a-select v-model="namespace" style="width: 100%" placeholder="namespaces">
               <a-select-option
-                v-for="name of namespaces"
+                v-for="name of namespacesStore.namespaces"
                 :key="name.uuid"
                 :value="name.uuid"
               >
@@ -121,8 +121,14 @@ import store from '@/store'
 import router from '@/router'
 import i18n from '@/i18n.js'
 import api from '@/api.js'
+import { useSpStore } from '@/stores/sp.js'
+import { usePlansStore } from '@/stores/plans.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
 
 const route = router.currentRoute
+const spStore = useSpStore()
+const plansStore = usePlansStore()
+const namespacesStore = useNamespasesStore()
 
 const plan = ref(null)
 const service = ref(null)
@@ -187,25 +193,20 @@ const services = computed(() =>
   store.getters['nocloud/vms/getServices'].filter((el) => el.status !== 'DEL')
 )
 
-const namespaces = computed(() =>
-  store.getters['nocloud/namespaces/getNameSpaces'] ?? []
-)
-
 const plans = computed(() =>
-  store.getters['nocloud/plans/getPlans']
-    .filter(({ type, uuid }) => {
-      const { plans } = store.getters['nocloud/sp/getShowcases'].find(
-        ({ uuid }) => uuid === route.query.service
-      ) ?? {}
+  plansStore.plans.filter(({ type, uuid }) => {
+    const { plans } = spStore.getShowcases.find(
+      ({ uuid }) => uuid === route.query.service
+    ) ?? {}
 
-      if (!plans) return type === 'openai'
+    if (!plans) return type === 'openai'
 
-      if (plans.length < 1) return type === 'openai'
-      return type === 'openai' && plans.includes(uuid)
-    })
+    if (plans.length < 1) return type === 'openai'
+    return type === 'openai' && plans.includes(uuid)
+  })
 )
 
-watch(namespaces, (value) => {
+watch(() => namespacesStore.namespaces, (value) => {
   namespace.value = value[0]?.uuid
 })
 
@@ -218,7 +219,7 @@ watch(plans, (value) => {
 })
 
 const sp = computed(() =>
-  store.getters['nocloud/sp/getSP'].find((sp) => sp.type === 'openai')
+  spStore.servicesProviders.find((sp) => sp.type === 'openai')
 )
 
 function orderClickHandler () {
@@ -331,13 +332,13 @@ function fetch () {
   fetchLoading.value = true
   const promises = [
     store.dispatch('nocloud/auth/fetchBillingData'),
-    store.dispatch('nocloud/sp/fetch', !isLogged.value),
-    store.dispatch('nocloud/plans/fetch', { anonymously: !isLogged.value })
+    plansStore.fetch({ anonymously: !isLogged.value }),
+    spStore.fetch(!isLogged.value)
   ]
 
   if (isLogged.value) {
     promises.push(
-      store.dispatch('nocloud/namespaces/fetch'),
+      namespacesStore.fetch(),
       store.dispatch('nocloud/vms/fetch')
     )
   }

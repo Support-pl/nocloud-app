@@ -2,23 +2,25 @@
   <div class="order_wrapper">
     <div class="order-cart">
       <div class="order__inputs order__field-cart">
-
         <div class="order_option">
           <a-row
             class="order_option__steps"
             type="flex"
             justify="center"
           >
-            <a-col :span="16"><!--TODO: add finish status if cart (watch to cart)-->
+            <a-col :span="16">
+              <!--TODO: add finish status if cart (watch to cart)-->
               <a-steps>
                 <a-step class="search" status="start" :title="$t('search')" @click="search">
-                  <template #icon><!---->
-                    <a-icon type="search"/>
+                  <template #icon>
+                    <!---->
+                    <a-icon type="search" />
                   </template>
                 </a-step>
-                <a-step class="cart" status="finish" :title="$t('cart')"><!--@click="cart"-->
+                <a-step class="cart" status="finish" :title="$t('cart')">
+                  <!--@click="cart"-->
                   <template #icon>
-                    <a-icon type="shopping-cart"/>
+                    <a-icon type="shopping-cart" />
                   </template>
                 </a-step>
               </a-steps>
@@ -26,7 +28,7 @@
             <a-col :span="2" class="badge-wrapper">
               <a-badge
                 :count="itemsInCart"
-                :offset=[-25,-2]
+                :offset="[-25,-2]"
                 show-zero
                 :number-style="{
                   backgroundColor: '#fff',
@@ -152,42 +154,44 @@
           </a-form-model>
 
           <a-row class="order__prop" style="margin-bottom: 5px">
-            <a-col span="8" :xs="6">{{ $t('domain_product.domain_in_your_cart') }}</a-col><!--{{$t('provider') | capitalize}}-->
+            <a-col span="8" :xs="6">
+              {{ $t('domain_product.domain_in_your_cart') }}
+            </a-col><!--{{$t('provider') | capitalize}}-->
           </a-row>
           <div class="description">
             <div v-if="!onCart.length" class="description-header">
               <a-icon type="question-circle" />
               <p>{{ $t('domain_product.your_cart_is_empty') }}</p>
             </div>
-              <a-descriptions
-                bordered
-                class="description-body"
-                v-for="(domain,index) in onCart"
-                :key="index"
-                :column="6"
-              >
-                <a-descriptions-item :span="1">
-                  <span class="description-body__domain-name">
-                    {{ domain.name }}
-                  </span>
-                </a-descriptions-item>
-                <a-descriptions-item :span="3">
-                  <span class="description-body__domain-cost">
-                    {{ products[domain.name] && products[domain.name][resources.period] }}
-                    {{ user.currency_code }}
-                  </span>
-                </a-descriptions-item>
-                <a-descriptions-item :span="2">
-                  <a-button
-                      class="description-body__btn-order"
-                      :key="index"
-                      @click="removeFromCart(domain, index)"
-                  >
-                    {{ $t('Delete') }}
-                  </a-button>
-                </a-descriptions-item>
-              </a-descriptions>
-            </div>
+            <a-descriptions
+              v-for="(domain,index) in onCart"
+              :key="index"
+              bordered
+              class="description-body"
+              :column="6"
+            >
+              <a-descriptions-item :span="1">
+                <span class="description-body__domain-name">
+                  {{ domain.name }}
+                </span>
+              </a-descriptions-item>
+              <a-descriptions-item :span="3">
+                <span class="description-body__domain-cost">
+                  {{ products[domain.name] && products[domain.name][resources.period] }}
+                  {{ user.currency_code }}
+                </span>
+              </a-descriptions-item>
+              <a-descriptions-item :span="2">
+                <a-button
+                  :key="index"
+                  class="description-body__btn-order"
+                  @click="removeFromCart(domain, index)"
+                >
+                  {{ $t('Delete') }}
+                </a-button>
+              </a-descriptions-item>
+            </a-descriptions>
+          </div>
           <!--<div class="order__slider">
             <template v-if="!fetchLoading">
               <div
@@ -227,19 +231,18 @@
               <div v-else class="loadingLine"></div>
             </a-col>
           </a-row>-->
-
         </div>
       </div>
 
       <div class="order__calculate order__field-cart">
-
         <a-row type="flex" justify="space-around" style="margin-top: 20px">
-          <a-col :xs="10" :sm="6" :lg='12' style="font-size: 1rem">
+          <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
             {{ $t('Pay period') }}:
           </a-col>
 
-          <a-col :xs="12" :sm="18" :lg='12'>
-            <a-select v-model="resources.period" style="width: 100%"><!--v-if="!fetchLoading"-->
+          <a-col :xs="12" :sm="18" :lg="12">
+            <a-select v-model="resources.period" style="width: 100%">
+              <!--v-if="!fetchLoading"-->
               <a-select-option
                 v-for="period in periods"
                 :key="period"
@@ -260,26 +263,26 @@
               @change="(value) => service = value"
             >
               <a-select-option
-                v-for="service of services"
-                :key="service.uuid"
-                :value="service.uuid"
+                v-for="item of services"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ service.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
-          <a-col v-if="namespaces.length > 1">
+          <a-col v-if="namespacesStore.namespaces.length > 1">
             <a-select
               style="width: 100%"
               placeholder="namespaces"
               @change="(value) => namespace = value"
             >
               <a-select-option
-                v-for="namespace of namespaces"
-                :key="namespace.uuid"
-                :value="namespace.uuid"
+                v-for="item of namespacesStore.namespaces"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ namespace.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
@@ -290,11 +293,11 @@
               @change="(value) => plan = value"
             >
               <a-select-option
-                v-for="plan of plans"
-                :key="plan.uuid"
-                :value="plan.uuid"
+                v-for="item of plans"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ plan.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
@@ -309,7 +312,9 @@
             {{ getProducts().pricing[resources.period] }}
             {{ getProducts().pricing.suffix }}
           </a-col>
-          <a-col v-else><div class="loadingLine loadingLine--total" /></a-col>
+          <a-col v-else>
+            <div class="loadingLine loadingLine--total" />
+          </a-col>
         </a-row>
 
         <a-row type="flex" justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
@@ -339,8 +344,8 @@
         <add-funds
           v-if="addfunds.visible"
           :sum="addfunds.amount"
-          :modalVisible="addfunds.visible"
-          :hideModal="() => addfunds.visible = false"
+          :modal-visible="addfunds.visible"
+          :hide-modal="() => addfunds.visible = false"
         />
       </div>
     </div>
@@ -348,22 +353,28 @@
 </template>
 
 <script>
-import passwordMeter from 'vue-simple-password-meter';
-import addFunds from '@/components/balance/addFunds.vue';
-import notification from '@/mixins/notification.js';
-import { countries } from '@/setup/countries.js';
+import { mapStores } from 'pinia'
+import passwordMeter from 'vue-simple-password-meter'
+
+import { useSpStore } from '@/stores/sp.js'
+import { usePlansStore } from '@/stores/plans.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
+
+import addFunds from '@/components/balance/addFunds.vue'
+import notification from '@/mixins/notification.js'
+import { countries } from '@/setup/countries.js'
 
 export default {
-  name: 'domain-order',
-  mixins: [notification],
+  name: 'DomainOrder',
   components: { passwordMeter, addFunds },
+  mixins: [notification],
   props: {
-    data: Object,
-    onCart: Array,
-    itemsInCart: Number,
-    removeFromCart: Function,
-    search: Function,
-    sp: Object
+    data: { type: Object, required: true },
+    onCart: { type: Array, required: true },
+    itemsInCart: { type: Number, required: true },
+    removeFromCart: { type: Function, required: true },
+    search: { type: Function, required: true },
+    sp: { type: Object, required: true }
   },
   data: () => ({
     countries,
@@ -392,323 +403,328 @@ export default {
     form: {},
     periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] // 'annually biennially triennial quadrennial quinquennial'
   }),
+  computed: {
+    ...mapStores(useNamespasesStore, useSpStore, usePlansStore),
+    isLogged () {
+      return this.$store.getters['nocloud/auth/isLoggedIn']
+    },
+    user () {
+      return this.$store.getters['nocloud/auth/billingData']
+    },
+    userdata () {
+      return this.$store.getters['nocloud/auth/userdata']
+    },
+    services () {
+      return this.$store.getters['nocloud/vms/getServices']
+        .filter((el) => el.status !== 'DEL')
+    },
+    plans () {
+      return this.plansStore.plans.filter(({ type, uuid }) => {
+        const { plans } = this.spStore.getShowcases.find(
+          ({ uuid }) => uuid === this.$route.query.service
+        ) ?? {}
+
+        if (!plans) return type === 'opensrs'
+
+        if (plans.length < 1) return type === 'opensrs'
+        return type === 'opensrs' && plans.includes(uuid)
+      })
+    },
+    rules () {
+      const message = this.$t('ssl_product.field is required')
+      const c = this.form.country
+
+      return {
+        req: [{ required: true, message }],
+        state: [{ required: c === 'CA' || c === 'US' || c === 'ES', message }],
+        postal_code: [{ required: c === 'CA' || c === 'US', message }]
+      }
+    }
+  },
+  mounted () {
+    const { action } = this.$store.getters.getOnlogin
+
+    if (typeof action !== 'function') return
+    this.modal.confirmCreate = true
+    this.modal.confirmLoading = true
+    action()
+  },
+  created () {
+    this.plansStore.fetch({ anonymously: !this.isLogged })
+      .then(() => {
+        if (this.plans.length === 1) this.plan = this.plans[0].uuid
+      })
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err
+
+        this.openNotificationWithIcon('error', {
+          message: this.$t(message)
+        })
+        console.error(err)
+      })
+
+    if (this.isLogged) {
+      this.namespacesStore.fetch()
+        .then(({ pool }) => {
+          if (pool.length === 1) this.namespace = pool[0].uuid
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err
+
+          if (err.response?.data?.code === 16) return
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          })
+          console.error(err)
+        })
+
+      this.$store.dispatch('nocloud/vms/fetch')
+        .then(() => {
+          if (this.services.length === 1) this.service = this.services[0].uuid
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err
+
+          if (err.response?.data?.code === 16) return
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          })
+          console.error(err)
+        })
+    }
+
+    this.fetch()
+    if ('form' in this.data) {
+      Object.entries(this.data).forEach(([key, value]) => {
+        this.$set(this, key, value)
+      })
+    } else this.installDataToBuffer()
+  },
+  beforeDestroy () {
+    this.$emit('change', { resources: this.resources, form: this.form })
+  },
   methods: {
-    fetch() {
-      this.fetchLoading = true;
+    fetch () {
+      this.fetchLoading = true
       const promises = this.onCart.map(({ name }) =>
         this.$api.servicesProviders.action({
           uuid: this.sp.uuid,
           action: 'get_domain_price',
-          params: { domain: name },
+          params: { domain: name }
         })
-      );
+      )
 
       Promise.all(promises)
         .then((res) => {
           res.forEach(({ meta }, i) => {
-            const { name } = this.onCart[i];
+            const { name } = this.onCart[i]
 
-            this.products[name] = meta.prices;
-          });
+            this.products[name] = meta.prices
+          })
           // this.options.provider = Object.keys(res)[0];
           // this.options.tarif = res[this.options.provider][0].tarif;
         })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
+          const message = err.response?.data?.message ?? err.message ?? err
 
           this.openNotificationWithIcon('error', {
             message: this.$t(message)
-          });
+          })
         })
-        .finally(() => { this.fetchLoading = false });
+        .finally(() => { this.fetchLoading = false })
     },
-    installDataToBuffer() {
+    installDataToBuffer () {
       const interestedKeys = [
-        "firstname",
-        "lastname",
-        "companyname",
-        "email",
-        "address1",
-        "address2",
-        "city",
-        "state",
-        "country",
-        "postcode",
-        "phonenumber",
-      ];
+        'firstname',
+        'lastname',
+        'companyname',
+        'email',
+        'address1',
+        'address2',
+        'city',
+        'state',
+        'country',
+        'postcode',
+        'phonenumber'
+      ]
       interestedKeys.forEach((key) => {
         switch (key) {
           case 'firstname':
-            this.$set(this.form, 'first_name', this.user[key]);
-            break;
+            this.$set(this.form, 'first_name', this.user[key])
+            break
           case 'lastname':
-            this.$set(this.form, 'last_name', this.user[key]);
-            break;
+            this.$set(this.form, 'last_name', this.user[key])
+            break
           case 'companyname':
-            this.$set(this.form, 'org_name', this.user[key]);
-            break;
+            this.$set(this.form, 'org_name', this.user[key])
+            break
           case 'postcode':
-            this.$set(this.form, 'postal_code', this.user[key]);
-            break;
+            this.$set(this.form, 'postal_code', this.user[key])
+            break
           case 'phonenumber':
-            this.$set(this.form, 'phone', this.user[key]);
-            break;
+            this.$set(this.form, 'phone', this.user[key])
+            break
           default:
-            this.$set(this.form, key, this.user[key]);
+            this.$set(this.form, key, this.user[key])
         }
-      });
+      })
     },
-    orderClickHandler() {
-      const service = this.services.find(({ uuid }) => uuid === this.service);
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
+    orderClickHandler () {
+      const service = this.services.find(({ uuid }) => uuid === this.service)
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = Object.keys(this.products).map((domain) => ({
         resources: { ...this.resources, user: this.form, domain },
         title: `Domain - ${domain}`,
         billing_plan: plan ?? {}
-      }));
+      }))
       const newGroup = {
         title: this.user.fullname + Date.now(),
         type: this.sp.type,
         sp: this.sp.uuid,
         instances
-      };
+      }
 
-      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service));
-      const group = info.instancesGroups?.find(({ type }) => type === 'opensrs');
+      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
+      const group = info.instancesGroups?.find(({ type }) => type === 'opensrs')
 
-      if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instancesGroups.push(newGroup);
+      if (group) group.instances = [...group.instances, ...instances]
+      else if (this.service) info.instancesGroups.push(newGroup)
 
       if (!this.userdata.uuid) {
-        this.$store.commit('setOnloginRedirect', this.$route.name);
+        this.$store.commit('setOnloginRedirect', this.$route.name)
         this.$store.commit('setOnloginInfo', {
           type: 'domains',
           title: 'Domains',
           cost: this.getProducts().pricing[this.resources.period],
           currency: this.currency.code
-        });
+        })
         this.$store.dispatch('setOnloginAction', () => {
-          this.createDomains(info);
-        });
+          this.createDomains(info)
+        })
 
-        this.$router.push({ name: 'login' });
-        return;
+        this.$router.push({ name: 'login' })
+        return
       }
 
       this.$refs.form.validate((isValid) => {
-        if (isValid) this.createDomains(info);
-        else this.openNotificationWithIcon('error', {
-          message: this.$t('all fields are required')
-        });
-      });
-    },
-    createDomains(info) {
-      this.modal.confirmLoading = true;
-      const action = (this.service) ? 'update' : 'create';
-      const orderData = (this.service) ? info : {
-        namespace: this.namespace,
-        service: {
-          title: this.user.fullname,
-          context: {},
-          version: '1',
-          instancesGroups: [info]
+        if (isValid) this.createDomains(info)
+        else {
+          this.openNotificationWithIcon('error', {
+            message: this.$t('all fields are required')
+          })
         }
-      };
+      })
+    },
+    createDomains (info) {
+      this.modal.confirmLoading = true
+      const action = (this.service) ? 'update' : 'create'
+      const orderData = (this.service)
+        ? info
+        : {
+            namespace: this.namespace,
+            service: {
+              title: this.user.fullname,
+              context: {},
+              version: '1',
+              instancesGroups: [info]
+            }
+          }
 
       this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
-          const config = { namespace: this.namespace, service: orderData };
-          const message = err.response?.data?.message ?? err.message ?? err;
+          const config = { namespace: this.namespace, service: orderData }
+          const message = err.response?.data?.message ?? err.message ?? err
 
           this.$api.services.testConfig(config)
             .then(({ result, errors }) => {
-              if (!result) errors.forEach(({ error }) => {
-                this.openNotificationWithIcon('error', { message: error });
-              });
-            });
+              if (!result) {
+                errors.forEach(({ error }) => {
+                  this.openNotificationWithIcon('error', { message: error })
+                })
+              }
+            })
           this.openNotificationWithIcon('error', {
             message: this.$t(message)
-          });
-          console.error(err);
-        });
+          })
+          console.error(err)
+        })
     },
-    orderConfirm() {
-      const domains = Object.keys(this.products);
+    orderConfirm () {
+      const domains = Object.keys(this.products)
 
       if (this.resources.reg_password.length < 10) {
         this.openNotificationWithIcon('error', {
           message: this.$t('pass at least 10 characters')
-        });
-        return;
+        })
+        return
       }
-      if (!domains.every((el) => el.match(/.+\..+/))){
-        this.$message.error(this.$t('domain is wrong'));
-        return;
+      if (!domains.every((el) => el.match(/.+\..+/))) {
+        this.$message.error(this.$t('domain is wrong'))
+        return
       }
-      if (!this.checkBalance()) return;
-      this.modal.confirmCreate = true;
+      if (!this.checkBalance()) return
+      this.modal.confirmCreate = true
     },
-    checkBalance() {
-      const sum = this.getProducts().pricing[this.resources.period];
+    checkBalance () {
+      const sum = this.getProducts().pricing[this.resources.period]
 
       if (this.userdata.balance < parseFloat(sum)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance'),
           content: this.$t('Click OK to replenish the account with the missing amount'),
           onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
-            this.addfunds.visible = true;
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
+            this.addfunds.visible = true
           }
-        });
-        return false;
+        })
+        return false
       }
-      return true;
+      return true
     },
-    deployService(uuid) {
+    deployService (uuid) {
       this.$api.services.up(uuid)
         .then(() => {
           this.openNotificationWithIcon('success', {
             message: this.$t('Domain created successfully')
-          });
-          this.$router.push({ path: '/services' });
+          })
+          this.$router.push({ path: '/services' })
         })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
+          const message = err.response?.data?.message ?? err.message ?? err
 
           this.openNotificationWithIcon('error', {
             message: this.$t(message)
-          });
+          })
         })
-        .finally(() => { this.modal.confirmLoading = false });
+        .finally(() => { this.modal.confirmLoading = false })
     },
-    getProducts() {
-      const prices = { suffix: this.user.currency_code };
+    getProducts () {
+      const prices = { suffix: this.user.currency_code }
 
-      if (this.onCart.length === 0) return {
-        pricing: this.periods.reduce((res, curr) => {
-          res[curr] = 0;
-          return res;
-        }, { ...prices })
-      };
+      if (this.onCart.length === 0) {
+        return {
+          pricing: this.periods.reduce((res, curr) => {
+            res[curr] = 0
+            return res
+          }, { ...prices })
+        }
+      }
       this.onCart.forEach(({ name }) => {
-        const domain = this.products[name] ?? {};
+        const domain = this.products[name] ?? {}
 
         Object.entries(domain).forEach(([key, value]) => {
-          if (!prices[key]) prices[key] = 0;
-          prices[key] = +(prices[key] + +value).toFixed(2);
-        });
-      });
+          if (!prices[key]) prices[key] = 0
+          prices[key] = +(prices[key] + +value).toFixed(2)
+        })
+      })
       return {
         name: `domains - ${this.onCart.length}`,
         pricing: { ...prices }
-      };
+      }
       // return this.products[this.options.provider].find(el => el.tarif == this.options.tarif);
     }
-  },
-  mounted() {
-    const { action } = this.$store.getters['getOnlogin'];
-
-    if (typeof action !== 'function') return;
-    this.modal.confirmCreate = true;
-    this.modal.confirmLoading = true;
-    action();
-  },
-  computed: {
-    isLogged() {
-      return this.$store.getters['nocloud/auth/isLoggedIn'];
-    },
-    user() {
-      return this.$store.getters['nocloud/auth/billingData'];
-    },
-    userdata() {
-      return this.$store.getters['nocloud/auth/userdata'];
-    },
-    services() {
-      return this.$store.getters['nocloud/vms/getServices']
-        .filter((el) => el.status !== 'DEL');
-    },
-    namespaces() {
-      return this.$store.getters['nocloud/namespaces/getNameSpaces'] ?? [];
-    },
-    plans() {
-      return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type, uuid }) => {
-          const { plans } = this.$store.getters['nocloud/sp/getShowcases'].find(
-            ({ uuid }) => uuid === this.$route.query.service
-          ) ?? {};
-
-          if (!plans) return type === 'opensrs';
-
-          if (plans.length < 1) return type === 'opensrs';
-          return type === 'opensrs' && plans.includes(uuid);
-        });
-    },
-    rules() {
-      const message = this.$t('ssl_product.field is required');
-      const c = this.form.country;
-
-      return {
-        req: [{ required: true, message }],
-        state: [{ required: c === 'CA' || c === 'US' || c === 'ES', message }],
-        postal_code: [{ required: c === 'CA' || c === 'US', message }]
-      };
-    }
-  },
-  created() {
-    this.$store.dispatch('nocloud/plans/fetch', { anonymously: !this.isLogged })
-      .then(() => {
-        if (this.plans.length === 1) this.plan = this.plans[0].uuid;
-      })
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
-
-        this.openNotificationWithIcon('error', {
-          message: this.$t(message)
-        });
-        console.error(err);
-      });
-
-    if (this.isLogged) {
-      this.$store.dispatch('nocloud/namespaces/fetch')
-        .then(({ pool }) => {
-          if (pool.length === 1) this.namespace = pool[0].uuid;
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          if (err.response?.data?.code === 16) return;
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          });
-          console.error(err);
-        });
-
-      this.$store.dispatch('nocloud/vms/fetch')
-        .then(() => {
-          if (this.services.length === 1) this.service = this.services[0].uuid;
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          if (err.response?.data?.code === 16) return;
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          });
-          console.error(err);
-        });
-    }
-
-    this.fetch();
-    if ('form' in this.data) {
-      Object.entries(this.data).forEach(([key, value]) => {
-        this.$set(this, key, value);
-      });
-    } else this.installDataToBuffer();
-  },
-  beforeDestroy() {
-    this.$emit('change', { resources: this.resources, form: this.form });
   }
   // watch: {
   //   'options.provider'() {
@@ -720,7 +736,7 @@ export default {
 
 <style>
 .has-error .ant-form-explain, .has-error .ant-form-split {
-	position: absolute;
+  position: absolute;
 }
 </style>
 

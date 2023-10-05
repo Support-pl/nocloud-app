@@ -5,7 +5,10 @@ import { createPromiseClient } from '@bufbuild/connect'
 import { createGrpcWebTransport } from '@bufbuild/connect-web'
 import { Value } from '@bufbuild/protobuf'
 
+import { useAppStore } from './app.js'
 import { useAuthStore } from './auth.js'
+import { useSupportStore } from './support.js'
+
 import {
   Empty, Chat, Message, ChatMeta, Role, Kind, EventType, Users, User, Status
 } from '@/libs/cc_connect/cc_pb'
@@ -13,37 +16,20 @@ import {
   ChatsAPI, MessagesAPI, StreamService, UsersAPI
 } from '@/libs/cc_connect/cc_connect'
 
-function toDate (timestamp) {
-  const date = new Date(timestamp)
-  const time = date.toTimeString().split(' ')[0]
-  const year = date.getFullYear()
-  let month = date.getMonth() + 1
-  let day = date.getDate()
-
-  if (`${month}`.length < 2) month = `0${month}`
-  if (`${day}`.length < 2) day = `0${day}`
-
-  return `${year}-${month}-${day} ${time}`
-}
-
-function changeMessage (message, user, uuid) {
-  return {
-    uuid: message.uuid,
-    date: toDate(Number(message.sent)),
-    sent: message.sent,
-    email: user.data?.email ?? 'none',
-    message: message.content.trim(),
-    name: user.title ?? 'anonymous',
-    userid: user.uuid,
-    requestor_type: (uuid === user.uuid) ? 'Owner' : 'Other',
-    gateways: message.gateways
-  }
-}
-
 export const useChatsStore = defineStore('chats', () => {
   const store = useAuthStore()
+  const appStore = useAppStore()
+  const supportStore = useSupportStore()
 
-  const transport = ref(null)
+  const transport = createGrpcWebTransport({
+    baseUrl: (VUE_APP_BASE_URL.endsWith('/') ? VUE_APP_BASE_URL : `${VUE_APP_BASE_URL}/`),
+    interceptors: [
+      (next) => async (req) => {
+        req.header.set('Authorization', `Bearer ${store.token}`)
+        return next(req)
+      }
+    ]
+  })
   const stream = ref(null)
 
   const accounts = ref(null)
@@ -53,11 +39,11 @@ export const useChatsStore = defineStore('chats', () => {
   const messages = ref([])
   const rawMessages = ref([])
 
-  const getChats = computed(({ support }) => {
-    if (support.filter[0] === 'all' || support.filter.length === 0) {
+  const getChats = computed(() => {
+    if (supportStore.filter[0] === 'all' || supportStore.filter.length === 0) {
       return chats.value
     } else {
-      const filters = support.filter.map((el) => {
+      const filters = supportStore.filter.map((el) => {
         if (!el.includes(' ')) return el
         return el.split(' ').map((el) =>
           `${el[0].toUpperCase()}${el.slice(1)}`
@@ -134,19 +120,18 @@ export const useChatsStore = defineStore('chats', () => {
     }
   }
 
-  function createTransport () {
-    const newTransport = createGrpcWebTransport({
-      baseUrl: (VUE_APP_BASE_URL.endsWith('/') ? VUE_APP_BASE_URL : `${VUE_APP_BASE_URL}/`),
-      interceptors: [
-        (next) => async (req) => {
-          req.header.set('Authorization', `Bearer ${store.token}`)
-          return next(req)
-        }
-      ]
-    })
-
-    transport.value = newTransport
-    return newTransport
+  function changeMessage (message, user, uuid) {
+    return {
+      uuid: message.uuid,
+      date: appStore.toDate(Number(message.sent), '-', true, true),
+      sent: message.sent,
+      email: user.data?.email ?? 'none',
+      message: message.content.trim(),
+      name: user.title ?? 'anonymous',
+      userid: user.uuid,
+      requestor_type: (uuid === user.uuid) ? 'Owner' : 'Other',
+      gateways: message.gateways
+    }
   }
 
   return {
@@ -166,8 +151,7 @@ export const useChatsStore = defineStore('chats', () => {
 
     async fetchChats () {
       try {
-        if (!transport.value) createTransport()
-        const chatsApi = createPromiseClient(ChatsAPI, transport.value)
+        const chatsApi = createPromiseClient(ChatsAPI, transport)
 
         const response = await chatsApi.list(new Empty())
 
@@ -184,12 +168,11 @@ export const useChatsStore = defineStore('chats', () => {
 
     async fetchMessages (id) {
       try {
-        if (!transport.value) createTransport()
-        const messagesApi = createPromiseClient(MessagesAPI, transport.value)
+        const messagesApi = createPromiseClient(MessagesAPI, transport)
         const chat = chats.value.get(id)
 
         const users = [...chat.users, ...chat.admins].map((uuid) => new User({ uuid }))
-        const usersApi = createPromiseClient(UsersAPI, transport.value)
+        const usersApi = createPromiseClient(UsersAPI, transport)
         const usersList = new Users({ users })
 
         if (!accounts.value) accounts.value = await usersApi.resolve(usersList)
@@ -214,7 +197,6 @@ export const useChatsStore = defineStore('chats', () => {
 
     async startStream () {
       if (stream.value) return
-      if (!transport.value) createTransport()
 
       const streaming = createPromiseClient(StreamService, transport)
 
@@ -236,8 +218,7 @@ export const useChatsStore = defineStore('chats', () => {
 
     async fetchDefaults () {
       try {
-        if (!transport.value) createTransport()
-        const usersApi = createPromiseClient(UsersAPI, transport.value)
+        const usersApi = createPromiseClient(UsersAPI, transport)
         const response = await usersApi.fetchDefaults(new Empty())
 
         defaults.value = response
@@ -248,8 +229,7 @@ export const useChatsStore = defineStore('chats', () => {
     },
 
     async createChat (data) {
-      if (!transport.value) createTransport()
-      const chatsApi = createPromiseClient(ChatsAPI, transport.value)
+      const chatsApi = createPromiseClient(ChatsAPI, transport)
 
       const newChat = new Chat({
         department: data.department,
@@ -273,8 +253,7 @@ export const useChatsStore = defineStore('chats', () => {
       return createdChat
     },
     async editChat (chat) {
-      if (!transport.value) createTransport()
-      const chatsApi = createPromiseClient(ChatsAPI, transport.value)
+      const chatsApi = createPromiseClient(ChatsAPI, transport)
       const createdChat = await chatsApi.update(chat)
 
       chats.value.set(createdChat.uuid, createdChat)
@@ -282,8 +261,7 @@ export const useChatsStore = defineStore('chats', () => {
     },
 
     async sendMessage (message) {
-      if (!transport.value) createTransport()
-      const messagesApi = createPromiseClient(MessagesAPI, transport.value)
+      const messagesApi = createPromiseClient(MessagesAPI, transport)
 
       const newMessage = new Message({
         kind: Kind.DEFAULT,
@@ -298,8 +276,7 @@ export const useChatsStore = defineStore('chats', () => {
       return newMessage
     },
     async editMessage (message) {
-      if (!transport.value) createTransport()
-      const messagesApi = createPromiseClient(MessagesAPI, transport.value)
+      const messagesApi = createPromiseClient(MessagesAPI, transport)
 
       const newMessage = new Message({
         ...rawMessages.value.find(({ uuid }) => uuid === message.uuid),

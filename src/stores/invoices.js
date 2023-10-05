@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth.js'
 import { useAppStore } from './app.js'
@@ -12,16 +12,16 @@ export const useInvoicesStore = defineStore('invoices', () => {
   const invoices = ref([])
   const filter = ref(['all'])
 
-  function getInvoices (state) {
-    let filtred
+  const getInvoices = computed(() => {
+    let filtered
 
-    if (state.filter[0] === 'all' || state.filter.length === 0) {
-      filtred = state.invoices
+    if (filter.value[0] === 'all' || filter.value.length === 0) {
+      filtered = invoices.value
     } else {
-      filtred = state.invoices.filter(ticket => state.filter.includes(ticket.status))
+      filtered = invoices.value.filter(ticket => filter.value.includes(ticket.status))
     }
 
-    return filtred.sort((a, b) => {
+    return filtered.sort((a, b) => {
       const dictionary = {
         Cancelled: 1,
         Paid: 1,
@@ -29,14 +29,14 @@ export const useInvoicesStore = defineStore('invoices', () => {
       }
       const astatus = dictionary[a.status]
       const bstatus = dictionary[b.status]
+
       if (astatus !== bstatus) {
         return bstatus - astatus
       }
-      const aid = parseInt(a.id, 10)
-      const bid = parseInt(b.id, 10)
-      return bid - aid
+
+      return parseInt(b.id, 10) - parseInt(a.id, 10)
     })
-  }
+  })
 
   return {
     invoices,

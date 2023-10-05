@@ -17,11 +17,11 @@ import { computed, onMounted } from 'vue'
 import store from '@/store'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
+import { Status } from '@/libs/cc_connect/cc_pb.js'
 import singleTicket from '@/components/appMain/support/singleTicket.vue'
 import addTicketField from '@/components/appMain/support/addTicket.vue'
 import loading from '@/components/loading/loading.vue'
 import empty from '@/components/empty/empty.vue'
-import { Status } from '@/libs/cc_connect/cc_pb'
 
 const chatsStore = useChatsStore()
 const supportStore = useSupportStore()

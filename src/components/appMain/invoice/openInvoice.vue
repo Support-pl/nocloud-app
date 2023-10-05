@@ -1,7 +1,7 @@
 <template>
   <div class="openInvoice__fullscreen">
     <transition name="invoiceApear">
-      <div v-if="!isLoading" class="openInvoice">
+      <div v-if="!invoicesStore.isLoading" class="openInvoice">
         <div class="openInvoice__header">
           <div class="container full-height">
             <div class="openInvoice__header--content">
@@ -114,7 +114,7 @@
                     <div
                       v-if="invoice.items.item.length > 1 && !showFullTable"
                       class="table__show-full"
-                      @click="showfull"
+                      @click="showFullTable = true"
                     >
                       {{ $t("Show full list") }} ({{ invoice.items.item.length }})
                     </div>
@@ -124,10 +124,10 @@
                   <!-- <p class="info__footer__discount">
                     {{ $t("VNDExcludeVAT") }}
                   </p> -->
-                  <template v-if="invoice.status == 'Unpaid'">
-                    <!-- <div class="info__postpone" @click="showConfirm">
+                  <template v-if="invoice.status === 'Unpaid'">
+                    <div class="info__postpone" @click="showConfirm">
                       <a-icon type="clock-circle" />
-                    </div> -->
+                    </div>
 
                     <!-- <div class="info__button info__button--pay"> -->
                     <a-button class="info__button" :loading="confirmLoading" @click="showPayModal">
@@ -149,101 +149,96 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { Modal } from 'ant-design-vue'
+import router from '@/router'
+import i18n from '@/i18n'
+import api from '@/api.js'
 import config from '@/appconfig.js'
+import { useAuthStore } from '@/stores/auth.js'
+import { useInvoicesStore } from '@/stores/invoices.js'
 import loading from '@/components/loading/loading.vue'
 
-export default {
-  name: 'OpenInvoice',
-  components: { loading },
-  data () {
-    return {
-      payment: ['visa', 'mastercard', 'yandex.money'],
-      showFullTable: false,
-      confirmLoading: false,
-      elem: ''
-    }
-  },
-  computed: {
-    user () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
-    baseURL () {
-      return this.$store.getters['invoices/getURL']
-    },
-    invoice () {
-      const { uuid } = this.$route.params
+const authStore = useAuthStore()
+const invoicesStore = useInvoicesStore()
 
-      return this.$store.getters['invoices/getInvoices']
-        .find((invoice) => invoice.id === +uuid)
-    },
-    isLoading () {
-      return this.$store.getters['invoices/isLoading']
-    },
-    statusColor () {
-      return this.invoice?.status.toLowerCase() === 'paid'
-        ? config.colors.success
-        : config.colors.err
-    },
-    total () {
-      return this.invoice.items.item.reduce((a, b) => a + +b.amount, 0)
-    }
-  },
-  mounted () {
-    setTimeout(() => {
-      const { uuid } = this.$route.params
+const showFullTable = ref(false)
+const confirmLoading = ref(false)
 
-      sessionStorage.setItem('invoice', uuid)
+const invoice = computed(() => {
+  const { uuid } = router.currentRoute.params
+
+  return invoicesStore.getInvoices.find(({ id }) => id === +uuid)
+})
+
+const statusColor = computed(() => {
+  return invoice.value?.status.toLowerCase() === 'paid'
+    ? config.colors.success
+    : config.colors.err
+})
+
+const total = computed(() =>
+  invoice.value.items.item.reduce((a, b) => a + +b.amount, 0)
+)
+
+onMounted(() => {
+  setTimeout(() => {
+    const { uuid } = router.currentRoute.params
+
+    sessionStorage.setItem('invoice', uuid)
+  })
+
+  invoicesStore.fetch().catch((err) => {
+    router.push('/billing')
+    console.error(err)
+  })
+})
+
+onUnmounted(() => {
+  if (!router.currentRoute.name.includes('billing')) {
+    sessionStorage.removeItem('invoice')
+  }
+})
+
+function goBack () {
+  router.push('/billing')
+}
+
+async function showPayModal () {
+  try {
+    confirmLoading.value = true
+    const response = await api.get(authStore.baseURL, {
+      params: {
+        run: 'get_pay_token',
+        invoice_id: invoice.value.id
+      }
     })
 
-    this.$store.dispatch('invoices/autoFetch')
-      .catch((err) => {
-        this.$router.push('/billing')
-        console.error(err)
-      })
-  },
-  destroyed () {
-    if (!this.$route.name.includes('billing')) {
-      sessionStorage.removeItem('invoice')
-    }
-  },
-  methods: {
-    goBack () {
-      this.$router.push('/billing')
-    },
-    showfull () {
-      this.showFullTable = true
-    },
-    showPayModal () {
-      this.confirmLoading = true
-      this.$api.get(this.baseURL, {
-        params: {
-          run: 'get_pay_token',
-          invoice_id: this.invoice.id
-        }
-      })
-        .then((res) => {
-          window.location.href = res
-        })
-        .finally(() => {
-          this.confirmLoading = false
-        })
-      // window.location.href = this.invoice.paytoken.checkout.redirect_url;
-    },
-    showConfirm () {
-      this.$confirm({
-        title: this.$t('Do you want to defer payment?'),
-        maskClosable: true,
-        content: this.$t('The payment can be postponed only once. The payment is postponed for 5 days.'),
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
-        onOk () {},
-        onCancel () {},
-        class: 'test'
-      })
-    }
+    window.location.href = response
+    // window.location.href = invoice.value.paytoken.checkout.redirect_url
+  } finally {
+    confirmLoading.value = false
   }
 }
+
+function showConfirm () {
+  Modal.confirm({
+    title: i18n.t('Do you want to defer payment?'),
+    maskClosable: true,
+    content: i18n.t('The payment can be postponed only once. The payment is postponed for 5 days.'),
+    okText: i18n.t('Yes'),
+    cancelText: i18n.t('Cancel'),
+    onOk () {},
+    onCancel () {},
+    class: 'test'
+  })
+}
+
+</script>
+
+<script>
+export default { name: 'OpenInvoice' }
 </script>
 
 <style>

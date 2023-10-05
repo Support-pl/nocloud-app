@@ -49,7 +49,7 @@ export const useAppStore = defineStore('app', () => {
         }
       ]
 
-  function date (timestamp, sep = '.', withTime = true, reverse) {
+  function toDate (timestamp, sep = '.', withTime = true, reverse) {
     if (timestamp < 1) return '-'
 
     const date = new Date(timestamp * 1000)
@@ -73,7 +73,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   return {
-    date,
+    toDate,
     update,
     buttons,
     activeTab,

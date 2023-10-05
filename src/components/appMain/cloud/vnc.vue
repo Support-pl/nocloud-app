@@ -273,6 +273,7 @@ import { mapState } from 'pinia'
 import UI from 'vnc-ui-vue'
 import { useAppStore } from '@/stores/app.js'
 import password from '@/components/password.vue'
+import { useProductsStore } from '@/stores/products'
 
 export default {
   name: 'VncView',
@@ -280,12 +281,12 @@ export default {
   data: () => ({ desktopName: '', token: '', url: '', rfb: null }),
   computed: {
     ...mapState(useAppStore, ['isMaintananceMode']),
+    ...mapState(useProductsStore, ['products']),
     instance () {
       const uuid = this.$route.params.pathMatch
       const instances = this.$store.getters['nocloud/vms/getInstances']
-      const products = this.$store.getters['products/getProducts']
 
-      return [...instances, ...products].find((inst) =>
+      return [...instances, ...this.products].find((inst) =>
         `${(inst.uuid ?? inst.id)}` === uuid
       )
     },

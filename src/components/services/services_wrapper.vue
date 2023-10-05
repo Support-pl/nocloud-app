@@ -1,37 +1,40 @@
 <template>
   <div class="services__wrapper" :style="{ gridTemplateColumns: `repeat(${columnsCount}, 1fr)` }">
-    <template v-for="service in avaliableServices">
-      <a-badge
-        count="+"
-        :number-style="{
-          fontSize: '20px',
-          transform: (hovered === service.title) ? 'none' : 'scale(0) translate(-20px, -20px)',
-          backgroundColor: '#fff',
-          boxShadow: '0 0 0 1px var(--main)',
-          color: 'var(--main)',
-          cursor: 'pointer',
-          transition: '0.3s'
-        }"
-        @click="newProductHandler(service)"
+    <a-badge
+      v-for="service in avaliableServices"
+      :key="service.title"
+      count="+"
+      :number-style="{
+        fontSize: '20px',
+        transform: (hovered === service.title) ? 'none' : 'scale(0) translate(-20px, -20px)',
+        backgroundColor: '#fff',
+        boxShadow: '0 0 0 1px var(--main)',
+        color: 'var(--main)',
+        cursor: 'pointer',
+        transition: '0.3s'
+      }"
+      @click="newProductHandler(service)"
+      @mouseover.native="hovered = service.title"
+      @mouseleave.native="hovered = null"
+    >
+      <service-item
+        v-if="!service.needLogin || isLogged"
+        :key="service.title"
+        :service="service"
+        :products-count="productsCount"
         @mouseover.native="hovered = service.title"
         @mouseleave.native="hovered = null"
-      >
-        <service-item
-          v-if="!service.needLogin || isLogged"
-          :key="service.title"
-          :service="service"
-          :products-count="productsCount"
-          @mouseover.native="hovered = service.title"
-          @mouseleave.native="hovered = null"
-        />
-      </a-badge>
-    </template>
+      />
+    </a-badge>
   </div>
 </template>
 
 <script>
+import { mapState } from 'pinia'
 import serviceItem from './service_min.vue'
 import config from '@/appconfig.js'
+import { useSpStore } from '@/stores/sp.js'
+import { useProductsStore } from '@/stores/products.js'
 
 export default {
   name: 'ServicesWrapper',
@@ -90,12 +93,11 @@ export default {
     }
   },
   computed: {
-    sp () {
-      return this.$store.getters['nocloud/sp/getSP']
-    },
-    showcases () {
-      return this.$store.getters['nocloud/sp/getShowcases']
-    },
+    ...mapState(useProductsStore, ['services']),
+    ...mapState(useSpStore, {
+      sp: 'servicesProviders',
+      showcases: 'getShowcases'
+    }),
     isLogged () {
       return this.$store.getters['nocloud/auth/isLoggedIn']
     },
@@ -103,9 +105,6 @@ export default {
       return this.$store.getters['nocloud/auth/getURL']
     },
 
-    services () {
-      return this.$store.getters['products/getServices']
-    },
     avaliableServices () {
       const services = (config.sharedEnabled)
         ? [{
@@ -208,7 +207,7 @@ export default {
         case 'acronis':
           name = 'service-acronis'
           break
-        case 'virtual':
+        case 'empty':
           name = 'service-custom'
           break
         case 'openai':
@@ -234,9 +233,9 @@ export default {
 
 <style>
 .services__wrapper {
-	/* background-color: red; */
-	display: grid;
-	grid-gap: 5px;
-	grid-template-columns: repeat(5, 1fr);
+  /* background-color: red; */
+  display: grid;
+  grid-gap: 5px;
+  grid-template-columns: repeat(5, 1fr);
 }
 </style>
