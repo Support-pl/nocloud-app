@@ -72,7 +72,7 @@
         </component>
       </div>
 
-      <div v-if="itemSP && getPlans.length > 0" class="newCloud__calculate field result">
+      <div v-if="itemSP && plans.length > 0" class="newCloud__calculate field result">
         <div
           v-if="locationDescription && activeKey === 'location'"
           v-html="locationDescription"
@@ -335,17 +335,13 @@
             style="width: 100%; margin-top: 10px"
           >
             <a-col style="width: 100%">
-              <a-select
-                v-model="plan"
-                placeholder="Price models"
-                style="width: 100%"
-              >
+              <a-select v-model="plan" placeholder="Price models" style="width: 100%">
                 <a-select-option
-                  v-for="plan in filteredPlans"
-                  :key="plan.uuid"
-                  :value="plan.uuid"
+                  v-for="item in filteredPlans"
+                  :key="item.uuid"
+                  :value="item.uuid"
                 >
-                  {{ plan.title }}
+                  {{ item.title }}
                 </a-select-option>
               </a-select>
             </a-col>
@@ -358,40 +354,32 @@
             style="width: 100%; margin-top: 10px"
           >
             <a-col style="width: 100%">
-              <a-select
-                v-model="service"
-                placeholder="Services"
-                style="width: 100%"
-              >
+              <a-select v-model="service" placeholder="Services" style="width: 100%">
                 <a-select-option
-                  v-for="service in services"
-                  :key="service.uuid"
-                  :value="service.uuid"
+                  v-for="item in services"
+                  :key="item.uuid"
+                  :value="item.uuid"
                 >
-                  {{ service.title }}
+                  {{ item.title }}
                 </a-select-option>
               </a-select>
             </a-col>
           </a-row>
 
           <a-row
-            v-if="getNameSpaces.length > 1"
+            v-if="namespaces.length > 1"
             type="flex"
             justify="space-between"
             style="width: 100%; margin-top: 10px"
           >
             <a-col style="width: 100%">
-              <a-select
-                v-model="namespace"
-                style="width: 100%"
-                placeholder="Namespaces"
-              >
+              <a-select v-model="namespace" style="width: 100%" placeholder="Namespaces">
                 <a-select-option
-                  v-for="name in getNameSpaces"
-                  :key="name.uuid"
-                  :value="name.uuid"
+                  v-for="item in namespaces"
+                  :key="item.uuid"
+                  :value="item.uuid"
                 >
-                  {{ name.title }}
+                  {{ item.title }}
                 </a-select-option>
               </a-select>
             </a-col>
@@ -597,12 +585,17 @@
 </template>
 
 <script>
+import { mapState, mapActions } from 'pinia'
 import { mapGetters } from 'vuex'
 import { NcMap } from 'nocloud-ui'
+import { useSpStore } from '@/stores/sp.js'
+import { usePlansStore } from '@/stores/plans.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
+
+import api from '@/api.js'
 import loading from '@/components/loading/loading.vue'
 import addFunds from '@/components/balance/addFunds.vue'
 import notification from '@/mixins/notification.js'
-import api from '@/api.js'
 
 export default {
   name: 'NewPaaS',
@@ -687,9 +680,9 @@ export default {
   },
 
   computed: {
-    ...mapGetters('nocloud/namespaces', ['getNameSpaces']),
-    ...mapGetters('nocloud/plans', ['getPlans']),
-    ...mapGetters('nocloud/sp', ['getSP']),
+    ...mapState(useNamespasesStore, ['namespaces']),
+    ...mapState(useSpStore, ['servicesProviders', 'getShowcases']),
+    ...mapState(usePlansStore, ['plans']),
     ...mapGetters('nocloud/auth', ['userdata', 'billingData', 'isLoggedIn']),
     ...mapGetters('nocloud/vms', ['getServicesFull']),
 
@@ -708,7 +701,7 @@ export default {
 
       this.showcases.forEach((showcase) => {
         showcase.locations?.forEach((location) => {
-          const sp = this.getSP.find(({ locations }) =>
+          const sp = this.servicesProviders.find(({ locations }) =>
             locations.find(({ id, type }) =>
               location.id.includes(id) && location.type === type
             )
@@ -723,10 +716,9 @@ export default {
       return locations
     },
     showcases () {
-      const showcases = this.$store.getters['nocloud/sp/getShowcases']
       const titles = [{ title: 'all', uuid: '' }]
 
-      showcases.forEach((showcase) => {
+      this.getShowcases.forEach((showcase) => {
         if (showcase.locations.length < 1) return
 
         titles.push(showcase)
@@ -745,7 +737,7 @@ export default {
     itemSP () {
       const { sp } = this.locations.find((el) => el.id === this.locationId) || {}
 
-      if (sp) return this.getSP.find((el) => el.uuid === sp)
+      if (sp) return this.servicesProviders.find((el) => el.uuid === sp)
       else return null
     },
     template () {
@@ -781,13 +773,13 @@ export default {
         return uuid === this.showcase
       }) ?? { plans: '' }
 
-      if (plans === '' || plans.length < 1) return this.getPlans
-      return this.getPlans.filter(({ uuid, type }) =>
+      if (plans === '' || plans.length < 1) return this.plans
+      return this.plans.filter(({ uuid, type }) =>
         locationItem?.type === type && plans.includes(uuid)
       )
     },
     getPlan () {
-      return this.getPlans.find(({ uuid }) => uuid === this.plan) ?? {}
+      return this.plans.find(({ uuid }) => uuid === this.plan) ?? {}
     },
     // -------------------------------------
 
@@ -797,7 +789,7 @@ export default {
       const titles = []
 
       const { products } = (isDynamic && isIone)
-        ? this.getPlans.find(({ uuid }) =>
+        ? this.plans.find(({ uuid }) =>
           uuid === this.getPlan.meta?.linkedPlan
         ) ?? {}
         : this.getPlan ?? {}
@@ -1034,7 +1026,7 @@ export default {
 
       if (!this.itemSP?.uuid) return
       this.isPlansLoading = true
-      this.$store.dispatch('nocloud/plans/fetch', {
+      this.fetchPlans({
         sp_uuid: this.itemSP.uuid,
         anonymously: !this.isLoggedIn
       })
@@ -1106,8 +1098,8 @@ export default {
   },
   created () {
     this.showcase = this.$route.query.service ?? ''
-    this.$store.dispatch('nocloud/sp/fetchShowcases', !this.isLoggedIn)
-    this.$store.dispatch('nocloud/sp/fetch', !this.isLoggedIn)
+    this.fetchShowcases(!this.isLoggedIn)
+    this.fetchProviders(!this.isLoggedIn)
       .then(async () => {
         const data = localStorage.getItem('data')
         const { query } = this.$route
@@ -1151,7 +1143,7 @@ export default {
     if (this.isLoggedIn) {
       Promise.all([
         this.$store.dispatch('nocloud/vms/fetch'),
-        this.$store.dispatch('nocloud/namespaces/fetch')
+        this.fetchNamespaces()
       ])
         .then(() => {
           setTimeout(this.setOneService, 300)
@@ -1189,6 +1181,12 @@ export default {
     })
   },
   methods: {
+    ...mapActions(useNamespasesStore, { fetchNamespaces: 'fetch' }),
+    ...mapActions(useSpStore, {
+      fetchProviders: 'fetch',
+      fetchShowcases: 'fetchShowcases'
+    }),
+    ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
     onScore ({ score }) {
       this.score = score
     },
@@ -1220,7 +1218,7 @@ export default {
 
       if (key === 'productSize') {
         const plan = (this.getPlan.kind === 'DYNAMIC' && this.getPlan.type === 'ione')
-          ? this.getPlans.find((el) => el.uuid === this.getPlan.meta.linkedPlan)
+          ? this.plans.find((el) => el.uuid === this.getPlan.meta.linkedPlan)
           : this.getPlan
 
         if (!plan) return
@@ -1244,7 +1242,7 @@ export default {
       }
 
       if (key === 'type') {
-        const plan = this.getPlans.find(({ type }) => type.includes(value))
+        const plan = this.plans.find(({ type }) => type.includes(value))
         const products = Object.values(plan.products)
         const product = products[1] ?? products[0]
 
@@ -1259,8 +1257,8 @@ export default {
       }
     },
     setOneNameSpace () {
-      if (this.getNameSpaces.length === 1) {
-        this.namespace = this.getNameSpaces[0].uuid
+      if (this.namespaces.length === 1) {
+        this.namespace = this.namespaces[0].uuid
       }
     },
     nextStep () {

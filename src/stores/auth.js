@@ -24,7 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
   function setToken (value) {
     const expires = new Date(Date.now() + 7776e6)
 
-    token.value = token
+    token.value = value
     cookies.set(COOKIES_NAME, value, { expires })
   }
 
@@ -89,10 +89,10 @@ export const useAuthStore = defineStore('auth', () => {
     },
 
     load () {
-      const token = cookies.get(COOKIES_NAME)
-      if (token) {
-        api.axios.defaults.headers.common.Authorization = 'Bearer ' + token
-        setToken(token)
+      const getToken = cookies.get(COOKIES_NAME)
+      if (getToken) {
+        api.axios.defaults.headers.common.Authorization = 'Bearer ' + getToken
+        token.value = getToken
       }
     },
 

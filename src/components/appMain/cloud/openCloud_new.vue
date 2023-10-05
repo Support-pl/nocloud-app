@@ -235,12 +235,15 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
 import diskControl from './openCloud/diskControl.vue'
 import bootOrder from './openCloud/bootOrder.vue'
 import networkControl from './openCloud/networkControl.vue'
 import accessManager from './openCloud/accessManager.vue'
 import loading from '@/components/loading/loading.vue'
 import notification from '@/mixins/notification.js'
+import { useProductsStore } from '@/stores/products'
+import { useSpStore } from '@/stores/sp'
 
 export default {
   name: 'OpenCloud',
@@ -287,7 +290,14 @@ export default {
       'getServicesFull',
       'getInstances'
     ]),
-    ...mapGetters('products', ['getProducts']),
+    ...mapState(useProductsStore, {
+      products: 'products',
+      fetchProducts: 'fetch'
+    }),
+    ...mapState(useSpStore, {
+      sp: 'servicesProviders',
+      fetchProviders: 'fetch'
+    }),
     ...mapGetters('support', { baseURL: 'getURL' }),
     template () {
       const components = import.meta.glob('@/components/appMain/modules/*/openInstance.vue')
@@ -357,8 +367,7 @@ export default {
           modules: ['ione', 'ovh']
         }
       ]
-      const sp = this.$store.getters['nocloud/sp/getSP']
-      let { type } = sp?.find(({ uuid }) => uuid === this.VM.sp) || {}
+      let { type } = this.sp.find(({ uuid }) => uuid === this.VM.sp) || {}
 
       if (this.VM.server_on) type = 'custom'
       return options.filter((el) =>
@@ -373,7 +382,7 @@ export default {
       return data
     },
     VM () {
-      const vms = [...this.getInstances, ...this.getProducts]
+      const vms = [...this.getInstances, ...this.products]
 
       for (const instance of vms) {
         if (instance.uuid === this.$route.params.uuid) {
@@ -487,8 +496,11 @@ export default {
 
     if (this.isLogged) {
       this.$store.dispatch('nocloud/auth/fetchBillingData')
-      this.$store.dispatch('products/fetch')
-      this.$store.dispatch('nocloud/sp/fetch')
+        .then(({ client_id: id }) => {
+          this.fetchProducts(id)
+        })
+
+      this.fetchProviders()
       this.$store.dispatch('nocloud/vms/fetch')
         .then(() => {
           const inst = this.getInstances.find(({ uuid }) => uuid === this.$route.params.uuid)

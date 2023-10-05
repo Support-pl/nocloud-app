@@ -105,9 +105,9 @@
             <a-col
               v-for="elem in info"
               :key="elem.key"
-              :md="12"
-              :xs="12"
-              :sm="12"
+              :md="(elem.key === 'autorenew') ? 24 : 12"
+              :xs="(elem.key === 'autorenew') ? 24 : 12"
+              :sm="(elem.key === 'autorenew') ? 24 : 12"
             >
               <div class="service-page__info">
                 <div class="service-page__info-title">
@@ -176,6 +176,7 @@ import { mapStores } from 'pinia'
 import config from '@/appconfig.js'
 import { useChatsStore } from '@/stores/chats.js'
 import loading from '@/components/loading/loading.vue'
+import { useProductsStore } from '@/stores/products'
 
 const info = [
   // {
@@ -215,20 +216,14 @@ export default {
   components: { loading },
   data: () => ({ service: null, info }),
   computed: {
-    ...mapStores(useChatsStore),
+    ...mapStores(useChatsStore, useProductsStore),
     user () {
       return this.$store.getters['nocloud/auth/billingData']
-    },
-    baseURL () {
-      return this.$store.getters['products/getURL']
     },
     currency () {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
 
       return { code: this.user.currency_code ?? defaultCurrency }
-    },
-    products () {
-      return this.$store.getters['products/getProducts']
     },
     getTagColor () {
       const status = this.service.status.replace('cloudStateItem.', '')
@@ -329,6 +324,7 @@ export default {
 
             domain.resources = {
               period: this.$t('PayG'),
+              recurringamount: 0,
               inputKilotoken: products.input_kilotoken,
               outputKilotoken: products.output_kilotoken
             }
@@ -343,7 +339,7 @@ export default {
             break
           }
 
-          case 'virtual': {
+          case 'empty': {
             const { period } = domain.billingPlan.products[domain.product]
 
             domain.data.expiry = {
@@ -431,13 +427,13 @@ export default {
       })
       .then(({ client_id: id }) => {
         if (!id) return 'done'
-        if (this.products.length < 1) {
-          return this.$store.dispatch('products/fetch', id)
+        if (this.productsStore.products.length < 1) {
+          return this.productsStore.fetch(id)
         }
       })
       .then((result) => {
         if (result === 'done') return
-        this.service = this.products.find(({ id }) => id === this.$route.params.id)
+        this.service = this.productsStore.products.find(({ id }) => id === this.$route.params.id)
       })
       .catch((err) => console.error(err))
 

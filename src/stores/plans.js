@@ -30,7 +30,7 @@ export const usePlansStore = defineStore('plans', () => {
         isLoading.value = true
         const response = await api.plans.list(params)
 
-        plans.value = response.pool
+        setPlans(response.pool)
         return response
       } catch (error) {
         return error

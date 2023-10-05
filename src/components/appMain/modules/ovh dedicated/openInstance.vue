@@ -160,6 +160,7 @@
           <template v-if="Object.keys(addonsPrice).length > 0">
             <div
               v-for="(price, addon) in addonsPrice"
+              :key="addon"
               class="block__column block__column_table block__column_price"
             >
               <div class="block__title">
@@ -370,6 +371,8 @@
 
 <script lang="jsx">
 import { defineComponent } from 'vue'
+import { mapState } from 'pinia'
+import { useSpStore } from '@/stores/sp.js'
 import notification from '@/mixins/notification'
 
 const columns = [
@@ -395,7 +398,9 @@ const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB']
 export default defineComponent({
   name: 'OpenInstance',
   mixins: [notification],
-  props: { VM: { type: Object, required: true } },
+  props: {
+    VM: { type: Object, required: true }
+  },
   data: () => ({
     modal: {
       reboot: false,
@@ -428,6 +433,7 @@ export default defineComponent({
     isSwitchLoading: false
   }),
   computed: {
+    ...mapState(useSpStore, ['servicesProviders']),
     user () {
       return this.$store.getters['nocloud/auth/billingData']
     },
@@ -454,11 +460,8 @@ export default defineComponent({
       }
     },
 
-    getSP () {
-      return this.$store.getters['nocloud/sp/getSP']
-    },
     dataSP () {
-      return this.getSP.find((el) => el.uuid === this.VM.sp)
+      return this.servicesProviders.find((el) => el.uuid === this.VM.sp)
     },
     osName () {
       const type = this.VM.billingPlan.type.split(' ')[1]
@@ -583,14 +586,14 @@ export default defineComponent({
     },
     checkRange (val) {
       let count = 0
-      for (let i = 0; val > 1024; count++) {
+      for (; val > 1024; count++) {
         val = val / 1024
       }
       return sizes[count]
     },
     fromBytesTo (val, newRange) {
       let count = sizes.indexOf(newRange)
-      if (count == -1) {
+      if (count === -1) {
         console.log("can't get such range")
         return
       }
@@ -707,8 +710,12 @@ export default defineComponent({
             uuidService: this.VM.uuidService,
             action: 'backup_restore_points'
           })
-            .then(({ meta }) => this.dates = meta.restorePoints)
-            .finally(() => this.actionLoading = false)
+            .then(({ meta }) => {
+              this.dates = meta.restorePoints
+            })
+            .finally(() => {
+              this.actionLoading = false
+            })
           break
         case 'snapshot':
           this.snapshots.modal = true
@@ -759,7 +766,7 @@ export default defineComponent({
                 <div>
                   <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
                   <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
-                    { ...Object.entries(this.addonsPrice).map(([key, value]) =>
+                    { Object.entries(this.addonsPrice).map(([key, value]) =>
                       <li>{ key }: { value } { this.currency.code }</li>
                     ) }
                   </ul>
@@ -796,7 +803,9 @@ export default defineComponent({
           onCancel () {}
         })
       })
-        .finally(() => this.isSwitchLoading = false)
+        .finally(() => {
+          this.isSwitchLoading = false
+        })
     },
     sendAddingAddon (action) {
       this.$confirm({
@@ -828,7 +837,9 @@ export default defineComponent({
               this.openNotificationWithIcon('error', opts)
               console.error(err)
             })
-            .finally(() => this.actionLoading = false)
+            .finally(() => {
+              this.actionLoading = false
+            })
         },
         onCancel () {}
       })
@@ -870,7 +881,9 @@ export default defineComponent({
         uuid: this.$route.params.uuid,
         action: 'start_vnc'
       })
-        .then(({ meta }) => location.href = meta.url)
+        .then(({ meta }) => {
+          location.href = meta.url
+        })
         .catch((err) => console.error(err))
     },
     date (string, timestamp) {

@@ -233,16 +233,20 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
-import { mapState, mapWritableState } from 'pinia'
+import { mapState, mapWritableState, mapActions as actionsPinia } from 'pinia'
 import moment from 'moment'
+
 import { useAppStore } from '@/stores/app.js'
+import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
+import { useProductsStore } from '@/stores/products.js'
+import { useInvoicesStore } from '@/stores/invoices.js'
 import { useTransactionsStore } from '@/stores/transactions.js'
+
 import config from '@/appconfig.js'
 import balance from '@/components/balance/balance.vue'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
-import { useAuthStore } from '@/stores/auth'
 
 export default {
   name: 'AppHeader',
@@ -308,7 +312,7 @@ export default {
               icon: 'reload',
               onClickFuncion: () => {
                 this.fetchClouds()
-                this.fetchProducts()
+                this.fetchProducts(this.user.client_id)
                 this.fetchUserData()
               }
             }
@@ -375,7 +379,6 @@ export default {
     ...mapState(useAuthStore, ['baseURL']),
     ...mapState(useSupportStore, {
       tickets: 'tickets',
-      isAddingTicket: 'isAddingTicket',
       isOnlyClosedTickets: 'isOnlyClosedTickets',
       fetchTickets: 'fetch'
     }),
@@ -386,15 +389,22 @@ export default {
       pageSize: 'size',
       fetchTransactions: 'fetch'
     }),
+    ...mapState(useInvoicesStore, {
+      invoices: 'invoices',
+      fetchInvoices: 'fetch'
+    }),
     ...mapWritableState(useSupportStore, {
+      isAddingTicket: 'isAddingTicket',
       supportFilter: 'filter'
     }),
     ...mapWritableState(useTransactionsStore, {
       transactionsFilter: 'filter'
     }),
+    ...mapWritableState(useInvoicesStore, {
+      invoicesFilter: 'filter'
+    }),
     ...mapState(useChatsStore, ['chats']),
     ...mapGetters('nocloud/vms', { searchString: 'getString' }),
-    ...mapGetters('invoices', ['getInvoices', 'getAllInvoices']),
     active () {
       const { headerTitle, layoutTitle } = this.$route.meta
 
@@ -416,7 +426,7 @@ export default {
       } else if (this.active === 'billing') {
         const isInvoice = this.activeInvoiceTab === 'Invoice'
 
-        filterElem = (isInvoice) ? this.getAllInvoices : this.transactions
+        filterElem = (isInvoice) ? this.invoices : this.transactions
       } else {
         filterElem = []
       }
@@ -542,8 +552,7 @@ export default {
     this.currencyCode = this.defaultCurrency
   },
   methods: {
-    ...mapActions('invoices', { fetchInvoices: 'fetch' }),
-    ...mapActions('products', { fetchProducts: 'fetch' }),
+    ...actionsPinia(useProductsStore, { fetchProducts: 'fetch' }),
     ...mapActions('nocloud/vms', { fetchClouds: 'fetch' }),
     ...mapActions('nocloud/auth', ['fetchUserData']),
     getState (name) {
@@ -681,12 +690,12 @@ export default {
           localStorage.setItem('invoiceFilters', JSON.stringify(filters))
         }
 
-        this.getAllInvoices.forEach((el) => {
+        this.invoices.forEach((el) => {
           const key = this.$t(`filterHeader.${el.status}`)
 
           filtered[key] = el.status
         })
-        this.$store.commit('invoices/updateFilter', info.map((el) => filtered[el]))
+        this.invoicesFilter = info.map((el) => filtered[el])
       }
     },
     updateSearch ({ key, target }) {

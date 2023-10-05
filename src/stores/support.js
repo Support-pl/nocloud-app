@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth.js'
 import api from '@/api.js'
@@ -15,7 +15,7 @@ export const useSupportStore = defineStore('support', () => {
 
   const filter = ref(['all'])
 
-  function getTickets () {
+  const getTickets = computed(() => {
     // const order = ['open', 'closed', 'answered']
     const result = [...tickets.value].sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -28,12 +28,12 @@ export const useSupportStore = defineStore('support', () => {
     })
 
     if (filter.value[0] === 'all' || filter.value.length === 0) {
-      tickets.value.sort()
+      result.sort()
       return result
     } else {
       return result.filter((ticket) => filters.includes(ticket.status))
     }
-  }
+  })
 
   return {
     tickets,

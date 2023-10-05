@@ -26,10 +26,12 @@ import i18n from '@/i18n.js'
 import api from '@/api.js'
 import config from '@/appconfig.js'
 import { useAppStore } from '@/stores/app.js'
+import { useAuthStore } from '@/stores/auth.js'
 import updateNotification from '@/components/updateNotification/index.vue'
 
 const route = router.currentRoute
 const appStore = useAppStore()
+const authStore = useAuthStore()
 
 const user = computed(() =>
   store.getters['nocloud/auth/billingData']
@@ -82,12 +84,14 @@ window.addEventListener('message', ({ data, origin }) => {
   api.applyToken(data.token)
   store.commit('nocloud/auth/setToken', data.token)
   store.dispatch('nocloud/auth/load')
+  authStore.load()
 
   if (data.uuid) redirectByType(data)
   else if (router.currentRoute.name?.includes('login')) {
     router.replace({ name: 'root' })
   }
 
+  authStore.fetchUserData()
   store.dispatch('nocloud/auth/fetchUserData')
   store.dispatch('nocloud/auth/fetchBillingData')
 })
@@ -99,6 +103,7 @@ onMounted(() => {
 })
 
 store.dispatch('nocloud/auth/load')
+authStore.load()
 
 router.beforeEach((to, _, next) => {
   const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined)
@@ -120,6 +125,7 @@ const lang = route.query.lang ?? localStorage.getItem('lang')
 
 if (lang) i18n.locale = lang
 if (isLogged.value) {
+  authStore.fetchUserData()
   store.dispatch('nocloud/auth/fetchUserData')
 }
 

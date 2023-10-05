@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <div class="login__title login__layout">
-      <div class="logo" :class="['pos_'+companyLogoPos]">
+      <div class="logo" :class="['pos_'+config.appLogo.pos]">
         <div v-if="companyName" class="logo__title">
           {{ companyName }}
         </div>
@@ -22,7 +22,23 @@
     <div class="login__main login__layout">
       <div class="login__UI">
         <div v-if="getOnlogin.info" class="login__action-info">
-          {{ getOnlogin.info }}
+          {{ $t('comp_services.Your orders') }}:
+          <div class="order__card">
+            <div class="order__icon">
+              <a-icon :type="config.services[getOnlogin.info.type]?.icon" />
+            </div>
+            <div class="order__info">
+              <div class="order__title">
+                {{ getOnlogin.info.title }}
+              </div>
+              <div class="order__cost">
+                {{ getOnlogin.info.cost }} {{ getOnlogin.info.currency }}
+              </div>
+            </div>
+            <div class="order__remove" @click="$store.commit('clearOnlogin')">
+              <a-icon type="close" />
+            </div>
+          </div>
         </div>
 
         <div class="login__inputs">
@@ -122,7 +138,7 @@
 
             <div class="inputs__log-pas">
               <a-select style="width: 100%; border: none" :value="$i18n.locale" @change="(e) => $i18n.locale = e">
-                <a-select-option v-for="lang in langs" :key="lang" :value="lang">
+                <a-select-option v-for="lang in config.languages" :key="lang" :value="lang">
                   {{ $t('localeLang', lang) }}
                 </a-select-option>
               </a-select>
@@ -156,139 +172,135 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, ref } from 'vue'
+import { notification, message } from 'ant-design-vue'
+import store from '@/store'
+import router from '@/router'
+import i18n from '@/i18n'
 import api from '@/api.js'
 import config from '@/appconfig.js'
 import countries from '@/countries.json'
-import notification from '@/mixins/notification.js'
 
-export default {
-  name: 'RegisterView',
-  mixins: [notification],
-  data () {
-    return {
-      countries,
-      currencies: [],
-      registerLoading: false,
-      invoiceChecked: false,
-      userinfo: {
+const currencies = ref([])
+const registerLoading = ref(false)
+const invoiceChecked = ref(false)
+const userinfo = ref({
+  firstname: '',
+  lastname: '',
+  email: '',
+  password: '',
+  address1: '',
+  city: '',
+  // state: '',
+  postcode: '',
+  country: undefined,
+  phonenumber: '',
+  currency: 1,
+  companyname: '',
+  tax_id: ''
+})
+
+const getOnlogin = computed(() =>
+  store.getters.getOnlogin
+)
+const companyName = computed(() =>
+  store.getters.getDomainInfo.name ?? config.appTitle
+)
+const baseURL = computed(() =>
+  store.getters['nocloud/auth/getURL']
+)
+
+const companyLogo = computed(() => {
+  const settings = store.getters.getDomainInfo
+
+  if (settings.logo && typeof settings.logo === 'string') {
+    return settings.logo
+  }
+  return config.appLogo.path
+})
+const phonecode = computed(() =>
+  countries.find(({ code }) => code === userinfo.value.country)?.dial_code
+)
+
+async function submitHandler () {
+  const info = (invoiceChecked.value)
+    ? { ...userinfo.value }
+    : {
         firstname: '',
         lastname: '',
         email: '',
         password: '',
-        address1: '',
-        city: '',
-        // state: '',
-        postcode: '',
-        country: undefined,
+        country: 'BY',
         phonenumber: '',
-        currency: 1,
-        companyname: '',
-        tax_id: ''
+        currency: 1
       }
-    }
-  },
-  computed: {
-    getOnlogin () {
-      return this.$store.getters.getOnlogin
-    },
-    companyName () {
-      return this.$store.getters.getDomainInfo.name ?? config.appTitle
-    },
-    companyLogo () {
-      const settings = this.$store.getters.getDomainInfo
-      if (settings.logo && typeof settings.logo === 'string') {
-        return settings.logo
-      }
-      return config.appLogo.path
-    },
-    langs () {
-      return config.languages
-    },
-    companyLogoPos () {
-      return config.appLogo.pos
-    },
-    baseURL () {
-      return this.$store.getters['support/getURL']
-    },
-    phonecode () {
-      return countries.find(({ code }) => code === this.userinfo.country)?.dial_code
-    }
-  },
-  created () {
-    api.get(this.baseURL, { params: { run: 'get_currencies' } })
-      .then((res) => { this.currencies = res.currency })
-      .catch(err => {
-        const message = err.response?.data?.message ?? err.message
+  delete info.tax_id
 
-        this.openNotificationWithIcon('error', {
-          message: this.$t(message)
-        })
-        console.error(err)
-      })
-  },
-  methods: {
-    submitHandler () {
-      const info = (this.invoiceChecked)
-        ? { ...this.userinfo }
-        : {
-            firstname: '',
-            lastname: '',
-            email: '',
-            password: '',
-            country: 'BY',
-            phonenumber: '',
-            currency: 1
-          }
-      delete info.tax_id
+  if (Object.keys(info).some(key => !`${userinfo.value[key]}`.length)) {
+    message.warn(i18n.t('all fields are required'))
+    return
+  }
 
-      if (Object.keys(info).some(key => !`${this.userinfo[key]}`.length)) {
-        this.$message.warn(this.$t('all fields are required'))
-        return
-      }
-
-      for (const key in info) {
-        if (this.userinfo[key].length < 2) {
-          this.$message.warn(key + ' ' + this.$t('field must contain more characters'))
-          return
-        }
-      }
-
-      const regexEmail = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
-      if (!this.userinfo.email.match(regexEmail)) {
-        this.$message.warn(this.$t('email is not valid'))
-        return
-      }
-
-      const temp = JSON.parse(JSON.stringify(this.userinfo))
-      const { locale } = this.$i18n.getLocaleMessage(this.$i18n.locale)
-
-      temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`
-      temp.phonenumber = temp.phonenumber.replace(this.phonecode, '').replace(/[\s-]/g, '')
-
-      this.registerLoading = true
-      api.get(this.baseURL, {
-        params: { ...temp, app_language: locale, run: 'create_user' }
-      })
-        .then((res) => {
-          if (res.result === 'error') this.$message.error(res.message)
-          else this.$message.success(this.$t('account created successfully'))
-          this.$router.push({ name: 'login' })
-        })
-        .catch(err => {
-          const message = err.response?.data?.message ?? err.message
-
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          })
-          console.error(err)
-        })
-        .finally(() => {
-          this.registerLoading = false
-        })
+  for (const key in info) {
+    if (userinfo.value[key].length < 2) {
+      message.warn(`${key} ${i18n.t('field must contain more characters')}`)
+      return
     }
   }
+
+  const regexEmail = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
+
+  if (!userinfo.value.email.match(regexEmail)) {
+    message.warn(i18n.t('email is not valid'))
+    return
+  }
+
+  const temp = JSON.parse(JSON.stringify(userinfo.value))
+  const { locale } = i18n.getLocaleMessage(i18n.locale)
+
+  temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`
+  temp.phonenumber = temp.phonenumber.replace(phonecode.value, '').replace(/[\s-]/g, '')
+
+  try {
+    registerLoading.value = true
+    const response = await api.get(baseURL.value, {
+      params: { ...temp, app_language: locale, run: 'create_user' }
+    })
+
+    if (response.result === 'error') throw response
+    else message.success(i18n.t('account created successfully'))
+    router.push({ name: 'login' })
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
+  } finally {
+    registerLoading.value = false
+  }
 }
+
+async function fetchCurrencies () {
+  try {
+    const response = await api.get(baseURL.value, {
+      params: { run: 'get_currencies' }
+    })
+
+    currencies.value = response.currency
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
+  }
+}
+
+fetchCurrencies()
+</script>
+
+<script>
+export default { name: 'RegisterView' }
 </script>
 
 <style>
@@ -371,6 +383,10 @@ export default {
   align-items: center;
   justify-content: space-around;
   overflow-y: auto;
+}
+
+.login__action-info {
+  margin-bottom: 20px;
 }
 
 .login__inputs {
