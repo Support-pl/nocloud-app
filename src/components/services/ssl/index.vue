@@ -1,9 +1,8 @@
 <template>
-	<div class="order_wrapper">
-		<div class="order">
-			<div class="order__inputs order__field">
-
-				<div class="order_option">
+  <div class="order_wrapper">
+    <div class="order">
+      <div class="order__inputs order__field">
+        <div class="order_option">
           <a-steps class="order__steps" size="small" :current="currentStep">
             <a-step :title="$t('ssl_product.product')" />
             <a-step :title="$t('ssl_product.CSR')" />
@@ -25,15 +24,17 @@
 
           <template v-if="currentStep === 0">
             <a-row class="order__prop" style="margin-bottom: 5px">
-              <a-col span="8" :xs="6">{{$t('provider') | capitalize}}:</a-col>
+              <a-col span="8" :xs="6">
+                {{ $t('provider') | capitalize }}:
+              </a-col>
             </a-row>
 
             <div class="order__slider">
               <template v-if="!fetchLoading">
                 <div
-                  class="order__slider-item"
                   v-for="provider of Object.keys(products)"
                   :key="provider"
+                  class="order__slider-item"
                   :class="{'order__slider-item--active': options.provider == provider}"
                   @click="() => options.provider = provider"
                 >
@@ -42,29 +43,34 @@
               </template>
               <template v-else>
                 <div
-                  class="order__slider-item order__slider-item--loading"
                   v-for="(provider, index) of Array(4)"
                   :key="index"
-                >
-                </div>
+                  class="order__slider-item order__slider-item--loading"
+                />
               </template>
             </div>
 
             <a-row class="order__prop">
-              <a-col span="8" :xs="6">{{$t('product_name') | capitalize}}:</a-col>
+              <a-col span="8" :xs="6">
+                {{ $t('product_name') | capitalize }}:
+              </a-col>
               <a-col span="16" :xs="18">
                 <a-select v-if="!fetchLoading" v-model="options.tarif" style="width: 100%">
-                  <a-select-option v-for="kind of products[options.provider]" :value="kind.product" :key="kind.product">{{kind.product}}</a-select-option>
+                  <a-select-option v-for="kind of products[options.provider]" :key="kind.product" :value="kind.product">
+                    {{ kind.product }}
+                  </a-select-option>
                 </a-select>
-                <div v-else class="loadingLine"></div>
+                <div v-else class="loadingLine" />
               </a-col>
             </a-row>
 
             <a-row class="order__prop">
-              <a-col span="8" :xs="6">{{$t('ssl_product.domain') }}:</a-col>
+              <a-col span="8" :xs="6">
+                {{ $t('ssl_product.domain') }}:
+              </a-col>
               <a-col span="16" :xs="18">
-                <a-input v-if="!fetchLoading" v-model="options.domain" placeholder="example.com"></a-input>
-                <div v-else class="loadingLine"></div>
+                <a-input v-if="!fetchLoading" v-model="options.domain" placeholder="example.com" />
+                <div v-else class="loadingLine" />
               </a-col>
             </a-row>
 
@@ -85,19 +91,18 @@
       </div>
 
       <div class="order__calculate order__field">
-
         <a-row type="flex" justify="space-around" style="margin-top: 20px">
-          <a-col :xs="10" :sm="6" :lg='12' style="font-size: 1rem">
-            {{$t('Payment period')}}:
+          <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
+            {{ $t('Payment period') }}:
           </a-col>
 
-          <a-col :xs="12" :sm="18" :lg='12'>
-            <a-select v-if="!fetchLoading" v-model="options.period"  style="width: 100%">
-              <a-select-option v-for="period in periods" :key="period.title+period.count" :value='period'>
+          <a-col :xs="12" :sm="18" :lg="12">
+            <a-select v-if="!fetchLoading" v-model="options.period" style="width: 100%">
+              <a-select-option v-for="period in periods" :key="period.title+period.count" :value="period">
                 {{ $tc('month', period) }}
               </a-select-option>
             </a-select>
-            <div v-else class="loadingLine"></div>
+            <div v-else class="loadingLine" />
           </a-col>
         </a-row>
 
@@ -109,29 +114,31 @@
               @change="(value) => service = value"
             >
               <a-select-option
-                v-for="service of services"
-                :key="service.uuid"
-                :value="service.uuid"
+                v-for="item of services"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ service.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
-          <a-col v-if="namespaces.length > 1">
+
+          <a-col v-if="namespacesStore.namespaces.length > 1">
             <a-select
               style="width: 100%"
               placeholder="namespaces"
               @change="(value) => namespace = value"
             >
               <a-select-option
-                v-for="namespace of namespaces"
-                :key="namespace.uuid"
-                :value="namespace.uuid"
+                v-for="item of namespacesStore.namespaces"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ namespace.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
+
           <a-col v-if="plans.length > 1">
             <a-select
               style="width: 100%"
@@ -139,18 +146,18 @@
               @change="(value) => plan = value"
             >
               <a-select-option
-                v-for="plan of plans"
-                :key="plan.uuid"
-                :value="plan.uuid"
+                v-for="item of plans"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ plan.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
         </a-row>
 
         <a-divider orientation="left" :style="{'margin-bottom': '0'}">
-          {{$t('Total')}}:
+          {{ $t('Total') }}:
         </a-divider>
 
         <a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
@@ -158,14 +165,14 @@
             <template v-if="!fetchLoading">
               {{ getProducts.prices[options.period] }} {{ currency.code }}
             </template>
-            <div v-else class="loadingLine loadingLine--total"></div>
+            <div v-else class="loadingLine loadingLine--total" />
           </a-col>
         </a-row>
 
         <a-row type="flex" justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
           <a-col :span="22">
             <a-button type="primary" block shape="round" :disabled="currentStep !== 3" @click="orderConfirm">
-              {{$t("order") | capitalize}}
+              {{ $t("order") | capitalize }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
@@ -180,28 +187,34 @@
           </a-col>
         </a-row>
 
-      <add-funds
-        v-if="addfunds.visible"
-        :sum="addfunds.amount"
-        :modalVisible="addfunds.visible"
-        :hideModal="() => addfunds.visible = false"
-      />
-			</div>
-		</div>
-	</div>
+        <add-funds
+          v-if="addfunds.visible"
+          :sum="addfunds.amount"
+          :modal-visible="addfunds.visible"
+          :hide-modal="() => addfunds.visible = false"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-import passwordMeter from 'vue-simple-password-meter';
-import addFunds from '@/components/balance/addFunds.vue';
-import notification from '@/mixins/notification.js';
-import { countries } from '@/setup/countries.js';
+import { mapStores } from 'pinia'
+import passwordMeter from 'vue-simple-password-meter'
+
+import { useSpStore } from '@/stores/sp.js'
+import { usePlansStore } from '@/stores/plans.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
+
+import addFunds from '@/components/balance/addFunds.vue'
+import notification from '@/mixins/notification.js'
+import { countries } from '@/setup/countries.js'
 
 export default {
-	name: 'ssl-component',
-  mixins: [notification],
+  name: 'SslComponent',
   components: { passwordMeter, addFunds },
-	data: () => ({
+  mixins: [notification],
+  data: () => ({
     countries,
     products: {},
     currentStep: 0,
@@ -225,45 +238,185 @@ export default {
     csr: {},
     personal: {},
     verification: {}
-	}),
-	methods: {
-		fetch(){
-      this.fetchLoading = true;
-			this.$api.post(`/sp/${this.sp.uuid}/invoke`, {
+  }),
+  computed: {
+    ...mapStores(useNamespasesStore, useSpStore, usePlansStore),
+
+    getProducts () {
+      if (Object.keys(this.products).length === 0) return 'NAN'
+      const product = this.products[this.options.provider]
+        .find(el => el.product === this.options.tarif)
+
+      return { ...product, price: +(product.price * this.currency.rate).toFixed(2) }
+    },
+    template () {
+      switch (this.currentStep) {
+        case 1:
+          return () => import('@/components/services/ssl/csr.vue')
+        case 2:
+          return () => import('@/components/services/ssl/personal.vue')
+        case 3:
+          return () => import('@/components/services/ssl/verification.vue')
+        default:
+          return null
+      }
+    },
+    user () {
+      return this.$store.getters['nocloud/auth/billingData']
+    },
+    userdata () {
+      return this.$store.getters['nocloud/auth/userdata']
+    },
+    isLoggedIn () {
+      return this.$store.getters['nocloud/auth/isLoggedIn']
+    },
+    currency () {
+      const currencies = this.$store.getters['nocloud/auth/currencies']
+      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
+
+      const code = this.$store.getters['nocloud/auth/unloginedCurrency']
+      const { rate } = currencies.find((el) =>
+        el.to === defaultCurrency && el.from === code
+      ) ?? {}
+
+      const { rate: reverseRate } = currencies.find((el) =>
+        el.from === defaultCurrency && el.to === code
+      ) ?? { rate: 1 }
+
+      if (!this.isLoggedIn) return { rate: (rate) || 1 / reverseRate, code }
+      return { rate: 1, code: this.user.currency_code ?? defaultCurrency }
+    },
+    sp () {
+      return this.spStore.servicesProviders.find(({ type }) => type === 'goget')
+    },
+    periods () {
+      return Object.keys(this.getProducts.prices || {})
+        .filter((el) => isFinite(+el))
+    },
+    services () {
+      return this.$store.getters['nocloud/vms/getServices']
+        .filter((el) => el.status !== 'DEL')
+    },
+    plans () {
+      return this.plansStore.plans.filter(({ type, uuid }) => {
+        const { plans } = this.spStore.getShowcases.find(
+          ({ uuid }) => uuid === this.$route.query.service
+        ) ?? {}
+
+        if (!plans) return type === 'goget'
+
+        if (plans.length < 1) return type === 'goget'
+        return type === 'goget' && plans.includes(uuid)
+      })
+    }
+  },
+  watch: {
+    'options.provider' (value) {
+      this.options.tarif = this.products[value][0].product
+    },
+    periods (value) {
+      this.options.period = value[0]
+    },
+    currentStep (value) {
+      if (value === 1) this.csr.domain = this.options.domain
+    }
+  },
+  mounted () {
+    const { action } = this.$store.getters.getOnlogin
+
+    if (typeof action !== 'function') return
+    this.modal.confirmCreate = true
+    this.modal.confirmLoading = true
+    action()
+  },
+  created () {
+    this.$store.dispatch('nocloud/auth/fetchBillingData')
+    this.spStore.fetch(!this.isLoggedIn).then(() => this.fetch())
+    this.plansStore.fetch({ anonymously: !this.isLoggedIn })
+      .then(() => {
+        if (this.plans.length === 1) this.plan = this.plans[0].uuid
+      })
+      .catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err
+
+        this.openNotificationWithIcon('error', {
+          message: this.$t(message)
+        })
+        console.error(err)
+      })
+
+    if (this.isLoggedIn) {
+      this.namespacesStore.fetch()
+        .then(({ pool }) => {
+          if (pool.length === 1) this.namespace = pool[0].uuid
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err
+
+          if (err.response?.data?.code === 16) return
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          })
+          console.error(err)
+        })
+
+      this.$store.dispatch('nocloud/vms/fetch')
+        .then(() => {
+          if (this.services.length === 1) this.service = this.services[0].uuid
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message ?? err.message ?? err
+
+          if (err.response?.data?.code === 16) return
+          this.openNotificationWithIcon('error', {
+            message: this.$t(message)
+          })
+          console.error(err)
+        })
+    }
+
+    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
+      this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn })
+    }
+  },
+  methods: {
+    fetch () {
+      this.fetchLoading = true
+      this.$api.post(`/sp/${this.sp.uuid}/invoke`, {
         method: 'get_certificate'
       })
-			.then(({ meta }) => {
-        const plan = this.plans.find(({ uuid }) => uuid === this.plan);
+        .then(({ meta }) => {
+          const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
-				meta.cert.products.forEach((product) => {
-          const prices = {};
+          meta.cert.products.forEach((product) => {
+            const prices = {}
 
-          Object.keys(product.prices).forEach((period) => {
-            const key = `${period} ${product.id}`;
+            Object.keys(product.prices).forEach((period) => {
+              const key = `${period} ${product.id}`
 
-            if (plan.products[key]) prices[period] = plan.products[key].price;
-          });
+              if (plan.products[key]) prices[period] = plan.products[key].price
+            })
 
-          if (Object.keys(prices).length > 0) {
-            if (!(product.brand in this.products)) {
-              this.products[product.brand] = [];
+            if (Object.keys(prices).length > 0) {
+              if (!(product.brand in this.products)) {
+                this.products[product.brand] = []
+              }
+              this.products[product.brand].push({ ...product, prices })
             }
-            this.products[product.brand].push({ ...product, prices });
-          }
-        });
+          })
 
-				this.options.provider = Object.keys(this.products)[0];
-				this.options.tarif = this.products[this.options.provider][0].product;
-        this.products = Object.assign({}, this.products);
-			})
-			.catch(err => console.error(err))
-			.finally(() => {
-				this.fetchLoading = false;
-			})
-		},
-		orderClickHandler(){
-			const service = this.services.find(({ uuid }) => uuid === this.service);
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
+          this.options.provider = Object.keys(this.products)[0]
+          this.options.tarif = this.products[this.options.provider][0].product
+          this.products = Object.assign({}, this.products)
+        })
+        .catch(err => console.error(err))
+        .finally(() => {
+          this.fetchLoading = false
+        })
+    },
+    orderClickHandler () {
+      const service = this.services.find(({ uuid }) => uuid === this.service)
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = [{
         resources: {
@@ -277,319 +430,182 @@ export default {
         },
         title: this.options.tarif,
         billing_plan: plan ?? {}
-      }];
+      }]
       const newGroup = {
         title: this.user.fullname + Date.now(),
         type: this.sp.type,
         sp: this.sp.uuid,
         instances
-      };
+      }
 
-      if (plan.kind === 'STATIC') instances[0].product = this.options.provider;
+      if (plan.kind === 'STATIC') instances[0].product = this.options.provider
 
-      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service));
-      const group = info.instancesGroups?.find(({ type }) => type === 'goget');
+      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
+      const group = info.instancesGroups?.find(({ type }) => type === 'goget')
 
-      if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instancesGroups.push(newGroup);
+      if (group) group.instances = [...group.instances, ...instances]
+      else if (this.service) info.instancesGroups.push(newGroup)
 
-			if (!this.user) {
-				this.$store.commit('setOnloginRedirect', this.$route.name);
-				this.$store.commit('setOnloginInfo', {
-					type: 'ssl',
-					title: 'SSL Certificate',
-					cost: this.getProducts.prices[this.options.period],
+      if (!this.user) {
+        this.$store.commit('setOnloginRedirect', this.$route.name)
+        this.$store.commit('setOnloginInfo', {
+          type: 'ssl',
+          title: 'SSL Certificate',
+          cost: this.getProducts.prices[this.options.period],
           currency: this.currency.code
-				});
-				this.$store.dispatch('setOnloginAction', () => {
-					this.createSSL(info);
-				});
+        })
+        this.$store.dispatch('setOnloginAction', () => {
+          this.createSSL(info)
+        })
 
-				this.$router.push({ name: 'login' });
-				return;
-			}
+        this.$router.push({ name: 'login' })
+        return
+      }
 
-      this.createSSL(info);
-		},
-		createSSL(info){
-			this.modal.confirmLoading = true;
-			const action = (this.service) ? 'update' : 'create';
-      const orderData = (this.service) ? info : {
-        namespace: this.namespace,
-        service: {
-          title: this.user.fullname,
-          context: {},
-          version: '1',
-          instancesGroups: [info]
-        }
-      };
+      this.createSSL(info)
+    },
+    createSSL (info) {
+      this.modal.confirmLoading = true
+      const action = (this.service) ? 'update' : 'create'
+      const orderData = (this.service)
+        ? info
+        : {
+            namespace: this.namespace,
+            service: {
+              title: this.user.fullname,
+              context: {},
+              version: '1',
+              instancesGroups: [info]
+            }
+          }
 
       this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
-          const config = { namespace: this.namespace, service: orderData };
-          const message = err.response?.data?.message ?? err.message ?? err;
+          const config = { namespace: this.namespace, service: orderData }
+          const message = err.response?.data?.message ?? err.message ?? err
 
           this.$api.services.testConfig(config)
             .then(({ result, errors }) => {
-              if (!result) errors.forEach(({ error }) => {
-                this.openNotificationWithIcon('error', { message: error });
-              });
-            });
+              if (!result) {
+                errors.forEach(({ error }) => {
+                  this.openNotificationWithIcon('error', { message: error })
+                })
+              }
+            })
           this.openNotificationWithIcon('error', {
             message: this.$t(message)
-          });
-          console.error(err);
-        });
-		},
-		orderConfirm(order = true) {
-      const isValid = this.options.domain.match(/.+\..+/);
+          })
+          console.error(err)
+        })
+    },
+    orderConfirm (order = true) {
+      const isValid = this.options.domain.match(/.+\..+/)
 
-			if (!isValid) {
-				this.$message.error('domain is wrong');
-				return
-			}
-      if (!this.checkBalance()) return;
-			if (order) this.modal.confirmCreate = true;
+      if (!isValid) {
+        this.$message.error('domain is wrong')
+        return
+      }
+      if (!this.checkBalance()) return
+      if (order) this.modal.confirmCreate = true
 
-      return isValid;
-		},
-    checkBalance() {
-      const sum = this.getProducts.prices[this.options.period];
+      return isValid
+    },
+    checkBalance () {
+      const sum = this.getProducts.prices[this.options.period]
 
       if (this.userdata.balance < parseFloat(sum)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance'),
           content: this.$t('Click OK to replenish the account with the missing amount'),
           onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance);
-            this.addfunds.visible = true;
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
+            this.addfunds.visible = true
           }
-        });
-        return false;
+        })
+        return false
       }
-      return true;
+      return true
     },
-    deployService(uuid) {
+    deployService (uuid) {
       this.$api.services.up(uuid)
         .then(() => {
           this.openNotificationWithIcon('success', {
             message: this.$t('SSL created successfully')
-          });
-          this.$router.push({ path: '/services' });
+          })
+          this.$router.push({ path: '/services' })
         })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
+          const message = err.response?.data?.message ?? err.message ?? err
 
           this.openNotificationWithIcon('error', {
             message: this.$t(message)
-          });
+          })
         })
-        .finally(() => this.modal.confirmLoading = false);
+        .finally(() => {
+          this.modal.confirmLoading = false
+        })
     },
-    handleClickPrev(data) {
+    handleClickPrev (data) {
       if (data.csr) {
-        this.csr = data;
+        this.csr = data
       } else if (data.firstname) {
-        this.personal = data;
+        this.personal = data
       } else if (data.dcv) {
-        this.verification = data;
+        this.verification = data
       }
-      this.currentStep--;
+      this.currentStep--
     },
-    handleClickNext(data) {
+    handleClickNext (data) {
       if (data.csr) {
-        this.csr = data;
+        this.csr = data
       } else if (data.firstname) {
-        this.personal = data;
+        this.personal = data
       }
 
       if (this.orderConfirm(false)) {
-        this.currentStep++;
+        this.currentStep++
       }
     }
-	},
-  mounted() {
-    const { action } = this.$store.getters['getOnlogin'];
-
-    if (typeof action !== 'function') return;
-    this.modal.confirmCreate = true;
-    this.modal.confirmLoading = true;
-    action();
-  },
-	computed: {
-		getProducts() {
-			if (Object.keys(this.products).length === 0) return "NAN";
-      const product = this.products[this.options.provider]
-        .find(el => el.product === this.options.tarif);
-
-      return { ...product, price:+(product.price * this.currency.rate).toFixed(2) };
-		},
-    template() {
-      switch (this.currentStep) {
-        case 1:
-          return () => import('@/components/services/ssl/csr.vue');
-        case 2:
-          return () => import('@/components/services/ssl/personal.vue');
-        case 3:
-          return () => import('@/components/services/ssl/verification.vue');
-        default:
-          return null;
-      }
-    },
-    user() {
-      return this.$store.getters['nocloud/auth/billingData'];
-    },
-    userdata() {
-      return this.$store.getters['nocloud/auth/userdata'];
-    },
-    isLoggedIn() {
-      return this.$store.getters['nocloud/auth/isLoggedIn'];
-    },
-    currency() {
-      const currencies = this.$store.getters['nocloud/auth/currencies'];
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
-
-      const code = this.$store.getters['nocloud/auth/unloginedCurrency'];
-      const { rate } = currencies.find((el) =>
-        el.to === defaultCurrency && el.from === code
-      ) ?? {};
-
-      const { rate: reverseRate } = currencies.find((el) =>
-        el.from === defaultCurrency && el.to === code
-      ) ?? { rate: 1 };
-
-      if (!this.isLoggedIn) return { rate: (rate) ? rate : 1 / reverseRate, code };
-      return { rate: 1, code: this.user.currency_code ?? defaultCurrency };
-    },
-    sp() {
-      return this.$store.getters['nocloud/sp/getSP']
-        .find(({ type }) => type === 'goget');
-    },
-    periods() {
-      return Object.keys(this.getProducts.prices || {})
-        .filter((el) => isFinite(+el));
-    },
-    services() {
-      return this.$store.getters['nocloud/vms/getServices']
-        .filter((el) => el.status !== 'DEL');
-    },
-    namespaces() {
-      return this.$store.getters['nocloud/namespaces/getNameSpaces'] ?? [];
-    },
-    plans() {
-      return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type, uuid }) => {
-          const { plans } = this.$store.getters['nocloud/sp/getShowcases'].find(
-            ({ uuid }) => uuid === this.$route.query.service
-          ) ?? {};
-
-          if (!plans) return type === 'goget';
-
-          if (plans.length < 1) return type === 'goget';
-          return type === 'goget' && plans.includes(uuid);
-        });
-    }
-	},
-	created() {
-    this.$store.dispatch('nocloud/auth/fetchBillingData');
-    this.$store.dispatch('nocloud/sp/fetch', !this.isLoggedIn).then(() => this.fetch());
-    this.$store.dispatch('nocloud/plans/fetch', { anonymously: !this.isLoggedIn })
-      .then(() => {
-        if (this.plans.length === 1) this.plan = this.plans[0].uuid;
-      })
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
-
-        this.openNotificationWithIcon('error', {
-          message: this.$t(message)
-        });
-        console.error(err);
-      });
-
-    if (this.isLoggedIn) {
-      this.$store.dispatch('nocloud/namespaces/fetch')
-        .then(({ pool }) => {
-          if (pool.length === 1) this.namespace = pool[0].uuid;
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          if (err.response?.data?.code === 16) return;
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          });
-          console.error(err);
-        });
-
-      this.$store.dispatch('nocloud/vms/fetch')
-        .then(() => {
-          if (this.services.length === 1) this.service = this.services[0].uuid;
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          if (err.response?.data?.code === 16) return;
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          });
-          console.error(err);
-        });
-    }
-
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn });
-    }
-	},
-	watch: {
-		'options.provider'(value) {
-			this.options.tarif = this.products[value][0].product;
-		},
-    periods(value) {
-      this.options.period = value[0];
-    },
-    currentStep(value) {
-      if (value === 1) this.csr.domain = this.options.domain;
-    }
-	}
+  }
 }
 </script>
 
 <style>
 .order_wrapper{
-	position: relative;
-	width: 100%;
-	min-height: 100%;
+  position: relative;
+  width: 100%;
+  min-height: 100%;
 }
 
 .order{
-	position: absolute;
-	margin-top: 15px;
-	margin-bottom: 15px;
-	width: 100%;
-	max-width: 1024px;
-	left: 50%;
-	transform: translateX(-50%);
-	display: flex;
+  position: absolute;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  width: 100%;
+  max-width: 1024px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
 }
 
 .order__prop:not(:first-child){
-	margin-top: 15px;
+  margin-top: 15px;
 }
 
 .order__inputs{
-	margin-right: 20px;
-	width: 72%;
+  margin-right: 20px;
+  width: 72%;
 }
 
 .order__field{
-	border-radius: 20px;
-	box-shadow:
-		5px 8px 10px rgba(0, 0, 0, .08),
-		0px 0px 12px rgba(0, 0, 0, .05);
-	padding: 20px;
-	background-color: #fff;
-	height: max-content;
+  border-radius: 20px;
+  box-shadow:
+    5px 8px 10px rgba(0, 0, 0, .08),
+    0px 0px 12px rgba(0, 0, 0, .05);
+  padding: 20px;
+  background-color: #fff;
+  height: max-content;
 }
 
 .order__steps > .ant-steps-item {
@@ -601,255 +617,254 @@ export default {
 }
 
 .order__calculate{
-	width: 28%;
-	font-size: 1.1rem;
-	padding: 10px 15px 10px;
+  width: 28%;
+  font-size: 1.1rem;
+  padding: 10px 15px 10px;
 }
 
 .order__field-header{
-	text-align: center;
-	font-size: 1.2rem;
-	font-weight: bold;
-	margin-bottom: 20px;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 20px;
 }
 
 .order__template{
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .order__template.one-line{
-	flex-wrap: nowrap;
-	justify-content: space-between;
+  flex-wrap: nowrap;
+  justify-content: space-between;
 }
 
 .order__template-item{
-	width: 116px;
-	margin-bottom: 10px;
-	background-color: #fff;
-	box-shadow:
-		3px 2px 6px rgba(0, 0, 0, .08),
-		0px 0px 8px rgba(0, 0, 0, .05);
-	border-radius: 15px;
-	transition: box-shadow .2s ease, transform .2s ease;
-	cursor: pointer;
-	text-align: center;
-	overflow: hidden;
+  width: 116px;
+  margin-bottom: 10px;
+  background-color: #fff;
+  box-shadow:
+    3px 2px 6px rgba(0, 0, 0, .08),
+    0px 0px 8px rgba(0, 0, 0, .05);
+  border-radius: 15px;
+  transition: box-shadow .2s ease, transform .2s ease;
+  cursor: pointer;
+  text-align: center;
+  overflow: hidden;
 
-	display: grid;
-	grid-template-columns: 1fr;
-	grid-template-rows: max-content auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: max-content auto;
 }
 
 .order__template-item:not(:last-child){
-	margin-right: 10px;
+  margin-right: 10px;
 }
 
 .order__template-item:hover{
-	box-shadow:
-		5px 8px 10px rgba(0, 0, 0, .08),
-		0px 0px 12px rgba(0, 0, 0, .05);
+  box-shadow:
+    5px 8px 10px rgba(0, 0, 0, .08),
+    0px 0px 12px rgba(0, 0, 0, .05);
 }
 
 .order__template-item.active{
-	box-shadow:
-		5px 8px 12px rgba(0, 0, 0, .08),
-		0px 0px 13px rgba(0, 0, 0, .05);
-	transform: scale(1.02);
+  box-shadow:
+    5px 8px 12px rgba(0, 0, 0, .08),
+    0px 0px 13px rgba(0, 0, 0, .05);
+  transform: scale(1.02);
 }
 
 .order__template-image{
-	padding: 10px;
+  padding: 10px;
 }
 
 .order__template-image__rate{
-	font-size: 2rem;
+  font-size: 2rem;
 }
 
 .order__template-name{
-	padding: 10px;
+  padding: 10px;
 }
 
 .order__template-item.active .order__template-name{
-	background-color: var(--main);
-	color: var(--bright_font);
+  background-color: var(--main);
+  color: var(--bright_font);
 }
 
 .max-width{
-	width: 100%;
+  width: 100%;
 }
 
 .ant-collapse-item:last-of-type .ant-collapse-content{
-	border-radius: 0 0 28px 28px;
+  border-radius: 0 0 28px 28px;
 }
 
 .slider_btn{
-	cursor: pointer;
+  cursor: pointer;
 }
 
 .removeMarginSkeleton .ant-skeleton-title{
-	margin: 0;
-	margin-top: 4px;
+  margin: 0;
+  margin-top: 4px;
 }
 
 .removeMarginSkeleton{
-	min-width: 75px;
+  min-width: 75px;
 }
 
 .total.removeMarginSkeleton{
-	width: 100%;
+  width: 100%;
 }
 
 .order__slider{
-	display: flex;
-	overflow-x: auto;
+  display: flex;
+  overflow-x: auto;
   padding-bottom: 10px;
 }
 
 .order__slider-item:not(:last-child){
-	margin-right: 10px;
+  margin-right: 10px;
 }
 
 .order__slider-item{
-	flex-shrink: 0;
-	/* border: 1px solid rgba(0, 0, 0, .15); */
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	width: 150px;
-	height: 70px;
-	cursor: pointer;
-	border-radius: 15px;
-	font-size: 1.1rem;
-	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  flex-shrink: 0;
+  /* border: 1px solid rgba(0, 0, 0, .15); */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 150px;
+  height: 70px;
+  cursor: pointer;
+  border-radius: 15px;
+  font-size: 1.1rem;
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
 .order__slider-item:hover{
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
 }
 
 .order__slider-item--active{
-	background-color: var(--main);
-	color: #fff;
+  background-color: var(--main);
+  color: #fff;
 }
 
-
 .order__slider-item--loading{
-	/* background-color: #f2f2f2; */
-	box-shadow: none;
-	/* animation: glowing .5s ease infinite; */
-	animation-name: glowing;
-	animation-duration: 1s;
-	animation-timing-function: ease;
-	animation-iteration-count: infinite;
-	animation-direction: alternate;
+  /* background-color: #f2f2f2; */
+  box-shadow: none;
+  /* animation: glowing .5s ease infinite; */
+  animation-name: glowing;
+  animation-duration: 1s;
+  animation-timing-function: ease;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
 }
 
 .loadingLine{
-	min-width: 100px;
-	width: 100%;
-	height: 2rem;
-	border-radius: 4px;
-	animation-name: glowing;
-	animation-duration: 1s;
-	animation-timing-function: ease;
-	animation-iteration-count: infinite;
-	animation-direction: alternate;
+  min-width: 100px;
+  width: 100%;
+  height: 2rem;
+  border-radius: 4px;
+  animation-name: glowing;
+  animation-duration: 1s;
+  animation-timing-function: ease;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
 }
 
 .loadingLine--total{
-	margin-top: 10px;
-	height: 26px;
+  margin-top: 10px;
+  height: 26px;
 }
 
 @keyframes glowing {
-	from {
-		background-color: #f2f2f2;
-	}
-	to {
-		background-color: #e9e9e9;
-		/* background-color: red; */
-	}
+  from {
+    background-color: #f2f2f2;
+  }
+  to {
+    background-color: #e9e9e9;
+    /* background-color: red; */
+  }
 }
 
 @media screen and (max-width: 1024px) {
-	.order{
-		flex-direction: column;
-		padding: 10px;
-		margin-top: 0px;
-		overflow: auto;
-	}
-	.order__inputs{
-		margin: 0;
-		border-radius: 20px 20px 0 0;
-		width: auto;
-	}
-	.order__field{
-		box-shadow: none;
-		flex-grow: 0;
-	}
-	.order__calculate{
-		border-radius: 0 0 20px 20px;
-		width: auto;
-	}
+  .order{
+    flex-direction: column;
+    padding: 10px;
+    margin-top: 0px;
+    overflow: auto;
+  }
+  .order__inputs{
+    margin: 0;
+    border-radius: 20px 20px 0 0;
+    width: auto;
+  }
+  .order__field{
+    box-shadow: none;
+    flex-grow: 0;
+  }
+  .order__calculate{
+    border-radius: 0 0 20px 20px;
+    width: auto;
+  }
 }
 
 @media screen and (max-width: 576px) {
-	.order__template{
-		flex-direction: column;
-		flex-wrap: nowrap;
-		align-items: stretch;
-	}
-	.order__template-item{
-		grid-template-columns: max-content auto;
-		grid-template-rows: 1fr;
-		width: auto;
-		height: 50px;
-	}
-	.order__template-item:not(:last-child){
-		margin-right: 0px;
-	}
-	.order__template-image{
-		width: 50px;
-		height: 50px;
-		padding: 4px;
-	}
-	.order__template-image__rate{
-		line-height: 42px;
-		font-size: 1.4rem;
-	}
-	.order__template-image img{
-		object-fit: contain;
-		width: 100%;
-		height: 100%;
-	}
-	.order__template-name{
-		text-align: left;
-		line-height: 30px;
-		display: flex;
-	}
-	.order__template-type{
-		width: 56px;
-	}
-	.order__template-name ul{
-		display: flex;
-		justify-content: space-around;
-		list-style: none;
-		flex: 1
-	}
-	.order__template-name ul li{
-		margin-left: 20px;
-	}
+  .order__template{
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+  .order__template-item{
+    grid-template-columns: max-content auto;
+    grid-template-rows: 1fr;
+    width: auto;
+    height: 50px;
+  }
+  .order__template-item:not(:last-child){
+    margin-right: 0px;
+  }
+  .order__template-image{
+    width: 50px;
+    height: 50px;
+    padding: 4px;
+  }
+  .order__template-image__rate{
+    line-height: 42px;
+    font-size: 1.4rem;
+  }
+  .order__template-image img{
+    object-fit: contain;
+    width: 100%;
+    height: 100%;
+  }
+  .order__template-name{
+    text-align: left;
+    line-height: 30px;
+    display: flex;
+  }
+  .order__template-type{
+    width: 56px;
+  }
+  .order__template-name ul{
+    display: flex;
+    justify-content: space-around;
+    list-style: none;
+    flex: 1
+  }
+  .order__template-name ul li{
+    margin-left: 20px;
+  }
 }
 
 .networkApear-enter-active, .networkApear-leave-active {
-	transition: opacity .5s, height .5s;
-	height: 26px;
+  transition: opacity .5s, height .5s;
+  height: 26px;
 }
 .networkApear-enter, .networkApear-leave-to {
-	opacity: 0;
-	height: 0;
+  opacity: 0;
+  height: 0;
 }
 </style>

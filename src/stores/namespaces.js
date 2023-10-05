@@ -13,7 +13,7 @@ export const useNamespasesStore = defineStore('namespaces', () => {
     async fetch () {
       try {
         isLoading.value = true
-        const response = api.namespaces.list()
+        const response = await api.namespaces.list()
 
         namespaces.value = response.pool
         return response

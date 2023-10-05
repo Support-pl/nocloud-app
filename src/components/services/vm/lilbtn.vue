@@ -38,11 +38,11 @@ export default defineComponent({
 
       const currentPeriod = (this.service.data.expiration)
         ? this.service.data.expiration
-        : this.date(null, this.service.data.last_monitoring);
+        : this.date(null, this.service.data.next_payment_date);
 
       const newPeriod = (this.service.data.expiration)
         ? this.date(this.service.data.expiration, +period)
-        : this.date(null, this.service.data.last_monitoring + +period);
+        : this.date(null, this.service.data.next_payment_date + +period);
 
 			this.$confirm({
         title: this.$t('Do you want to renew server?'),
@@ -63,7 +63,7 @@ export default defineComponent({
               <a-switch
                 size="small"
                 loading={ this.isLoading }
-                checked={ this.service.data.auto_renew }
+                checked={ this.service.config.auto_renew }
                 onChange={ this.onChange }
               />
             </div>

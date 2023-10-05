@@ -13,7 +13,7 @@
           {{ $t("invoiceDate") }}
         </div>
         <div class="invoice__date">
-          {{ date(invoice.start) }}
+          {{ toDate(invoice.start) }}
         </div>
       </div>
       <div class="invoice__date-item invoice__dueDate">
@@ -21,7 +21,7 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ date(invoice.end) }}
+          {{ toDate(invoice.end) }}
         </div>
       </div>
     </div>
@@ -57,7 +57,7 @@ import { useAppStore } from '@/stores/app.js'
 const props = defineProps({
   invoice: { type: Object, required: true }
 })
-const { date } = useAppStore()
+const { toDate } = useAppStore()
 
 const costColor = computed(() => {
   if (props.invoice?.total < 0) {

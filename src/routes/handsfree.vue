@@ -9,7 +9,7 @@
 
       <a-list size="small" :data-source="data">
         <template #renderItem="item, index">
-          <a-list-item style="padding: 12px 0 0" v-if="item === 'input'">
+          <a-list-item v-if="item === 'input'" style="padding: 12px 0 0">
             <a-input :value="code" :max-length="6" @input="formatText" />
           </a-list-item>
 
@@ -26,55 +26,75 @@
   </div>
 </template>
 
-<script>
-import { createPromiseClient } from "@bufbuild/connect";
-import { HandsfreeService } from "infinimesh-proto/build/es/handsfree/handsfree_connect";
-import { ControlPacket } from "infinimesh-proto/build/es/handsfree/handsfree_pb";
+<script setup>
+import { onMounted, ref } from 'vue'
+import { notification } from 'ant-design-vue'
+import { createPromiseClient } from '@bufbuild/connect'
+import { HandsfreeService } from 'infinimesh-proto/build/es/handsfree/handsfree_connect'
+import { ControlPacket } from 'infinimesh-proto/build/es/handsfree/handsfree_pb'
+import { useAuthStore } from '@/stores/auth.js'
+import { useChatsStore } from '@/stores/chats.js'
+import router from '@/router'
+import i18n from '@/i18n.js'
+import api from '@/api.js'
 
-export default {
-  name: 'handsfree-view',
-  data: () => ({
-    code: '',
-    link: 'https://t.me/nocloud_telegram_bot',
-    data: [
-      'Go to the telegram bot using the',
-      'Press the start button or type /start',
-      'Enter the code received by the bot',
-      'Click on send button',
-      'input'
-    ]
-  }),
-  methods: {
-    async sendCode() {
-      const { token } = this.$store.state.nocloud.auth;
-      const { transport } = this.$store.state.nocloud.chats;
-      const handsfree = createPromiseClient(HandsfreeService, transport);
+const authStore = useAuthStore()
+const chatsStore = useChatsStore()
 
-      try {
-        const { appId } = await handsfree.send(new ControlPacket({ payload: [this.code, token] }));
+const code = ref('')
+const link = ref('')
+const data = [
+  'Go to the telegram bot using the',
+  'Press the start button or type /start',
+  'Enter the code received by the bot',
+  'Click on send button',
+  'input'
+]
 
-        if (appId !== 'core-chatting.telegram-bot') {
-          throw new Error('[Error]: Failed to connect');
-        }
-        window.open(this.link, '_blank');
-      } catch (error) {
-        this.$notification.error({
-          message: this.$t(error.response?.data?.message ?? error.message ?? error)
-        });
-        console.debug(error);
-      }
-    },
-    formatText({ target }) {
-      target.value = target.value.replace(/[^a-f0-9]/gm, '');
-      this.code = target.value;
+async function sendCode () {
+  const handsfree = createPromiseClient(HandsfreeService, chatsStore.transport)
+
+  try {
+    const { appId } = await handsfree.send(new ControlPacket({
+      payload: [code.value, authStore.token]
+    }))
+
+    if (appId !== 'core-chatting.telegram-bot') {
+      throw new Error('[Error]: Failed to connect')
     }
-  },
-  mounted() {
-    if (this.$route.query.code) {
-      this.code = +this.$route.query.code;
-    }
+
+    window.open(link.value, '_blank')
+  } catch (error) {
+    notification.error({
+      message: i18n.t(error.response?.data?.message ?? error.message ?? error)
+    })
+    console.debug(error)
   }
 }
+
+async function getURL () {
+  const settings = await api.settings.get(['telegram-bot-config'])
+  const { url } = JSON.parse(settings['telegram-bot-config'])
+
+  link.value = url
+}
+
+function formatText ({ target }) {
+  target.value = target.value.replace(/[^a-f0-9]/gm, '')
+  code.value = target.value
+}
+
+onMounted(() => {
+  if (router.currentRoute.query.code) {
+    code.value = +router.currentRoute.query.code
+  }
+
+  getURL()
+})
+</script>
+
+<script>
+export default { name: 'HandsfreeView' }
 </script>
 
 <style scoped>

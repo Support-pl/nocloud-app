@@ -19,22 +19,22 @@
     </div>
 
     <a-alert
+      v-if="!loading"
       type="info"
       class="chat__notification"
-      v-if="!loading"
     >
       <template #message>
         {{ $t('You can also choose another way of communication') }}
-        <a-icon type="close" v-if="isVisible" @click="isVisible = false" />
+        <a-icon v-if="isVisible" type="close" @click="isVisible = false" />
         <a-icon v-else type="down" @click="isVisible = true" />
       </template>
 
-      <template #description v-if="isVisible">
+      <template v-if="isVisible" #description>
         <div class="order__grid">
           <div
-            class="order__slider-item"
             v-for="gate of options"
             :key="gate.id"
+            class="order__slider-item"
             :value="gate.id"
             :class="{ 'order__slider-item--active': gateway === gate.id }"
             @click="changeGateway(gate.id)"
@@ -58,13 +58,14 @@
     </a-alert>
 
     <load v-if="loading" />
-    <div v-else class="chat__content" ref="content">
+    <div v-else ref="content" class="chat__content">
       <template v-for="(reply, i) in replies">
-        <span class="chat__date" v-if="isDateVisible(replies, i)" :key="i">
+        <span v-if="isDateVisible(replies, i)" :key="i" class="chat__date">
           {{ reply.date.split(' ')[0] }}
         </span>
         <a-popover
-          :overlayClassName="(reply.error) ? 'chat__tooltip error' : 'chat__tooltip'"
+          :key="i"
+          :overlay-class-name="(reply.error) ? 'chat__tooltip error' : 'chat__tooltip'"
           :trigger="(reply.error) ? 'click' : 'hover'"
           :placement="(isAdminSent(reply)) ? 'rightBottom' : 'leftBottom'"
         >
@@ -86,8 +87,8 @@
                 <a-icon type="copy" /> {{ $t('copy') | capitalize }}
               </div>
               <div
-                style="cursor: pointer; margin-top: 5px"
                 v-if="isEditable(reply)"
+                style="cursor: pointer; margin-top: 5px"
                 @click="changeEditing(reply)"
               >
                 <a-icon type="edit" /> {{ $t('edit') | capitalize }}
@@ -96,8 +97,8 @@
           </template>
 
           <div
-            class="chat__message"
             :key="`${i}_message`"
+            class="chat__message"
             :class="[
               isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
             ]"
@@ -132,19 +133,18 @@
         </a-tag>
 
         <a-textarea
-          allowClear
+          id="message"
+          v-model="messageInput"
+          allow-clear
           type="text"
           class="chat__input"
           name="message"
-          id="message"
-          v-model="messageInput"
           :disabled="status == 'Closed'"
-          :autoSize="{ minRows: 2, maxRows: 100 }"
+          :auto-size="{ minRows: 2, maxRows: 100 }"
           :placeholder="$t('message') + '...'"
           @keyup.shift.enter.exact="newLine"
           @keydown.enter.exact.prevent="sendMessage"
-        >
-        </a-textarea>
+        />
         <div class="chat__send" @click="sendMessage">
           <a-icon type="arrow-up" />
         </div>
@@ -157,303 +157,309 @@
 </template>
 
 <script>
-import Markdown from "markdown-it";
-import emoji from "markdown-it-emoji"
-import load from "@/components/loading/loading.vue";
+import { mapStores } from 'pinia'
+import Markdown from 'markdown-it'
+import emoji from 'markdown-it-emoji'
+import { useChatsStore } from '@/stores/chats.js'
+import load from '@/components/loading/loading.vue'
 
 const md = new Markdown({
   html: true,
   linkify: true,
   typographer: true
-});
+})
 
-md.use(emoji);
+md.use(emoji)
 
 export default {
-  name: "ticketChat",
+  name: 'TicketChat',
   components: { load },
-  data() {
+  beforeRouteUpdate (to, from, next) {
+    this.chatid = to.params.pathMatch
+    this.loadMessages()
+  },
+  data () {
     return {
       status: null,
-      subject: "SUPPORT",
+      subject: 'SUPPORT',
       replies: null,
-      messageInput: "",
+      messageInput: '',
       loading: true,
       chatid: this.$route.params.pathMatch,
       showSendFiles: false,
       editing: null,
-      gateway: "",
+      gateway: '',
       isVisible: false,
       isEditLoading: false
-    };
+    }
   },
   computed: {
-    user() {
-      return this.$store.getters['nocloud/auth/userdata'];
+    ...mapStores(useChatsStore),
+    user () {
+      return this.$store.getters['nocloud/auth/userdata']
     },
-    baseURL() {
-      return this.$store.getters['support/getURL'];
+    baseURL () {
+      return this.$store.getters['support/getURL']
     },
-    titleDecoded() {
-      var txt = document.createElement("textarea");
-      txt.innerHTML = this.subject;
-      return txt.value;
+    titleDecoded () {
+      const txt = document.createElement('textarea')
+      txt.innerHTML = this.subject
+      return txt.value
     },
-    chat() {
-      const chats = this.$store.getters['nocloud/chats/getAllChats'];
+    chat () {
+      const chats = this.chatsStore.chats
 
-      return chats.get(this.chatid);
+      return chats.get(this.chatid)
     },
-    messages() {
-      const chatMessages = this.$store.getters['nocloud/chats/getMessages'];
+    messages () {
+      const chatMessages = this.chatsStore.messages
       const tickets = this.replies.filter(({ uuid }) =>
         !chatMessages.find((message) => message.uuid === uuid)
-      );
+      )
 
-      return [...tickets, ...chatMessages];
+      return [...tickets, ...chatMessages]
     },
-    options() {
-      const { gateways = [] } = this.$store.getters['nocloud/chats/getDefaults'] ?? {};
+    options () {
+      const { gateways = [] } = this.chatsStore.getDefaults ?? {}
 
       return gateways.map((gateway) => ({
         id: gateway,
         name: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`
-      }));
-    },
+      }))
+    }
+  },
+  watch: {
+    chat (value) {
+      this.gateway = value.gateways[0] ?? ''
+    }
+  },
+  mounted () {
+    this.chatsStore.fetchChats()
+    this.chatsStore.startStream()
+    this.chatsStore.fetchDefaults()
+    this.loadMessages()
   },
   methods: {
-    goBack() {
+    goBack () {
       if (this.$route.query.from) {
-        const params = { id: this.$route.query.from };
+        const params = { id: this.$route.query.from }
 
-        this.$router.push({ name: 'service', params });
+        this.$router.push({ name: 'service', params })
       } else {
-        this.$router.push("support");
+        this.$router.push('support')
       }
     },
-    beauty(message) {
-      message = md.render(message).trim();
-      message = message.replace(/\n/g, "<br>");
-      message = message.replace(/[\s\uFEFF\xA0]{2,}/g, " ");
-      message = message.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, "");
+    beauty (message) {
+      message = md.render(message).trim()
+      message = message.replace(/\n/g, '<br>')
+      message = message.replace(/[\s\uFEFF\xA0]{2,}/g, ' ')
+      message = message.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '')
 
-      return message.replace(/^<p>/, '').replace(/<\/p>$/, '');
+      return message.replace(/^<p>/, '').replace(/<\/p>$/, '')
     },
-    isDateVisible(replies, i) {
-      if (i === 0) return true;
-      return replies[i - 1].date.split(' ')[0] !== replies[i].date.split(' ')[0];
+    isDateVisible (replies, i) {
+      if (i === 0) return true
+      return replies[i - 1].date.split(' ')[0] !== replies[i].date.split(' ')[0]
     },
-    date(date) {
-      const time =  date.toTimeString().split(' ')[0];
-      const year = date.getFullYear();
-      let month = date.getMonth() + 1;
-      let day = date.getDate();
+    date (date) {
+      const time = date.toTimeString().split(' ')[0]
+      const year = date.getFullYear()
+      let month = date.getMonth() + 1
+      let day = date.getDate()
 
-      if (`${month}`.length < 2) month = `0${month}`;
-      if (`${day}`.length < 2) day = `0${day}`;
+      if (`${month}`.length < 2) month = `0${month}`
+      if (`${day}`.length < 2) day = `0${day}`
 
-      return `${year}-${month}-${day} ${time}`;
+      return `${year}-${month}-${day} ${time}`
     },
-    newLine() {
-      this.messageInput.replace(/$/, "\n");
+    newLine () {
+      this.messageInput.replace(/$/, '\n')
     },
-    isAdminSent(reply) {
-      return reply.requestor_type !== 'Owner';
+    isAdminSent (reply) {
+      return reply.requestor_type !== 'Owner'
     },
-    isEditable(reply) {
-      return reply.userid === this.user.uuid;
+    isEditable (reply) {
+      return reply.userid === this.user.uuid
     },
-    sendMessage() {
-      if (this.messageInput.trim().length < 1) return;
-      if (this.status == "Closed") return;
+    sendMessage () {
+      if (this.messageInput.trim().length < 1) return
+      if (this.status === 'Closed') return
       if (this.editing) {
-        this.editMessage(this.editing);
-        return;
+        this.editMessage(this.editing)
+        return
       }
 
       const message = {
-        admin: "",
-        attachment: "",
-        contactid: "0",
+        admin: '',
+        attachment: '',
+        contactid: '0',
         date: new Date(),
         email: this.user.data?.email ?? 'none',
         message: md.render(this.messageInput).trim().replace(/^<p>/, '').replace(/<\/p>$/, ''),
         name: this.user.title,
         userid: this.user.uuid,
-        error: true,
-      };
+        error: true
+      }
 
-      const requestor_type = 'Owner';
-      const date = this.date(message.date);
-      const { content } = this.$refs;
+      const date = this.date(message.date)
+      const { content } = this.$refs
 
-      this.replies.push({ ...message, date, requestor_type });
-      setTimeout(() => { content.scrollTo(0, content.scrollHeight) }, 100);
+      this.replies.push({ ...message, date, requestor_type: 'Owner' })
+      setTimeout(() => { content.scrollTo(0, content.scrollHeight) }, 100)
 
       if (this.replies[0].gateways) {
-        this.$store.dispatch('nocloud/chats/sendMessage', {
+        this.chatsStore.sendMessage({
           uuid: this.$route.params.pathMatch,
           content: message.message,
           account: message.userid,
           date: BigInt(message.date.getTime())
         })
           .then(({ uuid }) => {
-            this.replies.at(-1).uuid = uuid;
+            this.replies.at(-1).uuid = uuid
           })
           .catch((err) => {
-            this.replies.at(-1).error = true;
-            console.error(err);
+            this.replies.at(-1).error = true
+            console.error(err)
           })
           .finally(() => {
-            this.replies.at(-1).sending = false;
-          });
-        this.messageInput = '';
-        return;
+            this.replies.at(-1).sending = false
+          })
+        this.messageInput = ''
+        return
       }
 
-      this.$api.get(this.baseURL, { params: {
-        run: 'answer_ticket',
-        id: this.$route.params.pathMatch,
-        message: this.messageInput,
-      }})
+      this.$api.get(this.baseURL, {
+        params: {
+          run: 'answer_ticket',
+          id: this.$route.params.pathMatch,
+          message: this.messageInput
+        }
+      })
         .catch((err) => {
-          this.replies.at(-1).error = true;
-          console.error(err);
+          this.replies.at(-1).error = true
+          console.error(err)
         })
         .finally(() => {
-          this.replies.at(-1).sending = false;
-        });
-      this.messageInput = "";
+          this.replies.at(-1).sending = false
+        })
+      this.messageInput = ''
     },
-    loadMessages() {
-      this.loading = true;
-      this.$api.get(this.baseURL, { params: {
-        run: 'get_ticket_full',
-        ticket_id: this.chatid,
-      }})
+    loadMessages () {
+      this.loading = true
+      this.$api.get(this.baseURL, {
+        params: {
+          run: 'get_ticket_full',
+          ticket_id: this.chatid
+        }
+      })
         .then(async (resp) => {
-          if (resp.replies) return resp;
+          if (resp.replies) return resp
           else {
-            await this.$store.dispatch('nocloud/chats/fetchChats');
-            return this.$store.dispatch('nocloud/chats/fetchMessages', this.chatid);
+            await this.chatsStore.fetchChats()
+            return this.chatsStore.fetchMessages(this.chatid)
           }
         })
         .then((resp) => {
-          this.status = resp.status;
-          this.replies = resp.replies ?? [];
-          this.subject = resp.subject;
+          this.status = resp.status
+          this.replies = resp.replies ?? []
+          this.subject = resp.subject
 
-          this.replies.sort((a, b) => Number(a.sent - b.sent));
+          this.replies.sort((a, b) => Number(a.sent - b.sent))
         })
         .finally(() => {
           setTimeout(() => {
-            this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight);
-          });
-          this.loading = false;
-        });
+            this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
+          })
+          this.loading = false
+        })
     },
-    reload() {
-      this.loading = true;
-      this.loadMessages();
+    reload () {
+      this.loading = true
+      this.loadMessages()
     },
-    objectToParams(object) {
+    objectToParams (object) {
       return Object.entries(object)
         .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
-        .join("&");
+        .join('&')
     },
-    deleteMessage(message) {
-      this.replies.splice(this.replies.indexOf(message), 1);
+    deleteMessage (message) {
+      this.replies.splice(this.replies.indexOf(message), 1)
     },
-    resendMessage(message) {
-      this.deleteMessage(message);
-      this.messageInput = message.message;
-      this.sendMessage();
+    resendMessage (message) {
+      this.deleteMessage(message)
+      this.messageInput = message.message
+      this.sendMessage()
     },
-    editMessage(uuid) {
-      this.$store.dispatch('nocloud/chats/editMessage', {
+    editMessage (uuid) {
+      this.chatsStore.editMessage({
         content: this.messageInput, uuid
       })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message;
+          const message = err.response?.data?.message ?? err.message
 
-          this.$notification.error({ message: this.$t(message) });
-          console.error(err);
-        });
+          this.$notification.error({ message: this.$t(message) })
+          console.error(err)
+        })
 
-      this.editing = null;
-      this.messageInput = '';
+      this.editing = null
+      this.messageInput = ''
     },
-    changeEditing(message = {}) {
-      this.editing = message.uuid ?? null;
-      this.messageInput = message.message ?? '';
-      document.getElementById('message').focus();
+    changeEditing (message = {}) {
+      this.editing = message.uuid ?? null
+      this.messageInput = message.message ?? ''
+      document.getElementById('message').focus()
     },
-    getMessage(uuid) {
-      return this.replies?.find((reply) => reply.uuid === uuid)?.message;
+    getMessage (uuid) {
+      return this.replies?.find((reply) => reply.uuid === uuid)?.message
     },
-    updateChat() {
-      this.isEditLoading = true;
-      this.$store.dispatch('nocloud/chats/updateChat', {
+    updateChat () {
+      this.isEditLoading = true
+      this.chatsStore.updateChat({
         ...this.chat, gateways: [this.gateway]
       })
         .then(() => {
-          this.$notification.success({ message: this.$t('Done') });
+          this.$notification.success({ message: this.$t('Done') })
         })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message;
+          const message = err.response?.data?.message ?? err.message
 
-          this.$notification.error({ message: this.$t(message) });
-          console.error(err);
+          this.$notification.error({ message: this.$t(message) })
+          console.error(err)
         })
         .finally(() => {
-          this.isEditLoading = false;
-        });
+          this.isEditLoading = false
+        })
     },
-    changeGateway(value) {
+    changeGateway (value) {
       if (this.gateway === value) {
-        this.gateway = "";
+        this.gateway = ''
       } else {
-        this.gateway = value;
+        this.gateway = value
       }
     },
-    onError({ target }) {
-      target.src = '/img/OS/default.png';
+    onError ({ target }) {
+      target.src = '/img/OS/default.png'
     },
-    addToClipboard(text) {
+    addToClipboard (text) {
       if (navigator?.clipboard) {
         navigator.clipboard
           .writeText(text)
           .then(() => {
             this.$notification.success({
               message: this.$t('Text copied')
-            });
+            })
           })
           .catch((res) => {
-            console.error(res);
-          });
+            console.error(res)
+          })
       } else {
         this.$notification.error({
           message: this.$t('Clipboard is not supported')
-        });
+        })
       }
     }
-  },
-  mounted() {
-    this.$store.dispatch('nocloud/chats/fetchChats');
-    this.$store.dispatch('nocloud/chats/startStream');
-    this.$store.dispatch('nocloud/chats/fetchDefaults');
-    this.loadMessages();
-  },
-  beforeRouteUpdate(to, from, next) {
-    this.chatid = to.params.pathMatch;
-    this.loadMessages();
-  },
-  watch: {
-    chat(value) {
-      this.gateway = value.gateways[0] ?? '';
-    }
   }
-};
+}
 </script>
 
 <style>
@@ -523,29 +529,29 @@ export default {
 }
 
 .order__slider {
-	display: flex;
+  display: flex;
   justify-content: space-evenly;
   margin-bottom: 10px;
-	overflow-x: auto;
+  overflow-x: auto;
 }
 
 .order__slider-item {
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-	height: 100%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  height: 100%;
   padding: 7px 10px;
-	cursor: pointer;
-	border-radius: 15px;
-	font-size: 1rem;
-	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  cursor: pointer;
+  border-radius: 15px;
+  font-size: 1rem;
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
 .order__slider-item:hover {
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
 }
 
 .order__slider-item--active {
-	background-color: #1045b4;
-	color: #fff;
+  background-color: #1045b4;
+  color: #fff;
 }
 
 .order__grid .order__slider-name > .img_prod {

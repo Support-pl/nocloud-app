@@ -14,7 +14,9 @@
 
           <div v-if="service.domain" class="service-page__info">
             <div class="service-page__info-title">
-              {{ $t('key') | capitalize }}:
+              {{ (/^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i.test(service.domain)
+                ? $t('ssl_product.domain')
+                : $t('key')) | capitalize }}:
               <span style="font-weight: 400">{{ service.domain }}</span>
             </div>
           </div>
@@ -103,9 +105,9 @@
             <a-col
               v-for="elem in info"
               :key="elem.key"
-              :md="12"
-              :xs="12"
-              :sm="12"
+              :md="(elem.key === 'autorenew') ? 24 : 12"
+              :xs="(elem.key === 'autorenew') ? 24 : 12"
+              :sm="(elem.key === 'autorenew') ? 24 : 12"
             >
               <div class="service-page__info">
                 <div class="service-page__info-title">
@@ -170,8 +172,11 @@
 </template>
 
 <script>
+import { mapStores } from 'pinia'
 import config from '@/appconfig.js'
+import { useChatsStore } from '@/stores/chats.js'
 import loading from '@/components/loading/loading.vue'
+import { useProductsStore } from '@/stores/products'
 
 const info = [
   // {
@@ -198,6 +203,11 @@ const info = [
     title: 'next payment date',
     key: 'nextduedate',
     type: 'date'
+  },
+  {
+    title: 'auto renew',
+    key: 'autorenew',
+    type: 'text'
   }
 ]
 
@@ -206,19 +216,14 @@ export default {
   components: { loading },
   data: () => ({ service: null, info }),
   computed: {
+    ...mapStores(useChatsStore, useProductsStore),
     user () {
       return this.$store.getters['nocloud/auth/billingData']
-    },
-    baseURL () {
-      return this.$store.getters['products/getURL']
     },
     currency () {
       const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
 
       return { code: this.user.currency_code ?? defaultCurrency }
-    },
-    products () {
-      return this.$store.getters['products/getProducts']
     },
     getTagColor () {
       const status = this.service.status.replace('cloudStateItem.', '')
@@ -268,6 +273,7 @@ export default {
         key.includes(`/${serviceType}/draw.vue`)
       )
 
+      if (!components[component]) return
       if (serviceType === undefined) return
       if (!(status === 'Active' || state?.state === 'RUNNING')) return
       return () => components[component]()
@@ -296,13 +302,13 @@ export default {
         let groupname = 'Domains'
         let date = 'year'
 
-        if (!domain) return new Promise((resolve) => resolve({ meta: null }))
+        if (!domain) return { meta: null }
         switch (domain.billingPlan.type) {
           case 'cpanel': {
             const { period } = domain.billingPlan.products[domain.product]
 
             domain.data.expiry = {
-              expiredate: this.date(domain.data.last_monitoring ?? 0),
+              expiredate: this.date(domain.data.next_payment_date ?? 0),
               regdate: domain.data.creation ?? '0000-00-00'
             }
             domain.resources.period = this.getPeriod(period)
@@ -318,23 +324,26 @@ export default {
 
             domain.resources = {
               period: this.$t('PayG'),
+              recurringamount: 0,
               inputKilotoken: products.input_kilotoken,
               outputKilotoken: products.output_kilotoken
             }
 
             domain.data.expiry = {
-              expiredate: this.date(domain.data.last_monitoring ?? 0),
+              expiredate: this.date(domain.data.next_payment_date ?? 0),
               regdate: domain.data.creation ?? '0000-00-00'
             }
             groupname = 'OpenAI'
+
+            this.chatsStore.startStream()
             break
           }
 
-          case 'virtual': {
+          case 'empty': {
             const { period } = domain.billingPlan.products[domain.product]
 
             domain.data.expiry = {
-              expiredate: this.date(domain.data.last_monitoring ?? 0),
+              expiredate: this.date(domain.data.next_payment_date ?? 0),
               regdate: domain.data.creation ?? '0000-00-00'
             }
             domain.resources.period = this.getPeriod(period)
@@ -387,7 +396,8 @@ export default {
           regdate,
           name: domain.title,
           status: `cloudStateItem.${domain.state?.state || 'UNKNOWN'}`,
-          domain: domain.resources.domain,
+          domain: domain.resources.domain ?? domain.config.domain,
+          autorenew: (domain.config.auto_renew) ? 'enabled' : 'disabled',
           billingcycle: (typeof period === 'string') ? period : this.$tc(date, period),
           recurringamount: recurringamount ?? domain.billingPlan.products[domain.product]?.price ?? '?',
           nextduedate: expiredate
@@ -400,26 +410,30 @@ export default {
             action: 'get_domain_price',
             params: { domain: this.service.domain }
           })
+        } else {
+          return { meta: 'done' }
         }
       })
       .then(({ meta }) => {
-        if (meta) {
+        if (meta === null) {
           const { period } = this.service.resources
 
           this.service.recurringamount = meta.prices[period]
-        } else {
+        } else if (meta !== 'done') {
           return this.$store.dispatch('nocloud/auth/fetchBillingData')
+        } else {
+          return { client_id: null }
         }
       })
-      .then(({ client_id }) => {
-        if (this.products.length < 1) {
-          return this.$store.dispatch('products/fetch', client_id)
+      .then(({ client_id: id }) => {
+        if (!id) return 'done'
+        if (this.productsStore.products.length < 1) {
+          return this.productsStore.fetch(id)
         }
-
-        this.service = this.products.find(({ id }) => id === this.$route.params.id)
       })
-      .then(() => {
-        this.service = this.products.find(({ id }) => id === this.$route.params.id)
+      .then((result) => {
+        if (result === 'done') return
+        this.service = this.productsStore.products.find(({ id }) => id === this.$route.params.id)
       })
       .catch((err) => console.error(err))
 

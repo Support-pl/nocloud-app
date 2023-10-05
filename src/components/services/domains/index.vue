@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper" style="margin: 0; padding: 0">
-    <loading v-if="isLoading" />
-    <div class="order_wrapper" v-else-if="!cartVisibility">
+    <loading v-if="providersStore.isLoading" />
+    <div v-else-if="!cartVisibility" class="order_wrapper">
       <div class="order">
         <div class="order__inputs order__field">
           <div class="order_option">
@@ -10,16 +10,19 @@
               type="flex"
               justify="center"
             >
-              <a-col :xs="22" :sm="16"><!--TODO: add finish status if cart (watch to cart)-->
+              <a-col :xs="22" :sm="16">
+                <!--TODO: add finish status if cart (watch to cart)-->
                 <a-steps>
                   <a-step class="search" status="start" :title="$t('search')">
-                    <template #icon><!-- @click="search"-->
-                      <a-icon type="search"/>
+                    <template #icon>
+                      <!-- @click="search"-->
+                      <a-icon type="search" />
                     </template>
                   </a-step>
-                  <a-step class="cart" status="finish" :title="$t('cart')" @click="cart">
+
+                  <a-step class="cart" status="finish" :title="$t('cart')" @click="cartVisibility = true">
                     <template #icon>
-                      <a-icon type="shopping-cart"/>
+                      <a-icon type="shopping-cart" />
                     </template>
                   </a-step>
                 </a-steps>
@@ -27,7 +30,7 @@
               <a-col :span="2" class="badge-wrapper">
                 <a-badge
                   :count="itemsInCart"
-                  :offset=[-25,-2]
+                  :offset="[-25,-2]"
                   show-zero
                   :number-style="{
                     backgroundColor: '#fff',
@@ -41,39 +44,40 @@
               <a-col style="margin-bottom: 10px" :span="24">
                 <a-card :title="$t('domain_product.how_to_choose_the_right_domain')">
                   <div>
-                    <a-icon type="check"/>
-                    <p>{{ $t('domain_product.keep_your_name_easy_to_remember') }}</p></div>
+                    <a-icon type="check" />
+                    <p>{{ $t('domain_product.keep_your_name_easy_to_remember') }}</p>
+                  </div>
                   <div>
-                    <a-icon type="check"/>
+                    <a-icon type="check" />
                     <p>{{ $t('domain_product.choose_a_name_that_fit_your_brand') }}</p>
                   </div>
                 </a-card>
               </a-col>
             </a-row>
             <a-input-search
+              v-model="domain"
               placeholder="input search text"
               enter-button="Search"
-              v-model="domain"
               :loading="isDomainsLoading"
               @search="searchDomain"
             />
-            <div class="description" v-if="!cartVisibility && results.length">
+            <div v-if="!cartVisibility && results.length" class="description">
               <a-descriptions
-                bordered
-                class="description-body"
                 v-for="(result, i) in results"
                 :key="i"
+                bordered
+                class="description-body"
                 :column="6"
               >
                 <a-descriptions-item :span="1">
-                <span class="description-body__domain-name">
-                  {{ result.name }}
-                </span>
+                  <span class="description-body__domain-name">
+                    {{ result.name }}
+                  </span>
                 </a-descriptions-item>
                 <a-descriptions-item :span="3">
-                <span class="description-body__domain-cost">
-                  {{ result.status }}
-                </span>
+                  <span class="description-body__domain-cost">
+                    {{ result.status }}
+                  </span>
                 </a-descriptions-item>
                 <a-descriptions-item :span="2">
                   <a-button
@@ -96,142 +100,131 @@
       :on-cart="onCart"
       :items-in-cart="itemsInCart"
       :remove-from-cart="removeFromCart"
-      :search="search"
+      :search="() => { cartVisibility = false }"
       :sp="sp"
       @change="(data) => dataCart = data"
     />
   </div>
 </template>
 
-<script>
-import order from '@/components/services/domains/order.vue';
-import loading from '@/components/loading/loading.vue';
-import notification from '@/mixins/notification.js';
+<script setup>
+import { computed, ref } from 'vue'
+import { notification } from 'ant-design-vue'
+import { useSpStore } from '@/stores/sp.js'
+import order from '@/components/services/domains/order.vue'
+import loading from '@/components/loading/loading.vue'
+import i18n from '@/i18n'
+import api from '@/api'
+import store from '@/store'
 
-export default {
-  name: 'domains-component',
-  components: { order, loading },
-  mixins: [notification],
-  data: () => ({
-    itemsInCart: 0, //в корзине
-    domain: '',
-    zones: ['.com', '.info', '.net', '.org', '.biz',],
-    zonesMore: ['.pro', '.tv', '.ru', '.uk', '.fr', '.by', '.li', '.lt',],
-    results: [],
-    isDomainsLoading: false,
-    cartVisibility: false,
-    onCart: [],
-    dataCart: {},
-  }),
-  methods: {
-    searchDomain() {
-      const regexWithZone = /^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i;
-      const regexWithoutZone = /^[a-z0-9][a-z0-9-]*$/i;
-      const isValid = (regexWithZone.test(this.domain)) ||
-        (regexWithoutZone.test(this.domain));
+const providersStore = useSpStore()
 
-      if (!isValid) {
-        this.results = [];
-        console.log('*******-alert-*******');
-        return;
+const itemsInCart = ref(0) // в корзине
+const domain = ref('')
+const results = ref([])
+const isDomainsLoading = ref(false)
+const cartVisibility = ref(false)
+const onCart = ref([])
+const dataCart = ref({})
+
+const sp = computed(() =>
+  providersStore.servicesProviders.find((sp) => sp.type === 'opensrs')
+)
+
+async function searchDomain () {
+  const regexWithZone = /^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i
+  const regexWithoutZone = /^[a-z0-9][a-z0-9-]*$/i
+  const isValid = (regexWithZone.test(domain.value)) ||
+    (regexWithoutZone.test(domain.value))
+
+  if (!isValid) {
+    results.value = []
+    console.log('*******-alert-*******')
+    return
+  }
+
+  try {
+    isDomainsLoading.value = true
+    const { meta } = await api.servicesProviders.action({
+      uuid: sp.value.uuid,
+      action: 'get_domains',
+      params: {
+        searchString: domain.value,
+        gTLD: true,
+        p_ccTLD: true,
+        m_ccTLD: true
       }
-      this.isDomainsLoading = true;
-      this.$api.servicesProviders.action({
-        uuid: this.sp.uuid,
-        action: 'get_domains',
-        params: {
-          searchString: this.domain,
-          gTLD: true, p_ccTLD: true, m_ccTLD: true,
-        },
-      })
-        .then(({ meta }) => {
-          this.results = [];
-          meta.domains.forEach((el) => {
-            const options = {
-              name: el.domain,
-              status: el.status,
-              btnText: 'Add To Cart',
-              btnClass: 'description-body__btn-add',
-            };
+    })
 
-            if (el.domain === this.domain) {
-              this.results.unshift(options);
-              return;
-            };
-            if (el.status !== 'available') return;
-            else this.results.push(options);
-          });
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          });
-          console.error(err);
-        })
-        .finally(() => this.isDomainsLoading = false);
-    },
-    addToCart(result){
-      if(result.btnClass === 'description-body__btn-add'){
-
-        result.btnText = 'Order Now'
-        result.btnClass = 'description-body__btn-order'
-        if( !this.onCart.some((item) => item.name === result.name) ) {
-          this.onCart.push(result)
-          this.itemsInCart += 1
-        }
+    results.value = []
+    meta.domains.forEach((el) => {
+      const options = {
+        name: el.domain,
+        status: el.status,
+        btnText: 'Add To Cart',
+        btnClass: 'description-body__btn-add'
       }
-      else {
-        this.cartVisibility = true
+
+      if (el.domain === domain.value) {
+        results.value.unshift(options)
+        return
       }
-    },
-    removeFromCart(domain, index){
-      this.onCart.splice(index,1)
-      this.results.splice( this.results.findIndex((result) => result.name === domain.name), 1 )
-      this.itemsInCart -=1
-    },
-    cart(){
-      this.cartVisibility = true
-    },
-    search(){
-      this.cartVisibility = false
-    },
-  },
-  created() {
-    this.$store.dispatch('nocloud/auth/fetchBillingData')
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
+      if (el.status === 'available') results.value.push(options)
+    })
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
 
-        this.openNotificationWithIcon('error', {
-          message: this.$t(message)
-        });
-        console.error(err);
-      });
-    this.$store.dispatch('nocloud/sp/fetch')
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
-
-        this.openNotificationWithIcon('error', {
-          message: this.$t(message)
-        });
-        console.error(err);
-      });
-  },
-  computed: {
-    sp() {
-      return this.$store.getters['nocloud/sp/getSP']
-        .find((sp) => sp.type === 'opensrs');
-    },
-    isLoading() {
-      return this.$store.getters['nocloud/sp/isLoading'];
-    }
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
+  } finally {
+    isDomainsLoading.value = false
   }
 }
+
+function addToCart (result) {
+  if (result.btnClass === 'description-body__btn-add') {
+    result.btnText = 'Order Now'
+    result.btnClass = 'description-body__btn-order'
+
+    if (!onCart.value.some((item) => item.name === result.name)) {
+      onCart.value.push(result)
+      itemsInCart.value += 1
+    }
+  } else {
+    cartVisibility.value = true
+  }
+}
+
+function removeFromCart (domain, index) {
+  onCart.value.splice(index, 1)
+  results.value.splice(results.value.findIndex(
+    (result) => result.name === domain.name), 1
+  )
+  itemsInCart.value -= 1
+}
+
+async function fetch () {
+  try {
+    await Promise.all([
+      store.dispatch('nocloud/auth/fetchBillingData'),
+      providersStore.fetch()
+    ])
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
+  }
+}
+
+fetch()
+</script>
+
+<script>
+export default { name: 'DomainsComponent' }
 </script>
 
 <style>
-
 .order_wrapper{
   position: relative;
   width: 100%;
@@ -260,7 +253,6 @@ export default {
   height: max-content;
 }
 
-
 /*--steps--*/
 .search{
   font-weight: 600;
@@ -284,7 +276,6 @@ export default {
 .anticon-shopping-cart{
   font-size: 28px;
 }
-
 
 /*--card--*/
 .order_option__card{
@@ -319,7 +310,6 @@ export default {
   color: black;
 }
 
-
 /*--input--*/
 .ant-input-group .ant-input{
   width: 100%;
@@ -337,7 +327,6 @@ input.ant-input:focus{
   width: 100%;
   background-color: #427cf7!important;
 }
-
 
 /*--description--*/
 .description{
@@ -540,170 +529,3 @@ td.ant-descriptions-item-content:nth-child(6){
   height: 0;
 }*/
 </style>
-
-
-
-
-<!--//  VERSION WITH SELECT  //-->
-
-<!--body-->
-<!--
- <a-input-group class="input-group"
-              compact
-          >
-            <a-input class="input-group__input"
-                v-model="domain"
-                :placeholder="$t('domain.Pick a domain name')"
-            >
-              <template #addonAfter>
-                <a-icon type="setting" @click="selectZone" />
-              </template>
-            </a-input>
-            <a-button class="input-group__search-btn"
-                type="primary"
-                @click="searchDomain"
-            >
-              SEARCH
-            </a-button>
-            <a-select class="input-group__select"
-                v-if="multiZone"
-                v-model="values"
-                :options="options"
-                mode="multiple"
-                :placeholder="$t('domain.Please select domain zone')"
-            />
-          </a-input-group>
-
-
--->
-
-<!--script-->
-<!--
-values: [], //выбранные зоны
-multiZone: false,
-options: ['.com', '.info', '.net', '.org', '.pro', '.tv', '.ru', '.uk', '.fr', '.by', '.li', '.lt'].map(item => {
-return {value: item, label: item}
-      }),
--->
-<!--
- selectZone(){
-      this.multiZone = !this.multiZone;
-    },
- searchDomain() {
-      const regexWithZone = /^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i;
-      const regexWithoutZone = /^[a-z0-9][a-z0-9-]*$/i;
-
-      if (regexWithZone.test(this.domain)) {
-        if (this.values.length) {
-          this.results = []
-          this.results.push(
-              {
-                name: this.domain,
-                cost: '$6',
-                btnText: 'Add To Cart',
-                btnClass: 'description-body__btn-add',
-              })
-          this.values.forEach((zone) => {
-            if(this.domain !== this.domain.split('.')[0] + zone){
-              this.results.push(
-                  {
-                    name: this.domain.split('.')[0] + zone,
-                    cost: '$6',
-                    btnText: 'Add To Cart',
-                    btnClass: 'description-body__btn-add',
-                  })
-            }
-          })
-        }
-        else {
-          this.results = []
-          this.results.push(
-              {
-                name: this.domain,
-                cost: '$6',
-                btnText: 'Add To Cart',
-                btnClass: 'description-body__btn-add',
-              })
-        }
-      }
-      else if (regexWithoutZone.test(this.domain)) {
-        if (this.values.length) {
-          this.results = []
-          this.values.forEach((zone) => {
-            this.results.push(
-                {
-                  name: this.domain + zone,
-                  cost: '$6',
-                  btnText: 'Add To Cart',
-                  btnClass: 'description-body__btn-add',
-                })
-          })
-        }
-        else {
-          this.results = []
-          console.log('*******-alert-*******')
-        }
-      }
-      else {
-        this.results = []
-        console.log('*******-alert-*******')
-      }
-    },
--->
-
-<!--style-->
-<!--
-.input-group__input{
-  width: 78%;
-}
-
-input.ant-input {
-  margin-right: 10px;
-  border-top-left-radius: 3px!important;
-  border-bottom-left-radius: 3px!important;
-}
-
-span.ant-input-group-addon{
-  padding-left: 14px;
-  padding-right: 13px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.anticon-setting{
-  cursor: pointer; font-size: 20px;
-}
-
-.input-group__search-btn{
-  width: 22%;
-  border-bottom-right-radius: 3px!important;
-  border-top-right-radius: 3px!important;
-  font-size: 12px;
-  background-color: #427cf7;
-}
-
-.input-group__select{
-  width: 100%;
-  margin-top: 10px;
-}
-
-div.ant-select-selection{
-  border-radius: 3px!important;
-}
--->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

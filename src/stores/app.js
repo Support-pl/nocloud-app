@@ -19,35 +19,37 @@ export const useAppStore = defineStore('app', () => {
     index: activeTabNum
   })
 
-  const buttons = [
-    // {
-    //  icon: 'database',
-    //  title: 'cloud',
-    //  theme: 'filled'
-    // },
-    {
-      icon: 'appstore',
-      title: 'services',
-      theme: 'outlined'
-    },
-    {
-      icon: 'message',
-      title: 'support',
-      theme: 'outlined'
-    },
-    {
-      icon: 'fund',
-      title: 'billing',
-      theme: 'outlined'
-    },
-    {
-      icon: 'setting',
-      title: 'settings',
-      theme: 'filled'
-    }
-  ]
+  const buttons = (localStorage.getItem('oauth'))
+    ? []
+    : [
+        // {
+        //  icon: 'database',
+        //  title: 'cloud',
+        //  theme: 'filled'
+        // },
+        {
+          icon: 'appstore',
+          title: 'services',
+          theme: 'outlined'
+        },
+        {
+          icon: 'message',
+          title: 'support',
+          theme: 'outlined'
+        },
+        {
+          icon: 'fund',
+          title: 'billing',
+          theme: 'outlined'
+        },
+        {
+          icon: 'setting',
+          title: 'settings',
+          theme: 'filled'
+        }
+      ]
 
-  function date (timestamp, sep = '.', withTime = true, reverse) {
+  function toDate (timestamp, sep = '.', withTime = true, reverse) {
     if (timestamp < 1) return '-'
 
     const date = new Date(timestamp * 1000)
@@ -71,7 +73,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   return {
-    date,
+    toDate,
     update,
     buttons,
     activeTab,

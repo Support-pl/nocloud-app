@@ -7,7 +7,6 @@
   >
     <a-collapse-panel
       key="location"
-      :style="{ minHeight: panelHeight }"
       :header="`${$t('Location')}: ${(!itemSP) ? ' ' : ` (${region.title})`}`"
     >
       <slot name="location" />
@@ -277,7 +276,7 @@ export default {
     addonsCodes: { type: Object, required: true },
     price: { type: Object, required: true }
   },
-  data: () => ({ isFlavorsLoading: false, panelHeight: null }),
+  data: () => ({ isFlavorsLoading: false }),
   computed: {
     user () {
       return this.$store.getters['nocloud/auth/userdata']
@@ -353,7 +352,6 @@ export default {
   },
   watch: {
     getPlan () { this.changePlans() },
-    activeKey () { this.changePanelHeight() },
     addons (value) {
       const data = (localStorage.getItem('data'))
         ? JSON.parse(localStorage.getItem('data'))
@@ -372,7 +370,6 @@ export default {
     }
   },
   created () { this.changePlans() },
-  beforeMount () { this.changePanelHeight() },
   methods: {
     setOS (item, index) {
       if (item.warning) return
@@ -505,14 +502,6 @@ export default {
           this.$emit('changePlan', this.resources.plans[1] ?? this.resources.plans[0])
         })
       }
-    },
-    changePanelHeight () {
-      setTimeout(() => {
-        const panel = document.querySelector('.ant-collapse-content')?.lastElementChild
-        const height = (panel) ? getComputedStyle(panel).height : null
-
-        this.panelHeight = (this.activeKey === 'location') ? height : null
-      })
     }
   }
 }

@@ -2,7 +2,7 @@
   <div class="invoices">
     <div class="container">
       <a-progress
-        v-if="isLoading || isInvoicesLoading"
+        v-if="transactionsStore.isLoading || invoicesStore.isLoading"
         ref="loading"
         status="active"
         :percent="percent"
@@ -25,23 +25,25 @@
         </a-radio-group>
 
         <template v-if="currentTab === 'Invoice'">
-          <empty v-if="invoices.length === 0" style="margin: 50px 0" />
-          <single-invoice
-            v-for="(invoice, index) in invoices"
-            v-else
-            :key="index"
-            :invoice="invoice"
-          />
+          <empty v-if="invoicesStore.getInvoices.length === 0" style="margin: 50px 0" />
+          <template v-else>
+            <single-invoice
+              v-for="(invoice, index) in invoicesStore.getInvoices"
+              :key="index"
+              :invoice="invoice"
+            />
+          </template>
         </template>
 
         <template v-if="currentTab === 'Detail'">
           <empty v-if="transactions.length === 0" style="margin: 50px 0" />
-          <single-transaction
-            v-for="(invoice, index) in transactions"
-            v-else
-            :key="index"
-            :invoice="invoice"
-          />
+          <template v-else>
+            <single-transaction
+              v-for="(invoice, index) in transactions"
+              :key="index"
+              :invoice="invoice"
+            />
+          </template>
         </template>
 
         <a-pagination
@@ -63,13 +65,15 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { notification } from 'ant-design-vue'
-import { useTransactionsStore } from '@/stores/transactions.js'
 import store from '@/store'
+import { useInvoicesStore } from '@/stores/invoices.js'
+import { useTransactionsStore } from '@/stores/transactions.js'
 
 import empty from '@/components/empty/empty.vue'
 import singleInvoice from '@/components/appMain/invoice/singleInvoice.vue'
 import singleTransaction from '@/components/appMain/invoice/singleTransaction.vue'
 
+const invoicesStore = useInvoicesStore()
 const transactionsStore = useTransactionsStore()
 
 const currentTab = ref('Invoice')
@@ -95,16 +99,6 @@ const transactions = computed(() => {
   result.sort((a, b) => b.exec - a.exec)
   return result
 })
-const isLoading = computed(() =>
-  transactionsStore.isLoading
-)
-
-const invoices = computed(() =>
-  store.getters['invoices/getInvoices']
-)
-const isInvoicesLoading = computed(() =>
-  store.getters['invoices/isLoading']
-)
 
 const currentPage = computed(() =>
   transactionsStore.page
@@ -135,8 +129,8 @@ watch(currentTab, () => {
 })
 
 watch(userdata, () => {
-  if (isLoading.value) return
-  store.dispatch('invoices/autoFetch')
+  if (transactionsStore.isLoading) return
+  invoicesStore.fetch(invoicesStore.getInvoices.length)
 
   transactionsStore.fetch({
     account: userdata.value.uuid,
@@ -153,17 +147,17 @@ watch(userdata, () => {
   setPagination()
 })
 
-watch(isLoading, () => {
+watch(() => transactionsStore.isLoading, () => {
   percent.value = 0
   setCoordY()
   setLoading()
 })
 
-watch(isInvoicesLoading, setCoordY)
+watch(() => invoicesStore.isLoading, setCoordY)
 
 onMounted(() => {
   if (isLogged.value && userdata.value.uuid) {
-    store.dispatch('invoices/autoFetch')
+    invoicesStore.fetch(invoicesStore.getInvoices.length)
 
     transactionsStore.fetchCount({
       account: userdata.value.uuid, type: 'transaction'
@@ -190,7 +184,7 @@ onUnmounted(() => {
 
 function setCoordY () {
   setTimeout(() => {
-    const items = (currentTab.value === 'Invoice') ? invoices.value : transactions.value
+    const items = (currentTab.value === 'Invoice') ? invoicesStore.getInvoices : transactions.value
     const id = sessionStorage.getItem('invoice')
     const i = items.findIndex(({ uuid }) => uuid === id)
 

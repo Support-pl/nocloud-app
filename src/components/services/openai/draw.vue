@@ -15,15 +15,14 @@
         {{ service.resources.outputKilotoken }} {{ currency.code }}
       </a-col>
 
-      <a-col style="font-weight: 700">
-        Chats:
+      <a-col>
         <a-button
           size="small"
           type="primary"
           :disabled="!service.status.includes('RUNNING')"
           @click="moduleEnter"
         >
-          {{ $t('ticketStatus.New') }}
+          {{ $t('new chat') | capitalize }}
         </a-button>
       </a-col>
 
@@ -50,6 +49,8 @@
 <script setup>
 import { computed, ref } from 'vue'
 import store from '@/store'
+import { useChatsStore } from '@/stores/chats.js'
+import { useSupportStore } from '@/stores/support.js'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
 import addTicket from '@/components/appMain/support/addTicket.vue'
 import singleTicket from '@/components/appMain/support/singleTicket.vue'
@@ -59,11 +60,13 @@ const props = defineProps({
   service: { type: Object, required: true }
 })
 
+const chatsStore = useChatsStore()
+const supportStore = useSupportStore()
+
 const chats = computed(() => {
-  const allChats = store.getters['nocloud/chats/getAllChats']
   const result = []
 
-  allChats.forEach((chat) => {
+  chatsStore.chats.forEach((chat) => {
     const { value } = chat.meta.data.instance?.kind ?? {}
     if (value !== props.service.uuid) return
 
@@ -96,7 +99,7 @@ const currency = computed(() => {
 })
 
 function moduleEnter () {
-  store.commit('support/inverseAddTicketState')
+  supportStore.isAddingTicket = !supportStore.isAddingTicket
 }
 
 const isLoading = ref(false)
@@ -104,7 +107,7 @@ const isLoading = ref(false)
 async function fetch () {
   try {
     isLoading.value = true
-    await store.dispatch('nocloud/chats/fetchChats')
+    await chatsStore.fetchChats()
   } catch (error) {
     console.error(error)
   } finally {

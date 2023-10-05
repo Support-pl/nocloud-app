@@ -163,6 +163,9 @@
 </template>
 
 <script>
+import { mapStores } from 'pinia'
+import { useSpStore } from '@/stores/sp.js'
+import { useProductsStore } from '@/stores/products.js'
 import config from '@/appconfig.js'
 import loading from '@/components/loading/loading.vue'
 import cloudItem from '@/components/appMain/cloud/cloudItem.vue'
@@ -181,6 +184,7 @@ export default {
     anchor: null
   }),
   computed: {
+    ...mapStores(useProductsStore, useSpStore),
     isLogged () {
       return this.$store.getters['nocloud/auth/isLoggedIn']
     },
@@ -189,8 +193,8 @@ export default {
     },
     productsPrepared () {
       const state = {
-        size: this.$store.getters['products/size'],
-        page: this.$store.getters['products/page']
+        size: this.productsStore.size,
+        page: this.productsStore.page
       }
       const start = state.size * (state.page - 1)
       const end = start + state.size
@@ -203,7 +207,7 @@ export default {
       return products
     },
     products () {
-      const products = this.$store.getters['products/getProducts']
+      const products = this.productsStore.products
         .map((el) => ({
           ...el.ORDER_INFO,
           groupname: el.groupname,
@@ -244,18 +248,19 @@ export default {
             domainstatus: status,
             productname: inst.title,
             domain: publicIPs?.at(0),
-            date: inst.data.last_monitoring * 1000 || 0,
+            date: inst.data.next_payment_date * 1000 || 0,
             orderamount: inst.billingPlan.products[inst.product]?.price ?? 0
           }
 
           switch (inst.type) {
             case 'cpanel':
               res.groupname = 'Shared Hosting'
+              res.domain = inst.config.domain
               break
             case 'openai':
               res.groupname = 'OpenAI'
               break
-            case 'virtual':
+            case 'empty':
               res.groupname = 'Custom'
               break
             case 'acronis':
@@ -280,7 +285,7 @@ export default {
                 ? `${inst.config.duration} ${inst.config.planCode}`
                 : inst.product
 
-              res.date = inst.data.expiration ?? (inst.data.last_monitoring * 1000 || 0)
+              res.date = inst.data.expiration ?? (inst.data.next_payment_date * 1000 || 0)
               res.orderamount = inst.billingPlan.products[key]?.price ?? 0
 
               inst.config.addons?.forEach((addon) => {
@@ -334,26 +339,22 @@ export default {
         })
     },
     productsLoading () {
-      const productsLoading = this.$store.getters['products/getProductsLoading']
+      const productsLoading = this.productsStore.isLoading
       const instancesLoading = this.$store.getters['nocloud/vms/isLoading']
 
       return productsLoading || instancesLoading
     },
 
     services () {
-      return this.$store.getters['products/getServices']
-    },
-    sp () {
-      return this.$store.getters['nocloud/sp/getSP']
-    },
-    showcases () {
-      return this.$store.getters['nocloud/sp/getShowcases']
+      return this.productsStore.services
     },
     types () {
-      const result = this.showcases.map(({ title, uuid: value }) => ({ title, value }))
+      const result = this.spStore.getShowcases.map(
+        ({ title, uuid: value }) => ({ title, value })
+      )
 
       if (this.isFilterByLocation) {
-        return this.sp.reduce((prev, curr) =>
+        return this.spStore.servicesProviders.reduce((prev, curr) =>
           [...prev, ...curr.locations.map(({ title }) => title)], []
         )
       }
@@ -437,14 +438,14 @@ export default {
 
     const promises = []
 
-    if (this.showcases.length < 1) {
-      promises.push(this.$store.dispatch('nocloud/sp/fetchShowcases', !this.isLogged))
+    if (this.spStore.getShowcases.length < 1) {
+      promises.push(this.spStore.fetchShowcases(!this.isLogged))
     }
-    if (this.sp.length < 1) {
-      promises.push(this.$store.dispatch('nocloud/sp/fetch', !this.isLogged))
+    if (this.spStore.servicesProviders.length < 1) {
+      promises.push(this.spStore.fetch(!this.isLogged))
     }
     if (Object.keys(this.services).length < 1) {
-      promises.push(this.$store.dispatch('products/fetchServices'))
+      promises.push(this.productsStore.fetchServices())
     }
 
     Promise.all(promises)
@@ -456,11 +457,11 @@ export default {
       })
 
     if (!this.isLogged) return
-    this.$store.commit('products/setProductsLoading', true)
+    this.productsStore.isLoading = true
     this.$store.dispatch('nocloud/auth/fetchBillingData')
       .then((user) => {
         this.$store.dispatch('nocloud/vms/fetch')
-        this.$store.dispatch('products/fetch', user.client_id)
+        this.productsStore.fetch(user.client_id)
       })
       .catch((err) => console.error(err))
   },
@@ -491,9 +492,8 @@ export default {
       this.$router.replace({ query: { service: newTypes } })
     },
     newProductHandle () {
-      const services = this.$store.getters['products/getServices']
-      const { type } = this.sp.find(({ uuid }) => {
-        const { servicesProvider } = this.showcases.find(
+      const { type } = this.spStore.servicesProviders.find(({ uuid }) => {
+        const { servicesProvider } = this.spStore.getShowcases.find(
           ({ uuid }) => uuid === this.queryTypes[0]
         ) ?? {}
 
@@ -513,7 +513,7 @@ export default {
         case 'acronis':
           name = 'service-acronis'
           break
-        case 'virtual':
+        case 'empty':
           name = 'service-custom'
           break
         case 'openai':
@@ -524,7 +524,7 @@ export default {
           name = 'newPaaS'
       }
 
-      if (!type && services[this.queryTypes[0]]) {
+      if (!type && this.productsStore.services[this.queryTypes[0]]) {
         name = 'service-iaas'
       }
 
@@ -533,7 +533,8 @@ export default {
     filterProducts (products, types) {
       return products.filter(({ sp, hostingid, config, billingPlan, productname }) => {
         // фильтруем по значениям из гет запроса
-        let { title, locations = [] } = this.sp.find(({ uuid }) => uuid === sp) ?? {}
+        let { title, locations = [] } = this.spStore.servicesProviders
+          .find(({ uuid }) => uuid === sp) ?? {}
 
         if (hostingid) title = 'Virtual'
         if (this.isFilterByLocation) {
@@ -552,7 +553,9 @@ export default {
             return this.services[value].find(({ name }) => name === productname)
           }
 
-          const service = this.showcases.find(({ uuid }) => uuid === value)
+          const service = this.spStore.getShowcases.find(
+            ({ uuid }) => uuid === value
+          )
 
           if (!service) return value === title
           else {
@@ -565,7 +568,7 @@ export default {
       })
     },
     productsCount (type, filter) {
-      const total = this.$store.getters['products/total']
+      const total = this.productsStore.total
 
       if (this.checkedTypes.length > 0 || filter) {
         return this.filterProducts(this.productsPrepared, [type]).length

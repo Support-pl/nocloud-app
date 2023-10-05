@@ -1,114 +1,111 @@
 <template>
-	<div class="services">
-		<div class="container">
-			<services-wrapper class="services__block" v-if="!user.non_buyer" :productsCount="productsCount" />
-      <user-products class="services__block" ref="products" :min="false" />
+  <div class="services">
+    <div class="container">
+      <services-wrapper v-if="!user.non_buyer" class="services__block" :products-count="productsCount" />
+      <user-products ref="productsComponent" class="services__block" :min="false" />
 
       <a-pagination
+        v-if="products.length > 0"
         show-size-changer
         style="width: fit-content; margin: 0 0 20px auto"
-        v-if="products.length > 0"
         :page-size-options="pageSizeOptions"
-        :page-size="pageSize"
-        :total="totalSize"
-        :current="currentPage"
+        :page-size="productsStore.size"
+        :total="productsStore.total"
+        :current="productsStore.page"
         @showSizeChange="onShowSizeChange"
         @change="onShowSizeChange"
       />
-		</div>
-	</div>
+    </div>
+  </div>
 </template>
 
-<script>
-import servicesWrapper from '@/components/services/services_wrapper.vue';
-import userProducts from '@/components/userProducts/userProducts.vue';
+<script setup>
+import { computed, onMounted, ref, watch } from 'vue'
+import store from '@/store'
+import router from '@/router'
+import { useSpStore } from '@/stores/sp.js'
+import { useProductsStore } from '@/stores/products.js'
+import servicesWrapper from '@/components/services/services_wrapper.vue'
+import userProducts from '@/components/userProducts/userProducts.vue'
 
-export default {
-	name: "page-services",
-	components: { servicesWrapper, userProducts },
-  data: () => ({
-    pageSizeOptions: ['5', '10', '25', '50', '100']
-  }),
-  computed: {
-    user() {
-      return this.$store.getters["nocloud/auth/billingData"];
-    },
-    products() {
-      const products = this.$store.getters["products/getProducts"] ?? [];
-      const instances = this.$store.getters["nocloud/vms/getInstances"] ?? [];
+const productsStore = useProductsStore()
+const providersStore = useSpStore()
 
-      if (this.$route.query.service) {
-        return [...products, ...instances].filter(({ sp }) => {
-          const { title } = this.sp.find(({ uuid }) => uuid === sp) ?? {};
+const productsComponent = ref(null)
+const pageSizeOptions = ['5', '10', '25', '50', '100']
 
-          return this.checkedTypes.some((service) => service === title);
-        });
-      }
-      return [...products, ...instances];
-    },
-    sp() {
-      return this.$store.getters["nocloud/sp/getSP"];
-    },
-    checkedTypes() {
-      return (
-        this.$route.query?.service?.split(",").filter((el) => el.length > 0) ?? []
-      );
-    },
+const user = computed(() =>
+  store.getters['nocloud/auth/billingData']
+)
 
-    currentPage() {
-      return this.$store.getters["products/page"];
-    },
-    pageSize() {
-      return this.$store.getters["products/size"];
-    },
-    totalSize() {
-      return this.$store.getters["products/total"];
-    }
-  },
-  methods: {
-    productsCount(type, filter) {
-      return this.$refs.products.productsCount(type, filter);
-    },
-    onShowSizeChange(page, limit) {
-      if (page !== this.currentPage) {
-        this.$store.commit("products/setPage", page);
-      }
-      if (limit !== this.pageSize) {
-        this.$store.commit("products/setSize", limit);
-      }
+const providers = computed(() =>
+  providersStore.servicesProviders
+)
 
-      localStorage.setItem("servicesPagination", JSON.stringify({ page, limit }));
-    }
-  },
-  mounted() {
-    const pagination = localStorage.getItem("servicesPagination");
+const products = computed(() => {
+  const instances = store.getters['nocloud/vms/getInstances'] ?? []
 
-    if (!pagination) return;
-    const { page, limit } = JSON.parse(pagination);
+  if (router.currentRoute.query.service) {
+    return [...productsStore.products, ...instances].filter(({ sp }) => {
+      const { title } = providers.value.find(({ uuid }) => uuid === sp) ?? {}
 
-    this.onShowSizeChange(page, limit);
-  },
-  watch: {
-    products(value) {
-      this.$store.commit("products/setTotal", value.length);
-    }
+      return checkedTypes.value.some((service) => service === title)
+    })
   }
+  return [...productsStore.products, ...instances]
+})
+
+watch(products, (value) => {
+  productsStore.total = value.length
+})
+
+const checkedTypes = computed(() =>
+  router.currentRoute.query?.service?.split(',').filter((el) => el.length > 0) ?? []
+)
+
+function productsCount (type, filter) {
+  return productsComponent.value.productsCount(type, filter)
 }
+
+function onShowSizeChange (page, limit) {
+  if (page !== productsStore.page) {
+    productsStore.page = page
+  }
+  if (limit !== productsStore.size) {
+    productsStore.size = limit
+  }
+
+  localStorage.setItem('servicesPagination', JSON.stringify({ page, limit }))
+}
+
+onMounted(() => {
+  const pagination = localStorage.getItem('servicesPagination')
+
+  if (!pagination) return
+  const { page, limit } = JSON.parse(pagination)
+
+  onShowSizeChange(page, limit)
+})
+
+</script>
+
+<script>
+export default { name: 'PageServices' }
 </script>
 
 <style>
 .services {
-	padding-top: 15px;
+  padding-top: 15px;
 }
 
 .services__block {
-	margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 @media screen and (max-width: 768px) {
-	.services{
-		padding-left: 10px;
-		padding-right: 10px;
-	}
+  .services{
+    padding-left: 10px;
+    padding-right: 10px;
+  }
 }
 </style>

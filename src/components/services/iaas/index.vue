@@ -59,19 +59,20 @@
               <div v-if="fetchLoading">
                 Loading...
               </div>
-              <a-card-grid
-                v-for="addon of addons[getProducts.id]"
-                v-else
-                :key="addon.id"
-                class="card-item"
-                @click="changeAddons(addon.id)"
-              >
-                <div class="order__slider-name" style="grid-template-columns: 1fr auto">
-                  <span style="font-weight: 700; font-size: 16px" v-html="addon.name" />
-                  <a-checkbox :checked="options.addons.includes(addon.id)" />
-                  <span style="grid-column: 1 / 3" v-html="addon.description" />
-                </div>
-              </a-card-grid>
+              <template v-else>
+                <a-card-grid
+                  v-for="addon of addons[getProducts.id]"
+                  :key="addon.id"
+                  class="card-item"
+                  @click="changeAddons(addon.id)"
+                >
+                  <div class="order__slider-name" style="grid-template-columns: 1fr auto">
+                    <span style="font-weight: 700; font-size: 16px" v-html="addon.name" />
+                    <a-checkbox :checked="options.addons.includes(addon.id)" />
+                    <span style="grid-column: 1 / 3" v-html="addon.description" />
+                  </div>
+                </a-card-grid>
+              </template>
             </a-card>
           </template>
         </div>
@@ -211,8 +212,10 @@
 </template>
 
 <script>
+import { mapActions } from 'pinia'
 import config from '@/appconfig.js'
 import addFunds from '@/components/balance/addFunds.vue'
+import { useProductsStore } from '@/stores/products'
 
 export default {
   name: 'IaasComponent',
@@ -377,9 +380,10 @@ export default {
     action()
   },
   methods: {
+    ...mapActions(useProductsStore, ['fetchServices']),
     fetch () {
       this.fetchLoading = true
-      this.$store.dispatch('products/fetchServices')
+      this.fetchServices()
         .then((res) => {
           const { prod } = Object.values(res).find(({ group_name: group }) =>
             group === this.$route.query.service
@@ -419,7 +423,7 @@ export default {
     orderClickHandler () {
       const info = {
         run: 'add_product',
-        billingcycle: (this.getProducts.paytype === ['free', 'onetime']) ? 'monthly' : this.options.period,
+        billingcycle: (['free', 'onetime'].includes(this.getProducts.paytype)) ? 'monthly' : this.options.period,
         product: this.getProducts.id,
         paymentmethod: this.options.payment,
         addons: this.options.addons

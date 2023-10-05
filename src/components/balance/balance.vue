@@ -61,18 +61,20 @@ export default {
       this.$set(this.currency, 'suffix', value)
     },
     user (value) {
-      this.currency.suffix = value.currency_code ?? this.defaultCurrency
-      this.currency = Object.assign({}, this.currency)
+      this.$set(this.currency, 'suffix', value.currency_code ?? this.defaultCurrency)
     }
   },
   created () {
     this.$store.dispatch('nocloud/auth/fetchBillingData')
+      .then((result) => {
+        if (result.id && localStorage.getItem('oauth')) {
+          localStorage.removeItem('oauth')
+          this.$router.replace('/')
+        }
+      })
   },
   mounted () {
-    if (this.user.currency_code) {
-      this.currency.suffix = this.user.currency_code ?? this.defaultCurrency
-      this.currency = Object.assign({}, this.currency)
-    }
+    this.$set(this.currency, 'suffix', this.user.currency_code ?? this.defaultCurrency)
   },
   methods: {
     URLparameter (obj, outer = '') {

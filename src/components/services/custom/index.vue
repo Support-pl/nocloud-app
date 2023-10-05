@@ -102,47 +102,35 @@
 
         <a-row :gutter="[10, 10]" style="margin-top: 10px">
           <a-col v-if="services.length > 1">
-            <a-select
-              v-model="service"
-              style="width: 100%"
-              placeholder="services"
-            >
+            <a-select v-model="service" style="width: 100%" placeholder="services">
               <a-select-option
-                v-for="service of services"
-                :key="service.uuid"
-                :value="service.uuid"
+                v-for="item of services"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ service.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
-          <a-col v-if="namespaces.length > 1">
-            <a-select
-              v-model="namespace"
-              style="width: 100%"
-              placeholder="namespaces"
-            >
+          <a-col v-if="namespacesStore.namespaces.length > 1">
+            <a-select v-model="namespace" style="width: 100%" placeholder="namespaces">
               <a-select-option
-                v-for="namespace of namespaces"
-                :key="namespace.uuid"
-                :value="namespace.uuid"
+                v-for="item of namespacesStore.namespaces"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ namespace.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
           <a-col v-if="plans.length > 1">
-            <a-select
-              v-model="plan"
-              style="width: 100%"
-              placeholder="plans"
-            >
+            <a-select v-model="plan" style="width: 100%" placeholder="plans">
               <a-select-option
-                v-for="plan of plans"
-                :key="plan.uuid"
-                :value="plan.uuid"
+                v-for="item of plans"
+                :key="item.uuid"
+                :value="item.uuid"
               >
-                {{ plan.title }}
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
@@ -193,6 +181,10 @@
 </template>
 
 <script>
+import { mapStores } from 'pinia'
+import { useSpStore } from '@/stores/sp.js'
+import { usePlansStore } from '@/stores/plans.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
 import addFunds from '@/components/balance/addFunds.vue'
 
 export default {
@@ -213,6 +205,7 @@ export default {
     periods: []
   }),
   computed: {
+    ...mapStores(useNamespasesStore, useSpStore, usePlansStore),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const product = this.products[this.options.size]
@@ -248,28 +241,20 @@ export default {
       return this.$store.getters['nocloud/vms/getServices']
         .filter((el) => el.status !== 'DEL')
     },
-    namespaces () {
-      return this.$store.getters['nocloud/namespaces/getNameSpaces'] ?? []
-    },
     plans () {
-      return this.$store.getters['nocloud/plans/getPlans']
-        .filter(({ type, uuid }) => {
-          const { plans } = this.$store.getters['nocloud/sp/getShowcases'].find(
-            ({ uuid }) => uuid === this.$route.query.service
-          ) ?? {}
+      return this.plansStore.plans.filter(({ type, uuid }) => {
+        const { plans } = this.spStore.getShowcases.find(
+          ({ uuid }) => uuid === this.$route.query.service
+        ) ?? {}
 
-          if (!plans) return type === 'virtual'
+        if (!plans) return type === 'virtual'
 
-          if (plans.length < 1) return type === 'virtual'
-          return type === 'virtual' && plans.includes(uuid)
-        })
+        if (plans.length < 1) return type === 'virtual'
+        return type === 'virtual' && plans.includes(uuid)
+      })
     },
     sp () {
-      return this.$store.getters['nocloud/sp/getSP']
-        .find((sp) => sp.type === 'virtual')
-    },
-    isLoading () {
-      return this.$store.getters['nocloud/plans/isLoading']
+      return this.spStore.servicesProviders.find((sp) => sp.type === 'virtual')
     },
     rules () {
       const message = this.$t('ssl_product.field is required')
@@ -278,7 +263,7 @@ export default {
     }
   },
   watch: {
-    namespaces (value) { this.namespace = value[0]?.uuid },
+    'namespacesStore.namespaces' (value) { this.namespace = value[0]?.uuid },
     services (value) { this.service = value[0]?.uuid },
     plans (value) { this.plan = value[0]?.uuid },
     plan (value) {
@@ -301,13 +286,13 @@ export default {
     this.fetchLoading = true
     const promises = [
       this.$store.dispatch('nocloud/auth/fetchBillingData'),
-      this.$store.dispatch('nocloud/sp/fetch', !this.isLogged),
-      this.$store.dispatch('nocloud/plans/fetch', { anonymously: !this.isLogged })
+      this.plansStore.fetch({ anonymously: !this.isLogged }),
+      this.spStore.fetch(!this.isLogged)
     ]
 
     if (this.isLogged) {
       promises.push(
-        this.$store.dispatch('nocloud/namespaces/fetch'),
+        this.namespacesStore.fetch(),
         this.$store.dispatch('nocloud/vms/fetch')
       )
     }
