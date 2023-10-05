@@ -2,11 +2,10 @@
   <a-modal
     :title="(instanceId) ? $t('new chat') : $t('ask a question') | capitalize"
     :visible="supportStore.isAddingTicket"
-    :confirm-loading="isSending"
     :footer="null"
     @cancel="closeFields"
   >
-    <a-spin tip="Loading..." :spinning="isLoading">
+    <a-spin tip="Loading..." :spinning="isLoading || isSending">
       <a-form-model layout="vertical">
         <a-form-model-item v-if="!instanceId" :label="$t('department')">
           <a-select v-model="ticketDepartment" placeholder="department">
@@ -32,7 +31,16 @@
           />
         </a-form-model-item>
 
-        <a-form-model-item :label="$t('gateways')">
+        <a-button
+          v-if="isTicket"
+          type="primary"
+          style="display: block; margin-left: auto"
+          @click="sendNewTicket"
+        >
+          {{ $t('Send') }}
+        </a-button>
+
+        <a-form-model-item v-else :label="$t('gateways')">
           <div class="order__grid">
             <div
               v-for="gate of gateways"
@@ -56,7 +64,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { message } from 'ant-design-vue'
+import { message, notification } from 'ant-design-vue'
 import Markdown from 'markdown-it'
 import emoji from 'markdown-it-emoji'
 
@@ -98,6 +106,10 @@ const user = computed(() =>
 
 const userdata = computed(() =>
   store.getters['nocloud/auth/userdata']
+)
+
+const isTicket = computed(() =>
+  supportStore.departments.find(({ id }) => id === ticketDepartment.value)
 )
 
 const filteredDepartments = computed(() => {
@@ -160,7 +172,6 @@ async function createTicket () {
     if (response.result === 'success') {
       ticketTitle.value = ''
       ticketMessage.value = ''
-      isSending.value = false
 
       supportStore.fetch(true)
       supportStore.isAddingTicket = !supportStore.isAddingTicket
@@ -225,7 +236,7 @@ async function sendNewTicket () {
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 
-    message.error(i18n.t(message))
+    notification.error(i18n.t(message))
     console.error(error)
   } finally {
     isSending.value = false
