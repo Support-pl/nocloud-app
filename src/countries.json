@@ -500,6 +500,11 @@
     "dial_code": "+39"
   },
   {
+    "title": "Israel",
+    "code": "IL",
+    "dial_code": "+972"
+  },
+  {
     "title": "Japan",
     "code": "JP",
     "dial_code": "+81"

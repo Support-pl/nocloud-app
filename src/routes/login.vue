@@ -224,6 +224,7 @@ async function send () {
 
       router.replace({ name, query: { service } })
     } else {
+      authStore.fetchUserData()
       store.dispatch('nocloud/auth/fetchUserData')
       store.dispatch('nocloud/auth/fetchBillingData')
       router.push({ name: 'root' })
