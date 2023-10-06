@@ -10,7 +10,7 @@
         {{ $t('net total') | capitalize }}:
       </div>
       <div class="invoice__cost" :style="{ color: statusColor }">
-        {{ total }} {{ user.currency_code }}
+        {{ total }} {{ currency.code }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
