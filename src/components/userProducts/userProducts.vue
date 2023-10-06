@@ -261,6 +261,7 @@ export default {
               res.groupname = 'OpenAI'
               break
             case 'empty':
+            case 'virtual':
               res.groupname = 'Custom'
               break
             case 'acronis':
@@ -514,6 +515,7 @@ export default {
           name = 'service-acronis'
           break
         case 'empty':
+        case 'virtual':
           name = 'service-custom'
           break
         case 'openai':

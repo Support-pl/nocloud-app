@@ -208,6 +208,7 @@ export default {
           name = 'service-acronis'
           break
         case 'empty':
+        case 'virtual':
           name = 'service-custom'
           break
         case 'openai':
