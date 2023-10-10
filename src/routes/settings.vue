@@ -4,7 +4,7 @@
       <div class="settings__content">
         <div class="settings__info">
           <div class="settings__user">
-            <div v-if="isLogged" class="settings__name">
+            <div v-if="authStore.isLogged" class="settings__name">
               <!-- нету юзера -->
               <!-- {{ user.firstname }} {{ user.lastname }} -->
             </div>
@@ -59,7 +59,7 @@
         </div>
 
         <div
-          v-if="!user.paid_stop && isVisible"
+          v-if="!authStore.billingUser.paid_stop && isVisible"
           class="settings__item"
           @click="showModal('addFunds')"
         >
@@ -132,7 +132,7 @@
             <div
               v-for="text in authStore.loginButtons"
               :key="text"
-              :class="{ disabled: userdata.data?.oauth_types?.includes(text) }"
+              :class="{ disabled: authStore.userdata.data?.oauth_types?.includes(text) }"
               class="singleLang"
               @click="authStore.linkAccount(text)"
             >
@@ -146,7 +146,7 @@
                 {{ text | capitalize }}
               </span>
               <span
-                v-if="userdata.data?.oauth_types?.includes(text)"
+                v-if="authStore.userdata.data?.oauth_types?.includes(text)"
                 class="singleLang__current-marker"
               />
             </div>
@@ -186,7 +186,10 @@
         </div>
 
         <button
-          v-if="false && userdata.access && ['ROOT', 'ADMIN'].includes(userdata.access.level)"
+          v-if="
+            false && authStore.userdata.access &&
+              ['ROOT', 'ADMIN'].includes(authStore.userdata.access.level)
+          "
           class="settings__login"
           @click="loginToAdmin"
         >
@@ -205,6 +208,7 @@ import { mapStores } from 'pinia'
 import QrcodeVue from 'qrcode.vue'
 import config from '@/appconfig.js'
 import { useAuthStore } from '@/stores/auth.js'
+
 import notification from '@/mixins/notification.js'
 import balance from '@/components/balance/balance.vue'
 import addFunds from '@/components/balance/addFunds.vue'
@@ -229,15 +233,6 @@ export default {
   },
   computed: {
     ...mapStores(useAuthStore),
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
     isVisible () {
       return !localStorage.getItem('oauth')
     },
@@ -251,7 +246,7 @@ export default {
       return location.host
     },
     sshKeys () {
-      return this.userdata?.data?.ssh_keys ?? []
+      return this.authStore.userdata?.data?.ssh_keys ?? []
     }
   },
   methods: {
@@ -303,12 +298,11 @@ export default {
     //     });
     // },
     loginToAdmin () {
-      const url = `https://api.${location.host.split('.').slice(1).join('.')}/admin`
+      const url = `${VUE_APP_BASE_URL}/admin`
       const win = window.open(url)
-      const token = this.$store.state.nocloud.auth.token
 
       console.log(win)
-      setTimeout(() => { win.postMessage(token, url) }, 100)
+      setTimeout(() => { win.postMessage(this.authStore.token, url) }, 100)
     },
     logoutFunc () {
       this.authStore.logout()
@@ -349,24 +343,23 @@ export default {
         })
     },
     deleteSSH (index) {
-      for (const item in this.userdata.data.ssh_keys) {
+      for (const item in this.authStore.userdata.data.ssh_keys) {
         if (+item === index) {
-          this.userdata.data.ssh_keys.splice(item, 1)
+          this.authStore.userdata.data.ssh_keys.splice(item, 1)
         }
       }
       const dataSSH = {
-        id: this.userdata.uuid,
-        body: { data: this.userdata.data }
+        id: this.authStore.userdata.uuid,
+        body: { data: this.authStore.userdata.data }
       }
 
-      this.$store
-        .dispatch('nocloud/auth/addSSH', dataSSH)
+      this.authStore.addSSH(dataSSH)
         .then((result) => {
           if (result) {
             this.openNotificationWithIcon('success', {
               message: this.$t('delete SSH key successfully')
             })
-            this.$store.dispatch('nocloud/auth/fetchUserData')
+            this.authStore.fetchUserData()
           } else {
             this.openNotificationWithIcon('error', {
               message: this.$t('error delete SSH key')

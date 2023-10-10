@@ -199,9 +199,11 @@
 </template>
 
 <script>
-import { mapStores } from 'pinia'
+import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
@@ -241,7 +243,13 @@ export default {
   }),
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore),
-
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData']),
+    ...mapState(useCurrenciesStore, [
+      'currencies',
+      'defaultCurrency',
+      'unloginedCurrency',
+      'fetchCurrencies'
+    ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const product = this.products[this.options.provider]
@@ -261,30 +269,18 @@ export default {
           return null
       }
     },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
-    isLoggedIn () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
     currency () {
-      const currencies = this.$store.getters['nocloud/auth/currencies']
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
-      const code = this.$store.getters['nocloud/auth/unloginedCurrency']
-      const { rate } = currencies.find((el) =>
-        el.to === defaultCurrency && el.from === code
+      const code = this.unloginedCurrency
+      const { rate } = this.currencies.find((el) =>
+        el.to === this.defaultCurrency && el.from === code
       ) ?? {}
 
-      const { rate: reverseRate } = currencies.find((el) =>
-        el.from === defaultCurrency && el.to === code
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.from === this.defaultCurrency && el.to === code
       ) ?? { rate: 1 }
 
-      if (!this.isLoggedIn) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.user.currency_code ?? defaultCurrency }
+      if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
+      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
     sp () {
       return this.spStore.servicesProviders.find(({ type }) => type === 'goget')
@@ -330,9 +326,9 @@ export default {
     action()
   },
   created () {
-    this.$store.dispatch('nocloud/auth/fetchBillingData')
-    this.spStore.fetch(!this.isLoggedIn).then(() => this.fetch())
-    this.plansStore.fetch({ anonymously: !this.isLoggedIn })
+    this.fetchBillingData()
+    this.spStore.fetch(!this.isLogged).then(() => this.fetch())
+    this.plansStore.fetch({ anonymously: !this.isLogged })
       .then(() => {
         if (this.plans.length === 1) this.plan = this.plans[0].uuid
       })
@@ -345,7 +341,7 @@ export default {
         console.error(err)
       })
 
-    if (this.isLoggedIn) {
+    if (this.isLogged) {
       this.namespacesStore.fetch()
         .then(({ pool }) => {
           if (pool.length === 1) this.namespace = pool[0].uuid
@@ -375,9 +371,7 @@ export default {
         })
     }
 
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies', { anonymously: !this.isLoggedIn })
-    }
+    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
     fetch () {
@@ -432,7 +426,7 @@ export default {
         billing_plan: plan ?? {}
       }]
       const newGroup = {
-        title: this.user.fullname + Date.now(),
+        title: this.billingUser.fullname + Date.now(),
         type: this.sp.type,
         sp: this.sp.uuid,
         instances
@@ -446,7 +440,7 @@ export default {
       if (group) group.instances = [...group.instances, ...instances]
       else if (this.service) info.instancesGroups.push(newGroup)
 
-      if (!this.user) {
+      if (!this.isLogged) {
         this.$store.commit('setOnloginRedirect', this.$route.name)
         this.$store.commit('setOnloginInfo', {
           type: 'ssl',
@@ -472,7 +466,7 @@ export default {
         : {
             namespace: this.namespace,
             service: {
-              title: this.user.fullname,
+              title: this.billingUser.fullname,
               context: {},
               version: '1',
               instancesGroups: [info]

@@ -178,7 +178,7 @@
               <a-descriptions-item :span="3">
                 <span class="description-body__domain-cost">
                   {{ products[domain.name] && products[domain.name][resources.period] }}
-                  {{ user.currency_code }}
+                  {{ billingUser.currency_code }}
                 </span>
               </a-descriptions-item>
               <a-descriptions-item :span="2">
@@ -353,9 +353,10 @@
 </template>
 
 <script>
-import { mapStores } from 'pinia'
+import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
+import { useAuthStore } from '@/stores/auth.js'
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
@@ -405,15 +406,7 @@ export default {
   }),
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore),
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser']),
     services () {
       return this.$store.getters['nocloud/vms/getServices']
         .filter((el) => el.status !== 'DEL')
@@ -550,22 +543,22 @@ export default {
       interestedKeys.forEach((key) => {
         switch (key) {
           case 'firstname':
-            this.$set(this.form, 'first_name', this.user[key])
+            this.$set(this.form, 'first_name', this.billingUser[key])
             break
           case 'lastname':
-            this.$set(this.form, 'last_name', this.user[key])
+            this.$set(this.form, 'last_name', this.billingUser[key])
             break
           case 'companyname':
-            this.$set(this.form, 'org_name', this.user[key])
+            this.$set(this.form, 'org_name', this.billingUser[key])
             break
           case 'postcode':
-            this.$set(this.form, 'postal_code', this.user[key])
+            this.$set(this.form, 'postal_code', this.billingUser[key])
             break
           case 'phonenumber':
-            this.$set(this.form, 'phone', this.user[key])
+            this.$set(this.form, 'phone', this.billingUser[key])
             break
           default:
-            this.$set(this.form, key, this.user[key])
+            this.$set(this.form, key, this.billingUser[key])
         }
       })
     },
@@ -579,7 +572,7 @@ export default {
         billing_plan: plan ?? {}
       }))
       const newGroup = {
-        title: this.user.fullname + Date.now(),
+        title: this.billingUser.fullname + Date.now(),
         type: this.sp.type,
         sp: this.sp.uuid,
         instances
@@ -624,7 +617,7 @@ export default {
         : {
             namespace: this.namespace,
             service: {
-              title: this.user.fullname,
+              title: this.billingUser.fullname,
               context: {},
               version: '1',
               instancesGroups: [info]
@@ -701,7 +694,7 @@ export default {
         .finally(() => { this.modal.confirmLoading = false })
     },
     getProducts () {
-      const prices = { suffix: this.user.currency_code }
+      const prices = { suffix: this.billingUser.currency_code }
 
       if (this.onCart.length === 0) {
         return {

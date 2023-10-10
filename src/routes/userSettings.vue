@@ -5,12 +5,12 @@
         <!-- нету юзера -->
         <div class="content__title">
           {{ $t("Personal Area") }}
-          <span class="content__small"> #{{ userData.id }} </span>
+          <span class="content__small"> #{{ authStore.billingUser.id }} </span>
         </div>
         <div class="content__fields-wrapper" :style="{ margin: (!isVisible) ? 'auto' : null }">
           <a-form-model
             v-if="isVisible"
-            ref="form"
+            ref="formRef"
             :model="form"
             :rules="rules"
           >
@@ -86,7 +86,7 @@
                   v-model="form.countryname"
                   show-search
                   option-filter-prop="children"
-                  :disabled="userData.country_stop === 1 || isDisabled"
+                  :disabled="authStore.billingUser.country_stop === 1 || isDisabled"
                 >
                   <a-select-option
                     v-for="country in Object.keys(countries)"
@@ -125,203 +125,201 @@
   </div>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
-import empty from '../components/empty/empty.vue'
-import { countries } from '@/setup/countries'
-import countriesWithDialCode from '@/countries.json'
-import notification from '@/mixins/notification'
-import loading from '@/components/loading/loading.vue'
+<script setup>
+import { computed, ref, set } from 'vue'
+import { notification } from 'ant-design-vue'
+import i18n from '@/i18n'
 import api from '@/api.js'
 
-export default {
-  name: 'UserSettingsView',
-  components: { loading, empty },
-  mixins: [notification],
-  data () {
-    return {
-      form: {},
-      isLoading: false,
-      isSendingInfo: false,
-      countries,
-      rules: {
-        firstname: [
-          {
-            required: true,
-            message: `${this.$t('ssl_product.field is required')}`
-          }
-        ],
-        lastname: [
-          {
-            required: true,
-            message: `${this.$t('ssl_product.field is required')}`
-          }
-        ],
-        companyname: [
-          {
-            required: false,
-            message: `${this.$t('ssl_product.field is required')}`
-          }
-        ],
-        email: [
-          {
-            required: true,
-            message: `${this.$t('ssl_product.field is required')}`
-          }
-        ],
-        address1: [
-          {
-            required: false,
-            message: `${this.$t('ssl_product.field is required')}`
-          }
-        ],
-        city: [
-          {
-            required: false,
-            message: `${this.$t('ssl_product.field is required')}`
-          }
-        ],
-        state: [
-          {
-            required: false,
-            message: `${this.$t('ssl_product.field is required')}`
-          }
-        ],
-        countryname: [
-          {
-            required: true,
-            message: `${this.$t('ssl_product.field is required')}`
-          }
-        ],
-        postcode: [
-          {
-            required: false,
-            message: `${this.$t('ssl_product.field is required')}`
-          }
-        ],
-        phonenumber: [
-          {
-            required: true,
-            message: `${this.$t('ssl_product.field is required')}`
-          }
-        ]
-      }
+import { useAuthStore } from '@/stores/auth.js'
+import { countries } from '@/setup/countries'
+import countriesWithDialCode from '@/countries.json'
+
+import empty from '@/components/empty/empty.vue'
+import loading from '@/components/loading/loading.vue'
+
+const authStore = useAuthStore()
+
+const formRef = ref(null)
+const form = ref({})
+const isLoading = ref(false)
+const isSendingInfo = ref(false)
+
+const rules = {
+  firstname: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
     }
-  },
-  computed: {
-    ...mapGetters('nocloud/auth', {
-      baseURL: 'getURL',
-      user: 'userdata',
-      userData: 'billingData'
-    }),
-    deltaInfo () {
-      const info = { ...this.form, country: this.form.countryname }
-      for (const key in info) {
-        if (info[key] === this.userData[key]) {
-          delete info[key]
-        }
-      }
-      return info
-    },
-    phonecode () {
-      return countriesWithDialCode.find(({ title }) => title === this.form.countryname)?.dial_code
-    },
-    isDisabled () {
-      if (!this.userData.roles) return
-      return !!this.userData.roles.settings
-    },
-    isVisible () {
-      return (!this.isLoading && this.userData.firstname) || localStorage.getItem('oauth')
+  ],
+  lastname: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
     }
-  },
-  mounted () {
-    if (!('firstname' in this.userData)) this.fetchInfo()
-    else this.installDataToBuffer()
-  },
-  methods: {
-    installDataToBuffer () {
-      const interestedKeys = [
-        'firstname',
-        'lastname',
-        'companyname',
-        'email',
-        'address1',
-        'address2',
-        'city',
-        'state',
-        'postcode',
-        'countryname',
-        'phonenumber'
-      ]
-      interestedKeys.forEach((key) => {
-        this.$set(this.form, key, this.userData[key])
-      })
-    },
-    fetchInfo () {
-      this.isLoading = true
-      this.$store.dispatch('nocloud/auth/fetchBillingData')
-        .then((result) => {
-          if (localStorage.getItem('oauth')) return
-          if (result.ERROR) throw result.ERROR.toLowerCase()
-          if (result.result === 'error') throw result.message
-          this.installDataToBuffer()
-        })
-        .catch((error) => {
-          const message = error.response?.data?.message ?? error.message ?? error
+  ],
+  companyname: [
+    {
+      required: false,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  email: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  address1: [
+    {
+      required: false,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  city: [
+    {
+      required: false,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  state: [
+    {
+      required: false,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  countryname: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  postcode: [
+    {
+      required: false,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  phonenumber: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ]
+}
 
-          this.openNotificationWithIcon('error', { message: this.$t(message) })
-          console.error(error)
-        })
-        .finally(() => {
-          this.isLoading = false
-        })
-    },
-    sendInfo () {
-      this.$refs.form.validate((valid) => {
-        if (valid) {
-          const { locale } = this.$i18n.getLocaleMessage(this.$i18n.locale)
-          const params = (localStorage.getItem('oauth'))
-            ? {
-                ...this.deltaInfo,
-                app_language: locale,
-                uuid: this.user.uuid,
-                run: 'create_user_active'
-              }
-            : {
-                run: 'update_client',
-                user: { ...this.userData, ...this.deltaInfo }
-              }
+const deltaInfo = computed(() => {
+  const info = { ...form.value, country: form.value.countryname }
 
-          this.isSendingInfo = true
-          api.get(this.baseURL, { params })
-            .then(() => {
-              localStorage.removeItem('oauth')
-              this.$message.success('success')
-              this.fetchInfo()
-            })
-            .catch((err) => {
-              const message = err.response?.data?.message ?? err.message ?? err
-
-              this.openNotificationWithIcon('error', {
-                message: this.$t(message)
-              })
-              console.error(err)
-            })
-            .finally(() => {
-              this.isSendingInfo = false
-            })
-        } else {
-          this.openNotificationWithIcon('error', {
-            message: this.$t('ssl_product.fields is required')
-          })
-
-          this.isSendingInfo = false
-          return false
-        }
-      })
+  for (const key in info) {
+    if (info[key] === authStore.billingUser[key]) {
+      delete info[key]
     }
   }
+  return info
+})
+
+const phonecode = computed(() =>
+  countriesWithDialCode.find(({ title }) => title === form.value.countryname)?.dial_code
+)
+
+const isDisabled = computed(() => {
+  if (!authStore.billingUser.roles) return
+  return !!authStore.billingUser.roles.settings
+})
+
+const isVisible = computed(() =>
+  (!isLoading.value && authStore.billingUser.firstname) || localStorage.getItem('oauth')
+)
+
+function installDataToBuffer () {
+  const interestedKeys = [
+    'firstname',
+    'lastname',
+    'companyname',
+    'email',
+    'address1',
+    'address2',
+    'city',
+    'state',
+    'postcode',
+    'countryname',
+    'phonenumber'
+  ]
+
+  interestedKeys.forEach((key) => {
+    set(form.value, key, authStore.billingUser[key])
+  })
 }
+
+async function fetchInfo () {
+  try {
+    isLoading.value = true
+    const response = await authStore.fetchBillingData()
+
+    if (localStorage.getItem('oauth')) return
+    if (response.ERROR) throw response.ERROR.toLowerCase()
+    if (response.result === 'error') throw response
+
+    installDataToBuffer()
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function sendInfo () {
+  formRef.value.validate(async (valid) => {
+    if (!valid) {
+      notification.error({
+        message: i18n.t('ssl_product.fields is required')
+      })
+
+      return false
+    }
+
+    try {
+      const { locale } = i18n.getLocaleMessage(i18n.locale)
+      const params = (localStorage.getItem('oauth'))
+        ? {
+            ...deltaInfo.value,
+            app_language: locale,
+            uuid: authStore.userdata.uuid,
+            run: 'create_user_active'
+          }
+        : {
+            run: 'update_client',
+            user: { ...authStore.billingUser, ...deltaInfo.value }
+          }
+
+      isSendingInfo.value = true
+      await api.get(authStore.baseURL, { params })
+
+      localStorage.removeItem('oauth')
+      notification.success({ message: i18n.t('Done') })
+
+      fetchInfo()
+    } catch (error) {
+      const message = error.response?.data?.message ?? error.message ?? error
+
+      notification.error({ message: i18n.t(message) })
+      console.error(error)
+    } finally {
+      isSendingInfo.value = false
+    }
+  })
+}
+
+if (!('firstname' in authStore.billingUser)) fetchInfo()
+else installDataToBuffer()
+</script>
+
+<script>
+export default { name: 'UserSettingsView' }
 </script>
 
 <style>

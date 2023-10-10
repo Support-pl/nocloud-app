@@ -48,108 +48,118 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, ref } from 'vue'
+import { notification } from 'ant-design-vue'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+
+import api from '@/api'
+import i18n from '@/i18n'
 import config from '@/appconfig.js'
 
-export default {
-  name: 'InvoiceView',
-  props: { invoice: Object },
-  data: () => ({ isLoading: false }),
-  computed: {
-    baseURL () {
-      return this.$store.getters['invoices/getURL']
-    },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    currencies () {
-      return this.$store.getters['nocloud/auth/currencies']
-    },
-    currency () {
-      const code = this.user.currency_code ?? 'USD'
-      if (code === this.invoice.currencycode) return { code, rate: 1 }
+const props = defineProps({
+  invoice: { type: Object, required: true }
+})
 
-      const { rate } = this.currencies.find((el) =>
-        el.from === code && el.to === this.invoice.currencycode
-      ) ?? {}
+const authStore = useAuthStore()
+const currenciesStore = useCurrenciesStore()
 
-      const { rate: reverseRate } = this.currencies.find((el) =>
-        el.to === code && el.from === this.invoice.currencycode
-      ) ?? { rate: 1 }
+const isLoading = ref(false)
+const currencyCode = ref('')
 
-      return { code, rate: (rate) || 1 / reverseRate }
-    },
-    statusColor () {
-      switch (this.invoice.status.toLowerCase()) {
-        case 'paid':
-          return config.colors.success
-        case 'cancelled':
-          return config.colors.gray
-        default:
-          return config.colors.err
-      }
-    },
-    costColor () {
-      if (this.invoice?.subtotal > 0) {
-        return config.colors.success
-      } else if (this.invoice?.subtotal < 0) {
-        return config.colors.err
-      } else {
-        return null
-      }
-    },
-    total () {
-      const total = this.invoice?.subtotal ?? this.invoice.total
-      const rate = this.currency.rate
+const currency = computed(() => {
+  const code = authStore.billingUser.currency_code ?? 'USD'
+  if (code === currencyCode.value) return { code, rate: 1 }
 
-      return Math.abs(((+total + +this.invoice?.credit) * rate)).toFixed(2)
-    }
-  },
-  created () {
-    if (this.invoice.currencycode === 'NCU') {
-      this.invoice.currencycode = this.$store.getters['nocloud/auth/defaultCurrency']
-    }
-  },
-  methods: {
-    clickOnInvoice (uuid) {
-      if (this.invoice.status === 'Unpaid') {
-        this.isLoading = true
-        if (this.invoice.meta) {
-          const type = (this.invoice.total > 0) ? 'debit' : 'top-up'
+  const { rate } = currenciesStore.currencies.find((el) =>
+    el.from === code && el.to === currencyCode.value
+  ) ?? {}
 
-          this.$api.get(this.baseURL, {
-            params: {
-              run: 'create_inv',
-              invoice_id: uuid,
-              product: this.invoice.meta.description ?? this.invoice.service,
-              invoice_type: this.invoice.meta.invoiceType ?? type,
-              sum: this.total
-            }
-          })
-            .then(({ invoiceid }) => {
-              this.$notification.success({ message: this.$t('Done') })
-              this.getPaytoken(invoiceid)
-            })
-        } else this.getPaytoken(uuid)
-      } else {
-        this.getPaytoken(uuid)
-      }
-    },
-    getPaytoken (invoice_id) {
-      this.$api.get(this.baseURL, {
+  const { rate: reverseRate } = currenciesStore.currencies.find(
+    (el) => el.to === code && el.from === currencyCode.value
+  ) ?? { rate: 1 }
+
+  return { code, rate: (rate) || 1 / reverseRate }
+})
+
+const statusColor = computed(() => {
+  switch (props.invoice.status.toLowerCase()) {
+    case 'paid':
+      return config.colors.success
+    case 'cancelled':
+      return config.colors.gray
+    default:
+      return config.colors.err
+  }
+})
+
+// const costColor = computed(() => {
+//   if (props.invoice.subtotal > 0) {
+//     return config.colors.success
+//   } else if (props.invoice.subtotal < 0) {
+//     return config.colors.err
+//   } else {
+//     return null
+//   }
+// })
+
+const total = computed(() => {
+  const total = props.invoice.subtotal ?? props.invoice.total
+  const { rate } = currency.value
+
+  return Math.abs(((+total + +props.invoice?.credit) * rate)).toFixed(2)
+})
+
+async function clickOnInvoice (uuid) {
+  if (props.invoice.status === 'Unpaid') {
+    isLoading.value = true
+    if (props.invoice.meta) {
+      const type = (props.invoice.total > 0) ? 'debit' : 'top-up'
+
+      api.get(authStore.baseURL, {
         params: {
-          run: 'get_pay_token', invoice_id
+          run: 'create_inv',
+          invoice_id: uuid,
+          product: props.invoice.meta.description ?? props.invoice.service,
+          invoice_type: props.invoice.meta.invoiceType ?? type,
+          sum: total.value
         }
       })
-        .then((res) => {
-          window.location.href = res
+        .then(({ invoiceid }) => {
+          notification.success({ message: i18n.t('Done') })
+          getPaytoken(invoiceid)
         })
-        .finally(() => {
-          this.isLoading = false
-        })
-    }
+    } else getPaytoken(uuid)
+  } else {
+    getPaytoken(uuid)
   }
 }
+
+async function getPaytoken (id) {
+  try {
+    const response = await api.get(authStore.baseURL, {
+      params: {
+        run: 'get_pay_token', invoice_id: id
+      }
+    })
+
+    window.location.href = response
+  } finally {
+    isLoading.value = false
+  }
+}
+
+if (props.invoice.currencycode === 'NCU') {
+  currencyCode.value = currenciesStore.defaultCurrency
+} else {
+  currencyCode.value = props.invoice.currencycode
+}
+</script>
+
+<script>
+export default { name: 'InvoiceView' }
 </script>
 
 <style>

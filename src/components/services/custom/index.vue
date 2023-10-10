@@ -18,69 +18,30 @@
             </div>
           </div>
 
-          <a-carousel
-            v-else
-            arrows
-            draggable
-            :dots="false"
-            :slides-to-show="3"
-            :slides-to-scroll="1"
-          >
-            <template v-if="!fetchLoading">
-              <div
-                v-for="size of sizes"
-                :key="size.key"
-                class="order__slider-item"
-                :class="{ 'order__slider-item--active': options.size === size.key }"
-                @click="options.size = size.key"
-              >
-                <span class="order__slider-name" :title="size.label">
-                  <img class="img_prod" :src="products[size.key].meta.image ?? '/'" :alt="size.key" @error="onError">
-                  {{ size.label }}
-                </span>
-              </div>
-            </template>
-
-            <template v-else>
-              <div class="order__slider-item">
-                <div class="loadingLine loadingLine--image" />
-                <div class="loadingLine" />
-              </div>
-              <div class="order__slider-item">
-                <div class="loadingLine loadingLine--image" />
-                <div class="loadingLine" />
-              </div>
-              <div class="order__slider-item">
-                <div class="loadingLine loadingLine--image" />
-                <div class="loadingLine" />
-              </div>
-            </template>
-
-            <template #prevArrow>
-              <div class="custom-slick-arrow" style="left: -35px;">
-                <a-icon type="left-circle" />
-              </div>
-            </template>
-
-            <template #nextArrow>
-              <div class="custom-slick-arrow" style="right: -35px">
-                <a-icon type="right-circle" />
-              </div>
-            </template>
-          </a-carousel>
-
-          <transition name="specs" mode="out-in">
+          <a-checkbox-group v-model="checkedTypes" :options="typesOptions" />
+          <div class="order__grid">
             <div
-              v-if="typeof getProducts.meta?.description === 'string'"
-              v-html="getProducts.meta?.description"
-            />
-            <table v-else-if="getProducts.meta?.description" class="product__specs">
-              <tr v-for="resource in getProducts.meta?.description" :key="resource.name">
-                <td>{{ resource.name }}</td>
-                <td>{{ resource.value }}</td>
-              </tr>
-            </table>
-          </transition>
+              v-for="size of filteredSizes"
+              :key="size.key"
+              class="order__grid-item"
+              :class="{ 'order__grid-item--active': options.size === size.key }"
+              @click="options.size = size.key"
+            >
+              <h1>{{ size.label }}</h1>
+              <transition name="specs" mode="out-in">
+                <div
+                  v-if="typeof products[size.key].meta?.description === 'string'"
+                  v-html="products[size.key].meta?.description"
+                />
+                <table v-else-if="products[size.key].meta?.description" class="product__specs">
+                  <tr v-for="resource in products[size.key].meta?.description" :key="resource.name">
+                    <td>{{ resource.name }}</td>
+                    <td>{{ resource.value }}</td>
+                  </tr>
+                </table>
+              </transition>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -181,10 +142,15 @@
 </template>
 
 <script>
-import { mapStores } from 'pinia'
+import { mapStores, mapState } from 'pinia'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
+
 import addFunds from '@/components/balance/addFunds.vue'
 
 export default {
@@ -202,40 +168,52 @@ export default {
 
     products: {},
     sizes: [],
-    periods: []
+    periods: [],
+    checkedTypes: []
   }),
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData']),
+    ...mapState(useCurrenciesStore, [
+      'currencies',
+      'defaultCurrency',
+      'unloginedCurrency',
+      'fetchCurrencies'
+    ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const product = this.products[this.options.size]
 
       return { ...product, price: +(product.price * this.currency.rate).toFixed(2) }
     },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
+    typesOptions () {
+      const types = []
+
+      Object.values(this.products).forEach(({ group, title }) => {
+        if (types.includes(group)) return
+        types.push(group ?? title)
+      })
+
+      return types
     },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
+    filteredSizes () {
+      if (this.checkedTypes.length < 1) return this.sizes
+      return this.sizes.filter(({ group }) =>
+        this.checkedTypes.includes(group)
+      )
     },
     currency () {
-      const currencies = this.$store.getters['nocloud/auth/currencies']
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
-      const code = this.$store.getters['nocloud/auth/unloginedCurrency']
-      const { rate } = currencies.find((el) =>
-        el.to === code && el.from === defaultCurrency
+      const code = this.unloginedCurrency
+      const { rate } = this.currencies.find((el) =>
+        el.to === code && el.from === this.defaultCurrency
       ) ?? {}
 
-      const { rate: reverseRate } = currencies.find((el) =>
-        el.from === code && el.to === defaultCurrency
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.from === code && el.to === this.defaultCurrency
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.user.currency_code ?? defaultCurrency }
+      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
     services () {
       return this.$store.getters['nocloud/vms/getServices']
@@ -285,7 +263,7 @@ export default {
   created () {
     this.fetchLoading = true
     const promises = [
-      this.$store.dispatch('nocloud/auth/fetchBillingData'),
+      this.fetchBillingData(),
       this.plansStore.fetch({ anonymously: !this.isLogged }),
       this.spStore.fetch(!this.isLogged)
     ]
@@ -305,17 +283,22 @@ export default {
       console.error(err)
     })
 
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies')
-    }
+    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
     changeProducts (plan) {
+      const sortedProducts = Object.entries(plan.products ?? {})
+
       this.products = plan.products ?? {}
       this.plan = plan?.uuid
 
-      this.sizes = Object.entries(plan.products ?? {}).map(
-        ([key, value]) => ({ key, label: value.title })
+      sortedProducts.sort(([, a], [, b]) => a.sorter - b.sorter)
+      this.sizes = sortedProducts.map(
+        ([key, value]) => ({
+          key,
+          label: value.title,
+          group: value.group ?? value.title
+        })
       )
       this.options.size = this.sizes[0]?.key ?? ''
       this.periods = []
@@ -336,7 +319,7 @@ export default {
         billing_plan: plan ?? {}
       }]
       const newGroup = {
-        title: this.user.fullname + Date.now(),
+        title: this.billingUser.fullname + Date.now(),
         type: this.sp.type,
         sp: this.sp.uuid,
         instances
@@ -383,7 +366,7 @@ export default {
         : {
             namespace: this.namespace,
             service: {
-              title: this.user.fullname,
+              title: this.billingUser.fullname,
               context: {},
               version: '1',
               instancesGroups: [info]
@@ -553,50 +536,44 @@ export default {
   width: 72%;
 }
 
-.order__option div > .img_prod {
-  display: block;
-  max-width: 200px;
-  margin: 0 auto 10px;
-}
-
-.order__option .order__slider-name {
+.order__grid {
   display: grid;
-  justify-items: center;
-  gap: 5px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.order__option .order__slider-name img {
-  max-height: 65px;
+.order__grid-item {
+  padding: 10px 20px;
+  border-radius: 15px;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
-.order__option .ant-carousel {
-  width: calc(100% - 50px);
-  margin: 0 auto 5px;
+.order__grid-item:hover {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
 }
 
-.order__option .ant-carousel .slick-track {
-  display: flex;
-  align-items: center;
+.order__grid-item h1 {
+  margin-bottom: 5px;
+  color: inherit;
 }
 
-.order__option .ant-carousel .slick-slide > div {
-  height: 137px;
-  margin: 0 5px;
+.order__grid-item p {
+  margin-bottom: 6px;
+  line-height: 1.2;
 }
 
-.order__option .ant-carousel .custom-slick-arrow {
-  width: 25px;
-  height: 25px;
-  font-size: 25px;
-  color: var(--main);
-  opacity: 0.5;
-  transition: 0.3s;
+.order__grid-item--active {
+  background-color: var(--main);
+  color: #fff;
 }
-.order__option .ant-carousel .custom-slick-arrow::before {
-  display: none;
-}
-.order__option .ant-carousel .custom-slick-arrow:hover {
-  opacity: 1;
+
+@media (max-width: 576px) {
+  .order__grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .order__field{

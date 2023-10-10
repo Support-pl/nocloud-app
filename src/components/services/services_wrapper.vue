@@ -33,7 +33,9 @@
 import { mapState } from 'pinia'
 import serviceItem from './service_min.vue'
 import config from '@/appconfig.js'
+
 import { useSpStore } from '@/stores/sp.js'
+import { useAuthStore } from '@/stores/auth.js'
 import { useProductsStore } from '@/stores/products.js'
 
 export default {
@@ -93,17 +95,12 @@ export default {
     }
   },
   computed: {
+    ...mapState(useAuthStore, ['isLogged', 'baseURL']),
     ...mapState(useProductsStore, ['services']),
     ...mapState(useSpStore, {
       sp: 'servicesProviders',
       showcases: 'getShowcases'
     }),
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
-    baseURL () {
-      return this.$store.getters['nocloud/auth/getURL']
-    },
 
     avaliableServices () {
       const services = (config.sharedEnabled)

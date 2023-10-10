@@ -238,9 +238,13 @@ import moment from 'moment'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
+
 import { useProductsStore } from '@/stores/products.js'
+
 import { useInvoicesStore } from '@/stores/invoices.js'
 import { useTransactionsStore } from '@/stores/transactions.js'
 
@@ -312,7 +316,7 @@ export default {
               icon: 'reload',
               onClickFuncion: () => {
                 this.fetchClouds()
-                this.fetchProducts(this.user.client_id)
+                this.fetchProducts(this.billingUser.client_id)
                 this.fetchUserData()
               }
             }
@@ -376,7 +380,7 @@ export default {
   },
   computed: {
     ...mapState(useAppStore, ['activeTab']),
-    ...mapState(useAuthStore, ['baseURL']),
+    ...mapState(useAuthStore, ['baseURL', 'billingUser', 'userdata', 'isLogged']),
     ...mapState(useSupportStore, {
       tickets: 'tickets',
       isOnlyClosedTickets: 'isOnlyClosedTickets',
@@ -393,6 +397,7 @@ export default {
       invoices: 'invoices',
       fetchInvoices: 'fetch'
     }),
+    ...mapWritableState(useCurrenciesStore, ['defaultCurrency', 'unloginedCurrency']),
     ...mapWritableState(useSupportStore, {
       isAddingTicket: 'isAddingTicket',
       supportFilter: 'filter'
@@ -453,7 +458,7 @@ export default {
       return conditions.some((el) => !!el)
     },
     isNeedBalance () {
-      if (this.user.paid_stop) return false
+      if (this.billingUser.paid_stop) return false
       else if (this.headers[this.active]) {
         return this.headers[this.active].needBalance
       } else if (this.$route.meta.isNeedBalance) {
@@ -479,18 +484,6 @@ export default {
         )
       } else return ''
     },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    defaultCurrency () {
-      return this.$store.getters['nocloud/auth/defaultCurrency']
-    },
     viewport () {
       return document.documentElement.offsetWidth
     }
@@ -506,12 +499,12 @@ export default {
       this.updateFilter()
     },
     currencyCode (value) {
-      this.$store.commit('nocloud/auth/setUnloginedCurrency', value)
+      this.unloginedCurrency = value
     },
     '$i18n.locale' (value) {
       localStorage.setItem('lang', value)
     },
-    user (value) {
+    billingUser (value) {
       if (value.only_tickets) {
         const i = this.headers.support.buttons.findIndex(({ icon }) => icon === 'telegram')
 
@@ -538,7 +531,7 @@ export default {
       this.isButtonsVisible = false
     }
 
-    if (this.user.only_tickets) {
+    if (this.billingUser.only_tickets) {
       const i = this.headers.support.buttons.findIndex(({ icon }) => icon === 'telegram')
 
       this.headers.support.buttons.splice(i, 1)
@@ -552,9 +545,9 @@ export default {
     this.currencyCode = this.defaultCurrency
   },
   methods: {
+    ...actionsPinia(useAuthStore, ['fetchUserData']),
     ...actionsPinia(useProductsStore, { fetchProducts: 'fetch' }),
     ...mapActions('nocloud/vms', { fetchClouds: 'fetch' }),
-    ...mapActions('nocloud/auth', ['fetchUserData']),
     getState (name) {
       switch (name) {
         case 'support_filter':

@@ -1,12 +1,20 @@
 <template>
   <a-row class="module" :gutter="[10, 10]">
     <a-col span="12">
-      <div style="font-weight: 700">{{ $t('token') | capitalize }}:</div>
-      <div style="font-size: 1.1rem">{{ service.data?.token ?? '-' }}</div>
+      <div style="font-weight: 700">
+        {{ $t('token') | capitalize }}:
+      </div>
+      <div style="font-size: 1.1rem">
+        {{ service.data?.token ?? '-' }}
+      </div>
     </a-col>
     <a-col span="12">
-      <div style="font-weight: 700">{{ $t('Token expiration date') }}:</div>
-      <div style="font-size: 1.1rem">{{ service.data?.expires_at ?? '-' }}</div>
+      <div style="font-weight: 700">
+        {{ $t('Token expiration date') }}:
+      </div>
+      <div style="font-size: 1.1rem">
+        {{ service.data?.expires_at ?? '-' }}
+      </div>
     </a-col>
 
     <a-col>
@@ -28,70 +36,91 @@
   </a-row>
 </template>
 
-<script>
-export default {
-  name: 'acronis-draw',
-  props: { service: { type: Object, required: true } },
-  data() {
-    return {
-      isLoading: false,
-      isRefreshLoading: false,
-      columns: [
-        {
-          title: this.$options.filters.capitalize(this.$t('name')),
-          dataIndex: 'title',
-          key: 'title'
-        },
-        {
-          title: this.$options.filters.capitalize(this.$t('count')),
-          dataIndex: 'count',
-          key: 'count'
-        },
-        {
-          title: this.$t('invoice_Price'),
-          dataIndex: 'price',
-          key: 'price'
-        }
-      ],
-    }
-  },
-  methods: {
-    openLink() {
-      this.isLoading = true;
-      this.$api.instances
-        .action({ action: 'get_link', uuid: this.service.uuid })
-        .then(({ meta }) => location.assign(meta.link))
-        .catch((err) => console.error(err));
-    },
-    refreshToken() {
-      this.isRefreshLoading = true;
-      this.$api.instances
-        .action({ action: 'refresh_token', uuid: this.service.uuid })
-        .then(() => this.$message.success(this.$t('Done')))
-        .catch((err) => console.error(err))
-        .finally(() => this.isRefreshLoading = false);
-    },
-  },
-  computed: {
-    user() {
-      return this.$store.getters["nocloud/auth/billingData"];
-    },
-    currency() {
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency'];
+<script setup>
+import { computed, getCurrentInstance, ref } from 'vue'
+import { message } from 'ant-design-vue'
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+import i18n from '@/i18n.js'
+import api from '@/api.js'
 
-      return { code: this.user.currency_code ?? defaultCurrency };
-    },
-    acronisData() {
-      return Object.entries(this.service.config.items)
-        .reduce((res, [key, count]) => {
-          const { price: rowPrice, meta } = this.service.billingPlan.products[key];
-          const price = `${rowPrice} ${this.currency.code}`;
-          const title = meta.edition;
+const props = defineProps({
+  service: { type: Object, required: true }
+})
+const app = getCurrentInstance()
 
-          if (key === 'local_storage') return res;
-          return [...res, { key, count, title, price }];
-      }, []);
-    }
+const authStore = useAuthStore()
+const currenciesStore = useCurrenciesStore()
+
+const isLoading = ref(false)
+const isRefreshLoading = ref(false)
+const columns = [
+  {
+    title: app.proxy.$options.filters.capitalize(i18n.t('name')),
+    dataIndex: 'title',
+    key: 'title'
+  },
+  {
+    title: app.proxy.$options.filters.capitalize(i18n.t('count')),
+    dataIndex: 'count',
+    key: 'count'
+  },
+  {
+    title: i18n.t('invoice_Price'),
+    dataIndex: 'price',
+    key: 'price'
+  }
+]
+
+async function openLink () {
+  try {
+    isLoading.value = true
+    const { meta } = await api.instances.action({
+      action: 'get_link',
+      uuid: props.service.uuid
+    })
+
+    location.assign(meta.link)
+  } catch (error) {
+    console.error(error)
   }
 }
+
+async function refreshToken () {
+  try {
+    isRefreshLoading.value = true
+    await api.instances.action({
+      action: 'refresh_token',
+      uuid: props.service.uuid
+    })
+
+    message.success(i18n.t('Done'))
+  } catch (error) {
+    console.error(error)
+  } finally {
+    isRefreshLoading.value = false
+  }
+}
+
+const currency = computed(() => {
+  const { currency_code: code } = authStore.billingUser
+
+  return { code: code ?? currenciesStore.defaultCurrency }
+})
+
+const acronisData = computed(() =>
+  Object.entries(props.service.config.items)
+    .reduce((result, [key, count]) => {
+      const { price: rowPrice, meta } = props.service.billingPlan.products[key]
+      const price = `${rowPrice} ${currency.value.code}`
+      const title = meta.edition
+
+      if (key === 'local_storage') return result
+      return [...result, { key, count, title, price }]
+    }, [])
+)
+</script>
+
+<script>
+export default { name: 'AcronisDraw' }
 </script>

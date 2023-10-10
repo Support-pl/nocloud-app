@@ -81,6 +81,9 @@
 </template>
 
 <script>
+import { mapState } from 'pinia'
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import ovhCreationTemplate from '@/components/appMain/ovhCreationTemplate.vue'
 
 export default {
@@ -107,27 +110,20 @@ export default {
     checkedTypes: []
   }),
   computed: {
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
+    ...mapState(useAuthStore, ['billingUser', 'isLogged']),
+    ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'unloginedCurrency']),
     currency () {
-      const currencies = this.$store.getters['nocloud/auth/currencies']
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
-      const code = this.$store.getters['nocloud/auth/unloginedCurrency']
-      const { rate } = currencies.find((el) =>
-        el.to === code && el.from === defaultCurrency
+      const code = this.unloginedCurrency
+      const { rate } = this.currencies.find((el) =>
+        el.to === code && el.from === this.defaultCurrency
       ) ?? {}
 
-      const { rate: reverseRate } = currencies.find((el) =>
-        el.from === code && el.to === defaultCurrency
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.from === code && el.to === this.defaultCurrency
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.user.currency_code ?? defaultCurrency }
+      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
     resources () {
       const ram = new Set()

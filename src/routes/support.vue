@@ -14,25 +14,24 @@
 
 <script setup>
 import { computed, onMounted } from 'vue'
-import store from '@/store'
+import { Status } from '@/libs/cc_connect/cc_pb.js'
+
+import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
-import { Status } from '@/libs/cc_connect/cc_pb.js'
+
 import singleTicket from '@/components/appMain/support/singleTicket.vue'
 import addTicketField from '@/components/appMain/support/addTicket.vue'
 import loading from '@/components/loading/loading.vue'
 import empty from '@/components/empty/empty.vue'
 
+const authStore = useAuthStore()
 const chatsStore = useChatsStore()
 const supportStore = useSupportStore()
 
-const user = computed(() =>
-  store.getters['nocloud/auth/userdata']
-)
-
 const chats = computed(() => {
   const result = []
-  const { uuid } = user.value
+  const { uuid } = authStore.billingUser
 
   chatsStore.getChats.forEach((ticket) => {
     const isReaded = ticket.meta.lastMessage?.readers.includes(uuid)

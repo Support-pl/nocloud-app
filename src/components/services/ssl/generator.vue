@@ -4,10 +4,10 @@
       <div class="generate-page-card">
         <template v-if="generate.csr_commonname">
           <div class="generate-page__header">
-            <div class="generate-page__title" v-if="result.result == 'success'">
+            <div v-if="result.result == 'success'" class="generate-page__title">
               CSR
             </div>
-            <div class="generate-page__title" v-else>
+            <div v-else class="generate-page__title">
               {{ $t("ssl_product.csr_generation_form") }}
             </div>
           </div>
@@ -20,10 +20,10 @@
           />
           <div class="content__fields-wrapper">
             <a-form-model
+              v-if="result.result !== 'success'"
               ref="csrForm"
               :model="generate"
               :rules="rules"
-              v-if="result.result !== 'success'"
             >
               <a-form-model-item
                 :label="$t('ssl_product.domain')"
@@ -76,7 +76,7 @@
               <a-form-model-item>
                 <a-button
                   type="primary"
-                  :loading="loading"
+                  :loading="isLoading"
                   @click="generateCSR"
                 >
                   {{ $t("ssl_product.generate") }} CSR
@@ -123,14 +123,15 @@
                   <a-button type="primary">
                     <a-icon type="left" />{{
                       $t("ssl_product.save and return")
-                    }}</a-button
-                  >
+                    }}
+                  </a-button>
                 </router-link>
                 <a-button
                   style="margin-left: 10px"
                   @click="download('txt', result.csr_key)"
-                  >{{ $t("ssl_product.download_private_key") }}</a-button
                 >
+                  {{ $t("ssl_product.download_private_key") }}
+                </a-button>
               </a-form-model-item>
             </div>
           </div>
@@ -140,163 +141,165 @@
     </div>
   </div>
 </template>
-<script>
-import { countries } from "@/setup/countries";
-import loading from "@/components/loading/loading.vue";
-import api from "@/api.js";
 
-export default {
-  name: "ssl-generator",
-  components: { loading },
-  props: { domain: { type: String, required: true } },
-  data() {
-    return {
-      countries,
-      loading: false,
-      generate: {
-        csr_commonname: "",
-        csr_organization: "",
-        csr_department: "",
-        csr_city: "",
-        csr_state: "",
-        csr_country: "",
-        csr_email: "",
-      },
-      result: {
-        csr_code: "",
-        csr_key: "",
-        result: "pending",
-      },
-      rules: {
-        csr_commonname: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        csr_organization: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        csr_department: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
+<script setup>
+import { ref } from 'vue'
 
-        csr_email: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
+import { message } from 'ant-design-vue'
+import i18n from '@/i18n.js'
+import api from '@/api.js'
+import { useAuthStore } from '@/stores/auth.js'
 
-        csr_city: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        csr_state: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        csr_country: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-      },
-    };
-  },
-  computed: {
-    userData() {
-      return this.$store.getters['nocloud/auth/billingData'];
+import { countries } from '@/setup/countries'
+import loading from '@/components/loading/loading.vue'
+
+const props = defineProps({
+  domain: { type: String, required: true }
+})
+
+const authStore = useAuthStore()
+
+const csrForm = ref(null)
+const isLoading = ref(false)
+const generate = ref({
+  csr_commonname: '',
+  csr_organization: '',
+  csr_department: '',
+  csr_city: '',
+  csr_state: '',
+  csr_country: '',
+  csr_email: ''
+})
+
+const result = ref({
+  csr_code: '',
+  csr_key: '',
+  result: 'pending'
+})
+
+const rules = {
+  csr_commonname: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
     }
-  },
-  methods: {
-    download(ext, text) {
-      const domain = this.generate.csr_commonname;
-      let filename = domain.replace(".", "_") + "." + ext;
+  ],
+  csr_organization: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  csr_department: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
 
-      let element = document.createElement("a");
-      element.setAttribute(
-        "href",
-        "data:text/plain;charset=utf-8," + encodeURIComponent(text)
-      );
-      element.setAttribute("download", filename);
-      element.style.display = "none";
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-    },
-    fetchInfo() {
-      this.$store.dispatch('nocloud/auth/fetchBillingData')
-        .then((res) => {
-          this.$store.commit("setUserData", res);
-          this.installDataToBuffer();
-        })
-        .catch((res) => {
-          console.error(res);
-        });
-    },
-    installDataToBuffer() {
-      this.generate.csr_organization = this.userData.companyname;
-      this.generate.csr_email = this.userData.email;
-      this.generate.csr_country = this.userData.country;
-      this.generate.csr_city = this.userData.city;
-      this.generate.csr_state = this.userData.state;
-    },
-    generateCSR() {
-      this.$refs.csrForm.validate((valid) => {
-        if (valid) {
-          this.loading = true;
-          api
-            .sendAsUser(
-              "moduleTouch",
-              { ...this.generate, ...{ path: "goget/generateCSR" } },
-              "moduleTouch.phpgoget"
-            )
-            .then((resp) => {
-              // console.log(resp)
-              if (resp.error) {
-                throw resp;
-              }
+  csr_email: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
 
-              this.result.result = "success";
-              this.result.csr_code = resp.csr_code;
-              this.result.csr_key = resp.csr_key;
-            })
-            .catch((err) => {
-              console.error(err);
-              this.$message.error(err.description);
-              this.result.result = "failed";
-            })
-            .finally(() => (this.loading = false));
-        } else {
-          this.$message.error(`${this.$t("ssl_product.fields is required")}`);
-          return false;
-        }
-      });
-    },
+  csr_city: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  csr_state: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  csr_country: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ]
+}
 
-    retry() {
-      this.result.csr_code = "";
-      this.result.csr_key = "";
-      this.result.result = "pending";
-    },
-  },
-  mounted() {
-    this.generate.csr_commonname = this.domain;
-    this.fetchInfo();
-  },
-};
+function download (ext, text) {
+  const domain = generate.value.csr_commonname
+  const filename = `${domain.replace('.', '_')}.${ext}`
+  const element = document.createElement('a')
+
+  element.setAttribute(
+    'href', `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`
+  )
+  element.setAttribute('download', filename)
+  element.style.display = 'none'
+
+  document.body.appendChild(element)
+  element.click()
+  document.body.removeChild(element)
+}
+
+async function fetchInfo () {
+  try {
+    await authStore.fetchBillingData()
+
+    installDataToBuffer()
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+function installDataToBuffer () {
+  generate.value.csr_organization = authStore.billingUser.companyname
+  generate.value.csr_email = authStore.billingUser.email
+  generate.value.csr_country = authStore.billingUser.country
+  generate.value.csr_city = authStore.billingUser.city
+  generate.value.csr_state = authStore.billingUser.state
+}
+
+function generateCSR () {
+  csrForm.value.validate(async (valid) => {
+    if (!valid) {
+      message.error(`${i18n.t('ssl_product.fields is required')}`)
+      return false
+    }
+    try {
+      isLoading.value = true
+      const response = await api.sendAsUser(
+        'moduleTouch',
+        { ...generate.value, path: 'goget/generateCSR' },
+        'moduleTouch.phpgoget'
+      )
+
+      if (response.error) throw response
+
+      result.value.result = 'success'
+      result.value.csr_code = response.csr_code
+      result.value.csr_key = response.csr_key
+    } catch (error) {
+      message.error(error.description)
+      result.value.result = 'failed'
+
+      console.error(error)
+    } finally {
+      isLoading.value = false
+    }
+  })
+}
+
+function retry () {
+  result.value.csr_code = ''
+  result.value.csr_key = ''
+  result.value.result = 'pending'
+}
+
+generate.value.csr_commonname = props.domain
+fetchInfo()
+</script>
+
+<script>
+export default { name: 'SslGenerator' }
 </script>
 
 <style>

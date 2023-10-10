@@ -183,14 +183,15 @@
 </template>
 
 <script>
-import { mapStores } from 'pinia'
+import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 
-import config from '@/appconfig.js'
 import addFunds from '@/components/balance/addFunds.vue'
 
 export default {
@@ -214,6 +215,13 @@ export default {
   }),
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData']),
+    ...mapState(useCurrenciesStore, [
+      'currencies',
+      'defaultCurrency',
+      'unloginedCurrency',
+      'fetchCurrencies'
+    ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const product = JSON.parse(JSON.stringify(
@@ -221,35 +229,23 @@ export default {
       ))
 
       delete product.resources.model
-      if (product.resources.ssd?.includes('Gb')) return product
+      if (`${product.resources.ssd}`.includes('Gb')) return product
       product.resources.ssd = `${product.resources.ssd / 1024} Gb`
 
       return product
     },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
     currency () {
-      const currencies = this.$store.getters['nocloud/auth/currencies']
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
-      const code = config.currency.code
-      const { rate } = currencies.find((el) =>
-        el.to === defaultCurrency && el.from === code
+      const code = this.unloginedCurrency
+      const { rate } = this.currencies.find((el) =>
+        el.to === this.defaultCurrency && el.from === code
       ) ?? {}
 
-      const { rate: reverseRate } = currencies.find((el) =>
-        el.from === defaultCurrency && el.to === code
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.from === this.defaultCurrency && el.to === code
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.user.currency_code ?? defaultCurrency }
+      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
     services () {
       return this.$store.getters['nocloud/vms/getServices']
@@ -301,7 +297,7 @@ export default {
   },
   created () {
     const promises = [
-      this.$store.dispatch('nocloud/auth/fetchBillingData'),
+      this.fetchBillingData(),
       this.spStore.fetch(!this.isLogged),
       this.plansStore.fetch({ anonymously: !this.isLogged })
     ]
@@ -321,19 +317,19 @@ export default {
       console.error(err)
     })
 
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies')
-    }
+    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
     changeProducts (plan) {
       const products = Object.values(plan.products ?? {})
+      const sortedProducts = Object.entries(plan.products ?? {})
 
       products.sort((a, b) => b.title - a.title)
       this.products = products
       this.plan = plan?.uuid
 
-      this.sizes = Object.keys(plan.products ?? {})
+      sortedProducts.sort(([, a], [, b]) => a.sorter - b.sorter)
+      this.sizes = sortedProducts.map(([key]) => key)
       this.options.size = this.sizes[0]
       this.periods = []
 
@@ -359,7 +355,7 @@ export default {
         billing_plan: plan ?? {}
       }]
       const newGroup = {
-        title: this.user.fullname + Date.now(),
+        title: this.billingUser.fullname + Date.now(),
         type: this.sp.type,
         sp: this.sp.uuid,
         instances
@@ -399,7 +395,7 @@ export default {
         : {
             namespace: this.namespace,
             service: {
-              title: this.user.fullname,
+              title: this.billingUser.fullname,
               context: {},
               version: '1',
               instancesGroups: [info]

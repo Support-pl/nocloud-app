@@ -11,7 +11,7 @@
 
       <div ref="wrapper" class="invoices__wrapper">
         <a-radio-group
-          v-if="!user.paid_stop"
+          v-if="!authStore.billingUser.paid_stop"
           v-model="currentTab"
           size="large"
           default-value="Invoice"
@@ -66,6 +66,9 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { notification } from 'ant-design-vue'
 import store from '@/store'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInvoicesStore } from '@/stores/invoices.js'
 import { useTransactionsStore } from '@/stores/transactions.js'
 
@@ -73,6 +76,8 @@ import empty from '@/components/empty/empty.vue'
 import singleInvoice from '@/components/appMain/invoice/singleInvoice.vue'
 import singleTransaction from '@/components/appMain/invoice/singleTransaction.vue'
 
+const authStore = useAuthStore()
+const currenciesStore = useCurrenciesStore()
 const invoicesStore = useInvoicesStore()
 const transactionsStore = useTransactionsStore()
 
@@ -82,16 +87,6 @@ const pageSizeOptions = ref(['5', '10', '25', '50', '100'])
 
 const wrapper = ref(null)
 const loading = ref(null)
-
-const isLogged = computed(() =>
-  store.getters['nocloud/auth/isLoggedIn']
-)
-const user = computed(() =>
-  store.getters['nocloud/auth/billingData']
-)
-const userdata = computed(() =>
-  store.getters['nocloud/auth/userdata']
-)
 
 const transactions = computed(() => {
   const result = transactionsStore.filteredTransactions
@@ -116,10 +111,10 @@ watch(currentTab, () => {
 
   if (currentTab.value === 'Invoice') return
   if (transactions.value.length > 0) return
-  if (!userdata.value.uuid) return
+  if (!authStore.userdata.uuid) return
 
   transactionsStore.fetch({
-    account: userdata.value.uuid,
+    account: authStore.userdata.uuid,
     page: currentPage.value,
     limit: pageSize.value,
     field: 'exec',
@@ -128,12 +123,12 @@ watch(currentTab, () => {
   })
 })
 
-watch(userdata, () => {
+watch(() => authStore.userdata, () => {
   if (transactionsStore.isLoading) return
   invoicesStore.fetch(invoicesStore.getInvoices.length)
 
   transactionsStore.fetch({
-    account: userdata.value.uuid,
+    account: authStore.userdata.uuid,
     page: currentPage.value,
     limit: pageSize.value,
     field: 'exec',
@@ -142,7 +137,7 @@ watch(userdata, () => {
   })
 
   transactionsStore.fetchCount({
-    account: userdata.value.uuid, type: 'transaction'
+    account: authStore.userdata.uuid, type: 'transaction'
   })
   setPagination()
 })
@@ -156,11 +151,11 @@ watch(() => transactionsStore.isLoading, () => {
 watch(() => invoicesStore.isLoading, setCoordY)
 
 onMounted(() => {
-  if (isLogged.value && userdata.value.uuid) {
+  if (authStore.isLogged && authStore.userdata.uuid) {
     invoicesStore.fetch(invoicesStore.getInvoices.length)
 
     transactionsStore.fetchCount({
-      account: userdata.value.uuid, type: 'transaction'
+      account: authStore.userdata.uuid, type: 'transaction'
     })
     setPagination()
   }
@@ -171,8 +166,8 @@ onMounted(() => {
     localStorage.setItem('order', currentTab.value)
   }
 
-  if (store.getters['nocloud/auth/currencies'].length < 1) {
-    store.dispatch('nocloud/auth/fetchCurrencies')
+  if (currenciesStore.currencies.length < 1) {
+    currenciesStore.fetchCurrencies()
   }
 
   setCoordY()
@@ -232,7 +227,7 @@ function onShowSizeChange (page, limit) {
   transactionsStore.fetch({
     page,
     limit,
-    account: userdata.value.uuid,
+    account: authStore.userdata.uuid,
     field: 'exec',
     sort: 'desc',
     type: 'transaction'

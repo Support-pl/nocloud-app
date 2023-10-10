@@ -160,6 +160,7 @@
 import { mapStores } from 'pinia'
 import Markdown from 'markdown-it'
 import emoji from 'markdown-it-emoji'
+import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
 import load from '@/components/loading/loading.vue'
 
@@ -195,21 +196,14 @@ export default {
   },
   computed: {
     ...mapStores(useChatsStore),
-    user () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
-    baseURL () {
-      return this.$store.getters['support/getURL']
-    },
+    ...mapStores(useAuthStore),
     titleDecoded () {
       const txt = document.createElement('textarea')
       txt.innerHTML = this.subject
       return txt.value
     },
     chat () {
-      const chats = this.chatsStore.chats
-
-      return chats.get(this.chatid)
+      return this.chatsStore.chats.get(this.chatid)
     },
     messages () {
       const chatMessages = this.chatsStore.messages
@@ -279,7 +273,7 @@ export default {
       return reply.requestor_type !== 'Owner'
     },
     isEditable (reply) {
-      return reply.userid === this.user.uuid
+      return reply.userid === this.authStore.userdata.uuid
     },
     sendMessage () {
       if (this.messageInput.trim().length < 1) return
@@ -294,10 +288,10 @@ export default {
         attachment: '',
         contactid: '0',
         date: new Date(),
-        email: this.user.data?.email ?? 'none',
+        email: this.authStore.userdata.data?.email ?? 'none',
         message: md.render(this.messageInput).trim().replace(/^<p>/, '').replace(/<\/p>$/, ''),
-        name: this.user.title,
-        userid: this.user.uuid,
+        name: this.authStore.userdata.title,
+        userid: this.authStore.userdata.uuid,
         error: true
       }
 
@@ -328,7 +322,7 @@ export default {
         return
       }
 
-      this.$api.get(this.baseURL, {
+      this.$api.get(this.authStore.baseURL, {
         params: {
           run: 'answer_ticket',
           id: this.$route.params.pathMatch,
@@ -346,7 +340,7 @@ export default {
     },
     loadMessages () {
       this.loading = true
-      this.$api.get(this.baseURL, {
+      this.$api.get(this.authStore.baseURL, {
         params: {
           run: 'get_ticket_full',
           ticket_id: this.chatid

@@ -152,7 +152,7 @@
               <div style="display: flex; align-items: center; gap: 10px">
                 <a-select
                   style="width: 100%"
-                  :options="user.data?.ssh_keys"
+                  :options="userdata.data?.ssh_keys"
                   :value="options.config.ssh"
                   :style="{ boxShadow: `0 0 2px 2px var(${(options.config.ssh?.length > 1) ? '--main' : '--err'})` }"
                   @change="(value) => $emit('setData', { key: 'ssh', value, type: 'ovh' })"
@@ -249,14 +249,19 @@
 </template>
 
 <script>
+import { mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+
 import addSsh from '@/components/appMain/cloud/openCloud/addSSH.vue'
 
 export default {
   name: 'OvhCreationTemplate',
   components: { passwordMeter, addSsh },
   props: {
-    getPlan: { type: Object, default: {} },
+    getPlan: { type: Object, default: () => ({}) },
     itemSP: { type: Object, default: null },
     options: { type: Object, required: true },
     activeKey: { type: String, required: true },
@@ -278,28 +283,22 @@ export default {
   },
   data: () => ({ isFlavorsLoading: false }),
   computed: {
-    user () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
+    ...mapState(useAuthStore, ['userdata', 'billingUser', 'isLogged']),
+    ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'unloginedCurrency']),
     currency () {
-      const currencies = this.$store.getters['nocloud/auth/currencies']
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-      const { currency_code } = this.$store.getters['nocloud/auth/billingData']
+      const { currency_code: currencyCode } = this.billingUser
 
-      const code = this.$store.getters['nocloud/auth/unloginedCurrency']
-      const { rate } = currencies.find((el) =>
-        el.to === code && el.from === defaultCurrency
+      const code = this.unloginedCurrency
+      const { rate } = this.currencies.find((el) =>
+        el.to === code && el.from === this.defaultCurrency
       ) ?? {}
 
-      const { rate: reverseRate } = currencies.find((el) =>
-        el.from === code && el.to === defaultCurrency
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.from === code && el.to === this.defaultCurrency
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: currency_code ?? defaultCurrency }
+      return { rate: 1, code: currencyCode ?? this.defaultCurrency }
     },
     region () {
       const { extra, title } = this.itemSP?.locations
@@ -509,8 +508,8 @@ export default {
 
 <style scoped>
 .order__slider{
-	display: flex;
-	overflow-x: auto;
+  display: flex;
+  overflow-x: auto;
   padding-bottom: 10px;
   padding-top: 15px;
 }
@@ -523,30 +522,30 @@ export default {
 }
 
 .order__slider-item:not(:last-child){
-	margin-right: 10px;
+  margin-right: 10px;
 }
 
 .order__slider-item{
-	flex-shrink: 0;
-	/* border: 1px solid rgba(0, 0, 0, .15); */
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	padding: 10px 20px;
-	cursor: pointer;
-	border-radius: 15px;
-	font-size: 1.1rem;
-	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  flex-shrink: 0;
+  /* border: 1px solid rgba(0, 0, 0, .15); */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 15px;
+  font-size: 1.1rem;
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
 .order__slider-item:hover{
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
 }
 
 .order__slider-item--active{
-	background-color: var(--main);
-	color: #fff;
+  background-color: var(--main);
+  color: #fff;
 }
 
 @media (max-width: 576px) {

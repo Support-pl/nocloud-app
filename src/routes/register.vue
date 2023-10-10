@@ -175,12 +175,17 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { notification, message } from 'ant-design-vue'
+
 import store from '@/store'
 import router from '@/router'
 import i18n from '@/i18n'
 import api from '@/api.js'
 import config from '@/appconfig.js'
+
+import { useAuthStore } from '@/stores/auth.js'
 import countries from '@/countries.json'
+
+const authStore = useAuthStore()
 
 const currencies = ref([])
 const registerLoading = ref(false)
@@ -206,9 +211,6 @@ const getOnlogin = computed(() =>
 )
 const companyName = computed(() =>
   store.getters.getDomainInfo.name ?? config.appTitle
-)
-const baseURL = computed(() =>
-  store.getters['nocloud/auth/getURL']
 )
 
 const companyLogo = computed(() => {
@@ -264,7 +266,7 @@ async function submitHandler () {
 
   try {
     registerLoading.value = true
-    const response = await api.get(baseURL.value, {
+    const response = await api.get(authStore.baseURL, {
       params: { ...temp, app_language: locale, run: 'create_user' }
     })
 
@@ -283,7 +285,7 @@ async function submitHandler () {
 
 async function fetchCurrencies () {
   try {
-    const response = await api.get(baseURL.value, {
+    const response = await api.get(authStore.baseURL, {
       params: { run: 'get_currencies' }
     })
 

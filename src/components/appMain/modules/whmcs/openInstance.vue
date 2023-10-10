@@ -422,6 +422,9 @@
 </template>
 
 <script lang="jsx">
+import { mapState } from 'pinia'
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import notification from '@/mixins/notification.js'
 
 export default {
@@ -456,16 +459,10 @@ export default {
     }
   }),
   computed: {
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
+    ...mapState(useAuthStore, ['billingUser', 'baseURL']),
+    ...mapState(useCurrenciesStore, ['defaultCurrency']),
     currency () {
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
-      return { code: this.user.currency_code ?? defaultCurrency }
-    },
-    baseURL () {
-      return this.$store.getters['support/getURL']
+      return { code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
     statusVM () {
       if (!this.VM?.resources?.STATE) return {}

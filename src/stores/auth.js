@@ -1,8 +1,9 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import cookies from 'js-cookie'
-import config from '@/appconfig.js'
+import i18n from '@/i18n.js'
 import api from '@/api.js'
+import config from '@/appconfig.js'
 
 const COOKIES_NAME = 'noCloudinApp-token'
 
@@ -11,13 +12,9 @@ export const useAuthStore = defineStore('auth', () => {
   const userdata = ref({})
   const billingUser = ref({})
 
-  const currencies = ref([])
-  const defaultCurrency = ref('USD')
-  const unloginedCurrency = ref('USD')
-
   const loginButtons = ref([])
   const baseURL = `${config.WHMCSsiteurl}/modules/addons/nocloud/api/index.php`
-  const isLoggedIn = computed(() =>
+  const isLogged = computed(() =>
     token.value.length > 0
   )
 
@@ -28,35 +25,15 @@ export const useAuthStore = defineStore('auth', () => {
     cookies.set(COOKIES_NAME, value, { expires })
   }
 
-  function setCurrencies (rates) {
-    currencies.value = rates.map((el) => ({ ...el, id: `${el.from} ${el.to}` }))
-  }
-
-  function setDefaultCurrency (currencies) {
-    const currency = currencies.find((el) =>
-      el.rate === 1 && [el.from, el.to].includes('NCU')
-    )
-
-    if (!currency) return
-    defaultCurrency.value = (currency.from === 'NCU') ? currency.to : currency.from
-  }
-
   return {
     token,
     userdata,
     billingUser,
 
-    currencies,
-    defaultCurrency,
-    unloginedCurrency,
-
     baseURL,
-    isLoggedIn,
+    isLogged,
     loginButtons,
-
     setToken,
-    setCurrencies,
-    setDefaultCurrency,
 
     async login ({ login, password, type, uuid }) {
       try {
@@ -78,7 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout () {
       setToken('')
       const config = localStorage.getItem('globalConfig')
-      const lang = localStorage.getItem('lang') ?? 'en'
+      const lang = localStorage.getItem('lang') ?? i18n.locale
 
       localStorage.clear()
       localStorage.setItem('globalConfig', config)
@@ -97,9 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
     },
 
     async fetchUserData () {
-      if (userdata.value.uuid) {
-        return userdata.value
-      }
+      if (userdata.value.uuid) return userdata.value
 
       try {
         const response = await api.accounts.get('me')
@@ -112,9 +87,7 @@ export const useAuthStore = defineStore('auth', () => {
     },
 
     async fetchBillingData () {
-      if (billingUser.value.id) {
-        return billingUser.value
-      }
+      if (billingUser.value.firstname) return billingUser.value
 
       try {
         const response = await api.get(
@@ -122,19 +95,6 @@ export const useAuthStore = defineStore('auth', () => {
 
         if (!response.id) response.id = 'none'
         billingUser.value = response
-
-        return response
-      } catch (error) {
-        return error
-      }
-    },
-
-    async fetchCurrencies () {
-      try {
-        const response = await api.get('/billing/currencies/rates')
-
-        setCurrencies(response.rates)
-        setDefaultCurrency(response.rates)
 
         return response
       } catch (error) {
