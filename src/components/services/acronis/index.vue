@@ -156,11 +156,16 @@
 </template>
 
 <script>
-import { mapStores } from 'pinia'
+import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
+
 import addFunds from '@/components/balance/addFunds.vue'
 
 export default {
@@ -184,6 +189,13 @@ export default {
   }),
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData']),
+    ...mapState(useCurrenciesStore, [
+      'currencies',
+      'defaultCurrency',
+      'unloginedCurrency',
+      'fetchCurrencies'
+    ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const title = []
@@ -206,30 +218,18 @@ export default {
 
       return { title: title.join(', '), price, base, adv }
     },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
     currency () {
-      const currencies = this.$store.getters['nocloud/auth/currencies']
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
-      const code = this.$store.getters['nocloud/auth/unloginedCurrency']
-      const { rate } = currencies.find((el) =>
-        el.to === code && el.from === defaultCurrency
+      const code = this.unloginedCurrency
+      const { rate } = this.currencies.find((el) =>
+        el.to === code && el.from === this.defaultCurrency
       ) ?? {}
 
-      const { rate: reverseRate } = currencies.find((el) =>
-        el.from === code && el.to === defaultCurrency
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.from === code && el.to === this.defaultCurrency
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.user.currency_code ?? defaultCurrency }
+      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
     services () {
       return this.$store.getters['nocloud/vms/getServices']
@@ -280,7 +280,7 @@ export default {
   },
   created () {
     const promises = [
-      this.$store.dispatch('nocloud/auth/fetchBillingData'),
+      this.fetchBillingData(),
       this.plansStore.fetch({ anonymously: !this.isLogged }),
       this.spStore.fetch(!this.isLogged)
     ]
@@ -300,9 +300,7 @@ export default {
       console.error(err)
     })
 
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies')
-    }
+    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
     changeProducts (plan) {
@@ -331,9 +329,9 @@ export default {
       const instances = [{
         config: {
           items,
-          first_name: this.user.firstname,
-          last_name: this.user.lastname,
-          mail: this.user.email,
+          first_name: this.billingUser.firstname,
+          last_name: this.billingUser.lastname,
+          mail: this.billingUser.email,
           login: this.options.login,
           password: this.options.password
         },
@@ -349,7 +347,7 @@ export default {
       })
 
       const newGroup = {
-        title: this.user.fullname + Date.now(),
+        title: this.billingUser.fullname + Date.now(),
         type: this.sp.type,
         sp: this.sp.uuid,
         instances
@@ -390,7 +388,7 @@ export default {
         : {
             namespace: this.namespace,
             service: {
-              title: this.user.fullname,
+              title: this.billingUser.fullname,
               context: {},
               version: '1',
               instancesGroups: [info]

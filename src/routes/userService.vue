@@ -172,11 +172,15 @@
 </template>
 
 <script>
-import { mapStores } from 'pinia'
+import { mapStores, mapState } from 'pinia'
 import config from '@/appconfig.js'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useChatsStore } from '@/stores/chats.js'
+import { useProductsStore } from '@/stores/products.js'
+
 import loading from '@/components/loading/loading.vue'
-import { useProductsStore } from '@/stores/products'
 
 const info = [
   // {
@@ -217,13 +221,10 @@ export default {
   data: () => ({ service: null, info }),
   computed: {
     ...mapStores(useChatsStore, useProductsStore),
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
+    ...mapState(useAuthStore, ['baseURL', 'billingUser', 'fetchBillingData']),
+    ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'fetchCurrencies']),
     currency () {
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
-      return { code: this.user.currency_code ?? defaultCurrency }
+      return { code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
     getTagColor () {
       const status = this.service.status.replace('cloudStateItem.', '')
@@ -294,7 +295,7 @@ export default {
     }
   },
   created () {
-    this.$store.dispatch('nocloud/auth/fetchBillingData')
+    this.fetchBillingData()
     this.$store.dispatch('nocloud/vms/fetch')
       .then(() => {
         const domain = this.$store.getters['nocloud/vms/getInstances']
@@ -302,7 +303,7 @@ export default {
         let groupname = 'Domains'
         let date = 'year'
 
-        if (!domain) return { meta: null }
+        if (!domain) return { meta: 'product' }
         switch (domain.billingPlan.type) {
           case 'cpanel': {
             const { period } = domain.billingPlan.products[domain.product]
@@ -421,7 +422,7 @@ export default {
 
           this.service.recurringamount = meta.prices[period]
         } else if (meta !== 'done') {
-          return this.$store.dispatch('nocloud/auth/fetchBillingData')
+          return this.fetchBillingData()
         } else {
           return { client_id: null }
         }
@@ -435,18 +436,17 @@ export default {
       .then((result) => {
         if (result === 'done') return
         this.service = this.productsStore.products.find(({ id }) => id === this.$route.params.id)
+        this.info.pop()
       })
-      .catch((err) => console.error(err))
+      .catch((error) => {
+        console.error(error)
+      })
 
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies')
-    }
+    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
     clickOnInvoice (invoiceId) {
-      const url = this.$store.getters['nocloud/auth/getURL']
-
-      this.$api.get(url, {
+      this.$api.get(this.baseURL, {
         params: {
           run: 'get_pay_token', invoice_id: invoiceId
         }

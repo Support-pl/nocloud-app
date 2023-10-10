@@ -1,72 +1,76 @@
 <template>
-	<div class="service__item" @click="onClick">
-		<div class="service__icon">
-			<a-icon :type="service.icon" :theme="service.theme ?? 'outlined'"></a-icon>
-		</div>
-		<div class="service__title">{{ translatedName }}</div>
-	</div>
+  <div class="service__item" @click="onClick">
+    <div class="service__icon">
+      <a-icon :type="service.icon" :theme="service.theme ?? 'outlined'" />
+    </div>
+    <div class="service__title">
+      {{ translatedName }}
+    </div>
+  </div>
 </template>
 
-<script>
-export default {
-	name: 'service-item',
-	props: {
-    service: { type: Object, required: true },
-    productsCount: { type: Function, required: true }
-  },
-	computed: {
-		translatedName(){
-			if(this.service.translatable){
-				return this.$t(this.service.title);
-			}
-			return this.service.title
-		},
-    isLogged() {
-      return this.$store.getters['nocloud/auth/isLoggedIn'];
-    }
-	},
-  methods: {
-    onClick(e) {
-      const type = this.service.onclick.paramsArr[0].query.service;
-      const isCountZero = this.productsCount(type, true) === 0;
+<script setup>
+import { computed } from 'vue'
+import i18n from '@/i18n'
+import { useAuthStore } from '@/stores/auth.js'
 
-      if (this.isLogged && !isCountZero) e.stopPropagation();
-      else return;
+const props = defineProps({
+  service: { type: Object, required: true },
+  productsCount: { type: Function, required: true }
+})
 
-      this.service.onclick.function(...this.service.onclick.paramsArr)
-    }
+const authStore = useAuthStore()
+
+const translatedName = computed(() => {
+  if (props.service.translatable) {
+    return i18n.t(props.service.title)
   }
+  return props.service.title
+})
+
+function onClick (e) {
+  const type = props.service.onclick.paramsArr[0].query.service
+  const isCountZero = props.productsCount(type, true) === 0
+
+  if (authStore.isLogged && !isCountZero) e.stopPropagation()
+  else return
+
+  props.service.onclick.function(...props.service.onclick.paramsArr)
 }
+</script>
+
+<script>
+export default { name: 'ServiceItem' }
 </script>
 
 <style>
 .service__item{
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	border-radius: 10px;
-	transition: background-color .2s ease, color .2s ease;
-	padding: 10px;
-	cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  transition: background-color .2s ease, color .2s ease;
+  padding: 10px;
+  cursor: pointer;
 }
 
 /* .service__item:not(:last-of-type){
-	margin-right: 10px;
+  margin-right: 10px;
 } */
 
 .service__item:hover{
-	background-color: #fff;
-	color: var(--main);
+  background-color: #fff;
+  color: var(--main);
 }
 
 .service__icon{
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	font-size: 2rem;
-	margin-bottom: 3px;
-	position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  margin-bottom: 3px;
+  position: relative;
 }
 
 .service__title{
@@ -74,16 +78,16 @@ export default {
 }
 
 /* .service__icon::after{
-	color: var(--main);
-	font-size: 2.3rem;
-	content: '+';
-	display: block;
-	position: absolute;
-	right: 0;
-	bottom: 0;
-	width: 1rem;
-	height: 1rem;
-	transform: translate(5px, -14px);
+  color: var(--main);
+  font-size: 2.3rem;
+  content: '+';
+  display: block;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1rem;
+  height: 1rem;
+  transform: translate(5px, -14px);
 } */
 
 </style>

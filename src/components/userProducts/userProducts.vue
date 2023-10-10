@@ -1,6 +1,6 @@
 <template>
   <div class="products__wrapper">
-    <div v-if="isLogged" class="products__header">
+    <div v-if="authStore.isLogged" class="products__header">
       <div class="products__title">
         <!-- Ваши услуги -->
         <transition name="header-transition" mode="out-in">
@@ -43,7 +43,7 @@
       </div>
 
       <div
-        v-if="min && user"
+        v-if="min && authStore.billingUser"
         class="products__all"
       >
         <router-link :to="{ name: 'products' }">
@@ -52,7 +52,7 @@
         </router-link>
       </div>
       <div
-        v-else-if="user"
+        v-else-if="authStore.billingUser"
         class="products__control"
       >
         <a-popover
@@ -127,7 +127,7 @@
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
       <div
-        v-if="!isLogged"
+        v-if="!authStore.isLogged"
         class="products__unregistred"
       >
         {{ $t("unregistered.will be able after") }}
@@ -164,9 +164,12 @@
 
 <script>
 import { mapStores } from 'pinia'
-import { useSpStore } from '@/stores/sp.js'
-import { useProductsStore } from '@/stores/products.js'
 import config from '@/appconfig.js'
+
+import { useSpStore } from '@/stores/sp.js'
+import { useAuthStore } from '@/stores/auth.js'
+import { useProductsStore } from '@/stores/products.js'
+
 import loading from '@/components/loading/loading.vue'
 import cloudItem from '@/components/appMain/cloud/cloudItem.vue'
 
@@ -184,13 +187,7 @@ export default {
     anchor: null
   }),
   computed: {
-    ...mapStores(useProductsStore, useSpStore),
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
+    ...mapStores(useProductsStore, useSpStore, useAuthStore),
     productsPrepared () {
       const state = {
         size: this.productsStore.size,
@@ -440,10 +437,10 @@ export default {
     const promises = []
 
     if (this.spStore.getShowcases.length < 1) {
-      promises.push(this.spStore.fetchShowcases(!this.isLogged))
+      promises.push(this.spStore.fetchShowcases(!this.authStore.isLogged))
     }
     if (this.spStore.servicesProviders.length < 1) {
-      promises.push(this.spStore.fetch(!this.isLogged))
+      promises.push(this.spStore.fetch(!this.authStore.isLogged))
     }
     if (Object.keys(this.services).length < 1) {
       promises.push(this.productsStore.fetchServices())
@@ -457,9 +454,9 @@ export default {
         this.$notification.error({ message: this.$t(message) })
       })
 
-    if (!this.isLogged) return
+    if (!this.authStore.isLogged) return
     this.productsStore.isLoading = true
-    this.$store.dispatch('nocloud/auth/fetchBillingData')
+    this.authStore.fetchBillingData()
       .then((user) => {
         this.$store.dispatch('nocloud/vms/fetch')
         this.productsStore.fetch(user.client_id)

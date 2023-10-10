@@ -68,14 +68,13 @@ import { message, notification } from 'ant-design-vue'
 import Markdown from 'markdown-it'
 import emoji from 'markdown-it-emoji'
 
-import store from '@/store'
+import router from '@/router'
 import i18n from '@/i18n'
+import api from '@/api'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
-import api from '@/api'
-import router from '@/router'
 
 const md = new Markdown({
   html: true,
@@ -100,14 +99,6 @@ const ticketMessage = ref('')
 const isSending = ref(false)
 const isLoading = ref(false)
 
-const user = computed(() =>
-  store.getters['nocloud/auth/billingData']
-)
-
-const userdata = computed(() =>
-  store.getters['nocloud/auth/userdata']
-)
-
 const isTicket = computed(() =>
   supportStore.departments.find(({ id }) => id === ticketDepartment.value)
 )
@@ -115,8 +106,9 @@ const isTicket = computed(() =>
 const filteredDepartments = computed(() => {
   const chatsDeparts = chatsStore.getDefaults.departments
 
-  if (user.value.only_tickets) return supportStore.departments
-  else {
+  if (authStore.billingUser.only_tickets) {
+    return supportStore.departments
+  } else {
     return [...supportStore.departments, ...chatsDeparts]
   }
 })
@@ -204,7 +196,7 @@ async function createChat () {
         await chatsStore.sendMessage({
           uuid: response.uuid,
           content: md.render(ticketMessage.value).trim(),
-          account: userdata.value.uuid,
+          account: authStore.userdata.uuid,
           date: BigInt(Date.now())
         })
       }
@@ -261,10 +253,8 @@ function onError ({ target }) {
 
 try {
   isLoading.value = true
-  Promise.all([
-    chatsStore.fetchDefaults(),
-    supportStore.fetchDepartments()
-  ])
+  chatsStore.fetchDefaults()
+  supportStore.fetchDepartments()
 } catch {
   message.error(i18n.t('departments not found'))
 } finally {

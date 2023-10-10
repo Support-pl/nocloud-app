@@ -48,10 +48,13 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import store from '@/store'
+import { Status } from '@/libs/cc_connect/cc_pb.js'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
-import { Status } from '@/libs/cc_connect/cc_pb.js'
+
 import addTicket from '@/components/appMain/support/addTicket.vue'
 import singleTicket from '@/components/appMain/support/singleTicket.vue'
 import loading from '@/components/loading/loading.vue'
@@ -60,8 +63,10 @@ const props = defineProps({
   service: { type: Object, required: true }
 })
 
+const authStore = useAuthStore()
 const chatsStore = useChatsStore()
 const supportStore = useSupportStore()
+const currenciesStore = useCurrenciesStore()
 
 const chats = computed(() => {
   const result = []
@@ -91,12 +96,9 @@ const chats = computed(() => {
   return result
 })
 
-const currency = computed(() => {
-  const user = store.getters['nocloud/auth/billingData']
-  const defaultCurrency = store.getters['nocloud/auth/defaultCurrency']
-
-  return { code: user.currency_code ?? defaultCurrency }
-})
+const currency = computed(() => ({
+  code: authStore.billingUser.currency_code ?? currenciesStore.defaultCurrency
+}))
 
 function moduleEnter () {
   supportStore.isAddingTicket = !supportStore.isAddingTicket

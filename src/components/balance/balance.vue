@@ -1,13 +1,13 @@
 <template>
-  <div v-if="isLogged" class="balance">
+  <div v-if="authStore.isLogged" class="balance">
     <div
       class="balance__item"
-      :class="{ clickable: clickable }"
+      :class="{ clickable }"
       @click="showModal"
     >
-      {{ (userdata.balance || 0).toFixed(2) }}
+      {{ (authStore.userdata.balance || 0).toFixed(2) }}
 
-      <span class="currency__suffix">{{ currency.suffix }}</span>
+      <span class="currency__suffix">{{ currency.code }}</span>
       <span v-if="clickable" class="badge">
         <a-icon type="plus" />
       </span>
@@ -16,96 +16,68 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import addFunds from '@/components/balance/addFunds.vue'
+import router from '@/router'
 
-export default {
-  name: 'BalanceItem',
-  components: {
-    addFunds
-  },
-  props: {
-    clickable: {
-      type: Boolean,
-      default: true
-    }
-  },
-  data () {
-    return {
-      currency: {},
-      modalVisible: false,
-      confirmLoading: false,
-      amount: 10,
-      btns: [5, 10, 50, 100, 500, 1000],
-      stay: false
-    }
-  },
-  computed: {
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
-    defaultCurrency () {
-      return this.$store.getters['nocloud/auth/defaultCurrency']
-    }
-  },
-  watch: {
-    defaultCurrency (value) {
-      if (this.user.currency_code) return
+const props = defineProps({
+  clickable: { type: Boolean, default: true }
+})
 
-      this.$set(this.currency, 'suffix', value)
-    },
-    user (value) {
-      this.$set(this.currency, 'suffix', value.currency_code ?? this.defaultCurrency)
+const authStore = useAuthStore()
+const currenciesStore = useCurrenciesStore()
+
+const modalVisible = ref(false)
+
+const currency = computed(() => ({
+  code: authStore.billingUser.currency_code ?? currenciesStore.defaultCurrency
+}))
+
+// function URLparameter (obj, outer = '') {
+//   let str = ''
+//   for (const key in obj) {
+//     if (key === 'price') continue
+//     if (str !== '') {
+//       str += '&'
+//     }
+//     if (typeof obj[key] === 'object') {
+//       str += URLparameter(obj[key], outer + key)
+//     } else {
+//       str += outer + key + '=' + encodeURIComponent(obj[key])
+//     }
+//   }
+//   return str
+// }
+
+function showModal () {
+  if (props.clickable) modalVisible.value = true
+}
+
+function hideModal () {
+  modalVisible.value = false
+}
+
+async function fetch () {
+  try {
+    const { id } = await authStore.fetchBillingData()
+
+    if (id && localStorage.getItem('oauth')) {
+      localStorage.removeItem('oauth')
+      router.replace('/')
     }
-  },
-  created () {
-    this.$store.dispatch('nocloud/auth/fetchBillingData')
-      .then((result) => {
-        if (result.id && localStorage.getItem('oauth')) {
-          localStorage.removeItem('oauth')
-          this.$router.replace('/')
-        }
-      })
-  },
-  mounted () {
-    this.$set(this.currency, 'suffix', this.user.currency_code ?? this.defaultCurrency)
-  },
-  methods: {
-    URLparameter (obj, outer = '') {
-      let str = ''
-      for (const key in obj) {
-        if (key === 'price') continue
-        if (str !== '') {
-          str += '&'
-        }
-        if (typeof obj[key] === 'object') {
-          str += this.URLparameter(obj[key], outer + key)
-        } else {
-          str += outer + key + '=' + encodeURIComponent(obj[key])
-        }
-      }
-      return str
-    },
-    showModal () {
-      if (this.clickable) {
-        this.modalVisible = true
-      }
-    },
-    hideModal () {
-      this.modalVisible = false
-    },
-    addAmount (amount) {
-      if (this.amount === '') this.amount = 0
-      this.amount += amount
-    }
+  } catch (error) {
+    console.error(error)
   }
 }
+
+fetch()
+</script>
+
+<script>
+export default { name: 'BalanceView' }
 </script>
 
 <style>

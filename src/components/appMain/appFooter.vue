@@ -23,15 +23,12 @@
 
 <script setup>
 import { computed } from 'vue'
-import store from '@/store'
 import router from '@/router'
 import { useAppStore } from '@/stores/app.js'
+import { useAuthStore } from '@/stores/auth.js'
 
 const appStore = useAppStore()
-
-const user = computed(() =>
-  store.getters['nocloud/auth/billingData']
-)
+const authStore = useAuthStore()
 
 const active = computed(() => {
   const { footerTitle } = router.currentRoute.meta ?? {}
@@ -45,18 +42,18 @@ const active = computed(() => {
 const filteredButtons = computed(() =>
   appStore.buttons.filter(({ title }) => {
     if (title === 'root') title = 'services'
-    if (!user.value.roles) return true
+    if (!authStore.billingUser.roles) return true
 
     switch (title) {
       case 'billing':
-        return user.value.roles?.invoice
+        return authStore.billingUser.roles?.invoice
 
       case 'settings':
         return true
 
       default:
-        if (!(title in user.value.roles)) return true
-        return user.value.roles[title]
+        if (!(title in authStore.billingUser.roles)) return true
+        return authStore.billingUser.roles[title]
     }
   })
 )

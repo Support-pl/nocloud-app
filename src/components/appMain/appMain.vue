@@ -11,7 +11,7 @@
         </transition>
       </a-layout-content>
 
-      <a-layout-footer v-if="user" style="padding: 0">
+      <a-layout-footer v-if="authStore.isLogged" style="padding: 0">
         <app-footer />
       </a-layout-footer>
     </a-layout>
@@ -19,18 +19,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import store from '@/store'
 import router from '@/router'
 import { useAppStore } from '@/stores/app.js'
+import { useAuthStore } from '@/stores/auth.js'
 import appFooter from '@/components/appMain/appFooter.vue'
 import appHeader from '@/components/appMain/appHeader.vue'
 
 const appStore = useAppStore()
-
-const user = computed(() =>
-  store.getters['nocloud/auth/isLoggedIn']
-)
+const authStore = useAuthStore()
 
 router.onReady(() => {
   appStore.setTabByNameNoRoute(router.currentRoute.name)

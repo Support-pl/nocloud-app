@@ -3,11 +3,14 @@
     :title="$t('Add Funds')"
     :visible="modalVisible"
     :confirm-loading="confirmLoading"
+    :cancel-text="$t('Cancel')"
     @ok="handleOk"
-    @cancel="handleCancel"
-    :cancelText="$t('Cancel')"
+    @cancel="hideModal"
   >
-    <p v-if="isLogged">{{ $t("Enter value") }} ({{ user.currency_code || 'USD' }}):</p>
+    <p v-if="authStore.isLogged">
+      {{ $t("Enter value") }}
+      ({{ authStore.billingUser.currency_code || 'USD' }}):
+    </p>
     <a-input allow-clear style="width: 100%" :value="amount" @change="onChange" />
     <a-row
       type="flex"
@@ -17,9 +20,9 @@
       style="margin-top: 10px"
     >
       <a-col v-for="add in btns" :key="add" :xl="6" :xs="8">
-        <a-button style="width: 100%" @click="addAmount(add)"
-          >+{{ add }}</a-button
-        >
+        <a-button style="width: 100%" @click="addAmount(add)">
+          +{{ add }}
+        </a-button>
       </a-col>
     </a-row>
     <a-row style="margin-top: 10px">
@@ -33,62 +36,62 @@
   </a-modal>
 </template>
 
-<script>
-export default {
-  name: "balance_addFunds",
-  props: ["modalVisible", "hideModal", "sum"],
-  data() {
-    return {
-      confirmLoading: false,
-      amount: 5,
-      btns: [5, 10, 50, 100, 200],
-      stay: false,
-    };
-  },
-  computed: {
-    user() {
-      return this.$store.getters['nocloud/auth/billingData'];
-    },
-    isLogged() {
-      return this.$store.getters['nocloud/auth/isLoggedIn'];
-    },
-    baseURL() {
-      return this.$store.getters['support/getURL'];
-    }
-  },
-  methods: {
-    onChange({ target }) {
-      const value = target.value.replace(/\D/g, '');
+<script setup>
+import { ref } from 'vue'
+import { message } from 'ant-design-vue'
+import { useAuthStore } from '@/stores/auth.js'
+import router from '@/router'
+import api from '@/api.js'
 
-      target.value = value;
-      this.amount = +value;
-    },
-    handleOk() {
-      if (this.amount < 1) return;
-      this.confirmLoading = true;
-      this.$api.get(this.baseURL, { params: { run: 'add_func', sum: this.amount }})
-        .then((res) => {
-          this.hideModal();
-          this.confirmLoading = false;
-          if (!this.stay) {
-            localStorage.setItem('order', 'Invoice');
-            this.$router.push('/billing');
-          } else {
-            this.$message.success(`Now look invoice#${res.invoiceid}`);
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    },
-    handleCancel() {
-      this.hideModal();
-    },
-    addAmount(amount) {
-      if (this.amount == "") this.amount = 0;
-      this.amount += amount;
-    },
-  },
-  mounted() { this.amount = this.sum ?? 5 }
+const props = defineProps({
+  modalVisible: { type: Boolean, required: true },
+  hideModal: { type: Function, required: true },
+  sum: { type: Number, default: 0 }
+})
+
+const authStore = useAuthStore()
+
+const confirmLoading = ref(false)
+const amount = ref(5)
+const btns = ref([5, 10, 50, 100, 200])
+const stay = ref(false)
+
+function onChange ({ target }) {
+  const value = target.value.replace(/\D/g, '')
+
+  target.value = value
+  amount.value = +value
 }
+
+async function handleOk () {
+  if (amount.value < 1) return
+  confirmLoading.value = true
+
+  try {
+    const response = await api.get(
+      authStore.baseURL,
+      { params: { run: 'add_func', sum: amount.value } }
+    )
+
+    props.hideModal()
+
+    if (!stay.value) {
+      localStorage.setItem('order', 'Invoice')
+      router.push('/billing')
+    } else {
+      message.success(`Now look invoice#${response.invoiceid}`)
+    }
+  } catch (error) {
+    console.error(error)
+  } finally {
+    confirmLoading.value = false
+  }
+}
+
+function addAmount (value) {
+  if (amount.value === '') amount.value = 0
+  amount.value += value
+}
+
+amount.value = props.sum ?? 5
 </script>

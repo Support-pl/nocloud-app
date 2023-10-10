@@ -271,9 +271,12 @@
 <script>
 import { mapState } from 'pinia'
 import UI from 'vnc-ui-vue'
+
 import { useAppStore } from '@/stores/app.js'
+import { useAuthStore } from '@/stores/auth.js'
+import { useProductsStore } from '@/stores/products.js'
+
 import password from '@/components/password.vue'
-import { useProductsStore } from '@/stores/products'
 
 export default {
   name: 'VncView',
@@ -281,6 +284,7 @@ export default {
   data: () => ({ desktopName: '', token: '', url: '', rfb: null }),
   computed: {
     ...mapState(useAppStore, ['isMaintananceMode']),
+    ...mapState(useAuthStore, { appToken: 'token' }),
     ...mapState(useProductsStore, ['products']),
     instance () {
       const uuid = this.$route.params.pathMatch
@@ -341,7 +345,7 @@ export default {
 
           if (res.meta.info) {
             this.url = `wss://${this.instance.sp}.proxy.${baseURL.join('.')}socket?${res.meta.url}`
-            this.connect(this.$store.state.nocloud.auth.token)
+            this.connect(this.appToken)
           } else {
             this.url = res.meta.url
           }

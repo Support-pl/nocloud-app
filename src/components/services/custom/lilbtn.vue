@@ -18,19 +18,24 @@
 
 <script lang="jsx">
 import { defineComponent } from 'vue'
+import { mapState } from 'pinia'
+import { useAuthStore } from '@/stores/auth.js'
+
 import addFunds from '@/components/balance/addFunds.vue'
 
 export default defineComponent({
   components: { addFunds },
-  props: ['service', 'price', 'currency'],
+  props: {
+    price: { type: Number, required: true },
+    service: { type: Object, required: true },
+    currency: { type: Object, required: true }
+  },
   data: () => ({
     addfunds: { visible: false, amount: 0 },
     isLoading: false
   }),
   computed: {
-    user () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
+    ...mapState(useAuthStore, ['userdata']),
     slicedPrice () {
       if (`${this.price}`.replace('.').length > 3) {
         return (`${this.price}`[2] === '.')
@@ -100,12 +105,12 @@ export default defineComponent({
       })
     },
     checkBalance () {
-      if (this.user.balance < parseFloat(this.price)) {
+      if (this.userdata.balance < parseFloat(this.price)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance'),
           content: this.$t('Click OK to replenish the account with the missing amount'),
           onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(this.price) - this.user.balance)
+            this.addfunds.amount = Math.ceil(parseFloat(this.price) - this.userdata.balance)
             this.addfunds.visible = true
           }
         })
@@ -140,6 +145,6 @@ export default defineComponent({
 }
 
 .btn button {
-	height: 100%;
+  height: 100%;
 }
 </style>

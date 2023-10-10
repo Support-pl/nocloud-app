@@ -286,7 +286,7 @@
               </div>
             </a-form-item>
 
-            <a-form-item v-if="user.uuid" :label="$t('clientinfo.password')">
+            <a-form-item v-if="userdata.uuid" :label="$t('clientinfo.password')">
               <password-meter
                 :style="{
                   height: (password.length > 0) ? '10px' : '0',
@@ -303,10 +303,10 @@
               />
             </a-form-item>
 
-            <a-form-item v-if="user.uuid" :label="$t('SSH key')">
+            <a-form-item v-if="userdata.uuid" :label="$t('SSH key')">
               <a-select
                 style="width: 100%"
-                :options="user.data && user.data.ssh_keys"
+                :options="userdata.data && userdata.data.ssh_keys"
                 :value="sshKey"
                 @change="(value) => $emit('setData', { key: 'sshKey', value })"
               />
@@ -424,7 +424,9 @@
 </template>
 
 <script>
+import { mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
+import { useAuthStore } from '@/stores/auth.js'
 
 export default {
   name: 'CreateInstanceIone',
@@ -448,12 +450,7 @@ export default {
     filters: { cpu: [], ram: [] }
   }),
   computed: {
-    user () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
+    ...mapState(useAuthStore, ['userdata', 'isLogged', 'fetchUserData']),
     isProductsExist () {
       return this.getProducts.length > 0
     },
@@ -556,8 +553,8 @@ export default {
     }
   },
   created () {
-    if (!this.user?.uuid && this.isLogged) {
-      this.$store.dispatch('nocloud/auth/fetchUserData')
+    if (!this.userdata?.uuid && this.isLogged) {
+      this.fetchUserData()
     }
     this.changePeriods()
   },

@@ -1,7 +1,11 @@
 <template>
   <div class="services">
     <div class="container">
-      <services-wrapper v-if="!user.non_buyer" class="services__block" :products-count="productsCount" />
+      <services-wrapper
+        v-if="!authStore.billingUser.non_buyer"
+        class="services__block"
+        :products-count="productsCount"
+      />
       <user-products ref="productsComponent" class="services__block" :min="false" />
 
       <a-pagination
@@ -23,20 +27,20 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import store from '@/store'
 import router from '@/router'
+
+import { useAuthStore } from '@/stores/auth.js'
 import { useSpStore } from '@/stores/sp.js'
 import { useProductsStore } from '@/stores/products.js'
+
 import servicesWrapper from '@/components/services/services_wrapper.vue'
 import userProducts from '@/components/userProducts/userProducts.vue'
 
-const productsStore = useProductsStore()
+const authStore = useAuthStore()
 const providersStore = useSpStore()
+const productsStore = useProductsStore()
 
 const productsComponent = ref(null)
 const pageSizeOptions = ['5', '10', '25', '50', '100']
-
-const user = computed(() =>
-  store.getters['nocloud/auth/billingData']
-)
 
 const providers = computed(() =>
   providersStore.servicesProviders

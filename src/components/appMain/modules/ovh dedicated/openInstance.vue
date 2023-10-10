@@ -373,7 +373,9 @@
 import { defineComponent } from 'vue'
 import { mapState } from 'pinia'
 import { useSpStore } from '@/stores/sp.js'
-import notification from '@/mixins/notification'
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+import notification from '@/mixins/notification.js'
 
 const columns = [
   {
@@ -434,12 +436,8 @@ export default defineComponent({
   }),
   computed: {
     ...mapState(useSpStore, ['servicesProviders']),
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    baseURL () {
-      return this.$store.getters['support/getURL']
-    },
+    ...mapState(useAuthStore, ['billingUser', 'baseURL']),
+    ...mapState(useCurrenciesStore, ['defaultCurrency']),
     statusVM () {
       if (!this.VM) return
       const isSuspended = this.VM.state.state === 'PENDING' || this.VM.data.suspended_manually
@@ -507,9 +505,7 @@ export default defineComponent({
         .reduce((sum, curr) => sum + curr, 0)
     },
     currency () {
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
-      return { code: this.user.currency_code ?? defaultCurrency }
+      return { code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
 
     tariffs () {

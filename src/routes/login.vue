@@ -1,12 +1,12 @@
 <template>
   <div class="login">
     <div class="login__title login__layout">
-      <div class="logo" :class="['pos_' + companyLogoPos]">
+      <div class="logo" :class="['pos_' + config.appLogo.pos]">
         <div v-if="companyName" class="logo__title">
           {{ companyName }}
         </div>
-        <div v-if="companyLogo" class="logo__image">
-          <img :src="companyLogo" alt="logo">
+        <div v-if="config.appLogo.path" class="logo__image">
+          <img :src="config.appLogo.path" alt="logo">
         </div>
       </div>
       <svg class="clipPathSvg" width="0" height="0">
@@ -84,7 +84,7 @@
                 @change="(lang) => changeLocale(lang)"
               >
                 <a-select-option
-                  v-for="lang in langs"
+                  v-for="lang in config.languages"
                   :key="lang"
                   :value="lang"
                 >
@@ -158,11 +158,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { notification } from 'ant-design-vue'
 import QrcodeVue from 'qrcode.vue'
+
 import store from '@/store'
 import router from '@/router'
 import i18n from '@/i18n.js'
 import config from '@/appconfig.js'
 import api from '@/api.js'
+
 import { useAuthStore } from '@/stores/auth.js'
 
 const authStore = useAuthStore()
@@ -174,27 +176,13 @@ const password = ref('')
 const email = ref('')
 const type = ref(false)
 
-const baseURL = computed(() =>
-  store.getters['nocloud/auth/getURL']
-)
 const getOnlogin = computed(() =>
   store.getters.getOnlogin
 )
 const companyName = computed(() =>
   store.getters.getDomainInfo.name ?? config.appTitle
 )
-const companyLogo = computed(() =>
-  config.appLogo.path
-)
-const companyLogoPos = computed(() =>
-  config.appLogo.pos
-)
-const selfUrl = computed(() =>
-  location.href
-)
-const langs = computed(() =>
-  config.languages
-)
+const selfUrl = location.href
 
 function submitHandler () {
   tryingLogin.value = true
@@ -205,7 +193,7 @@ async function send () {
   try {
     const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(1)}`
 
-    await store.dispatch('nocloud/auth/login', {
+    await authStore.login({
       login: formatedEmail.trim(),
       password: password.value,
       type: (type.value) ? 'standard' : 'whmcs'
@@ -225,8 +213,7 @@ async function send () {
       router.replace({ name, query: { service } })
     } else {
       authStore.fetchUserData()
-      store.dispatch('nocloud/auth/fetchUserData')
-      store.dispatch('nocloud/auth/fetchBillingData')
+      authStore.fetchBillingData()
       router.push({ name: 'root' })
     }
   } catch (error) {
@@ -248,7 +235,7 @@ async function restorePass () {
   try {
     const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(1)}`
 
-    const { result, message } = api.get(baseURL.value, {
+    const { result, message } = api.get(authStore.baseURL, {
       params: {
         run: 'reset_password', email: encodeURIComponent(formatedEmail)
       }
@@ -262,7 +249,7 @@ async function restorePass () {
     }
   } catch (error) {
     notification.error({
-      message: i18n.t("Can't connect to the server")
+      message: i18n.t('Can\'t connect to the server')
     })
     console.error(error)
   } finally {
@@ -291,7 +278,7 @@ async function login (type) {
 
 onMounted(() => {
   if (router.currentRoute.query.token) {
-    store.commit('nocloud/auth/setToken', router.currentRoute.query.token)
+    authStore.setToken(router.currentRoute.query.token)
     router.replace({ name: 'root' }).then(() =>
       location.reload()
     )

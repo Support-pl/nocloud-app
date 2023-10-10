@@ -116,16 +116,23 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { notification } from 'ant-design-vue'
+
 import store from '@/store'
 import router from '@/router'
 import i18n from '@/i18n.js'
 import api from '@/api.js'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 
 const route = router.currentRoute
+const authStore = useAuthStore()
+const currenciesStore = useCurrenciesStore()
 const spStore = useSpStore()
 const plansStore = usePlansStore()
 const namespacesStore = useNamespasesStore()
@@ -160,33 +167,21 @@ const getProducts = computed(() => {
   }
 })
 
-const isLogged = computed(() =>
-  store.getters['nocloud/auth/isLoggedIn']
-)
-
-const user = computed(() =>
-  store.getters['nocloud/auth/billingData']
-)
-
-const userdata = computed(() =>
-  store.getters['nocloud/auth/userdata']
-)
-
 const currency = computed(() => {
-  const currencies = store.getters['nocloud/auth/currencies']
-  const defaultCurrency = store.getters['nocloud/auth/defaultCurrency']
+  const { currencies, defaultCurrency } = storeToRefs(currenciesStore)
+  const { billingUser: user } = storeToRefs(authStore)
+  const code = currenciesStore.unloginedCurrency
 
-  const code = store.getters['nocloud/auth/unloginedCurrency']
-  const { rate } = currencies.find((el) =>
-    el.to === code && el.from === defaultCurrency
+  const { rate } = currencies.value.find((el) =>
+    el.to === code && el.from === defaultCurrency.value
   ) ?? {}
 
-  const { rate: reverseRate } = currencies.find((el) =>
-    el.from === code && el.to === defaultCurrency
+  const { rate: reverseRate } = currencies.value.find((el) =>
+    el.from === code && el.to === defaultCurrency.value
   ) ?? { rate: 1 }
 
-  if (!isLogged.value) return { rate: (rate) || 1 / reverseRate, code }
-  return { rate: 1, code: user.value.currency_code ?? defaultCurrency }
+  if (!authStore.isLogged) return { rate: (rate) || 1 / reverseRate, code }
+  return { rate: 1, code: user.value.currency_code ?? defaultCurrency.value }
 })
 
 const services = computed(() =>
@@ -227,12 +222,12 @@ function orderClickHandler () {
   const planItem = plans.value.find(({ uuid }) => uuid === plan.value)
 
   const instances = [{
-    config: { user: userdata.value.uuid },
+    config: { user: authStore.userdata.uuid },
     title: getProducts.value.title,
     billing_plan: planItem ?? {}
   }]
   const newGroup = {
-    title: user.value.fullname + Date.now(),
+    title: authStore.billingUser.fullname + Date.now(),
     type: sp.value.type,
     sp: sp.value.uuid,
     instances
@@ -246,7 +241,7 @@ function orderClickHandler () {
   if (group) group.instances = [...group.instances, ...instances]
   else if (service.value) info.instancesGroups.push(newGroup)
 
-  if (!userdata.value.uuid) {
+  if (!authStore.userdata.uuid) {
     store.commit('setOnloginRedirect', route.name)
     store.commit('setOnloginInfo', {
       type: 'openai',
@@ -273,7 +268,7 @@ function createOpenAI (info) {
     : {
         namespace: namespace.value,
         service: {
-          title: user.value.fullname,
+          title: authStore.billingUser.fullname,
           context: {},
           version: '1',
           instancesGroups: [info]
@@ -331,12 +326,12 @@ onMounted(() => {
 function fetch () {
   fetchLoading.value = true
   const promises = [
-    store.dispatch('nocloud/auth/fetchBillingData'),
-    plansStore.fetch({ anonymously: !isLogged.value }),
-    spStore.fetch(!isLogged.value)
+    authStore.fetchBillingData(),
+    plansStore.fetch({ anonymously: !authStore.isLogged }),
+    spStore.fetch(!authStore.isLogged)
   ]
 
-  if (isLogged.value) {
+  if (authStore.isLogged) {
     promises.push(
       namespacesStore.fetch(),
       store.dispatch('nocloud/vms/fetch')
@@ -353,8 +348,8 @@ function fetch () {
     fetchLoading.value = false
   })
 
-  if (store.getters['nocloud/auth/currencies'].length < 1) {
-    store.dispatch('nocloud/auth/fetchCurrencies')
+  if (currenciesStore.currencies.length < 1) {
+    currenciesStore.fetchCurrencies()
   }
 }
 
