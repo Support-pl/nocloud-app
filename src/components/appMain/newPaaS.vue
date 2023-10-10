@@ -217,7 +217,7 @@
               <a-col>
                 {{ options.os.name }}
                 <template v-if="priceOVH.addons.os">
-                  ({{ priceOVH.addons.os }} {{ billingData.currency_code }})
+                  ({{ priceOVH.addons.os }} {{ currency.code }})
                 </template>
               </a-col>
             </a-row>
@@ -480,10 +480,10 @@
                 (itemSP.type !== 'ovh' &&
                   score > 3 &&
                   password.length > 0 &&
-                  !isLoggedIn) ||
+                  !isLogged) ||
                   options.os.name &&
                   vmName &&
-                  !isLoggedIn
+                  !isLogged
               "
               class="products__unregistred"
               style="margin-bottom: 10px; text-align: center"
@@ -519,7 +519,7 @@
                 vmName == '' ||
                   !namespace ||
                   options.os.name == '' ||
-                  !isLoggedIn
+                  !isLogged
               "
               @click="() => (modal.confirmCreate = true)"
             >
@@ -535,7 +535,7 @@
                   vmName == '' ||
                   !namespace ||
                   options.os.name == '' ||
-                  !isLoggedIn
+                  !isLogged
               "
               @click="() => (modal.confirmCreate = true)"
             >
@@ -588,6 +588,9 @@
 import { mapState, mapActions } from 'pinia'
 import { mapGetters } from 'vuex'
 import { NcMap } from 'nocloud-ui'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
@@ -680,10 +683,11 @@ export default {
   },
 
   computed: {
+    ...mapState(useAuthStore, ['userdata', 'billingUser', 'isLogged']),
+    ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'unloginedCurrency']),
     ...mapState(useNamespasesStore, ['namespaces']),
     ...mapState(useSpStore, ['servicesProviders', 'getShowcases']),
     ...mapState(usePlansStore, ['plans']),
-    ...mapGetters('nocloud/auth', ['userdata', 'billingData', 'isLoggedIn']),
     ...mapGetters('nocloud/vms', ['getServicesFull']),
 
     itemService () {
@@ -920,20 +924,17 @@ export default {
       }
     },
     currency () {
-      const currencies = this.$store.getters['nocloud/auth/currencies']
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
-      const code = this.$store.getters['nocloud/auth/unloginedCurrency']
-      const { rate } = currencies.find((el) =>
-        el.to === code && el.from === defaultCurrency
+      const code = this.unloginedCurrency
+      const { rate } = this.currencies.find((el) =>
+        el.to === code && el.from === this.defaultCurrency
       ) ?? {}
 
-      const { rate: reverseRate } = currencies.find((el) =>
-        el.from === code && el.to === defaultCurrency
+      const { rate: reverseRate } = this.currencies.find((el) =>
+        el.from === code && el.to === this.defaultCurrency
       ) ?? { rate: 1 }
 
-      if (!this.isLoggedIn) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.billingData.currency_code ?? defaultCurrency }
+      if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
+      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
 
     diskSize () {
@@ -1028,7 +1029,7 @@ export default {
       this.isPlansLoading = true
       this.fetchPlans({
         sp_uuid: this.itemSP.uuid,
-        anonymously: !this.isLoggedIn
+        anonymously: !this.isLogged
       })
         .then(({ pool }) => {
           this.plan = this.filteredPlans[0]?.uuid ?? pool[0]?.uuid ?? ''
@@ -1049,13 +1050,13 @@ export default {
         })
 
       const type = this.options.drive ? 'SSD' : 'HDD'
-      const { min_drive_size, max_drive_size } = this.itemSP.vars
+      const { min_drive_size: minSize, max_drive_size: maxSize } = this.itemSP.vars
 
-      if (min_drive_size) {
-        this.options.disk.min = min_drive_size.value[type]
+      if (minSize) {
+        this.options.disk.min = minSize.value[type]
       }
-      if (max_drive_size) {
-        this.options.disk.max = max_drive_size.value[type]
+      if (maxSize) {
+        this.options.disk.max = maxSize.value[type]
       }
     },
     getPlan (value) {
@@ -1069,9 +1070,9 @@ export default {
     'options.os.name' () {
       if (this.options.disk.min > 0) return
       const { id } = this.options.os
-      const { min_size } = this.itemSP.publicData.templates[id]
+      const { min_size: minSize } = this.itemSP.publicData.templates[id]
 
-      this.options.disk.min = min_size / 1024
+      this.options.disk.min = minSize / 1024
     },
     'options.disk.size' (value) {
       if (value / 1024 >= 200) {
@@ -1098,8 +1099,8 @@ export default {
   },
   created () {
     this.showcase = this.$route.query.service ?? ''
-    this.fetchShowcases(!this.isLoggedIn)
-    this.fetchProviders(!this.isLoggedIn)
+    this.fetchShowcases(!this.isLogged)
+    this.fetchProviders(!this.isLogged)
       .then(async () => {
         const data = localStorage.getItem('data')
         const { query } = this.$route
@@ -1140,7 +1141,7 @@ export default {
         }
       })
 
-    if (this.isLoggedIn) {
+    if (this.isLogged) {
       Promise.all([
         this.$store.dispatch('nocloud/vms/fetch'),
         this.fetchNamespaces()
@@ -1151,17 +1152,13 @@ export default {
         })
     }
 
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies', {
-        anonymously: !this.isLoggedIn
-      })
-    }
+    if (this.currencies.length < 1) this.fetchCurrencies()
 
     this.$router.beforeEach((to, from, next) => {
       if (
         from.path === '/cloud/newVM' &&
         localStorage.getItem('data') &&
-        this.isLoggedIn
+        this.isLogged
       ) {
         const answer = (this.addfunds.amount === 0)
           ? window.confirm(this.$t('Data will be lost'))
@@ -1181,6 +1178,7 @@ export default {
     })
   },
   methods: {
+    ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     ...mapActions(useNamespasesStore, { fetchNamespaces: 'fetch' }),
     ...mapActions(useSpStore, {
       fetchProviders: 'fetch',

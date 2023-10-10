@@ -10,7 +10,7 @@
           position: 'absolute',
           width: '100%',
           height: '100%',
-          minHeight: (isLogged) ? 'auto' : '100vh'
+          minHeight: (authStore.isLogged) ? 'auto' : '100vh'
         }"
       />
     </transition>
@@ -20,24 +20,22 @@
 
 <script setup>
 import { computed, onMounted, watch } from 'vue'
-import store from '@/store'
+
 import router from '@/router'
 import i18n from '@/i18n.js'
 import api from '@/api.js'
 import config from '@/appconfig.js'
+
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
+
 import updateNotification from '@/components/updateNotification/index.vue'
 
 const route = router.currentRoute
 const appStore = useAppStore()
 const authStore = useAuthStore()
 
-const user = computed(() =>
-  store.getters['nocloud/auth/billingData']
-)
-
-watch(user, (value) => {
+watch(() => authStore.billingUser, (value) => {
   const isServicesExist = value.roles && !value.roles.services
 
   if (isServicesExist && ['root', 'services'].includes(route.name)) {
@@ -45,24 +43,22 @@ watch(user, (value) => {
   }
 })
 
-const isLogged = computed(() =>
-  store.getters['nocloud/auth/isLoggedIn']
-)
-
 function isRouteExist (name) {
   if (name === 'root') name = 'services'
-  if (!user.value.roles) return true
+  if (!authStore.billingUser.roles) return true
 
   switch (name) {
     case 'billing':
-      return user.value.roles?.invoice
+      return authStore.billingUser.roles?.invoice
 
     case 'settings':
       return true
 
     default:
-      if (!(name in user.value.roles)) return true
-      return user.value.roles[name]
+      if (!(name in authStore.billingUser.roles)) {
+        return true
+      }
+      return authStore.billingUser.roles[name]
   }
 }
 
@@ -82,8 +78,7 @@ function redirectByType ({ uuid, type }) {
 window.addEventListener('message', ({ data, origin }) => {
   if (!origin.includes('https://api.')) return
   api.applyToken(data.token)
-  store.commit('nocloud/auth/setToken', data.token)
-  store.dispatch('nocloud/auth/load')
+  authStore.setToken(data.token)
   authStore.load()
 
   if (data.uuid) redirectByType(data)
@@ -92,8 +87,7 @@ window.addEventListener('message', ({ data, origin }) => {
   }
 
   authStore.fetchUserData()
-  store.dispatch('nocloud/auth/fetchUserData')
-  store.dispatch('nocloud/auth/fetchBillingData')
+  authStore.fetchBillingData()
 })
 
 onMounted(() => {
@@ -102,40 +96,35 @@ onMounted(() => {
   window.opener = null
 })
 
-store.dispatch('nocloud/auth/load')
-authStore.load()
-
 router.beforeEach((to, _, next) => {
   const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined)
 
-  if (mustBeLoggined && !isLogged.value) {
+  if (mustBeLoggined && !authStore.isLogged) {
     next({ name: 'login' })
   } else if (!isRouteExist(to.name)) {
-    if (!user.value.roles?.services) {
+    if (!authStore.billingUser.roles?.services) {
       next({ name: 'settings' })
     } else {
       next({ name: 'root' })
     }
-  } else if (to.name === 'login' && isLogged.value) {
+  } else if (to.name === 'login' && authStore.isLogged) {
     next({ name: 'root' })
   } else next()
 })
 
 const lang = route.query.lang ?? localStorage.getItem('lang')
 
+authStore.load()
 if (lang) i18n.locale = lang
-if (isLogged.value) {
-  authStore.fetchUserData()
-  store.dispatch('nocloud/auth/fetchUserData')
-}
+if (authStore.isLogged) authStore.fetchUserData()
 
 onMounted(() => {
   router.onReady(() => {
     const route = router.currentRoute
-    const mustUnloggined = route.meta?.mustBeUnloggined && isLogged.value
+    const mustUnloggined = route.meta?.mustBeUnloggined && authStore.isLogged
     const isIncluded = ['cabinet', 'settings'].includes(route.name)
 
-    if (route.meta?.mustBeLoggined && !isLogged.value) {
+    if (route.meta?.mustBeLoggined && !authStore.isLogged) {
       router.replace('login')
     } else if (localStorage.getItem('oauth') && !isIncluded) {
       router.replace('cabinet')

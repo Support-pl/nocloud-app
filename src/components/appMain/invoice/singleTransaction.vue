@@ -53,11 +53,16 @@ import store from '@/store'
 import router from '@/router'
 import config from '@/appconfig.js'
 import { useAppStore } from '@/stores/app.js'
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 
 const props = defineProps({
   invoice: { type: Object, required: true }
 })
+
 const { toDate } = useAppStore()
+const authStore = useAuthStore()
+const currenciesStore = useCurrenciesStore()
 
 const costColor = computed(() => {
   if (props.invoice?.total < 0) {
@@ -69,17 +74,14 @@ const costColor = computed(() => {
   }
 })
 
-const currencies = computed(() =>
-  store.getters['nocloud/auth/currencies']
-)
 const currency = computed(() => {
-  const code = store.getters['nocloud/auth/billingData'].currency_code ?? 'USD'
-  const { rate } = currencies.value.find((el) =>
+  const code = authStore.billingUser.currency_code ?? 'USD'
+  const { rate } = currenciesStore.currencies.find((el) =>
     el.to === code && el.from === props.invoice.currency
   ) ?? {}
 
-  const { rate: reverseRate } = currencies.value.find((el) =>
-    el.from === code && el.to === props.invoice.currency
+  const { rate: reverseRate } = currenciesStore.currencies.find(
+    (el) => el.from === code && el.to === props.invoice.currency
   ) ?? { rate: 1 }
 
   return { code, rate: (rate) || 1 / reverseRate }

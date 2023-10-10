@@ -45,19 +45,21 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { notification } from 'ant-design-vue'
-import store from '@/store'
+
 import i18n from '@/i18n.js'
 import api from '@/api.js'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useProductsStore } from '@/stores/products.js'
 
 const props = defineProps({
   service: { type: Object, required: true }
 })
 
-const isLoginLoading = ref(false)
+const authStore = useAuthStore()
+const productsStore = useProductsStore()
 
-const baseURL = computed(() =>
-  store.getters['products/getURL']
-)
+const isLoginLoading = ref(false)
 
 const serviceUsed = computed(() =>
   props.service.state?.meta?.account.reduce((result, value) => ({
@@ -98,14 +100,10 @@ function getPercent (value) {
 async function logIntoCpanel () {
   try {
     isLoginLoading.value = true
-    const user = await store.dispatch('nocloud/auth/fetchBillingData')
+    const user = await authStore.fetchBillingData()
     const response = await api.get(
-      `${baseURL.value}/cpanel.createSession.php`,
-      {
-        params: {
-          serviceid: props.service.id, userid: user.client_id
-        }
-      }
+      `${productsStore.baseURL}/cpanel.createSession.php`,
+      { params: { serviceid: props.service.id, userid: user.client_id } }
     )
 
     if (response.result === 'error') throw new Error(response)

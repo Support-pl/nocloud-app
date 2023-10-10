@@ -568,7 +568,9 @@
 import { defineComponent } from 'vue'
 import { mapState } from 'pinia'
 import { useSpStore } from '@/stores/sp.js'
-import notification from '@/mixins/notification'
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+import notification from '@/mixins/notification.js'
 import addFunds from '@/components/balance/addFunds.vue'
 
 const columns = [
@@ -646,9 +648,8 @@ export default defineComponent({
   }),
   computed: {
     ...mapState(useSpStore, ['servicesProviders']),
-    baseURL () {
-      return this.$store.getters['support/getURL']
-    },
+    ...mapState(useAuthStore, ['userdata', 'baseURL']),
+    ...mapState(useCurrenciesStore, ['defaultCurrency']),
     statusVM () {
       if (!this.VM) return
       const isSuspended = this.VM.state.meta.state === 1 || this.VM.data.suspended_manually
@@ -721,9 +722,7 @@ export default defineComponent({
         .reduce((sum, curr) => sum + curr)
     },
     currency () {
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
-      return { code: this.user.currency ?? defaultCurrency }
+      return { code: this.userdata.currency ?? this.defaultCurrency }
     },
 
     inbChartDataReady () {
@@ -803,9 +802,6 @@ export default defineComponent({
       return data
     },
 
-    user () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
     dataSP () {
       return this.servicesProviders.find((el) => el.uuid === this.VM.sp)
     },
@@ -885,12 +881,12 @@ export default defineComponent({
     checkBalance () {
       const sum = this.VM.billingPlan?.products[this.VM.product]?.price ?? 0
 
-      if (this.user.balance < parseFloat(sum)) {
+      if (this.userdata.balance < parseFloat(sum)) {
         this.$confirm({
           title: this.$t('You do not have enough funds on your balance'),
           content: this.$t('Click OK to replenish the account with the missing amount'),
           onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.user.balance)
+            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
             this.addfunds.visible = true
           }
         })

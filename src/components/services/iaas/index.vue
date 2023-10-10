@@ -212,10 +212,14 @@
 </template>
 
 <script>
-import { mapActions } from 'pinia'
+import { mapActions, mapState } from 'pinia'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useProductsStore } from '@/stores/products.js'
+
 import config from '@/appconfig.js'
 import addFunds from '@/components/balance/addFunds.vue'
-import { useProductsStore } from '@/stores/products'
 
 export default {
   name: 'IaasComponent',
@@ -237,6 +241,19 @@ export default {
     currencies: []
   }),
   computed: {
+    ...mapState(useAuthStore, [
+      'baseURL',
+      'isLogged',
+      'userdata',
+      'billingUser',
+      'fetchBillingData'
+    ]),
+    ...mapState(useCurrenciesStore, [
+      'currencies',
+      'defaultCurrency',
+      'unloginedCurrency',
+      'fetchCurrencies'
+    ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const findedProduct = this.products.find(({ id }) => id === +this.$route.query.product) ??
@@ -298,27 +315,13 @@ export default {
         return { ...result, total: result.value + result.onetime }
       }, { value: 0, onetime: 0, total: 0 })
     },
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
-    },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
     currency () {
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
-
       const code = (this.isLogged)
-        ? this.user.currency_code ?? defaultCurrency
-        : this.$store.getters['nocloud/auth/unloginedCurrency']
+        ? this.billingUser.currency_code ?? this.defaultCurrency
+        : this.unloginedCurrency
       const { id = -1 } = this.currencies?.find((currency) => currency.code === code) ?? {}
 
       return { code, id }
-    },
-    baseURL () {
-      return this.$store.getters['nocloud/auth/getURL']
     }
   },
   watch: {
@@ -349,7 +352,7 @@ export default {
   },
   created () {
     if (this.currencies.length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies')
+      this.fetchCurrencies()
     }
 
     this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
@@ -367,7 +370,7 @@ export default {
         this.options.payment = res.paymentmethod[0].module
       })
 
-    this.$store.dispatch('nocloud/auth/fetchBillingData')
+    this.fetchBillingData()
     this.fetch()
   },
   mounted () {
@@ -380,6 +383,8 @@ export default {
     action()
   },
   methods: {
+    ...mapActions(useAuthStore, ['fetchBillingData']),
+    ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     ...mapActions(useProductsStore, ['fetchServices']),
     fetch () {
       this.fetchLoading = true

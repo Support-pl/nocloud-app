@@ -61,181 +61,194 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth.js'
+import { useSpStore } from '@/stores/sp.js'
+import router from '@/router'
+import i18n from '@/i18n'
+import api from '@/api.js'
 import config from '@/appconfig.js'
 
-export default {
-  name: 'CloudItem',
-  props: {
-    instance: { type: Object, required: true }
-  },
-  data: () => ({ activeKey: [], prices: {} }),
-  computed: {
-    statusColor () {
-      switch (this.instance.domainstatus) {
-        case 'RUNNING':
-        case 'Active':
-          return 'var(--success)'
-        // останавливающийся и запускающийся
-        case 'BOOT':
-        case 'BUILD':
-        case 'BOOT_POWEROFF':
-        case 'SHUTDOWN_POWEROFF':
-          return 'var(--warn)'
-        case 'LCM_INIT':
-        case 'STOPPED':
-        case 'SUSPENDED':
-          return '#ff9140'
-        case 'OPERATION':
-        case 'PENDING':
-        case 'Pending':
-          return 'var(--main)'
-        default:
-          return 'var(--err)'
-      }
-    },
-    dateColor () {
-      if (this.isExpired) return 'var(--err)'
-      if (this.isPayg) return 'var(--main)'
-      if (this.localDate === 'none') return 'var(--gray)'
-      return null
-    },
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
-    },
-    getSP () {
-      return this.$store.getters['nocloud/sp/getSP']
-    },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
-    },
-    isLoading () {
-      return this.$store.getters['nocloud/vms/isLoading']
-    },
-    locationTitle () {
-      const sp = this.getSP.find(({ uuid }) => uuid === this.instance.sp)
-      if (sp?.type !== 'ovh') return sp?.locations[0]?.title
+const props = defineProps({
+  instance: { type: Object, required: true }
+})
 
-      const { configuration = {}, region } = this.instance.config
-      const { locations } = sp
-      const key = Object.keys(configuration).find(
-        (el) => el.includes('datacenter')
-      ) ?? 'region'
+const authStore = useAuthStore()
+const providersStore = useSpStore()
 
-      if (key === 'region') configuration.region = region
+const activeKey = ref([])
+const prices = ref({})
 
-      return locations?.find(({ extra }) =>
-        extra.region.toLowerCase() === configuration[key].toLowerCase()
-      )?.title
-    },
-    price () {
-      const amount = this.prices[this.instance.resources?.period] ??
-        this.instance.recurringamount ?? this.instance.orderamount
+const statusColor = computed(() => {
+  switch (props.instance.domainstatus) {
+    case 'RUNNING':
+    case 'Active':
+      return 'var(--success)'
+    // останавливающийся и запускающийся
+    case 'BOOT':
+    case 'BUILD':
+    case 'BOOT_POWEROFF':
+    case 'SHUTDOWN_POWEROFF':
+      return 'var(--warn)'
+    case 'LCM_INIT':
+    case 'STOPPED':
+    case 'SUSPENDED':
+      return '#ff9140'
+    case 'OPERATION':
+    case 'PENDING':
+    case 'Pending':
+      return 'var(--main)'
+    default:
+      return 'var(--err)'
+  }
+})
 
-      return +(+amount)?.toFixed(2) ?? 0
-    },
-    localDate () {
-      const productDate = new Date(this.instance.date ?? 0)
+const locationTitle = computed(() => {
+  const sp = providersStore.servicesProviders.find(
+    ({ uuid }) => uuid === props.instance.sp
+  )
+  if (sp?.type !== 'ovh') return sp?.locations[0]?.title
 
-      if (this.instance.data?.blocked) return this.$t('filterHeader.In Progress')
-      if (this.isPayg) return this.$t('PayG')
-      if (productDate.getTime() === 0) return 'none'
-      if (this.instance.date === '0000-00-00') return 'none'
-      // if (this.wholeProduct.groupname === 'Domains') {
-      //   const date = productDate.getTime();
+  const { configuration = {}, region } = props.instance.config
+  const key = Object.keys(configuration).find(
+    (el) => el.includes('datacenter')
+  ) ?? 'region'
 
-      //   return this.$tc('year', date);
-      // }
-      if (this.instance.groupname === 'SSL') {
-        const date = productDate.getTime()
+  if (key === 'region') configuration.region = region
 
-        return this.$tc('month', date)
-      }
-      return new Intl.DateTimeFormat().format(productDate)
-    },
-    currency () {
-      const defaultCurrency = this.$store.getters['nocloud/auth/defaultCurrency']
+  return sp.locations?.find(({ extra }) =>
+    extra.region.toLowerCase() === configuration[key].toLowerCase()
+  )?.title
+})
 
-      return { code: this.user.currency_code ?? defaultCurrency }
-    },
+const price = computed(() => {
+  const amount = prices.value[props.instance.resources?.period] ??
+    props.instance.recurringamount ?? props.instance.orderamount
 
-    isPayg () {
-      if (this.instance.groupname === 'OpenAI') return true
-      return this.instance.type === 'ione' && this.instance.billingPlan.kind === 'DYNAMIC'
-    },
-    isExpired () {
-      const productDate = new Date(this.instance.date)
-      const timestamp = productDate.getTime() - Date.now()
-      const days = 7 * 24 * 3600 * 1000
+  return +(+amount)?.toFixed(2) ?? 0
+})
 
-      if (this.instance.groupname === 'SSL') return
-      if (this.instance.date === 0) return
-      return timestamp < days
-    },
-    networking () {
-      const { networking } = this.instance?.state?.meta ?? {}
+const currency = computed(() => ({
+  code: authStore.billingUser.currency_code ?? authStore.defaultCurrency
+}))
 
-      if (!networking) return []
-      const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
+const isPayg = computed(() => {
+  if (props.instance.groupname === 'OpenAI') return true
+  return props.instance.type === 'ione' && props.instance.billingPlan.kind === 'DYNAMIC'
+})
 
-      const publicIPs = (this.instance.type === 'ovh')
-        ? networking.public?.filter((el) => !regexp.test(el))
-        : networking.public
-      const privateIPs = (this.instance.type === 'ovh')
-        ? networking.private?.filter((el) => !regexp.test(el))
-        : networking.private
+const isExpired = computed(() => {
+  const productDate = new Date(props.instance.date)
+  const timestamp = productDate.getTime() - Date.now()
+  const days = 7 * 24 * 3600 * 1000
 
-      return [...publicIPs ?? [], ...privateIPs ?? []]
-    },
-    title () {
-      return (!this.activeKey.includes('1')) ? `IP: ${this.networking[0]}` : 'IP\'s:'
-    },
-    getModuleProductBtn () {
-      const serviceType = config.getServiceType(this.instance.groupname)?.toLowerCase()
-      const isActive = ['active', 'running'].includes(this.instance.domainstatus?.toLowerCase())
-      const key = this.instance.product ?? this.instance.config?.product
-      const { meta } = this.instance.billingPlan?.products[key] ?? {}
+  if (props.instance.groupname === 'SSL') return
+  if (props.instance.date === 0) return
+  return timestamp < days
+})
 
-      const components = import.meta.glob('@/components/services/*/lilbtn.vue')
-      const component = Object.keys(components).find((key) =>
-        key.includes(`/${serviceType}/lilbtn.vue`)
-      )
+const localDate = computed(() => {
+  const productDate = new Date(props.instance.date ?? 0)
 
-      if (meta?.renew === false) return
-      if (serviceType === undefined) return
-      if (this.instance.date === 0) return
-      if (this.instance.server_on) return
-      if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return
-      return () => components[component]()
-    }
-  },
-  created () {
-    if (this.instance.groupname !== 'Domains') return
-    this.$api.servicesProviders.action({
-      uuid: this.instance.sp,
-      action: 'get_domain_price',
-      params: { domain: this.domain }
-    })
-      .then(({ meta }) => { this.prices = meta.prices })
-      .catch((err) => { console.error(err) })
-  },
-  methods: {
-    cloudClick (service, { target }) {
-      const { groupname, orderid, hostingid, server_on: isServer, id } = service
+  if (props.instance.data?.blocked) return i18n.t('filterHeader.In Progress')
+  if (isPayg.value) return i18n.t('PayG')
+  if (productDate.getTime() === 0) return 'none'
+  if (props.instance.date === '0000-00-00') return 'none'
+  // if (props.instance.groupname === 'Domains') {
+  //   const date = productDate.getTime();
 
-      if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return
-      if (id && isServer) {
-        this.$router.push({ name: 'openCloud_new', params: { uuid: id } })
-      } else if (hostingid) {
-        this.$router.push({ name: 'service', params: { id: hostingid } })
-      } else if (groupname === 'Self-Service VDS SSD HC') {
-        this.$router.push({ name: 'openCloud_new', params: { uuid: orderid } })
-      } else {
-        this.$router.push({ name: 'service', params: { id: orderid } })
-      }
-    }
+  //   return i18n.tc('year', date);
+  // }
+  if (props.instance.groupname === 'SSL') {
+    const date = productDate.getTime()
+
+    return i18n.tc('month', date)
+  }
+  return new Intl.DateTimeFormat().format(productDate)
+})
+
+const dateColor = computed(() => {
+  if (isExpired.value) return 'var(--err)'
+  if (isPayg.value) return 'var(--main)'
+  if (localDate.value === 'none') return 'var(--gray)'
+  return null
+})
+
+const networking = computed(() => {
+  const { networking } = props.instance?.state?.meta ?? {}
+
+  if (!networking) return []
+  const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
+
+  const publicIPs = (props.instance.type === 'ovh')
+    ? networking.public?.filter((el) => !regexp.test(el))
+    : networking.public
+  const privateIPs = (props.instance.type === 'ovh')
+    ? networking.private?.filter((el) => !regexp.test(el))
+    : networking.private
+
+  return [...publicIPs ?? [], ...privateIPs ?? []]
+})
+
+const title = computed(() =>
+  (!activeKey.value.includes('1')) ? `IP: ${networking.value[0]}` : 'IP\'s:'
+)
+
+const getModuleProductBtn = computed(() => {
+  const serviceType = config.getServiceType(props.instance.groupname)?.toLowerCase()
+  const isActive = ['active', 'running'].includes(props.instance.domainstatus?.toLowerCase())
+  const key = props.instance.product ?? props.instance.config?.product
+  const { meta } = props.instance.billingPlan?.products[key] ?? {}
+
+  const components = import.meta.glob('@/components/services/*/lilbtn.vue')
+  const component = Object.keys(components).find((key) =>
+    key.includes(`/${serviceType}/lilbtn.vue`)
+  )
+
+  if (meta?.renew === false) return
+  if (serviceType === undefined) return
+  if (props.instance.date === 0) return
+  if (props.instance.server_on) return
+  if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return
+  return () => components[component]()
+})
+
+function cloudClick (service, { target }) {
+  const { groupname, orderid, hostingid, server_on: isServer, id } = service
+
+  if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return
+  if (id && isServer) {
+    router.push({ name: 'openCloud_new', params: { uuid: id } })
+  } else if (hostingid) {
+    router.push({ name: 'service', params: { id: hostingid } })
+  } else if (groupname === 'Self-Service VDS SSD HC') {
+    router.push({ name: 'openCloud_new', params: { uuid: orderid } })
+  } else {
+    router.push({ name: 'service', params: { id: orderid } })
   }
 }
+
+async function fetch () {
+  if (props.instance.groupname !== 'Domains') return
+  try {
+    const { meta } = await api.servicesProviders.action({
+      uuid: props.instance.sp,
+      action: 'get_domain_price',
+      params: { domain: props.instance.domain }
+    })
+
+    prices.value = meta.prices
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+fetch()
+</script>
+
+<script>
+export default { name: 'CloudItem' }
 </script>
 
 <style>

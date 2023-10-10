@@ -235,15 +235,19 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { mapState } from 'pinia'
-import diskControl from './openCloud/diskControl.vue'
-import bootOrder from './openCloud/bootOrder.vue'
-import networkControl from './openCloud/networkControl.vue'
-import accessManager from './openCloud/accessManager.vue'
+import { mapState, mapActions } from 'pinia'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useSpStore } from '@/stores/sp.js'
+import { useProductsStore } from '@/stores/products.js'
+
+import diskControl from '@/components/appMain/cloud/openCloud/diskControl.vue'
+import bootOrder from '@/components/appMain/cloud/openCloud/bootOrder.vue'
+import networkControl from '@/components/appMain/cloud/openCloud/networkControl.vue'
+import accessManager from '@/components/appMain/cloud/openCloud/accessManager.vue'
 import loading from '@/components/loading/loading.vue'
 import notification from '@/mixins/notification.js'
-import { useProductsStore } from '@/stores/products'
-import { useSpStore } from '@/stores/sp'
 
 export default {
   name: 'OpenCloud',
@@ -285,11 +289,9 @@ export default {
     type: ''
   }),
   computed: {
-    ...mapGetters('nocloud/vms', [
-      'getActionLoadingInvoke',
-      'getServicesFull',
-      'getInstances'
-    ]),
+    ...mapGetters('nocloud/vms', ['getActionLoadingInvoke', 'getServicesFull', 'getInstances']),
+    ...mapState(useAuthStore, ['isLogged', 'baseURL']),
+    ...mapState(useCurrenciesStore, ['currencies']),
     ...mapState(useProductsStore, {
       products: 'products',
       fetchProducts: 'fetch'
@@ -298,7 +300,6 @@ export default {
       sp: 'servicesProviders',
       fetchProviders: 'fetch'
     }),
-    ...mapGetters('support', { baseURL: 'getURL' }),
     template () {
       const components = import.meta.glob('@/components/appMain/modules/*/openInstance.vue')
       const component = Object.keys(components).find((key) => key.includes(`/${this.type}/`))
@@ -453,9 +454,6 @@ export default {
         default:
           return 'var(--err)'
       }
-    },
-    isLogged () {
-      return this.$store.getters['nocloud/auth/isLoggedIn']
     }
   },
   watch: {
@@ -495,7 +493,7 @@ export default {
     }
 
     if (this.isLogged) {
-      this.$store.dispatch('nocloud/auth/fetchBillingData')
+      this.fetchBillingData()
         .then(({ client_id: id }) => {
           this.fetchProducts(id)
         })
@@ -522,17 +520,15 @@ export default {
         })
     }
 
-    if (this.$store.getters['nocloud/auth/currencies'].length < 1) {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies', {
-        anonymously: !this.isLoggedIn
-      })
-    }
+    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   destroyed () {
     if (!this.$store.state.nocloud.vms.socket) return
     this.$store.state.nocloud.vms.socket.close(1000, 'Work is done')
   },
   methods: {
+    ...mapActions(useAuthStore, ['fetchBillingData']),
+    ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     disabledMenu (menuName) {
       const states = ['RUNNING', 'STOPPED', 'POWEROFF', 'SUSPENDED']
 

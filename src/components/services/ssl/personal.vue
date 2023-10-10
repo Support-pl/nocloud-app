@@ -1,14 +1,16 @@
 <template>
   <div>
     <a-form-model
+      v-if="personal.firstname"
       ref="personalForm"
       :model="personal"
       :rules="rules"
-      v-if="personal.firstname"
     >
-      <a-divider orientation="left">{{
-        $t("ssl_product.technical_Contact")
-      }}</a-divider>
+      <a-divider orientation="left">
+        {{
+          $t("ssl_product.technical_Contact")
+        }}
+      </a-divider>
       <a-alert
         style="margin: 10px"
         :message="$t('ssl_product.personal_warning')"
@@ -16,7 +18,7 @@
         show-icon
       />
       <a-form-model-item :label="$t('ssl_product.order type')" prop="order">
-        <a-select placeholder=" Please choose one..." v-model="personal.order">
+        <a-select v-model="personal.order" placeholder=" Please choose one...">
           <a-select-option value="newOrder">
             {{ $t("ssl_product.new order") }}
           </a-select-option>
@@ -31,9 +33,15 @@
           v-model="personal.webserver"
           placeholder="Please choose one..."
         >
-          <a-select-option value="Nginx"> Nginx </a-select-option>
-          <a-select-option value="Apache"> Apache </a-select-option>
-          <a-select-option value="IIS"> IIS (Windows OS) </a-select-option>
+          <a-select-option value="Nginx">
+            Nginx
+          </a-select-option>
+          <a-select-option value="Apache">
+            Apache
+          </a-select-option>
+          <a-select-option value="IIS">
+            IIS (Windows OS)
+          </a-select-option>
         </a-select>
       </a-form-model-item>
 
@@ -79,13 +87,15 @@
             :key="country"
             :value="country"
           >
-           {{ country }}: {{ $t(`country.${country}`) }}
+            {{ country }}: {{ $t(`country.${country}`) }}
           </a-select-option>
         </a-select>
       </a-form-model-item>
 
-      <div v-if="orgVerification.includes(this.product_info.id)">
-        <a-divider orientation="left">Company details</a-divider>
+      <div v-if="orgVerification.includes(product_info.id)">
+        <a-divider orientation="left">
+          Company details
+        </a-divider>
 
         <a-form-model-item
           v-for="(val, key) in companyFields"
@@ -113,16 +123,16 @@
       </div>
 
       <a-form-model-item>
-        <a-button type="primary" @click="$emit('handleClickPrev', personal)"
-          ><a-icon type="left" /> {{ $t("ssl_product.back") }}
+        <a-button type="primary" @click="$emit('handleClickPrev', personal)">
+          <a-icon type="left" /> {{ $t("ssl_product.back") }}
         </a-button>
         <a-button
           type="primary"
-          @click="handleClickNext"
           style="margin-left: 10px"
+          @click="handleClickNext"
         >
-          {{ $t("ssl_product.continue") }} <a-icon type="right"
-        /></a-button>
+          {{ $t("ssl_product.continue") }} <a-icon type="right" />
+        </a-button>
       </a-form-model-item>
     </a-form-model>
 
@@ -130,22 +140,38 @@
   </div>
 </template>
 
-<script>
-import empty from "@/components/empty/empty.vue";
-import { countries } from "@/setup/countries";
+<script setup>
+import { onMounted, ref, set } from 'vue'
+import { message } from 'ant-design-vue'
+
+import i18n from '@/i18n.js'
+import { useAuthStore } from '@/stores/auth.js'
+
+import { countries } from '@/setup/countries'
+import empty from '@/components/empty/empty.vue'
+
+const props = defineProps({
+  csr: { type: Object, default: () => {} },
+  product_info: { type: Object, default: () => {} },
+  personal_back: { type: Object, default: () => {} }
+})
+const emits = defineEmits(['handleClickNext'])
+
+const authStore = useAuthStore()
 
 const interestedKeys = [
-  "firstname",
-  "lastname",
-  "email",
-  "address1",
-  "city",
-  "state",
-  "phonenumber",
-  "result",
-  "country",
-  "companyname",
-];
+  'firstname',
+  'lastname',
+  'email',
+  'address1',
+  'city',
+  'state',
+  'phonenumber',
+  'result',
+  'country',
+  'companyname'
+]
+
 const companyFields = {
   org_name: true,
   org_division: true,
@@ -155,143 +181,129 @@ const companyFields = {
   org_region: true,
   org_lei: false,
   org_postalcode: true,
-  org_phone: true,
-};
+  org_phone: true
+}
 
-export default {
-  name: "Personal-data",
-  components: { empty },
-  props: {
-    csr: { type: Object, default: () => {} },
-    product_info: { type: Object, default: () => {} },
-    personal_back: { type: Object, default: () => {} },
-  },
-  data() {
-    return {
-      countries,
-      companyFields,
-      orgVerification: [843, 958, 838, 839, 837, 841, 840, 874, 976, 1151],
-      personal: {
-        webserver: "Nginx",
-        order: "newOrder",
-      },
-      rules: {
-        org_country: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        order: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        webserver: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        firstname: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        lastname: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        companyname: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        email: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        address1: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        city: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        state: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        country: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        phonenumber: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-      },
-    };
-  },
-  computed: {
-    userData() {
-      return this.$store.getters['nocloud/auth/billingData'];
+const orgVerification = [843, 958, 838, 839, 837, 841, 840, 874, 976, 1151]
+const personalForm = ref(null)
+const personal = ref({
+  webserver: 'Nginx',
+  order: 'newOrder'
+})
+
+const rules = {
+  org_country: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
     }
-  },
-  methods: {
-    handleClickNext() {
-      this.$refs.personalForm.validate((valid) => {
-        if (valid) {
-          if ("csr" in this.personal) delete this.personal.csr;
-          this.$emit("handleClickNext", this.personal);
-        } else {
-          this.$message.error(`${this.$t("ssl_product.fields is required")}`);
-          return false;
+  ],
+  order: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  webserver: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  firstname: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  lastname: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  companyname: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  email: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  address1: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  city: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  state: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  country: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ],
+  phonenumber: [
+    {
+      required: true,
+      message: `${i18n.t('ssl_product.field is required')}`
+    }
+  ]
+}
+
+function handleClickNext () {
+  personalForm.value.validate((valid) => {
+    if (valid) {
+      if ('csr' in personal.value) delete personal.value.csr
+      emits('handleClickNext', personal.value)
+    } else {
+      message.error(`${i18n.t('ssl_product.fields is required')}`)
+      return false
+    }
+  })
+}
+
+function installDataToBuffer () {
+  if (props.personal_back.firstname) {
+    personal.value = Object.assign({}, personal.value, props.personal_back)
+  } else {
+    interestedKeys.forEach((key) => {
+      set(personal.value, key, authStore.billingUser[key])
+    })
+    personal.value = Object.assign({}, personal.value, props.csr)
+  }
+}
+
+onMounted(() => {
+  installDataToBuffer()
+  if (orgVerification.includes(props.product_info.id)) {
+    for (const keyField in companyFields) {
+      rules[keyField] = [
+        {
+          required: companyFields[keyField],
+          message: `${i18n.t('ssl_product.field is required')}`
         }
-      });
-    },
-    installDataToBuffer() {
-      if (this.personal_back.firstname) {
-        this.personal = Object.assign({}, this.personal, this.personal_back);
-      } else {
-        interestedKeys.forEach((key) => {
-          this.$set(this.personal, key, this.userData[key]);
-        });
-        this.personal = Object.assign({}, this.personal, this.csr);
-      }
-    },
-  },
-  mounted() {
-    this.installDataToBuffer();
-    if (this.orgVerification.includes(this.product_info.id)) {
-      for (let keyField in this.companyFields) {
-        this.rules[keyField] = [
-          {
-            required: this.companyFields[keyField],
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ];
-      }
+      ]
     }
-  },
-};
+  }
+})
 </script>
 
+<script>
+export default { name: 'PersonalData' }
+</script>

@@ -110,13 +110,16 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { notification } from 'ant-design-vue'
-import { useSpStore } from '@/stores/sp.js'
-import order from '@/components/services/domains/order.vue'
-import loading from '@/components/loading/loading.vue'
+
 import i18n from '@/i18n'
 import api from '@/api'
-import store from '@/store'
+import { useSpStore } from '@/stores/sp.js'
+import { useAuthStore } from '@/stores/auth.js'
 
+import order from '@/components/services/domains/order.vue'
+import loading from '@/components/loading/loading.vue'
+
+const authStore = useAuthStore()
 const providersStore = useSpStore()
 
 const itemsInCart = ref(0) // в корзине
@@ -206,7 +209,7 @@ function removeFromCart (domain, index) {
 async function fetch () {
   try {
     await Promise.all([
-      store.dispatch('nocloud/auth/fetchBillingData'),
+      authStore.fetchBillingData(),
       providersStore.fetch()
     ])
   } catch (error) {
