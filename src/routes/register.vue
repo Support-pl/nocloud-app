@@ -89,7 +89,7 @@
                 option-filter-prop="children"
               >
                 <a-select-option v-for="country in countries" :key="country.code" :value="country.code">
-                  {{ country.title }}
+                  {{ $t(`country.${country.code}`) }}
                 </a-select-option>
               </a-select>
 

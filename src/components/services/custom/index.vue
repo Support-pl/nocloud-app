@@ -275,6 +275,10 @@ export default {
       )
     }
 
+    if (this.spStore.getShowcases.length < 1) {
+      this.spStore.fetchShowcases(!this.isLogged)
+    }
+
     Promise.all(promises).catch((err) => {
       const message = err.response?.data?.message ?? err.message ?? err
 
@@ -287,19 +291,17 @@ export default {
   },
   methods: {
     changeProducts (plan) {
-      const sortedProducts = Object.entries(plan.products ?? {})
+      const sortedProducts = Object.entries(plan?.products ?? {})
 
-      this.products = plan.products ?? {}
+      this.products = plan?.products ?? {}
       this.plan = plan?.uuid
 
       sortedProducts.sort(([, a], [, b]) => a.sorter - b.sorter)
-      this.sizes = sortedProducts.map(
-        ([key, value]) => ({
-          key,
-          label: value.title,
-          group: value.group ?? value.title
-        })
-      )
+      this.sizes = sortedProducts.map(([key, value]) => ({
+        key,
+        label: value.title,
+        group: value.group ?? value.title
+      }))
       this.options.size = this.sizes[0]?.key ?? ''
       this.periods = []
 
@@ -538,7 +540,7 @@ export default {
 
 .order__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-top: 10px;
 }
@@ -572,7 +574,7 @@ export default {
 
 @media (max-width: 576px) {
   .order__grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 }
 

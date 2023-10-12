@@ -790,7 +790,7 @@ export default {
     getProducts () {
       const isDynamic = this.getPlan.kind === 'DYNAMIC'
       const isIone = this.getPlan.type === 'ione'
-      const titles = []
+      const titles = {}
 
       const { products } = (isDynamic && isIone)
         ? this.plans.find(({ uuid }) =>
@@ -803,11 +803,12 @@ export default {
 
         if (!product.public) return
         if (isEqual || this.getPlan.kind === 'DYNAMIC') {
-          titles.splice(product.sorter, 0, product.title)
+          titles[product.sorter] = product.title
         }
       })
+      const { length } = Object.keys(titles)
 
-      return titles
+      return Array.from({ ...titles, length })
     },
 
     productFullPriceStatic () {

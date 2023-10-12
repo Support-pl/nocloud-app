@@ -2,10 +2,12 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import cookies from 'js-cookie'
 import { useAuthStore } from './auth.js'
+import { useCurrenciesStore } from './currencies.js'
 import api from '@/api.js'
 
 export const useInstancesStore = defineStore('instances', () => {
-  const store = useAuthStore()
+  const authStore = useAuthStore()
+  const currenciesStore = useCurrenciesStore()
 
   const services = ref([])
   const instances = ref([])
@@ -38,11 +40,10 @@ export const useInstancesStore = defineStore('instances', () => {
 
     service.instancesGroups.forEach(group => {
       group.instances.forEach((inst) => {
+        const { currencies, defaultCurrency } = currenciesStore
         const {
-          currencies,
-          defaultCurrency,
           billingUser: { currency_code: code = defaultCurrency }
-        } = store
+        } = authStore
 
         const { rate } = currencies.find((el) =>
           el.from === defaultCurrency && el.to === code
@@ -97,8 +98,8 @@ export const useInstancesStore = defineStore('instances', () => {
         isLoading.value = !silent
         const response = await api.services.list()
 
-        if (store.currencies.length < 1) {
-          await store.fetchCurrencies()
+        if (currenciesStore.currencies.length < 1) {
+          await currenciesStore.fetchCurrencies()
         }
 
         services.value = response.pool

@@ -32,7 +32,8 @@ export default defineComponent({
   },
   data: () => ({
     addfunds: { visible: false, amount: 0 },
-    isLoading: false
+    isLoading: false,
+    autoRenew: false
   }),
   computed: {
     ...mapState(useAuthStore, ['userdata']),
@@ -100,6 +101,9 @@ export default defineComponent({
       }
     }
   },
+  mounted () {
+    this.autoRenew = this.service.config.auto_renew
+  },
   methods: {
     moduleEnter () {
       if (!this.checkBalance()) return
@@ -136,9 +140,17 @@ export default defineComponent({
               <a-switch
                 size="small"
                 loading={ this.isLoading }
-                checked={ this.service.config.auto_renew }
-                onChange={ this.onChange }
+                checked={ this.autoRenew }
+                onChange={ (value) => { this.autoRenew = value } }
               />
+              { (this.service.config.auto_renew !== this.autoRenew) && <a-button
+                size="small"
+                type="primary"
+                style="margin-left: 5px"
+                onClick={ this.onClick }
+              >
+                OK
+              </a-button> }
             </div>
 
             <div style="margin-top: 10px">
@@ -183,7 +195,7 @@ export default defineComponent({
         onCancel () {}
       })
     },
-    onChange (value) {
+    onClick () {
       const services = this.$store.getters['nocloud/vms/getServicesFull']
       const service = services.find(({ uuid }) => uuid === this.service.uuidService)
       const instance = service.instancesGroups
@@ -191,7 +203,7 @@ export default defineComponent({
         .find(({ uuid }) => uuid === this.service.uuid)
 
       this.isLoading = true
-      this.$set(instance.data, 'auto_renew', value)
+      this.$set(instance.config, 'auto_renew', this.autoRenew)
       this.$store.dispatch('nocloud/vms/updateService', service)
         .then(() => {
           const message = this.$t('Done')
