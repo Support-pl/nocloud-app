@@ -21,21 +21,21 @@
     </div>
     <div class="login__main login__layout">
       <div class="login__UI">
-        <div v-if="getOnlogin.info" class="login__action-info">
+        <div v-if="appStore.onLogin.info" class="login__action-info">
           {{ $t('comp_services.Your orders') }}:
           <div class="order__card">
             <div class="order__icon">
-              <a-icon :type="config.services[getOnlogin.info.type]?.icon" />
+              <a-icon :type="config.services[appStore.onLogin.info.type]?.icon" />
             </div>
             <div class="order__info">
               <div class="order__title">
-                {{ getOnlogin.info.title }}
+                {{ appStore.onLogin.info.title }}
               </div>
               <div class="order__cost">
-                {{ getOnlogin.info.cost }} {{ getOnlogin.info.currency }}
+                {{ appStore.onLogin.info.cost }} {{ appStore.onLogin.info.currency }}
               </div>
             </div>
-            <div class="order__remove" @click="$store.commit('clearOnlogin')">
+            <div class="order__remove" @click="appStore.clearOnLogin">
               <a-icon type="close" />
             </div>
           </div>
@@ -89,7 +89,7 @@
                 option-filter-prop="children"
               >
                 <a-select-option v-for="country in countries" :key="country.code" :value="country.code">
-                  {{ country.title }}
+                  {{ $t(`country.${country.code}`) }}
                 </a-select-option>
               </a-select>
 
@@ -176,15 +176,16 @@
 import { computed, ref } from 'vue'
 import { notification, message } from 'ant-design-vue'
 
-import store from '@/store'
 import router from '@/router'
 import i18n from '@/i18n'
 import api from '@/api.js'
 import config from '@/appconfig.js'
 
+import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import countries from '@/countries.json'
 
+const appStore = useAppStore()
 const authStore = useAuthStore()
 
 const currencies = ref([])
@@ -206,15 +207,12 @@ const userinfo = ref({
   tax_id: ''
 })
 
-const getOnlogin = computed(() =>
-  store.getters.getOnlogin
-)
 const companyName = computed(() =>
-  store.getters.getDomainInfo.name ?? config.appTitle
+  appStore.domainInfo.name ?? config.appTitle
 )
 
 const companyLogo = computed(() => {
-  const settings = store.getters.getDomainInfo
+  const { settings } = appStore.domainInfo
 
   if (settings.logo && typeof settings.logo === 'string') {
     return settings.logo

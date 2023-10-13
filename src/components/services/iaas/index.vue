@@ -214,6 +214,7 @@
 <script>
 import { mapActions, mapState } from 'pinia'
 
+import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useProductsStore } from '@/stores/products.js'
@@ -241,6 +242,7 @@ export default {
     currencies: []
   }),
   computed: {
+    ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, [
       'baseURL',
       'isLogged',
@@ -374,7 +376,7 @@ export default {
     this.fetch()
   },
   mounted () {
-    const { action, info } = this.$store.getters.getOnlogin
+    const { action, info } = this.onLogin
 
     if (typeof action !== 'function') return
     this.modal.goToInvoice = info.goToInvoice
@@ -435,17 +437,17 @@ export default {
       }
 
       if (!this.userdata.uuid) {
-        this.$store.commit('setOnloginRedirect', this.$route.name)
-        this.$store.commit('setOnloginInfo', {
+        this.onLogin.redirect = this.$route.name
+        this.onLogin.info = {
           type: 'iaas',
           title: this.$route.query.service,
           cost: this.getProducts.price[this.options.period] ?? 0,
           currency: this.currency.code,
           goToInvoice: this.modal.goToInvoice
-        })
-        this.$store.dispatch('setOnloginAction', () => {
+        }
+        this.onLogin.action = () => {
           this.createService(info)
-        })
+        }
         this.$router.push({ name: 'login' })
         return
       }

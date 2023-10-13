@@ -21,7 +21,6 @@ import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import addFunds from '@/components/balance/addFunds.vue'
-import router from '@/router'
 
 const props = defineProps({
   clickable: { type: Boolean, default: true }
@@ -62,12 +61,7 @@ function hideModal () {
 
 async function fetch () {
   try {
-    const { id } = await authStore.fetchBillingData()
-
-    if (id && localStorage.getItem('oauth')) {
-      localStorage.removeItem('oauth')
-      router.replace('/')
-    }
+    await authStore.fetchBillingData()
   } catch (error) {
     console.error(error)
   }

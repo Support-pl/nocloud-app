@@ -45,19 +45,15 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { notification } from 'ant-design-vue'
-
+import router from '@/router'
 import i18n from '@/i18n.js'
-import api from '@/api.js'
-
-import { useAuthStore } from '@/stores/auth.js'
-import { useProductsStore } from '@/stores/products.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 const props = defineProps({
   service: { type: Object, required: true }
 })
 
-const authStore = useAuthStore()
-const productsStore = useProductsStore()
+const instancesStore = useInstancesStore()
 
 const isLoginLoading = ref(false)
 
@@ -100,14 +96,14 @@ function getPercent (value) {
 async function logIntoCpanel () {
   try {
     isLoginLoading.value = true
-    const user = await authStore.fetchBillingData()
-    const response = await api.get(
-      `${productsStore.baseURL}/cpanel.createSession.php`,
-      { params: { serviceid: props.service.id, userid: user.client_id } }
-    )
+    const { id } = router.currentRoute.params
 
-    if (response.result === 'error') throw new Error(response)
-    window.open(response.data.url)
+    const response = await instancesStore.invokeAction({
+      uuid: id, action: 'session'
+    })
+
+    if (!response.result) throw new Error(response)
+    window.open(response.meta.url)
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 

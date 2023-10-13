@@ -599,7 +599,6 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
 import loading from "@/components/loading/loading.vue";
 import config from "@/appconfig";
 import api from "@/api";
@@ -763,15 +762,27 @@ export default {
       const color = this.$store.getters["cloud/getStateColor"](this.vmState);
       return color;
     },
-    ...mapGetters("cloud", {
-      updating: "isUpdating",
-      SingleCloud: "getOpenedCloud",
-      vmState: "getCloudState",
-      isLoading: "isLoading",
-      permissions: "permissions",
-      singleLoading: "singleLoading",
-    }),
-    ...mapGetters("app", ["isMaintananceMode"]),
+    updating() {
+      return this.$store.getters["cloud/isUpdating"]
+    },
+    SingleCloud() {
+      return this.$store.getters["cloud/getOpenedCloud"]
+    },
+    vmState() {
+      return this.$store.getters["cloud/getCloudState"]
+    },
+    isLoading() {
+      return this.$store.getters["cloud/isLoading"]
+    },
+    permissions() {
+      return this.$store.getters["cloud/permissions"]
+    },
+    singleLoading() {
+      return this.$store.getters["cloud/singleLoading"]
+    },
+    isMaintananceMode() {
+      return this.$store.getters["app/isMaintananceMode"]
+    },
     inbChartDataReady() {
       let data = this.chart1Data;
       if (data == undefined) {

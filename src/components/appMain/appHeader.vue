@@ -90,17 +90,16 @@
                 <a-popover v-else arrow-point-at-center placement="left" :align="{ offset: [-10, 0] }">
                   <template slot="content">
                     <a-input-search
-                      placeholder="Title / Status / IP"
+                      v-model="searchString"
                       enter-button
-                      :value="searchString"
-                      @input="(e) => $store.commit('nocloud/vms/setSearch', e.target.value)"
-                      @search="(text) => $store.commit('nocloud/vms/setSearch', text)"
+                      placeholder="Title / Status / IP"
+                      @search="(text) => searchString = text"
                       @keydown="updateSearch"
                     >
                       <div
                         slot="suffix"
                         style="cursor: pointer"
-                        @click="$store.commit('nocloud/vms/setSearch', '')"
+                        @click="searchString = ''"
                       >
                         <a-icon
                           type="close"
@@ -232,8 +231,7 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
-import { mapState, mapWritableState, mapActions as actionsPinia } from 'pinia'
+import { mapState, mapWritableState, mapActions } from 'pinia'
 import moment from 'moment'
 
 import { useAppStore } from '@/stores/app.js'
@@ -244,13 +242,14 @@ import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
 
 import { useProductsStore } from '@/stores/products.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 import { useInvoicesStore } from '@/stores/invoices.js'
 import { useTransactionsStore } from '@/stores/transactions.js'
 
 import config from '@/appconfig.js'
-import balance from '@/components/balance/balance.vue'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
+import balance from '@/components/balance/balance.vue'
 
 export default {
   name: 'AppHeader',
@@ -381,6 +380,7 @@ export default {
   computed: {
     ...mapState(useAppStore, ['activeTab']),
     ...mapState(useAuthStore, ['baseURL', 'billingUser', 'userdata', 'isLogged']),
+    ...mapState(useChatsStore, ['chats']),
     ...mapState(useSupportStore, {
       tickets: 'tickets',
       isOnlyClosedTickets: 'isOnlyClosedTickets',
@@ -397,6 +397,7 @@ export default {
       invoices: 'invoices',
       fetchInvoices: 'fetch'
     }),
+    ...mapWritableState(useInstancesStore, ['searchString']),
     ...mapWritableState(useCurrenciesStore, ['defaultCurrency', 'unloginedCurrency']),
     ...mapWritableState(useSupportStore, {
       isAddingTicket: 'isAddingTicket',
@@ -408,8 +409,7 @@ export default {
     ...mapWritableState(useInvoicesStore, {
       invoicesFilter: 'filter'
     }),
-    ...mapState(useChatsStore, ['chats']),
-    ...mapGetters('nocloud/vms', { searchString: 'getString' }),
+
     active () {
       const { headerTitle, layoutTitle } = this.$route.meta
 
@@ -545,9 +545,9 @@ export default {
     this.currencyCode = this.defaultCurrency
   },
   methods: {
-    ...actionsPinia(useAuthStore, ['fetchUserData']),
-    ...actionsPinia(useProductsStore, { fetchProducts: 'fetch' }),
-    ...mapActions('nocloud/vms', { fetchClouds: 'fetch' }),
+    ...mapActions(useAuthStore, ['fetchUserData']),
+    ...mapActions(useProductsStore, { fetchProducts: 'fetch' }),
+    ...mapActions(useInstancesStore, { fetchClouds: 'fetch' }),
     getState (name) {
       switch (name) {
         case 'support_filter':
@@ -695,7 +695,7 @@ export default {
       if (key !== 'Backspace') return
       if (target.value.length > 1) return
 
-      this.$store.commit('nocloud/vms/setSearch', '')
+      this.searchString = ''
     }
   }
 }

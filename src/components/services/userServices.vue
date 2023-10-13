@@ -23,7 +23,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 import loading from '../loading/loading.vue'
 
 export default {
@@ -40,7 +39,9 @@ export default {
 			const prods = this.$store.getters['products/getProducts'];
 			return prods.filter( element => element.groupname == this.$route.meta.productsGroupName);
 		},
-		...mapGetters('products', ['getProductsLoading'])
+    getProductsLoading(){
+		  return this.$store.getters['products/getProductsLoading'];
+    }
 	},
 	mounted(){
 		this.$store.dispatch('products/autoFetch');

@@ -22,7 +22,7 @@
     <div class="login__main login__layout">
       <div class="login__UI">
         <div class="login__onlogin-action">
-          <div v-if="!getOnlogin.info" class="login__see-services">
+          <div v-if="!appStore.onLogin.info" class="login__see-services">
             <router-link :to="{ name: 'services' }">
               <a-icon type="shopping-cart" />
               {{ $t("unregistered.see services") | capitalize }}
@@ -33,17 +33,17 @@
             {{ $t('comp_services.Your orders') }}:
             <div class="order__card">
               <div class="order__icon">
-                <a-icon :type="config.services[getOnlogin.info.type]?.icon" />
+                <a-icon :type="config.services[appStore.onLogin.info.type]?.icon" />
               </div>
               <div class="order__info">
                 <div class="order__title">
-                  {{ getOnlogin.info.title }}
+                  {{ appStore.onLogin.info.title }}
                 </div>
                 <div class="order__cost">
-                  {{ getOnlogin.info.cost }} {{ getOnlogin.info.currency }}
+                  {{ appStore.onLogin.info.cost }} {{ appStore.onLogin.info.currency }}
                 </div>
               </div>
-              <div class="order__remove" @click="$store.commit('clearOnlogin')">
+              <div class="order__remove" @click="appStore.clearOnLogin()">
                 <a-icon type="close" />
               </div>
             </div>
@@ -159,14 +159,15 @@ import { computed, onMounted, ref } from 'vue'
 import { notification } from 'ant-design-vue'
 import QrcodeVue from 'qrcode.vue'
 
-import store from '@/store'
 import router from '@/router'
 import i18n from '@/i18n.js'
 import config from '@/appconfig.js'
 import api from '@/api.js'
 
+import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 
+const appStore = useAppStore()
 const authStore = useAuthStore()
 
 const tryingLogin = ref(false)
@@ -176,11 +177,8 @@ const password = ref('')
 const email = ref('')
 const type = ref(false)
 
-const getOnlogin = computed(() =>
-  store.getters.getOnlogin
-)
 const companyName = computed(() =>
-  store.getters.getDomainInfo.name ?? config.appTitle
+  appStore.domainInfo.name ?? config.appTitle
 )
 const selfUrl = location.href
 
@@ -206,9 +204,9 @@ async function send () {
       } catch {
         localStorage.removeItem('data')
       }
-    } else if (getOnlogin.value.redirect) {
-      const name = getOnlogin.value.redirect
-      const service = getOnlogin.value.info.title
+    } else if (appStore.onLogin.redirect) {
+      const name = appStore.onLogin.redirect
+      const service = appStore.onLogin.info.title
 
       router.replace({ name, query: { service } })
     } else {

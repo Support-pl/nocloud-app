@@ -169,6 +169,7 @@ import config from '@/appconfig.js'
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useProductsStore } from '@/stores/products.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 import loading from '@/components/loading/loading.vue'
 import cloudItem from '@/components/appMain/cloud/cloudItem.vue'
@@ -187,7 +188,7 @@ export default {
     anchor: null
   }),
   computed: {
-    ...mapStores(useProductsStore, useSpStore, useAuthStore),
+    ...mapStores(useProductsStore, useSpStore, useAuthStore, useInstancesStore),
     productsPrepared () {
       const state = {
         size: this.productsStore.size,
@@ -213,107 +214,106 @@ export default {
           id: el.id
         }))
 
-      const instances = this.$store.getters['nocloud/vms/getInstances']
-        .map((inst) => {
-          const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
+      const instances = this.instancesStore.getInstances.map((inst) => {
+        const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
 
-          const publicIPs = inst.state?.meta.networking?.public?.filter((el) => !regexp.test(el))
-          const state = (this.VM?.billingPlan.type === 'ione')
-            ? inst.state?.meta.lcm_state_str
-            : inst.state?.state
-          let status = 'UNKNOWN'
+        const publicIPs = inst.state?.meta.networking?.public?.filter((el) => !regexp.test(el))
+        const state = (this.VM?.billingPlan.type === 'ione')
+          ? inst.state?.meta.lcm_state_str
+          : inst.state?.state
+        let status = 'UNKNOWN'
 
-          switch (state) {
-            case 'LCM_INIT':
-              status = 'POWEROFF'
-              break
-            default:
-              if (state) status = state.replaceAll('_', ' ')
+        switch (state) {
+          case 'LCM_INIT':
+            status = 'POWEROFF'
+            break
+          default:
+            if (state) status = state.replaceAll('_', ' ')
+        }
+
+        if (inst.state?.meta.state === 1) status = 'PENDING'
+        if (inst.state?.meta.state === 5) status = 'SUSPENDED'
+        if (inst.data.suspended_manually) status = 'SUSPENDED'
+        if (inst.state?.meta.state === 'BUILD') status = 'BUILD'
+
+        const res = {
+          ...inst,
+          sp: inst.sp,
+          orderid: inst.uuid,
+          groupname: 'Self-Service VDS SSD HC',
+          invoicestatus: null,
+          domainstatus: status,
+          productname: inst.title,
+          domain: publicIPs?.at(0),
+          date: inst.data.next_payment_date * 1000 || 0,
+          orderamount: inst.billingPlan.products[inst.product]?.price ?? 0
+        }
+
+        switch (inst.type) {
+          case 'cpanel':
+            res.groupname = 'Shared Hosting'
+            res.domain = inst.config.domain
+            break
+          case 'openai':
+            res.groupname = 'OpenAI'
+            break
+          case 'empty':
+          case 'virtual':
+            res.groupname = 'Custom'
+            break
+          case 'acronis':
+            res.groupname = 'Acronis'
+            break
+          case 'opensrs':
+            res.groupname = 'Domains'
+            res.date = inst.data.expiry.expiredate
+            res.domain = inst.resources.domain
+            break
+          case 'goget': {
+            const key = `${inst.resources.period} ${inst.resources.id}`
+
+            res.groupname = 'SSL'
+            res.date = +`${inst.resources.period}`
+            res.domain = inst.resources.domain
+            res.orderamount = inst.billingPlan.products[key]?.price ?? 0
+            break
           }
+          case 'ovh': {
+            const key = (!inst.product)
+              ? `${inst.config.duration} ${inst.config.planCode}`
+              : inst.product
 
-          if (inst.state?.meta.state === 1) status = 'PENDING'
-          if (inst.state?.meta.state === 5) status = 'SUSPENDED'
-          if (inst.data.suspended_manually) status = 'SUSPENDED'
-          if (inst.state?.meta.state === 'BUILD') status = 'BUILD'
+            res.date = inst.data.expiration ?? (inst.data.next_payment_date * 1000 || 0)
+            res.orderamount = inst.billingPlan.products[key]?.price ?? 0
 
-          const res = {
-            ...inst,
-            sp: inst.sp,
-            orderid: inst.uuid,
-            groupname: 'Self-Service VDS SSD HC',
-            invoicestatus: null,
-            domainstatus: status,
-            productname: inst.title,
-            domain: publicIPs?.at(0),
-            date: inst.data.next_payment_date * 1000 || 0,
-            orderamount: inst.billingPlan.products[inst.product]?.price ?? 0
+            inst.config.addons?.forEach((addon) => {
+              const addonKey = (inst.billingPlan.type.includes('dedicated'))
+                ? `${inst.config.duration} ${inst.config.planCode} ${addon}`
+                : `${inst.config.duration} ${addon}`
+
+              const { price } = inst.billingPlan.resources
+                .find(({ key }) => key === addonKey) ?? { price: 0 }
+
+              res.orderamount += +price
+            })
+            break
           }
-
-          switch (inst.type) {
-            case 'cpanel':
-              res.groupname = 'Shared Hosting'
-              res.domain = inst.config.domain
-              break
-            case 'openai':
-              res.groupname = 'OpenAI'
-              break
-            case 'empty':
-            case 'virtual':
-              res.groupname = 'Custom'
-              break
-            case 'acronis':
-              res.groupname = 'Acronis'
-              break
-            case 'opensrs':
-              res.groupname = 'Domains'
-              res.date = inst.data.expiry.expiredate
-              res.domain = inst.resources.domain
-              break
-            case 'goget': {
-              const key = `${inst.resources.period} ${inst.resources.id}`
-
-              res.groupname = 'SSL'
-              res.date = +`${inst.resources.period}`
-              res.domain = inst.resources.domain
-              res.orderamount = inst.billingPlan.products[key]?.price ?? 0
-              break
-            }
-            case 'ovh': {
-              const key = (!inst.product)
-                ? `${inst.config.duration} ${inst.config.planCode}`
-                : inst.product
-
-              res.date = inst.data.expiration ?? (inst.data.next_payment_date * 1000 || 0)
-              res.orderamount = inst.billingPlan.products[key]?.price ?? 0
-
-              inst.config.addons?.forEach((addon) => {
-                const addonKey = (inst.billingPlan.type.includes('dedicated'))
-                  ? `${inst.config.duration} ${inst.config.planCode} ${addon}`
-                  : `${inst.config.duration} ${addon}`
-
-                const { price } = inst.billingPlan.resources
-                  .find(({ key }) => key === addonKey) ?? { price: 0 }
-
-                res.orderamount += +price
-              })
-              break
-            }
-            case 'ione': {
-              res.orderamount += +inst.billingPlan.resources.reduce((prev, curr) => {
-                if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
-                  return prev + curr.price * inst.resources.drive_size / 1024
-                } else if (curr.key === 'ram') {
-                  return prev + curr.price * inst.resources.ram / 1024
-                } else if (inst.resources[curr.key]) {
-                  return prev + curr.price * inst.resources[curr.key]
-                }
-                return prev
-              }, 0)?.toFixed(2)
-            }
+          case 'ione': {
+            res.orderamount += +inst.billingPlan.resources.reduce((prev, curr) => {
+              if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
+                return prev + curr.price * inst.resources.drive_size / 1024
+              } else if (curr.key === 'ram') {
+                return prev + curr.price * inst.resources.ram / 1024
+              } else if (inst.resources[curr.key]) {
+                return prev + curr.price * inst.resources[curr.key]
+              }
+              return prev
+            }, 0)?.toFixed(2)
           }
+        }
 
-          return res
-        })
+        return res
+      })
 
       return [...products, ...instances]
         .sort((a, b) => {
@@ -338,7 +338,7 @@ export default {
     },
     productsLoading () {
       const productsLoading = this.productsStore.isLoading
-      const instancesLoading = this.$store.getters['nocloud/vms/isLoading']
+      const instancesLoading = this.instancesStore.isLoading
 
       return productsLoading || instancesLoading
     },
@@ -458,7 +458,7 @@ export default {
     this.productsStore.isLoading = true
     this.authStore.fetchBillingData()
       .then((user) => {
-        this.$store.dispatch('nocloud/vms/fetch')
+        this.instancesStore.fetch()
         this.productsStore.fetch(user.client_id)
       })
       .catch((err) => console.error(err))

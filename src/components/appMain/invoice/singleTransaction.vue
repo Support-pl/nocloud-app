@@ -49,12 +49,13 @@
 
 <script setup>
 import { computed } from 'vue'
-import store from '@/store'
 import router from '@/router'
 import config from '@/appconfig.js'
+
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 const props = defineProps({
   invoice: { type: Object, required: true }
@@ -63,6 +64,7 @@ const props = defineProps({
 const { toDate } = useAppStore()
 const authStore = useAuthStore()
 const currenciesStore = useCurrenciesStore()
+const instancesStore = useInstancesStore()
 
 const costColor = computed(() => {
   if (props.invoice?.total < 0) {
@@ -102,13 +104,9 @@ function clickOnInvoice (uuid) {
   router.push({ name: 'transaction', params: { uuid } })
 }
 
-const instances = computed(() =>
-  store.getters['nocloud/vms/getInstances']
-)
-
 function getInstance (uuid) {
   if (!uuid) return 'none'
-  return instances.value.find((inst) => inst.uuid === uuid)?.title ?? uuid
+  return instancesStore.instances.find((inst) => inst.uuid === uuid)?.title ?? uuid
 }
 </script>
 
