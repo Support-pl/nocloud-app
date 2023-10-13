@@ -19,7 +19,7 @@
               <div v-if="VM && VM.status" class="Fcloud__header-title">
                 <div
                   class="Fcloud__status-color"
-                  :class="{ 'glowing-animations': getActionLoadingInvoke }"
+                  :class="{ 'glowing-animations': isActionLoading }"
                   :style="{ 'background-color': stateColor }"
                 />
                 <div class="Fcloud__title">
@@ -27,7 +27,7 @@
                 </div>
                 <div
                   class="Fcloud__status"
-                  :class="{ 'glowing-animations': getActionLoadingInvoke }"
+                  :class="{ 'glowing-animations': isActionLoading }"
                 >
                   {{ stateVM }}
                 </div>
@@ -234,27 +234,28 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import { mapState, mapActions } from 'pinia'
+import notification from '@/mixins/notification.js'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
+
 import { useProductsStore } from '@/stores/products.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 import diskControl from '@/components/appMain/cloud/openCloud/diskControl.vue'
 import bootOrder from '@/components/appMain/cloud/openCloud/bootOrder.vue'
 import networkControl from '@/components/appMain/cloud/openCloud/networkControl.vue'
 import accessManager from '@/components/appMain/cloud/openCloud/accessManager.vue'
 import loading from '@/components/loading/loading.vue'
-import notification from '@/mixins/notification.js'
 
 export default {
   name: 'OpenCloud',
   components: { loading, diskControl, bootOrder, networkControl, accessManager },
   mixins: [notification],
   data: () => ({
-    isLoading: false,
+    isInfoLoading: false,
     isDeleteLoading: false,
     isRenameLoading: false,
     isLogsLoading: false,
@@ -289,7 +290,7 @@ export default {
     type: ''
   }),
   computed: {
-    ...mapGetters('nocloud/vms', ['getActionLoadingInvoke', 'getServicesFull', 'getInstances']),
+    ...mapState(useInstancesStore, ['isActionLoading', 'services', 'getInstances', 'isLoading', 'soket']),
     ...mapState(useAuthStore, ['isLogged', 'baseURL']),
     ...mapState(useCurrenciesStore, ['currencies']),
     ...mapState(useProductsStore, {
@@ -377,10 +378,7 @@ export default {
     },
 
     itemService () {
-      const data = this.getServicesFull.find((el) => {
-        return this.VM.uuidService === el.uuid
-      })
-      return data
+      return this.services.find((el) => this.VM.uuidService === el.uuid)
     },
     VM () {
       const vms = [...this.getInstances, ...this.products]
@@ -395,7 +393,7 @@ export default {
       return {}
     },
     vmsLoading () {
-      return this.$store.getters['nocloud/vms/isLoading'] || this.isLoading
+      return this.isLoading || this.isInfoLoading
     },
     stateVM () {
       if (this.VM.server_on) {
@@ -465,8 +463,8 @@ export default {
         this.resize.size = Math.ceil(this.VM.resources.drive_size / 1024)
 
         this.renameNewName = this.VM.title
-        if (!this.$store.state.nocloud.vms.socket) {
-          this.$store.dispatch('nocloud/vms/subscribeWebSocket', value)
+        if (!this.soket) {
+          this.subscribeWebSocket(value)
         }
 
         if (this.type === '') {
@@ -486,9 +484,9 @@ export default {
   created () {
     this.renameNewName = this.VM.title ?? ''
 
-    if (!this.$store.state.nocloud.vms.socket) {
+    if (!this.soket) {
       if (this.VM.uuidService) {
-        this.$store.dispatch('nocloud/vms/subscribeWebSocket', this.VM.uuidService)
+        this.subscribeWebSocket(this.VM.uuidService)
       }
     }
 
@@ -499,36 +497,39 @@ export default {
         })
 
       this.fetchProviders()
-      this.$store.dispatch('nocloud/vms/fetch')
-        .then(() => {
-          const inst = this.getInstances.find(({ uuid }) => uuid === this.$route.params.uuid)
+      this.fetch().then(() => {
+        const inst = this.getInstances.find(({ uuid }) => uuid === this.$route.params.uuid)
 
-          if (inst) return
+        if (inst) return
 
-          this.isLoading = true
-          this.$api.get(this.baseURL, {
-            params: {
-              run: 'on_info',
-              server_id: this.$route.params.uuid
-            }
-          })
-            .then((response) => {
-              this.resources = response
-              this.renameNewName = response.NAME
-            })
-            .finally(() => { this.isLoading = false })
+        this.isInfoLoading = true
+        this.$api.get(this.baseURL, {
+          params: {
+            run: 'on_info',
+            server_id: this.$route.params.uuid
+          }
         })
+          .then((response) => {
+            this.resources = response
+            this.renameNewName = response.NAME
+          })
+          .finally(() => { this.isInfoLoading = false })
+      })
     }
 
     if (this.currencies.length < 1) this.fetchCurrencies()
   },
   destroyed () {
-    if (!this.$store.state.nocloud.vms.socket) return
-    this.$store.state.nocloud.vms.socket.close(1000, 'Work is done')
+    if (!this.soket) return
+    this.soket.close(1000, 'Work is done')
   },
   methods: {
     ...mapActions(useAuthStore, ['fetchBillingData']),
     ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
+    ...mapActions(useInstancesStore, [
+      'fetch', 'subscribeWebSocket',
+      'updateService', 'deleteInstance', 'invokeAction'
+    ]),
     disabledMenu (menuName) {
       const states = ['RUNNING', 'STOPPED', 'POWEROFF', 'SUSPENDED']
 
@@ -601,8 +602,7 @@ export default {
         }
         instance.resources.drive_size = this.resize.size * 1024
 
-        this.$store
-          .dispatch('nocloud/vms/updateService', this.itemService)
+        this.updateService(this.itemService)
           .then((result) => {
             if (result) {
               // this.$message.success(this.$t("VM resized successfully"));
@@ -645,7 +645,7 @@ export default {
         const instance = group?.instances.find((el) => el.uuid === this.VM.uuid)
         const promise = (this.VM.server_on)
           ? this.$refs['open-instance'].sendAction('rename_vm', { vm_name: this.renameNewName })
-          : this.$store.dispatch('nocloud/vms/updateService', this.itemService)
+          : this.updateService(this.itemService)
 
         this.isRenameLoading = true
         instance.title = this.renameNewName
@@ -712,7 +712,7 @@ export default {
           }
           const promise = (this.VM.server_on)
             ? this.$refs['open-instance'].sendAction('on_reinstall')
-            : this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
+            : this.invokeAction(data)
 
           promise
             .then(() => {
@@ -750,8 +750,7 @@ export default {
         ),
         onOk: () => {
           this.isDeleteLoading = true
-          this.$store
-            .dispatch('nocloud/vms/deleteInstance', this.VM.uuid)
+          this.deleteInstance(this.VM.uuid)
             .then((result) => {
               if (result) {
                 this.openNotificationWithIcon('success', {
@@ -784,10 +783,7 @@ export default {
     getLogs () {
       this.isLogsLoading = true
       this.changeModal('logs')
-      this.$store.dispatch('nocloud/vms/actionVMInvoke', {
-        uuid: this.$route.params.uuid,
-        action: 'get_logs'
-      })
+      this.invokeAction({ uuid: this.$route.params.uuid, action: 'get_logs' })
         .then(({ meta: { logs } }) => {
           logs?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
           this.logs = logs

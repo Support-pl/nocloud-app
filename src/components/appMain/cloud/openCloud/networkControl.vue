@@ -4,16 +4,16 @@
       :columns="columns"
       :data-source="networks"
       :pagination="false"
-      rowKey="id"
+      row-key="id"
     >
       <span slot="ip" slot-scope="value">
-        {{ value || "--" }}
+        {{ value || '--' }}
       </span>
     </a-table>
 
     <a-row style="margin: 15px 0" :gutter="[10, 10]">
       <a-col style="display: flex; align-items: center" :sm="12" :xs="24">
-        <span>{{ $t("Public network") }}:</span>
+        <span>{{ $t('Public network') }}:</span>
         <a-switch
           v-model="networking.public.status"
           :style="{ 'margin': '0 5px' }"
@@ -28,7 +28,7 @@
       </a-col>
 
       <a-col style="display: flex; align-items: center" :sm="12" :xs="24">
-        <span>{{ $t("Private network") }}:</span>
+        <span>{{ $t('Private network') }}:</span>
         <a-switch
           v-model="networking.private.status"
           :style="{ 'margin': '0 5px' }"
@@ -54,178 +54,174 @@
   </div>
 </template>
 
-<script>
-import notification from "@/mixins/notification";
+<script setup>
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { notification } from 'ant-design-vue'
+import i18n from '@/i18n.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
-export default {
-  name: "networkControl",
-  props: {
-    itemService: {
-      type: Object,
-      default: "",
-    },
-    VM: {
-      type: Object,
-      dafault: "",
-    },
+const props = defineProps({
+  itemService: { type: Object, required: true },
+  VM: { type: Object, required: true }
+})
+const emits = defineEmits(['closeModal'])
+
+const instancesStore = useInstancesStore()
+
+const isLoading = ref(false)
+const columns = [
+  {
+    title: '№',
+    dataIndex: 'id',
+    key: 'id',
+    width: 50,
+    align: 'center'
   },
-  mixins: [notification],
-  data() {
-    return {
-      isLoading: false,
-      columns: [
-        {
-          title: "№",
-          dataIndex: "id",
-          key: "id",
-          width: 50,
-          align: "center",
-        },
-        {
-          title: "IP",
-          dataIndex: "ip",
-          key: "ip",
-          scopedSlots: { customRender: "ip" },
-        },
-        {
-          title: this.$t("cloud_Type"),
-          dataIndex: "type",
-          key: "type",
-        }
-      ],
-      networking: {
-        private: {
-          list: [],
-          status: false,
-          count: 0
-        },
-        public: {
-          list: [],
-          status: false,
-          count: 0
-        }
-      }
-    }
+  {
+    title: 'IP',
+    dataIndex: 'ip',
+    key: 'ip',
+    scopedSlots: { customRender: 'ip' }
   },
-  computed: {
-    networks() {
-      const networks = [];
-      const { length } = this.networking.private.list;
-
-      this.networking.private.list.forEach((ip, i) => {
-        networks.push({ id: i + 1, ip, type: 'private' });
-      });
-
-      this.networking.public.list.forEach((ip, i) => {
-        networks.push({ id: length + i + 1, ip, type: 'public' });
-      });
-
-      return networks;
-    },
-    privateMin() {
-      return (this.networking.private.status) ? 1 : 0;
-    },
-    publicMin() {
-      return (this.networking.public.status) ? 1 : 0;
-    }
-  },
-  methods: {
-    changeNetwork(type) {
-      switch (type) {
-        case 'public':
-          if (!this.networking.public.status) {
-            this.networking.private.status = true;
-            this.networking.public.count = 0;
-          }
-          break;
-        case 'private':
-          if (!this.networking.private.status) {
-            this.networking.public.status = true;
-            this.networking.private.count = 0;
-          }
-          break;
-      }
-    },
-    updateService(service) {
-      this.$store
-        .dispatch("nocloud/vms/updateService", service)
-        .then((result) => {
-          if (result) {
-            this.openNotificationWithIcon("success", {
-              message: this.$t('Change ip successfully'),
-            });
-
-            this.$emit('closeModal');
-          } else {
-            this.openNotificationWithIcon("error", {
-              message: this.$t(`Can't change ip VM`),
-            });
-          }
-        })
-        .catch((err) => {
-          this.openNotificationWithIcon("error", {
-            message: this.$t(`Can't change ip VM`),
-          });
-          console.error(err);
-        })
-        .finally(() => {
-          this.isLoading = false;
-        });
-    },
-    sendNewIP() {
-      this.isLoading = true;
-      this.$store.dispatch('nocloud/vms/fetch', true)
-        .then(({ pool }) => {
-          let group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp);
-          let instance = group.instances.find((el) => el.uuid === this.VM.uuid);
-
-          if (!instance?.resources) {
-            const service = pool.find(({ uuid }) => uuid === this.itemService.uuid);
-            group = service.instancesGroups.find((el) => el.sp === this.VM.sp);
-            instance = group.instances.find((el) => el.uuid === this.VM.uuid);
-          }
-
-          instance.resources.ips_private = this.networking.private.count;
-          instance.resources.ips_public = this.networking.public.count;
-          instance.state.meta.networking = {
-            private: this.networking.private.list,
-            public: this.networking.public.list
-          };
-
-          const ips = group.instances.reduce((prev, curr) => ({
-            private: prev.private + curr.resources.ips_private,
-            public: prev.public + curr.resources.ips_public
-          }), { private: 0, public: 0 });
-
-          group.resources.ips_private = ips.private;
-          group.resources.ips_public = ips.public;
-          this.updateService((instance?.resources) ? this.itemService : pool);
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
-
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          });
-          console.error(err);
-        });
-    },
-  },
-  mounted() {
-    const privateIPS = this.VM.state?.meta.networking.private || [];
-    const publicIPS = this.VM.state?.meta.networking.public || [];
-    const privateCount = this.VM.resources.ips_private;
-    const publicCount = this.VM.resources.ips_public;
-
-    this.networking.private.list = JSON.parse(JSON.stringify(privateIPS));
-    this.networking.public.list = JSON.parse(JSON.stringify(publicIPS));
-    this.networking.private.status = privateCount > 0;
-    this.networking.public.status = publicCount > 0;
-    this.networking.private.count = privateCount;
-    this.networking.public.count = publicCount;
-  },
-  beforeDestroy() {
-    this.$emit('closeModal');
+  {
+    title: i18n.t('cloud_Type'),
+    dataIndex: 'type',
+    key: 'type'
   }
-};
+]
+
+const networking = reactive({
+  private: ref({
+    list: ref([]),
+    status: false,
+    count: 0
+  }),
+  public: ref({
+    list: ref([]),
+    status: false,
+    count: 0
+  })
+})
+
+const networks = computed(() => {
+  const networks = []
+  const { length } = networking.private.list
+
+  networking.private.list.forEach((ip, i) => {
+    networks.push({ id: i + 1, ip, type: 'private' })
+  })
+
+  networking.public.list.forEach((ip, i) => {
+    networks.push({ id: length + i + 1, ip, type: 'public' })
+  })
+
+  return networks
+})
+
+const privateMin = computed(() =>
+  (networking.private.status) ? 1 : 0
+)
+
+const publicMin = computed(() =>
+  (networking.public.status) ? 1 : 0
+)
+
+function changeNetwork (type) {
+  switch (type) {
+    case 'public':
+      if (!networking.public.status) {
+        networking.private.status = true
+        networking.public.count = 0
+      }
+      break
+    case 'private':
+      if (!networking.private.status) {
+        networking.public.status = true
+        networking.private.count = 0
+      }
+      break
+  }
+}
+
+async function updateService (service) {
+  try {
+    const result = await instancesStore.updateService(service)
+    if (result) {
+      notification.success({
+        message: i18n.t('Change ip successfully')
+      })
+
+      emits('closeModal')
+    } else {
+      notification.error({
+        message: i18n.t('Can\'t change ip VM')
+      })
+    }
+  } catch (error) {
+    notification.error({
+      message: i18n.t('Can\'t change ip VM')
+    })
+    console.error(error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function sendNewIP () {
+  try {
+    isLoading.value = true
+    const { pool } = await instancesStore.fetch(true)
+    let group = props.itemService.instancesGroups.find((el) => el.sp === props.VM.sp)
+    let instance = group.instances.find((el) => el.uuid === props.VM.uuid)
+
+    if (!instance?.resources) {
+      const service = pool.find(({ uuid }) => uuid === props.itemService.uuid)
+      group = service.instancesGroups.find((el) => el.sp === props.VM.sp)
+      instance = group.instances.find((el) => el.uuid === props.VM.uuid)
+    }
+
+    instance.resources.ips_private = networking.private.count
+    instance.resources.ips_public = networking.public.count
+    instance.state.meta.networking = {
+      private: networking.private.list,
+      public: networking.public.list
+    }
+
+    const ips = group.instances.reduce((prev, curr) => ({
+      private: prev.private + curr.resources.ips_private,
+      public: prev.public + curr.resources.ips_public
+    }), { private: 0, public: 0 })
+
+    group.resources.ips_private = ips.private
+    group.resources.ips_public = ips.public
+    updateService((instance?.resources) ? props.itemService : pool)
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
+  }
+}
+
+onMounted(() => {
+  const privateIPS = props.VM.state?.meta.networking.private || []
+  const publicIPS = props.VM.state?.meta.networking.public || []
+  const privateCount = props.VM.resources.ips_private
+  const publicCount = props.VM.resources.ips_public
+
+  networking.private.list = JSON.parse(JSON.stringify(privateIPS))
+  networking.public.list = JSON.parse(JSON.stringify(publicIPS))
+  networking.private.status = privateCount > 0
+  networking.public.status = publicCount > 0
+  networking.private.count = privateCount
+  networking.public.count = publicCount
+})
+
+onBeforeUnmount(() => {
+  emits('closeModal')
+})
+</script>
+
+<script>
+export default { name: 'NetworkControl' }
 </script>

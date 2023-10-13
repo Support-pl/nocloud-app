@@ -170,7 +170,7 @@ export const useInstancesStore = defineStore('instances', () => {
         isActionLoading.value = false
       }
     },
-    async deleteInstance (_, uuid) {
+    async deleteInstance (uuid) {
       try {
         const response = await api.delete(`/instances/${uuid}`)
 

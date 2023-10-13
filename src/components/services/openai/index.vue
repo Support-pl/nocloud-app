@@ -119,23 +119,28 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { notification } from 'ant-design-vue'
 
-import store from '@/store'
 import router from '@/router'
 import i18n from '@/i18n.js'
 import api from '@/api.js'
 
+import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
+
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 const route = router.currentRoute
+const appStore = useAppStore()
 const authStore = useAuthStore()
 const currenciesStore = useCurrenciesStore()
+
 const spStore = useSpStore()
 const plansStore = usePlansStore()
 const namespacesStore = useNamespasesStore()
+const instancesStore = useInstancesStore()
 
 const plan = ref(null)
 const service = ref(null)
@@ -185,7 +190,7 @@ const currency = computed(() => {
 })
 
 const services = computed(() =>
-  store.getters['nocloud/vms/getServices'].filter((el) => el.status !== 'DEL')
+  instancesStore.services.filter((el) => el.status !== 'DEL')
 )
 
 const plans = computed(() =>
@@ -242,16 +247,16 @@ function orderClickHandler () {
   else if (service.value) info.instancesGroups.push(newGroup)
 
   if (!authStore.userdata.uuid) {
-    store.commit('setOnloginRedirect', route.name)
-    store.commit('setOnloginInfo', {
+    appStore.onLogin.redirect = route.name
+    appStore.onLogin.info = {
       type: 'openai',
       title: 'OpenAI',
       cost: getProducts.value.price,
       currency: currency.value.code
-    })
-    store.dispatch('setOnloginAction', () => {
+    }
+    appStore.onLogin.action = () => {
       createOpenAI(info)
-    })
+    }
 
     router.push({ name: 'login' })
     return
@@ -275,7 +280,7 @@ function createOpenAI (info) {
         }
       }
 
-  store.dispatch(`nocloud/vms/${action}Service`, orderData)
+  instancesStore[`${action}Service`](orderData)
     .then(({ uuid }) => { deployService(uuid) })
     .catch((err) => {
       const config = { namespace: namespace.value, service: orderData }
@@ -315,7 +320,7 @@ function deployService (uuid) {
 }
 
 onMounted(() => {
-  const { action } = store.getters.getOnlogin
+  const { action } = appStore.onLogin
 
   if (typeof action !== 'function') return
   modal.value.confirmCreate = true
@@ -334,7 +339,7 @@ function fetch () {
   if (authStore.isLogged) {
     promises.push(
       namespacesStore.fetch(),
-      store.dispatch('nocloud/vms/fetch')
+      instancesStore.fetch()
     )
   }
 

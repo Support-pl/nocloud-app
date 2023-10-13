@@ -1,6 +1,7 @@
 import { reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
 import router from '@/router'
+import config from '@/appconfig.js'
 /*
 ROUTER WORKS THERE!
 */
@@ -17,6 +18,17 @@ export const useAppStore = defineStore('app', () => {
   const activeTab = reactive({
     title: activeTabName,
     index: activeTabNum
+  })
+
+  const onLogin = ref({
+    redirect: null,
+    action: null,
+    info: null
+  })
+  const domainInfo = reactive({
+    settings: ref({
+      avaliable: Object.keys(config.services).map((el) => el.toLowerCase())
+    })
   })
 
   const buttons = (localStorage.getItem('oauth'))
@@ -75,10 +87,12 @@ export const useAppStore = defineStore('app', () => {
   return {
     toDate,
     update,
+    onLogin,
     buttons,
     activeTab,
     notification,
     isMaintananceMode,
+    domainInfo,
 
     setTabByName (value) {
       if (value === 'root') value = 'services'
@@ -104,6 +118,12 @@ export const useAppStore = defineStore('app', () => {
       if (value === 'root') value = 'services'
       activeTabName.value = value
       activeTabNum.value = buttons.findIndex(({ title }) => title === value)
+    },
+
+    clearOnLogin () {
+      onLogin.value = {
+        action: null, info: null, redirect: null
+      }
     }
   }
 })

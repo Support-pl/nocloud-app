@@ -1,7 +1,7 @@
 <template>
   <div class="vnc__page">
     <maintanance-mode
-      v-if="isMaintananceMode"
+      v-if="appStore.isMaintananceMode"
       main-page-button
     />
 
@@ -127,7 +127,7 @@
                   <li class="noVNC_heading">
                     <img alt="" src="/img/images/settings.svg"> Settings
                   </li>
-                  <template v-if="instance && !isLoading">
+                  <template v-if="instance && !instancesStore.isLoading">
                     <li>
                       password:
                     </li>
@@ -268,111 +268,128 @@
   </div>
 </template>
 
-<script>
-import { mapState } from 'pinia'
+<script setup>
+import { computed, onMounted, ref, watch } from 'vue'
+import { notification } from 'ant-design-vue'
 import UI from 'vnc-ui-vue'
+import router from '@/router'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useProductsStore } from '@/stores/products.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 import password from '@/components/password.vue'
 
-export default {
-  name: 'VncView',
-  components: { password },
-  data: () => ({ desktopName: '', token: '', url: '', rfb: null }),
-  computed: {
-    ...mapState(useAppStore, ['isMaintananceMode']),
-    ...mapState(useAuthStore, { appToken: 'token' }),
-    ...mapState(useProductsStore, ['products']),
-    instance () {
-      const uuid = this.$route.params.pathMatch
-      const instances = this.$store.getters['nocloud/vms/getInstances']
+const appStore = useAppStore()
+const authStore = useAuthStore()
+const productsStore = useProductsStore()
+const instancesStore = useInstancesStore()
 
-      return [...instances, ...this.products].find((inst) =>
-        `${(inst.uuid ?? inst.id)}` === uuid
-      )
-    },
-    isLoading () {
-      return this.$store.getters['nocloud/vms/isLoading']
+const vncscreen = ref(null)
+const desktopName = ref('')
+const token = ref('')
+const url = ref('')
+const rfb = ref(null)
+
+const instance = computed(() => {
+  const uuid = router.currentRoute.params.pathMatch
+  const instances = instancesStore.getInstances
+
+  return [...instances, ...productsStore.products].find((inst) =>
+    `${(inst.uuid ?? inst.id)}` === uuid
+  )
+})
+
+watch(instance, getToken)
+
+function goBack () {
+  const { pathMatch: uuid } = router.currentRoute.params
+
+  router.push({ name: 'openCloud_new', params: { uuid } })
+}
+
+async function getToken () {
+  const isCloud = instance.value.billingPlan?.type.includes('cloud')
+  const action = (isCloud) ? 'start_vnc_vm' : 'start_vnc'
+
+  if (instance.value.server_on) {
+    url.value = router.currentRoute.query.url
+    desktopName.value = instance.value?.name ?? 'Unknown'
+
+    connect()
+    return
+  }
+
+  try {
+    const response = await instancesStore.invokeAction({
+      uuid: router.currentRoute.params.pathMatch, action
+    })
+
+    const baseURL = VUE_APP_BASE_URL.split('.')
+
+    baseURL.splice(0, 1)
+    token.value = response.meta.token
+    desktopName.value = instance.value?.title ?? 'Unknown'
+
+    if (response.meta.info) {
+      url.value = `wss://${instance.value.sp}.proxy.${baseURL.join('.')}socket?${response.meta.url}`
+      connect(authStore.token)
+    } else {
+      url.value = response.meta.url
     }
-  },
-  watch: {
-    instance () { this.getToken() }
-  },
-  created () {
-    const instances = this.$store.getters['nocloud/vms/getInstances']
-    if (instances.length > 0) return
-
-    this.$store.dispatch('nocloud/vms/fetch')
-      .catch((err) => {
-        this.$router.replace('/services')
-        alert(err)
-      })
-  },
-  mounted () {
-    if (!this.instance) return
-    this.getToken()
-  },
-  methods: {
-    goBack () {
-      const { pathMatch: uuid } = this.$route.params
-
-      this.$router.push({ name: 'openCloud_new', params: { uuid } })
-    },
-    getToken () {
-      const isCloud = this.instance.billingPlan?.type.includes('cloud')
-      const action = (isCloud) ? 'start_vnc_vm' : 'start_vnc'
-
-      if (this.instance.server_on) {
-        this.url = this.$route.query.url
-        this.desktopName = this.instance?.name ?? 'Unknown'
-
-        this.connect()
-        return
-      }
-
-      this.$store.dispatch('nocloud/vms/actionVMInvoke', {
-        uuid: this.$route.params.pathMatch, action
-      })
-        .then(res => {
-          const baseURL = VUE_APP_BASE_URL.split('.')
-
-          baseURL.splice(0, 1)
-          this.token = res.meta.token
-          this.desktopName = this.instance?.title ?? 'Unknown'
-
-          if (res.meta.info) {
-            this.url = `wss://${this.instance.sp}.proxy.${baseURL.join('.')}socket?${res.meta.url}`
-            this.connect(this.appToken)
-          } else {
-            this.url = res.meta.url
-          }
-        })
-        .catch(err => console.error(err))
-    },
-    connect (token) {
-      this.$refs.vncscreen.innerHTML = ''
-      UI.connect(this.url, token)
-      UI.prime()
-      if (UI.connected) location.reload()
-    },
-    credentialsAreRequired () {
-      const password = prompt('Password Required:')
-
-      this.rfb.sendCredentials({ password })
-    },
-    updateDesktopName (e) {
-      this.desktopName = e.detail.name
-    },
-    removeCanvases () {
-      const conv = document.getElementsByTagName('canvas')
-
-      Array.from(conv).forEach(el => el.remove())
-    }
+  } catch (error) {
+    console.error(error)
   }
 }
+
+function connect (token) {
+  vncscreen.value.innerHTML = ''
+  UI.connect(url.value, token)
+  UI.prime()
+
+  if (UI.connected) location.reload()
+}
+
+function credentialsAreRequired () {
+  const password = prompt('Password Required:')
+
+  rfb.value.sendCredentials({ password })
+}
+
+function updateDesktopName (e) {
+  desktopName.value = e.detail.name
+}
+
+function removeCanvases () {
+  const conv = document.getElementsByTagName('canvas')
+
+  Array.from(conv).forEach((el) => el.remove())
+}
+
+async function fetch () {
+  const instances = instancesStore.getInstances
+  if (instances.length > 0) return
+
+  try {
+    await instancesStore.fetch()
+  } catch (error) {
+    const message = error.response?.data.message ?? error.message ?? error
+
+    router.replace('/services')
+    notification.error({ message })
+  }
+}
+
+fetch()
+onMounted(() => {
+  if (!instance.value) return
+  getToken()
+})
+</script>
+
+<script>
+export default { name: 'VncView' }
 </script>
 
 <style scoped>

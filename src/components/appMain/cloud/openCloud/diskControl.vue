@@ -107,8 +107,6 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-
 export default {
   name: "diskControl",
   data() {
@@ -173,10 +171,12 @@ export default {
     };
   },
   computed: {
-    ...mapGetters("cloud", {
-      SingleCloud: "getOpenedCloud",
-    }),
-    ...mapGetters({ user: "getUser" }),
+    SingleCloud() {
+      return this.$store.getters['getOpenedCloud'];
+    },
+		user() {
+      return this.$store.getters['getUser'];
+    },
     disks() {
       if (Array.isArray(this.SingleCloud.DISKS)) {
         const arrayDISKS = [];

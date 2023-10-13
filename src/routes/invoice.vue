@@ -65,12 +65,12 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { notification } from 'ant-design-vue'
-import store from '@/store'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInvoicesStore } from '@/stores/invoices.js'
 import { useTransactionsStore } from '@/stores/transactions.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 import empty from '@/components/empty/empty.vue'
 import singleInvoice from '@/components/appMain/invoice/singleInvoice.vue'
@@ -80,6 +80,7 @@ const authStore = useAuthStore()
 const currenciesStore = useCurrenciesStore()
 const invoicesStore = useInvoicesStore()
 const transactionsStore = useTransactionsStore()
+const instancesStore = useInstancesStore()
 
 const currentTab = ref('Invoice')
 const percent = ref(0)
@@ -237,9 +238,9 @@ function onShowSizeChange (page, limit) {
 }
 
 async function fetchInstances () {
-  if (store.getters['nocloud/vms/getInstances'].length > 0) return
+  if (instancesStore.getInstances.length > 0) return
   try {
-    await store.dispatch('nocloud/vms/fetch')
+    await instancesStore.fetch()
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 

@@ -562,8 +562,6 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-
 export default {
   name: "newVDC",
   data() {
@@ -757,7 +755,6 @@ export default {
         default:
           console.error("[VDC Calculator]: Wrong period in calc.", period);
           return undefined;
-          break;
       }
       return price;
     },
@@ -946,7 +943,9 @@ export default {
     },
   },
   computed: {
-    ...mapGetters("app", ["isMaintananceMode"]),
+    isMaintananceMode() {
+      return this.$store.getters["app/isMaintananceMode"]
+    },
     costAfterDiscount() {
       return (
         this.calculateFullPrice("month") *

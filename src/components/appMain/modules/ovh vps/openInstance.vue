@@ -529,11 +529,13 @@
 
 <script lang="jsx">
 import { defineComponent } from 'vue'
-import { mapState } from 'pinia'
+import { mapState, mapActions } from 'pinia'
+import notification from '@/mixins/notification.js'
+
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
-import notification from '@/mixins/notification.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 const columns = [
   {
@@ -796,6 +798,7 @@ export default defineComponent({
   },
   created () { this.fetchMonitoring() },
   methods: {
+    ...mapActions(useInstancesStore, ['invokeAction']),
     deployService () {
       this.actionLoading = true
       this.$api.services
@@ -878,8 +881,7 @@ export default defineComponent({
       }
 
       this.snapshots.addSnap.loading = true
-      this.$store
-        .dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then((res) => {
           this.VM.state.meta.snapshots = res?.meta.snapshots
           this.openNotificationWithIcon('success', {
@@ -905,8 +907,7 @@ export default defineComponent({
       }
 
       this.snapshots.loading = true
-      this.$store
-        .dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then(() => {
           delete this.VM.state.meta.snapshots[index]
           this.openNotificationWithIcon('success', {
@@ -931,8 +932,7 @@ export default defineComponent({
       }
 
       this.snapshots.addSnap.loading = true
-      this.$store
-        .dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then(() => {
           this.openNotificationWithIcon('success', {
             message: this.$t('Revert snapshot')
@@ -965,7 +965,7 @@ export default defineComponent({
         case 'recover':
           if (this.statusVM.recover) return
           this.actionLoading = true
-          this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+          this.invokeAction({
             uuid: this.VM.uuid,
             uuidService: this.VM.uuidService,
             action: 'backup_restore_points'
@@ -1077,7 +1077,7 @@ export default defineComponent({
           const planCode = this.VM.billingPlan.products[key].meta.addons
             .find((addon) => addon.includes(action))
           this.actionLoading = true
-          this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+          this.invokeAction({
             uuid: this.VM.uuid,
             uuidService: this.VM.uuidService,
             action: 'add_addon',
@@ -1119,7 +1119,7 @@ export default defineComponent({
         data.params = { newPlanCode: this.planCode }
       }
 
-      return this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
+      return this.invokeAction(data)
         .then((res) => {
           this.openNotificationWithIcon('success', { message: 'Done!' })
 
@@ -1137,7 +1137,7 @@ export default defineComponent({
         })
     },
     openVNC () {
-      this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+      this.invokeAction({
         uuid: this.$route.params.uuid,
         action: 'start_vnc'
       })
@@ -1155,7 +1155,7 @@ export default defineComponent({
         params: { period: 'lastday' }
       }
 
-      this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then((res) => {
           if (res.meta['net:rx'] !== undefined) {
             this.chart1Data = res.meta['net:rx'].values

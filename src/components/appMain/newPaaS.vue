@@ -586,19 +586,20 @@
 
 <script>
 import { mapState, mapActions } from 'pinia'
-import { mapGetters } from 'vuex'
 import { NcMap } from 'nocloud-ui'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useInstancesStore } from '@/stores/instances.js'
+
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 
 import api from '@/api.js'
+import notification from '@/mixins/notification.js'
 import loading from '@/components/loading/loading.vue'
 import addFunds from '@/components/balance/addFunds.vue'
-import notification from '@/mixins/notification.js'
 
 export default {
   name: 'NewPaaS',
@@ -688,7 +689,7 @@ export default {
     ...mapState(useNamespasesStore, ['namespaces']),
     ...mapState(useSpStore, ['servicesProviders', 'getShowcases']),
     ...mapState(usePlansStore, ['plans']),
-    ...mapGetters('nocloud/vms', ['getServicesFull']),
+    ...mapState(useInstancesStore, ['services']),
 
     itemService () {
       const data = this.getServicesFull.find((el) => {
@@ -1062,10 +1063,10 @@ export default {
     },
     getPlan (value) {
       if (value.meta?.minDisk) {
-        this.options.disk.min = +value.meta.minDisk
+        this.options.disk.min = value.meta.minDisk * 1024
       }
       if (value.meta?.maxDisk) {
-        this.options.disk.max = +value.meta.maxDisk
+        this.options.disk.max = value.meta.maxDisk * 1024
       }
     },
     'options.os.name' () {
@@ -1144,7 +1145,7 @@ export default {
 
     if (this.isLogged) {
       Promise.all([
-        this.$store.dispatch('nocloud/vms/fetch'),
+        this.fetchServices(),
         this.fetchNamespaces()
       ])
         .then(() => {
@@ -1186,6 +1187,8 @@ export default {
       fetchShowcases: 'fetchShowcases'
     }),
     ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
+    ...mapActions(useInstancesStore, { fetchServices: 'fetch' }),
+
     onScore ({ score }) {
       this.score = score
     },
@@ -1229,7 +1232,7 @@ export default {
 
             this.options.ram.size = product.resources.ram / 1024
             this.options.cpu.size = product.resources.cpu
-            this.options.disk.size = product.resources.disk ?? plan.meta.minDisk ?? 20 * 1024
+            this.options.disk.size = product.resources.disk ?? plan.meta.minDisk * 1024 ?? 20 * 1024
             this.product = product
           } else if (
             (value.title.includes(this.productSize) && !this.getPlan.type.includes('cloud')) ||
@@ -1377,35 +1380,34 @@ export default {
         this.itemService.instancesGroups = [newGroup]
       }
       if (this.service) {
-        this.$store.dispatch('nocloud/vms/fetch')
-          .then(() => {
-            setTimeout(() => {
-              this.setOneService()
-              const orderDataNew = Object.assign({}, this.itemService)
-              let group = orderDataNew.instancesGroups.find(
-                (el) => el.sp === this.itemSP.uuid
-              )
+        this.fetchServices().then(() => {
+          setTimeout(() => {
+            this.setOneService()
+            const orderDataNew = Object.assign({}, this.itemService)
+            let group = orderDataNew.instancesGroups.find(
+              (el) => el.sp === this.itemSP.uuid
+            )
 
-              if (!group) {
-                orderDataNew.instancesGroups.push(newGroup)
-                group = orderDataNew.instancesGroups.at(-1)
-              }
-              if (newInstance.config.type === 'cloud') {
-                group.config = { ssh: this.options.config.ssh }
-              }
-              group.instances.push(newInstance)
+            if (!group) {
+              orderDataNew.instancesGroups.push(newGroup)
+              group = orderDataNew.instancesGroups.at(-1)
+            }
+            if (newInstance.config.type === 'cloud') {
+              group.config = { ssh: this.options.config.ssh }
+            }
+            group.instances.push(newInstance)
 
-              const res = group.instances.reduce((prev, curr) => ({
-                private: prev.private + (curr.resources.ips_private ?? 0),
-                public: prev.public + (curr.resources.ips_public ?? 0)
-              }), { private: 0, public: 0 })
+            const res = group.instances.reduce((prev, curr) => ({
+              private: prev.private + (curr.resources.ips_private ?? 0),
+              public: prev.public + (curr.resources.ips_public ?? 0)
+            }), { private: 0, public: 0 })
 
-              group.resources.ips_private = res.private
-              group.resources.ips_public = res.public
+            group.resources.ips_private = res.private
+            group.resources.ips_public = res.public
 
-              if (this.checkBalance()) this.updateVM(orderDataNew)
-            }, 300)
-          })
+            if (this.checkBalance()) this.updateVM(orderDataNew)
+          }, 300)
+        })
       } else {
         // create service
         const orderData = {
@@ -1437,8 +1439,7 @@ export default {
     },
     orderVM (orderData) {
       this.modal.confirmLoading = true
-      this.$store
-        .dispatch('nocloud/vms/createService', orderData)
+      this.createService(orderData)
         .then((result) => {
           if (result) {
             this.$message.success(this.$t('Order created successfully'))
@@ -1461,8 +1462,7 @@ export default {
     },
     updateVM (orderDataNew) {
       this.modal.confirmLoading = true
-      this.$store
-        .dispatch('nocloud/vms/updateService', orderDataNew)
+      this.updateService(orderDataNew)
         .then((result) => {
           if (result) {
             this.$message.success(this.$t('Order update successfully'))

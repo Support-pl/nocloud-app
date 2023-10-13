@@ -3,7 +3,7 @@
     <div class="container">
       <div class="ssl-page-card">
         <template v-if="data">
-          <div class="ssl__top" v-if="data.name">
+          <div v-if="data.name" class="ssl__top">
             <div class="ssl-page__info">
               <div class="ssl-page__info-title">
                 {{ $t("ssl_product.registration_date") }}
@@ -18,12 +18,10 @@
                 {{ $t("ssl_product.product_service") }}
               </div>
 
-              <span
-                >{{ $t("ssl_product.SSL certificate") }} - {{ data.name }}
+              <span>{{ $t("ssl_product.SSL certificate") }} - {{ data.name }}
                 <a-tag :color="getTagColor">
                   {{ $t(data.status) }}
-                </a-tag></span
-              >
+                </a-tag></span>
               <a :href="data.domain">{{ data.domain }}</a>
             </div>
             <a-row>
@@ -82,40 +80,40 @@
             </div>
 
             <div
-              class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.valid_from") }}</div>
               <div>{{ data.SSL.configdata.valid_from }}</div>
             </div>
 
             <div
-              class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.expires") }}</div>
               <div>{{ data.SSL.configdata.valid_till }}</div>
             </div>
 
             <div
-              class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.subscription_starts") }}</div>
               <div>{{ data.SSL.configdata.begin_date }}</div>
             </div>
 
             <div
-              class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.subscription_ends") }}</div>
               <div>{{ data.SSL.configdata.end_date }}</div>
             </div>
 
             <div
-              class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.next_renewal") }}</div>
               <div><b>Renew SSL within 91 days</b></div>
@@ -127,8 +125,8 @@
             </div>
 
             <div
-              class="ssl__table__item"
               v-if="data.SSL.configdata.dcv_method === 'email'"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.approver_email") }}</div>
               <div>{{ data.SSL.configdata.approver_method.email }}</div>
@@ -140,8 +138,8 @@
             </div>
 
             <div
-              class="ssl__table__item"
               v-if="data.SSL.configdata.dcv_method === 'dns'"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.dns_cname_record") }}</div>
               <div>
@@ -153,8 +151,8 @@
             </div>
 
             <div
-              class="ssl__table__item"
               v-if="method.includes(data.SSL.configdata.dcv_method)"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.hash_file") }}</div>
               <div>
@@ -170,8 +168,8 @@
             </div>
 
             <div
-              class="ssl__table__item"
               v-if="method.includes(data.SSL.configdata.dcv_method)"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.content") }}</div>
               <div>
@@ -187,8 +185,8 @@
             </div>
             <!-- ---------------------------------- -->
             <div
-              class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.certificate_crt") }}</div>
               <div>
@@ -200,8 +198,8 @@
             </div>
 
             <div
-              class="ssl__table__item"
               v-if="data.SSL.configdata.status == 'active'"
+              class="ssl__table__item"
             >
               <div>{{ $t("ssl_product.intermediate_chanfiles") }}</div>
               <div>
@@ -213,8 +211,8 @@
             </div>
             <!-- ---------------------------- -->
             <div
-              class="ssl__table__item"
               v-if="method.includes(data.SSL.configdata.dcv_method)"
+              class="ssl__table__item"
             >
               <div>SANs:</div>
               <div class="ssl__table__item-sans__wrap">
@@ -265,15 +263,16 @@
             <div class="ssl__table__item">
               <div>{{ $t("ssl_product.actions") }}</div>
               <div class="ssl__table__item__button__wrap">
-                <a-button v-if="data.SSL.configdata.status == 'active'"
-                  ><router-link
+                <a-button v-if="data.SSL.configdata.status == 'active'">
+                  <router-link
                     :to="{
                       name: 'certificate',
                       params: { reissue: true },
                     }"
-                    >{{ $t("ssl_product.reissue_certificate") }}</router-link
-                  ></a-button
-                >
+                  >
+                    {{ $t("ssl_product.reissue_certificate") }}
+                  </router-link>
+                </a-button>
 
                 <a-button
                   v-if="data.SSL.configdata.status == 'processing'"
@@ -283,22 +282,22 @@
                 </a-button>
 
                 <a-button
-                  :loading="resendLoading"
                   v-if="
                     data.SSL.configdata.status === 'processing' &&
-                    data.SSL.configdata.dcv_method === 'email'
+                      data.SSL.configdata.dcv_method === 'email'
                   "
+                  :loading="resendLoading"
                   @click="resendValidationEmail"
                 >
                   {{ $t("ssl_product.Resend Validation Email") }}
                 </a-button>
 
                 <a-button
-                  :loading="revalidateLoading"
                   v-if="
                     data.SSL.configdata.status === 'processing' &&
-                    methodRevalidate.includes(data.SSL.configdata.dcv_method)
+                      methodRevalidate.includes(data.SSL.configdata.dcv_method)
                   "
+                  :loading="revalidateLoading"
                   @click="revalidate"
                 >
                   {{ $t("ssl_product.Revalidate") }}
@@ -317,15 +316,17 @@
                       ].filename
                     )
                   "
-                  >{{ $t("ssl_product.download_validation_file") }}</a-button
                 >
+                  {{ $t("ssl_product.download_validation_file") }}
+                </a-button>
 
                 <div v-for="(val, key) of fileinfo" :key="key">
                   <a-button
                     v-if="data.SSL.configdata.status == 'active'"
                     @click="download(key, data.SSL.configdata[val])"
-                    >{{ $t("ssl_product.download") }} {{ key.toUpperCase() }}</a-button
                   >
+                    {{ $t("ssl_product.download") }} {{ key.toUpperCase() }}
+                  </a-button>
                 </div>
 
                 <a-modal
@@ -336,13 +337,13 @@
                   @ok="handleOk"
                   @cancel="handleCancel"
                 >
-                  <a-form-model :model="action_data">
+                  <a-form-model :model="actionData">
                     <a-form-model-item :label="$t('ssl_product.DCV Method')">
-                      <a-select v-model="action_data.dcv">
+                      <a-select v-model="actionData.dcv">
                         <a-select-option
-                          v-for="item in dcv_list"
-                          :value="item"
+                          v-for="item in dcvList"
                           :key="item"
+                          :value="item"
                         >
                           {{ item }}
                         </a-select-option>
@@ -350,12 +351,12 @@
                     </a-form-model-item>
 
                     <a-form-model-item
+                      v-if="actionData.dcv === 'EMAIL'"
                       :label="$t('ssl_product.email')"
-                      v-if="action_data.dcv === 'EMAIL'"
                     >
-                      <a-select v-model="action_data.email">
+                      <a-select v-model="actionData.email">
                         <a-select-option
-                          v-for="item in email_list"
+                          v-for="item in emailList"
                           :key="item"
                           :value="`${item}${data.domain}`"
                         >
@@ -375,196 +376,184 @@
   </div>
 </template>
 
+<script setup>
+import { computed, ref, set } from 'vue'
+import { message } from 'ant-design-vue'
+import router from '@/router'
+import api from '@/api.js'
+
+import { useInstancesStore } from '@/stores/instances.js'
+import loading from '@/components/loading/loading.vue'
+
+const instancesStore = useInstancesStore()
+
+const method = ['http', 'https']
+const methodRevalidate = ['http', 'https', 'dns']
+const dcvList = ['EMAIL', 'HTTP', 'HTTPS', 'DNS']
+const emailList = [
+  'admin@',
+  'administrator@',
+  'hostmaster@',
+  'webmaster@',
+  'postmaster@'
+]
+
+const data = ref({})
+const actionData = ref({ dcv: 'EMAIL' })
+const fileinfo = ref({
+  csr: 'csr_code',
+  crt: 'crt_code',
+  ca: 'ca_code'
+})
+
+const resendLoading = ref(false)
+const revalidateLoading = ref(false)
+const modal = ref({
+  confirmCreate: false,
+  confirmLoading: false
+})
+
+const getTagColor = computed(() => {
+  switch (data.value.status) {
+    case 'Active':
+      return 'green'
+    case 'Pending':
+      return 'orange'
+    case 'Cancelled':
+      return 'red'
+    default:
+      return ''
+  }
+})
+
+async function fetch () {
+  try {
+    const domain = instancesStore.getInstances.find(
+      ({ uuid }) => uuid === router.currentRoute.params.id
+    )
+
+    const { meta } = await instancesStore.invokeAction({
+      uuid: domain.uuid,
+      uuidService: domain.uuidService,
+      action: 'monitoring'
+    })
+
+    data.value = { SSL: { configdata: meta.data } }
+    set(actionData.value, 'email', `admin@${meta.data.domain}`)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+function download (ext, text, filename = null) {
+  const domain = data.value.SSL.configdata.domain
+
+  if (!filename) {
+    filename = `${domain.replace('.', '_')}.${ext}`
+  }
+
+  const element = document.createElement('a')
+
+  element.setAttribute(
+    'href', `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`
+  )
+  element.setAttribute('download', filename)
+  element.style.display = 'none'
+
+  document.body.appendChild(element)
+  element.click()
+  document.body.removeChild(element)
+}
+
+async function revalidate () {
+  const params = {
+    remoteid: data.value.SSL.remoteid,
+    domain: data.value.SSL.configdata.domain
+  }
+
+  try {
+    revalidateLoading.value = true
+    const response = await api.sendAsUser(
+      'moduleTouch',
+      { ...params, path: 'ssl/revalidate' },
+      'moduleTouch.phpssl'
+    )
+
+    if (response.error) throw response
+    if (response.success) {
+      message.success(response.message)
+    }
+  } catch (error) {
+    console.error(error)
+    message.error(error.description)
+  } finally {
+    revalidateLoading.value = false
+  }
+}
+
+async function resendValidationEmail () {
+  const params = {
+    remoteid: data.value.SSL.remoteid
+  }
+
+  try {
+    resendLoading.value = true
+    const response = await api.sendAsUser(
+      'moduleTouch',
+      { ...params, path: 'ssl/resendValidationEmail' },
+      'moduleTouch.phpssl'
+    )
+
+    if (response.error) throw response
+    if (response.success) {
+      message.success(response.message)
+    }
+  } catch (error) {
+    console.error(error)
+    message.error(error.description)
+  } finally {
+    resendLoading.value = false
+  }
+}
+
+async function handleOk () {
+  const params = {
+    remoteid: data.value.SSL.remoteid,
+    dcv: (actionData.value.dcv === 'EMAIL')
+      ? actionData.value.email
+      : actionData.value.dcv,
+    domain: data.value.SSL.configdata.domain
+  }
+
+  try {
+    modal.value.confirmLoading = true
+    const response = await api.sendAsUser(
+      'moduleTouch',
+      { ...params, path: 'ssl/changeValidationMethod' },
+      'moduleTouch.phpssl'
+    )
+
+    if (response.error) throw response
+    if (response.success) location.reload()
+  } catch (error) {
+    console.error(error)
+    this.$message.error(error.description)
+  } finally {
+    modal.value.confirmLoading = false
+  }
+}
+
+function handleCancel () {
+  modal.value.confirmCreate = false
+}
+
+if (instancesStore.getInstances.length < 1) {
+  instancesStore.fetch().then(fetch)
+} else fetch()
+</script>
+
 <script>
-import loading from "@/components/loading/loading.vue";
-import api from "@/api.js";
-export default {
-  name: "SSL_certificate",
-  components: {
-    loading,
-  },
-  data() {
-    return {
-      data: "",
-      dcv_list: ["EMAIL", "HTTP", "HTTPS", "DNS"],
-      action_data: {
-        dcv: "EMAIL",
-      },
-      email_list: [
-        "admin@",
-        "administrator@",
-        "hostmaster@",
-        "webmaster@",
-        "postmaster@",
-      ],
-      fileinfo: {
-        csr: "csr_code",
-        crt: "crt_code",
-        ca: "ca_code",
-      },
-      method: ["http", "https"],
-      methodRevalidate: ["http", "https", "dns"],
-      resendLoading: false,
-      revalidateLoading: false,
-      modal: {
-        confirmCreate: false,
-        confirmLoading: false,
-      },
-    };
-  },
-  computed: {
-    getTagColor() {
-      switch (this.data.status) {
-        case "Active":
-          return "green";
-          break;
-        case "Pending":
-          return "orange";
-          break;
-        case "Cancelled":
-          return "red";
-          break;
-
-        default:
-          break;
-      }
-      return "";
-    },
-  },
-  methods: {
-    fetch() {
-      const domain = this.$store.getters['nocloud/vms/getInstances']
-        .find(({ uuid }) => uuid === this.$route.params.id);
-
-      this.$store.dispatch("nocloud/vms/actionVMInvoke", {
-        uuid: domain.uuid,
-        uuidService: domain.uuidService,
-        action: 'monitoring',
-      })
-        .then(({ meta: { data } }) => {
-          this.data = { SSL: { configdata: data } };
-          this.$set(this.action_data, "email", `admin@${data.domain}`);
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    },
-    download(ext, text, fullname = null) {
-      const domain = this.data.SSL.configdata.domain;
-      let filename;
-
-      if (fullname) {
-        filename = fullname;
-      } else {
-        filename = domain.replace(".", "_") + "." + ext;
-      }
-
-      let element = document.createElement("a");
-      element.setAttribute(
-        "href",
-        "data:text/plain;charset=utf-8," + encodeURIComponent(text)
-      );
-      element.setAttribute("download", filename);
-      element.style.display = "none";
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-    },
-    revalidate() {
-      const data = {
-        remoteid: this.data.SSL.remoteid,
-        domain: this.data.SSL.configdata.domain,
-      };
-      this.revalidateLoading = true;
-      api
-        .sendAsUser(
-          "moduleTouch",
-          { ...data, ...{ path: "ssl/revalidate" } },
-          "moduleTouch.phpssl"
-        )
-        .then((resp) => {
-          if (resp.error) {
-            throw resp;
-          }
-          if (resp.success) {
-            this.$message.success(resp.message);
-            this.revalidateLoading = false;
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          this.$message.error(err.description);
-        })
-        .finally(() => (this.loading = false));
-    },
-    resendValidationEmail() {
-      const data = {
-        remoteid: this.data.SSL.remoteid,
-      };
-      this.resendLoading = true;
-      api
-        .sendAsUser(
-          "moduleTouch",
-          { ...data, ...{ path: "ssl/resendValidationEmail" } },
-          "moduleTouch.phpssl"
-        )
-        .then((resp) => {
-          if (resp.error) {
-            throw resp;
-          }
-          if (resp.success) {
-            this.$message.success(resp.message);
-            this.resendLoading = false;
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          this.$message.error(err.description);
-        })
-        .finally(() => (this.loading = false));
-    },
-    handleOk() {
-      const data = {
-        remoteid: this.data.SSL.remoteid,
-        dcv:
-          this.action_data.dcv === "EMAIL"
-            ? this.action_data.email
-            : this.action_data.dcv,
-        domain: this.data.SSL.configdata.domain,
-      };
-
-      this.modal.confirmLoading = true;
-      api
-        .sendAsUser(
-          "moduleTouch",
-          { ...data, ...{ path: "ssl/changeValidationMethod" } },
-          "moduleTouch.phpssl"
-        )
-        .then((resp) => {
-          if (resp.error) {
-            throw resp;
-          }
-          if (resp.success) {
-            this.modal.confirmLoading = false;
-            location.reload();
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          this.$message.error(err.description);
-        })
-        .finally(() => (this.loading = false));
-    },
-    handleCancel() {
-      this.modal.confirmCreate = false;
-    },
-  },
-  created() {
-    if (this.$store.getters['nocloud/vms/getInstances'].length < 1) {
-      this.$store.dispatch('nocloud/vms/fetch').then(() => this.fetch());
-    } else this.fetch();
-  },
-};
+export default { name: 'SslCertificate' }
 </script>
 
 <style scoped>

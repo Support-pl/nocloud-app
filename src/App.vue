@@ -119,10 +119,15 @@ if (lang) i18n.locale = lang
 if (authStore.isLogged) authStore.fetchUserData()
 
 onMounted(() => {
-  router.onReady(() => {
+  router.onReady(async () => {
     const route = router.currentRoute
     const mustUnloggined = route.meta?.mustBeUnloggined && authStore.isLogged
     const isIncluded = ['cabinet', 'settings'].includes(route.name)
+    const { firstname } = await authStore.fetchBillingData()
+
+    if (firstname && localStorage.getItem('oauth')) {
+      localStorage.removeItem('oauth')
+    }
 
     if (route.meta?.mustBeLoggined && !authStore.isLogged) {
       router.replace('login')

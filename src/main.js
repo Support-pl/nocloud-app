@@ -5,7 +5,6 @@ import VueGoogleCharts from 'vue-google-charts'
 import App from './App.vue'
 import 'ant-design-vue/dist/antd.css'
 import i18n from './i18n'
-import store from './store'
 import router from './router'
 import './registerServiceWorker'
 import axios from './axios'
@@ -71,7 +70,6 @@ const pinia = createPinia()
 new Vue({
   i18n,
   router,
-  store,
   pinia,
   render: h => h(App)
 }).$mount('#app')

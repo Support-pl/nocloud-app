@@ -162,9 +162,11 @@ import passwordMeter from 'vue-simple-password-meter'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 
+import { useAppStore } from '@/stores/app.js'
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 import addFunds from '@/components/balance/addFunds.vue'
 
@@ -188,7 +190,8 @@ export default {
     score: 0
   }),
   computed: {
-    ...mapStores(useNamespasesStore, useSpStore, usePlansStore),
+    ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
+    ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData']),
     ...mapState(useCurrenciesStore, [
       'currencies',
@@ -232,8 +235,7 @@ export default {
       return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
     services () {
-      return this.$store.getters['nocloud/vms/getServices']
-        .filter((el) => el.status !== 'DEL')
+      return this.instancesStore.services.filter((el) => el.status !== 'DEL')
     },
     plans () {
       return this.plansStore.plans.filter(({ type, uuid }) => {
@@ -270,7 +272,7 @@ export default {
     }
   },
   mounted () {
-    const { action, info } = this.$store.getters.getOnlogin
+    const { action, info } = this.onLogin
 
     if (typeof action !== 'function') return
     this.modal.goToInvoice = info.goToInvoice
@@ -288,7 +290,7 @@ export default {
     if (this.isLogged) {
       promises.push(
         this.namespacesStore.fetch(),
-        this.$store.dispatch('nocloud/vms/fetch')
+        this.instancesStore.fetch()
       )
     }
 
@@ -362,17 +364,17 @@ export default {
       else if (this.service) info.instancesGroups.push(newGroup)
 
       if (!this.userdata.uuid) {
-        this.$store.commit('setOnloginRedirect', this.$route.name)
-        this.$store.commit('setOnloginInfo', {
+        this.onLogin.redirect = this.$route.name
+        this.onLogin.info = {
           type: 'acronis',
           title: 'Acronis',
           cost: this.getProducts.price,
           currency: this.currency.code,
           goToInvoice: this.modal.goToInvoice
-        })
-        this.$store.dispatch('setOnloginAction', () => {
+        }
+        this.onLogin.action = () => {
           this.createAcronis(info)
-        })
+        }
 
         this.$router.push({ name: 'login' })
         return
@@ -395,7 +397,7 @@ export default {
             }
           }
 
-      this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
+      this.instancesStore[`${action}Service`](orderData)
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
           const config = { namespace: this.namespace, service: orderData }
