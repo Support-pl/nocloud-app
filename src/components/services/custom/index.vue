@@ -147,9 +147,11 @@ import { mapStores, mapState } from 'pinia'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 
+import { useAppStore } from '@/stores/app.js'
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 import addFunds from '@/components/balance/addFunds.vue'
 
@@ -172,7 +174,8 @@ export default {
     checkedTypes: []
   }),
   computed: {
-    ...mapStores(useNamespasesStore, useSpStore, usePlansStore),
+    ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
+    ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData']),
     ...mapState(useCurrenciesStore, [
       'currencies',
@@ -216,8 +219,7 @@ export default {
       return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
     services () {
-      return this.$store.getters['nocloud/vms/getServices']
-        .filter((el) => el.status !== 'DEL')
+      return this.instancesStore.services.filter((el) => el.status !== 'DEL')
     },
     plans () {
       return this.plansStore.plans.filter(({ type, uuid }) => {
@@ -252,7 +254,7 @@ export default {
     }
   },
   mounted () {
-    const { action, info } = this.$store.getters.getOnlogin
+    const { action, info } = this.onLogin
 
     if (typeof action !== 'function') return
     this.modal.goToInvoice = info.goToInvoice
@@ -271,8 +273,12 @@ export default {
     if (this.isLogged) {
       promises.push(
         this.namespacesStore.fetch(),
-        this.$store.dispatch('nocloud/vms/fetch')
+        this.instancesStore.fetch()
       )
+    }
+
+    if (this.spStore.getShowcases.length < 1) {
+      this.spStore.fetchShowcases(!this.isLogged)
     }
 
     Promise.all(promises).catch((err) => {
@@ -287,19 +293,17 @@ export default {
   },
   methods: {
     changeProducts (plan) {
-      const sortedProducts = Object.entries(plan.products ?? {})
+      const sortedProducts = Object.entries(plan?.products ?? {})
 
-      this.products = plan.products ?? {}
+      this.products = plan?.products ?? {}
       this.plan = plan?.uuid
 
       sortedProducts.sort(([, a], [, b]) => a.sorter - b.sorter)
-      this.sizes = sortedProducts.map(
-        ([key, value]) => ({
-          key,
-          label: value.title,
-          group: value.group ?? value.title
-        })
-      )
+      this.sizes = sortedProducts.map(([key, value]) => ({
+        key,
+        label: value.title,
+        group: value.group ?? value.title
+      }))
       this.options.size = this.sizes[0]?.key ?? ''
       this.periods = []
 
@@ -340,17 +344,17 @@ export default {
       else if (this.service) info.instancesGroups.push(newGroup)
 
       if (!this.userdata.uuid) {
-        this.$store.commit('setOnloginRedirect', this.$route.name)
-        this.$store.commit('setOnloginInfo', {
+        this.onLogin.redirect = this.$route.name
+        this.onLogin.info = {
           type: 'custom',
           title: 'Custom',
           cost: this.getProducts.price,
           currency: this.currency.code,
           goToInvoice: this.modal.goToInvoice
-        })
-        this.$store.dispatch('setOnloginAction', () => {
+        }
+        this.onLogin.action = () => {
           this.createVirtual(info)
-        })
+        }
 
         this.$router.push({ name: 'login' })
         return
@@ -373,7 +377,7 @@ export default {
             }
           }
 
-      this.$store.dispatch(`nocloud/vms/${action}Service`, orderData)
+      this.instancesStore[`${action}Service`](orderData)
         .then(({ uuid }) => { this.deployService(uuid) })
         .catch((err) => {
           const config = { namespace: this.namespace, service: orderData }
@@ -538,7 +542,7 @@ export default {
 
 .order__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-top: 10px;
 }
@@ -572,7 +576,7 @@ export default {
 
 @media (max-width: 576px) {
   .order__grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 }
 

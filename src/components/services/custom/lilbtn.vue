@@ -16,125 +16,118 @@
   </div>
 </template>
 
-<script lang="jsx">
-import { defineComponent } from 'vue'
-import { mapState } from 'pinia'
+<script setup lang="jsx">
+import { computed, ref, set } from 'vue'
+import { Modal, notification } from 'ant-design-vue'
+import i18n from '@/i18n'
+
+import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 import addFunds from '@/components/balance/addFunds.vue'
 
-export default defineComponent({
-  components: { addFunds },
-  props: {
-    price: { type: Number, required: true },
-    service: { type: Object, required: true },
-    currency: { type: Object, required: true }
-  },
-  data: () => ({
-    addfunds: { visible: false, amount: 0 },
-    isLoading: false
-  }),
-  computed: {
-    ...mapState(useAuthStore, ['userdata']),
-    slicedPrice () {
-      if (`${this.price}`.replace('.').length > 3) {
-        return (`${this.price}`[2] === '.')
-          ? `${this.price.toString().slice(0, 4)}...`
-          : `${this.price.toString().slice(0, 3)}...`
-      } else {
-        return this.price
-      }
-    },
-    priceWithoutPrefix () {
-      const code = (`${this.price}`.replace('.').length > 3) ? '' : this.currency.code
+const props = defineProps({
+  price: { type: Number, required: true },
+  service: { type: Object, required: true },
+  currency: { type: Object, required: true }
+})
 
-      return `${this.slicedPrice} ${code}`
-    }
-  },
-  methods: {
-    moduleEnter () {
-      if (!this.checkBalance()) return
+const { toDate } = useAppStore()
+const authStore = useAuthStore()
+const instancesStore = useInstancesStore()
 
-      const key = this.service.product
-      const { period } = this.service.billingPlan.products[key]
+const addfunds = ref({ visible: false, amount: 0 })
 
-      const currentPeriod = this.date(this.service.data.next_payment_date)
-
-      const newPeriod = this.date(this.service.data.next_payment_date + +period)
-
-      this.$confirm({
-        title: this.$t('Do you want to renew service?'),
-        content: () => (
-          <div>
-            <div style="font-weight: 700">{ `${this.service.title}` }</div>
-            <div>
-              { `${this.$t('from')} ` }
-              <span style="font-style: italic">{ `${currentPeriod}` }</span>
-            </div>
-            <div>
-              { `${this.$t('to')} ` }
-              <span style="font-style: italic">{ `${newPeriod}` }</span>
-            </div>
-
-            <div style="margin-top: 10px">
-              <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
-              { this.price } { this.currency.code }
-            </div>
-          </div>
-        ),
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
-        okButtonProps: {
-          props: { disabled: (this.service.data.blocked) }
-        },
-        onOk: async () => {
-          const data = { uuid: this.service.uuid, action: 'manual_renew' }
-
-          return this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
-            .then(() => {
-              this.$notification.success({ message: 'Done!' })
-              this.$set(this.service.data, 'blocked', true)
-            })
-            .catch((err) => {
-              this.$notification.error({
-                message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-              })
-            })
-        },
-        onCancel () {}
-      })
-    },
-    checkBalance () {
-      if (this.userdata.balance < parseFloat(this.price)) {
-        this.$confirm({
-          title: this.$t('You do not have enough funds on your balance'),
-          content: this.$t('Click OK to replenish the account with the missing amount'),
-          onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(this.price) - this.userdata.balance)
-            this.addfunds.visible = true
-          }
-        })
-        return false
-      }
-      return true
-    },
-    date (timestamp) {
-      if (timestamp < 1) return '-'
-
-      const date = new Date(timestamp * 1000)
-      const time = date.toTimeString().split(' ')[0]
-
-      const year = date.getFullYear()
-      let month = date.getMonth() + 1
-      let day = date.getDate()
-
-      if (`${month}`.length < 2) month = `0${month}`
-      if (`${day}`.length < 2) day = `0${day}`
-
-      return `${day}.${month}.${year} ${time}`
-    }
+const slicedPrice = computed(() => {
+  if (`${props.price}`.replace('.').length > 3) {
+    return (`${props.price}`[2] === '.')
+      ? `${props.price.toString().slice(0, 4)}...`
+      : `${props.price.toString().slice(0, 3)}...`
+  } else {
+    return props.price
   }
 })
+
+const priceWithoutPrefix = computed(() => {
+  const code = (`${props.price}`.replace('.').length > 3) ? '' : props.currency.code
+
+  return `${slicedPrice.value} ${code}`
+})
+
+function moduleEnter () {
+  if (!checkBalance()) return
+
+  const key = props.service.product
+  const { period } = props.service.billingPlan.products[key]
+
+  const currentPeriod = toDate(props.service.data.next_payment_date)
+
+  const newPeriod = toDate(props.service.data.next_payment_date + +period)
+
+  Modal.confirm({
+    title: i18n.t('Do you want to renew service?'),
+    content: () => (
+      <div>
+        <div style="font-weight: 700">{ `${props.service.title}` }</div>
+        <div>
+          { `${i18n.t('from')} ` }
+          <span style="font-style: italic">{ `${currentPeriod}` }</span>
+        </div>
+        <div>
+          { `${i18n.t('to')} ` }
+          <span style="font-style: italic">{ `${newPeriod}` }</span>
+        </div>
+
+        <div style="margin-top: 10px">
+          <span style="font-weight: 700">{ i18n.t('Tariff price') }: </span>
+          { props.price } { props.currency.code }
+        </div>
+      </div>
+    ),
+    okText: i18n.t('Yes'),
+    cancelText: i18n.t('Cancel'),
+    okButtonProps: {
+      props: { disabled: (props.service.data.blocked) }
+    },
+    onOk: async () => {
+      const data = { uuid: props.service.uuid, action: 'manual_renew' }
+
+      return instancesStore.invokeAction(data)
+        .then(() => {
+          notification.success({ message: 'Done!' })
+          set(props.service.data, 'blocked', true)
+        })
+        .catch((error) => {
+          notification.error({
+            message: `Error: ${error?.response?.data?.message ?? 'Unknown'}.`
+          })
+        })
+    },
+    onCancel () {}
+  })
+}
+
+function checkBalance () {
+  if (authStore.userdata.balance < parseFloat(props.price)) {
+    Modal.confirm({
+      title: i18n.t('You do not have enough funds on your balance'),
+      content: i18n.t('Click OK to replenish the account with the missing amount'),
+      onOk: () => {
+        addfunds.value.amount = Math.ceil(
+          parseFloat(props.price) - authStore.userdata.balance
+        )
+        addfunds.value.visible = true
+      }
+    })
+    return false
+  }
+  return true
+}
+</script>
+
+<script lang="jsx">
+export default { name: 'LittleButton' }
 </script>
 
 <style scoped>

@@ -2,7 +2,11 @@
   <div class="Fcloud">
     <slot name="header" />
     <div v-if="VM.state" class="Fcloud__buttons">
-      <div class="Fcloud__button" @click="openActions">
+      <div
+        class="Fcloud__button"
+        :class="{ disabled: actionLoading }"
+        @click="openActions"
+      >
         <div class="Fcloud__BTN-icon">
           <a-icon :type="(actionLoading) ? 'loading' : 'deployment-unit'" />
         </div>
@@ -371,11 +375,13 @@
 
 <script lang="jsx">
 import { defineComponent } from 'vue'
-import { mapState } from 'pinia'
+import { mapState, mapActions } from 'pinia'
+import notification from '@/mixins/notification.js'
+
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
-import notification from '@/mixins/notification.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 const columns = [
   {
@@ -540,14 +546,14 @@ export default defineComponent({
     }
   },
   methods: {
+    ...mapActions(useInstancesStore, ['invokeAction']),
     async openActions () {
-      if (this.actionLoading) return
       this.actionLoading = true
 
-      const response = await fetch('http://geoplugin.net/json.gp')
-      const { geoplugin_request: ip } = await response.json()
+      const response = await fetch('https://ipinfo.io/ip')
+      const ip = await response.text()
 
-      this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+      this.invokeAction({
         uuid: this.VM.uuid, action: 'ipmi', params: { ip }
       })
         .then(({ result, meta }) => {
@@ -557,7 +563,7 @@ export default defineComponent({
               message: `${this.$t(meta.message)}`
             })
 
-            setTimeout(this.openActions, 30 * 1000)
+            setTimeout(this.openActions, 20_1000)
           }
         })
         .catch((err) => {
@@ -614,8 +620,7 @@ export default defineComponent({
       }
 
       this.snapshots.addSnap.loading = true
-      this.$store
-        .dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then((res) => {
           this.VM.state.meta.snapshots = res?.meta.snapshots
           this.openNotificationWithIcon('success', {
@@ -641,8 +646,7 @@ export default defineComponent({
       }
 
       this.snapshots.loading = true
-      this.$store
-        .dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then(() => {
           delete this.VM.state.meta.snapshots[index]
           this.openNotificationWithIcon('success', {
@@ -667,8 +671,7 @@ export default defineComponent({
       }
 
       this.snapshots.addSnap.loading = true
-      this.$store
-        .dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then(() => {
           this.openNotificationWithIcon('success', {
             message: this.$t('Revert snapshot')
@@ -701,7 +704,7 @@ export default defineComponent({
         case 'recover':
           if (this.statusVM.recover) return
           this.actionLoading = true
-          this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+          this.invokeAction({
             uuid: this.VM.uuid,
             uuidService: this.VM.uuidService,
             action: 'backup_restore_points'
@@ -813,7 +816,7 @@ export default defineComponent({
           const planCode = this.VM.billingPlan.products[key].meta.addons
             .find((addon) => addon.includes(action))
           this.actionLoading = true
-          this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+          this.invokeAction({
             uuid: this.VM.uuid,
             uuidService: this.VM.uuidService,
             action: 'add_addon',
@@ -855,7 +858,7 @@ export default defineComponent({
         data.params = { newPlanCode: this.planCode }
       }
 
-      return this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
+      return this.invokeAction(data)
         .then((res) => {
           this.openNotificationWithIcon('success', { message: 'Done!' })
 
@@ -873,7 +876,7 @@ export default defineComponent({
         })
     },
     openVNC () {
-      this.$store.dispatch('nocloud/vms/actionVMInvoke', {
+      this.invokeAction({
         uuid: this.$route.params.uuid,
         action: 'start_vnc'
       })

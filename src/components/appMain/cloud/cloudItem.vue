@@ -63,8 +63,11 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+
 import { useAuthStore } from '@/stores/auth.js'
 import { useSpStore } from '@/stores/sp.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+
 import router from '@/router'
 import i18n from '@/i18n'
 import api from '@/api.js'
@@ -76,6 +79,7 @@ const props = defineProps({
 
 const authStore = useAuthStore()
 const providersStore = useSpStore()
+const currenciesStore = useCurrenciesStore()
 
 const activeKey = ref([])
 const prices = ref({})
@@ -130,7 +134,7 @@ const price = computed(() => {
 })
 
 const currency = computed(() => ({
-  code: authStore.billingUser.currency_code ?? authStore.defaultCurrency
+  code: authStore.billingUser.currency_code ?? currenciesStore.defaultCurrency
 }))
 
 const isPayg = computed(() => {

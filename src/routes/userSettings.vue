@@ -77,44 +77,50 @@
               >
             </a-form-model-item>
 
-            <a-form-model-item>
-              <a-form-model-item
-                :label="$t('clientinfo.countryname') | capitalize"
-                prop="countryname"
+            <a-form-model-item
+              :label="$t('clientinfo.countryname') | capitalize"
+              prop="countryname"
+            >
+              <a-select
+                v-model="form.countryname"
+                show-search
+                option-filter-prop="children"
+                :disabled="authStore.billingUser.country_stop === 1 || isDisabled"
               >
-                <a-select
-                  v-model="form.countryname"
-                  show-search
-                  option-filter-prop="children"
-                  :disabled="authStore.billingUser.country_stop === 1 || isDisabled"
+                <a-select-option
+                  v-for="country in Object.keys(countries)"
+                  :key="country"
+                  :value="country"
                 >
-                  <a-select-option
-                    v-for="country in Object.keys(countries)"
-                    :key="country"
-                    :value="country"
-                  >
-                    {{ $t(`country.${country}`) }}
-                  </a-select-option>
-                </a-select>
-              </a-form-model-item>
-
-              <a-button
-                v-if="!isDisabled"
-                class="user__button user__button--submit"
-                type="primary"
-                :loading="isSendingInfo"
-                @click="sendInfo"
-              >
-                {{ $t("Submit") }}
-              </a-button>
-              <a-button
-                v-if="!isDisabled"
-                class="user__button user__button--cancel"
-                @click="installDataToBuffer"
-              >
-                {{ $t("Cancel") }}
-              </a-button>
+                  {{ $t(`country.${country}`) }}
+                </a-select-option>
+              </a-select>
             </a-form-model-item>
+
+            <a-form-model-item
+              v-if="isPasswordVisible"
+              :label="$t('clientinfo.password') | capitalize"
+              prop="password"
+            >
+              <a-input v-model="form.password" />
+            </a-form-model-item>
+
+            <a-button
+              v-if="!isDisabled"
+              class="user__button user__button--submit"
+              type="primary"
+              :loading="isSendingInfo"
+              @click="sendInfo"
+            >
+              {{ $t("Submit") }}
+            </a-button>
+            <a-button
+              v-if="!isDisabled"
+              class="user__button user__button--cancel"
+              @click="installDataToBuffer"
+            >
+              {{ $t("Cancel") }}
+            </a-button>
           </a-form-model>
 
           <loading v-else-if="isLoading" />
@@ -230,6 +236,10 @@ const isDisabled = computed(() => {
 
 const isVisible = computed(() =>
   (!isLoading.value && authStore.billingUser.firstname) || localStorage.getItem('oauth')
+)
+
+const isPasswordVisible = computed(() =>
+  localStorage.getItem('oauth')
 )
 
 function installDataToBuffer () {

@@ -25,12 +25,12 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import store from '@/store'
 import router from '@/router'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useSpStore } from '@/stores/sp.js'
 import { useProductsStore } from '@/stores/products.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 import servicesWrapper from '@/components/services/services_wrapper.vue'
 import userProducts from '@/components/userProducts/userProducts.vue'
@@ -38,6 +38,7 @@ import userProducts from '@/components/userProducts/userProducts.vue'
 const authStore = useAuthStore()
 const providersStore = useSpStore()
 const productsStore = useProductsStore()
+const instancesStore = useInstancesStore()
 
 const productsComponent = ref(null)
 const pageSizeOptions = ['5', '10', '25', '50', '100']
@@ -47,7 +48,7 @@ const providers = computed(() =>
 )
 
 const products = computed(() => {
-  const instances = store.getters['nocloud/vms/getInstances'] ?? []
+  const instances = instancesStore.getInstances ?? []
 
   if (router.currentRoute.query.service) {
     return [...productsStore.products, ...instances].filter(({ sp }) => {

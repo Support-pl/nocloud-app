@@ -27,7 +27,6 @@ import loading from "@/components/loading/loading.vue";
 import createvm from "@/components/createVM.vue";
 import maintanance from "@/components/maintanance.vue";
 import empty from "../components/empty/empty.vue";
-import { mapGetters } from "vuex";
 
 export default {
   name: "cloud",
@@ -44,7 +43,9 @@ export default {
     }
   },
   computed: {
-    ...mapGetters("app", ["isMaintananceMode"]),
+    isMaintananceMode() {
+      return this.$store.getters["app/isMaintananceMode"]
+    },
     getInstances() {
       return this.$store.getters["nocloud/vms/getInstances"]
         .filter(({ resources }) => !resources.domain);

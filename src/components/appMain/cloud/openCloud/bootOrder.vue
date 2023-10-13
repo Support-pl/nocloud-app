@@ -37,8 +37,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-
 export default {
 	name: 'BootOrder',
 	data(){
@@ -141,10 +139,12 @@ export default {
 		this.orderBuffer = JSON.parse(JSON.stringify(this.order));
 	},
 	computed: {
-		...mapGetters('cloud', {
-			SingleCloud: 'getOpenedCloud',
-		}),
-		...mapGetters({user: 'getUser'}),
+    SingleCloud() {
+      return this.$store.getters['getOpenedCloud'];
+    },
+		user() {
+      return this.$store.getters['getUser'];
+    },
 		getDisksShortnameList(){
 			return this.SingleCloud.DISKS.reduce( (prev, next) => {
 				// prev.push(`disk${next.DISK_ID}`);

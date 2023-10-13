@@ -566,12 +566,15 @@
 
 <script lang="jsx">
 import { defineComponent } from 'vue'
-import { mapState } from 'pinia'
+import { mapState, mapActions } from 'pinia'
+
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
+
 import notification from '@/mixins/notification.js'
 import addFunds from '@/components/balance/addFunds.vue'
+import { useInstancesStore } from '@/stores/instances'
 
 const columns = [
   {
@@ -816,6 +819,7 @@ export default defineComponent({
   },
   created () { this.fetchMonitoring() },
   methods: {
+    ...mapActions(useInstancesStore, ['invokeAction']),
     deployService () {
       this.actionLoading = true
       this.$api.services
@@ -917,8 +921,7 @@ export default defineComponent({
       }
 
       this.snapshots.addSnap.loading = true
-      this.$store
-        .dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then((res) => {
           this.VM.state.meta.snapshots = res?.meta.snapshots
           this.openNotificationWithIcon('success', {
@@ -944,8 +947,7 @@ export default defineComponent({
       }
 
       this.snapshots.loading = true
-      this.$store
-        .dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then(() => {
           delete this.VM.state.meta.snapshots[index]
           this.openNotificationWithIcon('success', {
@@ -970,8 +972,7 @@ export default defineComponent({
       }
 
       this.snapshots.addSnap.loading = true
-      this.$store
-        .dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then(() => {
           this.openNotificationWithIcon('success', {
             message: this.$t('Revert snapshot')
@@ -1134,7 +1135,7 @@ export default defineComponent({
           })
         return
       }
-      return this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
+      return this.invokeAction(data)
         .then(() => {
           const opts = {
             message: `${this.$t('Done')}!`
@@ -1156,7 +1157,7 @@ export default defineComponent({
         action: 'monitoring'
       }
 
-      this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
+      this.invokeAction(data)
         .then((res) => {
           if (res.meta?.NETRX !== undefined) {
             this.chart1Data = res.meta.NETRX

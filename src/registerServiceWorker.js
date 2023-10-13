@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import store from './store'
+import { useAppStore } from './stores/app'
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register(`${import.meta.env.BASE_URL}service-worker.js`)
@@ -17,7 +17,9 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
             return caches.delete(cacheName)
           }))
         )
-          .then(() => { store.commit('app/setUpdate', { worker, status: true }) })
+          .then(() => {
+            useAppStore().update = { worker, status: true }
+          })
       }
 
       worker.addEventListener('updatefound', () => {
@@ -37,7 +39,9 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
                   return caches.delete(cacheName)
                 }))
               )
-                .then(() => { store.commit('app/setUpdate', { worker, status: true }) })
+                .then(() => {
+                  useAppStore().update = { worker, status: true }
+                })
             } else {
               console.log('Content has been cached for offline use.')
             }

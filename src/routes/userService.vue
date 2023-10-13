@@ -179,6 +179,7 @@ import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useProductsStore } from '@/stores/products.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 import loading from '@/components/loading/loading.vue'
 
@@ -220,7 +221,7 @@ export default {
   components: { loading },
   data: () => ({ service: null, info }),
   computed: {
-    ...mapStores(useChatsStore, useProductsStore),
+    ...mapStores(useChatsStore, useProductsStore, useInstancesStore),
     ...mapState(useAuthStore, ['baseURL', 'billingUser', 'fetchBillingData']),
     ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'fetchCurrencies']),
     currency () {
@@ -296,9 +297,9 @@ export default {
   },
   created () {
     this.fetchBillingData()
-    this.$store.dispatch('nocloud/vms/fetch')
+    this.instancesStore.fetch()
       .then(() => {
-        const domain = this.$store.getters['nocloud/vms/getInstances']
+        const domain = this.instancesStore.getInstances
           .find(({ uuid }) => uuid === this.$route.params.id)
         let groupname = 'Domains'
         let date = 'year'
@@ -466,7 +467,7 @@ export default {
         onOk: async () => {
           const data = { uuid: this.service.uuid, action: 'manual_renew' }
 
-          return this.$store.dispatch('nocloud/vms/actionVMInvoke', data)
+          return this.instancesStore.invokeAction(data)
             .then(() => {
               this.$notification.success({ message: 'Done!' })
               this.$set(this.service.data, 'blocked', true)
@@ -493,8 +494,7 @@ export default {
           this.$t('All data will be deleted!')
         ),
         onOk: async () => {
-          return this.$store
-            .dispatch('nocloud/vms/deleteInstance', this.service.uuid)
+          return this.instancesStore.deleteInstance(this.service.uuid)
             .then(() => {
               this.$notification.success({ message: 'Done!' })
               this.$router.push({ path: '/services' })

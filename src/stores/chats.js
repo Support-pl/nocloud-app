@@ -17,7 +17,7 @@ import {
 } from '@/libs/cc_connect/cc_connect'
 
 export const useChatsStore = defineStore('chats', () => {
-  const store = useAuthStore()
+  const authStore = useAuthStore()
   const appStore = useAppStore()
   const supportStore = useSupportStore()
 
@@ -25,7 +25,7 @@ export const useChatsStore = defineStore('chats', () => {
     baseUrl: (VUE_APP_BASE_URL.endsWith('/') ? VUE_APP_BASE_URL : `${VUE_APP_BASE_URL}/`),
     interceptors: [
       (next) => async (req) => {
-        req.header.set('Authorization', `Bearer ${store.token}`)
+        req.header.set('Authorization', `Bearer ${authStore.token}`)
         return next(req)
       }
     ]
@@ -183,7 +183,7 @@ export const useChatsStore = defineStore('chats', () => {
             (account) => account.uuid === message.sender
           ) ?? {}
 
-          return changeMessage(message, user, store.userdata.uuid)
+          return changeMessage(message, user, authStore.userdata.uuid)
         })
 
         messages.value = replies
@@ -206,7 +206,7 @@ export const useChatsStore = defineStore('chats', () => {
         for await (const event of stream.value) {
           if (event.type === +EventType.PING) continue
           else if (event.type >= EventType.MESSAGE_SENT) {
-            updateMessage({ ...event, uuid: store.userdata.uuid })
+            updateMessage({ ...event, uuid: authStore.userdata.uuid })
           } else {
             updateChat(event)
           }
@@ -235,7 +235,7 @@ export const useChatsStore = defineStore('chats', () => {
         department: data.department,
         gateways: data.gateways ?? defaults.value.gateways,
         admins: data.admins ?? defaults.value.admins,
-        users: [store.userdata.uuid],
+        users: [authStore.userdata.uuid],
         topic: data.chat.subject,
         role: Role.OWNER,
         meta: new ChatMeta({

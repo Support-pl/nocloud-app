@@ -41,9 +41,6 @@
 </template>
 
 <script>
-import md5 from "md5";
-import { mapGetters } from "vuex";
-
 export default {
   name: "publicNetworks",
   data() {
@@ -97,7 +94,7 @@ export default {
       const user = this.user;
       const vmid = this.SingleCloud.ID;
 
-      const close_your_eyes = md5("NICRelease" + user.id + user.secret);
+      const close_your_eyes = '' // md5("NICRelease" + user.id + user.secret);
       const auth = {
         userid: user.id,
         vmid,
@@ -127,7 +124,7 @@ export default {
       const user = this.user;
       const vmid = this.SingleCloud.ID;
 
-      const close_your_eyes = md5("NICReserve" + user.id + user.secret);
+      const close_your_eyes = '' // md5("NICReserve" + user.id + user.secret);
       const auth = {
         userid: user.id,
         vmid,
@@ -155,14 +152,18 @@ export default {
     },
   },
   computed: {
-    ...mapGetters("cloud", {
-      SingleCloud: "getOpenedCloud",
-    }),
-    ...mapGetters("network", {
-      NICpublicData: "getNICpublic",
-      NICloading: "getNICloading",
-    }),
-    ...mapGetters({ user: "getUser" }),
+    SingleCloud() {
+      return this.$store.getters['getOpenedCloud'];
+    },
+		user() {
+      return this.$store.getters['getUser'];
+    },
+    NICpublicData() {
+      return this.$store.getters["network/getNICpublic"];
+    },
+    NICloading() {
+      return this.$store.getters["network/getNICloading"];
+    },
     NICpublic() {
       if (Array.isArray(this.NICpublicData)) {
         const arrayNICpublic = [];
