@@ -227,14 +227,14 @@ export default {
           ({ uuid }) => uuid === this.$route.query.service
         ) ?? {}
 
-        if (!plans) return type === 'virtual'
+        if (!plans) return type === 'empty'
 
-        if (plans.length < 1) return type === 'virtual'
-        return type === 'virtual' && plans.includes(uuid)
+        if (plans.length < 1) return type === 'empty'
+        return type === 'empty' && plans.includes(uuid)
       })
     },
     sp () {
-      return this.spStore.servicesProviders.find((sp) => sp.type === 'virtual')
+      return this.spStore.servicesProviders.find((sp) => sp.type === 'empty')
     },
     rules () {
       const message = this.$t('ssl_product.field is required')
@@ -338,7 +338,7 @@ export default {
       }
 
       const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
-      const group = info.instancesGroups?.find(({ type }) => type === 'virtual')
+      const group = info.instancesGroups?.find(({ type }) => type === 'empty')
 
       if (group) group.instances = [...group.instances, ...instances]
       else if (this.service) info.instancesGroups.push(newGroup)
