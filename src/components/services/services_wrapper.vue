@@ -185,8 +185,10 @@ export default {
     },
     newProductHandler (service) {
       const provider = service.onclick.paramsArr[0].query.service
+      let showcase = null
+
       const { type } = this.sp.find(({ uuid }) => {
-        const showcase = this.showcases.find(({ uuid }) => uuid === provider)
+        showcase = this.showcases.find(({ uuid }) => uuid === provider)
 
         return showcase?.servicesProvider?.includes(uuid)
       }) ?? {}
@@ -218,6 +220,9 @@ export default {
 
       if (!type && this.services[provider]) {
         name = 'service-iaas'
+      }
+      if (showcase?.promo[this.$i18n.locale]?.previewEnable) {
+        name = 'products'
       }
 
       this.$router.push({ name, query })
