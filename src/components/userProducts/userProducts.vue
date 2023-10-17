@@ -127,7 +127,12 @@
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
       <div
-        v-if="!authStore.isLogged"
+        v-if="showcase?.promo && showcase.promo[$i18n.locale]?.previewEnable"
+        class="products__unregistred"
+        v-html="showcase.promo[$i18n.locale]?.preview"
+      />
+      <div
+        v-else-if="!authStore.isLogged"
         class="products__unregistred"
       >
         {{ $t("unregistered.will be able after") }}
@@ -205,14 +210,13 @@ export default {
       return products
     },
     products () {
-      const products = this.productsStore.products
-        .map((el) => ({
-          ...el.ORDER_INFO,
-          groupname: el.groupname,
-          productname: el.name,
-          server_on: el.server_on,
-          id: el.id
-        }))
+      const products = this.productsStore.products.map((el) => ({
+        ...el.ORDER_INFO,
+        groupname: el.groupname,
+        productname: el.name,
+        server_on: el.server_on,
+        id: el.id
+      }))
 
       const instances = this.instancesStore.getInstances.map((inst) => {
         const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
@@ -345,6 +349,11 @@ export default {
 
     services () {
       return this.productsStore.services
+    },
+    showcase () {
+      return this.spStore.getShowcases.find(({ uuid }) =>
+        uuid === this.$route.query.service
+      )
     },
     types () {
       const result = this.spStore.getShowcases.map(
