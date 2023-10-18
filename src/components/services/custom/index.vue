@@ -18,7 +18,31 @@
             </div>
           </div>
 
-          <a-checkbox-group v-model="checkedTypes" :options="typesOptions" />
+          <template v-if="typesOptions.length > 1">
+            <div style="margin-bottom: 7px">
+              {{ $t('filter') }} {{ $t('by') }} {{ $t('groupname') }}:
+            </div>
+            <a-checkbox-group
+              v-model="checkedTypes"
+              style="margin-bottom: 15px"
+              :options="typesOptions"
+            />
+          </template>
+
+          <div v-for="(resource, key) in resources" :key="key">
+            <span>{{ $t('filter') }} {{ $t('by') }} {{ key }}:</span>
+            <a-slider
+              range
+              style="margin-top: 10px"
+              :marks="{ ...resource }"
+              :tip-formatter="null"
+              :default-value="[0, resource.length - 1]"
+              :max="resource.length - 1"
+              :min="0"
+              @change="([i, j]) => $set(filters, key, [resource[i], resource[j]])"
+            />
+          </div>
+
           <div class="order__grid">
             <div
               v-for="size of filteredSizes"
@@ -28,20 +52,25 @@
               @click="options.size = size.key"
             >
               <h1>{{ size.label }}</h1>
-              <transition name="specs" mode="out-in">
-                <div
-                  v-if="typeof products[size.key].meta?.description === 'string'"
-                  v-html="products[size.key].meta?.description"
-                />
-                <table v-else-if="products[size.key].meta?.description" class="product__specs">
-                  <tr v-for="resource in products[size.key].meta?.description" :key="resource.name">
-                    <td>{{ resource.name }}</td>
-                    <td>{{ resource.value }}</td>
-                  </tr>
-                </table>
-              </transition>
+              <p v-for="resource of products[size.key].meta?.resources" :key="resource.id">
+                {{ resource.key }}: {{ resource.title }}
+              </p>
             </div>
           </div>
+
+          <transition name="specs" mode="out-in">
+            <div
+              v-if="typeof getProducts.meta?.description === 'string'"
+              style="margin-top: 15px"
+              v-html="getProducts.meta?.description"
+            />
+            <table v-else-if="getProducts.meta?.description" class="product__specs">
+              <tr v-for="resource in getProducts.meta?.description" :key="resource.name">
+                <td>{{ resource.name }}</td>
+                <td>{{ resource.value }}</td>
+              </tr>
+            </table>
+          </transition>
         </div>
       </div>
 
@@ -171,7 +200,8 @@ export default {
     products: {},
     sizes: [],
     periods: [],
-    checkedTypes: []
+    checkedTypes: [],
+    filters: {}
   }),
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
@@ -189,6 +219,32 @@ export default {
 
       return { ...product, price: +(product.price * this.currency.rate).toFixed(2) }
     },
+    getResources () {
+      if (this.sizes.length < 2) return {}
+      const result = {}
+
+      this.sizes.forEach((size) => {
+        result[size.key] = this.products[size.key].meta.resources ?? []
+      })
+
+      return result
+    },
+    resources () {
+      const values = Object.values(this.getResources)
+      const result = {}
+
+      values.forEach((value) => {
+        value.forEach(({ key, value }) => {
+          if (!result[key]) result[key] = []
+          if (result[key].includes(value)) return
+
+          result[key].push(value)
+          result[key].sort((a, b) => a - b)
+        })
+      })
+
+      return result
+    },
     typesOptions () {
       const types = []
 
@@ -200,10 +256,19 @@ export default {
       return types
     },
     filteredSizes () {
-      if (this.checkedTypes.length < 1) return this.sizes
-      return this.sizes.filter(({ group }) =>
-        this.checkedTypes.includes(group)
-      )
+      return this.sizes.filter(({ group, key }) => {
+        const isIncluded = (this.checkedTypes.length > 0)
+          ? this.checkedTypes.includes(group)
+          : true
+
+        const { meta } = this.products[key] ?? {}
+
+        console.log(meta, isIncluded)
+        if (!meta?.resources) return isIncluded
+        return isIncluded && meta?.resources?.every(({ key, value }) =>
+          this.filters[key]?.at(0) <= value && this.filters[key]?.at(-1) <= value
+        )
+      })
     },
     currency () {
       const code = this.unloginedCurrency
@@ -251,7 +316,8 @@ export default {
 
       this.changeProducts(plan)
       this.fetchLoading = false
-    }
+    },
+    filters (value) { console.log(value) }
   },
   mounted () {
     const { action, info } = this.onLogin
