@@ -73,9 +73,9 @@
       </div>
 
       <div v-if="itemSP && plans.length > 0" class="newCloud__calculate field result">
-        <div
+        <editor-container
           v-if="locationDescription && activeKey === 'location'"
-          v-html="locationDescription"
+          :value="locationDescription"
         />
 
         <template v-else>
@@ -586,7 +586,7 @@
 
 <script>
 import { mapState, mapActions } from 'pinia'
-import { NcMap } from 'nocloud-ui'
+import { NcMap, EditorContainer } from 'nocloud-ui'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
@@ -603,7 +603,7 @@ import addFunds from '@/components/balance/addFunds.vue'
 
 export default {
   name: 'NewPaaS',
-  components: { loading, NcMap, addFunds },
+  components: { loading, NcMap, addFunds, EditorContainer },
   mixins: [notification],
   data () {
     return {

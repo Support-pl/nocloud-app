@@ -126,10 +126,10 @@
       class="products__inner"
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
-      <div
-        v-if="showcase?.promo && showcase.promo[$i18n.locale]?.previewEnable"
-        class="products__unregistred"
-        v-html="showcase.promo[$i18n.locale]?.preview"
+      <editor-container
+        v-if="isPromoVisible"
+        class="products__promo"
+        :value="showcase.promo[$i18n.locale]?.preview"
       />
       <div
         v-else-if="!authStore.isLogged"
@@ -169,6 +169,7 @@
 
 <script>
 import { mapStores } from 'pinia'
+import { EditorContainer } from 'nocloud-ui'
 import config from '@/appconfig.js'
 
 import { useSpStore } from '@/stores/sp.js'
@@ -181,7 +182,7 @@ import cloudItem from '@/components/appMain/cloud/cloudItem.vue'
 
 export default {
   name: 'ProductsBlock',
-  components: { cloudItem, loading },
+  components: { cloudItem, loading, EditorContainer },
   props: {
     min: { type: Boolean, default: true },
     count: { type: Number, default: 5 }
@@ -388,6 +389,11 @@ export default {
     },
     isNeedFilterStringInHeader () {
       return ['services', 'root', 'products'].includes(this.$route.name) && this.$route.query.service
+    },
+    isPromoVisible () {
+      return this.showcase?.promo &&
+        this.showcase.promo[this.$i18n.locale]?.previewEnable &&
+        this.productsPrepared.length < 1
     },
     queryTypes () {
       if (this.$route.query.service) {
@@ -666,7 +672,7 @@ export default {
   padding: 15px;
   border-radius: 10px;
   background: #fff;
-  box-shadow: 5px 8px 10px rgba(0,0,0,.05);
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
 }
 
 .products__wrapper--loading {
@@ -676,13 +682,21 @@ export default {
   align-items: center;
 }
 
+.products__promo {
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
+}
+
 .products__unregistred {
   padding: 7px 10px;
   font-size: 1.5rem;
   text-align: center;
   border-radius: 10px;
   background: #fff;
-  box-shadow: 5px 8px 10px rgba(0,0,0,.05);
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
 }
 
 .products__title {

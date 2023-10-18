@@ -22,7 +22,7 @@
     "markdown-it": "^13.0.1",
     "markdown-it-emoji": "^2.0.2",
     "moment": "^2.29.4",
-    "nocloud-ui": "^1.0.7",
+    "nocloud-ui": "^1.0.13",
     "nocloudjsrest": "^1.5.14",
     "pinia": "^2.1.6",
     "qrcode.vue": "^1.7.0",
