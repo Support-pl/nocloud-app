@@ -126,8 +126,13 @@
       class="products__inner"
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
+      <editor-container
+        v-if="isPromoVisible"
+        class="products__promo"
+        :value="showcase.promo[$i18n.locale]?.preview"
+      />
       <div
-        v-if="!authStore.isLogged"
+        v-else-if="!authStore.isLogged"
         class="products__unregistred"
       >
         {{ $t("unregistered.will be able after") }}
@@ -164,6 +169,7 @@
 
 <script>
 import { mapStores } from 'pinia'
+import { EditorContainer } from 'nocloud-ui'
 import config from '@/appconfig.js'
 
 import { useSpStore } from '@/stores/sp.js'
@@ -176,7 +182,7 @@ import cloudItem from '@/components/appMain/cloud/cloudItem.vue'
 
 export default {
   name: 'ProductsBlock',
-  components: { cloudItem, loading },
+  components: { cloudItem, loading, EditorContainer },
   props: {
     min: { type: Boolean, default: true },
     count: { type: Number, default: 5 }
@@ -205,14 +211,13 @@ export default {
       return products
     },
     products () {
-      const products = this.productsStore.products
-        .map((el) => ({
-          ...el.ORDER_INFO,
-          groupname: el.groupname,
-          productname: el.name,
-          server_on: el.server_on,
-          id: el.id
-        }))
+      const products = this.productsStore.products.map((el) => ({
+        ...el.ORDER_INFO,
+        groupname: el.groupname,
+        productname: el.name,
+        server_on: el.server_on,
+        id: el.id
+      }))
 
       const instances = this.instancesStore.getInstances.map((inst) => {
         const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
@@ -346,6 +351,11 @@ export default {
     services () {
       return this.productsStore.services
     },
+    showcase () {
+      return this.spStore.getShowcases.find(({ uuid }) =>
+        uuid === this.$route.query.service
+      )
+    },
     types () {
       const result = this.spStore.getShowcases.map(
         ({ title, uuid: value }) => ({ title, value })
@@ -379,6 +389,11 @@ export default {
     },
     isNeedFilterStringInHeader () {
       return ['services', 'root', 'products'].includes(this.$route.name) && this.$route.query.service
+    },
+    isPromoVisible () {
+      return this.showcase?.promo &&
+        this.showcase.promo[this.$i18n.locale]?.previewEnable &&
+        this.productsPrepared.length < 1
     },
     queryTypes () {
       if (this.$route.query.service) {
@@ -657,7 +672,7 @@ export default {
   padding: 15px;
   border-radius: 10px;
   background: #fff;
-  box-shadow: 5px 8px 10px rgba(0,0,0,.05);
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
 }
 
 .products__wrapper--loading {
@@ -667,13 +682,21 @@ export default {
   align-items: center;
 }
 
+.products__promo {
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
+}
+
 .products__unregistred {
   padding: 7px 10px;
   font-size: 1.5rem;
   text-align: center;
   border-radius: 10px;
   background: #fff;
-  box-shadow: 5px 8px 10px rgba(0,0,0,.05);
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
 }
 
 .products__title {

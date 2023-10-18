@@ -54,7 +54,7 @@
           <div v-if="loginError" class="login__error">
             {{ $t(loginError) }}
           </div>
-          <div class="inputs__log-pas" @keyup.enter="submitHandler()">
+          <div class="inputs__log-pas" @keyup.enter="send">
             <input v-model="email" type="text" placeholder="Email">
             <template v-if="remember">
               <span class="login__horisontal-line" />
@@ -70,11 +70,11 @@
               <button
                 v-if="remember"
                 class="login__submit"
-                @click="submitHandler()"
+                @click="send"
               >
                 {{ $t("login") | capitalize }}
               </button>
-              <button v-else class="login__submit" @click="restorePass()">
+              <button v-else class="login__submit" @click="restorePass">
                 {{ $t("restore") | capitalize }}
               </button>
 
@@ -104,12 +104,12 @@
         <p v-if="authStore.loginButtons.length > 0" style="margin: 20px 0 0">
           {{ $t('login') }} {{ $t('with') }}:
         </p>
-        <div style="display: flex; justify-content: center">
+        <div class="login__oauth">
           <img
             v-for="text of authStore.loginButtons"
             :key="text"
             :alt="text"
-            :src="`/img/icons/${text}24.png`"
+            :src="`/img/icons/${text}.png`"
             style="width: 32px; cursor: pointer"
             @click="login(text)"
           >
@@ -139,9 +139,7 @@
         </div>
         <div class="login__forgot" style="margin-bottom: 30px">
           <router-link :to="{ name: 'register' }">
-            {{
-              $t("sign up") | capitalize
-            }}
+            {{ $t("sign up") | capitalize }}
           </router-link>
         </div>
 
@@ -182,12 +180,8 @@ const companyName = computed(() =>
 )
 const selfUrl = location.href
 
-function submitHandler () {
-  tryingLogin.value = true
-  send()
-}
-
 async function send () {
+  tryingLogin.value = true
   try {
     const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(1)}`
 
@@ -335,6 +329,13 @@ export default { name: 'LoginView' }
 
 .login__layout {
   flex: 1 0;
+}
+
+.login__oauth {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
 }
 
 .login__title {
