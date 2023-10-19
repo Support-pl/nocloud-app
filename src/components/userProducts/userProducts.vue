@@ -1,6 +1,6 @@
 <template>
   <div class="products__wrapper">
-    <div v-if="authStore.isLogged" class="products__header">
+    <div v-if="authStore.isLogged && !isPromoVisible" class="products__header">
       <div class="products__title">
         <!-- Ваши услуги -->
         <transition name="header-transition" mode="out-in">
@@ -128,7 +128,6 @@
     >
       <editor-container
         v-if="isPromoVisible"
-        class="products__promo"
         :value="showcase.promo[$i18n.locale]?.preview"
       />
       <div
@@ -680,14 +679,6 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.products__promo {
-  padding: 10px;
-  font-size: 1rem;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
 }
 
 .products__unregistred {

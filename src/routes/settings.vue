@@ -140,7 +140,7 @@
                 <img
                   :key="text"
                   :alt="text"
-                  :src="`/img/icons/${text}24.png`"
+                  :src="`/img/icons/${text}.png`"
                   style="width: 32px; margin-right: 5px"
                 >
                 {{ text | capitalize }}

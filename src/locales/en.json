@@ -424,7 +424,10 @@
       "mysql": "MySQL Databases",
       "email": "Email Accounts",
       "ssd": "Shared SSD Storage",
-      "bandwidth": "Bandwidth"
+      "bandwidth": "Bandwidth",
+      "sites": "Websites",
+      "hdd_shared": "Shared HDD Storage",
+      "traffic": "Bandwidth"
     },
     "clientinfo": {
       "username": "Username",
@@ -678,6 +681,8 @@
     "cpu": "CPU",
     "ram": "RAM",
     "gpu": "GPU",
+    "highCPU": "high CPU",
+    "withAdministration": "with administration",
     "country": {
       "VN": "Vietnam",
       "BY": "Belarus",
