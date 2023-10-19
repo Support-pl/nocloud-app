@@ -217,6 +217,12 @@ export const useChatsStore = defineStore('chats', () => {
     },
 
     async fetchDefaults () {
+      if (Object.keys(defaults.value).length > 0) {
+        return defaults.value
+      } else if (defaults.value.error) {
+        return {}
+      }
+
       try {
         const usersApi = createPromiseClient(UsersAPI, transport)
         const response = await usersApi.fetchDefaults(new Empty())
@@ -224,6 +230,7 @@ export const useChatsStore = defineStore('chats', () => {
         defaults.value = response
         return response
       } catch (error) {
+        defaults.value = { error }
         console.debug(error)
       }
     },

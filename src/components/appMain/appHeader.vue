@@ -519,6 +519,7 @@ export default {
       if (value.only_tickets) {
         const i = this.headers.support.buttons.findIndex(({ icon }) => icon === 'telegram')
 
+        if (i === -1) return
         this.headers.support.buttons.splice(i, 1)
       }
     }
