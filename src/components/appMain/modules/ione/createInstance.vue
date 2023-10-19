@@ -19,41 +19,41 @@
       :disabled="itemSP ? false : true"
     >
       <template v-if="getPlan && getPlan.uuid">
-        <a-row v-if="resources.cpu.length > 0" type="flex" justify="space-between" align="middle">
-          <a-col>
-            <span style="display: inline-block">{{ $t('cpu') }}: (cores)</span>
-          </a-col>
-          <a-col :span="24" :md="20">
-            <a-slider
-              range
-              style="margin-top: 10px"
-              :marks="{ ...resources.cpu }"
-              :tip-formatter="null"
-              :default-value="[0, resources.cpu.length - 1]"
-              :max="resources.cpu.length - 1"
-              :min="0"
-              @change="([i, j]) => filters.cpu = [resources.cpu[i], resources.cpu[j]]"
-            />
-          </a-col>
-        </a-row>
+        <template v-for="(resource, key) in resources">
+          <a-row
+            v-if="Array.isArray(resource) && resource.length > 0"
+            :key="key"
+            type="flex"
+            justify="space-between"
+            align="middle"
+          >
+            <a-col>
+              <span style="display: inline-block">{{ $t(key) }}: (cores)</span>
+            </a-col>
+            <a-col :span="24" :md="20">
+              <a-slider
+                range
+                style="margin-top: 10px"
+                :marks="{ ...resource }"
+                :tip-formatter="null"
+                :default-value="[0, resource.length - 1]"
+                :max="resource.length - 1"
+                :min="0"
+                @change="([i, j]) => filters[key] = [resource[i], resource[j]]"
+              />
+            </a-col>
+          </a-row>
 
-        <a-row v-if="resources.ram.length > 0" type="flex" justify="space-between" align="middle">
-          <a-col>
-            <span style="display: inline-block">{{ $t('ram') }}: (Gb)</span>
-          </a-col>
-          <a-col :span="24" :md="20">
-            <a-slider
-              range
-              style="margin-top: 10px"
-              :marks="{ ...resources.ram }"
-              :tip-formatter="null"
-              :default-value="[0, resources.ram.length - 1]"
-              :max="resources.ram.length - 1"
-              :min="0"
-              @change="([i, j]) => filters.ram = [resources.ram[i], resources.ram[j]]"
-            />
-          </a-col>
-        </a-row>
+          <div
+            v-else-if="resource === true"
+            :key="key"
+            style="display: inline-flex; gap: 10px; width: 50%; margin-top: 10px"
+          >
+            <span style="display: inline-block">{{ $t(key) | capitalize }}:</span>
+
+            <a-switch v-model="filters[key]" size="small" />
+          </div>
+        </template>
 
         <a-divider style="margin: 10px 0" />
 
@@ -197,36 +197,6 @@
         type="warning"
         :message="$t('No linked plans. Choose another location')"
       />
-      <!-- <a-row class="newCloud__prop">
-          <a-col span="8" :xs="6"
-            >{{ $t("traffic") | capitalize }}:</a-col
-          >
-          <a-col span="16" :xs="18">
-            <a-select
-              default-value="-1"
-              style="width: 100%"
-              @change="(newdata) => setAddon('traffic', +newdata)"
-            >
-              <a-select-option value="-1">{{
-                $t("under 3 Gb per month") | capitalize
-              }}</a-select-option>
-              <a-select-option
-                v-for="group in getAddons.traffic"
-                :key="group.id"
-              >
-                {{
-                  $t(
-                    `newPaaSTrafficItem.${group.description.TITLE.replace(
-                      "Безлимитный, скорость канала не менее",
-                      "Безлимит, от "
-                    )}`
-                  )
-                }}
-              </a-select-option>
-            </a-select>
-          </a-col>
-        </a-row> -->
-      <!-- </a-skeleton> -->
     </a-collapse-panel>
 
     <!-- OS -->
@@ -369,57 +339,6 @@
         </a-row>
       </div>
     </a-collapse-panel>
-
-    <!-- Addons -->
-    <!-- <div class="paas_addons" v-if="!isAddonsLoading"> -->
-    <!-- <a-collapse-panel
-      key="addons"
-      :header="$t('Addons') + ':'"
-      :style="{ 'border-radius': '0 0 20px 20px' }"
-    >
-      <a-row class="newCloud__prop">
-        <a-col span="8" :xs="6"
-          >{{ $t("panel") | capitalize }}:</a-col
-        >
-        <a-col span="16" :xs="18">
-          <a-select
-            default-value="-1"
-            style="width: 100%"
-            @change="(newdata) => setAddon('panel', +newdata)"
-          >
-            <a-select-option value="-1">{{
-              $t("none")
-            }}</a-select-option>
-            <a-select-option
-              v-for="group in getAddons.panel"
-              :key="group.id"
-              >{{ group.description.TITLE }}</a-select-option
-            >
-          </a-select>
-        </a-col>
-      </a-row>
-
-      <a-row class="newCloud__prop">
-        <a-col span="8" :xs="6"
-          >{{ $t("backup HDD") | capitalize }}:</a-col
-        >
-        <a-col span="16" :xs="18">
-          <a-select
-            default-value="-1"
-            style="width: 100%"
-            @change="(newdata) => setAddon('backup', +newdata)"
-          >
-            <a-select-option value="-1">0 Gb</a-select-option>
-            <a-select-option
-              v-for="group in getAddons.backup"
-              :key="group.id"
-              >{{ group.description.TITLE }}</a-select-option
-            >
-          </a-select>
-        </a-col>
-      </a-row>
-    </a-collapse-panel> -->
-    <!-- </div> -->
   </a-collapse>
 </template>
 
@@ -467,6 +386,7 @@ export default {
       return images
     },
     resources () {
+      const { highCPU, withAdministration } = this.itemSP?.vars ?? {}
       const cpu = []
       const ram = []
 
@@ -486,7 +406,7 @@ export default {
       cpu.sort((a, b) => a - b)
       ram.sort((a, b) => a - b)
 
-      return { cpu, ram }
+      return { cpu, ram, highCPU, withAdministration }
     },
     filteredProducts () {
       const result = []

@@ -72,8 +72,17 @@
                 </svg>
               </div>
 
+              <a-input-search
+                v-else-if="viewport < 576 && button.icon === 'search'"
+                v-model="searchString"
+                search
+                placeholder="Title / Status / IP"
+                @search="(text) => searchString = text"
+                @keydown="updateSearch"
+              />
+
               <div
-                v-else-if="button.icon == 'search'"
+                v-else-if="button.icon === 'search'"
                 class="icon__wrapper"
                 :class="[button.additionalClass]"
                 :style="(searchString.length > 0) ? {
@@ -165,6 +174,7 @@
               </div>
             </div>
           </transition-group>
+
           <transition
             v-if="viewport < 576 && headers[active]?.buttons.length > 0 && isLogged"
             name="header__item-anim"
@@ -177,7 +187,7 @@
                   color: 'var(--main)'
                 } : null"
               >
-                <a-icon class="header__icon" type="down" />
+                <a-icon class="header__icon" :type="(isButtonsVisible) ? 'up' : 'down'" />
               </div>
             </div>
           </transition>
@@ -199,10 +209,11 @@
                   color: 'var(--main)'
                 } : null"
               >
-                <a-icon class="header__icon" type="down" />
+                <a-icon class="header__icon" :type="(isButtonsVisible) ? 'up' : 'down'" />
               </div>
             </div>
           </transition>
+
           <div v-if="!isLogged && isButtonsVisible" class="header__selects">
             <a-select v-model="$i18n.locale" style="width: 100%; border: none">
               <a-select-option v-for="lang in langs" :key="lang" :value="lang">
@@ -842,6 +853,11 @@ export default {
   justify-content: space-around;
 }
 
+.header__buttons .header__button {
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
 .header__button:not(:last-child) {
   margin-right: 15px;
 }
@@ -892,6 +908,7 @@ export default {
     left: 0;
     z-index: 10;
     width: 100%;
+    align-items: center;
     border-radius: 0 0 10px 10px;
     background: var(--main);
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);

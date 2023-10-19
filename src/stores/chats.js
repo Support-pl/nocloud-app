@@ -123,7 +123,7 @@ export const useChatsStore = defineStore('chats', () => {
   function changeMessage (message, user, uuid) {
     return {
       uuid: message.uuid,
-      date: appStore.toDate(Number(message.sent), '-', true, true),
+      date: appStore.toDate(Number(message.sent) / 1000, '-', true, true),
       sent: message.sent,
       email: user.data?.email ?? 'none',
       message: message.content.trim(),

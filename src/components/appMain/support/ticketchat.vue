@@ -20,6 +20,7 @@
 
     <a-alert
       v-if="!loading"
+      ref="notification"
       type="info"
       class="chat__notification"
     >
@@ -157,11 +158,15 @@
 </template>
 
 <script>
+import { nextTick } from 'vue'
 import { mapStores } from 'pinia'
 import Markdown from 'markdown-it'
 import emoji from 'markdown-it-emoji'
+
+import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
+
 import load from '@/components/loading/loading.vue'
 
 const md = new Markdown({
@@ -191,12 +196,12 @@ export default {
       editing: null,
       gateway: '',
       isVisible: false,
-      isEditLoading: false
+      isEditLoading: false,
+      chatPaddingTop: '15px'
     }
   },
   computed: {
-    ...mapStores(useChatsStore),
-    ...mapStores(useAuthStore),
+    ...mapStores(useAppStore, useAuthStore, useChatsStore),
     titleDecoded () {
       const txt = document.createElement('textarea')
       txt.innerHTML = this.subject
@@ -225,6 +230,12 @@ export default {
   watch: {
     chat (value) {
       this.gateway = value.gateways[0] ?? ''
+    },
+    loading (value) {
+      if (value) return
+      nextTick(() => {
+        this.chatPaddingTop = `${this.$refs.notification?.$el.offsetHeight + 15}px`
+      })
     }
   },
   mounted () {
@@ -232,6 +243,10 @@ export default {
     this.chatsStore.startStream()
     this.chatsStore.fetchDefaults()
     this.loadMessages()
+
+    window.addEventListener('resize', () => {
+      this.chatPaddingTop = `${this.$refs.notification?.$el.offsetHeight + 15}px`
+    })
   },
   methods: {
     goBack () {
@@ -255,17 +270,6 @@ export default {
       if (i === 0) return true
       return replies[i - 1].date.split(' ')[0] !== replies[i].date.split(' ')[0]
     },
-    date (date) {
-      const time = date.toTimeString().split(' ')[0]
-      const year = date.getFullYear()
-      let month = date.getMonth() + 1
-      let day = date.getDate()
-
-      if (`${month}`.length < 2) month = `0${month}`
-      if (`${day}`.length < 2) day = `0${day}`
-
-      return `${year}-${month}-${day} ${time}`
-    },
     newLine () {
       this.messageInput.replace(/$/, '\n')
     },
@@ -287,7 +291,7 @@ export default {
         admin: '',
         attachment: '',
         contactid: '0',
-        date: new Date(),
+        date: Date.now(),
         email: this.authStore.userdata.data?.email ?? 'none',
         message: md.render(this.messageInput).trim().replace(/^<p>/, '').replace(/<\/p>$/, ''),
         name: this.authStore.userdata.title,
@@ -295,7 +299,7 @@ export default {
         error: true
       }
 
-      const date = this.date(message.date)
+      const date = this.appStore.toDate(message.date / 1000, '-', true, true)
       const { content } = this.$refs
 
       this.replies.push({ ...message, date, requestor_type: 'Owner' })
@@ -306,7 +310,7 @@ export default {
           uuid: this.$route.params.pathMatch,
           content: message.message,
           account: message.userid,
-          date: BigInt(message.date.getTime())
+          date: BigInt(message.date)
         })
           .then(({ uuid }) => {
             this.replies.at(-1).uuid = uuid
@@ -637,7 +641,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 55px 15px 6px;
+  padding: v-bind(chatPaddingTop) 15px 6px;
   overflow: auto;
   background: var(--bright_font);
 }

@@ -689,7 +689,7 @@ export default {
     ...mapState(useNamespasesStore, ['namespaces']),
     ...mapState(useSpStore, ['servicesProviders', 'getShowcases']),
     ...mapState(usePlansStore, ['plans']),
-    ...mapState(useInstancesStore, ['services']),
+    ...mapState(useInstancesStore, { getServicesFull: 'services' }),
 
     itemService () {
       const data = this.getServicesFull.find((el) => {

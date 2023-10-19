@@ -158,7 +158,18 @@
               {{ $t("description") | capitalize }}:
             </div>
             <div class="service-page__info-value">
-              <div :style="(service.desc_product) ? 'padding: 0 15px' : ''" v-html="description" />
+              <div
+                v-if="typeof description === 'string'"
+                style="margin-top: 15px"
+                :style="(service.desc_product) ? 'padding: 0 15px' : ''"
+                v-html="description"
+              />
+              <table v-else class="product__specs">
+                <tr v-for="resource of description.properties" :key="resource.GROUP">
+                  <td>{{ $t(`virtual_product.${resource.GROUP}`) | capitalize }}</td>
+                  <td>{{ resource.TITLE }}</td>
+                </tr>
+              </table>
             </div>
           </div>
 
@@ -289,8 +300,12 @@ export default {
     description () {
       const key = this.service.product ?? this.service.config?.product
       const { meta } = this.service.billingPlan?.products[key] ?? {}
-      const description = this.service.desc_product
+      let description = this.service.desc_product
         ?.replace('/templates', `${config.WHMCSsiteurl}$&`)
+
+      try {
+        description = JSON.parse(description)
+      } catch {}
 
       return meta?.description ?? description
     }
@@ -436,7 +451,7 @@ export default {
       })
       .then((result) => {
         if (result === 'done') return
-        this.service = this.productsStore.products.find(({ id }) => id === this.$route.params.id)
+        this.service = this.productsStore.products.find(({ id }) => `${id}` === this.$route.params.id)
         this.info.pop()
       })
       .catch((error) => {
@@ -556,13 +571,6 @@ export default {
   padding-top: 20px;
 }
 
-@media screen and (max-width: 768px) {
-  .service-page {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-}
-
 .d-flex {
   display: flex;
 }
@@ -601,5 +609,66 @@ export default {
   display: block;
   max-width: 200px;
   margin: 0 auto 10px;
+}
+
+.product__specs{
+  --color: rgb(126, 126, 126);
+  color: var(--color);
+  margin: 0 auto;
+  --border-color: #dbdbdb;
+  --border-line-weight: 1px;
+  --border-line-type: solid;
+  width: 80%;
+  font-size: 1.2rem;
+}
+
+.product__specs td{
+  padding: 10px 20px;
+  position: relative;
+}
+
+.product__specs td:nth-child(1){
+  font-weight: 500;
+}
+
+.product__specs td:nth-child(2){
+  text-align: right;
+  color: rgba(0, 0, 0, .7)
+}
+
+.product__specs tr{
+  border-bottom: var(--border-line-weight) var(--border-line-type) var(--border-color);
+}
+
+.product__specs td:last-child::before{
+  content: '';
+  width: 2px;
+  height: 50%;
+  background: #f5f5f5;
+  display: block;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@media screen and (max-width: 768px) {
+  .service-page {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .product__specs {
+    width: 100%;
+  }
+
+  .product__specs td {
+    padding: 3px 7px;
+  }
+
+  .product__specs td:last-child::before {
+    transform: translate(-10px, -50%);
+  }
 }
 </style>

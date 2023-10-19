@@ -405,7 +405,10 @@
       "mysql": "Bazy danych MySQL",
       "email": "Konta email",
       "hdd_shared": "Współdzielona SSD",
-      "traffic": "Przepustowość łącza"
+      "traffic": "Przepustowość łącza",
+      "websites": "Websites",
+      "ssd": "Współdzielona SSD",
+      "bandwidth": "Przepustowość łącza"
     },
     "clientinfo": {
       "username": "Nazwa użytkownika",
@@ -655,6 +658,8 @@
     "cpu": "CPU",
     "ram": "RAM",
     "gpu": "GPU",
+    "highCPU": "high CPU",
+    "withAdministration": "with administration",
     "country": {
       "VN": "Vietnam",
       "BY": "Belarus",
