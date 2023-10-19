@@ -64,6 +64,10 @@ export const useSupportStore = defineStore('support', () => {
     },
 
     async fetchDepartments () {
+      if (departments.value.length > 0) {
+        return departments.value
+      }
+
       try {
         const response = await api.get(store.baseURL, { params: { run: 'get_dept' } })
 

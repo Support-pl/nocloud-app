@@ -63,7 +63,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { message, notification } from 'ant-design-vue'
 import Markdown from 'markdown-it'
 import emoji from 'markdown-it-emoji'
@@ -113,16 +113,8 @@ const filteredDepartments = computed(() => {
   }
 })
 
-watch(filteredDepartments, (value) => {
-  if (value.length < 1) return
-  if (props.instanceId) {
-    const result = value.find(({ id }) => `${id}`.includes('openai'))
-
-    ticketDepartment.value = result?.id ?? value[0]?.id ?? -1
-    return
-  }
-  ticketDepartment.value = value[0]?.id ?? -1
-})
+watch(filteredDepartments, setDepartment)
+onMounted(setDepartment)
 
 const gateways = computed(() => {
   const { gateways = [] } = chatsStore.getDefaults
@@ -135,6 +127,19 @@ const gateways = computed(() => {
   if (props.instanceId) result.splice(i, 1)
   return result
 })
+
+function setDepartment () {
+  if (filteredDepartments.value.length < 1) return
+  if (props.instanceId) {
+    const result = filteredDepartments.value.find(
+      ({ id }) => `${id}`.includes('openai')
+    )
+
+    ticketDepartment.value = result?.id ?? filteredDepartments.value[0]?.id ?? -1
+    return
+  }
+  ticketDepartment.value = filteredDepartments.value[0]?.id ?? -1
+}
 
 function validation () {
   if (ticketTitle.value.length < 3 || ticketMessage.value.length < 3) {
@@ -170,6 +175,7 @@ async function createTicket () {
     } else {
       throw response
     }
+    return { result: 'success' }
   } catch (error) {
     return { result: 'error', error }
   }
@@ -207,6 +213,7 @@ async function createChat () {
     } else {
       throw response
     }
+    return { result: 'success' }
   } catch (error) {
     return { result: 'error', error }
   }
@@ -225,6 +232,7 @@ async function sendNewTicket () {
       : await createTicket()
 
     if (response.result === 'error') throw response.error
+    else notification.success({ message: i18n.t('Done') })
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 
@@ -251,16 +259,19 @@ function onError ({ target }) {
   target.src = '/img/OS/default.png'
 }
 
-try {
-  isLoading.value = true
-  chatsStore.fetchDefaults()
-  supportStore.fetchDepartments()
-} catch {
-  message.error(i18n.t('departments not found'))
-} finally {
-  isLoading.value = false
+async function fetch () {
+  try {
+    isLoading.value = true
+    await chatsStore.fetchDefaults()
+    await supportStore.fetchDepartments()
+  } catch {
+    message.error(i18n.t('departments not found'))
+  } finally {
+    isLoading.value = false
+  }
 }
 
+fetch()
 </script>
 
 <script>
