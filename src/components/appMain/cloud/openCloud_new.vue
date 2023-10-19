@@ -574,7 +574,12 @@ export default {
             params: {
               run: 'create_ticket',
               subject: `Resize VM - ${this.VM.title}`,
-              message: `1. ID: ${this.VM.uuid}\n2. Resources:\n - cpu: ${this.resize.VCPU}\n - ram: ${this.resize.RAM * 1024}`,
+              message: `
+                1. ID: ${this.VM.uuid}
+                2. Resources:
+                  - cpu: ${this.resize.VCPU}
+                  - ram: ${this.resize.RAM * 1024}
+              `,
               department: 1
             }
           })

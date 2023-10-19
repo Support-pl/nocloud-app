@@ -451,7 +451,7 @@ export default {
       })
       .then((result) => {
         if (result === 'done') return
-        this.service = this.productsStore.products.find(({ id }) => `${id}` === this.$route.params.id)
+        this.service = this.productsStore.products.find(({ id }) => `${id}` === `${this.$route.params.id}`)
         this.info.pop()
       })
       .catch((error) => {
