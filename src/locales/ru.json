@@ -423,8 +423,11 @@
       "websites": "сайты",
       "mysql": "базы данных",
       "email": "email",
-      "ssd": "объем hdd",
-      "bandwidth": "трафик"
+      "ssd": "объем SSD",
+      "bandwidth": "трафик",
+      "sites": "сайты",
+      "hdd_shared": "объем HDD",
+      "traffic": "трафик"
     },
     "clientinfo": {
       "username": "Имя пользователя",
@@ -678,6 +681,8 @@
     "cpu": "ЦП",
     "ram": "ОЗУ",
     "gpu": "ГП",
+    "highCPU": "ЦП с повышенной частотой",
+    "withAdministration": "с администрированием",
     "country": {
       "BY": "Беларусь",
       "RU": "Россия",

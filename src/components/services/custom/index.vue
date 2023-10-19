@@ -3,21 +3,6 @@
     <div class="order">
       <div class="order__inputs order__field">
         <div class="order__option">
-          <div v-if="sizes.length < 5 && !fetchLoading" class="order__slider">
-            <div
-              v-for="size of sizes"
-              :key="size.key"
-              class="order__slider-item"
-              :class="{ 'order__slider-item--active': options.size === size.key }"
-              @click="options.size = size.key"
-            >
-              <span class="order__slider-name" :title="size.label">
-                <img class="img_prod" :src="products[size.key].meta.image ?? '/'" :alt="size.key" @error="onError">
-                {{ size.label }}
-              </span>
-            </div>
-          </div>
-
           <template v-if="typesOptions.length > 1">
             <div style="margin-bottom: 7px">
               {{ $t('filter') }} {{ $t('by') }} {{ $t('groupname') }}:
@@ -219,21 +204,13 @@ export default {
 
       return { ...product, price: +(product.price * this.currency.rate).toFixed(2) }
     },
-    getResources () {
+    resources () {
       if (this.sizes.length < 2) return {}
       const result = {}
 
       this.sizes.forEach((size) => {
-        result[size.key] = this.products[size.key].meta.resources ?? []
-      })
+        const value = this.products[size.key].meta.resources ?? []
 
-      return result
-    },
-    resources () {
-      const values = Object.values(this.getResources)
-      const result = {}
-
-      values.forEach((value) => {
         value.forEach(({ key, value }) => {
           if (!result[key]) result[key] = []
           if (result[key].includes(value)) return
@@ -263,10 +240,9 @@ export default {
 
         const { meta } = this.products[key] ?? {}
 
-        console.log(meta, isIncluded)
         if (!meta?.resources) return isIncluded
         return isIncluded && meta?.resources?.every(({ key, value }) =>
-          this.filters[key]?.at(0) <= value && this.filters[key]?.at(-1) <= value
+          this.filters[key]?.at(0) <= value && this.filters[key]?.at(-1) >= value
         )
       })
     },
@@ -317,7 +293,11 @@ export default {
       this.changeProducts(plan)
       this.fetchLoading = false
     },
-    filters (value) { console.log(value) }
+    resources (value) {
+      Object.entries(value).forEach(([key, resource]) => {
+        this.$set(this.filters, key, [resource.at(0), resource.at(-1)])
+      })
+    }
   },
   mounted () {
     const { action, info } = this.onLogin
