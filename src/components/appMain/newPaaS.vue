@@ -1063,10 +1063,10 @@ export default {
     },
     getPlan (value) {
       if (value.meta?.minDisk) {
-        this.options.disk.min = value.meta.minDisk * 1024
+        this.options.disk.min = +value.meta.minDisk
       }
       if (value.meta?.maxDisk) {
-        this.options.disk.max = value.meta.maxDisk * 1024
+        this.options.disk.max = +value.meta.maxDisk
       }
     },
     'options.os.name' () {
@@ -1232,7 +1232,7 @@ export default {
 
             this.options.ram.size = product.resources.ram / 1024
             this.options.cpu.size = product.resources.cpu
-            this.options.disk.size = product.resources.disk ?? plan.meta.minDisk * 1024 ?? 20 * 1024
+            this.options.disk.size = product.resources.disk ?? (plan.meta.minDisk ?? 20) * 1024
             this.product = product
           } else if (
             (value.title.includes(this.productSize) && !this.getPlan.type.includes('cloud')) ||
