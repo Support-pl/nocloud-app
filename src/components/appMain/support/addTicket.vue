@@ -197,7 +197,7 @@ async function createChat () {
     const response = await chatsStore.createChat({
       admins,
       department: key,
-      gateways: [gateway.value],
+      gateways: (gateway.value === 'userApp') ? [] : [gateway.value],
       chat: {
         subject: ticketTitle.value,
         message: md.render(ticketMessage.value).trim().replace(/^<p>/, '').replace(/<\/p>$/, ''),
