@@ -199,17 +199,9 @@
                     <network-control
                       v-else
                       :item-service="itemService"
-                      :VM="VM"
+                      :instance="VM"
                       @closeModal="modal.networkControl = false"
                     />
-                  </a-modal>
-
-                  <a-modal
-                    v-model="modal.bootOrder"
-                    :title="$t('Boot order')"
-                    :footer="null"
-                  >
-                    <boot-order @onEnd="bootOrderNewState" />
                   </a-modal>
 
                   <a-modal
@@ -217,7 +209,7 @@
                     :title="$t('Access manager')"
                     :footer="null"
                   >
-                    <access-manager :VM="VM" />
+                    <access-manager :instance="VM" />
                   </a-modal>
                 </div>
               </div>
@@ -225,10 +217,7 @@
           </template>
         </component>
       </div>
-      <loading
-        v-else-if="vmsLoading" key="loading" color="#fff" :style="{'position': 'absolute', 'height':
-          '100%', 'width': '100%'}" duration:
-      />
+      <loading v-else-if="vmsLoading" key="loading" color="#fff" class="loading" />
     </transition>
   </div>
 </template>
@@ -245,14 +234,13 @@ import { useProductsStore } from '@/stores/products.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import diskControl from '@/components/appMain/cloud/openCloud/diskControl.vue'
-import bootOrder from '@/components/appMain/cloud/openCloud/bootOrder.vue'
 import networkControl from '@/components/appMain/cloud/openCloud/networkControl.vue'
 import accessManager from '@/components/appMain/cloud/openCloud/accessManager.vue'
 import loading from '@/components/loading/loading.vue'
 
 export default {
   name: 'OpenCloud',
-  components: { loading, diskControl, bootOrder, networkControl, accessManager },
+  components: { loading, diskControl, networkControl, accessManager },
   mixins: [notification],
   data: () => ({
     isInfoLoading: false,
@@ -268,16 +256,12 @@ export default {
       delete: false,
       expand: false,
       diskControl: false,
-      bootOrder: false,
       SSH: false,
       logs: false,
       networkControl: false,
       accessManager: false,
       rename: false,
       resize: false
-    },
-    bootOrder: {
-      loading: false
     },
     resize: {
       VCPU: 0,
@@ -803,9 +787,6 @@ export default {
         })
         .finally(() => { this.isLogsLoading = false })
     },
-    bootOrderNewState () {
-      this.closeModal('bootOrder')
-    },
     addToClipboard ({ target }) {
       if (navigator?.clipboard) {
         navigator.clipboard
@@ -833,13 +814,22 @@ export default {
   display: flex;
   flex-direction: column;
 }
+
 .cloud__fullscreen {
   background: var(--main);
   display: flex;
 }
+
 .cloud__fullscreen--while {
   background: #fff;
 }
+
+.loading {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+
 .Fcloud {
   height: 100%;
   display: flex;
@@ -1015,9 +1005,7 @@ export default {
 .Fcloud__main-info--invoice .link:hover {
   background-color: #b9e6b9;
 }
-.block {
-  margin-top: 10px;
-}
+
 .Fcloud__block-header {
   font-weight: 700;
   font-size: 1rem;
@@ -1038,45 +1026,22 @@ export default {
 .Fcloud__block-content--charts {
   flex-wrap: wrap;
 }
-.block__column {
-  display: flex;
-  flex: 1 1 33%;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-}
-.block__title {
-  color: #919392;
-}
-.block__value {
-  word-break: break-word;
-}
+
 .ssh-text {
   border-bottom: 1px solid rgba(0, 0, 0, 0.65);
   cursor: pointer;
   transition: 0.3s;
 }
+
 .ssh-text:hover {
   border-bottom: 0px solid rgba(0, 0, 0, 0);
 }
-.permissions td:not(:first-child) {
-  text-align: center;
-  width: 80px;
-}
-.permissions th {
-  text-align: center;
-  font-weight: 600;
-}
-.permissions td:first-child {
-  color: #919392;
-}
+
 .glowing-animations {
   animation: glowing 1.5s ease infinite;
 }
 @keyframes glowing {
-  from,
-  to {
+  0%, 100% {
     opacity: 1;
   }
   50% {
