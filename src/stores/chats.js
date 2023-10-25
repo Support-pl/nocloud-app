@@ -236,62 +236,84 @@ export const useChatsStore = defineStore('chats', () => {
     },
 
     async createChat (data) {
-      const chatsApi = createPromiseClient(ChatsAPI, transport)
+      try {
+        const chatsApi = createPromiseClient(ChatsAPI, transport)
 
-      const newChat = new Chat({
-        department: data.department,
-        gateways: data.gateways ?? defaults.value.gateways,
-        admins: data.admins ?? defaults.value.admins,
-        users: [authStore.userdata.uuid],
-        topic: data.chat.subject,
-        role: Role.OWNER,
-        meta: new ChatMeta({
-          lastMessage: data.chat.message,
-          data: {
-            instance: new Value({
-              kind: { case: 'stringValue', value: data.chat.instanceId }
-            })
-          }
+        const newChat = new Chat({
+          department: data.department,
+          gateways: data.gateways ?? defaults.value.gateways,
+          admins: data.admins ?? defaults.value.admins,
+          users: [authStore.userdata.uuid],
+          topic: data.chat.subject,
+          role: Role.OWNER,
+          meta: new ChatMeta({
+            lastMessage: data.chat.message,
+            data: (data.chat.instanceId)
+              ? {
+                  instance: new Value({
+                    kind: { case: 'stringValue', value: data.chat.instanceId }
+                  })
+                }
+              : {}
+          })
         })
-      })
-      const createdChat = await chatsApi.create(newChat)
+        const createdChat = await chatsApi.create(newChat)
 
-      chats.value.set(createdChat.uuid, createdChat)
-      return createdChat
+        chats.value.set(createdChat.uuid, createdChat)
+        return createdChat
+      } catch (error) {
+        console.debug(error)
+        return error
+      }
     },
     async editChat (chat) {
-      const chatsApi = createPromiseClient(ChatsAPI, transport)
-      const createdChat = await chatsApi.update(chat)
+      try {
+        const chatsApi = createPromiseClient(ChatsAPI, transport)
+        const createdChat = await chatsApi.update(chat)
 
-      chats.value.set(createdChat.uuid, createdChat)
-      return createdChat
+        chats.value.set(createdChat.uuid, createdChat)
+        return createdChat
+      } catch (error) {
+        console.debug(error)
+        return error
+      }
     },
 
     async sendMessage (message) {
-      const messagesApi = createPromiseClient(MessagesAPI, transport)
+      try {
+        const messagesApi = createPromiseClient(MessagesAPI, transport)
 
-      const newMessage = new Message({
-        kind: Kind.DEFAULT,
-        underReview: false,
-        content: message.content,
-        chat: message.uuid,
-        sent: message.date,
-        sender: message.account
-      })
+        const newMessage = new Message({
+          kind: Kind.DEFAULT,
+          underReview: false,
+          content: message.content,
+          chat: message.uuid,
+          sent: message.date,
+          sender: message.account
+        })
 
-      messagesApi.send(newMessage)
-      return newMessage
+        messagesApi.send(newMessage)
+        return newMessage
+      } catch (error) {
+        console.debug(error)
+        return error
+      }
     },
     async editMessage (message) {
-      const messagesApi = createPromiseClient(MessagesAPI, transport)
+      try {
+        const messagesApi = createPromiseClient(MessagesAPI, transport)
 
-      const newMessage = new Message({
-        ...rawMessages.value.find(({ uuid }) => uuid === message.uuid),
-        content: message.content
-      })
+        const newMessage = new Message({
+          ...rawMessages.value.find(({ uuid }) => uuid === message.uuid),
+          content: message.content
+        })
 
-      messagesApi.update(newMessage)
-      return newMessage
+        messagesApi.update(newMessage)
+        return newMessage
+      } catch (error) {
+        console.debug(error)
+        return error
+      }
     }
   }
 })
