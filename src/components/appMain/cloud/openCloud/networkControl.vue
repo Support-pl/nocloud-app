@@ -6,9 +6,9 @@
       :pagination="false"
       row-key="id"
     >
-      <span slot="ip" slot-scope="value">
-        {{ value || '--' }}
-      </span>
+      <template #ip="{ value }">
+        <span>{{ value ?? '--' }}</span>
+      </template>
     </a-table>
 
     <a-row style="margin: 15px 0" :gutter="[10, 10]">
@@ -16,7 +16,7 @@
         <span>{{ $t('Public network') }}:</span>
         <a-switch
           v-model="networking.public.status"
-          :style="{ 'margin': '0 5px' }"
+          style="margin: 0 5px"
           @change="changeNetwork('public')"
         />
         <a-input-number
@@ -31,7 +31,7 @@
         <span>{{ $t('Private network') }}:</span>
         <a-switch
           v-model="networking.private.status"
-          :style="{ 'margin': '0 5px' }"
+          style="margin: 0 5px"
           @change="changeNetwork('private')"
         />
         <a-input-number
@@ -62,7 +62,7 @@ import { useInstancesStore } from '@/stores/instances.js'
 
 const props = defineProps({
   itemService: { type: Object, required: true },
-  VM: { type: Object, required: true }
+  instance: { type: Object, required: true }
 })
 const emits = defineEmits(['closeModal'])
 
@@ -171,13 +171,18 @@ async function sendNewIP () {
   try {
     isLoading.value = true
     const { pool } = await instancesStore.fetch(true)
-    let group = props.itemService.instancesGroups.find((el) => el.sp === props.VM.sp)
-    let instance = group.instances.find((el) => el.uuid === props.VM.uuid)
+    let group = props.itemService.instancesGroups.find(
+      ({ sp }) => sp === props.instance.sp
+    )
+    let instance = group.instances.find(({ uuid }) =>
+      uuid === props.instance.uuid
+    )
 
     if (!instance?.resources) {
       const service = pool.find(({ uuid }) => uuid === props.itemService.uuid)
-      group = service.instancesGroups.find((el) => el.sp === props.VM.sp)
-      instance = group.instances.find((el) => el.uuid === props.VM.uuid)
+
+      group = service.instancesGroups.find(({ sp }) => sp === props.instance.sp)
+      instance = group.instances.find(({ uuid }) => uuid === props.instance.uuid)
     }
 
     instance.resources.ips_private = networking.private.count
@@ -194,6 +199,7 @@ async function sendNewIP () {
 
     group.resources.ips_private = ips.private
     group.resources.ips_public = ips.public
+
     updateService((instance?.resources) ? props.itemService : pool)
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
@@ -204,10 +210,10 @@ async function sendNewIP () {
 }
 
 onMounted(() => {
-  const privateIPS = props.VM.state?.meta.networking.private || []
-  const publicIPS = props.VM.state?.meta.networking.public || []
-  const privateCount = props.VM.resources.ips_private
-  const publicCount = props.VM.resources.ips_public
+  const privateIPS = props.instance.state?.meta.networking.private ?? []
+  const publicIPS = props.instance.state?.meta.networking.public ?? []
+  const privateCount = props.instance.resources.ips_private
+  const publicCount = props.instance.resources.ips_public
 
   networking.private.list = JSON.parse(JSON.stringify(privateIPS))
   networking.public.list = JSON.parse(JSON.stringify(publicIPS))

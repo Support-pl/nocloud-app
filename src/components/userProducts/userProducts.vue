@@ -581,13 +581,15 @@ export default {
       })
     },
     productsCount (type, filter) {
+      const isProductsExist = this.productsPrepared.length > 0
+      const isProductsRoute = this.$route.name === 'products'
       const total = this.productsStore.total
 
       if (this.checkedTypes.length > 0 || filter) {
         return this.filterProducts(this.productsPrepared, [type]).length
       }
 
-      if (total && this.$route.name !== 'products') return total
+      if (total && !isProductsRoute && isProductsExist) return total
       if (this.min) {
         return this.products.length
       } else {

@@ -17,10 +17,20 @@
       :header="`${$t('Plan')}: ${planHeader}`"
       :disabled="!itemSP || isFlavorsLoading"
     >
-      <a-spin v-if="isFlavorsLoading" style="display: block; margin: 0 auto" :tip="$t('loading')" />
+      <a-spin
+        v-if="isFlavorsLoading"
+        style="display: block; margin: 0 auto"
+        :tip="$t('loading')"
+      />
+
       <slot v-else-if="!getPlan.type.includes('vps') && !$route.query.product" name="plan" />
       <template v-else-if="!isFlavorsLoading">
-        <a-row v-if="!$route.query.product" type="flex" align="middle" style="margin-bottom: 15px">
+        <a-row
+          v-if="!$route.query.product"
+          style="margin-bottom: 15px"
+          type="flex"
+          align="middle"
+        >
           <a-col v-if="resources.plans.length < 6 && resources.plans.length > 1" span="24">
             <a-slider
               style="margin-top: 10px"
@@ -39,7 +49,7 @@
                 :key="provider"
                 class="order__slider-item"
                 :class="{ 'order__slider-item--active': plan === provider }"
-                @click="() => $emit('changePlan', provider)"
+                @click="$emit('changePlan', provider)"
               >
                 {{ provider }}
               </div>
@@ -321,14 +331,16 @@ export default {
     },
     planKey () {
       const { cpu, ram, disk } = this.options
-      const drive = { size: disk.size / 1024 }
 
-      const resources = [cpu, ram, drive].map(({ size }) => size)
-      const plan = this.plans.find(({ label }) =>
-        label.includes(`${this.plan} ${resources.join('-')}`)
+      const values = { cpu, ram: { size: ram.size * 1024 }, disk }
+      const keys = Object.keys({ cpu, ram, disk })
+      const plan = this.plans.find(({ group, resources }) =>
+        group === this.plan && keys.every((key) =>
+          resources[key] === values[key].size
+        )
       )
 
-      return plan?.value.slice(4)
+      return plan?.value
     },
     planHeader () {
       if (this.itemSP) return this.plan && ` (${this.plan})`
@@ -442,8 +454,7 @@ export default {
       const products = Object.keys(this.getPlan.products ?? {})
 
       products.forEach((key) => {
-        const { title, price, meta, resources } = this.getPlan.products[key]
-        const label = title
+        const { title, price, meta, resources, group } = this.getPlan.products[key]
         const value = key.split(' ')[1]
 
         const i = plans.findIndex((plan) => plan.value === value)
@@ -470,8 +481,11 @@ export default {
         const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))
 
         if (!meta.datacenter?.includes(config[datacenter])) return
-        if (i === -1) plans.push({ value, label, resources, periods: [period] })
-        else plans[i].periods.push(period)
+        if (i === -1) {
+          plans.push({
+            value, title, resources, group, periods: [period]
+          })
+        } else plans[i].periods.push(period)
       })
 
       plans.sort((a, b) => {
