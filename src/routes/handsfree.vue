@@ -1,16 +1,13 @@
 <template>
   <div class="handsfree-wrapper">
     <a-card title="Code">
-      <template #extra>
-        <a-button type="primary" @click="sendCode">
-          {{ $t('Send') | capitalize }}
-        </a-button>
-      </template>
-
       <a-list size="small" :data-source="data">
         <template #renderItem="item, index">
-          <a-list-item v-if="item === 'input'" style="padding: 12px 0 0">
+          <a-list-item v-if="item === 'input'" style="padding: 12px 0 0; gap: 5px">
             <a-input :value="code" :max-length="6" @input="formatText" />
+            <a-button type="primary" @click="sendCode">
+              {{ $t('Send') | capitalize }}
+            </a-button>
           </a-list-item>
 
           <a-list-item v-else>
@@ -32,11 +29,13 @@ import { notification } from 'ant-design-vue'
 import { createPromiseClient } from '@bufbuild/connect'
 import { HandsfreeService } from 'infinimesh-proto/build/es/handsfree/handsfree_connect'
 import { ControlPacket } from 'infinimesh-proto/build/es/handsfree/handsfree_pb'
-import { useAuthStore } from '@/stores/auth.js'
-import { useChatsStore } from '@/stores/chats.js'
+
 import router from '@/router'
 import i18n from '@/i18n.js'
 import api from '@/api.js'
+
+import { useAuthStore } from '@/stores/auth.js'
+import { useChatsStore } from '@/stores/chats.js'
 
 const authStore = useAuthStore()
 const chatsStore = useChatsStore()
@@ -61,9 +60,28 @@ async function sendCode () {
 
     if (appId !== 'core-chatting.telegram-bot') {
       throw new Error('[Error]: Failed to connect')
+    } else if (authStore.userdata.data.telegram) {
+      router.push({ name: 'support' })
+      return
     }
 
-    window.open(link.value, '_blank')
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await chatsStore.fetchChats()
+    await authStore.fetchUserData()
+
+    const { uuid } = Array.from(chatsStore.chats.values()).find(({ meta }) =>
+      meta.data.telegram?.toJSON() === authStore.userdata.data.telegram
+    )
+
+    await chatsStore.sendMessage({
+      uuid,
+      content: localStorage.getItem('telegramMessage'),
+      account: authStore.userdata.uuid,
+      date: BigInt(Date.now())
+    })
+
+    localStorage.removeItem('telegramMessage')
+    router.push({ path: `/ticket-${uuid}` })
   } catch (error) {
     notification.error({
       message: i18n.t(error.response?.data?.message ?? error.message ?? error)

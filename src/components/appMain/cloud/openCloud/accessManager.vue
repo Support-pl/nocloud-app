@@ -4,7 +4,7 @@
       {{ $t('Login') }}:
     </a-col>
     <a-col style="margin-bottom: 10px" :span="18">
-      {{ VM.state?.meta.login ?? '-' }}
+      {{ instance.state?.meta.login ?? '-' }}
     </a-col>
     <a-col style="line-height: 2" :span="6">
       {{ $t('clientinfo.password') | capitalize }}:
@@ -15,18 +15,23 @@
   </a-row>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
 import passwordView from '@/components/password.vue'
 
-export default {
-  name: 'AccessManager',
-  components: { passwordView },
-  props: { VM: { type: Object, required: true } },
-  computed: {
-    password () {
-      if (this.VM.server_on) return this.VM.resources.password ?? '-'
-      return this.VM.state.meta.password ?? this.VM.config.password
-    }
+const props = defineProps({
+  instance: { type: Object, required: true }
+})
+
+const password = computed(() => {
+  if (props.instance.server_on) {
+    return props.instance.resources.password ?? '-'
   }
-}
+  return props.instance.state.meta.password ??
+    props.instance.config.password
+})
+</script>
+
+<script>
+export default { name: 'AccessManager' }
 </script>

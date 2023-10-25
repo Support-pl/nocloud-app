@@ -7,14 +7,17 @@
   >
     <a-spin tip="Loading..." :spinning="isLoading || isSending">
       <a-form-model layout="vertical">
-        <a-form-model-item v-if="!instanceId" :label="$t('department')">
+        <a-form-model-item
+          v-if="!instanceId && filteredDepartments.length > 1"
+          :label="$t('department')"
+        >
           <a-select v-model="ticketDepartment" placeholder="department">
             <a-select-option
-              v-for="dep of filteredDepartments"
-              :key="dep.id"
-              :value="dep.id"
+              v-for="department of filteredDepartments"
+              :key="department.id"
+              :value="department.id"
             >
-              {{ dep.name }}
+              {{ department.name }}
             </a-select-option>
           </a-select>
         </a-form-model-item>
@@ -40,7 +43,7 @@
           {{ $t('Send') }}
         </a-button>
 
-        <a-form-model-item v-else :label="$t('gateways')">
+        <a-form-model-item v-else style="margin-bottom: 0; padding-bottom: 0" :label="$t('gateways')">
           <div class="order__grid">
             <div
               v-for="gate of gateways"
@@ -51,7 +54,11 @@
               @click="changeGateway(gate.id)"
             >
               <span class="order__slider-name" :title="gate.name">
-                <img class="img_prod" :src="`/img/icons/${gate.id}.png`" :alt="gate.id" @error="onError">
+                <img
+                  class="img_prod"
+                  :src="`/img/icons/${gate.id}.png`"
+                  :alt="gate.id" @error="onError"
+                >
                 {{ gate.name }}
               </span>
             </div>
@@ -109,7 +116,7 @@ const filteredDepartments = computed(() => {
   if (authStore.billingUser.only_tickets) {
     return supportStore.departments
   } else {
-    return [...supportStore.departments, ...chatsDeparts]
+    return chatsDeparts // [...supportStore.departments, ...chatsDeparts]
   }
 })
 
@@ -124,7 +131,8 @@ const gateways = computed(() => {
   }))
   const i = result.findIndex(({ id }) => id.includes('email'))
 
-  if (props.instanceId) result.splice(i, 1)
+  if (props.instanceId && i !== -1) result.splice(i, 1)
+  result.push({ id: 'userApp', name: 'User App' })
   return result
 })
 
@@ -247,8 +255,24 @@ function closeFields () {
   supportStore.isAddingTicket = !supportStore.isAddingTicket
 }
 
+function sendTelegramMessage () {
+  if (authStore.userdata.data.telegram) {
+    sendNewTicket()
+    return
+  }
+
+  const message = md.render(ticketMessage.value)
+    .trim()
+    .replace(/^<p>/, '').replace(/<\/p>$/, '')
+
+  localStorage.setItem('telegramMessage', message)
+  router.push({ name: 'handsfree' })
+}
+
 function changeGateway (value) {
-  if (gateway.value === value) {
+  if (value === 'telegram' && gateway.value === value) {
+    sendTelegramMessage()
+  } else if (gateway.value === value) {
     sendNewTicket()
   } else {
     gateway.value = value
@@ -372,7 +396,6 @@ export default { name: 'AddTicket' }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin-bottom: 10px;
 }
 
 .order__slider {
