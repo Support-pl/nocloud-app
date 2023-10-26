@@ -557,7 +557,7 @@
                 {{ $t("Virtual machine will be available after paying the invoice") }}
               </template>
 
-              <a-row style="margin-top: 20px">
+              <a-row v-if="score > 3" style="margin-top: 20px">
                 <a-col>
                   <a-checkbox v-model="modal.autoRenew" />
                   {{ $t("renew automatically") | capitalize }}
@@ -1187,7 +1187,11 @@ export default {
       fetchShowcases: 'fetchShowcases'
     }),
     ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
-    ...mapActions(useInstancesStore, { fetchServices: 'fetch' }),
+    ...mapActions(useInstancesStore, {
+      fetchServices: 'fetch',
+      updateService: 'updateService',
+      createService: 'createService'
+    }),
 
     onScore ({ score }) {
       this.score = score
