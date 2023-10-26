@@ -1027,6 +1027,21 @@ export default {
   flex-wrap: wrap;
 }
 
+.block__column {
+  display: flex;
+  flex: 1 1 33%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+.block__title {
+  color: #919392;
+}
+.block__value {
+  word-break: break-word;
+}
+
 .ssh-text {
   border-bottom: 1px solid rgba(0, 0, 0, 0.65);
   cursor: pointer;
