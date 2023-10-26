@@ -491,7 +491,10 @@ export default {
       return products.find(({ title }) => title === product)?.resources
     },
     setOS (item, index) {
-      if (item.warning) return
+      if (item.warning) {
+        this.$message.warn(item.warning)
+        return
+      }
       this.options.os.id = +index
       this.options.os.name = item.name
     },
