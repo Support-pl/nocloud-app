@@ -420,7 +420,7 @@ export default {
   /* background-color: var(--err); */
   border: none;
   outline: none;
-  color: #fff;
+  color: var(--bright_font);
   font-weight: 600;
   width: 100%;
   padding: 12px 0;

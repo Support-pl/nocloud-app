@@ -88,7 +88,7 @@ export default { name: 'BalanceView' }
   top: 7px;
   background: #f5222d;
   border-radius: 50%;
-  border: 1.6px solid #fff;
+  border: 1.6px solid var(--bright_font);
   width: 22px;
   height: 22px;
   display: flex;

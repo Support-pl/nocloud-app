@@ -120,7 +120,7 @@ export default { name: 'SingleInvoice' }
   padding: 8px 15px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   color: rgba(0, 0, 0, 0.7);
   cursor: pointer;
 }

@@ -630,7 +630,7 @@ export default {
 
 .order__grid-item--active {
   background-color: var(--main);
-  color: #fff;
+  color: var(--bright_font);
 }
 
 @media (max-width: 576px) {

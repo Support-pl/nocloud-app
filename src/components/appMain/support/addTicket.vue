@@ -5,7 +5,7 @@
     :footer="null"
     @cancel="closeFields"
   >
-    <a-spin tip="Loading..." :spinning="isLoading || isSending">
+    <a-spin :tip="$t('loading')" :spinning="isLoading || isSending">
       <a-form-model layout="vertical">
         <a-form-model-item
           v-if="!instanceId && filteredDepartments.length > 1"
@@ -56,7 +56,7 @@
               <span class="order__slider-name" :title="gate.name">
                 <img
                   class="img_prod"
-                  :src="`/img/icons/${gate.id}.png`"
+                  :src="`/img/icons/${getImageName(gate.id)}.png`"
                   :alt="gate.id" @error="onError"
                 >
                 {{ gate.name }}
@@ -256,7 +256,7 @@ function closeFields () {
 }
 
 function sendTelegramMessage () {
-  if (authStore.userdata.data.telegram) {
+  if (authStore.userdata.data?.telegram) {
     sendNewTicket()
     return
   }
@@ -281,6 +281,10 @@ function changeGateway (value) {
 
 function onError ({ target }) {
   target.src = '/img/OS/default.png'
+}
+
+function getImageName (name) {
+  return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0]
 }
 
 async function fetch () {
@@ -320,7 +324,7 @@ export default { name: 'AddTicket' }
   width: 90%;
   max-width: 768px;
   height: 90%;
-  background: #fff;
+  background: var(--bright_font);
   border-radius: 35px 35px 0 0;
   box-shadow: 5px 2px 15px rgba(0, 0, 0, 0.2);
   padding: 15px 20px;
@@ -376,7 +380,7 @@ export default { name: 'AddTicket' }
   padding: 10px 15px;
   border: none;
   outline: none;
-  color: #fff;
+  color: var(--bright_font);
   font-weight: 600;
   font-size: 1.1rem;
   cursor: pointer;
@@ -421,7 +425,7 @@ export default { name: 'AddTicket' }
 
 .order__slider-item--active {
   background-color: #1045b4;
-  color: #fff;
+  color: var(--bright_font);
 }
 
 .order__grid .order__slider-name > .img_prod {

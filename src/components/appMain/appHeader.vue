@@ -728,12 +728,12 @@ export default {
 }
 
 .header__links a {
-  color: #fff;
+  color: var(--bright_font);
   transition: color 0.2s ease, background-color 0.3s ease, opacity 0.2s ease;
 }
 
 .header__links a:hover {
-  color: #fff;
+  color: var(--bright_font);
 }
 
 .header__links a:not(:last-child) {
@@ -755,11 +755,11 @@ export default {
   line-height: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0px 0px 0px 1px #fff;
+  box-shadow: 0px 0px 0px 1px var(--bright_font);
 }
 
 .header__links a:last-child:hover {
-  background: #fff;
+  background: var(--bright_font);
   color: var(--main);
 }
 

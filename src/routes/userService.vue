@@ -576,7 +576,7 @@ export default {
 }
 
 .service-page-card {
-  background: #fff;
+  background: var(--bright_font);
   border-radius: 10px;
   padding: 10px 15px 15px;
 }

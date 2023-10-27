@@ -41,7 +41,7 @@
             @click="changeGateway(gate.id)"
           >
             <span class="order__slider-name" :title="gate.name">
-              <img class="img_prod" :src="`/img/icons/${gate.id}.png`" :alt="gate.id" @error="onError">
+              <img class="img_prod" :src="`/img/icons/${getImageName(gate.id)}.png`" :alt="gate.id" @error="onError">
               {{ gate.name }}
             </span>
           </div>
@@ -438,6 +438,9 @@ export default {
     onError ({ target }) {
       target.src = '/img/OS/default.png'
     },
+    getImageName (name) {
+      return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0]
+    },
     addToClipboard (text) {
       if (navigator?.clipboard) {
         navigator.clipboard
@@ -549,7 +552,7 @@ export default {
 
 .order__slider-item--active {
   background-color: #1045b4;
-  color: #fff;
+  color: var(--bright_font);
 }
 
 .order__grid .order__slider-name > .img_prod {
@@ -711,7 +714,7 @@ export default {
   line-height: 1.9;
   border-radius: 50%;
   background: var(--err);
-  color: #fff;
+  color: var(--bright_font);
   cursor: pointer;
   transform: translate(15px, 5px);
 }

@@ -544,7 +544,9 @@
             <a-modal
               :title="$t((score < 4 && itemSP.type !== 'ovh') ? 'Weak pass' : 'Confirm')"
               :visible="modal.confirmCreate"
-              :ok-button-props="{ props: { disabled: (score < 4 && itemSP.type !== 'ovh') } }"
+              :ok-button-props="{
+                props: { disabled: (score < 4 && itemSP.type !== 'ovh') }
+              }"
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="handleOkOnCreateOrder"
@@ -1682,7 +1684,7 @@ export default {
 .field {
   border-radius: 20px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
-  background-color: #fff;
+  background-color: var(--bright_font);
   height: max-content;
 }
 .field--fluid {
@@ -1776,7 +1778,7 @@ export default {
 }
 .tariff__title {
   background-color: var(--main);
-  color: #fff;
+  color: var(--bright_font);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1827,7 +1829,7 @@ export default {
   border-radius: 0 0 20px 20px;
 }
 .newCloud__template-item {
-  background-color: #fff;
+  background-color: var(--bright_font);
   box-shadow: 3px 2px 6px rgba(0, 0, 0, 0.08), 0px 0px 8px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
   transition: all 0.2s ease, transform 0.2s ease;
@@ -1867,7 +1869,7 @@ export default {
   display: block;
   position: absolute;
   transform: translate(-36px, -59px) scale(0.21);
-  background: #fff;
+  background: var(--bright_font);
   border-radius: 50%;
   transition: 0.2s;
 }
@@ -1877,7 +1879,7 @@ export default {
 }
 .newCloud__template-item.active .newCloud__template-image img {
   padding: 2px;
-  background: #fff;
+  background: var(--bright_font);
   border-radius: 50%;
   transition: 0.2s;
 }

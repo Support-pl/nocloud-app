@@ -60,7 +60,7 @@ export default { name: 'ServiceItem' }
 } */
 
 .service__item:hover{
-  background-color: #fff;
+  background-color: var(--bright_font);
   color: var(--main);
 }
 

@@ -308,7 +308,7 @@ export default { name: 'SslGenerator' }
 }
 
 .generator__wrapper {
-  background-color: #fff;
+  background-color: var(--bright_font);
   border-radius: 20px;
   padding: 15px;
 }
@@ -333,14 +333,14 @@ export default { name: 'SslGenerator' }
 .button--icon:hover {
   /* color: var(--main); */
   background-color: var(--main);
-  color: #fff;
+  color: var(--bright_font);
 }
 
 .generate-page {
   padding-top: 20px;
 }
 .generate-page-card {
-  background: #fff;
+  background: var(--bright_font);
   border-radius: 10px;
   padding: 10px 15px 15px;
 }

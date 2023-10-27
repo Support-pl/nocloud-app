@@ -1,6 +1,6 @@
 <template>
   <div class="newCloud_wrapper">
-    <maintanance-mode v-if="isMaintananceMode"></maintanance-mode>
+    <maintanance-mode v-if="isMaintananceMode" />
     <template v-else>
       <div class="newCloud">
         <div class="newCloud__inputs newCloud__field">
@@ -15,7 +15,7 @@
               {{ $t("Ready made servers") }}
             </a-col>
             <a-col>
-              <a-switch v-model="custom" @click="closeAllTabs"></a-switch>
+              <a-switch v-model="custom" @click="closeAllTabs" />
             </a-col>
             <a-col>
               {{ $t("Pay as you Go") }}
@@ -26,25 +26,25 @@
             <a-collapse
               accordion
               :style="{ 'border-radius': '25px' }"
+              :active-key="collapseKey"
               @change="collapseChange"
-              :activeKey="collapseKey"
             >
               <a-collapse-panel
+                v-if="!custom"
                 key="Template"
                 :header="
                   $t('Choose a tariff') +
-                  (options.rate.id == 0 ? ':' : ' (' + options.rate.name + '):')
+                    (options.rate.id == 0 ? ':' : ' (' + options.rate.name + '):')
                 "
-                v-if="!custom"
               >
                 <div class="newCloud__option-field">
                   <div class="newCloud__template one-line">
                     <div
                       v-for="rate in ratesArray"
+                      :key="rate.pid"
                       class="newCloud__template-item"
                       :class="{ active: options.rate.id == rate.pid }"
                       @click="setRate(rate.pid)"
-                      :key="rate.pid"
                     >
                       <div
                         class="newCloud__template-image newCloud__template-image__rate"
@@ -76,23 +76,23 @@
                 key="OS"
                 :header="
                   $t('Choose OS') +
-                  (options.os.name == '' ? ':' : ' (' + options.os.name + '):')
+                    (options.os.name == '' ? ':' : ' (' + options.os.name + '):')
                 "
               >
                 <div class="newCloud__option-field">
                   <div class="newCloud__template">
                     <div
                       v-for="OS in templatesArray"
+                      :key="OS.id"
                       class="newCloud__template-item"
                       :class="{ active: options.os.id == OS.id }"
                       @click="setOS(OS.id)"
-                      :key="OS.id"
                     >
                       <div class="newCloud__template-image">
                         <img
                           :src="OS.logo.replace('images/', 'img/')"
                           :alt="OS.name"
-                        />
+                        >
                       </div>
                       <div class="newCloud__template-name">
                         {{ OS.description }}
@@ -102,16 +102,18 @@
                 </div>
               </a-collapse-panel>
               <a-collapse-panel
+                v-if="custom"
                 key="CPURAM"
                 header="CPU + RAM:"
                 :disabled="disableNotCustom"
-                v-if="custom"
               >
                 <div class="newCloud__option-field">
                   <a-row :gutter="[10, 10]">
                     <a-col :sm="12" :span="24">
                       <a-row>
-                        <a-col :sm="8" :span="10"> RAM (GB): </a-col>
+                        <a-col :sm="8" :span="10">
+                          RAM (GB):
+                        </a-col>
                         <a-col :sm="13" :span="14">
                           <a-row>
                             <a-col :span="24">
@@ -125,7 +127,7 @@
                                     type="minus"
                                     class="slider_btn"
                                     @click="changeValue('ramsize', -1)"
-                                  ></a-icon>
+                                  />
                                 </a-col>
                                 <a-col :span="18">
                                   <a-input-number
@@ -142,7 +144,7 @@
                                     type="plus"
                                     class="slider_btn"
                                     @click="changeValue('ramsize', 1)"
-                                  ></a-icon>
+                                  />
                                 </a-col>
                               </a-row>
                             </a-col>
@@ -153,7 +155,9 @@
 
                     <a-col :sm="12" :span="24">
                       <a-row>
-                        <a-col :sm="8" :span="10"> CPU: </a-col>
+                        <a-col :sm="8" :span="10">
+                          CPU:
+                        </a-col>
                         <a-col :sm="13" :span="14">
                           <a-row
                             type="flex"
@@ -165,7 +169,7 @@
                                 type="minus"
                                 class="slider_btn"
                                 @click="changeValue('cpucount', -1)"
-                              ></a-icon>
+                              />
                             </a-col>
                             <a-col :span="18">
                               <a-input-number
@@ -182,7 +186,7 @@
                                 type="plus"
                                 class="slider_btn"
                                 @click="changeValue('cpucount', 1)"
-                              ></a-icon>
+                              />
                             </a-col>
                           </a-row>
                         </a-col>
@@ -196,7 +200,9 @@
                   <a-row :gutter="[10, 10]">
                     <a-col :sm="12" :span="24">
                       <a-row>
-                        <a-col :sm="8" :span="10"> {{ $t("Drive") }}: </a-col>
+                        <a-col :sm="8" :span="10">
+                          {{ $t("Drive") }}:
+                        </a-col>
                         <a-col :sm="13" :span="14">
                           <a-row
                             type="flex"
@@ -208,7 +214,7 @@
                                 type="minus"
                                 class="slider_btn"
                                 @click="changeValue('disksize', -10)"
-                              ></a-icon>
+                              />
                             </a-col>
                             <a-col :span="18">
                               <a-slider
@@ -224,7 +230,7 @@
                                 type="plus"
                                 class="slider_btn"
                                 @click="changeValue('disksize', 10)"
-                              ></a-icon>
+                              />
                             </a-col>
                           </a-row>
                         </a-col>
@@ -482,7 +488,6 @@
                   ~{{ calculateFullPrice("month") }} {{ currencyPostfix }}/{{
                     $tc("period.month")
                   }}
-                  
                 </a-skeleton>
               </a-tooltip>
             </a-col>
@@ -513,7 +518,7 @@
               <a-switch
                 v-model="options.tarification"
                 :disabled="options.rate.id != 0"
-              ></a-switch>
+              />
             </a-col>
           </a-row>
 
@@ -563,8 +568,8 @@
 
 <script>
 export default {
-  name: "newVDC",
-  data() {
+  name: 'NewVDC',
+  data () {
     return {
       monthDiscount: 15,
       settings: {},
@@ -572,86 +577,179 @@ export default {
       savedRateId: 0,
       custom: true,
       showTooltip: false,
-      dontshowattarrifs: ["hdd", "traffic", "address"],
-      collapseKey: "",
-      period: "hour",
+      dontshowattarrifs: ['hdd', 'traffic', 'address'],
+      collapseKey: '',
+      period: 'hour',
       pricesLoaded: false,
       toShow: {
-        minute: "min",
-        hour: "hour",
-        day: "day",
-        week: "week",
-        month: "month",
+        minute: 'min',
+        hour: 'hour',
+        day: 'day',
+        week: 'week',
+        month: 'month'
       },
       modal: {
         confirmCreate: false,
-        confirmLoading: false,
+        confirmLoading: false
       },
       DISK_MIN_SIZE: {},
       DISK_MAX_SIZE: {},
       options: {
         tarification: false,
-        vmname: "",
-        password: "",
-        password2: "",
+        vmname: '',
+        password: '',
+        password2: '',
         rate: {
           id: 0,
-          name: "Custom",
+          name: 'Custom'
         },
         os: {
           id: -1,
-          name: "",
+          name: ''
         },
         cpu: {
           count: 1,
           price: 0,
           min: 1,
-          max: 32,
+          max: 32
         },
         ram: {
           size: 1,
-          units: "GB",
+          units: 'GB',
           price: 0,
           min: 1,
-          max: 512,
+          max: 512
         },
         disk: {
           size: 0,
-          units: "GB",
-          type: "",
+          units: 'GB',
+          type: '',
           price: {
             HDD: 0,
-            SSD: 0,
+            SSD: 0
           },
           min: {
             HDD: 0,
-            SSD: 0,
+            SSD: 0
           },
           max: {
             HDD: 0,
-            SSD: 0,
+            SSD: 0
           },
-          backupPrice: 0,
+          backupPrice: 0
         },
         network: {
           public: {
             status: true,
-            count: 1,
+            count: 1
           },
           local: {
             status: false,
-            count: 0,
+            count: 0
           },
-          price: 0,
-        },
-      },
-    };
+          price: 0
+        }
+      }
+    }
   },
-  mounted() {
-    this.$store.dispatch("newVDC/fetchTemplates");
-    this.$store.dispatch("newVDC/fetchRates");
+  computed: {
+    isMaintananceMode () {
+      return this.$store.getters['app/isMaintananceMode']
+    },
+    costAfterDiscount () {
+      return (
+        this.calculateFullPrice('month') *
+        (1 - this.monthDiscount / 100)
+      ).toFixed(2)
+    },
+    templatesArray () {
+      const elements = this.$store.getters['newVDC/getTemplates']
+      return elements
+    },
+    ratesArray () {
+      const elements = this.$store.getters['newVDC/getRates']
+      return elements
+    },
+    periodToShow () {
+      if (this.options.tarification) {
+        return 'month'
+      } else {
+        return this.period
+      }
+    },
+    disableNotCustom () {
+      return this.options.rate.id != 0
+    },
+    user () {
+      const user = this.$store.getters.getUser
+      return user
+    },
+    currencyPostfix () {
+      return this.$config.currency.suffix
+    },
+    isWindowsSelected () {
+      return this.options.os.name.search(/windows/i) != -1
+    },
+    selectedTemplate () {
+      return this.templatesArray.find(
+        (template) => template.id == this.options.os.id
+      )
+    },
+    diskMinValue () {
+      if (
+        this.selectedTemplate?.DISK_MIN_SIZE?.[this.options.disk.type] !=
+        undefined
+      ) {
+        return this.selectedTemplate.DISK_MIN_SIZE
+      }
 
-    const user = this.user;
+      if (this.settings?.DISK_MIN_SIZE?.[this.options.disk.type] != undefined) {
+        // console.log(this.settings.DISK_MIN_SIZE[this.options.disk.type]);
+        return this.settings.DISK_MIN_SIZE[this.options.disk.type]
+      }
+
+      return 50
+    },
+    diskMaxValue () {
+      if (
+        this.selectedTemplate?.DISK_MAX_SIZE?.[this.options.disk.type] !=
+        undefined
+      ) {
+        return this.selectedTemplate.DISK_MAX_SIZE[this.options.disk.type]
+      }
+
+      if (this.settings?.DISK_MAX_SIZE?.[this.options.disk.type] != undefined) {
+        return this.settings.DISK_MAX_SIZE[this.options.disk.type]
+      }
+
+      return 300
+    }
+  },
+  watch: {
+    collapseKey: function (val) {
+      if (val == 'drive') {
+        setTimeout(() => {
+          this.showTooltip = true
+        }, 250)
+      } else {
+        this.showTooltip = false
+      }
+    },
+    diskMinValue: {
+      handler: function (val) {
+        // console.log(val)
+        if (this.options.disk.size < val) {
+          this.options.disk.size = val
+        }
+      },
+      immediate: true
+    }
+  },
+  mounted () {
+    this.$store.dispatch('newVDC/fetchTemplates')
+    this.$store.dispatch('newVDC/fetchRates')
+
+    const user = this.user
     if (user) {
       // let userinfo = {
       //   userid: user.id,
@@ -660,27 +758,27 @@ export default {
       // this.$axios.get("createVDC.php?" + this.URLparameter(userinfo) );
     }
     this.$axios
-      .get("getSettings.php?filter=cost,disktypes,minDisk,maxDisk")
+      .get('getSettings.php?filter=cost,disktypes,minDisk,maxDisk')
       .then((res) => {
-        this.settings = res.data;
-        const multiplier = 60 * 60 * 24 * 30;
-        const CAPACITY_COST = res.data.CAPACITY_COST;
-        this.options.cpu.price = CAPACITY_COST.CPU_COST * multiplier;
-        this.options.ram.price = CAPACITY_COST.MEMORY_COST * multiplier;
+        this.settings = res.data
+        const multiplier = 60 * 60 * 24 * 30
+        const CAPACITY_COST = res.data.CAPACITY_COST
+        this.options.cpu.price = CAPACITY_COST.CPU_COST * multiplier
+        this.options.ram.price = CAPACITY_COST.MEMORY_COST * multiplier
 
-        const DISK_COSTS = res.data.DISK_COSTS;
+        const DISK_COSTS = res.data.DISK_COSTS
         Object.keys(DISK_COSTS).forEach((disktype) => {
-          this.options.disk.price[disktype] = DISK_COSTS[disktype] * multiplier;
-        });
-        this.options.network.price = res.data.PUBLIC_IP_COST;
-        this.diskTypes = res.data.DISK_TYPES.split(",");
-        this.options.disk.type = this.diskTypes[0];
-        this.pricesLoaded = true;
+          this.options.disk.price[disktype] = DISK_COSTS[disktype] * multiplier
+        })
+        this.options.network.price = res.data.PUBLIC_IP_COST
+        this.diskTypes = res.data.DISK_TYPES.split(',')
+        this.options.disk.type = this.diskTypes[0]
+        this.pricesLoaded = true
       })
       .catch((err) => {
-        console.error(err);
-        this.$message.error("Can't load prices. Show saved ones.");
-      });
+        console.error(err)
+        this.$message.error("Can't load prices. Show saved ones.")
+      })
 
     // userinfo = {
     // 	userid: user.id,
@@ -695,166 +793,166 @@ export default {
     // 	.catch( err => console.error(err));
   },
   methods: {
-    setOS(id) {
-      this.options.os.id = id;
+    setOS (id) {
+      this.options.os.id = id
       this.options.os.name = this.templatesArray.find(
         (el) => el.id == id
-      ).description;
+      ).description
       if (this.options.rate.id == 0) {
-        this.collapseKey = "CPURAM";
+        this.collapseKey = 'CPURAM'
       } else {
-        this.collapseKey = "drive";
+        this.collapseKey = 'drive'
       }
     },
-    setRate(id) {
-      this.options.rate.id = id;
-      this.savedRateId = id;
+    setRate (id) {
+      this.options.rate.id = id
+      this.savedRateId = id
       if (id != 0) {
-        const rate = this.ratesArray.find((el) => el.pid == id);
-        this.options.rate.name = rate.name;
-        let props = rate.description.properties;
+        const rate = this.ratesArray.find((el) => el.pid == id)
+        this.options.rate.name = rate.name
+        const props = rate.description.properties
         props.forEach((el) => {
-          let val = el.VALUE.match(/\d+/);
-          if (el.GROUP == "hdd") {
-            this.options.disk.type = el.GROUP.toUpperCase();
-            this.options.disk.size = parseInt(val[0], 10);
+          const val = el.VALUE.match(/\d+/)
+          if (el.GROUP == 'hdd') {
+            this.options.disk.type = el.GROUP.toUpperCase()
+            this.options.disk.size = parseInt(val[0], 10)
           }
-          if (el.GROUP == "ssd") {
-            this.options.disk.type = el.GROUP.toUpperCase();
-            this.options.disk.size = parseInt(val[0], 10);
+          if (el.GROUP == 'ssd') {
+            this.options.disk.type = el.GROUP.toUpperCase()
+            this.options.disk.size = parseInt(val[0], 10)
           }
-          if (el.GROUP == "cpu_core") {
-            this.options.cpu.count = parseInt(val[0], 10);
+          if (el.GROUP == 'cpu_core') {
+            this.options.cpu.count = parseInt(val[0], 10)
           }
-          if (el.GROUP == "ram") {
-            this.options.ram.size = parseInt(val[0], 10);
+          if (el.GROUP == 'ram') {
+            this.options.ram.size = parseInt(val[0], 10)
           }
-        });
-      } else this.options.rate.name = "Custom";
-      this.collapseKey = "OS";
+        })
+      } else this.options.rate.name = 'Custom'
+      this.collapseKey = 'OS'
     },
-    changePeriod(value) {
-      this.period = value;
+    changePeriod (value) {
+      this.period = value
     },
-    calculatePrice(price, period = this.period) {
+    calculatePrice (price, period = this.period) {
       // if(this.options.tarification){
       // 	return price;
       // }
       switch (period) {
-        case "minute":
-          price = price / 60;
-        case "hour":
-          price = price / 24;
-        case "day":
-          price = price / 30;
-        case "month":
-          break;
-        case "week":
-          price = (price / 30) * 7;
-          break;
+        case 'minute':
+          price = price / 60
+        case 'hour':
+          price = price / 24
+        case 'day':
+          price = price / 30
+        case 'month':
+          break
+        case 'week':
+          price = (price / 30) * 7
+          break
         default:
-          console.error("[VDC Calculator]: Wrong period in calc.", period);
-          return undefined;
+          console.error('[VDC Calculator]: Wrong period in calc.', period)
+          return undefined
       }
-      return price;
+      return price
     },
-    calculateFullPrice(tarification = this.period) {
+    calculateFullPrice (tarification = this.period) {
       if (this.options.rate.id != 0) {
-        this.options.tarification = true;
+        this.options.tarification = true
         return this.ratesArray.find((el) => el.pid == this.options.rate.id)
-          .pricingmonth[this.currencyPostfix];
-      } //выключил
-      let parts = [
+          .pricingmonth[this.currencyPostfix]
+      } // выключил
+      const parts = [
         this.options.cpu.price * this.options.cpu.count,
         this.options.ram.price * this.options.ram.size,
         this.options.disk.price[this.options.disk.type] *
-          this.options.disk.size,
+          this.options.disk.size
         // this.options.network.price * this.options.network.public.count
-      ];
+      ]
       return this.calculatePrice(
         parts.reduce((a, b) => a + b),
         tarification
-      ).toFixed(2);
+      ).toFixed(2)
     },
-    createVDC() {
-      const user = this.user;
+    createVDC () {
+      const user = this.user
 
-      let parts = [
+      const parts = [
         this.options.cpu.price * this.options.cpu.count,
         this.options.ram.price * this.options.ram.size,
         this.options.disk.price[this.options.disk.type] *
-          this.options.disk.size,
-      ];
-      let price = this.calculatePrice(
+          this.options.disk.size
+      ]
+      const price = this.calculatePrice(
         parts.reduce((a, b) => a + b),
-        "day"
-      ).toFixed(3);
+        'day'
+      ).toFixed(3)
       if (user && +price > +user.balance) {
-        this.$message.error("You don't have enough money for a day of use");
-        return;
+        this.$message.error("You don't have enough money for a day of use")
+        return
       }
       if (!~this.options.os.id) {
-        this.$message.error(this.$t("select OS"));
-        this.collapseKey = "OS";
-        return;
+        this.$message.error(this.$t('select OS'))
+        this.collapseKey = 'OS'
+        return
       }
       if (!this.custom && this.options.rate.id == 0) {
-        this.$message.error(this.$t("select tariff"));
+        this.$message.error(this.$t('select tariff'))
       } else {
-        this.modal.confirmCreate = true;
+        this.modal.confirmCreate = true
       }
     },
-    diskChange() {
+    diskChange () {
       if (
         [this.options.disk.min.SSD, this.options.disk.min.HDD].includes(
           this.options.disk.size
         )
       ) {
-        this.options.disk.size = this.options.disk.min[this.options.disk.type];
+        this.options.disk.size = this.options.disk.min[this.options.disk.type]
       }
     },
-    handleOk() {
+    handleOk () {
       if (this.options.password.length < 6) {
-        this.$message.error(this.$t("Password is too short"));
-        return 0;
+        this.$message.error(this.$t('Password is too short'))
+        return 0
       }
       if (this.options.password != this.options.password2) {
-        this.$message.error(this.$t("Password mismatch"));
-        return 0;
+        this.$message.error(this.$t('Password mismatch'))
+        return 0
       }
-      this.modal.confirmLoading = true;
+      this.modal.confirmLoading = true
       this.send()
         .then((response) => {
-          if (response.result == "error") {
-            this.$message.error(response.message);
+          if (response.result == 'error') {
+            this.$message.error(response.message)
           } else {
             this.$message.success(
-              this.$t("VDC created successfully with") + " id = " + response.id
-            );
-            this.$store.dispatch("app/setTabByName", "cloud");
+              this.$t('VDC created successfully with') + ' id = ' + response.id
+            )
+            this.$store.dispatch('app/setTabByName', 'cloud')
           }
-          this.options.password = "";
-          this.modal.confirmCreate = false;
-          this.modal.confirmLoading = false;
+          this.options.password = ''
+          this.modal.confirmCreate = false
+          this.modal.confirmLoading = false
         })
         .catch((err) => {
-          console.error(err);
-          this.$message.error(this.$t("Unknown error."));
-        });
+          console.error(err)
+          this.$message.error(this.$t('Unknown error.'))
+        })
     },
-    handleCancel() {
-      this.modal.confirmCreate = false;
+    handleCancel () {
+      this.modal.confirmCreate = false
     },
-    getPopupContainer(trigger) {
-      const elem = trigger.parentElement.parentElement.parentElement;
-      return elem;
+    getPopupContainer (trigger) {
+      const elem = trigger.parentElement.parentElement.parentElement
+      return elem
     },
-    send() {
-      const user = this.user;
-      let savedPeriod = this.period;
-      this.period = "month";
-      const price = this.calculateFullPrice();
-      this.period = savedPeriod;
+    send () {
+      const user = this.user
+      const savedPeriod = this.period
+      this.period = 'month'
+      const price = this.calculateFullPrice()
+      this.period = savedPeriod
       const vmOptions = {
         publicIPs: this.options.network.public.status
           ? this.options.network.public.count
@@ -868,174 +966,81 @@ export default {
         templateid: this.options.os.id,
         vmname: this.options.vmname,
         password: this.options.password,
-        calculatedPrice: price,
-      };
+        calculatedPrice: price
+      }
       if (this.options.network.local.status) {
-        vmOptions["localIPs"] = this.options.network.local.count;
+        vmOptions.localIPs = this.options.network.local.count
       }
       // return this.$axios.get("createVM.php?" + this.URLparameter(vmOptions) + "&" + this.URLparameter(userinfo) );
       if (user) {
-        return this.$api.sendAsUser("createVM", vmOptions);
+        return this.$api.sendAsUser('createVM', vmOptions)
       } else {
-        this.$store.commit("setOnloginRedirect", "newVDC");
+        this.$store.commit('setOnloginRedirect', 'newVDC')
 
-        this.$store.commit("setOnloginInfo", {
-          type: "IaaS",
-          title: "Cloud Virtual machine",
-          cost: this.calculateFullPrice("month"),
-        });
+        this.$store.commit('setOnloginInfo', {
+          type: 'IaaS',
+          title: 'Cloud Virtual machine',
+          cost: this.calculateFullPrice('month')
+        })
 
-        this.$store.dispatch("setOnloginAction", () => {
-          this.$api.sendAsUser("createVM", vmOptions);
-        });
+        this.$store.dispatch('setOnloginAction', () => {
+          this.$api.sendAsUser('createVM', vmOptions)
+        })
 
-        this.$router.push({ name: "login" });
+        this.$router.push({ name: 'login' })
       }
     },
-    URLparameter(obj, outer = "") {
-      var str = "";
-      for (var key in obj) {
-        if (key == "price") continue;
-        if (str != "") {
-          str += "&";
+    URLparameter (obj, outer = '') {
+      let str = ''
+      for (const key in obj) {
+        if (key == 'price') continue
+        if (str != '') {
+          str += '&'
         }
-        if (typeof obj[key] == "object") {
-          str += this.URLparameter(obj[key], outer + key);
+        if (typeof obj[key] === 'object') {
+          str += this.URLparameter(obj[key], outer + key)
         } else {
-          str += outer + key + "=" + encodeURIComponent(obj[key]);
+          str += outer + key + '=' + encodeURIComponent(obj[key])
         }
       }
-      return str;
+      return str
     },
-    collapseChange(key) {
-      this.collapseKey = key;
+    collapseChange (key) {
+      this.collapseKey = key
     },
-    changeValue(variable, val) {
+    changeValue (variable, val) {
       if (
-        variable == "disksize" &&
+        variable == 'disksize' &&
         this.options.disk.size + val <= this.diskMaxValue &&
         this.options.disk.size + val >= this.diskMinValue
       ) {
-        this.options.disk.size += val;
+        this.options.disk.size += val
       }
       if (
-        variable == "ramsize" &&
+        variable == 'ramsize' &&
         this.options.ram.size + val <= this.options.ram.max &&
         this.options.ram.size + val >= this.options.ram.min
       ) {
-        this.options.ram.size += val;
+        this.options.ram.size += val
       }
       if (
-        variable == "cpucount" &&
+        variable == 'cpucount' &&
         this.options.cpu.count + val <= this.options.cpu.max &&
         this.options.cpu.count + val >= this.options.cpu.min
       ) {
-        this.options.cpu.count += val;
+        this.options.cpu.count += val
       }
     },
-    closeAllTabs(val) {
+    closeAllTabs (val) {
       if (val) {
-        this.options.rate.id = 0;
+        this.options.rate.id = 0
       } else {
-        this.options.rate.id = this.savedRateId;
+        this.options.rate.id = this.savedRateId
       }
-      this.collapseKey = "";
-    },
-  },
-  computed: {
-    isMaintananceMode() {
-      return this.$store.getters["app/isMaintananceMode"]
-    },
-    costAfterDiscount() {
-      return (
-        this.calculateFullPrice("month") *
-        (1 - this.monthDiscount / 100)
-      ).toFixed(2);
-    },
-    templatesArray() {
-      const elements = this.$store.getters["newVDC/getTemplates"];
-      return elements;
-    },
-    ratesArray() {
-      const elements = this.$store.getters["newVDC/getRates"];
-      return elements;
-    },
-    periodToShow() {
-      if (this.options.tarification) {
-        return "month";
-      } else {
-        return this.period;
-      }
-    },
-    disableNotCustom() {
-      return this.options.rate.id != 0;
-    },
-    user() {
-      const user = this.$store.getters.getUser;
-      return user;
-    },
-    currencyPostfix() {
-      return this.$config.currency.suffix;
-    },
-    isWindowsSelected() {
-      return this.options.os.name.search(/windows/i) != -1;
-    },
-    selectedTemplate() {
-      return this.templatesArray.find(
-        (template) => template.id == this.options.os.id
-      );
-    },
-    diskMinValue() {
-      if (
-        this.selectedTemplate?.DISK_MIN_SIZE?.[this.options.disk.type] !=
-        undefined
-      ) {
-        return this.selectedTemplate.DISK_MIN_SIZE;
-      }
-
-      if (this.settings?.DISK_MIN_SIZE?.[this.options.disk.type] != undefined) {
-        // console.log(this.settings.DISK_MIN_SIZE[this.options.disk.type]);
-        return this.settings.DISK_MIN_SIZE[this.options.disk.type];
-      }
-
-      return 50;
-    },
-    diskMaxValue() {
-      if (
-        this.selectedTemplate?.DISK_MAX_SIZE?.[this.options.disk.type] !=
-        undefined
-      ) {
-        return this.selectedTemplate.DISK_MAX_SIZE[this.options.disk.type];
-      }
-
-      if (this.settings?.DISK_MAX_SIZE?.[this.options.disk.type] != undefined) {
-        return this.settings.DISK_MAX_SIZE[this.options.disk.type];
-      }
-
-      return 300;
-    },
-  },
-  watch: {
-    collapseKey: function (val) {
-      if (val == "drive") {
-        setTimeout(() => {
-          this.showTooltip = true;
-        }, 250);
-      } else {
-        this.showTooltip = false;
-      }
-    },
-    diskMinValue: {
-      handler: function (val) {
-        // console.log(val)
-        if (this.options.disk.size < val) {
-          this.options.disk.size = val;
-        }
-      },
-      immediate: true,
-    },
-  },
-};
+      this.collapseKey = ''
+    }
+  }
+}
 </script>
 
 <style>
@@ -1064,7 +1069,7 @@ export default {
   border-radius: 20px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
   padding: 10px 5px 5px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   height: max-content;
 }
 
@@ -1095,7 +1100,7 @@ justify-content: space-between;
 .newCloud__template-item {
   width: 116px;
   margin-bottom: 10px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   box-shadow: 3px 2px 6px rgba(0, 0, 0, 0.08), 0px 0px 8px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
   transition: box-shadow 0.2s ease, transform 0.2s ease;

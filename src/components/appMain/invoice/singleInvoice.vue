@@ -168,7 +168,7 @@ export default { name: 'InvoiceView' }
   padding: 8px 15px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   color: rgba(0, 0, 0, 0.7);
   cursor: pointer;
 }
@@ -187,7 +187,7 @@ export default { name: 'InvoiceView' }
   padding: 4px 8px;
   line-height: 1;
   border-radius: 12px;
-  color: #fff;
+  color: var(--bright_font);
   background: var(--success);
 }
 

@@ -561,7 +561,7 @@ export default { name: 'SslCertificate' }
   padding-top: 20px;
 }
 .ssl-page-card {
-  background: #fff;
+  background: var(--bright_font);
   border-radius: 10px;
   padding: 10px 15px 15px;
   margin-bottom: 20px;

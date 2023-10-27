@@ -589,7 +589,7 @@ export default {
     5px 8px 10px rgba(0, 0, 0, .08),
     0px 0px 12px rgba(0, 0, 0, .05);
   padding: 20px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   height: max-content;
 }
 
@@ -620,7 +620,7 @@ export default {
 .order__template-item{
   width: 116px;
   margin-bottom: 10px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   box-shadow:
     3px 2px 6px rgba(0, 0, 0, .08),
     0px 0px 8px rgba(0, 0, 0, .05);
@@ -724,7 +724,7 @@ export default {
 
 .order__slider-item--active{
   background-color: var(--main);
-  color: #fff;
+  color: var(--bright_font);
 }
 
 .order__slider-item--loading{
