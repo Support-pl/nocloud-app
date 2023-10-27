@@ -73,8 +73,10 @@ export const useAuthStore = defineStore('auth', () => {
       }
     },
 
-    async fetchUserData () {
-      if (userdata.value.uuid) return userdata.value
+    async fetchUserData (update) {
+      if (userdata.value.uuid && !update) {
+        return userdata.value
+      }
 
       try {
         const response = await api.accounts.get('me')
@@ -86,8 +88,10 @@ export const useAuthStore = defineStore('auth', () => {
       }
     },
 
-    async fetchBillingData () {
-      if (billingUser.value.firstname) return billingUser.value
+    async fetchBillingData (update) {
+      if (billingUser.value.firstname && !update) {
+        return billingUser.value
+      }
 
       try {
         const response = await api.get(

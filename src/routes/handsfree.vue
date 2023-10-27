@@ -5,7 +5,7 @@
         <template #renderItem="item, index">
           <a-list-item v-if="item === 'input'" style="padding: 12px 0 0; gap: 5px">
             <a-input :value="code" :max-length="6" @input="formatText" />
-            <a-button type="primary" @click="sendCode">
+            <a-button type="primary" :loading="isLoading" @click="sendCode">
               {{ $t('Send') | capitalize }}
             </a-button>
           </a-list-item>
@@ -40,6 +40,7 @@ import { useChatsStore } from '@/stores/chats.js'
 const authStore = useAuthStore()
 const chatsStore = useChatsStore()
 
+const isLoading = ref(false)
 const code = ref('')
 const link = ref('')
 const data = [
@@ -54,6 +55,7 @@ async function sendCode () {
   const handsfree = createPromiseClient(HandsfreeService, chatsStore.transport)
 
   try {
+    isLoading.value = true
     const { appId } = await handsfree.send(new ControlPacket({
       payload: [code.value, authStore.token]
     }))
@@ -67,13 +69,14 @@ async function sendCode () {
 
     await new Promise((resolve) => setTimeout(resolve, 1000))
     await chatsStore.fetchChats()
-    await authStore.fetchUserData()
+    await authStore.fetchUserData(true)
 
     const { telegram } = authStore.userdata.data ?? { telegram: -1 }
     const { uuid } = Array.from(chatsStore.chats.values()).find(
       ({ meta }) => meta.data.telegram?.toJSON() === telegram
-    )
+    ) ?? {}
 
+    if (!uuid) throw new Error('[Error]: Could not find telegram chat')
     await chatsStore.sendMessage({
       uuid,
       content: localStorage.getItem('telegramMessage'),
@@ -88,6 +91,8 @@ async function sendCode () {
       message: i18n.t(error.response?.data?.message ?? error.message ?? error)
     })
     console.debug(error)
+  } finally {
+    isLoading.value = false
   }
 }
 
