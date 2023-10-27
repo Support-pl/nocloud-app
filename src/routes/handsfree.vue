@@ -60,7 +60,7 @@ async function sendCode () {
 
     if (appId !== 'core-chatting.telegram-bot') {
       throw new Error('[Error]: Failed to connect')
-    } else if (authStore.userdata.data.telegram) {
+    } else if (authStore.userdata.data?.telegram) {
       router.push({ name: 'support' })
       return
     }
@@ -69,8 +69,9 @@ async function sendCode () {
     await chatsStore.fetchChats()
     await authStore.fetchUserData()
 
-    const { uuid } = Array.from(chatsStore.chats.values()).find(({ meta }) =>
-      meta.data.telegram?.toJSON() === authStore.userdata.data.telegram
+    const { telegram } = authStore.userdata.data ?? { telegram: -1 }
+    const { uuid } = Array.from(chatsStore.chats.values()).find(
+      ({ meta }) => meta.data.telegram?.toJSON() === telegram
     )
 
     await chatsStore.sendMessage({

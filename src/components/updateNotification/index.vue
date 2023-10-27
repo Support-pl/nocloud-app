@@ -52,7 +52,7 @@ export default { name: 'UpdateNotification' }
   right: 50px;
   bottom: 52px;
   background-color: #565656;
-  color: #fff;
+  color: var(--bright_font);
   padding: 10px 30px 10px 20px;
   font-size: .95rem;
   border-radius: 4px;

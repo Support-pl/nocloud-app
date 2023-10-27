@@ -7,7 +7,7 @@
       :number-style="{
         fontSize: '20px',
         transform: (hovered === service.title) ? 'none' : 'scale(0) translate(-20px, -20px)',
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--bright_font)',
         boxShadow: '0 0 0 1px var(--main)',
         color: 'var(--main)',
         cursor: 'pointer',

@@ -316,7 +316,7 @@ export default {
   height: 64px;
   line-height: 64px;
   background-color: var(--main);
-  color: #fff;
+  color: var(--bright_font);
   padding: 0;
 }
 
@@ -365,14 +365,14 @@ export default {
 }
 
 .openInvoice__cost-text {
-  fill: #fff;
+  fill: var(--bright_font);
 }
 
 .openInvoice__info {
   display: flex;
   flex-direction: column;
   flex: 1 0;
-  background-color: #fff;
+  background-color: var(--bright_font);
   border-radius: 25px 25px 0 0;
   padding: 10px 20px 20px;
   position: relative;

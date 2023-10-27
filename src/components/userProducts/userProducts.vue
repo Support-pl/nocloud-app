@@ -657,7 +657,7 @@ export default {
   justify-content: space-between;
   padding: 7px 15px;
   margin-bottom: 15px;
-  background: #fff;
+  background: var(--bright_font);
   border-radius: 10px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
 }
@@ -672,7 +672,7 @@ export default {
   margin: 0;
   padding: 15px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--bright_font);
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
 }
 
@@ -688,7 +688,7 @@ export default {
   font-size: 1.5rem;
   text-align: center;
   border-radius: 10px;
-  background: #fff;
+  background: var(--bright_font);
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
 }
 

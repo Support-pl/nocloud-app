@@ -31,7 +31,7 @@
                 :offset="[-25,-2]"
                 show-zero
                 :number-style="{
-                  backgroundColor: '#fff',
+                  backgroundColor: 'var(--bright_font)',
                   color: '#999',
                   boxShadow: '0 0 0 1px #d9d9d9 inset'
                 }"
@@ -791,7 +791,7 @@ export default {
   border-color: #427cf7;
 }
 .description-body__btn-add:hover{
-  color: #fff;
+  color: var(--bright_font);
   background-color: #40a9ff!important;
   border-color: #40a9ff!important;
 }
@@ -807,7 +807,7 @@ export default {
   border-color: #f5222d;
 }
 .description-body__btn-order:hover{
-  color: #fff;
+  color: var(--bright_font);
   background-color: rgba(245, 34, 45, 0.65) !important;
   border-color: rgba(245, 34, 45, 0.65) !important;
 }
@@ -859,7 +859,7 @@ td.ant-descriptions-item-content:nth-child(6){
   justify-content: center;
 }
 .description-btn-more:hover{
-  color: #fff;
+  color: var(--bright_font);
   background-color: #40a9ff!important;
   border-color: #40a9ff!important;
 }
@@ -897,7 +897,7 @@ td.ant-descriptions-item-content:nth-child(6){
       5px 8px 10px rgba(0, 0, 0, .08),
       0px 0px 12px rgba(0, 0, 0, .05);
   padding: 20px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   height: max-content;
 }
 
@@ -929,7 +929,7 @@ td.ant-descriptions-item-content:nth-child(6){
 .order__template-item{
   width: 116px;
   margin-bottom: 10px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   box-shadow:
       3px 2px 6px rgba(0, 0, 0, .08),
       0px 0px 8px rgba(0, 0, 0, .05);
@@ -1033,7 +1033,7 @@ td.ant-descriptions-item-content:nth-child(6){
 
 .order__slider-item--active{
   background-color: var(--main);
-  color: #fff;
+  color: var(--bright_font);
 }
 
 .order__slider-item--loading{

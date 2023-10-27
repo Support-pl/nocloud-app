@@ -1,53 +1,53 @@
 <template>
-	<div class="create-vm__wrapper">
-		<a-row :gutter="[15,15]">
-			<!-- 'IaaS' -->
-			<a-col span="24" v-for="type in ['PaaS']" :key="type">
-				<a-button
-					class="create-vm__btn"
-					size="large"
-					shape="round"
-					icon="plus"
-					type="primary"
-					@click="createVM(type)"
-					block
-				>
-					{{$t(type+'.createButton') | capitalize}}
-				</a-button>
-				<div class="create-vm__description cloud__info info">
-					<p class="info__content">
-						{{$t(type+'.description')}}
-					</p>
-				</div>
-			</a-col>
-		</a-row>
-	</div>
+  <div class="create-vm__wrapper">
+    <a-row :gutter="[15,15]">
+      <!-- 'IaaS' -->
+      <a-col v-for="type in ['PaaS']" :key="type" span="24">
+        <a-button
+          class="create-vm__btn"
+          size="large"
+          shape="round"
+          icon="plus"
+          type="primary"
+          block
+          @click="createVM(type)"
+        >
+          {{ $t(type+'.createButton') | capitalize }}
+        </a-button>
+        <div class="create-vm__description cloud__info info">
+          <p class="info__content">
+            {{ $t(type+'.description') }}
+          </p>
+        </div>
+      </a-col>
+    </a-row>
+  </div>
 </template>
 
 <script>
 export default {
-	name: "create-vm",
-	methods: {
-		createVM(type){
-			let newRouteName;
-			type = type || this.$route.query.type;
-			console.log(type)
-			if(type == 'IaaS'){
-				newRouteName = 'newVDC'
-			}
-			if(type == 'PaaS'){
-				newRouteName = 'newPaaS'
-			}
-			this.$store.dispatch("app/setTabByName", newRouteName);
-		},
-	},
+  name: 'CreateVm',
+  methods: {
+    createVM (type) {
+      let newRouteName
+      type = type || this.$route.query.type
+      console.log(type)
+      if (type == 'IaaS') {
+        newRouteName = 'newVDC'
+      }
+      if (type == 'PaaS') {
+        newRouteName = 'newPaaS'
+      }
+      this.$store.dispatch('app/setTabByName', newRouteName)
+    }
+  }
 }
 </script>
 
 <style>
 
 .create-vm__wrapper{
-	background: #fff;
+	background: var(--bright_font);
 	border-radius: 10px;
 	padding: 10px 10px 15px 10px;
 	margin-bottom: 10px;

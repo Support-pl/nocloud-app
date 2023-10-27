@@ -723,7 +723,7 @@ export default { name: 'VncView' }
 
     text-align: center;
     font-weight: bold;
-    color: #fff;
+    color: var(--bright_font);
 
     border-radius: 10px;
     box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.5);
@@ -1006,7 +1006,7 @@ export default { name: 'VncView' }
 
     padding: 15px;
 
-    background: #fff;
+    background: var(--bright_font);
     border-radius: 10px;
     color: #000;
     border: 2px solid #E0E0E0;
@@ -1207,7 +1207,7 @@ export default { name: 'VncView' }
 
     line-height: 25px;
     word-wrap: break-word;
-    color: #fff;
+    color: var(--bright_font);
 
     border-bottom: 1px solid rgba(0, 0, 0, 0.9);
   }
@@ -1408,8 +1408,8 @@ export default { name: 'VncView' }
   #noVNC_keyboardinput {
     width: 1px;
     height: 1px;
-    background-color: #fff;
-    color: #fff;
+    background-color: var(--bright_font);
+    color: var(--bright_font);
     border: 0;
     position: absolute;
     left: -40px;

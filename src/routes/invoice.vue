@@ -295,7 +295,7 @@ export default { name: 'InvoicesView' }
 }
 
 .invoices__wrapper  .card-container > .ant-tabs-card > .ant-tabs-bar {
-  background-color: #fff;
+  background-color: var(--bright_font);
   border-bottom: 0;
   margin: 0 10px 20px;
 }
@@ -323,7 +323,7 @@ export default { name: 'InvoicesView' }
 }
 
 .invoices__wrapper  .card-container > .ant-tabs-card > .ant-tabs-bar .ant-tabs-tab-active {
-  background: #fff;
+  background: var(--bright_font);
   border-left: 1px solid #40a9ff ;
   border-right: 1px solid #40a9ff ;
   border-bottom: 1px solid #40a9ff ;

@@ -402,7 +402,7 @@ export default { name: 'LoginView' }
 .login__submit {
   border: none;
   outline: none;
-  color: #fff;
+  color: var(--bright_font);
   font-weight: 600;
   border-radius: 10px;
   padding: 7px 20px;

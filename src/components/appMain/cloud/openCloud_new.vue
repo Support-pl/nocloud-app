@@ -217,7 +217,7 @@
           </template>
         </component>
       </div>
-      <loading v-else-if="vmsLoading" key="loading" color="#fff" class="loading" />
+      <loading v-else-if="vmsLoading" key="loading" color="var(--bright_font)" class="loading" />
     </transition>
   </div>
 </template>
@@ -821,7 +821,7 @@ export default {
 }
 
 .cloud__fullscreen--while {
-  background: #fff;
+  background: var(--bright_font);
 }
 
 .loading {
@@ -908,7 +908,7 @@ export default {
   transition: color 0.1s ease, text-shadow 0.1s ease, opacity 0.1s ease;
 }
 .Fcloud__button:hover .Fcloud__BTN-icon {
-  background-color: #fff;
+  background-color: var(--bright_font);
   box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.2);
 }
 .Fcloud__button:hover .Fcloud__BTN-title {
@@ -945,7 +945,7 @@ export default {
 }
 .Fcloud__back {
   font-weight: bold;
-  color: #fff;
+  color: var(--bright_font);
   font-size: 1.4rem;
   cursor: pointer;
 }
@@ -959,7 +959,7 @@ export default {
 }
 .Fcloud__main-info {
   margin-top: 20px;
-  background: #fff;
+  background: var(--bright_font);
   border-radius: 15px;
   padding: 15px 0;
 }
@@ -1018,7 +1018,7 @@ export default {
   gap: 10px;
   margin-top: 8px;
   font-size: 1rem;
-  background-color: #fff;
+  background-color: var(--bright_font);
   border-radius: 20px;
   padding: 10px 0;
   text-align: center;

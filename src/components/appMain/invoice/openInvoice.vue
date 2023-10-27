@@ -255,7 +255,7 @@ export default { name: 'OpenInvoice' }
   height: 64px;
   line-height: 64px;
   background-color: var(--main);
-  color: #fff;
+  color: var(--bright_font);
   padding: 0;
 }
 
@@ -304,14 +304,14 @@ export default { name: 'OpenInvoice' }
 }
 
 .openInvoice__cost-text {
-  fill: #fff;
+  fill: var(--bright_font);
 }
 
 .openInvoice__info {
   display: flex;
   flex-direction: column;
   flex: 1 0;
-  background-color: #fff;
+  background-color: var(--bright_font);
   border-radius: 25px 25px 0 0;
   padding: 10px 20px 20px;
   position: relative;
@@ -505,7 +505,7 @@ export default { name: 'OpenInvoice' }
 
 .info__row--pay-btn {
   background-color: #0fd058;
-  color: #fff;
+  color: var(--bright_font);
   font-weight: 500;
   display: flex;
   justify-content: center;

@@ -33,7 +33,7 @@
                   :offset="[-25,-2]"
                   show-zero
                   :number-style="{
-                    backgroundColor: '#fff',
+                    backgroundColor: 'var(--bright_font)',
                     color: '#999',
                     boxShadow: '0 0 0 1px #d9d9d9 inset'
                   }"
@@ -252,7 +252,7 @@ export default { name: 'DomainsComponent' }
   margin-bottom: 20px;
   border-radius: 10px;
   padding: 23px 78px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   height: max-content;
 }
 
@@ -383,7 +383,7 @@ input.ant-input:focus{
   border-color: #427cf7;
 }
 .description-body__btn-add:hover{
-  color: #fff;
+  color: var(--bright_font);
   background-color: #40a9ff!important;
   border-color: #40a9ff!important;
 }
@@ -399,7 +399,7 @@ input.ant-input:focus{
   border-color: #5CB85B;
 }
 .description-body__btn-order:hover{
-  color: #fff;
+  color: var(--bright_font);
   background-color: rgba(92,184,91,0.65)!important;
   border-color: rgba(92,184,91,0.65)!important;
 }
@@ -452,7 +452,7 @@ td.ant-descriptions-item-content:nth-child(6){
 }
 
 .description-btn-more:hover{
-  color: #fff;
+  color: var(--bright_font);
   background-color: #40a9ff!important;
   border-color: #40a9ff!important;
 }

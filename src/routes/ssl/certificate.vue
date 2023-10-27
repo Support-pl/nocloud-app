@@ -12,14 +12,14 @@
         <div class="steps__content">
           <component
             :is="steps[current].content"
-            @handleClickNext="handleClickNext"
-            @handleClickPrev="handleClickPrev"
-            @saveProductInfo="saveProductInfo"
-            @saveReissueInfo="saveReissueInfo"
             :personal="personal"
             :personal_back="personal_back || {}"
             :csr="csr"
             :product_info="product_info"
+            @handleClickNext="handleClickNext"
+            @handleClickPrev="handleClickPrev"
+            @saveProductInfo="saveProductInfo"
+            @saveReissueInfo="saveReissueInfo"
           />
         </div>
       </div>
@@ -27,67 +27,66 @@
   </div>
 </template>
 <script>
-import csr from "@/components/services/ssl/csr.vue";
-import personal from "@/components/services/ssl/personal.vue";
-import verification from "@/components/services/ssl/verification.vue";
+import csr from '@/components/services/ssl/csr.vue'
+import personal from '@/components/services/ssl/personal.vue'
+import verification from '@/components/services/ssl/verification.vue'
 const steps = [
   {
-    title: "CSR",
-    content: csr,
+    title: 'CSR',
+    content: csr
   },
   {
-    title: "personal data",
-    content: personal,
+    title: 'personal data',
+    content: personal
   },
   {
-    title: "verification",
-    content: verification,
-  },
-];
+    title: 'verification',
+    content: verification
+  }
+]
 export default {
-  name: "Certificare",
+  name: 'Certificare',
   components: { csr, personal, verification },
-  data() {
+  data () {
     return {
       current: 0,
-      personal: "",
-      personal_back: "",
+      personal: '',
+      personal_back: '',
       product_info: {},
       csr: {},
-      steps,
-    };
+      steps
+    }
   },
   methods: {
-    handleClickPrev(data) {
+    handleClickPrev (data) {
       if (data) {
-        this.personal_back = data;
+        this.personal_back = data
       }
-      this.current--;
+      this.current--
     },
-    handleClickNext(data) {
+    handleClickNext (data) {
       if (data.csr) {
-        this.csr = data;
-        this.current++;
-        return;
+        this.csr = data
+        this.current++
+        return
       }
       if (data.firstname) {
-        this.personal = data;
-        this.current++;
-        return;
+        this.personal = data
+        this.current++
       }
     },
-    saveProductInfo(data) {
+    saveProductInfo (data) {
       if (data) {
-        this.product_info = data;
+        this.product_info = data
       }
     },
-    saveReissueInfo(data) {
+    saveReissueInfo (data) {
       if (data) {
-        this.personal_back = data;
+        this.personal_back = data
       }
-    },
-  },
-};
+    }
+  }
+}
 </script>
 <style>
 .ant-form-item {
@@ -100,7 +99,7 @@ export default {
   padding-top: 20px;
 }
 .certificate-page-card {
-  background: #fff;
+  background: var(--bright_font);
   border-radius: 10px;
   padding: 10px 15px 15px;
   margin-bottom: 20px;

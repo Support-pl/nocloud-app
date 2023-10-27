@@ -95,7 +95,7 @@ export default {
   padding: 15px 20px 15px 40px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   cursor: pointer;
 }
 .ticket:hover {

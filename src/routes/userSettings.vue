@@ -342,7 +342,7 @@ export default { name: 'UserSettingsView' }
   flex-direction: column;
   padding: 10px 10px 15px 10px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--bright_font);
 }
 
 .content__fields-wrapper {

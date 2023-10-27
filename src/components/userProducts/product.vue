@@ -187,7 +187,7 @@ export default {
 	flex-shrink: 0;
 	justify-content: center;
 	align-items: center;
-	color: #fff;
+	color: var(--bright_font);
 }
 
 .product__text{
@@ -237,7 +237,7 @@ export default {
   padding: 2px 5px 0;
   border-radius: 3px;
   background: var(--err);
-  color: #fff;
+  color: var(--bright_font);
 }
 
 .product__date,
