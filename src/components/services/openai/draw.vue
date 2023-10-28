@@ -30,7 +30,7 @@
         <loading />
       </a-col>
       <a-col v-else-if="chats.length > 0">
-        <single-ticket
+        <ticket-item
           v-for="chat of chats"
           :key="chat.id"
           :ticket="chat"
@@ -55,9 +55,9 @@ import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
 
-import addTicket from '@/components/appMain/support/addTicket.vue'
-import singleTicket from '@/components/appMain/support/singleTicket.vue'
-import loading from '@/components/loading/loading.vue'
+import addTicket from '@/components/support/addTicket.vue'
+import ticketItem from '@/components/support/ticketItem.vue'
+import loading from '@/components/ui/loading.vue'
 
 const props = defineProps({
   service: { type: Object, required: true }

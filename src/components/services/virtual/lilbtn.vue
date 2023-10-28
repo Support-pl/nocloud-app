@@ -9,7 +9,7 @@
 <script setup>
 import { ref } from 'vue'
 import { notification } from 'ant-design-vue'
-import i18n from '@/i18n.js'
+import i18n from '@/i18n'
 import { useInstancesStore } from '@/stores/instances.js'
 
 const props = defineProps({

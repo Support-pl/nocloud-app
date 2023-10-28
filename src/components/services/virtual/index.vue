@@ -170,13 +170,6 @@
             </a-modal>
           </a-col>
         </a-row>
-
-        <add-funds
-          v-if="addfunds.visible"
-          :sum="addfunds.amount"
-          :modal-visible="addfunds.visible"
-          :hide-modal="() => addfunds.visible = false"
-        />
       </div>
     </div>
   </div>
@@ -195,11 +188,10 @@ import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
-import addFunds from '@/components/balance/addFunds.vue'
-
 export default {
   name: 'VirtualComponent',
-  components: { addFunds, passwordMeter },
+  components: { passwordMeter },
+  inject: ['checkBalance'],
   data: () => ({
     plan: null,
     service: null,
@@ -210,7 +202,6 @@ export default {
     options: { size: '', model: '', period: '' },
     config: { domain: '', email: '', password: '' },
     modal: { confirmCreate: false, confirmLoading: false },
-    addfunds: { visible: false, amount: 0 },
 
     products: [],
     sizes: [],
@@ -442,24 +433,8 @@ export default {
         return
       }
 
-      if (!this.checkBalance()) return
+      if (!this.checkBalance(this.getProducts.price)) return
       this.modal.confirmCreate = true
-    },
-    checkBalance () {
-      const sum = this.getProducts.price
-
-      if (this.userdata.balance < parseFloat(sum)) {
-        this.$confirm({
-          title: this.$t('You do not have enough funds on your balance'),
-          content: this.$t('Click OK to replenish the account with the missing amount'),
-          onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
-            this.addfunds.visible = true
-          }
-        })
-        return false
-      }
-      return true
     },
     deployService (uuid) {
       this.$api.services.up(uuid)

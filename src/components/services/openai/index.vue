@@ -120,7 +120,7 @@ import { storeToRefs } from 'pinia'
 import { notification } from 'ant-design-vue'
 
 import router from '@/router'
-import i18n from '@/i18n.js'
+import i18n from '@/i18n'
 import api from '@/api.js'
 
 import { useAppStore } from '@/stores/app.js'

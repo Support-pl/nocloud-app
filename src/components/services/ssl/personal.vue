@@ -112,11 +112,11 @@
             placeholder=" Please choose one..."
           >
             <a-select-option
-              v-for="country in Object.keys(countries)"
-              :key="country"
-              :value="country"
+              v-for="country in countries"
+              :key="country.code"
+              :value="country.code"
             >
-              {{ country }}: {{ countries[country] }}
+              {{ country.code }}: {{ country.title }}
             </a-select-option>
           </a-select>
         </a-form-model-item>
@@ -144,11 +144,11 @@
 import { onMounted, ref, set } from 'vue'
 import { message } from 'ant-design-vue'
 
-import i18n from '@/i18n.js'
+import i18n from '@/i18n'
 import { useAuthStore } from '@/stores/auth.js'
 
-import { countries } from '@/setup/countries'
-import empty from '@/components/empty/empty.vue'
+import countries from '@/assets/countries.json'
+import empty from '@/components/ui/empty.vue'
 
 const props = defineProps({
   csr: { type: Object, default: () => {} },

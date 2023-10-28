@@ -117,7 +117,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 
 import order from '@/components/services/domains/order.vue'
-import loading from '@/components/loading/loading.vue'
+import loading from '@/components/ui/loading.vue'
 
 const authStore = useAuthStore()
 const providersStore = useSpStore()

@@ -1,8 +1,8 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import appMain from '@/components/appMain/appMain.vue'
+import appMain from '@/components/layout/appMain.vue'
 import config from '@/appconfig.js'
-import i18n from '@/i18n.js'
+import i18n from '@/i18n'
 
 Vue.use(VueRouter)
 
@@ -54,7 +54,7 @@ const routes = [
       mustBeLoggined: false,
       mustBeUnloggined: true
     },
-    component: () => import('@/routes/login.vue')
+    component: () => import('@/routes/authorization/login.vue')
   },
   {
     path: '/register',
@@ -63,7 +63,7 @@ const routes = [
       mustBeLoggined: false,
       mustBeUnloggined: true
     },
-    component: () => import('@/routes/register.vue')
+    component: () => import('@/routes/authorization/register.vue')
   },
   {
     path: '/handsfree',
@@ -71,7 +71,7 @@ const routes = [
     meta: {
       mustBeLoggined: true
     },
-    component: () => import('@/routes/handsfree.vue')
+    component: () => import('@/routes/support/handsfree.vue')
   },
   {
     path: '/',
@@ -83,7 +83,7 @@ const routes = [
         meta: {
           mustBeLoggined: true
         },
-        component: () => import('@/routes/services.vue')
+        component: () => import('@/routes/services/services.vue')
       },
       {
         path: 'services',
@@ -91,7 +91,7 @@ const routes = [
         meta: {
           // mustBeLoggined: true,
         },
-        component: () => import('@/routes/services.vue')
+        component: () => import('@/routes/services/services.vue')
       },
       ...services,
       {
@@ -102,7 +102,7 @@ const routes = [
           layoutTitle: 'services',
           isNeedBackButton: true
         },
-        component: () => import('@/routes/products.vue')
+        component: () => import('@/routes/services/products.vue')
       },
       {
         path: 'support',
@@ -110,7 +110,7 @@ const routes = [
         meta: {
           mustBeLoggined: true
         },
-        component: () => import('@/routes/support.vue')
+        component: () => import('@/routes/support/support.vue')
       },
       {
         path: 'billing',
@@ -118,7 +118,7 @@ const routes = [
         meta: {
           mustBeLoggined: true
         },
-        component: () => import('@/routes/invoice.vue')
+        component: () => import('@/routes/invoices/invoice.vue')
       },
       {
         path: 'settings',
@@ -126,7 +126,7 @@ const routes = [
         meta: {
           mustBeLoggined: true
         },
-        component: () => import('@/routes/settings.vue')
+        component: () => import('@/routes/settings/settings.vue')
       },
       {
         path: 'cloud/newVM',
@@ -135,17 +135,17 @@ const routes = [
           footerTitle: 'cloud',
           isFromRoute: true
         },
-        component: () => import('@/components/appMain/newPaaS.vue')
+        component: () => import('@/routes/cloud/createPaas.vue')
       },
-      {
-        path: 'cloud/newVDC',
-        name: 'newVDC',
-        meta: {
-          // mustBeLoggined: true,
-          footerTitle: 'cloud'
-        },
-        component: () => import('@/components/appMain/newVDC.vue')
-      },
+      // {
+      //   path: 'cloud/newVDC',
+      //   name: 'newVDC',
+      //   meta: {
+      //     // mustBeLoggined: true,
+      //     footerTitle: 'cloud'
+      //   },
+      //   component: () => import('@/components/newVDC.vue')
+      // },
       {
         path: 'service/:id',
         name: 'service',
@@ -155,7 +155,7 @@ const routes = [
           headerTitle: 'service',
           isNeedBackButton: true
         },
-        component: () => import('@/routes/userService.vue')
+        component: () => import('@/routes/services/servicePage.vue')
       },
       {
         path: 'service/:id/certificate',
@@ -166,7 +166,7 @@ const routes = [
           isNeedBackButton: true
         },
         props: true,
-        component: () => import('@/routes/ssl/certificate.vue')
+        component: () => import('@/routes/services/certificate.vue')
       },
       {
         path: 'service/:id/certificate/csr',
@@ -176,7 +176,7 @@ const routes = [
           headerTitle: 'CSR',
           isNeedBackButton: true
         },
-        component: () => import('@/routes/ssl/csr.vue')
+        component: () => import('@/components/services/ssl/generator.vue')
       },
       {
         path: 'service/:id/ssl',
@@ -186,7 +186,7 @@ const routes = [
           headerTitle: 'SSL certificate',
           isNeedBackButton: true
         },
-        component: () => import('@/routes/ssl/ssl.vue')
+        component: () => import('@/routes/services/ssl.vue')
       },
       {
         path: 'cabinet',
@@ -197,21 +197,14 @@ const routes = [
           headerTitle: 'settings',
           isNeedBackButton: true
         },
-        component: () => import('@/routes/userSettings.vue')
+        component: () => import('@/routes/settings/userPage.vue')
       }
     ]
   },
   {
     path: '/cloud/:uuid',
-    name: 'openCloud_new',
-    component: () => import('@/components/appMain/cloud/openCloud_new.vue'),
-    meta: {
-      mustBeLoggined: true
-    }
-  },
-  {
-    path: '/cloud/*',
-    component: () => import('@/components/appMain/cloud/cloudRouter.vue'),
+    name: 'openCloud',
+    component: () => import('@/routes/cloud/cloudPage.vue'),
     meta: {
       mustBeLoggined: true
     },
@@ -219,18 +212,8 @@ const routes = [
       {
         path: 'vnc',
         name: 'VNC',
-        component: () => import('@/components/appMain/cloud/vnc.vue')
-      },
-      {
-        path: '*',
-        redirect: (to) => `/cloud-${to.params.uuid}`
-      },
-      {
-        path: '',
-        name: 'openCloud',
-        component: () => import('@/components/appMain/cloud/openCloud_new.vue')
-      }
-    ]
+        component: () => import('@/routes/cloud/vnc.vue')
+      }]
   },
   {
     path: '/ticket-*',
@@ -238,7 +221,7 @@ const routes = [
     meta: {
       mustBeLoggined: true
     },
-    component: () => import('@/components/appMain/support/ticketchat.vue')
+    component: () => import('@/routes/support/chatPage.vue')
   },
   {
     path: '/invoice/:uuid',
@@ -246,7 +229,7 @@ const routes = [
     meta: {
       mustBeLoggined: true
     },
-    component: () => import('@/components/appMain/invoice/openInvoice.vue')
+    component: () => import('@/routes/invoices/invoicePage.vue')
   },
   {
     path: '/transaction/:uuid',
@@ -254,7 +237,7 @@ const routes = [
     meta: {
       mustBeLoggined: true
     },
-    component: () => import('@/components/appMain/invoice/openTransaction.vue')
+    component: () => import('@/routes/invoices/transactionPage.vue')
   }
 ]
 

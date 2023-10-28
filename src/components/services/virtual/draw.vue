@@ -46,7 +46,7 @@
 import { ref, computed } from 'vue'
 import { notification } from 'ant-design-vue'
 import router from '@/router'
-import i18n from '@/i18n.js'
+import i18n from '@/i18n'
 import { useInstancesStore } from '@/stores/instances.js'
 
 const props = defineProps({

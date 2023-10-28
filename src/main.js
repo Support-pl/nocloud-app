@@ -7,18 +7,15 @@ import 'ant-design-vue/dist/antd.css'
 import i18n from './i18n'
 import router from './router'
 import './registerServiceWorker'
-import axios from './axios'
 import api from '@/api.js'
 import './assets/style.css'
 
-import maintanance from '@/components/maintanance.vue'
+import maintanance from '@/components/ui/maintanance.vue'
 
 Vue.config.productionTip = false
 Vue.use(Antd)
 Vue.use(VueGoogleCharts)
 Vue.use(PiniaVuePlugin)
-
-Vue.prototype.$axios = axios
 Vue.prototype.$api = api
 
 Vue.filter('capitalize', function (value, isLower) {

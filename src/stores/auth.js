@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import cookies from 'js-cookie'
-import i18n from '@/i18n.js'
+import i18n from '@/i18n'
 import api from '@/api.js'
 import config from '@/appconfig.js'
 
@@ -53,6 +53,8 @@ export const useAuthStore = defineStore('auth', () => {
     },
 
     logout () {
+      if (!isLogged.value) return
+
       setToken('')
       const config = localStorage.getItem('globalConfig')
       const lang = localStorage.getItem('lang') ?? i18n.locale

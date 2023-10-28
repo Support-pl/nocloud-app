@@ -64,11 +64,11 @@
               >
                 <a-select v-model="generate.csr_country">
                   <a-select-option
-                    v-for="country in Object.keys(countries)"
-                    :key="country"
-                    :value="country"
+                    v-for="country in countries"
+                    :key="country.code"
+                    :value="country.code"
                   >
-                    {{ country }}: {{ $t(`country.${country}`) }}
+                    {{ country.title }}: {{ $t(`country.${country.code}`) }}
                   </a-select-option>
                 </a-select>
               </a-form-model-item>
@@ -146,12 +146,12 @@
 import { ref } from 'vue'
 
 import { message } from 'ant-design-vue'
-import i18n from '@/i18n.js'
+import i18n from '@/i18n'
 import api from '@/api.js'
 import { useAuthStore } from '@/stores/auth.js'
 
-import { countries } from '@/setup/countries'
-import loading from '@/components/loading/loading.vue'
+import countries from '@/assets/countries.json'
+import loading from '@/components/ui/loading.vue'
 
 const props = defineProps({
   domain: { type: String, required: true }

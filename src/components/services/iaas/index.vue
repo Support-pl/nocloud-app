@@ -199,13 +199,6 @@
             </a-modal>
           </a-col>
         </a-row>
-
-        <add-funds
-          v-if="addfunds.visible"
-          :sum="addfunds.amount"
-          :modal-visible="addfunds.visible"
-          :hide-modal="() => addfunds.visible = false"
-        />
       </div>
     </div>
   </div>
@@ -220,11 +213,10 @@ import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useProductsStore } from '@/stores/products.js'
 
 import config from '@/appconfig.js'
-import addFunds from '@/components/balance/addFunds.vue'
 
 export default {
   name: 'IaasComponent',
-  components: { addFunds },
+  inject: ['checkBalance'],
   data: () => ({
     sizes: [],
     products: [],
@@ -236,7 +228,6 @@ export default {
       confirmLoading: false,
       goToInvoice: true
     },
-    addfunds: { visible: false, amount: 0 },
     addons: {},
     periods: [],
     currencies: []
@@ -484,24 +475,8 @@ export default {
         this.$message.error(this.$t('Choose your payment method'))
         return
       }
-      if (!this.checkBalance()) return
+      if (!this.checkBalance(this.getProducts.price[this.options.period])) return
       this.modal.confirmCreate = true
-    },
-    checkBalance () {
-      const sum = this.getProducts.price[this.options.period]
-
-      if (this.userdata.balance < parseFloat(sum)) {
-        this.$confirm({
-          title: this.$t('You do not have enough funds on your balance'),
-          content: this.$t('Click OK to replenish the account with the missing amount'),
-          onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
-            this.addfunds.visible = true
-          }
-        })
-        return false
-      }
-      return true
     },
     getPaytoken (invoiceId) {
       this.$api.get(this.baseURL, {

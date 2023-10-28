@@ -111,11 +111,11 @@
                 <a-form-model-item prop="country" :label="$t('clientinfo.countryname')" :rules="rules.req">
                   <a-select v-model="form.country" style="width: 100%">
                     <a-select-option
-                      v-for="country in Object.keys(countries)"
-                      :key="country"
-                      :value="country"
+                      v-for="country in countries"
+                      :key="country.code"
+                      :value="country.code"
                     >
-                      {{ $t(`country.${country}`) }}
+                      {{ $t(`country.${country.code}`) }}
                     </a-select-option>
                   </a-select>
                 </a-form-model-item>
@@ -340,13 +340,6 @@
             </a-modal>
           </a-col>
         </a-row>
-
-        <add-funds
-          v-if="addfunds.visible"
-          :sum="addfunds.amount"
-          :modal-visible="addfunds.visible"
-          :hide-modal="() => addfunds.visible = false"
-        />
       </div>
     </div>
   </div>
@@ -364,14 +357,14 @@ import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 
-import addFunds from '@/components/balance/addFunds.vue'
 import notification from '@/mixins/notification.js'
-import { countries } from '@/setup/countries.js'
+import countries from '@/assets/countries.json'
 
 export default {
   name: 'DomainOrder',
-  components: { passwordMeter, addFunds },
+  components: { passwordMeter },
   mixins: [notification],
+  inject: ['checkBalance'],
   props: {
     data: { type: Object, required: true },
     onCart: { type: Array, required: true },
@@ -393,7 +386,6 @@ export default {
       confirmLoading: false
     },
 
-    addfunds: { visible: false, amount: 0 },
     options: { provider: '', tarif: '', domain: '' },
     resources: {
       registrant_ip: '',
@@ -660,24 +652,8 @@ export default {
         this.$message.error(this.$t('domain is wrong'))
         return
       }
-      if (!this.checkBalance()) return
+      if (!this.checkBalance(this.getProducts().pricing[this.resources.period])) return
       this.modal.confirmCreate = true
-    },
-    checkBalance () {
-      const sum = this.getProducts().pricing[this.resources.period]
-
-      if (this.userdata.balance < parseFloat(sum)) {
-        this.$confirm({
-          title: this.$t('You do not have enough funds on your balance'),
-          content: this.$t('Click OK to replenish the account with the missing amount'),
-          onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
-            this.addfunds.visible = true
-          }
-        })
-        return false
-      }
-      return true
     },
     deployService (uuid) {
       this.$api.services.up(uuid)

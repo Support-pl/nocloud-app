@@ -1,11 +1,19 @@
 import Api from 'nocloudjsrest'
+import { useAppStore } from './stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 
 // const api = new Api()
 const api = new Api(VUE_APP_BASE_URL)
 
 api.axios.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data.maintenance) {
+      console.log(response, 'maintanance mode')
+      useAppStore().isMaintananceMode = response.data.maintenance
+    }
+
+    return response
+  },
   (error) => {
     if (
       error.response && (
@@ -16,6 +24,7 @@ api.axios.interceptors.response.use(
       console.log('credentials are not actual')
       setTimeout(useAuthStore().logout, 2000)
     }
+
     return Promise.reject(error) // this is the important part
   })
 

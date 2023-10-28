@@ -186,13 +186,6 @@
             </a-modal>
           </a-col>
         </a-row>
-
-        <add-funds
-          v-if="addfunds.visible"
-          :sum="addfunds.amount"
-          :modal-visible="addfunds.visible"
-          :hide-modal="() => addfunds.visible = false"
-        />
       </div>
     </div>
   </div>
@@ -211,16 +204,14 @@ import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
-import addFunds from '@/components/balance/addFunds.vue'
 import notification from '@/mixins/notification.js'
-import { countries } from '@/setup/countries.js'
 
 export default {
   name: 'SslComponent',
-  components: { passwordMeter, addFunds },
+  components: { passwordMeter },
   mixins: [notification],
+  inject: ['checkBalance'],
   data: () => ({
-    countries,
     products: {},
     currentStep: 0,
     plan: null,
@@ -238,7 +229,6 @@ export default {
       confirmCreate: false,
       confirmLoading: false
     },
-    addfunds: { visible: false, amount: 0 },
 
     csr: {},
     personal: {},
@@ -503,26 +493,10 @@ export default {
         this.$message.error('domain is wrong')
         return
       }
-      if (!this.checkBalance()) return
+      if (!this.checkBalance(this.getProducts.prices[this.options.period])) return
       if (order) this.modal.confirmCreate = true
 
       return isValid
-    },
-    checkBalance () {
-      const sum = this.getProducts.prices[this.options.period]
-
-      if (this.userdata.balance < parseFloat(sum)) {
-        this.$confirm({
-          title: this.$t('You do not have enough funds on your balance'),
-          content: this.$t('Click OK to replenish the account with the missing amount'),
-          onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
-            this.addfunds.visible = true
-          }
-        })
-        return false
-      }
-      return true
     },
     deployService (uuid) {
       this.$api.services.up(uuid)

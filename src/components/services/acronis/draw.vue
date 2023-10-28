@@ -41,7 +41,7 @@ import { computed, getCurrentInstance, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
-import i18n from '@/i18n.js'
+import i18n from '@/i18n'
 import api from '@/api.js'
 
 const props = defineProps({
