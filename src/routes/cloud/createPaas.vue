@@ -26,47 +26,49 @@
           :ssh-key="sshKey"
           :location-id="locationId"
           @score="onScore"
-          @setData="setData"
+          @set-data="setData"
         >
           <template #location>
             <a-row justify="space-between" style="margin-bottom: 10px">
-              <a-alert
-                v-if="!locationId"
-                show-icon
-                type="warning"
-                style="margin-bottom: 15px"
-                :message="$t('Please select a suitable location')"
-              />
+              <a-col span="24">
+                <a-alert
+                  v-if="!locationId"
+                  show-icon
+                  type="warning"
+                  style="margin-bottom: 15px"
+                  :message="$t('Please select a suitable location')"
+                />
 
-              <!-- <a-select
-                v-model="locationId"
-                :placeholder="$t('select location')"
-                style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
-              >
-                <a-select-option v-for="item in locations" :key="item.id" :value="item.id">
-                  {{ item.title }}
-                </a-select-option>
-              </a-select> -->
-
-              <a-select
-                v-model="showcase"
-                :placeholder="$t('select service')"
-                style="width: 180px; position: relative; z-index: 4"
-              >
-                <a-select-option v-for="item in showcases" :key="item.uuid" :value="item.uuid">
-                  {{ item.title }}
-                </a-select-option>
-              </a-select>
-
-              <div style="overflow: hidden; margin-top: 15px">
-                <nc-map
-                  v-if="locations.length"
+                <!-- <a-select
                   v-model="locationId"
+                  :placeholder="$t('select location')"
+                  style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
+                >
+                  <a-select-option v-for="item in locations" :key="item.id" :value="item.id">
+                    {{ item.title }}
+                  </a-select-option>
+                </a-select> -->
+
+                <a-select
+                  v-model:value="showcase"
+                  :placeholder="$t('select service')"
+                  style="width: 180px; position: relative; z-index: 4"
+                >
+                  <a-select-option v-for="item in showcases" :key="item.uuid">
+                    {{ item.title }}
+                  </a-select-option>
+                </a-select>
+              </a-col>
+
+              <a-col span="24" style="overflow: hidden; margin-top: 15px">
+                <nc-map
+                  :value="locationId"
                   :markers="locations"
                   :marker-color="itemSP?.meta.markerColor"
                   :marker-url="itemSP?.meta.markerUrl"
+                  @input="(value) => locationId = value"
                 />
-              </div>
+              </a-col>
             </a-row>
           </template>
         </component>
@@ -91,7 +93,7 @@
                 border-bottom: 1px solid #e8e8e8;
               "
             >
-              <a-col> {{ $t("location") | capitalize }}: </a-col>
+              <a-col> {{ capitalize($t("location")) }}: </a-col>
               <a-col>
                 {{ locationTitle }}
               </a-col>
@@ -105,7 +107,7 @@
               justify="space-between"
               :style="{ 'font-size': '1.2rem' }"
             >
-              <a-col> {{ $t("tariff") | capitalize }}: </a-col>
+              <a-col> {{ capitalize($t("tariff")) }}: </a-col>
               <a-col>
                 {{ productSize }}
               </a-col>
@@ -235,7 +237,7 @@
               justify="space-between"
               :style="{ 'font-size': '1.1rem' }"
             >
-              <a-col> {{ $t(key) | capitalize }} {{ getAddonsValue(key) }}: </a-col>
+              <a-col> {{ capitalize($t(key)) }} {{ getAddonsValue(key) }}: </a-col>
               <a-col>
                 {{ addon }} {{ currency.code }}
               </a-col>
@@ -249,12 +251,8 @@
             style="width: 100%; margin-top: 10px"
           >
             <a-col style="width: 100%">
-              <a-select v-model="plan" placeholder="Price models" style="width: 100%">
-                <a-select-option
-                  v-for="item in filteredPlans"
-                  :key="item.uuid"
-                  :value="item.uuid"
-                >
+              <a-select v-model:value="plan" placeholder="Price models" style="width: 100%">
+                <a-select-option v-for="item in filteredPlans" :key="item.uuid">
                   {{ item.title }}
                 </a-select-option>
               </a-select>
@@ -268,12 +266,8 @@
             style="width: 100%; margin-top: 10px"
           >
             <a-col style="width: 100%">
-              <a-select v-model="service" placeholder="Services" style="width: 100%">
-                <a-select-option
-                  v-for="item in services"
-                  :key="item.uuid"
-                  :value="item.uuid"
-                >
+              <a-select v-model:value="service" placeholder="Services" style="width: 100%">
+                <a-select-option v-for="item in services" :key="item.uuid">
                   {{ item.title }}
                 </a-select-option>
               </a-select>
@@ -287,12 +281,8 @@
             style="width: 100%; margin-top: 10px"
           >
             <a-col style="width: 100%">
-              <a-select v-model="namespace" placeholder="Namespaces" style="width: 100%">
-                <a-select-option
-                  v-for="item in namespaces"
-                  :key="item.uuid"
-                  :value="item.uuid"
-                >
+              <a-select v-model:value="namespace" placeholder="Namespaces" style="width: 100%">
+                <a-select-option v-for="item in namespaces" :key="item.uuid">
                   {{ item.title }}
                 </a-select-option>
               </a-select>
@@ -312,7 +302,7 @@
               border-top: 1px solid #e8e8e8;
             "
           >
-            <a-col> {{ $t('installation') | capitalize }}: </a-col>
+            <a-col> {{ capitalize($t('installation')) }}: </a-col>
             <a-col style="margin-left: auto">
               {{ +(product.installationFee * currency.rate).toFixed(2) }} {{ currency.code }}
             </a-col>
@@ -330,7 +320,7 @@
               borderTop: '1px solid #e8e8e8'
             } : null"
           >
-            <a-col> {{ $t('recurring payment') | capitalize }}: </a-col>
+            <a-col> {{ capitalize($t('recurring payment')) }}: </a-col>
             <a-col style="margin-left: auto">
               {{ +(productFullPrice - (product.installationFee ?? 0)).toFixed(2) }} {{ currency.code }}
             </a-col>
@@ -347,7 +337,7 @@
           <a-col>
             <a-radio-group
               ref="periods-group"
-              v-model="tarification"
+              v-model:value="tarification"
               default-value="Monthly"
               :style="{ display: 'grid', textAlign: 'center', gridTemplateColumns: periodColumns }"
             >
@@ -356,7 +346,7 @@
                 :key="period.value"
                 :value="period.value"
               >
-                {{ $t(period.label || period.value) | capitalize }}
+                {{ capitalize($t(period.label || period.value)) }}
               </a-radio-button>
             </a-radio-group>
           </a-col>
@@ -369,7 +359,7 @@
           :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
         >
           <a-col v-if="activeKey === 'location' && tarification" style="margin-right: 4px">
-            {{ $t('from') | capitalize }}:
+            {{ capitalize($t('from')) }}:
           </a-col>
           <transition name="textchange" mode="out-in">
             <a-col>
@@ -394,7 +384,7 @@
               </a>.
               <br>
               <a href="#" @click.prevent="availableLogin('copy')">
-                {{ $t('Copy link') }} <a-icon type="copy" />
+                {{ $t('Copy link') }} <copy-icon />
               </a>
             </a-col>
           </template>
@@ -409,8 +399,8 @@
 
             <a-row v-if="score > 3" style="margin-top: 20px">
               <a-col>
-                <a-checkbox v-model="modal.autoRenew" />
-                {{ $t('renew automatically') | capitalize }}
+                <a-checkbox v-model:checked="modal.autoRenew" />
+                {{ capitalize($t('renew automatically')) }}
               </a-col>
             </a-row>
           </template>
@@ -431,6 +421,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapState, mapActions } from 'pinia'
 import { NcMap, EditorContainer } from 'nocloud-ui'
 
@@ -448,9 +439,13 @@ import notification from '@/mixins/notification.js'
 import createButton from '@/components/cloud/create/button.vue'
 import loading from '@/components/ui/loading.vue'
 
+const copyIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CopyOutlined')
+)
+
 export default {
   name: 'NewPaaS',
-  components: { loading, NcMap, EditorContainer, createButton },
+  components: { loading, NcMap, EditorContainer, createButton, copyIcon },
   mixins: [notification],
   inject: ['checkBalance'],
   data () {
@@ -598,9 +593,9 @@ export default {
         const components = import.meta.glob('@/components/cloud/modules/*/createInstance.vue')
         const component = Object.keys(components).find((key) => key.includes(`/${type}/`))
 
-        return () => components[component]()
+        return defineAsyncComponent(() => components[component]())
       } else {
-        return () => import('@/components/cloud/modules/ione/createInstance.vue')
+        return defineAsyncComponent(() => import('@/components/cloud/modules/ione/createInstance.vue'))
       }
     },
     addons () {
@@ -915,15 +910,15 @@ export default {
       if (group.config?.ssh) this.options.isSSHExist = true
       else this.options.isSSHExist = false
     },
-    itemSP () {
+    itemSP (value, prev) {
       if (!this.dataLocalStorage.config) {
         this.options.os = { id: -1, name: '' }
       }
 
-      if (!this.itemSP?.uuid) return
+      if (!value?.uuid || value.uuid === prev?.uuid) return
       this.isPlansLoading = true
       this.fetchPlans({
-        sp_uuid: this.itemSP.uuid,
+        sp_uuid: value.uuid,
         anonymously: !this.isLogged
       })
         .then(({ pool }) => {
@@ -945,7 +940,7 @@ export default {
         })
 
       const type = this.options.drive ? 'SSD' : 'HDD'
-      const { min_drive_size: minSize, max_drive_size: maxSize } = this.itemSP.vars
+      const { min_drive_size: minSize, max_drive_size: maxSize } = value.vars
 
       if (minSize) {
         this.options.disk.min = minSize.value[type]
@@ -982,7 +977,7 @@ export default {
     },
     activeKey () {
       setTimeout(() => {
-        const { $el } = this.$refs['periods-group']?.$children.at(-1) ?? {}
+        const { $el } = this.$refs['periods-group'] ?? {}
 
         if ($el?.style.gridColumn === '' && Object.keys(this.periods).length > 4) {
           if (Object.keys(this.periods).length % 3 === 1) $el.style.gridColumn = '2 / 3'
@@ -1099,7 +1094,7 @@ export default {
           key = 'configuration'
         }
 
-        this.$set(this.options.config, key, value)
+        this.options.config[key] = value
         return
       }
       if (typeof value === 'object') this[key] = Object.assign({}, value)
@@ -1446,7 +1441,7 @@ export default {
     setDefaultLocation () {
       const item = this.showcases.find(({ uuid }) => uuid === this.showcase)
       const locationItem = this.locations.find(({ id }) =>
-        id.includes(item?.promo.main?.default)
+        id.includes(item?.promo?.main?.default)
       )
 
       if (!locationItem) return
@@ -1559,6 +1554,9 @@ export default {
   width: 28%;
   font-size: 1.1rem;
   padding: 10px 15px 10px;
+}
+.newCloud__calculate .ant-col {
+  font-size: inherit;
 }
 .result__title {
   font-size: 1.5rem;
@@ -1813,7 +1811,7 @@ export default {
   transition: opacity 0.5s, height 0.5s;
   height: 28px;
 }
-.networkApear-enter,
+.networkApear-enter-from,
 .networkApear-leave-to {
   opacity: 0;
   height: 0;
@@ -1824,7 +1822,7 @@ export default {
   transition: all .15s ease;
 }
 
-.textchange-enter {
+.textchange-enter-from {
   transform: translateY(-0.5em);
   opacity: 0;
 }

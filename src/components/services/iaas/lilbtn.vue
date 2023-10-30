@@ -1,28 +1,30 @@
 <template>
-	<div class="btn">
-		<a-button block @click.stop="moduleEnter">{{$t('enter') | capitalize}}</a-button>
-	</div>
+  <div class="btn">
+    <a-button block size="small" @click.stop="moduleEnter">
+      {{ capitalize($t('enter')) }}
+    </a-button>
+  </div>
 </template>
 
-<script>
-import api from "@/api.js"
+<script setup>
+import { useRouter } from 'vue-router'
 
-export default {
-	props: ['service'],
-	methods: {
-		moduleEnter(){
-			this.$router.push({name: 'cloud', query: {type: 'IaaS'}})
-		}
-	}
+const router = useRouter()
+
+function moduleEnter () {
+  router.push({ name: 'cloud', query: { type: 'IaaS' } })
 }
 </script>
 
+<script>
+export default { name: 'IaasButton' }</script>
+
 <style scoped>
-.btn{
-	margin-right: 20px;
+.btn {
+  margin-right: 20px;
 }
 
-.btn button{
-	height: 100%;
+.btn button {
+  height: 100%;
 }
 </style>

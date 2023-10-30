@@ -23,7 +23,7 @@
         {{ instance.domain ?? instance.groupname }}
       </div>
 
-      <a-collapse v-else v-model="activeKey" expand-icon-position="right" :bordered="false">
+      <a-collapse v-else v-model:activeKey="activeKey" expand-icon-position="right" :bordered="false">
         <a-collapse-panel key="1" :header="title">
           <div v-for="(item, index) in networking" :key="index">
             {{ item }}
@@ -62,20 +62,23 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useSpStore } from '@/stores/sp.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 
-import router from '@/router'
-import i18n from '@/i18n'
 import api from '@/api.js'
 import config from '@/appconfig.js'
 
 const props = defineProps({
   instance: { type: Object, required: true }
 })
+
+const i18n = useI18n()
+const router = useRouter()
 
 const authStore = useAuthStore()
 const providersStore = useSpStore()
@@ -215,7 +218,7 @@ const getModuleProductBtn = computed(() => {
   if (props.instance.date === 0) return
   if (props.instance.server_on) return
   if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return
-  return () => components[component]()
+  return defineAsyncComponent(() => components[component]())
 })
 
 function cloudClick (service, { target }) {

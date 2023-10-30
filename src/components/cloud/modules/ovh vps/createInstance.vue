@@ -17,10 +17,10 @@
     :all-addons="allAddons"
     :addons-codes="addonsCodes"
     :price="price"
-    @setData="(value) => $emit('setData', value)"
-    @changePlans="(value) => plans = value"
-    @changePlan="(value) => plan = value"
-    @changeType="(value) => $emit('setData', { key: 'type', value })"
+    @set-data="(value) => $emit('setData', value)"
+    @change-plans="(value) => plans = value"
+    @change-plan="(value) => plan = value"
+    @change-type="(value) => $emit('setData', { key: 'type', value })"
   >
     <template #location>
       <slot name="location" />
@@ -46,6 +46,7 @@ export default {
     vmName: { type: String, required: true },
     password: { type: String, required: true }
   },
+  emits: ['setData'],
   data: () => ({
     plan: '',
     images: [],

@@ -1,10 +1,7 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import appMain from '@/components/layout/appMain.vue'
-import config from '@/appconfig.js'
+import { createRouter, createWebHistory } from 'vue-router'
 import i18n from '@/i18n'
-
-Vue.use(VueRouter)
+import config from '@/appconfig.js'
+import appMain from '@/components/layout/appMain.vue'
 
 const components = import.meta.glob('@/components/services/*/*.vue')
 const servicesArray = config.services
@@ -162,7 +159,7 @@ const routes = [
         name: 'certificate',
         meta: {
           mustBeLoggined: true,
-          headerTitle: i18n.t('ssl_product.certificate_configuration'),
+          headerTitle: i18n.global.t('ssl_product.certificate_configuration'),
           isNeedBackButton: true
         },
         props: true,
@@ -207,16 +204,15 @@ const routes = [
     component: () => import('@/routes/cloud/cloudPage.vue'),
     meta: {
       mustBeLoggined: true
-    },
-    children: [
-      {
-        path: 'vnc',
-        name: 'VNC',
-        component: () => import('@/routes/cloud/vnc.vue')
-      }]
+    }
   },
   {
-    path: '/ticket-*',
+    path: '/cloud/:uuid/vnc',
+    name: 'VNC',
+    component: () => import('@/routes/cloud/vnc.vue')
+  },
+  {
+    path: '/ticket/:id',
     name: 'ticket',
     meta: {
       mustBeLoggined: true
@@ -241,10 +237,6 @@ const routes = [
   }
 ]
 
-const router = new VueRouter({
-  routes,
-  mode: 'history',
-  base: import.meta.env.BASE_URL
+export default createRouter({
+  routes, history: createWebHistory(import.meta.env.BASE_URL)
 })
-
-export default router

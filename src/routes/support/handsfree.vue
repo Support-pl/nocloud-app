@@ -6,7 +6,7 @@
           <a-list-item v-if="item === 'input'" style="padding: 12px 0 0; gap: 5px">
             <a-input :value="code" :max-length="6" @input="formatText" />
             <a-button type="primary" :loading="isLoading" @click="sendCode">
-              {{ $t('Send') | capitalize }}
+              {{ capitalize($t('Send')) }}
             </a-button>
           </a-list-item>
 
@@ -26,16 +26,21 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { notification } from 'ant-design-vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
 import { createPromiseClient } from '@bufbuild/connect'
 import { HandsfreeService } from 'infinimesh-proto/build/es/handsfree/handsfree_connect'
 import { ControlPacket } from 'infinimesh-proto/build/es/handsfree/handsfree_pb'
 
-import router from '@/router'
-import i18n from '@/i18n'
 import api from '@/api.js'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
+
+const router = useRouter()
+const route = useRoute()
+const i18n = useI18n()
 
 const authStore = useAuthStore()
 const chatsStore = useChatsStore()
@@ -85,7 +90,7 @@ async function sendCode () {
     })
 
     localStorage.removeItem('telegramMessage')
-    router.push({ path: `/ticket-${uuid}` })
+    router.push({ path: `/ticket/${uuid}` })
   } catch (error) {
     notification.error({
       message: i18n.t(error.response?.data?.message ?? error.message ?? error)
@@ -109,8 +114,8 @@ function formatText ({ target }) {
 }
 
 onMounted(() => {
-  if (router.currentRoute.query.code) {
-    code.value = +router.currentRoute.query.code
+  if (route.query.code) {
+    code.value = +route.query.code
   }
 
   getURL()

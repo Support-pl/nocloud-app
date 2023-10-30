@@ -16,13 +16,12 @@
     <a-collapse-panel
       key="plan"
       :header="`${$t('Plan')}: ${planHeader}`"
-      :disabled="itemSP ? false : true"
+      :collapsible="itemSP ? null : 'disabled'"
     >
       <template v-if="getPlan && getPlan.uuid">
-        <template v-for="(resource, key) in resources">
+        <template v-for="(resource, key) in resources" :key="key">
           <a-row
             v-if="Array.isArray(resource) && resource.length > 0"
-            :key="key"
             type="flex"
             justify="space-between"
             align="middle"
@@ -46,12 +45,11 @@
 
           <div
             v-else-if="resource === true"
-            :key="key"
             style="display: inline-flex; gap: 10px; width: 50%; margin-top: 10px"
           >
-            <span style="display: inline-block">{{ $t(key) | capitalize }}:</span>
+            <span style="display: inline-block">{{ capitalize($t(key)) }}:</span>
 
-            <a-switch v-model="filters[key]" size="small" />
+            <a-switch v-model:checked="filters[key]" size="small" />
           </div>
         </template>
 
@@ -64,14 +62,14 @@
           >
             {{ $t("Drive") }}:
           </span>
-          <a-switch v-if="driveTypes.length > 1" v-model="options.drive">
-            <template #checkedChildren>
-              SSD
-            </template>
-            <template #unCheckedChildren>
-              HDD
-            </template>
-          </a-switch>
+
+          <a-switch
+            v-if="driveTypes.length > 1"
+            v-model:checked="options.drive"
+            checked-children="SSD"
+            un-checked-children="HDD"
+          />
+
           <a-slider
             style="margin-top: 10px"
             :tip-formatter="null"
@@ -81,12 +79,13 @@
             :value="parseFloat(diskSize)"
             @change="(value) => (options.disk.size = value * 1024)"
           />
+
           <div class="changing__field" style="text-align: right">
             <template v-if="isProductsExist">
               {{ diskSize }}
             </template>
             <template v-else>
-              <a-input-number v-model="options.disk.size" allow-clear :min="0" :max="512 * 1024" /> Mb
+              <a-input-number v-model:value="options.disk.size" allow-clear :min="0" :max="512 * 1024" /> Mb
             </template>
           </div>
         </div>
@@ -137,7 +136,7 @@
                 {{ options.cpu.size }} vCPU
               </template>
               <template v-else>
-                <a-input-number v-model="options.cpu.size" allow-clear :min="0" :max="32" /> Gb
+                <a-input-number v-model:value="options.cpu.size" allow-clear :min="0" :max="32" /> Gb
               </template>
             </a-col>
           </transition>
@@ -159,7 +158,7 @@
                 {{ options.ram.size.toFixed(0) }} Gb
               </template>
               <template v-else>
-                <a-input-number v-model="options.ram.size" allow-clear :min="0" :max="64" /> Gb
+                <a-input-number v-model:value="options.ram.size" allow-clear :min="0" :max="64" /> Gb
               </template>
             </a-col>
           </transition>
@@ -172,14 +171,14 @@
           >
             {{ $t("Drive") }}:
           </span>
-          <a-switch v-if="driveTypes.length > 1" v-model="options.drive">
-            <template #checkedChildren>
-              SSD
-            </template>
-            <template #unCheckedChildren>
-              HDD
-            </template>
-          </a-switch>
+
+          <a-switch
+            v-if="driveTypes.length > 1"
+            v-model:checked="options.drive"
+            checked-children="SSD"
+            un-checked-children="HDD"
+          />
+
           <a-slider
             style="margin-top: 10px"
             :tip-formatter="null"
@@ -189,12 +188,13 @@
             :value="parseFloat(diskSize)"
             @change="(value) => (options.disk.size = value * 1024)"
           />
+
           <div class="changing__field" style="text-align: right">
             <template v-if="isProductsExist">
               {{ diskSize }}
             </template>
             <template v-else>
-              <a-input-number v-model="options.disk.size" allow-clear :min="0" :max="512 * 1024" /> Mb
+              <a-input-number v-model:value="options.disk.size" allow-clear :min="0" :max="512 * 1024" /> Mb
             </template>
           </div>
         </div>
@@ -210,7 +210,7 @@
     <!-- OS -->
     <a-collapse-panel
       key="OS"
-      :disabled="!itemSP || !getPlan"
+      :collapsible="(!itemSP || !getPlan) ? 'disabled' : null"
       :header="`${$t('os')}: ${(options.os.name == '') ? ' ' : ` (${options.os.name})`}`"
     >
       <div class="newCloud__option-field">
@@ -242,53 +242,72 @@
         </div>
         <a-row>
           <a-col :xs="24" :sm="10">
-            <a-form-item style="margin-top: 15px" :label="$t('server name') | capitalize">
-              <a-input
-                :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
-                :value="vmName"
-                @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
-              />
-              <div v-if="vmName.length < 2" style="line-height: 1.5; color: var(--err)">
-                {{ $t('ssl_product.field is required') }}
-              </div>
-            </a-form-item>
+            <a-form no-style autocomplete="off" layout="vertical">
+              <a-form-item
+                style="margin-top: 15px"
+                class="newCloud__form-item"
+                :label="`${capitalize($t('server name'))}:`"
+              >
+                <a-input
+                  :style="{ boxShadow: (vmName.length < 2) ? '0 0 2px 2px var(--err)' : null }"
+                  :value="vmName"
+                  @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
+                />
+                <div v-if="vmName.length < 2" style="line-height: 1.5; color: var(--err)">
+                  {{ $t('ssl_product.field is required') }}
+                </div>
+              </a-form-item>
 
-            <a-form-item style="margin-top: 15px" :label="$t('clientinfo.username') | capitalize">
-              <a-input
-                :style="{ boxShadow: (username.length < 2) ? '0 0 2px 2px var(--err)' : null }"
-                :value="username"
-                @change="({ target: { value } }) => $emit('setData', { key: 'username', value })"
-              />
-              <div v-if="username.length < 2" style="line-height: 1.5; color: var(--err)">
-                {{ $t('ssl_product.field is required') }}
-              </div>
-            </a-form-item>
+              <a-form-item
+                style="margin-top: 15px"
+                class="newCloud__form-item"
+                :label="`${capitalize($t('clientinfo.username'))}:`"
+              >
+                <a-input
+                  :style="{ boxShadow: (username.length < 2) ? '0 0 2px 2px var(--err)' : null }"
+                  :value="username"
+                  @change="({ target: { value } }) => $emit('setData', { key: 'username', value })"
+                />
+                <div v-if="username.length < 2" style="line-height: 1.5; color: var(--err)">
+                  {{ $t('ssl_product.field is required') }}
+                </div>
+              </a-form-item>
 
-            <a-form-item v-if="userdata.uuid" :label="$t('clientinfo.password')">
-              <password-meter
-                :style="{
-                  height: (password.length > 0) ? '10px' : '0',
-                  marginTop: (password.length < 1) ? '0' : null
-                }"
-                :password="password"
-                @score="(value) => $emit('score', value)"
-              />
+              <a-form-item
+                v-if="userdata.uuid"
+                class="newCloud__form-item"
+                :label="`${$t('clientinfo.password')}:`"
+              >
+                <password-meter
+                  :style="{
+                    height: (password.length > 0) ? '10px' : '0',
+                    marginTop: (password.length < 1) ? '0' : null,
+                    marginBottom: (password.length > 0) ? '4px': null
+                  }"
+                  :password="password"
+                  @score="(value) => $emit('score', value)"
+                />
 
-              <a-input-password
-                class="password"
-                :value="password"
-                @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
-              />
-            </a-form-item>
+                <a-input-password
+                  class="password"
+                  :value="password"
+                  @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
+                />
+              </a-form-item>
 
-            <a-form-item v-if="userdata.uuid" :label="$t('SSH key')">
-              <a-select
-                style="width: 100%"
-                :options="userdata.data && userdata.data.ssh_keys"
-                :value="sshKey"
-                @change="(value) => $emit('setData', { key: 'sshKey', value })"
-              />
-            </a-form-item>
+              <a-form-item
+                v-if="userdata.uuid"
+                class="newCloud__form-item"
+                :label="`${$t('SSH key')}:`"
+              >
+                <a-select
+                  style="width: 100%"
+                  :options="userdata.data && userdata.data.ssh_keys"
+                  :value="sshKey"
+                  @change="(value) => $emit('setData', { key: 'sshKey', value })"
+                />
+              </a-form-item>
+            </a-form>
           </a-col>
         </a-row>
       </div>
@@ -299,7 +318,7 @@
       v-if="false && getPlan.kind === 'STATIC'"
       key="network"
       :header="`${$t('Network')}: ${networkHeader}`"
-      :disabled="itemSP ? false : true"
+      :collapsible="itemSP ? null : 'disabled'"
     >
       <div class="newCloud__option-field">
         <a-row :gutter="[10, 10]">
@@ -310,11 +329,11 @@
               </a-col>
               <a-col :sm="12" :span="12">
                 <a-switch
-                  v-model="options.network.public.status"
+                  v-model:checked="options.network.public.status"
                   @change="changeNetwork('public')"
                 />
                 <a-input-number
-                  v-model="options.network.public.count"
+                  v-model:value="options.network.public.count"
                   :min="(options.network.public.status) ? 1 : 0"
                   :max="10"
                   :disabled="!options.network.public.status"
@@ -331,11 +350,11 @@
               </a-col>
               <a-col :sm="12" :span="12">
                 <a-switch
-                  v-model="options.network.private.status"
+                  v-model:checked="options.network.private.status"
                   @change="changeNetwork('private')"
                 />
                 <a-input-number
-                  v-model="options.network.private.count"
+                  v-model:value="options.network.private.count"
                   :min="(options.network.private.status) ? 1 : 0"
                   :max="10"
                   :disabled="!options.network.private.status"
@@ -372,6 +391,7 @@ export default {
     password: { type: String, required: true },
     sshKey: { type: String, default: null }
   },
+  emits: ['setData', 'score'],
   data: () => ({
     panelHeight: null,
     filters: { cpu: [], ram: [] }

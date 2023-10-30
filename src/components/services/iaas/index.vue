@@ -81,15 +81,11 @@
       <div class="order__calculate order__field">
         <a-row style="margin-top: 20px" type="flex" justify="space-around" align="middle">
           <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
-            {{ $t('Payment method') | capitalize }}:
+            {{ capitalize($t('Payment method')) }}:
           </a-col>
           <a-col :xs="12" :sm="18" :lg="12">
-            <a-select v-if="!fetchLoading" v-model="options.payment" style="width: 100%">
-              <a-select-option
-                v-for="method of payMethods"
-                :key="method.module"
-                :value="method.module"
-              >
+            <a-select v-if="!fetchLoading" v-model:value="options.payment" style="width: 100%">
+              <a-select-option v-for="method of payMethods" :key="method.module">
                 {{ method.displayname }}
               </a-select-option>
             </a-select>
@@ -109,12 +105,16 @@
           </a-col>
 
           <a-col :xs="12" :sm="18" :lg="12">
-            <a-select v-if="!fetchLoading && periods.length > 1" v-model="options.period" style="width: 100%">
-              <a-select-option v-for="period in periods" :key="period" :value="period">
+            <a-select
+              v-if="!fetchLoading && periods.length > 1"
+              v-model:value="options.period"
+              style="width: 100%"
+            >
+              <a-select-option v-for="period in periods" :key="period">
                 {{ $t(period) }}
               </a-select-option>
             </a-select>
-            <div v-else-if="periods.length === 1" style="text-align: right">
+            <div v-else-if="periods.length === 1" style="text-align: right; font-size: 1.1rem">
               {{ $t(periods[0]) }}
             </div>
             <div v-else class="loadingLine" />
@@ -129,9 +129,9 @@
           align="middle"
         >
           <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
-            {{ $t('one time payment') | capitalize }}:
+            {{ capitalize($t('one time payment')) }}:
           </a-col>
-          <a-col :xs="12" :sm="18" :lg="12">
+          <a-col :xs="12" :sm="18" :lg="12" style="font-size: 1.1rem">
             <div v-if="!fetchLoading" style="text-align: right">
               {{ addonsPrice.onetime + (+getProducts.price.value || 0) }}
               {{ getProducts.price.currency }}
@@ -148,9 +148,9 @@
           align="middle"
         >
           <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
-            {{ $t('recurring payment') | capitalize }}:
+            {{ capitalize($t('recurring payment')) }}:
           </a-col>
-          <a-col :xs="12" :sm="18" :lg="12">
+          <a-col :xs="12" :sm="18" :lg="12" style="font-size: 1.1rem">
             <div v-if="!fetchLoading" style="text-align: right">
               {{ addonsPrice.value + (+getProducts.price[options.period] || 0) }}
               {{ getProducts.price.currency }}
@@ -163,13 +163,13 @@
           {{ $t('Total') }}:
         </a-divider>
 
-        <a-row type="flex" justify="space-around" style="font-size: 1.5rem">
-          <a-col>
+        <a-row type="flex" justify="space-around">
+          <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
-              <div v-if="!fetchLoading">
+              <template v-if="!fetchLoading">
                 {{ (+getProducts.price[options.period] || getProducts.price.value) + addonsPrice.total }}
                 {{ getProducts.price.currency }}
-              </div>
+              </template>
               <div v-else class="loadingLine loadingLine--total" />
             </transition>
           </a-col>
@@ -178,11 +178,11 @@
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
             <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ $t(($route.query.product) ? 'order' : 'next') | capitalize }}
+              {{ capitalize($t(($route.query.product) ? 'order' : 'next')) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
-              :visible="modal.confirmCreate"
+              :open="modal.confirmCreate"
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
@@ -193,7 +193,7 @@
               <a-row style="margin-top: 20px">
                 <a-col>
                   <a-checkbox :checked="modal.goToInvoice" @change="(e) => modal.goToInvoice = e.target.checked" />
-                  {{ $t('go to invoice') | capitalize }}
+                  {{ capitalize($t('go to invoice')) }}
                 </a-col>
               </a-row>
             </a-modal>
@@ -238,15 +238,9 @@ export default {
       'baseURL',
       'isLogged',
       'userdata',
-      'billingUser',
-      'fetchBillingData'
+      'billingUser'
     ]),
-    ...mapState(useCurrenciesStore, [
-      'currencies',
-      'defaultCurrency',
-      'unloginedCurrency',
-      'fetchCurrencies'
-    ]),
+    ...mapState(useCurrenciesStore, ['defaultCurrency', 'unloginedCurrency']),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const findedProduct = this.products.find(({ id }) => id === +this.$route.query.product) ??
@@ -337,7 +331,7 @@ export default {
         }
       })
         .then((res) => {
-          this.$set(this.addons, this.getProducts.id, res)
+          this.addons[this.getProducts.id] = res
           this.options.addons = []
         })
         .catch((err) => console.error(err))
@@ -646,7 +640,7 @@ export default {
   width: 100%;
 }
 
-.card-item {
+.order__option .card-item {
   width: 100%;
   cursor: pointer;
   border: 0 solid transparent;
@@ -935,7 +929,7 @@ export default {
   transition: all .15s ease;
 }
 
-.specs-enter{
+.specs-enter-from {
   transform: translateX(-1em);
   opacity: 0;
 }
@@ -950,7 +944,7 @@ export default {
   transition: all .15s ease;
 }
 
-.textchange-enter{
+.textchange-enter-from {
   transform: translateY(-0.5em);
   opacity: 0;
 }

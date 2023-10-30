@@ -7,7 +7,7 @@
             <div class="openInvoice__header--content">
               <div class="openInvoice__back" @click="goBack()">
                 <div class="icon__wrapper">
-                  <a-icon type="left" />
+                  <left-icon />
                 </div>
               </div>
               <div class="openInvoice__title">
@@ -55,7 +55,7 @@
                         {{ $t("invoiceDate") }}
                       </div>
                       <div class="info__date-value">
-                        {{ invoice.date | dateFormat }}
+                        {{ dateFormat(invoice.date) }}
                       </div>
                     </div>
                     <div class="info__date-item">
@@ -63,7 +63,7 @@
                         {{ $t("dueDate") }}
                       </div>
                       <div class="info__date-value">
-                        {{ (invoice.datepaid ?? invoice.duedate) | dateFormat }}
+                        {{ dateFormat(invoice.datepaid ?? invoice.duedate) }}
                       </div>
                     </div>
                   </div>
@@ -126,7 +126,7 @@
                   </p> -->
                   <template v-if="invoice.status === 'Unpaid'">
                     <div class="info__postpone" @click="showConfirm">
-                      <a-icon type="clock-circle" />
+                      <clock-circle-icon />
                     </div>
 
                     <!-- <div class="info__button info__button--pay"> -->
@@ -150,11 +150,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
-import router from '@/router'
-import i18n from '@/i18n'
 import api from '@/api.js'
 import config from '@/appconfig.js'
 
@@ -163,14 +163,25 @@ import { useInvoicesStore } from '@/stores/invoices.js'
 
 import loading from '@/components/ui/loading.vue'
 
+const router = useRouter()
+const route = useRoute()
+const i18n = useI18n()
+
 const authStore = useAuthStore()
 const invoicesStore = useInvoicesStore()
+
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
+const clockCircleIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ClockCircleOutlined')
+)
 
 const showFullTable = ref(false)
 const confirmLoading = ref(false)
 
 const invoice = computed(() => {
-  const { uuid } = router.currentRoute.params
+  const { uuid } = route.params
 
   return invoicesStore.getInvoices.find(({ id }) => id === +uuid)
 })
@@ -187,7 +198,7 @@ const total = computed(() =>
 
 onMounted(() => {
   setTimeout(() => {
-    const { uuid } = router.currentRoute.params
+    const { uuid } = route.params
 
     sessionStorage.setItem('invoice', uuid)
   })
@@ -199,7 +210,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (!router.currentRoute.name.includes('billing')) {
+  if (!route.name.includes('billing')) {
     sessionStorage.removeItem('invoice')
   }
 })
@@ -534,7 +545,7 @@ export default { name: 'OpenInvoice' }
 .invoiceApear-leave-active {
   transition: opacity 0.6s;
 }
-.invoiceApear-enter,
+.invoiceApear-enter-from,
 .invoiceApear-leave-to {
   opacity: 0;
 }
@@ -543,7 +554,7 @@ export default { name: 'OpenInvoice' }
   transition: transform 0.2s 0.4s ease;
 }
 
-.invoiceApear-enter .openInvoice__title {
+.invoiceApear-enter-from .openInvoice__title {
   transform-origin: center left;
   transform: translateY(-50px) rotate(10deg);
 }
@@ -552,7 +563,7 @@ export default { name: 'OpenInvoice' }
   transition: transform 0.2s 0.3s ease, opacity 0.2s 0.4s ease;
 }
 
-.invoiceApear-enter .openInvoice__cost {
+.invoiceApear-enter-from .openInvoice__cost {
   opacity: 0;
   transform-origin: center left;
   transform: translateY(-50px) rotate(10deg);
@@ -562,7 +573,7 @@ export default { name: 'OpenInvoice' }
   transition: transform 0.2s 0.4s ease, opacity 0.2s 0.2s ease;
 }
 
-.opencloud-enter .openInvoice__info {
+.opencloud-enter-from .openInvoice__info {
   transform: translateY(200px);
   opacity: 0;
 }
@@ -570,7 +581,7 @@ export default { name: 'OpenInvoice' }
   transition: transform 0.3s 0.3s ease, opacity 0.2s 0.4s ease;
 }
 
-.invoiceApear-enter .info__footer {
+.invoiceApear-enter-from .info__footer {
   transform: translateY(50px);
   opacity: 0;
 }

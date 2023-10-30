@@ -15,7 +15,7 @@
     <a-collapse-panel
       key="plan"
       :header="`${$t('Plan')}: ${planHeader}`"
-      :disabled="!itemSP || isFlavorsLoading"
+      :collapsible="(!itemSP || isFlavorsLoading) ? 'disabled' : null"
     >
       <a-spin
         v-if="isFlavorsLoading"
@@ -56,9 +56,8 @@
             </div>
           </a-col>
         </a-row>
-        <a-icon
+        <left-icon
           v-else-if="$route.query.product"
-          type="left"
           style="margin-bottom: 10px; font-size: 20px"
           @click="$router.go(-1)"
         />
@@ -67,7 +66,7 @@
             <span style="display: inline-block; width: 70px">CPU:</span>
           </a-col>
           <a-col class="changing__field" style="text-align: right">
-            <a-icon v-if="options.cpu.size === 'loading'" type="loading" />
+            <loading-icon v-if="options.cpu.size === 'loading'" />
             <template v-else>
               {{ options.cpu.size }} {{ (isNaN(+options.cpu.size)) ? '' : 'vCPU' }}
             </template>
@@ -86,7 +85,7 @@
               :min="0"
               :value="resources.ram.indexOf(options.ram.size)"
               @change="(i) => options.ram.size = resources.ram[i]"
-              @afterChange="setResource({ key: 'ram', value: options.ram.size })"
+              @after-change="setResource({ key: 'ram', value: options.ram.size })"
             />
           </a-col>
           <transition name="textchange" mode="out-in">
@@ -108,7 +107,7 @@
               :min="0"
               :value="resources.disk.indexOf(parseInt(diskSize))"
               @change="(i) => options.disk.size = resources.disk[i] * 1024"
-              @afterChange="setResource({ key: 'disk', value: options.disk.size / 1024 })"
+              @after-change="setResource({ key: 'disk', value: options.disk.size / 1024 })"
             />
           </a-col>
           <a-col class="changing__field" :sm="3" :xs="18" style="text-align: right">
@@ -121,67 +120,68 @@
     <!-- OS -->
     <a-collapse-panel
       key="OS"
-      :disabled="!itemSP || isFlavorsLoading || !plan || isProductExist"
+      :collapsible="(!itemSP || isFlavorsLoading || !plan || isProductExist) ? 'disabled' : null"
       :header="osHeader"
     >
       <div v-if="images.length > 0" class="newCloud__option-field">
         <a-row>
           <a-col :xs="24" :sm="10">
-            <a-form-item :label="$t('server name') | capitalize">
-              <a-input
-                :value="vmName"
-                :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
-                @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
-              />
-              <div v-if="vmName.length < 2" style="line-height: 1.5; color: var(--err)">
-                {{ $t('ssl_product.field is required') }}
-              </div>
-            </a-form-item>
+            <a-form no-style autocomplete="off" layout="vertical">
+              <a-form-item :label="`${capitalize($t('server name'))}:`">
+                <a-input
+                  :value="vmName"
+                  :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
+                  @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
+                />
+                <div v-if="vmName.length < 2" style="line-height: 1.5; color: var(--err)">
+                  {{ $t('ssl_product.field is required') }}
+                </div>
+              </a-form-item>
 
-            <a-form-item v-if="false" :label="$t('clientinfo.password')">
-              <password-meter
-                :style="{
-                  height: (password.length > 0) ? '10px' : '0',
-                  marginTop: (password.length < 1) ? '0' : null
-                }"
-                :password="password"
-                @score="(value) => $emit('score', value)"
-              />
-
-              <a-input-password
-                class="password"
-                :value="password"
-                @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
-              />
-            </a-form-item>
-
-            <a-form-item
-              v-if="getPlan.type?.includes('cloud') && !options.isSSHExist"
-              :label="$t('SSH key')"
-            >
-              <div style="display: flex; align-items: center; gap: 10px">
-                <a-select
-                  style="width: 100%"
-                  :options="userdata.data?.ssh_keys"
-                  :value="options.config.ssh"
-                  :style="{ boxShadow: `0 0 2px 2px var(${(options.config.ssh?.length > 1) ? '--main' : '--err'})` }"
-                  @change="(value) => $emit('setData', { key: 'ssh', value, type: 'ovh' })"
+              <a-form-item v-if="false" :label="`${$t('clientinfo.password')}:`">
+                <password-meter
+                  :style="{
+                    height: (password.length > 0) ? '10px' : '0',
+                    marginTop: (password.length < 1) ? '0' : null
+                  }"
+                  :password="password"
+                  @score="(value) => $emit('score', value)"
                 />
 
-                <add-ssh>
-                  <template #actions="{ showModal }">
-                    <a-icon
-                      type="plus"
-                      style="color: var(--main); font-size: 20px; vertical-align: middle"
-                      @click="showModal"
-                    />
-                  </template>
-                </add-ssh>
-              </div>
-              <div v-if="!(options.config.ssh?.length > 1)" style="line-height: 1.5; color: var(--err)">
-                {{ $t('ssl_product.field is required') }}
-              </div>
-            </a-form-item>
+                <a-input-password
+                  class="password"
+                  :value="password"
+                  @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
+                />
+              </a-form-item>
+
+              <a-form-item
+                v-if="getPlan.type?.includes('cloud') && !options.isSSHExist"
+                :label="`${$t('SSH key')}:`"
+              >
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <a-select
+                    style="width: 100%"
+                    :options="userdata.data?.ssh_keys"
+                    :value="options.config.ssh"
+                    :style="{ boxShadow: `0 0 2px 2px var(${(options.config.ssh?.length > 1) ? '--main' : '--err'})` }"
+                    @change="(value) => $emit('setData', { key: 'ssh', value, type: 'ovh' })"
+                  />
+
+                  <add-ssh>
+                    <template #actions="{ showModal }">
+                      <plus-icon
+                        style="color: var(--main); font-size: 20px; vertical-align: middle"
+                        @click="showModal"
+                      />
+                    </template>
+                  </add-ssh>
+                </div>
+                <div v-if="!(options.config.ssh?.length > 1)" style="line-height: 1.5; color: var(--err)">
+                  {{ $t('ssl_product.field is required') }}
+                </div>
+              </a-form-item>
+            </a-form>
           </a-col>
         </a-row>
         <div v-if="itemSP" class="newCloud__template">
@@ -227,14 +227,14 @@
     <a-collapse-panel
       v-if="!getPlan.type?.includes('cloud')"
       key="addons"
-      :disabled="!itemSP || isFlavorsLoading || !plan || isProductExist"
+      :collapsible="(!itemSP || isFlavorsLoading || !plan || isProductExist) ? 'disabled' : null"
       :header="$t('Addons') + ':'"
       :style="{ 'border-radius': '0 0 20px 20px' }"
     >
       <template v-if="!isFlavorsLoading">
         <a-row v-for="(addon, key) in addons" :key="key" class="newCloud__prop">
           <a-col span="8" :xs="6">
-            {{ $t(key) | capitalize }}:
+            {{ capitalize($t(key)) }}:
           </a-col>
           <a-col span="16" :xs="18">
             <a-select
@@ -259,6 +259,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
@@ -267,9 +268,19 @@ import { useCurrenciesStore } from '@/stores/currencies.js'
 
 import addSsh from '@/components/ui/addSSH.vue'
 
+const loadingIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LoadingOutlined')
+)
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
+const plusIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/PlusOutlined')
+)
+
 export default {
   name: 'OvhCreationTemplate',
-  components: { passwordMeter, addSsh },
+  components: { passwordMeter, addSsh, loadingIcon, leftIcon, plusIcon },
   props: {
     getPlan: { type: Object, default: () => ({}) },
     itemSP: { type: Object, default: null },
@@ -291,6 +302,7 @@ export default {
     addonsCodes: { type: Object, required: true },
     price: { type: Object, required: true }
   },
+  emits: ['setData', 'changePlan', 'score', 'changePlans'],
   data: () => ({ isFlavorsLoading: false }),
   computed: {
     ...mapState(useAuthStore, ['userdata', 'billingUser', 'isLogged']),
@@ -417,12 +429,12 @@ export default {
     setAddon (planCode, addon, key) {
       if (planCode === '-1') {
         delete this.price.addons[key]
-        this.$delete(this.addonsCodes, key)
+        delete this.addonsCodes[key]
       } else {
         const period = addon.periods.find(({ pricingMode }) => pricingMode === this.mode)
 
         this.price.addons[key] = period.price.value
-        this.$set(this.addonsCodes, key, planCode)
+        this.addonsCodes[key] = planCode
       }
       const addons = Object.values(this.addonsCodes)
 
@@ -475,7 +487,7 @@ export default {
             period.pricingMode = 'default'
         }
 
-        this.$set(this.allAddons, value, meta.addons)
+        this.allAddons[value] = meta.addons
 
         const config = this.options.config.configuration
         const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))

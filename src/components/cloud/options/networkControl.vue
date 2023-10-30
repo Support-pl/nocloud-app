@@ -15,12 +15,12 @@
       <a-col style="display: flex; align-items: center" :sm="12" :xs="24">
         <span>{{ $t('Public network') }}:</span>
         <a-switch
-          v-model="networking.public.status"
+          v-model:checked="networking.public.status"
           style="margin: 0 5px"
           @change="changeNetwork('public')"
         />
         <a-input-number
-          v-model="networking.public.count"
+          v-model:value="networking.public.count"
           :min="publicMin"
           :max="10"
           :disabled="!networking.public.status"
@@ -30,12 +30,12 @@
       <a-col style="display: flex; align-items: center" :sm="12" :xs="24">
         <span>{{ $t('Private network') }}:</span>
         <a-switch
-          v-model="networking.private.status"
+          v-model:checked="networking.private.status"
           style="margin: 0 5px"
           @change="changeNetwork('private')"
         />
         <a-input-number
-          v-model="networking.private.count"
+          v-model:value="networking.private.count"
           :min="privateMin"
           :max="10"
           :disabled="!networking.private.status"
@@ -57,7 +57,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { notification } from 'ant-design-vue'
-import i18n from '@/i18n'
+import { useI18n } from 'vue-i18n'
 import { useInstancesStore } from '@/stores/instances.js'
 
 const props = defineProps({
@@ -66,6 +66,7 @@ const props = defineProps({
 })
 const emits = defineEmits(['closeModal'])
 
+const i18n = useI18n()
 const instancesStore = useInstancesStore()
 
 const isLoading = ref(false)
@@ -91,16 +92,16 @@ const columns = [
 ]
 
 const networking = reactive({
-  private: ref({
-    list: ref([]),
+  private: {
+    list: [],
     status: false,
     count: 0
-  }),
-  public: ref({
-    list: ref([]),
+  },
+  public: {
+    list: [],
     status: false,
     count: 0
-  })
+  }
 })
 
 const networks = computed(() => {
@@ -132,12 +133,14 @@ function changeNetwork (type) {
       if (!networking.public.status) {
         networking.private.status = true
         networking.public.count = 0
+        networking.private.count = 1
       }
       break
     case 'private':
       if (!networking.private.status) {
         networking.public.status = true
         networking.private.count = 0
+        networking.public.count = 1
       }
       break
   }

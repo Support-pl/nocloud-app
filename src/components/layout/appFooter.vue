@@ -10,7 +10,7 @@
           @click="appStore.setTabByName(button.title)"
         >
           <div class="button__icon">
-            <a-icon :type="button.icon" :theme="button.theme" />
+            <component :is="button.icon" />
           </div>
           <div class="button__title">
             {{ $t(button.title) }}
@@ -23,16 +23,17 @@
 
 <script setup>
 import { computed } from 'vue'
-import router from '@/router'
+import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 
+const route = useRoute()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 
 const active = computed(() => {
-  const { footerTitle } = router.currentRoute.meta ?? {}
-  const { layoutTitle } = router.currentRoute.meta ?? {}
+  const { footerTitle } = route.meta ?? {}
+  const { layoutTitle } = route.meta ?? {}
 
   if (footerTitle) return footerTitle
   if (layoutTitle) return layoutTitle

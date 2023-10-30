@@ -1,8 +1,5 @@
-import Vue from 'vue'
-import VueI18n from 'vue-i18n'
+import { createI18n } from 'vue-i18n'
 import config from '@/appconfig.js'
-
-Vue.use(VueI18n)
 
 function loadLocaleMessages () {
   const locales = import.meta.globEager('./locales/*.json')
@@ -21,9 +18,10 @@ const SystemLangs = navigator.languages
 
 const lang = AppLangs.find(el => ~SystemLangs.map(el => el.replace(/-[a-z]{2}/i, '')).indexOf(el))
 
-export default new VueI18n({
+export default createI18n({
   // locale: import.meta.env.VUE_APP_I18N_LOCALE ?? 'en',
   locale: lang,
+  allowComposition: true,
   fallbackLocale: import.meta.env.VUE_APP_I18N_FALLBACK_LOCALE ?? 'en',
   messages: loadLocaleMessages(),
   pluralizationRules: {

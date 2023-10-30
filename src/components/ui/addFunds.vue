@@ -1,7 +1,7 @@
 <template>
   <a-modal
     :title="$t('Add Funds')"
-    :visible="modalVisible"
+    :open="modalVisible"
     :confirm-loading="confirmLoading"
     :cancel-text="$t('Cancel')"
     @ok="handleOk"
@@ -28,7 +28,7 @@
     <a-row style="margin-top: 10px">
       <a-col>
         <label>
-          <a-checkbox v-model="stay" />
+          <a-checkbox v-model:checked="stay" />
           {{ $t("stay on page") }}
         </label>
       </a-col>
@@ -39,8 +39,8 @@
 <script setup>
 import { ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
-import router from '@/router'
 import api from '@/api.js'
 
 const props = defineProps({
@@ -49,6 +49,7 @@ const props = defineProps({
   sum: { type: Number, default: 0 }
 })
 
+const router = useRouter()
 const authStore = useAuthStore()
 
 const confirmLoading = ref(false)

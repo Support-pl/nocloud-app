@@ -6,21 +6,21 @@
       style="margin: 10px"
       :message="$t('ssl_product.verification_warning')"
     />
-    <a-form-model ref="verification" :model="verification" :rules="rules">
-      <a-form-model-item :label="$t('ssl_product.domain')" prop="domain">
-        <a-input v-model="verification.domain" disabled />
-      </a-form-model-item>
+    <a-form ref="verification" :model="verification" :rules="rules">
+      <a-form-item :label="$t('ssl_product.domain')" name="domain">
+        <a-input v-model:value="verification.domain" disabled />
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.DCV Method')" prop="dcv">
-        <a-select v-model="verification.dcv">
+      <a-form-item :label="$t('ssl_product.DCV Method')" name="dcv">
+        <a-select v-model:value="verification.dcv">
           <a-select-option v-for="item in dcvList" :key="item" :value="item">
             {{ item }}
           </a-select-option>
         </a-select>
-      </a-form-model-item>
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.email')" prop="email">
-        <a-select v-model="verification.email">
+      <a-form-item :label="$t('ssl_product.email')" name="email">
+        <a-select v-model:value="verification.email">
           <a-select-option
             v-for="item in emailList"
             :key="item"
@@ -29,26 +29,32 @@
             {{ item }}{{ csr.domain }}
           </a-select-option>
         </a-select>
-      </a-form-model-item>
+      </a-form-item>
 
-      <a-form-model-item>
+      <a-form-item>
         <a-button type="primary" @click="emits('handleClickPrev', verification)">
-          <a-icon type="left" /> {{ $t('ssl_product.back') }}
+          <left-icon /> {{ $t('ssl_product.back') }}
         </a-button>
-      </a-form-model-item>
-    </a-form-model>
+      </a-form-item>
+    </a-form>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import i18n from '@/i18n'
+import { defineAsyncComponent, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
-  verification_back: { type: Object, default: () => {} },
+  verificationBack: { type: Object, default: () => {} },
   csr: { type: Object, default: () => {} }
 })
 const emits = defineEmits(['handleClickPrev', 'getVerification'])
+
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
+
+const i18n = useI18n()
 
 const verification = ref({
   domain: props.csr.domain,
@@ -75,10 +81,10 @@ const rules = {
 }
 
 onMounted(() => {
-  if (!('dcv' in props.verification_back)) {
+  if (!('dcv' in props.verificationBack)) {
     emits('getVerification', verification.value)
   } else {
-    verification.value = JSON.parse(JSON.stringify(props.verification_back))
+    verification.value = JSON.parse(JSON.stringify(props.verificationBack))
   }
 })
 </script>

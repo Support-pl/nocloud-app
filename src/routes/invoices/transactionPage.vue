@@ -7,7 +7,7 @@
             <div class="openInvoice__header--content">
               <div class="openInvoice__back" @click="goBack()">
                 <div class="icon__wrapper">
-                  <a-icon type="left" />
+                  <left-icon />
                 </div>
               </div>
               <div class="openInvoice__title">
@@ -77,14 +77,14 @@
                 </div>
 
                 <div v-if="invoice?.meta.description" class="info__main">
-                  <a-card :title="$t('description') | capitalize">
+                  <a-card :title="capitalize($t('description'))">
                     <div>{{ invoice.meta.description }}</div>
                   </a-card>
 
                   <a-card
                     v-if="invoice.meta.instances && invoice.meta.instances.length > 0"
                     style="margin-top: 15px"
-                    :title="$t('services') | capitalize"
+                    :title="capitalize($t('services'))"
                   >
                     <template #extra>
                       <router-link :to="{ name: 'services' }">
@@ -117,12 +117,17 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import config from '@/appconfig.js'
 import loading from '@/components/ui/loading.vue'
 
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
+
 export default {
   name: 'OpenTransaction',
-  components: { loading },
+  components: { loading, leftIcon },
   data: () => ({
     isLoading: true,
     isPayLoading: false,
@@ -221,7 +226,7 @@ export default {
         pool.forEach((service) => {
           service.instancesGroups.forEach((group) => {
             group.instances.forEach((inst) => {
-              this.$set(this.instances, inst.uuid, inst.title)
+              this.instances[inst.uuid] = inst.title
             })
           })
         })
@@ -242,7 +247,7 @@ export default {
         this.isLoading = false
       })
   },
-  destroyed () {
+  unmounted () {
     if (!this.$route.name.includes('billing')) {
       sessionStorage.removeItem('invoice')
     }
@@ -459,7 +464,7 @@ export default {
 .invoiceApear-leave-active {
   transition: opacity 0.6s;
 }
-.invoiceApear-enter,
+.invoiceApear-enter-from,
 .invoiceApear-leave-to {
   opacity: 0;
 }
@@ -468,7 +473,7 @@ export default {
   transition: transform 0.2s 0.4s ease;
 }
 
-.invoiceApear-enter .openInvoice__title {
+.invoiceApear-enter-from .openInvoice__title {
   transform-origin: center left;
   transform: translateY(-50px) rotate(10deg);
 }
@@ -477,7 +482,7 @@ export default {
   transition: transform 0.2s 0.3s ease, opacity 0.2s 0.4s ease;
 }
 
-.invoiceApear-enter .openInvoice__cost {
+.invoiceApear-enter-from .openInvoice__cost {
   opacity: 0;
   transform-origin: center left;
   transform: translateY(-50px) rotate(10deg);
@@ -487,7 +492,7 @@ export default {
   transition: transform 0.2s 0.4s ease, opacity 0.2s 0.2s ease;
 }
 
-.opencloud-enter .openInvoice__info {
+.opencloud-enter-from .openInvoice__info {
   transform: translateY(200px);
   opacity: 0;
 }
@@ -495,7 +500,7 @@ export default {
   transition: transform 0.3s 0.3s ease, opacity 0.2s 0.4s ease;
 }
 
-.invoiceApear-enter .info__footer {
+.invoiceApear-enter-from .info__footer {
   transform: translateY(50px);
   opacity: 0;
 }

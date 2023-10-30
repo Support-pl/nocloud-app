@@ -1,17 +1,17 @@
 <template>
   <a-modal
-    :title="(instanceId) ? $t('new chat') : $t('ask a question') | capitalize"
-    :visible="supportStore.isAddingTicket"
+    :title="capitalize((instanceId) ? $t('new chat') : $t('ask a question'))"
+    :open="supportStore.isAddingTicket"
     :footer="null"
     @cancel="closeFields"
   >
     <a-spin :tip="$t('loading')" :spinning="isLoading || isSending">
-      <a-form-model layout="vertical">
-        <a-form-model-item
+      <a-form layout="vertical">
+        <a-form-item
           v-if="!instanceId && filteredDepartments.length > 1"
           :label="$t('department')"
         >
-          <a-select v-model="ticketDepartment" placeholder="department">
+          <a-select v-model:value="ticketDepartment" placeholder="department">
             <a-select-option
               v-for="department of filteredDepartments"
               :key="department.id"
@@ -20,19 +20,19 @@
               {{ department.name }}
             </a-select-option>
           </a-select>
-        </a-form-model-item>
+        </a-form-item>
 
-        <a-form-model-item :label="$t('subject')">
-          <a-input v-model="ticketTitle" placeholder="" />
-        </a-form-model-item>
+        <a-form-item :label="$t('subject')">
+          <a-input v-model:value="ticketTitle" placeholder="" />
+        </a-form-item>
 
-        <a-form-model-item :label="(instanceId) ? null : $t('question')">
+        <a-form-item :label="(instanceId) ? null : $t('question')">
           <a-textarea
-            v-model="ticketMessage"
-            rows="10"
+            v-model:value="ticketMessage"
+            :rows="10"
             :placeholder="(instanceId) ? $t('input text') : null"
           />
-        </a-form-model-item>
+        </a-form-item>
 
         <a-button
           v-if="isTicket"
@@ -43,7 +43,7 @@
           {{ $t('Send') }}
         </a-button>
 
-        <a-form-model-item v-else style="margin-bottom: 0; padding-bottom: 0" :label="$t('gateways')">
+        <a-form-item v-else style="margin-bottom: 0; padding-bottom: 0" :label="$t('gateways')">
           <div class="order__grid">
             <div
               v-for="gate of gateways"
@@ -63,8 +63,8 @@
               </span>
             </div>
           </div>
-        </a-form-model-item>
-      </a-form-model>
+        </a-form-item>
+      </a-form>
     </a-spin>
   </a-modal>
 </template>
@@ -72,11 +72,11 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { message, notification } from 'ant-design-vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
 import Markdown from 'markdown-it'
 import emoji from 'markdown-it-emoji'
-
-import router from '@/router'
-import i18n from '@/i18n'
 import api from '@/api'
 
 import { useAuthStore } from '@/stores/auth.js'
@@ -94,6 +94,9 @@ md.use(emoji)
 const props = defineProps({
   instanceId: { type: String, default: null }
 })
+
+const router = useRouter()
+const i18n = useI18n()
 
 const authStore = useAuthStore()
 const chatsStore = useChatsStore()
@@ -221,7 +224,7 @@ async function createChat () {
 
       const query = { from: props.instanceId }
 
-      router.push({ path: `/ticket-${response.uuid}`, query })
+      router.push({ path: `/ticket/${response.uuid}`, query })
     } else {
       throw response
     }

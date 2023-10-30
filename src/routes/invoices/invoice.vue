@@ -12,7 +12,7 @@
       <div ref="wrapper" class="invoices__wrapper">
         <a-radio-group
           v-if="!authStore.billingUser.paid_stop"
-          v-model="currentTab"
+          v-model:value="currentTab"
           size="large"
           default-value="Invoice"
         >
@@ -54,7 +54,7 @@
           :page-size="pageSize"
           :total="totalSize"
           :current="currentPage"
-          @showSizeChange="onShowSizeChange"
+          @show-size-change="onShowSizeChange"
           @change="onShowSizeChange"
         />
       </div>

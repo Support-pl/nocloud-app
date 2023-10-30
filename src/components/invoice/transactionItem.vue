@@ -41,15 +41,15 @@
         </template>
       </div>
       <div v-if="isClickable" class="invoice__btn">
-        <a-icon type="right" />
+        <right-icon />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import router from '@/router'
+import { computed, defineAsyncComponent } from 'vue'
+import { useRouter } from 'vue-router'
 import config from '@/appconfig.js'
 
 import { useAppStore } from '@/stores/app.js'
@@ -61,11 +61,16 @@ const props = defineProps({
   invoice: { type: Object, required: true }
 })
 
+const router = useRouter()
+
 const { toDate } = useAppStore()
 const authStore = useAuthStore()
 const currenciesStore = useCurrenciesStore()
 const instancesStore = useInstancesStore()
 
+const rightIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/RightOutlined')
+)
 const costColor = computed(() => {
   if (props.invoice?.total < 0) {
     return config.colors.success

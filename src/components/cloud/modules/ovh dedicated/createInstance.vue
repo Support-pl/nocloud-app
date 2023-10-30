@@ -18,61 +18,61 @@
     :all-addons="allAddons"
     :addons-codes="addonsCodes"
     :price="price"
-    @setData="(value) => $emit('setData', value)"
-    @changePlans="(value) => plans = value"
-    @changePlan="(value) => plan = value"
-    @changeType="(value) => $emit('setData', { key: 'type', value })"
+    @set-data="(value) => $emit('setData', value)"
+    @change-plans="(value) => plans = value"
+    @change-plan="({ value }) => plan = value"
+    @change-type="(value) => $emit('setData', { key: 'type', value })"
   >
     <template #location>
       <slot name="location" />
     </template>
 
     <template #plan>
-      <a-checkbox-group v-model="checkedTypes" :options="typesOptions" />
+      <a-checkbox-group v-model:value="checkedTypes" :options="typesOptions" />
       <div class="order__grid">
         <div
           v-for="provider of resources.plans"
-          :key="provider"
+          :key="provider.value"
           class="order__grid-item"
-          :class="{ 'order__grid-item--active': plan === provider }"
-          @click="plan = provider"
+          :class="{ 'order__grid-item--active': plan === provider.value }"
+          @click="plan = provider.value"
         >
-          <h1>{{ provider }}</h1>
+          <h1>{{ provider.title }}</h1>
           <div>
             {{ $t('cpu') }}:
-            <a-icon v-if="options.cpu.size === 'loading' && plan === provider" type="loading" />
+            <loading-icon v-if="options.cpu.size === 'loading' && plan === provider.value" />
             <template v-else>
-              {{ getCpu(provider) ?? '?' }}
+              {{ getCpu(provider.value) ?? '?' }}
             </template>
           </div>
           <div>
             {{ $t('ram') }}: {{ $t('from') }}
-            {{ allResources[provider]?.ram[0] ?? '?' }} Gb
+            {{ allResources[provider.value]?.ram[0] ?? '?' }} Gb
           </div>
           <div>
             {{ $t('Drive') }}: {{ $t('from') }}
-            {{ allResources[provider]?.disk[0] ?? '?' }} Gb
+            {{ allResources[provider.value]?.disk[0] ?? '?' }} Gb
           </div>
           <div style="margin-top: 5px">
-            {{ $t('from') | capitalize }}
+            {{ capitalize($t('from')) }}
             <span
               :style="{
                 fontSize: '18px',
                 fontWeight: 700,
-                color: (plan === provider) ? null : 'var(--main)'
+                color: (plan === provider.value) ? null : 'var(--main)'
               }"
             >
-              {{ +((allResources[provider]?.price[0] ?? 0) * currency.rate).toFixed(2) }}
+              {{ +((allResources[provider.value]?.price[0] ?? 0) * currency.rate).toFixed(2) }}
               {{ currency.code }}
             </span>
           </div>
           <a-button
-            v-if="plan === provider"
+            v-if="plan === provider.value"
             ghost
             style="display: block; margin: 5px 0 0 auto"
             @click="$router.push({ query: { product: plan } })"
           >
-            {{ $t('config') | capitalize }}
+            {{ capitalize($t('config')) }}
           </a-button>
         </div>
       </div>
@@ -81,14 +81,19 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapState } from 'pinia'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import ovhCreationTemplate from '@/components/cloud/create/ovhTemplate.vue'
 
+const loadingIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LoadingOutlined')
+)
+
 export default {
   name: 'CreateInstanceOvh',
-  components: { ovhCreationTemplate },
+  components: { ovhCreationTemplate, loadingIcon },
   props: {
     getPlan: { type: Object, default: () => ({}) },
     itemSP: { type: Object, default: null },
@@ -99,6 +104,7 @@ export default {
     vmName: { type: String, required: true },
     password: { type: String, required: true }
   },
+  emits: ['setData'],
   data: () => ({
     plan: '',
     images: [],
@@ -131,7 +137,7 @@ export default {
 
       if (!this.getPlan.products) return { plans: [], ram: [], disk: [] }
       const duration = (this.mode === 'upfront12') ? 'P1Y' : 'P1M'
-      const { value } = this.plans.find(({ label }) => label.includes(this.plan)) ?? {}
+      const { value } = this.plans.find((el) => el.value === this.plan) ?? {}
       const { meta: { addons } } = this.getPlan.products[`${duration} ${value}`] ??
         Object.values(this.getPlan.products)[0]
 
@@ -148,9 +154,9 @@ export default {
       })
 
       return {
-        plans: this.plans.map(({ label }) => label).filter((label) => {
+        plans: this.plans.filter(({ group }) => {
           if (this.checkedTypes.length < 1) return true
-          return this.checkedTypes.find((type) => label.includes(type))
+          return this.checkedTypes.find((type) => group.includes(type))
         }),
         ram: Array.from(ram).sort((a, b) => a - b),
         disk: Array.from(disk).sort((a, b) => a - b)
@@ -159,7 +165,7 @@ export default {
     allResources () {
       if (!this.getPlan.products) return {}
 
-      return this.plans.reduce((result, { value, label, periods }) => {
+      return this.plans.reduce((result, { value, periods }) => {
         const ram = new Set()
         const disk = new Set()
 
@@ -181,7 +187,7 @@ export default {
 
         return {
           ...result,
-          [label]: {
+          [value]: {
             price: periods.map(({ price }) => price.value).sort((a, b) => a - b),
             ram: Array.from(ram).sort((a, b) => a - b),
             disk: Array.from(disk).sort((a, b) => a - b)
@@ -192,11 +198,11 @@ export default {
     typesOptions () {
       const types = []
 
-      this.plans.forEach(({ label }) => {
-        const value = label.split('-')[0]
+      this.plans.forEach(({ group }) => {
+        const value = group.split('-')[0]
 
         if (types.find((type) => type.value.includes(value))) return
-        if (label.includes('STOR') || label.includes('SDS')) {
+        if (group.includes('STOR') || group.includes('SDS')) {
           types.push({ value, label: 'Storage' })
         }
 
@@ -214,7 +220,7 @@ export default {
             types.push({ value, label: 'Storage' })
             break
           default:
-            types.push({ value, label: this.$options.filters.capitalize(value) })
+            types.push({ value, label: this.capitalize(value) })
         }
       })
 
@@ -225,7 +231,7 @@ export default {
 
       Object.keys(addons).forEach((addon) => {
         this.getPlan.resources?.forEach(({ price, key }) => {
-          const { value } = this.plans.find((el) => el.label.includes(this.plan)) ?? {}
+          const { value } = this.plans.find((el) => el.value === this.plan) ?? {}
 
           const addonKey = key.split(' ').at(-1)
           const duration = key.split(' ').at(0)
@@ -278,7 +284,7 @@ export default {
 
       setTimeout(() => {
         const duration = (this.mode === 'upfront12') ? 'P1Y' : 'P1M'
-        const { value } = this.plans.find(({ label }) => label.includes(this.plan)) ?? {}
+        const { value } = this.plans.find((el) => el.value === this.plan) ?? {}
         const { meta: { addons: allAddons } } = this.getPlan.products[`${duration} ${value}`] ??
           Object.values(this.getPlan.products)[0]
         const addons = []
@@ -323,7 +329,7 @@ export default {
   methods: {
     setData (resource, changeTarifs = true) {
       const duration = (this.mode === 'upfront12') ? 'P1Y' : 'P1M'
-      const { periods, value } = this.plans.find((el) => el.label.includes(this.plan)) ?? {}
+      const { periods, value } = this.plans.find((el) => el.value === this.plan) ?? {}
       if (!value) return
 
       const product = Object.entries(this.getPlan.products).find(([key]) => key.includes(value))
@@ -370,7 +376,7 @@ export default {
       this.price = { value: plan.price.value, addons: { ...this.price.addons } }
       this.price.addons[resource.key] = this.getPlan.resources
         .find((el) => el.key.includes(addonKey))?.price ?? 0
-      this.$set(this.addonsCodes, resource.key, addonKey)
+      this.addonsCodes[resource.key] = addonKey
 
       if (changeTarifs) this.$emit('setData', { key: 'periods', value: tarifs })
       this.$emit('setData', { key: 'priceOVH', value: this.price })
@@ -392,7 +398,7 @@ export default {
       if (this.images.length === 1) this.$refs.template?.setOS(this.images[0], 0)
     },
     getCpu (plan) {
-      const { value } = this.plans.find((el) => el.label.includes(plan)) ?? {}
+      const { value } = this.plans.find((el) => el.value === plan) ?? {}
 
       return this.cpus[value]
     }

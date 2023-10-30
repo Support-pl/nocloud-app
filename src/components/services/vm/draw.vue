@@ -1,31 +1,40 @@
 <template>
-	<div class="module">
-		<a-row :gutter='[10, 10]'>
-			<a-col :md="12" :xs="24" :sm="12">
-				<a-button
+  <div class="module">
+    <a-row :gutter="[10, 10]">
+      <a-col :md="12" :xs="24" :sm="12">
+        <a-button
           size="large"
           type="primary"
-          :disabled="service.status != 'Active'"
+          :disabled="service.status !== 'Active'"
           @click="moduleEnter"
         >
-          {{$t('enter') | capitalize}}
+          {{ capitalize($t('enter')) }}
         </a-button>
-			</a-col>
-		</a-row>
-	</div>
+      </a-col>
+    </a-row>
+  </div>
 </template>
 
-<script>
-export default {
-	name: 'vm-draw',
-	props: { service: { required: true } },
-	methods: {
-		moduleEnter() {
-			const vms = this.$store.getters['nocloud/vms/getInstances'];
-			const { uuid } = vms.find((vm) => vm.uuidService === this.service.uuid);
+<script setup>
+import { useRouter } from 'vue-router'
+import { useInstancesStore } from '@/stores/instances.js'
 
-			this.$router.push(`/cloud/${uuid}`);
-		}
-	}
+const props = defineProps({
+  service: { type: Object, required: true }
+})
+
+const router = useRouter()
+const store = useInstancesStore()
+
+function moduleEnter () {
+  const { uuid } = store.getInstances.find((vm) =>
+    vm.uuidService === props.service.uuid
+  )
+
+  router.push(`/cloud/${uuid}`)
 }
+</script>
+
+<script>
+export default { name: 'VmDraw' }
 </script>

@@ -21,36 +21,24 @@
       <div class="order__calculate order__field">
         <a-row :gutter="[10, 10]" style="margin-bottom: 10px">
           <a-col v-if="services.length > 1">
-            <a-select v-model="service" style="width: 100%" placeholder="services">
-              <a-select-option
-                v-for="item of services"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="service" style="width: 100%" placeholder="services">
+              <a-select-option v-for="item of services" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
 
           <a-col v-if="namespacesStore.namespaces.length > 1">
-            <a-select v-model="namespace" style="width: 100%" placeholder="namespaces">
-              <a-select-option
-                v-for="name of namespacesStore.namespaces"
-                :key="name.uuid"
-                :value="name.uuid"
-              >
+            <a-select v-model:value="namespace" style="width: 100%" placeholder="namespaces">
+              <a-select-option v-for="name of namespacesStore.namespaces" :key="name.uuid">
                 {{ name.title }}
               </a-select-option>
             </a-select>
           </a-col>
 
           <a-col v-if="plans.length > 1">
-            <a-select v-model="plan" style="width: 100%" placeholder="plans">
-              <a-select-option
-                v-for="item of plans"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="plan" style="width: 100%" placeholder="plans">
+              <a-select-option v-for="item of plans" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
@@ -67,7 +55,7 @@
             Input kilotoken:
           </a-col>
           <a-col :xs="12" :sm="18" :lg="12">
-            <div v-if="!fetchLoading" style="text-align: right">
+            <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
               {{ getProducts.inputKilotoken }} {{ currency.code }}
             </div>
             <div v-else class="loadingLine" />
@@ -85,7 +73,7 @@
             Output kilotoken:
           </a-col>
           <a-col :xs="12" :sm="18" :lg="12">
-            <div v-if="!fetchLoading" style="text-align: right">
+            <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
               {{ getProducts.outputKilotoken }} {{ currency.code }}
             </div>
             <div v-else class="loadingLine" />
@@ -95,11 +83,11 @@
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
             <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ $t("order") | capitalize }}
+              {{ capitalize($t("order")) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
-              :visible="modal.confirmCreate"
+              :open="modal.confirmCreate"
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
@@ -118,9 +106,8 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { notification } from 'ant-design-vue'
-
-import router from '@/router'
-import i18n from '@/i18n'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import api from '@/api.js'
 
 import { useAppStore } from '@/stores/app.js'
@@ -132,7 +119,10 @@ import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
-const route = router.currentRoute
+const router = useRouter()
+const route = useRoute()
+const i18n = useI18n()
+
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const currenciesStore = useCurrenciesStore()
@@ -534,7 +524,7 @@ export default { name: 'OpenaiComponent' }
   transition: all .15s ease;
 }
 
-.specs-enter{
+.specs-enter-from {
   transform: translateX(-1em);
   opacity: 0;
 }

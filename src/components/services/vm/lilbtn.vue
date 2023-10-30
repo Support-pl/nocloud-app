@@ -1,18 +1,23 @@
 <template>
   <div class="btn">
-    <a-button block :disabled="service.data?.blocked" @click.stop="moduleEnter">
-      {{ $t('renew') | capitalize }}
-      <template v-if="currency">
+    <a-button
+      block
+      size="small"
+      :disabled="service.data?.blocked"
+      @click.stop="moduleEnter"
+    >
+      {{ capitalize($t('renew')) }}
+      <span v-if="currency" style="margin-left: 4px">
         {{ (currency.code === 'USD') ? `$${slicedPrice}` : priceWithoutPrefix }}
-      </template>
+      </span>
     </a-button>
   </div>
 </template>
 
 <script setup lang="jsx">
-import { computed, inject, onMounted, ref, set } from 'vue'
-import { Modal, notification } from 'ant-design-vue'
-import i18n from '@/i18n'
+import { computed, inject, onMounted, ref } from 'vue'
+import { Modal, notification, Switch, Button } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { useInstancesStore } from '@/stores/instances.js'
 
 const props = defineProps({
@@ -21,11 +26,13 @@ const props = defineProps({
   currency: { type: Object, required: true }
 })
 
+const i18n = useI18n()
 const instancesStore = useInstancesStore()
 const checkBalance = inject('checkBalance', () => {})
 
 const autoRenew = ref(false)
 const isLoading = ref(false)
+const isDisabled = ref(false)
 
 const slicedPrice = computed(() => {
   if (`${props.price}`.replace('.').length > 3) {
@@ -95,6 +102,7 @@ const addonsPrice = computed(() => {
 
 onMounted(() => {
   autoRenew.value = props.service.config.auto_renew
+  isDisabled.value = props.service.data.blocked
 })
 
 function moduleEnter () {
@@ -129,14 +137,14 @@ function moduleEnter () {
 
         <div style="margin-top: 10px">
           <span style="line-height: 1.7">{ i18n.t('Automatic renewal') }: </span>
-          <a-switch
+          <Switch
             size="small"
             loading={ isLoading.value }
             checked={ autoRenew.value }
             onChange={ (value) => { autoRenew.value = value } }
           />
           { (props.service.config.auto_renew !== autoRenew.value) &&
-            <a-button
+            <Button
               size="small"
               type="primary"
               style="margin-left: 5px"
@@ -144,7 +152,7 @@ function moduleEnter () {
               onClick={ onClick }
             >
               OK
-            </a-button>
+            </Button>
           }
         </div>
 
@@ -171,7 +179,7 @@ function moduleEnter () {
     okText: i18n.t('Yes'),
     cancelText: i18n.t('Cancel'),
     okButtonProps: {
-      props: { disabled: (props.service.data.blocked) }
+      props: { disabled: isDisabled.value }
     },
     onOk: async () => {
       const data = { uuid: props.service.orderid, action: 'manual_renew' }
@@ -179,7 +187,7 @@ function moduleEnter () {
       try {
         await instancesStore.invokeAction(data)
 
-        set(props.service.data, 'blocked', true)
+        isDisabled.value = true
         notification.success({ message: i18n.t('Done') })
       } catch (error) {
         notification.error({
@@ -201,7 +209,7 @@ async function onClick () {
 
   try {
     isLoading.value = true
-    set(instance.config, 'auto_renew', autoRenew.value)
+    instance.config.auto_renew = autoRenew.value
     await instancesStore.updateService(service)
 
     Modal.destroyAll()

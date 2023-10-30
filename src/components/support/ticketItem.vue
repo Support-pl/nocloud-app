@@ -59,7 +59,7 @@ export default {
     ticketClick (id) {
       const query = { from: this.instanceId }
 
-      this.$router.push({ path: `/ticket-${id}`, query })
+      this.$router.push({ path: `/ticket/${id}`, query })
     },
     beauty (message) {
       message = this.decode(message)

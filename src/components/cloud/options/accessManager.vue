@@ -7,7 +7,7 @@
       {{ instance.state?.meta.login ?? '-' }}
     </a-col>
     <a-col style="line-height: 2" :span="6">
-      {{ $t('clientinfo.password') | capitalize }}:
+      {{ capitalize($t('clientinfo.password')) }}:
     </a-col>
     <a-col :span="18">
       <password-view :password="password" />

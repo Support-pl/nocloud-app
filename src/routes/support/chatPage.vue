@@ -4,7 +4,7 @@
       <div class="chat__container">
         <div class="chat__back">
           <div class="icon__wrapper" @click="goBack()">
-            <a-icon type="left" />
+            <left-icon />
           </div>
         </div>
         <div class="chat__title">
@@ -12,7 +12,7 @@
         </div>
         <div class="chat__reload">
           <div class="icon__wrapper" @click="reload()">
-            <a-icon type="reload" />
+            <reload-icon />
           </div>
         </div>
       </div>
@@ -26,8 +26,8 @@
     >
       <template #message>
         {{ $t('You can also choose another way of communication') }}
-        <a-icon v-if="isVisible" type="close" @click="isVisible = false" />
-        <a-icon v-else type="down" @click="isVisible = true" />
+        <plus-icon v-if="isVisible" :rotate="45" @click="isVisible = false" />
+        <down-icon v-else @click="isVisible = true" />
       </template>
 
       <template v-if="isVisible" #description>
@@ -60,12 +60,12 @@
 
     <loading v-if="isLoading" />
     <div v-else ref="content" class="chat__content">
-      <template v-for="(reply, i) in replies">
-        <span v-if="isDateVisible(replies, i)" :key="i" class="chat__date">
+      <template v-for="(reply, i) in replies" :key="i">
+        <span v-if="isDateVisible(replies, i)" class="chat__date">
           {{ reply.date.split(' ')[0] }}
         </span>
+
         <a-popover
-          :key="i"
           :overlay-class-name="(reply.error) ? 'chat__tooltip error' : 'chat__tooltip'"
           :trigger="(reply.error) ? 'click' : 'hover'"
           :placement="(isAdminSent(reply)) ? 'rightBottom' : 'leftBottom'"
@@ -80,19 +80,19 @@
                   {{ $t("chat_Resend_message") }}
                 </a>
               </template>
-              <a-icon type="exclamation-circle" class="msgStatus error" />
+              <exclamation-icon class="msgStatus error" />
             </a-popover>
 
             <template v-else>
               <div style="cursor: pointer" @click="addToClipboard(reply.message)">
-                <a-icon type="copy" /> {{ $t('copy') | capitalize }}
+                <copy-icon /> {{ capitalize($t('copy')) }}
               </div>
               <div
                 v-if="isEditable(reply)"
                 style="cursor: pointer; margin-top: 5px"
                 @click="changeEditing(reply)"
               >
-                <a-icon type="edit" /> {{ $t('edit') | capitalize }}
+                <edit-icon /> {{ capitalize($t('edit')) }}
               </div>
             </template>
           </template>
@@ -109,7 +109,7 @@
               <span>{{ reply.name }}</span>
               <span>{{ reply.date.slice(-8, -3) }}</span>
             </div>
-            <a-icon v-if="reply.sending" type="loading" class="msgStatus loading" />
+            <loading-icon v-if="reply.sending" class="msgStatus loading" />
           </div>
         </a-popover>
       </template>
@@ -121,13 +121,13 @@
         style="grid-template-columns: 1fr auto; align-items: end"
       >
         <a-tag
+          v-if="editing"
           closable
           color="blue"
           class="chat__tag"
-          :visible="!!editing"
-          @close="changeEditing()"
+          @close="changeEditing"
         >
-          <span style="margin-bottom: 7px">{{ $t('editing') | capitalize }}:</span>
+          <span style="margin-bottom: 7px">{{ capitalize($t('editing')) }}:</span>
           <span style="font-size: 14px; grid-column: 1 / 3; order: 1; white-space: normal">
             {{ getMessage(editing) }}
           </span>
@@ -135,10 +135,9 @@
 
         <a-textarea
           id="message"
-          v-model="messageInput"
+          v-model:value="messageInput"
           allow-clear
           type="text"
-          class="chat__input"
           name="message"
           :disabled="status == 'Closed'"
           :auto-size="{ minRows: 2, maxRows: 100 }"
@@ -147,10 +146,10 @@
           @keydown.enter.exact.prevent="sendMessage"
         />
         <div class="chat__send" @click="sendMessage">
-          <a-icon type="arrow-up" />
+          <arrow-up-icon />
         </div>
         <div v-if="showSendFiles" class="chat__send">
-          <a-icon type="plus" />
+          <plus-icon />
         </div>
       </div>
     </div>
@@ -158,7 +157,7 @@
 </template>
 
 <script>
-import { nextTick } from 'vue'
+import { defineAsyncComponent, nextTick } from 'vue'
 import { mapStores } from 'pinia'
 import Markdown from 'markdown-it'
 import emoji from 'markdown-it-emoji'
@@ -168,6 +167,36 @@ import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
 
 import loading from '@/components/ui/loading.vue'
+
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
+const reloadIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ReloadOutlined')
+)
+const downIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/DownOutlined')
+)
+
+const exclamationIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ExclamationCircleOutlined')
+)
+const copyIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CopyOutlined')
+)
+const editIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/EditOutlined')
+)
+
+const loadingIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LoadingOutlined')
+)
+const arrowUpIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ArrowUpOutlined')
+)
+const plusIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/PlusOutlined')
+)
 
 const md = new Markdown({
   html: true,
@@ -179,7 +208,21 @@ md.use(emoji)
 
 export default {
   name: 'TicketChat',
-  components: { loading },
+  components: {
+    loading,
+
+    leftIcon,
+    reloadIcon,
+    downIcon,
+
+    exclamationIcon,
+    copyIcon,
+    editIcon,
+
+    loadingIcon,
+    arrowUpIcon,
+    plusIcon
+  },
   beforeRouteUpdate (to, from, next) {
     this.chatid = to.params.id
     this.loadMessages()
@@ -490,6 +533,7 @@ export default {
   grid-template-columns: 20% 1fr 20%;
   justify-items: center;
   align-items: center;
+  gap: 5px;
   max-width: 768px;
   height: 100%;
   width: 100%;
@@ -513,6 +557,10 @@ export default {
   max-width: calc(768px - 30px);
   transform: translate(-50%, 15px);
   transition: .3s;
+}
+
+.chat__notification.ant-alert-with-description {
+  padding: 15px;
 }
 
 .chat__notification .ant-alert-message {
@@ -649,7 +697,7 @@ export default {
   background: var(--bright_font);
 }
 
-.chat__tooltip .ant-popover-inner-content {
+.chat__tooltip .ant-popover-inner {
   padding: 6px 8px;
 }
 

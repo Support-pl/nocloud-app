@@ -1,18 +1,7 @@
 <template>
   <div class="Fcloud">
     <slot name="header" />
-    <div v-if="!VM.state && false" class="Fcloud__buttons">
-      <div class="Fcloud__button" @click="deployService()">
-        <div class="Fcloud__BTN-icon">
-          <a-icon type="deployment-unit" />
-        </div>
-        <div class="Fcloud__BTN-title">
-          <!-- {{$t('Start')}} -->
-          {{ $t('Deploy') }}
-        </div>
-      </div>
-    </div>
-    <div v-else class="Fcloud__buttons">
+    <div class="Fcloud__buttons">
       <div
         v-if="
           VM.state &&
@@ -32,23 +21,21 @@
           {{ $t("Power off") }}
         </div>
         <a-modal
-          v-model="modal.shutdown"
+          v-model:open="modal.shutdown"
           :title="$t('cloud_Shutdown_modal')"
           @ok="handleOk('shutdown')"
         >
           <p>{{ $t("cloud_Shutdown_invite") }}</p>
           <a-radio-group
-            v-model="option.shutdown"
+            v-model:value="option.shutdown"
             name="shutdownOption"
             :default-value="1"
           >
             <a-radio :value="0" :style="{ 'margin-bottom': '10px' }">
               <a-tag color="green" :style="{ margin: '0 2px 0 0' }">
-                {{
-                  $t("cloud_Regular")
-                }}
+                {{ $t('cloud_Regular') }}
               </a-tag>
-              {{ $t("cloud_Shutdown") }}
+              {{ $t('cloud_Shutdown') }}
             </a-radio>
             <a-radio :value="1">
               <a-tag color="red" :style="{ margin: '0 2px 0 0' }">
@@ -68,7 +55,7 @@
         @click="sendAction('resume')"
       >
         <div class="Fcloud__BTN-icon">
-          <a-icon type="caret-right" />
+          <caret-right-icon />
         </div>
         <div class="Fcloud__BTN-title">
           {{ $t("Start") }}
@@ -83,24 +70,24 @@
         @click="openModal('reboot')"
       >
         <div class="Fcloud__BTN-icon">
-          <a-icon type="redo" />
+          <redo-icon />
         </div>
         <div class="Fcloud__BTN-title">
           {{ $t("Reboot") }}
         </div>
         <a-modal
-          v-model="modal.reboot"
+          v-model:open="modal.reboot"
           :title="$t('cloud_Reboot_modal')"
           @ok="handleOk('reboot')"
         >
           <p>{{ $t("cloud_Reboot_invite") }}</p>
           <a-radio-group
-            v-model="option.reboot"
+            v-model:value="option.reboot"
             name="rebootOption"
             :default-value="1"
           >
             <a-radio :value="0">
-              <a-tag color="green" :style="{ 'margin-bottom': '10px' }">
+              <a-tag color="green">
                 {{ $t("cloud_Regular") }}
               </a-tag>
               {{ $t("cloud_Reboot_modal") }}
@@ -122,13 +109,13 @@
         @click="openModal('recover')"
       >
         <div class="Fcloud__BTN-icon">
-          <a-icon type="backward" />
+          <backward-icon />
         </div>
         <div class="Fcloud__BTN-title">
           {{ $t("Recover") }}
         </div>
         <a-modal
-          v-model="modal.recover"
+          v-model:open="modal.recover"
           :title="$t('cloud_Recover_modal')"
           @ok="handleOk('recover')"
         >
@@ -137,7 +124,7 @@
           <p>{{ $t("cloud_Recover_invite_line3") }}</p>
           <p>{{ $t("cloud_Recover_invite") }}</p>
           <a-radio-group
-            v-model="option.recover"
+            v-model:value="option.recover"
             name="recover"
             :default-value="1"
           >
@@ -163,8 +150,7 @@
         class="Fcloud__info-block block"
       >
         <div class="Fcloud__block-header">
-          <a-icon type="flag" theme="filled" />
-          IP
+          <flag-icon /> IP
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column" style="flex-direction: row">
@@ -202,8 +188,7 @@
 
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
-          <a-icon type="environment" theme="filled" />
-          {{ $t("Location") }}
+          <env-icon /> {{ $t("Location") }}
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
@@ -220,8 +205,7 @@
 
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
-          <a-icon type="info-circle" />
-          {{ $t("info") | capitalize }}
+          <info-icon /> {{ capitalize($t("info")) }}
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
@@ -244,17 +228,17 @@
 
           <div v-if="VM.data.next_payment_date" class="block__column">
             <div class="block__title">
-              {{ $t("userService.next payment date") | capitalize }}
+              {{ capitalize($t("userService.next payment date")) }}
             </div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.next_payment_date * 1000) }}
-              <a-icon type="sync" title="Renew" @click="handleOk('renew')" />
+              <sync-icon title="Renew" @click="handleOk('renew')" />
             </div>
           </div>
 
           <div class="block__column">
             <div class="block__title">
-              {{ $t('userService.auto renew') | capitalize }}
+              {{ capitalize($t('userService.auto renew')) }}
             </div>
             <div class="block__value">
               {{ VM.config.auto_renew ? $t('enabled') : $t('disabled') }}
@@ -265,14 +249,13 @@
 
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
-          <a-icon type="credit-card" />
-          {{ $t("prices") | capitalize }}
+          <card-icon /> {{ capitalize($t("prices")) }}
         </div>
 
         <div class="Fcloud__block-content block-content_table">
           <div class="block__column block__column_table">
             <div class="block__title">
-              {{ $t('tariff') | capitalize }}
+              {{ capitalize($t('tariff')) }}
             </div>
           </div>
           <div class="block__column block__column_table block__column_price">
@@ -315,8 +298,7 @@
 
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
-          <a-icon type="setting" theme="filled" />
-          {{ $t("cloud_system") | capitalize }}
+          <setting-icon /> {{ capitalize($t("cloud_system")) }}
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
@@ -339,8 +321,7 @@
       </div>
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
-          <a-icon type="database" theme="filled" />
-          {{ $t("cloud_Storage") }}
+          <database-icon /> {{ $t("cloud_Storage") }}
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
@@ -367,13 +348,12 @@
         class="Fcloud__info-block block"
       >
         <div class="Fcloud__block-header">
-          <a-icon type="apartment" />
-          {{ $t("Network") }}
+          <apartment-icon /> {{ $t("Network") }}
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
             <div class="block__title">
-              {{ $t("inbound") | capitalize }}
+              {{ capitalize($t("inbound")) }}
             </div>
             <div class="block__value">
               {{
@@ -383,7 +363,7 @@
           </div>
           <div class="block__column">
             <div class="block__title">
-              {{ $t("outgoing") | capitalize }}
+              {{ capitalize($t("outgoing")) }}
             </div>
             <div class="block__value">
               {{
@@ -398,36 +378,35 @@
         class="Fcloud__info-block block"
       >
         <div class="Fcloud__block-header">
-          <a-icon type="line-chart" />
-          {{ $t("graphs") | capitalize }}
+          <line-chart-icon /> {{ capitalize($t("graphs")) }}
         </div>
         <div
           class="Fcloud__block-content Fcloud__block-content--charts"
         >
           <a-row type="flex" justify="space-around" style="width: 100%">
             <a-col>
-              <GChart
+              <g-chart
                 type="LineChart"
                 :data="inbChartDataReady"
                 :options="chartOption('inbound')"
               />
             </a-col>
             <a-col>
-              <GChart
+              <g-chart
                 type="LineChart"
                 :data="outChartDataReady"
                 :options="chartOption('outgoing')"
               />
             </a-col>
             <a-col>
-              <GChart
+              <g-chart
                 type="LineChart"
                 :data="cpuChartDataReady"
                 :options="chartOption('cpu')"
               />
             </a-col>
             <a-col>
-              <GChart
+              <g-chart
                 type="LineChart"
                 :data="ramChartDataReady"
                 :options="chartOption('ram')"
@@ -439,118 +418,113 @@
 
       <a-row v-if="VM.state" :gutter="[15, 15]" style="margin-top: 20px">
         <a-col :span="24" :md="12">
-          <div class="button">
-            <a-button
-              type="primary"
-              shape="round"
-              block
-              size="large"
-              :disabled="VM.data.lock"
-              @click="openModal('snapshot')"
+          <a-button
+            type="primary"
+            shape="round"
+            block
+            size="large"
+            :disabled="VM.data.lock"
+            @click="openModal('snapshot')"
+          >
+            {{ $t("Snapshots") }}
+          </a-button>
+          <a-modal
+            v-model:open="snapshots.modal"
+            :title="$t('Snapshots')"
+            :footer="null"
+          >
+            <div
+              v-for="(item, index) in VM.state.meta.snapshots"
+              :key="item.name"
+              style="display: flex; align-items: center; margin-bottom: 10px"
             >
-              {{ $t("Snapshots") }}
-            </a-button>
-            <a-modal
-              v-model="snapshots.modal"
-              :title="$t('Snapshots')"
-              :footer="null"
-            >
-              <div
-                v-for="(item, index) in VM.state.meta.snapshots"
-                :key="item.name"
-                style="display: flex; align-items: center; margin-bottom: 10px"
-              >
-                <a-col style="width: 100%">
-                  <div style="display: flex; font-size: 16px">
-                    <div style="margin-right: 30px; width: 30%">
-                      {{ item.name }}
-                    </div>
-                    <div style="width: 70%">
-                      {{ (item.ts * 1000) | dateFormat }}
-                    </div>
+              <a-col style="width: 100%">
+                <div style="display: flex; font-size: 16px">
+                  <div style="margin-right: 30px; width: 30%">
+                    {{ item.name }}
                   </div>
-                </a-col>
-                <a-col style="margin-left: auto; display: flex">
-                  <a-button
-                    type="primary"
-                    style="margin-right: 10px"
-                    :loading="snapshots.addSnap.loading"
-                    @click="revSnapshot(index)"
-                  >
-                    <a-icon type="caret-right" />
-                  </a-button>
-                  <a-button
-                    type="danger"
-                    :loading="snapshots.loading"
-                    @click="deleteSnapshot(index)"
-                  >
-                    <a-icon type="close" />
-                  </a-button>
-                </a-col>
-              </div>
+                  <div style="width: 70%">
+                    {{ dateFormat(item.ts * 1000) }}
+                  </div>
+                </div>
+              </a-col>
+              <a-col style="margin-left: auto; display: flex">
+                <a-button
+                  type="primary"
+                  style="margin-right: 10px"
+                  :loading="snapshots.addSnap.loading"
+                  @click="revSnapshot(index)"
+                >
+                  <caret-right-icon />
+                </a-button>
+                <a-button
+                  danger
+                  :loading="snapshots.loading"
+                  @click="deleteSnapshot(index)"
+                >
+                  <close-icon />
+                </a-button>
+              </a-col>
+            </div>
+
+            <div class="modal__buttons">
+              <a-button
+                type="primary"
+                shape="round"
+                size="large"
+                @click="openModal('createSnapshot')"
+              >
+                + {{ $t("Take snapshot") }}
+              </a-button>
+            </div>
+            <a-modal
+              v-model:open="snapshots.addSnap.modal"
+              :footer="null"
+              :title="$t('Create snapshot')"
+            >
+              <p>{{ $t("You can only have 3 snapshots at a time.") }}</p>
+              <p>{{ $t("Each snapshot exists for 24 hours and is then deleted.") }}</p>
+              <p>{{ $t("Choose a name for the new snapshot:") }}</p>
+              <a-input
+                ref="snapNameInput"
+                v-model:value="snapshots.addSnap.snapname"
+                :placeholder="$t('Snapshot name')"
+              />
 
               <div class="modal__buttons">
                 <a-button
-                  icon="plus"
+                  shape="round"
+                  :style="{ 'margin-right': '10px' }"
+                  @click="snapshots.addSnap.modal = false"
+                >
+                  {{ $t("Cancel") }}
+                </a-button>
+                <a-button
                   type="primary"
                   shape="round"
-                  size="large"
-                  @click="openModal('createSnapshot')"
+                  :disabled="snapshots.addSnap.snapname.length < 1"
+                  :loading="snapshots.addSnap.loading"
+                  @click="createSnapshot()"
                 >
-                  {{ $t("Take snapshot") }}
+                  + {{ $t("Take snapshot") }}
                 </a-button>
               </div>
-              <a-modal
-                v-model="snapshots.addSnap.modal"
-                :footer="null"
-                :title="$t('Create snapshot')"
-              >
-                <p>{{ $t("You can only have 3 snapshots at a time.") }}</p>
-                <p>{{ $t("Each snapshot exists for 24 hours and is then deleted.") }}</p>
-                <p>{{ $t("Choose a name for the new snapshot:") }}</p>
-                <a-input
-                  ref="snapNameInput"
-                  v-model="snapshots.addSnap.snapname"
-                  :placeholder="$t('Snapshot name')"
-                />
-                <div class="modal__buttons">
-                  <a-button
-                    shape="round"
-                    :style="{ 'margin-right': '10px' }"
-                    @click="snapshots.addSnap.modal = false"
-                  >
-                    {{ $t("Cancel") }}
-                  </a-button>
-                  <a-button
-                    icon="plus"
-                    type="primary"
-                    shape="round"
-                    :disabled="snapshots.addSnap.snapname.length < 1"
-                    :loading="snapshots.addSnap.loading"
-                    @click="createSnapshot()"
-                  >
-                    {{ $t("Take snapshot") }}
-                  </a-button>
-                </div>
-              </a-modal>
             </a-modal>
-          </div>
+          </a-modal>
         </a-col>
 
         <a-col :span="24" :md="12">
-          <div class="button">
-            <a-button
-              block
-              type="primary"
-              shape="round"
-              size="large"
-              :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3) || VM.data.lock"
-            >
-              <router-link :to="{ path: `${$route.params.uuid}/vnc`, }">
-                VNC
-              </router-link>
-            </a-button>
-          </div>
+          <a-button
+            block
+            type="primary"
+            shape="round"
+            size="large"
+            :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3) || VM.data.lock"
+          >
+            <router-link :to="{ name: 'VNC', params: { uuid: $route.params.uuid } }">
+              VNC
+            </router-link>
+          </a-button>
         </a-col>
       </a-row>
     </div>
@@ -558,8 +532,9 @@
 </template>
 
 <script lang="jsx">
-import { defineComponent } from 'vue'
+import { defineAsyncComponent, defineComponent } from 'vue'
 import { mapState, mapActions } from 'pinia'
+import { GChart } from 'vue-google-charts'
 
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -567,6 +542,50 @@ import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import notification from '@/mixins/notification.js'
+
+const redoIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/RedoOutlined')
+)
+const backwardIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/BackwardOutlined')
+)
+
+const flagIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/FlagFilled')
+)
+const envIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/EnvironmentOutlined')
+)
+const infoIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/InfoCircleOutlined')
+)
+
+const syncIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SyncOutlined')
+)
+const cardIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CreditCardOutlined')
+)
+
+const settingIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SettingFilled')
+)
+const databaseIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/DatabaseFilled')
+)
+const apartmentIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ApartmentOutlined')
+)
+
+const lineChartIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LineChartOutlined')
+)
+const caretRightIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CaretRightOutlined')
+)
+const closeIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CloseOutlined')
+)
 
 const columns = [
   {
@@ -590,6 +609,22 @@ const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 export default defineComponent({
   name: 'OpenInstance',
+  components: {
+    GChart,
+    redoIcon,
+    backwardIcon,
+    flagIcon,
+    envIcon,
+    infoIcon,
+    syncIcon,
+    cardIcon,
+    settingIcon,
+    databaseIcon,
+    apartmentIcon,
+    lineChartIcon,
+    caretRightIcon,
+    closeIcon
+  },
   mixins: [notification],
   inject: ['checkBalance'],
   props: {

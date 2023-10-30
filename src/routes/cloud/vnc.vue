@@ -26,7 +26,7 @@
               <a-icon type="left"></a-icon>
             </router-link> -->
               <a class="noVNC_button noVNC_button--goBack" title="Go back" @click="goBack">
-                <a-icon type="left" />
+                <left-icon />
               </a>
             </div>
 
@@ -269,10 +269,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { notification } from 'ant-design-vue'
+import { useRoute, useRouter } from 'vue-router'
 import UI from 'vnc-ui-vue'
-import router from '@/router'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -281,10 +281,17 @@ import { useInstancesStore } from '@/stores/instances.js'
 
 import password from '@/components/ui/password.vue'
 
+const router = useRouter()
+const route = useRoute()
+
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const productsStore = useProductsStore()
 const instancesStore = useInstancesStore()
+
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
 
 const vncscreen = ref(null)
 const desktopName = ref('')
@@ -293,18 +300,18 @@ const url = ref('')
 const rfb = ref(null)
 
 const instance = computed(() => {
-  const uuid = router.currentRoute.params.pathMatch
+  const { uuid } = route.params
   const instances = instancesStore.getInstances
 
-  return [...instances, ...productsStore.products].find((inst) =>
-    `${(inst.uuid ?? inst.id)}` === uuid
-  )
+  return [...instances, ...productsStore.products].find((inst) => {
+    return `${(inst.uuid ?? inst.id)}` === uuid
+  })
 })
 
 watch(instance, getToken)
 
 function goBack () {
-  const { pathMatch: uuid } = router.currentRoute.params
+  const { uuid } = route.params
 
   router.push({ name: 'openCloud', params: { uuid } })
 }
@@ -314,7 +321,7 @@ async function getToken () {
   const action = (isCloud) ? 'start_vnc_vm' : 'start_vnc'
 
   if (instance.value.server_on) {
-    url.value = router.currentRoute.query.url
+    url.value = route.query.url
     desktopName.value = instance.value?.name ?? 'Unknown'
 
     connect()
@@ -323,7 +330,7 @@ async function getToken () {
 
   try {
     const response = await instancesStore.invokeAction({
-      uuid: router.currentRoute.params.pathMatch, action
+      uuid: route.params.uuid, action
     })
 
     const baseURL = VUE_APP_BASE_URL.split('.')

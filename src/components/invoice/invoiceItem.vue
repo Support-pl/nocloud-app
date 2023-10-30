@@ -7,7 +7,7 @@
     </div>
     <div class="invoice__middle">
       <div class="invoice__prefix">
-        {{ $t('net total') | capitalize }}:
+        {{ capitalize($t('net total')) }}:
       </div>
       <div class="invoice__cost" :style="{ color: statusColor }">
         {{ total }} {{ currency.code }}
@@ -37,34 +37,42 @@
       <div class="invoice__btn">
         <span v-if="invoice.status === 'Unpaid'" class="invoice__pay">
           {{ $t('Pay').toLowerCase() }}
-          <a-icon
+          <component
+            :is="(isLoading) ? loadingIcon : rightIcon"
             color="success"
-            :type="(isLoading) ? 'loading' : 'right'"
           />
         </span>
-        <a-icon v-else :type="(isLoading) ? 'loading' : 'right'" />
+        <component :is="(isLoading) ? loadingIcon : rightIcon" v-else />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { notification } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 
 import api from '@/api'
-import i18n from '@/i18n'
 import config from '@/appconfig.js'
 
 const props = defineProps({
   invoice: { type: Object, required: true }
 })
 
+const i18n = useI18n()
 const authStore = useAuthStore()
 const currenciesStore = useCurrenciesStore()
+
+const loadingIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LoadingOutlined')
+)
+const rightIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/RightOutlined')
+)
 
 const isLoading = ref(false)
 const currencyCode = ref('')

@@ -4,14 +4,15 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref } from 'vue'
-import router from '@/router'
+import { useRoute } from 'vue-router'
 import api from '@/api.js'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useProductsStore } from '@/stores/products.js'
 
+const route = useRoute()
 const authStore = useAuthStore()
 const productsStore = useProductsStore()
 
@@ -19,7 +20,7 @@ const link = ref('')
 
 async function openCpanel () {
   try {
-    const { serviceid } = router.currentRoute.params
+    const { serviceid } = route.params
     const user = await authStore.fetchBillingData()
 
     const response = await api.get(

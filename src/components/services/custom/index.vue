@@ -8,7 +8,7 @@
               {{ $t('filter') }} {{ $t('by') }} {{ $t('groupname') }}:
             </div>
             <a-checkbox-group
-              v-model="checkedTypes"
+              v-model:value="checkedTypes"
               style="margin-bottom: 15px"
               :options="typesOptions"
             />
@@ -24,7 +24,7 @@
               :default-value="[0, resource.length - 1]"
               :max="resource.length - 1"
               :min="0"
-              @change="([i, j]) => $set(filters, key, [resource[i], resource[j]])"
+              @change="([i, j]) => filters[key] = [resource[i], resource[j]]"
             />
           </div>
 
@@ -66,8 +66,8 @@
           </a-col>
 
           <a-col :xs="12" :sm="18" :lg="12">
-            <a-select v-if="!fetchLoading" v-model="options.period" style="width: 100%">
-              <a-select-option v-for="period in periods" :key="period" :value="period">
+            <a-select v-if="!fetchLoading" v-model:value="options.period" style="width: 100%">
+              <a-select-option v-for="period in periods" :key="period">
                 {{ getPeriod(period) }}
               </a-select-option>
             </a-select>
@@ -77,34 +77,22 @@
 
         <a-row :gutter="[10, 10]" style="margin-top: 10px">
           <a-col v-if="services.length > 1">
-            <a-select v-model="service" style="width: 100%" placeholder="services">
-              <a-select-option
-                v-for="item of services"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="service" style="width: 100%" placeholder="services">
+              <a-select-option v-for="item of services" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
           <a-col v-if="namespacesStore.namespaces.length > 1">
-            <a-select v-model="namespace" style="width: 100%" placeholder="namespaces">
-              <a-select-option
-                v-for="item of namespacesStore.namespaces"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="namespace" style="width: 100%" placeholder="namespaces">
+              <a-select-option v-for="item of namespacesStore.namespaces" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
           <a-col v-if="plans.length > 1">
-            <a-select v-model="plan" style="width: 100%" placeholder="plans">
-              <a-select-option
-                v-for="item of plans"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="plan" style="width: 100%" placeholder="plans">
+              <a-select-option v-for="item of plans" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
@@ -115,12 +103,12 @@
           {{ $t('Total') }}:
         </a-divider>
 
-        <a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
-          <a-col>
+        <a-row type="flex" justify="space-around">
+          <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
-              <div v-if="!fetchLoading">
+              <template v-if="!fetchLoading">
                 {{ getProducts.price }} {{ currency.code }}
-              </div>
+              </template>
               <div v-else class="loadingLine loadingLine--total" />
             </transition>
           </a-col>
@@ -129,15 +117,15 @@
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
             <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ $t("order") | capitalize }}
+              {{ capitalize($t("order")) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
-              :visible="modal.confirmCreate"
+              :open="modal.confirmCreate"
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
-              @cancel="() => {modal.confirmCreate = false}"
+              @cancel="modal.confirmCreate = false"
             >
               <p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.title }}</p>
             </a-modal>
@@ -285,7 +273,7 @@ export default {
     },
     resources (value) {
       Object.entries(value).forEach(([key, resource]) => {
-        this.$set(this.filters, key, [resource.at(0), resource.at(-1)])
+        this.filters[key] = [resource.at(0), resource.at(-1)]
       })
     }
   },
@@ -873,7 +861,7 @@ export default {
   transition: all .15s ease;
 }
 
-.specs-enter{
+.specs-enter-from {
   transform: translateX(-1em);
   opacity: 0;
 }
@@ -888,7 +876,7 @@ export default {
   transition: all .15s ease;
 }
 
-.textchange-enter{
+.textchange-enter-from {
   transform: translateY(-0.5em);
   opacity: 0;
 }

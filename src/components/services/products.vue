@@ -17,27 +17,24 @@
               {{ productsCount() }}
             </span>
 
-            <transition-group
-              name="fade-in"
-              style="display: flex; flex-wrap: wrap; gap: 10px"
-            >
-              <a-badge
-                v-for="checkedType of checkedTypesString"
-                :key="checkedType.value"
-                class="products__filters"
-              >
-                <template #count>
-                  <a-icon
-                    type="close-circle"
-                    theme="filled"
-                    style="color: var(--err)"
-                    @click="filterElementClickHandler(checkedType.value)"
-                  />
-                </template>
-                {{ checkedType.title }}: {{ productsCount(checkedType.value) }}
-                <!-- всего -->
-              </a-badge>
-            </transition-group>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px">
+              <transition-group name="fade-in">
+                <a-badge
+                  v-for="checkedType of checkedTypesString"
+                  :key="checkedType.value"
+                  class="products__filters"
+                >
+                  <template #count>
+                    <close-circle-icon
+                      style="color: var(--err)"
+                      @click="filterElementClickHandler(checkedType.value)"
+                    />
+                  </template>
+                  {{ checkedType.title }}: {{ productsCount(checkedType.value) }}
+                  <!-- всего -->
+                </a-badge>
+              </transition-group>
+            </div>
           </span>
         </transition>
       </div>
@@ -55,10 +52,7 @@
         v-else-if="authStore.billingUser"
         class="products__control"
       >
-        <a-popover
-          placement="bottomRight"
-          arrow-point-at-center
-        >
+        <a-popover placement="bottomRight" arrow-point-at-center>
           <template #content>
             <p
               v-for="productType of types"
@@ -74,46 +68,48 @@
           </template>
           <template #title>
             <span>
-              {{ $t("filter") | capitalize }} {{ $t("by") }}
+              {{ capitalize($t("filter")) }} {{ $t("by") }}
             </span>
-            <span class="products__count">
+            <span class="products__count" style="margin: 0 5px">
               {{ (isFilterByLocation) ? $t('location') : $t('provider') }}
             </span>
             <a-switch
-              v-model="isFilterByLocation"
+              v-model:checked="isFilterByLocation"
               size="small"
             />
           </template>
-          <a-icon
-            type="filter"
+          <filter-icon
             class="products__control-item"
             :style="{ color: (checkedTypes.length > 0) ? 'var(--main)' : null }"
           />
         </a-popover>
+
         <a-popover placement="bottomRight" arrow-point-at-center>
           <template #content>
-            <a-radio-group v-model="sortBy">
+            <a-radio-group v-model:value="sortBy">
               <a-radio value="Name">
-                {{ $t('name') | capitalize }}
+                {{ capitalize($t('name')) }}
               </a-radio>
               <a-radio value="Cost">
-                {{ $t('cost') | capitalize }}
+                {{ capitalize($t('cost')) }}
               </a-radio>
               <a-radio value="Date">
-                {{ $t('date') | capitalize }}
+                {{ capitalize($t('date')) }}
               </a-radio>
             </a-radio-group>
           </template>
           <template #title>
-            <span>{{ $t('sort') | capitalize }}</span>
+            <span style="margin-right: 5px">{{ capitalize($t('sort')) }}</span>
+            <sort-ascending-icon
+              v-if="sortType === 'sort-ascending'"
+              @click="sortType = 'sort-descending'"
+            />
+            <sort-descending-icon
+              v-else
+              @click="sortType = 'sort-ascending'"
+            />
           </template>
-          <a-icon
-            class="products__control-item"
-            :type="sortType"
-            @click="() => (sortType === 'sort-descending')
-              ? sortType = 'sort-ascending'
-              : sortType = 'sort-descending'"
-          />
+          <sort-icon class="products__control-item" />
         </a-popover>
       </div>
     </div>
@@ -140,7 +136,6 @@
           v-for="product in productsPrepared"
           :key="product.orderid"
           :instance="product"
-          @click="productClickHandler(product)"
         />
       </template>
       <a-empty v-else />
@@ -150,18 +145,18 @@
         class="products__new"
         size="large"
         shape="round"
-        icon="plus"
         type="primary"
         block
         @click="newProductHandle"
       >
-        {{ $t("Order") }}
+        + {{ $t("Order") }}
       </a-button>
     </div>
   </div>
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapStores } from 'pinia'
 import { EditorContainer } from 'nocloud-ui'
 import config from '@/appconfig.js'
@@ -174,9 +169,35 @@ import { useInstancesStore } from '@/stores/instances.js'
 import loading from '@/components/ui/loading.vue'
 import cloudItem from '@/components/cloud/item.vue'
 
+const closeCircleIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CloseCircleFilled')
+)
+const filterIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/FilterOutlined')
+)
+const sortAscendingIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SortAscendingOutlined')
+)
+const sortDescendingIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SortDescendingOutlined')
+)
+const sortIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SlidersOutlined')
+)
+
 export default {
   name: 'ProductsBlock',
-  components: { cloudItem, loading, EditorContainer },
+  components: {
+    cloudItem,
+    loading,
+    EditorContainer,
+
+    closeCircleIcon,
+    filterIcon,
+    sortIcon,
+    sortAscendingIcon,
+    sortDescendingIcon
+  },
   props: {
     min: { type: Boolean, default: true },
     count: { type: Number, default: 5 }
@@ -217,7 +238,7 @@ export default {
         const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
 
         const publicIPs = inst.state?.meta.networking?.public?.filter((el) => !regexp.test(el))
-        const state = (this.VM?.billingPlan.type === 'ione')
+        const state = (inst.billingPlan?.type === 'ione')
           ? inst.state?.meta.lcm_state_str
           : inst.state?.state
         let status = 'UNKNOWN'
@@ -398,7 +419,7 @@ export default {
   watch: {
     queryTypes () { setTimeout(this.createObserver) },
     checkedTypes () {
-      if (this.$route.query.service) {
+      if (this.isNeedFilterStringInHeader) {
         localStorage.setItem('types', this.$route.query.service)
       } else {
         localStorage.removeItem('types')
@@ -473,11 +494,6 @@ export default {
       .catch((err) => console.error(err))
   },
   mounted () { this.createObserver() },
-  beforeDestroy () {
-    const anchor = document.querySelector('#app').lastElementChild
-
-    if (this.anchor) anchor.remove()
-  },
   methods: {
     productClickHandler ({ groupname, orderid, hostingid }) {
       if (['Domains', 'SSL'].includes(groupname)) {
@@ -605,8 +621,7 @@ export default {
 
       if (!button && !this.anchor) return
       else if (this.anchor) {
-        document.querySelector('#app').lastElementChild.remove()
-        this.anchor = null
+        this.anchor.remove()
         return
       }
 
@@ -731,7 +746,7 @@ export default {
 .fade-in-leave-active {
   transition: opacity 0.5s ease;
 }
-.fade-in-enter,
+.fade-in-enter-from,
 .fade-in-leave-to {
   opacity: 0;
 }
@@ -754,7 +769,7 @@ export default {
   transition: all 0.15s ease;
 }
 
-.header-transition-enter {
+.header-transition-enter-from {
   transform: translateY(-0.5em);
   opacity: 0;
 }

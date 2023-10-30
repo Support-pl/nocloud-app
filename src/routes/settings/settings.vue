@@ -14,13 +14,13 @@
             </div>
           </div>
           <div v-if="user_btn" class="settings__user-btn">
-            <a-icon type="right" />
+            <right-icon />
           </div>
         </div>
 
         <div class="settings__item" @click="GoToPersonalArea()">
           <div class="settings__logo">
-            <a-icon type="user" />
+            <user-icon />
           </div>
           <div class="settings__title">
             {{ $t("Personal Area") }}
@@ -29,7 +29,7 @@
 
         <div class="settings__item" @click="changeLanguage()">
           <div class="settings__logo">
-            <a-icon type="global" />
+            <global-icon />
           </div>
           <div class="settings__title">
             {{ $t("Language") }}
@@ -37,7 +37,7 @@
 
           <a-modal
             :title="$t('Language')"
-            :visible="modal.language"
+            :open="modal.language"
             :footer="false"
             @cancel="closeModal('language')"
           >
@@ -64,7 +64,7 @@
           @click="showModal('addFunds')"
         >
           <div class="settings__logo">
-            <a-icon type="dollar" />
+            <dolar-icon />
           </div>
           <div class="settings__title">
             {{ $t("Add Funds") }}
@@ -74,13 +74,13 @@
 
         <div class="settings__item" @click="showModal('SSH')">
           <div class="settings__logo">
-            <a-icon type="safety" />
+            <safety-icon />
           </div>
           <div class="settings__title">
             SSH
           </div>
           <a-modal
-            v-model="modal.SSH"
+            v-model:open="modal.SSH"
             :title="$t('SSH keys')"
             :footer="null"
           >
@@ -102,8 +102,8 @@
                   </div>
                 </a-col>
                 <a-col style="margin-left: auto">
-                  <a-button type="danger" @click="deleteSSH(index)">
-                    <a-icon type="close" />
+                  <a-button danger @click="deleteSSH(index)">
+                    <close-icon />
                   </a-button>
                 </a-col>
               </div>
@@ -117,15 +117,15 @@
 
         <div v-if="isVisible" class="settings__item" @click="showModal('login')">
           <div class="settings__logo">
-            <a-icon type="login" />
+            <login-icon />
           </div>
           <div class="settings__title">
-            {{ $t('link') | capitalize }} {{ $t('account') }}
+            {{ capitalize($t('link')) }} {{ $t('account') }}
           </div>
 
           <a-modal
-            :title="$t('link') | capitalize"
-            :visible="modal.login"
+            :title="capitalize($t('link'))"
+            :open="modal.login"
             :footer="false"
             @cancel="closeModal('login')"
           >
@@ -143,7 +143,7 @@
                   :src="`/img/icons/${getImageName(text)}.png`"
                   style="width: 32px; margin-right: 5px"
                 >
-                {{ text | capitalize }}
+                {{ capitalize(text) }}
               </span>
               <span
                 v-if="authStore.userdata.data?.oauth_types?.includes(text)"
@@ -155,31 +155,33 @@
 
         <div class="settings__item" @click="showModal('QR')">
           <div class="settings__logo">
-            <a-icon type="qrcode" />
+            <qrcode-icon />
           </div>
           <div class="settings__title">
-            {{ $t("share app link") | capitalize }}
+            {{ capitalize($t("share app link")) }}
           </div>
 
           <a-modal
-            :title="$t('share') | capitalize"
-            :visible="modal.QR"
+            :title="capitalize($t('share'))"
+            :open="modal.QR"
             :footer="false"
             @cancel="closeModal('QR')"
           >
             <h3 style="text-align: center">
-              {{ $t("copy link") | capitalize }}:
-              <span class="link--clickable" @click="copyLink"><a-icon type="copy" /> {{ selfHost }}</span>
+              {{ capitalize($t("copy link")) }}:
+              <span class="link--clickable" @click="copyLink">
+                <copy-icon /> {{ selfHost }}
+              </span>
             </h3>
             <h3 style="text-align: center">
-              {{ $t("your QR code") | capitalize }}:
+              {{ capitalize($t('your QR code')) }}:
             </h3>
             <div class="qr__wrapper">
-              <qrcode-vue
+              <a-qrcode
                 :value="selfUrl"
-                size="150"
-                level="M"
-                render-as="svg"
+                :size="150"
+                error-level="M"
+                type="svg"
               />
             </div>
           </a-modal>
@@ -193,10 +195,10 @@
           class="settings__login"
           @click="loginToAdmin"
         >
-          {{ $t("Login to admin panel") }}
+          {{ $t('Login to admin panel') }}
         </button>
-        <button class="settings__exit" @click="logoutFunc()">
-          {{ $t("Exit") }}
+        <button class="settings__exit" @click="logoutFunc">
+          {{ $t('Exit') }}
         </button>
       </div>
     </div>
@@ -204,8 +206,8 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapStores } from 'pinia'
-import QrcodeVue from 'qrcode.vue'
 import config from '@/appconfig.js'
 import { useAuthStore } from '@/stores/auth.js'
 
@@ -214,9 +216,52 @@ import balance from '@/components/ui/balance.vue'
 import addFunds from '@/components/ui/addFunds.vue'
 import addSSH from '@/components/ui/addSSH.vue'
 
+const rightIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/RightOutlined')
+)
+const userIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/UserOutlined')
+)
+const globalIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/GlobalOutlined')
+)
+
+const dolarIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/DollarOutlined')
+)
+const safetyIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SafetyOutlined')
+)
+const closeIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CloseOutlined')
+)
+
+const copyIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CopyOutlined')
+)
+const loginIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LoginOutlined')
+)
+const qrcodeIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/QrcodeOutlined')
+)
+
 export default {
   name: 'SettingsView',
-  components: { balance, addFunds, QrcodeVue, addSSH },
+  components: {
+    balance,
+    addFunds,
+    addSSH,
+    rightIcon,
+    userIcon,
+    globalIcon,
+    dolarIcon,
+    safetyIcon,
+    closeIcon,
+    copyIcon,
+    loginIcon,
+    qrcodeIcon
+  },
   mixins: [notification],
   data () {
     return {

@@ -16,13 +16,13 @@
                   <a-step class="search" status="start" :title="$t('search')">
                     <template #icon>
                       <!-- @click="search"-->
-                      <a-icon type="search" />
+                      <search-icon />
                     </template>
                   </a-step>
 
                   <a-step class="cart" status="finish" :title="$t('cart')" @click="cartVisibility = true">
                     <template #icon>
-                      <a-icon type="shopping-cart" />
+                      <shopping-cart-icon />
                     </template>
                   </a-step>
                 </a-steps>
@@ -44,18 +44,18 @@
               <a-col style="margin-bottom: 10px" :span="24">
                 <a-card :title="$t('domain_product.how_to_choose_the_right_domain')">
                   <div>
-                    <a-icon type="check" />
+                    <check-icon />
                     <p>{{ $t('domain_product.keep_your_name_easy_to_remember') }}</p>
                   </div>
                   <div>
-                    <a-icon type="check" />
+                    <check-icon />
                     <p>{{ $t('domain_product.choose_a_name_that_fit_your_brand') }}</p>
                   </div>
                 </a-card>
               </a-col>
             </a-row>
             <a-input-search
-              v-model="domain"
+              v-model:value="domain"
               placeholder="input search text"
               enter-button="Search"
               :loading="isDomainsLoading"
@@ -108,10 +108,10 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { notification } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 
-import i18n from '@/i18n'
 import api from '@/api'
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -119,8 +119,19 @@ import { useAuthStore } from '@/stores/auth.js'
 import order from '@/components/services/domains/order.vue'
 import loading from '@/components/ui/loading.vue'
 
+const i18n = useI18n()
 const authStore = useAuthStore()
 const providersStore = useSpStore()
+
+const searchIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SearchOutlined')
+)
+const shoppingCartIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ShoppingCartOutlined')
+)
+const checkIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CheckOutlined')
+)
 
 const itemsInCart = ref(0) // в корзине
 const domain = ref('')
@@ -527,7 +538,7 @@ td.ant-descriptions-item-content:nth-child(6){
   transition: opacity .5s, height .5s;
   height: 26px;
 }
-.networkApear-enter, .networkApear-leave-to {
+.networkApear-enter-from, .networkApear-leave-to {
   opacity: 0;
   height: 0;
 }*/

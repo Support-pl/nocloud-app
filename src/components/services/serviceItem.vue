@@ -1,7 +1,7 @@
 <template>
   <div class="service__item" @click="onClick">
     <div class="service__icon">
-      <a-icon :type="service.icon" :theme="service.theme ?? 'outlined'" />
+      <component :is="service.icon" />
     </div>
     <div class="service__title">
       {{ translatedName }}
@@ -11,7 +11,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import i18n from '@/i18n'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.js'
 
 const props = defineProps({
@@ -19,6 +19,7 @@ const props = defineProps({
   productsCount: { type: Function, required: true }
 })
 
+const i18n = useI18n()
 const authStore = useAuthStore()
 
 const translatedName = computed(() => {

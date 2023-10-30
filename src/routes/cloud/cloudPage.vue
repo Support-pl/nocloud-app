@@ -13,7 +13,7 @@
             <div class="Fcloud__header">
               <div class="Fcloud__back-wrapper">
                 <div class="Fcloud__back icon__wrapper" @click="$router.push('/services')">
-                  <a-icon type="left" />
+                  <left-icon />
                 </div>
               </div>
               <div v-if="VM && VM.status" class="Fcloud__header-title">
@@ -34,43 +34,45 @@
               </div>
               <div class="Fcloud__menu-wrapper">
                 <div class="Fcloud__menu-btn icon__wrapper">
-                  <a-icon type="more" @click="changeModal('menu')" />
-                  <a-modal v-model="modal.menu" :title="$t('Menu')" :footer="null">
+                  <more-icon @click="changeModal('menu')" />
+                  <a-modal v-model:open="modal.menu" :title="$t('Menu')" :footer="null">
                     <a-button
                       v-for="btn in menuOptions"
                       :key="btn.title"
                       block
                       class="menu__button"
-                      :icon="btn.icon"
-                      :type="btn.type || 'default'"
+                      :danger="btn.isDanger"
                       :disabled="disabledMenu(btn.title.toLowerCase())"
-                      :loading="(btn.icon === 'delete') ? isDeleteLoading : null"
+                      :loading="(btn.icon === 'delete') ? isDeleteLoading : false"
                       @click="btn.onclick(...btn.params)"
                     >
+                      <template #icon>
+                        <component :is="icons[btn.icon]" />
+                      </template>
                       {{ $t(btn.title) }}
                     </a-button>
                   </a-modal>
                   <a-modal
-                    v-model="modal.rename"
+                    v-model:open="modal.rename"
                     :confirm-loading="isRenameLoading"
                     :title="$t('Rename')"
                     @ok="sendRename"
                   >
                     <p>{{ $t("Enter new VM name") }}</p>
                     <a-input
-                      v-model="renameNewName"
+                      v-model:value="renameNewName"
                       :placeholder="$t('input new name')"
                     />
                   </a-modal>
                   <a-modal
-                    v-model="modal.reinstall"
+                    v-model:open="modal.reinstall"
                     :title="$t('Reinstall')"
                     @ok="sendReinstall"
                   >
                     <template v-if="!disabledMenu('reinstall')">
                       <p>{{ $t("Enter new password") }}</p>
                       <a-input-password
-                        v-model="reinstallPass"
+                        v-model:value="reinstallPass"
                         :placeholder="$t('input password')"
                       />
                     </template>
@@ -80,7 +82,7 @@
                     </template>
                   </a-modal>
                   <a-modal
-                    v-model="modal.expand"
+                    v-model:open="modal.expand"
                     :confirm-loading="loadingResizeVM"
                     :title="$t('Resize VM')"
                     @ok="ResizeVM"
@@ -91,7 +93,7 @@
                       </a-col>
                       <a-col style="width: 100%">
                         <a-input-number
-                          v-model="resize.VCPU"
+                          v-model:value="resize.VCPU"
                           style="width: 100%"
                           :min="1"
                           :max="32"
@@ -106,7 +108,7 @@
                       </a-col>
                       <a-col style="width: 100%">
                         <a-input-number
-                          v-model="resize.RAM"
+                          v-model:value="resize.RAM"
                           style="width: 100%"
                           :min="1"
                           :max="64"
@@ -126,7 +128,7 @@
                       </a-col>
                       <a-col style="width: 100%">
                         <a-input-number
-                          v-model="resize.size"
+                          v-model:value="resize.size"
                           style="width: 100%"
                           :min="VM.resources && VM.resources.drive_size / 1024"
                           default-value="1"
@@ -138,12 +140,12 @@
                     </a-row>
                   </a-modal>
                   <a-modal
-                    v-model="modal.SSH"
+                    v-model:open="modal.SSH"
                     :title="$t('SSH key')"
                     :footer="null"
                   >
                     <div>
-                      <span style="font-weight: 700">{{ $t('key') | capitalize }}: </span>
+                      <span style="font-weight: 700">{{ capitalize($t('key')) }}: </span>
                       <span
                         class="ssh-text"
                         :title="$t('Click to copy')"
@@ -154,32 +156,40 @@
                     </div>
                   </a-modal>
                   <a-modal
-                    v-model="modal.logs"
+                    v-model:open="modal.logs"
                     :title="$t('Logs')"
                     :footer="null"
                   >
-                    <a-spin style="display: block; margin: 0 auto" :tip="$t('loading')" :spinning="isLogsLoading">
-                      <a-card
-                        v-for="(log, i) of logs"
-                        :key="log.date"
-                        size="small"
-                        :body-style="{ display: 'flex' }"
-                        :style="{ marginBottom: (logs.length - 1 !== i) ? '24px' : null }"
-                      >
-                        <template #extra>
-                          <a-badge :status="(log.state === 'done') ? 'success' : 'error'" />
-                        </template>
-                        <template #title>
-                          <span style="font-weight: 700">{{ log.type }}</span>
-                        </template>
-                        <span style="margin-right: auto">{{ log.date.replace('T', ' ') }}</span>
-                        <span v-if="log.progress < 100">{{ `${log.progress}%` }}</span>
-                      </a-card>
+                    <a-spin
+                      style="display: block;
+                      margin: 0 auto"
+                      :tip="$t('loading')"
+                      :spinning="isLogsLoading"
+                    >
+                      <template v-if="logs.length > 0">
+                        <a-card
+                          v-for="(log, i) of logs"
+                          :key="log.date"
+                          size="small"
+                          :body-style="{ display: 'flex' }"
+                          :style="{ marginBottom: (logs.length - 1 !== i) ? '24px' : null }"
+                        >
+                          <template #extra>
+                            <a-badge :status="(log.state === 'done') ? 'success' : 'error'" />
+                          </template>
+                          <template #title>
+                            <span style="font-weight: 700">{{ log.type }}</span>
+                          </template>
+                          <span style="margin-right: auto">{{ log.date.replace('T', ' ') }}</span>
+                          <span v-if="log.progress < 100">{{ `${log.progress}%` }}</span>
+                        </a-card>
+                      </template>
+                      <a-empty v-else />
                     </a-spin>
                   </a-modal>
 
                   <a-modal
-                    v-model="modal.networkControl"
+                    v-model:open="modal.networkControl"
                     width="600px"
                     :title="$t('Network control')"
                     :footer="null"
@@ -192,12 +202,12 @@
                       v-else
                       :item-service="itemService"
                       :instance="VM"
-                      @closeModal="modal.networkControl = false"
+                      @close-modal="modal.networkControl = false"
                     />
                   </a-modal>
 
                   <a-modal
-                    v-model="modal.accessManager"
+                    v-model:open="modal.accessManager"
                     :title="$t('Access manager')"
                     :footer="null"
                   >
@@ -215,7 +225,9 @@
 </template>
 
 <script>
+import { defineAsyncComponent, h } from 'vue'
 import { mapState, mapActions } from 'pinia'
+import * as icons from '@ant-design/icons-vue'
 import notification from '@/mixins/notification.js'
 
 import { useAuthStore } from '@/stores/auth.js'
@@ -229,11 +241,19 @@ import networkControl from '@/components/cloud/options/networkControl.vue'
 import accessManager from '@/components/cloud/options/accessManager.vue'
 import loading from '@/components/ui/loading.vue'
 
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
+const moreIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/MoreOutlined')
+)
+
 export default {
   name: 'OpenCloud',
-  components: { loading, networkControl, accessManager },
+  components: { loading, networkControl, accessManager, leftIcon, moreIcon },
   mixins: [notification],
   data: () => ({
+    icons,
     isInfoLoading: false,
     isDeleteLoading: false,
     isRenameLoading: false,
@@ -280,7 +300,7 @@ export default {
       const component = Object.keys(components).find((key) => key.includes(`/${this.type}/`))
 
       if (!component) return () => ({})
-      return () => components[component]()
+      return defineAsyncComponent(() => components[component]())
     },
     menuOptions () {
       const options = [
@@ -288,20 +308,20 @@ export default {
           title: 'Reinstall',
           onclick: this.sendReinstall,
           params: [],
-          icon: 'exclamation',
+          icon: 'ExclamationOutlined',
           modules: ['ione', 'custom']
         },
         {
           title: 'Rename',
           onclick: this.changeModal,
           params: ['rename'],
-          icon: 'tag'
+          icon: 'TagOutlined'
         },
         {
           title: 'Resize VM',
           onclick: this.changeModal,
           params: ['expand'],
-          icon: 'arrows-alt',
+          icon: 'ArrowsAltOutlined',
           forVNC: true,
           modules: ['ione']
         },
@@ -309,14 +329,14 @@ export default {
           title: 'SSH key',
           onclick: this.changeModal,
           params: ['SSH'],
-          icon: 'safety',
+          icon: 'SafetyOutlined',
           modules: ['ione', 'ovh']
         },
         {
           title: 'Network control',
           onclick: this.changeModal,
           params: ['networkControl'],
-          icon: 'global',
+          icon: 'GlobalOutlined',
           forVNC: true,
           modules: ['ione']
         },
@@ -324,21 +344,21 @@ export default {
           title: 'Access manager',
           onclick: this.changeModal,
           params: ['accessManager'],
-          icon: 'safety'
+          icon: 'SafetyOutlined'
         },
         {
           title: 'Logs',
           onclick: this.getLogs,
           params: ['logs'],
-          icon: 'code',
+          icon: 'CodeOutlined',
           modules: ['ovh']
         },
         {
           title: 'Delete',
           onclick: this.sendDelete,
           params: ['delete'],
-          icon: 'delete',
-          type: 'danger',
+          icon: 'DeleteOutlined',
+          isDanger: true,
           forVNC: true,
           modules: ['ione', 'ovh']
         }
@@ -422,7 +442,7 @@ export default {
         case 'suspended':
         case 'suspend':
         case 'pending':
-          return 'var(--main)'
+          return 'var(--bright_font)'
         default:
           return 'var(--err)'
       }
@@ -493,7 +513,7 @@ export default {
 
     if (this.currencies.length < 1) this.fetchCurrencies()
   },
-  destroyed () {
+  unmounted () {
     if (!this.soket) return
     this.soket.close(1000, 'Work is done')
   },
@@ -657,8 +677,8 @@ export default {
       if (this.disabledMenu('reinstall')) {
         this.$store
           .dispatch('utils/createTicket', {
-            subject: `[generated]: Reinstall VM#${this.$route.params.pathMatch}`,
-            message: `VM#${this.$route.params.pathMatch} имеет аддон, запрещающий автопереустановку. Необходимо выполнить перустановку вручную.`
+            subject: `[generated]: Reinstall VM#${this.$route.params.uuid}`,
+            message: `VM#${this.$route.params.uuid} имеет аддон, запрещающий автопереустановку. Необходимо выполнить перустановку вручную.`
           })
           .then(() => {
             this.$message.success(this.$t('Order created successfully'))
@@ -678,9 +698,9 @@ export default {
         okType: 'danger',
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
-        content: (h) => h(
+        content: () => h(
           'div',
-          { attrs: { style: 'color: red' } },
+          { style: 'color: red' },
           this.$t('All data will be deleted!')
         ),
         onOk: () => {
@@ -722,9 +742,9 @@ export default {
         okType: 'danger',
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
-        content: (h) => h(
+        content: () => h(
           'div',
-          { attrs: { style: 'color: red' } },
+          { style: 'color: red' },
           this.$t('All data will be deleted!')
         ),
         onOk: () => {
@@ -763,9 +783,9 @@ export default {
       this.isLogsLoading = true
       this.changeModal('logs')
       this.invokeAction({ uuid: this.$route.params.uuid, action: 'get_logs' })
-        .then(({ meta: { logs } }) => {
-          logs?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          this.logs = logs
+        .then((response) => {
+          response.meta?.logs?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          this.logs = response.meta?.logs ?? []
         })
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err
@@ -927,7 +947,7 @@ export default {
   flex: 1 0;
   border-radius: 35px 35px 0 0;
   margin-top: 30px;
-  padding: 10px 30px 0;
+  padding: 10px 30px;
   overflow: auto;
 }
 .Fcloud__info-header {
@@ -1058,28 +1078,28 @@ export default {
 .opencloud-leave-active {
   transition: opacity 0.6s;
 }
-.opencloud-enter,
+.opencloud-enter-from,
 .opencloud-leave-to {
   opacity: 0;
 }
 .opencloud-enter-active .Fcloud__header-title {
   transition: transform 0.2s 0.4s ease;
 }
-.opencloud-enter .Fcloud__header-title {
+.opencloud-enter-from .Fcloud__header-title {
   transform-origin: center left;
   transform: translateY(-50px) rotate(10deg);
 }
 .opencloud-enter-active .Fcloud__info {
   transition: opacity 0.2s 0.2s ease, transform 0.2s 0.2s ease;
 }
-.opencloud-enter .Fcloud__info {
+.opencloud-enter-from .Fcloud__info {
   transform: translateY(200px);
   opacity: 0;
 }
 .opencloud-enter-active .Fcloud__button {
   transition: opacity 0.2s 0.1s ease, transform 0.2s 0.1s ease;
 }
-.opencloud-enter .Fcloud__button {
+.opencloud-enter-from .Fcloud__button {
   transform: scale(0.5) rotate(15deg);
   opacity: 0;
 }

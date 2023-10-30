@@ -6,9 +6,11 @@
       </a-layout-header>
 
       <a-layout-content :style="{'background-color': 'var(--bright_bg)', 'position': 'relative'}">
-        <transition name="main-frame-anim">
-          <router-view class="frame" />
-        </transition>
+        <router-view v-slot="{ Component }" class="frame">
+          <transition name="main-frame-anim">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </a-layout-content>
 
       <a-layout-footer v-if="authStore.isLogged" style="padding: 0">
@@ -19,17 +21,20 @@
 </template>
 
 <script setup>
-import router from '@/router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import appFooter from '@/components/layout/appFooter.vue'
 import appHeader from '@/components/layout/appHeader.vue'
 
+const router = useRouter()
+const route = useRoute()
+
 const appStore = useAppStore()
 const authStore = useAuthStore()
 
-router.onReady(() => {
-  appStore.setTabByNameNoRoute(router.currentRoute.name)
+router.isReady().then(() => {
+  appStore.setTabByNameNoRoute(route.name)
 })
 router.beforeEach((to, _, next) => {
   appStore.setTabByNameNoRoute(to.name)
@@ -70,7 +75,7 @@ export default { name: 'AppMain' }
   transition: all .25s ease;
 }
 
-.main-frame-anim-enter {
+.main-frame-anim-enter-from {
   transform: translateY(-0.5em);
   opacity: 0;
 }

@@ -1,11 +1,15 @@
 import { reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { defineStore } from 'pinia'
-import router from '@/router'
+import { AppstoreOutlined, FundOutlined, MessageOutlined, SettingFilled } from '@ant-design/icons-vue'
 import config from '@/appconfig.js'
 /*
 ROUTER WORKS THERE!
 */
 export const useAppStore = defineStore('app', () => {
+  const router = useRouter()
+  const route = useRoute()
+
   const notification = ref(false)
   const activeTabName = ref('')
   const activeTabNum = ref(-1)
@@ -39,26 +43,10 @@ export const useAppStore = defineStore('app', () => {
         //  title: 'cloud',
         //  theme: 'filled'
         // },
-        {
-          icon: 'appstore',
-          title: 'services',
-          theme: 'outlined'
-        },
-        {
-          icon: 'message',
-          title: 'support',
-          theme: 'outlined'
-        },
-        {
-          icon: 'fund',
-          title: 'billing',
-          theme: 'outlined'
-        },
-        {
-          icon: 'setting',
-          title: 'settings',
-          theme: 'filled'
-        }
+        { icon: AppstoreOutlined, title: 'services' },
+        { icon: MessageOutlined, title: 'support' },
+        { icon: FundOutlined, title: 'billing' },
+        { icon: SettingFilled, title: 'settings' }
       ]
 
   function toDate (timestamp, sep = '.', withTime = true, reverse) {
@@ -99,7 +87,7 @@ export const useAppStore = defineStore('app', () => {
       activeTabName.value = value
       activeTabNum.value = buttons.findIndex(({ title }) => title === value)
 
-      if (router.currentRoute.name !== activeTab.title || Object.keys(router.currentRoute.query).length > 0) {
+      if (route.name !== activeTab.title || Object.keys(route.query).length > 0) {
         router.push({ name: activeTab.title })
       }
       console.log(activeTab.title)
@@ -109,7 +97,7 @@ export const useAppStore = defineStore('app', () => {
       activeTabNum.value = value
       activeTabName.value = buttons[value].title
 
-      if (router.currentRoute.name !== activeTab.title) {
+      if (route.name !== activeTab.title) {
         router.push({ name: activeTab.title })
       }
     },

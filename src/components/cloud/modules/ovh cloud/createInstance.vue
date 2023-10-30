@@ -17,9 +17,9 @@
     :all-addons="allAddons"
     :addons-codes="addonsCodes"
     :price="price"
-    @setData="(value) => $emit('setData', value)"
-    @changePlans="setPlans"
-    @changePlan="(value) => plan = value"
+    @set-data="(value) => $emit('setData', value)"
+    @change-plans="setPlans"
+    @change-plan="(value) => plan = value"
   >
     <template #location>
       <slot name="location" />
@@ -81,12 +81,12 @@
       <div class="order__grid" style="margin-top: 10px">
         <div
           v-for="provider of filteredPlans"
-          :key="provider.label"
+          :key="provider.title"
           class="order__grid-item"
-          :class="{ 'order__grid-item--active': plan === provider.label }"
-          @click="plan = provider.label"
+          :class="{ 'order__grid-item--active': plan === provider.title }"
+          @click="plan = provider.title"
         >
-          <h1>{{ provider.label }}</h1>
+          <h1>{{ provider.title }}</h1>
           <div>
             {{ $t('cpu') }}: {{ provider.resources.cpu ?? '?' }}
           </div>
@@ -127,6 +127,7 @@ export default {
     vmName: { type: String, required: true },
     password: { type: String, required: true }
   },
+  emits: ['setData'],
   data: () => ({
     plan: '',
     images: [],
@@ -141,7 +142,7 @@ export default {
     filteredPlans () {
       const plans = []
 
-      this.plans.forEach(({ label, resources }) => {
+      this.plans.forEach(({ title, value, resources }) => {
         const byCpu = resources.cpu >= this.filters.cpu.at(0) &&
           resources.cpu <= this.filters.cpu.at(-1)
 
@@ -152,14 +153,14 @@ export default {
           resources.drive_size / 1024 <= this.filters.disk.at(-1)
 
         if (byCpu && byRam && byDisk) {
-          plans.push({ label, resources })
+          plans.push({ title, value, resources })
         }
       })
 
       return plans
     },
     resources () {
-      const plans = this.plans.map(({ label }) => label)
+      const plans = this.plans.map(({ title }) => title)
       const cpu = []
       const ram = []
       const disk = []
@@ -205,12 +206,12 @@ export default {
   },
   watch: {
     tarification () {
-      const plan = this.plans.find((el) => el.label === this.plan)
+      const plan = this.plans.find((el) => el.title === this.plan)
 
       this.setData(plan.value, false)
     },
     plan (value) {
-      const plan = this.plans.find((el) => el.label === value)
+      const plan = this.plans.find((el) => el.title === value)
 
       this.setData(plan?.value)
       this.$emit('setData', { key: 'productSize', value })

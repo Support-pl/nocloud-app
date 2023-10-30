@@ -4,7 +4,9 @@
       v-for="service in avaliableServices"
       :key="service.title"
       count="+"
+      style="width: 100%"
       :number-style="{
+        width: 'auto',
         fontSize: '20px',
         transform: (hovered === service.title) ? 'none' : 'scale(0) translate(-20px, -20px)',
         backgroundColor: 'var(--bright_font)',
@@ -14,29 +16,39 @@
         transition: '0.3s'
       }"
       @click="newProductHandler(service)"
-      @mouseover.native="hovered = service.title"
-      @mouseleave.native="hovered = null"
+      @mouseover="hovered = service.title"
+      @mouseleave="hovered = null"
     >
       <service-item
         v-if="!service.needLogin || isLogged"
         :key="service.title"
         :service="service"
         :products-count="productsCount"
-        @mouseover.native="hovered = service.title"
-        @mouseleave.native="hovered = null"
+        @mouseover="hovered = service.title"
+        @mouseleave="hovered = null"
       />
     </a-badge>
   </div>
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
+import * as icons from '@ant-design/icons-vue'
 import { mapState } from 'pinia'
-import serviceItem from '@/components/services/serviceItem.vue'
 import config from '@/appconfig.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useProductsStore } from '@/stores/products.js'
+
+import serviceItem from '@/components/services/serviceItem.vue'
+
+const solutionIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SolutionOutlined')
+)
+const shoppingIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ShoppingOutlined')
+)
 
 export default {
   name: 'ServicesWrapper',
@@ -107,7 +119,7 @@ export default {
         ? [{
             title: 'Virtual',
             translatable: true,
-            icon: 'solution',
+            icon: solutionIcon,
             type: 'virtual',
             onclick: {
               function: this.routeTo,
@@ -119,7 +131,7 @@ export default {
       Object.keys(this.services).forEach((service) => {
         services.push({
           title: service,
-          icon: 'shopping',
+          icon: shoppingIcon,
           type: service,
           onclick: {
             function: this.routeTo,
@@ -128,23 +140,10 @@ export default {
         })
       })
 
-      this.showcases.forEach((showcase) => {
-        showcase.icon = this.toKebabCase(showcase.icon)
-        let theme = showcase.icon.split('-').at(-1)
-        let icon = showcase.icon.replace(`-${theme}`, '')
-
-        if (!['outlined', 'filled'].includes(theme)) {
-          icon = showcase.icon
-          theme = null
-        } else if (theme === 'tone') {
-          icon = icon.replace('-two')
-          theme = 'two-tone'
-        }
-
+      this.showcases.forEach(async (showcase) => {
         services.push({
           ...showcase,
-          icon,
-          theme,
+          icon: icons[showcase.icon],
           onclick: {
             function: this.routeTo,
             paramsArr: [{ name: 'products', query: { service: showcase.uuid } }]

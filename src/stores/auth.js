@@ -1,13 +1,16 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { useI18n } from 'vue-i18n'
+
 import cookies from 'js-cookie'
-import i18n from '@/i18n'
 import api from '@/api.js'
 import config from '@/appconfig.js'
 
 const COOKIES_NAME = 'noCloudinApp-token'
 
 export const useAuthStore = defineStore('auth', () => {
+  const i18n = useI18n()
+
   const token = ref('')
   const userdata = ref({})
   const billingUser = ref({})

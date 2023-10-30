@@ -9,7 +9,7 @@
 
       <span class="currency__suffix">{{ currency.code }}</span>
       <span v-if="clickable" class="badge">
-        <a-icon type="plus" />
+        <plus-icon />
       </span>
     </div>
     <add-funds :modal-visible="modalVisible" :hide-modal="hideModal" />
@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import addFunds from '@/components/ui/addFunds.vue'
@@ -28,6 +28,10 @@ const props = defineProps({
 
 const authStore = useAuthStore()
 const currenciesStore = useCurrenciesStore()
+
+const plusIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/PlusOutlined')
+)
 
 const modalVisible = ref(false)
 

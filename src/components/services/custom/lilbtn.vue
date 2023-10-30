@@ -1,18 +1,23 @@
 <template>
   <div class="btn">
-    <a-button block :disabled="service.data.blocked" @click.stop="moduleEnter">
-      {{ $t('renew') | capitalize }}
-      <template v-if="currency">
+    <a-button
+      block
+      size="small"
+      :disabled="service.data.blocked"
+      @click.stop="moduleEnter"
+    >
+      {{ capitalize($t('renew')) }}
+      <span v-if="currency" style="margin-left: 4px">
         {{ (currency.code === 'USD') ? `$${slicedPrice}` : priceWithoutPrefix }}
-      </template>
+      </span>
     </a-button>
   </div>
 </template>
 
 <script setup lang="jsx">
-import { computed, inject, set } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { Modal, notification } from 'ant-design-vue'
-import i18n from '@/i18n'
+import { useI18n } from 'vue-i18n'
 
 import { useAppStore } from '@/stores/app.js'
 import { useInstancesStore } from '@/stores/instances.js'
@@ -23,10 +28,12 @@ const props = defineProps({
   currency: { type: Object, required: true }
 })
 
+const i18n = useI18n()
 const { toDate } = useAppStore()
 const instancesStore = useInstancesStore()
 const checkBalance = inject('checkBalance', () => {})
 
+const isDisabled = ref(false)
 const slicedPrice = computed(() => {
   if (`${props.price}`.replace('.').length > 3) {
     return (`${props.price}`[2] === '.')
@@ -76,7 +83,7 @@ function moduleEnter () {
     okText: i18n.t('Yes'),
     cancelText: i18n.t('Cancel'),
     okButtonProps: {
-      props: { disabled: (props.service.data.blocked) }
+      props: { disabled: isDisabled.value }
     },
     onOk: async () => {
       const data = { uuid: props.service.uuid, action: 'manual_renew' }
@@ -84,7 +91,7 @@ function moduleEnter () {
       return instancesStore.invokeAction(data)
         .then(() => {
           notification.success({ message: 'Done!' })
-          set(props.service.data, 'blocked', true)
+          isDisabled.value = true
         })
         .catch((error) => {
           notification.error({
@@ -95,6 +102,8 @@ function moduleEnter () {
     onCancel () {}
   })
 }
+
+isDisabled.value = props.service.data.blocked
 </script>
 
 <script lang="jsx">

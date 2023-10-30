@@ -100,11 +100,11 @@ export default { name: 'SupportView' }
       all .4s ease,
   }
 
-  .ticket__add-enter.addTicket__wrapper,
+  .ticket__add-enter-from.addTicket__wrapper,
   .ticket__add-leave-to.addTicket__wrapper {
     opacity: 0;
   }
-  .ticket__add-enter .addTicket,
+  .ticket__add-enter-from .addTicket,
   .ticket__add-leave-to .addTicket {
     opacity: 0;
     transform: translateX(-50%) translateY(100%) !important;

@@ -16,14 +16,14 @@
             <div class="service-page__info-title">
               {{ (/^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i.test(service.domain)
                 ? $t('ssl_product.domain')
-                : $t('key')) | capitalize }}:
+                : capitalize($t('key'))) }}:
               <span style="font-weight: 400">{{ service.domain }}</span>
             </div>
           </div>
 
           <div class="service-page__info">
             <div class="service-page__info-title">
-              {{ $t("status") | capitalize }}:
+              {{ capitalize($t("status")) }}:
               <a-tag :color="getTagColor">
                 {{ $t(service.status) }}
               </a-tag>
@@ -35,9 +35,9 @@
               {{ $t('Actions') }}:
               <div style="display: inline-flex; gap: 8px">
                 <a-button v-if="service.groupname !== 'OpenAI'" size="small" @click="sendRenew">
-                  {{ $t('renew') | capitalize }}
+                  {{ capitalize($t('renew')) }}
                 </a-button>
-                <a-button size="small" type="danger" @click="sendDelete">
+                <a-button danger size="small" @click="sendDelete">
                   {{ $t('Delete') }}
                 </a-button>
               </div>
@@ -46,7 +46,7 @@
 
           <div v-if="service.ORDER_INFO" class="service-page__info">
             <div class="service-page__info-title">
-              {{ $t("invoice status") | capitalize }}:
+              {{ capitalize($t("invoice status")) }}:
               <a-tag :color="getInvoiceStatusColor">
                 {{ $t("invoice_" + service.ORDER_INFO.invoicestatus) }}
               </a-tag>
@@ -111,7 +111,7 @@
             >
               <div class="service-page__info">
                 <div class="service-page__info-title">
-                  {{ $t("userService." + elem.title) | capitalize }}:
+                  {{ capitalize($t("userService." + elem.title)) }}:
                 </div>
 
                 <div
@@ -144,7 +144,7 @@
                   v-else-if="elem.type == 'text'"
                   class="service-page__info-value"
                 >
-                  {{ service[elem.key] && $t(service[elem.key].toLowerCase()) | capitalize }}
+                  {{ service[elem.key] && capitalize($t(service[elem.key].toLowerCase())) }}
                 </div>
                 <div v-else class="service-page__info-value">
                   {{ service[elem.key] }}
@@ -155,7 +155,7 @@
 
           <div v-if="description" class="service-page__info">
             <div class="service-page__info-title">
-              {{ $t("description") | capitalize }}:
+              {{ capitalize($t("description")) }}:
             </div>
             <div class="service-page__info-value">
               <div
@@ -166,7 +166,7 @@
               />
               <table v-else class="product__specs">
                 <tr v-for="resource of description.properties" :key="resource.GROUP">
-                  <td>{{ $t(`virtual_product.${resource.GROUP}`) | capitalize }}</td>
+                  <td>{{ capitalize($t(`virtual_product.${resource.GROUP}`)) }}</td>
                   <td>{{ resource.TITLE }}</td>
                 </tr>
               </table>
@@ -183,6 +183,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent, h } from 'vue'
 import { mapStores, mapState } from 'pinia'
 import config from '@/appconfig.js'
 
@@ -289,7 +290,7 @@ export default {
       if (!components[component]) return
       if (serviceType === undefined) return
       if (!(status === 'Active' || state?.state === 'RUNNING')) return
-      return () => components[component]()
+      return defineAsyncComponent(() => components[component]())
     },
     isActionsActive () {
       const key = this.service.product ?? this.service.config?.product
@@ -485,7 +486,7 @@ export default {
           return this.instancesStore.invokeAction(data)
             .then(() => {
               this.$notification.success({ message: 'Done!' })
-              this.$set(this.service.data, 'blocked', true)
+              this.service.data.blocked = true
             })
             .catch((err) => {
               this.$notification.error({
@@ -503,9 +504,9 @@ export default {
         okType: 'danger',
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
-        content: (h) => h(
+        content: () => h(
           'div',
-          { attrs: { style: 'color: red' } },
+          { style: 'color: red' },
           this.$t('All data will be deleted!')
         ),
         onOk: async () => {

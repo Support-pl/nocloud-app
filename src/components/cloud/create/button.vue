@@ -18,7 +18,7 @@
         shape="round"
         @click="options.nextButton.onClick"
       >
-        {{ $t('next') | capitalize }}
+        {{ capitalize($t('next')) }}
       </a-button>
 
       <a-button
@@ -34,7 +34,7 @@
 
       <a-modal
         :title="$t(options.modal.title)"
-        :visible="options.modal.visible"
+        :open="options.modal.visible"
         :ok-button-props="{
           props: options.modal.okProps
         }"

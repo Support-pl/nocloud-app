@@ -1,8 +1,8 @@
 <template>
-  <a-row class="module" :gutter="[10, 10]">
+  <a-row :gutter="[10, 10]">
     <a-col span="12">
       <div style="font-weight: 700">
-        {{ $t('token') | capitalize }}:
+        {{ capitalize($t('token')) }}:
       </div>
       <div style="font-size: 1.1rem">
         {{ service.data?.token ?? '-' }}
@@ -39,15 +39,17 @@
 <script setup>
 import { computed, getCurrentInstance, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
-import i18n from '@/i18n'
 import api from '@/api.js'
 
 const props = defineProps({
   service: { type: Object, required: true }
 })
-const app = getCurrentInstance()
+
+const app = getCurrentInstance().appContext.config.globalProperties
+const i18n = useI18n()
 
 const authStore = useAuthStore()
 const currenciesStore = useCurrenciesStore()
@@ -56,12 +58,12 @@ const isLoading = ref(false)
 const isRefreshLoading = ref(false)
 const columns = [
   {
-    title: app.proxy.$options.filters.capitalize(i18n.t('name')),
+    title: app.capitalize(i18n.t('name')),
     dataIndex: 'title',
     key: 'title'
   },
   {
-    title: app.proxy.$options.filters.capitalize(i18n.t('count')),
+    title: app.capitalize(i18n.t('count')),
     dataIndex: 'count',
     key: 'count'
   },

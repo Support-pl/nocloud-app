@@ -8,13 +8,11 @@
       >
         <template #actions="{ value }">
           <span style="display: flex; justify-content: space-between">
-            <a-icon
-              type="edit"
+            <edit-icon
               style="font-size: 20px"
               @click="openModal('edit', value)"
             />
-            <a-icon
-              type="delete"
+            <delete-icon
               style="font-size: 20px"
               @click="deleteDomain(value)"
             />
@@ -22,6 +20,7 @@
         </template>
       </a-table>
     </a-col>
+
     <a-col style="display: flex; gap: 10px">
       <a-button type="primary" @click="openModal">
         {{ $t('Add') }}
@@ -30,46 +29,56 @@
         {{ $t('Save') }}
       </a-button>
     </a-col>
+
     <a-modal
-      v-model="isVisible"
+      v-model:open="isVisible"
       :confirm-loading="isLoading"
       @ok="changeDomain"
     >
-      <a-form-model ref="form" :model="newData">
-        <a-form-model-item
+      <a-form ref="form" :model="newData">
+        <a-form-item
           v-if="!newData.key"
-          prop="type"
-          :label="$t('type') | capitalize"
+          name="type"
+          :label="capitalize($t('type'))"
           :rules="rules.req"
         >
-          <a-select v-model="newData.type">
-            <a-select-option
-              v-for="item of dnsTypes"
-              :key="item"
-              :value="item"
-            >
+          <a-select v-model:value="newData.type">
+            <a-select-option v-for="item of dnsTypes" :key="item">
               {{ item }}
             </a-select-option>
           </a-select>
-        </a-form-model-item>
-        <a-form-model-item
+        </a-form-item>
+
+        <a-form-item
           v-for="value of dnsKeys"
           :key="value"
-          :prop="value"
-          :label="$t(value) | capitalize"
+          :name="value"
+          :label="capitalize($t(value))"
           :rules="rules.req"
         >
-          <a-input v-model="newData[value]" />
-        </a-form-model-item>
-      </a-form-model>
+          <a-input v-model:value="newData[value]" />
+        </a-form-item>
+      </a-form>
     </a-modal>
   </a-row>
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
+
+const editIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/EditOutlined')
+)
+const deleteIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/DeleteOutlined')
+)
+
 export default {
   name: 'DomainsDraw',
-  props: { service: { type: Object, required: true } },
+  components: { editIcon, deleteIcon },
+  props: {
+    service: { type: Object, required: true }
+  },
   data () {
     return {
       isVisible: false,
@@ -78,12 +87,12 @@ export default {
       newData: {},
       columns: [
         {
-          title: this.$options.filters.capitalize(this.$t('type')),
+          title: this.capitalize(this.$t('type')),
           dataIndex: 'type',
           key: 'type'
         },
         {
-          title: this.$options.filters.capitalize(this.$t('subdomain')),
+          title: this.capitalize(this.$t('subdomain')),
           dataIndex: 'subdomain',
           key: 'subdomain'
         },

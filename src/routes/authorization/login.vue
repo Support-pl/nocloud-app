@@ -24,8 +24,8 @@
         <div class="login__onlogin-action">
           <div v-if="!appStore.onLogin.info" class="login__see-services">
             <router-link :to="{ name: 'services' }">
-              <a-icon type="shopping-cart" />
-              {{ $t("unregistered.see services") | capitalize }}
+              <shopping-cart-icon />
+              {{ capitalize($t("unregistered.see services")) }}
             </router-link>
           </div>
 
@@ -33,7 +33,7 @@
             {{ $t('comp_services.Your orders') }}:
             <div class="order__card">
               <div class="order__icon">
-                <a-icon :type="config.services[appStore.onLogin.info.type]?.icon" />
+                <component :is="config.services[appStore.onLogin.info.type]?.icon" />
               </div>
               <div class="order__info">
                 <div class="order__title">
@@ -44,7 +44,7 @@
                 </div>
               </div>
               <div class="order__remove" @click="appStore.clearOnLogin()">
-                <a-icon type="close" />
+                <close-icon />
               </div>
             </div>
           </div>
@@ -59,8 +59,9 @@
             <template v-if="remember">
               <span class="login__horisontal-line" />
               <a-input-password
-                v-model="password"
+                v-model:value="password"
                 placeholder="Password"
+                style="padding: 6px 15px; border: none"
               />
             </template>
           </div>
@@ -72,10 +73,10 @@
                 class="login__submit"
                 @click="send"
               >
-                {{ $t("login") | capitalize }}
+                {{ capitalize($t("login")) }}
               </button>
               <button v-else class="login__submit" @click="restorePass">
-                {{ $t("restore") | capitalize }}
+                {{ capitalize($t("restore")) }}
               </button>
 
               <a-select
@@ -116,15 +117,15 @@
         </div>
 
         <div class="login__forgot" style="margin-top: 30px">
-          <a-dropdown :trigger="['click']" placement="bottomCenter">
+          <a-dropdown :trigger="['click']" placement="bottom">
             <a class="ant-dropdown-link" @click.prevent>
               {{ $t('advanced options') }}
-              <a-icon type="down" />
+              <down-icon />
             </a>
             <template #overlay>
               <a-menu>
                 <a-menu-item key="0">
-                  <a-checkbox v-model="type">
+                  <a-checkbox v-model:checked="type">
                     {{ $t('use standard credentials') }}
                   </a-checkbox>
                 </a-menu-item>
@@ -134,18 +135,26 @@
         </div>
         <div class="login__forgot">
           <a href="#" @click.prevent="forgotPass">{{
-            remember ? $t("forgotPass") : $t("I have a password") | capitalize
+            capitalize(remember ? $t("forgotPass") : $t("I have a password"))
           }}</a>
         </div>
         <div class="login__forgot" style="margin-bottom: 30px">
           <router-link :to="{ name: 'register' }">
-            {{ $t("sign up") | capitalize }}
+            {{ capitalize($t("sign up")) }}
           </router-link>
         </div>
 
         <div id="qrcode" style="margin-top: 50px; text-align: center">
-          <p>{{ $t("Use on your phone:") }}</p>
-          <qrcode-vue :value="selfUrl" size="150" level="M" render-as="svg" />
+          <p style="margin-bottom: 0">
+            {{ $t("Use on your phone:") }}
+          </p>
+          <a-qrcode
+            :value="selfUrl"
+            :size="170"
+            :bordered="false"
+            error-level="M"
+            type="svg"
+          />
         </div>
       </div>
     </div>
@@ -153,20 +162,33 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { notification } from 'ant-design-vue'
-import QrcodeVue from 'qrcode.vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
-import router from '@/router'
-import i18n from '@/i18n'
 import config from '@/appconfig.js'
 import api from '@/api.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 
+const router = useRouter()
+const route = useRoute()
+const i18n = useI18n()
+
 const appStore = useAppStore()
 const authStore = useAuthStore()
+
+const closeIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CloseOutlined')
+)
+const shoppingCartIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ShoppingCartOutlined')
+)
+const downIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/DownOutlined')
+)
 
 const tryingLogin = ref(false)
 const loginError = ref('')
@@ -250,7 +272,7 @@ async function restorePass () {
 }
 
 function changeLocale (lang) {
-  i18n.locale = lang
+  i18n.locale.value = lang
   localStorage.setItem('lang', i18n.locale)
 }
 
@@ -273,8 +295,8 @@ function getImageName (name) {
 }
 
 onMounted(() => {
-  if (router.currentRoute.query.token) {
-    authStore.setToken(router.currentRoute.query.token)
+  if (route.query.token) {
+    authStore.setToken(route.query.token)
     router.replace({ name: 'root' }).then(() =>
       location.reload()
     )
@@ -504,7 +526,7 @@ export default { name: 'LoginView' }
   box-shadow: inset 0px 0px 0px 1px var(--main);
 }
 
-.login__see-services a i {
+.login__see-services a span {
   font-size: 1.5em;
 }
 

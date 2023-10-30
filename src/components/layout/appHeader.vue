@@ -13,157 +13,155 @@
             class="header_back_btn icon__wrapper"
             @click="routeBack"
           >
-            <a-icon type="left" />
+            <left-icon />
           </div>
           <!-- {{$t(`headerTitle.${headerTitle}`)}} -->
           <span>{{ headerTitle }}</span>
         </div>
 
         <div class="header__right-side">
-          <transition-group
-            v-if="headers[active] && isLogged && isButtonsVisible"
-            name="header__item-anim"
-            class="header__buttons"
-            tag="div"
-          >
-            <div
-              v-for="button in headers[active].buttons"
-              :key="button.icon"
-              class="header__button"
-            >
+          <div v-if="headers[active] && isLogged && isButtonsVisible" class="header__buttons">
+            <transition-group name="header__item-anim">
               <div
-                v-if="button.onClickFuncion && button.type == undefined"
-                class="icon__wrapper"
-                :class="[
-                  { active__btn: getState(button.name) },
-                  button.additionalClass,
-                ]"
-                @click="button.onClickFuncion"
+                v-for="button in headers[active].buttons"
+                :key="button.name"
+                class="header__button"
               >
-                <a-icon
-                  :spin="button.isSpin"
-                  class="header__icon"
-                  :type="button.icon"
-                />
-              </div>
+                <div
+                  v-if="button.onClickFuncion && button.type == undefined"
+                  class="icon__wrapper"
+                  :class="[
+                    { active__btn: getState(button.name) },
+                    button.additionalClass,
+                  ]"
+                  @click="button.onClickFuncion"
+                >
+                  <component
+                    :is="button.icon"
+                    :spin="button.isSpin"
+                    class="header__icon"
+                  />
+                </div>
 
-              <div
-                v-else-if="button.onClickFuncion && button.type != undefined"
-                class="icon__wrapper btn--no-image"
-                :class="[
-                  { active__btn: getState(button.name) },
-                  button.additionalClass,
-                ]"
-                @click="button.onClickFuncion"
-              >
-                <div class="header__btn--no-image">
-                  {{ button.name }}
+                <div
+                  v-else-if="button.onClickFuncion && button.type != undefined"
+                  class="icon__wrapper btn--no-image"
+                  :class="[
+                    { active__btn: getState(button.name) },
+                    button.additionalClass,
+                  ]"
+                  @click="button.onClickFuncion"
+                >
+                  <div class="header__btn--no-image">
+                    {{ button.name }}
+                  </div>
+                </div>
+
+                <a-input-search
+                  v-else-if="viewport < 576 && button.name.includes('search')"
+                  v-model:value="searchString"
+                  search
+                  placeholder="Title / Status / IP"
+                  @search="(text) => searchString = text"
+                  @keydown="updateSearch"
+                />
+
+                <div
+                  v-else-if="button.name.includes('search')"
+                  class="icon__wrapper"
+                  :class="[button.additionalClass]"
+                  :style="(searchString.length > 0) ? {
+                    borderRadius: '50%',
+                    background: 'var(--bright_bg)',
+                    color: 'var(--main)'
+                  } : null"
+                >
+                  <component
+                    :is="button.icon"
+                    v-if="!button.popover"
+                    class="header__icon"
+                  />
+                  <a-popover v-else arrow-point-at-center placement="left" :align="{ offset: [-10, 0] }">
+                    <template #content>
+                      <a-input-search
+                        v-model:value="searchString"
+                        enter-button
+                        placeholder="Title / Status / IP"
+                        @search="(text) => searchString = text"
+                        @keydown="updateSearch"
+                      >
+                        <template #suffix>
+                          <div style="cursor: pointer" @click="searchString = ''">
+                            <close-icon style="color: rgba(0, 0, 0, 0.45)" />
+                          </div>
+                        </template>
+                      </a-input-search>
+                    </template>
+                    <component :is="button.icon" class="header__icon" />
+                  </a-popover>
+                </div>
+
+                <div
+                  v-else
+                  class="icon__wrapper"
+                  :class="[
+                    { active__btn: getState(button.name) },
+                    button.additionalClass,
+                  ]"
+                >
+                  <component
+                    :is="button.icon"
+                    v-if="!button.popover"
+                    class="header__icon"
+                  />
+                  <a-popover
+                    v-else
+                    arrow-point-at-center
+                    placement="bottomRight"
+                    :open="isVisible"
+                    @open-change="((isOpen) ? isVisible = true : isVisible = !isVisible)"
+                  >
+                    <template #content>
+                      <a-range-picker
+                        v-if="active === 'billing' && activeInvoiceTab === 'Detail'"
+                        show-time
+                        :value="checkedList"
+                        @ok="updateFilter"
+                        @change="onChangeRange"
+                        @open-change="openRange"
+                      />
+                      <a-checkbox-group
+                        v-else
+                        v-model:value="checkedList"
+                        :options="plainOptions"
+                        @change="onChange"
+                      />
+                    </template>
+                    <template #title>
+                      <span>{{ capitalize($t("filter")) }}</span>
+                    </template>
+                    <component
+                      :is="button.icon"
+                      class="header__icon"
+                      :style="(checkedList.length > 0) ? {
+                        padding: '5px',
+                        borderRadius: '50%',
+                        background: 'var(--bright_bg)',
+                        color: 'var(--main)'
+                      } : null"
+                    />
+                  </a-popover>
                 </div>
               </div>
+            </transition-group>
+          </div>
 
-              <a-input-search
-                v-else-if="viewport < 576 && button.icon === 'search'"
-                v-model="searchString"
-                search
-                placeholder="Title / Status / IP"
-                @search="(text) => searchString = text"
-                @keydown="updateSearch"
-              />
-
-              <div
-                v-else-if="button.icon === 'search'"
-                class="icon__wrapper"
-                :class="[button.additionalClass]"
-                :style="(searchString.length > 0) ? {
-                  borderRadius: '50%',
-                  background: 'var(--bright_bg)',
-                  color: 'var(--main)'
-                } : null"
-              >
-                <a-icon
-                  v-if="!button.popover"
-                  class="header__icon"
-                  :type="button.icon"
-                />
-                <a-popover v-else arrow-point-at-center placement="left" :align="{ offset: [-10, 0] }">
-                  <template #content>
-                    <a-input-search
-                      v-model="searchString"
-                      enter-button
-                      placeholder="Title / Status / IP"
-                      @search="(text) => searchString = text"
-                      @keydown="updateSearch"
-                    >
-                      <template #suffix>
-                        <div style="cursor: pointer" @click="searchString = ''">
-                          <a-icon type="close" style="color: rgba(0, 0, 0, 0.45)" />
-                        </div>
-                      </template>
-                    </a-input-search>
-                  </template>
-                  <a-icon class="header__icon" :type="button.icon" />
-                </a-popover>
-              </div>
-
-              <div
-                v-else
-                class="icon__wrapper"
-                :class="[
-                  { active__btn: getState(button.name) },
-                  button.additionalClass,
-                ]"
-              >
-                <a-icon
-                  v-if="!button.popover"
-                  class="header__icon"
-                  :type="button.icon"
-                />
-                <a-popover
-                  v-else
-                  arrow-point-at-center
-                  placement="bottomRight"
-                  :visible="isVisible"
-                  @visibleChange="((isOpen) ? isVisible = true : isVisible = !isVisible)"
-                >
-                  <template #content>
-                    <a-range-picker
-                      v-if="active === 'billing' && activeInvoiceTab === 'Detail'"
-                      show-time
-                      :value="checkedList"
-                      @ok="updateFilter"
-                      @change="onChangeRange"
-                      @openChange="openRange"
-                    />
-                    <a-checkbox-group
-                      v-else
-                      v-model="checkedList"
-                      :options="plainOptions"
-                      @change="onChange"
-                    />
-                  </template>
-                  <template #title>
-                    <span>{{ $t("filter") | capitalize }}</span>
-                  </template>
-                  <a-icon
-                    class="header__icon"
-                    :type="button.icon"
-                    :style="(checkedList.length > 0) ? {
-                      padding: '5px',
-                      borderRadius: '50%',
-                      background: 'var(--bright_bg)',
-                      color: 'var(--main)'
-                    } : null"
-                  />
-                </a-popover>
-              </div>
-            </div>
-          </transition-group>
-
-          <transition
-            v-if="viewport < 576 && headers[active]?.buttons.length > 0 && isLogged"
-            name="header__item-anim"
-          >
-            <div class="header__button" @click="isButtonsVisible = !isButtonsVisible">
+          <transition name="header__item-anim">
+            <div
+              v-if="viewport < 576 && headers[active]?.buttons.length > 0 && isLogged"
+              class="header__button"
+              @click="isButtonsVisible = !isButtonsVisible"
+            >
               <div
                 class="icon__wrapper" :style="(isButtonsVisible) ? {
                   borderRadius: '50%',
@@ -171,7 +169,7 @@
                   color: 'var(--main)'
                 } : null"
               >
-                <a-icon class="header__icon" :type="(isButtonsVisible) ? 'up' : 'down'" />
+                <down-icon :rotate="(isButtonsVisible) ? 180 : 0" class="header__icon" />
               </div>
             </div>
           </transition>
@@ -181,11 +179,12 @@
             </div>
           </transition>
 
-          <transition
-            v-if="viewport < 576 && !isLogged"
-            name="header__item-anim"
-          >
-            <div class="header__button" @click="isButtonsVisible = !isButtonsVisible">
+          <transition name="header__item-anim">
+            <div
+              v-if="viewport < 576 && !isLogged"
+              class="header__button"
+              @click="isButtonsVisible = !isButtonsVisible"
+            >
               <div
                 class="icon__wrapper" :style="(isButtonsVisible) ? {
                   borderRadius: '50%',
@@ -193,20 +192,28 @@
                   color: 'var(--main)'
                 } : null"
               >
-                <a-icon class="header__icon" :type="(isButtonsVisible) ? 'up' : 'down'" />
+                <down-icon :rotate="(isButtonsVisible) ? 180 : 0" class="header__icon" />
               </div>
             </div>
           </transition>
 
           <div v-if="!isLogged && isButtonsVisible" class="header__selects">
-            <a-select v-model="$i18n.locale" style="width: 100%; border: none">
-              <a-select-option v-for="lang in langs" :key="lang" :value="lang">
+            <a-select
+              v-model:value="$i18n.locale"
+              style="width: 100%; color: var(--bright_font)"
+              class="header__inputs"
+            >
+              <a-select-option v-for="lang in langs" :key="lang">
                 {{ $t('localeLang', lang) }}
               </a-select-option>
             </a-select>
 
-            <a-select v-model="currencyCode" style="width: 100%; border: none">
-              <a-select-option v-for="currency in currencies" :key="currency.code" :value="currency.code">
+            <a-select
+              v-model:value="currencyCode"
+              style="width: 100%; color: var(--bright_font)"
+              class="header__inputs"
+            >
+              <a-select-option v-for="currency in currencies" :key="currency.code">
                 {{ currency.code }}
               </a-select-option>
             </a-select>
@@ -226,8 +233,16 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapState, mapWritableState, mapActions } from 'pinia'
 import moment from 'moment'
+import {
+  FilterOutlined as filterIcon,
+  ReloadOutlined as reloadIcon,
+  SearchOutlined as searchIcon,
+  PlusOutlined as plusIcon
+} from '@ant-design/icons-vue'
+
 import config from '@/appconfig.js'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
 
@@ -246,9 +261,19 @@ import { useTransactionsStore } from '@/stores/transactions.js'
 
 import balance from '@/components/ui/balance.vue'
 
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
+const closeIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CloseOutlined')
+)
+const downIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/DownOutlined')
+)
+
 export default {
   name: 'AppHeader',
-  components: { balance },
+  components: { balance, leftIcon, closeIcon, downIcon },
   data () {
     return {
       isOpen: false,
@@ -269,19 +294,19 @@ export default {
           buttons: [
             {
               name: 'support_filter',
-              icon: 'filter',
+              icon: filterIcon,
               popover: true
             },
             {
               name: 'support_plus',
-              icon: 'plus',
+              icon: plusIcon,
               onClickFuncion: () => { this.isAddingTicket = !this.isAddingTicket },
               isActiveState: this.isAddingTicket,
               additionalClass: ['active-rotate']
             },
             {
               name: 'support_reload',
-              icon: 'reload',
+              icon: reloadIcon,
               onClickFuncion: () => {
                 this.fetchTickets()
                 this.fetchUserData()
@@ -295,12 +320,12 @@ export default {
           buttons: [
             {
               name: 'cloud_search',
-              icon: 'search',
+              icon: searchIcon,
               popover: true
             },
             {
               name: 'cloud_reload',
-              icon: 'reload',
+              icon: reloadIcon,
               onClickFuncion: () => {
                 this.fetchClouds()
                 this.fetchProducts(this.billingUser.client_id)
@@ -315,13 +340,13 @@ export default {
           buttons: [
             {
               name: 'invoice_filter',
-              icon: 'filter',
+              icon: filterIcon,
               popover: true
               // доделать фильтр тут
             },
             {
               name: 'invoice_reload',
-              icon: 'reload',
+              icon: reloadIcon,
               onClickFuncion: () => {
                 const params = {
                   account: this.userdata.uuid,
@@ -456,18 +481,18 @@ export default {
     },
     headerTitle () {
       if (this.headers[this.active] && this.$route.query.type === 'PaaS') {
-        return this.$options.filters.capitalize(this.$t('Servers'))
+        return this.capitalize(this.$t('Servers'))
       }
 
       if (this.headers[this.active]) {
-        return this.$options.filters.capitalize(
+        return this.capitalize(
           this.$t(this.headers[this.active].title)
         )
       } else if (this.$route.meta.headerTitle) {
         // console.log(this.$route.meta.headerTitle);
         // console.log(this.$t(this.$route.meta.headerTitle));
         // return this.$route.meta.headerTitle
-        return this.$options.filters.capitalize(
+        return this.capitalize(
           this.$t(this.$route.meta.headerTitle)
         )
       } else return ''
@@ -717,6 +742,15 @@ export default {
   margin-right: 20px;
 }
 
+.ant-select.header__inputs .ant-select-selector {
+  background: transparent;
+  color: var(--bright_font);
+}
+
+.ant-select.header__inputs.ant-select-open .ant-select-selection-item {
+  color: var(--bright_font);
+}
+
 .header__links {
   display: flex;
   align-items: center;
@@ -859,7 +893,7 @@ export default {
 .header__item-anim-leave-active {
   transition: all 0.2s;
 }
-.header__item-anim-enter,
+.header__item-anim-enter-from,
 .header__item-anim-leave-to {
   opacity: 0;
   transform: translateY(30px);

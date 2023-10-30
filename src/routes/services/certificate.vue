@@ -13,9 +13,9 @@
           <component
             :is="steps[current].content"
             :personal="personal"
-            :personal_back="personalBack ?? {}"
+            :personal-back="personalBack ?? {}"
             :csr="csr"
-            :product_info="productInfo"
+            :product-info="productInfo"
             @handleClickNext="handleClickNext"
             @handleClickPrev="handleClickPrev"
             @saveProductInfo="saveProductInfo"

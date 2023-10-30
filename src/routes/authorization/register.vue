@@ -25,7 +25,7 @@
           {{ $t('comp_services.Your orders') }}:
           <div class="order__card">
             <div class="order__icon">
-              <a-icon :type="config.services[appStore.onLogin.info.type]?.icon" />
+              <component :is="config.services[appStore.onLogin.info.type]?.icon" />
             </div>
             <div class="order__info">
               <div class="order__title">
@@ -36,7 +36,7 @@
               </div>
             </div>
             <div class="order__remove" @click="appStore.clearOnLogin">
-              <a-icon type="close" />
+              <close-icon />
             </div>
           </div>
         </div>
@@ -48,7 +48,7 @@
             <!-- <div class="inputs__log-pas">
               <input type="text" placeholder="Email" v-model="userinfo.email">
               <span class="login__horisontal-line"></span>
-              <input type="password" :placeholder="$t('clientinfo.password') | capitalize"  v-model="userinfo.password">
+              <input type="password" :placeholder="capitalize($t('clientinfo.password'))"  v-model="userinfo.password">
             </div> -->
 
             <div class="inputs__log-pas">
@@ -56,7 +56,7 @@
                 v-model="userinfo.firstname"
                 type="text"
                 name="firstname"
-                :placeholder="$t('clientinfo.firstname') + ' *' | capitalize"
+                :placeholder="`${capitalize($t('clientinfo.firstname'))} *`"
                 readonly
                 onfocus="this.removeAttribute('readonly')"
               >
@@ -65,7 +65,7 @@
                 v-model="userinfo.lastname"
                 type="text"
                 name="lastname"
-                :placeholder="$t('clientinfo.lastname') + ' *' | capitalize"
+                :placeholder="`${capitalize($t('clientinfo.lastname'))} *`"
                 readonly
                 onfocus="this.removeAttribute('readonly')"
               >
@@ -74,7 +74,7 @@
                 v-model="userinfo.email"
                 type="email"
                 name="email"
-                :placeholder="$t('clientinfo.email') + ' *' | capitalize"
+                :placeholder="`${capitalize($t('clientinfo.email'))} *`"
                 readonly
                 onfocus="this.removeAttribute('readonly')"
               >
@@ -82,13 +82,14 @@
               <span class="login__horisontal-line" />
               <a-select
                 id="country"
-                v-model="userinfo.country"
-                show-search
-                :placeholder="$t('clientinfo.countryname') + ' *' | capitalize"
+                v-model:value="userinfo.country"
                 name="country"
-                option-filter-prop="children"
+                class="register__select"
+                show-search
+                :filter-option="searchCountries"
+                :placeholder="`${capitalize($t('clientinfo.countryname'))} *`"
               >
-                <a-select-option v-for="country in countries" :key="country.code" :value="country.code">
+                <a-select-option v-for="country in countries" :key="country.code">
                   {{ $t(`country.${country.code}`) }}
                 </a-select-option>
               </a-select>
@@ -99,7 +100,7 @@
                 v-phone="phonecode"
                 type="tel"
                 name="phone"
-                :placeholder="$t('clientinfo.phone number') + ' *' | capitalize"
+                :placeholder="`${capitalize($t('clientinfo.phone number'))} *`"
                 :disabled="!userinfo.country"
                 autocomplete="tel"
                 maxlength="18"
@@ -109,7 +110,7 @@
                 v-model="userinfo.password"
                 type="password"
                 name="password"
-                :placeholder="$t('clientinfo.password') + ' *' | capitalize"
+                :placeholder="`${capitalize($t('clientinfo.password'))} *`"
                 readonly
                 onfocus="this.removeAttribute('readonly')"
               >
@@ -117,42 +118,42 @@
             </div>
 
             <div class="inputs__log-pas" style="padding: 8px 16px">
-              <a-checkbox v-model="invoiceChecked">
+              <a-checkbox v-model:checked="invoiceChecked">
                 {{ $t('Company Details') }}
               </a-checkbox>
             </div>
 
             <div v-if="invoiceChecked" class="inputs__log-pas">
-              <input v-model="userinfo.companyname" :placeholder="$t('clientinfo.companyname') + ' *' | capitalize">
+              <input v-model="userinfo.companyname" :placeholder="`${capitalize($t('clientinfo.companyname'))} *`">
               <span class="login__horisontal-line" />
               <input v-model="userinfo.tax_id" placeholder="VAT ID">
               <!-- <span class="login__horisontal-line"></span>
-              <input :placeholder="$t('clientinfo.state') | capitalize" v-model="userinfo.state"> -->
+              <input :placeholder="capitalize($t('clientinfo.state'))" v-model="userinfo.state"> -->
               <span class="login__horisontal-line" />
-              <input v-model="userinfo.city" :placeholder="$t('clientinfo.city') + ' *' | capitalize">
+              <input v-model="userinfo.city" :placeholder="`${capitalize($t('clientinfo.city'))} *`">
               <span class="login__horisontal-line" />
-              <input v-model="userinfo.postcode" :placeholder="$t('clientinfo.postcode') + ' *' | capitalize">
+              <input v-model="userinfo.postcode" :placeholder="`${capitalize($t('clientinfo.postcode'))} *`">
               <span class="login__horisontal-line" />
-              <input v-model="userinfo.address1" :placeholder="$t('clientinfo.address') + ' *' | capitalize">
+              <input v-model="userinfo.address1" :placeholder="`${capitalize($t('clientinfo.address'))} *`">
             </div>
 
             <div class="inputs__log-pas">
-              <a-select style="width: 100%; border: none" :value="$i18n.locale" @change="(e) => $i18n.locale = e">
-                <a-select-option v-for="lang in config.languages" :key="lang" :value="lang">
+              <a-select v-model:value="$i18n.locale" class="register__select" style="width: 100%; border: none">
+                <a-select-option v-for="lang in config.languages" :key="lang">
                   {{ $t('localeLang', lang) }}
                 </a-select-option>
               </a-select>
 
               <span class="login__horisontal-line" />
-              <a-select v-model="userinfo.currency" style="width: 100%; border: none">
-                <a-select-option v-for="currency in currencies" :key="currency.id" :value="currency.id">
+              <a-select v-model:value="userinfo.currency" class="register__select" style="width: 100%; border: none">
+                <a-select-option v-for="currency in currencies" :key="currency.id">
                   {{ currency.code }}
                 </a-select-option>
               </a-select>
             </div>
 
             <button v-if="!registerLoading" class="login__submit" @click.prevent="submitHandler">
-              {{ $t('clientinfo.register') | capitalize }}
+              {{ capitalize($t('clientinfo.register')) }}
             </button>
 
             <div v-else class="login__loading">
@@ -164,7 +165,7 @@
         </div>
         <div class="register__already-has" style="margin-top: 40px">
           <router-link :to="{name: 'login'}">
-            {{ $t('clientinfo.already have account?') | capitalize }}
+            {{ capitalize($t('clientinfo.already have account?')) }}
           </router-link>
         </div>
       </div>
@@ -173,11 +174,11 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { notification, message } from 'ant-design-vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
-import router from '@/router'
-import i18n from '@/i18n'
 import api from '@/api.js'
 import config from '@/appconfig.js'
 
@@ -185,8 +186,15 @@ import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import countries from '@/assets/countries.json'
 
+const router = useRouter()
+const i18n = useI18n()
+
 const appStore = useAppStore()
 const authStore = useAuthStore()
+
+const closeIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CloseOutlined')
+)
 
 const currencies = ref([])
 const registerLoading = ref(false)
@@ -279,6 +287,12 @@ async function submitHandler () {
   } finally {
     registerLoading.value = false
   }
+}
+
+function searchCountries (input, option) {
+  const country = option.children(option)[0].children.toLowerCase()
+
+  return country.includes(input.toLowerCase())
 }
 
 async function fetchCurrencies () {
@@ -412,6 +426,11 @@ export default { name: 'RegisterView' }
   overflow: hidden;
   box-shadow: 3px 8px 20px rgba(164, 180, 244, .5);
   margin-bottom: 25px;
+}
+
+.ant-select.register__select .ant-select-selector {
+  padding: 0px 15px;
+  border: 0;
 }
 
 .login__submit {

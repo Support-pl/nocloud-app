@@ -8,102 +8,99 @@
           <span class="content__small"> #{{ authStore.billingUser.id }} </span>
         </div>
         <div class="content__fields-wrapper" :style="{ margin: (!isVisible) ? 'auto' : null }">
-          <a-form-model
+          <a-form
             v-if="isVisible"
             ref="formRef"
+            layout="vertical"
             :model="form"
             :rules="rules"
           >
-            <a-form-model-item
-              :label="$t('clientinfo.firstname') | capitalize"
-              prop="firstname"
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.firstname'))}:`"
+              name="firstname"
             >
-              <a-input v-model="form.firstname" :disabled="isDisabled" />
-            </a-form-model-item>
-            <a-form-model-item
-              :label="$t('clientinfo.lastname') | capitalize"
-              prop="lastname"
+              <a-input v-model:value="form.firstname" :disabled="isDisabled" />
+            </a-form-item>
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.lastname'))}:`"
+              name="lastname"
             >
-              <a-input v-model="form.lastname" :disabled="isDisabled" />
-            </a-form-model-item>
-            <a-form-model-item
-              :label="$t('clientinfo.companyname') | capitalize"
-              prop="companyname"
+              <a-input v-model:value="form.lastname" :disabled="isDisabled" />
+            </a-form-item>
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.companyname'))}:`"
+              name="companyname"
             >
-              <a-input v-model="form.companyname" :disabled="isDisabled" />
-            </a-form-model-item>
-            <a-form-model-item
-              :label="$t('clientinfo.email') | capitalize"
-              prop="email"
+              <a-input v-model:value="form.companyname" :disabled="isDisabled" />
+            </a-form-item>
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.email'))}:`"
+              name="email"
             >
-              <a-input v-model="form.email" :disabled="isDisabled" />
-            </a-form-model-item>
+              <a-input v-model:value="form.email" :disabled="isDisabled" />
+            </a-form-item>
 
-            <a-form-model-item
-              :label="$t('clientinfo.address1') | capitalize"
-              prop="address1"
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.address1'))}:`"
+              name="address1"
             >
-              <a-input v-model="form.address1" :disabled="isDisabled" />
-            </a-form-model-item>
+              <a-input v-model:value="form.address1" :disabled="isDisabled" />
+            </a-form-item>
 
-            <a-form-model-item
-              :label="$t('clientinfo.city') | capitalize"
-              prop="city"
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.city'))}:`"
+              name="city"
             >
-              <a-input v-model="form.city" :disabled="isDisabled" />
-            </a-form-model-item>
-            <a-form-model-item
-              :label="$t('clientinfo.state') | capitalize"
-              prop="state"
+              <a-input v-model:value="form.city" :disabled="isDisabled" />
+            </a-form-item>
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.state'))}:`"
+              name="state"
             >
-              <a-input v-model="form.state" :disabled="isDisabled" />
-            </a-form-model-item>
-            <a-form-model-item
-              :label="$t('clientinfo.postcode') | capitalize"
-              prop="postcode"
+              <a-input v-model:value="form.state" :disabled="isDisabled" />
+            </a-form-item>
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.postcode'))}:`"
+              name="postcode"
             >
-              <a-input v-model="form.postcode" :disabled="isDisabled" />
-            </a-form-model-item>
-            <a-form-model-item
-              :label="$t('clientinfo.phonenumber') | capitalize"
-              prop="phonenumber"
+              <a-input v-model:value="form.postcode" :disabled="isDisabled" />
+            </a-form-item>
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.phonenumber'))}:`"
+              name="phonenumber"
             >
               <input
                 v-model="form.phonenumber"
                 v-phone="phonecode"
                 type="tel"
-                class="ant-input"
+                class="user__input"
                 :disabled="!form.countryname || isDisabled"
               >
-            </a-form-model-item>
+            </a-form-item>
 
-            <a-form-model-item
-              :label="$t('clientinfo.countryname') | capitalize"
-              prop="countryname"
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.countryname'))}:`"
+              name="countryname"
             >
               <a-select
-                v-model="form.countryname"
+                v-model:value="form.countryname"
                 show-search
-                option-filter-prop="children"
+                :filter-option="searchCountries"
                 :disabled="authStore.billingUser.country_stop === 1 || isDisabled"
               >
-                <a-select-option
-                  v-for="country in countries"
-                  :key="country.code"
-                  :value="country.code"
-                >
+                <a-select-option v-for="country in countries" :key="country.code">
                   {{ $t(`country.${country.code}`) }}
                 </a-select-option>
               </a-select>
-            </a-form-model-item>
+            </a-form-item>
 
-            <a-form-model-item
+            <a-form-item
               v-if="isPasswordVisible"
-              :label="$t('clientinfo.password') | capitalize"
-              prop="password"
+              :label="`${capitalize($t('clientinfo.password'))}:`"
+              name="password"
             >
-              <a-input v-model="form.password" />
-            </a-form-model-item>
+              <a-input v-model:value="form.password" />
+            </a-form-item>
 
             <a-button
               v-if="!isDisabled"
@@ -121,7 +118,7 @@
             >
               {{ $t("Cancel") }}
             </a-button>
-          </a-form-model>
+          </a-form>
 
           <loading v-else-if="isLoading" />
           <empty v-else style="height: 100%" />
@@ -132,9 +129,9 @@
 </template>
 
 <script setup>
-import { computed, ref, set } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { notification } from 'ant-design-vue'
-import i18n from '@/i18n'
+import { useI18n } from 'vue-i18n'
 import api from '@/api.js'
 
 import { useAuthStore } from '@/stores/auth.js'
@@ -143,6 +140,7 @@ import countries from '@/assets/countries.json'
 import empty from '@/components/ui/empty.vue'
 import loading from '@/components/ui/loading.vue'
 
+const i18n = useI18n()
 const authStore = useAuthStore()
 
 const formRef = ref(null)
@@ -150,68 +148,26 @@ const form = ref({})
 const isLoading = ref(false)
 const isSendingInfo = ref(false)
 
-const rules = {
-  firstname: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  lastname: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  companyname: [
-    {
-      required: false,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  email: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  address1: [
-    {
-      required: false,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  city: [
-    {
-      required: false,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  state: [
-    {
-      required: false,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  countryname: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  postcode: [
-    {
-      required: false,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  phonenumber: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ]
-}
+const reqRule = reactive({
+  message: 'Field is required',
+  trigger: 'change'
+})
+const rules = computed(() => ({
+  firstname: [{ required: true, ...reqRule }],
+  lastname: [{ required: true, ...reqRule }],
+  companyname: [{ required: false, ...reqRule }],
+  email: [{ required: true, ...reqRule }],
+  address1: [{ required: false, ...reqRule }],
+  city: [{ required: false, ...reqRule }],
+  state: [{ required: false, ...reqRule }],
+  countryname: [{ required: true, ...reqRule }],
+  postcode: [{ required: false, ...reqRule }],
+  phonenumber: [{ required: true, ...reqRule }]
+}))
+
+onMounted(() => {
+  reqRule.message = `${i18n.t('ssl_product.field is required')}`
+})
 
 const deltaInfo = computed(() => {
   const info = { ...form.value, country: form.value.countryname }
@@ -257,7 +213,7 @@ function installDataToBuffer () {
   ]
 
   interestedKeys.forEach((key) => {
-    set(form.value, key, authStore.billingUser[key])
+    form.value[key] = authStore.billingUser[key]
   })
 }
 
@@ -281,46 +237,51 @@ async function fetchInfo () {
   }
 }
 
-function sendInfo () {
-  formRef.value.validate(async (valid) => {
-    if (!valid) {
-      notification.error({
-        message: i18n.t('ssl_product.fields is required')
-      })
+async function sendInfo () {
+  try {
+    await formRef.value.validate()
+  } catch {
+    notification.error({
+      message: i18n.t('ssl_product.fields is required')
+    })
+    return
+  }
 
-      return false
-    }
+  try {
+    const { locale } = i18n.getLocaleMessage(i18n.locale)
+    const params = (localStorage.getItem('oauth'))
+      ? {
+          ...deltaInfo.value,
+          app_language: locale,
+          uuid: authStore.userdata.uuid,
+          run: 'create_user_active'
+        }
+      : {
+          run: 'update_client',
+          user: { ...authStore.billingUser, ...deltaInfo.value }
+        }
 
-    try {
-      const { locale } = i18n.getLocaleMessage(i18n.locale)
-      const params = (localStorage.getItem('oauth'))
-        ? {
-            ...deltaInfo.value,
-            app_language: locale,
-            uuid: authStore.userdata.uuid,
-            run: 'create_user_active'
-          }
-        : {
-            run: 'update_client',
-            user: { ...authStore.billingUser, ...deltaInfo.value }
-          }
+    isSendingInfo.value = true
+    await api.get(authStore.baseURL, { params })
 
-      isSendingInfo.value = true
-      await api.get(authStore.baseURL, { params })
+    localStorage.removeItem('oauth')
+    notification.success({ message: i18n.t('Done') })
 
-      localStorage.removeItem('oauth')
-      notification.success({ message: i18n.t('Done') })
+    fetchInfo()
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
 
-      fetchInfo()
-    } catch (error) {
-      const message = error.response?.data?.message ?? error.message ?? error
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
+  } finally {
+    isSendingInfo.value = false
+  }
+}
 
-      notification.error({ message: i18n.t(message) })
-      console.error(error)
-    } finally {
-      isSendingInfo.value = false
-    }
-  })
+function searchCountries (input, option) {
+  const country = option.children(option)[0].children.toLowerCase()
+
+  return country.includes(input.toLowerCase())
 }
 
 if (!('firstname' in authStore.billingUser)) fetchInfo()
@@ -357,6 +318,24 @@ export default { name: 'UserSettingsView' }
   font-size: 0.7em;
   opacity: 0.5;
 }
+
+.user__input {
+  padding: 4px 11px;
+  font-size: 14px;
+  width: 100%;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.user__input:disabled {
+  color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(0, 0, 0, 0.04);
+  border-color: #d9d9d9;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
 .user__button--cancel {
   margin-left: 10px;
 }

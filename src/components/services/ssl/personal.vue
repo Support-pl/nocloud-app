@@ -1,15 +1,13 @@
 <template>
   <div>
-    <a-form-model
+    <a-form
       v-if="personal.firstname"
       ref="personalForm"
       :model="personal"
       :rules="rules"
     >
       <a-divider orientation="left">
-        {{
-          $t("ssl_product.technical_Contact")
-        }}
+        {{ $t("ssl_product.technical_Contact") }}
       </a-divider>
       <a-alert
         style="margin: 10px"
@@ -17,8 +15,8 @@
         type="warning"
         show-icon
       />
-      <a-form-model-item :label="$t('ssl_product.order type')" prop="order">
-        <a-select v-model="personal.order" placeholder=" Please choose one...">
+      <a-form-item :label="$t('ssl_product.order type')" name="order">
+        <a-select v-model:value="personal.order" placeholder=" Please choose one...">
           <a-select-option value="newOrder">
             {{ $t("ssl_product.new order") }}
           </a-select-option>
@@ -26,11 +24,11 @@
             {{ $t("ssl_product.renewal") }}
           </a-select-option>
         </a-select>
-      </a-form-model-item>
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.webserver type')" prop="webserver">
+      <a-form-item :label="$t('ssl_product.webserver type')" name="webserver">
         <a-select
-          v-model="personal.webserver"
+          v-model:value="personal.webserver"
           placeholder="Please choose one..."
         >
           <a-select-option value="Nginx">
@@ -43,108 +41,99 @@
             IIS (Windows OS)
           </a-select-option>
         </a-select>
-      </a-form-model-item>
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.firstname')" prop="firstname">
-        <a-input v-model="personal.firstname" />
-      </a-form-model-item>
+      <a-form-item :label="$t('ssl_product.firstname')" name="firstname">
+        <a-input v-model:value="personal.firstname" />
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.lastname')" prop="lastname">
-        <a-input v-model="personal.lastname" />
-      </a-form-model-item>
+      <a-form-item :label="$t('ssl_product.lastname')" name="lastname">
+        <a-input v-model:value="personal.lastname" />
+      </a-form-item>
 
-      <a-form-model-item label="Email" prop="email">
-        <a-input v-model="personal.email" type="email" />
-      </a-form-model-item>
+      <a-form-item label="Email" name="email">
+        <a-input v-model:value="personal.email" type="email" />
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.phone number')" prop="phonenumber">
-        <a-input v-model.number="personal.phonenumber" />
-      </a-form-model-item>
+      <a-form-item :label="$t('ssl_product.phone number')" name="phonenumber">
+        <a-input v-model:value.number="personal.phonenumber" />
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.companyname')" prop="companyname">
-        <a-input v-model="personal.companyname" />
-      </a-form-model-item>
+      <a-form-item :label="$t('ssl_product.companyname')" name="companyname">
+        <a-input v-model:value="personal.companyname" />
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.address')" prop="address1">
-        <a-input v-model="personal.address1" />
-      </a-form-model-item>
+      <a-form-item :label="$t('ssl_product.address')" name="address1">
+        <a-input v-model:value="personal.address1" />
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.city')" prop="city">
-        <a-input v-model="personal.city" />
-      </a-form-model-item>
+      <a-form-item :label="$t('ssl_product.city')" name="city">
+        <a-input v-model:value="personal.city" />
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.state')" prop="state">
-        <a-input v-model="personal.state" />
-      </a-form-model-item>
+      <a-form-item :label="$t('ssl_product.state')" name="state">
+        <a-input v-model:value="personal.state" />
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.countryname')" prop="country">
+      <a-form-item :label="$t('ssl_product.countryname')" name="country">
         <a-select
-          v-model="personal.country"
+          v-model:value="personal.country"
           placeholder=" Please choose one..."
         >
-          <a-select-option
-            v-for="country in Object.keys(countries)"
-            :key="country"
-            :value="country"
-          >
+          <a-select-option v-for="country in Object.keys(countries)" :key="country">
             {{ country }}: {{ $t(`country.${country}`) }}
           </a-select-option>
         </a-select>
-      </a-form-model-item>
+      </a-form-item>
 
-      <div v-if="orgVerification.includes(product_info.id)">
+      <div v-if="orgVerification.includes(productInfo.id)">
         <a-divider orientation="left">
           Company details
         </a-divider>
 
-        <a-form-model-item
+        <a-form-item
           v-for="(val, key) in companyFields"
           :key="key"
           :label="$t('ssl_product.' + key)"
-          :prop="key"
+          :name="key"
         >
-          <a-input v-model="personal[key]" />
-        </a-form-model-item>
+          <a-input v-model:value="personal[key]" />
+        </a-form-item>
 
-        <a-form-model-item :label="$t('ssl_product.org_country')" prop="org_country">
+        <a-form-item :label="$t('ssl_product.org_country')" name="org_country">
           <a-select
-            v-model="personal.org_country"
+            v-model:value="personal.org_country"
             placeholder=" Please choose one..."
           >
-            <a-select-option
-              v-for="country in countries"
-              :key="country.code"
-              :value="country.code"
-            >
+            <a-select-option v-for="country in countries" :key="country.code">
               {{ country.code }}: {{ country.title }}
             </a-select-option>
           </a-select>
-        </a-form-model-item>
+        </a-form-item>
       </div>
 
-      <a-form-model-item>
+      <a-form-item>
         <a-button type="primary" @click="$emit('handleClickPrev', personal)">
-          <a-icon type="left" /> {{ $t("ssl_product.back") }}
+          <left-icon /> {{ $t("ssl_product.back") }}
         </a-button>
         <a-button
           type="primary"
           style="margin-left: 10px"
           @click="handleClickNext"
         >
-          {{ $t("ssl_product.continue") }} <a-icon type="right" />
+          {{ $t("ssl_product.continue") }} <right-icon />
         </a-button>
-      </a-form-model-item>
-    </a-form-model>
+      </a-form-item>
+    </a-form>
 
     <empty v-else style="height: 100%" />
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, set } from 'vue'
+import { defineAsyncComponent, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
-
-import i18n from '@/i18n'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.js'
 
 import countries from '@/assets/countries.json'
@@ -152,12 +141,20 @@ import empty from '@/components/ui/empty.vue'
 
 const props = defineProps({
   csr: { type: Object, default: () => {} },
-  product_info: { type: Object, default: () => {} },
-  personal_back: { type: Object, default: () => {} }
+  productInfo: { type: Object, default: () => {} },
+  personalBack: { type: Object, default: () => {} }
 })
-const emits = defineEmits(['handleClickNext'])
+const emits = defineEmits(['handleClickNext', 'handleClickPrev'])
 
+const i18n = useI18n()
 const authStore = useAuthStore()
+
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
+const rightIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/RightOutlined')
+)
 
 const interestedKeys = [
   'firstname',
@@ -266,24 +263,24 @@ const rules = {
   ]
 }
 
-function handleClickNext () {
-  personalForm.value.validate((valid) => {
-    if (valid) {
-      if ('csr' in personal.value) delete personal.value.csr
-      emits('handleClickNext', personal.value)
-    } else {
-      message.error(`${i18n.t('ssl_product.fields is required')}`)
-      return false
-    }
-  })
+async function handleClickNext () {
+  try {
+    await personalForm.value.validate()
+
+    if ('csr' in personal.value) delete personal.value.csr
+    emits('handleClickNext', personal.value)
+  } catch {
+    message.error(`${i18n.t('ssl_product.fields is required')}`)
+    return false
+  }
 }
 
 function installDataToBuffer () {
-  if (props.personal_back.firstname) {
-    personal.value = Object.assign({}, personal.value, props.personal_back)
+  if (props.personalBack.firstname) {
+    personal.value = Object.assign({}, personal.value, props.personalBack)
   } else {
     interestedKeys.forEach((key) => {
-      set(personal.value, key, authStore.billingUser[key])
+      personal.value[key] = authStore.billingUser[key]
     })
     personal.value = Object.assign({}, personal.value, props.csr)
   }
@@ -291,7 +288,7 @@ function installDataToBuffer () {
 
 onMounted(() => {
   installDataToBuffer()
-  if (orgVerification.includes(props.product_info.id)) {
+  if (orgVerification.includes(props.productInfo.id)) {
     for (const keyField in companyFields) {
       rules[keyField] = [
         {

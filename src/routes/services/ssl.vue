@@ -331,30 +331,26 @@
 
                 <a-modal
                   :title="$t('Confirm')"
-                  :visible="modal.confirmCreate"
+                  :open="modal.confirmCreate"
                   :confirm-loading="modal.confirmLoading"
                   :cancel-text="$t('Cancel')"
                   @ok="handleOk"
                   @cancel="handleCancel"
                 >
-                  <a-form-model :model="actionData">
-                    <a-form-model-item :label="$t('ssl_product.DCV Method')">
-                      <a-select v-model="actionData.dcv">
-                        <a-select-option
-                          v-for="item in dcvList"
-                          :key="item"
-                          :value="item"
-                        >
+                  <a-form :model="actionData">
+                    <a-form-item :label="$t('ssl_product.DCV Method')">
+                      <a-select v-model:value="actionData.dcv">
+                        <a-select-option v-for="item in dcvList" :key="item">
                           {{ item }}
                         </a-select-option>
                       </a-select>
-                    </a-form-model-item>
+                    </a-form-item>
 
-                    <a-form-model-item
+                    <a-form-item
                       v-if="actionData.dcv === 'EMAIL'"
                       :label="$t('ssl_product.email')"
                     >
-                      <a-select v-model="actionData.email">
+                      <a-select v-model:value="actionData.email">
                         <a-select-option
                           v-for="item in emailList"
                           :key="item"
@@ -363,8 +359,8 @@
                           {{ item }}{{ data.domain }}
                         </a-select-option>
                       </a-select>
-                    </a-form-model-item>
-                  </a-form-model>
+                    </a-form-item>
+                  </a-form>
                 </a-modal>
               </div>
             </div>
@@ -377,14 +373,15 @@
 </template>
 
 <script setup>
-import { computed, ref, set } from 'vue'
+import { computed, ref } from 'vue'
 import { message } from 'ant-design-vue'
-import router from '@/router'
+import { useRoute } from 'vue-router'
 import api from '@/api.js'
 
 import { useInstancesStore } from '@/stores/instances.js'
 import loading from '@/components/ui/loading.vue'
 
+const route = useRoute()
 const instancesStore = useInstancesStore()
 
 const method = ['http', 'https']
@@ -429,7 +426,7 @@ const getTagColor = computed(() => {
 async function fetch () {
   try {
     const domain = instancesStore.getInstances.find(
-      ({ uuid }) => uuid === router.currentRoute.params.id
+      ({ uuid }) => uuid === route.params.id
     )
 
     const { meta } = await instancesStore.invokeAction({
@@ -439,7 +436,7 @@ async function fetch () {
     })
 
     data.value = { SSL: { configdata: meta.data } }
-    set(actionData.value, 'email', `admin@${meta.data.domain}`)
+    actionData.value.email = `admin@${meta.data.domain}`
   } catch (error) {
     console.error(error)
   }

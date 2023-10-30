@@ -2,7 +2,7 @@
   <div class="maintanance">
     <a-result title="Oops...">
       <template #icon>
-        <a-icon type="tool" />
+        <tool-icon />
       </template>
 
       <template #subTitle>
@@ -24,9 +24,15 @@
 </template>
 
 <script setup>
+import { defineAsyncComponent } from 'vue'
+
 defineProps({
   mainPageButton: { type: Boolean, default: true }
 })
+
+const toolIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ToolOutlined')
+)
 </script>
 
 <script>

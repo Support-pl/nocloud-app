@@ -2,8 +2,8 @@ import Api from 'nocloudjsrest'
 import { useAppStore } from './stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 
-// const api = new Api()
-const api = new Api(VUE_APP_BASE_URL)
+const api = new Api('http://localhost/https://api.nocloud.ione-cloud.net', 8624)
+// const api = new Api(VUE_APP_BASE_URL)
 
 api.axios.interceptors.response.use(
   (response) => {

@@ -16,7 +16,7 @@
         :page-size="productsStore.size"
         :total="productsStore.total"
         :current="productsStore.page"
-        @showSizeChange="onShowSizeChange"
+        @show-size-change="onShowSizeChange"
         @change="onShowSizeChange"
       />
     </div>
@@ -25,7 +25,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import router from '@/router'
+import { useRoute } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useSpStore } from '@/stores/sp.js'
@@ -34,6 +34,8 @@ import { useInstancesStore } from '@/stores/instances.js'
 
 import servicesWrapper from '@/components/services/servicesWrapper.vue'
 import userProducts from '@/components/services/products.vue'
+
+const route = useRoute()
 
 const authStore = useAuthStore()
 const providersStore = useSpStore()
@@ -50,7 +52,7 @@ const providers = computed(() =>
 const products = computed(() => {
   const instances = instancesStore.getInstances ?? []
 
-  if (router.currentRoute.query.service) {
+  if (route.query.service) {
     return [...productsStore.products, ...instances].filter(({ sp }) => {
       const { title } = providers.value.find(({ uuid }) => uuid === sp) ?? {}
 
@@ -65,7 +67,7 @@ watch(products, (value) => {
 })
 
 const checkedTypes = computed(() =>
-  router.currentRoute.query?.service?.split(',').filter((el) => el.length > 0) ?? []
+  route.query?.service?.split(',').filter((el) => el.length > 0) ?? []
 )
 
 function productsCount (type, filter) {

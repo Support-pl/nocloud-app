@@ -1,12 +1,12 @@
 <template>
   <div>
-    <a-modal v-model="isVisible" :title="$t('Add a new SSH key')" @ok="handleOk">
+    <a-modal v-model:open="isVisible" :title="$t('Add a new SSH key')" @ok="handleOk">
       <a-row :gutter="[10, 10]" style="display: flex; align-items: center">
         <a-col :xs="24" :sm="4">
-          {{ $t('title') | capitalize }}
+          {{ capitalize($t('title')) }}
         </a-col>
         <a-col :xs="24" :sm="20">
-          <a-input v-model="title" type="text" />
+          <a-input v-model:value="title" type="text" />
         </a-col>
       </a-row>
       <a-row
@@ -17,7 +17,7 @@
           SSH
         </a-col>
         <a-col :xs="24" :sm="20">
-          <a-textarea v-model="value" :auto-size="{ minRows: 3, maxRows: 5 }" />
+          <a-textarea v-model:value="value" :auto-size="{ minRows: 3, maxRows: 5 }" />
         </a-col>
       </a-row>
     </a-modal>
@@ -33,9 +33,10 @@
 <script setup>
 import { ref } from 'vue'
 import { notification } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.js'
-import i18n from '@/i18n'
 
+const i18n = useI18n()
 const authStore = useAuthStore()
 
 const isLoading = ref(false)
