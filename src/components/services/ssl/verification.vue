@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
@@ -65,20 +65,14 @@ const verification = ref({
 const dcvList = ['EMAIL', 'HTTP', 'HTTPS', 'DNS']
 const emailList = ['admin@', 'administrator@', 'hostmaster@', 'webmaster@', 'postmaster@']
 
-const rules = {
-  dcv: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  email: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ]
-}
+const reqRule = reactive({
+  required: true,
+  message: 'Field is required'
+})
+const rules = computed(() => ({
+  dcv: [reqRule],
+  email: [reqRule]
+}))
 
 onMounted(() => {
   if (!('dcv' in props.verificationBack)) {
@@ -86,6 +80,8 @@ onMounted(() => {
   } else {
     verification.value = JSON.parse(JSON.stringify(props.verificationBack))
   }
+
+  reqRule.message = `${i18n.t('ssl_product.field is required')}`
 })
 </script>
 

@@ -103,7 +103,9 @@
         <a-form-item :label="$t('ssl_product.org_country')" name="org_country">
           <a-select
             v-model:value="personal.org_country"
+            show-search
             placeholder=" Please choose one..."
+            :filter-option="searchCountries"
           >
             <a-select-option v-for="country in countries" :key="country.code">
               {{ country.code }}: {{ country.title }}
@@ -131,7 +133,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.js'
@@ -188,80 +190,24 @@ const personal = ref({
   order: 'newOrder'
 })
 
-const rules = {
-  org_country: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  order: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  webserver: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  firstname: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  lastname: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  companyname: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  email: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  address1: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  city: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  state: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  country: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  phonenumber: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ]
-}
+const reqRule = reactive({
+  required: true,
+  message: 'Field is required'
+})
+const rules = computed(() => ({
+  org_country: [reqRule],
+  order: [reqRule],
+  webserver: [reqRule],
+  firstname: [reqRule],
+  lastname: [reqRule],
+  companyname: [reqRule],
+  email: [reqRule],
+  address1: [reqRule],
+  city: [reqRule],
+  state: [reqRule],
+  country: [reqRule],
+  phonenumber: [reqRule]
+}))
 
 async function handleClickNext () {
   try {
@@ -286,11 +232,17 @@ function installDataToBuffer () {
   }
 }
 
+function searchCountries (input, option) {
+  const country = option.children(option)[0].children.toLowerCase()
+
+  return country.includes(input.toLowerCase())
+}
+
 onMounted(() => {
   installDataToBuffer()
   if (orgVerification.includes(props.productInfo.id)) {
     for (const keyField in companyFields) {
-      rules[keyField] = [
+      rules.effect[keyField] = [
         {
           required: companyFields[keyField],
           message: `${i18n.t('ssl_product.field is required')}`
@@ -298,6 +250,8 @@ onMounted(() => {
       ]
     }
   }
+
+  reqRule.message = `${i18n.t('ssl_product.field is required')}`
 })
 </script>
 

@@ -4,21 +4,64 @@
       <div class="order__inputs order__field">
         <div class="order__option">
           <transition name="specs" mode="out-in">
-            <div
-              v-if="typeof getProducts.description === 'string'"
-              v-html="getProducts.description"
-            />
-            <table v-else-if="getProducts.description" class="product__specs">
-              <tr v-for="resource in getProducts.description" :key="resource.name">
-                <td>{{ resource.name }}</td>
-                <td>{{ resource.value }}</td>
-              </tr>
-            </table>
+            <a-row :gutter="[10, 10]" style="margin-bottom: 10px">
+              <a-col
+                v-for="(resource, key) in getProducts.resources"
+                :key="key"
+                span="24"
+                class="order__resource"
+              >
+                {{ resource.title ?? capitalize(key) }}:
+                <a-slider
+                  v-if="resource.slider"
+                  v-model:value="resources[key]"
+                  style="margin: 10px"
+                  :tip-formatter="null"
+                  :step="resource.step"
+                  :max="resource.max"
+                  :min="0"
+                />
+
+                <a-input-number
+                  v-else
+                  v-model:value="resources[key]"
+                  allow-clear
+                  style="margin: 0 0 0 auto"
+                  :min="0"
+                  :max="resource.max"
+                />
+                <template v-if="resource.slider">
+                  {{ resources[key] }}
+                </template>
+                {{ resource.postfix }}
+              </a-col>
+            </a-row>
           </transition>
         </div>
       </div>
 
       <div class="order__calculate order__field">
+        <template v-for="(resource, key) in resources" :key="key">
+          <a-row
+            v-if="resource > 0"
+            type="flex"
+            justify="space-around"
+            align="middle"
+          >
+            <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
+              {{ getProducts.resources[key].title }}:
+            </a-col>
+            <a-col :xs="12" :sm="18" :lg="12">
+              <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
+                {{ resource }} {{ getProducts.resources[key].postfix }}
+              </div>
+              <div v-else class="loadingLine" />
+            </a-col>
+          </a-row>
+        </template>
+
+        <a-divider style="margin: 5px 0 15px" />
+
         <a-row :gutter="[10, 10]" style="margin-bottom: 10px">
           <a-col v-if="services.length > 1" span="24">
             <a-select v-model:value="service" style="width: 100%" placeholder="services">
@@ -30,8 +73,8 @@
 
           <a-col v-if="namespacesStore.namespaces.length > 1" span="24">
             <a-select v-model:value="namespace" style="width: 100%" placeholder="namespaces">
-              <a-select-option v-for="name of namespacesStore.namespaces" :key="name.uuid">
-                {{ name.title }}
+              <a-select-option v-for="item of namespacesStore.namespaces" :key="item.uuid">
+                {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
@@ -45,45 +88,25 @@
           </a-col>
         </a-row>
 
-        <a-row
-          v-if="getProducts.inputKilotoken > 0"
-          type="flex"
-          justify="space-around"
-          align="middle"
-        >
-          <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
-            Input kilotoken:
-          </a-col>
-          <a-col :xs="12" :sm="18" :lg="12">
-            <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
-              {{ getProducts.inputKilotoken }} {{ currency.code }}
-            </div>
-            <div v-else class="loadingLine" />
-          </a-col>
-        </a-row>
+        <a-divider orientation="left" style="margin: 10px 0 0">
+          {{ $t('Total') }}:
+        </a-divider>
 
-        <a-row
-          v-if="getProducts.outputKilotoken > 0"
-          style="margin-top: 10px"
-          type="flex"
-          justify="space-around"
-          align="middle"
-        >
-          <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
-            Output kilotoken:
-          </a-col>
-          <a-col :xs="12" :sm="18" :lg="12">
-            <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
-              {{ getProducts.outputKilotoken }} {{ currency.code }}
-            </div>
-            <div v-else class="loadingLine" />
+        <a-row type="flex" justify="space-around">
+          <a-col style="font-size: 1.5rem">
+            <transition name="textchange" mode="out-in">
+              <template v-if="!fetchLoading">
+                {{ getProducts.price }} {{ currency.code }}
+              </template>
+              <div v-else class="loadingLine loadingLine--total" />
+            </transition>
           </a-col>
         </a-row>
 
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
             <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ capitalize($t("order")) }}
+              {{ capitalize($t('order')) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
@@ -91,7 +114,7 @@
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
-              @cancel="() => { modal.confirmCreate = false }"
+              @cancel="modal.confirmCreate = false"
             >
               <p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.title }}</p>
             </a-modal>
@@ -138,28 +161,40 @@ const namespace = ref(null)
 const fetchLoading = ref(false)
 
 const modal = ref({ confirmCreate: false, confirmLoading: false })
+const resources = ref({})
 
 const getProducts = computed(() => {
-  const { resources, title } = plans.value.find(({ uuid }) => uuid === plan.value) ?? {}
-  if (!resources) return 'NAN'
-
-  const products = Object.values(resources).reduce(
-    (result, resource) => ({
-      ...result, [resource.key]: resource.price
-    }), {}
-  )
-  const inputKilotoken = +(products.input_kilotoken * currency.value.rate).toFixed(2)
-  const outputKilotoken = +(products.output_kilotoken * currency.value.rate).toFixed(2)
-
   return {
-    title,
-    inputKilotoken,
-    outputKilotoken,
-    price: inputKilotoken + outputKilotoken,
-    description: `<span style="font-size: 18px">
-      You can think of tokens as pieces of words used for natural language processing. For English text, 1 token is approximately 4 characters or 0.75 words.
-    </span>`
+    title: 'VDC',
+    resources: {
+      cpu: { max: 12, postfix: 'cores', title: 'CPU' },
+      ram: { max: 32, postfix: 'Gb', title: 'RAM' },
+      ips_public: { max: 10, postfix: '', title: 'Public IP\'s' },
+      ips_private: { max: 10, postfix: '', title: 'Private IP\'s' },
+      drive_ssd: {
+        max: 300,
+        postfix: 'Gb',
+        title: 'SSD',
+        slider: true,
+        step: 10
+      },
+      drive_hdd: {
+        max: 1000,
+        postfix: 'Gb',
+        title: 'HDD',
+        slider: true,
+        step: 10
+      }
+    },
+    price: '-',
+    description: ''
   }
+})
+
+watch(getProducts, (value) => {
+  Object.keys(value.resources).forEach((key) => {
+    resources.value[key] = 0
+  })
 })
 
 const currency = computed(() => {
@@ -189,10 +224,10 @@ const plans = computed(() =>
       ({ uuid }) => uuid === route.query.service
     ) ?? {}
 
-    if (!plans) return type === 'openai'
+    if (!plans) return type === 'vdc'
 
-    if (plans.length < 1) return type === 'openai'
-    return type === 'openai' && plans.includes(uuid)
+    if (plans.length < 1) return type === 'vdc'
+    return type === 'vdc' && plans.includes(uuid)
   })
 )
 
@@ -209,66 +244,54 @@ watch(plans, (value) => {
 })
 
 const sp = computed(() =>
-  spStore.servicesProviders.find((sp) => sp.type === 'openai')
+  spStore.servicesProviders.find((sp) => sp.type === 'ione') ?? {}
 )
 
 function orderClickHandler () {
-  const serviceItem = services.value.find(({ uuid }) => uuid === service.value)
-  const planItem = plans.value.find(({ uuid }) => uuid === plan.value)
-
-  const instances = [{
-    config: { user: authStore.userdata.uuid },
-    title: getProducts.value.title,
-    billing_plan: planItem ?? {}
-  }]
   const newGroup = {
-    title: authStore.billingUser.fullname + Date.now(),
-    type: sp.value.type,
-    sp: sp.value.uuid,
-    instances
+    title: authStore.userdata.title + Date.now(),
+    type: sp.value.type ?? 'ione',
+    sp: sp.value.uuid ?? null,
+    instances: [/* {
+      title: `VDC-${Date.now()}`,
+      config: { isVdc: true },
+      billingPlan: {}
+    } */],
+    config: { is_vdc: true },
+    resources: resources.value
   }
-
-  if (planItem.kind === 'STATIC') instances[0].product = ''
-
-  const info = (!service.value) ? newGroup : JSON.parse(JSON.stringify(serviceItem))
-  const group = info.instancesGroups?.find(({ type }) => type === 'openai')
-
-  if (group) group.instances = [...group.instances, ...instances]
-  else if (service.value) info.instancesGroups.push(newGroup)
 
   if (!authStore.userdata.uuid) {
     appStore.onLogin.redirect = route.name
     appStore.onLogin.info = {
-      type: 'openai',
-      title: 'OpenAI',
+      type: 'vdc',
+      title: 'VDC',
       cost: getProducts.value.price,
       currency: currency.value.code
     }
     appStore.onLogin.action = () => {
-      createOpenAI(info)
+      createVDC(newGroup)
     }
 
     router.push({ name: 'login' })
     return
   }
 
-  createOpenAI(info)
+  createVDC(newGroup)
 }
 
-function createOpenAI (info) {
+function createVDC (info) {
   modal.value.confirmLoading = true
-  const action = (service.value) ? 'update' : 'create'
-  const orderData = (service.value)
-    ? info
-    : {
-        namespace: namespace.value,
-        service: {
-          title: authStore.billingUser.fullname,
-          context: {},
-          version: '1',
-          instancesGroups: [info]
-        }
-      }
+  const action = 'create'
+  const orderData = {
+    namespace: namespace.value,
+    service: {
+      title: authStore.userdata.title,
+      context: {},
+      version: '1',
+      instancesGroups: [info]
+    }
+  }
 
   instancesStore[`${action}Service`](orderData)
     .then(({ uuid }) => { deployService(uuid) })
@@ -312,6 +335,10 @@ function deployService (uuid) {
 onMounted(() => {
   const { action } = appStore.onLogin
 
+  Object.keys(getProducts.value.resources).forEach((key) => {
+    resources.value[key] = 0
+  })
+
   if (typeof action !== 'function') return
   modal.value.confirmCreate = true
   modal.value.confirmLoading = true
@@ -352,7 +379,7 @@ fetch()
 </script>
 
 <script>
-export default { name: 'OpenaiComponent' }
+export default { name: 'CreateVdc' }
 </script>
 
 <style>
@@ -444,6 +471,13 @@ export default { name: 'OpenaiComponent' }
 
 .order__option .order__slider-name img {
   max-height: 65px;
+}
+
+.order__resource {
+  display: grid;
+  grid-template-columns: auto 1fr minmax(30px, max-content);
+  align-items: center;
+  gap: 5px;
 }
 
 .order__field {

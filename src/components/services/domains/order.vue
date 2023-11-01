@@ -109,12 +109,13 @@
               </a-col>
               <a-col :xs="24" :sm="12">
                 <a-form-item name="country" :label="$t('clientinfo.countryname')" :rules="rules.req">
-                  <a-select v-model:value="form.country" style="width: 100%">
-                    <a-select-option
-                      v-for="country in countries"
-                      :key="country.code"
-                      :value="country.code"
-                    >
+                  <a-select
+                    v-model:value="form.country"
+                    show-search
+                    style="width: 100%"
+                    :filter-option="searchCountries"
+                  >
+                    <a-select-option v-for="country in countries" :key="country.code">
                       {{ $t(`country.${country.code}`) }}
                     </a-select-option>
                   </a-select>
@@ -691,6 +692,11 @@ export default {
         pricing: { ...prices }
       }
       // return this.products[this.options.provider].find(el => el.tarif == this.options.tarif);
+    },
+    searchCountries (input, option) {
+      const country = option.children(option)[0].children.toLowerCase()
+
+      return country.includes(input.toLowerCase())
     }
   }
   // watch: {

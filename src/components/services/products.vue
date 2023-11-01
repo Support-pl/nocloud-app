@@ -686,6 +686,10 @@ export default {
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
 }
 
+.products__inner > div > img {
+  width: 100%;
+}
+
 .products__wrapper--loading {
   min-height: 170px;
   display: flex;

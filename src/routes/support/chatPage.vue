@@ -281,8 +281,8 @@ export default {
       })
     }
   },
-  mounted () {
-    this.chatsStore.fetchChats()
+  async mounted () {
+    await this.chatsStore.fetchChats()
     this.chatsStore.startStream()
     this.chatsStore.fetchDefaults()
     this.loadMessages()
@@ -298,7 +298,7 @@ export default {
 
         this.$router.push({ name: 'service', params })
       } else {
-        this.$router.push('support')
+        this.$router.push({ name: 'support' })
       }
     },
     beauty (message) {
@@ -387,19 +387,16 @@ export default {
     },
     loadMessages () {
       this.isLoading = true
-      this.$api.get(this.authStore.baseURL, {
-        params: {
-          run: 'get_ticket_full',
-          ticket_id: this.chatid
-        }
-      })
-        .then(async (resp) => {
-          if (resp.replies) return resp
-          else {
-            await this.chatsStore.fetchChats()
-            return this.chatsStore.fetchMessages(this.chatid)
+      const response = (this.chatsStore.chats.get(this.chatid))
+        ? this.chatsStore.fetchMessages(this.chatid)
+        : this.$api.get(this.authStore.baseURL, {
+          params: {
+            run: 'get_ticket_full',
+            ticket_id: this.chatid
           }
         })
+
+      response
         .then((resp) => {
           this.status = resp.status
           this.replies = resp.replies ?? []

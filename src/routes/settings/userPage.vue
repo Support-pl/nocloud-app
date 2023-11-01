@@ -149,20 +149,22 @@ const isLoading = ref(false)
 const isSendingInfo = ref(false)
 
 const reqRule = reactive({
+  required: true,
   message: 'Field is required',
   trigger: 'change'
 })
 const rules = computed(() => ({
-  firstname: [{ required: true, ...reqRule }],
-  lastname: [{ required: true, ...reqRule }],
-  companyname: [{ required: false, ...reqRule }],
-  email: [{ required: true, ...reqRule }],
-  address1: [{ required: false, ...reqRule }],
-  city: [{ required: false, ...reqRule }],
-  state: [{ required: false, ...reqRule }],
-  countryname: [{ required: true, ...reqRule }],
-  postcode: [{ required: false, ...reqRule }],
-  phonenumber: [{ required: true, ...reqRule }]
+  email: [reqRule],
+  lastname: [reqRule],
+  firstname: [reqRule],
+  countryname: [reqRule],
+  phonenumber: [reqRule],
+
+  companyname: [{ required: false }],
+  address1: [{ required: false }],
+  city: [{ required: false }],
+  state: [{ required: false }],
+  postcode: [{ required: false }]
 }))
 
 onMounted(() => {

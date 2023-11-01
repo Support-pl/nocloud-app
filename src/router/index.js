@@ -134,15 +134,15 @@ const routes = [
         },
         component: () => import('@/routes/cloud/createPaas.vue')
       },
-      // {
-      //   path: 'cloud/newVDC',
-      //   name: 'newVDC',
-      //   meta: {
-      //     // mustBeLoggined: true,
-      //     footerTitle: 'cloud'
-      //   },
-      //   component: () => import('@/components/newVDC.vue')
-      // },
+      {
+        path: 'cloud/newVDC',
+        name: 'newVDC',
+        meta: {
+          // mustBeLoggined: true,
+          footerTitle: 'cloud'
+        },
+        component: () => import('@/routes/cloud/createVdc.vue')
+      },
       {
         path: 'service/:id',
         name: 'service',

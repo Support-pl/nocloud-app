@@ -739,7 +739,7 @@ export default {
 
 .header_back_btn {
   font-size: 1.4rem;
-  margin-right: 20px;
+  margin: 0 20px 0 5px;
 }
 
 .ant-select.header__inputs .ant-select-selector {

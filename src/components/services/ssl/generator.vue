@@ -62,12 +62,12 @@
                 :label="$t('ssl_product.countryname')"
                 name="csr_country"
               >
-                <a-select v-model:value="generate.csr_country">
-                  <a-select-option
-                    v-for="country in countries"
-                    :key="country.code"
-                    :value="country.code"
-                  >
+                <a-select
+                  v-model:value="generate.csr_country"
+                  show-search
+                  :filter-option="searchCountries"
+                >
+                  <a-select-option v-for="country in countries" :key="country.code">
                     {{ country.title }}: {{ $t(`country.${country.code}`) }}
                   </a-select-option>
                 </a-select>
@@ -141,7 +141,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 
@@ -180,52 +180,26 @@ const result = ref({
   result: 'pending'
 })
 
-const rules = {
-  csr_commonname: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  csr_organization: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  csr_department: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
+const reqRule = reactive({
+  required: true,
+  message: 'Field is required'
+})
+const rules = computed(() => ({
+  csr_commonname: [reqRule],
+  csr_organization: [reqRule],
+  csr_department: [reqRule],
 
-  csr_email: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
+  csr_email: [reqRule],
 
-  csr_city: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  csr_state: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  csr_country: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ]
-}
+  csr_city: [reqRule],
+  csr_state: [reqRule],
+  csr_country: [reqRule]
+
+}))
+
+onMounted(() => {
+  reqRule.message = `${i18n.t('ssl_product.field is required')}`
+})
 
 function download (ext, text) {
   const domain = generate.value.csr_commonname
@@ -290,6 +264,12 @@ async function generateCSR () {
   } finally {
     isLoading.value = false
   }
+}
+
+function searchCountries (input, option) {
+  const country = option.children(option)[0].children.toLowerCase()
+
+  return country.includes(input.toLowerCase())
 }
 
 function retry () {

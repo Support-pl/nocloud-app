@@ -46,6 +46,9 @@ import serviceItem from '@/components/services/serviceItem.vue'
 const solutionIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/SolutionOutlined')
 )
+const clusterIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ClusterOutlined')
+)
 const shoppingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/ShoppingOutlined')
 )
@@ -115,18 +118,33 @@ export default {
     }),
 
     avaliableServices () {
-      const services = (config.sharedEnabled)
-        ? [{
-            title: 'Virtual',
-            translatable: true,
-            icon: solutionIcon,
-            type: 'virtual',
-            onclick: {
-              function: this.routeTo,
-              paramsArr: [{ name: 'products', query: { service: 'Virtual' } }]
-            }
-          }]
-        : []
+      const services = []
+
+      if (config.sharedEnabled) {
+        services.push({
+          title: 'Virtual',
+          translatable: true,
+          icon: solutionIcon,
+          type: 'virtual',
+          onclick: {
+            function: this.routeTo,
+            paramsArr: [{ name: 'products', query: { service: 'Virtual' } }]
+          }
+        })
+      }
+
+      if (config.vdcEnabled) {
+        services.push({
+          title: 'VDC',
+          translatable: true,
+          icon: clusterIcon,
+          type: 'VDC',
+          onclick: {
+            function: this.routeTo,
+            paramsArr: [{ name: 'newVDC', query: { service: 'VDC' } }]
+          }
+        })
+      }
 
       Object.keys(this.services).forEach((service) => {
         services.push({
@@ -222,6 +240,9 @@ export default {
       }
       if (showcase?.promo[this.$i18n.locale]?.previewEnable) {
         name = 'products'
+      }
+      if (provider === 'VDC') {
+        name = 'newVDC'
       }
 
       this.$router.push({ name, query })
