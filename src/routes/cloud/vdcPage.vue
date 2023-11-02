@@ -86,8 +86,21 @@
                   {{ capitalize($t(service[item.key].toLowerCase())) }}
                 </div>
 
+                <div
+                  v-else-if="item.type === 'login'"
+                  class="service-page__info-value"
+                >
+                  {{ capitalize(service[item.key]) }}
+                  <copy-icon @click="addToClipboard(service[item.key])" />
+                </div>
+
                 <div v-else class="service-page__info-value">
-                  {{ service[item.key] }} {{ options[item.key]?.suffix ?? '' }}
+                  {{
+                    (options[item.key]?.suffix === 'Gb')
+                      ? service[item.key] / 1024
+                      : service[item.key]
+                  }}
+                  {{ options[item.key]?.suffix ?? '' }}
                 </div>
               </div>
             </a-col>
@@ -158,7 +171,7 @@ const info = computed(() => {
 
   resources.sort((a, b) => options[a.key].sorter - options[b.key].sorter)
   return [
-    { title: 'login', key: 'uuid', type: 'text' },
+    { title: 'login', key: 'uuid', type: 'login' },
     { title: 'password', key: 'password', type: 'password' },
     ...resources
   ]

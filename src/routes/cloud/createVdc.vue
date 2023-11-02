@@ -249,6 +249,8 @@ function orderClickHandler () {
   Object.entries(resources.value).forEach(([key, value]) => {
     if (getProducts.value.resources[key].postfix === 'Gb') {
       result[key] = value * 1024
+    } else {
+      result[key] = value
     }
   })
 
