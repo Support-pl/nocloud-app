@@ -244,13 +244,21 @@ watch(plans, (value) => {
 })
 
 function orderClickHandler () {
+  const result = {}
+
+  Object.entries(resources.value).forEach(([key, value]) => {
+    if (getProducts.value.resources[key].postfix === 'Gb') {
+      result[key] = value * 1024
+    }
+  })
+
   const newGroup = {
     title: authStore.userdata.title + Date.now(),
     type: 'ione',
     sp: sp.value,
     instances: [],
     config: { is_vdc: true },
-    resources: resources.value
+    resources: result
   }
 
   if (!authStore.userdata.uuid) {

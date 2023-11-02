@@ -18,6 +18,13 @@
             </div>
           </div>
 
+          <div v-if="provider.publicData?.sunstone_url" class="service-page__info">
+            <div class="service-page__info-title">
+              Sunstone:
+              <span style="font-weight: 400">{{ provider.publicData?.sunstone_url }}</span>
+            </div>
+          </div>
+
           <div v-if="isActionsActive" class="service-page__info">
             <div class="service-page__info-title">
               {{ $t('Actions') }}:
@@ -102,6 +109,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.js'
 import { useInstancesStore } from '@/stores/instances.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useSpStore } from '@/stores/sp.js'
 import { useNotification, useClipboard } from '@/hooks/utils'
 
 import loading from '@/components/ui/loading.vue'
@@ -119,6 +127,7 @@ const { addToClipboard } = useClipboard()
 const authStore = useAuthStore()
 const instancesStore = useInstancesStore()
 const currenciesStore = useCurrenciesStore()
+const providersStore = useSpStore()
 
 const service = computed(() => {
   const instance = instancesStore.instances.find(({ uuid }) =>
@@ -179,6 +188,12 @@ const getTagColor = computed(() => {
       return 'red'
   }
 })
+
+const provider = computed(() =>
+  providersStore.servicesProviders.find(({ uuid }) =>
+    uuid === service.value.sp
+  ) ?? {}
+)
 
 const isActionsActive = ref(false)
 
@@ -246,7 +261,8 @@ async function fetch () {
     await Promise.all([
       instancesStore.fetch(),
       authStore.fetchBillingData(),
-      currenciesStore.fetchCurrencies()
+      currenciesStore.fetchCurrencies(),
+      providersStore.fetch(!authStore.isLogged)
     ])
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
