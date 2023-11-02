@@ -141,7 +141,7 @@ export default {
           type: 'VDC',
           onclick: {
             function: this.routeTo,
-            paramsArr: [{ name: 'newVDC', query: { service: 'VDC' } }]
+            paramsArr: [{ name: 'newVDC', query: {} }]
           }
         })
       }
@@ -230,6 +230,9 @@ export default {
         case 'openai':
           name = 'service-openai'
           break
+        case 'vdc':
+          name = 'newVDC'
+          break
         case 'ione':
         case 'ovh':
           name = 'newPaaS'
@@ -240,9 +243,6 @@ export default {
       }
       if (showcase?.promo[this.$i18n.locale]?.previewEnable) {
         name = 'products'
-      }
-      if (provider === 'VDC') {
-        name = 'newVDC'
       }
 
       this.$router.push({ name, query })

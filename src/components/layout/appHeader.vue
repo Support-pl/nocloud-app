@@ -383,6 +383,11 @@ export default {
           title: 'Service',
           needBalance: true,
           buttons: []
+        },
+        openVDC: {
+          title: 'VDC',
+          needBalance: true,
+          buttons: []
         }
       },
       langs: config.languages,

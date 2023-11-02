@@ -76,6 +76,11 @@ export default {
       groupname: ['OpenAI'],
       creationRouteName: 'service-openai',
       icon: 'robot'
+    },
+    vdc: {
+      groupname: ['VDC'],
+      creationRouteName: 'newVDC',
+      icon: 'cluster'
     }
   },
   getServiceType (groupname) {

@@ -270,6 +270,9 @@ export default {
         }
 
         switch (inst.type) {
+          case 'vdc':
+            res.groupname = 'VDC'
+            break
           case 'cpanel':
             res.groupname = 'Shared Hosting'
             res.domain = inst.config.domain
@@ -495,8 +498,10 @@ export default {
   },
   mounted () { this.createObserver() },
   methods: {
-    productClickHandler ({ groupname, orderid, hostingid }) {
-      if (['Domains', 'SSL'].includes(groupname)) {
+    productClickHandler ({ groupname, orderid, hostingid, config }) {
+      if (config.is_vdc) {
+        this.$router.push({ name: 'openVDC', params: { uuid: orderid } })
+      } else if (['Domains', 'SSL'].includes(groupname)) {
         this.$router.push({ name: 'service', params: { id: orderid } })
       } else if (groupname === 'Self-Service VDS SSD HC') {
         this.$router.push({ name: 'openCloud', params: { uuid: orderid } })
@@ -542,6 +547,9 @@ export default {
           break
         case 'openai':
           name = 'service-openai'
+          break
+        case 'vdc':
+          name = 'newVDC'
           break
         case 'ione':
         case 'ovh':

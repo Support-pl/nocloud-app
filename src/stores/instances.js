@@ -39,6 +39,19 @@ export const useInstancesStore = defineStore('instances', () => {
     )
 
     service.instancesGroups.forEach(group => {
+      if (group.config.is_vdc) {
+        instances.value.push({
+          ...group,
+          type: 'vdc',
+          title: service.title,
+          uuidService: service.uuid,
+          billingPlan: { products: {}, resources: [] },
+          state: {
+            meta: {},
+            state: (group.status === 'UP') ? 'RUNNING' : 'UNKNOWN'
+          }
+        })
+      }
       group.instances.forEach((inst) => {
         const { currencies, defaultCurrency } = currenciesStore
         const {

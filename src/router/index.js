@@ -184,6 +184,17 @@ const routes = [
           isNeedBackButton: true
         },
         component: () => import('@/routes/services/ssl.vue')
+      }, {
+        path: 'vdc/:uuid',
+        name: 'openVDC',
+        component: () => import('@/routes/cloud/vdcPage.vue'),
+        meta: {
+          mustBeLoggined: true,
+          footerTitle: 'services',
+          isNeedBackButton: true,
+          isNeedBalance: true,
+          headerTitle: 'VDC'
+        }
       },
       {
         path: 'cabinet',
@@ -198,6 +209,7 @@ const routes = [
       }
     ]
   },
+
   {
     path: '/cloud/:uuid',
     name: 'openCloud',

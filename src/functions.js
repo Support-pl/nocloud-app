@@ -37,3 +37,13 @@ export function onError ({ target }) {
 export function getImageName (name) {
   return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0]
 }
+
+export function toKebabCase (text) {
+  return text.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+}
+
+export function toPascalCase (text) {
+  return text.replace(/(^\w|-\w)/g, (text) =>
+    text.replace(/-/, '').toUpperCase()
+  )
+}

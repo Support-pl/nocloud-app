@@ -83,7 +83,8 @@ export const useAppStore = defineStore('app', () => {
     domainInfo,
 
     setTabByName (value) {
-      if (value === 'root') value = 'services'
+      if (['root', 'openVDC'].includes(value)) value = 'services'
+
       activeTabName.value = value
       activeTabNum.value = buttons.findIndex(({ title }) => title === value)
 
@@ -103,7 +104,8 @@ export const useAppStore = defineStore('app', () => {
     },
 
     setTabByNameNoRoute (value) {
-      if (value === 'root') value = 'services'
+      if (['root', 'openVDC'].includes(value)) value = 'services'
+
       activeTabName.value = value
       activeTabNum.value = buttons.findIndex(({ title }) => title === value)
     },

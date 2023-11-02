@@ -222,10 +222,12 @@ const getModuleProductBtn = computed(() => {
 })
 
 function cloudClick (service, { target }) {
-  const { groupname, orderid, hostingid, server_on: isServer, id } = service
+  const { groupname, orderid, hostingid, server_on: isServer, id, config } = service
 
   if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return
-  if (id && isServer) {
+  if (config.is_vdc) {
+    router.push({ name: 'openVDC', params: { uuid: orderid } })
+  } else if (id && isServer) {
     router.push({ name: 'openCloud', params: { uuid: id } })
   } else if (hostingid) {
     router.push({ name: 'service', params: { id: hostingid } })

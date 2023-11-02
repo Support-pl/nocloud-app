@@ -63,9 +63,9 @@
         <a-divider style="margin: 5px 0 15px" />
 
         <a-row :gutter="[10, 10]" style="margin-bottom: 10px">
-          <a-col v-if="services.length > 1" span="24">
-            <a-select v-model:value="service" style="width: 100%" placeholder="services">
-              <a-select-option v-for="item of services" :key="item.uuid">
+          <a-col v-if="providers.length > 1" span="24">
+            <a-select v-model:value="sp" style="width: 100%" placeholder="providers">
+              <a-select-option v-for="item of providers" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
@@ -156,7 +156,7 @@ const namespacesStore = useNamespasesStore()
 const instancesStore = useInstancesStore()
 
 const plan = ref(null)
-const service = ref(null)
+const sp = ref(null)
 const namespace = ref(null)
 const fetchLoading = ref(false)
 
@@ -214,8 +214,8 @@ const currency = computed(() => {
   return { rate: 1, code: user.value.currency_code ?? defaultCurrency.value }
 })
 
-const services = computed(() =>
-  instancesStore.services.filter((el) => el.status !== 'DEL')
+const providers = computed(() =>
+  spStore.servicesProviders.filter((sp) => sp.type === 'ione')
 )
 
 const plans = computed(() =>
@@ -235,28 +235,20 @@ watch(() => namespacesStore.namespaces, (value) => {
   namespace.value = value[0]?.uuid
 })
 
-watch(services, (value) => {
-  service.value = value[0]?.uuid
+watch(providers, (value) => {
+  sp.value = value[0]?.uuid
 })
 
 watch(plans, (value) => {
   plan.value = value[0]?.uuid
 })
 
-const sp = computed(() =>
-  spStore.servicesProviders.find((sp) => sp.type === 'ione') ?? {}
-)
-
 function orderClickHandler () {
   const newGroup = {
     title: authStore.userdata.title + Date.now(),
-    type: sp.value.type ?? 'ione',
-    sp: sp.value.uuid ?? null,
-    instances: [/* {
-      title: `VDC-${Date.now()}`,
-      config: { isVdc: true },
-      billingPlan: {}
-    } */],
+    type: 'ione',
+    sp: sp.value,
+    instances: [],
     config: { is_vdc: true },
     resources: resources.value
   }
@@ -280,56 +272,56 @@ function orderClickHandler () {
   createVDC(newGroup)
 }
 
-function createVDC (info) {
+async function createVDC (info) {
   modal.value.confirmLoading = true
-  const action = 'create'
   const orderData = {
     namespace: namespace.value,
     service: {
-      title: authStore.userdata.title,
+      title: `VDC-${Date.now()}`,
       context: {},
       version: '1',
       instancesGroups: [info]
     }
   }
 
-  instancesStore[`${action}Service`](orderData)
-    .then(({ uuid }) => { deployService(uuid) })
-    .catch((err) => {
-      const config = { namespace: namespace.value, service: orderData }
-      const message = err.response?.data?.message ?? err.message ?? err
+  try {
+    const { uuid } = await instancesStore.createService(orderData)
 
-      api.services.testConfig(config)
-        .then(({ result, errors }) => {
-          if (!result) {
-            errors.forEach(({ error }) => {
-              notification.error({ message: error })
-            })
-          }
-        })
-      notification.error({ message: i18n.t(message) })
-      console.error(err)
-    })
+    await deployService(uuid)
+  } catch (error) {
+    const config = { namespace: namespace.value, service: orderData }
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    const { result, errors } = await api.services.testConfig(config)
+
+    if (!result) {
+      errors.forEach(({ error }) => {
+        notification.error({ message: error })
+      })
+    }
+
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
+  }
 }
 
 function orderConfirm () {
   modal.value.confirmCreate = true
 }
 
-function deployService (uuid) {
-  api.services.up(uuid)
-    .then(() => {
-      notification.success({ message: i18n.t('Done') })
-      router.push({ path: '/services' })
-    })
-    .catch((err) => {
-      const message = err.response?.data?.message ?? err.message ?? err
+async function deployService (uuid) {
+  try {
+    await api.services.up(uuid)
 
-      notification.error({ message: i18n.t(message) })
-    })
-    .finally(() => {
-      modal.value.confirmLoading = false
-    })
+    notification.success({ message: i18n.t('Done') })
+    router.push({ path: '/services' })
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    notification.error({ message: i18n.t(message) })
+  } finally {
+    modal.value.confirmLoading = false
+  }
 }
 
 onMounted(() => {
@@ -345,30 +337,33 @@ onMounted(() => {
   action()
 })
 
-function fetch () {
-  fetchLoading.value = true
-  const promises = [
-    authStore.fetchBillingData(),
-    plansStore.fetch({ anonymously: !authStore.isLogged }),
-    spStore.fetch(!authStore.isLogged)
-  ]
+async function fetch () {
+  try {
+    fetchLoading.value = true
+    const promises = [
+      authStore.fetchBillingData(),
+      plansStore.fetch({ anonymously: !authStore.isLogged }),
+      spStore.fetch(!authStore.isLogged)
+    ]
 
-  if (authStore.isLogged) {
-    promises.push(
-      namespacesStore.fetch(),
-      instancesStore.fetch()
-    )
-  }
+    if (authStore.isLogged) {
+      promises.push(
+        namespacesStore.fetch(),
+        instancesStore.fetch()
+      )
+    }
 
-  Promise.all(promises).catch((err) => {
-    const message = err.response?.data?.message ?? err.message ?? err
+    await Promise.all(promises)
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
 
-    if (err.response?.data?.code === 16) return
+    if (error.response?.data?.code === 16) return
+
     notification.error({ message: i18n.t(message) })
-    console.error(err)
-  }).finally(() => {
+    console.error(error)
+  } finally {
     fetchLoading.value = false
-  })
+  }
 
   if (currenciesStore.currencies.length < 1) {
     currenciesStore.fetchCurrencies()
