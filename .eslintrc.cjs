@@ -36,7 +36,7 @@ module.exports = {
   root: true,
   env: { node: true },
   extends: [
-    'plugin:vue/recommended',
+    'plugin:vue/vue3-recommended',
     '@vue/eslint-config-standard',
     'eslint:recommended'
   ],
@@ -58,7 +58,8 @@ module.exports = {
     // 'import/no-unresolved': 'error',
     'vue/valid-v-slot': 'off',
     'vue/no-v-html': 'off',
-    'vue/max-attributes-per-line': 'off'
+    'vue/max-attributes-per-line': 'off',
+    'vue/no-deprecated-filter': 'warn'
   // },
   // settings: {
   //   ...createAliasSetting({

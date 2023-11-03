@@ -16,6 +16,6 @@
     }
   },
   "languages": ["en", "ru", "vi", "fr", "pl"],
-  "sharedEnabled": true,
-  "dangerModeNoSSLCheck": false
+  "vdc_enabled": true,
+  "shared_enabled": true
 }

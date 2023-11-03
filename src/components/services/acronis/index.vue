@@ -2,15 +2,15 @@
   <div class="order_wrapper">
     <div class="order">
       <div class="order__inputs order__field">
-        <a-collapse v-model="activeKey" style="border-radius: 20px">
+        <a-collapse v-model:activeKey="activeKey" style="border-radius: 20px">
           <a-collapse-panel key="base" :header="`${$t('Base')}:`">
             <div class="order_option">
               <a-row v-for="(value, key) in getProducts.base" :key="key" class="order__prop">
                 <a-col span="18">
-                  {{ (value.meta.edition || value.title) | capitalize }}:
+                  {{ capitalize(value.meta.edition || value.title) }}:
                 </a-col>
                 <a-col span="6" style="text-align: right">
-                  <a-input-number v-if="!fetchLoading" v-model="config[key]" :min="0" />
+                  <a-input-number v-if="!fetchLoading" v-model:value="config[key]" :min="0" />
                   <div v-else class="loadingLine" />
                 </a-col>
               </a-row>
@@ -21,20 +21,20 @@
             <div class="order_option">
               <a-row v-for="(value, key) in getProducts.adv" :key="key" class="order__prop">
                 <a-col span="6">
-                  {{ value.meta.edition || value.title | capitalize }}:
+                  {{ capitalize(value.meta.edition || value.title) }}:
                 </a-col>
                 <a-col span="18" style="text-align: right">
-                  <a-input-number v-if="!fetchLoading" v-model="config[key]" :min="0" />
+                  <a-input-number v-if="!fetchLoading" v-model:value="config[key]" :min="0" />
                   <div v-else class="loadingLine" />
                 </a-col>
               </a-row>
             </div>
           </a-collapse-panel>
 
-          <a-collapse-panel key="personal" style="border-bottom: 0" :header="`${$t('data')}:` | capitalize">
+          <a-collapse-panel key="personal" style="border-bottom: 0" :header="`${capitalize($t('data'))}:`">
             <a-form-item :label="$t('login')">
               <a-input
-                v-model="options.login"
+                v-model:value="options.login"
                 :style="{ boxShadow: (options.login.length < 2) ? '0 0 2px 2px var(--err)' : null }"
               />
               <div v-if="options.login.length < 2" style="line-height: 1.5; color: var(--err)">
@@ -51,7 +51,7 @@
                 :password="options.password"
                 @score="(value) => score = value.score"
               />
-              <a-input-password v-model="options.password" class="password" />
+              <a-input-password v-model:value="options.password" class="password" />
             </a-form-item>
           </a-collapse-panel>
         </a-collapse>
@@ -64,8 +64,8 @@
           </a-col>
 
           <a-col :xs="12" :sm="18" :lg="12">
-            <a-select v-if="!fetchLoading" v-model="options.period" style="width: 100%">
-              <a-select-option v-for="period in periods" :key="period" :value="period">
+            <a-select v-if="!fetchLoading" v-model:value="options.period" style="width: 100%">
+              <a-select-option v-for="period in periods" :key="period">
                 {{ getPeriod(period) }}
               </a-select-option>
             </a-select>
@@ -75,36 +75,24 @@
 
         <a-row style="margin-top: 10px" :gutter="[10, 10]">
           <a-col v-if="services.length > 1">
-            <a-select v-model="service" style="width: 100%" placeholder="services">
-              <a-select-option
-                v-for="item of services"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="service" style="width: 100%" placeholder="services">
+              <a-select-option v-for="item of services" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
 
           <a-col v-if="namespacesStore.namespaces.length > 1">
-            <a-select v-model="namespace" style="width: 100%" placeholder="namespaces">
-              <a-select-option
-                v-for="item of namespacesStore.namespaces"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="namespace" style="width: 100%" placeholder="namespaces">
+              <a-select-option v-for="item of namespacesStore.namespaces" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
 
           <a-col v-if="plans.length > 1">
-            <a-select v-model="plan" style="width: 100%" placeholder="plans">
-              <a-select-option
-                v-for="item of plans"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="plan" style="width: 100%" placeholder="plans">
+              <a-select-option v-for="item of plans" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
@@ -115,12 +103,12 @@
           {{ $t('Total') }}:
         </a-divider>
 
-        <a-row type="flex" justify="space-around" style="font-size: 1.5rem">
-          <a-col>
+        <a-row type="flex" justify="space-around">
+          <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
-              <div v-if="!fetchLoading">
+              <template v-if="!fetchLoading">
                 {{ getProducts.price }} {{ currency.code }}
-              </div>
+              </template>
               <div v-else class="loadingLine loadingLine--total" />
             </transition>
           </a-col>
@@ -129,11 +117,11 @@
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
             <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ $t('order') | capitalize }}
+              {{ capitalize($t('order')) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
-              :visible="modal.confirmCreate"
+              :open="modal.confirmCreate"
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
@@ -143,13 +131,6 @@
             </a-modal>
           </a-col>
         </a-row>
-
-        <add-funds
-          v-if="addfunds.visible"
-          :sum="addfunds.amount"
-          :modal-visible="addfunds.visible"
-          :hide-modal="() => addfunds.visible = false"
-        />
       </div>
     </div>
   </div>
@@ -168,11 +149,10 @@ import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
-import addFunds from '@/components/balance/addFunds.vue'
-
 export default {
   name: 'AcronisComponent',
-  components: { addFunds, passwordMeter },
+  components: { passwordMeter },
+  inject: ['checkBalance'],
   data: () => ({
     plan: undefined,
     service: undefined,
@@ -309,7 +289,7 @@ export default {
       const products = []
 
       Object.entries(plan.products).forEach(([key, value]) => {
-        this.$set(this.config, key, 0)
+        this.config[key] = 0
         products.push(value)
       })
 
@@ -429,24 +409,8 @@ export default {
         return
       }
 
-      if (!this.checkBalance()) return
+      if (!this.checkBalance(this.getProducts.price)) return
       this.modal.confirmCreate = true
-    },
-    checkBalance () {
-      const sum = this.getProducts.price
-
-      if (this.userdata.balance < parseFloat(sum)) {
-        this.$confirm({
-          title: this.$t('You do not have enough funds on your balance'),
-          content: this.$t('Click OK to replenish the account with the missing amount'),
-          onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
-            this.addfunds.visible = true
-          }
-        })
-        return false
-      }
-      return true
     },
     deployService (uuid) {
       this.$api.services.up(uuid)
@@ -826,7 +790,7 @@ export default {
   transition: all .15s ease;
 }
 
-.specs-enter{
+.specs-enter-from {
   transform: translateX(-1em);
   opacity: 0;
 }
@@ -841,7 +805,7 @@ export default {
   transition: all .15s ease;
 }
 
-.textchange-enter{
+.textchange-enter-from {
   transform: translateY(-0.5em);
   opacity: 0;
 }

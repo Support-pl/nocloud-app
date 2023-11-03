@@ -1,7 +1,7 @@
 import path from 'path'
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue2'
-import vueJsx from '@vitejs/plugin-vue2-jsx'
+import vue from '@vitejs/plugin-vue'
+import vueJsx from '@vitejs/plugin-vue-jsx'
 // import { VitePWA } from 'vite-plugin-pwa'
 
 let prefix = import.meta.env?.titlePrefix ?? ''
@@ -80,12 +80,9 @@ export default defineConfig({
     // })
   ],
   resolve: {
-    alias: [
-      {
-        find: '@',
-        replacement: path.resolve(__dirname, 'src')
-      }
-    ]
+    alias: {
+      '@': path.resolve(__dirname, 'src')
+    }
   },
   publicPath: './'
 })

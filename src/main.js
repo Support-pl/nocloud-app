@@ -1,49 +1,53 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import Antd from 'ant-design-vue'
-import { PiniaVuePlugin, createPinia } from 'pinia'
+import { createPinia } from 'pinia'
 import VueGoogleCharts from 'vue-google-charts'
-import App from './App.vue'
-import 'ant-design-vue/dist/antd.css'
-import i18n from './i18n'
-import router from './router'
-import './registerServiceWorker'
-import axios from './axios'
+
+import App from '@/App.vue'
+import i18n from '@/i18n'
+import router from '@/router'
 import api from '@/api.js'
+
+import 'ant-design-vue/dist/reset.css'
 import './assets/style.css'
+import './registerServiceWorker'
 
-import maintanance from '@/components/maintanance.vue'
+import maintanance from '@/components/ui/maintanance.vue'
 
-Vue.config.productionTip = false
-Vue.use(Antd)
-Vue.use(VueGoogleCharts)
-Vue.use(PiniaVuePlugin)
+const app = createApp(App)
+const pinia = createPinia()
 
-Vue.prototype.$axios = axios
-Vue.prototype.$api = api
+app.use(Antd)
+  .use(VueGoogleCharts)
+  .use(i18n)
+  .use(router)
+  .use(pinia)
 
-Vue.filter('capitalize', function (value, isLower) {
+app.config.globalProperties.$api = api
+
+app.config.globalProperties.capitalize = (value, isLower) => {
   if (!value) return ''
   value = value.toString()
 
   if (isLower) value = value.toLowerCase()
   return value.charAt(0).toUpperCase() + value.slice(1)
-})
+}
 
-Vue.filter('replace', function (value, from, to) {
+app.config.globalProperties.replace = (value, from, to) => {
   if (!value) return ''
   value = value.toString()
   return value.replace(from, to)
-})
+}
 
-Vue.filter('dateFormat', function (value) {
+app.config.globalProperties.dateFormat = (value) => {
   if (!value) return ''
   // return   new Intl.DateTimeFormat("en-GB", {
   //   dateStyle: "short",
   // }).format(new Date(value))
   return new Intl.DateTimeFormat().format(new Date(value))
-})
+}
 
-Vue.directive('phone', {
+app.directive('phone', {
   update (el, { value: code }) {
     if (!event?.isTrusted) return
     el.value = el.value.replace(code, '')
@@ -63,13 +67,5 @@ Vue.directive('phone', {
   }
 })
 
-Vue.component('MaintananceMode', maintanance)
-
-const pinia = createPinia()
-
-new Vue({
-  i18n,
-  router,
-  pinia,
-  render: h => h(App)
-}).$mount('#app')
+app.component('MaintananceMode', maintanance)
+app.mount('#app')

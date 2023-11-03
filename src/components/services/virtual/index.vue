@@ -15,7 +15,7 @@
           <transition name="specs" mode="out-in">
             <table v-if="getProducts.resources" :key="getProducts.title" class="product__specs">
               <tr v-for="(value, key) in getProducts.resources" :key="key">
-                <td>{{ $t('virtual_product.' + key) | capitalize }}</td>
+                <td>{{ capitalize($t('virtual_product.' + key)) }}</td>
                 <td>{{ (value === 'Не ограничен') ? $t('virtual_product.unlimited') : value }}</td>
               </tr>
             </table>
@@ -23,12 +23,12 @@
 
           <a-row class="order__prop">
             <a-col span="8" :xs="6">
-              {{ $t('ssl_product.domain') | capitalize }}:
+              {{ capitalize($t('ssl_product.domain')) }}:
             </a-col>
             <a-col span="16" :xs="18">
               <a-input
                 v-if="!fetchLoading"
-                v-model="config.domain"
+                v-model:value="config.domain"
                 placeholder="example.com"
                 :rules="rules.req"
               />
@@ -38,12 +38,12 @@
 
           <a-row class="order__prop">
             <a-col span="8" :xs="6">
-              {{ $t('ssl_product.email') | capitalize }}:
+              {{ capitalize($t('ssl_product.email')) }}:
             </a-col>
             <a-col span="16" :xs="18">
               <a-input
                 v-if="!fetchLoading"
-                v-model="config.email"
+                v-model:value="config.email"
                 placeholder="email"
                 :rules="rules.req"
               />
@@ -53,7 +53,7 @@
 
           <a-row class="order__prop">
             <a-col span="8" :xs="6">
-              {{ $t('clientinfo.password') | capitalize }}:
+              {{ capitalize($t('clientinfo.password')) }}:
             </a-col>
             <a-col span="16" :xs="18">
               <password-meter
@@ -68,7 +68,7 @@
 
               <a-input-password
                 v-if="!fetchLoading"
-                v-model="config.password"
+                v-model:value="config.password"
                 placeholder="password"
                 :rules="rules.req"
               />
@@ -85,8 +85,8 @@
           </a-col>
 
           <a-col :xs="12" :sm="18" :lg="12">
-            <a-select v-if="!fetchLoading" v-model="options.period" style="width: 100%">
-              <a-select-option v-for="period in periods" :key="period" :value="period">
+            <a-select v-if="!fetchLoading" v-model:value="options.period" style="width: 100%">
+              <a-select-option v-for="period in periods" :key="period">
                 {{ getPeriod(period) }}
               </a-select-option>
             </a-select>
@@ -96,36 +96,24 @@
 
         <a-row :gutter="[10, 10]" style="margin-top: 10px">
           <a-col v-if="services.length > 1">
-            <a-select v-model="service" style="width: 100%" placeholder="services">
-              <a-select-option
-                v-for="item of services"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="service" style="width: 100%" placeholder="services">
+              <a-select-option v-for="item of services" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
 
           <a-col v-if="namespacesStore.namespaces.length > 1">
-            <a-select v-model="namespace" style="width: 100%" placeholder="namespaces">
-              <a-select-option
-                v-for="item of namespacesStore.namespaces"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="namespace" style="width: 100%" placeholder="namespaces">
+              <a-select-option v-for="item of namespacesStore.namespaces" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
 
           <a-col v-if="plans.length > 1">
-            <a-select v-model="plan" style="width: 100%" placeholder="plans">
-              <a-select-option
-                v-for="item of plans"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+            <a-select v-model:value="plan" style="width: 100%" placeholder="plans">
+              <a-select-option v-for="item of plans" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
@@ -136,12 +124,12 @@
           {{ $t('Total') }}:
         </a-divider>
 
-        <a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
-          <a-col>
+        <a-row type="flex" justify="space-around">
+          <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
-              <div v-if="!fetchLoading">
+              <template v-if="!fetchLoading">
                 {{ getProducts.price * currency.rate }} {{ currency.code }}
-              </div>
+              </template>
               <div v-else class="loadingLine loadingLine--total" />
             </transition>
           </a-col>
@@ -156,11 +144,11 @@
               :disabled="score < 4"
               @click="orderConfirm"
             >
-              {{ $t("order") | capitalize }}
+              {{ capitalize($t("order")) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
-              :visible="modal.confirmCreate"
+              :open="modal.confirmCreate"
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
@@ -170,13 +158,6 @@
             </a-modal>
           </a-col>
         </a-row>
-
-        <add-funds
-          v-if="addfunds.visible"
-          :sum="addfunds.amount"
-          :modal-visible="addfunds.visible"
-          :hide-modal="() => addfunds.visible = false"
-        />
       </div>
     </div>
   </div>
@@ -195,11 +176,10 @@ import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
-import addFunds from '@/components/balance/addFunds.vue'
-
 export default {
   name: 'VirtualComponent',
-  components: { addFunds, passwordMeter },
+  components: { passwordMeter },
+  inject: ['checkBalance'],
   data: () => ({
     plan: null,
     service: null,
@@ -210,7 +190,6 @@ export default {
     options: { size: '', model: '', period: '' },
     config: { domain: '', email: '', password: '' },
     modal: { confirmCreate: false, confirmLoading: false },
-    addfunds: { visible: false, amount: 0 },
 
     products: [],
     sizes: [],
@@ -442,24 +421,8 @@ export default {
         return
       }
 
-      if (!this.checkBalance()) return
+      if (!this.checkBalance(this.getProducts.price)) return
       this.modal.confirmCreate = true
-    },
-    checkBalance () {
-      const sum = this.getProducts.price
-
-      if (this.userdata.balance < parseFloat(sum)) {
-        this.$confirm({
-          title: this.$t('You do not have enough funds on your balance'),
-          content: this.$t('Click OK to replenish the account with the missing amount'),
-          onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
-            this.addfunds.visible = true
-          }
-        })
-        return false
-      }
-      return true
     },
     deployService (uuid) {
       this.$api.services.up(uuid)
@@ -849,7 +812,7 @@ export default {
   transition: all .15s ease;
 }
 
-.specs-enter{
+.specs-enter-from {
   transform: translateX(-1em);
   opacity: 0;
 }
@@ -864,7 +827,7 @@ export default {
   transition: all .15s ease;
 }
 
-.textchange-enter{
+.textchange-enter-from {
   transform: translateY(-0.5em);
   opacity: 0;
 }
