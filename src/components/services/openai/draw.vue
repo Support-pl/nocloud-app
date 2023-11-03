@@ -1,49 +1,47 @@
 <template>
-  <div class="module">
-    <a-row :gutter="[10, 10]">
-      <a-col span="12" style="padding-bottom: 0; font-weight: 700">
-        Input kilotoken:
-      </a-col>
-      <a-col span="12" style="padding-bottom: 0; font-weight: 700">
-        Output kilotoken:
-      </a-col>
+  <a-row :gutter="[10, 0]" style="margin-top: 10px">
+    <a-col span="12" style="padding-bottom: 0; font-weight: 700">
+      Input kilotoken:
+    </a-col>
+    <a-col span="12" style="padding-bottom: 0; font-weight: 700">
+      Output kilotoken:
+    </a-col>
 
-      <a-col span="12" style="padding-top: 0; font-size: 18px">
-        {{ service.resources.inputKilotoken }} {{ currency.code }}
-      </a-col>
-      <a-col span="12" style="padding-top: 0; font-size: 18px">
-        {{ service.resources.outputKilotoken }} {{ currency.code }}
-      </a-col>
+    <a-col span="12" style="padding-top: 0; font-size: 18px">
+      {{ service.resources.inputKilotoken }} {{ currency.code }}
+    </a-col>
+    <a-col span="12" style="padding-top: 0; font-size: 18px">
+      {{ service.resources.outputKilotoken }} {{ currency.code }}
+    </a-col>
 
-      <a-col>
-        <a-button
-          size="small"
-          type="primary"
-          :disabled="!service.status.includes('RUNNING')"
-          @click="moduleEnter"
-        >
-          {{ $t('new chat') | capitalize }}
-        </a-button>
-      </a-col>
+    <a-col span="24" style="margin-top: 10px">
+      <a-button
+        size="small"
+        type="primary"
+        :disabled="!service.status.includes('RUNNING')"
+        @click="moduleEnter"
+      >
+        {{ capitalize($t('new chat')) }}
+      </a-button>
+    </a-col>
 
-      <a-col v-if="isLoading">
-        <loading />
-      </a-col>
-      <a-col v-else-if="chats.length > 0">
-        <single-ticket
-          v-for="chat of chats"
-          :key="chat.id"
-          :ticket="chat"
-          :instance-id="service.uuid"
-        />
-      </a-col>
-      <a-col v-else>
-        <a-empty />
-      </a-col>
-    </a-row>
+    <a-col v-if="isLoading" span="24">
+      <loading />
+    </a-col>
+    <a-col v-else-if="chats.length > 0" span="24">
+      <ticket-item
+        v-for="chat of chats"
+        :key="chat.id"
+        :ticket="chat"
+        :instance-id="service.uuid"
+      />
+    </a-col>
+    <a-col v-else span="24">
+      <a-empty />
+    </a-col>
+  </a-row>
 
-    <add-ticket :instance-id="service.uuid" />
-  </div>
+  <add-ticket :instance-id="service.uuid" />
 </template>
 
 <script setup>
@@ -55,9 +53,9 @@ import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
 
-import addTicket from '@/components/appMain/support/addTicket.vue'
-import singleTicket from '@/components/appMain/support/singleTicket.vue'
-import loading from '@/components/loading/loading.vue'
+import addTicket from '@/components/support/addTicket.vue'
+import ticketItem from '@/components/support/ticketItem.vue'
+import loading from '@/components/ui/loading.vue'
 
 const props = defineProps({
   service: { type: Object, required: true }

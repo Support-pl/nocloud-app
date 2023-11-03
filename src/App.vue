@@ -1,37 +1,46 @@
 <template>
-  <div
-    id="app"
-    :style="false && cssVars"
-    :class="{ 'block-page': appStore.notification }"
+  <router-view
+    v-slot="{ Component }"
+    :style="{
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      minHeight: (authStore.isLogged) ? 'auto' : '100vh'
+    }"
   >
     <transition name="slide">
-      <router-view
-        :style="{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          minHeight: (authStore.isLogged) ? 'auto' : '100vh'
-        }"
-      />
+      <component :is="Component" />
     </transition>
-    <update-notification />
-  </div>
+  </router-view>
+  <update-notification />
+
+  <add-funds
+    v-if="modal.visible"
+    :sum="modal.amount"
+    :modal-visible="modal.visible"
+    :hide-modal="() => modal.visible = false"
+  />
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, provide, ref, watch } from 'vue'
+import { Modal } from 'ant-design-vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
-import router from '@/router'
-import i18n from '@/i18n.js'
 import api from '@/api.js'
 import config from '@/appconfig.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 
-import updateNotification from '@/components/updateNotification/index.vue'
+import addFunds from '@/components/ui/addFunds.vue'
+import updateNotification from '@/components/ui/updateNotification.vue'
 
-const route = router.currentRoute
+const router = useRouter()
+const route = useRoute()
+const i18n = useI18n()
+
 const appStore = useAppStore()
 const authStore = useAuthStore()
 
@@ -42,6 +51,28 @@ watch(() => authStore.billingUser, (value) => {
     router.replace('settings')
   }
 })
+
+const modal = ref({
+  amount: 0, visible: false
+})
+provide('checkBalance', checkBalance)
+
+function checkBalance (price = 0) {
+  if (authStore.userdata.balance < parseFloat(price)) {
+    Modal.confirm({
+      title: i18n.t('You do not have enough funds on your balance'),
+      content: i18n.t('Click OK to replenish the account with the missing amount'),
+      onOk: () => {
+        modal.value.amount = Math.ceil(
+          parseFloat(price) - authStore.userdata.balance
+        )
+        modal.value.visible = true
+      }
+    })
+    return false
+  }
+  return true
+}
 
 function isRouteExist (name) {
   if (name === 'root') name = 'services'
@@ -66,7 +97,7 @@ function redirectByType ({ uuid, type }) {
   switch (type) {
     case 'ovh':
     case 'ione':
-      router.replace({ name: 'openCloud_new', params: { uuid } })
+      router.replace({ name: 'openCloud', params: { uuid } })
       break
 
     default:
@@ -82,7 +113,7 @@ window.addEventListener('message', ({ data, origin }) => {
   authStore.load()
 
   if (data.uuid) redirectByType(data)
-  else if (router.currentRoute.name?.includes('login')) {
+  else if (route.name.includes('login')) {
     router.replace({ name: 'root' })
   }
 
@@ -118,48 +149,43 @@ authStore.load()
 if (lang) i18n.locale = lang
 if (authStore.isLogged) authStore.fetchUserData()
 
-onMounted(() => {
-  router.onReady(async () => {
-    const route = router.currentRoute
-    const mustUnloggined = route.meta?.mustBeUnloggined && authStore.isLogged
-    const isIncluded = ['cabinet', 'settings'].includes(route.name)
-    const { firstname } = await authStore.fetchBillingData()
+onMounted(async () => {
+  await router.isReady()
 
-    if (firstname && localStorage.getItem('oauth')) {
-      localStorage.removeItem('oauth')
-    }
+  const mustUnloggined = route.meta.mustBeUnloggined && authStore.isLogged
+  const isIncluded = ['cabinet', 'settings'].includes(route.name)
+  const { firstname } = await authStore.fetchBillingData()
 
-    if (route.meta?.mustBeLoggined && !authStore.isLogged) {
-      router.replace('login')
-    } else if (localStorage.getItem('oauth') && !isIncluded) {
-      router.replace('cabinet')
-    } else if (mustUnloggined) {
-      router.replace('/')
-    }
+  if (firstname && localStorage.getItem('oauth')) {
+    localStorage.removeItem('oauth')
+  }
 
-    if (!route.query.lang) return
-    if (route.query.lang !== i18n.locale) {
-      i18n.locale = route.query.lang
-    }
-  })
+  if (route.meta?.mustBeLoggined && !authStore.isLogged) {
+    router.replace('login')
+  } else if (localStorage.getItem('oauth') && !isIncluded) {
+    router.replace('cabinet')
+  } else if (mustUnloggined) {
+    router.replace('/')
+  }
 
-  document.title = 'Cloud'
-  document.body.setAttribute('style',
-    Object.entries(cssVars.value).map(([k, v]) => `${k}:${v}`).join(';')
-  )
+  if (route.query.lang && route.query.lang !== i18n.locale) {
+    i18n.locale = route.query.lang
+  }
 })
 
 watch(() => appStore.notification, (value) => {
   if (!value) return
   setTimeout(() => {
+    const app = document.getElementById('app')
     const elements = document.querySelectorAll('.ant-notification-notice-close')
     const close = Array.from(elements)
     const open = () => {
       if (close.length > 1) close.pop()
-      else appStore.notification = false
+      else app.classList.remove('block-page')
     }
 
     close.forEach((el) => { el.addEventListener('click', open) })
+    app.classList.add('block-page')
   }, 100)
 })
 
@@ -169,6 +195,11 @@ const cssVars = computed(() =>
       ([key, value]) => [`--${key}`, value]
     )
   )
+)
+
+document.title = 'Cloud'
+document.body.setAttribute('style',
+  Object.entries(cssVars.value).map(([k, v]) => `${k}:${v}`).join(';')
 )
 </script>
 
@@ -212,7 +243,7 @@ body {
   /* transition: transform .5s; */
   transition: opacity 0.5s ease;
 }
-.slide-enter,
+.slide-enter-from,
 .slide-leave-to {
   /* transform: translateX(100%); */
   opacity: 0;

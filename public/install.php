@@ -171,7 +171,7 @@ function generateField($field, $path = []){
 
 		.header {
 			background-color: #427cf7;
-			color: #fff;
+			color: var(--bright_font);
 			height: 64px;
 		}
 

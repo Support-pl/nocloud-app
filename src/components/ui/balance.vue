@@ -1,0 +1,103 @@
+<template>
+  <div v-if="authStore.isLogged" class="balance">
+    <div
+      class="balance__item"
+      :class="{ clickable }"
+      @click="showModal"
+    >
+      {{ (authStore.userdata.balance || 0).toFixed(2) }}
+
+      <span class="currency__suffix">{{ currency.code }}</span>
+      <span v-if="clickable" class="badge">
+        <plus-icon />
+      </span>
+    </div>
+    <add-funds :modal-visible="modalVisible" :hide-modal="hideModal" />
+  </div>
+</template>
+
+<script setup>
+import { computed, defineAsyncComponent, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+import addFunds from '@/components/ui/addFunds.vue'
+
+const props = defineProps({
+  clickable: { type: Boolean, default: true }
+})
+
+const authStore = useAuthStore()
+const currenciesStore = useCurrenciesStore()
+
+const plusIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/PlusOutlined')
+)
+
+const modalVisible = ref(false)
+
+const currency = computed(() => ({
+  code: authStore.billingUser.currency_code ?? currenciesStore.defaultCurrency
+}))
+
+// function URLparameter (obj, outer = '') {
+//   let str = ''
+//   for (const key in obj) {
+//     if (key === 'price') continue
+//     if (str !== '') {
+//       str += '&'
+//     }
+//     if (typeof obj[key] === 'object') {
+//       str += URLparameter(obj[key], outer + key)
+//     } else {
+//       str += outer + key + '=' + encodeURIComponent(obj[key])
+//     }
+//   }
+//   return str
+// }
+
+function showModal () {
+  if (props.clickable) modalVisible.value = true
+}
+
+function hideModal () {
+  modalVisible.value = false
+}
+
+async function fetch () {
+  try {
+    await authStore.fetchBillingData()
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+fetch()
+</script>
+
+<script>
+export default { name: 'BalanceView' }
+</script>
+
+<style>
+.balance__item.clickable {
+  cursor: pointer;
+}
+.currency__suffix {
+  font-size: 14px;
+}
+.badge {
+  position: absolute;
+  font-size: 12px;
+  right: 3px;
+  top: 7px;
+  background: #f5222d;
+  border-radius: 50%;
+  border: 1.6px solid var(--bright_font);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+</style>

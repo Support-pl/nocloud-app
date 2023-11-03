@@ -14,13 +14,13 @@
                 <a-step class="search" status="start" :title="$t('search')" @click="search">
                   <template #icon>
                     <!---->
-                    <a-icon type="search" />
+                    <search-icon />
                   </template>
                 </a-step>
                 <a-step class="cart" status="finish" :title="$t('cart')">
                   <!--@click="cart"-->
                   <template #icon>
-                    <a-icon type="shopping-cart" />
+                    <shopping-cart-icon />
                   </template>
                 </a-step>
               </a-steps>
@@ -31,7 +31,7 @@
                 :offset="[-25,-2]"
                 show-zero
                 :number-style="{
-                  backgroundColor: '#fff',
+                  backgroundColor: 'var(--bright_font)',
                   color: '#999',
                   boxShadow: '0 0 0 1px #d9d9d9 inset'
                 }"
@@ -47,7 +47,7 @@
                 </a-col>
                 <a-col span="24">
                   <a-input
-                    v-model="resources.reg_username"
+                    v-model:value="resources.reg_username"
                     :placeholder="$t('clientinfo.username')"
                   />
                 </a-col>
@@ -59,7 +59,7 @@
                   />
 
                   <a-input-password
-                    v-model="resources.reg_password"
+                    v-model:value="resources.reg_password"
                     :placeholder="$t('clientinfo.password')"
                   />
                 </a-col>
@@ -67,100 +67,101 @@
             </a-col>
             <a-col span="12">
               <a-row :gutter="[10, 10]">
-                <a-col>{{ $t('advanced options') | capitalize }}:</a-col>
+                <a-col>{{ capitalize($t('advanced options')) }}:</a-col>
                 <a-col>
-                  <a-switch v-model="resources.auto_renew" />
-                  {{ $t('domain_product.auto_renew') | capitalize }}
+                  <a-switch v-model:checked="resources.auto_renew" />
+                  {{ capitalize($t('domain_product.auto_renew')) }}
                 </a-col>
                 <a-col>
-                  <a-switch v-model="resources.who_is_privacy" />
-                  {{ $t('domain_product.who_is_privacy') | capitalize }} (3$)
+                  <a-switch v-model:checked="resources.who_is_privacy" />
+                  {{ capitalize($t('domain_product.who_is_privacy')) }} (3$)
                 </a-col>
                 <a-col>
-                  <a-switch v-model="resources.lock_domain" />
-                  {{ $t('domain_product.lock_domain') | capitalize }}
+                  <a-switch v-model:checked="resources.lock_domain" />
+                  {{ capitalize($t('domain_product.lock_domain')) }}
                 </a-col>
               </a-row>
             </a-col>
           </a-row>
 
-          <a-form-model ref="form" :model="form">
+          <a-form ref="form" :model="form">
             <a-row :gutter="[15, 10]" style="margin-top: 15px">
-              <a-col>{{ $t('user data') | capitalize }}:</a-col>
+              <a-col>{{ capitalize($t('user data')) }}:</a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="first_name" :label="$t('clientinfo.firstname')" :rules="rules.req">
-                  <a-input v-model="form.first_name" />
-                </a-form-model-item>
+                <a-form-item name="first_name" :label="$t('clientinfo.firstname')" :rules="rules.req">
+                  <a-input v-model:value="form.first_name" />
+                </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="last_name" :label="$t('clientinfo.lastname')" :rules="rules.req">
-                  <a-input v-model="form.last_name" />
-                </a-form-model-item>
+                <a-form-item name="last_name" :label="$t('clientinfo.lastname')" :rules="rules.req">
+                  <a-input v-model:value="form.last_name" />
+                </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="email" :label="$t('clientinfo.email')" :rules="rules.req">
-                  <a-input v-model="form.email" />
-                </a-form-model-item>
+                <a-form-item name="email" :label="$t('clientinfo.email')" :rules="rules.req">
+                  <a-input v-model:value="form.email" />
+                </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="phone" :label="$t('clientinfo.phonenumber')" :rules="rules.req">
-                  <a-input v-model="form.phone" />
-                </a-form-model-item>
+                <a-form-item name="phone" :label="$t('clientinfo.phonenumber')" :rules="rules.req">
+                  <a-input v-model:value="form.phone" />
+                </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="country" :label="$t('clientinfo.countryname')" :rules="rules.req">
-                  <a-select v-model="form.country" style="width: 100%">
-                    <a-select-option
-                      v-for="country in Object.keys(countries)"
-                      :key="country"
-                      :value="country"
-                    >
-                      {{ $t(`country.${country}`) }}
+                <a-form-item name="country" :label="$t('clientinfo.countryname')" :rules="rules.req">
+                  <a-select
+                    v-model:value="form.country"
+                    show-search
+                    style="width: 100%"
+                    :filter-option="searchCountries"
+                  >
+                    <a-select-option v-for="country in countries" :key="country.code">
+                      {{ $t(`country.${country.code}`) }}
                     </a-select-option>
                   </a-select>
-                </a-form-model-item>
+                </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="state" :label="$t('clientinfo.state')" :rules="rules.state">
-                  <a-input v-model="form.state" />
-                </a-form-model-item>
+                <a-form-item name="state" :label="$t('clientinfo.state')" :rules="rules.state">
+                  <a-input v-model:value="form.state" />
+                </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="city" :label="$t('clientinfo.city')" :rules="rules.req">
-                  <a-input v-model="form.city" />
-                </a-form-model-item>
+                <a-form-item name="city" :label="$t('clientinfo.city')" :rules="rules.req">
+                  <a-input v-model:value="form.city" />
+                </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="postal_code" :label="$t('clientinfo.postcode')" :rules="rules.postal_code">
-                  <a-input v-model="form.postal_code" />
-                </a-form-model-item>
+                <a-form-item name="postal_code" :label="$t('clientinfo.postcode')" :rules="rules.postal_code">
+                  <a-input v-model:value="form.postal_code" />
+                </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="address1" :label="$t('clientinfo.address1')" :rules="rules.req">
-                  <a-input v-model="form.address1" />
-                </a-form-model-item>
+                <a-form-item name="address1" :label="$t('clientinfo.address1')" :rules="rules.req">
+                  <a-input v-model:value="form.address1" />
+                </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="address2" :label="$t('clientinfo.address2')">
-                  <a-input v-model="form.address2" />
-                </a-form-model-item>
+                <a-form-item name="address2" :label="$t('clientinfo.address2')">
+                  <a-input v-model:value="form.address2" />
+                </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
-                <a-form-model-item prop="org_name" :label="$t('clientinfo.companyname')" :rules="rules.req">
-                  <a-input v-model="form.org_name" />
-                </a-form-model-item>
+                <a-form-item name="org_name" :label="$t('clientinfo.companyname')" :rules="rules.req">
+                  <a-input v-model:value="form.org_name" />
+                </a-form-item>
               </a-col>
             </a-row>
-          </a-form-model>
+          </a-form>
 
           <a-row class="order__prop" style="margin-bottom: 5px">
             <a-col span="8" :xs="6">
               {{ $t('domain_product.domain_in_your_cart') }}
-            </a-col><!--{{$t('provider') | capitalize}}-->
+            </a-col><!--{{capitalize($t('provider'))}}-->
           </a-row>
           <div class="description">
             <div v-if="!onCart.length" class="description-header">
-              <a-icon type="question-circle" />
+              <question-circle-icon />
               <p>{{ $t('domain_product.your_cart_is_empty') }}</p>
             </div>
             <a-descriptions
@@ -215,9 +216,9 @@
           </div>
 
           <a-row class="order__prop">
-            <a-col span="8" :xs="6">{{$t('tarif') | capitalize}}:</a-col>
+            <a-col span="8" :xs="6">{{capitalize($t('tarif'))}}:</a-col>
             <a-col span="16" :xs="18">
-              <a-select v-if="!fetchLoading" v-model="options.tarif" style="width: 100%">
+              <a-select v-if="!fetchLoading" v-model:value="options.tarif" style="width: 100%">
                 <a-select-option v-for="kind of products[options.provider]" :value="kind.tarif" :key="kind.tarif">{{kind.tarif}}</a-select-option>
               </a-select>
               <div v-else class="loadingLine"></div>
@@ -225,9 +226,9 @@
           </a-row>
 
           <a-row class="order__prop">
-            <a-col span="8" :xs="6">777&lt;!&ndash;{{$t('domain') | capitalize}}&ndash;&gt;:</a-col>
+            <a-col span="8" :xs="6">777&lt;!&ndash;{{capitalize($t('domain'))}}&ndash;&gt;:</a-col>
             <a-col span="16" :xs="18">
-              <a-input v-if="!fetchLoading" v-model="options.domain" placeholder="example.com"></a-input>
+              <a-input v-if="!fetchLoading" v-model:value="options.domain" placeholder="example.com"></a-input>
               <div v-else class="loadingLine"></div>
             </a-col>
           </a-row>-->
@@ -241,13 +242,9 @@
           </a-col>
 
           <a-col :xs="12" :sm="18" :lg="12">
-            <a-select v-model="resources.period" style="width: 100%">
+            <a-select v-model:value="resources.period" style="width: 100%">
               <!--v-if="!fetchLoading"-->
-              <a-select-option
-                v-for="period in periods"
-                :key="period"
-                :value="period"
-              >
+              <a-select-option v-for="period in periods" :key="period">
                 {{ $tc('year', period) }}
               </a-select-option>
             </a-select>
@@ -262,11 +259,7 @@
               placeholder="services"
               @change="(value) => service = value"
             >
-              <a-select-option
-                v-for="item of services"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+              <a-select-option v-for="item of services" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
@@ -277,11 +270,7 @@
               placeholder="namespaces"
               @change="(value) => namespace = value"
             >
-              <a-select-option
-                v-for="item of namespacesStore.namespaces"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+              <a-select-option v-for="item of namespacesStore.namespaces" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
@@ -292,11 +281,7 @@
               placeholder="plans"
               @change="(value) => plan = value"
             >
-              <a-select-option
-                v-for="item of plans"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
+              <a-select-option v-for="item of plans" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
             </a-select>
@@ -307,8 +292,8 @@
           {{ $t('Total') }}:
         </a-divider>
 
-        <a-row type="flex" justify="space-around" :style="{ fontSize: '1.5rem' }">
-          <a-col v-if="!fetchLoading">
+        <a-row type="flex" justify="space-around">
+          <a-col v-if="!fetchLoading" style="font-size: 1.5rem">
             {{ getProducts().pricing[resources.period] }}
             {{ getProducts().pricing.suffix }}
           </a-col>
@@ -326,11 +311,11 @@
               :disabled="!onCart.length || !namespace || !plan || !resources.reg_username || score < 4"
               @click="orderConfirm"
             >
-              {{ $t("order") | capitalize }}
+              {{ capitalize($t("order")) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
-              :visible="modal.confirmCreate"
+              :open="modal.confirmCreate"
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
@@ -340,19 +325,13 @@
             </a-modal>
           </a-col>
         </a-row>
-
-        <add-funds
-          v-if="addfunds.visible"
-          :sum="addfunds.amount"
-          :modal-visible="addfunds.visible"
-          :hide-modal="() => addfunds.visible = false"
-        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
@@ -364,14 +343,23 @@ import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 
-import addFunds from '@/components/balance/addFunds.vue'
 import notification from '@/mixins/notification.js'
-import { countries } from '@/setup/countries.js'
+import countries from '@/assets/countries.json'
 
+const searchIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SearchOutlined')
+)
+const shoppingCartIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ShoppingCartOutlined')
+)
+const questionCircleIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/QuestionCircleOutlined')
+)
 export default {
   name: 'DomainOrder',
-  components: { passwordMeter, addFunds },
+  components: { passwordMeter, searchIcon, shoppingCartIcon, questionCircleIcon },
   mixins: [notification],
+  inject: ['checkBalance'],
   props: {
     data: { type: Object, required: true },
     onCart: { type: Array, required: true },
@@ -380,6 +368,7 @@ export default {
     search: { type: Function, required: true },
     sp: { type: Object, required: true }
   },
+  emits: ['change'],
   data: () => ({
     countries,
     products: {},
@@ -393,7 +382,6 @@ export default {
       confirmLoading: false
     },
 
-    addfunds: { visible: false, amount: 0 },
     options: { provider: '', tarif: '', domain: '' },
     resources: {
       registrant_ip: '',
@@ -492,11 +480,11 @@ export default {
     this.fetch()
     if ('form' in this.data) {
       Object.entries(this.data).forEach(([key, value]) => {
-        this.$set(this, key, value)
+        this[key] = value
       })
     } else this.installDataToBuffer()
   },
-  beforeDestroy () {
+  beforeUnmount () {
     this.$emit('change', { resources: this.resources, form: this.form })
   },
   methods: {
@@ -546,26 +534,26 @@ export default {
       interestedKeys.forEach((key) => {
         switch (key) {
           case 'firstname':
-            this.$set(this.form, 'first_name', this.billingUser[key])
+            this.form.first_name = this.billingUser[key]
             break
           case 'lastname':
-            this.$set(this.form, 'last_name', this.billingUser[key])
+            this.form.last_name = this.billingUser[key]
             break
           case 'companyname':
-            this.$set(this.form, 'org_name', this.billingUser[key])
+            this.form.org_name = this.billingUser[key]
             break
           case 'postcode':
-            this.$set(this.form, 'postal_code', this.billingUser[key])
+            this.form.postal_code = this.billingUser[key]
             break
           case 'phonenumber':
-            this.$set(this.form, 'phone', this.billingUser[key])
+            this.form.phone = this.billingUser[key]
             break
           default:
-            this.$set(this.form, key, this.billingUser[key])
+            this.form[key] = this.billingUser[key]
         }
       })
     },
-    orderClickHandler () {
+    async orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
       const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
@@ -603,14 +591,14 @@ export default {
         return
       }
 
-      this.$refs.form.validate((isValid) => {
-        if (isValid) this.createDomains(info)
-        else {
-          this.openNotificationWithIcon('error', {
-            message: this.$t('all fields are required')
-          })
-        }
-      })
+      try {
+        await this.$refs.form.validate()
+        this.createDomains(info)
+      } catch {
+        this.openNotificationWithIcon('error', {
+          message: this.$t('all fields are required')
+        })
+      }
     },
     createDomains (info) {
       this.modal.confirmLoading = true
@@ -660,24 +648,8 @@ export default {
         this.$message.error(this.$t('domain is wrong'))
         return
       }
-      if (!this.checkBalance()) return
+      if (!this.checkBalance(this.getProducts().pricing[this.resources.period])) return
       this.modal.confirmCreate = true
-    },
-    checkBalance () {
-      const sum = this.getProducts().pricing[this.resources.period]
-
-      if (this.userdata.balance < parseFloat(sum)) {
-        this.$confirm({
-          title: this.$t('You do not have enough funds on your balance'),
-          content: this.$t('Click OK to replenish the account with the missing amount'),
-          onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
-            this.addfunds.visible = true
-          }
-        })
-        return false
-      }
-      return true
     },
     deployService (uuid) {
       this.$api.services.up(uuid)
@@ -720,6 +692,11 @@ export default {
         pricing: { ...prices }
       }
       // return this.products[this.options.provider].find(el => el.tarif == this.options.tarif);
+    },
+    searchCountries (input, option) {
+      const country = option.children(option)[0].children.toLowerCase()
+
+      return country.includes(input.toLowerCase())
     }
   }
   // watch: {
@@ -791,7 +768,7 @@ export default {
   border-color: #427cf7;
 }
 .description-body__btn-add:hover{
-  color: #fff;
+  color: var(--bright_font);
   background-color: #40a9ff!important;
   border-color: #40a9ff!important;
 }
@@ -807,7 +784,7 @@ export default {
   border-color: #f5222d;
 }
 .description-body__btn-order:hover{
-  color: #fff;
+  color: var(--bright_font);
   background-color: rgba(245, 34, 45, 0.65) !important;
   border-color: rgba(245, 34, 45, 0.65) !important;
 }
@@ -859,7 +836,7 @@ td.ant-descriptions-item-content:nth-child(6){
   justify-content: center;
 }
 .description-btn-more:hover{
-  color: #fff;
+  color: var(--bright_font);
   background-color: #40a9ff!important;
   border-color: #40a9ff!important;
 }
@@ -897,7 +874,7 @@ td.ant-descriptions-item-content:nth-child(6){
       5px 8px 10px rgba(0, 0, 0, .08),
       0px 0px 12px rgba(0, 0, 0, .05);
   padding: 20px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   height: max-content;
 }
 
@@ -929,7 +906,7 @@ td.ant-descriptions-item-content:nth-child(6){
 .order__template-item{
   width: 116px;
   margin-bottom: 10px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   box-shadow:
       3px 2px 6px rgba(0, 0, 0, .08),
       0px 0px 8px rgba(0, 0, 0, .05);
@@ -1033,7 +1010,7 @@ td.ant-descriptions-item-content:nth-child(6){
 
 .order__slider-item--active{
   background-color: var(--main);
-  color: #fff;
+  color: var(--bright_font);
 }
 
 .order__slider-item--loading{
@@ -1148,7 +1125,7 @@ td.ant-descriptions-item-content:nth-child(6){
   transition: opacity .5s, height .5s;
   height: 26px;
 }
-.networkApear-enter, .networkApear-leave-to {
+.networkApear-enter-from, .networkApear-leave-to {
   opacity: 0;
   height: 0;
 }

@@ -19,61 +19,61 @@
             show-icon
           />
           <div class="content__fields-wrapper">
-            <a-form-model
+            <a-form
               v-if="result.result !== 'success'"
               ref="csrForm"
               :model="generate"
               :rules="rules"
             >
-              <a-form-model-item
+              <a-form-item
                 :label="$t('ssl_product.domain')"
-                prop="csr_commonname"
+                name="csr_commonname"
               >
-                <a-input v-model="generate.csr_commonname" />
-              </a-form-model-item>
+                <a-input v-model:value="generate.csr_commonname" />
+              </a-form-item>
 
-              <a-form-model-item label="Email" prop="csr_email">
-                <a-input v-model="generate.csr_email" />
-              </a-form-model-item>
+              <a-form-item label="Email" name="csr_email">
+                <a-input v-model:value="generate.csr_email" />
+              </a-form-item>
 
-              <a-form-model-item
+              <a-form-item
                 :label="$t('ssl_product.companyname')"
-                prop="csr_organization"
+                name="csr_organization"
               >
-                <a-input v-model="generate.csr_organization" />
-              </a-form-model-item>
+                <a-input v-model:value="generate.csr_organization" />
+              </a-form-item>
 
-              <a-form-model-item
+              <a-form-item
                 :label="$t('ssl_product.departament')"
-                prop="csr_department"
+                name="csr_department"
               >
-                <a-input v-model="generate.csr_department" />
-              </a-form-model-item>
+                <a-input v-model:value="generate.csr_department" />
+              </a-form-item>
 
-              <a-form-model-item :label="$t('ssl_product.city')" prop="csr_city">
-                <a-input v-model="generate.csr_city" />
-              </a-form-model-item>
+              <a-form-item :label="$t('ssl_product.city')" name="csr_city">
+                <a-input v-model:value="generate.csr_city" />
+              </a-form-item>
 
-              <a-form-model-item :label="$t('ssl_product.state')" prop="csr_state">
-                <a-input v-model="generate.csr_state" />
-              </a-form-model-item>
+              <a-form-item :label="$t('ssl_product.state')" name="csr_state">
+                <a-input v-model:value="generate.csr_state" />
+              </a-form-item>
 
-              <a-form-model-item
+              <a-form-item
                 :label="$t('ssl_product.countryname')"
-                prop="csr_country"
+                name="csr_country"
               >
-                <a-select v-model="generate.csr_country">
-                  <a-select-option
-                    v-for="country in Object.keys(countries)"
-                    :key="country"
-                    :value="country"
-                  >
-                    {{ country }}: {{ $t(`country.${country}`) }}
+                <a-select
+                  v-model:value="generate.csr_country"
+                  show-search
+                  :filter-option="searchCountries"
+                >
+                  <a-select-option v-for="country in countries" :key="country.code">
+                    {{ country.title }}: {{ $t(`country.${country.code}`) }}
                   </a-select-option>
                 </a-select>
-              </a-form-model-item>
+              </a-form-item>
 
-              <a-form-model-item>
+              <a-form-item>
                 <a-button
                   type="primary"
                   :loading="isLoading"
@@ -81,8 +81,8 @@
                 >
                   {{ $t("ssl_product.generate") }} CSR
                 </a-button>
-              </a-form-model-item>
-            </a-form-model>
+              </a-form-item>
+            </a-form>
             <div v-else-if="result.result == 'success'">
               <a-alert
                 style="margin: 10px"
@@ -90,13 +90,13 @@
                 type="warning"
                 show-icon
               />
-              <a-form-model-item label="CSR" has-feedback prop="">
+              <a-form-item label="CSR" has-feedback name="">
                 <a-textarea
                   :value="result.csr_code"
                   :auto-size="{ minRows: 10, maxRows: 10 }"
                 />
-              </a-form-model-item>
-              <a-form-model-item
+              </a-form-item>
+              <a-form-item
                 :label="$t('ssl_product.private key (RSA)')"
                 style="margin-top: 20px"
               >
@@ -104,8 +104,8 @@
                   :value="result.csr_key"
                   :auto-size="{ minRows: 10, maxRows: 10 }"
                 />
-              </a-form-model-item>
-              <a-form-model-item>
+              </a-form-item>
+              <a-form-item>
                 <router-link
                   :to="{
                     name: 'certificate',
@@ -121,9 +121,7 @@
                   }"
                 >
                   <a-button type="primary">
-                    <a-icon type="left" />{{
-                      $t("ssl_product.save and return")
-                    }}
+                    <left-icon /> {{ $t("ssl_product.save and return") }}
                   </a-button>
                 </router-link>
                 <a-button
@@ -132,7 +130,7 @@
                 >
                   {{ $t("ssl_product.download_private_key") }}
                 </a-button>
-              </a-form-model-item>
+              </a-form-item>
             </div>
           </div>
         </template>
@@ -143,20 +141,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
+import { computed, defineAsyncComponent, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import i18n from '@/i18n.js'
+
 import api from '@/api.js'
 import { useAuthStore } from '@/stores/auth.js'
 
-import { countries } from '@/setup/countries'
-import loading from '@/components/loading/loading.vue'
+import countries from '@/assets/countries.json'
+import loading from '@/components/ui/loading.vue'
 
 const props = defineProps({
   domain: { type: String, required: true }
 })
 
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
+
+const i18n = useI18n()
 const authStore = useAuthStore()
 
 const csrForm = ref(null)
@@ -177,52 +180,26 @@ const result = ref({
   result: 'pending'
 })
 
-const rules = {
-  csr_commonname: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  csr_organization: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  csr_department: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
+const reqRule = reactive({
+  required: true,
+  message: 'Field is required'
+})
+const rules = computed(() => ({
+  csr_commonname: [reqRule],
+  csr_organization: [reqRule],
+  csr_department: [reqRule],
 
-  csr_email: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
+  csr_email: [reqRule],
 
-  csr_city: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  csr_state: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ],
-  csr_country: [
-    {
-      required: true,
-      message: `${i18n.t('ssl_product.field is required')}`
-    }
-  ]
-}
+  csr_city: [reqRule],
+  csr_state: [reqRule],
+  csr_country: [reqRule]
+
+}))
+
+onMounted(() => {
+  reqRule.message = `${i18n.t('ssl_product.field is required')}`
+})
 
 function download (ext, text) {
   const domain = generate.value.csr_commonname
@@ -258,34 +235,41 @@ function installDataToBuffer () {
   generate.value.csr_state = authStore.billingUser.state
 }
 
-function generateCSR () {
-  csrForm.value.validate(async (valid) => {
-    if (!valid) {
-      message.error(`${i18n.t('ssl_product.fields is required')}`)
-      return false
-    }
-    try {
-      isLoading.value = true
-      const response = await api.sendAsUser(
-        'moduleTouch',
-        { ...generate.value, path: 'goget/generateCSR' },
-        'moduleTouch.phpgoget'
-      )
+async function generateCSR () {
+  try {
+    await csrForm.value.validate()
+  } catch {
+    message.error(`${i18n.t('ssl_product.fields is required')}`)
+    return
+  }
 
-      if (response.error) throw response
+  try {
+    isLoading.value = true
+    const response = await api.sendAsUser(
+      'moduleTouch',
+      { ...generate.value, path: 'goget/generateCSR' },
+      'moduleTouch.phpgoget'
+    )
 
-      result.value.result = 'success'
-      result.value.csr_code = response.csr_code
-      result.value.csr_key = response.csr_key
-    } catch (error) {
-      message.error(error.description)
-      result.value.result = 'failed'
+    if (response.error) throw response
 
-      console.error(error)
-    } finally {
-      isLoading.value = false
-    }
-  })
+    result.value.result = 'success'
+    result.value.csr_code = response.csr_code
+    result.value.csr_key = response.csr_key
+  } catch (error) {
+    message.error(error.description)
+    result.value.result = 'failed'
+
+    console.error(error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function searchCountries (input, option) {
+  const country = option.children(option)[0].children.toLowerCase()
+
+  return country.includes(input.toLowerCase())
 }
 
 function retry () {
@@ -308,7 +292,7 @@ export default { name: 'SslGenerator' }
 }
 
 .generator__wrapper {
-  background-color: #fff;
+  background-color: var(--bright_font);
   border-radius: 20px;
   padding: 15px;
 }
@@ -333,14 +317,14 @@ export default { name: 'SslGenerator' }
 .button--icon:hover {
   /* color: var(--main); */
   background-color: var(--main);
-  color: #fff;
+  color: var(--bright_font);
 }
 
 .generate-page {
   padding-top: 20px;
 }
 .generate-page-card {
-  background: #fff;
+  background: var(--bright_font);
   border-radius: 10px;
   padding: 10px 15px 15px;
 }

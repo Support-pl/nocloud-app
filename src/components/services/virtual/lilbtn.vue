@@ -1,7 +1,7 @@
 <template>
   <div class="btn">
-    <a-button block :loading="isLoading" @click.stop="logIntoCpanel">
-      {{ $t('enter') | capitalize }}
+    <a-button block size="small" :loading="isLoading" @click.stop="logIntoCpanel">
+      {{ capitalize($t('enter')) }}
     </a-button>
   </div>
 </template>
@@ -9,13 +9,14 @@
 <script setup>
 import { ref } from 'vue'
 import { notification } from 'ant-design-vue'
-import i18n from '@/i18n.js'
+import { useI18n } from 'vue-i18n'
 import { useInstancesStore } from '@/stores/instances.js'
 
 const props = defineProps({
   service: { type: Object, required: true }
 })
 
+const i18n = useI18n()
 const instancesStore = useInstancesStore()
 
 const isLoading = ref(false)

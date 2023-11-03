@@ -1,58 +1,58 @@
 <template>
-  <div class="module">
-    <a-row :gutter="[10, 10]">
-      <a-col :md="12" :xs="12" :sm="12">
-        <div class="service-page__info">
-          <div class="service-page__info-title">
-            {{ $t('virtual_product.used space') | capitalize }}:
-          </div>
-
-          <div class="service-page__info-value">
-            {{ serviceUsed.diskusage.count }} / {{ serviceUsed.diskusage.max }}
-            ({{ (getPercent(serviceUsed.diskusage) || 0).toFixed(2) }}%)
-          </div>
-          <a-progress :percent="getPercent(serviceUsed.diskusage)" :show-info="false" />
+  <a-row :gutter="[10, 10]">
+    <a-col :md="12" :xs="12" :sm="12">
+      <div class="service-page__info">
+        <div class="service-page__info-title">
+          {{ capitalize($t('virtual_product.used space')) }}:
         </div>
-      </a-col>
 
-      <a-col :md="12" :xs="12" :sm="12">
-        <div class="service-page__info">
-          <div class="service-page__info-title">
-            {{ $t('virtual_product.bw') | capitalize }}:
-          </div>
-
-          <div class="service-page__info-value">
-            {{ serviceUsed.bandwidthusage.count }} /
-            {{ (serviceUsed.bandwidthusage.max !== 'unlimited')
-              ? `${serviceUsed.bandwidthusage.max}MB (${getPercent(serviceUsed.bandwidthusage)}%)`
-              : $t('virtual_product.unlimited') }}
-          </div>
-          <a-progress :percent="getPercent(serviceUsed.bandwidthusage)" :show-info="false" />
+        <div class="service-page__info-value">
+          {{ serviceUsed.diskusage.count }} / {{ serviceUsed.diskusage.max }}
+          ({{ (getPercent(serviceUsed.diskusage) || 0).toFixed(2) }}%)
         </div>
-      </a-col>
-    </a-row>
+        <a-progress :percent="getPercent(serviceUsed.diskusage)" :show-info="false" />
+      </div>
+    </a-col>
 
-    <a-row :gutter="[10, 10]">
-      <a-col :md="12" :xs="24" :sm="12">
-        <a-button size="large" type="primary" :loading="isLoginLoading" @click="logIntoCpanel">
-          {{ $t('enter') | capitalize }}
-        </a-button>
-      </a-col>
-    </a-row>
-  </div>
+    <a-col :md="12" :xs="12" :sm="12">
+      <div class="service-page__info">
+        <div class="service-page__info-title">
+          {{ capitalize($t('virtual_product.bw')) }}:
+        </div>
+
+        <div class="service-page__info-value">
+          {{ serviceUsed.bandwidthusage.count }} /
+          {{ (serviceUsed.bandwidthusage.max !== 'unlimited')
+            ? `${serviceUsed.bandwidthusage.max}MB (${getPercent(serviceUsed.bandwidthusage)}%)`
+            : $t('virtual_product.unlimited') }}
+        </div>
+        <a-progress :percent="getPercent(serviceUsed.bandwidthusage)" :show-info="false" />
+      </div>
+    </a-col>
+  </a-row>
+
+  <a-row :gutter="[10, 10]">
+    <a-col :md="12" :xs="24" :sm="12">
+      <a-button size="large" type="primary" :loading="isLoginLoading" @click="logIntoCpanel">
+        {{ capitalize($t('enter')) }}
+      </a-button>
+    </a-col>
+  </a-row>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { notification } from 'ant-design-vue'
-import router from '@/router'
-import i18n from '@/i18n.js'
+import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useInstancesStore } from '@/stores/instances.js'
 
 const props = defineProps({
   service: { type: Object, required: true }
 })
 
+const route = useRoute()
+const i18n = useI18n()
 const instancesStore = useInstancesStore()
 
 const isLoginLoading = ref(false)
@@ -96,10 +96,8 @@ function getPercent (value) {
 async function logIntoCpanel () {
   try {
     isLoginLoading.value = true
-    const { id } = router.currentRoute.params
-
     const response = await instancesStore.invokeAction({
-      uuid: id, action: 'session'
+      uuid: route.params.id, action: 'session'
     })
 
     if (!response.result) throw new Error(response)
@@ -121,7 +119,7 @@ export default { name: 'VirtualDraw' }
 
 <style>
 
-.module__row-title{
+.module__row-title {
   font-weight: bold;
   margin-top: 10px;
   margin-bottom: 5px;

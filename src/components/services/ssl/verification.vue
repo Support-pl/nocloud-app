@@ -1,90 +1,90 @@
 <template>
   <div>
     <a-alert
+      show-icon
+      type="warning"
       style="margin: 10px"
       :message="$t('ssl_product.verification_warning')"
-      type="warning"
-      show-icon
     />
-    <a-form-model ref="verification" :model="verification" :rules="rules">
-      <a-form-model-item :label="$t('ssl_product.domain')" prop="domain">
-        <a-input disabled v-model="verification.domain" />
-      </a-form-model-item>
-      <a-form-model-item :label="$t('ssl_product.DCV Method')" prop="dcv">
-        <a-select v-model="verification.dcv">
-          <a-select-option v-for="item in dcv_list" :value="item" :key="item">
+    <a-form ref="verification" :model="verification" :rules="rules">
+      <a-form-item :label="$t('ssl_product.domain')" name="domain">
+        <a-input v-model:value="verification.domain" disabled />
+      </a-form-item>
+
+      <a-form-item :label="$t('ssl_product.DCV Method')" name="dcv">
+        <a-select v-model:value="verification.dcv">
+          <a-select-option v-for="item in dcvList" :key="item" :value="item">
             {{ item }}
           </a-select-option>
         </a-select>
-      </a-form-model-item>
+      </a-form-item>
 
-      <a-form-model-item :label="$t('ssl_product.email')" prop="email">
-        <a-select v-model="verification.email">
+      <a-form-item :label="$t('ssl_product.email')" name="email">
+        <a-select v-model:value="verification.email">
           <a-select-option
-            v-for="item in email_list"
+            v-for="item in emailList"
             :key="item"
             :value="`${item}${csr.domain}`"
           >
             {{ item }}{{ csr.domain }}
           </a-select-option>
         </a-select>
-      </a-form-model-item>
+      </a-form-item>
 
-      <a-form-model-item>
-        <a-button type="primary" @click="$emit('handleClickPrev', verification)">
-          <a-icon type="left" /> {{ $t("ssl_product.back") }}
+      <a-form-item>
+        <a-button type="primary" @click="emits('handleClickPrev', verification)">
+          <left-icon /> {{ $t('ssl_product.back') }}
         </a-button>
-      </a-form-model-item>
-    </a-form-model>
+      </a-form-item>
+    </a-form>
   </div>
 </template>
 
-<script>
-import loading from "@/components/loading/loading.vue";
+<script setup>
+import { computed, defineAsyncComponent, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-export default {
-  name: "Verification",
-  components: { loading },
-  props: {
-    verification_back: { type: Object, default: () => {} },
-    csr: { type: Object, default: () => {} }
-  },
-  data() {
-    return {
-      loading: false,
-      data: "",
-      verification: {
-        domain: this.csr.domain,
-        dcv: "EMAIL",
-        email: `admin@${this.csr.domain}`,
-      },
-      dcv_list: ["EMAIL", "HTTP", "HTTPS", "DNS"],
-      email_list: [
-        "admin@",
-        "administrator@",
-        "hostmaster@",
-        "webmaster@",
-        "postmaster@",
-      ],
-      rules: {
-        dcv: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-        email: [
-          {
-            required: true,
-            message: `${this.$t("ssl_product.field is required")}`,
-          },
-        ],
-      },
-    };
-  },
-  mounted() {
-    if (!('dcv' in this.verification_back)) this.$emit('getVerification', this.verification);
-    else this.verification = this.verification_back;
+const props = defineProps({
+  verificationBack: { type: Object, default: () => {} },
+  csr: { type: Object, default: () => {} }
+})
+const emits = defineEmits(['handleClickPrev', 'getVerification'])
+
+const leftIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/LeftOutlined')
+)
+
+const i18n = useI18n()
+
+const verification = ref({
+  domain: props.csr.domain,
+  dcv: 'EMAIL',
+  email: `admin@${props.csr.domain}`
+})
+
+const dcvList = ['EMAIL', 'HTTP', 'HTTPS', 'DNS']
+const emailList = ['admin@', 'administrator@', 'hostmaster@', 'webmaster@', 'postmaster@']
+
+const reqRule = reactive({
+  required: true,
+  message: 'Field is required'
+})
+const rules = computed(() => ({
+  dcv: [reqRule],
+  email: [reqRule]
+}))
+
+onMounted(() => {
+  if (!('dcv' in props.verificationBack)) {
+    emits('getVerification', verification.value)
+  } else {
+    verification.value = JSON.parse(JSON.stringify(props.verificationBack))
   }
-};
+
+  reqRule.message = `${i18n.t('ssl_product.field is required')}`
+})
+</script>
+
+<script>
+export default { name: 'VerificationView' }
 </script>

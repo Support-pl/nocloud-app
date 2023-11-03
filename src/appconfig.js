@@ -1,6 +1,7 @@
 const config = localStorage.getItem('globalConfig')
 
 if (config) globalThis.globalConfig = JSON.parse(config)
+const { globalConfig } = globalThis
 
 export default {
   colors: globalConfig.app?.colors,
@@ -8,7 +9,8 @@ export default {
   autoTicketDepartment: 9,
 
   languages: globalConfig.languages ?? ['en'],
-  sharedEnabled: globalConfig.sharedEnabled ?? false,
+  vdcEnabled: globalConfig.vdc_enabled ?? false,
+  sharedEnabled: globalConfig.shared_enabled ?? false,
   dangerModeNoSSLCheck: globalConfig.dangerModeNoSSLCheck ?? false,
   WHMCSsiteurl: globalConfig.whmcs?.site_url ?? '',
   sharedFolder: globalConfig.app?.shared_folder ?? 'virtualHosting',
@@ -74,6 +76,11 @@ export default {
       groupname: ['OpenAI'],
       creationRouteName: 'service-openai',
       icon: 'robot'
+    },
+    vdc: {
+      groupname: ['VDC'],
+      creationRouteName: 'newVDC',
+      icon: 'cluster'
     }
   },
   getServiceType (groupname) {

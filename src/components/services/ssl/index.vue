@@ -14,18 +14,18 @@
             :is="template"
             :csr="csr"
             :personal="personal"
-            :personal_back="personal"
-            :product_info="getProducts"
-            :verification_back="verification"
-            @handleClickNext="handleClickNext"
-            @handleClickPrev="handleClickPrev"
-            @getVerification="(data) => verification = data"
+            :personal-back="personal"
+            :product-info="getProducts"
+            :verification-back="verification"
+            @handle-click-next="handleClickNext"
+            @handle-click-prev="handleClickPrev"
+            @get-verification="(data) => verification = data"
           />
 
           <template v-if="currentStep === 0">
             <a-row class="order__prop" style="margin-bottom: 5px">
               <a-col span="8" :xs="6">
-                {{ $t('provider') | capitalize }}:
+                {{ capitalize($t('provider')) }}:
               </a-col>
             </a-row>
 
@@ -36,7 +36,7 @@
                   :key="provider"
                   class="order__slider-item"
                   :class="{'order__slider-item--active': options.provider == provider}"
-                  @click="() => options.provider = provider"
+                  @click="options.provider = provider"
                 >
                   {{ provider }}
                 </div>
@@ -52,11 +52,11 @@
 
             <a-row class="order__prop">
               <a-col span="8" :xs="6">
-                {{ $t('product_name') | capitalize }}:
+                {{ capitalize($t('product_name')) }}:
               </a-col>
               <a-col span="16" :xs="18">
-                <a-select v-if="!fetchLoading" v-model="options.tarif" style="width: 100%">
-                  <a-select-option v-for="kind of products[options.provider]" :key="kind.product" :value="kind.product">
+                <a-select v-if="!fetchLoading" v-model:value="options.tarif" style="width: 100%">
+                  <a-select-option v-for="kind of products[options.provider]" :key="kind.product">
                     {{ kind.product }}
                   </a-select-option>
                 </a-select>
@@ -69,7 +69,11 @@
                 {{ $t('ssl_product.domain') }}:
               </a-col>
               <a-col span="16" :xs="18">
-                <a-input v-if="!fetchLoading" v-model="options.domain" placeholder="example.com" />
+                <a-input
+                  v-if="!fetchLoading"
+                  v-model:value="options.domain"
+                  placeholder="example.com"
+                />
                 <div v-else class="loadingLine" />
               </a-col>
             </a-row>
@@ -82,7 +86,7 @@
                   </a-button>
                 </router-link>
                 <a-button type="primary" style="margin-left: 10px" @click="handleClickNext">
-                  {{ $t("ssl_product.continue") }} <a-icon type="right" />
+                  {{ $t("ssl_product.continue") }} <right-icon />
                 </a-button>
               </a-col>
             </a-row>
@@ -97,8 +101,8 @@
           </a-col>
 
           <a-col :xs="12" :sm="18" :lg="12">
-            <a-select v-if="!fetchLoading" v-model="options.period" style="width: 100%">
-              <a-select-option v-for="period in periods" :key="period.title+period.count" :value="period">
+            <a-select v-if="!fetchLoading" v-model:value="options.period" style="width: 100%">
+              <a-select-option v-for="period in periods" :key="period">
                 {{ $tc('month', period) }}
               </a-select-option>
             </a-select>
@@ -172,11 +176,11 @@
         <a-row type="flex" justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
           <a-col :span="22">
             <a-button type="primary" block shape="round" :disabled="currentStep !== 3" @click="orderConfirm">
-              {{ $t("order") | capitalize }}
+              {{ capitalize($t("order")) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
-              :visible="modal.confirmCreate"
+              :open="modal.confirmCreate"
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
@@ -186,19 +190,13 @@
             </a-modal>
           </a-col>
         </a-row>
-
-        <add-funds
-          v-if="addfunds.visible"
-          :sum="addfunds.amount"
-          :modal-visible="addfunds.visible"
-          :hide-modal="() => addfunds.visible = false"
-        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
@@ -211,16 +209,18 @@ import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
-import addFunds from '@/components/balance/addFunds.vue'
 import notification from '@/mixins/notification.js'
-import { countries } from '@/setup/countries.js'
+
+const rightIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/RightOutlined')
+)
 
 export default {
   name: 'SslComponent',
-  components: { passwordMeter, addFunds },
+  components: { passwordMeter, rightIcon },
   mixins: [notification],
+  inject: ['checkBalance'],
   data: () => ({
-    countries,
     products: {},
     currentStep: 0,
     plan: null,
@@ -238,7 +238,6 @@ export default {
       confirmCreate: false,
       confirmLoading: false
     },
-    addfunds: { visible: false, amount: 0 },
 
     csr: {},
     personal: {},
@@ -503,26 +502,10 @@ export default {
         this.$message.error('domain is wrong')
         return
       }
-      if (!this.checkBalance()) return
+      if (!this.checkBalance(this.getProducts.prices[this.options.period])) return
       if (order) this.modal.confirmCreate = true
 
       return isValid
-    },
-    checkBalance () {
-      const sum = this.getProducts.prices[this.options.period]
-
-      if (this.userdata.balance < parseFloat(sum)) {
-        this.$confirm({
-          title: this.$t('You do not have enough funds on your balance'),
-          content: this.$t('Click OK to replenish the account with the missing amount'),
-          onOk: () => {
-            this.addfunds.amount = Math.ceil(parseFloat(sum) - this.userdata.balance)
-            this.addfunds.visible = true
-          }
-        })
-        return false
-      }
-      return true
     },
     deployService (uuid) {
       this.$api.services.up(uuid)
@@ -601,7 +584,7 @@ export default {
     5px 8px 10px rgba(0, 0, 0, .08),
     0px 0px 12px rgba(0, 0, 0, .05);
   padding: 20px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   height: max-content;
 }
 
@@ -640,7 +623,7 @@ export default {
 .order__template-item{
   width: 116px;
   margin-bottom: 10px;
-  background-color: #fff;
+  background-color: var(--bright_font);
   box-shadow:
     3px 2px 6px rgba(0, 0, 0, .08),
     0px 0px 8px rgba(0, 0, 0, .05);
@@ -745,7 +728,7 @@ export default {
 
 .order__slider-item--active{
   background-color: var(--main);
-  color: #fff;
+  color: var(--bright_font);
 }
 
 .order__slider-item--loading{
@@ -860,7 +843,7 @@ export default {
   transition: opacity .5s, height .5s;
   height: 26px;
 }
-.networkApear-enter, .networkApear-leave-to {
+.networkApear-enter-from, .networkApear-leave-to {
   opacity: 0;
   height: 0;
 }
