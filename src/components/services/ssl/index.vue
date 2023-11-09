@@ -110,55 +110,12 @@
           </a-col>
         </a-row>
 
-        <a-row :gutter="[10, 10]" style="margin-top: 10px">
-          <a-col v-if="services.length > 1">
-            <a-select
-              style="width: 100%"
-              placeholder="services"
-              @change="(value) => service = value"
-            >
-              <a-select-option
-                v-for="item of services"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
-                {{ item.title }}
-              </a-select-option>
-            </a-select>
-          </a-col>
-
-          <a-col v-if="namespacesStore.namespaces.length > 1">
-            <a-select
-              style="width: 100%"
-              placeholder="namespaces"
-              @change="(value) => namespace = value"
-            >
-              <a-select-option
-                v-for="item of namespacesStore.namespaces"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
-                {{ item.title }}
-              </a-select-option>
-            </a-select>
-          </a-col>
-
-          <a-col v-if="plans.length > 1">
-            <a-select
-              style="width: 100%"
-              placeholder="plans"
-              @change="(value) => plan = value"
-            >
-              <a-select-option
-                v-for="item of plans"
-                :key="item.uuid"
-                :value="item.uuid"
-              >
-                {{ item.title }}
-              </a-select-option>
-            </a-select>
-          </a-col>
-        </a-row>
+        <selects-to-create
+          v-model:plan="plan"
+          v-model:service="service"
+          v-model:namespace="namespace"
+          :plans-list="plans"
+        />
 
         <a-divider orientation="left" :style="{'margin-bottom': '0'}">
           {{ $t('Total') }}:
@@ -210,6 +167,7 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import notification from '@/mixins/notification.js'
+import selectsToCreate from '@/components/ui/selectsToCreate.vue'
 
 const rightIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RightOutlined')
@@ -217,7 +175,7 @@ const rightIcon = defineAsyncComponent(
 
 export default {
   name: 'SslComponent',
-  components: { passwordMeter, rightIcon },
+  components: { passwordMeter, selectsToCreate, rightIcon },
   mixins: [notification],
   inject: ['checkBalance'],
   data: () => ({

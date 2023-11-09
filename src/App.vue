@@ -1,30 +1,32 @@
 <template>
-  <router-view
-    v-slot="{ Component }"
-    :style="{
-      position: 'absolute',
-      width: '100%',
-      height: '100%',
-      minHeight: (authStore.isLogged) ? 'auto' : '100vh'
-    }"
-  >
-    <transition name="slide">
-      <component :is="Component" />
-    </transition>
-  </router-view>
-  <update-notification />
+  <a-config-provider :theme="{ algorithm: theme.defaultAlgorithm }">
+    <router-view
+      v-slot="{ Component }"
+      :style="{
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        minHeight: (authStore.isLogged) ? 'auto' : '100vh'
+      }"
+    >
+      <transition name="slide">
+        <component :is="Component" />
+      </transition>
+    </router-view>
+    <update-notification />
 
-  <add-funds
-    v-if="modal.visible"
-    :sum="modal.amount"
-    :modal-visible="modal.visible"
-    :hide-modal="() => modal.visible = false"
-  />
+    <add-funds
+      v-if="modal.visible"
+      :sum="modal.amount"
+      :modal-visible="modal.visible"
+      :hide-modal="() => modal.visible = false"
+    />
+  </a-config-provider>
 </template>
 
 <script setup>
 import { computed, onMounted, provide, ref, watch } from 'vue'
-import { Modal } from 'ant-design-vue'
+import { Modal, theme } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 

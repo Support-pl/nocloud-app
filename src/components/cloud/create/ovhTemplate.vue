@@ -39,7 +39,7 @@
               :max="resources.plans.length - 1"
               :min="0"
               :value="resources.plans.indexOf(plan)"
-              @change="(i) => $emit('changePlan', resources.plans[i])"
+              @change="(i) => $emit('update:plan', resources.plans[i])"
             />
           </a-col>
           <a-col v-else span="24">
@@ -49,7 +49,7 @@
                 :key="provider"
                 class="order__slider-item"
                 :class="{ 'order__slider-item--active': plan === provider }"
-                @click="$emit('changePlan', provider)"
+                @click="$emit('update:plan', provider)"
               >
                 {{ provider }}
               </div>
@@ -297,12 +297,12 @@ export default {
 
     plan: { type: String, required: true, default: '' },
     images: { type: Array, required: true },
-    plans: { type: Array, required: true },
+    products: { type: Array, required: true },
     allAddons: { type: Object, required: true },
     addonsCodes: { type: Object, required: true },
     price: { type: Object, required: true }
   },
-  emits: ['setData', 'changePlan', 'score', 'changePlans'],
+  emits: ['setData', 'update:plan', 'score', 'update:products'],
   data: () => ({ isFlavorsLoading: false }),
   computed: {
     ...mapState(useAuthStore, ['userdata', 'billingUser', 'isLogged']),
@@ -346,7 +346,7 @@ export default {
 
       const values = { cpu, ram: { size: ram.size * 1024 }, disk }
       const keys = Object.keys({ cpu, ram, disk })
-      const plan = this.plans.find(({ group, resources }) =>
+      const plan = this.products.find(({ group, resources }) =>
         group === this.plan && keys.every((key) =>
           resources[key] === values[key].size
         )
@@ -511,7 +511,7 @@ export default {
         if (isCpuEqual) return resA.at(-2) - resB.at(-2)
         return resA.at(-3) - resB.at(-3)
       })
-      this.$emit('changePlans', plans)
+      this.$emit('update:products', plans)
       if (plans.length < 1) return
 
       const dataString = (localStorage.getItem('data'))
@@ -521,10 +521,10 @@ export default {
       if (dataString.includes('productSize')) {
         const data = JSON.parse(dataString)
 
-        this.$emit('changePlan', data.productSize)
+        this.$emit('update:plan', data.productSize)
       } else if (this.plan === '') {
         setTimeout(() => {
-          this.$emit('changePlan', this.resources.plans[1] ?? this.resources.plans[0])
+          this.$emit('update:plan', this.resources.plans[1] ?? this.resources.plans[0])
         })
       }
     }
