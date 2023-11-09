@@ -81,213 +81,29 @@
         />
 
         <template v-else>
-          <!-- Location -->
-          <transition name="networkApear">
-            <a-row
-              type="flex"
-              justify="space-between"
-              style="
-                font-size: 1.2rem;
-                padding-bottom: 5px;
-                margin-bottom: 10px;
-                border-bottom: 1px solid #e8e8e8;
-              "
-            >
-              <a-col> {{ capitalize($t("location")) }}: </a-col>
-              <a-col>
-                {{ locationTitle }}
-              </a-col>
-            </a-row>
-          </transition>
-          <!-- Tarif -->
-          <transition name="networkApear">
-            <a-row
-              v-if="productSize"
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem' }"
-            >
-              <a-col> {{ capitalize($t("tariff")) }}: </a-col>
-              <a-col>
-                {{ productSize }}
-              </a-col>
-            </a-row>
-          </transition>
-
-          <!-- CPU -->
-          <transition name="networkApear">
-            <a-row
-              v-if="options.cpu.size && options.cpu.size !== 'loading'"
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem', 'align-items': 'center' }"
-            >
-              <a-col> {{ $t("cpu") }}: </a-col>
-              <a-col>{{ options.cpu.size }} {{ (isNaN(+options.cpu.size)) ? '' : 'vCPU' }}</a-col>
-            </a-row>
-          </transition>
-
-          <!-- RAM -->
-          <transition name="networkApear">
-            <a-row
-              v-if="options.ram.size"
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem' }"
-            >
-              <a-col> {{ $t("ram") }}: </a-col>
-              <a-col>{{ options.ram.size }} Gb</a-col>
-            </a-row>
-          </transition>
-
-          <!-- GPU -->
-          <transition name="networkApear">
-            <a-row
-              v-if="product.resources?.gpu_name"
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem' }"
-            >
-              <a-col> {{ $t("gpu") }}: </a-col>
-              <a-col>{{ product.resources.gpu_name }} (x{{ product.resources.gpu_count }})</a-col>
-            </a-row>
-          </transition>
-
-          <!-- Drive -->
-          <transition name="networkApear">
-            <a-row
-              v-if="parseFloat(diskSize)"
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.2rem', 'margin-bottom': '5px' }"
-            >
-              <a-col> {{ $t("Drive") }}: </a-col>
-              <a-col>
-                {{ options.drive ? "SSD" : "HDD" }}
-                <span>{{ diskSize }}</span>
-              </a-col>
-            </a-row>
-          </transition>
-
-          <!-- os -->
-          <transition name="networkApear">
-            <a-row
-              v-if="options.os.name"
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.1rem' }"
-            >
-              <a-col> {{ $t("os") }}: </a-col>
-              <a-col>
-                {{ options.os.name }}
-                <template v-if="priceOVH.addons.os">
-                  ({{ priceOVH.addons.os }} {{ currency.code }})
-                </template>
-              </a-col>
-            </a-row>
-          </transition>
-
-          <!-- network -->
-          <transition name="networkApear">
-            <a-row
-              v-if="
-                options.network.public.status &&
-                  itemSP.type !== 'ovh'
-              "
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.1rem' }"
-            >
-              <a-col>
-                <template v-if="tarification !== 'Hourly'">
-                  {{ $t("public") }} IPv4:
-                </template>
-                <template v-else>
-                  {{ $t("public") }} IPv4*:
-                </template>
-              </a-col>
-              <a-col>
-                {{ options.network.public.count }}
-              </a-col>
-            </a-row>
-          </transition>
-
-          <transition name="networkApear">
-            <a-row
-              v-if="options.network.private.status"
-              type="flex"
-              justify="space-between"
-              :style="{ 'font-size': '1.1rem' }"
-            >
-              <a-col>
-                {{ $t("private") }} IPv4:
-              </a-col>
-              <a-col>
-                {{ options.network.private.count }}
-              </a-col>
-            </a-row>
-          </transition>
+          <!-- Location Tarif CPU RAM GPU Drive os network -->
+          <cloud-resources :items="resources" />
 
           <!-- addons -->
           <transition-group name="networkApear">
             <a-row
               v-for="(addon, key) in addons"
               :key="addon"
-              type="flex"
               justify="space-between"
-              :style="{ 'font-size': '1.1rem' }"
+              style="font-size: 1.1rem"
             >
               <a-col> {{ capitalize($t(key)) }} {{ getAddonsValue(key) }}: </a-col>
-              <a-col>
-                {{ addon }} {{ currency.code }}
-              </a-col>
+              <a-col> {{ addon }} {{ currency.code }} </a-col>
             </a-row>
           </transition-group>
 
-          <a-row
-            v-if="filteredPlans.length > 1 && itemSP.type !== 'ione'"
-            type="flex"
-            justify="space-between"
-            style="width: 100%; margin-top: 10px"
-          >
-            <a-col style="width: 100%">
-              <a-select v-model:value="plan" placeholder="Price models" style="width: 100%">
-                <a-select-option v-for="item in filteredPlans" :key="item.uuid">
-                  {{ item.title }}
-                </a-select-option>
-              </a-select>
-            </a-col>
-          </a-row>
-
-          <a-row
-            v-if="services.length > 1"
-            type="flex"
-            justify="space-between"
-            style="width: 100%; margin-top: 10px"
-          >
-            <a-col style="width: 100%">
-              <a-select v-model:value="service" placeholder="Services" style="width: 100%">
-                <a-select-option v-for="item in services" :key="item.uuid">
-                  {{ item.title }}
-                </a-select-option>
-              </a-select>
-            </a-col>
-          </a-row>
-
-          <a-row
-            v-if="namespaces.length > 1"
-            type="flex"
-            justify="space-between"
-            style="width: 100%; margin-top: 10px"
-          >
-            <a-col style="width: 100%">
-              <a-select v-model:value="namespace" placeholder="Namespaces" style="width: 100%">
-                <a-select-option v-for="item in namespaces" :key="item.uuid">
-                  {{ item.title }}
-                </a-select-option>
-              </a-select>
-            </a-col>
-          </a-row>
+          <selects-to-create
+            v-model:plan="plan"
+            v-model:service="service"
+            v-model:namespace="namespace"
+            :plans-list="filteredPlans"
+            :is-plans-visible="itemSP.type !== 'ione'"
+          />
         </template>
 
         <transition name="networkApear">
@@ -436,6 +252,8 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import api from '@/api.js'
 import notification from '@/mixins/notification.js'
 
+import cloudResources from '@/components/cloud/create/resources.vue'
+import selectsToCreate from '@/components/ui/selectsToCreate.vue'
 import createButton from '@/components/cloud/create/button.vue'
 import loading from '@/components/ui/loading.vue'
 
@@ -445,7 +263,15 @@ const copyIcon = defineAsyncComponent(
 
 export default {
   name: 'NewPaaS',
-  components: { loading, NcMap, EditorContainer, createButton, copyIcon },
+  components: {
+    NcMap,
+    EditorContainer,
+    loading,
+    createButton,
+    cloudResources,
+    selectsToCreate,
+    copyIcon
+  },
   mixins: [notification],
   inject: ['checkBalance'],
   data () {
@@ -532,6 +358,66 @@ export default {
     ...mapState(useSpStore, ['servicesProviders', 'getShowcases']),
     ...mapState(usePlansStore, ['plans']),
     ...mapState(useInstancesStore, { getServicesFull: 'services' }),
+
+    resources () {
+      return {
+        location: {
+          title: this.$t('location'),
+          value: this.locationTitle,
+          style: {
+            paddingBottom: '5px',
+            marginBottom: '10px',
+            borderBottom: '1px solid #e8e8e8'
+          }
+        },
+        tarif: { title: this.$t('tariff'), value: this.productSize },
+        cpu: {
+          title: this.$t('cpu'),
+          value: `${this.options.cpu.size} ${(isNaN(+this.options.cpu.size)) ? '' : 'vCPU'}`,
+          visible: this.options.cpu.size && this.options.cpu.size !== 'loading'
+        },
+        ram: {
+          title: this.$t('ram'),
+          value: `${this.options.ram.size} Gb`,
+          visible: this.options.ram.size
+        },
+        gpu: {
+          title: this.$t('gpu'),
+          value: `${this.product.resources?.gpu_name} (x${this.product.resources?.gpu_count})`,
+          visible: this.product.resources?.gpu_name ?? false
+        },
+        drive: {
+          title: this.$t('Drive'),
+          value: `${this.options.drive ? 'SSD' : 'HDD'} ${this.diskSize}`,
+          visible: parseFloat(this.diskSize),
+          style: { marginBottom: '5px' }
+        },
+        os: {
+          title: this.$t('os'),
+          value: `${this.options.os.name} ${
+            (this.priceOVH.addons.os)
+              ? `(${this.priceOVH.addons.os} ${this.currency.code})`
+              : ''
+          }`,
+          visible: this.options.os.name,
+          style: { fontSize: '1.1rem' }
+        },
+        public: {
+          title: `${this.$t('public')} IPv4${
+            (this.tarification === 'Hourly') ? '*' : ''
+          }`,
+          value: this.options.network.public.count,
+          visible: this.options.network.public.status && this.itemSP.type !== 'ovh',
+          style: { fontSize: '1.1rem' }
+        },
+        private: {
+          title: `${this.$t('private')} IPv4`,
+          value: this.options.network.private.count,
+          visible: this.options.network.private.status,
+          style: { fontSize: '1.1rem' }
+        }
+      }
+    },
 
     itemService () {
       const data = this.getServicesFull.find((el) => {
@@ -1158,10 +1044,6 @@ export default {
         this.activeKey = 'addons'
       }
     },
-    getPopupContainer (trigger) {
-      const elem = trigger.parentElement.parentElement.parentElement
-      return elem
-    },
     getAddonsValue (key) {
       const addon = this.options.config.addons.find((el) => el.includes(key))
       const value = parseFloat(addon.split('-').at(-1))
@@ -1186,21 +1068,6 @@ export default {
           return 'Biennially'
       }
     },
-    // URLparameter(obj, outer = "") {
-    //   var str = "";
-    //   for (var key in obj) {
-    //     if (key == "price") continue;
-    //     if (str != "") {
-    //       str += "&";
-    //     }
-    //     if (typeof obj[key] == "object") {
-    //       str += this.URLparameter(obj[key], outer + key);
-    //     } else {
-    //       str += outer + key + "=" + encodeURIComponent(obj[key]);
-    //     }
-    //   }
-    //   return str;
-    // },
     handleOkOnCreateOrder () {
       // --------------------------------
       const sum = this.$refs['sum-order'].$el.firstElementChild.innerText

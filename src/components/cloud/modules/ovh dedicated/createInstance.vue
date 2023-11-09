@@ -1,6 +1,7 @@
 <template>
   <ovh-creation-template
     ref="template"
+    v-model:products="plans"
     :active-key="activeKey"
     :item-s-p="itemSP"
     :get-plan="getPlan"
@@ -14,13 +15,11 @@
     :set-data="setData"
     :plan="plan"
     :images="images"
-    :plans="plans"
     :all-addons="allAddons"
     :addons-codes="addonsCodes"
     :price="price"
     @set-data="(value) => $emit('setData', value)"
-    @change-plans="(value) => plans = value"
-    @change-plan="({ value }) => plan = value"
+    @update:plan="({ value }) => plan = value"
     @change-type="(value) => $emit('setData', { key: 'type', value })"
   >
     <template #location>
