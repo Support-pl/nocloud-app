@@ -18,7 +18,8 @@ export const useNamespasesStore = defineStore('namespaces', () => {
         namespaces.value = response.pool
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       } finally {
         isLoading.value = false
       }

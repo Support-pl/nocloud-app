@@ -49,7 +49,8 @@ export const useSpStore = defineStore('sp', () => {
         servicesProviders.value = response.pool
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       } finally {
         isLoading.value = false
       }
@@ -63,7 +64,8 @@ export const useSpStore = defineStore('sp', () => {
         showcases.value = response.showcases
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       } finally {
         isShowcasesLoading.value = false
       }

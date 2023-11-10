@@ -73,31 +73,12 @@
           </a-col>
         </a-row>
 
-        <a-row style="margin-top: 10px" :gutter="[10, 10]">
-          <a-col v-if="services.length > 1">
-            <a-select v-model:value="service" style="width: 100%" placeholder="services">
-              <a-select-option v-for="item of services" :key="item.uuid">
-                {{ item.title }}
-              </a-select-option>
-            </a-select>
-          </a-col>
-
-          <a-col v-if="namespacesStore.namespaces.length > 1">
-            <a-select v-model:value="namespace" style="width: 100%" placeholder="namespaces">
-              <a-select-option v-for="item of namespacesStore.namespaces" :key="item.uuid">
-                {{ item.title }}
-              </a-select-option>
-            </a-select>
-          </a-col>
-
-          <a-col v-if="plans.length > 1">
-            <a-select v-model:value="plan" style="width: 100%" placeholder="plans">
-              <a-select-option v-for="item of plans" :key="item.uuid">
-                {{ item.title }}
-              </a-select-option>
-            </a-select>
-          </a-col>
-        </a-row>
+        <selects-to-create
+          v-model:plan="plan"
+          v-model:service="service"
+          v-model:namespace="namespace"
+          :plans-list="plans"
+        />
 
         <a-divider orientation="left" style="margin-bottom: 0">
           {{ $t('Total') }}:
@@ -149,9 +130,11 @@ import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
+import selectsToCreate from '@/components/ui/selectsToCreate.vue'
+
 export default {
   name: 'AcronisComponent',
-  components: { passwordMeter },
+  components: { passwordMeter, selectsToCreate },
   inject: ['checkBalance'],
   data: () => ({
     plan: undefined,

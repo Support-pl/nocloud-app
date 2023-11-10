@@ -48,7 +48,8 @@ export const useProductsStore = defineStore('products', () => {
         products.value = result
         return result
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       } finally {
         isLoading.value = false
       }
@@ -72,7 +73,8 @@ export const useProductsStore = defineStore('products', () => {
         services.value = result
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     }
   }

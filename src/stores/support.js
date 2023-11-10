@@ -57,7 +57,8 @@ export const useSupportStore = defineStore('support', () => {
         tickets.value = response
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       } finally {
         isLoading.value = false
       }
@@ -80,7 +81,7 @@ export const useSupportStore = defineStore('support', () => {
         return response
       } catch (error) {
         console.error(error)
-        return error
+        throw error
       }
     }
   }

@@ -1,6 +1,12 @@
 <template>
   <div v-if="authStore.isLogged" class="balance">
+    <a-spin v-if="isLoading" :spinning="isLoading">
+      <template #indicator>
+        <LoadingOutlined style="color: var(--bright_font)" />
+      </template>
+    </a-spin>
     <div
+      v-else
       class="balance__item"
       :class="{ clickable }"
       @click="showModal"
@@ -18,6 +24,7 @@
 
 <script setup>
 import { computed, defineAsyncComponent, ref } from 'vue'
+import { LoadingOutlined } from '@ant-design/icons-vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import addFunds from '@/components/ui/addFunds.vue'
@@ -33,6 +40,7 @@ const plusIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/PlusOutlined')
 )
 
+const isLoading = ref(false)
 const modalVisible = ref(false)
 
 const currency = computed(() => ({
@@ -65,9 +73,12 @@ function hideModal () {
 
 async function fetch () {
   try {
+    isLoading.value = true
     await authStore.fetchBillingData()
   } catch (error) {
     console.error(error)
+  } finally {
+    isLoading.value = false
   }
 }
 

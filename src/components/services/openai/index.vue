@@ -19,31 +19,13 @@
       </div>
 
       <div class="order__calculate order__field">
-        <a-row :gutter="[10, 10]" style="margin-bottom: 10px">
-          <a-col v-if="services.length > 1" span="24">
-            <a-select v-model:value="service" style="width: 100%" placeholder="services">
-              <a-select-option v-for="item of services" :key="item.uuid">
-                {{ item.title }}
-              </a-select-option>
-            </a-select>
-          </a-col>
-
-          <a-col v-if="namespacesStore.namespaces.length > 1" span="24">
-            <a-select v-model:value="namespace" style="width: 100%" placeholder="namespaces">
-              <a-select-option v-for="name of namespacesStore.namespaces" :key="name.uuid">
-                {{ name.title }}
-              </a-select-option>
-            </a-select>
-          </a-col>
-
-          <a-col v-if="plans.length > 1" span="24">
-            <a-select v-model:value="plan" style="width: 100%" placeholder="plans">
-              <a-select-option v-for="item of plans" :key="item.uuid">
-                {{ item.title }}
-              </a-select-option>
-            </a-select>
-          </a-col>
-        </a-row>
+        <selects-to-create
+          v-model:plan="plan"
+          v-model:service="service"
+          v-model:namespace="namespace"
+          style="margin-bottom: 10px"
+          :plans-list="plans"
+        />
 
         <a-row
           v-if="getProducts.inputKilotoken > 0"
@@ -118,6 +100,8 @@ import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
+
+import selectsToCreate from '@/components/ui/selectsToCreate.vue'
 
 const router = useRouter()
 const route = useRoute()

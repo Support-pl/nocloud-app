@@ -225,7 +225,7 @@ function cloudClick (service, { target }) {
   const { groupname, orderid, hostingid, server_on: isServer, id, config } = service
 
   if (target.hasAttribute('role') || target.hasAttribute('viewBox')) return
-  if (config.is_vdc) {
+  if (config?.is_vdc) {
     router.push({ name: 'openVDC', params: { uuid: orderid } })
   } else if (id && isServer) {
     router.push({ name: 'openCloud', params: { uuid: id } })
