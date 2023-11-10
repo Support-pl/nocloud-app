@@ -178,9 +178,7 @@ function moduleEnter () {
     ),
     okText: i18n.t('Yes'),
     cancelText: i18n.t('Cancel'),
-    okButtonProps: {
-      props: { disabled: isDisabled.value }
-    },
+    okButtonProps: { disabled: isDisabled.value },
     onOk: async () => {
       const data = { uuid: props.service.orderid, action: 'manual_renew' }
 

@@ -255,6 +255,7 @@ async function sendNewTicket () {
     console.error(error)
   } finally {
     isSending.value = false
+    closeFields()
   }
 }
 

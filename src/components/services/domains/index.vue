@@ -108,13 +108,14 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, ref } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { notification } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 
 import api from '@/api'
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
+import { usePlansStore } from '@/stores/plans.js'
 
 import order from '@/components/services/domains/order.vue'
 import loading from '@/components/ui/loading.vue'
@@ -122,6 +123,7 @@ import loading from '@/components/ui/loading.vue'
 const i18n = useI18n()
 const authStore = useAuthStore()
 const providersStore = useSpStore()
+const plansStore = usePlansStore()
 
 const searchIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/SearchOutlined')
@@ -144,6 +146,10 @@ const dataCart = ref({})
 const sp = computed(() =>
   providersStore.servicesProviders.find((sp) => sp.type === 'opensrs')
 )
+
+watch(sp, ({ uuid }) => {
+  plansStore.fetch({ anonymously: !authStore.isLogged, sp_uuid: uuid })
+})
 
 async function searchDomain () {
   const regexWithZone = /^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i
@@ -221,7 +227,8 @@ async function fetch () {
   try {
     await Promise.all([
       authStore.fetchBillingData(),
-      providersStore.fetch()
+      providersStore.fetch(!authStore.isLogged),
+      providersStore.fetchShowcases(!authStore.isLogged)
     ])
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error

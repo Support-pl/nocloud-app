@@ -194,6 +194,8 @@ export default {
         this.products[this.sizes.indexOf(this.options.size)]
       ))
 
+      console.log(this.products)
+
       delete product.resources.model
       if (`${product.resources.ssd}`.includes('Gb')) return product
       product.resources.ssd = `${product.resources.ssd / 1024} Gb`
@@ -238,9 +240,9 @@ export default {
     }
   },
   watch: {
-    'namespacesStore.namespaces' (value) { this.namespace = value[0]?.uuid },
-    services (value) { this.service = value[0]?.uuid },
-    plans (value) { this.plan = value[0]?.uuid },
+    sp ({ uuid }) {
+      this.plansStore.fetch({ anonymously: !this.isLogged, sp_uuid: uuid })
+    },
     plan (value) {
       const plan = this.plans.find(({ uuid }) => uuid === value)
 
@@ -264,7 +266,7 @@ export default {
     const promises = [
       this.fetchBillingData(),
       this.spStore.fetch(!this.isLogged),
-      this.plansStore.fetch({ anonymously: !this.isLogged })
+      this.spStore.fetchShowcases(!this.isLogged)
     ]
 
     if (this.isLogged) {
@@ -292,7 +294,7 @@ export default {
       const products = Object.values(plan.products ?? {})
       const sortedProducts = Object.entries(plan.products ?? {})
 
-      products.sort((a, b) => b.title - a.title)
+      products.sort((a, b) => a.sorter - b.sorter)
       this.products = products
       this.plan = plan?.uuid
 
