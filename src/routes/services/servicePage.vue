@@ -477,9 +477,7 @@ export default {
         title: this.$t('Do you want to renew service?'),
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
-        okButtonProps: {
-          props: { disabled: (this.service.data.blocked) }
-        },
+        okButtonProps: { disabled: (this.service.data.blocked) },
         onOk: async () => {
           const data = { uuid: this.service.uuid, action: 'manual_renew' }
 

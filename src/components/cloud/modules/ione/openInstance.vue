@@ -159,11 +159,7 @@
             >
               <table class="Fcloud__table">
                 <tbody>
-                  <tr
-                    v-for="nic in VM.state &&
-                      VM.state.meta.networking.public"
-                    :key="nic"
-                  >
+                  <tr v-for="nic in VM.state?.meta.networking.public" :key="nic">
                     <td>{{ nic }}</td>
                   </tr>
                 </tbody>
@@ -172,11 +168,7 @@
             <div v-if="dataSP" class="block__value" style="font-size: 18px">
               <table class="Fcloud__table">
                 <tbody>
-                  <tr
-                    v-for="nic in VM.state &&
-                      VM.state.meta.networking.private"
-                    :key="nic"
-                  >
+                  <tr v-for="nic in VM.state?.meta.networking.private" :key="nic">
                     <td>{{ nic }}</td>
                   </tr>
                 </tbody>
@@ -1109,9 +1101,7 @@ export default defineComponent({
         ),
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
-        okButtonProps: {
-          props: { disabled: (this.VM.data.blocked) }
-        },
+        okButtonProps: { disabled: (this.VM.data.blocked) },
         onOk: () => this.sendAction('manual_renew'),
         onCancel () {}
       })

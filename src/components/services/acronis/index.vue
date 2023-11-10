@@ -222,11 +222,9 @@ export default {
     }
   },
   watch: {
-    'appStore.namespaces' (value) { this.namespace = value[0]?.uuid },
-    services (value) {
-      if (value.length === 1) this.service = value[0]?.uuid
+    sp ({ uuid }) {
+      this.plansStore.fetch({ anonymously: !this.isLogged, sp_uuid: uuid })
     },
-    plans (value) { this.plan = value[0]?.uuid },
     plan (value) {
       const plan = this.plans.find(({ uuid }) => uuid === value)
 
@@ -246,8 +244,8 @@ export default {
   created () {
     const promises = [
       this.fetchBillingData(),
-      this.plansStore.fetch({ anonymously: !this.isLogged }),
-      this.spStore.fetch(!this.isLogged)
+      this.spStore.fetch(!this.isLogged),
+      this.spStore.fetchShowcases(!this.isLogged)
     ]
 
     if (this.isLogged) {

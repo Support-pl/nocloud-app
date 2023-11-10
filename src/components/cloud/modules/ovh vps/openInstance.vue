@@ -1085,9 +1085,7 @@ export default defineComponent({
         ),
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
-        okButtonProps: {
-          props: { disabled: (this.VM.data.blocked) }
-        },
+        okButtonProps: { disabled: (this.VM.data.blocked) },
         onOk: () => this.sendAction('manual_renew'),
         onCancel () {}
       })

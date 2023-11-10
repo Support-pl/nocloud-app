@@ -99,8 +99,11 @@ export const useChatsStore = defineStore('chats', () => {
     switch (event.type) {
       case EventType.MESSAGE_SENT: {
         const chat = chats.value.get(message.chat)
+        const i = messages.value.findIndex(({ uuid }) => uuid === event.item.value.uuid)
 
-        // messages.value.push(newMessage);
+        if (i === -1) messages.value.push(newMessage)
+        else messages.value.splice(i, 1, newMessage)
+
         chat.meta = new ChatMeta({
           unread: chat.meta.unread + 1,
           lastMessage: message
@@ -285,17 +288,19 @@ export const useChatsStore = defineStore('chats', () => {
       try {
         const messagesApi = createPromiseClient(MessagesAPI, transport)
 
-        const newMessage = new Message({
+        const response = await messagesApi.send(new Message({
           kind: Kind.DEFAULT,
           underReview: false,
           content: message.content,
           chat: message.uuid,
           sent: message.date,
           sender: message.account
-        })
+        }))
 
-        messagesApi.send(newMessage)
-        return newMessage
+        if (response.uuid === '') {
+          response.uuid = 'last message'
+        }
+        return response
       } catch (error) {
         console.debug(error)
         throw error

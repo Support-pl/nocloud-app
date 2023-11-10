@@ -267,6 +267,9 @@ export default {
     }
   },
   watch: {
+    sp ({ uuid }) {
+      this.plansStore.fetch({ anonymously: !this.isLogged, sp_uuid: uuid })
+    },
     'options.provider' (value) {
       this.options.tarif = this.products[value][0].product
     },
@@ -288,24 +291,10 @@ export default {
   created () {
     this.fetchBillingData()
     this.spStore.fetch(!this.isLogged).then(() => this.fetch())
-    this.plansStore.fetch({ anonymously: !this.isLogged })
-      .then(() => {
-        if (this.plans.length === 1) this.plan = this.plans[0].uuid
-      })
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err
-
-        this.openNotificationWithIcon('error', {
-          message: this.$t(message)
-        })
-        console.error(err)
-      })
+    this.spStore.fetchShowcases(!this.isLogged)
 
     if (this.isLogged) {
       this.namespacesStore.fetch()
-        .then(({ pool }) => {
-          if (pool.length === 1) this.namespace = pool[0].uuid
-        })
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err
 
@@ -317,9 +306,6 @@ export default {
         })
 
       this.instancesStore.fetch()
-        .then(() => {
-          if (this.services.length === 1) this.service = this.services[0].uuid
-        })
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err
 

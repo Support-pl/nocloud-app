@@ -180,21 +180,13 @@ const plans = computed(() =>
   })
 )
 
-watch(() => namespacesStore.namespaces, (value) => {
-  namespace.value = value[0]?.uuid
-})
-
-watch(services, (value) => {
-  service.value = value[0]?.uuid
-})
-
-watch(plans, (value) => {
-  plan.value = value[0]?.uuid
-})
-
 const sp = computed(() =>
   spStore.servicesProviders.find((sp) => sp.type === 'openai')
 )
+
+watch(sp, ({ uuid }) => {
+  plansStore.fetch({ anonymously: !authStore.isLogged, sp_uuid: uuid })
+})
 
 function orderClickHandler () {
   const serviceItem = services.value.find(({ uuid }) => uuid === service.value)
@@ -239,7 +231,7 @@ function orderClickHandler () {
   createOpenAI(info)
 }
 
-function createOpenAI (info) {
+async function createOpenAI (info) {
   modal.value.confirmLoading = true
   const action = (service.value) ? 'update' : 'create'
   const orderData = (service.value)
@@ -254,43 +246,42 @@ function createOpenAI (info) {
         }
       }
 
-  instancesStore[`${action}Service`](orderData)
-    .then(({ uuid }) => { deployService(uuid) })
-    .catch((err) => {
-      const config = { namespace: namespace.value, service: orderData }
-      const message = err.response?.data?.message ?? err.message ?? err
+  try {
+    const { uuid } = await instancesStore[`${action}Service`](orderData)
 
-      api.services.testConfig(config)
-        .then(({ result, errors }) => {
-          if (!result) {
-            errors.forEach(({ error }) => {
-              notification.error({ message: error })
-            })
-          }
-        })
-      notification.error({ message: i18n.t(message) })
-      console.error(err)
-    })
+    deployService(uuid)
+  } catch (error) {
+    const config = { namespace: namespace.value, service: orderData }
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    const { result, errors } = await api.services.testConfig(config)
+
+    notification.error({ message: i18n.t(message) })
+    if (!result) {
+      errors.forEach(({ error }) => {
+        notification.error({ message: error })
+      })
+    }
+  }
 }
 
 function orderConfirm () {
   modal.value.confirmCreate = true
 }
 
-function deployService (uuid) {
-  api.services.up(uuid)
-    .then(() => {
-      notification.success({ message: i18n.t('Done') })
-      router.push({ path: '/services' })
-    })
-    .catch((err) => {
-      const message = err.response?.data?.message ?? err.message ?? err
+async function deployService (uuid) {
+  try {
+    await api.services.up(uuid)
 
-      notification.error({ message: i18n.t(message) })
-    })
-    .finally(() => {
-      modal.value.confirmLoading = false
-    })
+    notification.success({ message: i18n.t('Done') })
+    router.push({ path: '/services' })
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    notification.error({ message: i18n.t(message) })
+  } finally {
+    modal.value.confirmLoading = false
+  }
 }
 
 onMounted(() => {
@@ -302,30 +293,33 @@ onMounted(() => {
   action()
 })
 
-function fetch () {
-  fetchLoading.value = true
-  const promises = [
-    authStore.fetchBillingData(),
-    plansStore.fetch({ anonymously: !authStore.isLogged }),
-    spStore.fetch(!authStore.isLogged)
-  ]
+async function fetch () {
+  try {
+    fetchLoading.value = true
+    const promises = [
+      authStore.fetchBillingData(),
+      spStore.fetch(!authStore.isLogged),
+      spStore.fetchShowcases(!authStore.isLogged)
+    ]
 
-  if (authStore.isLogged) {
-    promises.push(
-      namespacesStore.fetch(),
-      instancesStore.fetch()
-    )
-  }
+    if (authStore.isLogged) {
+      promises.push(
+        namespacesStore.fetch(),
+        instancesStore.fetch()
+      )
+    }
 
-  Promise.all(promises).catch((err) => {
-    const message = err.response?.data?.message ?? err.message ?? err
+    await Promise.all(promises)
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
 
-    if (err.response?.data?.code === 16) return
+    if (error.response?.data?.code === 16) return
     notification.error({ message: i18n.t(message) })
-    console.error(err)
-  }).finally(() => {
+
+    console.error(error)
+  } finally {
     fetchLoading.value = false
-  })
+  }
 
   if (currenciesStore.currencies.length < 1) {
     currenciesStore.fetchCurrencies()
