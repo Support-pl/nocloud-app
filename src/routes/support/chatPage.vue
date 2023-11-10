@@ -231,7 +231,7 @@ export default {
     return {
       status: null,
       subject: 'SUPPORT',
-      replies: null,
+      replies: [],
       messageInput: '',
       isLoading: true,
       chatid: this.$route.params.id,
@@ -279,6 +279,15 @@ export default {
       nextTick(() => {
         this.chatPaddingTop = `${this.$refs.notification?.$el.offsetHeight + 15}px`
       })
+    },
+    messages: {
+      handler () {
+        nextTick(() => {
+          if (!this.$refs?.content) return
+          this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
+        })
+      },
+      deep: true
     }
   },
   async mounted () {
@@ -339,14 +348,12 @@ export default {
         message: md.render(this.messageInput).trim().replace(/^<p>/, '').replace(/<\/p>$/, ''),
         name: this.authStore.userdata.title,
         userid: this.authStore.userdata.uuid,
-        error: true
+        sending: true
       }
 
       const date = this.appStore.toDate(message.date / 1000, '-', true, true)
-      const { content } = this.$refs
 
       this.replies.push({ ...message, date, requestor_type: 'Owner' })
-      setTimeout(() => { content.scrollTo(0, content.scrollHeight) }, 100)
 
       if (this.replies[0].gateways) {
         this.chatsStore.sendMessage({
@@ -356,14 +363,14 @@ export default {
           date: BigInt(message.date)
         })
           .then(({ uuid }) => {
-            this.replies.at(-1).uuid = uuid
+            this.replies[this.replies.length - 1].uuid = uuid
           })
           .catch((err) => {
-            this.replies.at(-1).error = true
+            this.replies[this.replies.length - 1].error = true
             console.error(err)
           })
           .finally(() => {
-            this.replies.at(-1).sending = false
+            this.replies[this.replies.length - 1].sending = false
           })
         this.messageInput = ''
         return
@@ -377,11 +384,11 @@ export default {
         }
       })
         .catch((err) => {
-          this.replies.at(-1).error = true
+          this.replies[this.replies.length - 1].error = true
           console.error(err)
         })
         .finally(() => {
-          this.replies.at(-1).sending = false
+          this.replies[this.replies.length - 1].sending = false
         })
       this.messageInput = ''
     },

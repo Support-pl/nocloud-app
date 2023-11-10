@@ -215,9 +215,7 @@ function sendRenew () {
     title: i18n.t('Do you want to renew service?'),
     okText: i18n.t('Yes'),
     cancelText: i18n.t('Cancel'),
-    okButtonProps: {
-      props: { disabled: (service.value.data.blocked) }
-    },
+    okButtonProps: { disabled: (service.value.data.blocked) },
     onOk: async () => {
       const data = { uuid: service.value.uuid, action: 'manual_renew' }
 

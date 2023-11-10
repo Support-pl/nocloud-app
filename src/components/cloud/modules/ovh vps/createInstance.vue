@@ -190,7 +190,7 @@ export default {
     this.$emit('setData', {
       key: 'vps_datacenter',
       type: 'ovh',
-      value: this.region.value.replace(/\d/g, '')
+      value: this.region?.value.replace(/\d/g, '')
     })
   },
   methods: {

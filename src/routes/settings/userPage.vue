@@ -65,18 +65,6 @@
             >
               <a-input v-model:value="form.postcode" :disabled="isDisabled" />
             </a-form-item>
-            <a-form-item
-              :label="`${capitalize($t('clientinfo.phonenumber'))}:`"
-              name="phonenumber"
-            >
-              <input
-                v-model="form.phonenumber"
-                v-phone="phonecode"
-                type="tel"
-                class="user__input"
-                :disabled="!form.countryname || isDisabled"
-              >
-            </a-form-item>
 
             <a-form-item
               :label="`${capitalize($t('clientinfo.countryname'))}:`"
@@ -92,6 +80,19 @@
                   {{ $t(`country.${country.code}`) }}
                 </a-select-option>
               </a-select>
+            </a-form-item>
+
+            <a-form-item
+              :label="`${capitalize($t('clientinfo.phonenumber'))}:`"
+              name="phonenumber"
+            >
+              <input
+                v-model="form.phonenumber"
+                v-phone="phonecode"
+                type="tel"
+                class="user__input"
+                :disabled="!form.countryname || isDisabled"
+              >
             </a-form-item>
 
             <a-form-item

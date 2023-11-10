@@ -412,24 +412,8 @@ export default {
     action()
   },
   created () {
-    this.plansStore.fetch({ anonymously: !this.isLogged })
-      .then(() => {
-        if (this.plans.length === 1) this.plan = this.plans[0].uuid
-      })
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err
-
-        this.openNotificationWithIcon('error', {
-          message: this.$t(message)
-        })
-        console.error(err)
-      })
-
     if (this.isLogged) {
       this.namespacesStore.fetch()
-        .then(({ pool }) => {
-          if (pool.length === 1) this.namespace = pool[0].uuid
-        })
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err
 
@@ -441,9 +425,6 @@ export default {
         })
 
       this.instancesStore.fetch()
-        .then(() => {
-          if (this.services.length === 1) this.service = this.services[0].uuid
-        })
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err
 
