@@ -33,7 +33,8 @@ export const usePlansStore = defineStore('plans', () => {
         setPlans(response.pool)
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       } finally {
         isLoading.value = false
       }

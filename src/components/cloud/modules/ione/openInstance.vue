@@ -680,7 +680,11 @@ export default defineComponent({
     ...mapState(useAuthStore, ['userdata', 'baseURL']),
     ...mapState(useCurrenciesStore, ['defaultCurrency']),
     statusVM () {
-      if (!this.VM) return
+      if (!this.VM?.state) {
+        return {
+          start: true, shutdown: true, reboot: true, recover: true
+        }
+      }
       const isSuspended = this.VM.state.meta.state === 1 || this.VM.data.suspended_manually
 
       if (isSuspended || this.VM.data.lock) {

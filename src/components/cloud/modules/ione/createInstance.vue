@@ -26,9 +26,7 @@
             justify="space-between"
             align="middle"
           >
-            <a-col>
-              <span style="display: inline-block">{{ $t(key) }}: (cores)</span>
-            </a-col>
+            <a-col>{{ $t(key) }}: ({{ prefixes[key] }})</a-col>
             <a-col :span="24" :md="20">
               <a-slider
                 range
@@ -394,7 +392,8 @@ export default {
   emits: ['setData', 'score'],
   data: () => ({
     panelHeight: null,
-    filters: { cpu: [], ram: [] }
+    filters: { cpu: [], ram: [] },
+    prefixes: { cpu: 'cores', ram: 'Gb' }
   }),
   computed: {
     ...mapState(useAuthStore, ['userdata', 'isLogged', 'fetchUserData']),
@@ -492,7 +491,6 @@ export default {
   },
   watch: {
     plans () { this.changePeriods() },
-    activeKey () { this.changePanelHeight() },
     'resources.cpu' (value) {
       this.filters.cpu = [value.at(0), value.at(-1)]
     },
@@ -510,7 +508,6 @@ export default {
     const images = Object.entries(this.itemSP?.publicData.templates ?? {})
 
     if (images.length === 1) this.setOS(images[0][1], images[0][0])
-    this.changePanelHeight()
   },
   methods: {
     getProduct (product) {
@@ -610,14 +607,6 @@ export default {
         this.options.disk.max -= 128
         this.options.disk.min -= 128
       }
-    },
-    changePanelHeight () {
-      setTimeout(() => {
-        const panel = document.querySelector('.ant-collapse-content')?.lastElementChild
-        const height = (panel) ? getComputedStyle(panel).height : null
-
-        this.panelHeight = (this.activeKey === 'location') ? height : null
-      })
     }
   }
 }
@@ -639,15 +628,15 @@ export default {
 }
 
 .order__grid-item {
-	padding: 10px 20px;
-	border-radius: 15px;
-	cursor: pointer;
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-	transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  padding: 10px 20px;
+  border-radius: 15px;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
 .order__grid-item:hover {
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
 }
 
 .order__grid-item h1 {

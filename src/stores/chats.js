@@ -162,7 +162,8 @@ export const useChatsStore = defineStore('chats', () => {
         chats.value = new Map(chatsArray)
         return chatsArray
       } catch (error) {
-        return error
+        console.debug(error)
+        throw error
       }
     },
 
@@ -191,7 +192,8 @@ export const useChatsStore = defineStore('chats', () => {
 
         return { status: chat.status, subject: chat.topic, replies }
       } catch (error) {
-        return error
+        console.debug(error)
+        throw error
       }
     },
 
@@ -263,7 +265,7 @@ export const useChatsStore = defineStore('chats', () => {
         return createdChat
       } catch (error) {
         console.debug(error)
-        return error
+        throw error
       }
     },
     async editChat (chat) {
@@ -275,7 +277,7 @@ export const useChatsStore = defineStore('chats', () => {
         return createdChat
       } catch (error) {
         console.debug(error)
-        return error
+        throw error
       }
     },
 
@@ -296,7 +298,7 @@ export const useChatsStore = defineStore('chats', () => {
         return newMessage
       } catch (error) {
         console.debug(error)
-        return error
+        throw error
       }
     },
     async editMessage (message) {
@@ -312,7 +314,7 @@ export const useChatsStore = defineStore('chats', () => {
         return newMessage
       } catch (error) {
         console.debug(error)
-        return error
+        throw error
       }
     }
   }
