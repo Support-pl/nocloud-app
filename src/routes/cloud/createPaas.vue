@@ -519,7 +519,6 @@ export default {
     getProducts () {
       const isDynamic = this.getPlan.kind === 'DYNAMIC'
       const isIone = this.getPlan.type === 'ione'
-      const titles = {}
 
       const { products } = (isDynamic && isIone)
         ? this.plans.find(({ uuid }) =>
@@ -527,17 +526,15 @@ export default {
         ) ?? {}
         : this.getPlan ?? {}
 
-      Object.values(products ?? {}).forEach((product) => {
-        const isEqual = this.tarification === this.getTarification(product.period)
+      return Object.values(products ?? {})
+        .filter((product) => {
+          const isEqual = this.tarification === this.getTarification(product.period)
 
-        if (!product.public) return
-        if (isEqual || this.getPlan.kind === 'DYNAMIC') {
-          titles[product.sorter] = product.title
-        }
-      })
-      const { length } = Object.keys(titles)
-
-      return Array.from({ ...titles, length })
+          if (!product.public) return false
+          return isEqual || this.getPlan.kind === 'DYNAMIC'
+        })
+        .sort((a, b) => a.sorter - b.sorter)
+        .map(({ title }) => title)
     },
 
     productFullPriceStatic () {
@@ -742,6 +739,7 @@ export default {
   },
 
   watch: {
+    product (value) { console.log(value) },
     tarification (value) {
       if (this.getPlan.type === 'ione' && value) {
         const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC'
@@ -993,8 +991,6 @@ export default {
 
         if (!plan) return
         for (const [key, value] of Object.entries(plan.products ?? {})) {
-          const period = (this.options.config.monthlyBilling) ? 'P1M' : 'P1H'
-
           if (value.title === this.productSize) {
             const product = { ...value, key }
 
@@ -1002,10 +998,7 @@ export default {
             this.options.cpu.size = product.resources.cpu
             this.options.disk.size = product.resources.disk ?? (plan.meta.minDisk ?? 20) * 1024
             this.product = product
-          } else if (
-            (value.title.includes(this.productSize) && !this.getPlan.type.includes('cloud')) ||
-            (value.title.includes(this.productSize) && value.resources.period === period)
-          ) {
+          } else if (value.group === this.productSize) {
             this.product = { ...value, key }
           }
         }
@@ -1201,13 +1194,22 @@ export default {
             throw new Error('error')
           }
         })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
+        .catch(async (error) => {
+          const config = { namespace: this.namespace, service: orderData }
+          const message = error.response?.data?.message ?? error.message ?? error
 
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          })
-          console.error(err)
+          const { result, errors } = await api.services.testConfig(config)
+
+          if (!result) {
+            errors.forEach(({ error }) => {
+              this.openNotificationWithIcon('error', { message: error })
+            })
+          }
+
+          this.openNotificationWithIcon('error', { message: this.$t(message) })
+        })
+        .finally(() => {
+          this.modal.confirmLoading = false
         })
     },
     updateVM (orderDataNew) {
@@ -1224,13 +1226,22 @@ export default {
             throw new Error('error')
           }
         })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
+        .catch(async (error) => {
+          const config = { namespace: this.namespace, service: orderDataNew }
+          const message = error.response?.data?.message ?? error.message ?? error
 
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          })
-          console.error(err)
+          const { result, errors } = await api.services.testConfig(config)
+
+          if (!result) {
+            errors.forEach(({ error }) => {
+              this.openNotificationWithIcon('error', { message: error })
+            })
+          }
+
+          this.openNotificationWithIcon('error', { message: this.$t(message) })
+        })
+        .finally(() => {
+          this.modal.confirmLoading = false
         })
     },
     deployService (uuidService) {

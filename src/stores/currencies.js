@@ -37,7 +37,8 @@ export const useCurrenciesStore = defineStore('currencies', () => {
 
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     }
   }

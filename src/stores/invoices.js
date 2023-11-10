@@ -77,7 +77,8 @@ export const useInvoicesStore = defineStore('invoices', () => {
 
         return result
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       } finally {
         isLoading.value = false
       }

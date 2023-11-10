@@ -7,7 +7,7 @@
         :value="provider"
         :options="providers"
         :field-names="fieldNames"
-        @change="emits('update:provider')"
+        @change="(value) => emits('update:provider', value)"
       />
     </a-col>
 
@@ -18,7 +18,7 @@
         :value="plan"
         :options="plans"
         :field-names="fieldNames"
-        @change="emits('update:plan')"
+        @change="(value) => emits('update:plan', value)"
       />
     </a-col>
 
@@ -29,7 +29,7 @@
         :value="service"
         :options="services"
         :field-names="fieldNames"
-        @change="emits('update:service')"
+        @change="(value) => emits('update:service', value)"
       />
     </a-col>
 
@@ -40,7 +40,7 @@
         :value="namespace"
         :options="namespaces"
         :field-names="fieldNames"
-        @change="emits('update:namespace')"
+        @change="(value) => emits('update:namespace', value)"
       />
     </a-col>
   </a-row>

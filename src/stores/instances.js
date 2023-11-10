@@ -122,7 +122,8 @@ export const useInstancesStore = defineStore('instances', () => {
 
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       } finally {
         isLoading.value = false
       }
@@ -135,7 +136,8 @@ export const useInstancesStore = defineStore('instances', () => {
         setInstances(response)
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     },
     async updateService (data) {
@@ -145,7 +147,8 @@ export const useInstancesStore = defineStore('instances', () => {
         setInstances(response)
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     },
 
@@ -178,7 +181,8 @@ export const useInstancesStore = defineStore('instances', () => {
 
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       } finally {
         isActionLoading.value = false
       }
@@ -189,7 +193,8 @@ export const useInstancesStore = defineStore('instances', () => {
 
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     }
   }

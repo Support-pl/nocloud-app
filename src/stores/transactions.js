@@ -70,7 +70,8 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       } finally {
         isLoading.value = false
       }
@@ -82,7 +83,8 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
         total.value = +response.total
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     }
   }

@@ -386,11 +386,13 @@ export default {
     setResources (value, changeTarifs = true) {
       const duration = (this.mode === 'upfront12') ? 'P1Y' : 'P1M'
       const product = this.getPlan.products[`${duration} ${this.plan}`]
-      const { meta: { os } } = product ?? Object.values(this.getPlan.products)[0] ?? { meta: { os: [] } }
+      const { meta: { os }, title } = product ??
+        Object.values(this.getPlan.products)[0] ??
+        { meta: { os: [] } }
 
       this.setData({ key: 'ram', value: this.resources.ram[0] }, changeTarifs)
       this.setData({ key: 'disk', value: this.resources.disk[0] }, false)
-      if (value) this.$emit('setData', { key: 'productSize', value })
+      if (value) this.$emit('setData', { key: 'productSize', value: title ?? value })
 
       os.sort()
       this.images = os.map((el) => ({ name: el, desc: el }))

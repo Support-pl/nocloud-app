@@ -51,7 +51,8 @@ export const useAuthStore = defineStore('auth', () => {
 
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     },
 
@@ -89,7 +90,8 @@ export const useAuthStore = defineStore('auth', () => {
         userdata.value = response
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     },
 
@@ -107,7 +109,8 @@ export const useAuthStore = defineStore('auth', () => {
 
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     },
 
@@ -118,7 +121,8 @@ export const useAuthStore = defineStore('auth', () => {
         userdata.value = response.pool
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     },
 
@@ -129,7 +133,8 @@ export const useAuthStore = defineStore('auth', () => {
         loginButtons.value = response
         return response
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     },
 
@@ -144,7 +149,8 @@ export const useAuthStore = defineStore('auth', () => {
 
         location.assign(url)
       } catch (error) {
-        return error
+        console.error(error)
+        throw error
       }
     }
   }
