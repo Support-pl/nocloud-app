@@ -16,7 +16,7 @@
     "@bufbuild/connect-web": "^0.10.1",
     "@bufbuild/protobuf": "^1.2.1",
     "ant-design-vue": "^4.0.6",
-    "core-js": "^3.33.1",
+    "core-js": "^3.33.2",
     "infinimesh-proto": "^1.0.1",
     "js-cookie": "^3.0.5",
     "markdown-it": "^13.0.1",
