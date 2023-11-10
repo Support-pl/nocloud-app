@@ -13,7 +13,7 @@
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
     "@bufbuild/connect": "^0.10.1",
-    "@bufbuild/connect-web": "^0.10.1",
+    "@bufbuild/connect-web": "^0.13.0",
     "@bufbuild/protobuf": "^1.2.1",
     "ant-design-vue": "^4.0.6",
     "core-js": "^3.33.1",
