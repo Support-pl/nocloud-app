@@ -32,18 +32,18 @@
             <div class="order__slider">
               <template v-if="!fetchLoading">
                 <div
-                  v-for="provider of Object.keys(products)"
-                  :key="provider"
+                  v-for="product of Object.keys(products)"
+                  :key="product"
                   class="order__slider-item"
-                  :class="{'order__slider-item--active': options.provider == provider}"
-                  @click="options.provider = provider"
+                  :class="{ 'order__slider-item--active': options.provider === product }"
+                  @click="options.provider = product"
                 >
-                  {{ provider }}
+                  {{ product }}
                 </div>
               </template>
               <template v-else>
                 <div
-                  v-for="(provider, index) of Array(4)"
+                  v-for="(_, index) of Array(4)"
                   :key="index"
                   class="order__slider-item order__slider-item--loading"
                 />
@@ -114,7 +114,9 @@
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
+          v-model:provider="provider"
           :plans-list="plans"
+          :sp-list="sp"
         />
 
         <a-divider orientation="left" :style="{'margin-bottom': '0'}">
@@ -180,10 +182,12 @@ export default {
   inject: ['checkBalance'],
   data: () => ({
     products: {},
+    cachedPlans: {},
     currentStep: 0,
     plan: null,
     service: null,
     namespace: null,
+    provider: null,
     fetchLoading: false,
 
     options: {
@@ -243,9 +247,6 @@ export default {
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
       return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
     },
-    sp () {
-      return this.spStore.servicesProviders.find(({ type }) => type === 'goget')
-    },
     periods () {
       return Object.keys(this.getProducts.prices || {})
         .filter((el) => isFinite(+el))
@@ -254,21 +255,51 @@ export default {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')
     },
     plans () {
-      return this.plansStore.plans.filter(({ type, uuid }) => {
-        const { plans } = this.spStore.getShowcases.find(
+      return this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
+        const { items } = this.spStore.showcases.find(
           ({ uuid }) => uuid === this.$route.query.service
         ) ?? {}
+        const plans = []
 
-        if (!plans) return type === 'goget'
+        if (!items) return type === 'goget'
+        items.forEach(({ servicesProvider, plan }) => {
+          if (servicesProvider === this.provider) {
+            plans.push(plan)
+          }
+        })
 
         if (plans.length < 1) return type === 'goget'
         return type === 'goget' && plans.includes(uuid)
-      })
+      }) ?? []
+    },
+    sp () {
+      const { items } = this.spStore.showcases.find(
+        ({ uuid }) => uuid === this.$route.query.service
+      ) ?? {}
+
+      if (!items) return []
+      return this.spStore.servicesProviders.filter(({ uuid }) =>
+        items.find((item) => uuid === item.servicesProvider)
+      )
     }
   },
   watch: {
-    sp ({ uuid }) {
-      this.plansStore.fetch({ anonymously: !this.isLogged, sp_uuid: uuid })
+    sp (value) {
+      if (value.length > 0) this.provider = value[0].uuid
+    },
+    async provider (uuid) {
+      if (this.cachedPlans[uuid]) return
+      try {
+        const { pool } = await this.plansStore.fetch({
+          anonymously: !this.isLogged, sp_uuid: uuid
+        })
+
+        this.cachedPlans[uuid] = pool
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.$notification.error({ message })
+      }
     },
     'options.provider' (value) {
       this.options.tarif = this.products[value][0].product
@@ -322,7 +353,7 @@ export default {
   methods: {
     fetch () {
       this.fetchLoading = true
-      this.$api.post(`/sp/${this.sp.uuid}/invoke`, {
+      this.$api.post(`/sp/${this.provider}/invoke`, {
         method: 'get_certificate'
       })
         .then(({ meta }) => {
@@ -373,8 +404,8 @@ export default {
       }]
       const newGroup = {
         title: this.billingUser.fullname + Date.now(),
-        type: this.sp.type,
-        sp: this.sp.uuid,
+        type: 'goget',
+        sp: this.provider,
         instances
       }
 

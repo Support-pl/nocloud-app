@@ -23,8 +23,10 @@
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
+          v-model:provider="provider"
           style="margin-bottom: 10px"
           :plans-list="plans"
+          :sp-list="sp"
         />
 
         <a-row
@@ -85,7 +87,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { notification } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -119,6 +121,9 @@ const instancesStore = useInstancesStore()
 const plan = ref(null)
 const service = ref(null)
 const namespace = ref(null)
+const provider = ref(null)
+
+const cachedPlans = reactive({})
 const fetchLoading = ref(false)
 
 const modal = ref({ confirmCreate: false, confirmLoading: false })
@@ -168,24 +173,52 @@ const services = computed(() =>
 )
 
 const plans = computed(() =>
-  plansStore.plans.filter(({ type, uuid }) => {
-    const { plans } = spStore.getShowcases.find(
+  cachedPlans[provider.value]?.filter(({ type, uuid }) => {
+    const { items } = spStore.showcases.find(
       ({ uuid }) => uuid === route.query.service
     ) ?? {}
+    const plans = []
 
-    if (!plans) return type === 'openai'
+    if (!items) return type === 'openai'
+    items.forEach(({ servicesProvider, plan }) => {
+      if (servicesProvider === provider.value) {
+        plans.push(plan)
+      }
+    })
 
     if (plans.length < 1) return type === 'openai'
     return type === 'openai' && plans.includes(uuid)
   })
 )
 
-const sp = computed(() =>
-  spStore.servicesProviders.find((sp) => sp.type === 'openai')
-)
+const sp = computed(() => {
+  const { items } = spStore.showcases.find(
+    ({ uuid }) => uuid === route.query.service
+  ) ?? {}
 
-watch(sp, ({ uuid }) => {
-  plansStore.fetch({ anonymously: !authStore.isLogged, sp_uuid: uuid })
+  if (!items) return []
+  return spStore.servicesProviders.filter(({ uuid }) =>
+    items.find((item) => uuid === item.servicesProvider)
+  )
+})
+
+watch(sp, (value) => {
+  if (value.length > 0) provider.value = value[0].uuid
+})
+
+watch(provider, async (uuid) => {
+  if (cachedPlans[uuid]) return
+  try {
+    const { pool } = await plansStore.fetch({
+      anonymously: !authStore.isLogged, sp_uuid: uuid
+    })
+
+    cachedPlans[uuid] = pool
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    notification.error({ message })
+  }
 })
 
 function orderClickHandler () {

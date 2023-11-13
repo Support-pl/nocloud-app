@@ -77,7 +77,9 @@
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
+          v-model:provider="provider"
           :plans-list="plans"
+          :sp-list="sp"
         />
 
         <a-divider orientation="left" style="margin-bottom: 0">
@@ -140,6 +142,7 @@ export default {
     plan: undefined,
     service: undefined,
     namespace: undefined,
+    provider: undefined,
     fetchLoading: false,
 
     options: { login: '', password: '', period: '' },
@@ -147,6 +150,7 @@ export default {
     addfunds: { visible: false, amount: 0 },
 
     config: {},
+    cachedPlans: {},
     products: [],
     periods: [],
     activeKey: 'base',
@@ -201,19 +205,32 @@ export default {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')
     },
     plans () {
-      return this.plansStore.plans.filter(({ type, uuid }) => {
-        const { plans } = this.spStore.getShowcases.find(
+      return this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
+        const { items } = this.spStore.showcases.find(
           ({ uuid }) => uuid === this.$route.query.service
         ) ?? {}
+        const plans = []
 
-        if (!plans) return type === 'acronis'
+        if (!items) return type === 'acronis'
+        items.forEach(({ servicesProvider, plan }) => {
+          if (servicesProvider === this.provider) {
+            plans.push(plan)
+          }
+        })
 
         if (plans.length < 1) return type === 'acronis'
         return type === 'acronis' && plans.includes(uuid)
-      })
+      }) ?? []
     },
     sp () {
-      return this.spStore.servicesProviders.find((sp) => sp.type === 'acronis')
+      const { items } = this.spStore.showcases.find(
+        ({ uuid }) => uuid === this.$route.query.service
+      ) ?? {}
+
+      if (!items) return []
+      return this.spStore.servicesProviders.filter(({ uuid }) =>
+        items.find((item) => uuid === item.servicesProvider)
+      )
     },
     rules () {
       const message = this.$t('ssl_product.field is required')
@@ -222,8 +239,22 @@ export default {
     }
   },
   watch: {
-    sp ({ uuid }) {
-      this.plansStore.fetch({ anonymously: !this.isLogged, sp_uuid: uuid })
+    sp (value) {
+      if (value.length > 0) this.provider = value[0].uuid
+    },
+    async provider (uuid) {
+      if (this.cachedPlans[uuid]) return
+      try {
+        const { pool } = await this.plansStore.fetch({
+          anonymously: !this.isLogged, sp_uuid: uuid
+        })
+
+        this.cachedPlans[uuid] = pool
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.$notification.error({ message })
+      }
     },
     plan (value) {
       const plan = this.plans.find(({ uuid }) => uuid === value)
@@ -311,8 +342,8 @@ export default {
 
       const newGroup = {
         title: this.billingUser.fullname + Date.now(),
-        type: this.sp.type,
-        sp: this.sp.uuid,
+        type: 'acronis',
+        sp: this.provider,
         instances
       }
 
