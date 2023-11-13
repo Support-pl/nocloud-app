@@ -108,22 +108,22 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { notification } from 'ant-design-vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import api from '@/api'
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
-import { usePlansStore } from '@/stores/plans.js'
 
 import order from '@/components/services/domains/order.vue'
 import loading from '@/components/ui/loading.vue'
 
 const i18n = useI18n()
+const route = useRoute()
 const authStore = useAuthStore()
 const providersStore = useSpStore()
-const plansStore = usePlansStore()
 
 const searchIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/SearchOutlined')
@@ -143,12 +143,15 @@ const cartVisibility = ref(false)
 const onCart = ref([])
 const dataCart = ref({})
 
-const sp = computed(() =>
-  providersStore.servicesProviders.find((sp) => sp.type === 'opensrs')
-)
+const sp = computed(() => {
+  const { items } = providersStore.showcases.find(
+    ({ uuid }) => uuid === route.query.service
+  ) ?? {}
 
-watch(sp, ({ uuid }) => {
-  plansStore.fetch({ anonymously: !authStore.isLogged, sp_uuid: uuid })
+  if (!items) return []
+  return providersStore.servicesProviders.filter(({ uuid }) =>
+    items.find((item) => uuid === item.servicesProvider)
+  )
 })
 
 async function searchDomain () {
