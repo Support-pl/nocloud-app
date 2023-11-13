@@ -56,6 +56,31 @@
               </tr>
             </table>
           </transition>
+
+          <a-card
+            v-if="fetchLoading || getProducts.meta?.addons && getProducts.meta?.addons.length > 0"
+            style="margin-top: 15px"
+            :title="`${$t('Addons')} (${$t('choose addons you want')})`"
+            :loading="fetchLoading"
+          >
+            <div v-if="fetchLoading">
+              Loading...
+            </div>
+            <template v-else>
+              <a-card-grid
+                v-for="addon of getProducts.meta?.addons"
+                :key="addon.id"
+                class="card-item"
+                @click="changeAddons(addon.id)"
+              >
+                <div class="order__slider-name" style="grid-template-columns: 1fr auto">
+                  <span style="font-weight: 700; font-size: 16px" v-html="addon.title" />
+                  <a-checkbox :checked="options.addons.includes(addon.id)" />
+                  <span style="grid-column: 1 / 3" v-html="addon.description" />
+                </div>
+              </a-card-grid>
+            </template>
+          </a-card>
         </div>
       </div>
 
@@ -79,7 +104,9 @@
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
+          v-model:provider="provider"
           :plans-list="plans"
+          :sp-list="sp"
         />
 
         <a-divider orientation="left" :style="{'margin-bottom': '0'}">
@@ -141,16 +168,18 @@ export default {
     plan: null,
     service: null,
     namespace: null,
+    provider: null,
     fetchLoading: false,
 
-    options: { size: '', period: '' },
+    options: { size: '', period: '', addons: [] },
     modal: { confirmCreate: false, confirmLoading: false },
 
     products: {},
     sizes: [],
     periods: [],
     checkedTypes: [],
-    filters: {}
+    filters: {},
+    cachedPlans: {}
   }),
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
@@ -176,6 +205,7 @@ export default {
         const value = this.products[size.key].meta.resources ?? []
 
         value.forEach(({ key, value }) => {
+          if (!key) return
           if (!result[key]) result[key] = []
           if (result[key].includes(value)) return
 
@@ -184,6 +214,7 @@ export default {
         })
       })
 
+      if (Object.keys(result).length < 2) return {}
       return result
     },
     typesOptions () {
@@ -227,19 +258,32 @@ export default {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')
     },
     plans () {
-      return this.plansStore.plans.filter(({ type, uuid }) => {
-        const { plans } = this.spStore.getShowcases.find(
+      return this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
+        const { items } = this.spStore.showcases.find(
           ({ uuid }) => uuid === this.$route.query.service
         ) ?? {}
+        const plans = []
 
-        if (!plans) return type === 'empty'
+        if (!items) return type === 'empty'
+        items.forEach(({ servicesProvider, plan }) => {
+          if (servicesProvider === this.provider) {
+            plans.push(plan)
+          }
+        })
 
         if (plans.length < 1) return type === 'empty'
         return type === 'empty' && plans.includes(uuid)
-      })
+      }) ?? []
     },
     sp () {
-      return this.spStore.servicesProviders.find((sp) => sp.type === 'empty')
+      const { items } = this.spStore.showcases.find(
+        ({ uuid }) => uuid === this.$route.query.service
+      ) ?? {}
+
+      if (!items) return []
+      return this.spStore.servicesProviders.filter(({ uuid }) =>
+        items.find((item) => uuid === item.servicesProvider)
+      )
     },
     rules () {
       const message = this.$t('ssl_product.field is required')
@@ -248,8 +292,22 @@ export default {
     }
   },
   watch: {
-    sp ({ uuid }) {
-      this.plansStore.fetch({ anonymously: !this.isLogged, sp_uuid: uuid })
+    sp (value) {
+      if (value.length > 0) this.provider = value[0].uuid
+    },
+    async provider (uuid) {
+      if (this.cachedPlans[uuid]) return
+      try {
+        const { pool } = await this.plansStore.fetch({
+          anonymously: !this.isLogged, sp_uuid: uuid
+        })
+
+        this.cachedPlans[uuid] = pool
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.$notification.error({ message })
+      }
     },
     plan (value) {
       const plan = this.plans.find(({ uuid }) => uuid === value)
@@ -287,7 +345,7 @@ export default {
       )
     }
 
-    if (this.spStore.getShowcases.length < 1) {
+    if (this.spStore.showcases.length < 1) {
       this.spStore.fetchShowcases(!this.isLogged)
     }
 
@@ -323,6 +381,13 @@ export default {
       })
       this.options.period = this.periods[0]
     },
+    changeAddons (id) {
+      if (this.options.addons.includes(id)) {
+        this.options.addons = this.options.addons.filter((addon) => addon !== id)
+      } else {
+        this.options.addons.push(id)
+      }
+    },
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
       const plan = this.plans.find(({ uuid }) => uuid === this.plan)
@@ -334,8 +399,8 @@ export default {
       }]
       const newGroup = {
         title: this.billingUser.fullname + Date.now(),
-        type: this.sp.type,
-        sp: this.sp.uuid,
+        type: 'empty',
+        sp: this.provider,
         instances
       }
 
@@ -566,6 +631,50 @@ export default {
 .order__grid-item--active {
   background-color: var(--main);
   color: var(--bright_font);
+}
+
+.order__option .ant-card-head {
+  background: var(--bright_bg);
+}
+
+.order__option .ant-card-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.order__option .ant-card-loading-content {
+  width: 100%;
+}
+
+.order__option .card-item {
+  width: 100%;
+  cursor: pointer;
+  border: 0 solid transparent;
+  background: var(--bright_bg);
+}
+
+.order__option .order__slider-name {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+}
+
+.order__option .order__slider-name .ant-checkbox {
+  box-shadow: 0 0 5px var(--main);
+}
+
+.order__option .order__slider-name img {
+  max-height: 65px;
+}
+
+.card-item .order__slider-name {
+  justify-items: start;
+}
+
+.card-item--active {
+  padding: 19px;
+  border: 5px solid var(--main);
 }
 
 @media (max-width: 576px) {

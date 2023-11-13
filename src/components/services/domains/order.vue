@@ -256,7 +256,9 @@
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
+          v-model:provider="provider"
           :plans-list="plans"
+          :sp-list="sp"
         />
 
         <a-divider orientation="left" :style="{ marginBottom: 0 }">
@@ -344,7 +346,7 @@ export default {
     itemsInCart: { type: Number, required: true },
     removeFromCart: { type: Function, required: true },
     search: { type: Function, required: true },
-    sp: { type: Object, required: true }
+    sp: { type: Array, required: true }
   },
   emits: ['change'],
   data: () => ({
@@ -354,6 +356,7 @@ export default {
     plan: null,
     service: null,
     namespace: null,
+    provider: null,
     fetchLoading: false,
     modal: {
       confirmCreate: false,
@@ -371,6 +374,7 @@ export default {
       lock_domain: true
     },
     form: {},
+    cachedPlans: {},
     periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] // 'annually biennially triennial quadrennial quinquennial'
   }),
   computed: {
@@ -381,16 +385,22 @@ export default {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')
     },
     plans () {
-      return this.plansStore.plans.filter(({ type, uuid }) => {
-        const { plans } = this.spStore.getShowcases.find(
+      return this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
+        const { items } = this.spStore.showcases.find(
           ({ uuid }) => uuid === this.$route.query.service
         ) ?? {}
+        const plans = []
 
-        if (!plans) return type === 'opensrs'
+        if (!items) return type === 'opensrs'
+        items.forEach(({ servicesProvider, plan }) => {
+          if (servicesProvider === this.provider) {
+            plans.push(plan)
+          }
+        })
 
         if (plans.length < 1) return type === 'opensrs'
         return type === 'opensrs' && plans.includes(uuid)
-      })
+      }) ?? []
     },
     rules () {
       const message = this.$t('ssl_product.field is required')
@@ -400,6 +410,25 @@ export default {
         req: [{ required: true, message }],
         state: [{ required: c === 'CA' || c === 'US' || c === 'ES', message }],
         postal_code: [{ required: c === 'CA' || c === 'US', message }]
+      }
+    }
+  },
+  watch: {
+    sp (value) {
+      if (value.length > 0) this.provider = value[0].uuid
+    },
+    async provider (uuid) {
+      if (this.cachedPlans[uuid]) return
+      try {
+        const { pool } = await this.plansStore.fetch({
+          anonymously: !this.isLogged, sp_uuid: uuid
+        })
+
+        this.cachedPlans[uuid] = pool
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.$notification.error({ message })
       }
     }
   },
@@ -451,7 +480,7 @@ export default {
       this.fetchLoading = true
       const promises = this.onCart.map(({ name }) =>
         this.$api.servicesProviders.action({
-          uuid: this.sp.uuid,
+          uuid: this.provider,
           action: 'get_domain_price',
           params: { domain: name }
         })
@@ -523,8 +552,8 @@ export default {
       }))
       const newGroup = {
         title: this.billingUser.fullname + Date.now(),
-        type: this.sp.type,
-        sp: this.sp.uuid,
+        type: 'opensrs',
+        sp: this.provider,
         instances
       }
 

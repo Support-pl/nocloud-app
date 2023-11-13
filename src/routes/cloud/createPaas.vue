@@ -739,7 +739,6 @@ export default {
   },
 
   watch: {
-    product (value) { console.log(value) },
     tarification (value) {
       if (this.getPlan.type === 'ione' && value) {
         const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC'
