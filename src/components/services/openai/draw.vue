@@ -48,10 +48,9 @@
 import { computed, ref } from 'vue'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
+import { useCurrency } from '@/hooks/utils'
 
 import addTicket from '@/components/support/addTicket.vue'
 import ticketItem from '@/components/support/ticketItem.vue'
@@ -61,10 +60,9 @@ const props = defineProps({
   service: { type: Object, required: true }
 })
 
-const authStore = useAuthStore()
 const chatsStore = useChatsStore()
 const supportStore = useSupportStore()
-const currenciesStore = useCurrenciesStore()
+const { currency } = useCurrency()
 
 const chats = computed(() => {
   const result = []
@@ -93,10 +91,6 @@ const chats = computed(() => {
 
   return result
 })
-
-const currency = computed(() => ({
-  code: authStore.billingUser.currency_code ?? currenciesStore.defaultCurrency
-}))
 
 function moduleEnter () {
   supportStore.isAddingTicket = !supportStore.isAddingTicket

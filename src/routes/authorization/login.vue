@@ -273,7 +273,7 @@ async function restorePass () {
 
 function changeLocale (lang) {
   i18n.locale.value = lang
-  localStorage.setItem('lang', i18n.locale)
+  localStorage.setItem('lang', lang)
 }
 
 authStore.fetchAuth()

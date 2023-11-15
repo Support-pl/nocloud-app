@@ -656,7 +656,7 @@ export default defineComponent({
   }),
   computed: {
     ...mapState(useSpStore, ['servicesProviders']),
-    ...mapState(useAuthStore, ['billingUser', 'baseURL']),
+    ...mapState(useAuthStore, ['userdata', 'baseURL']),
     ...mapState(useCurrenciesStore, ['defaultCurrency']),
     statusVM () {
       if (!this.VM) return
@@ -725,7 +725,7 @@ export default defineComponent({
         .reduce((sum, curr) => sum + curr)
     },
     currency () {
-      return { code: this.billingUser.currency_code ?? this.defaultCurrency }
+      return { code: this.userdata.currency ?? this.defaultCurrency }
     },
 
     tariffs () {

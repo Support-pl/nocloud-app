@@ -65,10 +65,8 @@
 import { computed, defineAsyncComponent, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-
-import { useAuthStore } from '@/stores/auth.js'
 import { useSpStore } from '@/stores/sp.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useCurrency } from '@/hooks/utils'
 
 import api from '@/api.js'
 import config from '@/appconfig.js'
@@ -80,9 +78,8 @@ const props = defineProps({
 const i18n = useI18n()
 const router = useRouter()
 
-const authStore = useAuthStore()
 const providersStore = useSpStore()
-const currenciesStore = useCurrenciesStore()
+const { currency } = useCurrency()
 
 const activeKey = ref([])
 const prices = ref({})
@@ -135,10 +132,6 @@ const price = computed(() => {
 
   return +(+amount)?.toFixed(2) ?? 0
 })
-
-const currency = computed(() => ({
-  code: authStore.billingUser.currency_code ?? currenciesStore.defaultCurrency
-}))
 
 const isPayg = computed(() => {
   if (props.instance.groupname === 'OpenAI') return true

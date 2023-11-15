@@ -496,10 +496,10 @@ export default {
     }
   }),
   computed: {
-    ...mapState(useAuthStore, ['billingUser', 'baseURL']),
+    ...mapState(useAuthStore, ['userdata', 'baseURL']),
     ...mapState(useCurrenciesStore, ['defaultCurrency']),
     currency () {
-      return { code: this.billingUser.currency_code ?? this.defaultCurrency }
+      return { code: this.userdata.currency ?? this.defaultCurrency }
     },
     statusVM () {
       if (!this.VM?.resources?.STATE) return {}

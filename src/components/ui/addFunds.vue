@@ -9,7 +9,7 @@
   >
     <p v-if="authStore.isLogged">
       {{ $t("Enter value") }}
-      ({{ authStore.billingUser.currency_code || 'USD' }}):
+      ({{ authStore.userdata.currency || 'USD' }}):
     </p>
     <a-input allow-clear style="width: 100%" :value="amount" @change="onChange" />
     <a-row

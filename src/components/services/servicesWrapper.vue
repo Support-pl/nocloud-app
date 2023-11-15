@@ -112,10 +112,7 @@ export default {
   computed: {
     ...mapState(useAuthStore, ['isLogged', 'baseURL']),
     ...mapState(useProductsStore, ['services']),
-    ...mapState(useSpStore, {
-      sp: 'servicesProviders',
-      showcases: 'getShowcases'
-    }),
+    ...mapState(useSpStore, ['servicesProviders', 'showcases']),
 
     avaliableServices () {
       const services = []
@@ -204,7 +201,7 @@ export default {
       const provider = service.onclick.paramsArr[0].query.service
       let showcase = null
 
-      const { type } = this.sp.find(({ uuid }) => {
+      const { type } = this.servicesProviders.find(({ uuid }) => {
         showcase = this.showcases.find(({ uuid }) => uuid === provider)
 
         return showcase?.servicesProvider?.includes(uuid)

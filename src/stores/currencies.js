@@ -1,9 +1,13 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { useAuthStore } from '@/stores/auth.js'
 import api from '@/api.js'
 
 export const useCurrenciesStore = defineStore('currencies', () => {
+  const authStore = useAuthStore()
+
   const currencies = ref([])
+  const whmcsCurrencies = ref([])
   const defaultCurrency = ref('USD')
   const unloginedCurrency = ref('USD')
 
@@ -22,6 +26,7 @@ export const useCurrenciesStore = defineStore('currencies', () => {
 
   return {
     currencies,
+    whmcsCurrencies,
     defaultCurrency,
     unloginedCurrency,
 
@@ -36,6 +41,18 @@ export const useCurrenciesStore = defineStore('currencies', () => {
         setDefaultCurrency(response.rates)
 
         return response
+      } catch (error) {
+        console.error(error)
+        throw error
+      }
+    },
+    async fetchWhmcsCurrencies () {
+      try {
+        const response = await api.get(authStore.baseURL, {
+          params: { run: 'get_currencies' }
+        })
+
+        whmcsCurrencies.value = response.currency
       } catch (error) {
         console.error(error)
         throw error

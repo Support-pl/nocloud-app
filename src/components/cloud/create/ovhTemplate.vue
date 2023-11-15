@@ -305,10 +305,10 @@ export default {
   emits: ['setData', 'update:plan', 'score', 'update:products'],
   data: () => ({ isFlavorsLoading: false }),
   computed: {
-    ...mapState(useAuthStore, ['userdata', 'billingUser', 'isLogged']),
+    ...mapState(useAuthStore, ['userdata', 'isLogged']),
     ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'unloginedCurrency']),
     currency () {
-      const { currency_code: currencyCode } = this.billingUser
+      const { currency: currencyCode } = this.userdata
 
       const code = this.unloginedCurrency
       const { rate } = this.currencies.find((el) =>

@@ -179,7 +179,7 @@
               <a-descriptions-item :span="3">
                 <span class="description-body__domain-cost">
                   {{ products[domain.name] && products[domain.name][resources.period] }}
-                  {{ billingUser.currency_code }}
+                  {{ userdata.currency }}
                 </span>
               </a-descriptions-item>
               <a-descriptions-item :span="2">
@@ -551,7 +551,7 @@ export default {
         billing_plan: plan ?? {}
       }))
       const newGroup = {
-        title: this.billingUser.fullname + Date.now(),
+        title: this.userdata.title + Date.now(),
         type: 'opensrs',
         sp: this.provider,
         instances
@@ -596,7 +596,7 @@ export default {
         : {
             namespace: this.namespace,
             service: {
-              title: this.billingUser.fullname,
+              title: this.userdata.title,
               context: {},
               version: '1',
               instancesGroups: [info]
@@ -657,7 +657,7 @@ export default {
         .finally(() => { this.modal.confirmLoading = false })
     },
     getProducts () {
-      const prices = { suffix: this.billingUser.currency_code }
+      const prices = { suffix: this.userdata.currency }
 
       if (this.onCart.length === 0) {
         return {

@@ -199,7 +199,7 @@ export default {
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
+      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
     services () {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')

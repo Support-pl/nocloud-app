@@ -78,7 +78,7 @@ const isLoading = ref(false)
 const currencyCode = ref('')
 
 const currency = computed(() => {
-  const code = authStore.billingUser.currency_code ?? 'USD'
+  const code = authStore.userdata.currency ?? 'USD'
   if (code === currencyCode.value) return { code, rate: 1 }
 
   const { rate } = currenciesStore.currencies.find((el) =>

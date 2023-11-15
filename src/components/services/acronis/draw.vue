@@ -105,7 +105,7 @@ async function refreshToken () {
 }
 
 const currency = computed(() => {
-  const { currency_code: code } = authStore.billingUser
+  const { currency: code } = authStore.userdata
 
   return { code: code ?? currenciesStore.defaultCurrency }
 })

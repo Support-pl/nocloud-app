@@ -20,6 +20,7 @@
 
       <div class="order__calculate order__field">
         <selects-to-create
+          v-if="services.length > 1 || plans.length > 1 || sp.length > 1 || namespacesStore.namespaces.length > 1"
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
@@ -153,7 +154,7 @@ const getProducts = computed(() => {
 
 const currency = computed(() => {
   const { currencies, defaultCurrency } = storeToRefs(currenciesStore)
-  const { billingUser: user } = storeToRefs(authStore)
+  const { userdata: user } = storeToRefs(authStore)
   const code = currenciesStore.unloginedCurrency
 
   const { rate } = currencies.value.find((el) =>
@@ -165,7 +166,7 @@ const currency = computed(() => {
   ) ?? { rate: 1 }
 
   if (!authStore.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-  return { rate: 1, code: user.value.currency_code ?? defaultCurrency.value }
+  return { rate: 1, code: user.value.currency ?? defaultCurrency.value }
 })
 
 const services = computed(() =>
@@ -188,7 +189,7 @@ const plans = computed(() =>
 
     if (plans.length < 1) return type === 'openai'
     return type === 'openai' && plans.includes(uuid)
-  })
+  }) ?? []
 )
 
 const sp = computed(() => {
@@ -214,6 +215,7 @@ watch(provider, async (uuid) => {
     })
 
     cachedPlans[uuid] = pool
+    plan.value = pool[0]?.uuid
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 
@@ -231,7 +233,7 @@ function orderClickHandler () {
     billing_plan: planItem ?? {}
   }]
   const newGroup = {
-    title: authStore.billingUser.fullname + Date.now(),
+    title: authStore.userdata.title + Date.now(),
     type: sp.value.type,
     sp: sp.value.uuid,
     instances
@@ -272,7 +274,7 @@ async function createOpenAI (info) {
     : {
         namespace: namespace.value,
         service: {
-          title: authStore.billingUser.fullname,
+          title: authStore.userdata.title,
           context: {},
           version: '1',
           instancesGroups: [info]
