@@ -204,7 +204,7 @@ export default {
       const { type } = this.servicesProviders.find(({ uuid }) => {
         showcase = this.showcases.find(({ uuid }) => uuid === provider)
 
-        return showcase?.servicesProvider?.includes(uuid)
+        return showcase?.items?.find(({ servicesProvider }) => servicesProvider === uuid)
       }) ?? {}
 
       let name = 'service-virtual'
