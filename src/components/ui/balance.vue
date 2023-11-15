@@ -23,10 +23,10 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, ref } from 'vue'
+import { defineAsyncComponent, ref } from 'vue'
 import { LoadingOutlined } from '@ant-design/icons-vue'
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useCurrency } from '@/hooks/utils'
 import addFunds from '@/components/ui/addFunds.vue'
 
 const props = defineProps({
@@ -34,7 +34,7 @@ const props = defineProps({
 })
 
 const authStore = useAuthStore()
-const currenciesStore = useCurrenciesStore()
+const { currency } = useCurrency()
 
 const plusIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/PlusOutlined')
@@ -42,10 +42,6 @@ const plusIcon = defineAsyncComponent(
 
 const isLoading = ref(false)
 const modalVisible = ref(false)
-
-const currency = computed(() => ({
-  code: authStore.billingUser.currency_code ?? currenciesStore.defaultCurrency
-}))
 
 // function URLparameter (obj, outer = '') {
 //   let str = ''

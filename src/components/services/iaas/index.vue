@@ -229,18 +229,12 @@ export default {
       goToInvoice: true
     },
     addons: {},
-    periods: [],
-    currencies: []
+    periods: []
   }),
   computed: {
     ...mapState(useAppStore, ['onLogin']),
-    ...mapState(useAuthStore, [
-      'baseURL',
-      'isLogged',
-      'userdata',
-      'billingUser'
-    ]),
-    ...mapState(useCurrenciesStore, ['defaultCurrency', 'unloginedCurrency']),
+    ...mapState(useAuthStore, ['baseURL', 'isLogged', 'userdata']),
+    ...mapState(useCurrenciesStore, ['defaultCurrency', 'unloginedCurrency', 'whmcsCurrencies']),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const findedProduct = this.products.find(({ id }) => id === +this.$route.query.product) ??
@@ -304,9 +298,9 @@ export default {
     },
     currency () {
       const code = (this.isLogged)
-        ? this.billingUser.currency_code ?? this.defaultCurrency
+        ? this.userdata.currency ?? this.defaultCurrency
         : this.unloginedCurrency
-      const { id = -1 } = this.currencies?.find((currency) => currency.code === code) ?? {}
+      const { id = -1 } = this.whmcsCurrencies?.find((currency) => currency.code === code) ?? {}
 
       return { code, id }
     }
@@ -338,18 +332,9 @@ export default {
     }
   },
   created () {
-    if (this.currencies.length < 1) {
-      this.fetchCurrencies()
+    if (this.whmcsCurrencies.length < 1) {
+      this.fetchWhmcsCurrencies()
     }
-
-    this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
-      .then((res) => { this.currencies = res.currency })
-      .catch(err => {
-        const message = err.response?.data?.message ?? err.message
-
-        this.$notification.error({ message: this.$t(message) })
-        console.error(err)
-      })
 
     this.$api.get(this.baseURL, { params: { run: 'get_payment' } })
       .then((res) => {
@@ -371,7 +356,7 @@ export default {
   },
   methods: {
     ...mapActions(useAuthStore, ['fetchBillingData']),
-    ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
+    ...mapActions(useCurrenciesStore, ['fetchWhmcsCurrencies']),
     ...mapActions(useProductsStore, ['fetchServices']),
     fetch () {
       this.fetchLoading = true

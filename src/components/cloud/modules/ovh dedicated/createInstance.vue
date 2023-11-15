@@ -115,7 +115,7 @@ export default {
     checkedTypes: []
   }),
   computed: {
-    ...mapState(useAuthStore, ['billingUser', 'isLogged']),
+    ...mapState(useAuthStore, ['userdata', 'isLogged']),
     ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'unloginedCurrency']),
     currency () {
       const code = this.unloginedCurrency
@@ -128,7 +128,7 @@ export default {
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
+      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
     resources () {
       const ram = new Set()

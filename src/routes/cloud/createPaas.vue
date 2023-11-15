@@ -352,7 +352,7 @@ export default {
   },
 
   computed: {
-    ...mapState(useAuthStore, ['userdata', 'billingUser', 'isLogged']),
+    ...mapState(useAuthStore, ['userdata', 'isLogged']),
     ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'unloginedCurrency']),
     ...mapState(useNamespasesStore, ['namespaces']),
     ...mapState(useSpStore, ['servicesProviders', 'getShowcases']),
@@ -661,7 +661,7 @@ export default {
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
+      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
 
     diskSize () {

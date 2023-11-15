@@ -185,7 +185,7 @@ export default {
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
-    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData']),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData']),
     ...mapState(useCurrenciesStore, [
       'currencies',
       'defaultCurrency',
@@ -215,7 +215,7 @@ export default {
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
+      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
     services () {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')
@@ -272,9 +272,10 @@ export default {
         this.$notification.error({ message })
       }
     },
-    plan (value) {
-      const plan = this.plans.find(({ uuid }) => uuid === value)
+    plans (value) {
+      const plan = value.find(({ uuid }) => uuid === this.plan)
 
+      if (!plan) return
       this.changeProducts(plan)
     },
     getProducts () {
@@ -354,7 +355,7 @@ export default {
         billing_plan: plan ?? {}
       }]
       const newGroup = {
-        title: this.billingUser.fullname + Date.now(),
+        title: this.userdata.title + Date.now(),
         type: 'cpanel',
         sp: this.provider,
         instances
@@ -394,7 +395,7 @@ export default {
         : {
             namespace: this.namespace,
             service: {
-              title: this.billingUser.fullname,
+              title: this.userdata.title,
               context: {},
               version: '1',
               instancesGroups: [info]

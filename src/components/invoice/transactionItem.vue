@@ -82,7 +82,7 @@ const costColor = computed(() => {
 })
 
 const currency = computed(() => {
-  const code = authStore.billingUser.currency_code ?? 'USD'
+  const code = authStore.userdata.currency ?? 'USD'
   const { rate } = currenciesStore.currencies.find((el) =>
     el.to === code && el.from === props.invoice.currency
   ) ?? {}
