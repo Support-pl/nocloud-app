@@ -5,7 +5,7 @@
         <div class="order__option">
           <template v-if="typesOptions.length > 1">
             <div style="margin-bottom: 7px">
-              {{ $t('filter') }} {{ $t('by') }} {{ $t('groupname') }}:
+              {{ capitalize($t('filter')) }}:
             </div>
             <a-checkbox-group
               v-model:value="checkedTypes"
@@ -15,7 +15,7 @@
           </template>
 
           <div v-for="(resource, key) in resources" :key="key">
-            <span>{{ $t('filter') }} {{ $t('by') }} {{ key }}:</span>
+            <span>{{ capitalize($t('filter')) }} {{ $t('by') }} {{ key }}:</span>
             <a-slider
               range
               style="margin-top: 10px"
@@ -184,7 +184,7 @@ export default {
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
-    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData']),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData']),
     ...mapState(useCurrenciesStore, [
       'currencies',
       'defaultCurrency',
@@ -252,7 +252,7 @@ export default {
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
+      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
     services () {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')
@@ -303,6 +303,7 @@ export default {
         })
 
         this.cachedPlans[uuid] = pool
+        this.plan = pool[0]?.uuid
       } catch (error) {
         const message = error.response?.data?.message ?? error.message ?? error
 
@@ -398,7 +399,7 @@ export default {
         billing_plan: plan ?? {}
       }]
       const newGroup = {
-        title: this.billingUser.fullname + Date.now(),
+        title: this.userdata.title + Date.now(),
         type: 'empty',
         sp: this.provider,
         instances
@@ -445,7 +446,7 @@ export default {
         : {
             namespace: this.namespace,
             service: {
-              title: this.billingUser.fullname,
+              title: this.userdata.title,
               context: {},
               version: '1',
               instancesGroups: [info]

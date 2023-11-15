@@ -234,10 +234,10 @@ export default {
   data: () => ({ service: null, info }),
   computed: {
     ...mapStores(useChatsStore, useProductsStore, useInstancesStore),
-    ...mapState(useAuthStore, ['baseURL', 'billingUser', 'fetchBillingData']),
+    ...mapState(useAuthStore, ['baseURL', 'userdata', 'fetchBillingData']),
     ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'fetchCurrencies']),
     currency () {
-      return { code: this.billingUser.currency_code ?? this.defaultCurrency }
+      return { code: this.userdata.currency ?? this.defaultCurrency }
     },
     getTagColor () {
       const status = this.service.status.replace('cloudStateItem.', '')

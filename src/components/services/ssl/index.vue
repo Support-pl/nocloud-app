@@ -208,7 +208,7 @@ export default {
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
-    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData']),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData']),
     ...mapState(useCurrenciesStore, [
       'currencies',
       'defaultCurrency',
@@ -245,7 +245,7 @@ export default {
       ) ?? { rate: 1 }
 
       if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.billingUser.currency_code ?? this.defaultCurrency }
+      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
     periods () {
       return Object.keys(this.getProducts.prices || {})
@@ -403,7 +403,7 @@ export default {
         billing_plan: plan ?? {}
       }]
       const newGroup = {
-        title: this.billingUser.fullname + Date.now(),
+        title: this.userdata.title + Date.now(),
         type: 'goget',
         sp: this.provider,
         instances
@@ -443,7 +443,7 @@ export default {
         : {
             namespace: this.namespace,
             service: {
-              title: this.billingUser.fullname,
+              title: this.userdata.title,
               context: {},
               version: '1',
               instancesGroups: [info]

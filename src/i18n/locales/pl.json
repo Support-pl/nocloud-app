@@ -404,10 +404,10 @@
       "sites": "Websites",
       "mysql": "Bazy danych MySQL",
       "email": "Konta email",
-      "hdd_shared": "Współdzielona SSD",
+      "hdd_shared": "Współdzielona HDD",
       "traffic": "Przepustowość łącza",
       "websites": "Websites",
-      "ssd": "Współdzielona SSD",
+      "ssd": "Objętość dysku",
       "bandwidth": "Przepustowość łącza"
     },
     "clientinfo": {

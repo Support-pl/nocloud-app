@@ -146,7 +146,7 @@
 
               <span class="login__horisontal-line" />
               <a-select v-model:value="userinfo.currency" class="register__select" style="width: 100%; border: none">
-                <a-select-option v-for="currency in currencies" :key="currency.id">
+                <a-select-option v-for="currency in currenciesStore.whmcsCurrencies" :key="currency.id">
                   {{ currency.code }}
                 </a-select-option>
               </a-select>
@@ -184,6 +184,7 @@ import config from '@/appconfig.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import countries from '@/assets/countries.json'
 
 const router = useRouter()
@@ -191,12 +192,12 @@ const i18n = useI18n()
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
+const currenciesStore = useCurrenciesStore()
 
 const closeIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/CloseOutlined')
 )
 
-const currencies = ref([])
 const registerLoading = ref(false)
 const invoiceChecked = ref(false)
 const userinfo = ref({
@@ -295,22 +296,9 @@ function searchCountries (input, option) {
   return country.includes(input.toLowerCase())
 }
 
-async function fetchCurrencies () {
-  try {
-    const response = await api.get(authStore.baseURL, {
-      params: { run: 'get_currencies' }
-    })
-
-    currencies.value = response.currency
-  } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
-
-    notification.error({ message: i18n.t(message) })
-    console.error(error)
-  }
+if (currenciesStore.whmcsCurrencies.length < 1) {
+  currenciesStore.fetchWhmcsCurrencies()
 }
-
-fetchCurrencies()
 </script>
 
 <script>

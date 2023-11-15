@@ -55,7 +55,7 @@ export const useInstancesStore = defineStore('instances', () => {
       group.instances.forEach((inst) => {
         const { currencies, defaultCurrency } = currenciesStore
         const {
-          billingUser: { currency_code: code = defaultCurrency }
+          userdata: { currency: code = defaultCurrency }
         } = authStore
 
         const { rate } = currencies.find((el) =>

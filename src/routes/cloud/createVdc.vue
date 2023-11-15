@@ -199,7 +199,7 @@ watch(getProducts, (value) => {
 
 const currency = computed(() => {
   const { currencies, defaultCurrency } = storeToRefs(currenciesStore)
-  const { billingUser: user } = storeToRefs(authStore)
+  const { userdata: user } = storeToRefs(authStore)
   const code = currenciesStore.unloginedCurrency
 
   const { rate } = currencies.value.find((el) =>
@@ -211,7 +211,7 @@ const currency = computed(() => {
   ) ?? { rate: 1 }
 
   if (!authStore.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-  return { rate: 1, code: user.value.currency_code ?? defaultCurrency.value }
+  return { rate: 1, code: user.value.currency ?? defaultCurrency.value }
 })
 
 const providers = computed(() =>
