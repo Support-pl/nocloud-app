@@ -2,7 +2,7 @@
   <div class="handsfree-wrapper">
     <a-card title="Code">
       <a-list size="small" :data-source="data">
-        <template #renderItem="item, index">
+        <template #renderItem="{ item, index }">
           <a-list-item v-if="item === 'input'" style="padding: 12px 0 0; gap: 5px">
             <a-input :value="code" :max-length="6" @input="formatText" />
             <a-button type="primary" :loading="isLoading" @click="sendCode">
