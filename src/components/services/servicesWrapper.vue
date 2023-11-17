@@ -170,7 +170,7 @@ export default {
         if (a.icon === 'shopping' && b.icon !== 'shopping') return -1
         if (b.icon === 'shopping' && a.icon !== 'shopping') return 1
         if (a.icon === 'shopping' && b.icon === 'shopping') return 0
-        return a.title > b.title
+        return a.sorter - b.sorter
       })
 
       return services
