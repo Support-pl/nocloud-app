@@ -266,14 +266,15 @@ export default {
         })
 
         this.cachedPlans[uuid] = pool
+        this.plan = pool[0]?.uuid
       } catch (error) {
         const message = error.response?.data?.message ?? error.message ?? error
 
         this.$notification.error({ message })
       }
     },
-    plans (value) {
-      const plan = value.find(({ uuid }) => uuid === this.plan)
+    plan (value) {
+      const plan = this.plans.find(({ uuid }) => uuid === value)
 
       if (!plan) return
       this.changeProducts(plan)

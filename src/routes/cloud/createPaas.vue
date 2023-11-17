@@ -355,7 +355,7 @@ export default {
     ...mapState(useAuthStore, ['userdata', 'isLogged']),
     ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'unloginedCurrency']),
     ...mapState(useNamespasesStore, ['namespaces']),
-    ...mapState(useSpStore, ['servicesProviders', 'getShowcases']),
+    ...mapState(useSpStore, { servicesProviders: 'servicesProviders', getShowcases: 'showcases' }),
     ...mapState(usePlansStore, ['plans']),
     ...mapState(useInstancesStore, { getServicesFull: 'services' }),
 
@@ -499,14 +499,22 @@ export default {
     // --------------Plans-----------------
     filteredPlans () {
       const locationItem = this.locations.find((el) => el.id === this.locationId)
-      const { plans } = this.showcases.find(({ uuid }) => {
+      const { items } = this.showcases.find(({ uuid }) => {
         if (this.showcase === '') {
           return uuid === locationItem?.showcase
         }
         return uuid === this.showcase
       }) ?? { plans: '' }
+      const plans = []
 
-      if (plans === '' || plans.length < 1) return this.plans
+      if (!items) return this.plans
+      items.forEach(({ servicesProvider, plan }) => {
+        if (servicesProvider === this.itemSP.uuid) {
+          plans.push(plan)
+        }
+      })
+
+      if (plans.length < 1) return this.plans
       return this.plans.filter(({ uuid, type }) =>
         locationItem?.type === type && plans.includes(uuid)
       )
