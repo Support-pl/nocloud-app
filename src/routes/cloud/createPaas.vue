@@ -509,7 +509,7 @@ export default {
 
       if (!items) return this.plans
       items.forEach(({ servicesProvider, plan }) => {
-        if (servicesProvider === this.itemSP.uuid) {
+        if (servicesProvider === this.itemSP?.uuid) {
           plans.push(plan)
         }
       })
