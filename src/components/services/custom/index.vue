@@ -58,7 +58,7 @@
           </transition>
 
           <a-card
-            v-if="fetchLoading || getProducts.meta?.addons && getProducts.meta?.addons.length > 0"
+            v-if="fetchLoading || getProducts.addons && getProducts.addons.length > 0"
             style="margin-top: 15px"
             :title="`${$t('Addons')} (${$t('choose addons you want')})`"
             :loading="fetchLoading"
@@ -68,15 +68,25 @@
             </div>
             <template v-else>
               <a-card-grid
-                v-for="addon of getProducts.meta?.addons"
+                v-for="addon of getProducts.addons"
                 :key="addon.id"
                 class="card-item"
-                @click="changeAddons(addon.id)"
+                @click="changeAddons(addon.key)"
               >
-                <div class="order__slider-name" style="grid-template-columns: 1fr auto">
-                  <span style="font-weight: 700; font-size: 16px" v-html="addon.title" />
-                  <a-checkbox :checked="options.addons.includes(addon.id)" />
-                  <span style="grid-column: 1 / 3" v-html="addon.description" />
+                <div
+                  class="order__slider-name"
+                  style="grid-template-columns: 1fr auto auto; gap: 10px"
+                >
+                  <span style="font-weight: 700; font-size: 16px">
+                    {{ addon.key.split('; product: ')[0] }}
+                  </span>
+
+                  <span style="font-weight: 700">
+                    {{ getPeriod(addon.period) }}
+                  </span>
+
+                  <a-checkbox :checked="options.addons.includes(addon.key)" />
+                  <span style="grid-column: 1 / 4" v-html="addon.title" />
                 </div>
               </a-card-grid>
             </template>
@@ -85,7 +95,7 @@
       </div>
 
       <div class="order__calculate order__field">
-        <a-row type="flex" justify="space-around" style="margin-top: 20px">
+        <a-row justify="space-around" style="margin-top: 20px">
           <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
             {{ $t('Pay period') }}:
           </a-col>
@@ -97,6 +107,21 @@
               </a-select-option>
             </a-select>
             <div v-else class="loadingLine" />
+          </a-col>
+        </a-row>
+
+        <a-row
+          v-for="addon of options.addons"
+          :key="addon"
+          justify="space-around"
+          style="margin-top: 20px"
+        >
+          <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
+            {{ capitalize(getAddon(addon).key) }}:
+          </a-col>
+
+          <a-col :xs="12" :sm="18" :lg="12" style="font-size: 1.1rem; text-align: right">
+            {{ getAddon(addon).price }} {{ currency.code }}
           </a-col>
         </a-row>
 
@@ -194,8 +219,19 @@ export default {
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const product = this.products[this.options.size]
+      const price = product.price + this.options.addons.reduce(
+        (sum, id) => {
+          const addon = product.addons?.find(({ key }) => key === id)
 
-      return { ...product, price: +(product.price * this.currency.rate).toFixed(2) }
+          if (!addon) return sum
+          return sum + addon.price * addon.period / product.period
+        }, 0
+      )
+
+      return {
+        ...product,
+        price: +(price * this.currency.rate).toFixed(2)
+      }
     },
     resources () {
       if (this.sizes.length < 2) return {}
@@ -214,7 +250,12 @@ export default {
         })
       })
 
-      if (Object.keys(result).length < 2) return {}
+      Object.keys(result).forEach((key) => {
+        if (result[key].length < 2) {
+          delete result[key]
+        }
+      })
+
       return result
     },
     typesOptions () {
@@ -236,9 +277,12 @@ export default {
         const { meta } = this.products[key] ?? {}
 
         if (!meta?.resources) return isIncluded
-        return isIncluded && meta?.resources?.every(({ key, value }) =>
-          this.filters[key]?.at(0) <= value && this.filters[key]?.at(-1) >= value
-        )
+        return isIncluded && meta?.resources?.every(({ key, value }) => {
+          const a = this.filters[key]?.at(0) <= value
+          const b = this.filters[key]?.at(-1) >= value
+
+          return (this.filters[key]) ? a && b : true
+        })
       })
     },
     currency () {
@@ -320,6 +364,9 @@ export default {
       Object.entries(value).forEach(([key, resource]) => {
         this.filters[key] = [resource.at(0), resource.at(-1)]
       })
+    },
+    'options.size' () {
+      this.options.addons = []
     }
   },
   mounted () {
@@ -364,8 +411,15 @@ export default {
     changeProducts (plan) {
       const sortedProducts = Object.entries(plan?.products ?? {})
 
-      this.products = plan?.products ?? {}
       this.plan = plan?.uuid
+      sortedProducts.forEach(([productKey, value]) => {
+        this.products[productKey] = {
+          ...value,
+          addons: plan.resources.filter(({ key }) =>
+            key.split('; product: ')[1] === productKey
+          )
+        }
+      })
 
       sortedProducts.sort(([, a], [, b]) => a.sorter - b.sorter)
       this.sizes = sortedProducts.map(([key, value]) => ({
@@ -382,11 +436,21 @@ export default {
       })
       this.options.period = this.periods[0]
     },
-    changeAddons (id) {
-      if (this.options.addons.includes(id)) {
-        this.options.addons = this.options.addons.filter((addon) => addon !== id)
+    changeAddons (key) {
+      if (this.options.addons.includes(key)) {
+        this.options.addons = this.options.addons.filter((addon) => addon !== key)
       } else {
-        this.options.addons.push(id)
+        this.options.addons.push(key)
+      }
+    },
+    getAddon (addon) {
+      const item = this.getProducts.addons.find(({ key }) => key === addon)
+      const price = item.price * item.period / this.getProducts.period
+
+      return {
+        ...item,
+        key: item.key.split('; product: ')[0],
+        price: +(price * this.currency.rate).toFixed(2)
       }
     },
     orderClickHandler () {
