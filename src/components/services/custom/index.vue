@@ -138,7 +138,7 @@
           {{ $t('Total') }}:
         </a-divider>
 
-        <a-row type="flex" justify="space-around">
+        <a-row justify="space-around">
           <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
               <template v-if="!fetchLoading">
@@ -149,7 +149,7 @@
           </a-col>
         </a-row>
 
-        <a-row type="flex" justify="space-around" style="margin: 10px 0">
+        <a-row justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
             <a-button type="primary" block shape="round" @click="orderConfirm">
               {{ capitalize($t("order")) }}
@@ -458,9 +458,9 @@ export default {
       const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = [{
-        config: {},
+        config: { addons: this.options.addons },
         title: this.getProducts.title,
-        billing_plan: plan ?? {}
+        billing_plan: { uuid: this.plan }
       }]
       const newGroup = {
         title: this.userdata.title + Date.now(),
@@ -472,6 +472,7 @@ export default {
       if (plan.kind === 'STATIC') instances[0].product = this.options.size
       else {
         instances[0].config = {
+          ...instances[0].config,
           product: this.options.size,
           period: +this.options.period
         }
