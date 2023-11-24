@@ -185,6 +185,7 @@
 <script>
 import { defineAsyncComponent, h } from 'vue'
 import { mapStores, mapState } from 'pinia'
+import { usePeriod } from '@/hooks/utils'
 import config from '@/appconfig.js'
 
 import { useAuthStore } from '@/stores/auth.js'
@@ -231,6 +232,11 @@ const info = [
 export default {
   name: 'UserServiceView',
   components: { loading },
+  setup () {
+    const { getPeriod } = usePeriod()
+
+    return { getPeriod }
+  },
   data: () => ({ service: null, info }),
   computed: {
     ...mapStores(useChatsStore, useProductsStore, useInstancesStore),
@@ -522,30 +528,6 @@ export default {
         },
         onCancel () {}
       })
-    },
-    getPeriod (timestamp) {
-      const hour = 3600
-      const day = hour * 24
-      const month = day * 30
-      const year = month * 12
-
-      let period = ''
-      let count = 0
-
-      if (timestamp / hour < 24 && timestamp >= hour) {
-        period = 'hour'
-        count = timestamp / hour
-      } else if (timestamp / day < 30 && timestamp >= day) {
-        period = 'day'
-        count = timestamp / day
-      } else if (timestamp / month < 12 && timestamp >= month) {
-        period = 'month'
-        count = timestamp / month
-      } else {
-        period = 'year'
-        count = timestamp / year
-      }
-      return this.$tc(period, Math.round(count))
     },
     date (timestamp) {
       if (timestamp < 1) return '0000-00-00'

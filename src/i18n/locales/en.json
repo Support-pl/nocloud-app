@@ -576,6 +576,7 @@
     "subject": "Subject",
     "question": "Question",
     "gateways": "Gateways",
+    "gateway": "Communication channel",
     "message": "Message",
     "description": "Description",
     "ticketStatus": {
@@ -651,9 +652,9 @@
       "Draft": "Draft",
       "0": "New",
       "1": "Open",
-      "3": "In progress",
-      "4": "Resolved",
-      "5": "Closed"
+      "2": "Resolved",
+      "3": "Closed",
+      "4": "In progress"
     },
     "virtual": "virtual",
     "ssl": "SSL",

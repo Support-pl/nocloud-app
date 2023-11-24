@@ -52,9 +52,9 @@ export const useSupportStore = defineStore('support', () => {
           store.baseURL, { params: { run: 'get_tickets' } })
 
         if (response?.ERROR) throw response.ERROR.toLowerCase()
-        if (!response) throw new Error('tickets not found')
+        if (!response) console.warn('tickets not found')
 
-        tickets.value = response
+        tickets.value = response ?? []
         return response
       } catch (error) {
         console.error(error)

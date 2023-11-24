@@ -1,12 +1,27 @@
 <template>
   <div class="application">
     <a-layout>
-      <a-layout-header :style="{'background-color': 'var(--main)', color: 'var(--bright_font)', padding: 0}">
-        <app-header />
+      <a-layout-header
+        :style="{
+          padding: 0,
+          color: 'var(--bright_font)',
+          backgroundColor: 'var(--main)'
+        }"
+      >
+        <app-header v-model:is-button-visible="isButtonsVisible" />
       </a-layout-header>
 
-      <a-layout-content :style="{'background-color': 'var(--bright_bg)', 'position': 'relative'}">
-        <router-view v-slot="{ Component }" class="frame">
+      <a-layout-content
+        :style="{
+          position: 'relative',
+          backgroundColor: 'var(--bright_bg)'
+        }"
+      >
+        <router-view
+          v-slot="{ Component }"
+          class="frame"
+          :style="{ paddingTop: (isButtonsVisible) ? '50px' : null }"
+        >
           <transition name="main-frame-anim">
             <component :is="Component" />
           </transition>
@@ -21,6 +36,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -32,6 +48,7 @@ const route = useRoute()
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
+const isButtonsVisible = ref(false)
 
 router.isReady().then(() => {
   appStore.setTabByNameNoRoute(route.name)
