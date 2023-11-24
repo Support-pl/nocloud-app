@@ -34,16 +34,7 @@
           />
         </a-form-item>
 
-        <a-button
-          v-if="isTicket"
-          type="primary"
-          style="display: block; margin-left: auto"
-          @click="sendNewTicket"
-        >
-          {{ $t('Send') }}
-        </a-button>
-
-        <a-form-item v-else style="margin-bottom: 0; padding-bottom: 0" :label="$t('gateways')">
+        <a-form-item style="margin-bottom: 0; padding-bottom: 0" :label="$t('gateway')">
           <div class="order__grid">
             <div
               v-for="gate of gateways"
@@ -51,7 +42,7 @@
               class="order__slider-item"
               :value="gate.id"
               :class="{ 'order__slider-item--active': gateway === gate.id }"
-              @click="changeGateway(gate.id)"
+              @click="gateway = gate.id"
             >
               <span class="order__slider-name" :title="gate.name">
                 <img
@@ -64,6 +55,14 @@
             </div>
           </div>
         </a-form-item>
+
+        <a-button
+          type="primary"
+          style="display: block; margin-left: auto"
+          @click="(gateway === 'telegram') ? sendTelegramMessage : sendNewTicket"
+        >
+          OK
+        </a-button>
       </a-form>
     </a-spin>
   </a-modal>
@@ -102,16 +101,12 @@ const authStore = useAuthStore()
 const chatsStore = useChatsStore()
 const supportStore = useSupportStore()
 
-const gateway = ref('')
+const gateway = ref('userApp')
 const ticketDepartment = ref(-1)
 const ticketTitle = ref('')
 const ticketMessage = ref('')
 const isSending = ref(false)
 const isLoading = ref(false)
-
-const isTicket = computed(() =>
-  supportStore.departments.find(({ id }) => id === ticketDepartment.value)
-)
 
 const filteredDepartments = computed(() => {
   const chatsDeparts = chatsStore.getDefaults.departments
@@ -135,7 +130,7 @@ const gateways = computed(() => {
   const i = result.findIndex(({ id }) => id.includes('email'))
 
   if (props.instanceId && i !== -1) result.splice(i, 1)
-  result.push({ id: 'userApp', name: 'User App' })
+  result.unshift({ id: 'userApp', name: 'User App' })
   return result
 })
 
@@ -275,16 +270,6 @@ function sendTelegramMessage () {
 
   localStorage.setItem('telegramMessage', message)
   router.push({ name: 'handsfree' })
-}
-
-function changeGateway (value) {
-  if (value === 'telegram' && gateway.value === value) {
-    sendTelegramMessage()
-  } else if (gateway.value === value) {
-    sendNewTicket()
-  } else {
-    gateway.value = value
-  }
 }
 
 function onError ({ target }) {

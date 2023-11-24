@@ -53,7 +53,7 @@
           :loading="isEditLoading"
           @click="updateChat"
         >
-          {{ $t('Send') }}
+          OK
         </a-button>
       </template>
     </a-alert>

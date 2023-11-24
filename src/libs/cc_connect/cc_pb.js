@@ -39,6 +39,7 @@ export const Kind = proto3.makeEnum(
   [
     {no: 0, name: "DEFAULT"},
     {no: 1, name: "ADMIN_ONLY"},
+    {no: 2, name: "FOR_BOT"},
   ],
 );
 
@@ -97,6 +98,8 @@ export const Chat = proto3.makeMessageType(
     { no: 9, name: "created", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 10, name: "status", kind: "enum", T: proto3.getEnumType(Status) },
     { no: 11, name: "department", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 12, name: "responsible", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 13, name: "bot_state", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
   ],
 );
 
@@ -139,6 +142,7 @@ export const Message = proto3.makeMessageType(
     { no: 10, name: "under_review", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 11, name: "readers", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 12, name: "meta", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
+    { no: 13, name: "mentioned", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ],
 );
 
@@ -161,6 +165,9 @@ export const User = proto3.makeMessageType(
     { no: 1, name: "uuid", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "data", kind: "message", T: Struct },
+    { no: 4, name: "cc_is_bot", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 5, name: "cc_username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "cc_commands", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ],
 );
 
@@ -231,6 +238,16 @@ export const Event = proto3.makeMessageType(
     { no: 1, name: "type", kind: "enum", T: proto3.getEnumType(EventType) },
     { no: 2, name: "chat", kind: "message", T: Chat, oneof: "item" },
     { no: 3, name: "msg", kind: "message", T: Message, oneof: "item" },
+  ],
+);
+
+/**
+ * @generated from message cc.StreamRequest
+ */
+export const StreamRequest = proto3.makeMessageType(
+  "cc.StreamRequest",
+  () => [
+    { no: 1, name: "commands", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ],
 );
 

@@ -67,6 +67,13 @@
             </a-form-item>
 
             <a-form-item
+              :label="(form.countryname === 'PL') ? 'NIP' : 'VAT ID'"
+              name="tax_id"
+            >
+              <a-input v-model="form.tax_id" :disabled="isDisabled" />
+            </a-form-item>
+
+            <a-form-item
               :label="`${capitalize($t('clientinfo.countryname'))}:`"
               name="countryname"
             >
@@ -93,6 +100,18 @@
                 class="user__input"
                 :disabled="!form.countryname || isDisabled"
               >
+            </a-form-item>
+
+            <a-form-item
+              v-if="isPasswordVisible"
+              :label="`${capitalize('currency')}:`"
+              name="currency"
+            >
+              <a-select v-model:value="form.currency">
+                <a-select-option v-for="currency in currenciesStore.whmcsCurrencies" :key="currency.id">
+                  {{ currency.code }}
+                </a-select-option>
+              </a-select>
             </a-form-item>
 
             <a-form-item
@@ -136,6 +155,7 @@ import { useI18n } from 'vue-i18n'
 import api from '@/api.js'
 
 import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
 import countries from '@/assets/countries.json'
 
 import empty from '@/components/ui/empty.vue'
@@ -143,6 +163,7 @@ import loading from '@/components/ui/loading.vue'
 
 const i18n = useI18n()
 const authStore = useAuthStore()
+const currenciesStore = useCurrenciesStore()
 
 const formRef = ref(null)
 const form = ref({})
@@ -160,6 +181,7 @@ const rules = computed(() => ({
   firstname: [reqRule],
   countryname: [reqRule],
   phonenumber: [reqRule],
+  currency: [reqRule],
 
   companyname: [{ required: false }],
   address1: [{ required: false }],

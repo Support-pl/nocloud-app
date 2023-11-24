@@ -367,6 +367,7 @@
 
 <script lang="jsx">
 import { defineAsyncComponent, defineComponent } from 'vue'
+import { Button, Modal, Switch } from 'ant-design-vue'
 import { mapState, mapActions } from 'pinia'
 import notification from '@/mixins/notification.js'
 
@@ -483,12 +484,15 @@ export default defineComponent({
     dates: [],
     planCode: '',
     actionLoading: false,
-    isSwitchLoading: false
+    isSwitchLoading: false,
+    isLoading: false,
+    autoRenew: false
   }),
   computed: {
     ...mapState(useSpStore, ['servicesProviders']),
     ...mapState(useAuthStore, ['userdata', 'baseURL']),
     ...mapState(useCurrenciesStore, ['defaultCurrency']),
+    ...mapState(useInstancesStore, ['services']),
     statusVM () {
       if (!this.VM) return
       const isSuspended = this.VM.state.state === 'PENDING' || this.VM.data.suspended_manually
@@ -590,8 +594,9 @@ export default defineComponent({
       return { public: publicIPs ?? [], private: privateIPs ?? [] }
     }
   },
+  mounted () { this.autoRenew = this.VM.config.auto_renew },
   methods: {
-    ...mapActions(useInstancesStore, ['invokeAction']),
+    ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
     async openActions () {
       this.actionLoading = true
 
@@ -804,6 +809,28 @@ export default defineComponent({
             </div>
 
             <div style="margin-top: 10px">
+              <span style="line-height: 1.7">{ this.$t('Automatic renewal') }: </span>
+              <Switch
+                size="small"
+                loading={ this.isLoading }
+                checked={ this.autoRenew }
+                onChange={ (value) => { this.autoRenew = value } }
+              />
+              { (this.VM.config.auto_renew !== this.autoRenew) &&
+                <Button
+                  size="small"
+                  type="primary"
+                  style="margin-left: 5px"
+                  loading={ this.isLoading }
+                  onClick={ this.onClick }
+                >
+                  OK
+                </Button>
+              }
+            </div>
+
+            <div style="margin-top: 10px">
+              <div>{ this.$t('Manual renewal') }:</div>
               <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
               { this.tariffPrice } { this.currency.code }
               { Object.keys(this.addonsPrice).length > 0 &&
@@ -830,6 +857,30 @@ export default defineComponent({
         onOk: () => this.sendAction('manual_renew'),
         onCancel () {}
       })
+    },
+    async onClick () {
+      const service = this.services.find(({ uuid }) =>
+        uuid === this.VM.uuidService
+      )
+      const instance = service.instancesGroups
+        .find(({ sp }) => sp === this.VM.sp).instances
+        .find(({ uuid }) => uuid === this.VM.uuid)
+
+      try {
+        this.isLoading = true
+        instance.config.auto_renew = this.autoRenew
+        await this.updateService(service)
+
+        Modal.destroyAll()
+        this.openNotificationWithIcon('success', { message: this.$t('Done') })
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.openNotificationWithIcon('error', { message })
+        console.error(error)
+      } finally {
+        this.isLoading = false
+      }
     },
     sendNewTariff () {
       this.isSwitchLoading = true

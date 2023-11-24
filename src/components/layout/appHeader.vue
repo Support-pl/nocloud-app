@@ -274,6 +274,7 @@ const downIcon = defineAsyncComponent(
 export default {
   name: 'AppHeader',
   components: { balance, leftIcon, closeIcon, downIcon },
+  emits: ['update:isButtonVisible'],
   data () {
     return {
       isOpen: false,
@@ -453,19 +454,11 @@ export default {
       } else {
         filterElem = []
       }
-      let statuses = filterElem.map((el) =>
+      const statuses = filterElem.map((el) =>
         this.$t(`filterHeader.${el.status}`)
       )
 
-      statuses = arrayUnique(statuses)
-
-      Object.assign(this, {
-        checkedList: statuses,
-        indeterminate: false,
-        checkAll: true
-      })
-
-      return statuses
+      return arrayUnique(statuses)
     },
     isNeedHeader () {
       const conditions = [
@@ -507,14 +500,31 @@ export default {
     }
   },
   watch: {
-    active () {
+    active (value) {
       if (this.$route.query.service) {
         this.headers.iaas.title = this.$route.query.service
+      }
+
+      if (value === 'support') {
+        this.isButtonsVisible = true
       }
     },
     activeInvoiceTab () {
       this.checkedList = []
       this.updateFilter()
+    },
+    plainOptions (statuses) {
+      Object.assign(this, {
+        checkedList: statuses.filter((status) =>
+          (this.active === 'support') ? status !== 'Closed' : true
+        ),
+        indeterminate: false,
+        checkAll: true
+      })
+      this.updateFilter(this.checkedList)
+    },
+    isButtonsVisible (value) {
+      this.$emit('update:isButtonVisible', value)
     },
     currencyCode (value) {
       this.unloginedCurrency = value

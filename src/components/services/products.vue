@@ -1,6 +1,6 @@
 <template>
   <div class="products__wrapper">
-    <div v-if="authStore.isLogged && !isPromoVisible" class="products__header">
+    <div v-if="authStore.isLogged" class="products__header">
       <div class="products__title">
         <!-- Ваши услуги -->
         <transition name="header-transition" mode="out-in">
@@ -117,12 +117,8 @@
       class="products__inner"
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
-      <editor-container
-        v-if="isPromoVisible"
-        :value="showcase.promo[$i18n.locale]?.preview"
-      />
       <div
-        v-else-if="!authStore.isLogged"
+        v-if="!authStore.isLogged"
         class="products__unregistred"
       >
         {{ $t("unregistered.will be able after") }}
@@ -158,7 +154,6 @@
 <script>
 import { defineAsyncComponent } from 'vue'
 import { mapStores } from 'pinia'
-import { EditorContainer } from 'nocloud-ui'
 import config from '@/appconfig.js'
 
 import { useSpStore } from '@/stores/sp.js'
@@ -190,7 +185,6 @@ export default {
   components: {
     cloudItem,
     loading,
-    EditorContainer,
 
     closeCircleIcon,
     filterIcon,
@@ -407,11 +401,6 @@ export default {
     },
     isNeedFilterStringInHeader () {
       return ['services', 'root', 'products'].includes(this.$route.name) && this.$route.query.service
-    },
-    isPromoVisible () {
-      return this.showcase?.promo &&
-        this.showcase.promo[this.$i18n.locale]?.previewEnable &&
-        this.productsPrepared.length < 1
     },
     queryTypes () {
       if (this.$route.query.service) {
