@@ -1,7 +1,7 @@
 <template>
   <div class="newCloud_wrapper">
     <div class="newCloud">
-      <div class="newCloud__inputs field">
+      <div class="newCloud__inputs order__field">
         <a-spin
           v-if="isPlansLoading"
           style="display: block; margin: 15px auto"
@@ -74,7 +74,7 @@
         </component>
       </div>
 
-      <div v-if="itemSP && plans.length > 0" class="newCloud__calculate field">
+      <div v-if="itemSP && plans.length > 0" class="newCloud__calculate order__field">
         <editor-container
           v-if="locationDescription && activeKey === 'location'"
           :value="locationDescription"
@@ -82,7 +82,15 @@
 
         <template v-else>
           <!-- Location Tarif CPU RAM GPU Drive os network -->
-          <cloud-resources :items="resources" />
+          <cloud-resources
+            :options="options"
+            :item-s-p="itemSP"
+            :product="product"
+            :product-size="productSize"
+            :tarification="tarification"
+            :disk-size="diskSize"
+            :price-o-v-h="priceOVH"
+          />
 
           <!-- addons -->
           <transition-group name="networkApear">
@@ -232,6 +240,8 @@
           </template>
         </create-button>
       </div>
+
+      <promo-page class="order__promo" />
     </div>
   </div>
 </template>
@@ -256,6 +266,7 @@ import cloudResources from '@/components/cloud/create/resources.vue'
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
 import createButton from '@/components/cloud/create/button.vue'
 import loading from '@/components/ui/loading.vue'
+import promoPage from '@/components/ui/promo.vue'
 
 const copyIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/CopyOutlined')
@@ -270,6 +281,7 @@ export default {
     createButton,
     cloudResources,
     selectsToCreate,
+    promoPage,
     copyIcon
   },
   mixins: [notification],
@@ -359,66 +371,6 @@ export default {
     ...mapState(usePlansStore, ['plans']),
     ...mapState(useInstancesStore, { getServicesFull: 'services' }),
 
-    resources () {
-      return {
-        location: {
-          title: this.$t('location'),
-          value: this.locationTitle,
-          style: {
-            paddingBottom: '5px',
-            marginBottom: '10px',
-            borderBottom: '1px solid #e8e8e8'
-          }
-        },
-        tarif: { title: this.$t('tariff'), value: this.productSize },
-        cpu: {
-          title: this.$t('cpu'),
-          value: `${this.options.cpu.size} ${(isNaN(+this.options.cpu.size)) ? '' : 'vCPU'}`,
-          visible: this.options.cpu.size && this.options.cpu.size !== 'loading'
-        },
-        ram: {
-          title: this.$t('ram'),
-          value: `${this.options.ram.size} Gb`,
-          visible: this.options.ram.size
-        },
-        gpu: {
-          title: this.$t('gpu'),
-          value: `${this.product.resources?.gpu_name} (x${this.product.resources?.gpu_count})`,
-          visible: this.product.resources?.gpu_name ?? false
-        },
-        drive: {
-          title: this.$t('Drive'),
-          value: `${this.options.drive ? 'SSD' : 'HDD'} ${this.diskSize}`,
-          visible: parseFloat(this.diskSize),
-          style: { marginBottom: '5px' }
-        },
-        os: {
-          title: this.$t('os'),
-          value: `${this.options.os.name} ${
-            (this.priceOVH.addons.os)
-              ? `(${this.priceOVH.addons.os} ${this.currency.code})`
-              : ''
-          }`,
-          visible: this.options.os.name,
-          style: { fontSize: '1.1rem' }
-        },
-        public: {
-          title: `${this.$t('public')} IPv4${
-            (this.tarification === 'Hourly') ? '*' : ''
-          }`,
-          value: this.options.network.public.count,
-          visible: this.options.network.public.status && this.itemSP.type !== 'ovh',
-          style: { fontSize: '1.1rem' }
-        },
-        private: {
-          title: `${this.$t('private')} IPv4`,
-          value: this.options.network.private.count,
-          visible: this.options.network.private.status,
-          style: { fontSize: '1.1rem' }
-        }
-      }
-    },
-
     itemService () {
       const data = this.getServicesFull.find((el) => {
         return this.service === el.uuid
@@ -504,7 +456,7 @@ export default {
           return uuid === locationItem?.showcase
         }
         return uuid === this.showcase
-      }) ?? { plans: '' }
+      }) ?? {}
       const plans = []
 
       if (!items) return this.plans
@@ -1406,40 +1358,44 @@ export default {
   width: 100%;
   min-height: 100%;
 }
+
 .newCloud {
   position: absolute;
-  margin-top: 15px;
-  padding-bottom: 15px;
+  left: 50%;
+  display: grid;
+  grid-template-columns: calc(72% - 20px) 28%;
+  gap: 20px;
   width: 100%;
   max-width: 1024px;
-  left: 50%;
+  margin-top: 15px;
+  margin-bottom: 15px;
   transform: translateX(-50%);
-  display: flex;
 }
-.newCloud__inputs {
-  margin-right: 20px;
-  width: 72%;
-  padding: 0;
-}
+
 .newCloud__change-tariff {
   color: var(--main);
   cursor: pointer;
 }
-.field {
+
+.order__field {
   border-radius: 20px;
-  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    5px 8px 10px rgba(0, 0, 0, .08),
+    0px 0px 12px rgba(0, 0, 0, .05);
   background-color: var(--bright_font);
   height: max-content;
 }
+
+.newCloud__calculate {
+  padding: 10px 15px 10px;
+  font-size: 1.1rem;
+}
+
 .field--fluid {
   width: 100%;
   padding: 10px 15px;
 }
-.newCloud__calculate {
-  width: 28%;
-  font-size: 1.1rem;
-  padding: 10px 15px 10px;
-}
+
 .newCloud__calculate .ant-col {
   font-size: inherit;
 }
@@ -1639,24 +1595,22 @@ export default {
 }
 @media screen and (max-width: 991px) {
   .newCloud {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    gap: 0;
     padding: 10px;
     margin-top: 0px;
     overflow: auto;
   }
-  .newCloud__inputs {
-    margin: 0;
-    border-radius: 20px 20px 0 0;
-    width: auto;
-    padding-bottom: 0;
-  }
-  .field {
+  .order__field {
     box-shadow: none;
-    flex-grow: 0;
+    border-radius: 20px 20px 0 0;
   }
   .newCloud__calculate {
-    border-radius: 0 0 20px 20px;
     width: auto;
+    border-radius: 0 0 20px 20px;
+  }
+  .order__promo {
+    margin-top: 20px;
   }
 }
 @media screen and (max-width: 768px) {

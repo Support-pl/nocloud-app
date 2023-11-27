@@ -1,7 +1,7 @@
 <template>
   <div class="order_wrapper">
     <div class="order">
-      <div class="order__inputs order__field">
+      <div class="order__field">
         <div class="order_option">
           <a-slider
             :marks="{ ...sizes }"
@@ -142,6 +142,8 @@
           </a-col>
         </a-row>
       </div>
+
+      <promo-page class="order__promo" />
     </div>
   </div>
 </template>
@@ -149,6 +151,7 @@
 <script>
 import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
+import { usePeriod } from '@/hooks/utils'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -160,11 +163,17 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
+import promoPage from '@/components/ui/promo.vue'
 
 export default {
   name: 'VirtualComponent',
-  components: { passwordMeter, selectsToCreate },
+  components: { passwordMeter, selectsToCreate, promoPage },
   inject: ['checkBalance'],
+  setup () {
+    const { getPeriod } = usePeriod()
+
+    return { getPeriod }
+  },
   data: () => ({
     plan: null,
     service: null,
@@ -454,51 +463,29 @@ export default {
         .finally(() => {
           this.modal.confirmLoading = false
         })
-    },
-    getPeriod (timestamp) {
-      const hour = 3600
-      const day = hour * 24
-      const month = day * 30
-      const year = month * 12
-
-      let period = ''
-      let count = 0
-
-      if (timestamp / hour < 24 && timestamp >= hour) {
-        period = 'hour'
-        count = timestamp / hour
-      } else if (timestamp / day < 30 && timestamp >= day) {
-        period = 'day'
-        count = timestamp / day
-      } else if (timestamp / month < 12 && timestamp >= month) {
-        period = 'month'
-        count = timestamp / month
-      } else {
-        period = 'year'
-        count = timestamp / year
-      }
-      return this.$tc(period, Math.round(count))
     }
   }
 }
 </script>
 
 <style>
-.order_wrapper{
+.order_wrapper {
   position: relative;
   width: 100%;
   min-height: 100%;
 }
 
-.order{
+.order {
   position: absolute;
-  margin-top: 15px;
-  margin-bottom: 15px;
+  left: 50%;
+  display: grid;
+  grid-template-columns: calc(72% - 20px) 28%;
+  gap: 20px;
   width: 100%;
   max-width: 1024px;
-  left: 50%;
+  margin-top: 15px;
+  margin-bottom: 15px;
   transform: translateX(-50%);
-  display: flex;
 }
 
 .order .ant-slider-mark-text {
@@ -557,12 +544,7 @@ export default {
   margin-top: 15px;
 }
 
-.order__inputs{
-  margin-right: 20px;
-  width: 72%;
-}
-
-.order__field{
+.order__field {
   border-radius: 20px;
   box-shadow:
     5px 8px 10px rgba(0, 0, 0, .08),
@@ -572,10 +554,9 @@ export default {
   height: max-content;
 }
 
-.order__calculate{
-  width: 28%;
-  font-size: 1.1rem;
+.order__calculate {
   padding: 10px 15px 10px;
+  font-size: 1.1rem;
 }
 
 .order__field-header{
@@ -745,24 +726,23 @@ export default {
 }
 
 @media screen and (max-width: 1024px) {
-  .order{
-    flex-direction: column;
+  .order {
+    grid-template-columns: 1fr;
+    gap: 0;
     padding: 10px;
     margin-top: 0px;
     overflow: auto;
   }
-  .order__inputs{
-    margin: 0;
-    border-radius: 20px 20px 0 0;
-    width: auto;
-  }
-  .order__field{
+  .order__field {
     box-shadow: none;
-    flex-grow: 0;
+    border-radius: 20px 20px 0 0;
   }
-  .order__calculate{
-    border-radius: 0 0 20px 20px;
+  .order__calculate {
     width: auto;
+    border-radius: 0 0 20px 20px;
+  }
+  .order__promo {
+    margin-top: 20px;
   }
 }
 

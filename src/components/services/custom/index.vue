@@ -1,7 +1,7 @@
 <template>
   <div class="order_wrapper">
     <div class="order">
-      <div class="order__inputs order__field">
+      <div class="order__field">
         <div class="order__option">
           <template v-if="typesOptions.length > 1">
             <div style="margin-bottom: 7px">
@@ -58,7 +58,7 @@
           </transition>
 
           <a-card
-            v-if="fetchLoading || getProducts.meta?.addons && getProducts.meta?.addons.length > 0"
+            v-if="fetchLoading || getProducts.addons && getProducts.addons.length > 0"
             style="margin-top: 15px"
             :title="`${$t('Addons')} (${$t('choose addons you want')})`"
             :loading="fetchLoading"
@@ -68,15 +68,25 @@
             </div>
             <template v-else>
               <a-card-grid
-                v-for="addon of getProducts.meta?.addons"
+                v-for="addon of getProducts.addons"
                 :key="addon.id"
                 class="card-item"
-                @click="changeAddons(addon.id)"
+                @click="changeAddons(addon.key)"
               >
-                <div class="order__slider-name" style="grid-template-columns: 1fr auto">
-                  <span style="font-weight: 700; font-size: 16px" v-html="addon.title" />
-                  <a-checkbox :checked="options.addons.includes(addon.id)" />
-                  <span style="grid-column: 1 / 3" v-html="addon.description" />
+                <div
+                  class="order__slider-name"
+                  style="grid-template-columns: 1fr auto auto; gap: 10px"
+                >
+                  <span style="font-weight: 700; font-size: 16px">
+                    {{ addon.title }}
+                  </span>
+
+                  <span style="font-weight: 700">
+                    {{ getPeriod(addon.period) }}
+                  </span>
+
+                  <a-checkbox :checked="options.addons.includes(addon.key)" />
+                  <span style="grid-column: 1 / 4" v-html="addon.meta?.description ?? ''" />
                 </div>
               </a-card-grid>
             </template>
@@ -85,7 +95,7 @@
       </div>
 
       <div class="order__calculate order__field">
-        <a-row type="flex" justify="space-around" style="margin-top: 20px">
+        <a-row justify="space-around" style="margin-top: 5px">
           <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
             {{ $t('Pay period') }}:
           </a-col>
@@ -100,20 +110,37 @@
           </a-col>
         </a-row>
 
+        <a-row
+          v-for="addon of options.addons"
+          :key="addon"
+          justify="space-around"
+          style="margin-top: 20px"
+        >
+          <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
+            {{ capitalize(getAddon(addon).key) }}:
+          </a-col>
+
+          <a-col :xs="12" :sm="18" :lg="12" style="font-size: 1.1rem; text-align: right">
+            {{ getAddon(addon).price }} {{ currency.code }}
+          </a-col>
+        </a-row>
+
         <selects-to-create
+          v-if="services.length > 1 || sp.length > 1 || namespacesStore.namespaces.length > 1"
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
           v-model:provider="provider"
           :plans-list="plans"
           :sp-list="sp"
+          :is-plans-visible="false"
         />
 
         <a-divider orientation="left" :style="{'margin-bottom': '0'}">
           {{ $t('Total') }}:
         </a-divider>
 
-        <a-row type="flex" justify="space-around">
+        <a-row justify="space-around">
           <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
               <template v-if="!fetchLoading">
@@ -124,7 +151,7 @@
           </a-col>
         </a-row>
 
-        <a-row type="flex" justify="space-around" style="margin: 10px 0">
+        <a-row justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
             <a-button type="primary" block shape="round" @click="orderConfirm">
               {{ capitalize($t("order")) }}
@@ -142,12 +169,15 @@
           </a-col>
         </a-row>
       </div>
+
+      <promo-page class="order__promo" />
     </div>
   </div>
 </template>
 
 <script>
 import { mapStores, mapState } from 'pinia'
+import { usePeriod } from '@/hooks/utils'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
@@ -159,11 +189,17 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
+import promoPage from '@/components/ui/promo.vue'
 
 export default {
   name: 'CustomComponent',
-  components: { selectsToCreate },
+  components: { selectsToCreate, promoPage },
   inject: ['checkBalance'],
+  setup () {
+    const { getPeriod } = usePeriod()
+
+    return { getPeriod }
+  },
   data: () => ({
     plan: null,
     service: null,
@@ -194,8 +230,20 @@ export default {
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const product = this.products[this.options.size]
+      const price = product.price + this.options.addons.reduce(
+        (sum, id) => {
+          const addon = product.addons?.find(({ key }) => key === id)
+          const period = addon.period / product.period
 
-      return { ...product, price: +(product.price * this.currency.rate).toFixed(2) }
+          if (!addon) return sum
+          return sum + addon.price * ((period >= 1) ? period : 1 / period)
+        }, 0
+      )
+
+      return {
+        ...product,
+        price: +(price * this.currency.rate).toFixed(2)
+      }
     },
     resources () {
       if (this.sizes.length < 2) return {}
@@ -214,15 +262,20 @@ export default {
         })
       })
 
-      if (Object.keys(result).length < 2) return {}
+      Object.keys(result).forEach((key) => {
+        if (result[key].length < 2) {
+          delete result[key]
+        }
+      })
+
       return result
     },
     typesOptions () {
       const types = []
 
-      Object.values(this.products).forEach(({ group, title }) => {
+      this.sizes.forEach(({ group, label }) => {
         if (types.includes(group)) return
-        types.push(group ?? title)
+        types.push(group ?? label)
       })
 
       return types
@@ -236,9 +289,12 @@ export default {
         const { meta } = this.products[key] ?? {}
 
         if (!meta?.resources) return isIncluded
-        return isIncluded && meta?.resources?.every(({ key, value }) =>
-          this.filters[key]?.at(0) <= value && this.filters[key]?.at(-1) >= value
-        )
+        return isIncluded && meta?.resources?.every(({ key, value }) => {
+          const a = this.filters[key]?.at(0) <= value
+          const b = this.filters[key]?.at(-1) >= value
+
+          return (this.filters[key]) ? a && b : true
+        })
       })
     },
     currency () {
@@ -304,22 +360,24 @@ export default {
 
         this.cachedPlans[uuid] = pool
         this.plan = pool[0]?.uuid
+        this.changePeriods(pool)
       } catch (error) {
         const message = error.response?.data?.message ?? error.message ?? error
 
         this.$notification.error({ message })
       }
     },
-    plan (value) {
-      const plan = this.plans.find(({ uuid }) => uuid === value)
-
-      this.changeProducts(plan)
-      this.fetchLoading = false
-    },
     resources (value) {
       Object.entries(value).forEach(([key, resource]) => {
         this.filters[key] = [resource.at(0), resource.at(-1)]
       })
+    },
+    'options.size' () {
+      this.options.addons = []
+    },
+    'options.period' (value) {
+      this.changeProducts(value)
+      this.fetchLoading = false
     }
   },
   mounted () {
@@ -361,11 +419,32 @@ export default {
     if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
-    changeProducts (plan) {
-      const sortedProducts = Object.entries(plan?.products ?? {})
+    changeProducts (period) {
+      const sortedProducts = this.cachedPlans[this.provider]?.reduce(
+        (result, plan) => {
+          let isValid = false
 
-      this.products = plan?.products ?? {}
-      this.plan = plan?.uuid
+          for (const product of Object.values(plan.products)) {
+            if (+product.period === +period) {
+              isValid = true
+              break
+            }
+          }
+
+          if (!isValid) return result
+          return [...result, ...Object.entries(plan.products)]
+        }, []
+      ) ?? []
+      const plan = this.cachedPlans[this.provider]?.at(0)
+
+      sortedProducts.forEach(([productKey, value]) => {
+        this.products[productKey] = {
+          ...value,
+          addons: plan.resources.filter(({ key }) =>
+            key.split('; product: ')[1] === productKey
+          )
+        }
+      })
 
       sortedProducts.sort(([, a], [, b]) => a.sorter - b.sorter)
       this.sizes = sortedProducts.map(([key, value]) => ({
@@ -374,19 +453,33 @@ export default {
         group: value.group ?? value.title
       }))
       this.options.size = this.sizes[0]?.key ?? ''
+    },
+    changePeriods (plans) {
       this.periods = []
-
-      Object.values(this.products).forEach(({ period }) => {
-        if (this.periods.includes(period)) return
-        this.periods.push(period)
+      plans.forEach(({ products }) => {
+        Object.values(products).forEach(({ period }) => {
+          if (this.periods.includes(+period)) return
+          this.periods.push(+period)
+        })
       })
       this.options.period = this.periods[0]
     },
-    changeAddons (id) {
-      if (this.options.addons.includes(id)) {
-        this.options.addons = this.options.addons.filter((addon) => addon !== id)
+    changeAddons (key) {
+      if (this.options.addons.includes(key)) {
+        this.options.addons = this.options.addons.filter((addon) => addon !== key)
       } else {
-        this.options.addons.push(id)
+        this.options.addons.push(key)
+      }
+    },
+    getAddon (addon) {
+      const item = this.getProducts.addons.find(({ key }) => key === addon)
+      const period = item.period / this.getProducts.period
+      const price = item.price * ((period >= 1) ? period : 1 / period)
+
+      return {
+        ...item,
+        key: item.key.split('; product: ')[0],
+        price: +(price * this.currency.rate).toFixed(2)
       }
     },
     orderClickHandler () {
@@ -394,9 +487,9 @@ export default {
       const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = [{
-        config: {},
+        config: { addons: this.options.addons },
         title: this.getProducts.title,
-        billing_plan: plan ?? {}
+        billing_plan: { uuid: this.plan }
       }]
       const newGroup = {
         title: this.userdata.title + Date.now(),
@@ -408,6 +501,7 @@ export default {
       if (plan.kind === 'STATIC') instances[0].product = this.options.size
       else {
         instances[0].config = {
+          ...instances[0].config,
           product: this.options.size,
           period: +this.options.period
         }
@@ -492,51 +586,44 @@ export default {
     },
     onError ({ target }) {
       target.src = '/img/OS/default.png'
-    },
-    getPeriod (timestamp) {
-      const hour = 3600
-      const day = hour * 24
-      const month = day * 30
-      const year = month * 12
-
-      let period = ''
-      let count = 0
-
-      if (timestamp / hour < 24 && timestamp >= hour) {
-        period = 'hour'
-        count = timestamp / hour
-      } else if (timestamp / day < 30 && timestamp >= day) {
-        period = 'day'
-        count = timestamp / day
-      } else if (timestamp / month < 12 && timestamp >= month) {
-        period = 'month'
-        count = timestamp / month
-      } else {
-        period = 'year'
-        count = timestamp / year
-      }
-      return this.$tc(period, Math.round(count))
     }
   }
 }
 </script>
 
 <style>
-.order_wrapper{
+.order_wrapper {
   position: relative;
   width: 100%;
   min-height: 100%;
 }
 
-.order{
+.order {
   position: absolute;
-  margin-top: 15px;
-  margin-bottom: 15px;
+  left: 50%;
+  display: grid;
+  grid-template-columns: calc(72% - 20px) 28%;
+  gap: 20px;
   width: 100%;
   max-width: 1024px;
-  left: 50%;
+  margin-top: 15px;
+  margin-bottom: 15px;
   transform: translateX(-50%);
-  display: flex;
+}
+
+.order__field {
+  border-radius: 20px;
+  box-shadow:
+    5px 8px 10px rgba(0, 0, 0, .08),
+    0px 0px 12px rgba(0, 0, 0, .05);
+  padding: 20px;
+  background-color: var(--bright_font);
+  height: max-content;
+}
+
+.order__calculate {
+  padding: 10px 15px 10px;
+  font-size: 1.1rem;
 }
 
 .order .ant-slider-mark-text {
@@ -593,11 +680,6 @@ export default {
 
 .order__prop:not(:first-child){
   margin-top: 15px;
-}
-
-.order__inputs{
-  margin-right: 20px;
-  width: 72%;
 }
 
 .order__grid {
@@ -682,104 +764,6 @@ export default {
   .order__grid {
     grid-template-columns: 1fr;
   }
-}
-
-.order__field{
-  border-radius: 20px;
-  box-shadow:
-    5px 8px 10px rgba(0, 0, 0, .08),
-    0px 0px 12px rgba(0, 0, 0, .05);
-  padding: 20px;
-  background-color: var(--bright_font);
-  height: max-content;
-}
-
-.order__calculate{
-  width: 28%;
-  font-size: 1.1rem;
-  padding: 10px 15px 10px;
-}
-
-.order__field-header{
-  text-align: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 20px;
-}
-
-.order__template{
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-}
-
-.order__template.one-line{
-  flex-wrap: nowrap;
-  justify-content: space-between;
-}
-
-.order__template-item{
-  width: 116px;
-  margin-bottom: 10px;
-  background-color: var(--bright_font);
-  box-shadow:
-    3px 2px 6px rgba(0, 0, 0, .08),
-    0px 0px 8px rgba(0, 0, 0, .05);
-  border-radius: 15px;
-  transition: box-shadow .2s ease, transform .2s ease;
-  cursor: pointer;
-  text-align: center;
-  overflow: hidden;
-
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: max-content auto;
-}
-
-.order__template-item:not(:last-child){
-  margin-right: 10px;
-}
-
-.order__template-item:hover{
-  box-shadow:
-    5px 8px 10px rgba(0, 0, 0, .08),
-    0px 0px 12px rgba(0, 0, 0, .05);
-}
-
-.order__template-item.active{
-  box-shadow:
-    5px 8px 12px rgba(0, 0, 0, .08),
-    0px 0px 13px rgba(0, 0, 0, .05);
-  transform: scale(1.02);
-}
-
-.order__template-image{
-  padding: 10px;
-}
-
-.order__template-image__rate{
-  font-size: 2rem;
-}
-
-.order__template-name{
-  padding: 10px;
-}
-
-.order__template-item.active .order__template-name{
-  background-color: var(--main);
-  color: var(--bright_font);
-}
-
-.max-width{
-  width: 100%;
-}
-
-.ant-collapse-item:last-of-type .ant-collapse-content{
-  border-radius: 0 0 28px 28px;
-}
-
-.slider_btn{
-  cursor: pointer;
 }
 
 .removeMarginSkeleton .ant-skeleton-title{
@@ -874,24 +858,23 @@ export default {
 }
 
 @media screen and (max-width: 1024px) {
-  .order{
-    flex-direction: column;
+  .order {
+    grid-template-columns: 1fr;
+    gap: 0;
     padding: 10px;
     margin-top: 0px;
     overflow: auto;
   }
-  .order__inputs{
-    margin: 0;
-    border-radius: 20px 20px 0 0;
-    width: auto;
-  }
-  .order__field{
+  .order__field {
     box-shadow: none;
-    flex-grow: 0;
+    border-radius: 20px 20px 0 0;
   }
-  .order__calculate{
-    border-radius: 0 0 20px 20px;
+  .order__calculate {
     width: auto;
+    border-radius: 0 0 20px 20px;
+  }
+  .order__promo {
+    margin-top: 20px;
   }
 }
 

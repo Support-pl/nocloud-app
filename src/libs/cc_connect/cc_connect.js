@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, Message, Messages, User, Users } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Empty, Event, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -53,6 +53,33 @@ export const ChatsAPI = {
      */
     delete: {
       name: "Delete",
+      I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.ChatsAPI.SetBotState
+     */
+    setBotState: {
+      name: "SetBotState",
+      I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.ChatsAPI.GetBotState
+     */
+    getBotState: {
+      name: "GetBotState",
+      I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.ChatsAPI.ChangeDepartment
+     */
+    changeDepartment: {
+      name: "ChangeDepartment",
       I: Chat,
       O: Chat,
       kind: MethodKind.Unary,
@@ -130,6 +157,24 @@ export const UsersAPI = {
       kind: MethodKind.Unary,
     },
     /**
+     * @generated from rpc cc.UsersAPI.GetConfig
+     */
+    getConfig: {
+      name: "GetConfig",
+      I: Empty,
+      O: Defaults,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.UsersAPI.SetConfig
+     */
+    setConfig: {
+      name: "SetConfig",
+      I: Defaults,
+      O: Defaults,
+      kind: MethodKind.Unary,
+    },
+    /**
      * Resolves given Users data by their UUIDs
      * And returns all accessible Users for Requestor
      *
@@ -164,7 +209,7 @@ export const StreamService = {
      */
     stream: {
       name: "Stream",
-      I: Empty,
+      I: StreamRequest,
       O: Event,
       kind: MethodKind.ServerStreaming,
     },

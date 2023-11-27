@@ -1,7 +1,7 @@
 <template>
   <div class="order_wrapper">
     <div class="order">
-      <div class="order__inputs order__field">
+      <div class="order__field">
         <div class="order__option">
           <transition name="specs" mode="out-in">
             <div
@@ -83,6 +83,8 @@
           </a-col>
         </a-row>
       </div>
+
+      <promo-page class="order__promo" />
     </div>
   </div>
 </template>
@@ -105,6 +107,7 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
+import promoPage from '@/components/ui/promo.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -377,13 +380,15 @@ export default { name: 'OpenaiComponent' }
 
 .order {
   position: absolute;
-  margin-top: 15px;
-  margin-bottom: 15px;
+  left: 50%;
+  display: grid;
+  grid-template-columns: calc(72% - 20px) 28%;
+  gap: 20px;
   width: 100%;
   max-width: 1024px;
-  left: 50%;
+  margin-top: 15px;
+  margin-bottom: 15px;
   transform: translateX(-50%);
-  display: flex;
 }
 
 .order .ant-slider-mark-text {
@@ -438,11 +443,6 @@ export default { name: 'OpenaiComponent' }
   transform: translateY(-50%);
 }
 
-.order__inputs {
-  margin-right: 20px;
-  width: 72%;
-}
-
 .order__option div>.img_prod {
   display: block;
   max-width: 200px;
@@ -470,9 +470,8 @@ export default { name: 'OpenaiComponent' }
 }
 
 .order__calculate {
-  width: 28%;
-  font-size: 1.1rem;
   padding: 10px 15px 10px;
+  font-size: 1.1rem;
 }
 
 .order__slider {
@@ -560,26 +559,25 @@ export default { name: 'OpenaiComponent' }
 
 @media screen and (max-width: 1024px) {
   .order {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    gap: 0;
     padding: 10px;
     margin-top: 0px;
     overflow: auto;
   }
 
-  .order__inputs {
-    margin: 0;
-    border-radius: 20px 20px 0 0;
-    width: auto;
-  }
-
   .order__field {
     box-shadow: none;
-    flex-grow: 0;
+    border-radius: 20px 20px 0 0;
   }
 
   .order__calculate {
-    border-radius: 0 0 20px 20px;
     width: auto;
+    border-radius: 0 0 20px 20px;
+  }
+
+  .order__promo {
+    margin-top: 20px;
   }
 }
 

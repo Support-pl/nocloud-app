@@ -126,7 +126,7 @@
             <div v-if="invoiceChecked" class="inputs__log-pas">
               <input v-model="userinfo.companyname" :placeholder="`${capitalize($t('clientinfo.companyname'))} *`">
               <span class="login__horisontal-line" />
-              <input v-model="userinfo.tax_id" placeholder="VAT ID">
+              <input v-model="userinfo.tax_id" :placeholder="(userinfo.country === 'PL') ? 'NIP' : 'VAT ID'">
               <!-- <span class="login__horisontal-line"></span>
               <input :placeholder="capitalize($t('clientinfo.state'))" v-model="userinfo.state"> -->
               <span class="login__horisontal-line" />

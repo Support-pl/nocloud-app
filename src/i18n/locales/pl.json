@@ -422,7 +422,7 @@
       "address": "Adres",
       "phone number": "Numer telefonu",
       "phonenumber": "Numer telefonu",
-      "register": "Rejestrować",
+      "register": "Dalej",
       "already have account?": "Posiadasz już konto?",
       "companyname": "Nazwa firmy",
       "countryname": "Nazwa kraju",
@@ -437,7 +437,7 @@
       "city": "Miasto",
       "address": "Adres",
       "phone number": "Numer telefonu",
-      "register": "Rejestrować",
+      "register": "Dalej",
       "companyname": "Nazwa firmy",
       "countryname": "Nazwa kraju",
       "email": "Email",
@@ -555,6 +555,7 @@
     "department": "Dział",
     "subject": "Temat",
     "question": "Pytanie",
+    "gateway": "Kanał komunikacyjny",
     "message": "Wiadomość",
     "description": "Description",
     "ticketStatus": {
@@ -629,9 +630,9 @@
       "Draft": "Projekt",
       "0": "New",
       "1": "Open",
-      "3": "In progress",
-      "4": "Resolved",
-      "5": "Closed"
+      "2": "Resolved",
+      "3": "Closed",
+      "4": "In progress"
     },
     "virtual": "wirtualny",
     "ssl": "SSL",

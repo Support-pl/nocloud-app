@@ -1,7 +1,7 @@
 <template>
   <div class="order_wrapper">
     <div class="order">
-      <div class="order__inputs order__field">
+      <div class="order__field">
         <div class="order_option">
           <a-steps class="order__steps" size="small" :current="currentStep">
             <a-step :title="$t('ssl_product.product')" />
@@ -150,6 +150,8 @@
           </a-col>
         </a-row>
       </div>
+
+      <promo-page class="order__promo" />
     </div>
   </div>
 </template>
@@ -170,6 +172,7 @@ import { useInstancesStore } from '@/stores/instances.js'
 
 import notification from '@/mixins/notification.js'
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
+import promoPage from '@/components/ui/promo.vue'
 
 const rightIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RightOutlined')
@@ -177,7 +180,7 @@ const rightIcon = defineAsyncComponent(
 
 export default {
   name: 'SslComponent',
-  components: { passwordMeter, selectsToCreate, rightIcon },
+  components: { passwordMeter, selectsToCreate, promoPage, rightIcon },
   mixins: [notification],
   inject: ['checkBalance'],
   data: () => ({
@@ -528,33 +531,30 @@ export default {
 </script>
 
 <style>
-.order_wrapper{
+.order_wrapper {
   position: relative;
   width: 100%;
   min-height: 100%;
 }
 
-.order{
+.order {
   position: absolute;
-  margin-top: 15px;
-  margin-bottom: 15px;
+  left: 50%;
+  display: grid;
+  grid-template-columns: calc(72% - 20px) 28%;
+  gap: 20px;
   width: 100%;
   max-width: 1024px;
-  left: 50%;
+  margin-top: 15px;
+  margin-bottom: 15px;
   transform: translateX(-50%);
-  display: flex;
 }
 
 .order__prop:not(:first-child){
   margin-top: 15px;
 }
 
-.order__inputs{
-  margin-right: 20px;
-  width: 72%;
-}
-
-.order__field{
+.order__field {
   border-radius: 20px;
   box-shadow:
     5px 8px 10px rgba(0, 0, 0, .08),
@@ -564,18 +564,17 @@ export default {
   height: max-content;
 }
 
+.order__calculate {
+  padding: 10px 15px 10px;
+  font-size: 1.1rem;
+}
+
 .order__steps > .ant-steps-item {
   flex: 1 1 auto;
 }
 
 .order__steps > .ant-steps-item:last-child {
   flex: none;
-}
-
-.order__calculate{
-  width: 28%;
-  font-size: 1.1rem;
-  padding: 10px 15px 10px;
 }
 
 .order__field-header{
@@ -746,24 +745,23 @@ export default {
 }
 
 @media screen and (max-width: 1024px) {
-  .order{
-    flex-direction: column;
+  .order {
+    grid-template-columns: 1fr;
+    gap: 0;
     padding: 10px;
     margin-top: 0px;
     overflow: auto;
   }
-  .order__inputs{
-    margin: 0;
-    border-radius: 20px 20px 0 0;
-    width: auto;
-  }
-  .order__field{
+  .order__field {
     box-shadow: none;
-    flex-grow: 0;
+    border-radius: 20px 20px 0 0;
   }
-  .order__calculate{
-    border-radius: 0 0 20px 20px;
+  .order__calculate {
     width: auto;
+    border-radius: 0 0 20px 20px;
+  }
+  .order__promo {
+    margin-top: 20px;
   }
 }
 

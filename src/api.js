@@ -7,7 +7,7 @@ const api = new Api(VUE_APP_BASE_URL)
 
 api.axios.interceptors.response.use(
   (response) => {
-    if (response.data.maintenance) {
+    if (response.data?.maintenance) {
       console.log(response, 'maintanance mode')
       useAppStore().isMaintananceMode = response.data.maintenance
     }

@@ -235,9 +235,6 @@ export default {
       if (!type && this.services[provider]) {
         name = 'service-iaas'
       }
-      if (showcase?.promo[this.$i18n.locale]?.previewEnable) {
-        name = 'products'
-      }
       if (service.type === 'VDC') {
         name = 'newVDC'
       }
