@@ -59,7 +59,7 @@
         <a-button
           type="primary"
           style="display: block; margin-left: auto"
-          @click="(gateway === 'telegram') ? sendTelegramMessage : sendNewTicket"
+          @click="(gateway === 'telegram') ? sendTelegramMessage() : sendNewTicket()"
         >
           OK
         </a-button>
