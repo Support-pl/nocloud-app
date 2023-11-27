@@ -116,7 +116,7 @@
         </a-row>
       </div>
 
-      <promo-page />
+      <promo-page class="order__promo" />
     </div>
   </div>
 </template>

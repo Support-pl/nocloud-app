@@ -78,7 +78,7 @@
                   style="grid-template-columns: 1fr auto auto; gap: 10px"
                 >
                   <span style="font-weight: 700; font-size: 16px">
-                    {{ addon.key.split('; product: ')[0] }}
+                    {{ addon.title }}
                   </span>
 
                   <span style="font-weight: 700">
@@ -86,7 +86,7 @@
                   </span>
 
                   <a-checkbox :checked="options.addons.includes(addon.key)" />
-                  <span style="grid-column: 1 / 4" v-html="addon.title" />
+                  <span style="grid-column: 1 / 4" v-html="addon.meta?.description ?? ''" />
                 </div>
               </a-card-grid>
             </template>
@@ -170,7 +170,7 @@
         </a-row>
       </div>
 
-      <promo-page />
+      <promo-page class="order__promo" />
     </div>
   </div>
 </template>
@@ -236,7 +236,7 @@ export default {
           const period = addon.period / product.period
 
           if (!addon) return sum
-          return sum + addon.price * (period > 1) ? period : 1 / period
+          return sum + addon.price * ((period >= 1) ? period : 1 / period)
         }, 0
       )
 
@@ -474,7 +474,7 @@ export default {
     getAddon (addon) {
       const item = this.getProducts.addons.find(({ key }) => key === addon)
       const period = item.period / this.getProducts.period
-      const price = item.price * (period > 1) ? period : 1 / period
+      const price = item.price * ((period >= 1) ? period : 1 / period)
 
       return {
         ...item,

@@ -32,6 +32,7 @@ export default { name: 'PromoPage' }
 .order__field {
   height: max-content;
   padding: 10px 15px;
+  overflow-x: scroll;
   border-radius: 20px;
   box-shadow:
     5px 8px 10px rgba(0, 0, 0, .08),
