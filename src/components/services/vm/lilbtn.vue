@@ -78,21 +78,21 @@ const addonsPrice = computed(() => {
 
         return {
           ...prev,
-          [key]: curr.price * props.service.resources.drive_size / 1024
+          [key]: +(curr.price * props.service.resources.drive_size / 1024).toFixed(2)
         }
       } else if (curr.key === 'ram') {
         const key = i18n.t('ram')
 
         return {
           ...prev,
-          [key]: curr.price * props.service.resources.ram / 1024
+          [key]: +(curr.price * props.service.resources.ram / 1024).toFixed(2)
         }
       } else if (props.service.resources[curr.key]) {
         const key = i18n.t(curr.key.replace('_', ' '))
 
         return {
           ...prev,
-          [key]: curr.price * props.service.resources[curr.key]
+          [key]: +(curr.price * props.service.resources[curr.key]).toFixed(2)
         }
       }
       return prev
