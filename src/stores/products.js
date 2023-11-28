@@ -64,7 +64,7 @@ export const useProductsStore = defineStore('products', () => {
 
         const result = {}
 
-        Object.values(response).forEach((service) => {
+        Object.values(response ?? {}).forEach((service) => {
           const { group_name: name, prod } = service
 
           result[name] = prod
