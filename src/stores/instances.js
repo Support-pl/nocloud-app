@@ -154,7 +154,7 @@ export const useInstancesStore = defineStore('instances', () => {
 
     subscribeWebSocket (uuid) {
       const token = cookies.get('noCloudinApp-token')
-      const url = VUE_APP_BASE_URL.replace('https', 'wss')
+      const url = VUE_APP_BASE_URL.replace('http', 'ws')
 
       socket.value = new WebSocket(`${url}services/${uuid}/stream`, ['Bearer', token])
 
