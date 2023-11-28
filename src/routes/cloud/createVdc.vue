@@ -127,15 +127,13 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { storeToRefs } from 'pinia'
-import { notification } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/api.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useCurrency, useNotification } from '@/hooks/utils'
 
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
@@ -148,7 +146,8 @@ const i18n = useI18n()
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
-const currenciesStore = useCurrenciesStore()
+const { currency } = useCurrency()
+const { openNotification } = useNotification()
 
 const spStore = useSpStore()
 const plansStore = usePlansStore()
@@ -195,23 +194,6 @@ watch(getProducts, (value) => {
   Object.keys(value.resources).forEach((key) => {
     resources.value[key] = 0
   })
-})
-
-const currency = computed(() => {
-  const { currencies, defaultCurrency } = storeToRefs(currenciesStore)
-  const { userdata: user } = storeToRefs(authStore)
-  const code = currenciesStore.unloginedCurrency
-
-  const { rate } = currencies.value.find((el) =>
-    el.to === code && el.from === defaultCurrency.value
-  ) ?? {}
-
-  const { rate: reverseRate } = currencies.value.find((el) =>
-    el.from === code && el.to === defaultCurrency.value
-  ) ?? { rate: 1 }
-
-  if (!authStore.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-  return { rate: 1, code: user.value.currency ?? defaultCurrency.value }
 })
 
 const providers = computed(() =>
@@ -306,11 +288,11 @@ async function createVDC (info) {
 
     if (!result) {
       errors.forEach(({ error }) => {
-        notification.error({ message: error })
+        openNotification('error', { message: error })
       })
     }
 
-    notification.error({ message: i18n.t(message) })
+    openNotification('error', { message: i18n.t(message) })
     console.error(error)
   }
 }
@@ -323,12 +305,12 @@ async function deployService (uuid) {
   try {
     await api.services.up(uuid)
 
-    notification.success({ message: i18n.t('Done') })
+    openNotification('success', { message: i18n.t('Done') })
     router.push({ path: '/services' })
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 
-    notification.error({ message: i18n.t(message) })
+    openNotification('error', { message: i18n.t(message) })
   } finally {
     modal.value.confirmLoading = false
   }
@@ -369,14 +351,10 @@ async function fetch () {
 
     if (error.response?.data?.code === 16) return
 
-    notification.error({ message: i18n.t(message) })
+    openNotification('error', { message: i18n.t(message) })
     console.error(error)
   } finally {
     fetchLoading.value = false
-  }
-
-  if (currenciesStore.currencies.length < 1) {
-    currenciesStore.fetchCurrencies()
   }
 }
 
@@ -387,7 +365,7 @@ fetch()
 export default { name: 'CreateVdc' }
 </script>
 
-<style>
+<style scoped>
 .order_wrapper {
   position: relative;
   width: 100%;
@@ -405,77 +383,9 @@ export default { name: 'CreateVdc' }
   display: flex;
 }
 
-.order .ant-slider-mark-text {
-  white-space: nowrap;
-}
-
-.order .ant-slider-mark-text:first-of-type {
-  transform: translateX(-10px) !important;
-}
-
-.order .ant-slider-mark-text:last-of-type {
-  transform: translateX(calc(-100% + 10px)) !important;
-}
-
-.product__specs {
-  --color: rgb(126, 126, 126);
-  color: var(--color);
-  margin: 0 auto;
-  --border-color: #dbdbdb;
-  --border-line-weight: 1px;
-  --border-line-type: solid;
-  width: 80%;
-  font-size: 1.2rem;
-}
-
-.product__specs td {
-  padding: 10px 20px;
-  position: relative;
-}
-
-.product__specs td:nth-child(1) {
-  font-weight: 500;
-}
-
-.product__specs td:nth-child(2) {
-  text-align: right;
-  color: rgba(0, 0, 0, .7)
-}
-
-.product__specs tr {
-  border-bottom: var(--border-line-weight) var(--border-line-type) var(--border-color);
-}
-
-.product__specs td:last-child::before {
-  content: '';
-  width: 2px;
-  height: 50%;
-  background: #f5f5f5;
-  display: block;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
 .order__inputs {
   margin-right: 20px;
   width: 72%;
-}
-
-.order__option div>.img_prod {
-  display: block;
-  max-width: 200px;
-  margin: 0 auto 10px;
-}
-
-.order__option .order__slider-name {
-  display: grid;
-  justify-items: center;
-  gap: 5px;
-}
-
-.order__option .order__slider-name img {
-  max-height: 65px;
 }
 
 .order__resource {
@@ -501,38 +411,6 @@ export default { name: 'CreateVdc' }
   padding: 10px 15px 10px;
 }
 
-.order__slider {
-  display: flex;
-  justify-content: space-evenly;
-  margin-bottom: 10px;
-  overflow-x: auto;
-}
-
-.order__slider-item:not(:last-child) {
-  margin-right: 10px;
-}
-
-.order__slider-item {
-  flex-shrink: 0;
-  /* border: 1px solid rgba(0, 0, 0, .15); */
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-  height: 100%;
-  padding: 7px 10px;
-  cursor: pointer;
-  border-radius: 15px;
-  font-size: 1.1rem;
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
-}
-
-.order__slider-item:hover {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
-}
-
-.order__slider-item--active {
-  background-color: var(--main);
-  color: var(--bright_font);
-}
-
 .loadingLine {
   min-width: 100px;
   width: 100%;
@@ -548,14 +426,6 @@ export default { name: 'CreateVdc' }
 .loadingLine--total {
   margin-top: 10px;
   height: 26px;
-}
-
-.loadingLine--image {
-  min-width: 60px;
-  width: 60px;
-  height: 60px;
-  margin: auto;
-  margin-bottom: 15px;
 }
 
 .specs-enter-active,
@@ -606,20 +476,6 @@ export default { name: 'CreateVdc' }
   .order__calculate {
     border-radius: 0 0 20px 20px;
     width: auto;
-  }
-}
-
-@media screen and (max-width: 576px) {
-  .product__specs {
-    width: 100%;
-  }
-
-  .product__specs td {
-    padding: 3px 7px;
-  }
-
-  .product__specs td:last-child::before {
-    transform: translate(-10px, -50%);
   }
 }
 </style>
