@@ -350,9 +350,9 @@ export default {
         const [count, size] = addonKey?.split('-')[1].split('x') ?? ['0', '0']
 
         this.options.disk.size = count * parseInt(size) * 1024
-        if (addonKey?.includes('hybrid')) this.options.drive = 'SSD + HDD'
-        else if (size.includes('sa')) this.options.drive = false
-        else this.options.drive = 'SSD'
+        if (addonKey?.includes('hybrid')) this.options.disk.type = 'SSD + HDD'
+        else if (size.includes('sa')) this.options.disk.type = 'HDD'
+        else this.options.disk.type = 'SSD'
       }
       if (!addons || !addonKey) {
         this.options.cpu.size = 0

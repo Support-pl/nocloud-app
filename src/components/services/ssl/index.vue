@@ -151,7 +151,7 @@
         </a-row>
       </div>
 
-      <promo-page class="order__promo" />
+      <promo-block class="order__promo" />
     </div>
   </div>
 </template>
@@ -172,7 +172,7 @@ import { useInstancesStore } from '@/stores/instances.js'
 
 import notification from '@/mixins/notification.js'
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
-import promoPage from '@/components/ui/promo.vue'
+import promoBlock from '@/components/ui/promo.vue'
 
 const rightIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RightOutlined')
@@ -180,7 +180,7 @@ const rightIcon = defineAsyncComponent(
 
 export default {
   name: 'SslComponent',
-  components: { passwordMeter, selectsToCreate, promoPage, rightIcon },
+  components: { passwordMeter, selectsToCreate, promoBlock, rightIcon },
   mixins: [notification],
   inject: ['checkBalance'],
   data: () => ({

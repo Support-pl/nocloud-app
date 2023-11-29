@@ -1,0 +1,211 @@
+<template>
+  <div v-if="provider && filteredPlans.length > 0" class="newCloud__calculate order__field">
+    <editor-container
+      v-if="locationDescription && activeKey === 'location'"
+      :value="locationDescription"
+    />
+
+    <template v-else>
+      <!-- Location Tarif CPU RAM GPU Drive os network -->
+      <cloud-resources
+        :provider="provider"
+        :product-size="productSize"
+        :tarification="tarification"
+      />
+
+      <!-- addons -->
+      <transition-group name="networkApear">
+        <a-row
+          v-for="(addon, key) in addons"
+          :key="addon"
+          justify="space-between"
+          style="font-size: 1.1rem"
+        >
+          <a-col> {{ capitalize($t(key)) }} {{ getAddonsValue(key) }}: </a-col>
+          <a-col> {{ addon }} {{ currency.code }} </a-col>
+        </a-row>
+      </transition-group>
+
+      <selects-to-create
+        v-model:plan="cloudStore.planId"
+        v-model:service="cloudStore.serviceId"
+        v-model:namespace="cloudStore.namespaceId"
+        :plans-list="filteredPlans"
+        :is-plans-visible="provider.type !== 'ione'"
+      />
+    </template>
+
+    <transition name="networkApear">
+      <a-row
+        v-if="product.installationFee"
+        type="flex"
+        justify="space-between"
+        style="
+          font-size: 1.2rem;
+          padding-top: 5px;
+          margin-top: 10px;
+          border-top: 1px solid #e8e8e8;
+        "
+      >
+        <a-col> {{ capitalize($t('installation')) }}: </a-col>
+        <a-col style="margin-left: auto">
+          {{ +(product.installationFee * currency.rate).toFixed(2) }} {{ currency.code }}
+        </a-col>
+      </a-row>
+    </transition>
+
+    <transition name="networkApear">
+      <a-row
+        type="flex"
+        justify="space-between"
+        style="font-size: 1.2rem; gap: 5px"
+        :style="(!product.installationFee) ? {
+          paddingTop: '5px',
+          marginTop: '10px',
+          borderTop: '1px solid #e8e8e8'
+        } : null"
+      >
+        <a-col> {{ capitalize($t('recurring payment')) }}: </a-col>
+        <a-col style="margin-left: auto">
+          {{ +(productFullPrice - (product.installationFee ?? 0)).toFixed(2) }} {{ currency.code }}
+        </a-col>
+      </a-row>
+    </transition>
+
+    <a-divider
+      orientation="left"
+      style="margin-bottom: 0; margin-top: 5px"
+    >
+      {{ $t("Total") }}:
+    </a-divider>
+    <a-row type="flex" justify="center" style="margin-top: 15px">
+      <a-col>
+        <a-radio-group
+          ref="periods-group"
+          default-value="Monthly"
+          :value="tarification"
+          :style="{ display: 'grid', textAlign: 'center', gridTemplateColumns: periodColumns }"
+          @update:value="emits('update:tarification', $event)"
+        >
+          <a-radio-button
+            v-for="period of periods"
+            :key="period.value"
+            :value="period.value"
+          >
+            {{ capitalize($t(period.label || period.value)) }}
+          </a-radio-button>
+        </a-radio-group>
+      </a-col>
+    </a-row>
+
+    <a-row
+      ref="sum-order"
+      type="flex"
+      justify="center"
+      :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
+    >
+      <a-col v-if="activeKey === 'location' && tarification" style="margin-right: 4px">
+        {{ capitalize($t('from')) }}:
+      </a-col>
+      <transition name="textchange" mode="out-in">
+        <a-col>
+          {{ +(productFullPrice).toFixed(2) }} {{ currency.code }}
+        </a-col>
+      </transition>
+    </a-row>
+
+    <cloud-create-button :active-key="activeKey" :tarification="tarification" />
+  </div>
+</template>
+
+<script setup>
+import { computed, inject, toRefs } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { EditorContainer } from 'nocloud-ui'
+
+import { useCloudStore } from '@/stores/cloud.js'
+import { useSpStore } from '@/stores/sp.js'
+import { usePlansStore } from '@/stores/plans.js'
+import { useCurrency } from '@/hooks/utils'
+import useCloudPrices from '@/hooks/cloud/prices.js'
+
+import cloudResources from '@/components/cloud/create/resources.vue'
+import selectsToCreate from '@/components/ui/selectsToCreate.vue'
+import cloudCreateButton from '@/components/cloud/create/button.vue'
+
+const props = defineProps({
+  activeKey: { type: String, required: true },
+  productSize: { type: String, required: true },
+  tarification: { type: String, required: true },
+  filteredPlans: { type: Array, required: true },
+  periods: { type: Object, required: true },
+  nextStep: { type: Function, required: true }
+})
+const emits = defineEmits(['update:tarification'])
+
+const i18n = useI18n()
+const { currency } = useCurrency()
+
+const spStore = useSpStore()
+const plansStore = usePlansStore()
+const cloudStore = useCloudStore()
+
+const options = inject('options', {})
+const product = inject('product', {})
+const priceOVH = inject('priceOVH', {})
+
+const provider = computed(() => {
+  const { sp } = cloudStore.locations.find(
+    ({ id }) => id === cloudStore.locationId
+  ) ?? {}
+
+  return spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? null
+})
+
+const plan = computed(() =>
+  plansStore.plans.find(({ uuid }) => uuid === cloudStore.planId) ?? {}
+)
+
+const addons = computed(() => {
+  const addons = { ...priceOVH.addons }
+
+  if (plan.value.type?.includes('dedicated')) {
+    delete addons.disk
+  }
+
+  delete addons.os
+  delete addons.ram
+  return addons
+})
+
+const locationDescription = computed(() => {
+  const { showcase: id } = cloudStore.locations.find(
+    (el) => el.id === cloudStore.locationId
+  ) ?? {}
+  const showcase = cloudStore.showcases.find(({ uuid }) => uuid === id)
+
+  if (!showcase?.promo) return
+  return showcase?.promo[i18n.locale.value]?.service.description
+})
+
+const periodColumns = computed(() => {
+  const { length } = Object.keys(props.periods)
+
+  if (length === 4) return 'repeat(2, 1fr)'
+  return `repeat(${(length < 3) ? length : 3}, 1fr)`
+})
+
+const { tarification, productSize, activeKey } = toRefs(props)
+const { productFullPrice } = useCloudPrices(plan, product, provider, tarification, productSize, activeKey, options, priceOVH)
+
+function getAddonsValue (key) {
+  const addon = options.config.addons.find((el) => el.includes(key))
+  const value = parseFloat(addon.split('-').at(-1))
+
+  return isFinite(value) ? `(${value} Gb)` : ''
+}
+</script>
+
+<script>
+export default { name: 'CalculatorBlock' }
+</script>
