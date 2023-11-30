@@ -22,7 +22,7 @@ api.axios.interceptors.response.use(
       )
     ) {
       console.log('credentials are not actual')
-      setTimeout(useAuthStore().logout, 2000)
+      useAuthStore().logout()
     }
 
     return Promise.reject(error) // this is the important part

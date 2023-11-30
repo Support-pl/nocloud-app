@@ -162,12 +162,12 @@ onMounted(async () => {
 
   const mustUnloggined = route.meta.mustBeUnloggined && authStore.isLogged
   const isIncluded = ['cabinet', 'settings'].includes(route.name)
-  const { firstname } = await authStore.fetchBillingData()
+  const { firstname, id } = await authStore.fetchBillingData()
 
   if (firstname && localStorage.getItem('oauth')) {
     localStorage.removeItem('oauth')
     appStore.isButtonsVisible = true
-  } else {
+  } else if (!id) {
     appStore.isButtonsVisible = false
   }
 
