@@ -132,6 +132,12 @@ onMounted(() => {
 router.beforeEach((to, _, next) => {
   const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined)
 
+  if (localStorage.getItem('oauth')) {
+    appStore.isButtonsVisible = false
+  } else {
+    appStore.isButtonsVisible = true
+  }
+
   if (mustBeLoggined && !authStore.isLogged) {
     next({ name: 'login' })
   } else if (!isRouteExist(to.name)) {
@@ -148,7 +154,7 @@ router.beforeEach((to, _, next) => {
 const lang = route.query.lang ?? localStorage.getItem('lang')
 
 authStore.load()
-if (lang) i18n.locale = lang
+if (lang) i18n.locale.value = lang
 if (authStore.isLogged) authStore.fetchUserData()
 
 onMounted(async () => {
@@ -160,6 +166,9 @@ onMounted(async () => {
 
   if (firstname && localStorage.getItem('oauth')) {
     localStorage.removeItem('oauth')
+    appStore.isButtonsVisible = true
+  } else {
+    appStore.isButtonsVisible = false
   }
 
   if (route.meta?.mustBeLoggined && !authStore.isLogged) {
@@ -170,8 +179,8 @@ onMounted(async () => {
     router.replace('/')
   }
 
-  if (route.query.lang && route.query.lang !== i18n.locale) {
-    i18n.locale = route.query.lang
+  if (route.query.lang && route.query.lang !== i18n.locale.value) {
+    i18n.locale.value = route.query.lang
   }
 })
 

@@ -61,7 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       setToken('')
       const config = localStorage.getItem('globalConfig')
-      const lang = localStorage.getItem('lang') ?? i18n.locale
+      const lang = localStorage.getItem('lang') ?? i18n.locale.value
 
       localStorage.clear()
       localStorage.setItem('globalConfig', config)

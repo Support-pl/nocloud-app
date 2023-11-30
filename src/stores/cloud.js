@@ -87,7 +87,7 @@ export const useCloudStore = defineStore('cloud', () => {
       newInstance.config = {
         ...options.config,
         type: plan.value.type.split(' ')[1],
-        auto_renew: autoRenew.value
+        auto_renew: false
       }
 
       if (newInstance.config.type === 'cloud') {
