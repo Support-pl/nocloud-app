@@ -1,4 +1,4 @@
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { defineStore } from 'pinia'
 import { AppstoreOutlined, FundOutlined, MessageOutlined, SettingFilled } from '@ant-design/icons-vue'
@@ -14,6 +14,7 @@ export const useAppStore = defineStore('app', () => {
   const activeTabName = ref('')
   const activeTabNum = ref(-1)
 
+  const isButtonsVisible = ref(true)
   const isMaintananceMode = ref(false)
   const update = ref({
     worker: null,
@@ -35,19 +36,17 @@ export const useAppStore = defineStore('app', () => {
     })
   })
 
-  const buttons = (localStorage.getItem('oauth'))
-    ? []
-    : [
-        // {
-        //  icon: 'database',
-        //  title: 'cloud',
-        //  theme: 'filled'
-        // },
-        { icon: AppstoreOutlined, title: 'services' },
-        { icon: MessageOutlined, title: 'support' },
-        { icon: FundOutlined, title: 'billing' },
-        { icon: SettingFilled, title: 'settings' }
-      ]
+  const buttons = computed(() =>
+    (isButtonsVisible.value)
+      ? [
+          // { icon: 'database', title: 'cloud', theme: 'filled' },
+          { icon: AppstoreOutlined, title: 'services' },
+          { icon: MessageOutlined, title: 'support' },
+          { icon: FundOutlined, title: 'billing' },
+          { icon: SettingFilled, title: 'settings' }
+        ]
+      : []
+  )
 
   function toDate (timestamp, sep = '.', withTime = true, reverse) {
     if (timestamp < 1) return '-'
@@ -80,13 +79,14 @@ export const useAppStore = defineStore('app', () => {
     activeTab,
     notification,
     isMaintananceMode,
+    isButtonsVisible,
     domainInfo,
 
     setTabByName (value) {
       if (['root', 'openVDC'].includes(value)) value = 'services'
 
       activeTabName.value = value
-      activeTabNum.value = buttons.findIndex(({ title }) => title === value)
+      activeTabNum.value = buttons.value.findIndex(({ title }) => title === value)
 
       if (route.name !== activeTab.title || Object.keys(route.query).length > 0) {
         router.push({ name: activeTab.title })
@@ -107,7 +107,7 @@ export const useAppStore = defineStore('app', () => {
       if (['root', 'openVDC'].includes(value)) value = 'services'
 
       activeTabName.value = value
-      activeTabNum.value = buttons.findIndex(({ title }) => title === value)
+      activeTabNum.value = buttons.value.findIndex(({ title }) => title === value)
     },
 
     clearOnLogin () {

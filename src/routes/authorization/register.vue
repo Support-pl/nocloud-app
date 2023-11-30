@@ -266,7 +266,7 @@ async function submitHandler () {
   }
 
   const temp = JSON.parse(JSON.stringify(userinfo.value))
-  const { locale } = i18n.getLocaleMessage(i18n.locale)
+  const { locale } = i18n.getLocaleMessage(i18n.locale.value)
 
   temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`
   temp.phonenumber = temp.phonenumber.replace(phonecode.value, '').replace(/[\s-]/g, '')
