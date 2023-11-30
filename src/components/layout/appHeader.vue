@@ -209,7 +209,7 @@
             </a-select>
 
             <a-select
-              v-model:value="currencyCode"
+              v-model:value="unloginedCurrency"
               style="width: 100%; color: var(--bright_font)"
               class="header__inputs"
             >
@@ -392,8 +392,7 @@ export default {
         }
       },
       langs: config.languages,
-      currencies: [],
-      currencyCode: ''
+      currencies: []
     }
   },
   computed: {
@@ -526,7 +525,7 @@ export default {
     isButtonsVisible (value) {
       this.$emit('update:isButtonVisible', value)
     },
-    currencyCode (value) {
+    defaultCurrency (value) {
       this.unloginedCurrency = value
     },
     '$i18n.locale' (value) {
@@ -542,6 +541,8 @@ export default {
         this.$notification.error({ message: this.$t(message) })
         console.error(err)
       })
+
+    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   mounted () {
     if (this.$route.query.service) {
@@ -557,10 +558,11 @@ export default {
     if (this.langs.includes(lang) && !localStorage.getItem('lang')) {
       this.$i18n.locale = lang
     }
-    this.currencyCode = this.defaultCurrency
+    this.unloginedCurrency = this.defaultCurrency
   },
   methods: {
     ...mapActions(useAuthStore, ['fetchUserData']),
+    ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     ...mapActions(useProductsStore, { fetchProducts: 'fetch' }),
     ...mapActions(useInstancesStore, { fetchClouds: 'fetch' }),
     getState (name) {

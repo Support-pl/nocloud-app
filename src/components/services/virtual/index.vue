@@ -143,7 +143,7 @@
         </a-row>
       </div>
 
-      <promo-page class="order__promo" />
+      <promo-block class="order__promo" />
     </div>
   </div>
 </template>
@@ -163,11 +163,11 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
-import promoPage from '@/components/ui/promo.vue'
+import promoBlock from '@/components/ui/promo.vue'
 
 export default {
   name: 'VirtualComponent',
-  components: { passwordMeter, selectsToCreate, promoPage },
+  components: { passwordMeter, selectsToCreate, promoBlock },
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()

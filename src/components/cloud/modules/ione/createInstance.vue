@@ -63,7 +63,9 @@
 
           <a-switch
             v-if="driveTypes.length > 1"
-            v-model:checked="options.drive"
+            v-model:checked="options.disk.type"
+            checked-value="SSD"
+            un-checked-value="HDD"
             checked-children="SSD"
             un-checked-children="HDD"
           />
@@ -172,7 +174,9 @@
 
           <a-switch
             v-if="driveTypes.length > 1"
-            v-model:checked="options.drive"
+            v-model:checked="options.disk.type"
+            checked-value="SSD"
+            un-checked-value="HDD"
             checked-children="SSD"
             un-checked-children="HDD"
           />
@@ -573,7 +577,7 @@ export default {
       if (types.size > 1) return
       value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period)
 
-      this.options.drive = false
+      this.options.disk.type = 'HDD'
       this.$emit('setData', { key: 'periods', value })
     },
     changeNetwork (type) {
