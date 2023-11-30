@@ -70,7 +70,6 @@ const copyIcon = defineAsyncComponent(
 )
 
 const props = defineProps({
-  activeKey: { type: String, required: true },
   tarification: { type: String, required: true }
 })
 
@@ -82,7 +81,8 @@ const spStore = useSpStore()
 const plansStore = usePlansStore()
 const cloudStore = useCloudStore()
 
-const options = inject('options', {})
+const [options] = inject('useOptions', () => [])()
+const [activeKey, nextStep] = inject('useActiveKey', () => [])()
 const modal = reactive({ confirmCreate: false, confirmLoading: false })
 
 const provider = computed(() => {
@@ -139,13 +139,13 @@ const createButtonOptions = computed(() => {
 })
 
 const nextButtonOptions = computed(() => ({
-  visible: props.activeKey && (
-    (props.activeKey !== 'addons' && provider.value.type === 'ovh' &&
+  visible: activeKey.value && (
+    (activeKey.value !== 'addons' && provider.value.type === 'ovh' &&
       !plan.value.type?.includes('cloud')) ||
-    (props.activeKey !== 'OS' && provider.value.type !== 'ovh') ||
-    (props.activeKey !== 'OS' && plan.value.type?.includes('cloud'))
+    (activeKey.value !== 'os' && provider.value.type !== 'ovh') ||
+    (activeKey.value !== 'os' && plan.value.type?.includes('cloud'))
   ),
-  onClick: inject('nextStep')
+  onClick: nextStep
 }))
 
 const isUnlogginedLinkVisible = computed(() => {
@@ -165,7 +165,7 @@ function availableLogin (mode) {
     productSize: props.productSize,
     titleVM: cloudStore.authData.vmName,
     locationId: cloudStore.locationId,
-    activeKey: props.activeKey,
+    activeKey: activeKey.value,
     resources: {
       cpu: options.cpu.size,
       ram: options.ram.size * 1024,

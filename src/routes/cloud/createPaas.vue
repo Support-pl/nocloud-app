@@ -2,18 +2,90 @@
   <div class="newCloud_wrapper">
     <div class="newCloud">
       <div class="newCloud__inputs order__field">
+        <a-collapse
+          v-if="getPlan.type === 'ione'"
+          v-model:active-key="activeKey"
+          accordion
+          style="border-radius: 20px"
+        >
+          <template v-for="(panel, key) in panelsComponents" :key="key">
+            <a-collapse-panel
+              v-if="panels[key].visible ?? true"
+              :key="key"
+              :header="panels[key].title"
+              :collapsible="panels[key].disabled"
+            >
+              <a-row v-if="key === 'location'" justify="space-between">
+                <a-col span="24">
+                  <a-alert
+                    v-if="!locationId"
+                    show-icon
+                    type="warning"
+                    style="margin-bottom: 15px"
+                    :message="$t('Please select a suitable location')"
+                  />
+
+                  <!-- <a-select
+                    v-model="locationId"
+                    :placeholder="$t('select location')"
+                    style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
+                  >
+                    <a-select-option v-for="item in locations" :key="item.id" :value="item.id">
+                      {{ item.title }}
+                    </a-select-option>
+                  </a-select> -->
+
+                  <a-select
+                    v-model:value="showcaseId"
+                    :placeholder="$t('select service')"
+                    style="width: 180px; position: relative; z-index: 4"
+                  >
+                    <a-select-option v-for="item in showcases" :key="item.uuid">
+                      {{ item.title }}
+                    </a-select-option>
+                  </a-select>
+                </a-col>
+
+                <a-col span="24" style="overflow: hidden; margin-top: 15px">
+                  <a-spin
+                    style="display: block; margin: 15px auto"
+                    :tip="$t('loading')"
+                    :spinning="isPlansLoading"
+                  >
+                    <nc-map
+                      :value="locationId"
+                      :markers="locations"
+                      :marker-color="provider?.meta.markerColor"
+                      :marker-url="provider?.meta.markerUrl"
+                      @input="(value) => locationId = value"
+                    />
+                  </a-spin>
+                </a-col>
+              </a-row>
+
+              <component
+                :is="panel"
+                v-else
+                :plans="filteredPlans"
+                :get-products="getProducts"
+                :product-size="productSize"
+                @set-data="setData"
+              />
+            </a-collapse-panel>
+          </template>
+        </a-collapse>
+
         <a-spin
-          v-if="isPlansLoading"
+          v-else-if="isPlansLoading"
           style="display: block; margin: 15px auto"
           :tip="$t('loading')"
           :spinning="isPlansLoading"
         />
-
         <component
           :is="template"
           v-else
           :active-key="activeKey"
-          :item-s-p="itemSP"
+          :item-s-p="provider"
           :plans="filteredPlans"
           :get-plan="getPlan"
           :options="options"
@@ -39,16 +111,6 @@
                   :message="$t('Please select a suitable location')"
                 />
 
-                <!-- <a-select
-                  v-model="locationId"
-                  :placeholder="$t('select location')"
-                  style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
-                >
-                  <a-select-option v-for="item in locations" :key="item.id" :value="item.id">
-                    {{ item.title }}
-                  </a-select-option>
-                </a-select> -->
-
                 <a-select
                   v-model:value="showcaseId"
                   :placeholder="$t('select service')"
@@ -64,8 +126,8 @@
                 <nc-map
                   :value="locationId"
                   :markers="locations"
-                  :marker-color="itemSP?.meta.markerColor"
-                  :marker-url="itemSP?.meta.markerUrl"
+                  :marker-color="provider?.meta.markerColor"
+                  :marker-url="provider?.meta.markerUrl"
                   @input="(value) => locationId = value"
                 />
               </a-col>
@@ -76,11 +138,9 @@
 
       <calculator-block
         v-model:tarification="tarification"
-        :active-key="activeKey"
         :filtered-plans="filteredPlans"
         :product-size="productSize"
         :periods="periods"
-        :next-step="nextStep"
       />
       <promo-block class="order__promo" />
     </div>
@@ -88,7 +148,7 @@
 </template>
 
 <script>
-import { defineAsyncComponent, ref, reactive, provide, readonly, computed } from 'vue'
+import { ref, reactive, provide, readonly, computed, defineAsyncComponent, watch, markRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { mapState, mapActions, storeToRefs } from 'pinia'
 import { NcMap } from 'nocloud-ui'
@@ -102,6 +162,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 
+import useCloudPanels from '@/hooks/cloud/panels.js'
 import notification from '@/mixins/notification.js'
 
 import loading from '@/components/ui/loading.vue'
@@ -121,6 +182,8 @@ export default {
   setup () {
     const router = useRouter()
     const route = useRoute()
+
+    const spStore = useSpStore()
     const plansStore = usePlansStore()
     const cloudStore = useCloudStore()
 
@@ -147,32 +210,142 @@ export default {
       config: { addons: [], configuration: {} }
     })
 
+    const provider = computed(() => {
+      const { sp } = cloudStore.locations.find(({ id }) =>
+        id === cloudStore.locationId
+      ) ?? {}
+
+      return spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? null
+    })
+
     const getPlan = computed(() =>
       plansStore.plans.find(({ uuid }) => uuid === cloudStore.planId) ?? {}
     )
 
+    const filteredPlans = computed(() => {
+      const locationItem = cloudStore.locations.find(({ id }) =>
+        id === cloudStore.locationId
+      )
+
+      const { items } = cloudStore.showcases.find(({ uuid }) => {
+        if (cloudStore.showcaseId === '') {
+          return uuid === locationItem?.showcase
+        }
+        return uuid === cloudStore.showcaseId
+      }) ?? {}
+      const plans = []
+
+      if (!items) return plansStore.plans
+      items.forEach(({ servicesProvider, plan }) => {
+        if (servicesProvider === provider.value?.uuid) {
+          plans.push(plan)
+        }
+      })
+
+      if (plans.length < 1) return plansStore.plans
+      return plansStore.plans.filter(({ uuid, type }) =>
+        locationItem?.type === type && plans.includes(uuid)
+      )
+    })
+
+    const getProducts = computed(() => {
+      const isDynamic = getPlan.value.kind === 'DYNAMIC'
+      const isIone = getPlan.value.type === 'ione'
+
+      const { products } = (isDynamic && isIone)
+        ? plansStore.plans.find(({ uuid }) =>
+          uuid === getPlan.value.meta?.linkedPlan
+        ) ?? {}
+        : getPlan.value ?? {}
+
+      return Object.values(products ?? {})
+        .filter((product) => {
+          const isEqual = tarification.value === getTarification(product.period)
+
+          if (!product.public) return false
+          return isEqual || getPlan.value.kind === 'DYNAMIC'
+        })
+        .sort((a, b) => a.sorter - b.sorter)
+        .map(({ title }) => title)
+    })
+
     const isProductExist = computed(() =>
       !route.query.product && getPlan.value.type?.includes('dedicated')
     )
+
+    const components = import.meta.glob('@/components/cloud/modules/*/panels/*.vue')
+    const { panels } = useCloudPanels(tarification, options.os, options.network)
+    const panelsComponents = ref(
+      Object.keys(panels.value).reduce((result, key) =>
+        ({ ...result, [key]: markRaw(getComponent(key)) }), {}
+      )
+    )
+
+    watch(() => getPlan.value.type, () => {
+      panelsComponents.value = Object.keys(panels.value).reduce((result, key) =>
+        ({ ...result, [key]: markRaw(getComponent(key)) }), {}
+      )
+    })
+
+    function setOptions (path, value) {
+      let result = options
+
+      if (!path || typeof path !== 'string') {
+        console.error('[Error]: Path is not valid - ', path)
+        return
+      }
+
+      path.split('.').forEach((key, i, array) => {
+        if (i === array.length - 1) result[key] = value
+        else result = result[key]
+      })
+    }
+
+    function getComponent (name) {
+      const result = Object.keys(components).find((key) =>
+        key.includes(`/${getPlan.value.type}/panels/${name}.vue`)
+      )
+
+      return defineAsyncComponent(() => components[result]())
+    }
+
+    function getTarification (timestamp) {
+      const day = 3600 * 24
+      const month = day * 30
+      const year = day * 365
+
+      switch (+timestamp) {
+        case 3600:
+          return 'Hourly'
+        case day:
+          return 'Daily'
+        case month:
+          return 'Monthly'
+        case year:
+          return 'Annually'
+        case year * 2:
+          return 'Biennially'
+      }
+    }
 
     function nextStep () {
       if (activeKey.value === 'location') {
         activeKey.value = 'plan'
       } else if (activeKey.value === 'plan') {
         if (!isProductExist.value) {
-          activeKey.value = 'OS'
+          activeKey.value = 'os'
           return
         }
-        router.push({ query: { product: productSize.value } })
-      } else if (activeKey.value === 'OS') {
+        router.push({ query: { ...route.query, product: productSize.value } })
+      } else if (activeKey.value === 'os') {
         activeKey.value = 'addons'
       }
     }
 
-    provide('options', readonly(options))
     provide('product', readonly(product))
     provide('priceOVH', readonly(priceOVH))
-    provide('nextStep', nextStep)
+    provide('useOptions', () => [readonly(options), setOptions])
+    provide('useActiveKey', () => [readonly(activeKey), nextStep])
 
     return {
       isPlansLoading,
@@ -180,12 +353,19 @@ export default {
       productSize,
       activeKey,
       periods,
-      tarification,
 
+      filteredPlans,
+      getProducts,
+      tarification,
+      getTarification,
+
+      provider,
       getPlan,
       product,
       priceOVH,
       options,
+      panels,
+      panelsComponents,
 
       ...storeToRefs(cloudStore),
       createOrder: cloudStore.createOrder,
@@ -210,15 +390,8 @@ export default {
     services () {
       return this.getServicesFull.filter((el) => el.status !== 'DEL')
     },
-
-    itemSP () {
-      const { sp } = this.locations.find((el) => el.id === this.locationId) ?? {}
-
-      if (sp) return this.servicesProviders.find((el) => el.uuid === sp)
-      else return null
-    },
     template () {
-      if (this.itemSP?.type.includes('ovh')) {
+      if (this.provider?.type.includes('ovh')) {
         const { type = 'ovh vps' } = this.getPlan ?? {}
         const components = import.meta.glob('@/components/cloud/modules/*/createInstance.vue')
         const component = Object.keys(components).find((key) => key.includes(`/${type}/`))
@@ -227,49 +400,6 @@ export default {
       } else {
         return defineAsyncComponent(() => import('@/components/cloud/modules/ione/createInstance.vue'))
       }
-    },
-
-    filteredPlans () {
-      const locationItem = this.locations.find((el) => el.id === this.locationId)
-      const { items } = this.showcases.find(({ uuid }) => {
-        if (this.showcaseId === '') {
-          return uuid === locationItem?.showcase
-        }
-        return uuid === this.showcaseId
-      }) ?? {}
-      const plans = []
-
-      if (!items) return this.plans
-      items.forEach(({ servicesProvider, plan }) => {
-        if (servicesProvider === this.itemSP?.uuid) {
-          plans.push(plan)
-        }
-      })
-
-      if (plans.length < 1) return this.plans
-      return this.plans.filter(({ uuid, type }) =>
-        locationItem?.type === type && plans.includes(uuid)
-      )
-    },
-    getProducts () {
-      const isDynamic = this.getPlan.kind === 'DYNAMIC'
-      const isIone = this.getPlan.type === 'ione'
-
-      const { products } = (isDynamic && isIone)
-        ? this.plans.find(({ uuid }) =>
-          uuid === this.getPlan.meta?.linkedPlan
-        ) ?? {}
-        : this.getPlan ?? {}
-
-      return Object.values(products ?? {})
-        .filter((product) => {
-          const isEqual = this.tarification === this.getTarification(product.period)
-
-          if (!product.public) return false
-          return isEqual || this.getPlan.kind === 'DYNAMIC'
-        })
-        .sort((a, b) => a.sorter - b.sorter)
-        .map(({ title }) => title)
     }
   },
 
@@ -328,7 +458,7 @@ export default {
       if (group.config?.ssh) this.options.isSSHExist = true
       else this.options.isSSHExist = false
     },
-    itemSP (value, prev) {
+    provider (value, prev) {
       if (!this.dataLocalStorage.config) {
         this.options.os = { id: -1, name: '' }
       }
@@ -349,9 +479,7 @@ export default {
             this.tarification = this.periods[0]?.value ?? ''
           }
 
-          if (this.dataLocalStorage) {
-            this.activeKey = this.dataLocalStorage.activeKey ?? 'location'
-          }
+          this.activeKey = this.dataLocalStorage?.activeKey ?? 'plan'
         })
         .finally(() => {
           this.isPlansLoading = false
@@ -377,7 +505,7 @@ export default {
     'options.os.name' () {
       if (this.options.disk.min > 0) return
       const { id } = this.options.os
-      const { min_size: minSize } = this.itemSP.publicData.templates[id]
+      const { min_size: minSize } = this.provider.publicData.templates[id]
 
       this.options.disk.min = minSize / 1024
     },
@@ -451,7 +579,8 @@ export default {
     if (this.isLogged) {
       Promise.all([
         this.fetchServices(),
-        this.fetchNamespaces()
+        this.fetchNamespaces(),
+        this.fetchBillingData()
       ])
         .then(() => {
           setTimeout(this.setOneService, 300)
@@ -475,6 +604,7 @@ export default {
     })
   },
   methods: {
+    ...mapActions(useAuthStore, ['fetchUserData']),
     ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     ...mapActions(useNamespasesStore, { fetchNamespaces: 'fetch' }),
     ...mapActions(useSpStore, {
@@ -514,8 +644,13 @@ export default {
         this.options.config[key] = value
         return
       }
-      if (typeof value === 'object') this[key] = Object.assign({}, value)
-      else this[key] = value
+
+      if (key === 'priceOVH') {
+        this.priceOVH.value = value.value
+        this.priceOVH.addons = value.addons
+      } else if (typeof value === 'object') {
+        this[key] = Object.assign({}, value)
+      } else this[key] = value
 
       if (key === 'productSize') {
         const plan = (this.getPlan.kind === 'DYNAMIC' && this.getPlan.type === 'ione')
@@ -555,24 +690,6 @@ export default {
     setOneNameSpace () {
       if (this.namespaces.length === 1) {
         this.namespaceId = this.namespaces[0].uuid
-      }
-    },
-    getTarification (timestamp) {
-      const day = 3600 * 24
-      const month = day * 30
-      const year = day * 365
-
-      switch (+timestamp) {
-        case 3600:
-          return 'Hourly'
-        case day:
-          return 'Daily'
-        case month:
-          return 'Monthly'
-        case year:
-          return 'Annually'
-        case year * 2:
-          return 'Biennially'
       }
     },
     handleOkOnCreateOrder () {
@@ -665,8 +782,7 @@ export default {
   gap: 20px;
   width: 100%;
   max-width: 1024px;
-  margin-top: 15px;
-  margin-bottom: 15px;
+  padding: 15px 0;
   transform: translateX(-50%);
 }
 
@@ -689,6 +805,10 @@ export default {
   grid-column: 2;
   padding: 10px 15px 10px;
   font-size: 1.1rem;
+}
+
+.order__promo {
+  grid-column: 1;
 }
 
 .field--fluid {

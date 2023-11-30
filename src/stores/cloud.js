@@ -131,7 +131,7 @@ export const useCloudStore = defineStore('cloud', () => {
         ips_public: options.network.public.count
       },
       billing_plan: { uuid: planId.value },
-      product: product.key
+      product: product.value.key
     }
 
     const group = {

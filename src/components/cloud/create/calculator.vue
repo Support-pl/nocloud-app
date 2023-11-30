@@ -1,5 +1,5 @@
 <template>
-  <div v-if="provider && filteredPlans.length > 0" class="newCloud__calculate order__field">
+  <div v-if="filteredPlans.length > 0" class="newCloud__calculate order__field">
     <editor-container
       v-if="locationDescription && activeKey === 'location'"
       :value="locationDescription"
@@ -114,7 +114,7 @@
       </transition>
     </a-row>
 
-    <cloud-create-button :active-key="activeKey" :tarification="tarification" />
+    <cloud-create-button :tarification="tarification" />
   </div>
 </template>
 
@@ -129,17 +129,15 @@ import { usePlansStore } from '@/stores/plans.js'
 import { useCurrency } from '@/hooks/utils'
 import useCloudPrices from '@/hooks/cloud/prices.js'
 
-import cloudResources from '@/components/cloud/create/resources.vue'
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
+import cloudResources from '@/components/cloud/create/resources.vue'
 import cloudCreateButton from '@/components/cloud/create/button.vue'
 
 const props = defineProps({
-  activeKey: { type: String, required: true },
   productSize: { type: String, required: true },
   tarification: { type: String, required: true },
   filteredPlans: { type: Array, required: true },
-  periods: { type: Object, required: true },
-  nextStep: { type: Function, required: true }
+  periods: { type: Object, required: true }
 })
 const emits = defineEmits(['update:tarification'])
 
@@ -150,7 +148,7 @@ const spStore = useSpStore()
 const plansStore = usePlansStore()
 const cloudStore = useCloudStore()
 
-const options = inject('options', {})
+const [options] = inject('useOptions', () => [])()
 const product = inject('product', {})
 const priceOVH = inject('priceOVH', {})
 
@@ -195,8 +193,9 @@ const periodColumns = computed(() => {
   return `repeat(${(length < 3) ? length : 3}, 1fr)`
 })
 
-const { tarification, productSize, activeKey } = toRefs(props)
-const { productFullPrice } = useCloudPrices(plan, product, provider, tarification, productSize, activeKey, options, priceOVH)
+const [activeKey] = inject('useActiveKey', () => [])()
+const { tarification, productSize } = toRefs(props)
+const { productFullPrice } = useCloudPrices(product, tarification, activeKey, options, priceOVH)
 
 function getAddonsValue (key) {
   const addon = options.config.addons.find((el) => el.includes(key))

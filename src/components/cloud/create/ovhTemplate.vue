@@ -119,7 +119,7 @@
 
     <!-- OS -->
     <a-collapse-panel
-      key="OS"
+      key="os"
       :collapsible="(!itemSP || isFlavorsLoading || !plan || isProductExist) ? 'disabled' : null"
       :header="osHeader"
     >
@@ -129,11 +129,10 @@
             <a-form no-style autocomplete="off" layout="vertical">
               <a-form-item :label="`${capitalize($t('server name'))}:`">
                 <a-input
-                  :value="vmName"
-                  :style="{ boxShadow: `0 0 2px 2px var(${(vmName.length > 1) ? '--main' : '--err'})` }"
-                  @change="({ target: { value } }) => $emit('setData', { key: 'vmName', value })"
+                  v-model:value="authData.vmName"
+                  :style="{ boxShadow: `0 0 2px 2px var(${(authData.vmName.length > 1) ? '--main' : '--err'})` }"
                 />
-                <div v-if="vmName.length < 2" style="line-height: 1.5; color: var(--err)">
+                <div v-if="authData.vmName.length < 2" style="line-height: 1.5; color: var(--err)">
                   {{ $t('ssl_product.field is required') }}
                 </div>
               </a-form-item>
@@ -141,17 +140,16 @@
               <a-form-item v-if="false" :label="`${$t('clientinfo.password')}:`">
                 <password-meter
                   :style="{
-                    height: (password.length > 0) ? '10px' : '0',
-                    marginTop: (password.length < 1) ? '0' : null
+                    height: (authData.password.length > 0) ? '10px' : '0',
+                    marginTop: (authData.password.length < 1) ? '0' : null
                   }"
-                  :password="password"
+                  :password="authData.password"
                   @score="(value) => $emit('score', value)"
                 />
 
                 <a-input-password
+                  v-model:value="authData.password"
                   class="password"
-                  :value="password"
-                  @change="({ target: { value } }) => $emit('setData', { key: 'password', value })"
                 />
               </a-form-item>
 
@@ -264,6 +262,7 @@ import { mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
 import { useAuthStore } from '@/stores/auth.js'
+import { useCloudStore } from '@/stores/cloud.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 
 import addSsh from '@/components/ui/addSSH.vue'
@@ -306,6 +305,7 @@ export default {
   data: () => ({ isFlavorsLoading: false }),
   computed: {
     ...mapState(useAuthStore, ['userdata', 'isLogged']),
+    ...mapState(useCloudStore, ['authData']),
     ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'unloginedCurrency']),
     currency () {
       const { currency: currencyCode } = this.userdata
@@ -533,22 +533,11 @@ export default {
 </script>
 
 <style scoped>
-.order__slider{
-  display: flex;
-  overflow-x: auto;
-  padding-bottom: 10px;
-  padding-top: 15px;
-}
-
 .order__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-bottom: 10px;
-}
-
-.order__slider-item:not(:last-child){
-  margin-right: 10px;
 }
 
 .order__slider-item{

@@ -1,19 +1,27 @@
 import { computed } from 'vue'
+import { useCloudStore } from '@/stores/cloud.js'
+import { usePlansStore } from '@/stores/plans.js'
 import { useCurrency } from '@/hooks/utils'
 
-function useCloudPrices (plan, product, provider, tarification, productSize, activeKey, options, priceOVH) {
+function useCloudPrices (product, tarification, activeKey, options, priceOVH) {
+  const plansStore = usePlansStore()
+  const cloudStore = useCloudStore()
   const { currency } = useCurrency()
+
+  const plan = computed(() =>
+    plansStore.plans.find(({ uuid }) => uuid === cloudStore.planId) ?? {}
+  )
 
   const productFullPriceStatic = computed(() => {
     if (!plan.value) return 0
     const values = Object.values(plan.value.products ?? {})
       .filter((product) => product.public)
-    const product = (activeKey.value !== 'location')
-      ? values.find(({ title }) => title === productSize.value)
+    const value = (activeKey.value !== 'location')
+      ? values.find(({ title }) => title === product.value.title)
       : values.sort((a, b) => a.price - b.price)[0]
 
-    if (!product) return 0
-    return product.price / product.period * 3600 * 24 * 30
+    if (!value) return 0
+    return value.price / value.period * 3600 * 24 * 30
   })
 
   const productFullPriceCustom = computed(() => {
@@ -71,7 +79,7 @@ function useCloudPrices (plan, product, provider, tarification, productSize, act
 
   return {
     productFullPrice: computed(() => {
-      const resourcesPrice = (provider.value.type === 'ione')
+      const resourcesPrice = (plan.value.type === 'ione')
         ? productFullPriceCustom.value * 24 * 30 * currency.value.rate
         : 0
       let price = 0
@@ -95,7 +103,7 @@ function useCloudPrices (plan, product, provider, tarification, productSize, act
           price = productFullPriceCustom.value
       }
 
-      if (provider.value.type === 'ovh') {
+      if (plan.value.type?.includes('ovh')) {
         period = 'hour'
         price = productFullPriceOVH.value
       } else if (plan.value.kind === 'STATIC') {

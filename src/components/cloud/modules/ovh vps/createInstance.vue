@@ -216,7 +216,7 @@ export default {
       this.options.cpu.size = +resources.cpu
       this.options.ram.size = resources.ram / 1024
       this.options.disk.size = +resources.disk
-      this.options.disk.type = 'HDD'
+      this.options.disk.type = 'SSD'
 
       periods.forEach((period) => {
         if (period.pricingMode === this.mode) plan = period
