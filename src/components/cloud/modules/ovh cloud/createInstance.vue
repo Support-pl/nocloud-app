@@ -217,10 +217,12 @@ export default {
 
       setTimeout(() => {
         const period = (this.mode === 'default') ? 'P1M' : 'P1H'
-        const products = Object.values(this.getPlan.products ?? {}).filter((product) =>
-          product.title === value && product.resources.period === period
+        const product = Object.values(this.getPlan.products ?? {}).find((product) =>
+          product.title === value &&
+            product.resources.period === period &&
+            product.meta.region === this.region.value
         )
-        const { os } = products[0]?.meta ?? {}
+        const { os } = product?.meta ?? {}
 
         os?.sort((a, b) => a.name < b.name)
         this.images = os?.map(({ name, id }) => ({ name, desc: name, id })) ?? []
