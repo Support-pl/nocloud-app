@@ -604,7 +604,7 @@ export default {
     })
   },
   methods: {
-    ...mapActions(useAuthStore, ['fetchUserData']),
+    ...mapActions(useAuthStore, ['fetchBillingData']),
     ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     ...mapActions(useNamespasesStore, { fetchNamespaces: 'fetch' }),
     ...mapActions(useSpStore, {
