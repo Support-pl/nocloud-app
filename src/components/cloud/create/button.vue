@@ -32,7 +32,7 @@
         {{ $t('Virtual machine will be available after paying the invoice') }}
       </template>
 
-      <a-row v-if="score > 3" style="margin-top: 20px">
+      <a-row v-if="cloudStore.authData.score > 3" style="margin-top: 20px">
         <a-col>
           <a-checkbox v-model:checked="cloudStore.autoRenew" />
           {{ capitalize($t('renew automatically')) }}
@@ -70,6 +70,7 @@ const copyIcon = defineAsyncComponent(
 )
 
 const props = defineProps({
+  createOrder: { type: Function, required: true },
   tarification: { type: String, required: true }
 })
 
@@ -105,7 +106,7 @@ const modalOptions = computed(() => {
     visible: modal.confirmCreate,
     loading: modal.confirmLoading,
     okProps: { disabled: isWeakPass },
-    onOk: cloudStore.createOrder,
+    onOk: props.createOrder,
     onCancel: () => {
       modal.confirmCreate = false
     }

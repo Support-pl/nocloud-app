@@ -178,7 +178,6 @@ export default {
     promoBlock
   },
   mixins: [notification],
-  inject: ['checkBalance'],
   setup () {
     const router = useRouter()
     const route = useRoute()
@@ -691,12 +690,6 @@ export default {
       if (this.namespaces.length === 1) {
         this.namespaceId = this.namespaces[0].uuid
       }
-    },
-    handleOkOnCreateOrder () {
-      const sum = this.$refs['sum-order'].$el.firstElementChild.innerText
-
-      if (this.checkBalance(sum)) return
-      this.createOrder(this.options, this.product)
     },
 
     setDefaultLocation () {

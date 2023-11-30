@@ -99,7 +99,7 @@
     </a-row>
 
     <a-row
-      ref="sum-order"
+      ref="sumOrder"
       type="flex"
       justify="center"
       :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
@@ -114,12 +114,12 @@
       </transition>
     </a-row>
 
-    <cloud-create-button :tarification="tarification" />
+    <cloud-create-button :tarification="tarification" :create-order="createOrder" />
   </div>
 </template>
 
 <script setup>
-import { computed, inject, toRefs } from 'vue'
+import { computed, inject, toRefs, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { EditorContainer } from 'nocloud-ui'
 
@@ -151,6 +151,9 @@ const cloudStore = useCloudStore()
 const [options] = inject('useOptions', () => [])()
 const product = inject('product', {})
 const priceOVH = inject('priceOVH', {})
+
+const sumOrder = ref()
+const checkBalance = inject('checkBalance', () => {})
 
 const provider = computed(() => {
   const { sp } = cloudStore.locations.find(
@@ -202,6 +205,13 @@ function getAddonsValue (key) {
   const value = parseFloat(addon.split('-').at(-1))
 
   return isFinite(value) ? `(${value} Gb)` : ''
+}
+
+function createOrder () {
+  const sum = sumOrder.value.$el.firstElementChild.innerText
+
+  if (!checkBalance(sum)) return
+  cloudStore.createOrder(options, product)
 }
 </script>
 
