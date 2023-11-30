@@ -22,7 +22,7 @@
           style="font-size: 1.1rem"
         >
           <a-col> {{ capitalize($t(key)) }} {{ getAddonsValue(key) }}: </a-col>
-          <a-col> {{ addon }} {{ currency.code }} </a-col>
+          <a-col> {{ +(addon * currency.rate).toFixed(2) }} {{ currency.code }} </a-col>
         </a-row>
       </transition-group>
 

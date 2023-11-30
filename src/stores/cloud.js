@@ -97,8 +97,6 @@ export const useCloudStore = defineStore('cloud', () => {
         newGroup.config = { ssh: newInstance.config.ssh }
         delete newInstance.config.ssh
       }
-
-      delete newInstance.product
     }
 
     if (service.value?.instancesGroups?.length < 1) {
