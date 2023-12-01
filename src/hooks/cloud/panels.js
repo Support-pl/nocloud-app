@@ -6,7 +6,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useCloudStore } from '@/stores/cloud.js'
 
-function useCloudPanels (tarification, os, network, productName) {
+function useCloudPanels (tarification, options, productName) {
   const i18n = useI18n()
   const route = useRoute()
 
@@ -54,14 +54,14 @@ function useCloudPanels (tarification, os, network, productName) {
   })
 
   const osHeader = computed(() => {
-    const osNotExist = os.name === '' || os.name.includes('none')
+    const osNotExist = options.os.name === '' || options.os.name.includes('none')
 
-    return (osNotExist) ? ' ' : ` (${os.name})`
+    return (osNotExist) ? ' ' : ` (${options.os.name})`
   })
 
   const networkHeader = computed(() => {
-    const pub = network.public
-    const priv = network.private
+    const pub = options.network.public
+    const priv = options.network.private
 
     if (!provider.value) {
       return ' '
@@ -78,9 +78,10 @@ function useCloudPanels (tarification, os, network, productName) {
     return ' '
   })
 
-  const isProductExist = computed(() =>
-    !route.query.product && plan.value.type?.includes('dedicated')
-  )
+  const isProductExist = computed(() => {
+    if (plan.value.type === 'ione') return
+    return !route.query.product && plan.value.type?.includes('dedicated')
+  })
 
   const panels = computed(() => ({
     location: {
@@ -92,7 +93,7 @@ function useCloudPanels (tarification, os, network, productName) {
     },
     os: {
       title: `${i18n.t('os')}: ${osHeader.value}`,
-      disabled: (!provider.value || !plan.value || isProductExist) ? 'disabled' : null
+      disabled: (!provider.value || !plan.value) ? 'disabled' : null
     },
     network: {
       title: `${i18n.t('Network')}: ${networkHeader.value}`,

@@ -1,5 +1,9 @@
 <template>
-  <a-row :gutter="[10, 10]" style="margin-top: 10px">
+  <a-row
+    v-if="providers.length > 1 || plans.length > 1 || namespaces.length > 1 || services.length > 1"
+    style="margin-top: 10px"
+    :gutter="[10, 10]"
+  >
     <a-col v-if="providers.length > 1" span="24">
       <a-select
         placeholder="Providers"

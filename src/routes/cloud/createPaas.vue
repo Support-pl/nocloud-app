@@ -273,7 +273,7 @@ export default {
     )
 
     const components = import.meta.glob('@/components/cloud/modules/*/panels/*.vue')
-    const { panels } = useCloudPanels(tarification, options.os, options.network)
+    const { panels } = useCloudPanels(tarification, options)
     const panelsComponents = ref(
       Object.keys(panels.value).reduce((result, key) =>
         ({ ...result, [key]: markRaw(getComponent(key)) }), {}
@@ -285,20 +285,6 @@ export default {
         ({ ...result, [key]: markRaw(getComponent(key)) }), {}
       )
     })
-
-    function setOptions (path, value) {
-      let result = options
-
-      if (!path || typeof path !== 'string') {
-        console.error('[Error]: Path is not valid - ', path)
-        return
-      }
-
-      path.split('.').forEach((key, i, array) => {
-        if (i === array.length - 1) result[key] = value
-        else result = result[key]
-      })
-    }
 
     function getComponent (name) {
       const result = Object.keys(components).find((key) =>
@@ -327,6 +313,26 @@ export default {
       }
     }
 
+    function setValue (path, value, result) {
+      if (!path || typeof path !== 'string') {
+        console.error('[Error]: Path is not valid - ', path)
+        return
+      }
+
+      path.split('.').forEach((key, i, array) => {
+        if (i === array.length - 1) result[key] = value
+        else result = result[key]
+      })
+    }
+
+    function setOptions (path, value) {
+      setValue(path, value, options)
+    }
+
+    function setPrice (path, value) {
+      setValue(path, value, priceOVH.value)
+    }
+
     function nextStep () {
       if (activeKey.value === 'location') {
         activeKey.value = 'plan'
@@ -342,7 +348,7 @@ export default {
     }
 
     provide('product', readonly(product))
-    provide('priceOVH', readonly(priceOVH))
+    provide('usePriceOVH', () => [readonly(priceOVH), setPrice])
     provide('useOptions', () => [readonly(options), setOptions])
     provide('useActiveKey', () => [readonly(activeKey), nextStep])
 

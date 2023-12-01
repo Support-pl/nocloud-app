@@ -148,9 +148,9 @@ const spStore = useSpStore()
 const plansStore = usePlansStore()
 const cloudStore = useCloudStore()
 
-const [options] = inject('useOptions', () => [])()
 const product = inject('product', {})
-const priceOVH = inject('priceOVH', {})
+const [options] = inject('useOptions', () => [])()
+const [priceOVH] = inject('usePriceOVH', () => [])()
 
 const sumOrder = ref()
 const checkBalance = inject('checkBalance', () => {})

@@ -282,7 +282,8 @@ export default {
         this.$notification.error({ message })
       }
     },
-    plan (value) {
+    async plan (value) {
+      await new Promise((resolve) => setTimeout(resolve, 100))
       const plan = this.plans.find(({ uuid }) => uuid === value)
 
       if (!plan) return
@@ -426,6 +427,7 @@ export default {
                 })
               }
             })
+          this.modal.confirmLoading = false
           this.$notification.error({ message: this.$t(message) })
           console.error(err)
         })
