@@ -117,7 +117,7 @@
           style="margin-top: 20px"
         >
           <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
-            {{ capitalize(getAddon(addon).key) }}:
+            {{ capitalize(getAddon(addon).title) }}:
           </a-col>
 
           <a-col :xs="12" :sm="18" :lg="12" style="font-size: 1.1rem; text-align: right">
@@ -126,7 +126,6 @@
         </a-row>
 
         <selects-to-create
-          v-if="services.length > 1 || sp.length > 1 || namespacesStore.namespaces.length > 1"
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"

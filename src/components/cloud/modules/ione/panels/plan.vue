@@ -67,7 +67,7 @@
     </div>
 
     <a-row
-      v-if="getProducts.length > 1 && getProducts.length < 6"
+      v-if="getProducts.length < 6"
       class="newCloud__prop"
       justify="space-between"
       align="middle"

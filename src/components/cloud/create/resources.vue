@@ -30,9 +30,9 @@ const props = defineProps({
 const i18n = useI18n()
 const { currency } = useCurrency()
 
-const [options] = inject('useOptions', () => [])()
 const product = inject('product', {})
-const priceOVH = inject('priceOVH', {})
+const [options] = inject('useOptions', () => [])()
+const [priceOVH] = inject('usePriceOVH', () => [])()
 
 const locationTitle = computed(() => {
   if (props.provider?.type !== 'ovh') return props.provider?.locations[0].title

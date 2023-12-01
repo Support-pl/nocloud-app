@@ -20,7 +20,6 @@
 
       <div class="order__calculate order__field">
         <selects-to-create
-          v-if="services.length > 1 || plans.length > 1 || sp.length > 1 || namespacesStore.namespaces.length > 1"
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
