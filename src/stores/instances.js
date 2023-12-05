@@ -11,6 +11,7 @@ export const useInstancesStore = defineStore('instances', () => {
 
   const services = ref([])
   const instances = ref([])
+  const allInstances = ref([])
   const searchString = ref('')
   const isLoading = ref(false)
   const isActionLoading = ref(false)
@@ -33,14 +34,14 @@ export const useInstancesStore = defineStore('instances', () => {
     return instances.value.filter(({ state }) => state?.state !== 'DELETED')
   })
 
-  function setInstances (service) {
-    instances.value = instances.value.filter(({ uuidService }) =>
+  function setInstances (service, items = instances) {
+    items.value = items.value.filter(({ uuidService }) =>
       uuidService !== service.uuid
     )
 
     service.instancesGroups.forEach(group => {
       if (group.config.is_vdc) {
-        instances.value.push({
+        items.value.push({
           ...group,
           type: 'vdc',
           title: service.title,
@@ -77,7 +78,7 @@ export const useInstancesStore = defineStore('instances', () => {
           }
         })
 
-        instances.value.push({
+        items.value.push({
           ...inst,
           uuidService: service.uuid,
           type: group.type,
@@ -126,6 +127,21 @@ export const useInstancesStore = defineStore('instances', () => {
         throw error
       } finally {
         isLoading.value = false
+      }
+    },
+
+    async fetchAll () {
+      try {
+        const response = await api.get('/services', { params: { show_deleted: true } })
+
+        response.pool.forEach((service) => {
+          setInstances(service, allInstances)
+        })
+
+        return response
+      } catch (error) {
+        console.error(error)
+        throw error
       }
     },
 

@@ -42,7 +42,7 @@ const locationTitle = computed(() => {
   )
 
   return props.provider.locations?.find(({ extra }) =>
-    extra.region.toLowerCase() === configuration[key]?.toLowerCase()
+    extra.region?.toLowerCase() === configuration[key]?.toLowerCase()
   )?.title
 })
 
@@ -99,7 +99,7 @@ const resources = computed(() => ({
       (props.tarification === 'Hourly') ? '*' : ''
     }`,
     value: options.network.public.count,
-    visible: options.network.public.status && props.provider.type !== 'ovh',
+    visible: options.network.public.status && props.provider?.type !== 'ovh',
     style: { fontSize: '1.1rem' }
   },
   private: {

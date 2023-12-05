@@ -3,7 +3,7 @@
     <div class="newCloud">
       <div class="newCloud__inputs order__field">
         <a-collapse
-          v-if="getPlan.type === 'ione'"
+          v-if="plan.type === 'ione'"
           v-model:active-key="activeKey"
           accordion
           style="border-radius: 20px"
@@ -87,7 +87,7 @@
           :active-key="activeKey"
           :item-s-p="provider"
           :plans="filteredPlans"
-          :get-plan="getPlan"
+          :get-plan="plan"
           :options="options"
           :get-products="getProducts"
           :product-size="productSize"
@@ -164,6 +164,7 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 
 import useCloudPanels from '@/hooks/cloud/panels.js'
 import notification from '@/mixins/notification.js'
+import { setValue } from '@/functions.js'
 
 import loading from '@/components/ui/loading.vue'
 import promoBlock from '@/components/ui/promo.vue'
@@ -209,18 +210,6 @@ export default {
       config: { addons: [], configuration: {} }
     })
 
-    const provider = computed(() => {
-      const { sp } = cloudStore.locations.find(({ id }) =>
-        id === cloudStore.locationId
-      ) ?? {}
-
-      return spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? null
-    })
-
-    const getPlan = computed(() =>
-      plansStore.plans.find(({ uuid }) => uuid === cloudStore.planId) ?? {}
-    )
-
     const filteredPlans = computed(() => {
       const locationItem = cloudStore.locations.find(({ id }) =>
         id === cloudStore.locationId
@@ -236,7 +225,7 @@ export default {
 
       if (!items) return plansStore.plans
       items.forEach(({ servicesProvider, plan }) => {
-        if (servicesProvider === provider.value?.uuid) {
+        if (servicesProvider === cloudStore.provider?.uuid) {
           plans.push(plan)
         }
       })
@@ -248,28 +237,28 @@ export default {
     })
 
     const getProducts = computed(() => {
-      const isDynamic = getPlan.value.kind === 'DYNAMIC'
-      const isIone = getPlan.value.type === 'ione'
+      const isDynamic = cloudStore.plan.kind === 'DYNAMIC'
+      const isIone = cloudStore.plan.type === 'ione'
 
       const { products } = (isDynamic && isIone)
         ? plansStore.plans.find(({ uuid }) =>
-          uuid === getPlan.value.meta?.linkedPlan
+          uuid === cloudStore.plan.meta?.linkedPlan
         ) ?? {}
-        : getPlan.value ?? {}
+        : cloudStore.plan ?? {}
 
       return Object.values(products ?? {})
         .filter((product) => {
           const isEqual = tarification.value === getTarification(product.period)
 
           if (!product.public) return false
-          return isEqual || getPlan.value.kind === 'DYNAMIC'
+          return isEqual || cloudStore.plan.kind === 'DYNAMIC'
         })
         .sort((a, b) => a.sorter - b.sorter)
         .map(({ title }) => title)
     })
 
     const isProductExist = computed(() =>
-      !route.query.product && getPlan.value.type?.includes('dedicated')
+      !route.query.product && cloudStore.plan.type?.includes('dedicated')
     )
 
     const components = import.meta.glob('@/components/cloud/modules/*/panels/*.vue')
@@ -280,7 +269,7 @@ export default {
       )
     )
 
-    watch(() => getPlan.value.type, () => {
+    watch(() => cloudStore.plan.type, () => {
       panelsComponents.value = Object.keys(panels.value).reduce((result, key) =>
         ({ ...result, [key]: markRaw(getComponent(key)) }), {}
       )
@@ -288,7 +277,7 @@ export default {
 
     function getComponent (name) {
       const result = Object.keys(components).find((key) =>
-        key.includes(`/${getPlan.value.type}/panels/${name}.vue`)
+        key.includes(`/${cloudStore.plan.type}/panels/${name}.vue`)
       )
 
       return defineAsyncComponent(() => components[result]())
@@ -311,18 +300,6 @@ export default {
         case year * 2:
           return 'Biennially'
       }
-    }
-
-    function setValue (path, value, result) {
-      if (!path || typeof path !== 'string') {
-        console.error('[Error]: Path is not valid - ', path)
-        return
-      }
-
-      path.split('.').forEach((key, i, array) => {
-        if (i === array.length - 1) result[key] = value
-        else result = result[key]
-      })
     }
 
     function setOptions (path, value) {
@@ -359,13 +336,12 @@ export default {
       activeKey,
       periods,
 
+      cachedPlans: ref({}),
       filteredPlans,
       getProducts,
       tarification,
       getTarification,
 
-      provider,
-      getPlan,
       product,
       priceOVH,
       options,
@@ -379,10 +355,9 @@ export default {
   },
 
   computed: {
-    ...mapState(useAuthStore, ['userdata', 'isLogged']),
-    ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'unloginedCurrency']),
+    ...mapState(useAuthStore, ['isLogged']),
+    ...mapState(useCurrenciesStore, ['currencies']),
     ...mapState(useNamespasesStore, ['namespaces']),
-    ...mapState(useSpStore, { servicesProviders: 'servicesProviders', getShowcases: 'showcases' }),
     ...mapState(usePlansStore, ['plans']),
     ...mapState(useInstancesStore, { getServicesFull: 'services' }),
 
@@ -397,7 +372,7 @@ export default {
     },
     template () {
       if (this.provider?.type.includes('ovh')) {
-        const { type = 'ovh vps' } = this.getPlan ?? {}
+        const { type = 'ovh vps' } = this.plan ?? {}
         const components = import.meta.glob('@/components/cloud/modules/*/createInstance.vue')
         const component = Object.keys(components).find((key) => key.includes(`/${type}/`))
 
@@ -410,10 +385,10 @@ export default {
 
   watch: {
     tarification (value) {
-      if (this.getPlan.type === 'ione' && value) {
+      if (this.plan.type === 'ione' && value) {
         const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC'
-        const item = this.filteredPlans.find((el) => {
-          if (type === 'DYNAMIC') return el.kind === type
+        const item = this.filteredPlans.find(({ kind, products }) => {
+          if (type === 'DYNAMIC') return kind === type
           let period = 0
 
           switch (value) {
@@ -430,18 +405,18 @@ export default {
               period = 3600 * 24 * 30
           }
 
-          return el.kind === type && Object.values(el.products).find((el) => +el.period === period)
+          return kind === type && Object.values(products).find((el) => +el.period === period)
         })
 
         this.planId = item.uuid
         this.setData({ key: 'productSize', value: this.getProducts[1] ?? this.getProducts[0] })
-      } else if (this.getPlan.type?.includes('cloud')) {
+      } else if (this.plan.type?.includes('cloud')) {
         setTimeout(() => {
           const period = (this.options.config.monthlyBilling) ? 'P1M' : 'P1H'
           const { planCode } = this.options.config
 
           this.product = {
-            ...this.getPlan.products[`${period} ${planCode}`],
+            ...this.plan.products[`${period} ${planCode}`],
             key: `${period} ${planCode}`
           }
         }, 100)
@@ -457,24 +432,31 @@ export default {
     },
     itemService (service) {
       const group = service.instancesGroups.find(({ type }) =>
-        this.getPlan.type?.includes(type)
+        this.plan.type?.includes(type)
       ) ?? {}
 
       if (group.config?.ssh) this.options.isSSHExist = true
       else this.options.isSSHExist = false
     },
-    provider (value, prev) {
+    locationId () {
       if (!this.dataLocalStorage.config) {
         this.options.os = { id: -1, name: '' }
       }
 
-      if (!value?.uuid || value.uuid === prev?.uuid) return
+      if (!this.provider?.uuid) return
+      if (this.cachedPlans[this.provider.uuid]) {
+        this.setPlans(this.cachedPlans[this.provider.uuid])
+        this.planId = this.filteredPlans[0]?.uuid ?? ''
+        return
+      }
+
       this.isPlansLoading = true
       this.fetchPlans({
-        sp_uuid: value.uuid,
+        sp_uuid: this.provider.uuid,
         anonymously: !this.isLogged
       })
         .then(({ pool }) => {
+          this.cachedPlans[this.provider.uuid] = pool
           this.planId = this.filteredPlans[0]?.uuid ?? pool[0]?.uuid ?? ''
 
           if (this.dataLocalStorage.billing_plan) {
@@ -485,12 +467,13 @@ export default {
           }
 
           this.activeKey = this.dataLocalStorage?.activeKey ?? 'plan'
+          setTimeout(() => { this.activeKey = 'location' })
         })
         .finally(() => {
           this.isPlansLoading = false
         })
 
-      const { min_drive_size: minSize, max_drive_size: maxSize } = value.vars
+      const { min_drive_size: minSize, max_drive_size: maxSize } = this.provider.vars
 
       if (minSize) {
         this.options.disk.min = minSize.value[this.options.disk.type]
@@ -499,7 +482,7 @@ export default {
         this.options.disk.max = maxSize.value[this.options.disk.type]
       }
     },
-    getPlan (value) {
+    plan (value) {
       if (value.meta?.minDisk) {
         this.options.disk.min = +value.meta.minDisk
       }
@@ -616,7 +599,7 @@ export default {
       fetchProviders: 'fetch',
       fetchShowcases: 'fetchShowcases'
     }),
-    ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
+    ...mapActions(usePlansStore, { fetchPlans: 'fetch', setPlans: 'setPlans' }),
     ...mapActions(useInstancesStore, {
       fetchServices: 'fetch',
       updateService: 'updateService',
@@ -658,9 +641,9 @@ export default {
       } else this[key] = value
 
       if (key === 'productSize') {
-        const plan = (this.getPlan.kind === 'DYNAMIC' && this.getPlan.type === 'ione')
-          ? this.plans.find((el) => el.uuid === this.getPlan.meta.linkedPlan)
-          : this.getPlan
+        const plan = (this.plan.kind === 'DYNAMIC' && this.plan.type === 'ione')
+          ? this.plans.find((el) => el.uuid === this.plan.meta.linkedPlan)
+          : this.plan
 
         if (!plan) return
         for (const [key, value] of Object.entries(plan.products ?? {})) {
@@ -1025,6 +1008,8 @@ export default {
     border-radius: 20px 20px 0 0;
   }
   .newCloud__calculate {
+    grid-column: 1;
+    grid-row: 2;
     width: auto;
     border-radius: 0 0 20px 20px;
   }

@@ -238,9 +238,9 @@ function onShowSizeChange (page, limit) {
 }
 
 async function fetchInstances () {
-  if (instancesStore.getInstances.length > 0) return
+  if (instancesStore.getAllInstances.length > 0) return
   try {
-    await instancesStore.fetch()
+    await instancesStore.fetchAll()
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 

@@ -239,7 +239,7 @@ export default {
     }
   },
   created () {
-    this.$emit('setData', { key: 'cloud_datacenter', type: 'ovh', value: this.region.value })
+    this.$emit('setData', { key: 'cloud_datacenter', type: 'ovh', value: this.region?.value })
   },
   methods: {
     setData (planKey, changeTarifs = true) {

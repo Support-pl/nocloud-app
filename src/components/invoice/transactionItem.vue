@@ -111,7 +111,7 @@ function clickOnInvoice (uuid) {
 
 function getInstance (uuid) {
   if (!uuid) return 'none'
-  return instancesStore.instances.find((inst) => inst.uuid === uuid)?.title ?? uuid
+  return instancesStore.allInstances.find((inst) => inst.uuid === uuid)?.title ?? uuid
 }
 </script>
 

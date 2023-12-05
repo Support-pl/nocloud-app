@@ -49,7 +49,7 @@ function useCloudPrices (product, tarification, activeKey, options, priceOVH) {
         } else {
           const { size } = (activeKey.value === 'location')
             ? { size: options[key]?.min ?? 0 }
-            : options[key]
+            : options[key] ?? {}
 
           price.push(resource.price / resource.period * 3600 * size)
         }
