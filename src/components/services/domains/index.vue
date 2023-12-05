@@ -301,8 +301,7 @@ export default { name: 'DomainsComponent' }
 }
 
 /*--card--*/
-.order_option__card{
-  margin: 20px 0 27px;
+.order_option__card {
   padding-bottom: 15px;
 }
 
@@ -348,14 +347,14 @@ input.ant-input:focus{
 
 .ant-input-search-button{
   width: 100%;
-  background-color: #427cf7!important;
+  background-color: var(--main)!important;
 }
 
 /*--description--*/
-.description{
-  padding: 11px 0 11px 32px;
+.description {
+  padding: 12px;
   margin-top: 18px;
-  background-color: #f7f7f7;
+  background-color: var(--bright_bg);
 }
 
 .description-header{
@@ -374,53 +373,53 @@ input.ant-input:focus{
   margin-left: 10px;
   font-size: 12px;
   font-weight: 400;
-  color: #0fd058;
-  background-color: #f7f7f7;
+  color: var(--success);
+  background-color: var(--bright_bg);
   display: inline;
 }
 
 .description-body{
-  background-color: #f7f7f7;
+  background-color: var(--bright_bg);
 }
 
-.ant-descriptions-item-content .description-body__domain-name{
+.description-body__domain-name{
   color: black;
 }
 
 .description-body__btn-add{
-  background-color: #427cf7;
-  color: white;
+  background-color: var(--main);
+  color: var(--bright_font);
   padding: 0;
   width: 115px;
   font-size: 12px;
   height: 24px;
   margin: 3px 2px 5px 0;
-  border-color: #427cf7;
+  border-color: var(--main);
 }
-.description-body__btn-add:hover{
-  color: var(--bright_font);
-  background-color: #40a9ff!important;
-  border-color: #40a9ff!important;
+.ant-btn.description-body__btn-add:hover{
+  color: var(--main);
+  background-color: var(--bright_font);
+  border-color: var(--main);
 }
 
-.description-body__btn-order{
-  background-color: #5CB85B;
-  color: white;
+.description-body__btn-order {
+  background-color: var(--success);
+  color: var(--bright_font);
   padding: 0;
   width: 115px;
   font-size: 12px;
   height: 24px;
   margin: 3px 2px 5px 0;
-  border-color: #5CB85B;
+  border-color: var(--success);
 }
-.description-body__btn-order:hover{
-  color: var(--bright_font);
-  background-color: rgba(92,184,91,0.65)!important;
-  border-color: rgba(92,184,91,0.65)!important;
+.ant-btn.description-body__btn-order:hover{
+  color: var(--success);
+  background-color: var(--bright_font);
+  border-color: var(--success);
 }
 
 div.ant-descriptions-view{
-  border-color: #f7f7f7!important;
+  border-color: var(--bright_bg) !important;
   border-bottom-right-radius: 0;
   border-top-right-radius: 0;
 }
@@ -431,37 +430,34 @@ th.ant-descriptions-item-label.ant-descriptions-item-colon.ant-descriptions-item
   padding: 0;
 }
 
-td.ant-descriptions-item-content{
-  padding-top: 5px!important;
-  padding-bottom: 2px!important;
+td.ant-descriptions-item-content {
+  padding: 7px 0 2px !important;
   font-weight: 400;/*!important*/
   font-size: 12px;
   text-align: center;
 }
-td.ant-descriptions-item-content:nth-child(2){
-  padding: 7px 0 2px;
-  width: 150px;
+td.ant-descriptions-item-content:nth-child(2) {
+  width: 184px;
   text-align: start;
   border: none;
 }
-td.ant-descriptions-item-content:nth-child(4){
-  padding: 7px 0 2px;
-  width: 184px;
-  background-color: white;
+td.ant-descriptions-item-content:nth-child(4) {
+  width: 150px;
+  background-color: var(--bright_font);
 }
-td.ant-descriptions-item-content:nth-child(6){
-  background-color: white;
+td.ant-descriptions-item-content:nth-child(6) {
+  background-color: var(--bright_font);
 }
 
 .description-btn-more{
   display: flex;
   width: 150px;
-  background-color: #427cf7;
-  color: white;
+  background-color: var(--main);
+  color: var(--bright_font);
   padding: 7px;
   font-size: 12px;
   margin: 30px 2px 5px 0;
-  border-color: #427cf7;
+  border-color: var(--main);
   align-items: center;
   justify-content: center;
 }
