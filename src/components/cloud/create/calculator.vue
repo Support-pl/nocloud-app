@@ -31,7 +31,7 @@
         v-model:service="cloudStore.serviceId"
         v-model:namespace="cloudStore.namespaceId"
         :plans-list="filteredPlans"
-        :is-plans-visible="provider?.type !== 'ione'"
+        :is-plans-visible="false"
       />
     </template>
 

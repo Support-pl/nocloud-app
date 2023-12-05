@@ -445,8 +445,10 @@ export default {
 
       if (!this.provider?.uuid) return
       if (this.cachedPlans[this.provider.uuid]) {
-        this.setPlans(this.cachedPlans[this.provider.uuid])
-        this.planId = this.filteredPlans[0]?.uuid ?? ''
+        const { items } = this.showcases.find(({ uuid }) => uuid === this.showcaseId) ?? {}
+        const { plan } = items?.find((item) => item.locations.includes(this.locationId)) ?? {}
+
+        this.planId = plan ?? this.filteredPlans[0]?.uuid ?? ''
         return
       }
 
