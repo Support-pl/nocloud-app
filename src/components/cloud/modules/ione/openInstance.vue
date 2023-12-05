@@ -245,19 +245,21 @@
         </div>
 
         <div class="Fcloud__block-content block-content_table">
-          <div class="block__column block__column_table">
-            <div class="block__title">
-              {{ capitalize($t('tariff')) }}
+          <template v-if="tariffPrice">
+            <div class="block__column block__column_table">
+              <div class="block__title">
+                {{ capitalize($t('tariff')) }}
+              </div>
             </div>
-          </div>
-          <div class="block__column block__column_table block__column_price">
-            <div class="block__title">
-              {{ productName || $t('No Data') }}:
+            <div class="block__column block__column_table block__column_price">
+              <div class="block__title">
+                {{ productName || $t('No Data') }}:
+              </div>
+              <div class="block__value">
+                {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
+              </div>
             </div>
-            <div class="block__value">
-              {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
-            </div>
-          </div>
+          </template>
 
           <div class="block__column block__column_table">
             <div class="block__title">
@@ -719,7 +721,7 @@ export default defineComponent({
     tariffPrice () {
       const key = this.VM.product
 
-      return this.VM.billingPlan.products[key].price
+      return this.VM.billingPlan.products[key]?.price ?? 0
     },
     addonsPrice () {
       return this.VM.billingPlan.resources.reduce((prev, curr) => {

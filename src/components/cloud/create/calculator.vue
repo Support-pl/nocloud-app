@@ -38,7 +38,6 @@
     <transition name="networkApear">
       <a-row
         v-if="product.installationFee"
-        type="flex"
         justify="space-between"
         style="
           font-size: 1.2rem;
@@ -56,7 +55,6 @@
 
     <transition name="networkApear">
       <a-row
-        type="flex"
         justify="space-between"
         style="font-size: 1.2rem; gap: 5px"
         :style="(!product.installationFee) ? {
@@ -78,7 +76,7 @@
     >
       {{ $t("Total") }}:
     </a-divider>
-    <a-row type="flex" justify="center" style="margin-top: 15px">
+    <a-row justify="center" style="margin-top: 15px">
       <a-col>
         <a-radio-group
           ref="periods-group"
@@ -100,7 +98,6 @@
 
     <a-row
       ref="sumOrder"
-      type="flex"
       justify="center"
       :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
     >

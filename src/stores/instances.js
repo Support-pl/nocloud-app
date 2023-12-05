@@ -100,6 +100,7 @@ export const useInstancesStore = defineStore('instances', () => {
     services,
     instances,
     getInstances,
+    allInstances,
 
     isLoading,
     isActionLoading,
