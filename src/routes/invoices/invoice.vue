@@ -238,7 +238,7 @@ function onShowSizeChange (page, limit) {
 }
 
 async function fetchInstances () {
-  if (instancesStore.getAllInstances.length > 0) return
+  if (instancesStore.allInstances.length > 0) return
   try {
     await instancesStore.fetchAll()
   } catch (error) {

@@ -202,6 +202,7 @@ export const useCloudStore = defineStore('cloud', () => {
   }
 
   return {
+    autoRenew,
     authData,
     provider,
     plan,
