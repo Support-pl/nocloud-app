@@ -99,7 +99,7 @@ const plan = computed(() =>
 )
 
 const modalOptions = computed(() => {
-  const isWeakPass = cloudStore.authData.score < 4 && provider.value.type !== 'ovh'
+  const isWeakPass = cloudStore.authData.score < 4 && provider.value?.type !== 'ovh'
 
   return {
     title: (isWeakPass) ? 'Weak pass' : 'Confirm',
@@ -121,7 +121,7 @@ const createButtonOptions = computed(() => {
     }
   }
 
-  if (provider.value.type === 'ovh') {
+  if (provider.value?.type === 'ovh') {
     result.disabled =
       cloudStore.authData.vmName === '' ||
       !cloudStore.namespaceId ||
@@ -141,9 +141,9 @@ const createButtonOptions = computed(() => {
 
 const nextButtonOptions = computed(() => ({
   visible: activeKey.value && (
-    (activeKey.value !== 'addons' && provider.value.type === 'ovh' &&
+    (activeKey.value !== 'addons' && provider.value?.type === 'ovh' &&
       !plan.value.type?.includes('cloud')) ||
-    (activeKey.value !== 'os' && provider.value.type !== 'ovh') ||
+    (activeKey.value !== 'os' && provider.value?.type !== 'ovh') ||
     (activeKey.value !== 'os' && plan.value.type?.includes('cloud'))
   ),
   onClick: nextStep
@@ -152,7 +152,7 @@ const nextButtonOptions = computed(() => ({
 const isUnlogginedLinkVisible = computed(() => {
   const { score, password, vmName } = cloudStore.authData
   const isStrongPass = score > 3 && password.length > 0
-  const isNotOvh = provider.value.type !== 'ovh'
+  const isNotOvh = provider.value?.type !== 'ovh'
 
   if (authStore.isLogged) return false
   return (isNotOvh && isStrongPass) || (options.os.name && vmName)

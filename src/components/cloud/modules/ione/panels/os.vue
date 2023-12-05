@@ -1,32 +1,6 @@
 <template>
   <div class="newCloud__option-field">
-    <div v-if="provider" class="newCloud__template">
-      <div
-        v-for="(item, index) in images"
-        :key="index"
-        class="newCloud__template-item"
-        :class="{ active: options.os.name === item.name }"
-        @click="setOS(item, index)"
-      >
-        <template v-if="item.warning">
-          <div class="newCloud__template-image">
-            <img src="/img/OS/default.png" :alt="item.desc">
-          </div>
-          <div class="newCloud__template-name">
-            {{ item.name }}
-          </div>
-        </template>
-
-        <template v-else>
-          <div class="newCloud__template-image">
-            <img :src="`/img/OS/${getImageName(item.name)}.png`" :alt="item.desc">
-          </div>
-          <div class="newCloud__template-name">
-            {{ item.name }}
-          </div>
-        </template>
-      </div>
-    </div>
+    <images-list v-if="provider" :images="images" :os-name="options.os.name" :set-o-s="setOS" />
 
     <a-row>
       <a-col :xs="24" :sm="10">
@@ -119,26 +93,16 @@ import { message } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
-import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
 
-import { getImageName } from '@/functions.js'
+import imagesList from '@/components/cloud/create/images.vue'
 
-const spStore = useSpStore()
 const authStore = useAuthStore()
 const cloudStore = useCloudStore()
-const { authData } = storeToRefs(cloudStore)
+const { authData, provider } = storeToRefs(cloudStore)
 
 const [options, setOptions] = inject('useOptions')()
-
-const provider = computed(() => {
-  const { sp } = cloudStore.locations.find(({ id }) =>
-    id === cloudStore.locationId
-  ) ?? {}
-
-  return spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? null
-})
 
 const images = computed(() => {
   const { templates } = provider.value.publicData

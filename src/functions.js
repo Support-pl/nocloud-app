@@ -30,6 +30,18 @@ export function toDate (timestamp, sep = '.', withTime = true, reverse) {
   return result
 }
 
+export function setValue (path, value, result) {
+  if (!path || typeof path !== 'string') {
+    console.error('[Error]: Path is not valid - ', path)
+    return
+  }
+
+  path.split('.').forEach((key, i, array) => {
+    if (i === array.length - 1) result[key] = value
+    else result = result[key]
+  })
+}
+
 export function getPeriods (plans) {
   const value = []
   const types = new Set()

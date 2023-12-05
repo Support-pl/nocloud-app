@@ -25,7 +25,7 @@ async function logIntoCpanel () {
   try {
     isLoading.value = true
     const response = await instancesStore.invokeAction({
-      uuid: props.service.id, action: 'session'
+      uuid: props.service.uuid, action: 'session'
     })
 
     if (!response.result) throw response

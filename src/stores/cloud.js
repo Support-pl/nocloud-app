@@ -203,6 +203,8 @@ export const useCloudStore = defineStore('cloud', () => {
 
   return {
     authData,
+    provider,
+    plan,
 
     locationId,
     showcaseId,

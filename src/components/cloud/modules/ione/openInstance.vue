@@ -214,7 +214,7 @@
               {{ $t('Product') }}
             </div>
             <div class="block__value">
-              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}
+              {{ productName || $t('No Data') }}
             </div>
           </div>
 
@@ -252,7 +252,7 @@
           </div>
           <div class="block__column block__column_table block__column_price">
             <div class="block__title">
-              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}:
+              {{ productName || $t('No Data') }}:
             </div>
             <div class="block__value">
               {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
@@ -533,6 +533,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInstancesStore } from '@/stores/instances.js'
+import { usePlansStore } from '@/stores/plans.js'
 
 import notification from '@/mixins/notification.js'
 
@@ -675,6 +676,7 @@ export default defineComponent({
     ...mapState(useAuthStore, ['userdata', 'baseURL']),
     ...mapState(useCurrenciesStore, ['defaultCurrency']),
     ...mapState(useInstancesStore, ['services']),
+    ...mapState(usePlansStore, ['plans']),
     statusVM () {
       if (!this.VM?.state) {
         return {
@@ -838,14 +840,24 @@ export default defineComponent({
       const i = this.VM?.config?.template_id
 
       return this.dataSP?.publicData.templates[i]?.name
+    },
+    productName () {
+      const key = this.VM.product
+      const plan = this.plans.find(({ products }) => products[key])
+
+      return plan?.products[key]?.title ?? key
     }
   },
   watch: {
     'VM.uuidService' () { this.fetchMonitoring() }
   },
-  created () { this.fetchMonitoring() },
+  created () {
+    this.fetchPlans({ anonymously: false })
+    this.fetchMonitoring()
+  },
   mounted () { this.autoRenew = this.VM.config.auto_renew },
   methods: {
+    ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
     ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
     deployService () {
       this.actionLoading = true
