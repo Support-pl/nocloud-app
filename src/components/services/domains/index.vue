@@ -29,9 +29,9 @@
               </a-col>
               <a-col :span="2" class="badge-wrapper">
                 <a-badge
-                  :count="itemsInCart"
-                  :offset="[-25,-2]"
                   show-zero
+                  :count="itemsInCart"
+                  :offset="[0, -5]"
                   :number-style="{
                     backgroundColor: 'var(--bright_font)',
                     color: '#999',
@@ -67,19 +67,18 @@
                 :key="i"
                 bordered
                 class="description-body"
+                size="small"
                 :column="6"
               >
+                <a-descriptions-item class="description-body__domain-name" :span="3">
+                  {{ result.name }}
+                </a-descriptions-item>
+
+                <a-descriptions-item class="description-body__domain-name" :span="2">
+                  {{ result.status }}
+                </a-descriptions-item>
+
                 <a-descriptions-item :span="1">
-                  <span class="description-body__domain-name">
-                    {{ result.name }}
-                  </span>
-                </a-descriptions-item>
-                <a-descriptions-item :span="3">
-                  <span class="description-body__domain-cost">
-                    {{ result.status }}
-                  </span>
-                </a-descriptions-item>
-                <a-descriptions-item :span="2">
                   <a-button
                     :key="i"
                     :class="result.btnClass"
@@ -169,7 +168,7 @@ async function searchDomain () {
   try {
     isDomainsLoading.value = true
     const { meta } = await api.servicesProviders.action({
-      uuid: sp.value.uuid,
+      uuid: sp.value[0].uuid,
       action: 'get_domains',
       params: {
         searchString: domain.value,
@@ -384,12 +383,7 @@ input.ant-input:focus{
   background-color: #f7f7f7;
 }
 
-.description-body__domain-name{
-  margin-left: 15px;
-  color: black;
-}
-
-.description-body__domain-cost{
+.ant-descriptions-item-content .description-body__domain-name{
   color: black;
 }
 
