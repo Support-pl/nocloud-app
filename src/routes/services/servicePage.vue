@@ -393,6 +393,7 @@ export default {
 
             if (!domain.data.expiry) domain.data.expiry = { regdate: '0000-00-00' }
             else domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`
+            groupname = 'Domains'
             break
           }
 
@@ -430,7 +431,7 @@ export default {
         }
         info[0].type = ''
 
-        if (this.service.recurringamount === '?') {
+        if (groupname === 'Domains') {
           return this.$api.servicesProviders.action({
             uuid: domain.sp,
             action: 'get_domain_price',
@@ -441,10 +442,11 @@ export default {
         }
       })
       .then(({ meta }) => {
-        if (meta === null) {
+        if (meta?.prices) {
           const { period } = this.service.resources
 
           this.service.recurringamount = meta.prices[period]
+          return { client_id: null }
         } else if (meta !== 'done') {
           return this.fetchBillingData()
         } else {
@@ -463,8 +465,10 @@ export default {
           `${id}` === `${this.$route.params.id}`
         )
 
-        if (product) this.service = product
-        this.info.pop()
+        if (product) {
+          this.service = product
+          this.info.pop()
+        }
       })
       .catch((error) => {
         console.error(error)
