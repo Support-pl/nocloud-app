@@ -1,5 +1,5 @@
 <template>
-  <ovh-addons :addons="addons" :all-addons="allAddons" />
+  <ovh-addons :addons="addons" />
 </template>
 
 <script setup>

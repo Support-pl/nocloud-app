@@ -236,8 +236,8 @@ function orderClickHandler () {
   }]
   const newGroup = {
     title: authStore.userdata.title + Date.now(),
-    type: sp.value.type,
-    sp: sp.value.uuid,
+    type: 'openai',
+    sp: provider.value,
     instances
   }
 

@@ -42,7 +42,7 @@
 
     <template #after>
       <a-col
-        v-if="provider.type !== 'ovh' && tarification === 'Hourly'"
+        v-if="provider?.type !== 'ovh' && tarification === 'Hourly'"
         style="font-size: 14px; margin: 16px 16px 0"
       >
         <span style="position: absolute; left: -8px">*</span>
