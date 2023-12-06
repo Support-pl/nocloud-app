@@ -366,10 +366,6 @@ export default {
         this.$notification.error({ message })
       }
     },
-    getProducts (value) {
-      this.options.addons = []
-      this.options.addons = value.meta?.autoEnabled
-    },
     resources (value) {
       Object.entries(value).forEach(([key, resource]) => {
         this.filters[key] = [resource.at(0), resource.at(-1)]
@@ -377,6 +373,8 @@ export default {
     },
     'options.size' () {
       this.options.addons = []
+      this.options.addons = (this.getProducts.meta?.autoEnabled ?? [])
+        .filter((addon) => this.getProducts.addons.find(({ key }) => key === addon))
     },
     'options.period' (value) {
       this.changeProducts(value)
