@@ -372,7 +372,7 @@ export default {
         instances
       }
 
-      if (plan.kind === 'STATIC') instances[0].product = this.options.size
+      instances[0].product = this.options.size
 
       const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
       const group = info.instancesGroups?.find(({ type }) => type === 'cpanel')

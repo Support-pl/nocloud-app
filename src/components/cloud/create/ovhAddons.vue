@@ -31,7 +31,6 @@ import { useCurrency } from '@/hooks/utils'
 
 const props = defineProps({
   addons: { type: Object, required: true },
-  allAddons: { type: Object, required: true },
   isFlavorsLoading: { type: Boolean, default: false }
 })
 

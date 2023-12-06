@@ -210,7 +210,7 @@ const getModuleProductBtn = computed(() => {
   if (serviceType === undefined) return
   if (props.instance.date === 0) return
   if (props.instance.server_on) return
-  if (!isActive && ['virtual', 'iaas'].includes(serviceType)) return
+  if (!(isActive && components[component])) return
   return defineAsyncComponent(() => components[component]())
 })
 

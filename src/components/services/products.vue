@@ -283,7 +283,7 @@ export default {
             break
           case 'opensrs':
             res.groupname = 'Domains'
-            res.date = inst.data.expiry.expiredate
+            res.date = inst.data.expiry?.expiredate ?? 0
             res.domain = inst.resources.domain
             break
           case 'goget': {

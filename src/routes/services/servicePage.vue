@@ -388,10 +388,11 @@ export default {
 
           case 'opensrs': {
             const { period } = domain.resources
-            const { expiredate } = domain.data.expiry
+            const { expiredate } = domain.data?.expiry ?? { expiredate: '0000-00-00' }
             const year = parseInt(expiredate) - period
 
-            domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`
+            if (!domain.data.expiry) domain.data.expiry = { regdate: '0000-00-00' }
+            else domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`
             break
           }
 
@@ -458,7 +459,11 @@ export default {
       })
       .then((result) => {
         if (result === 'done') return
-        this.service = this.productsStore.products.find(({ id }) => `${id}` === `${this.$route.params.id}`)
+        const product = this.productsStore.products.find(({ id }) =>
+          `${id}` === `${this.$route.params.id}`
+        )
+
+        if (product) this.service = product
         this.info.pop()
       })
       .catch((error) => {
