@@ -232,7 +232,7 @@ export default {
       const price = product.price + this.options.addons.reduce(
         (sum, id) => {
           const addon = product.addons?.find(({ key }) => key === id)
-          const period = addon.period / product.period
+          const period = addon?.period / product.period
 
           if (!addon) return sum
           return sum + addon.price * ((period >= 1) ? period : 1 / period)
@@ -365,6 +365,10 @@ export default {
 
         this.$notification.error({ message })
       }
+    },
+    getProducts (value) {
+      this.options.addons = []
+      this.options.addons = value.meta?.autoEnabled
     },
     resources (value) {
       Object.entries(value).forEach(([key, resource]) => {
