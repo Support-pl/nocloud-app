@@ -3,7 +3,6 @@
     <div class="newCloud">
       <div class="newCloud__inputs order__field">
         <a-collapse
-          v-if="plan.type === 'ione' || plan.type === 'ovh vps'"
           v-model:active-key="activeKey"
           accordion
           style="border-radius: 20px"
@@ -76,66 +75,6 @@
             </a-collapse-panel>
           </template>
         </a-collapse>
-
-        <a-spin
-          v-else-if="isPlansLoading"
-          style="display: block; margin: 15px auto"
-          :tip="$t('loading')"
-          :spinning="isPlansLoading"
-        />
-        <component
-          :is="template"
-          v-else
-          :active-key="activeKey"
-          :item-s-p="provider"
-          :plans="filteredPlans"
-          :get-plan="plan"
-          :options="options"
-          :get-products="products"
-          :product-size="productSize"
-          :tarification="tarification"
-          :vm-name="authData.vmName"
-          :username="authData.username"
-          :password="authData.password"
-          :ssh-key="authData.sshKey"
-          :location-id="locationId"
-          @score="onScore"
-          @set-data="setData"
-        >
-          <template #location>
-            <a-row justify="space-between" style="margin-bottom: 10px">
-              <a-col span="24">
-                <a-alert
-                  v-if="!locationId"
-                  show-icon
-                  type="warning"
-                  style="margin-bottom: 15px"
-                  :message="$t('Please select a suitable location')"
-                />
-
-                <a-select
-                  v-model:value="showcaseId"
-                  :placeholder="$t('select service')"
-                  style="width: 180px; position: relative; z-index: 4"
-                >
-                  <a-select-option v-for="item in showcases" :key="item.uuid">
-                    {{ item.title }}
-                  </a-select-option>
-                </a-select>
-              </a-col>
-
-              <a-col span="24" style="overflow: hidden; margin-top: 15px">
-                <nc-map
-                  :value="locationId"
-                  :markers="locations"
-                  :marker-color="provider?.meta.markerColor"
-                  :marker-url="provider?.meta.markerUrl"
-                  @input="(value) => locationId = value"
-                />
-              </a-col>
-            </a-row>
-          </template>
-        </component>
       </div>
 
       <calculator-block
@@ -388,6 +327,25 @@ export default {
         }, 100)
       }
     },
+    productSize (size) {
+      const plan = (this.plan.kind === 'DYNAMIC' && this.plan.type === 'ione')
+        ? this.plans.find((el) => el.uuid === this.plan.meta.linkedPlan)
+        : this.plan
+
+      if (!plan) return
+      for (const [key, value] of Object.entries(plan.products ?? {})) {
+        if (value.title === size) {
+          const product = { ...value, key }
+
+          this.options.ram.size = product.resources.ram / 1024
+          this.options.cpu.size = product.resources.cpu
+          this.options.disk.size = product.resources.disk ?? (plan.meta.minDisk ?? 20) * 1024
+          this.product = product
+        } else if (value.group === size) {
+          this.product = { ...value, key }
+        }
+      }
+    },
     periods (periods) {
       if (this.dataLocalStorage.productSize) return
       this.tarification = ''
@@ -461,6 +419,7 @@ export default {
       }
     },
     'options.os.name' () {
+      if (this.plan.type !== 'ione') return
       if (this.options.disk.min > 0) return
       const { id } = this.options.os
       const { min_size: minSize } = this.provider.publicData.templates[id]
@@ -609,26 +568,6 @@ export default {
       } else if (typeof value === 'object') {
         this[key] = Object.assign({}, value)
       } else this[key] = value
-
-      if (key === 'productSize') {
-        const plan = (this.plan.kind === 'DYNAMIC' && this.plan.type === 'ione')
-          ? this.plans.find((el) => el.uuid === this.plan.meta.linkedPlan)
-          : this.plan
-
-        if (!plan) return
-        for (const [key, value] of Object.entries(plan.products ?? {})) {
-          if (value.title === this.productSize) {
-            const product = { ...value, key }
-
-            this.options.ram.size = product.resources.ram / 1024
-            this.options.cpu.size = product.resources.cpu
-            this.options.disk.size = product.resources.disk ?? (plan.meta.minDisk ?? 20) * 1024
-            this.product = product
-          } else if (value.group === this.productSize) {
-            this.product = { ...value, key }
-          }
-        }
-      }
 
       if (key === 'type') {
         const plan = this.plans.find(({ type }) => type.includes(value))

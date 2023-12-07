@@ -49,7 +49,7 @@
     </a-row>
 
     <images-list
-      v-if="provider"
+      v-if="images.length > 0"
       :images="images"
       :os-name="options.os.name"
       :os-price="osPrice"
@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, inject } from 'vue'
+import { defineAsyncComponent, inject, ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
@@ -80,14 +80,36 @@ const plusIcon = defineAsyncComponent(
 )
 
 const props = defineProps({
-  images: { type: Array, required: true },
-  mode: { type: String, required: true }
+  mode: { type: String, required: true },
+  productSize: { type: String, required: true }
 })
 
+watch(() => props.productSize, setImages)
+onMounted(setImages)
+
 const authStore = useAuthStore()
-const { authData } = storeToRefs(useCloudStore())
+const { authData, locations, locationId, plan } = storeToRefs(useCloudStore())
+
+const images = ref([])
 const [options, setOptions] = inject('useOptions', () => [])()
 const [price, setPrice] = inject('usePriceOVH', () => [])()
+
+const region = computed(() =>
+  locations.value.find(({ id }) => locationId.value.includes(id))?.extra?.region
+)
+
+function setImages () {
+  const period = (props.mode === 'default') ? 'P1M' : 'P1H'
+  const product = Object.values(plan.value.products ?? {}).find((product) =>
+    product.title === props.productSize &&
+      product.resources.period === period &&
+      product.meta.region === region.value
+  )
+  const { os } = product?.meta ?? {}
+
+  os?.sort((a, b) => a.name < b.name)
+  images.value = os?.map(({ name, id }) => ({ name, desc: name, id })) ?? []
+}
 
 function setOS (item, index) {
   if (item.warning) return

@@ -8,7 +8,7 @@
     <template v-else>
       <!-- Location Tarif CPU RAM GPU Drive os network -->
       <cloud-resources
-        :provider="provider"
+        :provider="cloudStore.provider"
         :product-size="productSize"
         :tarification="tarification"
       />
@@ -121,8 +121,6 @@ import { useI18n } from 'vue-i18n'
 import { EditorContainer } from 'nocloud-ui'
 
 import { useCloudStore } from '@/stores/cloud.js'
-import { useSpStore } from '@/stores/sp.js'
-import { usePlansStore } from '@/stores/plans.js'
 import { useCurrency } from '@/hooks/utils'
 import useCloudPrices from '@/hooks/cloud/prices.js'
 
@@ -140,9 +138,6 @@ const emits = defineEmits(['update:tarification'])
 
 const i18n = useI18n()
 const { currency } = useCurrency()
-
-const spStore = useSpStore()
-const plansStore = usePlansStore()
 const cloudStore = useCloudStore()
 
 const product = inject('product', {})
@@ -152,22 +147,10 @@ const [priceOVH] = inject('usePriceOVH', () => [])()
 const sumOrder = ref()
 const checkBalance = inject('checkBalance', () => {})
 
-const provider = computed(() => {
-  const { sp } = cloudStore.locations.find(
-    ({ id }) => id === cloudStore.locationId
-  ) ?? {}
-
-  return spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? null
-})
-
-const plan = computed(() =>
-  plansStore.plans.find(({ uuid }) => uuid === cloudStore.planId) ?? {}
-)
-
 const addons = computed(() => {
   const addons = { ...priceOVH.addons }
 
-  if (plan.value.type?.includes('dedicated')) {
+  if (cloudStore.plan.type?.includes('dedicated')) {
     delete addons.disk
   }
 

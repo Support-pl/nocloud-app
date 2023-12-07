@@ -642,12 +642,14 @@ export default {
       if (this.renameNewName !== '') {
         const group = this.itemService?.instancesGroups.find((el) => el.sp === this.VM.sp)
         const instance = group?.instances.find((el) => el.uuid === this.VM.uuid)
+
+        this.isRenameLoading = true
+        instance.title = this.renameNewName
+
         const promise = (this.VM.server_on)
           ? this.$refs['open-instance'].sendAction('rename_vm', { vm_name: this.renameNewName })
           : this.updateService(this.itemService)
 
-        this.isRenameLoading = true
-        instance.title = this.renameNewName
         promise
           .then((result) => {
             if (result) {

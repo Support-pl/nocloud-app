@@ -39,32 +39,33 @@
 </template>
 
 <script setup>
-import { inject, computed } from 'vue'
+import { inject, ref, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCloudStore } from '@/stores/cloud.js'
 import imagesList from '@/components/cloud/create/images.vue'
 
 const props = defineProps({
-  images: { type: Array, required: true },
-  tarification: { type: String, required: true }
+  mode: { type: String, required: true },
+  productSize: { type: String, required: true }
 })
 
-const { authData, provider } = storeToRefs(useCloudStore())
+watch(() => props.productSize, setImages)
+onMounted(setImages)
+
+const { authData, plan } = storeToRefs(useCloudStore())
+
+const images = ref([])
 const [options, setOptions] = inject('useOptions', () => [])()
 const [price, setPrice] = inject('usePriceOVH', () => [])()
 
-const mode = computed(() => {
-  switch (props.tarification) {
-    case 'Annually':
-      return 'upfront12'
-    case 'Biennially':
-      return 'upfront24'
-    case 'Hourly':
-      return 'hourly'
-    default:
-      return 'default'
-  }
-})
+function setImages () {
+  const period = (props.mode === 'default') ? 'P1M' : 'P1Y'
+  const product = plan.value.products[`${period} ${props.productSize}`]
+  const { os } = product?.meta ?? {}
+
+  os?.sort()
+  images.value = os?.map((name) => ({ name, desc: name })) ?? []
+}
 
 function setOS (item, index) {
   if (item.warning) return
@@ -77,11 +78,11 @@ function setOS (item, index) {
     setPrice('addons.os', 0)
   }
 
-  setOptions('config.configuration.vps_os', item.name)
+  setOptions('config.configuration.dedicated_os', item.name)
 }
 
 function osPrice (prices) {
-  const addon = prices.find(({ pricingMode }) => pricingMode === mode.value)
+  const addon = prices.find(({ pricingMode }) => pricingMode === props.mode)
 
   return addon?.price.value ?? 0
 }
