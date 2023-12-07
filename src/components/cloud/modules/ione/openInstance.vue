@@ -514,10 +514,9 @@
             shape="round"
             size="large"
             :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3) || VM.data.lock"
+            @click="openVNC"
           >
-            <router-link :to="{ name: 'VNC', params: { uuid: $route.params.uuid } }">
-              VNC
-            </router-link>
+            VNC
           </a-button>
         </a-col>
       </a-row>
@@ -730,21 +729,21 @@ export default defineComponent({
 
           return {
             ...prev,
-            [key]: curr.price * this.VM.resources.drive_size / 1024
+            [key]: +(curr.price * this.VM.resources.drive_size / 1024).toFixed(2)
           }
         } else if (curr.key === 'ram') {
           const key = this.$t('ram')
 
           return {
             ...prev,
-            [key]: curr.price * this.VM.resources.ram / 1024
+            [key]: +(curr.price * this.VM.resources.ram / 1024).toFixed(2)
           }
         } else if (this.VM.resources[curr.key]) {
           const key = this.$t(curr.key.replace('_', ' '))
 
           return {
             ...prev,
-            [key]: curr.price * this.VM.resources[curr.key]
+            [key]: +(curr.price * this.VM.resources[curr.key]).toFixed(2)
           }
         }
         return prev
@@ -883,6 +882,9 @@ export default defineComponent({
     },
     mbToGb (mb) {
       return (mb / 1024).toFixed(1)
+    },
+    openVNC () {
+      this.$router.push({ name: 'VNC', params: { uuid: this.$route.params.uuid } })
     },
     handleOk (from) {
       this.VM.state.meta.state = 0

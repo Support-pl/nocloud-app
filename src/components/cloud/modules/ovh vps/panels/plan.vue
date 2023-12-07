@@ -217,8 +217,7 @@ function setResources (productKey, changeTarifs = true) {
 
   setOptions('cpu.size', +resources.cpu)
   setOptions('ram.size', resources.ram / 1024)
-  setOptions('disk.size', +resources.disk)
-  setOptions('disk.type', 'SSD')
+  setOptions('disk', { size: +resources.disk, type: 'SSD' })
 
   periods.forEach((period) => {
     if (period.pricingMode === props.mode) product = period
@@ -238,10 +237,13 @@ function setResources (productKey, changeTarifs = true) {
   setPrice('value', product.price.value)
   setPrice('addons', {})
 
-  setOptions('config.planCode', value)
-  setOptions('config.duration', product.duration)
-  setOptions('config.pricingMode', product.pricingMode)
-  setOptions('config.addons', [])
+  setOptions('config', {
+    ...options.config,
+    planCode: value,
+    duration: product.duration,
+    pricingMode: product.pricingMode,
+    addons: []
+  })
 }
 
 const { extra } = cloudStore.locations

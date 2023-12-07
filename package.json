@@ -21,7 +21,7 @@
     "js-cookie": "^3.0.5",
     "markdown-it": "^13.0.2",
     "markdown-it-emoji": "^2.0.2",
-    "moment": "^2.29.4",
+    "dayjs": "^1.11.10",
     "nocloud-ui": "^1.0.14",
     "nocloudjsrest": "^1.5.14",
     "pinia": "^2.1.7",

@@ -18,8 +18,8 @@ export const useTransactionsStore = defineStore('transactions', () => {
     transactions.value.filter(({ exec }) => {
       if (filter.value.length < 1) return true
 
-      const startOf = filter.value[0]._d.getTime() / 1000
-      const endOf = filter.value[1]._d.getTime() / 1000
+      const startOf = filter.value[0].toDate().getTime() / 1000
+      const endOf = filter.value[1].toDate().getTime() / 1000
 
       return exec > startOf && exec < endOf
     })
@@ -44,9 +44,10 @@ export const useTransactionsStore = defineStore('transactions', () => {
     filter,
     setAll,
 
-    async fetch (params) {
+    async fetch (params, force) {
       const records = []
 
+      if (force) allTransactions.value = {}
       for (let i = params.limit / 5 * params.page; i >= params.page; i--) {
         if (!allTransactions.value[i]) break
 

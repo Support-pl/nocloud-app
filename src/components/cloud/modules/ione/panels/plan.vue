@@ -1,5 +1,5 @@
 <template>
-  <template v-if="plan?.uuid">
+  <template v-if="cloudStore.plan?.uuid">
     <template v-for="(resource, key) in resources" :key="key">
       <a-row
         v-if="Array.isArray(resource) && resource.length > 0"
@@ -133,8 +133,6 @@
 
 <script setup>
 import { computed, inject, reactive, watch } from 'vue'
-import { useSpStore } from '@/stores/sp.js'
-import { usePlansStore } from '@/stores/plans.js'
 import { useCloudStore } from '@/stores/cloud.js'
 import { getPeriods } from '@/functions.js'
 import ioneDrive from '@/components/cloud/create/ioneDrive.vue'
@@ -146,10 +144,7 @@ const props = defineProps({
 })
 const emits = defineEmits(['update:periods', 'update:product-size'])
 
-const spStore = useSpStore()
-const plansStore = usePlansStore()
 const cloudStore = useCloudStore()
-
 const [options, setOptions] = inject('useOptions')()
 
 const filters = reactive({ cpu: [], ram: [] })
@@ -160,24 +155,12 @@ watch(() => props.plans, (value) => {
   emits('update:periods', getPeriods(value))
 })
 
-const provider = computed(() => {
-  const { sp } = cloudStore.locations.find(({ id }) =>
-    id === cloudStore.locationId
-  ) ?? {}
-
-  return spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? null
-})
-
-const plan = computed(() =>
-  plansStore.plans.find(({ uuid }) => uuid === cloudStore.planId)
-)
-
 const isProductsExist = computed(() =>
   props.products.length > 0
 )
 
 const resources = computed(() => {
-  const { highCPU, withAdministration } = provider.value?.vars ?? {}
+  const { highCPU, withAdministration } = cloudStore.provider?.vars ?? {}
   const cpu = []
   const ram = []
 
@@ -228,7 +211,7 @@ const filteredProducts = computed(() => {
 })
 
 function getProduct (product) {
-  const products = Object.values(plan.value.products)
+  const products = Object.values(cloudStore.plan.products)
 
   return products.find(({ title }) => title === product)?.resources
 }

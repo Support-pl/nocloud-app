@@ -1,33 +1,15 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-
-import { useSpStore } from '@/stores/sp.js'
-import { usePlansStore } from '@/stores/plans.js'
 import { useCloudStore } from '@/stores/cloud.js'
 
 function useCloudPanels (tarification, options, productSize) {
   const i18n = useI18n()
   const route = useRoute()
-
-  const spStore = useSpStore()
-  const plansStore = usePlansStore()
   const cloudStore = useCloudStore()
 
-  const provider = computed(() => {
-    const { sp } = cloudStore.locations.find(({ id }) =>
-      id === cloudStore.locationId
-    ) ?? {}
-
-    return spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? null
-  })
-
-  const plan = computed(() =>
-    plansStore.plans.find(({ uuid }) => uuid === cloudStore.planId)
-  )
-
   const region = computed(() => {
-    const { extra, title } = provider.value?.locations
+    const { extra, title } = cloudStore.provider?.locations
       .find(({ id }) => cloudStore.locationId.includes(id)) ?? {}
 
     if (!extra) return null
@@ -35,18 +17,18 @@ function useCloudPanels (tarification, options, productSize) {
   })
 
   const locationHeader = computed(() => {
-    if (!provider.value) {
+    if (!cloudStore.provider) {
       return ' '
     }
-    return (provider.value.type === 'ione')
-      ? ` (${provider.value.locations[0].title})`
+    return (cloudStore.provider.type === 'ione')
+      ? ` (${cloudStore.provider.locations[0].title})`
       : ` (${region.value.title})`
   })
 
   const planHeader = computed(() => {
-    if (provider.value && plan.value) {
-      if (provider.value.type !== 'ione') {
-        return ` (${productSize.value})`
+    if (cloudStore.provider && cloudStore.plan) {
+      if (cloudStore.provider.type !== 'ione') {
+        return (productSize.value) ? ` (${productSize.value})` : ' '
       }
 
       return (tarification.value === 'Hourly')
@@ -66,7 +48,7 @@ function useCloudPanels (tarification, options, productSize) {
     const pub = options.network.public
     const priv = options.network.private
 
-    if (!provider.value) {
+    if (!cloudStore.provider) {
       return ' '
     }
     if (pub.status && priv.status) {
@@ -82,8 +64,8 @@ function useCloudPanels (tarification, options, productSize) {
   })
 
   const isProductExist = computed(() => {
-    if (plan.value.type === 'ione') return
-    return !route.query.product && plan.value.type?.includes('dedicated')
+    if (cloudStore.plan.type === 'ione') return
+    return !route.query.product && cloudStore.plan.type?.includes('dedicated')
   })
 
   const panels = computed(() => ({
@@ -92,21 +74,21 @@ function useCloudPanels (tarification, options, productSize) {
     },
     plan: {
       title: `${i18n.t('Plan')}: ${planHeader.value}`,
-      disabled: (provider.value) ? null : 'disabled'
+      disabled: (cloudStore.provider) ? null : 'disabled'
     },
     os: {
       title: `${i18n.t('os')}: ${osHeader.value}`,
-      disabled: (!provider.value || !plan.value || isProductExist.value) ? 'disabled' : null
+      disabled: (!cloudStore.provider || !cloudStore.plan || isProductExist.value) ? 'disabled' : null
     },
     network: {
       title: `${i18n.t('Network')}: ${networkHeader.value}`,
-      disabled: (provider.value) ? null : 'disabled',
-      visible: false && plan.value.kind === 'STATIC'
+      disabled: (cloudStore.provider) ? null : 'disabled',
+      visible: false && cloudStore.plan.kind === 'STATIC'
     },
     addons: {
       title: `${i18n.t('Addons')}:`,
-      disabled: (!provider.value || !plan.value || isProductExist.value) ? 'disabled' : null,
-      visible: !['ione', 'ovh cloud'].includes(plan.value?.type)
+      disabled: (!cloudStore.provider || !cloudStore.plan || isProductExist.value) ? 'disabled' : null,
+      visible: !['ione', 'ovh cloud'].includes(cloudStore.plan?.type)
     }
   }))
 
