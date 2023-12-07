@@ -60,12 +60,16 @@ const [price, setPrice] = inject('usePriceOVH', () => [])()
 
 function setImages () {
   const period = (props.mode === 'default') ? 'P1M' : 'P1Y'
-  const product = plan.value.products[`${period} ${props.productSize}`]
+  const product = plan.value.products[`${period} ${options.config.planCode}`]
   const { os } = product?.meta ?? {}
 
   os?.sort()
   images.value = os?.map((name) => ({ name, desc: name })) ?? []
 }
+
+watch(images, (value) => {
+  if (value.length === 1) setOS(value[0], 0)
+})
 
 function setOS (item, index) {
   if (item.warning) return

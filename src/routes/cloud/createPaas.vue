@@ -152,6 +152,11 @@ export default {
       config: { addons: [], configuration: {} }
     })
 
+    watch(() => cloudStore.locationId, () => {
+      options.config = { configuration: {}, addons: [] }
+      priceOVH.addons = {}
+    })
+
     const filteredPlans = computed(() => {
       const locationItem = cloudStore.locations.find(({ id }) =>
         id === cloudStore.locationId
@@ -203,6 +208,7 @@ export default {
         key.includes(`/${cloudStore.plan.type}/panels/${name}.vue`)
       )
 
+      if (!components[result]) return {}
       return defineAsyncComponent(() => components[result]())
     }
 
