@@ -10,6 +10,7 @@ export const useCurrenciesStore = defineStore('currencies', () => {
   const whmcsCurrencies = ref([])
   const defaultCurrency = ref('USD')
   const unloginedCurrency = ref('USD')
+  const isLoading = ref(false)
 
   function setCurrencies (rates) {
     currencies.value = rates.map((el) => ({ ...el, id: `${el.from} ${el.to}` }))
@@ -34,7 +35,9 @@ export const useCurrenciesStore = defineStore('currencies', () => {
     setDefaultCurrency,
 
     async fetchCurrencies () {
+      if (isLoading.value) return
       try {
+        isLoading.value = true
         const response = await api.get('/billing/currencies/rates')
 
         setCurrencies(response.rates)
@@ -44,6 +47,8 @@ export const useCurrenciesStore = defineStore('currencies', () => {
       } catch (error) {
         console.error(error)
         throw error
+      } finally {
+        isLoading.value = false
       }
     },
     async fetchWhmcsCurrencies () {

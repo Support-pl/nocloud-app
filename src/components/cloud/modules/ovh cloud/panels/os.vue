@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, inject } from 'vue'
+import { defineAsyncComponent, inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
@@ -81,26 +81,13 @@ const plusIcon = defineAsyncComponent(
 
 const props = defineProps({
   images: { type: Array, required: true },
-  tarification: { type: String, required: true }
+  mode: { type: String, required: true }
 })
 
 const authStore = useAuthStore()
 const { authData } = storeToRefs(useCloudStore())
 const [options, setOptions] = inject('useOptions', () => [])()
 const [price, setPrice] = inject('usePriceOVH', () => [])()
-
-const mode = computed(() => {
-  switch (props.tarification) {
-    case 'Annually':
-      return 'upfront12'
-    case 'Biennially':
-      return 'upfront24'
-    case 'Hourly':
-      return 'hourly'
-    default:
-      return 'default'
-  }
-})
 
 function setOS (item, index) {
   if (item.warning) return
@@ -109,7 +96,7 @@ function setOS (item, index) {
 
   if (item.prices) {
     setPrice('addons.os', osPrice(item.prices))
-  } else if (price.value.addons.os !== 0) {
+  } else if (price.addons.os !== 0) {
     setPrice('addons.os', 0)
   }
 
@@ -117,7 +104,7 @@ function setOS (item, index) {
 }
 
 function osPrice (prices) {
-  const addon = prices.find(({ pricingMode }) => pricingMode === mode.value)
+  const addon = prices.find(({ pricingMode }) => pricingMode === props.mode)
 
   return addon?.price.value ?? 0
 }

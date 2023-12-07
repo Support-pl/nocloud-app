@@ -50,6 +50,7 @@
     "services": "услуги",
     "invoiceDate": "Дата счёта",
     "dueDate": "Дата оплаты",
+    "onetime": "одноразовая",
     "Choice payment": "Способ оплаты",
     "one time payment": "одноразовая оплата",
     "recurring payment": "регулярная оплата",

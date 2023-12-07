@@ -73,7 +73,7 @@ function setOS (item, index) {
 
   if (item.prices) {
     setPrice('addons.os', osPrice(item.prices))
-  } else if (price.value.addons.os !== 0) {
+  } else if (price.addons.os !== 0) {
     setPrice('addons.os', 0)
   }
 

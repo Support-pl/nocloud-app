@@ -227,12 +227,12 @@ watch(provider, async (uuid) => {
 
 function orderClickHandler () {
   const serviceItem = services.value.find(({ uuid }) => uuid === service.value)
-  const planItem = plans.value.find(({ uuid }) => uuid === plan.value)
 
   const instances = [{
     config: { user: authStore.userdata.uuid },
     title: getProducts.value.title,
-    billing_plan: planItem ?? {}
+    billing_plan: { uuid: plan.value },
+    product: ''
   }]
   const newGroup = {
     title: authStore.userdata.title + Date.now(),
@@ -241,10 +241,8 @@ function orderClickHandler () {
     instances
   }
 
-  if (planItem.kind === 'STATIC') instances[0].product = ''
-
   const info = (!service.value) ? newGroup : JSON.parse(JSON.stringify(serviceItem))
-  const group = info.instancesGroups?.find(({ type }) => type === 'openai')
+  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value)
 
   if (group) group.instances = [...group.instances, ...instances]
   else if (service.value) info.instancesGroups.push(newGroup)

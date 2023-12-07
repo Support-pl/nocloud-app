@@ -13,7 +13,7 @@
             <component :is="button.icon" />
           </div>
           <div class="button__title">
-            {{ $t(button.title) }}
+            {{ capitalize($t(button.title)) }}
           </div>
         </div>
       </div>

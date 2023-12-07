@@ -12,7 +12,7 @@
           @change="(value) => setAddon(value, addon[value], key)"
         >
           <a-select-option value="-1">
-            {{ $t('none') }}
+            {{ $t('ip.none') }}
           </a-select-option>
           <a-select-option v-for="(item, id) in addon" :key="id">
             {{ item.title }} ({{ addonPrice(item) }})
@@ -25,12 +25,15 @@
 </template>
 
 <script setup>
-import { inject, computed, watch } from 'vue'
+import { inject, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCurrency } from '@/hooks/utils'
 
 const props = defineProps({
   addons: { type: Object, required: true },
+  plans: { type: Array, default: () => [] },
+  productSize: { type: String, default: '' },
+  mode: { type: String, required: true },
   isFlavorsLoading: { type: Boolean, default: false }
 })
 
@@ -56,28 +59,15 @@ watch(() => props.addons, (value) => {
   })
 })
 
-const mode = computed(() => {
-  switch (props.tarification) {
-    case 'Annually':
-      return 'upfront12'
-    case 'Biennially':
-      return 'upfront24'
-    case 'Hourly':
-      return 'hourly'
-    default:
-      return 'default'
-  }
-})
-
 function setAddon (code, addon, key) {
-  const addonsPrices = JSON.parse(JSON.stringify(price.value.addons))
+  const addonsPrices = JSON.parse(JSON.stringify(price.addons))
   const addonsCodes = JSON.parse(JSON.stringify(options.config.addons))
 
   if (code === '-1') {
     delete addonsPrices[key]
     addonsCodes.splice(addonsCodes.indexOf(code), 1)
   } else {
-    const period = addon.periods.find(({ pricingMode }) => pricingMode === mode.value)
+    const period = addon.periods.find(({ pricingMode }) => pricingMode === props.mode)
 
     addonsPrices[key] = period.price.value
     addonsCodes.push(code)
@@ -94,7 +84,7 @@ function addonName (addons) {
 }
 
 function addonPrice ({ periods }) {
-  const period = periods.find(({ pricingMode }) => pricingMode === mode.value) ??
+  const period = periods.find(({ pricingMode }) => pricingMode === props.mode) ??
     { price: { value: 0 } }
   const price = +(period.price.value * currency.value.rate).toFixed(2)
 

@@ -509,7 +509,7 @@ export default {
       }
 
       const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
-      const group = info.instancesGroups?.find(({ type }) => type === 'empty')
+      const group = info.instancesGroups?.find(({ sp }) => sp === this.provider)
 
       if (group) group.instances = [...group.instances, ...instances]
       else if (this.service) info.instancesGroups.push(newGroup)
