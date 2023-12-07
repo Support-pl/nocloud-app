@@ -185,7 +185,7 @@ const resources = computed(() => {
 })
 
 watch(resources, (value) => {
-  if (value.length < 1) return
+  if (value.products.length < 1) return
 
   const dataString = (localStorage.getItem('data'))
     ? localStorage.getItem('data')
