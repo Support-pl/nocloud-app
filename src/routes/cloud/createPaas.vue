@@ -3,7 +3,7 @@
     <div class="newCloud">
       <div class="newCloud__inputs order__field">
         <a-collapse
-          v-if="plan.type === 'ione'"
+          v-if="plan.type === 'ione' || plan.type === 'ovh vps'"
           v-model:active-key="activeKey"
           accordion
           style="border-radius: 20px"
@@ -66,10 +66,12 @@
               <component
                 :is="panel"
                 v-else
+                v-model:product-size="productSize"
                 :plans="filteredPlans"
-                :get-products="getProducts"
-                :product-size="productSize"
-                @set-data="setData"
+                :products="products"
+                :product-key="productKey"
+                :mode="mode"
+                @update:periods="periods = $event"
               />
             </a-collapse-panel>
           </template>
@@ -89,7 +91,7 @@
           :plans="filteredPlans"
           :get-plan="plan"
           :options="options"
-          :get-products="getProducts"
+          :get-products="products"
           :product-size="productSize"
           :tarification="tarification"
           :vm-name="authData.vmName"
@@ -162,6 +164,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 
+import useProducts from '@/hooks/cloud/products.js'
 import useCloudPanels from '@/hooks/cloud/panels.js'
 import notification from '@/mixins/notification.js'
 import { setValue } from '@/functions.js'
@@ -236,33 +239,14 @@ export default {
       )
     })
 
-    const getProducts = computed(() => {
-      const isDynamic = cloudStore.plan.kind === 'DYNAMIC'
-      const isIone = cloudStore.plan.type === 'ione'
-
-      const { products } = (isDynamic && isIone)
-        ? plansStore.plans.find(({ uuid }) =>
-          uuid === cloudStore.plan.meta?.linkedPlan
-        ) ?? {}
-        : cloudStore.plan ?? {}
-
-      return Object.values(products ?? {})
-        .filter((product) => {
-          const isEqual = tarification.value === getTarification(product.period)
-
-          if (!product.public) return false
-          return isEqual || cloudStore.plan.kind === 'DYNAMIC'
-        })
-        .sort((a, b) => a.sorter - b.sorter)
-        .map(({ title }) => title)
-    })
+    const { mode, productKey, products } = useProducts(options, tarification, productSize)
 
     const isProductExist = computed(() =>
       !route.query.product && cloudStore.plan.type?.includes('dedicated')
     )
 
     const components = import.meta.glob('@/components/cloud/modules/*/panels/*.vue')
-    const { panels } = useCloudPanels(tarification, options)
+    const { panels } = useCloudPanels(tarification, options, productSize)
     const panelsComponents = ref(
       Object.keys(panels.value).reduce((result, key) =>
         ({ ...result, [key]: markRaw(getComponent(key)) }), {}
@@ -283,31 +267,12 @@ export default {
       return defineAsyncComponent(() => components[result]())
     }
 
-    function getTarification (timestamp) {
-      const day = 3600 * 24
-      const month = day * 30
-      const year = day * 365
-
-      switch (+timestamp) {
-        case 3600:
-          return 'Hourly'
-        case day:
-          return 'Daily'
-        case month:
-          return 'Monthly'
-        case year:
-          return 'Annually'
-        case year * 2:
-          return 'Biennially'
-      }
-    }
-
     function setOptions (path, value) {
       setValue(path, value, options)
     }
 
     function setPrice (path, value) {
-      setValue(path, value, priceOVH.value)
+      setValue(path, value, priceOVH)
     }
 
     function nextStep () {
@@ -338,9 +303,10 @@ export default {
 
       cachedPlans: ref({}),
       filteredPlans,
-      getProducts,
       tarification,
-      getTarification,
+      products,
+      productKey,
+      mode,
 
       product,
       priceOVH,
@@ -409,7 +375,7 @@ export default {
         })
 
         this.planId = item.uuid
-        this.setData({ key: 'productSize', value: this.getProducts[1] ?? this.getProducts[0] })
+        this.setData({ key: 'productSize', value: this.products[1] ?? this.products[0] })
       } else if (this.plan.type?.includes('cloud')) {
         setTimeout(() => {
           const period = (this.options.config.monthlyBilling) ? 'P1M' : 'P1H'

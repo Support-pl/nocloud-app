@@ -6,7 +6,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useCloudStore } from '@/stores/cloud.js'
 
-function useCloudPanels (tarification, options, productName) {
+function useCloudPanels (tarification, options, productSize) {
   const i18n = useI18n()
   const route = useRoute()
 
@@ -45,7 +45,10 @@ function useCloudPanels (tarification, options, productName) {
 
   const planHeader = computed(() => {
     if (provider.value && plan.value) {
-      if (productName) return productName
+      if (provider.value.type !== 'ione') {
+        return ` (${productSize.value})`
+      }
+
       return (tarification.value === 'Hourly')
         ? ` (VDC ${i18n.t('Pay-as-you-Go')})`
         : ` (VDS ${i18n.t('Pre-Paid')})`
@@ -93,7 +96,7 @@ function useCloudPanels (tarification, options, productName) {
     },
     os: {
       title: `${i18n.t('os')}: ${osHeader.value}`,
-      disabled: (!provider.value || !plan.value) ? 'disabled' : null
+      disabled: (!provider.value || !plan.value || isProductExist.value) ? 'disabled' : null
     },
     network: {
       title: `${i18n.t('Network')}: ${networkHeader.value}`,
@@ -102,10 +105,11 @@ function useCloudPanels (tarification, options, productName) {
     },
     addons: {
       title: `${i18n.t('Addons')}:`,
-      disabled: (!provider.value || !plan.value || isProductExist) ? 'disabled' : null,
+      disabled: (!provider.value || !plan.value || isProductExist.value) ? 'disabled' : null,
       visible: !['ione', 'ovh cloud'].includes(plan.value?.type)
     }
   }))
+
   return { panels }
 }
 

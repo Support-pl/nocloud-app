@@ -207,7 +207,6 @@ const getModuleProductBtn = computed(() => {
   )
 
   if (meta?.renew === false) return
-  if (serviceType === undefined) return
   if (props.instance.date === 0) return
   if (props.instance.server_on) return
   if (!(isActive && components[component])) return

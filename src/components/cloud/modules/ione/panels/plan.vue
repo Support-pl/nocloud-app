@@ -33,19 +33,19 @@
 
     <a-divider style="margin: 10px 0" />
 
-    <div v-if="getProducts.length > 5" class="newCloud__drive">
+    <div v-if="products.length > 5" class="newCloud__drive">
       <ione-drive :is-products-exist="isProductsExist" />
     </div>
 
     <a-slider
-      v-if="getProducts.length > 1 && getProducts.length < 6"
+      v-if="products.length > 1 && products.length < 6"
       style="margin-top: 10px"
-      :marks="{ ...getProducts }"
+      :marks="{ ...products }"
       :tip-formatter="null"
-      :max="getProducts.length - 1"
+      :max="products.length - 1"
       :min="0"
-      :value="getProducts.indexOf(productSize)"
-      @update:value="emits('setData', { key: 'productSize', value: getProducts[$event] })"
+      :value="products.indexOf(productSize)"
+      @update:value="emits('update:product-size', products[$event])"
     />
 
     <div v-else class="order__grid">
@@ -54,7 +54,7 @@
         :key="product"
         class="order__grid-item"
         :class="{ 'order__grid-item--active': productSize === product }"
-        @click="emits('setData', { key: 'productSize', value: product })"
+        @click="emits('update:product-size', product)"
       >
         <h1>{{ product }}</h1>
         <div>
@@ -67,11 +67,11 @@
     </div>
 
     <a-row
-      v-if="getProducts.length < 6"
+      v-if="products.length < 6"
       class="newCloud__prop"
       justify="space-between"
       align="middle"
-      :style="{ marginTop: (!getProducts.length < 2) ? null : '50px' }"
+      :style="{ marginTop: (!products.length < 2) ? null : '50px' }"
     >
       <a-col> <span style="display: inline-block; width: 70px">CPU:</span> </a-col>
       <transition name="textchange" mode="out-in">
@@ -94,7 +94,7 @@
     </a-row>
 
     <a-row
-      v-if="getProducts.length < 6"
+      v-if="products.length < 6"
       class="newCloud__prop"
       justify="space-between"
       align="middle"
@@ -119,7 +119,7 @@
       </transition>
     </a-row>
 
-    <div v-if="getProducts.length < 6" class="newCloud__drive">
+    <div v-if="products.length < 6" class="newCloud__drive">
       <ione-drive :is-products-exist="isProductsExist" />
     </div>
   </template>
@@ -141,10 +141,10 @@ import ioneDrive from '@/components/cloud/create/ioneDrive.vue'
 
 const props = defineProps({
   plans: { type: Array, required: true },
-  getProducts: { type: Array, required: true },
+  products: { type: Array, required: true },
   productSize: { type: String, required: true }
 })
-const emits = defineEmits(['setData'])
+const emits = defineEmits(['update:periods', 'update:product-size'])
 
 const spStore = useSpStore()
 const plansStore = usePlansStore()
@@ -155,9 +155,9 @@ const [options, setOptions] = inject('useOptions')()
 const filters = reactive({ cpu: [], ram: [] })
 const prefixes = reactive({ cpu: 'cores', ram: 'Gb' })
 
-emits('setData', { key: 'periods', value: getPeriods(props.plans) })
+emits('update:periods', getPeriods(props.plans))
 watch(() => props.plans, (value) => {
-  emits('setData', { key: 'periods', value: getPeriods(value) })
+  emits('update:periods', getPeriods(value))
 })
 
 const provider = computed(() => {
@@ -173,7 +173,7 @@ const plan = computed(() =>
 )
 
 const isProductsExist = computed(() =>
-  props.getProducts.length > 0
+  props.products.length > 0
 )
 
 const resources = computed(() => {
@@ -181,10 +181,10 @@ const resources = computed(() => {
   const cpu = []
   const ram = []
 
-  if (props.getProducts.length < 6) return { cpu, ram }
+  if (props.products.length < 6) return { cpu, ram }
   props.plans.forEach(({ products }) => {
     Object.values(products).forEach(({ resources, title }) => {
-      if (!props.getProducts.includes(title)) return
+      if (!props.products.includes(title)) return
       if (!cpu.includes(resources.cpu)) {
         cpu.push(resources.cpu)
       }
@@ -213,7 +213,7 @@ const filteredProducts = computed(() => {
 
   props.plans.forEach(({ products }) => {
     Object.values(products).forEach(({ resources, title }) => {
-      if (!props.getProducts.includes(title)) return
+      if (!props.products.includes(title)) return
       const byCpu = resources.cpu >= filters.cpu.at(0) &&
         resources.cpu <= filters.cpu.at(-1)
 

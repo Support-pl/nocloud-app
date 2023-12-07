@@ -1,5 +1,5 @@
 <template>
-  <div v-if="images.length > 0" class="newCloud__option-field">
+  <div v-if="images.length > 0 || !isLoading" class="newCloud__option-field">
     <a-row>
       <a-col :xs="24" :sm="10">
         <a-form no-style autocomplete="off" layout="vertical">
@@ -34,7 +34,7 @@
     </a-row>
 
     <images-list
-      v-if="provider"
+      v-if="cloudStore.provider"
       :images="images"
       :os-name="options.os.name"
       :os-price="osPrice"
@@ -43,7 +43,7 @@
   </div>
 
   <a-alert
-    v-else-if="!isFlavorsLoading"
+    v-else-if="!(isFlavorsLoading || isLoading)"
     show-icon
     type="warning"
     :message="$t('No OS. Choose another plan')"
@@ -52,34 +52,91 @@
 </template>
 
 <script setup>
-import { inject, computed } from 'vue'
+import { inject, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
+
 import { useCloudStore } from '@/stores/cloud.js'
+import api from '@/api.js'
 import imagesList from '@/components/cloud/create/images.vue'
 
 const props = defineProps({
-  images: { type: Array, required: true },
-  tarification: { type: String, required: true },
+  mode: { type: String, required: true },
+  productKey: { type: String, required: true },
+  productSize: { type: String, required: true },
   isFlavorsLoading: { type: Boolean, default: false }
 })
 
-const { authData, provider } = storeToRefs(useCloudStore())
+const cloudStore = useCloudStore()
+const images = ref([])
+const catalog = ref({})
+const isLoading = ref(false)
+
+const { authData } = storeToRefs(useCloudStore())
 const [options, setOptions] = inject('useOptions', () => [])()
 const [price, setPrice] = inject('usePriceOVH', () => [])()
 
-const mode = computed(() => {
-  switch (props.tarification) {
-    case 'Annually':
-      return 'upfront12'
-    case 'Biennially':
-      return 'upfront24'
-    case 'Hourly':
-      return 'hourly'
-    default:
-      return 'default'
+watch(() => props.productSize, setImages)
+if (props.productSize) setImages()
+
+async function setImages () {
+  const planProducts = Object.entries(cloudStore.plan.products ?? {}).filter(
+    ([key]) => key.includes(props.productKey)
+  )
+
+  if (!planProducts[0]) return
+  const { os } = planProducts[0][1].meta
+
+  os.sort()
+  try {
+    const filteredImages = await filterImages(os)
+
+    changeOS(filteredImages, planProducts)
+  } catch (error) {
+    changeOS(os, planProducts)
   }
-})
+}
+
+function changeOS (list, products) {
+  images.value = list.map((el) => ({ name: el, desc: el }))
+  images.value.forEach(({ name }, i, array) => {
+    if (name.toLowerCase().includes('windows')) {
+      array[i].prices = products.map(([key, { meta }]) => ({
+        price: { value: meta.windows },
+        duration: key.split(' ')[0],
+        pricingMode: (key.split(' ')[0] === 'P1Y') ? 'upfront12' : 'default'
+      }))
+    }
+  })
+}
+
+async function filterImages (images) {
+  let response = null
+
+  try {
+    isLoading.value = true
+    if (catalog.value.plans) {
+      response = { meta: { catalog: catalog.value } }
+    } else {
+      response = await api.servicesProviders.action(
+        { action: 'get_plans', uuid: cloudStore.provider.uuid }
+      )
+
+      catalog.value = response.meta.catalog
+    }
+  } catch (error) {
+    console.error(error)
+  } finally {
+    isLoading.value = false
+  }
+
+  const { configurations } = response.meta.catalog.plans.find(
+    ({ planCode }) => planCode === props.productKey
+  )
+  const os = configurations[1].values
+
+  return images.filter((image) => os.includes(image))
+}
 
 function setOS (item, index) {
   if (item.warning) return
@@ -88,7 +145,7 @@ function setOS (item, index) {
 
   if (item.prices) {
     setPrice('addons.os', osPrice(item.prices))
-  } else if (price.value.addons.os !== 0) {
+  } else if (price.addons.os !== 0) {
     setPrice('addons.os', 0)
   }
 
@@ -96,7 +153,7 @@ function setOS (item, index) {
 }
 
 function osPrice (prices) {
-  const addon = prices.find(({ pricingMode }) => pricingMode === mode.value)
+  const addon = prices.find(({ pricingMode }) => pricingMode === props.mode)
 
   return addon?.price.value ?? 0
 }

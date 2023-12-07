@@ -10,26 +10,26 @@
       style="margin-bottom: 15px"
       align="middle"
     >
-      <a-col v-if="resources.plans.length < 6 && resources.plans.length > 1" span="24">
+      <a-col v-if="resources.products.length < 6 && resources.products.length > 1" span="24">
         <a-slider
           style="margin-top: 10px"
-          :marks="{ ...resources.plans }"
+          :marks="{ ...resources.products }"
           :tip-formatter="null"
-          :max="resources.plans.length - 1"
+          :max="resources.products.length - 1"
           :min="0"
-          :value="resources.plans.indexOf(plan)"
-          @change="(i) => plan = resources.plans[i]"
+          :value="resources.products.indexOf(product)"
+          @change="(i) => product = resources.products[i]"
         />
       </a-col>
 
       <a-col v-else span="24">
         <div class="order__grid">
           <div
-            v-for="provider of resources.plans"
+            v-for="provider of resources.products"
             :key="provider"
             class="order__slider-item"
-            :class="{ 'order__slider-item--active': plan === provider }"
-            @click="plan = provider"
+            :class="{ 'order__slider-item--active': product === provider }"
+            @click="product = provider"
           >
             {{ provider }}
           </div>
@@ -68,7 +68,7 @@
           :min="0"
           :value="resources.ram.indexOf(options.ram.size)"
           @change="(i) => setOptions('ram.size', resources.ram[i])"
-          @after-change="setResources(planKey)"
+          @after-change="setResources(productKey)"
         />
       </a-col>
       <transition name="textchange" mode="out-in">
@@ -91,7 +91,7 @@
           :min="0"
           :value="resources.disk.indexOf(parseInt(diskSize))"
           @change="(i) => setOptions('disk.size', resources.disk[i] * 1024)"
-          @after-change="setResources(planKey)"
+          @after-change="setResources(productKey)"
         />
       </a-col>
       <a-col class="changing__field" :sm="3" :xs="18" style="text-align: right">
@@ -102,7 +102,9 @@
 </template>
 
 <script setup>
-import { ref, inject, defineAsyncComponent, computed } from 'vue'
+import { ref, inject, defineAsyncComponent, computed, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
+import { useCloudStore } from '@/stores/cloud.js'
 
 const loadingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LoadingOutlined')
@@ -112,24 +114,63 @@ const leftIcon = defineAsyncComponent(
 )
 
 const props = defineProps({
-  plans: { type: Array, required: true },
-  planKey: { type: String, required: true },
-  tarification: { type: String, required: true },
+  plans: { type: Array, default: () => [] },
+  products: { type: Array, required: true },
+  productKey: { type: String, required: true, default: '' },
+  productSize: { type: String, required: true },
+  mode: { type: String, required: true },
   isFlavorsLoading: { type: Boolean, default: false }
 })
-const emits = defineEmits(['setData'])
+const emits = defineEmits(['update:periods', 'update:product-size'])
 
+const route = useRoute()
+const cloudStore = useCloudStore()
 const [options, setOptions] = inject('useOptions', () => [])()
 const [, setPrice] = inject('usePriceOVH', () => [])()
-const plan = ref('')
+const product = ref('')
+
+watch(product, (value) => {
+  const product = props.products.find(({ group }) => group === value)
+
+  emits('update:product-size', value)
+  setResources(product?.value)
+})
+
+watch(() => options.ram.size, async (size) => {
+  await nextTick()
+  const plan = props.products.find(({ value }) => value === props.productKey)
+
+  if (plan) return
+  const { resources } = props.products.find((el) =>
+    el.group === product.value && el.resources.ram / 1024 === size
+  ) ?? {}
+
+  setOptions('disk.size', resources.disk)
+})
+
+watch(() => options.disk.size, async (size) => {
+  await nextTick()
+  const plan = props.products.find(({ value }) => value === props.productKey)
+
+  if (plan) return
+  const { resources } = props.products.find((el) =>
+    el.group === product.value && el.resources.disk === size
+  ) ?? {}
+
+  setOptions('ram.size', resources.ram / 1024)
+})
+
+watch(() => props.mode, () => {
+  setResources(props.productKey, false)
+})
 
 const resources = computed(() => {
-  const groups = new Set(props.plans.map(({ group }) => group))
+  const groups = new Set(props.products.map(({ group }) => group))
 
   const ram = new Set()
   const disk = new Set()
 
-  const filteredPlans = props.plans.filter(({ group }) => group === plan.value)
+  const filteredPlans = props.products.filter(({ group }) => group === product.value)
 
   filteredPlans.forEach(({ resources }) => {
     ram.add(resources.ram / 1024)
@@ -137,22 +178,27 @@ const resources = computed(() => {
   })
 
   return {
-    plans: Array.from(groups),
+    products: Array.from(groups),
     ram: Array.from(ram).sort((a, b) => a - b),
     disk: Array.from(disk).sort((a, b) => a - b)
   }
 })
 
-const mode = computed(() => {
-  switch (props.tarification) {
-    case 'Annually':
-      return 'upfront12'
-    case 'Biennially':
-      return 'upfront24'
-    case 'Hourly':
-      return 'hourly'
-    default:
-      return 'default'
+watch(resources, (value) => {
+  if (value.length < 1) return
+
+  const dataString = (localStorage.getItem('data'))
+    ? localStorage.getItem('data')
+    : route.query.data ?? '{}'
+
+  if (dataString.includes('productSize')) {
+    const data = JSON.parse(dataString)
+
+    product.value = data.productSize
+  } else if (product.value === '') {
+    setTimeout(() => {
+      product.value = resources.value.products[1] ?? resources.value.products[0]
+    })
   }
 })
 
@@ -162,12 +208,12 @@ const diskSize = computed(() => {
   return (size >= 1) ? `${size} Gb` : `${options.disk.size} Mb`
 })
 
-function setResources (planKey, changeTarifs = true) {
-  const { periods, value, resources } = props.plans.find((el) => el.value === planKey) ?? {}
+function setResources (productKey, changeTarifs = true) {
+  const { periods, value, resources } = props.products.find((el) => el.value === productKey) ?? {}
   if (!value) return
 
   const tarifs = []
-  let plan = periods[0]
+  let product = periods[0]
 
   setOptions('cpu.size', +resources.cpu)
   setOptions('ram.size', resources.ram / 1024)
@@ -175,7 +221,7 @@ function setResources (planKey, changeTarifs = true) {
   setOptions('disk.type', 'SSD')
 
   periods.forEach((period) => {
-    if (period.pricingMode === mode.value) plan = period
+    if (period.pricingMode === props.mode) product = period
     switch (period.pricingMode) {
       case 'upfront12':
         tarifs.push({ value: 'Annually', label: 'annually' })
@@ -188,14 +234,20 @@ function setResources (planKey, changeTarifs = true) {
     }
   })
 
-  if (changeTarifs) emits('setData', { key: 'periods', value: tarifs })
-  setPrice('value', plan.price.value)
+  if (changeTarifs) emits('update:periods', tarifs)
+  setPrice('value', product.price.value)
   setPrice('addons', {})
 
   setOptions('config.planCode', value)
-  setOptions('config.duration', plan.duration)
-  setOptions('config.pricingMode', plan.pricingMode)
+  setOptions('config.duration', product.duration)
+  setOptions('config.pricingMode', product.pricingMode)
+  setOptions('config.addons', [])
 }
+
+const { extra } = cloudStore.locations
+  .find(({ id }) => cloudStore.locationId.includes(id)) ?? {}
+
+setOptions('config.configuration.vps_datacenter', extra.region)
 </script>
 
 <script>

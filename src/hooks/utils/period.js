@@ -13,6 +13,7 @@ function usePeriod () {
       let period = ''
       let count = 0
 
+      if (timestamp === 0) return i18n.t('onetime')
       if (timestamp / hour < 24 && timestamp >= hour) {
         period = 'hour'
         count = timestamp / hour

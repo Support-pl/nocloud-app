@@ -554,12 +554,11 @@ export default {
     },
     async orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = Object.keys(this.products).map((domain) => ({
         resources: { ...this.resources, user: this.form, domain },
         title: `Domain - ${domain}`,
-        billing_plan: plan ?? {}
+        billing_plan: { uuid: this.plan }
       }))
       const newGroup = {
         title: this.userdata.title + Date.now(),
@@ -569,7 +568,7 @@ export default {
       }
 
       const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
-      const group = info.instancesGroups?.find(({ type }) => type === 'opensrs')
+      const group = info.instancesGroups?.find(({ sp }) => sp === this.provider)
 
       if (group) group.instances = [...group.instances, ...instances]
       else if (this.service) info.instancesGroups.push(newGroup)

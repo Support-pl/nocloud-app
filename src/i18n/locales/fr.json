@@ -44,6 +44,7 @@
     "services": "Prestations de service",
     "invoiceDate": "Date de commande",
     "dueDate": "Paiement dû",
+    "onetime": "unique",
     "Choice payment": "Choisissez le paiement",
     "Information": "Renseignements",
     "It’s empty...": "Aucune information n'est encore disponible.",
