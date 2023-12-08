@@ -25,7 +25,7 @@ const isPromoVisible = computed(() =>
 </script>
 
 <script>
-export default { name: 'PromoPage' }
+export default { name: 'PromoBlock' }
 </script>
 
 <style scoped>

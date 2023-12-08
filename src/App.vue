@@ -123,14 +123,14 @@ window.addEventListener('message', ({ data, origin }) => {
   authStore.fetchBillingData()
 })
 
-onMounted(() => {
-  if (!window.opener) return
-  window.opener.postMessage('ready', '*')
-  window.opener = null
-})
-
 router.beforeEach((to, _, next) => {
   const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined)
+
+  if (localStorage.getItem('oauth')) {
+    appStore.isButtonsVisible = false
+  } else {
+    appStore.isButtonsVisible = true
+  }
 
   if (mustBeLoggined && !authStore.isLogged) {
     next({ name: 'login' })
@@ -145,21 +145,28 @@ router.beforeEach((to, _, next) => {
   } else next()
 })
 
-const lang = route.query.lang ?? localStorage.getItem('lang')
-
 authStore.load()
-if (lang) i18n.locale = lang
 if (authStore.isLogged) authStore.fetchUserData()
 
 onMounted(async () => {
+  const lang = route.query.lang ?? localStorage.getItem('lang')
+
+  if (lang) i18n.locale.value = lang
+  if (window.opener) {
+    window.opener.postMessage('ready', '*')
+    window.opener = null
+  }
   await router.isReady()
 
   const mustUnloggined = route.meta.mustBeUnloggined && authStore.isLogged
   const isIncluded = ['cabinet', 'settings'].includes(route.name)
-  const { firstname } = await authStore.fetchBillingData()
+  const { firstname, id } = await authStore.fetchBillingData()
 
   if (firstname && localStorage.getItem('oauth')) {
     localStorage.removeItem('oauth')
+    appStore.isButtonsVisible = true
+  } else if (!id) {
+    appStore.isButtonsVisible = false
   }
 
   if (route.meta?.mustBeLoggined && !authStore.isLogged) {
@@ -168,10 +175,6 @@ onMounted(async () => {
     router.replace('cabinet')
   } else if (mustUnloggined) {
     router.replace('/')
-  }
-
-  if (route.query.lang && route.query.lang !== i18n.locale) {
-    i18n.locale = route.query.lang
   }
 })
 

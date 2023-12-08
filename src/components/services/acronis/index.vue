@@ -116,7 +116,7 @@
         </a-row>
       </div>
 
-      <promo-page class="order__promo" />
+      <promo-block class="order__promo" />
     </div>
   </div>
 </template>
@@ -136,11 +136,11 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
-import promoPage from '@/components/ui/promo.vue'
+import promoBlock from '@/components/ui/promo.vue'
 
 export default {
   name: 'AcronisComponent',
-  components: { passwordMeter, selectsToCreate, promoPage },
+  components: { passwordMeter, selectsToCreate, promoBlock },
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()
@@ -327,7 +327,6 @@ export default {
     },
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const items = { local_storage: 1 }
       const instances = [{
@@ -340,7 +339,8 @@ export default {
           password: this.options.password
         },
         title: this.getProducts.title,
-        billing_plan: plan ?? {}
+        billing_plan: { uuid: this.plan },
+        product: this.options.size
       }]
 
       Object.entries(this.config).forEach(([key, value]) => {
@@ -357,10 +357,8 @@ export default {
         instances
       }
 
-      if (plan.kind === 'STATIC') instances[0].product = this.options.size
-
       const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
-      const group = info.instancesGroups?.find(({ type }) => type === 'acronis')
+      const group = info.instancesGroups?.find(({ sp }) => sp === this.provider)
 
       if (group) group.instances = [...group.instances, ...instances]
       else if (this.service) info.instancesGroups.push(newGroup)

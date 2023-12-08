@@ -20,7 +20,6 @@
 
       <div class="order__calculate order__field">
         <selects-to-create
-          v-if="services.length > 1 || plans.length > 1 || sp.length > 1 || namespacesStore.namespaces.length > 1"
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
@@ -84,7 +83,7 @@
         </a-row>
       </div>
 
-      <promo-page class="order__promo" />
+      <promo-block class="order__promo" />
     </div>
   </div>
 </template>
@@ -107,7 +106,7 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
-import promoPage from '@/components/ui/promo.vue'
+import promoBlock from '@/components/ui/promo.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -228,24 +227,22 @@ watch(provider, async (uuid) => {
 
 function orderClickHandler () {
   const serviceItem = services.value.find(({ uuid }) => uuid === service.value)
-  const planItem = plans.value.find(({ uuid }) => uuid === plan.value)
 
   const instances = [{
     config: { user: authStore.userdata.uuid },
     title: getProducts.value.title,
-    billing_plan: planItem ?? {}
+    billing_plan: { uuid: plan.value },
+    product: ''
   }]
   const newGroup = {
     title: authStore.userdata.title + Date.now(),
-    type: sp.value.type,
-    sp: sp.value.uuid,
+    type: 'openai',
+    sp: provider.value,
     instances
   }
 
-  if (planItem.kind === 'STATIC') instances[0].product = ''
-
   const info = (!service.value) ? newGroup : JSON.parse(JSON.stringify(serviceItem))
-  const group = info.instancesGroups?.find(({ type }) => type === 'openai')
+  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value)
 
   if (group) group.instances = [...group.instances, ...instances]
   else if (service.value) info.instancesGroups.push(newGroup)

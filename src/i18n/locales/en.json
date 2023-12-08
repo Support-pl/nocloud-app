@@ -50,6 +50,7 @@
     "services": "Services",
     "invoiceDate": "Order Date",
     "dueDate": "Payment Date",
+    "onetime": "one-time",
     "Choice payment": "Choose payment",
     "one time payment": "one time payment",
     "recurring payment": "recurring payment",

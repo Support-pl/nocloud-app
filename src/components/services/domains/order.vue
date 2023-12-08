@@ -3,11 +3,7 @@
     <div class="order-cart">
       <div class="order__inputs order__field-cart">
         <div class="order_option">
-          <a-row
-            class="order_option__steps"
-            type="flex"
-            justify="center"
-          >
+          <a-row class="order_option__steps" justify="center">
             <a-col :span="16">
               <!--TODO: add finish status if cart (watch to cart)-->
               <a-steps>
@@ -28,7 +24,7 @@
             <a-col :span="2" class="badge-wrapper">
               <a-badge
                 :count="itemsInCart"
-                :offset="[-25,-2]"
+                :offset="[0, -5]"
                 show-zero
                 :number-style="{
                   backgroundColor: 'var(--bright_font)',
@@ -39,7 +35,7 @@
             </a-col>
           </a-row>
 
-          <a-row :gutter="[10, 10]" type="flex" align="bottom">
+          <a-row :gutter="[10, 10]" align="bottom">
             <a-col span="12">
               <a-row :gutter="[10, 10]">
                 <a-col>
@@ -67,26 +63,30 @@
             </a-col>
             <a-col span="12">
               <a-row :gutter="[10, 10]">
-                <a-col>{{ capitalize($t('advanced options')) }}:</a-col>
-                <a-col>
-                  <a-switch v-model:checked="resources.auto_renew" />
+                <a-col span="24">
+                  {{ capitalize($t('advanced options')) }}:
+                </a-col>
+                <a-col span="24">
+                  <a-switch v-model:checked="resources.auto_renew" size="small" />
                   {{ capitalize($t('domain_product.auto_renew')) }}
                 </a-col>
-                <a-col>
-                  <a-switch v-model:checked="resources.who_is_privacy" />
+                <a-col span="24">
+                  <a-switch v-model:checked="resources.who_is_privacy" size="small" />
                   {{ capitalize($t('domain_product.who_is_privacy')) }} (3$)
                 </a-col>
-                <a-col>
-                  <a-switch v-model:checked="resources.lock_domain" />
+                <a-col span="24">
+                  <a-switch v-model:checked="resources.lock_domain" size="small" />
                   {{ capitalize($t('domain_product.lock_domain')) }}
                 </a-col>
               </a-row>
             </a-col>
           </a-row>
 
-          <a-form ref="form" :model="form">
+          <a-form ref="form" layout="vertical" :model="form">
             <a-row :gutter="[15, 10]" style="margin-top: 15px">
-              <a-col>{{ capitalize($t('user data')) }}:</a-col>
+              <a-col span="24">
+                {{ capitalize($t('user data')) }}:
+              </a-col>
               <a-col :xs="24" :sm="12">
                 <a-form-item name="first_name" :label="$t('clientinfo.firstname')" :rules="rules.req">
                   <a-input v-model:value="form.first_name" />
@@ -177,9 +177,9 @@
                 </span>
               </a-descriptions-item>
               <a-descriptions-item :span="3">
-                <span class="description-body__domain-cost">
+                <span class="description-body__domain-name">
                   {{ products[domain.name] && products[domain.name][resources.period] }}
-                  {{ userdata.currency }}
+                  {{ currency.code }}
                 </span>
               </a-descriptions-item>
               <a-descriptions-item :span="2">
@@ -236,7 +236,7 @@
       </div>
 
       <div class="order__calculate order__field-cart">
-        <a-row type="flex" justify="space-around" style="margin-top: 20px">
+        <a-row justify="space-around" style="margin-top: 20px">
           <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
             {{ $t('Pay period') }}:
           </a-col>
@@ -265,17 +265,17 @@
           {{ $t('Total') }}:
         </a-divider>
 
-        <a-row type="flex" justify="space-around">
+        <a-row justify="space-around">
           <a-col v-if="!fetchLoading" style="font-size: 1.5rem">
             {{ getProducts().pricing[resources.period] }}
-            {{ getProducts().pricing.suffix }}
+            {{ currency.code }}
           </a-col>
           <a-col v-else>
             <div class="loadingLine loadingLine--total" />
           </a-col>
         </a-row>
 
-        <a-row type="flex" justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
+        <a-row justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
           <a-col :span="22">
             <a-button
               block
@@ -304,7 +304,7 @@
 </template>
 
 <script>
-import { defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, reactive, ref } from 'vue'
 import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
@@ -316,6 +316,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 
+import { useCurrency } from '@/hooks/utils'
 import notification from '@/mixins/notification.js'
 import countries from '@/assets/countries.json'
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
@@ -349,34 +350,39 @@ export default {
     sp: { type: Array, required: true }
   },
   emits: ['change'],
-  data: () => ({
-    countries,
-    products: {},
-    score: 0,
-    plan: null,
-    service: null,
-    namespace: null,
-    provider: null,
-    fetchLoading: false,
-    modal: {
-      confirmCreate: false,
-      confirmLoading: false
-    },
+  setup () {
+    const { currency } = useCurrency()
 
-    options: { provider: '', tarif: '', domain: '' },
-    resources: {
-      registrant_ip: '',
-      reg_username: '',
-      reg_password: '',
-      period: 1,
-      auto_renew: true,
-      who_is_privacy: false,
-      lock_domain: true
-    },
-    form: {},
-    cachedPlans: {},
-    periods: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] // 'annually biennially triennial quadrennial quinquennial'
-  }),
+    return {
+      countries,
+      currency,
+      products: ref({}),
+      score: ref(0),
+      plan: ref(null),
+      service: ref(null),
+      namespace: ref(null),
+      provider: ref(null),
+      fetchLoading: ref(false),
+      modal: reactive({
+        confirmCreate: false,
+        confirmLoading: false
+      }),
+
+      options: reactive({ provider: '', tarif: '', domain: '' }),
+      resources: reactive({
+        registrant_ip: '',
+        reg_username: '',
+        reg_password: '',
+        period: 1,
+        auto_renew: true,
+        who_is_privacy: false,
+        lock_domain: true
+      }),
+      form: ref({}),
+      cachedPlans: ref({}),
+      periods: ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) // 'annually biennially triennial quadrennial quinquennial'
+    }
+  },
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
@@ -418,6 +424,7 @@ export default {
       if (value.length > 0) this.provider = value[0].uuid
     },
     async provider (uuid) {
+      this.fetch()
       if (this.cachedPlans[uuid]) return
       try {
         const { pool } = await this.plansStore.fetch({
@@ -436,45 +443,48 @@ export default {
   mounted () {
     const { action } = this.onLogin
 
-    if (typeof action !== 'function') return
-    this.modal.confirmCreate = true
-    this.modal.confirmLoading = true
-    action()
-  },
-  created () {
-    if (this.isLogged) {
-      this.namespacesStore.fetch()
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
-
-          if (err.response?.data?.code === 16) return
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          })
-          console.error(err)
-        })
-
-      this.instancesStore.fetch()
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
-
-          if (err.response?.data?.code === 16) return
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          })
-          console.error(err)
-        })
+    if (typeof action === 'function') {
+      this.modal.confirmCreate = true
+      this.modal.confirmLoading = true
+      action()
     }
 
-    this.fetch()
     if ('form' in this.data) {
       Object.entries(this.data).forEach(([key, value]) => {
         this[key] = value
       })
     } else this.installDataToBuffer()
+
+    if (this.provider) this.fetch()
+    else if (this.sp.length > 0) this.provider = this.sp[0].uuid
+  },
+  created () {
+    if (this.isLogged) {
+      const promises = []
+
+      if (this.namespacesStore.namespaces.length < 1) {
+        promises.push(this.namespacesStore.fetch())
+      }
+
+      if (this.instancesStore.services.length < 1) {
+        promises.push(this.instancesStore.fetch())
+      }
+
+      Promise.all(promises).catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err
+
+        if (err.response?.data?.code === 16) return
+        this.openNotificationWithIcon('error', {
+          message: this.$t(message)
+        })
+        console.error(err)
+      })
+    }
   },
   beforeUnmount () {
-    this.$emit('change', { resources: this.resources, form: this.form })
+    this.$emit('change', JSON.parse(JSON.stringify({
+      resources: this.resources, form: this.form
+    })))
   },
   methods: {
     fetch () {
@@ -544,12 +554,11 @@ export default {
     },
     async orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = Object.keys(this.products).map((domain) => ({
         resources: { ...this.resources, user: this.form, domain },
         title: `Domain - ${domain}`,
-        billing_plan: plan ?? {}
+        billing_plan: { uuid: this.plan }
       }))
       const newGroup = {
         title: this.userdata.title + Date.now(),
@@ -559,7 +568,7 @@ export default {
       }
 
       const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
-      const group = info.instancesGroups?.find(({ type }) => type === 'opensrs')
+      const group = info.instancesGroups?.find(({ sp }) => sp === this.provider)
 
       if (group) group.instances = [...group.instances, ...instances]
       else if (this.service) info.instancesGroups.push(newGroup)
@@ -705,81 +714,53 @@ export default {
 <style scoped>
 
 /*--description--*/
-.description{
-  padding: 11px 0 11px 32px;
+.description {
+  padding: 12px;
   margin-top: 18px;
-  background-color: #f7f7f7;
+  background-color: var(--bright_bg);
 }
 
-.description-header{
+.description-header {
   display: flex;
   margin-bottom: 2px;
 }
 
-.anticon-like,
-.anticon-question-circle{
-  font-size: 27px;
-  color: grey;
-  display: inline-block
-}
-
-.description-header p{
+.description-header p {
   margin-top: 4px;
   margin-left: 10px;
   font-size: 12px;
   font-weight: 400;
   color: #0fd058;
-  background-color: #f7f7f7;
+  background-color: var(--bright_bg);
   display: inline;
 }
 
 .description-body{
-  background-color: #f7f7f7;
+  background-color: var(--bright_bg);
 }
 
-.description-body__domain-name{
-  margin-left: 15px;
+.description-body__domain-name {
   color: black;
 }
 
-.description-body__domain-cost{
-  color: black;
-}
-
-.description-body__btn-add{
-  background-color: #427cf7;
-  color: white;
+.description-body__btn-order {
+  background-color: var(--err);
+  color: var(--bright_font);
   padding: 0;
   width: 115px;
   font-size: 12px;
   height: 24px;
   margin: 3px 2px 5px 0;
-  border-color: #427cf7;
+  border-color: var(--err);
 }
-.description-body__btn-add:hover{
-  color: var(--bright_font);
-  background-color: #40a9ff!important;
-  border-color: #40a9ff!important;
-}
-
-.description-body__btn-order{
-  background-color: #f5222d;
-  color: white;
-  padding: 0;
-  width: 115px;
-  font-size: 12px;
-  height: 24px;
-  margin: 3px 2px 5px 0;
-  border-color: #f5222d;
-}
-.description-body__btn-order:hover{
-  color: var(--bright_font);
-  background-color: rgba(245, 34, 45, 0.65) !important;
-  border-color: rgba(245, 34, 45, 0.65) !important;
+.description-body__btn-order:hover {
+  color: var(--err) !important;
+  background-color: var(--bright_font) !important;
+  border-color: var(--err) !important;
 }
 
-div.ant-descriptions-view{
-  border-color: #f7f7f7!important;
+div.ant-descriptions-view {
+  border-color: var(--bright_bg) !important;
   border-bottom-right-radius: 0;
   border-top-right-radius: 0;
 }
@@ -790,44 +771,23 @@ th.ant-descriptions-item-label.ant-descriptions-item-colon.ant-descriptions-item
   padding: 0;
 }
 
-td.ant-descriptions-item-content{
-  padding-top: 5px!important;
-  padding-bottom: 2px!important;
+td.ant-descriptions-item-content {
+  padding: 7px 0 2px !important;
   font-weight: 400;/*!important*/
   font-size: 12px;
   text-align: center;
 }
-td.ant-descriptions-item-content:nth-child(2){
-  padding: 7px 0 2px;
-  width: 150px;
+td.ant-descriptions-item-content:nth-child(2) {
+  width: 184px;
   text-align: start;
   border: none;
 }
-td.ant-descriptions-item-content:nth-child(4){
-  padding: 7px 0 2px;
-  width: 184px;
-  background-color: white;
-}
-td.ant-descriptions-item-content:nth-child(6){
-  background-color: white;
-}
-
-.description-btn-more{
-  display: flex;
+td.ant-descriptions-item-content:nth-child(4) {
   width: 150px;
-  background-color: #427cf7;
-  color: white;
-  padding: 7px;
-  font-size: 12px;
-  margin: 30px 2px 5px 0;
-  border-color: #427cf7;
-  align-items: center;
-  justify-content: center;
+  background-color: var(--bright_font);
 }
-.description-btn-more:hover{
-  color: var(--bright_font);
-  background-color: #40a9ff!important;
-  border-color: #40a9ff!important;
+td.ant-descriptions-item-content:nth-child(6) {
+  background-color: var(--bright_font);
 }
 
 /* order*/
@@ -873,146 +833,6 @@ td.ant-descriptions-item-content:nth-child(6){
   padding: 10px 15px 10px;
 }
 
-.order__field-header{
-  text-align: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 20px;
-}
-
-/*order-template*/
-/*.order__template{
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-}
-
-.order__template.one-line{
-  flex-wrap: nowrap;
-  justify-content: space-between;
-}
-
-.order__template-item{
-  width: 116px;
-  margin-bottom: 10px;
-  background-color: var(--bright_font);
-  box-shadow:
-      3px 2px 6px rgba(0, 0, 0, .08),
-      0px 0px 8px rgba(0, 0, 0, .05);
-  border-radius: 15px;
-  transition: box-shadow .2s ease, transform .2s ease;
-  cursor: pointer;
-  text-align: center;
-  overflow: hidden;
-
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: max-content auto;
-}
-
-.order__template-item:not(:last-child){
-  margin-right: 10px;
-}
-
-.order__template-item:hover{
-  box-shadow:
-      5px 8px 10px rgba(0, 0, 0, .08),
-      0px 0px 12px rgba(0, 0, 0, .05);
-}
-
-.order__template-item.active{
-  box-shadow:
-      5px 8px 12px rgba(0, 0, 0, .08),
-      0px 0px 13px rgba(0, 0, 0, .05);
-  transform: scale(1.02);
-}
-
-.order__template-image{
-  padding: 10px;
-}
-
-.order__template-image__rate{
-  font-size: 2rem;
-}
-
-.order__template-name{
-  padding: 10px;
-}
-
-.order__template-item.active .order__template-name{
-  background-color: var(--main);
-  color: var(--bright_font);
-}*/
-
-.max-width{
-  width: 100%;
-}
-
-.ant-collapse-item:last-of-type .ant-collapse-content{
-  border-radius: 0 0 28px 28px;
-}
-
-.slider_btn{
-  cursor: pointer;
-}
-
-.removeMarginSkeleton .ant-skeleton-title{
-  margin: 0;
-  margin-top: 4px;
-}
-
-.removeMarginSkeleton{
-  min-width: 75px;
-}
-
-.total.removeMarginSkeleton{
-  width: 100%;
-}
-
-.order__slider{
-  display: flex;
-  overflow-x: auto;
-}
-
-.order__slider-item:not(:last-child){
-  margin-right: 10px;
-}
-
-.order__slider-item{
-  flex-shrink: 0;
-  /* border: 1px solid rgba(0, 0, 0, .15); */
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 150px;
-  height: 70px;
-  cursor: pointer;
-  border-radius: 15px;
-  font-size: 1.1rem;
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
-}
-
-.order__slider-item:hover{
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
-}
-
-.order__slider-item--active{
-  background-color: var(--main);
-  color: var(--bright_font);
-}
-
-.order__slider-item--loading{
-  /* background-color: #f2f2f2; */
-  box-shadow: none;
-  /* animation: glowing .5s ease infinite; */
-  animation-name: glowing;
-  animation-duration: 1s;
-  animation-timing-function: ease;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-
 .loadingLine{
   min-width: 100px;
   width: 100%;
@@ -1041,81 +861,24 @@ td.ant-descriptions-item-content:nth-child(6){
 }
 
 @media screen and (max-width: 1024px) {
-  .order-cart{
+  .order-cart {
     flex-direction: column;
     padding: 10px;
     margin-top: 0px;
     overflow: auto;
   }
-  .order__inputs{
+  .order__inputs {
     margin: 0;
     border-radius: 20px 20px 0 0;
     width: auto;
   }
-  .order__field-cart{
+  .order__field-cart {
     box-shadow: none;
     flex-grow: 0;
   }
-  .order__calculate{
+  .order__calculate {
     border-radius: 0 0 20px 20px;
     width: auto;
   }
-}
-
-@media screen and (max-width: 576px) {
-  .order__template{
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: stretch;
-  }
-  .order__template-item{
-    grid-template-columns: max-content auto;
-    grid-template-rows: 1fr;
-    width: auto;
-    height: 50px;
-  }
-  .order__template-item:not(:last-child){
-    margin-right: 0px;
-  }
-  .order__template-image{
-    width: 50px;
-    height: 50px;
-    padding: 4px;
-  }
-  .order__template-image__rate{
-    line-height: 42px;
-    font-size: 1.4rem;
-  }
-  .order__template-image img{
-    object-fit: contain;
-    width: 100%;
-    height: 100%;
-  }
-  .order__template-name{
-    text-align: left;
-    line-height: 30px;
-    display: flex;
-  }
-  .order__template-type{
-    width: 56px;
-  }
-  .order__template-name ul{
-    display: flex;
-    justify-content: space-around;
-    list-style: none;
-    flex: 1
-  }
-  .order__template-name ul li{
-    margin-left: 20px;
-  }
-}
-
-.networkApear-enter-active, .networkApear-leave-active {
-  transition: opacity .5s, height .5s;
-  height: 26px;
-}
-.networkApear-enter-from, .networkApear-leave-to {
-  opacity: 0;
-  height: 0;
 }
 </style>

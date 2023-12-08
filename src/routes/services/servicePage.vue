@@ -388,10 +388,12 @@ export default {
 
           case 'opensrs': {
             const { period } = domain.resources
-            const { expiredate } = domain.data.expiry
+            const { expiredate } = domain.data?.expiry ?? { expiredate: '0000-00-00' }
             const year = parseInt(expiredate) - period
 
-            domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`
+            if (!domain.data.expiry) domain.data.expiry = { regdate: '0000-00-00' }
+            else domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`
+            groupname = 'Domains'
             break
           }
 
@@ -429,7 +431,7 @@ export default {
         }
         info[0].type = ''
 
-        if (this.service.recurringamount === '?') {
+        if (groupname === 'Domains') {
           return this.$api.servicesProviders.action({
             uuid: domain.sp,
             action: 'get_domain_price',
@@ -440,10 +442,11 @@ export default {
         }
       })
       .then(({ meta }) => {
-        if (meta === null) {
+        if (meta?.prices) {
           const { period } = this.service.resources
 
           this.service.recurringamount = meta.prices[period]
+          return { client_id: null }
         } else if (meta !== 'done') {
           return this.fetchBillingData()
         } else {
@@ -458,8 +461,14 @@ export default {
       })
       .then((result) => {
         if (result === 'done') return
-        this.service = this.productsStore.products.find(({ id }) => `${id}` === `${this.$route.params.id}`)
-        this.info.pop()
+        const product = this.productsStore.products.find(({ id }) =>
+          `${id}` === `${this.$route.params.id}`
+        )
+
+        if (product) {
+          this.service = product
+          this.info.pop()
+        }
       })
       .catch((error) => {
         console.error(error)

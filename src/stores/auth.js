@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import cookies from 'js-cookie'
@@ -9,6 +10,7 @@ import config from '@/appconfig.js'
 const COOKIES_NAME = 'noCloudinApp-token'
 
 export const useAuthStore = defineStore('auth', () => {
+  const router = useRouter()
   const i18n = useI18n()
 
   const token = ref('')
@@ -59,16 +61,16 @@ export const useAuthStore = defineStore('auth', () => {
     logout () {
       if (!isLogged.value) return
 
-      setToken('')
       const config = localStorage.getItem('globalConfig')
-      const lang = localStorage.getItem('lang') ?? i18n.locale
+      const lang = localStorage.getItem('lang') ?? i18n.locale.value
 
       localStorage.clear()
       localStorage.setItem('globalConfig', config)
       localStorage.setItem('lang', lang)
 
+      token.value = ''
       cookies.remove(COOKIES_NAME)
-      location.reload()
+      router.push('/login')
     },
 
     load () {

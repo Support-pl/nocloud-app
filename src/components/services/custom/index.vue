@@ -117,7 +117,7 @@
           style="margin-top: 20px"
         >
           <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
-            {{ capitalize(getAddon(addon).key) }}:
+            {{ capitalize(getAddon(addon).title) }}:
           </a-col>
 
           <a-col :xs="12" :sm="18" :lg="12" style="font-size: 1.1rem; text-align: right">
@@ -126,7 +126,6 @@
         </a-row>
 
         <selects-to-create
-          v-if="services.length > 1 || sp.length > 1 || namespacesStore.namespaces.length > 1"
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
@@ -170,7 +169,7 @@
         </a-row>
       </div>
 
-      <promo-page class="order__promo" />
+      <promo-block class="order__promo" />
     </div>
   </div>
 </template>
@@ -189,11 +188,11 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
-import promoPage from '@/components/ui/promo.vue'
+import promoBlock from '@/components/ui/promo.vue'
 
 export default {
   name: 'CustomComponent',
-  components: { selectsToCreate, promoPage },
+  components: { selectsToCreate, promoBlock },
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()
@@ -233,7 +232,7 @@ export default {
       const price = product.price + this.options.addons.reduce(
         (sum, id) => {
           const addon = product.addons?.find(({ key }) => key === id)
-          const period = addon.period / product.period
+          const period = addon?.period / product.period
 
           if (!addon) return sum
           return sum + addon.price * ((period >= 1) ? period : 1 / period)
@@ -374,6 +373,8 @@ export default {
     },
     'options.size' () {
       this.options.addons = []
+      this.options.addons = (this.getProducts.meta?.autoEnabled ?? [])
+        .filter((addon) => this.getProducts.addons.find(({ key }) => key === addon))
     },
     'options.period' (value) {
       this.changeProducts(value)
@@ -508,7 +509,7 @@ export default {
       }
 
       const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
-      const group = info.instancesGroups?.find(({ type }) => type === 'empty')
+      const group = info.instancesGroups?.find(({ sp }) => sp === this.provider)
 
       if (group) group.instances = [...group.instances, ...instances]
       else if (this.service) info.instancesGroups.push(newGroup)

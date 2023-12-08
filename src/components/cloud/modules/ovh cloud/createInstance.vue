@@ -217,10 +217,12 @@ export default {
 
       setTimeout(() => {
         const period = (this.mode === 'default') ? 'P1M' : 'P1H'
-        const products = Object.values(this.getPlan.products ?? {}).filter((product) =>
-          product.title === value && product.resources.period === period
+        const product = Object.values(this.getPlan.products ?? {}).find((product) =>
+          product.title === value &&
+            product.resources.period === period &&
+            product.meta.region === this.region.value
         )
-        const { os } = products[0]?.meta ?? {}
+        const { os } = product?.meta ?? {}
 
         os?.sort((a, b) => a.name < b.name)
         this.images = os?.map(({ name, id }) => ({ name, desc: name, id })) ?? []
@@ -237,7 +239,7 @@ export default {
     }
   },
   created () {
-    this.$emit('setData', { key: 'cloud_datacenter', type: 'ovh', value: this.region.value })
+    this.$emit('setData', { key: 'cloud_datacenter', type: 'ovh', value: this.region?.value })
   },
   methods: {
     setData (planKey, changeTarifs = true) {
@@ -250,7 +252,7 @@ export default {
       this.options.cpu.size = +resources.cpu
       this.options.ram.size = +(resources.ram / 1024).toFixed(2)
       this.options.disk.size = resources.drive_size
-      this.options.drive = true
+      this.options.disk.type = 'SSD'
 
       periods.forEach((period) => {
         if (period.pricingMode === this.mode) plan = period

@@ -209,7 +209,7 @@
             </a-select>
 
             <a-select
-              v-model:value="currencyCode"
+              v-model:value="unloginedCurrency"
               style="width: 100%; color: var(--bright_font)"
               class="header__inputs"
             >
@@ -235,7 +235,8 @@
 <script>
 import { defineAsyncComponent } from 'vue'
 import { mapState, mapWritableState, mapActions } from 'pinia'
-import moment from 'moment'
+import dayjs from 'dayjs'
+
 import {
   FilterOutlined as filterIcon,
   ReloadOutlined as reloadIcon,
@@ -357,8 +358,8 @@ export default {
                   sort: 'desc'
                 }
 
-                this.fetchInvoices()
-                this.fetchTransactions(params)
+                if (this.activeInvoiceTab === 'Invoice') this.fetchInvoices()
+                else this.fetchTransactions(params, true)
                 this.fetchUserData()
               }
             }
@@ -392,8 +393,7 @@ export default {
         }
       },
       langs: config.languages,
-      currencies: [],
-      currencyCode: ''
+      currencies: []
     }
   },
   computed: {
@@ -450,7 +450,7 @@ export default {
       } else if (this.active === 'billing') {
         const isInvoice = this.activeInvoiceTab === 'Invoice'
 
-        filterElem = (isInvoice) ? this.invoices : this.transactions
+        filterElem = (isInvoice) ? this.invoices : []
       } else {
         filterElem = []
       }
@@ -526,7 +526,7 @@ export default {
     isButtonsVisible (value) {
       this.$emit('update:isButtonVisible', value)
     },
-    currencyCode (value) {
+    defaultCurrency (value) {
       this.unloginedCurrency = value
     },
     '$i18n.locale' (value) {
@@ -542,6 +542,8 @@ export default {
         this.$notification.error({ message: this.$t(message) })
         console.error(err)
       })
+
+    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   mounted () {
     if (this.$route.query.service) {
@@ -557,10 +559,11 @@ export default {
     if (this.langs.includes(lang) && !localStorage.getItem('lang')) {
       this.$i18n.locale = lang
     }
-    this.currencyCode = this.defaultCurrency
+    this.unloginedCurrency = this.defaultCurrency
   },
   methods: {
     ...mapActions(useAuthStore, ['fetchUserData']),
+    ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     ...mapActions(useProductsStore, { fetchProducts: 'fetch' }),
     ...mapActions(useInstancesStore, { fetchClouds: 'fetch' }),
     getState (name) {
@@ -593,10 +596,22 @@ export default {
     },
     onChangeRange (range) {
       this.checkedList = range
-      if (range.length < 1) {
-        this.updateFilter(range)
+      if (!range || range?.length < 1) {
+        this.updateFilter(range ?? [])
         this.isVisible = false
         this.checkedList = []
+      } else {
+        this.fetchTransactions({
+          account: this.userdata.uuid,
+          page: this.currentPage,
+          limit: this.pageSize,
+          field: 'exec',
+          sort: 'desc',
+          filters: {
+            start: { from: Math.round(range[0].toDate().getTime() / 1000) },
+            end: { from: Math.round(range[1].toDate().getTime() / 1000) }
+          }
+        }, true)
       }
     },
     openRange (value) {
@@ -676,7 +691,7 @@ export default {
       if (this.active === 'billing' && this.activeInvoiceTab === 'Detail') {
         const dates = JSON.parse(
           localStorage.getItem('detailFilters') ?? '[]'
-        ).map((el) => moment(el))
+        ).map((date) => dayjs(date))
 
         if (!info) {
           info = dates

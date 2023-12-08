@@ -273,7 +273,7 @@ async function sendInfo () {
   }
 
   try {
-    const { locale } = i18n.getLocaleMessage(i18n.locale)
+    const { locale } = i18n.getLocaleMessage(i18n.locale.value)
     const params = (localStorage.getItem('oauth'))
       ? {
           ...deltaInfo.value,

@@ -30,6 +30,68 @@ export function toDate (timestamp, sep = '.', withTime = true, reverse) {
   return result
 }
 
+export function setValue (path, value, result) {
+  if (!path || typeof path !== 'string') {
+    console.error('[Error]: Path is not valid - ', path)
+    return
+  }
+
+  path.split('.').forEach((key, i, array) => {
+    if (i === array.length - 1) result[key] = value
+    else result = result[key]
+  })
+}
+
+export function getPeriods (plans) {
+  const value = []
+  const types = new Set()
+  const day = 3600 * 24
+  const month = day * 30
+  const year = day * 365
+
+  plans.forEach((plan) => {
+    types.add(plan.type)
+
+    if (plan.kind === 'DYNAMIC') {
+      value.push(
+        { value: 'Hourly', label: 'ssl_product.Hourly' }
+      )
+    }
+
+    if (plan.kind !== 'STATIC') return
+    const periods = Object.values(plan.products).map((el) => +el.period)
+
+    if (periods.includes(day)) {
+      value.push(
+        { value: 'Daily', label: 'daily', period: day }
+      )
+    }
+
+    if (periods.includes(month)) {
+      value.push(
+        { value: 'Monthly', label: 'ssl_product.Monthly', period: month }
+      )
+    }
+
+    if (periods.includes(year)) {
+      value.push(
+        { value: 'Annually', label: 'annually', period: year }
+      )
+    }
+
+    if (periods.includes(year * 2)) {
+      value.push(
+        { value: 'Biennially', label: 'biennially', period: year * 2 }
+      )
+    }
+  })
+
+  if (types.size > 1) return
+  value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period)
+
+  return value
+}
+
 export function onError ({ target }) {
   target.src = '/img/OS/default.png'
 }

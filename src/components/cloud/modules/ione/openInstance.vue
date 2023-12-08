@@ -214,7 +214,7 @@
               {{ $t('Product') }}
             </div>
             <div class="block__value">
-              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}
+              {{ productName || $t('No Data') }}
             </div>
           </div>
 
@@ -245,19 +245,21 @@
         </div>
 
         <div class="Fcloud__block-content block-content_table">
-          <div class="block__column block__column_table">
-            <div class="block__title">
-              {{ capitalize($t('tariff')) }}
+          <template v-if="tariffPrice">
+            <div class="block__column block__column_table">
+              <div class="block__title">
+                {{ capitalize($t('tariff')) }}
+              </div>
             </div>
-          </div>
-          <div class="block__column block__column_table block__column_price">
-            <div class="block__title">
-              {{ VM.product.replace('_', ' ').toUpperCase() || $t('No Data') }}:
+            <div class="block__column block__column_table block__column_price">
+              <div class="block__title">
+                {{ productName || $t('No Data') }}:
+              </div>
+              <div class="block__value">
+                {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
+              </div>
             </div>
-            <div class="block__value">
-              {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
-            </div>
-          </div>
+          </template>
 
           <div class="block__column block__column_table">
             <div class="block__title">
@@ -512,10 +514,9 @@
             shape="round"
             size="large"
             :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3) || VM.data.lock"
+            @click="openVNC"
           >
-            <router-link :to="{ name: 'VNC', params: { uuid: $route.params.uuid } }">
-              VNC
-            </router-link>
+            VNC
           </a-button>
         </a-col>
       </a-row>
@@ -533,6 +534,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInstancesStore } from '@/stores/instances.js'
+import { usePlansStore } from '@/stores/plans.js'
 
 import notification from '@/mixins/notification.js'
 
@@ -675,6 +677,7 @@ export default defineComponent({
     ...mapState(useAuthStore, ['userdata', 'baseURL']),
     ...mapState(useCurrenciesStore, ['defaultCurrency']),
     ...mapState(useInstancesStore, ['services']),
+    ...mapState(usePlansStore, ['plans']),
     statusVM () {
       if (!this.VM?.state) {
         return {
@@ -717,7 +720,7 @@ export default defineComponent({
     tariffPrice () {
       const key = this.VM.product
 
-      return this.VM.billingPlan.products[key].price
+      return this.VM.billingPlan.products[key]?.price ?? 0
     },
     addonsPrice () {
       return this.VM.billingPlan.resources.reduce((prev, curr) => {
@@ -726,21 +729,21 @@ export default defineComponent({
 
           return {
             ...prev,
-            [key]: curr.price * this.VM.resources.drive_size / 1024
+            [key]: +(curr.price * this.VM.resources.drive_size / 1024).toFixed(2)
           }
         } else if (curr.key === 'ram') {
           const key = this.$t('ram')
 
           return {
             ...prev,
-            [key]: curr.price * this.VM.resources.ram / 1024
+            [key]: +(curr.price * this.VM.resources.ram / 1024).toFixed(2)
           }
         } else if (this.VM.resources[curr.key]) {
           const key = this.$t(curr.key.replace('_', ' '))
 
           return {
             ...prev,
-            [key]: curr.price * this.VM.resources[curr.key]
+            [key]: +(curr.price * this.VM.resources[curr.key]).toFixed(2)
           }
         }
         return prev
@@ -838,14 +841,24 @@ export default defineComponent({
       const i = this.VM?.config?.template_id
 
       return this.dataSP?.publicData.templates[i]?.name
+    },
+    productName () {
+      const key = this.VM.product
+      const plan = this.plans.find(({ products }) => products[key])
+
+      return plan?.products[key]?.title ?? key
     }
   },
   watch: {
     'VM.uuidService' () { this.fetchMonitoring() }
   },
-  created () { this.fetchMonitoring() },
+  created () {
+    this.fetchPlans({ anonymously: false })
+    this.fetchMonitoring()
+  },
   mounted () { this.autoRenew = this.VM.config.auto_renew },
   methods: {
+    ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
     ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
     deployService () {
       this.actionLoading = true
@@ -869,6 +882,9 @@ export default defineComponent({
     },
     mbToGb (mb) {
       return (mb / 1024).toFixed(1)
+    },
+    openVNC () {
+      this.$router.push({ name: 'VNC', params: { uuid: this.$route.params.uuid } })
     },
     handleOk (from) {
       this.VM.state.meta.state = 0

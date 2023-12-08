@@ -1,6 +1,6 @@
 <template>
   <a-row class="module" :gutter="[10, 10]">
-    <a-col>
+    <a-col span="24">
       <a-table
         :columns="columns"
         :data-source="domainData"
@@ -21,7 +21,7 @@
       </a-table>
     </a-col>
 
-    <a-col style="display: flex; gap: 10px">
+    <a-col span="24" style="display: flex; gap: 10px">
       <a-button type="primary" @click="openModal">
         {{ $t('Add') }}
       </a-button>

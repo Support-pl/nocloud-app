@@ -151,7 +151,7 @@
         </a-row>
       </div>
 
-      <promo-page class="order__promo" />
+      <promo-block class="order__promo" />
     </div>
   </div>
 </template>
@@ -172,7 +172,7 @@ import { useInstancesStore } from '@/stores/instances.js'
 
 import notification from '@/mixins/notification.js'
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
-import promoPage from '@/components/ui/promo.vue'
+import promoBlock from '@/components/ui/promo.vue'
 
 const rightIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RightOutlined')
@@ -180,7 +180,7 @@ const rightIcon = defineAsyncComponent(
 
 export default {
   name: 'SslComponent',
-  components: { passwordMeter, selectsToCreate, promoPage, rightIcon },
+  components: { passwordMeter, selectsToCreate, promoBlock, rightIcon },
   mixins: [notification],
   inject: ['checkBalance'],
   data: () => ({
@@ -391,7 +391,6 @@ export default {
     },
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = [{
         resources: {
@@ -404,7 +403,8 @@ export default {
           approver_email: this.verification.email
         },
         title: this.options.tarif,
-        billing_plan: plan ?? {}
+        billing_plan: { uuid: this.plan },
+        product: this.options.provider
       }]
       const newGroup = {
         title: this.userdata.title + Date.now(),
@@ -413,10 +413,8 @@ export default {
         instances
       }
 
-      if (plan.kind === 'STATIC') instances[0].product = this.options.provider
-
       const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
-      const group = info.instancesGroups?.find(({ type }) => type === 'goget')
+      const group = info.instancesGroups?.find(({ sp }) => sp === this.provider)
 
       if (group) group.instances = [...group.instances, ...instances]
       else if (this.service) info.instancesGroups.push(newGroup)
