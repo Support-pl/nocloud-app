@@ -79,7 +79,7 @@
       </div>
 
       <div class="order__calculate order__field">
-        <a-row style="margin-top: 20px" type="flex" justify="space-around" align="middle">
+        <a-row style="margin-top: 10px" type="flex" justify="space-around" align="middle">
           <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
             {{ capitalize($t('Payment method')) }}:
           </a-col>
@@ -95,7 +95,7 @@
 
         <a-row
           v-if="fetchLoading || periods.length > 0"
-          style="margin-top: 20px"
+          style="margin-top: 10px"
           type="flex"
           justify="space-around"
           align="middle"
@@ -123,7 +123,7 @@
 
         <a-row
           v-if="addonsPrice.onetime > 0 || getProducts.paytype === 'onetype'"
-          style="margin-top: 20px"
+          style="margin-top: 10px"
           type="flex"
           justify="space-around"
           align="middle"
@@ -142,7 +142,7 @@
 
         <a-row
           v-if="addonsPrice.value > 0 || getProducts.paytype === 'recurring'"
-          style="margin-top: 20px"
+          style="margin-top: 10px"
           type="flex"
           justify="space-around"
           align="middle"
@@ -200,6 +200,8 @@
           </a-col>
         </a-row>
       </div>
+
+      <promo-block class="order__promo" />
     </div>
   </div>
 </template>
@@ -213,9 +215,11 @@ import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useProductsStore } from '@/stores/products.js'
 
 import config from '@/appconfig.js'
+import promoBlock from '@/components/ui/promo.vue'
 
 export default {
   name: 'IaasComponent',
+  components: { promoBlock },
   inject: ['checkBalance'],
   data: () => ({
     sizes: [],
@@ -470,21 +474,38 @@ export default {
 </script>
 
 <style>
-.order_wrapper{
+.order_wrapper {
   position: relative;
   width: 100%;
   min-height: 100%;
 }
 
-.order{
+.order {
   position: absolute;
-  margin-top: 15px;
-  margin-bottom: 15px;
+  left: 50%;
+  display: grid;
+  grid-template-columns: calc(72% - 20px) 28%;
+  gap: 20px;
   width: 100%;
   max-width: 1024px;
-  left: 50%;
+  margin-top: 15px;
+  margin-bottom: 15px;
   transform: translateX(-50%);
-  display: flex;
+}
+
+.order__field {
+  border-radius: 20px;
+  box-shadow:
+    5px 8px 10px rgba(0, 0, 0, .08),
+    0px 0px 12px rgba(0, 0, 0, .05);
+  padding: 20px;
+  background-color: var(--bright_font);
+  height: max-content;
+}
+
+.order__calculate {
+  padding: 10px 15px 10px;
+  font-size: 1.1rem;
 }
 
 .product__specs{
@@ -529,11 +550,6 @@ export default {
 
 .order__prop:not(:first-child){
   margin-top: 15px;
-}
-
-.order__inputs{
-  margin-right: 20px;
-  width: 72%;
 }
 
 .order__grid {
@@ -639,22 +655,6 @@ export default {
 .card-item--active {
   padding: 19px;
   border: 5px solid var(--main);
-}
-
-.order__field{
-  border-radius: 20px;
-  box-shadow:
-    5px 8px 10px rgba(0, 0, 0, .08),
-    0px 0px 12px rgba(0, 0, 0, .05);
-  padding: 20px;
-  background-color: var(--bright_font);
-  height: max-content;
-}
-
-.order__calculate{
-  width: 28%;
-  font-size: 1.1rem;
-  padding: 10px 15px 10px;
 }
 
 .order__field-header{
@@ -828,24 +828,23 @@ export default {
 }
 
 @media screen and (max-width: 1024px) {
-  .order{
-    flex-direction: column;
+  .order {
+    grid-template-columns: 1fr;
+    gap: 0;
     padding: 10px;
     margin-top: 0px;
     overflow: auto;
   }
-  .order__inputs{
-    margin: 0;
-    border-radius: 20px 20px 0 0;
-    width: auto;
-  }
-  .order__field{
+  .order__field {
     box-shadow: none;
-    flex-grow: 0;
+    border-radius: 20px 20px 0 0;
   }
-  .order__calculate{
-    border-radius: 0 0 20px 20px;
+  .order__calculate {
     width: auto;
+    border-radius: 0 0 20px 20px;
+  }
+  .order__promo {
+    margin-top: 20px;
   }
 }
 
