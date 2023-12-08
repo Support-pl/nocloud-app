@@ -106,7 +106,11 @@ const modalOptions = computed(() => {
     visible: modal.confirmCreate,
     loading: modal.confirmLoading,
     okProps: { disabled: isWeakPass },
-    onOk: props.createOrder,
+    onOk: async () => {
+      modal.confirmLoading = true
+      await props.createOrder()
+      modal.confirmLoading = false
+    },
     onCancel: () => {
       modal.confirmCreate = false
     }
