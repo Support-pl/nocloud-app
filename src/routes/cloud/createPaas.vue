@@ -213,6 +213,12 @@ export default {
     }
 
     function setOptions (path, value) {
+      if (/configuration.\w{1,}_os/.test(path)) {
+        options.config.configuration = {
+          ...options.config.configuration, [path.split('.').at(-1)]: value
+        }
+        return
+      }
       setValue(path, value, options)
     }
 

@@ -80,7 +80,7 @@ export const useCloudStore = defineStore('cloud', () => {
     instancesStore.services.find(({ uuid }) => uuid === serviceId.value) ?? {}
   )
 
-  function createOrder (options, product) {
+  async function createOrder (options, product) {
     const [newInstance, newGroup] = setInstance(options, product)
 
     if (newGroup.type === 'ovh') {
@@ -104,9 +104,9 @@ export const useCloudStore = defineStore('cloud', () => {
     }
 
     if (serviceId.value) {
-      updateService(newGroup, newInstance, options)
+      await updateService(newGroup, newInstance, options)
     } else {
-      createService(newInstance, options)
+      await createService(newInstance, options)
     }
   }
 
@@ -128,8 +128,11 @@ export const useCloudStore = defineStore('cloud', () => {
         ips_private: options.network.private.count,
         ips_public: options.network.public.count
       },
-      billing_plan: { uuid: planId.value },
-      product: product.value.key
+      billing_plan: { uuid: planId.value }
+    }
+
+    if (plan.value.kind === 'STATIC' || plan.value.type !== 'ione') {
+      instance.product = product.value.key
     }
 
     const group = {
@@ -143,7 +146,7 @@ export const useCloudStore = defineStore('cloud', () => {
     return [instance, group]
   }
 
-  function createService (newInstance, options) {
+  async function createService (newInstance, options) {
     const orderData = {
       namespace: namespaceId.value,
       service: {
@@ -170,10 +173,10 @@ export const useCloudStore = defineStore('cloud', () => {
     }
     const message = i18n.t('Order created successfully')
 
-    createInstance('create', orderData, namespaceId.value, message, deployMessage)
+    await createInstance('create', orderData, namespaceId.value, message, deployMessage)
   }
 
-  function updateService (newGroup, newInstance, options) {
+  async function updateService (newGroup, newInstance, options) {
     const orderData = Object.assign({}, service.value)
     let group = orderData.instancesGroups.find(
       (el) => el.sp === provider.value.uuid
@@ -198,7 +201,7 @@ export const useCloudStore = defineStore('cloud', () => {
 
     const message = i18n.t('Order update successfully')
 
-    createInstance('update', orderData, namespaceId.value, message, deployMessage)
+    await createInstance('update', orderData, namespaceId.value, message, deployMessage)
   }
 
   return {

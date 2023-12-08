@@ -187,11 +187,11 @@ function getAddonsValue (key) {
   return isFinite(value) ? `(${value} Gb)` : ''
 }
 
-function createOrder () {
+async function createOrder () {
   const sum = sumOrder.value.$el.firstElementChild.innerText
 
   if (!checkBalance(sum)) return
-  cloudStore.createOrder(options, product)
+  await cloudStore.createOrder(options, product)
 }
 </script>
 
