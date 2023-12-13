@@ -246,10 +246,15 @@ function setResources (productKey, changeTarifs = true) {
   })
 }
 
-const { extra } = cloudStore.locations
-  .find(({ id }) => cloudStore.locationId.includes(id)) ?? {}
+function setDatacenter () {
+  const { extra } = cloudStore.locations
+    .find(({ id }) => cloudStore.locationId.includes(id)) ?? {}
 
-setOptions('config.configuration.vps_datacenter', extra.region)
+  setOptions('config.configuration.vps_datacenter', extra.region)
+}
+
+watch(() => cloudStore.locationId, setDatacenter)
+setDatacenter()
 </script>
 
 <script>

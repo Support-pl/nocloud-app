@@ -146,7 +146,7 @@
 
               <span class="login__horisontal-line" />
               <a-select v-model:value="userinfo.currency" class="register__select" style="width: 100%; border: none">
-                <a-select-option v-for="currency in currenciesStore.whmcsCurrencies" :key="currency.id">
+                <a-select-option v-for="currency in currencies" :key="currency.id">
                   {{ currency.code }}
                 </a-select-option>
               </a-select>
@@ -174,7 +174,7 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, ref } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { notification, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -215,6 +215,23 @@ const userinfo = ref({
   companyname: '',
   tax_id: ''
 })
+
+const currencies = computed(() =>
+  (config.WHMCSsiteurl) ? currenciesStore.whmcsCurrencies : currenciesStore.list
+)
+
+watch(() => currenciesStore.list, (value) => {
+  if (config.WHMCSsiteurl) return
+  userinfo.value.currency = value[0].id
+})
+
+watch(() => currenciesStore.whmcsCurrencies, (value) => {
+  userinfo.value.currency = value[0].id
+})
+
+userinfo.value.currency = (config.WHMCSsiteurl)
+  ? currenciesStore.whmcsCurrencies[0]?.id ?? 1
+  : currenciesStore.defaultCurrency
 
 const companyName = computed(() =>
   appStore.domainInfo.name ?? config.appTitle
@@ -273,9 +290,26 @@ async function submitHandler () {
 
   try {
     registerLoading.value = true
-    const response = await api.get(authStore.baseURL, {
-      params: { ...temp, app_language: locale, run: 'create_user' }
-    })
+    const response = (config.WHMCSsiteurl)
+      ? await api.get(authStore.baseURL, {
+        params: { ...temp, app_language: locale, run: 'create_user' }
+      })
+      : await api.post('/accounts/signup', {
+        title: `${temp.firstname} ${temp.lastname}`,
+        auth: { type: 'standard', data: [temp.email, temp.password] },
+        currency: temp.currency,
+        data: [
+          'firstname',
+          'lastname',
+          'email',
+          'address1',
+          'city',
+          'postcode',
+          'country',
+          'phonenumber',
+          'companyname'
+        ].reduce((result, key) => ({ ...result, [key]: temp[key] }), {})
+      })
 
     if (response.result === 'error') throw response
     else message.success(i18n.t('account created successfully'))
@@ -299,14 +333,16 @@ function searchCountries (input, option) {
 if (currenciesStore.whmcsCurrencies.length < 1) {
   currenciesStore.fetchWhmcsCurrencies()
 }
+if (currenciesStore.list.length < 1) {
+  currenciesStore.fetch()
+}
 </script>
 
 <script>
 export default { name: 'RegisterView' }
 </script>
 
-<style>
-
+<style scoped>
 .logo {
   display: flex;
   grid-gap: 15px
@@ -416,7 +452,7 @@ export default { name: 'RegisterView' }
   margin-bottom: 25px;
 }
 
-.ant-select.register__select .ant-select-selector {
+:deep(.ant-select.register__select) .ant-select-selector {
   padding: 0px 15px;
   border: 0;
 }
@@ -444,9 +480,12 @@ export default { name: 'RegisterView' }
 }
 
 @keyframes gradient {
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
+  0%, 100% {
+    background-position: 0% 50%
+  }
+  50% {
+    background-position: 100% 50%
+  }
 }
 
 .inputs__log-pas input,

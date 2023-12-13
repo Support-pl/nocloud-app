@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
   const i18n = useI18n()
 
   const token = ref('')
-  const userdata = ref({})
+  const userdata = ref({ data: {} })
   const billingUser = ref({})
 
   const loginButtons = ref([])
@@ -89,6 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
       try {
         const response = await api.accounts.get('me')
 
+        if (!response.data) response.data = {}
         userdata.value = response
         return response
       } catch (error) {
@@ -101,6 +102,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (billingUser.value.firstname && !update) {
         return billingUser.value
       }
+      if (!config.WHMCSsiteurl) return billingUser.value
 
       try {
         const response = await api.get(

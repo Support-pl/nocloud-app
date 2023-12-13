@@ -44,7 +44,7 @@ export const useSpStore = defineStore('sp', () => {
     async fetch (anonymously = false) {
       try {
         isLoading.value = true
-        const response = await api.servicesProviders.list(anonymously)
+        const response = await api.servicesProviders.list({ anonymously })
 
         servicesProviders.value = response.pool
         return response
@@ -59,7 +59,7 @@ export const useSpStore = defineStore('sp', () => {
     async fetchShowcases (anonymously = false) {
       try {
         isShowcasesLoading.value = true
-        const response = await api.showcases.list(anonymously)
+        const response = await api.showcases.list({ anonymously })
 
         showcases.value = response.showcases
         return response

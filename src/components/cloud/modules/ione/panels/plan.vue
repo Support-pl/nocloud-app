@@ -207,6 +207,7 @@ const filteredProducts = computed(() => {
     })
   })
 
+  result.sort((a, b) => props.products.indexOf(a) - props.products.indexOf(b))
   return result
 })
 

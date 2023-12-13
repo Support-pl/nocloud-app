@@ -34,7 +34,7 @@ function useCreateInstance () {
 
         if (uuid) {
           openMessage.success(message)
-          deployService(uuid, deployMessage)
+          await deployService(uuid, deployMessage)
         } else {
           throw new Error('[Error]: Service uuid not found')
         }

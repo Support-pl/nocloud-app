@@ -1,8 +1,8 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth'
-import api from '@/api.js'
 import config from '@/appconfig.js'
+import api from '@/api.js'
 
 export const useProductsStore = defineStore('products', () => {
   const store = useAuthStore()
@@ -36,6 +36,7 @@ export const useProductsStore = defineStore('products', () => {
     baseURL,
 
     async fetch (userid, silent) {
+      if (!config.WHMCSsiteurl) return {}
       try {
         if (!silent) isLoading.value = true
         const response = await api.get(
@@ -56,6 +57,7 @@ export const useProductsStore = defineStore('products', () => {
     },
 
     async fetchServices () {
+      if (!config.WHMCSsiteurl) return {}
       try {
         const response = await api.get(
           store.baseURL,

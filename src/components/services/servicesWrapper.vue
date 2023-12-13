@@ -229,6 +229,7 @@ export default {
           break
         case 'ione':
         case 'ovh':
+        case 'keyweb':
           name = 'newPaaS'
       }
 

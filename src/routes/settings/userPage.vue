@@ -152,6 +152,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { notification } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
+import config from '@/appconfig.js'
 import api from '@/api.js'
 
 import { useAuthStore } from '@/stores/auth.js'
@@ -214,9 +215,11 @@ const isDisabled = computed(() => {
   return !!authStore.billingUser.roles.settings
 })
 
-const isVisible = computed(() =>
-  (!isLoading.value && authStore.billingUser.firstname) || localStorage.getItem('oauth')
-)
+const isVisible = computed(() => {
+  if (!config.WHMCSsiteurl) return true
+  if (localStorage.getItem('oauth')) return true
+  return (!isLoading.value && authStore.billingUser.firstname)
+})
 
 const isPasswordVisible = computed(() =>
   localStorage.getItem('oauth')
@@ -238,7 +241,8 @@ function installDataToBuffer () {
   ]
 
   interestedKeys.forEach((key) => {
-    form.value[key] = authStore.billingUser[key]
+    if (config.WHMCSsiteurl) form.value[key] = authStore.billingUser[key]
+    else form.value[key] = authStore.userdata.data[key]
   })
 }
 
@@ -287,7 +291,27 @@ async function sendInfo () {
         }
 
     isSendingInfo.value = true
-    await api.get(authStore.baseURL, { params })
+    if (config.WHMCSsiteurl) await api.get(authStore.baseURL, { params })
+    else {
+      await api.accounts.update({
+        ...authStore.userdata,
+        title: `${deltaInfo.value.firstname} ${deltaInfo.value.lastname}`,
+        data: [
+          'firstname',
+          'lastname',
+          'email',
+          'address1',
+          'city',
+          'postcode',
+          'country',
+          'phonenumber',
+          'companyname'
+        ].reduce(
+          (result, key) => ({ ...result, [key]: deltaInfo.value[key] }),
+          { ...authStore.userdata.data }
+        )
+      })
+    }
 
     localStorage.removeItem('oauth')
     notification.success({ message: i18n.t('Done') })

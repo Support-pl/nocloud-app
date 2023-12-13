@@ -56,6 +56,7 @@ import { inject, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
+import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
 import api from '@/api.js'
 import imagesList from '@/components/cloud/create/images.vue'
@@ -67,7 +68,9 @@ const props = defineProps({
   isFlavorsLoading: { type: Boolean, default: false }
 })
 
+const authStore = useAuthStore()
 const cloudStore = useCloudStore()
+
 const images = ref([])
 const catalog = ref({})
 const isLoading = ref(false)
@@ -117,7 +120,7 @@ async function filterImages (images) {
     isLoading.value = true
     if (catalog.value.plans) {
       response = { meta: { catalog: catalog.value } }
-    } else {
+    } else if (authStore.isLogged) {
       response = await api.servicesProviders.action(
         { action: 'get_plans', uuid: cloudStore.provider.uuid }
       )
