@@ -2,6 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth.js'
 import { useAppStore } from './app.js'
+import config from '@/appconfig.js'
 import api from '@/api.js'
 
 export const useInvoicesStore = defineStore('invoices', () => {
@@ -46,6 +47,7 @@ export const useInvoicesStore = defineStore('invoices', () => {
 
     async fetch (silent) {
       try {
+        if (!config.WHMCSsiteurl) return
         if (!silent) isLoading.value = true
         const account = auth.userdata.uuid
         const promises = [

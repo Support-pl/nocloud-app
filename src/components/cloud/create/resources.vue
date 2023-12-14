@@ -20,33 +20,38 @@
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCurrency } from '@/hooks/utils'
+import { useCloudStore } from '@/stores/cloud.js'
 
 const props = defineProps({
-  provider: { type: Object, required: true },
   productSize: { type: String, required: true },
   tarification: { type: String, required: true }
 })
 
 const i18n = useI18n()
 const { currency } = useCurrency()
+const cloudStore = useCloudStore()
 
 const product = inject('product', {})
 const [options] = inject('useOptions', () => [])()
 const [priceOVH] = inject('usePriceOVH', () => [])()
 
 const locationTitle = computed(() => {
-  if (props.provider?.type !== 'ovh') return props.provider?.locations[0].title
+  if (cloudStore.provider?.type !== 'ovh') {
+    return cloudStore.provider?.locations[0].title
+  }
+
   const { configuration } = options.config
   const key = Object.keys(configuration).find(
     (el) => el.includes('datacenter')
   )
 
-  return props.provider.locations?.find(({ extra }) =>
+  return cloudStore.provider.locations?.find(({ extra }) =>
     extra.region?.toLowerCase() === configuration[key]?.toLowerCase()
   )?.title
 })
 
 const diskSize = computed(() => {
+  // const x = (cloudStore.plan.type === 'ovh cloud') ? 1000 : 1024
   const size = (options.disk.size / 1024).toFixed(1)
 
   return (size >= 1) ? `${size} Gb` : `${options.disk.size} Mb`
@@ -99,7 +104,7 @@ const resources = computed(() => ({
       (props.tarification === 'Hourly') ? '*' : ''
     }`,
     value: options.network.public.count,
-    visible: options.network.public.status && props.provider?.type !== 'ovh',
+    visible: options.network.public.status && cloudStore.provider?.type !== 'ovh',
     style: { fontSize: '1.1rem' }
   },
   private: {

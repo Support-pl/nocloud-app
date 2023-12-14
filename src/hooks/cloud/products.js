@@ -6,10 +6,22 @@ function useProducts (options, tarification, productSize) {
   const cloudStore = useCloudStore()
   const plansStore = usePlansStore()
 
-  const products = computed(() =>
-    (cloudStore.plan.type === 'ione') ? getIoneProducts() : getOvhProducts()
-  )
+  const products = computed(() => {
+    switch (cloudStore.plan.type) {
+      case 'ione':
+        return getIoneProducts()
+      case 'keyweb':
+        return getKeywebProducts()
+      default:
+        return getOvhProducts()
+    }
+  })
+
   const mode = computed(() => {
+    if (cloudStore.provider.type !== 'ovh') {
+      return tarification.value
+    }
+
     switch (tarification.value) {
       case 'Annually':
         return 'upfront12'
@@ -124,6 +136,15 @@ function useProducts (options, tarification, productSize) {
         if (!product.public) return false
         return isEqual || cloudStore.plan.kind === 'DYNAMIC'
       })
+      .sort((a, b) => a.sorter - b.sorter)
+      .map(({ title }) => title)
+  }
+
+  function getKeywebProducts () {
+    return Object.values(cloudStore.plan.products)
+      .filter((product) =>
+        tarification.value === getTarification(product.period)
+      )
       .sort((a, b) => a.sorter - b.sorter)
       .map(({ title }) => title)
   }

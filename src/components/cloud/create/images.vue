@@ -23,8 +23,8 @@
 
         <div class="newCloud__template-name">
           {{ item.name }} <br>
-          <template v-if="item.prices">
-            ({{ osPrice(item.prices) }} {{ currency.code }})
+          <template v-if="item.prices || item.price">
+            ({{ osPrice(item.prices ?? item) }} {{ currency.code }})
           </template>
         </div>
       </template>
@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { getImageName, onError } from '@/functions'
+import { getImageName, onError } from '@/functions.js'
 import { useCurrency } from '@/hooks/utils'
 
 defineProps({

@@ -42,6 +42,25 @@ export function setValue (path, value, result) {
   })
 }
 
+export function getTarification (timestamp) {
+  const day = 3600 * 24
+  const month = day * 30
+  const year = day * 365
+
+  switch (+timestamp) {
+    case 3600:
+      return 'Hourly'
+    case day:
+      return 'Daily'
+    case month:
+      return 'Monthly'
+    case year:
+      return 'Annually'
+    case year * 2:
+      return 'Biennially'
+  }
+}
+
 export function getPeriods (plans) {
   const value = []
   const types = new Set()

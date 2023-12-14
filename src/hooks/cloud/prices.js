@@ -103,7 +103,7 @@ function useCloudPrices (product, tarification, activeKey, options, priceOVH) {
           price = productFullPriceCustom.value
       }
 
-      if (plan.value.type?.includes('ovh')) {
+      if (plan.value.type?.includes('ovh') || plan.value.type === 'keyweb') {
         period = 'hour'
         price = productFullPriceOVH.value
       } else if (plan.value.kind === 'STATIC') {

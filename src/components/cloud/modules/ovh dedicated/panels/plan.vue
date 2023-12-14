@@ -404,10 +404,15 @@ function getCpu (plan) {
   return cpus.value[value]
 }
 
-const { extra } = cloudStore.locations
-  .find(({ id }) => cloudStore.locationId.includes(id)) ?? {}
+function setDatacenter () {
+  const { extra } = cloudStore.locations
+    .find(({ id }) => cloudStore.locationId.includes(id)) ?? {}
 
-setOptions('config.configuration.dedicated_datacenter', extra.region)
+  setOptions('config.configuration.dedicated_datacenter', extra.region)
+}
+
+watch(() => cloudStore.locationId, setDatacenter)
+setDatacenter()
 </script>
 
 <script>

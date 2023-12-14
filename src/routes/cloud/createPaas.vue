@@ -17,7 +17,7 @@
               <a-row v-if="key === 'location'" justify="space-between">
                 <a-col span="24">
                   <a-alert
-                    v-if="!locationId"
+                    v-if="!cloudStore.locationId"
                     show-icon
                     type="warning"
                     style="margin-bottom: 15px"
@@ -35,11 +35,11 @@
                   </a-select> -->
 
                   <a-select
-                    v-model:value="showcaseId"
+                    v-model:value="cloudStore.showcaseId"
                     :placeholder="$t('select service')"
                     style="width: 180px; position: relative; z-index: 4"
                   >
-                    <a-select-option v-for="item in showcases" :key="item.uuid">
+                    <a-select-option v-for="item in cloudStore.showcases" :key="item.uuid">
                       {{ item.title }}
                     </a-select-option>
                   </a-select>
@@ -52,11 +52,11 @@
                     :spinning="isPlansLoading"
                   >
                     <nc-map
-                      :value="locationId"
-                      :markers="locations"
-                      :marker-color="provider?.meta.markerColor"
-                      :marker-url="provider?.meta.markerUrl"
-                      @input="(value) => locationId = value"
+                      :value="cloudStore.locationId"
+                      :markers="cloudStore.locations"
+                      :marker-color="cloudStore.provider?.meta.markerColor"
+                      :marker-url="cloudStore.provider?.meta.markerUrl"
+                      @input="(value) => cloudStore.locationId = value"
                     />
                   </a-spin>
                 </a-col>
@@ -88,10 +88,10 @@
   </div>
 </template>
 
-<script>
-import { ref, reactive, provide, readonly, computed, defineAsyncComponent, watch, markRaw } from 'vue'
+<script setup>
+import { ref, reactive, provide, readonly, computed, defineAsyncComponent, watch, markRaw, nextTick, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { mapState, mapActions, storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { NcMap } from 'nocloud-ui'
 
 import { useAuthStore } from '@/stores/auth.js'
@@ -105,514 +105,401 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 
 import useProducts from '@/hooks/cloud/products.js'
 import useCloudPanels from '@/hooks/cloud/panels.js'
-import notification from '@/mixins/notification.js'
-import { setValue } from '@/functions.js'
+import { useNotification } from '@/hooks/utils'
+import { setValue, getTarification } from '@/functions.js'
 
-import loading from '@/components/ui/loading.vue'
 import promoBlock from '@/components/ui/promo.vue'
 import calculatorBlock from '@/components/cloud/create/calculator.vue'
 
-export default {
-  name: 'NewPaaS',
-  components: {
-    NcMap,
-    loading,
-    calculatorBlock,
-    promoBlock
+const router = useRouter()
+const route = useRoute()
+const i18n = useI18n()
+const { openNotification } = useNotification()
+
+const authStore = useAuthStore()
+const instancesStore = useInstancesStore()
+const namespasesStore = useNamespasesStore()
+const currenciesStore = useCurrenciesStore()
+
+const spStore = useSpStore()
+const plansStore = usePlansStore()
+const cloudStore = useCloudStore()
+
+const isPlansLoading = ref(false)
+const dataLocalStorage = ref('')
+const productSize = ref('')
+const activeKey = ref('location')
+const periods = ref([])
+const tarification = ref('')
+
+const product = ref({})
+const cachedPlans = ref({})
+const priceOVH = reactive({ value: 0, addons: {} })
+const options = reactive({
+  isSSHExist: false,
+  highCPU: false,
+  cpu: { size: 1, min: 1, max: 8 },
+  ram: { size: 1, min: 1, max: 12 },
+  disk: { type: 'SSD', step: 1, size: 1, min: 20, max: 480 },
+  os: { id: -1, name: '' },
+  network: {
+    public: { status: true, count: 1 },
+    private: { status: false, count: 0 }
   },
-  mixins: [notification],
-  setup () {
-    const router = useRouter()
-    const route = useRoute()
+  config: { addons: [], configuration: {} }
+})
 
-    const spStore = useSpStore()
-    const plansStore = usePlansStore()
-    const cloudStore = useCloudStore()
+const filteredPlans = computed(() => {
+  const locationItem = cloudStore.locations.find(({ id }) =>
+    id === cloudStore.locationId
+  )
 
-    const isPlansLoading = ref(false)
-    const dataLocalStorage = ref('')
-    const productSize = ref('')
-    const activeKey = ref('location')
-    const periods = ref([])
-    const tarification = ref('')
-
-    const product = ref({})
-    const priceOVH = reactive({ value: 0, addons: {} })
-    const options = reactive({
-      isSSHExist: false,
-      highCPU: false,
-      cpu: { size: 1, min: 1, max: 8 },
-      ram: { size: 1, min: 1, max: 12 },
-      disk: { type: 'SSD', step: 1, size: 1, min: 20, max: 480 },
-      os: { id: -1, name: '' },
-      network: {
-        public: { status: true, count: 1 },
-        private: { status: false, count: 0 }
-      },
-      config: { addons: [], configuration: {} }
-    })
-
-    watch(() => cloudStore.locationId, () => {
-      options.config = { configuration: {}, addons: [] }
-      priceOVH.addons = {}
-    })
-
-    const filteredPlans = computed(() => {
-      const locationItem = cloudStore.locations.find(({ id }) =>
-        id === cloudStore.locationId
-      )
-
-      const { items } = cloudStore.showcases.find(({ uuid }) => {
-        if (cloudStore.showcaseId === '') {
-          return uuid === locationItem?.showcase
-        }
-        return uuid === cloudStore.showcaseId
-      }) ?? {}
-      const plans = []
-
-      if (!items) return plansStore.plans
-      items.forEach(({ servicesProvider, plan }) => {
-        if (servicesProvider === cloudStore.provider?.uuid) {
-          plans.push(plan)
-        }
-      })
-
-      if (plans.length < 1) return plansStore.plans
-      return plansStore.plans.filter(({ uuid, type }) =>
-        locationItem?.type === type && plans.includes(uuid)
-      )
-    })
-
-    const { mode, productKey, products } = useProducts(options, tarification, productSize)
-
-    const isProductExist = computed(() =>
-      !route.query.product && cloudStore.plan.type?.includes('dedicated')
-    )
-
-    const components = import.meta.glob('@/components/cloud/modules/*/panels/*.vue')
-    const { panels } = useCloudPanels(tarification, options, productSize)
-    const panelsComponents = ref(
-      Object.keys(panels.value).reduce((result, key) =>
-        ({ ...result, [key]: markRaw(getComponent(key)) }), {}
-      )
-    )
-
-    watch(() => cloudStore.plan.type, () => {
-      panelsComponents.value = Object.keys(panels.value).reduce((result, key) =>
-        ({ ...result, [key]: markRaw(getComponent(key)) }), {}
-      )
-    })
-
-    function getComponent (name) {
-      const result = Object.keys(components).find((key) =>
-        key.includes(`/${cloudStore.plan.type}/panels/${name}.vue`)
-      )
-
-      if (!components[result]) return {}
-      return defineAsyncComponent(() => components[result]())
+  const { items } = cloudStore.showcases.find(({ uuid }) => {
+    if (cloudStore.showcaseId === '') {
+      return uuid === locationItem?.showcase
     }
+    return uuid === cloudStore.showcaseId
+  }) ?? {}
+  const plans = []
 
-    function setOptions (path, value) {
-      if (/configuration.\w{1,}_os/.test(path)) {
-        options.config.configuration = {
-          ...options.config.configuration, [path.split('.').at(-1)]: value
-        }
-        return
-      }
-      setValue(path, value, options)
+  if (!items) return plansStore.plans
+  items.forEach(({ servicesProvider, plan }) => {
+    if (servicesProvider === cloudStore.provider?.uuid) {
+      plans.push(plan)
     }
+  })
 
-    function setPrice (path, value) {
-      setValue(path, value, priceOVH)
+  if (plans.length < 1) return plansStore.plans
+  return plansStore.plans.filter(({ uuid, type }) =>
+    locationItem?.type === type && plans.includes(uuid)
+  )
+})
+
+const { mode, productKey, products } = useProducts(options, tarification, productSize)
+
+const isProductExist = computed(() =>
+  !route.query.product && cloudStore.plan.type?.includes('dedicated')
+)
+
+const components = import.meta.glob('@/components/cloud/modules/*/panels/*.vue')
+const { panels } = useCloudPanels(tarification, options, productSize)
+const panelsComponents = ref(
+  Object.keys(panels.value).reduce((result, key) =>
+    ({ ...result, [key]: markRaw(getComponent(key)) }), {}
+  )
+)
+
+watch(() => cloudStore.plan.type, () => {
+  panelsComponents.value = Object.keys(panels.value).reduce((result, key) =>
+    ({ ...result, [key]: markRaw(getComponent(key)) }), {}
+  )
+})
+
+function getComponent (name) {
+  const result = Object.keys(components).find((key) =>
+    key.includes(`/${cloudStore.plan.type}/panels/${name}.vue`)
+  )
+
+  if (!components[result]) return {}
+  return defineAsyncComponent(() => components[result]())
+}
+
+function setOptions (path, value) {
+  if (/configuration.\w{1,}_os/.test(path)) {
+    options.config.configuration = {
+      ...options.config.configuration, [path.split('.').at(-1)]: value
     }
+    return
+  }
+  setValue(path, value, options)
+}
 
-    function nextStep () {
-      if (activeKey.value === 'location') {
-        activeKey.value = 'plan'
-      } else if (activeKey.value === 'plan') {
-        if (!isProductExist.value) {
-          activeKey.value = 'os'
-          return
-        }
-        router.push({ query: { ...route.query, product: productSize.value } })
-      } else if (activeKey.value === 'os') {
-        activeKey.value = 'addons'
-      }
+function setPrice (path, value) {
+  setValue(path, value, priceOVH)
+}
+
+function nextStep () {
+  if (activeKey.value === 'location') {
+    activeKey.value = 'plan'
+  } else if (activeKey.value === 'plan') {
+    if (!isProductExist.value) {
+      activeKey.value = 'os'
+      return
     }
-
-    provide('product', readonly(product))
-    provide('usePriceOVH', () => [readonly(priceOVH), setPrice])
-    provide('useOptions', () => [readonly(options), setOptions])
-    provide('useActiveKey', () => [readonly(activeKey), nextStep])
-
-    return {
-      isPlansLoading,
-      dataLocalStorage,
-      productSize,
-      activeKey,
-      periods,
-
-      cachedPlans: ref({}),
-      filteredPlans,
-      tarification,
-      products,
-      productKey,
-      mode,
-
-      product,
-      priceOVH,
-      options,
-      panels,
-      panelsComponents,
-
-      ...storeToRefs(cloudStore),
-      createOrder: cloudStore.createOrder,
-      nextStep
-    }
-  },
-
-  computed: {
-    ...mapState(useAuthStore, ['isLogged']),
-    ...mapState(useCurrenciesStore, ['currencies']),
-    ...mapState(useNamespasesStore, ['namespaces']),
-    ...mapState(usePlansStore, ['plans']),
-    ...mapState(useInstancesStore, { getServicesFull: 'services' }),
-
-    itemService () {
-      const data = this.getServicesFull.find((el) => {
-        return this.serviceId === el.uuid
-      })
-      return data
-    },
-    services () {
-      return this.getServicesFull.filter((el) => el.status !== 'DEL')
-    },
-    template () {
-      if (this.provider?.type.includes('ovh')) {
-        const { type = 'ovh vps' } = this.plan ?? {}
-        const components = import.meta.glob('@/components/cloud/modules/*/createInstance.vue')
-        const component = Object.keys(components).find((key) => key.includes(`/${type}/`))
-
-        return defineAsyncComponent(() => components[component]())
-      } else {
-        return defineAsyncComponent(() => import('@/components/cloud/modules/ione/createInstance.vue'))
-      }
-    }
-  },
-
-  watch: {
-    tarification (value) {
-      if (this.plan.type === 'ione' && value) {
-        const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC'
-        const item = this.filteredPlans.find(({ kind, products }) => {
-          if (type === 'DYNAMIC') return kind === type
-          let period = 0
-
-          switch (value) {
-            case 'Daily':
-              period = 3600 * 24
-              break
-            case 'Annually':
-              period = 3600 * 24 * 365
-              break
-            case 'Biennially':
-              period = 3600 * 24 * 365 * 2
-              break
-            default:
-              period = 3600 * 24 * 30
-          }
-
-          return kind === type && Object.values(products).find((el) => +el.period === period)
-        })
-
-        this.planId = item.uuid
-        this.setData({ key: 'productSize', value: this.products[1] ?? this.products[0] })
-      } else if (this.plan.type?.includes('cloud')) {
-        setTimeout(() => {
-          const period = (this.options.config.monthlyBilling) ? 'P1M' : 'P1H'
-          const { planCode } = this.options.config
-
-          this.product = {
-            ...this.plan.products[`${period} ${planCode}`],
-            key: `${period} ${planCode}`
-          }
-        }, 100)
-      }
-    },
-    productSize (size) {
-      const plan = (this.plan.kind === 'DYNAMIC' && this.plan.type === 'ione')
-        ? this.plans.find((el) => el.uuid === this.plan.meta.linkedPlan)
-        : this.plan
-
-      if (!plan) return
-      for (const [key, value] of Object.entries(plan.products ?? {})) {
-        if (value.title === size) {
-          const product = { ...value, key }
-
-          this.options.ram.size = product.resources.ram / 1024
-          this.options.cpu.size = product.resources.cpu
-          this.options.disk.size = product.resources.disk ?? (plan.meta.minDisk ?? 20) * 1024
-          this.product = product
-        } else if (value.group === size) {
-          this.product = { ...value, key }
-        }
-      }
-    },
-    periods (periods) {
-      if (this.dataLocalStorage.productSize) return
-      this.tarification = ''
-
-      setTimeout(() => {
-        this.tarification = periods[0]?.value ?? ''
-      })
-    },
-    itemService (service) {
-      const group = service.instancesGroups.find(({ type }) =>
-        this.plan.type?.includes(type)
-      ) ?? {}
-
-      if (group.config?.ssh) this.options.isSSHExist = true
-      else this.options.isSSHExist = false
-    },
-    locationId () {
-      if (!this.dataLocalStorage.config) {
-        this.options.os = { id: -1, name: '' }
-      }
-
-      if (!this.provider?.uuid) return
-      if (this.cachedPlans[this.provider.uuid]) {
-        this.setPlans(this.cachedPlans[this.provider.uuid])
-
-        const { items } = this.showcases.find(({ uuid }) => uuid === this.showcaseId) ?? {}
-        const { plan } = items?.find((item) => item.locations.includes(this.locationId)) ?? {}
-
-        this.planId = plan ?? this.filteredPlans[0]?.uuid ?? ''
-        return
-      }
-
-      this.isPlansLoading = true
-      this.fetchPlans({
-        sp_uuid: this.provider.uuid,
-        anonymously: !this.isLogged
-      })
-        .then(({ pool }) => {
-          this.cachedPlans[this.provider.uuid] = pool
-          this.planId = this.filteredPlans[0]?.uuid ?? pool[0]?.uuid ?? ''
-
-          if (this.dataLocalStorage.billing_plan) {
-            this.planId = this.dataLocalStorage.billing_plan.uuid
-            this.setData({ key: 'productSize', value: this.dataLocalStorage.productSize })
-          } else if (this.dataLocalStorage.locationId) {
-            this.tarification = this.periods[0]?.value ?? ''
-          }
-
-          this.activeKey = this.dataLocalStorage?.activeKey ?? 'plan'
-          setTimeout(() => { this.activeKey = 'location' })
-        })
-        .finally(() => {
-          this.isPlansLoading = false
-        })
-
-      const { min_drive_size: minSize, max_drive_size: maxSize } = this.provider.vars
-
-      if (minSize) {
-        this.options.disk.min = minSize.value[this.options.disk.type]
-      }
-      if (maxSize) {
-        this.options.disk.max = maxSize.value[this.options.disk.type]
-      }
-    },
-    plan (value) {
-      if (value.meta?.minDisk) {
-        this.options.disk.min = +value.meta.minDisk
-      }
-      if (value.meta?.maxDisk) {
-        this.options.disk.max = +value.meta.maxDisk
-      }
-    },
-    'options.os.name' () {
-      if (this.plan.type !== 'ione') return
-      if (this.options.disk.min > 0) return
-      const { id } = this.options.os
-      const { min_size: minSize } = this.provider.publicData.templates[id]
-
-      this.options.disk.min = minSize / 1024
-    },
-    'options.disk.size' (value) {
-      if (value / 1024 >= 200) {
-        this.options.disk.step = 20
-      } else if (value / 1024 >= 100) {
-        this.options.disk.step = 10
-      } else if (value / 1024 >= 50) {
-        this.options.disk.step = 5
-      } else {
-        this.options.disk.step = 1
-      }
-    },
-    activeKey () {
-      setTimeout(() => {
-        const { $el } = this.$refs['periods-group'] ?? {}
-
-        if ($el?.style.gridColumn === '' && Object.keys(this.periods).length > 4) {
-          if (Object.keys(this.periods).length % 3 === 1) $el.style.gridColumn = '2 / 3'
-        }
-      })
-    },
-    showcaseId () { this.setDefaultLocation() },
-    locations () { this.setDefaultLocation() }
-  },
-  created () {
-    this.showcaseId = this.$route.query.service ?? ''
-    this.fetchShowcases(!this.isLogged)
-    this.fetchProviders(!this.isLogged)
-      .then(async () => {
-        const data = localStorage.getItem('data')
-        const { query } = this.$route
-
-        if (data || ('data' in query)) {
-          try {
-            await new Promise((resolve) => setTimeout(resolve, 100))
-            this.dataLocalStorage = (data)
-              ? JSON.parse(localStorage.getItem('data'))
-              : JSON.parse(query.data)
-
-            this.tarification = this.dataLocalStorage.tarification ?? ''
-            this.authData.vmName = this.dataLocalStorage.titleVM ?? ''
-            this.locationId = this.locations.find(({ id }) => {
-              const locationId = this.dataLocalStorage.locationId.split('-')
-
-              locationId.shift()
-              return id.includes(locationId.join('-'))
-            })?.id ?? ''
-            this.activeKey = null
-
-            if (this.dataLocalStorage.config) {
-              this.options.os.id = this.dataLocalStorage.config.template_id
-              this.options.os.name = this.dataLocalStorage.config.template_name
-            }
-
-            if (this.dataLocalStorage.ovhConfig) {
-              this.options.config = this.dataLocalStorage.ovhConfig
-            }
-
-            if (this.dataLocalStorage.resources) {
-              this.options.disk.size = this.dataLocalStorage.resources.drive_size
-              this.options.disk.type = this.dataLocalStorage.resources.drive_type
-            }
-          } catch (e) {
-            localStorage.removeItem('data')
-          }
-        }
-      })
-
-    if (this.isLogged) {
-      Promise.all([
-        this.fetchServices(),
-        this.fetchNamespaces(),
-        this.fetchBillingData()
-      ])
-        .then(() => {
-          setTimeout(this.setOneService, 300)
-          setTimeout(this.setOneNameSpace, 300)
-        })
-    }
-
-    if (this.currencies.length < 1) this.fetchCurrencies()
-
-    this.$router.beforeEach((to, from, next) => {
-      if (
-        from.path === '/cloud/newVM' &&
-        localStorage.getItem('data') &&
-        this.isLogged
-      ) {
-        if (window.confirm(this.$t('Data will be lost'))) {
-          localStorage.removeItem('data')
-          next()
-        } else next(false)
-      } else next()
-    })
-  },
-  methods: {
-    ...mapActions(useAuthStore, ['fetchBillingData']),
-    ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
-    ...mapActions(useNamespasesStore, { fetchNamespaces: 'fetch' }),
-    ...mapActions(useSpStore, {
-      fetchProviders: 'fetch',
-      fetchShowcases: 'fetchShowcases'
-    }),
-    ...mapActions(usePlansStore, { fetchPlans: 'fetch', setPlans: 'setPlans' }),
-    ...mapActions(useInstancesStore, {
-      fetchServices: 'fetch',
-      updateService: 'updateService',
-      createService: 'createService'
-    }),
-
-    onScore ({ score }) {
-      this.score = score
-    },
-    setData ({ key, value, type }) {
-      if (type === 'ovh') {
-        if (key.includes('datacenter') || key.includes('os')) {
-          value = { [key]: value }
-        }
-        if (key.includes('datacenter')) {
-          const confKey = Object.keys(this.options.config.configuration)
-            .find((el) => el.includes('os'))
-
-          value[confKey] = this.options.config.configuration[confKey]
-          key = 'configuration'
-        }
-        if (key.includes('os')) {
-          const confKey = Object.keys(this.options.config.configuration)
-            .find((el) => el.includes('datacenter'))
-
-          value[confKey] = this.options.config.configuration[confKey]
-          key = 'configuration'
-        }
-
-        this.options.config[key] = value
-        return
-      }
-
-      if (key === 'priceOVH') {
-        this.priceOVH.value = value.value
-        this.priceOVH.addons = value.addons
-      } else if (typeof value === 'object') {
-        this[key] = Object.assign({}, value)
-      } else this[key] = value
-
-      if (key === 'type') {
-        const plan = this.plans.find(({ type }) => type.includes(value))
-        const products = Object.values(plan.products)
-        const product = products[1] ?? products[0]
-
-        this.planId = plan.uuid
-        this.setData({ key: 'productSize', value: product.title })
-      }
-    },
-    setOneService () {
-      console.log(this.services)
-      if (this.services?.length === 1) {
-        this.serviceId = this.services[0].uuid
-      }
-    },
-    setOneNameSpace () {
-      if (this.namespaces.length === 1) {
-        this.namespaceId = this.namespaces[0].uuid
-      }
-    },
-
-    setDefaultLocation () {
-      const item = this.showcases.find(({ uuid }) => uuid === this.showcaseId)
-      const locationItem = this.locations.find(({ id }) =>
-        id.includes(item?.promo?.main?.default)
-      )
-
-      if (!locationItem) return
-      this.locationId = locationItem.id
-    }
+    router.push({ query: { ...route.query, product: productSize.value } })
+  } else if (activeKey.value === 'os') {
+    activeKey.value = 'addons'
   }
 }
+
+watch(() => [cloudStore.locationId, cloudStore.locations], setDefaultLocation)
+
+watch(tarification, async (value) => {
+  if (cloudStore.plan.type === 'ione' && value) {
+    const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC'
+    const item = filteredPlans.value.find(({ kind, products }) => {
+      if (type === 'DYNAMIC') return kind === type
+      let period = 0
+
+      switch (value) {
+        case 'Daily':
+          period = 3600 * 24
+          break
+        case 'Annually':
+          period = 3600 * 24 * 365
+          break
+        case 'Biennially':
+          period = 3600 * 24 * 365 * 2
+          break
+        default:
+          period = 3600 * 24 * 30
+      }
+
+      return kind === type && Object.values(products).find((el) => +el.period === period)
+    })
+
+    cloudStore.planId = item.uuid
+    productSize.value = products.value[1] ?? products.value[0]
+  } else if (cloudStore.plan.type?.includes('cloud')) {
+    nextTick(() => {
+      const period = (options.config.monthlyBilling) ? 'P1M' : 'P1H'
+      const { planCode } = options.config
+
+      product.value = {
+        ...cloudStore.plan.products[`${period} ${planCode}`],
+        key: `${period} ${planCode}`
+      }
+    })
+  } else if (cloudStore.plan.type === 'keyweb') {
+    await nextTick()
+    const [key] = Object.entries(cloudStore.plan.products).find(
+      ([, { period, title }]) => (
+        getTarification(period) === value && title === productSize.value
+      )
+    )
+
+    product.value = { ...cloudStore.plan.products[key], key }
+  }
+})
+
+watch(productSize, (size) => {
+  const plan = (cloudStore.plan.kind === 'DYNAMIC' && cloudStore.plan.type === 'ione')
+    ? plansStore.plans.find(({ uuid }) => uuid === cloudStore.plan.meta.linkedPlan)
+    : cloudStore.plan
+
+  if (!plan) return
+  for (const [key, value] of Object.entries(plan.products ?? {})) {
+    const isEqual = getTarification(value.period) === tarification.value
+
+    if (value.title === size && isEqual) {
+      const result = { ...value, key }
+
+      options.ram.size = result.resources.ram / 1024
+      options.cpu.size = result.resources.cpu
+      options.disk.size = result.resources.disk ?? (plan.meta.minDisk ?? 20) * 1024
+      product.value = result
+    } else if (value.group === size) {
+      product.value = { ...value, key }
+    }
+  }
+})
+
+watch(periods, (periods) => {
+  if (dataLocalStorage.value.productSize) return
+  tarification.value = ''
+
+  setTimeout(() => {
+    tarification.value = periods[0]?.value ?? ''
+  })
+})
+
+watch(() => cloudStore.serviceId, (value) => {
+  const service = instancesStore.services.find(({ uuid }) => uuid === value)
+  const group = service.instancesGroups.find(({ type }) =>
+    cloudStore.plan.type?.includes(type)
+  ) ?? {}
+
+  if (group.config?.ssh) options.isSSHExist = true
+  else options.isSSHExist = false
+})
+
+watch(() => [cloudStore.locationId, spStore.servicesProviders], async () => {
+  if (!dataLocalStorage.value.config) {
+    options.os = { id: -1, name: '' }
+  }
+  options.config = { configuration: {}, addons: [] }
+  priceOVH.addons = {}
+
+  if (!cloudStore.provider?.uuid) return
+  if (cachedPlans.value[cloudStore.provider.uuid]) {
+    plansStore.setPlans(cachedPlans.value[cloudStore.provider.uuid])
+
+    const { items } = cloudStore.showcases.find(
+      ({ uuid }) => uuid === cloudStore.showcaseId
+    ) ?? {}
+    const { plan } = items?.find((item) =>
+      item.locations.includes(cloudStore.locationId)
+    ) ?? {}
+
+    cloudStore.planId = plan ?? filteredPlans.value[0]?.uuid ?? ''
+    return
+  }
+
+  try {
+    isPlansLoading.value = true
+    const { pool } = await plansStore.fetch({
+      sp_uuid: cloudStore.provider.uuid,
+      anonymously: !authStore.isLogged
+    })
+
+    cachedPlans.value[cloudStore.provider.uuid] = pool
+    cloudStore.planId = filteredPlans.value[0]?.uuid ?? pool[0]?.uuid ?? ''
+
+    if (dataLocalStorage.value.billing_plan) {
+      cloudStore.planId = dataLocalStorage.value.billing_plan.uuid
+      productSize.value = dataLocalStorage.value.productSize
+    } else if (dataLocalStorage.value.locationId) {
+      tarification.value = periods.value[0]?.value ?? ''
+    }
+
+    activeKey.value = dataLocalStorage.value?.activeKey ?? 'plan'
+    setTimeout(() => { activeKey.value = 'location' })
+  } catch (error) {
+    openNotification('error', {
+      message: error.response?.data.message ?? error.message ?? error
+    })
+  } finally {
+    isPlansLoading.value = false
+  }
+
+  const { min_drive_size: minSize, max_drive_size: maxSize } = cloudStore.provider.vars
+
+  if (minSize) {
+    options.disk.min = minSize.value[options.disk.type]
+  }
+  if (maxSize) {
+    options.disk.max = maxSize.value[options.disk.type]
+  }
+})
+
+watch(() => cloudStore.plan, (value) => {
+  if (value.meta?.minDisk) {
+    options.disk.min = +value.meta.minDisk
+  }
+  if (value.meta?.maxDisk) {
+    options.disk.max = +value.meta.maxDisk
+  }
+})
+
+watch(() => options.os.name, () => {
+  if (cloudStore.plan.type !== 'ione') return
+  if (options.disk.min > 0) return
+  const { id } = options.os
+  const { min_size: minSize } = cloudStore.provider.publicData.templates[id]
+
+  options.disk.min = minSize / 1024
+})
+
+watch(() => options.disk.size, (value) => {
+  if (value / 1024 >= 200) {
+    options.disk.step = 20
+  } else if (value / 1024 >= 100) {
+    options.disk.step = 10
+  } else if (value / 1024 >= 50) {
+    options.disk.step = 5
+  } else {
+    options.disk.step = 1
+  }
+})
+
+function setDefaultLocation () {
+  const item = cloudStore.showcases.find(({ uuid }) =>
+    uuid === cloudStore.showcaseId
+  )
+  const locationItem = cloudStore.locations.find(({ id }) =>
+    id.includes(item?.promo?.main?.default)
+  )
+
+  if (!locationItem) return
+  cloudStore.locationId = locationItem.id
+}
+
+function fetch () {
+  spStore.fetchShowcases(!authStore.isLogged)
+  spStore.fetch(!authStore.isLogged)
+    .then(async () => {
+      const data = localStorage.getItem('data') ?? route.query.data
+
+      if (!data) return
+      try {
+        await nextTick()
+        dataLocalStorage.value = JSON.parse(data)
+
+        tarification.value = dataLocalStorage.value.tarification ?? ''
+        cloudStore.authData.vmName = dataLocalStorage.value.titleVM ?? ''
+        cloudStore.locationId = cloudStore.locations.find(({ id }) => {
+          const locationId = dataLocalStorage.value.locationId.split('-')
+
+          locationId.shift()
+          return id.includes(locationId.join('-'))
+        })?.id ?? ''
+        activeKey.value = null
+
+        if (dataLocalStorage.value.config) {
+          options.os.id = dataLocalStorage.value.config.template_id
+          options.os.name = dataLocalStorage.value.config.template_name
+        }
+
+        if (dataLocalStorage.value.ovhConfig) {
+          options.config = dataLocalStorage.value.ovhConfig
+        }
+
+        if (dataLocalStorage.value.resources) {
+          options.disk.size = dataLocalStorage.value.resources.drive_size
+          options.disk.type = dataLocalStorage.value.resources.drive_type
+        }
+      } catch {
+        localStorage.removeItem('data')
+      }
+    })
+
+  if (authStore.isLogged) {
+    Promise.all([
+      instancesStore.fetch(),
+      namespasesStore.fetch(),
+      authStore.fetchBillingData()
+    ])
+  }
+
+  if (currenciesStore.currencies.length < 1) {
+    currenciesStore.fetchCurrencies()
+  }
+}
+
+onUnmounted(() => {
+  plansStore.setPlans([])
+  cloudStore.$reset()
+})
+
+cloudStore.showcaseId = route.query.service ?? ''
+router.beforeEach((_, from, next) => {
+  if (
+    from.path === '/cloud/newVM' &&
+      localStorage.getItem('data') &&
+      authStore.isLogged
+  ) {
+    if (window.confirm(i18n.t('Data will be lost'))) {
+      localStorage.removeItem('data')
+      next()
+    } else next(false)
+  } else next()
+})
+fetch()
+
+provide('product', readonly(product))
+provide('usePriceOVH', () => [readonly(priceOVH), setPrice])
+provide('useOptions', () => [readonly(options), setOptions])
+provide('useActiveKey', () => [readonly(activeKey), nextStep])
 </script>
 
 <style>

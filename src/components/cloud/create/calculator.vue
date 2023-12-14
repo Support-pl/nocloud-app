@@ -8,7 +8,6 @@
     <template v-else>
       <!-- Location Tarif CPU RAM GPU Drive os network -->
       <cloud-resources
-        :provider="cloudStore.provider"
         :product-size="productSize"
         :tarification="tarification"
       />
@@ -21,7 +20,7 @@
           justify="space-between"
           style="font-size: 1.1rem"
         >
-          <a-col> {{ capitalize($t(key)) }} {{ getAddonsValue(key) }}: </a-col>
+          <a-col> {{ capitalize($t(key)) }}{{ getAddonsValue(key) }}: </a-col>
           <a-col> {{ +(addon * currency.rate).toFixed(2) }} {{ currency.code }} </a-col>
         </a-row>
       </transition-group>
@@ -79,7 +78,6 @@
     <a-row justify="center" style="margin-top: 15px">
       <a-col>
         <a-radio-group
-          ref="periods-group"
           default-value="Monthly"
           :value="tarification"
           :style="{ display: 'grid', textAlign: 'center', gridTemplateColumns: periodColumns }"
@@ -181,10 +179,10 @@ const { tarification, productSize } = toRefs(props)
 const { productFullPrice } = useCloudPrices(product, tarification, activeKey, options, priceOVH)
 
 function getAddonsValue (key) {
-  const addon = options.config.addons.find((el) => el.includes(key))
-  const value = parseFloat(addon.split('-').at(-1))
+  const addon = options.config.addons?.find((el) => el.includes(key))
+  const value = parseFloat(addon?.split('-')?.at(-1))
 
-  return isFinite(value) ? `(${value} Gb)` : ''
+  return isFinite(value) ? ` (${value} Gb)` : ''
 }
 
 async function createOrder () {

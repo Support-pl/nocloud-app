@@ -1,5 +1,9 @@
 <template>
-  <div v-if="isPromoVisible" class="order__field" :style="(isBitrixApps) ? 'padding: 0' : null">
+  <div
+    v-if="isPromoVisible"
+    class="order__field"
+    :style="(isBitrixApps) ? { padding: 0, overflow: 'hidden' } : null"
+  >
     <editor-container :value="promo" />
   </div>
 </template>
@@ -14,6 +18,8 @@ import { useSpStore } from '@/stores/sp.js'
 const route = useRoute()
 const i18n = useI18n()
 const spStore = useSpStore()
+
+const url = 'https://support.pl/licencje/oferta-specjalna/?utm_source=cloud&utm_medium=banner&utm_campaign=special-offer'
 
 const showcase = computed(() =>
   spStore.getShowcases.find(({ uuid }) => uuid === route.query.service)
@@ -31,7 +37,7 @@ const isPromoVisible = computed(() => {
 const promo = computed(() => {
   if (isBitrixApps.value) {
     return `
-      <a href="https://support.pl/licencje/oferta-specjalna/" target="_blank">
+      <a href="${url}" target="_blank">
         <img
           id="promo"
           style="width: 100%"
@@ -46,7 +52,7 @@ const promo = computed(() => {
 
 watchEffect(async () => {
   await nextTick()
-  document.getElementById('promo').addEventListener('error', onError)
+  document.getElementById('promo')?.addEventListener('error', onError)
 })
 
 function onError ({ target }) {
