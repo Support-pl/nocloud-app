@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth.js'
+import config from '@/appconfig.js'
 import api from '@/api.js'
 
 export const useSupportStore = defineStore('support', () => {
@@ -46,6 +47,7 @@ export const useSupportStore = defineStore('support', () => {
     filter,
 
     async fetch (silent) {
+      if (!config.WHMCSsiteurl) return
       try {
         if (!silent) isLoading.value = true
         const response = await api.get(
@@ -65,6 +67,7 @@ export const useSupportStore = defineStore('support', () => {
     },
 
     async fetchDepartments () {
+      if (!config.WHMCSsiteurl) return
       if (departments.value.length > 0) {
         return departments.value
       }

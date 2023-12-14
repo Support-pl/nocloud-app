@@ -99,6 +99,7 @@ function redirectByType ({ uuid, type }) {
   switch (type) {
     case 'ovh':
     case 'ione':
+    case 'keyweb':
       router.replace({ name: 'openCloud', params: { uuid } })
       break
 
@@ -165,7 +166,7 @@ onMounted(async () => {
   if (firstname && localStorage.getItem('oauth')) {
     localStorage.removeItem('oauth')
     appStore.isButtonsVisible = true
-  } else if (!id) {
+  } else if (!id && config.WHMCSsiteurl) {
     appStore.isButtonsVisible = false
   }
 

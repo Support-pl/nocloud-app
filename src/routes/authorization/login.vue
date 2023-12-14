@@ -210,7 +210,7 @@ async function send () {
     await authStore.login({
       login: formatedEmail.trim(),
       password: password.value,
-      type: (type.value) ? 'standard' : 'whmcs'
+      type: (type.value || !config.WHMCSsiteurl) ? 'standard' : 'whmcs'
     })
 
     if (localStorage.getItem('data')) {
@@ -226,8 +226,8 @@ async function send () {
 
       router.replace({ name, query: { service } })
     } else {
-      authStore.fetchUserData()
-      authStore.fetchBillingData()
+      authStore.fetchUserData(true)
+      authStore.fetchBillingData(true)
       router.push({ name: 'root' })
     }
   } catch (error) {

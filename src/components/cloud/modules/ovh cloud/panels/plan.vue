@@ -172,7 +172,7 @@ function setResources (productKey, changeTarifs = true) {
   let product = periods[0]
 
   setOptions('cpu.size', +resources.cpu)
-  setOptions('ram.size', +(resources.ram / 1024).toFixed(2))
+  setOptions('ram.size', +(resources.ram / 1000).toFixed(2))
   setOptions('disk', { size: resources.drive_size, type: 'SSD' })
 
   periods.forEach((period) => {
@@ -215,10 +215,15 @@ function sortProducts () {
   )
 }
 
-const { extra } = cloudStore.locations
-  .find(({ id }) => cloudStore.locationId.includes(id)) ?? {}
+function setDatacenter () {
+  const { extra } = cloudStore.locations
+    .find(({ id }) => cloudStore.locationId.includes(id)) ?? {}
 
-setOptions('config.configuration.cloud_datacenter', extra.region)
+  setOptions('config.configuration.cloud_datacenter', extra.region)
+}
+
+watch(() => cloudStore.locationId, setDatacenter)
+setDatacenter()
 </script>
 
 <script>

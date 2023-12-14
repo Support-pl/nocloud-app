@@ -534,14 +534,16 @@ export default {
     }
   },
   created () {
-    this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
-      .then((res) => { this.currencies = res.currency })
-      .catch(err => {
-        const message = err.response?.data?.message ?? err.message
+    if (config.WHMCSsiteurl) {
+      this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
+        .then((res) => { this.currencies = res.currency })
+        .catch(err => {
+          const message = err.response?.data?.message ?? err.message
 
-        this.$notification.error({ message: this.$t(message) })
-        console.error(err)
-      })
+          this.$notification.error({ message: this.$t(message) })
+          console.error(err)
+        })
+    }
 
     if (this.currencies.length < 1) this.fetchCurrencies()
   },
@@ -808,7 +810,7 @@ export default {
 }
 
 .header__links a:last-child {
-  max-width: 100px;
+  max-width: 25vw;
   padding: 10px 15px;
   border-radius: 5px;
   line-height: 1;
@@ -962,6 +964,10 @@ export default {
     border-radius: 0 0 10px 10px;
     background: var(--main);
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .header__links a:last-child {
+    max-width: 36vw;
   }
 
   .header__links a:not(:last-child) {

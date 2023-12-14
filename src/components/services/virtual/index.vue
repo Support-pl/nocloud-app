@@ -101,6 +101,7 @@
           v-model:provider="provider"
           :plans-list="plans"
           :sp-list="sp"
+          :is-plans-visible="false"
         />
 
         <a-divider orientation="left" :style="{'margin-bottom': '0'}">
@@ -276,23 +277,21 @@ export default {
 
         this.cachedPlans[uuid] = pool
         this.plan = pool[0]?.uuid
+        this.changePeriods(pool)
       } catch (error) {
         const message = error.response?.data?.message ?? error.message ?? error
 
         this.$notification.error({ message })
       }
     },
-    async plan (value) {
-      await new Promise((resolve) => setTimeout(resolve, 100))
-      const plan = this.plans.find(({ uuid }) => uuid === value)
-
-      if (!plan) return
-      this.changeProducts(plan)
-    },
     getProducts () {
       const product = this.products[this.sizes.indexOf(this.options.size)]
 
       this.options.model = product?.resources.model ?? ''
+    },
+    'options.period' (value) {
+      this.changeProducts(value)
+      this.fetchLoading = false
     }
   },
   mounted () {
@@ -331,22 +330,35 @@ export default {
     if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
-    changeProducts (plan) {
-      const products = Object.values(plan.products ?? {})
-      const sortedProducts = Object.entries(plan.products ?? {})
+    changeProducts (period) {
+      const sortedProducts = this.cachedPlans[this.provider]?.reduce(
+        (result, plan) => {
+          let isValid = false
 
-      products.sort((a, b) => a.sorter - b.sorter)
-      this.products = products
-      this.plan = plan?.uuid
+          for (const product of Object.values(plan.products)) {
+            if (+product.period === +period) {
+              isValid = true
+              break
+            }
+          }
+
+          if (!isValid) return result
+          return [...result, ...Object.entries(plan.products)]
+        }, []
+      ) ?? []
+      this.products = sortedProducts.map(([, value]) => value)
 
       sortedProducts.sort(([, a], [, b]) => a.sorter - b.sorter)
       this.sizes = sortedProducts.map(([key]) => key)
       this.options.size = this.sizes[0]
+    },
+    changePeriods (plans) {
       this.periods = []
-
-      this.products.forEach(({ period }) => {
-        if (this.periods.includes(period)) return
-        this.periods.push(period)
+      plans.forEach(({ products }) => {
+        Object.values(products).forEach(({ period }) => {
+          if (this.periods.includes(+period)) return
+          this.periods.push(+period)
+        })
       })
       this.options.period = this.periods[0]
     },

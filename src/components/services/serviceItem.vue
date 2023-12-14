@@ -23,6 +23,9 @@ const i18n = useI18n()
 const authStore = useAuthStore()
 
 const translatedName = computed(() => {
+  const { title } = (props.service.promo ?? {})[i18n.locale.value] ?? {}
+
+  if (title) return title
   if (props.service.translatable) {
     return i18n.t(props.service.title)
   }

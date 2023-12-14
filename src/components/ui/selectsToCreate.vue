@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
@@ -124,20 +124,35 @@ const namespaces = computed(() => {
   return namespacesStore.namespaces
 })
 
+onMounted(() => {
+  if (!props.provider && providers.value.length === 1) {
+    emits('update:provider', providers.value[0].uuid)
+  }
+  if (!props.plan && plans.value.length === 1) {
+    emits('update:provider', plans.value[0].uuid)
+  }
+  if (!props.service && services.value.length === 1) {
+    emits('update:provider', services.value[0].uuid)
+  }
+  if (!props.namespace && namespaces.value.length === 1) {
+    emits('update:provider', namespaces.value[0].uuid)
+  }
+})
+
 watch(providers, (value) => {
   if (value.length !== 1) return
-  emits('update:provider', value[0]?.uuid)
+  emits('update:provider', value[0].uuid)
 })
 watch(plans, (value) => {
   if (value.length !== 1) return
-  emits('update:plan', value[0]?.uuid)
+  emits('update:plan', value[0].uuid)
 })
 watch(services, (value) => {
   if (value.length !== 1) return
-  emits('update:service', value[0]?.uuid)
+  emits('update:service', value[0].uuid)
 })
 watch(namespaces, (value) => {
   if (value.length !== 1) return
-  emits('update:namespace', value[0]?.uuid)
+  emits('update:namespace', value[0].uuid)
 })
 </script>

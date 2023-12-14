@@ -21,6 +21,7 @@ export const useCloudStore = defineStore('cloud', () => {
   const authData = reactive({
     vmName: '',
     username: '',
+    hostname: '',
     password: '',
     sshKey: undefined,
     score: null
@@ -97,6 +98,13 @@ export const useCloudStore = defineStore('cloud', () => {
         newGroup.config = { ssh: newInstance.config.ssh }
         delete newInstance.config.ssh
       }
+    } else if (newGroup.type === 'keyweb') {
+      newInstance.config = {
+        ...options.config,
+        auto_renew: autoRenew.value
+      }
+
+      newInstance.resources = {}
     }
 
     if (service.value?.instancesGroups?.length < 1) {
@@ -220,6 +228,19 @@ export const useCloudStore = defineStore('cloud', () => {
     showcases,
     locations,
 
-    createOrder
+    createOrder,
+    $reset: () => {
+      authData.vmName = ''
+      authData.username = ''
+      authData.password = ''
+      authData.sshKey = null
+      authData.score = null
+
+      locationId.value = 'Location'
+      showcaseId.value = ''
+      planId.value = null
+      serviceId.value = null
+      namespaceId.value = null
+    }
   }
 })
