@@ -359,7 +359,7 @@ export default {
 
         this.cachedPlans[uuid] = pool
         this.plan = pool[0]?.uuid
-        this.changePeriods(pool)
+        this.changeProducts()
       } catch (error) {
         const message = error.response?.data?.message ?? error.message ?? error
 
@@ -371,13 +371,12 @@ export default {
         this.filters[key] = [resource.at(0), resource.at(-1)]
       })
     },
-    'options.size' () {
+    'options.size' (value) {
+      this.changePeriods(value)
       this.options.addons = []
       this.options.addons = (this.getProducts.meta?.autoEnabled ?? [])
         .filter((addon) => this.getProducts.addons.find(({ key }) => key === addon))
-    },
-    'options.period' (value) {
-      this.changeProducts(value)
+
       this.fetchLoading = false
     }
   },
@@ -420,20 +419,16 @@ export default {
     if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
-    changeProducts (period) {
+    changeProducts () {
       const sortedProducts = this.cachedPlans[this.provider]?.reduce(
         (result, plan) => {
-          let isValid = false
+          for (const [key, product] of Object.entries(plan.products)) {
+            const i = result.findIndex(([, { title }]) => title === product.title)
 
-          for (const product of Object.values(plan.products)) {
-            if (+product.period === +period) {
-              isValid = true
-              break
-            }
+            if (i === -1) result.push([key, product])
           }
 
-          if (!isValid) return result
-          return [...result, ...Object.entries(plan.products)]
+          return result
         }, []
       ) ?? []
       const plan = this.cachedPlans[this.provider]?.at(0)
@@ -455,13 +450,14 @@ export default {
       }))
       this.options.size = this.sizes[0]?.key ?? ''
     },
-    changePeriods (plans) {
+    changePeriods (key) {
+      const { title } = this.products[key]
+
       this.periods = []
-      plans.forEach(({ products }) => {
-        Object.values(products).forEach(({ period }) => {
-          if (this.periods.includes(+period)) return
-          this.periods.push(+period)
-        })
+      Object.values(this.products).forEach((product) => {
+        if (product.title !== title) return
+        if (this.periods.includes(+product.period)) return
+        this.periods.push(+product.period)
       })
       this.options.period = this.periods[0]
     },

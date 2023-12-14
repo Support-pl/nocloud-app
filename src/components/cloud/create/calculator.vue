@@ -109,7 +109,11 @@
       </transition>
     </a-row>
 
-    <cloud-create-button :tarification="tarification" :create-order="createOrder" />
+    <cloud-create-button
+      :tarification="tarification"
+      :create-order="createOrder"
+      :panels="panels"
+    />
   </div>
 </template>
 
@@ -130,7 +134,8 @@ const props = defineProps({
   productSize: { type: String, required: true },
   tarification: { type: String, required: true },
   filteredPlans: { type: Array, required: true },
-  periods: { type: Object, required: true }
+  periods: { type: Object, required: true },
+  panels: { type: Array, required: true }
 })
 const emits = defineEmits(['update:tarification'])
 

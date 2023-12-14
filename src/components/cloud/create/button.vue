@@ -71,7 +71,8 @@ const copyIcon = defineAsyncComponent(
 
 const props = defineProps({
   createOrder: { type: Function, required: true },
-  tarification: { type: String, required: true }
+  tarification: { type: String, required: true },
+  panels: { type: Array, required: true }
 })
 
 const router = useRouter()
@@ -144,12 +145,7 @@ const createButtonOptions = computed(() => {
 })
 
 const nextButtonOptions = computed(() => ({
-  visible: activeKey.value && (
-    (activeKey.value !== 'addons' && provider.value?.type === 'ovh' &&
-      !plan.value.type?.includes('cloud')) ||
-    (activeKey.value !== 'os' && provider.value?.type !== 'ovh') ||
-    (activeKey.value !== 'os' && plan.value.type?.includes('cloud'))
-  ),
+  visible: activeKey.value !== props.panels.at(-1),
   onClick: nextStep
 }))
 
