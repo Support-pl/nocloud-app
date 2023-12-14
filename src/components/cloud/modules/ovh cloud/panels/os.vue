@@ -21,6 +21,7 @@
             <div style="display: flex; align-items: center; gap: 10px">
               <a-select
                 style="width: 100%"
+                :field-names="{ label: 'title', value: 'value', options: 'options' }"
                 :options="authStore.userdata.data?.ssh_keys"
                 :value="options.config.ssh"
                 :style="{

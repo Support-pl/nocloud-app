@@ -46,7 +46,7 @@ const locationTitle = computed(() => {
   )
 
   return cloudStore.provider.locations?.find(({ extra }) =>
-    extra.region?.toLowerCase() === configuration[key]?.toLowerCase()
+    `${extra.region}`.toLowerCase() === `${configuration[key]}`.toLowerCase()
   )?.title
 })
 

@@ -28,7 +28,7 @@
               :style="{
                 boxShadow: (authData.username.length < 2) ? '0 0 2px 2px var(--err)' : null
               }"
-              @update:value="setOptions('config.username', $event)"
+              @change="(value) => setOptions('config.username', value)"
             />
 
             <div v-if="authData.username.length < 2" style="line-height: 1.5; color: var(--err)">
@@ -47,7 +47,7 @@
               :style="{
                 boxShadow: (authData.hostname.length < 2) ? '0 0 2px 2px var(--err)' : null
               }"
-              @update:value="setOptions('config.hostname', $event)"
+              @change="(value) => setOptions('config.hostname', value)"
             />
 
             <div v-if="authData.hostname.length < 2" style="line-height: 1.5; color: var(--err)">
@@ -70,7 +70,7 @@
             <a-input-password
               v-model:value="authData.password"
               class="password"
-              @update:value="setOptions('config.password', $event)"
+              @change="(value) => setOptions('config.password', value)"
             />
           </a-form-item>
         </a-col>

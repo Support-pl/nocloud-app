@@ -151,7 +151,7 @@
                         :title="$t('Click to copy')"
                         @click="addToClipboard"
                       >
-                        {{ VM.config && VM.config.ssh_public_key || $t('ip.none') }}
+                        {{ VM.config?.ssh_public_key || $t('ip.none') }}
                       </span>
                     </div>
                   </a-modal>
@@ -330,7 +330,7 @@ export default {
           onclick: this.changeModal,
           params: ['SSH'],
           icon: 'SafetyOutlined',
-          modules: ['ione', 'ovh']
+          modules: ['ione', 'ovh', 'keyweb']
         },
         {
           title: 'Network control',
@@ -360,7 +360,7 @@ export default {
           icon: 'DeleteOutlined',
           isDanger: true,
           forVNC: true,
-          modules: ['ione', 'ovh']
+          modules: ['ione', 'ovh', 'keyweb']
         }
       ]
       let { type } = this.sp.find(({ uuid }) => uuid === this.VM.sp) || {}

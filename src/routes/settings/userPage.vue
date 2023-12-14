@@ -293,7 +293,7 @@ async function sendInfo () {
     isSendingInfo.value = true
     if (config.WHMCSsiteurl) await api.get(authStore.baseURL, { params })
     else {
-      await api.accounts.update({
+      await api.accounts.update(authStore.userdata.uuid, {
         ...authStore.userdata,
         title: `${deltaInfo.value.firstname} ${deltaInfo.value.lastname}`,
         data: [

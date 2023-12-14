@@ -172,6 +172,7 @@ import api from '@/api.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
+import { useInstancesStore } from '@/stores/instances.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -228,6 +229,7 @@ async function send () {
     } else {
       authStore.fetchUserData(true)
       authStore.fetchBillingData(true)
+      useInstancesStore().$reset()
       router.push({ name: 'root' })
     }
   } catch (error) {

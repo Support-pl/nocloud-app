@@ -79,6 +79,7 @@
               v-model:value="authData.sshKey"
               style="width: 100%"
               :options="authStore.userdata.data?.ssh_keys"
+              :field-names="{ label: 'title', value: 'value', options: 'options' }"
             />
           </a-form-item>
         </a-form>
