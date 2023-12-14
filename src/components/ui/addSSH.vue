@@ -71,7 +71,7 @@ async function handleOk () {
       title.value = ''
       value.value = ''
 
-      authStore.fetchUserData()
+      await authStore.fetchUserData(true)
     } else {
       notification.error({ message: i18n.t('Error adding SSH key') })
     }

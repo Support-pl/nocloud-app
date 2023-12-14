@@ -213,6 +213,11 @@ export const useInstancesStore = defineStore('instances', () => {
         console.error(error)
         throw error
       }
+    },
+    $reset () {
+      services.value = []
+      instances.value = []
+      allInstances.value = []
     }
   }
 })

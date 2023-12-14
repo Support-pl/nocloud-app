@@ -82,6 +82,7 @@
         :filtered-plans="filteredPlans"
         :product-size="productSize"
         :periods="periods"
+        :panels="panelsKeys"
       />
       <promo-block class="order__promo" />
     </div>
@@ -189,6 +190,12 @@ const panelsComponents = ref(
   )
 )
 
+const panelsKeys = computed(() =>
+  Object.entries(panels.value)
+    .filter(([, { visible }]) => visible ?? true)
+    .map(([key]) => key)
+)
+
 watch(() => cloudStore.plan.type, () => {
   panelsComponents.value = Object.keys(panels.value).reduce((result, key) =>
     ({ ...result, [key]: markRaw(getComponent(key)) }), {}
@@ -205,7 +212,7 @@ function getComponent (name) {
 }
 
 function setOptions (path, value) {
-  if (/configuration.\w{1,}_os/.test(path)) {
+  if (/configuration.\w{1,}_/.test(path)) {
     options.config.configuration = {
       ...options.config.configuration, [path.split('.').at(-1)]: value
     }
@@ -232,7 +239,7 @@ function nextStep () {
   }
 }
 
-watch(() => [cloudStore.locationId, cloudStore.locations], setDefaultLocation)
+watch(() => cloudStore.locations, setDefaultLocation)
 
 watch(tarification, async (value) => {
   if (cloudStore.plan.type === 'ione' && value) {
@@ -424,7 +431,7 @@ function setDefaultLocation () {
   cloudStore.locationId = locationItem.id
 }
 
-function fetch () {
+async function fetch () {
   spStore.fetchShowcases(!authStore.isLogged)
   spStore.fetch(!authStore.isLogged)
     .then(async () => {
@@ -464,11 +471,18 @@ function fetch () {
     })
 
   if (authStore.isLogged) {
-    Promise.all([
+    const [services, namespaces] = await Promise.all([
       instancesStore.fetch(),
       namespasesStore.fetch(),
       authStore.fetchBillingData()
     ])
+
+    if (services.pool.length === 1) {
+      cloudStore.serviceId = services.pool[0].uuid
+    }
+    if (namespaces.pool.length === 1) {
+      cloudStore.namespaceId = namespaces.pool[0].uuid
+    }
   }
 
   if (currenciesStore.currencies.length < 1) {

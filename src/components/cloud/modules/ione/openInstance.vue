@@ -751,7 +751,7 @@ export default defineComponent({
     },
     fullPrice () {
       return this.tariffPrice + Object.values(this.addonsPrice)
-        .reduce((sum, curr) => sum + curr)
+        .reduce((sum, curr) => sum + curr, 0)
     },
     currency () {
       return { code: this.userdata.currency ?? this.defaultCurrency }

@@ -122,7 +122,9 @@ export const useAuthStore = defineStore('auth', () => {
       try {
         const response = await api.accounts.update(data.id, data.body)
 
-        userdata.value = response.pool
+        if (response.result === false) {
+          throw new Error(response.message ?? '[Error]: Unknown')
+        }
         return response
       } catch (error) {
         console.error(error)
