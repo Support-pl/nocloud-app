@@ -92,6 +92,7 @@ export const useInstancesStore = defineStore('instances', () => {
   function setInstanceInvoke (data) {
     const inst = instances.value.find(item => item.uuid === data.uuid)
 
+    if (!inst) return
     data.state.meta.networking = inst.state.meta.networking
     inst.state = JSON.parse(JSON.stringify(data.state))
   }

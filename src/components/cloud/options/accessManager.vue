@@ -4,7 +4,7 @@
       {{ $t('Login') }}:
     </a-col>
     <a-col style="margin-bottom: 10px" :span="18">
-      {{ instance.state?.meta.login ?? '-' }}
+      {{ instance.state?.meta.login ?? instance.config.username ?? '-' }}
     </a-col>
     <a-col style="line-height: 2" :span="6">
       {{ capitalize($t('clientinfo.password')) }}:
