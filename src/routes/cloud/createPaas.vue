@@ -239,85 +239,61 @@ function nextStep () {
   }
 }
 
-watch(() => cloudStore.locations, setDefaultLocation)
+async function setProduct () {
+  await nextTick()
+  if (cloudStore.plan.type?.includes('cloud')) {
+    const period = (options.config.monthlyBilling) ? 'P1M' : 'P1H'
+    const { planCode } = options.config
 
-watch(tarification, async (value) => {
-  if (cloudStore.plan.type === 'ione' && value) {
-    const type = (value === 'Hourly') ? 'DYNAMIC' : 'STATIC'
-    const item = filteredPlans.value.find(({ kind, products }) => {
-      if (type === 'DYNAMIC') return kind === type
-      let period = 0
+    product.value = {
+      ...cloudStore.plan.products[`${period} ${planCode}`],
+      key: `${period} ${planCode}`
+    }
+  } else {
+    if (!tarification.value || !productSize.value) return
 
-      switch (value) {
-        case 'Daily':
-          period = 3600 * 24
-          break
-        case 'Annually':
-          period = 3600 * 24 * 365
-          break
-        case 'Biennially':
-          period = 3600 * 24 * 365 * 2
-          break
-        default:
-          period = 3600 * 24 * 30
+    for (let plan of plansStore.plans) {
+      const isHourly = tarification.value === 'Hourly'
+      const isDynamic = plan.kind === 'DYNAMIC'
+      const isIone = plan.type === 'ione'
+      let result = false
+      let uuid = null
+
+      if (isDynamic && isIone && isHourly) {
+        uuid = plan.uuid
+        plan = plansStore.plans.find(({ uuid }) => uuid === plan.meta.linkedPlan)
       }
 
-      return kind === type && Object.values(products).find((el) => +el.period === period)
-    })
+      for (const [key, item] of Object.entries(plan.products)) {
+        const { period, title, group } = item
+        const isEqualSize = [title, group].includes(productSize.value)
+        let isEqualPeriod = getTarification(period) === tarification.value
 
-    cloudStore.planId = item.uuid
-    productSize.value = products.value[1] ?? products.value[0]
-  } else if (cloudStore.plan.type?.includes('cloud')) {
-    nextTick(() => {
-      const period = (options.config.monthlyBilling) ? 'P1M' : 'P1H'
-      const { planCode } = options.config
+        if (isDynamic && isIone && isHourly) {
+          isEqualPeriod = true
+        }
 
-      product.value = {
-        ...cloudStore.plan.products[`${period} ${planCode}`],
-        key: `${period} ${planCode}`
+        if (isEqualPeriod && isEqualSize) {
+          product.value = { ...item, key }
+          cloudStore.planId = uuid ?? plan.uuid
+
+          result = true
+          break
+        }
       }
-    })
-  } else if (cloudStore.plan.type === 'keyweb') {
-    await nextTick()
-    const [key] = Object.entries(cloudStore.plan.products).find(
-      ([, { period, title }]) => (
-        getTarification(period) === value && title === productSize.value
-      )
-    )
-
-    product.value = { ...cloudStore.plan.products[key], key }
-  }
-})
-
-watch(productSize, (size) => {
-  const plan = (cloudStore.plan.kind === 'DYNAMIC' && cloudStore.plan.type === 'ione')
-    ? plansStore.plans.find(({ uuid }) => uuid === cloudStore.plan.meta.linkedPlan)
-    : cloudStore.plan
-
-  if (!plan) return
-  for (const [key, value] of Object.entries(plan.products ?? {})) {
-    const isEqual = getTarification(value.period) === tarification.value
-
-    if (value.title === size && isEqual) {
-      const result = { ...value, key }
-
-      options.ram.size = result.resources.ram / 1024
-      options.cpu.size = result.resources.cpu
-      options.disk.size = result.resources.disk ?? (plan.meta.minDisk ?? 20) * 1024
-      product.value = result
-    } else if (value.group === size) {
-      product.value = { ...value, key }
+      if (result) break
     }
   }
-})
+}
+
+watch(() => cloudStore.locations, setDefaultLocation)
+watch(tarification, setProduct)
+watch(productSize, setProduct)
 
 watch(periods, (periods) => {
   if (dataLocalStorage.value.productSize) return
-  tarification.value = ''
-
-  setTimeout(() => {
-    tarification.value = periods[0]?.value ?? ''
-  })
+  if (periods.find(({ value }) => value === tarification.value)) return
+  tarification.value = periods[0]?.value ?? ''
 })
 
 watch(() => cloudStore.serviceId, (value) => {
