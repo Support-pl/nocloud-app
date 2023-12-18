@@ -62,25 +62,6 @@ function useProducts (options, tarification, productSize) {
     })
   }
 
-  function getTarification (timestamp) {
-    const day = 3600 * 24
-    const month = day * 30
-    const year = day * 365
-
-    switch (+timestamp) {
-      case 3600:
-        return 'Hourly'
-      case day:
-        return 'Daily'
-      case month:
-        return 'Monthly'
-      case year:
-        return 'Annually'
-      case year * 2:
-        return 'Biennially'
-    }
-  }
-
   function getOvhProducts () {
     const result = []
     const keys = Object.keys(cloudStore.plan.products ?? {})
@@ -129,24 +110,32 @@ function useProducts (options, tarification, productSize) {
       ) ?? {}
       : cloudStore.plan ?? {}
 
-    return Object.values(productsList ?? {})
-      .filter((product) => {
-        const isEqual = tarification.value === getTarification(product.period)
+    const values = Object.values(productsList ?? {})
 
-        if (!product.public) return false
-        return isEqual || cloudStore.plan.kind === 'DYNAMIC'
-      })
-      .sort((a, b) => a.sorter - b.sorter)
-      .map(({ title }) => title)
+    values.sort((a, b) => a.sorter - b.sorter)
+    const result = []
+
+    values.forEach((product) => {
+      if (!product.public) return
+      if (result.includes(product.title)) return
+      result.push(product.title)
+    })
+
+    return result
   }
 
   function getKeywebProducts () {
-    return Object.values(cloudStore.plan.products)
-      .filter((product) =>
-        tarification.value === getTarification(product.period)
-      )
-      .sort((a, b) => a.sorter - b.sorter)
-      .map(({ title }) => title)
+    const values = Object.values(cloudStore.plan.products)
+
+    values.sort((a, b) => a.sorter - b.sorter)
+    const result = []
+
+    values.forEach(({ title }) => {
+      if (result.includes(title)) return
+      result.push(title)
+    })
+
+    return result
   }
 
   return { mode, products, productKey }

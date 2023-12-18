@@ -41,9 +41,9 @@ const props = defineProps({
 })
 const emits = defineEmits(['update:periods', 'update:product-size'])
 
-emits('update:periods', getPeriods(props.plans))
-watch(() => props.plans, (value) => {
-  emits('update:periods', getPeriods(value))
+emits('update:periods', getPeriods(props.productSize, props.plans))
+watch(() => props.productSize, (value) => {
+  emits('update:periods', getPeriods(value, props.plans))
 })
 
 const cloudStore = useCloudStore()
@@ -51,44 +51,45 @@ const product = inject('product')
 const [, setOptions] = inject('useOptions', () => [])()
 const [, setPrice] = inject('usePriceOVH', () => [])()
 
+if (props.products.length > 0) {
+  setProduct(props.products[1] ?? props.products[0])
+}
 watch(() => props.products, (value) => {
   setProduct(value[1] ?? value[0])
 })
-watch(() => props.mode, async (value) => {
-  await nextTick()
-  let result = ''
 
-  switch (value) {
-    case 'Annually':
-      result = 'yearly'
-      break
-    case 'Biennially':
-      result = '2-yearly'
-      break
-    case 'Hourly':
-      result = 'hourly'
-      break
-    default:
-      result = 'monthly'
-  }
-  setOptions('config.cycle', result)
+watch(() => props.mode, () => {
+  setProduct(props.productSize)
 })
 
 async function setProduct (value) {
   emits('update:product-size', value)
 
   await nextTick()
+  if (!product.value.key) return
+
   const { price, meta } = cloudStore.plan.products[product.value.key]
+  let cycle = ''
+
+  switch (props.mode) {
+    case 'Annually':
+      cycle = 'yearly'
+      break
+    case 'Biennially':
+      cycle = '2-yearly'
+      break
+    case 'Hourly':
+      cycle = 'hourly'
+      break
+    default:
+      cycle = 'monthly'
+  }
 
   setOptions('cpu.size', 0)
   setOptions('ram.size', 0)
   setOptions('disk.size', 0)
 
-  setOptions('config', {
-    configurations: {},
-    cycle: 'monthly',
-    id: meta.keywebId
-  })
+  setOptions('config', { configurations: {}, id: meta.keywebId, cycle })
   setPrice('value', price)
 }
 </script>

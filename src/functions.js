@@ -61,7 +61,7 @@ export function getTarification (timestamp) {
   }
 }
 
-export function getPeriods (plans) {
+export function getPeriods (productSize, plans) {
   const value = []
   const types = new Set()
   const day = 3600 * 24
@@ -78,7 +78,9 @@ export function getPeriods (plans) {
     }
 
     if (plan.kind !== 'STATIC') return
-    const periods = Object.values(plan.products).map((el) => +el.period)
+    const periods = Object.values(plan.products)
+      .filter(({ title }) => title === productSize)
+      .map((el) => +el.period)
 
     if (periods.includes(day)) {
       value.push(
