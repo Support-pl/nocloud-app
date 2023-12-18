@@ -25,39 +25,35 @@ function useCloudPrices (product, tarification, activeKey, options, priceOVH) {
   })
 
   const productFullPriceCustom = computed(() => {
-    if (plan.value) {
-      const price = []
-      for (const resource of plan.value.resources ?? []) {
-        const key = resource.key.toLowerCase()
+    const price = []
+    for (const resource of plan.value.resources ?? []) {
+      const key = resource.key.toLowerCase()
 
-        if (key.includes('ip')) {
-          const { count } = (activeKey.value !== 'location')
-            ? options.network.public
-            : { count: 1 }
+      if (key.includes('ip')) {
+        const { count } = (activeKey.value !== 'location')
+          ? options.network.public
+          : { count: 1 }
 
-          price.push(resource.price / resource.period * 3600 * count)
-        } else if (key.includes('drive')) {
-          const { size } = (activeKey.value === 'location')
-            ? { size: options.disk.min * 1024 }
-            : options.disk
-          const type = (activeKey.value === 'location')
-            ? 'hdd'
-            : options.disk.type.toLowerCase()
+        price.push(resource.price / resource.period * 3600 * count)
+      } else if (key.includes('drive')) {
+        const { size } = (activeKey.value === 'location')
+          ? { size: options.disk.min * 1024 }
+          : options.disk
+        const type = (activeKey.value === 'location')
+          ? 'hdd'
+          : options.disk.type.toLowerCase()
 
-          if (key !== `drive_${type}`) continue
-          price.push(resource.price / resource.period * 3600 * (size / 1024))
-        } else {
-          const { size } = (activeKey.value === 'location')
-            ? { size: options[key]?.min ?? 0 }
-            : options[key] ?? {}
+        if (key !== `drive_${type}`) continue
+        price.push(resource.price / resource.period * 3600 * (size / 1024))
+      } else {
+        const { size } = (activeKey.value === 'location')
+          ? { size: options[key]?.min ?? 0 }
+          : options[key] ?? {}
 
-          price.push(resource.price / resource.period * 3600 * size)
-        }
+        price.push(resource.price / resource.period * 3600 * size)
       }
-      return price.reduce((accum, item) => accum + item, 0)
     }
-
-    return 0
+    return price.reduce((accum, item) => accum + item, 0)
   })
 
   const productFullPriceOVH = computed(() => {

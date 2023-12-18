@@ -45,23 +45,23 @@
       :max="products.length - 1"
       :min="0"
       :value="products.indexOf(productSize)"
-      @update:value="emits('update:product-size', products[$event])"
+      @update:value="setProduct(products[$event])"
     />
 
     <div v-else class="order__grid">
       <div
-        v-for="product of filteredProducts"
-        :key="product"
+        v-for="item of filteredProducts"
+        :key="item"
         class="order__grid-item"
-        :class="{ 'order__grid-item--active': productSize === product }"
-        @click="emits('update:product-size', product)"
+        :class="{ 'order__grid-item--active': productSize === item }"
+        @click="setProduct(item)"
       >
-        <h1>{{ product }}</h1>
+        <h1>{{ item }}</h1>
         <div>
-          {{ $t('cpu') }}: {{ getProduct(product)?.cpu ?? '?' }} vCPU
+          {{ $t('cpu') }}: {{ getProduct(item)?.cpu ?? '?' }} vCPU
         </div>
         <div>
-          {{ $t('ram') }}: {{ getProduct(product)?.ram / 1024 ?? '?' }} Gb
+          {{ $t('ram') }}: {{ getProduct(item)?.ram / 1024 ?? '?' }} Gb
         </div>
       </div>
     </div>
@@ -132,12 +132,13 @@
 </template>
 
 <script setup>
-import { computed, inject, reactive, watch } from 'vue'
+import { computed, inject, nextTick, reactive, watch } from 'vue'
 import { useCloudStore } from '@/stores/cloud.js'
-import { getPeriods } from '@/functions.js'
+import { getPeriods, getTarification } from '@/functions.js'
 import ioneDrive from '@/components/cloud/create/ioneDrive.vue'
 
 const props = defineProps({
+  mode: { type: String, required: true },
   plans: { type: Array, required: true },
   products: { type: Array, required: true },
   productSize: { type: String, required: true }
@@ -150,9 +151,18 @@ const [options, setOptions] = inject('useOptions')()
 const filters = reactive({ cpu: [], ram: [] })
 const prefixes = reactive({ cpu: 'cores', ram: 'Gb' })
 
-emits('update:periods', getPeriods(props.plans))
-watch(() => props.plans, (value) => {
-  emits('update:periods', getPeriods(value))
+emits('update:periods', getPeriods(props.productSize, props.plans))
+watch(() => props.productSize, (value) => {
+  emits('update:periods', getPeriods(value, props.plans))
+})
+
+if (props.products.length > 0) {
+  setProduct(props.products[1] ?? props.products[0])
+}
+watch(() => props.products, (value) => {
+  if (value.length < 1) return
+  if (cloudStore.plan.kind === 'DYNAMIC') return
+  setProduct(value[1] ?? value[0])
 })
 
 const isProductsExist = computed(() =>
@@ -211,10 +221,32 @@ const filteredProducts = computed(() => {
   return result
 })
 
-function getProduct (product) {
-  const products = Object.values(cloudStore.plan.products)
+function getProduct (size, plan = cloudStore.plan) {
+  const isDynamic = cloudStore.plan.kind === 'DYNAMIC'
+  const products = Object.values(plan.products)
+  const product = products.find(({ title, period }) =>
+    title === size && (
+      getTarification(period) === props.mode || isDynamic
+    )
+  )
 
-  return products.find(({ title }) => title === product)?.resources
+  return product?.resources
+}
+
+async function setProduct (value) {
+  emits('update:product-size', value)
+
+  await nextTick()
+  const plan = (cloudStore.plan.kind === 'DYNAMIC' && cloudStore.plan.type === 'ione')
+    ? props.plans.find(({ uuid }) => uuid === cloudStore.plan.meta.linkedPlan)
+    : cloudStore.plan
+
+  if (!plan) return
+  const resources = getProduct(value, plan) ?? {}
+
+  setOptions('cpu.size', resources.cpu ?? 0)
+  setOptions('ram.size', (resources.ram ?? 0) / 1024)
+  setOptions('disk.size', resources.disk ?? (plan.meta.minDisk ?? 20) * 1024)
 }
 </script>
 
