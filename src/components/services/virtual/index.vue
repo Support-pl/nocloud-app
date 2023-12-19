@@ -349,10 +349,10 @@ export default {
       this.options.size = this.sizes[0]
     },
     changePeriods (key) {
-      const { title } = this.products[key]
+      const { title } = this.products[this.sizes.indexOf(key)]
 
       this.periods = []
-      Object.values(this.products).forEach((product) => {
+      this.products.forEach((product) => {
         if (product.title !== title) return
         if (this.periods.includes(+product.period)) return
         this.periods.push(+product.period)
