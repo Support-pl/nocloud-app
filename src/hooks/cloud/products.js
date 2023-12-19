@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import { useCloudStore } from '@/stores/cloud.js'
 import { usePlansStore } from '@/stores/plans.js'
 
-function useProducts (options, tarification, productSize) {
+function useCloudProducts (options, tarification, productSize) {
   const cloudStore = useCloudStore()
   const plansStore = usePlansStore()
 
@@ -92,6 +92,7 @@ function useProducts (options, tarification, productSize) {
       const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))
 
       if (!meta.datacenter?.includes(config[datacenter])) return
+      if (meta.cpu) resources.cpu = meta.cpu
       if (i === -1) {
         result.push({
           value, title, resources, group, periods: [period], addons: meta.addons
@@ -141,4 +142,4 @@ function useProducts (options, tarification, productSize) {
   return { mode, products, productKey }
 }
 
-export default useProducts
+export default useCloudProducts

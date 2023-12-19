@@ -161,7 +161,7 @@
             type="primary"
             shape="round"
             size="large"
-            :disabled="!(VM.state.state === 'RUNNING') || VM.data.lock || true"
+            :disabled="!(VM.state.state === 'RUNNING') || VM.data.lock"
             @click="openVNC"
           >
             VNC
