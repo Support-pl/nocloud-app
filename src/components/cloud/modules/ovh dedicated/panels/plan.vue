@@ -159,7 +159,7 @@ watch(product, (value) => {
 
   emits('update:product-size', product?.title)
   setResources()
-  fetchCpu()
+  if (!product.resources.cpu) fetchCpu()
 })
 
 watch(() => props.mode, () => {
@@ -399,9 +399,9 @@ function getResources (ram, disk, value) {
 }
 
 function getCpu (plan) {
-  const { value } = props.products.find((el) => el.value === plan) ?? {}
+  const { value, resources } = props.products.find((el) => el.value === plan) ?? {}
 
-  return cpus.value[value]
+  return resources.cpu ?? cpus.value[value]
 }
 
 function setDatacenter () {

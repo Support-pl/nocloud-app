@@ -60,14 +60,15 @@ const modal = ref({
 provide('checkBalance', checkBalance)
 
 function checkBalance (price = 0) {
-  if (authStore.userdata.balance < parseFloat(price)) {
+  const { balance = -1 } = authStore.userdata
+
+  if (!authStore.isLogged) return true
+  if (balance < parseFloat(price)) {
     Modal.confirm({
       title: i18n.t('You do not have enough funds on your balance'),
       content: i18n.t('Click OK to replenish the account with the missing amount'),
       onOk: () => {
-        modal.value.amount = Math.ceil(
-          parseFloat(price) - authStore.userdata.balance
-        )
+        modal.value.amount = Math.ceil(parseFloat(price) - balance)
         modal.value.visible = true
       }
     })
