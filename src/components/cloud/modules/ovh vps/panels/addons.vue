@@ -19,7 +19,9 @@ const addons = computed(() => {
   const addons = { backup: {}, snapshot: {}, disk: {} }
 
   Object.keys(addons).forEach((addon) => {
-    cloudStore.plan.resources?.forEach(({ price, key, title }) => {
+    cloudStore.plan.resources?.forEach(({ price, key, title, public: pub }) => {
+      if (!pub) return
+
       const { addons: addonsKeys } = props.products.find(
         (el) => el.value === props.productKey
       ) ?? {}
