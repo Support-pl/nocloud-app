@@ -115,6 +115,16 @@
       </template>
     </div>
 
+    <div class="chat__list">
+      <ticket-item
+        v-for="item of chats"
+        :key="item.id"
+        :ticket="item"
+        :style="(item.id === chatid) ? 'filter: brightness(0.9)' : null"
+        compact
+      />
+    </div>
+
     <div class="chat__footer">
       <div
         class="chat__container"
@@ -161,12 +171,15 @@ import { defineAsyncComponent, nextTick } from 'vue'
 import { mapStores } from 'pinia'
 import Markdown from 'markdown-it'
 import emoji from 'markdown-it-emoji'
+import { Status } from '@/libs/cc_connect/cc_pb'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
+import { useSupportStore } from '@/stores/support.js'
 
 import loading from '@/components/ui/loading.vue'
+import ticketItem from '@/components/support/ticketItem.vue'
 
 const leftIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LeftOutlined')
@@ -210,7 +223,7 @@ export default {
   name: 'TicketChat',
   components: {
     loading,
-
+    ticketItem,
     leftIcon,
     reloadIcon,
     downIcon,
@@ -226,9 +239,11 @@ export default {
   beforeRouteUpdate (to, from, next) {
     this.chatid = to.params.id
     this.loadMessages()
+    next()
   },
   data () {
     return {
+      cachedChats: {},
       status: null,
       subject: 'SUPPORT',
       replies: [],
@@ -244,7 +259,7 @@ export default {
     }
   },
   computed: {
-    ...mapStores(useAppStore, useAuthStore, useChatsStore),
+    ...mapStores(useAppStore, useAuthStore, useChatsStore, useSupportStore),
     titleDecoded () {
       const txt = document.createElement('textarea')
       txt.innerHTML = this.subject
@@ -252,6 +267,34 @@ export default {
     },
     chat () {
       return this.chatsStore.chats.get(this.chatid)
+    },
+    chats () {
+      const result = []
+      const { uuid } = this.authStore.billingUser
+
+      this.chatsStore.getChats.forEach((ticket) => {
+        const isReaded = ticket.meta.lastMessage?.readers.includes(uuid)
+        const status = Status[ticket.status].toLowerCase().split('_')
+        const capitalized = status.map((el) =>
+          `${el[0].toUpperCase()}${el.slice(1)}`
+        ).join(' ')
+
+        const value = {
+          id: ticket.uuid,
+          tid: ticket.uuid.slice(0, 8),
+          title: ticket.topic,
+          date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
+          message: ticket.meta.lastMessage?.content ?? '',
+          status: capitalized,
+          unread: (isReaded) ? 0 : ticket.meta.unread
+        }
+
+        result.push(value)
+      })
+
+      result.sort((a, b) => b.date - a.date)
+
+      return [...result, ...this.supportStore.getTickets]
     },
     messages () {
       const chatMessages = this.chatsStore.messages
@@ -392,7 +435,20 @@ export default {
         })
       this.messageInput = ''
     },
-    loadMessages () {
+    loadMessages (update) {
+      if (!update && this.cachedChats[this.chatid]) {
+        const result = this.cachedChats[this.chatid]
+
+        this.status = result.status
+        this.replies = result.replies
+        this.subject = result.subject
+
+        setTimeout(() => {
+          this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
+        })
+        return
+      }
+
       this.isLoading = true
       const response = (this.chatsStore.chats.get(this.chatid))
         ? this.chatsStore.fetchMessages(this.chatid)
@@ -410,6 +466,7 @@ export default {
           this.subject = resp.subject
 
           this.replies.sort((a, b) => Number(a.sent - b.sent))
+          this.cachedChats[this.chatid] = resp
         })
         .finally(() => {
           setTimeout(() => {
@@ -420,7 +477,7 @@ export default {
     },
     reload () {
       this.isLoading = true
-      this.loadMessages()
+      this.loadMessages(true)
     },
     objectToParams (object) {
       return Object.entries(object)
@@ -512,10 +569,13 @@ export default {
 
 <style>
 .chat {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
   position: relative;
+  display: grid;
+  grid-template-columns: 400px 768px;
+  grid-template-rows: 1fr auto;
+  justify-content: center;
+  gap: 10px 20px;
+  height: 100%;
   padding-top: 64px;
   background: var(--bright_bg);
 }
@@ -538,7 +598,7 @@ export default {
   justify-items: center;
   align-items: center;
   gap: 5px;
-  max-width: 768px;
+  max-width: calc(768px + 400px + 20px);
   height: 100%;
   width: 100%;
   margin: 0 auto;
@@ -555,11 +615,11 @@ export default {
 
 .chat__notification {
   position: absolute;
-  left: 50%;
+  left: calc(50% + 210px);
   z-index: 10;
   width: 100%;
   max-width: calc(768px - 30px);
-  transform: translate(-50%, 15px);
+  transform: translate(-50%, 77px);
   transition: .3s;
 }
 
@@ -638,12 +698,18 @@ export default {
   cursor: pointer;
 }
 
+.chat__list {
+  grid-row: 1 / 3;
+  overflow: scroll;
+}
+
 .chat__footer {
   display: flex;
   justify-content: center;
   align-items: flex-end;
+  grid-column: 2;
+  padding: 10px 0;
   background-color: var(--bright_bg);
-  padding: 10px;
 }
 
 .chat__input {
@@ -688,15 +754,18 @@ export default {
 }
 
 .chat__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
   max-width: 768px;
   width: 100%;
   height: 100%;
   margin: 0 auto;
-  flex: 1 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
   padding: v-bind(chatPaddingTop) 15px 6px;
+
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
   overflow: auto;
   background: var(--bright_font);
 }

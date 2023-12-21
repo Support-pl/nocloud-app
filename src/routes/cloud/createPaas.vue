@@ -11,6 +11,7 @@
             <a-collapse-panel
               v-if="panels[key].visible ?? true"
               :key="key"
+              :force-render="(cloudStore.provider) ? true : false"
               :header="panels[key].title"
               :collapsible="panels[key].disabled"
             >
@@ -90,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, provide, readonly, computed, defineAsyncComponent, watch, markRaw, nextTick, onUnmounted } from 'vue'
+import { ref, reactive, provide, readonly, computed, defineAsyncComponent, watch, markRaw, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NcMap } from 'nocloud-ui'
@@ -100,11 +101,11 @@ import { useCloudStore } from '@/stores/cloud.js'
 import { usePlansStore } from '@/stores/plans.js'
 
 import useProducts from '@/hooks/cloud/products.js'
+import useCloudPlans from '@/hooks/cloud/plans.js'
 import useCloudOptions from '@/hooks/cloud/options.js'
 import useCloudPanels from '@/hooks/cloud/panels.js'
 
-import { useNotification } from '@/hooks/utils'
-import { setValue, getTarification } from '@/functions.js'
+import { setValue } from '@/functions.js'
 
 import promoBlock from '@/components/ui/promo.vue'
 import calculatorBlock from '@/components/cloud/create/calculator.vue'
@@ -112,50 +113,30 @@ import calculatorBlock from '@/components/cloud/create/calculator.vue'
 const router = useRouter()
 const route = useRoute()
 const i18n = useI18n()
-const { openNotification } = useNotification()
 
 const authStore = useAuthStore()
 const plansStore = usePlansStore()
 const cloudStore = useCloudStore()
 
-const isPlansLoading = ref(false)
-const productSize = ref('')
 const activeKey = ref('location')
 const periods = ref([])
 const tarification = ref('')
-
-const product = ref({})
-const cachedPlans = ref({})
 const priceOVH = reactive({ value: 0, addons: {} })
 
-const filteredPlans = computed(() => {
-  const locationItem = cloudStore.locations.find(({ id }) =>
-    id === cloudStore.locationId
-  )
-
-  const { items } = cloudStore.showcases.find(({ uuid }) => {
-    if (cloudStore.showcaseId === '') {
-      return uuid === locationItem?.showcase
-    }
-    return uuid === cloudStore.showcaseId
-  }) ?? {}
-  const plans = []
-
-  if (!items) return plansStore.plans
-  items.forEach(({ servicesProvider, plan }) => {
-    if (servicesProvider === cloudStore.provider?.uuid) {
-      plans.push(plan)
-    }
-  })
-
-  if (plans.length < 1) return plansStore.plans
-  return plansStore.plans.filter(({ uuid, type }) =>
-    locationItem?.type === type && plans.includes(uuid)
-  )
-})
-
 const { options, dataLocalStorage, fetch } = useCloudOptions(activeKey, tarification)
+const { filteredPlans, product, productSize, isPlansLoading } = useCloudPlans(tarification, options)
 const { mode, productKey, products } = useProducts(options, tarification, productSize)
+
+watch(isPlansLoading, () => {
+  if (dataLocalStorage.value.billing_plan) {
+    cloudStore.planId = dataLocalStorage.value.billing_plan.uuid
+    productSize.value = dataLocalStorage.value.productSize
+  } else if (dataLocalStorage.value.locationId) {
+    tarification.value = periods.value[0]?.value ?? ''
+  }
+
+  activeKey.value = dataLocalStorage.value?.activeKey ?? 'location'
+})
 
 const isProductExist = computed(() =>
   !route.query.product && cloudStore.plan.type?.includes('dedicated')
@@ -218,116 +199,17 @@ function nextStep () {
   }
 }
 
-async function setProduct () {
-  await nextTick()
-  if (cloudStore.plan.type?.includes('cloud')) {
-    const period = (options.config.monthlyBilling) ? 'P1M' : 'P1H'
-    const { planCode } = options.config
-
-    product.value = {
-      ...cloudStore.plan.products[`${period} ${planCode}`],
-      key: `${period} ${planCode}`
-    }
-  } else {
-    if (!tarification.value || !productSize.value) return
-
-    for (let plan of plansStore.plans) {
-      const isHourly = tarification.value === 'Hourly'
-      const isDynamic = plan.kind === 'DYNAMIC'
-      const isIone = plan.type === 'ione'
-      let result = false
-      let uuid = null
-
-      if (isDynamic && isIone && isHourly) {
-        uuid = plan.uuid
-        plan = plansStore.plans.find(({ uuid }) => uuid === plan.meta.linkedPlan)
-      }
-
-      for (const [key, item] of Object.entries(plan.products)) {
-        const { period, title, group } = item
-        const isEqualSize = [title, group].includes(productSize.value)
-        let isEqualPeriod = getTarification(period) === tarification.value
-
-        if (isDynamic && isIone && isHourly) {
-          isEqualPeriod = true
-        }
-
-        if (isEqualPeriod && isEqualSize) {
-          product.value = { ...item, key }
-          cloudStore.planId = uuid ?? plan.uuid
-
-          result = true
-          break
-        }
-      }
-      if (result) break
-    }
-  }
-}
+watch(() => [cloudStore.provider, cloudStore.locationId], () => {
+  priceOVH.addons = {}
+})
 
 watch(() => cloudStore.locations, setDefaultLocation)
-watch(tarification, setProduct)
-watch(productSize, setProduct, { flush: 'sync' })
 
 watch(periods, (periods) => {
   if (dataLocalStorage.value.productSize) return
   if (periods.find(({ value }) => value === tarification.value)) return
   tarification.value = periods[0]?.value ?? ''
 })
-
-watch(() => [cloudStore.provider, cloudStore.locationId], async ([value]) => {
-  if (!dataLocalStorage.value.config) {
-    options.os = { id: -1, name: '' }
-  }
-  options.config = { configuration: {}, addons: [] }
-  priceOVH.addons = {}
-
-  if (!value?.uuid) return
-  if (cachedPlans.value[value.uuid]) {
-    plansStore.setPlans(cachedPlans.value[value.uuid])
-
-    const { items } = cloudStore.showcases.find(
-      ({ uuid }) => uuid === cloudStore.showcaseId
-    ) ?? {}
-    const { plan } = items?.find((item) =>
-      item.locations.includes(cloudStore.locationId)
-    ) ?? {}
-
-    cloudStore.planId = plan ?? filteredPlans.value[0]?.uuid ?? ''
-    return
-  }
-
-  await fetchPlans(value)
-})
-
-async function fetchPlans (provider) {
-  try {
-    isPlansLoading.value = true
-    const { pool } = await plansStore.fetch({
-      sp_uuid: provider.uuid,
-      anonymously: !authStore.isLogged
-    })
-
-    cachedPlans.value[provider.uuid] = pool
-    cloudStore.planId = filteredPlans.value[0]?.uuid ?? pool[0]?.uuid ?? ''
-
-    if (dataLocalStorage.value.billing_plan) {
-      cloudStore.planId = dataLocalStorage.value.billing_plan.uuid
-      productSize.value = dataLocalStorage.value.productSize
-    } else if (dataLocalStorage.value.locationId) {
-      tarification.value = periods.value[0]?.value ?? ''
-    }
-
-    activeKey.value = dataLocalStorage.value?.activeKey ?? 'plan'
-    nextTick(() => { activeKey.value = 'location' })
-  } catch (error) {
-    openNotification('error', {
-      message: error.response?.data.message ?? error.message ?? error
-    })
-  } finally {
-    isPlansLoading.value = false
-  }
-}
 
 function setDefaultLocation () {
   const item = cloudStore.showcases.find(({ uuid }) =>

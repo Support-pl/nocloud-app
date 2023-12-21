@@ -204,8 +204,11 @@ export default {
     ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
+      if (!(this.options.size && this.options.period)) return 'NAN'
       const product = JSON.parse(JSON.stringify(
-        this.products[this.sizes.indexOf(this.options.size)]
+        this.products.find(({ title, period }) =>
+          title === this.options.size && +period === this.options.period
+        )
       ))
 
       delete product.resources.model
@@ -285,7 +288,9 @@ export default {
       }
     },
     getProducts () {
-      const product = this.products[this.sizes.indexOf(this.options.size)]
+      const product = this.products.find(({ title, period }) =>
+        title === this.options.size && +period === this.options.period
+      )
 
       this.options.model = product?.resources.model ?? ''
     },
@@ -331,26 +336,27 @@ export default {
   },
   methods: {
     changeProducts () {
-      const sortedProducts = this.cachedPlans[this.provider]?.reduce(
-        (result, plan) => {
-          for (const [key, product] of Object.entries(plan.products)) {
-            const i = result.findIndex(([, { title }]) => title === product.title)
+      const productsAndSizes = this.plans.reduce((result, plan) => {
+        for (const [key, product] of Object.entries(plan.products)) {
+          const i = result.sizes.findIndex(({ title }) => title === product.title)
 
-            if (i === -1) result.push([key, product])
+          result.products.push({ key, ...product })
+          if (i === -1) {
+            result.sizes.push({
+              title: product.title, sorter: product.sorter
+            })
           }
+        }
 
-          return result
-        }, []
-      ) ?? []
-      this.products = sortedProducts.map(([, value]) => value)
+        return result
+      }, { products: [], sizes: [] })
+      productsAndSizes.sizes.sort((a, b) => a.sorter - b.sorter)
 
-      sortedProducts.sort(([, a], [, b]) => a.sorter - b.sorter)
-      this.sizes = sortedProducts.map(([key]) => key)
+      this.products = productsAndSizes.products
+      this.sizes = productsAndSizes.sizes.map(({ title }) => title)
       this.options.size = this.sizes[0]
     },
-    changePeriods (key) {
-      const { title } = this.products[this.sizes.indexOf(key)]
-
+    changePeriods (title) {
       this.periods = []
       this.products.forEach((product) => {
         if (product.title !== title) return
@@ -379,8 +385,11 @@ export default {
         sp: this.provider,
         instances
       }
+      const { key } = this.products.find(({ title, period }) =>
+        title === this.options.size && +period === this.options.period
+      )
 
-      instances[0].product = this.options.size
+      instances[0].product = key
 
       const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
       const group = info.instancesGroups?.find(({ sp }) => sp === this.provider)

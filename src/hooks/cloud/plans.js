@@ -1,11 +1,16 @@
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+
+import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
 import { usePlansStore } from '@/stores/plans.js'
+
 import { useNotification } from '@/hooks/utils'
 import { getTarification } from '@/functions.js'
 
-function useCloudPlans (tarification) {
+function useCloudPlans (tarification, options) {
   const { openNotification } = useNotification()
+
+  const authStore = useAuthStore()
   const plansStore = usePlansStore()
   const cloudStore = useCloudStore()
 
@@ -91,8 +96,6 @@ function useCloudPlans (tarification) {
   watch(productSize, setProduct, { flush: 'sync' })
 
   watch(() => [cloudStore.provider, cloudStore.locationId], async ([value]) => {
-    priceOVH.addons = {}
-
     if (!value?.uuid) return
     if (cachedPlans.value[value.uuid]) {
       plansStore.setPlans(cachedPlans.value[value.uuid])
@@ -121,16 +124,6 @@ function useCloudPlans (tarification) {
 
       cachedPlans.value[provider.uuid] = pool
       cloudStore.planId = filteredPlans.value[0]?.uuid ?? pool[0]?.uuid ?? ''
-
-      if (dataLocalStorage.value.billing_plan) {
-        cloudStore.planId = dataLocalStorage.value.billing_plan.uuid
-        productSize.value = dataLocalStorage.value.productSize
-      } else if (dataLocalStorage.value.locationId) {
-        tarification.value = periods.value[0]?.value ?? ''
-      }
-
-      activeKey.value = dataLocalStorage.value?.activeKey ?? 'plan'
-      nextTick(() => { activeKey.value = 'location' })
     } catch (error) {
       openNotification('error', {
         message: error.response?.data.message ?? error.message ?? error
@@ -140,7 +133,7 @@ function useCloudPlans (tarification) {
     }
   }
 
-  return {}
+  return { filteredPlans, product, productSize, isPlansLoading }
 }
 
 export default useCloudPlans
