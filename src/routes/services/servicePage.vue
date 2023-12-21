@@ -21,7 +21,13 @@
             </div>
           </div>
 
-          <div class="service-page__info">
+          <div
+            class="service-page__info"
+            :style="(service.groupname === 'OpenAI')
+              ? { display: 'inline-block', width: '50%' }
+              : null
+            "
+          >
             <div class="service-page__info-title">
               {{ capitalize($t("status")) }}:
               <a-tag :color="getTagColor">
@@ -30,7 +36,14 @@
             </div>
           </div>
 
-          <div v-if="isActionsActive" class="service-page__info">
+          <div
+            v-if="isActionsActive"
+            class="service-page__info"
+            :style="(service.groupname === 'OpenAI')
+              ? { display: 'inline-block', width: '50%' }
+              : null
+            "
+          >
             <div class="service-page__info-title">
               {{ $t('Actions') }}:
               <div style="display: inline-flex; gap: 8px">
@@ -70,14 +83,8 @@
               <a-tag :color="getTagColorSSL">
                 {{ $t("ssl_product.completed") }}
               </a-tag>
-              <router-link
-                :to="{
-                  name: 'ssl',
-                  params: {
-                    id: $route.params.id,
-                  },
-                }"
-              >
+
+              <router-link :to="{ name: 'ssl', params: { id: $route.params.id } }">
                 <a-button size="small" type="primary">
                   {{ $t("open") }}
                 </a-button>
@@ -101,59 +108,19 @@
               </router-link>
             </div>
           </div>
-          <a-row :gutter="[10, 10]">
-            <a-col
-              v-for="elem in info"
-              :key="elem.key"
-              :md="(elem.key === 'autorenew') ? 24 : 12"
-              :xs="(elem.key === 'autorenew') ? 24 : 12"
-              :sm="(elem.key === 'autorenew') ? 24 : 12"
-            >
-              <div class="service-page__info">
-                <div class="service-page__info-title">
-                  {{ capitalize($t("userService." + elem.title)) }}:
-                </div>
 
-                <div
-                  v-if="elem.type == 'money'"
-                  class="service-page__info-value"
-                >
-                  <template v-if="service.groupname === 'OpenAI'">
-                    -
-                  </template>
-                  <template v-else>
-                    {{ service[elem.key] }} {{ currency.code }}
-                  </template>
-                </div>
-                <div
-                  v-else-if="
-                    elem.type == 'date' && service[elem.key] == '0000-00-00'
-                  "
-                  class="service__info-value"
-                >
-                  -
-                </div>
-                <div
-                  v-else-if="elem.type == 'date'"
-                  class="service-page__info-value"
-                >
-                  {{ service[elem.key] &&
-                    new Intl.DateTimeFormat().format(new Date(service[elem.key])) }}
-                </div>
-                <div
-                  v-else-if="elem.type == 'text'"
-                  class="service-page__info-value"
-                >
-                  {{ service[elem.key] && capitalize($t(service[elem.key].toLowerCase())) }}
-                </div>
-                <div v-else class="service-page__info-value">
-                  {{ service[elem.key] }}
-                </div>
-              </div>
-            </a-col>
-          </a-row>
+          <service-info v-if="service.groupname !== 'OpenAI'" :service="service" :info="info" />
+          <a-collapse v-else class="service-page__collapse" :bordered="false">
+            <template #expandIcon="{ isActive }">
+              <caret-right-icon :rotate="isActive ? 90 : 0" />
+            </template>
 
-          <div v-if="description" class="service-page__info">
+            <a-collapse-panel :header="capitalize($t('info'))">
+              <service-info :service="service" :info="info" />
+            </a-collapse-panel>
+          </a-collapse>
+
+          <div v-if="description" class="service-page__info" style="margin-top: 10px">
             <div class="service-page__info-title">
               {{ capitalize($t("description")) }}:
             </div>
@@ -189,12 +156,12 @@ import { usePeriod } from '@/hooks/utils'
 import config from '@/appconfig.js'
 
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useProductsStore } from '@/stores/products.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import loading from '@/components/ui/loading.vue'
+import serviceInfo from '@/components/ui/serviceInfo.vue'
 
 const info = [
   // {
@@ -229,9 +196,13 @@ const info = [
   }
 ]
 
+const caretRightIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CaretRightOutlined')
+)
+
 export default {
   name: 'UserServiceView',
-  components: { loading },
+  components: { loading, serviceInfo, caretRightIcon },
   setup () {
     const { getPeriod } = usePeriod()
 
@@ -241,10 +212,6 @@ export default {
   computed: {
     ...mapStores(useChatsStore, useProductsStore, useInstancesStore),
     ...mapState(useAuthStore, ['baseURL', 'userdata', 'fetchBillingData']),
-    ...mapState(useCurrenciesStore, ['currencies', 'defaultCurrency', 'fetchCurrencies']),
-    currency () {
-      return { code: this.userdata.currency ?? this.defaultCurrency }
-    },
     getTagColor () {
       const status = this.service.status.replace('cloudStateItem.', '')
 
@@ -473,8 +440,6 @@ export default {
       .catch((error) => {
         console.error(error)
       })
-
-    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
     clickOnInvoice (invoiceId) {
@@ -556,13 +521,9 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .service-page {
   padding-top: 20px;
-}
-
-.d-flex {
-  display: flex;
 }
 
 .service-page-card {
@@ -599,6 +560,16 @@ export default {
   display: block;
   max-width: 200px;
   margin: 0 auto 10px;
+}
+
+.service-page__collapse,
+.service-page__collapse :deep(.ant-collapse-content) {
+  color: inherit;
+}
+
+.service-page__collapse :deep(.ant-collapse-header) {
+  font-weight: 700;
+  color: inherit;
 }
 
 .product__specs{
