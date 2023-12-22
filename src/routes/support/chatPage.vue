@@ -306,11 +306,16 @@ export default {
     },
     options () {
       const { gateways = [] } = this.chatsStore.getDefaults ?? {}
-
-      return gateways.map((gateway) => ({
+      let result = gateways.map((gateway) => ({
         id: gateway,
         name: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`
       }))
+
+      if (this.$route.query.from) {
+        result = result.filter(({ id }) => id === 'telegram')
+      }
+
+      return result
     }
   },
   watch: {
@@ -571,7 +576,7 @@ export default {
 .chat {
   position: relative;
   display: grid;
-  grid-template-columns: 400px 768px;
+  grid-template-columns: min(400px, 35vw - 20px) min(768px, 65vw - 20px);
   grid-template-rows: 1fr auto;
   justify-content: center;
   gap: 10px 20px;
@@ -615,11 +620,11 @@ export default {
 
 .chat__notification {
   position: absolute;
-  left: calc(50% + 210px);
+  right: max(25px, (100vw - 1158px) / 2);
+  top: 77px;
   z-index: 10;
   width: 100%;
-  max-width: calc(768px - 30px);
-  transform: translate(-50%, 77px);
+  max-width: min(65vw - 50px, 768px - 30px);
   transition: .3s;
 }
 
@@ -738,8 +743,8 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-left: 10px;
-  margin-bottom: 15px;
+  margin-left: 5px;
+  margin-bottom: 10px;
   font-size: 1.2rem;
   transition: filter 0.2s ease;
   cursor: pointer;
@@ -874,9 +879,22 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .chat {
+    grid-template-columns: 1fr;
+  }
+
   .chat__notification {
+    right: 15px;
     max-width: calc(100% - 30px);
-    transform: translate(-50%, 15px);
+  }
+
+  .chat__list {
+    display: none;
+  }
+
+  .chat__footer {
+    grid-column: 1;
+    padding: 0 10px 10px 0;
   }
 }
 

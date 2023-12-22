@@ -17,7 +17,7 @@ const cloudStore = useCloudStore()
 const [options] = inject('useOptions', () => [])()
 
 const addons = computed(() => {
-  const addons = { traffic: {}, vrack: {} }
+  const addons = { 'Public network': {}, 'Private network': {} }
 
   Object.keys(addons).forEach((addon) => {
     cloudStore.plan.resources?.forEach(({ price, key, title }) => {
@@ -25,18 +25,23 @@ const addons = computed(() => {
         (el) => el.value === options.config.planCode
       ) ?? {}
 
-      const [duration, addonKey] = key.split(' ')
+      const [duration, , addonKey] = key.split(' ')
       const period = {
         price: { value: price },
         duration,
         pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
       }
 
-      const isInclude = addonsKeys?.includes(addonKey)
+      const isInclude = (addonsKeys.some((el) => typeof el === 'string'))
+        ? addonsKeys?.includes(addonKey)
+        : addonsKeys?.find(({ id }) => id.includes(addonKey))?.id
       const isEqualMode = period.pricingMode === props.mode
+      const isAddon = (addon === 'Public network')
+        ? addonKey.startsWith('bandwidth') || key.includes('traffic')
+        : key.includes('vrack')
 
       if (title === '') title = addonKey
-      if (isInclude && key.includes(addon) && isEqualMode) {
+      if (isInclude && isAddon && isEqualMode) {
         addons[addon][addonKey] = { periods: [period], title }
       }
     })
@@ -47,5 +52,5 @@ const addons = computed(() => {
 </script>
 
 <script>
-export default { name: 'OvhVpsAddonsPanel' }
+export default { name: 'OvhDedicatedAddonsPanel' }
 </script>
