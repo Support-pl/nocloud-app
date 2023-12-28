@@ -3,19 +3,55 @@
     <div class="chat__header">
       <div class="chat__container">
         <div class="chat__back">
-          <div class="icon__wrapper" @click="goBack()">
+          <div class="icon__wrapper" @click="goBack">
             <left-icon />
           </div>
         </div>
         <div class="chat__title">
           {{ titleDecoded }}
         </div>
-        <div class="chat__reload">
-          <div class="icon__wrapper" @click="reload()">
+        <div class="chat__actions">
+          <div
+            class="icon__wrapper"
+            :class="{ active: supportStore.isAddingTicket }"
+            @click="supportStore.isAddingTicket = !supportStore.isAddingTicket"
+          >
+            <plus-icon />
+          </div>
+
+          <div
+            class="icon__wrapper"
+            :style="(searchString.length > 0) ? {
+              borderRadius: '50%',
+              background: 'var(--bright_bg)',
+              color: 'var(--main)'
+            } : null"
+          >
+            <a-popover arrow-point-at-center placement="left" :align="{ offset: [-10, 0] }">
+              <template #content>
+                <a-input-search
+                  v-model:value="text"
+                  enter-button
+                  placeholder="Topic"
+                  @update:value="search"
+                >
+                  <template #suffix>
+                    <div style="cursor: pointer" @click="text = ''">
+                      <plus-icon style="color: rgba(0, 0, 0, 0.45)" :rotate="45" />
+                    </div>
+                  </template>
+                </a-input-search>
+              </template>
+              <search-icon />
+            </a-popover>
+          </div>
+
+          <div class="icon__wrapper" @click="reload">
             <reload-icon />
           </div>
         </div>
       </div>
+      <add-ticket v-if="supportStore.isAddingTicket" :instance-id="$route.query.from" />
     </div>
 
     <a-alert
@@ -172,6 +208,7 @@ import { mapStores } from 'pinia'
 import Markdown from 'markdown-it'
 import emoji from 'markdown-it-emoji'
 import { Status } from '@/libs/cc_connect/cc_pb'
+import { debounce } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -180,6 +217,7 @@ import { useSupportStore } from '@/stores/support.js'
 
 import loading from '@/components/ui/loading.vue'
 import ticketItem from '@/components/support/ticketItem.vue'
+import addTicket from '@/components/support/addTicket.vue'
 
 const leftIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LeftOutlined')
@@ -210,6 +248,9 @@ const arrowUpIcon = defineAsyncComponent(
 const plusIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/PlusOutlined')
 )
+const searchIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SearchOutlined')
+)
 
 const md = new Markdown({
   html: true,
@@ -224,6 +265,8 @@ export default {
   components: {
     loading,
     ticketItem,
+    addTicket,
+
     leftIcon,
     reloadIcon,
     downIcon,
@@ -234,7 +277,8 @@ export default {
 
     loadingIcon,
     arrowUpIcon,
-    plusIcon
+    plusIcon,
+    searchIcon
   },
   beforeRouteUpdate (to, from, next) {
     this.chatid = to.params.id
@@ -253,6 +297,8 @@ export default {
       showSendFiles: false,
       editing: null,
       gateway: '',
+      text: '',
+      searchString: '',
       isVisible: false,
       isEditLoading: false,
       chatPaddingTop: '15px'
@@ -273,6 +319,14 @@ export default {
       const { uuid } = this.authStore.billingUser
 
       this.chatsStore.getChats.forEach((ticket) => {
+        const instance = ticket.meta.data.instance?.kind.value ?? {}
+        const { from } = this.$route.query
+        if (instance !== from && from) return
+
+        const string = this.searchString.toLowerCase()
+        const topic = ticket.topic.toLowerCase()
+        if (!topic.includes(string)) return
+
         const isReaded = ticket.meta.lastMessage?.readers.includes(uuid)
         const status = Status[ticket.status].toLowerCase().split('_')
         const capitalized = status.map((el) =>
@@ -347,8 +401,11 @@ export default {
     window.addEventListener('resize', () => {
       this.chatPaddingTop = `${this.$refs.notification?.$el.offsetHeight + 15}px`
     })
+
+    this.search = debounce(() => this.searchString = this.text, 200)
   },
   methods: {
+    search () {},
     goBack () {
       if (this.$route.query.from) {
         const params = { id: this.$route.query.from }
@@ -521,7 +578,7 @@ export default {
     },
     updateChat () {
       this.isEditLoading = true
-      this.chatsStore.updateChat({
+      this.chatsStore.changeGateway({
         ...this.chat, gateways: [this.gateway]
       })
         .then(() => {
@@ -693,14 +750,21 @@ export default {
   justify-self: start;
 }
 
-.chat__reload {
+.chat__actions {
+  display: flex;
   justify-self: end;
 }
 
 .chat__back,
-.chat__reload {
+.chat__actions > .icon__wrapper {
   font-size: 1.4rem;
   cursor: pointer;
+}
+
+.icon__wrapper.active {
+  background-color: var(--bright_bg);
+  color: var(--main);
+  transform: rotate(45deg);
 }
 
 .chat__list {

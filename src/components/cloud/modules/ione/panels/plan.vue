@@ -159,11 +159,6 @@ watch(() => props.productSize, (value) => {
 if (props.products.length > 0) {
   setProduct(props.products[1] ?? props.products[0])
 }
-watch(() => props.products, (value) => {
-  if (value.length < 1) return
-  if (cloudStore.plan.kind === 'DYNAMIC') return
-  setProduct(value[1] ?? value[0])
-})
 
 const isProductsExist = computed(() =>
   props.products.length > 0
@@ -192,6 +187,14 @@ const resources = computed(() => {
 
   return { cpu, ram, highCPU, withAdministration }
 })
+
+if (resources.value.cpu.length > 1) {
+  filters.cpu = [resources.value.cpu.at(0), resources.value.cpu.at(-1)]
+}
+
+if (resources.value.ram.length > 1) {
+  filters.ram = [resources.value.ram.at(0), resources.value.ram.at(-1)]
+}
 
 watch(() => resources.value.cpu, (value) => {
   filters.cpu = [value.at(0), value.at(-1)]

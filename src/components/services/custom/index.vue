@@ -178,10 +178,10 @@
 import { mapStores, mapState } from 'pinia'
 import { usePeriod } from '@/hooks/utils'
 
+import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 
-import { useAppStore } from '@/stores/app.js'
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
@@ -374,8 +374,10 @@ export default {
     'options.size' (value) {
       this.changePeriods(value)
       this.options.addons = []
-      this.options.addons = (this.getProducts.meta?.autoEnabled ?? [])
-        .filter((addon) => this.getProducts.addons.find(({ key }) => key === addon))
+
+      this.getProducts.addons.forEach(({ meta, key }) => {
+        if (meta.autoEnable) this.options.addons.push(key)
+      })
 
       this.fetchLoading = false
     }
@@ -420,7 +422,7 @@ export default {
   },
   methods: {
     changeProducts () {
-      const sortedProducts = this.cachedPlans[this.provider]?.reduce(
+      const sortedProducts = this.plans.reduce(
         (result, plan) => {
           for (const [key, product] of Object.entries(plan.products)) {
             const i = result.findIndex(([, { title }]) => title === product.title)
@@ -431,13 +433,13 @@ export default {
           return result
         }, []
       ) ?? []
-      const plan = this.cachedPlans[this.provider]?.at(0)
+      const plan = this.plans.at(0)
 
       sortedProducts.forEach(([productKey, value]) => {
         this.products[productKey] = {
           ...value,
           addons: plan.resources.filter(({ key }) =>
-            key.split('; product: ')[1] === productKey
+            value.meta.addons?.includes(key)
           )
         }
       })
@@ -475,7 +477,6 @@ export default {
 
       return {
         ...item,
-        key: item.key.split('; product: ')[0],
         price: +(price * this.currency.rate).toFixed(2)
       }
     },
