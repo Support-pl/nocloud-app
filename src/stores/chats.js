@@ -239,6 +239,17 @@ export const useChatsStore = defineStore('chats', () => {
         console.debug(error)
       }
     },
+    async changeGateway (chat) {
+      try {
+        const chatsApi = createPromiseClient(ChatsAPI, transport)
+        const response = await chatsApi.changeGateway(new Chat(chat))
+
+        return response
+      } catch (error) {
+        console.debug(error)
+        throw error
+      }
+    },
 
     async createChat (data) {
       try {

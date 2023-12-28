@@ -27,7 +27,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import config from '@/appconfig.js'
 
 const props = defineProps({
@@ -37,6 +37,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
+const route = useRoute()
 
 const statusColor = computed(() => {
   switch (props.ticket.status.toLowerCase()) {
@@ -60,7 +61,7 @@ const titleDecoded = computed(() =>
 )
 
 function ticketClick (id) {
-  const query = { from: props.instanceId }
+  const query = { ...route.query, from: props.instanceId }
 
   router.push({ path: `/ticket/${id}`, query })
 }

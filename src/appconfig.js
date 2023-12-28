@@ -1,3 +1,5 @@
+import * as icons from '@ant-design/icons-vue'
+
 const config = localStorage.getItem('globalConfig')
 
 if (config) globalThis.globalConfig = JSON.parse(config)
@@ -28,17 +30,17 @@ export default {
     virtual: {
       groupname: ['Виртуальный хостинг', 'Shared Hosting'],
       creationRouteName: 'service-virtual',
-      icon: 'solution'
+      icon: icons.SolutionOutlined
     },
     domains: {
       groupname: ['Domains'],
       creationRouteName: 'service-domains',
-      icon: 'solution'
+      icon: icons.SolutionOutlined
     },
     ssl: {
       groupname: ['GoGet SSL 2.5.6', 'SSL', 'SSL сертификаты'],
       creationRouteName: 'service-ssl',
-      icon: 'lock',
+      icon: icons.LockOutlined,
       additionalRoutes: [
         {
           path: 'SSL/generator/:id',
@@ -55,32 +57,32 @@ export default {
     vm: {
       groupname: ['Self-Service VDS (2018)', 'Self-Service VDS SSD HC', 'Self-Service VDS SSD (2018)'],
       creationRouteName: 'newPaaS',
-      icon: 'database'
+      icon: icons.DatabaseOutlined
     },
     iaas: {
       groupname: ['VDS SSD', 'VDC IaaS'],
       creationRouteName: 'service-iaas',
-      icon: 'shopping'
+      icon: icons.ShoppingOutlined
     },
     acronis: {
       groupname: ['Acronis'],
       creationRouteName: 'service-acronis',
-      icon: 'rollback'
+      icon: icons.RollbackOutlined
     },
     custom: {
       groupname: ['Custom'],
       creationRouteName: 'service-custom',
-      icon: 'appstore'
+      icon: icons.AppstoreOutlined
     },
     openai: {
       groupname: ['OpenAI'],
       creationRouteName: 'service-openai',
-      icon: 'robot'
+      icon: icons.RobotOutlined
     },
     vdc: {
       groupname: ['VDC'],
       creationRouteName: 'newVDC',
-      icon: 'cluster'
+      icon: icons.ClusterOutlined
     }
   },
   getServiceType (groupname) {
