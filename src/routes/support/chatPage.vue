@@ -621,7 +621,7 @@ export default {
 .chat__notification {
   position: absolute;
   right: max(25px, (100vw - 1158px) / 2);
-  top: 77px;
+  top: 87px;
   z-index: 10;
   width: 100%;
   max-width: min(65vw - 50px, 768px - 30px);
@@ -705,6 +705,7 @@ export default {
 
 .chat__list {
   grid-row: 1 / 3;
+  padding-top: 10px;
   overflow: scroll;
 }
 
@@ -766,7 +767,7 @@ export default {
   max-width: 768px;
   width: 100%;
   height: 100%;
-  margin: 0 auto;
+  margin: 10px auto 0;
   padding: v-bind(chatPaddingTop) 15px 6px;
 
   border: 1px solid #d9d9d9;
