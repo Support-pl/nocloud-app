@@ -84,6 +84,15 @@ export const ChatsAPI = {
       O: Chat,
       kind: MethodKind.Unary,
     },
+    /**
+     * @generated from rpc cc.ChatsAPI.ChangeGateway
+     */
+    changeGateway: {
+      name: "ChangeGateway",
+      I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
   }
 };
 

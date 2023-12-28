@@ -619,40 +619,40 @@ export default {
       return timestamp < days
     },
     createObserver () {
-      const button = this.$refs['order-button']?.$el
+      // const button = this.$refs['order-button']?.$el
 
-      if (!button && !this.anchor) return
-      else if (this.anchor) {
-        this.anchor.remove()
-        return
-      }
+      // if (!button && !this.anchor) return
+      // else if (this.anchor) {
+      //   this.anchor.remove()
+      //   return
+      // }
 
-      const anchor = button.cloneNode(true)
-      const observer = new IntersectionObserver((entries) => {
-        if (entries[0].intersectionRatio < 0.2) {
-          button.style.visibility = 'hidden'
-          anchor.style.cssText = `
-            position: fixed;
-            right: 5vw;
-            bottom: 7vh;
-            display: block;
-            width: 50px;
-            height: 50px;
-            font-size: 25px;
-            overflow: hidden;
-          `
-          anchor.firstElementChild.style.margin = '7px 20px 0 -7px'
-        } else if (entries[0].intersectionRatio === 1) {
-          button.style.visibility = ''
-          anchor.style.cssText = 'display: none'
-          anchor.firstElementChild.style.margin = ''
-        }
-      }, { root: null, threshold: [0.2, 1] })
+      // const anchor = button.cloneNode(true)
+      // const observer = new IntersectionObserver((entries) => {
+      //   if (entries[0].intersectionRatio < 0.2) {
+      //     button.style.visibility = 'hidden'
+      //     anchor.style.cssText = `
+      //       position: fixed;
+      //       right: 5vw;
+      //       bottom: 7vh;
+      //       display: block;
+      //       width: 50px;
+      //       height: 50px;
+      //       font-size: 25px;
+      //       overflow: hidden;
+      //     `
+      //     anchor.firstElementChild.style.margin = '7px 20px 0 -7px'
+      //   } else if (entries[0].intersectionRatio === 1) {
+      //     button.style.visibility = ''
+      //     anchor.style.cssText = 'display: none'
+      //     anchor.firstElementChild.style.margin = ''
+      //   }
+      // }, { root: null, threshold: [0.2, 1] })
 
-      observer.observe(button)
-      anchor.onclick = this.newProductHandle
-      document.querySelector('#app').append(anchor)
-      this.anchor = anchor
+      // observer.observe(button)
+      // anchor.onclick = this.newProductHandle
+      // document.querySelector('#app').append(anchor)
+      // this.anchor = anchor
     }
   }
 }

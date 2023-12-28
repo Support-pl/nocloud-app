@@ -32,7 +32,7 @@
                 {{ appStore.onLogin.info.title }}
               </div>
               <div class="order__cost">
-                {{ appStore.onLogin.info.cost }} {{ appStore.onLogin.info.currency }}
+                {{ +appStore.onLogin.info.cost.toFixed(2) }} {{ appStore.onLogin.info.currency }}
               </div>
             </div>
             <div class="order__remove" @click="appStore.clearOnLogin">

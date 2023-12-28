@@ -123,14 +123,16 @@ onMounted(setDepartment)
 
 const gateways = computed(() => {
   const { gateways = [] } = chatsStore.getDefaults
-  const result = gateways.map((gateway) => ({
+  let result = gateways.map((gateway) => ({
     id: gateway,
     name: `${gateway[0].toUpperCase()}${gateway.slice(1)}`
   }))
-  const i = result.findIndex(({ id }) => id.includes('email'))
 
-  if (props.instanceId && i !== -1) result.splice(i, 1)
+  if (props.instanceId) {
+    result = result.filter(({ id }) => id === 'telegram')
+  }
   result.unshift({ id: 'userApp', name: 'User App' })
+
   return result
 })
 

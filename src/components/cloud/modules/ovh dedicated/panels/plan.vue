@@ -29,8 +29,7 @@
           :max="resources.ram.length - 1"
           :min="0"
           :value="resources.ram.indexOf(options.ram.size)"
-          @change="(i) => setOptions('ram.size', resources.ram[i])"
-          @after-change="setResource({ key: 'ram', value: options.ram.size })"
+          @change="(i) => setResource({ key: 'ram', value: resources.ram[i] })"
         />
       </a-col>
       <transition name="textchange" mode="out-in">
@@ -52,8 +51,7 @@
           :max="resources.disk.length - 1"
           :min="0"
           :value="resources.disk.indexOf(parseInt(diskSize))"
-          @change="(i) => setOptions('disk.size', resources.disk[i] * 1024)"
-          @after-change="setResource({ key: 'disk', value: options.disk.size / 1024 })"
+          @change="(i) => setResource({ key: 'disk', value: resources.disk[i] * 1024 })"
         />
       </a-col>
       <a-col class="changing__field" :sm="3" :xs="18" style="text-align: right">
@@ -77,7 +75,7 @@
           {{ $t('cpu') }}:
           <loading-icon v-if="options.cpu.size === 'loading' && product === item.value" />
           <template v-else>
-            {{ getCpu(item.value) ?? '?' }}
+            {{ item.resources.cpu ?? '?' }}
           </template>
         </div>
         <div>
@@ -117,11 +115,8 @@
 <script setup>
 import { getCurrentInstance, watch, inject, computed, ref, nextTick, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
 import { useCurrency } from '@/hooks/utils'
-import api from '@/api.js'
 
 const loadingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LoadingOutlined')
@@ -141,9 +136,7 @@ const props = defineProps({
 const emits = defineEmits(['update:periods', 'update:product-size'])
 
 const app = getCurrentInstance().appContext.config.globalProperties
-const i18n = useI18n()
 const route = useRoute()
-const authStore = useAuthStore()
 const cloudStore = useCloudStore()
 
 const [options, setOptions] = inject('useOptions', () => [])()
@@ -151,7 +144,6 @@ const [price, setPrice] = inject('usePriceOVH', () => [])()
 const { currency } = useCurrency()
 
 const product = ref('')
-const cpus = ref({})
 const checkedTypes = ref([])
 
 watch(product, (value) => {
@@ -159,7 +151,6 @@ watch(product, (value) => {
 
   emits('update:product-size', product?.title)
   setResources()
-  if (!product.resources.cpu) fetchCpu()
 })
 
 watch(() => props.mode, () => {
@@ -275,7 +266,9 @@ async function setResource (resource, changeTarifs = true) {
   const { meta: { addons } } = cloudStore.plan
     .products[`${duration} ${value}`] ?? prod[1]
 
-  let addonKey = addons?.find(({ id }) => id.includes(resource.value))?.id
+  let addonKey = (addons?.some((el) => typeof el === 'string'))
+    ? addons?.find((id) => id.includes(resource.value))
+    : addons?.find(({ id }) => id.includes(resource.value))?.id
   let item = periods[0]
   const tarifs = []
 
@@ -283,12 +276,14 @@ async function setResource (resource, changeTarifs = true) {
     setOptions('ram.size', parseInt(addonKey?.split('-')[1] ?? 0))
   }
   if (resource.key === 'disk') {
-    addonKey = addons?.find(({ id }) => {
+    addonKey = addons?.find((id) => {
+      if (typeof id !== 'string') id = id.id
       const isDisk = id.includes('raid')
       const [count, size] = id.split('-')[1].split('x')
 
       return isDisk && (count * parseInt(size)) === resource.value
-    })?.id
+    })
+    if (addonKey?.id) addonKey = addonKey.id
     const [count, size] = addonKey?.split('-')[1].split('x') ?? ['0', '0']
 
     setOptions('disk.size', count * parseInt(size) * 1024)
@@ -334,59 +329,18 @@ function setResources (changeTarifs = true) {
   setResource({ key: 'disk', value: resources.value.disk[0] }, false)
 }
 
-async function fetchCpu () {
-  await nextTick()
-
-  const duration = (props.mode === 'upfront12') ? 'P1Y' : 'P1M'
-  const { value } = props.products.find((el) => el.value === product.value) ?? {}
-  const { meta: { addons: allAddons } } = cloudStore.plan.products[`${duration} ${value}`] ??
-    Object.values(cloudStore.plan.products)[0]
-  const addons = []
-
-  allAddons.forEach(({ id }) => {
-    const isRamExist = addons.find((addon) => addon.includes('ram'))
-    const isDiskExist = addons.find((addon) => addon.includes('raid'))
-
-    if (id.includes('ram') && !isRamExist) addons.push(id)
-    if (id.includes('raid') && !isDiskExist) addons.push(id)
-  })
-
-  setOptions('cpu.size', cpus.value[value] ?? 'loading')
-
-  if (cpus.value[value] || !authStore.isLogged) return
-  try {
-    const { meta: { order: { details } } } = await api.post(
-      `/sp/${cloudStore.provider.uuid}/invoke`,
-      {
-        method: 'checkout_baremetal',
-        params: { ...options.config, addons }
-      }
-    )
-
-    const cpu = details.find(({ description }) =>
-      description.toLowerCase().includes('amd') ||
-        description.toLowerCase().includes('intel')
-    )
-
-    cpus.value[value] = cpu?.description ?? i18n.t('No Data')
-    setOptions('cpu.size', cpu?.description ?? i18n.t('No Data'))
-  } catch {
-    cpus.value[value] = i18n.t('No Data')
-    setOptions('cpu.size', i18n.t('No Data'))
-  }
-}
-
 function getResources (ram, disk, value) {
   const duration = (props.mode === 'upfront12') ? 'P1Y' : 'P1M'
   const { meta: { addons } } = cloudStore.plan.products[`${duration} ${value}`] ??
     Object.values(cloudStore.plan.products)[0]
 
-  addons?.forEach(({ id }) => {
+  addons?.forEach((id) => {
+    if (typeof id !== 'string') id = id.id
     const resource = cloudStore.plan.resources.find(
       ({ key }) => key === `${duration} ${value} ${id}`
     )
 
-    if (!resource) return
+    if (!resource || !resource?.public) return
     if (id.includes('ram')) {
       ram.add(parseInt(id.split('-')[1]))
     }
@@ -396,12 +350,6 @@ function getResources (ram, disk, value) {
       disk.add(count * parseInt(size))
     }
   })
-}
-
-function getCpu (plan) {
-  const { value, resources } = props.products.find((el) => el.value === plan) ?? {}
-
-  return resources.cpu ?? cpus.value[value]
 }
 
 function setDatacenter () {
