@@ -126,10 +126,8 @@ async function setImages () {
   )
 
   if (!product) return
-  const { os } = product.meta
-
-  os.sort()
-  images.value = os.map((el) => {
+  product.meta.os.sort()
+  images.value = product.meta.os.map((el) => {
     const { title, price, meta } = cloudStore.plan
       .resources.find(({ key }) => key === el) ?? {}
 
@@ -148,7 +146,7 @@ function setOS (item, index) {
     setPrice('addons.os', 0)
   }
 
-  setOptions(`config.configurations.${item.key}`, item.name)
+  setOptions(`config.configurations.${item.type}`, item.key)
 }
 
 function osPrice (item) {

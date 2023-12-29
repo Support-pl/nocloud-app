@@ -545,6 +545,7 @@ export default {
         case 'vdc':
           name = 'newVDC'
           break
+        case 'keyweb':
         case 'ione':
         case 'ovh':
           name = 'newPaaS'
