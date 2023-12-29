@@ -206,6 +206,7 @@ const getModuleProductBtn = computed(() => {
     key.includes(`/${serviceType}/lilbtn.vue`)
   )
 
+  if (props.instance.type === 'keyweb') return
   if (meta?.renew === false) return
   if (props.instance.date === 0) return
   if (props.instance.server_on) return

@@ -146,7 +146,7 @@ function setOS (item, index) {
     setPrice('addons.os', 0)
   }
 
-  setOptions(`config.configurations.${item.type}`, item.key)
+  setOptions(`config.configurations.${item.type}`, item.key.split('$')[0])
 }
 
 function osPrice (item) {

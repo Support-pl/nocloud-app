@@ -78,13 +78,13 @@ async function setAddon (code, addon, key) {
   }
 
   setPrice('addons', addonsPrices)
-  setOptions(`config.configurations.${addon.type}`, code)
+  setOptions(`config.configurations.${addon.type}`, code.split('$')[0])
 }
 
 function getAddon (addons) {
   const keys = Object.values(options.config.configurations ?? {})
 
-  return Object.keys(addons).find((key) => keys.includes(key))
+  return Object.keys(addons).find((item) => keys.find((key) => item.includes(key)))
 }
 </script>
 
