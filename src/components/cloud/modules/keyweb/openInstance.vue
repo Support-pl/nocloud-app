@@ -88,7 +88,7 @@
             </div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.next_payment_date * 1000) }}
-              <sync-icon title="Renew" @click="openRenew" />
+              <!-- <sync-icon title="Renew" @click="openRenew" /> -->
             </div>
           </div>
 
@@ -161,6 +161,7 @@
             type="primary"
             shape="round"
             size="large"
+            :loading="isVNCLoading"
             :disabled="!(VM.state.state === 'RUNNING') || VM.data.lock"
             @click="openVNC"
           >
@@ -220,6 +221,7 @@ const { currency } = useCurrency()
 const { openNotification } = useNotification()
 const checkBalance = inject('checkBalance')
 
+const isVNCLoading = ref(false)
 const isLoading = ref(false)
 const autoRenew = ref(false)
 
@@ -382,9 +384,7 @@ async function onClick () {
     await instancesStore.updateService(service)
 
     Modal.destroyAll()
-    openNotification('success', {
-      message: i18n.t('Done')
-    })
+    openNotification('success', { message: i18n.t('Done') })
   } catch (error) {
     openNotification('error', {
       message: error.response?.data?.message ?? error.message ?? error
@@ -395,8 +395,23 @@ async function onClick () {
   }
 }
 
-function openVNC () {
-  router.push({ name: 'VNC', params: { uuid: route.params.uuid } })
+async function openVNC () {
+  try {
+    isVNCLoading.value = true
+    const response = await instancesStore.invokeAction({
+      uuid: route.params.uuid, action: 'start_vnc'
+    })
+
+    location.replace(response.meta.url)
+  } catch (error) {
+    openNotification('error', {
+      message: error.response?.data?.message ?? error.message ?? error
+    })
+    console.error(error)
+  } finally {
+    isVNCLoading.value = false
+  }
+  // router.push({ name: 'VNC', params: { uuid: route.params.uuid } })
 }
 
 onMounted(() => {
