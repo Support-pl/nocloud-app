@@ -267,7 +267,10 @@ async function setResource (resource, changeTarifs = true) {
     .products[`${duration} ${value}`] ?? prod[1]
 
   let addonKey = (addons?.some((el) => typeof el === 'string'))
-    ? addons?.find((id) => id.includes(resource.value))
+    ? addons?.find((id) => {
+      console.log(id, resource.value)
+      return id.includes(resource.value)
+    })
     : addons?.find(({ id }) => id.includes(resource.value))?.id
   let item = periods[0]
   const tarifs = []
@@ -336,9 +339,7 @@ function getResources (ram, disk, value) {
 
   addons?.forEach((id) => {
     if (typeof id !== 'string') id = id.id
-    const resource = cloudStore.plan.resources.find(
-      ({ key }) => key === `${duration} ${value} ${id}`
-    )
+    const resource = cloudStore.plan.resources.find(({ key }) => key === id)
 
     if (!resource || !resource?.public) return
     if (id.includes('ram')) {
