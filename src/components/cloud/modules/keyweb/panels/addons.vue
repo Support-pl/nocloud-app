@@ -37,16 +37,17 @@ const addons = computed(() => {
   const addons = { backup: {} }
 
   Object.keys(addons).forEach((addon) => {
-    cloudStore.plan.resources?.forEach(({ price, key, title, period }) => {
-      const { meta } = cloudStore.plan.products[product.value.key] ?? {}
+    const { meta } = cloudStore.plan.products[product.value.key] ?? {}
 
-      const { type } = meta?.addons?.find((addon) => addon.key === key) ?? {}
-      const isEqualMode = getTarification(period) === props.mode
-      const isInclude = key.toLowerCase().includes(addon)
+    meta?.addons?.forEach((addonKey) => {
+      const resource = cloudStore.plan.resources.find(({ key }) => addonKey === key) ?? {}
+      const { title, price, meta: { type } } = resource
 
-      if (title === '') title = key
-      if (type && isInclude && isEqualMode) {
-        addons[addon][key] = { price, title, type }
+      const isEqualMode = getTarification(resource.period) === props.mode
+      const isInclude = resource.key.toLowerCase().includes(addon)
+
+      if (addonKey && isInclude && isEqualMode && resource.public) {
+        addons[addon][resource.key] = { price, title, type }
       }
     })
   })
@@ -81,7 +82,7 @@ async function setAddon (code, addon, key) {
 }
 
 function getAddon (addons) {
-  const keys = Object.values(options.config.configurations)
+  const keys = Object.values(options.config.configurations ?? {})
 
   return Object.keys(addons).find((key) => keys.includes(key))
 }

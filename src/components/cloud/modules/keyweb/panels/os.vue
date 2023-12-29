@@ -130,11 +130,10 @@ async function setImages () {
 
   os.sort()
   images.value = os.map((el) => {
-    const { title, price } = cloudStore.plan.resources.find(
-      ({ key }) => key === el.key
-    ) ?? {}
+    const { title, price, meta } = cloudStore.plan
+      .resources.find(({ key }) => key === el) ?? {}
 
-    return { ...el, name: title, desc: title, price }
+    return { key: el, type: meta.type, name: title, desc: title, price }
   })
 }
 
