@@ -263,8 +263,11 @@ const OSName = computed(() => {
 
   const configs = props.VM.config.configurations
   const product = plan.value?.products[props.VM.product]
-  const { type } = product.meta.os.find(({ key }) =>
+  const image = product.meta.os.find((key) =>
     Object.values(configs).includes(key.split('$')[0])
+  )
+  const { meta: { type } } = plan.value?.resources.find(
+    ({ key }) => key === image
   )
   const key = `${configs[type]}$${props.VM.product}`
 
