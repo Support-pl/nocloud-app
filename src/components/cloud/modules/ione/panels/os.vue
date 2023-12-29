@@ -64,10 +64,7 @@
               @score="(value) => authData.score = value.score"
             />
 
-            <a-input-password
-              v-model:value="authData.password"
-              class="password"
-            />
+            <a-input-password v-model:value="authData.password" class="password" />
           </a-form-item>
 
           <a-form-item
