@@ -61,8 +61,9 @@ const titleDecoded = computed(() =>
 )
 
 function ticketClick (id) {
-  const query = { ...route.query, from: props.instanceId }
+  const query = { ...route.query }
 
+  if (props.instanceId) query.from = props.instanceId
   router.push({ path: `/ticket/${id}`, query })
 }
 

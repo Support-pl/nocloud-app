@@ -402,7 +402,7 @@ export default {
       this.chatPaddingTop = `${this.$refs.notification?.$el.offsetHeight + 15}px`
     })
 
-    this.search = debounce(() => this.searchString = this.text, 200)
+    this.search = debounce(() => { this.searchString = this.text }, 200)
   },
   methods: {
     search () {},
@@ -592,6 +592,7 @@ export default {
         })
         .finally(() => {
           this.isEditLoading = false
+          this.supportStore.isAddingTicket = false
         })
     },
     changeGateway (value) {

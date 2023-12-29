@@ -266,11 +266,15 @@ function sendTelegramMessage () {
     return
   }
 
-  const message = md.render(ticketMessage.value)
-    .trim()
-    .replace(/^<p>/, '').replace(/<\/p>$/, '')
-
-  localStorage.setItem('telegramMessage', message)
+  localStorage.setItem('telegramChat', JSON.stringify({
+    message: md.render(ticketMessage.value)
+      .trim()
+      .replace(/^<p>/, '').replace(/<\/p>$/, ''),
+    gateway: gateway.value,
+    department: ticketDepartment.value,
+    title: ticketTitle.value,
+    instanceId: props.instanceId
+  }))
   router.push({ name: 'handsfree' })
 }
 
