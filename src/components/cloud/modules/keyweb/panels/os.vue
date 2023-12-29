@@ -28,7 +28,7 @@
               :style="{
                 boxShadow: (authData.username.length < 2) ? '0 0 2px 2px var(--err)' : null
               }"
-              @change="(value) => setOptions('config.username', value)"
+              @update:value="setOptions('config.username', $event)"
             />
 
             <div v-if="authData.username.length < 2" style="line-height: 1.5; color: var(--err)">
@@ -47,7 +47,7 @@
               :style="{
                 boxShadow: (authData.hostname.length < 2) ? '0 0 2px 2px var(--err)' : null
               }"
-              @change="(value) => setOptions('config.hostname', value)"
+              @update:value="setOptions('config.hostname', $event)"
             />
 
             <div v-if="authData.hostname.length < 2" style="line-height: 1.5; color: var(--err)">
@@ -70,7 +70,7 @@
             <a-input-password
               v-model:value="authData.password"
               class="password"
-              @change="(value) => setOptions('config.password', value)"
+              @update:value="setOptions('config.password', $event)"
             />
           </a-form-item>
         </a-col>
@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { inject, ref, watch } from 'vue'
+import { inject, ref, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
@@ -120,6 +120,7 @@ watch(() => props.productSize, setImages)
 if (props.productSize) setImages()
 
 async function setImages () {
+  await nextTick()
   const values = Object.values(cloudStore.plan.products ?? {})
   const product = values.find(({ title, period }) =>
     title === props.productSize && getTarification(period) === props.mode
