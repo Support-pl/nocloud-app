@@ -142,6 +142,17 @@ const getProducts = computed(() => {
   )
   const inputKilotoken = +(products.input_kilotoken * currency.value.rate).toFixed(2)
   const outputKilotoken = +(products.output_kilotoken * currency.value.rate).toFixed(2)
+  let description
+
+  switch (i18n.locale.value) {
+    case 'ru':
+      description = 'Представьте себе, что «токен» - это фрагмент слова, используемый для обработки естественного языка. Для текста на английском 1 токен составляет примерно 4 символа или 0,75 слова. Для русского языка один токен примерно равен 2 символам или 0,25 слова.'
+      break
+
+    default:
+      description = 'You can think of tokens as pieces of words used for natural language processing. For English text, 1 token is approximately 4 characters or 0.75 words.'
+      break
+  }
 
   return {
     title,
@@ -149,7 +160,7 @@ const getProducts = computed(() => {
     outputKilotoken,
     price: inputKilotoken + outputKilotoken,
     description: `<span style="font-size: 18px">
-      You can think of tokens as pieces of words used for natural language processing. For English text, 1 token is approximately 4 characters or 0.75 words.
+      ${description}
     </span>`
   }
 })

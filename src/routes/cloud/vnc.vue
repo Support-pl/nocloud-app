@@ -6,7 +6,7 @@
     />
 
     <iframe
-      v-else-if="!instance?.billingPlan?.type === 'ione'"
+      v-else-if="instance?.billingPlan?.type !== 'ione'"
       frameborder="0"
       style="width: 100%; height: 100%"
       :src="url"

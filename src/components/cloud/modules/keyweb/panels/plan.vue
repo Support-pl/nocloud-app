@@ -7,7 +7,7 @@
         :tip-formatter="null"
         :max="products.length - 1"
         :min="0"
-        :value="products.indexOf(product)"
+        :value="products.indexOf(productSize)"
         @update:value="setProduct(products[$event])"
       />
     </a-col>
@@ -25,11 +25,16 @@
         </div>
       </div>
     </a-col>
+
+    <a-col span="24">
+      <editor-container :value="description" />
+    </a-col>
   </a-row>
 </template>
 
 <script setup>
-import { inject, nextTick, watch } from 'vue'
+import { inject, nextTick, watch, computed } from 'vue'
+import { EditorContainer } from 'nocloud-ui'
 import { useCloudStore } from '@/stores/cloud.js'
 import { getPeriods } from '@/functions.js'
 
@@ -61,6 +66,10 @@ watch(() => props.products, (value) => {
 watch(() => props.mode, () => {
   setProduct(props.productSize)
 })
+
+const description = computed(() =>
+  product.value.meta?.description
+)
 
 async function setProduct (value) {
   emits('update:product-size', value)
