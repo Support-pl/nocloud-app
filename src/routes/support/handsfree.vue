@@ -77,19 +77,37 @@ async function sendCode () {
     await authStore.fetchUserData(true)
 
     const { telegram } = authStore.userdata.data ?? { telegram: -1 }
-    const { uuid } = Array.from(chatsStore.chats.values()).find(
+    let { uuid } = Array.from(chatsStore.chats.values()).find(
       ({ meta }) => meta.data.telegram?.toJSON() === telegram
     ) ?? {}
+    const chat = JSON.parse(localStorage.getItem('telegramChat') ?? '{}')
 
-    if (!uuid) throw new Error('[Error]: Could not find telegram chat')
+    if (!uuid) {
+      const { departments } = chatsStore.getDefaults
+      const { admins, id: key } = departments.find(({ id }) => id === chat.department) ?? {}
+
+      const response = await chatsStore.createChat({
+        admins,
+        department: key,
+        gateways: (chat.gateway === 'userApp') ? [] : [chat.gateway],
+        chat: {
+          message: chat.message,
+          subject: chat.title,
+          instanceId: chat.instanceId
+        }
+      })
+
+      uuid = response.uuid
+    }
+
     await chatsStore.sendMessage({
       uuid,
-      content: localStorage.getItem('telegramMessage'),
+      content: chat.message,
       account: authStore.userdata.uuid,
       date: BigInt(Date.now())
     })
 
-    localStorage.removeItem('telegramMessage')
+    localStorage.removeItem('telegramChat')
     router.push({ path: `/ticket/${uuid}` })
   } catch (error) {
     notification.error({
