@@ -223,6 +223,7 @@ export default {
         case 'empty':
         case 'virtual':
           name = 'service-custom'
+          query.headerTitle = showcase.promo[this.$i18n.locale]?.title ?? showcase.title
           break
         case 'openai':
           name = 'service-openai'

@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { inject, ref, watch, onMounted } from 'vue'
+import { inject, ref, watch, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCloudStore } from '@/stores/cloud.js'
 import imagesList from '@/components/cloud/create/images.vue'
@@ -58,7 +58,8 @@ const images = ref([])
 const [options, setOptions] = inject('useOptions', () => [])()
 const [price, setPrice] = inject('usePriceOVH', () => [])()
 
-function setImages () {
+async function setImages () {
+  await nextTick()
   const period = (props.mode === 'default') ? 'P1M' : 'P1Y'
   const product = plan.value.products[`${period} ${options.config.planCode}`]
   const { os } = product?.meta ?? {}
