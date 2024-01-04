@@ -203,9 +203,11 @@ watch(resources, (value) => {
 })
 
 const diskSize = computed(() => {
-  const size = (options.disk.size / 1024).toFixed(1)
+  const size = options.disk.size / 1024
 
-  return (size >= 1) ? `${size} Gb` : `${options.disk.size} Mb`
+  if (size > 1024) return `${(size / 1024).toFixed(1)} Tb`
+  if (size >= 1) return `${size.toFixed(1)} Gb`
+  return `${options.disk.size.toFixed(1)} Mb`
 })
 
 function setResources (productKey, changeTarifs = true) {

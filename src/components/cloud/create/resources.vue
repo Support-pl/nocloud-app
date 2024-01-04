@@ -52,9 +52,11 @@ const locationTitle = computed(() => {
 
 const diskSize = computed(() => {
   // const x = (cloudStore.plan.type === 'ovh cloud') ? 1000 : 1024
-  const size = (options.disk.size / 1024).toFixed(1)
+  const size = options.disk.size / 1024
 
-  return (size >= 1) ? `${size} Gb` : `${options.disk.size} Mb`
+  if (size > 1024) return `${(size / 1024).toFixed(1)} Tb`
+  if (size >= 1) return `${size.toFixed(1)} Gb`
+  return `${options.disk.size.toFixed(1)} Mb`
 })
 
 const resources = computed(() => ({

@@ -205,8 +205,8 @@
 <script>
 import { defineAsyncComponent, nextTick } from 'vue'
 import { mapStores } from 'pinia'
-import Markdown from 'markdown-it'
-import emoji from 'markdown-it-emoji'
+import markdown from 'markdown-it'
+import { full as emoji } from 'markdown-it-emoji'
 import { Status } from '@/libs/cc_connect/cc_pb'
 import { debounce } from '@/functions.js'
 
@@ -252,7 +252,7 @@ const searchIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/SearchOutlined')
 )
 
-const md = new Markdown({
+const md = markdown({
   html: true,
   linkify: true,
   typographer: true
@@ -401,6 +401,14 @@ export default {
     window.addEventListener('resize', () => {
       this.chatPaddingTop = `${this.$refs.notification?.$el.offsetHeight + 15}px`
     })
+
+    if (localStorage.getItem('gateway')) {
+      this.gateway = localStorage.getItem('gateway')
+      this.isVisible = true
+
+      this.updateChat()
+      localStorage.removeItem('gateway')
+    }
 
     this.search = debounce(() => { this.searchString = this.text }, 200)
   },
@@ -578,6 +586,10 @@ export default {
     },
     updateChat () {
       this.isEditLoading = true
+      if (!this.authStore.userdata.data.telegram) {
+        this.$router.push({ name: 'handsfree' })
+      }
+
       this.chatsStore.changeGateway({
         ...this.chat, gateways: [this.gateway]
       })

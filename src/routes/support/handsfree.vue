@@ -80,9 +80,12 @@ async function sendCode () {
     let { uuid } = Array.from(chatsStore.chats.values()).find(
       ({ meta }) => meta.data.telegram?.toJSON() === telegram
     ) ?? {}
-    const chat = JSON.parse(localStorage.getItem('telegramChat') ?? '{}')
+    const chat = JSON.parse(localStorage.getItem('telegramChat') ?? 'null')
 
-    if (!uuid) {
+    if (!chat) {
+      localStorage.setItem('gateway', 'telegram')
+      router.back()
+    } else if (!uuid) {
       const { departments } = chatsStore.getDefaults
       const { admins, id: key } = departments.find(({ id }) => id === chat.department) ?? {}
 

@@ -22,14 +22,11 @@
         <span style="display: inline-block; width: 70px">RAM:</span>
       </a-col>
       <a-col v-if="resources.ram.length > 1" :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }">
-        <a-slider
-          style="margin-top: 10px"
-          :marks="{ ...resources.ram }"
-          :tip-formatter="null"
-          :max="resources.ram.length - 1"
-          :min="0"
-          :value="resources.ram.indexOf(options.ram.size)"
-          @change="(i) => setResource({ key: 'ram', value: resources.ram[i] })"
+        <a-select
+          style="width: 100%"
+          :value="options.ram.size"
+          :options="resources.ram"
+          @update:value="setResource({ key: 'ram', value: $event }, false)"
         />
       </a-col>
       <transition name="textchange" mode="out-in">
@@ -44,14 +41,11 @@
         <span style="display: inline-block; width: 70px">{{ $t("Drive") }}:</span>
       </a-col>
       <a-col v-if="resources.disk.length > 1" :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }">
-        <a-slider
-          style="margin-top: 10px"
-          :marks="{ ...resources.disk }"
-          :tip-formatter="null"
-          :max="resources.disk.length - 1"
-          :min="0"
-          :value="resources.disk.indexOf(parseInt(diskSize))"
-          @change="(i) => setResource({ key: 'disk', value: resources.disk[i] * 1024 })"
+        <a-select
+          style="width: 100%"
+          :value="options.disk.size / 1024"
+          :options="resources.disk"
+          @update:value="setResource({ key: 'disk', value: $event * 1024 }, false)"
         />
       </a-col>
       <a-col class="changing__field" :sm="3" :xs="18" style="text-align: right">
@@ -78,11 +72,11 @@
             {{ item.resources.cpu ?? '?' }}
           </template>
         </div>
-        <div>
+        <div style="margin-top: 6px; line-height: 1.3">
           {{ $t('ram') }}: {{ $t('from') }}
           {{ allResources[item.value]?.ram[0] ?? '?' }} Gb
         </div>
-        <div>
+        <div style="margin-top: 6px; line-height: 1.3">
           {{ $t('Drive') }}: {{ $t('from') }}
           {{ allResources[item.value]?.disk[0] ?? '?' }} Gb
         </div>
@@ -115,6 +109,7 @@
 <script setup>
 import { getCurrentInstance, watch, inject, computed, ref, nextTick, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useCloudStore } from '@/stores/cloud.js'
 import { useCurrency } from '@/hooks/utils'
 
@@ -137,6 +132,7 @@ const emits = defineEmits(['update:periods', 'update:product-size'])
 
 const app = getCurrentInstance().appContext.config.globalProperties
 const route = useRoute()
+const i18n = useI18n()
 const cloudStore = useCloudStore()
 
 const [options, setOptions] = inject('useOptions', () => [])()
@@ -158,21 +154,19 @@ watch(() => props.mode, () => {
 })
 
 const resources = computed(() => {
-  const ram = new Set()
-  const disk = new Set()
+  const ram = []
+  const disk = []
 
   if (!cloudStore.plan.products) return { products: [], ram: [], disk: [] }
-  const { value } = props.products.find((el) => el.value === product.value) ?? {}
-
-  getResources(ram, disk, value)
+  getResources(ram, disk, product.value)
 
   return {
     products: props.products.filter(({ group }) => {
       if (checkedTypes.value.length < 1) return true
       return checkedTypes.value.find((type) => group.includes(type))
     }),
-    ram: Array.from(ram).sort((a, b) => a - b),
-    disk: Array.from(disk).sort((a, b) => a - b)
+    ram: ram.sort((a, b) => a.value - b.value),
+    disk: disk.sort((a, b) => a.value - b.value)
   }
 })
 
@@ -180,8 +174,8 @@ const allResources = computed(() => {
   if (!cloudStore.plan.products) return {}
 
   return props.products.reduce((result, { value, periods }) => {
-    const ram = new Set()
-    const disk = new Set()
+    const ram = []
+    const disk = []
 
     getResources(ram, disk, value)
 
@@ -189,8 +183,8 @@ const allResources = computed(() => {
       ...result,
       [value]: {
         price: periods.map(({ price }) => price.value).sort((a, b) => a - b),
-        ram: Array.from(ram).sort((a, b) => a - b),
-        disk: Array.from(disk).sort((a, b) => a - b)
+        ram: ram.sort((a, b) => a.value - b.value).map(({ label }) => label),
+        disk: disk.sort((a, b) => a.value - b.value).map(({ label }) => label)
       }
     }
   }, {})
@@ -228,6 +222,11 @@ const typesOptions = computed(() => {
   return types
 })
 
+watch(() => props.products, async () => {
+  await nextTick()
+  product.value = resources.value.products[1]?.value ?? resources.value.products[0]?.value
+})
+
 watch(resources, (value) => {
   if (value.products.length < 1) return
 
@@ -247,10 +246,22 @@ watch(resources, (value) => {
 })
 
 const diskSize = computed(() => {
-  const size = (options.disk.size / 1024).toFixed(1)
+  const size = options.disk.size / 1024
 
-  return (size >= 1) ? `${size} Gb` : `${options.disk.size} Mb`
+  if (size > 1024) return `${(size / 1024).toFixed(1)} Tb`
+  if (size >= 1) return `${size.toFixed(1)} Gb`
+  return `${options.disk.size.toFixed(1)} Mb`
 })
+
+function getDisk (key) {
+  const keys = key?.match(/[0-9]x[0-9]{1,}/g) ?? []
+
+  return keys.reduce((sum, key) => {
+    const [count, size] = key.split('x')
+
+    return sum + count * size
+  }, 0)
+}
 
 async function setResource (resource, changeTarifs = true) {
   await nextTick()
@@ -267,31 +278,26 @@ async function setResource (resource, changeTarifs = true) {
     .products[`${duration} ${value}`] ?? prod[1]
 
   let addonKey = (addons?.some((el) => typeof el === 'string'))
-    ? addons?.find((id) => {
-      console.log(id, resource.value)
-      return id.includes(resource.value)
-    })
+    ? addons?.find((id) => id.includes(resource.value))
     : addons?.find(({ id }) => id.includes(resource.value))?.id
   let item = periods[0]
   const tarifs = []
 
   if (resource.key === 'ram') {
-    setOptions('ram.size', parseInt(addonKey?.split('-')[1] ?? 0))
+    setOptions('ram.size', parseInt(addonKey?.split(' ').at(-1).split('-')[1] ?? 0))
   }
   if (resource.key === 'disk') {
     addonKey = addons?.find((id) => {
       if (typeof id !== 'string') id = id.id
       const isDisk = id.includes('raid')
-      const [count, size] = id.split('-')[1].split('x')
 
-      return isDisk && (count * parseInt(size)) === resource.value
+      return isDisk && (getDisk(id) * 1024) === resource.value
     })
     if (addonKey?.id) addonKey = addonKey.id
-    const [count, size] = addonKey?.split('-')[1].split('x') ?? ['0', '0']
 
-    setOptions('disk.size', count * parseInt(size) * 1024)
+    setOptions('disk.size', getDisk(addonKey) * 1024)
     if (addonKey?.includes('hybrid')) setOptions('disk.type', 'SSD + HDD')
-    else if (size.includes('sa')) setOptions('disk.type', 'HDD')
+    else if (addonKey?.match(/[0-9]x[0-9]{1,}sa/g)) setOptions('disk.type', 'HDD')
     else setOptions('disk.type', 'SSD')
   }
   if (!addons || !addonKey) return
@@ -328,8 +334,11 @@ async function setResource (resource, changeTarifs = true) {
 }
 
 function setResources (changeTarifs = true) {
-  setResource({ key: 'ram', value: resources.value.ram[0] }, changeTarifs)
-  setResource({ key: 'disk', value: resources.value.disk[0] }, false)
+  const item = props.products.find((item) => item.value === product.value)
+
+  setOptions('cpu.size', item.resources.cpu ?? i18n.t('ip.none'))
+  setResource({ key: 'ram', value: resources.value.ram[0].value }, changeTarifs)
+  setResource({ key: 'disk', value: resources.value.disk[0].value * 1024 }, false)
 }
 
 function getResources (ram, disk, value) {
@@ -343,12 +352,17 @@ function getResources (ram, disk, value) {
 
     if (!resource || !resource?.public) return
     if (id.includes('ram')) {
-      ram.add(parseInt(id.split('-')[1]))
-    }
-    if (id.includes('raid')) {
-      const [count, size] = id.split('-')[1].split('x')
+      const value = parseInt(id.split(' ').at(-1).split('-')[1])
 
-      disk.add(count * parseInt(size))
+      if (ram.find((item) => item.value === value)) return
+      ram.push({ value, label: resource.title })
+    }
+
+    if (id.includes('raid')) {
+      const value = getDisk(id)
+
+      if (disk.find((item) => item.value === value)) return
+      disk.push({ value, label: resource.title })
     }
   })
 }
@@ -371,7 +385,7 @@ export default { name: 'OvhDedicatedPlanPanel' }
 <style scoped>
 .order__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-top: 10px;
 }
@@ -400,7 +414,7 @@ export default { name: 'OvhDedicatedPlanPanel' }
 
 @media (max-width: 576px) {
   .order__grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 }
 </style>
