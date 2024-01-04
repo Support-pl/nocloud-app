@@ -74,15 +74,15 @@ import { message, notification } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import Markdown from 'markdown-it'
-import emoji from 'markdown-it-emoji'
+import markdown from 'markdown-it'
+import { full as emoji } from 'markdown-it-emoji'
 import api from '@/api'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
 
-const md = new Markdown({
+const md = markdown({
   html: true,
   linkify: true,
   typographer: true

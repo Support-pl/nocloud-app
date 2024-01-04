@@ -59,6 +59,14 @@ function useCloudPrices (product, tarification, activeKey, options, priceOVH) {
   const productFullPriceOVH = computed(() => {
     const { value, addons } = priceOVH
     const addonsPrice = Object.values(addons).reduce((a, b) => a + b, 0)
+
+    if (activeKey.value === 'location') {
+      const values = Object.values(plan.value.products ?? {})
+        .filter((product) => product.public)
+
+      values.sort((a, b) => a.price - b.price)
+      return values[0]?.price ?? value
+    }
     // let percent = (plan.value.fee?.default ?? 0) / 100 + 1;
 
     return value + addonsPrice

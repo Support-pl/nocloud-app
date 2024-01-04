@@ -1,6 +1,6 @@
 <template>
   <a-row style="margin-bottom: 15px" align="middle">
-    <a-col v-if="products.length < 6 && products.length > 1" span="24">
+    <a-col v-if="products.length < 8 && products.length > 1" span="24">
       <a-slider
         style="margin-top: 10px"
         :marks="{ ...products }"

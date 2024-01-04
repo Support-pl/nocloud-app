@@ -514,12 +514,13 @@ export default {
       this.$router.replace({ query: { service: newTypes } })
     },
     newProductHandle () {
+      let showcase = null
       const { type } = this.spStore.servicesProviders.find(({ uuid }) => {
-        const { servicesProvider } = this.spStore.getShowcases.find(
+        showcase = this.spStore.getShowcases.find(
           ({ uuid }) => uuid === this.queryTypes[0]
         ) ?? {}
 
-        return servicesProvider?.includes(uuid)
+        return showcase?.servicesProvider?.includes(uuid)
       }) ?? {}
 
       let name = 'service-virtual'
@@ -538,6 +539,7 @@ export default {
         case 'empty':
         case 'virtual':
           name = 'service-custom'
+          query.headerTitle = showcase.promo[this.$i18n.locale]?.title ?? showcase.title
           break
         case 'openai':
           name = 'service-openai'
