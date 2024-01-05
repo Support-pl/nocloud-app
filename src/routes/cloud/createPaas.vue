@@ -173,9 +173,7 @@ function getComponent (name) {
 
 function setOptions (path, value) {
   if (/configuration\.\w{1,}_/.test(path)) {
-    options.config.configuration = {
-      ...options.config.configuration, [path.split('.').at(-1)]: value
-    }
+    options.config.configuration[path.split('.').at(-1)] = value
     return
   }
   setValue(path, value, options)

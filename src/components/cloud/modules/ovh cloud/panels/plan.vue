@@ -110,7 +110,6 @@ const filteredProducts = computed(() => {
 })
 
 const resources = computed(() => {
-  const products = sortedProducts.value.map(({ title }) => title)
   const cpu = []
   const ram = []
   const disk = []
@@ -131,29 +130,16 @@ const resources = computed(() => {
   ram.sort((a, b) => a - b)
   disk.sort((a, b) => a - b)
 
-  return { products, cpu, ram, disk }
+  return { cpu, ram, disk }
 })
 
 watch(resources, async (value) => {
   await nextTick()
-  if (value.products.length < 1) return
+  if (sortedProducts.value.length < 1) return
 
   filters.cpu = [value.cpu.at(0), value.cpu.at(-1)]
   filters.ram = [value.ram.at(0), value.ram.at(-1)]
   filters.disk = [value.disk.at(0), value.disk.at(-1)]
-
-  const dataString = (localStorage.getItem('data'))
-    ? localStorage.getItem('data')
-    : route.query.data ?? '{}'
-
-  if (dataString.includes('productSize')) {
-    const data = JSON.parse(dataString)
-
-    product.value = data.productSize
-  } else if (product.value === '') {
-    await nextTick()
-    product.value = resources.value.products[1] ?? resources.value.products[0]
-  }
 })
 
 watch(() => props.mode, () => {
@@ -197,22 +183,37 @@ function setResources (productKey, changeTarifs = true) {
   setPrice('value', product.price.value)
   setPrice('addons', {})
 
-  setOptions('config', {
-    ...options.config,
-    planCode: value,
-    monthlyBilling: (product.duration === 'P1M'),
-    duration: product.duration,
-    pricingMode: product.pricingMode,
-    addons: []
-  })
+  setOptions('config.planCode', value)
+  setOptions('config.monthlyBilling', product.duration === 'P1M')
+  setOptions('config.duration', product.duration)
+  setOptions('config.pricingMode', product.pricingMode)
+  setOptions('config.addons', [])
 }
 
 function sortProducts () {
-  sortedProducts.value = JSON.parse(JSON.stringify(props.products))
+  sortedProducts.value = props.products.filter(({ datacenter }) => {
+    const key = options.config.configuration.cloud_datacenter
+
+    return datacenter?.includes(key)
+  })
 
   sortedProducts.value.sort((a, b) =>
     a.periods[0].price.value - b.periods[0].price.value
   )
+
+  const dataString = (localStorage.getItem('data'))
+    ? localStorage.getItem('data')
+    : route.query.data ?? '{}'
+
+  if (dataString.includes('productSize')) {
+    const data = JSON.parse(dataString)
+
+    product.value = data.productSize
+  }
+
+  nextTick(() => {
+    product.value = sortedProducts.value[1].title ?? sortedProducts.value[0].title
+  })
 }
 
 function setDatacenter () {
