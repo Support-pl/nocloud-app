@@ -10,22 +10,22 @@
       style="margin-bottom: 15px"
       align="middle"
     >
-      <a-col v-if="resources.products.length < 6 && resources.products.length > 1" span="24">
+      <a-col v-if="products.length < 6 && products.length > 1" span="24">
         <a-slider
           style="margin-top: 10px"
-          :marks="{ ...resources.products }"
+          :marks="{ ...products }"
           :tip-formatter="null"
-          :max="resources.products.length - 1"
+          :max="products.length - 1"
           :min="0"
-          :value="resources.products.indexOf(product)"
-          @change="(i) => product = resources.products[i]"
+          :value="products.indexOf(product)"
+          @change="(i) => product = products[i]"
         />
       </a-col>
 
       <a-col v-else span="24">
         <div class="order__grid">
           <div
-            v-for="provider of resources.products"
+            v-for="provider of products"
             :key="provider"
             class="order__slider-item"
             :class="{ 'order__slider-item--active': product === provider }"
@@ -164,9 +164,35 @@ watch(() => props.mode, () => {
   setResources(props.productKey, false)
 })
 
-const resources = computed(() => {
-  const groups = new Set(props.products.map(({ group }) => group))
+const products = computed(() =>
+  Array.from(new Set(
+    props.products.filter(({ datacenter }) => {
+      const key = options.config.configuration.vps_datacenter
 
+      return datacenter?.includes(key)
+    }).map(({ group }) => group)
+  ))
+)
+
+watch(products, (value) => {
+  if (value.length < 1) return
+
+  const dataString = (localStorage.getItem('data'))
+    ? localStorage.getItem('data')
+    : route.query.data ?? '{}'
+
+  if (dataString.includes('productSize')) {
+    const data = JSON.parse(dataString)
+
+    product.value = data.productSize
+  }
+
+  nextTick(() => {
+    product.value = value[1] ?? value[0]
+  })
+})
+
+const resources = computed(() => {
   const ram = new Set()
   const disk = new Set()
 
@@ -178,27 +204,8 @@ const resources = computed(() => {
   })
 
   return {
-    products: Array.from(groups),
     ram: Array.from(ram).sort((a, b) => a - b),
     disk: Array.from(disk).sort((a, b) => a - b)
-  }
-})
-
-watch(resources, (value) => {
-  if (value.products.length < 1) return
-
-  const dataString = (localStorage.getItem('data'))
-    ? localStorage.getItem('data')
-    : route.query.data ?? '{}'
-
-  if (dataString.includes('productSize')) {
-    const data = JSON.parse(dataString)
-
-    product.value = data.productSize
-  } else if (product.value === '') {
-    setTimeout(() => {
-      product.value = resources.value.products[1] ?? resources.value.products[0]
-    })
   }
 })
 
@@ -239,13 +246,10 @@ function setResources (productKey, changeTarifs = true) {
   setPrice('value', product.price.value)
   setPrice('addons', {})
 
-  setOptions('config', {
-    ...options.config,
-    planCode: value,
-    duration: product.duration,
-    pricingMode: product.pricingMode,
-    addons: []
-  })
+  setOptions('config.planCode', value)
+  setOptions('config.duration', product.duration)
+  setOptions('config.pricingMode', product.pricingMode)
+  setOptions('config.addons', [])
 }
 
 function setDatacenter () {

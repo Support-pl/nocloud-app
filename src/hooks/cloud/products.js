@@ -88,14 +88,12 @@ function useCloudProducts (options, tarification, productSize) {
           period.pricingMode = 'default'
       }
 
-      const config = options.config.configuration
-      const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))
-
-      if (!meta.datacenter?.includes(config[datacenter])) return
       if (meta.cpu) resources.cpu = meta.cpu
       if (i === -1) {
+        const { addons, datacenter } = meta
+
         result.push({
-          value, title, resources, group, periods: [period], addons: meta.addons
+          value, title, resources, group, periods: [period], addons, datacenter
         })
       } else result[i].periods.push(period)
     })
