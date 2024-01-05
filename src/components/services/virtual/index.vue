@@ -367,9 +367,10 @@ export default {
     },
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = [{
-        config: { ...this.config },
+        config: { ...this.config, auto_start: plan.meta.auto_start },
         resources: {
           ...this.getProducts.resources,
           ssd: `${parseFloat(this.getProducts.resources.ssd) * 1024}`,

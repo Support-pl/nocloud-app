@@ -155,7 +155,7 @@ export default {
         })
       })
 
-      this.showcases.forEach(async (showcase) => {
+      this.showcases.forEach((showcase) => {
         services.push({
           ...showcase,
           icon: icons[showcase.icon],

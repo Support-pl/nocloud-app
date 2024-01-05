@@ -554,8 +554,10 @@ export default {
     },
     async orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = Object.keys(this.products).map((domain) => ({
+        config: { auto_start: plan.meta.auto_start },
         resources: { ...this.resources, user: this.form, domain },
         title: `Domain - ${domain}`,
         billing_plan: { uuid: this.plan }

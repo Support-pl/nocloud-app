@@ -88,7 +88,7 @@
             </div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.next_payment_date * 1000) }}
-              <!-- <sync-icon title="Renew" @click="openRenew" /> -->
+              <sync-icon v-if="false" title="Renew" @click="openRenew" />
             </div>
           </div>
 
@@ -176,7 +176,7 @@
 <script setup lang="jsx">
 import { computed, defineAsyncComponent, inject, ref, onMounted } from 'vue'
 import { Button, Modal, Switch } from 'ant-design-vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useSpStore } from '@/stores/sp.js'
@@ -209,7 +209,6 @@ const cardIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/CreditCardOutlined')
 )
 
-const router = useRouter()
 const route = useRoute()
 const i18n = useI18n()
 
@@ -229,12 +228,18 @@ const provider = computed(() =>
   spStore.servicesProviders.find(({ uuid }) => uuid === props.VM.sp)
 )
 
-const plan = computed(() =>
-  plansStore.plans.find(({ uuid }) => uuid === props.VM.billingPlan.uuid)
-)
+const plan = computed(() => {
+  const { products, uuid } = props.VM.billingPlan
+
+  if (products[props.VM.product]?.meta) {
+    return props.VM.billingPlan
+  }
+
+  return plansStore.plans.find((plan) => plan.uuid === uuid)
+})
 
 const tariffPrice = computed(() =>
-  plan.value?.products[props.VM.product]?.price ?? 0
+  plan.value.products[props.VM.product]?.price ?? 0
 )
 
 const addonsPrice = computed(() => {
@@ -250,7 +255,7 @@ const addonsPrice = computed(() => {
     }
     return {
       ...prev,
-      [key]: plan.value?.resources.find(({ key }) => key === productKey)?.price
+      [key]: plan.value.resources.find(({ key }) => key === productKey)?.price ?? 0
     }
   }, {})
 })
@@ -261,23 +266,23 @@ const fullPrice = computed(() =>
 )
 
 const OSName = computed(() => {
-  if (!plan.value) return
+  const product = plan.value.products[props.VM.product]
+  if (!product?.meta.os) return
 
   const configs = props.VM.config.configurations
-  const product = plan.value?.products[props.VM.product]
   const image = product.meta.os.find((key) =>
     Object.values(configs).includes(key.split('$')[0])
   )
-  const { meta: { type } } = plan.value?.resources.find(
+  const { meta: { type } } = plan.value.resources.find(
     ({ key }) => key === image
-  )
+  ) ?? { meta: {} }
   const key = `${configs[type]}$${props.VM.product}`
 
-  return plan.value?.resources.find((resource) => resource.key === key)?.title
+  return plan.value.resources.find((resource) => resource.key === key)?.title
 })
 
 const productName = computed(() =>
-  plan.value?.products[props.VM.product]?.title ?? props.VM.product
+  plan.value.products[props.VM.product]?.title ?? props.VM.product
 )
 
 function openRenew () {
@@ -285,7 +290,7 @@ function openRenew () {
 }
 
 function sendRenew () {
-  const { period } = props.VM.billingPlan.products[props.VM.product]
+  const { period } = plan.value.products[props.VM.product]
   const currentPeriod = toDate(props.VM.data.next_payment_date)
   const newPeriod = toDate(props.VM.data.next_payment_date + +period)
 

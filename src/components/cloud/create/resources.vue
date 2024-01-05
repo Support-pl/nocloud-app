@@ -40,7 +40,7 @@ const locationTitle = computed(() => {
     return cloudStore.provider?.locations[0].title
   }
 
-  const { configuration } = options.config
+  const { configuration = {} } = options.config
   const key = Object.keys(configuration).find(
     (el) => el.includes('datacenter')
   )
