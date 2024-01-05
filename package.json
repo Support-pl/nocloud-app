@@ -23,7 +23,7 @@
     "markdown-it-emoji": "^3.0.0",
     "dayjs": "^1.11.10",
     "nocloud-ui": "^1.0.14",
-    "nocloudjsrest": "^1.5.15",
+    "nocloudjsrest": "^1.5.16",
     "pinia": "^2.1.7",
     "vnc-ui-vue": "^1.0.0",
     "vue": "^3.3.11",
