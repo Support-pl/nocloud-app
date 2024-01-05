@@ -58,7 +58,7 @@
     <a-checkbox-group v-model:value="checkedTypes" :options="typesOptions" />
     <div class="order__grid">
       <div
-        v-for="item of resources.products"
+        v-for="item of products"
         :key="item.value"
         class="order__grid-item"
         :class="{ 'order__grid-item--active': product === item.value }"
@@ -153,18 +153,41 @@ watch(() => props.mode, () => {
   setResources(false)
 })
 
+const products = computed(() =>
+  props.products.filter(({ group, datacenter }) => {
+    const key = options.config.configuration.dedicated_datacenter
+
+    if (!datacenter?.includes(key)) return false
+    if (checkedTypes.value.length < 1) return true
+    return checkedTypes.value.find((type) => group.includes(type))
+  })
+)
+
+watch(products, (value) => {
+  if (value.length < 1) return
+
+  const dataString = (localStorage.getItem('data'))
+    ? localStorage.getItem('data')
+    : route.query.data ?? '{}'
+
+  if (dataString.includes('productSize')) {
+    const data = JSON.parse(dataString)
+
+    product.value = data.productSize
+  }
+  nextTick(() => {
+    product.value = value[1]?.value ?? value[0]?.value
+  })
+})
+
 const resources = computed(() => {
   const ram = []
   const disk = []
 
-  if (!cloudStore.plan.products) return { products: [], ram: [], disk: [] }
+  if (!cloudStore.plan.products) return { ram: [], disk: [] }
   getResources(ram, disk, product.value)
 
   return {
-    products: props.products.filter(({ group }) => {
-      if (checkedTypes.value.length < 1) return true
-      return checkedTypes.value.find((type) => group.includes(type))
-    }),
     ram: ram.sort((a, b) => a.value - b.value),
     disk: disk.sort((a, b) => a.value - b.value)
   }
@@ -220,29 +243,6 @@ const typesOptions = computed(() => {
   })
 
   return types
-})
-
-watch(() => props.products, async () => {
-  await nextTick()
-  product.value = resources.value.products[1]?.value ?? resources.value.products[0]?.value
-})
-
-watch(resources, (value) => {
-  if (value.products.length < 1) return
-
-  const dataString = (localStorage.getItem('data'))
-    ? localStorage.getItem('data')
-    : route.query.data ?? '{}'
-
-  if (dataString.includes('productSize')) {
-    const data = JSON.parse(dataString)
-
-    product.value = data.productSize
-  } else if (product.value === '') {
-    nextTick(() => {
-      product.value = value.products[1]?.value ?? value.products[0]?.value
-    })
-  }
 })
 
 const diskSize = computed(() => {
@@ -324,13 +324,10 @@ async function setResource (resource, changeTarifs = true) {
       .find((el) => el.key.includes(addonKey))?.price ?? 0
   })
 
-  setOptions('config', {
-    ...options.config,
-    planCode: value,
-    duration: item.duration,
-    pricingMode: item.pricingMode,
-    addons: []
-  })
+  setOptions('config.planCode', value)
+  setOptions('config.duration', item.duration)
+  setOptions('config.pricingMode', item.pricingMode)
+  setOptions('config.addons', [])
 }
 
 function setResources (changeTarifs = true) {
