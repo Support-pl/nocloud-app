@@ -238,9 +238,13 @@ watch(provider, async (uuid) => {
 
 function orderClickHandler () {
   const serviceItem = services.value.find(({ uuid }) => uuid === service.value)
+  const planItem = plans.value.find(({ uuid }) => uuid === plan.value)
 
   const instances = [{
-    config: { user: authStore.userdata.uuid },
+    config: {
+      user: authStore.userdata.uuid,
+      auto_start: planItem.meta.auto_start
+    },
     title: getProducts.value.title,
     billing_plan: { uuid: plan.value },
     product: ''

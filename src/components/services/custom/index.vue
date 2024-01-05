@@ -485,7 +485,10 @@ export default {
       const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = [{
-        config: { addons: this.options.addons },
+        config: {
+          addons: this.options.addons,
+          auto_start: plan.meta.auto_start
+        },
         title: this.getProducts.title,
         billing_plan: { uuid: this.plan }
       }]

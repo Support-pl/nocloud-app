@@ -126,7 +126,8 @@ export const useCloudStore = defineStore('cloud', () => {
         username: authData.username,
         password: authData.password,
         ssh_public_key: authData.sshKey,
-        auto_renew: autoRenew.value
+        auto_renew: autoRenew.value,
+        auto_start: plan.value.meta.auto_start
       },
       resources: {
         cpu: options.cpu.size,

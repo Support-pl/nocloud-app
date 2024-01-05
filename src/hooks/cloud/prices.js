@@ -2,8 +2,9 @@ import { computed } from 'vue'
 import { useCloudStore } from '@/stores/cloud.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useCurrency } from '@/hooks/utils'
+import { getTarification } from '@/functions.js'
 
-function useCloudPrices (product, tarification, activeKey, options, priceOVH) {
+function useCloudPrices (currentProduct, tarification, activeKey, options, priceOVH) {
   const plansStore = usePlansStore()
   const cloudStore = useCloudStore()
   const { currency } = useCurrency()
@@ -12,13 +13,27 @@ function useCloudPrices (product, tarification, activeKey, options, priceOVH) {
     plansStore.plans.find(({ uuid }) => uuid === cloudStore.planId) ?? {}
   )
 
+  const product = computed(() => {
+    const config = options.config.configuration ?? {}
+    const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))
+    const values = Object.values(plan.value.products ?? {})
+      .filter((product) => product.public)
+
+    values.sort((a, b) => a.price - b.price)
+    return values.find(({ period, meta }) =>
+      tarification.value === getTarification(period) && (
+        meta.datacenter?.includes(config[datacenter]) || plan.value.type !== 'ovh'
+      )
+    ) ?? values[0]
+  })
+
   const productFullPriceStatic = computed(() => {
     if (!plan.value) return 0
     const values = Object.values(plan.value.products ?? {})
       .filter((product) => product.public)
     const value = (activeKey.value !== 'location')
-      ? values.find(({ title }) => title === product.value.title)
-      : values.sort((a, b) => a.price - b.price)[0]
+      ? values.find(({ title }) => title === currentProduct.value.title)
+      : product.value
 
     if (!value) return 0
     return value.price / value.period * 3600 * 24 * 30
@@ -61,11 +76,7 @@ function useCloudPrices (product, tarification, activeKey, options, priceOVH) {
     const addonsPrice = Object.values(addons).reduce((a, b) => a + b, 0)
 
     if (activeKey.value === 'location') {
-      const values = Object.values(plan.value.products ?? {})
-        .filter((product) => product.public)
-
-      values.sort((a, b) => a.price - b.price)
-      return values[0]?.price ?? value
+      return product.value?.price ?? value
     }
     // let percent = (plan.value.fee?.default ?? 0) / 100 + 1;
 
@@ -114,7 +125,7 @@ function useCloudPrices (product, tarification, activeKey, options, priceOVH) {
         price = productFullPriceStatic.value
       }
 
-      price += product.value.installationFee ?? 0
+      price += product.value?.installationFee ?? 0
       price *= currency.value.rate
 
       switch (period) {

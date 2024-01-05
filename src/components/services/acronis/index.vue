@@ -327,6 +327,7 @@ export default {
     },
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const items = { local_storage: 1 }
       const instances = [{
@@ -336,7 +337,8 @@ export default {
           last_name: this.billingUser.lastname,
           mail: this.billingUser.email,
           login: this.options.login,
-          password: this.options.password
+          password: this.options.password,
+          auto_start: plan.meta.auto_start
         },
         title: this.getProducts.title,
         billing_plan: { uuid: this.plan },
