@@ -14,6 +14,8 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
   )
 
   const product = computed(() => {
+    if (activeKey.value !== 'location') return currentProduct.value
+
     const config = options.config.configuration ?? {}
     const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))
     const values = Object.values(plan.value.products ?? {})
@@ -22,9 +24,9 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
     values.sort((a, b) => a.price - b.price)
     return values.find(({ period, meta }) =>
       tarification.value === getTarification(period) && (
-        meta.datacenter?.includes(config[datacenter]) || plan.value.type !== 'ovh'
+        meta.datacenter?.includes(config[datacenter]) || !plan.value.type.includes('ovh')
       )
-    ) ?? values[0]
+    )
   })
 
   const productFullPriceStatic = computed(() => {
@@ -32,7 +34,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
     const values = Object.values(plan.value.products ?? {})
       .filter((product) => product.public)
     const value = (activeKey.value !== 'location')
-      ? values.find(({ title }) => title === currentProduct.value.title)
+      ? values.find(({ title }) => title === product.value.title)
       : product.value
 
     if (!value) return 0
@@ -93,6 +95,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
   })
 
   return {
+    installationFee: computed(() => product.value?.installationFee ?? 0),
     productFullPrice: computed(() => {
       const resourcesPrice = (plan.value.type === 'ione')
         ? productFullPriceCustom.value * 24 * 30 * currency.value.rate
