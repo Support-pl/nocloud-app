@@ -36,7 +36,7 @@
 
     <transition name="networkApear">
       <a-row
-        v-if="product.installationFee"
+        v-if="installationFee"
         justify="space-between"
         style="
           font-size: 1.2rem;
@@ -47,7 +47,7 @@
       >
         <a-col> {{ capitalize($t('installation')) }}: </a-col>
         <a-col style="margin-left: auto">
-          {{ +(product.installationFee * currency.rate).toFixed(2) }} {{ currency.code }}
+          {{ +(installationFee * currency.rate).toFixed(2) }} {{ currency.code }}
         </a-col>
       </a-row>
     </transition>
@@ -56,7 +56,7 @@
       <a-row
         justify="space-between"
         style="font-size: 1.2rem; gap: 5px"
-        :style="(!product.installationFee) ? {
+        :style="(!installationFee) ? {
           paddingTop: '5px',
           marginTop: '10px',
           borderTop: '1px solid #e8e8e8'
@@ -64,7 +64,7 @@
       >
         <a-col> {{ capitalize($t('recurring payment')) }}: </a-col>
         <a-col style="margin-left: auto">
-          {{ +(productFullPrice - (product.installationFee ?? 0)).toFixed(2) }} {{ currency.code }}
+          {{ +(productFullPrice - (installationFee ?? 0)).toFixed(2) }} {{ currency.code }}
         </a-col>
       </a-row>
     </transition>
@@ -181,7 +181,7 @@ const periodColumns = computed(() => {
 
 const [activeKey] = inject('useActiveKey', () => [])()
 const { tarification, productSize } = toRefs(props)
-const { productFullPrice } = useCloudPrices(product, tarification, activeKey, options, priceOVH)
+const { productFullPrice, installationFee } = useCloudPrices(product, tarification, activeKey, options, priceOVH)
 
 function getAddonsValue (key) {
   const addon = options.config.addons?.find((el) => el.includes(key))

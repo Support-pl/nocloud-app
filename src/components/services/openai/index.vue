@@ -228,7 +228,7 @@ watch(provider, async (uuid) => {
     })
 
     cachedPlans[uuid] = pool
-    plan.value = pool[0]?.uuid
+    plan.value = plans.value[0]?.uuid
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 

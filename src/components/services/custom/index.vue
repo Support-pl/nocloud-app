@@ -358,7 +358,7 @@ export default {
         })
 
         this.cachedPlans[uuid] = pool
-        this.plan = pool[0]?.uuid
+        this.plan = this.plans[0]?.uuid
         this.changeProducts()
       } catch (error) {
         const message = error.response?.data?.message ?? error.message ?? error
