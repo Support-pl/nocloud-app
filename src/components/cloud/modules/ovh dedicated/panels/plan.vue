@@ -89,7 +89,7 @@
               color: (product === item.value) ? null : 'var(--main)'
             }"
           >
-            {{ +((allResources[item.value]?.price[0] ?? 0) * currency.rate).toFixed(2) }}
+            {{ +((allResources[item.value]?.prices[mode] ?? 0) * currency.rate).toFixed(2) }}
             {{ currency.code }}
           </span>
         </div>
@@ -199,13 +199,17 @@ const allResources = computed(() => {
   return props.products.reduce((result, { value, periods }) => {
     const ram = []
     const disk = []
+    const prices = {}
 
     getResources(ram, disk, value)
+    for (const item of periods) {
+      prices[item.pricingMode] = item.price.value
+    }
 
     return {
       ...result,
       [value]: {
-        price: periods.map(({ price }) => price.value).sort((a, b) => a - b),
+        prices,
         ram: ram.sort((a, b) => a.value - b.value).map(({ label }) => label),
         disk: disk.sort((a, b) => a.value - b.value).map(({ label }) => label)
       }
@@ -339,9 +343,8 @@ function setResources (changeTarifs = true) {
 }
 
 function getResources (ram, disk, value) {
-  const duration = (props.mode === 'upfront12') ? 'P1Y' : 'P1M'
-  const { meta: { addons } } = cloudStore.plan.products[`${duration} ${value}`] ??
-    Object.values(cloudStore.plan.products)[0]
+  const entries = Object.entries(cloudStore.plan.products)
+  const { meta: { addons } } = entries.find(([key]) => key.includes(value))[1] ?? entries[0][1]
 
   addons?.forEach((id) => {
     if (typeof id !== 'string') id = id.id

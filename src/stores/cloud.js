@@ -125,7 +125,6 @@ export const useCloudStore = defineStore('cloud', () => {
         template_id: options.os.id,
         username: authData.username,
         password: authData.password,
-        ssh_public_key: authData.sshKey,
         auto_renew: autoRenew.value,
         auto_start: plan.value.meta.auto_start
       },
@@ -142,6 +141,9 @@ export const useCloudStore = defineStore('cloud', () => {
 
     if (plan.value.kind === 'STATIC' || plan.value.type !== 'ione') {
       instance.product = product.value.key
+    }
+    if (authData.sshKey) {
+      instance.config.ssh_public_key = authData.sshKey
     }
 
     const group = {
