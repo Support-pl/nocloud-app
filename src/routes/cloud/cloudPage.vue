@@ -395,9 +395,7 @@ export default {
       }
       if (!this.VM.state) return 'UNKNOWN'
 
-      const state = (this.VM?.billingPlan.type === 'ione')
-        ? this.VM.state.meta.lcm_state_str
-        : this.VM.state.state
+      const state = this.VM.state.meta?.lcm_state_str ?? this.VM.state.state
 
       if (this.VM.state.meta.state === 1) return 'PENDING'
       if (this.VM.state.meta.state === 5) return 'SUSPENDED'
@@ -417,7 +415,7 @@ export default {
 
       let state
       if (this.VM?.billingPlan?.type === 'ione') {
-        state = this.VM.state.meta.lcm_state_str
+        state = this.VM.state.meta.lcm_state_str ?? this.VM.state.state
       } else if (this.VM.server_on) {
         state = this.VM.resources.STATE
       } else {

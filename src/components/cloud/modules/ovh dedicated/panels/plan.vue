@@ -21,11 +21,15 @@
       <a-col>
         <span style="display: inline-block; width: 70px">RAM:</span>
       </a-col>
-      <a-col v-if="resources.ram.length > 1" :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }">
+      <a-col
+        v-if="resources[product].ram.length > 1"
+        :sm="{ span: 18, order: 0 }"
+        :xs="{ span: 24, order: 1 }"
+      >
         <a-select
           style="width: 100%"
           :value="options.ram.size"
-          :options="resources.ram"
+          :options="resources[product].ram"
           @update:value="setResource({ key: 'ram', value: $event }, false)"
         />
       </a-col>
@@ -40,11 +44,15 @@
       <a-col>
         <span style="display: inline-block; width: 70px">{{ $t("Drive") }}:</span>
       </a-col>
-      <a-col v-if="resources.disk.length > 1" :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }">
+      <a-col
+        v-if="resources[product].disk.length > 1"
+        :sm="{ span: 18, order: 0 }"
+        :xs="{ span: 24, order: 1 }"
+      >
         <a-select
           style="width: 100%"
           :value="options.disk.size / 1024"
-          :options="resources.disk"
+          :options="resources[product].disk"
           @update:value="setResource({ key: 'disk', value: $event * 1024 }, false)"
         />
       </a-col>
@@ -54,7 +62,7 @@
     </a-row>
   </template>
 
-  <template v-else>
+  <template v-else-if="products.length > 0">
     <a-checkbox-group v-model:value="checkedTypes" :options="typesOptions" />
     <div class="order__grid">
       <div
@@ -74,11 +82,11 @@
         </div>
         <div style="margin-top: 6px; line-height: 1.3">
           {{ $t('ram') }}: {{ $t('from') }}
-          {{ allResources[item.value]?.ram[0] ?? '?' }} Gb
+          {{ resources[item.value]?.ram[0]?.label ?? '?' }} Gb
         </div>
         <div style="margin-top: 6px; line-height: 1.3">
           {{ $t('Drive') }}: {{ $t('from') }}
-          {{ allResources[item.value]?.disk[0] ?? '?' }} Gb
+          {{ resources[item.value]?.disk[0]?.label ?? '?' }} Gb
         </div>
         <div style="margin-top: 5px">
           {{ capitalize($t('from')) }}
@@ -89,7 +97,7 @@
               color: (product === item.value) ? null : 'var(--main)'
             }"
           >
-            {{ +((allResources[item.value]?.prices[mode] ?? 0) * currency.rate).toFixed(2) }}
+            {{ +((resources[item.value]?.prices[mode] ?? 0) * currency.rate).toFixed(2) }}
             {{ currency.code }}
           </span>
         </div>
@@ -104,6 +112,12 @@
       </div>
     </div>
   </template>
+  <a-alert
+    v-else
+    show-icon
+    type="warning"
+    :message="$t('No linked plans. Choose another location')"
+  />
 </template>
 
 <script setup>
@@ -164,7 +178,10 @@ const products = computed(() =>
 )
 
 watch(products, (value) => {
-  if (value.length < 1) return
+  if (value.length < 1) {
+    resetData()
+    return
+  }
 
   const dataString = (localStorage.getItem('data'))
     ? localStorage.getItem('data')
@@ -181,19 +198,6 @@ watch(products, (value) => {
 })
 
 const resources = computed(() => {
-  const ram = []
-  const disk = []
-
-  if (!cloudStore.plan.products) return { ram: [], disk: [] }
-  getResources(ram, disk, product.value)
-
-  return {
-    ram: ram.sort((a, b) => a.value - b.value),
-    disk: disk.sort((a, b) => a.value - b.value)
-  }
-})
-
-const allResources = computed(() => {
   if (!cloudStore.plan.products) return {}
 
   return props.products.reduce((result, { value, periods }) => {
@@ -210,8 +214,8 @@ const allResources = computed(() => {
       ...result,
       [value]: {
         prices,
-        ram: ram.sort((a, b) => a.value - b.value).map(({ label }) => label),
-        disk: disk.sort((a, b) => a.value - b.value).map(({ label }) => label)
+        ram: ram.sort((a, b) => a.price - b.price),
+        disk: disk.sort((a, b) => a.price - b.price)
       }
     }
   }, {})
@@ -258,13 +262,30 @@ const diskSize = computed(() => {
 })
 
 function getDisk (key) {
-  const keys = key?.match(/[0-9]x[0-9]{1,}/g) ?? []
+  const keys = key?.match(/[0-9]{1,}x[0-9]{1,}/g) ?? []
 
   return keys.reduce((sum, key) => {
     const [count, size] = key.split('x')
 
     return sum + count * size
   }, 0)
+}
+
+function resetData () {
+  emits('update:product-size', '-')
+  emits('update:periods', [{ value: '-', label: 'unknown' }])
+
+  setOptions('cpu.size', 0)
+  setOptions('ram.size', 0)
+  setOptions('disk.size', 0)
+
+  setPrice('value', 0)
+  setPrice('addons', {})
+
+  setOptions('config.planCode', '')
+  setOptions('config.duration', '')
+  setOptions('config.pricingMode', '')
+  setOptions('config.addons', [])
 }
 
 async function setResource (resource, changeTarifs = true) {
@@ -336,15 +357,16 @@ async function setResource (resource, changeTarifs = true) {
 
 function setResources (changeTarifs = true) {
   const item = props.products.find((item) => item.value === product.value)
+  const { ram, disk } = resources.value[item.value]
 
   setOptions('cpu.size', item.resources.cpu ?? i18n.t('ip.none'))
-  setResource({ key: 'ram', value: resources.value.ram[0].value }, changeTarifs)
-  setResource({ key: 'disk', value: resources.value.disk[0].value * 1024 }, false)
+  setResource({ key: 'ram', value: ram[0].value }, changeTarifs)
+  setResource({ key: 'disk', value: disk[0].value * 1024 }, false)
 }
 
 function getResources (ram, disk, value) {
   const entries = Object.entries(cloudStore.plan.products)
-  const { meta: { addons } } = entries.find(([key]) => key.includes(value))[1] ?? entries[0][1]
+  const { meta: { addons } } = entries.find(([key]) => key.includes(value))[1]
 
   addons?.forEach((id) => {
     if (typeof id !== 'string') id = id.id
@@ -353,16 +375,18 @@ function getResources (ram, disk, value) {
     if (!resource || !resource?.public) return
     if (id.includes('ram')) {
       const value = parseInt(id.split(' ').at(-1).split('-')[1])
+      const i = ram.findIndex((item) => item.value === value)
 
-      if (ram.find((item) => item.value === value)) return
-      ram.push({ value, label: resource.title })
+      if (i !== -1) return
+      ram.push({ value, label: resource.title, price: resource.price })
     }
 
     if (id.includes('raid')) {
       const value = getDisk(id)
+      const i = disk.findIndex((item) => item.value === value)
 
-      if (disk.find((item) => item.value === value)) return
-      disk.push({ value, label: resource.title })
+      if (i !== -1) return
+      disk.push({ value, label: resource.title, price: resource.price })
     }
   })
 }

@@ -52,10 +52,10 @@ export const useCloudStore = defineStore('cloud', () => {
 
     showcases.value.forEach((showcase) => {
       showcase.locations?.forEach((location) => {
-        const sp = spStore.servicesProviders.find(({ locations }) =>
+        const sp = spStore.servicesProviders.find(({ uuid, locations }) =>
           locations.find(({ id, type }) =>
             location.id.includes(id) && location.type === type
-          )
+          ) && showcase.items.find((item) => item.servicesProvider === uuid)
         )
 
         if (showcaseId.value === '' || showcaseId.value === showcase.uuid) {
