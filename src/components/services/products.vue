@@ -73,10 +73,7 @@
             <span class="products__count" style="margin: 0 5px">
               {{ (isFilterByLocation) ? $t('location') : $t('provider') }}
             </span>
-            <a-switch
-              v-model:checked="isFilterByLocation"
-              size="small"
-            />
+            <a-switch v-model:checked="isFilterByLocation" size="small" />
           </template>
           <filter-icon
             class="products__control-item"
@@ -367,7 +364,7 @@ export default {
       )
     },
     types () {
-      const result = this.spStore.getShowcases.map(
+      const result = this.spStore.showcases.map(
         ({ title, uuid: value }) => ({ title, value })
       )
 
