@@ -82,11 +82,11 @@
         </div>
         <div style="margin-top: 6px; line-height: 1.3">
           {{ $t('ram') }}: {{ $t('from') }}
-          {{ resources[item.value]?.ram[0]?.label ?? '?' }} Gb
+          {{ resources[item.value]?.ram[0]?.label ?? '?' }}
         </div>
         <div style="margin-top: 6px; line-height: 1.3">
           {{ $t('Drive') }}: {{ $t('from') }}
-          {{ resources[item.value]?.disk[0]?.label ?? '?' }} Gb
+          {{ resources[item.value]?.disk[0]?.label ?? '?' }}
         </div>
         <div style="margin-top: 5px">
           {{ capitalize($t('from')) }}

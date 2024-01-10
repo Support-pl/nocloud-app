@@ -54,6 +54,7 @@ const diskSize = computed(() => {
   // const x = (cloudStore.plan.type === 'ovh cloud') ? 1000 : 1024
   const size = options.disk.size / 1024
 
+  if (isNaN(size)) return options.disk.size
   if (size > 1024) return `${(size / 1024).toFixed(1)} Tb`
   if (size >= 1) return `${size.toFixed(1)} Gb`
   return `${options.disk.size.toFixed(1)} Mb`
@@ -98,7 +99,7 @@ const resources = computed(() => ({
         ? `(${priceOVH.addons.os} ${currency.value.code})`
         : ''
     }`,
-    visible: options.os.name,
+    visible: options.os.name && !options.os.name.includes('none'),
     style: { fontSize: '1.1rem' }
   },
   public: {

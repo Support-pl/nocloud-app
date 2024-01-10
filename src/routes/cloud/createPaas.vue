@@ -12,7 +12,7 @@
               v-if="panels[key].visible ?? true"
               :key="key"
               :force-render="(cloudStore.provider) ? true : false"
-              :header="panels[key].title"
+              :header="capitalize(panels[key].title)"
               :collapsible="panels[key].disabled"
             >
               <a-row v-if="key === 'location'" justify="space-between">

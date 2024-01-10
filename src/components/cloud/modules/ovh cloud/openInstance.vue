@@ -405,7 +405,7 @@
             shape="round"
             block
             size="large"
-            :disabled="Vm.data.lock"
+            :disabled="VM.data.lock"
             @click="openModal('snapshot')"
           >
             {{ $t("Snapshots") }}

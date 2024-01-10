@@ -1240,7 +1240,7 @@ export default defineComponent({
         .catch((err) => console.error(err))
     },
     fetchMonitoring () {
-      if (!this.VM?.uuidService) return
+      if (!this.VM?.uuidService || this.VM.state.state === 'PENDING') return
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
