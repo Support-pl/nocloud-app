@@ -77,7 +77,7 @@ function useCloudPanels (tarification, options, productSize) {
       disabled: (cloudStore.provider) ? null : 'disabled'
     },
     os: {
-      title: `${i18n.t('os')}: ${osHeader.value}`,
+      title: `${i18n.t((cloudStore.plan.type === 'ovh dedicated') ? 'config' : 'os')}: ${osHeader.value}`,
       disabled: (!cloudStore.provider || !cloudStore.plan || isProductExist.value) ? 'disabled' : null
     },
     network: {
