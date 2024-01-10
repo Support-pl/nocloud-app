@@ -12,7 +12,7 @@
       />
     </a-col>
 
-    <a-col v-else span="24">
+    <a-col v-else-if="products.length > 0" span="24">
       <div class="order__grid">
         <div
           v-for="item of products"
@@ -25,6 +25,12 @@
         </div>
       </div>
     </a-col>
+    <a-alert
+      v-else
+      show-icon
+      type="warning"
+      :message="$t('No linked plans. Choose another location')"
+    />
 
     <a-col span="24">
       <editor-container :value="description" />
@@ -56,20 +62,34 @@ const product = inject('product')
 const [, setOptions] = inject('useOptions', () => [])()
 const [, setPrice] = inject('usePriceOVH', () => [])()
 
-if (props.products.length > 0) {
-  setProduct(props.products[1] ?? props.products[0])
-}
+if (props.products.length > 0) setProduct(props.products[1] ?? props.products[0])
+else resetData()
+
 watch(() => props.products, (value) => {
-  setProduct(value[1] ?? value[0])
+  if (value.length < 1) resetData()
+  else setProduct(value[1] ?? value[0])
 })
 
 watch(() => props.mode, () => {
+  if (props.products.length < 1) return
   setProduct(props.productSize)
 })
 
 const description = computed(() =>
   product.value.meta?.description
 )
+
+function resetData () {
+  emits('update:product-size', '-')
+  emits('update:periods', [{ value: '-', label: 'unknown' }])
+
+  setOptions('cpu.size', 0)
+  setOptions('ram.size', 0)
+  setOptions('disk.size', 0)
+
+  setPrice('value', 0)
+  setOptions('config', {})
+}
 
 async function setProduct (value) {
   emits('update:product-size', value)

@@ -4,9 +4,8 @@
     style="display: block; margin: 0 auto"
     :tip="$t('loading')"
   />
-  <template v-else-if="!$route.query.product">
+  <template v-else-if="products.length > 0">
     <a-row
-      v-if="!$route.query.product"
       style="margin-bottom: 15px"
       align="middle"
     >
@@ -36,12 +35,6 @@
         </div>
       </a-col>
     </a-row>
-
-    <left-icon
-      v-else-if="$route.query.product"
-      style="margin-bottom: 10px; font-size: 20px"
-      @click="$router.go(-1)"
-    />
 
     <a-row justify="space-between" align="middle" class="newCloud__prop">
       <a-col>
@@ -99,6 +92,13 @@
       </a-col>
     </a-row>
   </template>
+
+  <a-alert
+    v-else
+    show-icon
+    type="warning"
+    :message="$t('No linked plans. Choose another location')"
+  />
 </template>
 
 <script setup>
@@ -108,9 +108,6 @@ import { useCloudStore } from '@/stores/cloud.js'
 
 const loadingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LoadingOutlined')
-)
-const leftIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LeftOutlined')
 )
 
 const props = defineProps({
@@ -128,6 +125,8 @@ const cloudStore = useCloudStore()
 const [options, setOptions] = inject('useOptions', () => [])()
 const [, setPrice] = inject('usePriceOVH', () => [])()
 const product = ref('')
+
+if (props.products.length < 1) resetData()
 
 watch(product, (value) => {
   const product = props.products.find(({ group }) => group === value)
@@ -175,7 +174,10 @@ const products = computed(() =>
 )
 
 watch(products, (value) => {
-  if (value.length < 1) return
+  if (value.length < 1) {
+    resetData()
+    return
+  }
 
   const dataString = (localStorage.getItem('data'))
     ? localStorage.getItem('data')
@@ -216,6 +218,23 @@ const diskSize = computed(() => {
   if (size >= 1) return `${size.toFixed(1)} Gb`
   return `${options.disk.size.toFixed(1)} Mb`
 })
+
+function resetData () {
+  emits('update:product-size', '-')
+  emits('update:periods', [{ value: '-', label: 'unknown' }])
+
+  setOptions('cpu.size', 0)
+  setOptions('ram.size', 0)
+  setOptions('disk.size', 0)
+
+  setPrice('value', 0)
+  setPrice('addons', {})
+
+  setOptions('config.planCode', '')
+  setOptions('config.duration', '')
+  setOptions('config.pricingMode', '')
+  setOptions('config.addons', [])
+}
 
 function setResources (productKey, changeTarifs = true) {
   const { periods, value, resources } = props.products.find((el) => el.value === productKey) ?? {}

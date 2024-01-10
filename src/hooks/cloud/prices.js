@@ -14,7 +14,9 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
   )
 
   const product = computed(() => {
-    if (activeKey.value !== 'location') return currentProduct.value
+    if (activeKey.value !== 'location' && tarification.value !== '-') {
+      return currentProduct.value
+    }
 
     const config = options.config.configuration ?? {}
     const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))

@@ -671,16 +671,7 @@ export default {
     },
     updateFilter (info) {
       if (this.active === 'support') {
-        const filtered = {}
-
-        if (!info) {
-          info = JSON.parse(localStorage.getItem('supportFilters') ?? '[]')
-          this.checkedList = info
-        } else {
-          const filters = info.map((el) => filtered[el])
-
-          localStorage.setItem('supportFilters', JSON.stringify(filters))
-        }
+        const filtered = {};
 
         [...this.tickets, ...this.chats.values()].forEach((el) => {
           const status = (typeof el.status === 'number')
@@ -691,6 +682,14 @@ export default {
 
           filtered[key] = capitalized
         })
+
+        if (!info) {
+          info = JSON.parse(localStorage.getItem('supportFilters') ?? '[]')
+          this.checkedList = info
+        } else {
+          localStorage.setItem('supportFilters', JSON.stringify(info))
+        }
+
         this.supportFilter = info.map((el) => filtered[el])
       }
 
@@ -710,20 +709,19 @@ export default {
       } else if (this.active === 'billing') {
         const filtered = {}
 
-        if (!info) {
-          info = JSON.parse(localStorage.getItem('invoiceFilters') ?? '[]')
-          this.checkedList = info
-        } else {
-          const filters = info.map((el) => filtered[el])
-
-          localStorage.setItem('invoiceFilters', JSON.stringify(filters))
-        }
-
         this.invoices.forEach((el) => {
           const key = this.$t(`filterHeader.${el.status}`)
 
           filtered[key] = el.status
         })
+
+        if (!info) {
+          info = JSON.parse(localStorage.getItem('invoiceFilters') ?? '[]')
+          this.checkedList = info
+        } else {
+          localStorage.setItem('invoiceFilters', JSON.stringify(info))
+        }
+
         this.invoicesFilter = info.map((el) => filtered[el])
       }
     },
