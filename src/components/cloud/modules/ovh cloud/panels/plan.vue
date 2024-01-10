@@ -22,7 +22,7 @@
     </a-row>
   </template>
 
-  <div class="order__grid" style="margin-top: 10px">
+  <div v-if="products.length > 0" class="order__grid" style="margin-top: 10px">
     <div
       v-for="item of filteredProducts"
       :key="item.title"
@@ -51,6 +51,13 @@
       </div>
     </div>
   </div>
+
+  <a-alert
+    v-else
+    show-icon
+    type="warning"
+    :message="$t('No linked plans. Choose another location')"
+  />
 </template>
 
 <script setup>
@@ -212,8 +219,28 @@ function sortProducts () {
   }
 
   nextTick(() => {
-    product.value = sortedProducts.value[1].title ?? sortedProducts.value[0].title
+    if (sortedProducts.value.length < 1) resetData()
+    else {
+      product.value = sortedProducts.value[1].title ?? sortedProducts.value[0].title
+    }
   })
+}
+
+function resetData () {
+  emits('update:product-size', '-')
+  emits('update:periods', [{ value: '-', label: 'unknown' }])
+
+  setOptions('cpu.size', 0)
+  setOptions('ram.size', 0)
+  setOptions('disk.size', 0)
+
+  setPrice('value', 0)
+  setPrice('addons', {})
+
+  setOptions('config.planCode', '')
+  setOptions('config.duration', '')
+  setOptions('config.pricingMode', '')
+  setOptions('config.addons', [])
 }
 
 function setDatacenter () {

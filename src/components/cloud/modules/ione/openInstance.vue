@@ -272,7 +272,7 @@
             class="block__column block__column_table block__column_price"
           >
             <div class="block__title">
-              {{ addon }}:
+              {{ capitalize(addon) }}:
             </div>
             <div class="block__value">
               {{ +price.toFixed(2) }} {{ currency.code }}
@@ -686,7 +686,7 @@ export default defineComponent({
       }
       const isSuspended = this.VM.state.meta.state === 1 || this.VM.data.suspended_manually
 
-      if (isSuspended || this.VM.data.lock) {
+      if (isSuspended || this.VM.data.lock || this.VM.state.state === 'PENDING') {
         return {
           start: true, shutdown: true, reboot: true, recover: true
         }
