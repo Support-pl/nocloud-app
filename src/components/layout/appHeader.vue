@@ -7,8 +7,7 @@
             v-if="
               (headers[active] && headers[active].notmain) ||
                 isInSpecialType ||
-                $route.meta.isNeedBackButton ||
-                !isLogged
+                $route.meta.isNeedBackButton
             "
             class="header_back_btn icon__wrapper"
             @click="routeBack"
@@ -317,7 +316,7 @@ export default {
           ]
         },
         services: {
-          title: 'services',
+          title: '',
           needBalance: true,
           buttons: [
             {
@@ -370,13 +369,13 @@ export default {
           buttons: []
         },
         newVDC: {
-          title: 'Create VM',
+          title: 'Create',
           notmain: true,
           needBalance: true,
           buttons: []
         },
         newPaaS: {
-          title: 'Create VM',
+          title: 'Create',
           notmain: true,
           needBalance: true,
           buttons: []
@@ -897,6 +896,7 @@ export default {
 .header__right-side {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .header__selects {

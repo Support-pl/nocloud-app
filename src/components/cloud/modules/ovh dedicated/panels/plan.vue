@@ -159,6 +159,7 @@ const checkedTypes = ref([])
 watch(product, (value) => {
   const product = props.products.find((item) => item.value === value)
 
+  if (!product) return
   emits('update:product-size', product?.title)
   setResources()
 })
@@ -272,6 +273,7 @@ function getDisk (key) {
 }
 
 function resetData () {
+  product.value = ''
   emits('update:product-size', '-')
   emits('update:periods', [{ value: '-', label: 'unknown' }])
 

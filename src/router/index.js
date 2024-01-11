@@ -78,7 +78,7 @@ const routes = [
         path: '/',
         name: 'root',
         meta: {
-          mustBeLoggined: true
+          // mustBeLoggined: true
         },
         component: () => import('@/routes/services/services.vue')
       },
