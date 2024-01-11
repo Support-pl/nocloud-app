@@ -335,6 +335,10 @@ provide('useActiveKey', () => [readonly(activeKey), nextStep])
   height: max-content;
 }
 
+.newCloud__inputs.order__field {
+  padding: 0;
+}
+
 .newCloud__calculate {
   grid-row: 1 / 3;
   grid-column: 2;

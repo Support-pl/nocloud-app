@@ -85,6 +85,7 @@ const filters = reactive({ cpu: [], ram: [], disk: [] })
 watch(product, (value) => {
   const product = sortedProducts.value.find(({ title }) => title === value)
 
+  if (!product) return
   emits('update:product-size', value)
   setResources(product?.value)
 })
@@ -227,6 +228,7 @@ function sortProducts () {
 }
 
 function resetData () {
+  product.value = ''
   emits('update:product-size', '-')
   emits('update:periods', [{ value: '-', label: 'unknown' }])
 
