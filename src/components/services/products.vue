@@ -114,16 +114,7 @@
       class="products__inner"
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
-      <div
-        v-if="!authStore.isLogged"
-        class="products__unregistred"
-      >
-        {{ $t("unregistered.will be able after") }}
-        <router-link :to="{ name: 'login' }">
-          {{ $t("unregistered.login") }}
-        </router-link>.
-      </div>
-      <loading v-else-if="productsLoading" />
+      <loading v-if="productsLoading" />
       <template v-else-if="productsPrepared.length > 0">
         <cloud-item
           v-for="product in productsPrepared"
@@ -131,7 +122,7 @@
           :instance="product"
         />
       </template>
-      <a-empty v-else />
+      <a-empty v-else-if="authStore.isLogged" />
       <a-button
         v-if="queryTypes.length === 1 && !isFilterByLocation"
         ref="order-button"

@@ -9,7 +9,7 @@
       <user-products ref="productsComponent" class="services__block" :min="false" />
 
       <a-pagination
-        v-if="products.length > 0"
+        v-if="products.length > 0 && authStore.isLogged"
         show-size-changer
         style="width: fit-content; margin: 0 0 20px auto"
         :page-size-options="pageSizeOptions"
@@ -20,13 +20,24 @@
         @change="onShowSizeChange"
       />
     </div>
+
+    <div v-if="['services', 'root'].includes(route.name)" class="logo__wrapper">
+      <div v-if="config.appLogo.path">
+        <img :src="config.appLogo.path" alt="logo" style="width: 100%">
+      </div>
+      <div v-if="companyName" class="logo__title">
+        {{ companyName }}
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import config from '@/appconfig.js'
 
+import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useSpStore } from '@/stores/sp.js'
 import { useProductsStore } from '@/stores/products.js'
@@ -36,8 +47,9 @@ import servicesWrapper from '@/components/services/servicesWrapper.vue'
 import userProducts from '@/components/services/products.vue'
 
 const route = useRoute()
-
+const appStore = useAppStore()
 const authStore = useAuthStore()
+
 const providersStore = useSpStore()
 const productsStore = useProductsStore()
 const instancesStore = useInstancesStore()
@@ -47,6 +59,10 @@ const pageSizeOptions = ['5', '10', '25', '50', '100']
 
 const providers = computed(() =>
   providersStore.servicesProviders
+)
+
+const companyName = computed(() =>
+  appStore.domainInfo.name ?? config.appTitle
 )
 
 const products = computed(() => {
@@ -100,19 +116,43 @@ onMounted(() => {
 export default { name: 'PageServices' }
 </script>
 
-<style>
+<style scoped>
 .services {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   padding-top: 15px;
+}
+
+.services > .container {
+  min-height: auto;
+  width: 100%;
 }
 
 .services__block {
   margin-bottom: 10px;
 }
 
-@media screen and (max-width: 768px) {
+.logo__wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 40vh;
+  padding: 10px;
+  background: var(--main);
+}
+
+.logo__title {
+  color: var(--bright_font);
+  font-size: 36px;
+  font-weight: 700;
+}
+
+/* @media screen and (max-width: 768px) {
   .services{
     padding-left: 10px;
     padding-right: 10px;
   }
-}
+} */
 </style>
