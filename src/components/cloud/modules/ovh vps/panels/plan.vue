@@ -131,6 +131,7 @@ if (props.products.length < 1) resetData()
 watch(product, (value) => {
   const product = props.products.find(({ group }) => group === value)
 
+  if (!product) return
   emits('update:product-size', value)
   setResources(product?.value)
 })
@@ -220,6 +221,7 @@ const diskSize = computed(() => {
 })
 
 function resetData () {
+  product.value = ''
   emits('update:product-size', '-')
   emits('update:periods', [{ value: '-', label: 'unknown' }])
 
