@@ -7,7 +7,6 @@
           ref="open-instance"
           :VM="VM"
           @update:password="(value) => resources.password = value"
-          @update:vnc="(value) => resources.vnc = value"
         >
           <template #header>
             <div class="Fcloud__header">

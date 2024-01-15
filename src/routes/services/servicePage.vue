@@ -47,7 +47,11 @@
             <div class="service-page__info-title">
               {{ $t('Actions') }}:
               <div style="display: inline-flex; gap: 8px">
-                <a-button v-if="service.groupname !== 'OpenAI'" size="small" @click="sendRenew">
+                <a-button
+                  v-if="service.nextduedate !== '0000-00-00'"
+                  size="small"
+                  @click="sendRenew"
+                >
                   {{ capitalize($t('renew')) }}
                 </a-button>
                 <a-button danger size="small" @click="sendDelete">
