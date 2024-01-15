@@ -24,7 +24,8 @@ import { useCloudStore } from '@/stores/cloud.js'
 
 const props = defineProps({
   productSize: { type: String, required: true },
-  tarification: { type: String, required: true }
+  tarification: { type: String, required: true },
+  minProduct: { type: Object, default: () => ({}) }
 })
 
 const i18n = useI18n()
@@ -50,15 +51,54 @@ const locationTitle = computed(() => {
   )?.title
 })
 
+const tariffTitle = computed(() =>
+  props.minProduct.title ?? props.productSize
+)
+
+const cpuSize = computed(() => {
+  const result = props.minProduct.resources?.cpu ?? options.cpu.size
+
+  return `${result} ${(isNaN(+result)) ? '' : 'vCPU'}`
+})
+
+const ramSize = computed(() => {
+  const ram = props.minProduct.resources?.ram ?? options.ram.size
+  const size = ram / 1024
+
+  if (isNaN(size)) return ram
+  if (size > 1024) return `${+(size / 1024).toFixed(1)} Tb`
+  if (size >= 1) return `${+size.toFixed(1)} Gb`
+  return `${+ram.toFixed(1)} Gb`
+})
+
+const gpuSize = computed(() => {
+  const { resources } = props.minProduct ?? product.value ?? {}
+
+  if (resources?.gpu_name) {
+    return `${resources.gpu_name} (x${resources.gpu_count})`
+  }
+
+  if (resources?.gpu_name) {
+    return `${resources.gpu_name} (x${resources.gpu_count})`
+  }
+
+  return false
+})
+
 const diskSize = computed(() => {
   // const x = (cloudStore.plan.type === 'ovh cloud') ? 1000 : 1024
-  const size = options.disk.size / 1024
+  const disk = props.minProduct.resources?.drive_size ?? options.disk.size
+  const size = disk / 1024
 
-  if (isNaN(size)) return options.disk.size
+  if (isNaN(size)) return disk
   if (size > 1024) return `${(size / 1024).toFixed(1)} Tb`
   if (size >= 1) return `${size.toFixed(1)} Gb`
-  return `${options.disk.size.toFixed(1)} Mb`
+  return `${disk.toFixed(1)} Mb`
 })
+
+const diskType = computed(() =>
+  props.minProduct.resources?.drive_type ?? options.disk.type
+)
 
 const resources = computed(() => ({
   location: {
@@ -70,25 +110,15 @@ const resources = computed(() => ({
       borderBottom: '1px solid #e8e8e8'
     }
   },
-  tarif: { title: i18n.t('tariff'), value: props.productSize },
-  cpu: {
-    title: i18n.t('cpu'),
-    value: `${options.cpu.size} ${(isNaN(+options.cpu.size)) ? '' : 'vCPU'}`,
-    visible: options.cpu.size && options.cpu.size !== 'loading'
-  },
-  ram: {
-    title: i18n.t('ram'),
-    value: `${+(options.ram.size).toFixed(1)} Gb`,
-    visible: options.ram.size
-  },
-  gpu: {
-    title: i18n.t('gpu'),
-    value: `${product.value.resources?.gpu_name} (x${product.value.resources?.gpu_count})`,
-    visible: product.value.resources?.gpu_name ?? false
-  },
+  tarif: { title: i18n.t('tariff'), value: tariffTitle.value },
+
+  cpu: { title: i18n.t('cpu'), value: cpuSize.value, visible: parseFloat(cpuSize.value) !== 0 },
+  ram: { title: i18n.t('ram'), value: ramSize.value, visible: parseFloat(ramSize.value) },
+  gpu: { title: i18n.t('gpu'), value: gpuSize.value, visible: parseFloat(gpuSize.value) },
+
   drive: {
     title: i18n.t('Drive'),
-    value: `${options.disk.type} ${diskSize.value}`,
+    value: `${diskType.value} ${diskSize.value}`,
     visible: parseFloat(diskSize.value),
     style: { marginBottom: '5px' }
   },
@@ -102,6 +132,7 @@ const resources = computed(() => ({
     visible: options.os.name && !options.os.name.includes('none'),
     style: { fontSize: '1.1rem' }
   },
+
   public: {
     title: `${i18n.t('public')} IPv4${
       (props.tarification === 'Hourly') ? '*' : ''

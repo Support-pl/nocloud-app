@@ -470,7 +470,7 @@ export default {
     // eslint-disable-next-line vue/prop-name-casing
     VM: { type: Object, required: true }
   },
-  emits: ['update:vnc', 'update:password'],
+  emits: ['update:password'],
   data: () => ({
     modal: {
       reboot: false,
@@ -517,17 +517,10 @@ export default {
     this.sendAction('on_get_hash').then((password) => {
       this.$emit('update:password', password)
     })
-
-    this.sendAction('on_get_vnc').then(({ response: { token, connectURL } }) => {
-      this.$emit('update:vnc', { url: connectURL, token })
-    })
   },
   methods: {
     startVNC () {
-      this.$router.push({
-        path: `${this.$route.params.uuid}/vnc`,
-        query: { url: this.VM.resources.vnc?.url }
-      })
+      this.$router.push({ path: `${this.$route.params.uuid}/vnc` })
     },
     mbToGb (mb) {
       return +(mb / 1024).toFixed(2)

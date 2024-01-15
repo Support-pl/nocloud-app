@@ -273,6 +273,7 @@ import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { notification } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
 import UI from 'vnc-ui-vue'
+import api from '@/api.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -321,7 +322,11 @@ async function getToken () {
   const action = (isCloud) ? 'start_vnc_vm' : 'start_vnc'
 
   if (instance.value.server_on) {
-    url.value = route.query.url
+    const { response } = await api.get(authStore.baseURL, {
+      params: { run: 'on_get_vnc', server_id: route.params.uuid }
+    })
+
+    url.value = response.connectURL
     desktopName.value = instance.value?.name ?? 'Unknown'
 
     connect()
@@ -351,7 +356,7 @@ async function getToken () {
 }
 
 function connect (token) {
-  vncscreen.value.innerHTML = ''
+  if (vncscreen.value) vncscreen.value.innerHTML = ''
   UI.connect(url.value, token)
   UI.prime()
 

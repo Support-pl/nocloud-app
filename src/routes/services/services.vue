@@ -21,7 +21,7 @@
       />
     </div>
 
-    <div v-if="['services', 'root'].includes(route.name)" class="logo__wrapper">
+    <div v-if="['services', 'root'].includes(route.name) && !authStore.isLogged" class="logo__wrapper">
       <div v-if="config.appLogo.path">
         <img :src="config.appLogo.path" alt="logo" style="width: 100%">
       </div>

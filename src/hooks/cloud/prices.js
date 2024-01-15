@@ -1,17 +1,13 @@
 import { computed } from 'vue'
 import { useCloudStore } from '@/stores/cloud.js'
-import { usePlansStore } from '@/stores/plans.js'
 import { useCurrency } from '@/hooks/utils'
 import { getTarification } from '@/functions.js'
 
 function useCloudPrices (currentProduct, tarification, activeKey, options, priceOVH) {
-  const plansStore = usePlansStore()
   const cloudStore = useCloudStore()
   const { currency } = useCurrency()
 
-  const plan = computed(() =>
-    plansStore.plans.find(({ uuid }) => uuid === cloudStore.planId) ?? {}
-  )
+  const plan = computed(() => cloudStore.plan ?? {})
 
   const product = computed(() => {
     if (activeKey.value !== 'location' && tarification.value !== '-') {
@@ -24,11 +20,18 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
       .filter((product) => product.public)
 
     values.sort((a, b) => a.price - b.price)
-    return values.find(({ period, meta }) =>
+    const result = values.find(({ period, meta }) =>
       tarification.value === getTarification(period) && (
         meta.datacenter?.includes(config[datacenter]) || !plan.value.type.includes('ovh')
       )
     )
+
+    if (result?.meta.cpu) result.resources.cpu = result.meta.cpu ?? 'No Data'
+    if (plan.value.type !== 'ovh vps') result.resources.drive_type = 'HDD'
+    else result.resources.drive_type = 'SSD'
+    if (result) result.resources.drive_size = plan.value.meta?.minSize ?? 20 * 1024
+
+    return result
   })
 
   const productFullPriceStatic = computed(() => {
@@ -97,7 +100,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
   })
 
   return {
-    installationFee: computed(() => product.value?.installationFee ?? 0),
+    minProduct: computed(() => product.value ?? {}),
     productFullPrice: computed(() => {
       const resourcesPrice = (plan.value.type === 'ione')
         ? productFullPriceCustom.value * 24 * 30 * currency.value.rate
