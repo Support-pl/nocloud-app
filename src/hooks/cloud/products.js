@@ -67,7 +67,7 @@ function useCloudProducts (options, tarification, productSize) {
     const keys = Object.keys(cloudStore.plan.products ?? {})
 
     keys.forEach((key) => {
-      const { title, price, meta, resources, group } = cloudStore.plan.products[key]
+      const { title, price, meta, resources, group, public: pub } = cloudStore.plan.products[key]
       const value = key.split(' ')[1]
 
       const i = result.findIndex((product) => product.value === value)
@@ -88,6 +88,7 @@ function useCloudProducts (options, tarification, productSize) {
           period.pricingMode = 'default'
       }
 
+      if (!(pub || cloudStore.plan.type === 'ovh cloud')) return
       if (meta.cpu) resources.cpu = meta.cpu
       if (i === -1) {
         const { addons, datacenter } = meta

@@ -33,7 +33,7 @@ const addons = computed(() => {
         pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
       }
 
-      const isInclude = addonsKeys?.includes(addonKey)
+      const isInclude = addonsKeys?.includes(key)
       const isEqualMode = period.pricingMode === props.mode
 
       if (title === '') title = addonKey
