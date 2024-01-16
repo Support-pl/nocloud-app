@@ -7,6 +7,16 @@ export function debounce (func, ms) {
   }
 }
 
+export function getDisk (key) {
+  const keys = key?.match(/[0-9]{1,}x[0-9]{1,}/g) ?? []
+
+  return keys.reduce((sum, key) => {
+    const [count, size] = key.split('x')
+
+    return sum + count * size
+  }, 0)
+}
+
 export function toDate (timestamp, sep = '.', withTime = true, reverse) {
   if (timestamp < 1) return '-'
 

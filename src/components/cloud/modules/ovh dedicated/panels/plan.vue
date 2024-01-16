@@ -126,6 +126,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCloudStore } from '@/stores/cloud.js'
 import { useCurrency } from '@/hooks/utils'
+import { getDisk } from '@/functions.js'
 
 const loadingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LoadingOutlined')
@@ -261,16 +262,6 @@ const diskSize = computed(() => {
   if (size >= 1) return `${size.toFixed(1)} Gb`
   return `${options.disk.size.toFixed(1)} Mb`
 })
-
-function getDisk (key) {
-  const keys = key?.match(/[0-9]{1,}x[0-9]{1,}/g) ?? []
-
-  return keys.reduce((sum, key) => {
-    const [count, size] = key.split('x')
-
-    return sum + count * size
-  }, 0)
-}
 
 function resetData () {
   product.value = ''
