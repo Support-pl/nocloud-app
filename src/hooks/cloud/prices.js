@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { useCloudStore } from '@/stores/cloud.js'
 import { useCurrency } from '@/hooks/utils'
-import { getTarification } from '@/functions.js'
+import { getDisk, getTarification } from '@/functions.js'
 
 function useCloudPrices (currentProduct, tarification, activeKey, options, priceOVH) {
   const cloudStore = useCloudStore()
@@ -17,7 +17,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
     const config = options.config.configuration ?? {}
     const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))
     const values = Object.values(plan.value.products ?? {})
-      .filter((product) => product.public)
+      .filter((product) => (cloudStore.plan.type === 'ovh cloud') ? true : product.public)
 
     values.sort((a, b) => a.price - b.price)
     const result = values.find(({ period, meta }) =>
@@ -26,13 +26,67 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
       )
     )
 
-    if (result?.meta.cpu) result.resources.cpu = result.meta.cpu ?? 'No Data'
-    if (plan.value.type !== 'ovh vps') result.resources.drive_type = 'HDD'
-    else result.resources.drive_type = 'SSD'
-    if (result) result.resources.drive_size = plan.value.meta?.minSize ?? 20 * 1024
+    if (!result) return
+    if (result.meta.cpu) result.resources.cpu = result.meta.cpu
+
+    if (!result.resources.ram) {
+      result.resources.ram = getResource('ram', result)
+    }
+
+    if (!result.resources.drive_type) {
+      if (plan.value.type === 'ovh dedicated') {
+        result.resources.drive_type = getResource('disk-type', result)
+      } else if (plan.value.type === 'ovh vps') {
+        result.resources.drive_type = 'SSD'
+      } else {
+        result.resources.drive_type = 'HDD'
+      }
+    }
+
+    if (!result.resources.drive_size) {
+      if (plan.value.type === 'ovh dedicated') {
+        result.resources.drive_size = getResource('disk-size', result)
+      } else if (result.resources.disk) {
+        result.resources.drive_size = result.resources.disk
+      } else {
+        result.resources.drive_size = plan.value.meta?.minSize ?? 20 * 1024
+      }
+    }
 
     return result
   })
+
+  function getResource (type, product) {
+    let key = ''
+
+    switch (type) {
+      case 'ram':
+        key = getMinResource('ram', product)
+
+        return parseInt(key.split(' ').at(-1).split('-')[1] ?? 0)
+
+      case 'disk-size':
+        key = getMinResource('raid', product)
+
+        return getDisk(key) * 1024
+
+      case 'disk-type':
+        key = getMinResource('raid', product)
+
+        if (key.includes('hybrid')) return 'SSD + HDD'
+        else if (key.match(/[0-9]x[0-9]{1,}sa/g)) return 'HDD'
+        else return 'SSD'
+    }
+  }
+
+  function getMinResource (type, product) {
+    const addons = plan.value.resources.filter(({ key }) =>
+      key.includes(type) && product.meta.addons.includes(key)
+    )
+
+    addons.sort((a, b) => a.price - b.price)
+    return addons[0]?.key ?? ''
+  }
 
   const productFullPriceStatic = computed(() => {
     if (!plan.value) return 0
