@@ -48,8 +48,7 @@ app.config.globalProperties.dateFormat = (value) => {
 }
 
 app.directive('phone', {
-  update (el, { value: code }) {
-    if (!event?.isTrusted) return
+  updated (el, { value: code }) {
     el.value = el.value.replace(code, '')
 
     const value = el.value.replace(/\D/g, '')

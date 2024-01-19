@@ -66,9 +66,9 @@ export const useChatsStore = defineStore('chats', () => {
 
   const getDefaults = computed(() => ({
     ...defaults.value,
-    departments: defaults.value.departments?.map(
-      ({ admins, title, key }) => ({ id: key, admins, name: title })
-    ) ?? []
+    departments: defaults.value.departments
+      ?.filter((department) => department.public)
+      ?.map(({ admins, title, key }) => ({ id: key, admins, name: title })) ?? []
   }))
 
   function updateChat (event) {
@@ -222,10 +222,10 @@ export const useChatsStore = defineStore('chats', () => {
     },
 
     async fetchDefaults () {
-      if (Object.keys(defaults.value).length > 0) {
-        return defaults.value
-      } else if (defaults.value.error) {
+      if (defaults.value.error) {
         return {}
+      } else if (Object.keys(defaults.value).length > 0) {
+        return defaults.value
       }
 
       try {
