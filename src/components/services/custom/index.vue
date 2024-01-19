@@ -490,22 +490,14 @@ export default {
           auto_start: plan.meta.auto_start
         },
         title: this.getProducts.title,
-        billing_plan: { uuid: this.plan }
+        billing_plan: { uuid: this.plan },
+        product: this.options.size
       }]
       const newGroup = {
         title: this.userdata.title + Date.now(),
         type: 'empty',
         sp: this.provider,
         instances
-      }
-
-      if (plan.kind === 'STATIC') instances[0].product = this.options.size
-      else {
-        instances[0].config = {
-          ...instances[0].config,
-          product: this.options.size,
-          period: +this.options.period
-        }
       }
 
       const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))

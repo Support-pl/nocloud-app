@@ -17,7 +17,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
     const config = options.config.configuration ?? {}
     const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))
     const values = Object.values(plan.value.products ?? {})
-      .filter((product) => (cloudStore.plan.type === 'ovh cloud') ? true : product.public)
+      .filter((product) => product.public)
 
     values.sort((a, b) => a.price - b.price)
     const result = values.find(({ period, meta }) =>

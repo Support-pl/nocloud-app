@@ -81,17 +81,20 @@ function useCloudOptions (activeKey, tarification) {
     if (value.meta?.maxDisk) {
       options.disk.max = +value.meta.maxDisk
     }
+    setSshKey(cloudStore.serviceId)
   })
 
-  watch(() => cloudStore.serviceId, (value) => {
-    const service = instancesStore.services.find(({ uuid }) => uuid === value)
+  watch(() => cloudStore.serviceId, setSshKey)
+
+  function setSshKey (serviceId) {
+    const service = instancesStore.services.find(({ uuid }) => uuid === serviceId)
     const group = service.instancesGroups.find(({ type }) =>
       cloudStore.plan.type?.includes(type)
     ) ?? {}
 
     if (group.config?.ssh) options.isSSHExist = true
     else options.isSSHExist = false
-  })
+  }
 
   async function fetch () {
     spStore.fetchShowcases(!authStore.isLogged)

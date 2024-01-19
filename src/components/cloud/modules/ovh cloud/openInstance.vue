@@ -195,7 +195,7 @@
             </div>
             <div class="block__value">
               {{ VM.data.expiration }}
-              <sync-icon title="Renew" @click="handleOk('renew')" />
+              <sync-icon v-if="false" title="Renew" @click="handleOk('renew')" />
             </div>
           </div>
 
@@ -217,12 +217,44 @@
         :confirm-loading="isSwitchLoading"
         @ok="sendNewTariff"
       >
-        <span style="margin-right: 16px">{{ $t("Select new tariff") }}:</span>
-        <a-select v-model:value="planCode" style="width: 200px">
-          <a-select-option v-for="(item, key) in tariffs" :key="key">
-            {{ item.title }}
-          </a-select-option>
-        </a-select>
+        <a-spin :tip="$t('loading')" :spinning="isPlansLoading">
+          <div style="display: grid; grid-template-columns: auto 1fr; gap: 5px">
+            <span style="margin-right: 16px">{{ $t('Select new tariff') }}:</span>
+            <a-select
+              v-model:value="planCode"
+              show-search
+              :filter-option="searchTafiff"
+            >
+              <a-select-option v-for="(item, key) in tariffs" :key="key">
+                {{ item.title }}
+              </a-select-option>
+            </a-select>
+
+            <span style="margin-right: 16px">{{ $t('Select new OS') }}:</span>
+            <a-select v-model:value="newOS">
+              <a-select-option v-for="item of images" :key="item.id">
+                {{ item.name }}
+              </a-select-option>
+            </a-select>
+          </div>
+
+          <div
+            v-if="planCode"
+            style="
+              display: grid;
+              grid-template-columns: 100px 1fr;
+              margin-top: 10px;
+              text-align: right
+            "
+          >
+            <span style="font-weight: 700; text-align: left">{{ $t('cpu') }}:</span>
+            {{ tariffs[planCode].resources.cpu }} cores
+            <span style="font-weight: 700; text-align: left">{{ $t('ram') }}:</span>
+            {{ tariffs[planCode].resources.ram / 1000 }} Gb
+            <span style="font-weight: 700; text-align: left">{{ $t('disk') }}:</span>
+            {{ tariffs[planCode].resources.drive_size / 1024 }} Gb
+          </div>
+        </a-spin>
       </a-modal>
 
       <div class="Fcloud__info-block block">
@@ -299,7 +331,7 @@
               {{ $t("cloud_Memory") }}
             </div>
             <div class="block__value">
-              {{ (VM.resources.ram / 1024).toFixed(2) }} GB
+              {{ (VM.resources.ram / 1000).toFixed(2) }} GB
             </div>
           </div>
         </div>
@@ -325,75 +357,6 @@
               {{ (VM.resources.drive_size / 1024).toFixed(2) }} GB
             </div>
           </div>
-        </div>
-      </div>
-
-      <div
-        v-if="!(chart1Data.length == 0 || chart2Data.length == 0)"
-        class="Fcloud__info-block block"
-      >
-        <div class="Fcloud__block-header">
-          <apartment-icon /> {{ $t("Network") }}
-        </div>
-        <div class="Fcloud__block-content">
-          <div class="block__column">
-            <div class="block__title">
-              {{ capitalize($t("inbound")) }}
-            </div>
-            <div class="block__value">
-              {{ printWidthRange(chart1Data[chart1Data.length - 1].value) }}
-            </div>
-          </div>
-          <div class="block__column">
-            <div class="block__title">
-              {{ capitalize($t("outgoing")) }}
-            </div>
-            <div class="block__value">
-              {{ printWidthRange(chart2Data[chart2Data.length - 1].value) }}
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        v-if="!(chart1Data.length == 0 || chart2Data.length == 0)"
-        class="Fcloud__info-block block"
-      >
-        <div class="Fcloud__block-header">
-          <line-chart-icon /> {{ capitalize($t("graphs")) }}
-        </div>
-        <div
-          class="Fcloud__block-content Fcloud__block-content--charts"
-        >
-          <a-row type="flex" justify="space-around" style="width: 100%">
-            <a-col>
-              <g-chart
-                type="LineChart"
-                :data="inbChartDataReady"
-                :options="chartOption('inbound')"
-              />
-            </a-col>
-            <a-col>
-              <g-chart
-                type="LineChart"
-                :data="outChartDataReady"
-                :options="chartOption('outgoing')"
-              />
-            </a-col>
-            <a-col>
-              <g-chart
-                type="LineChart"
-                :data="cpuChartDataReady"
-                :options="chartOption('cpu')"
-              />
-            </a-col>
-            <a-col>
-              <g-chart
-                type="LineChart"
-                :data="ramChartDataReady"
-                :options="chartOption('ram')"
-              />
-            </a-col>
-          </a-row>
         </div>
       </div>
 
@@ -535,6 +498,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInstancesStore } from '@/stores/instances.js'
+import { usePlansStore } from '@/stores/plans.js'
 
 const redoIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RedoOutlined')
@@ -569,13 +533,6 @@ const settingIcon = defineAsyncComponent(
 const databaseIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/DatabaseFilled')
 )
-const apartmentIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/ApartmentOutlined')
-)
-
-const lineChartIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LineChartOutlined')
-)
 const caretRightIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/CaretRightOutlined')
 )
@@ -601,7 +558,6 @@ const columns = [
     scopedSlots: { customRender: 'actions' }
   }
 ]
-const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 export default defineComponent({
   name: 'OpenInstance',
@@ -616,8 +572,6 @@ export default defineComponent({
     cardIcon,
     settingIcon,
     databaseIcon,
-    apartmentIcon,
-    lineChartIcon,
     caretRightIcon,
     closeIcon
   },
@@ -626,23 +580,6 @@ export default defineComponent({
     VM: { type: Object, required: true }
   },
   data: () => ({
-    chart1Data: [['Time', '']],
-    chart2Data: [['Time', '']],
-    chart3Data: [['Time', '']],
-    chart4Data: [['Time', '']],
-    chartHead: ['Timestamp'],
-    chartOptions: {
-      title: 'network',
-      curveType: 'function',
-      legend: 'none',
-      width: 300,
-      height: 150,
-      vAxis: {
-        viewWindowMode: 'explicit',
-        viewWindow: { min: 0 }
-      }
-    },
-
     modal: {
       reboot: false,
       shutdown: false,
@@ -670,12 +607,14 @@ export default defineComponent({
 
     dates: [],
     planCode: '',
+    newOS: '',
     actionLoading: false,
     isSwitchLoading: false,
     isLoading: false,
     autoRenew: false
   }),
   computed: {
+    ...mapState(usePlansStore, { plans: 'plans', isPlansLoading: 'isLoading' }),
     ...mapState(useSpStore, ['servicesProviders']),
     ...mapState(useAuthStore, ['userdata', 'baseURL']),
     ...mapState(useCurrenciesStore, ['defaultCurrency']),
@@ -758,21 +697,30 @@ export default defineComponent({
     tariffs () {
       if (!this.VM?.billingPlan) return {}
       const tariffs = {}
-      const { products } = this.VM.billingPlan
+      const { products } = this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {}
       const productKey = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
-      const a = Object.values(products[productKey].resources)
-        .reduce((acc, curr) => +acc + +curr, 0)
+      const keys = Object.keys(products ?? {}).sort((a, b) =>
+        products[a].price - products[b].price
+      )
 
-      Object.keys(products).forEach((key) => {
-        const b = Object.values(products[key].resources)
-          .reduce((acc, curr) => +acc + +curr, 0)
+      keys.forEach((key) => {
+        const { cloud_datacenter: region } = this.VM.config.configuration
+        const [a, b] = [products[productKey], products[key]]
 
-        if (b > a && products[key].period === products[productKey].period) {
+        const isPriceMore = a.price <= b.price
+        const isPeriodsEqual = a.period === b.period
+        const isRegionIncluded = b.meta.datacenter.includes(region)
+
+        if (productKey === key) return
+        if (isPriceMore && isPeriodsEqual && isRegionIncluded) {
           tariffs[key] = products[key]
         }
       })
 
       return tariffs
+    },
+    images () {
+      return this.tariffs[this.planCode]?.meta.os ?? []
     },
     networking () {
       const { networking } = this.VM?.state?.meta
@@ -784,162 +732,26 @@ export default defineComponent({
       const privateIPs = networking.private?.filter((el) => !regexp.test(el))
 
       return { public: publicIPs ?? [], private: privateIPs ?? [] }
-    },
-
-    inbChartDataReady () {
-      let data = this.chart1Data
-      if (data === undefined) {
-        console.error("can't get chart1")
-        return [[0], [0]]
-      }
-      if (data[0] === undefined || data[1] === undefined) {
-        return [
-          [this.chartHead[0], 'bytes'],
-          [0, 0]
-        ]
-      }
-      const range = this.checkRange(data[data.length - 1].value)
-      data = data.map((pair) => [
-        new Date(pair.timestamp * 1000),
-        this.fromBytesTo(parseInt(pair.value), range)
-      ])
-      data.unshift([this.chartHead[0], range])
-      return data
-    },
-    outChartDataReady () {
-      let data = this.chart2Data
-      if (data === undefined) {
-        console.error("can't get chart2")
-        return [[0], [0]]
-      }
-      if (data[0] === undefined || data[1] === undefined) {
-        return [
-          [this.chartHead[0], 'bytes'],
-          [0, 0]
-        ]
-      }
-      const range = this.checkRange(data[data.length - 1].value)
-      data = data.map((pair) => [
-        new Date(pair.timestamp * 1000),
-        this.fromBytesTo(parseInt(pair.value), range)
-      ])
-      data.unshift([this.chartHead[0], range])
-      return data
-    },
-    cpuChartDataReady () {
-      let data = this.chart3Data
-      if (data === undefined) {
-        console.error("can't get chart3")
-        return [[0], [0]]
-      }
-      if (data[0] === undefined || data[1] === undefined) {
-        return [
-          [this.chartHead[0], '%'],
-          [0, 0]
-        ]
-      }
-      data = data.map((pair) => [new Date(pair.timestamp * 1000), parseInt(pair.value)])
-      data.unshift([this.chartHead[0], 'usage'])
-      return data
-    },
-    ramChartDataReady () {
-      let data = this.chart4Data
-      if (data === undefined) {
-        console.error("can't get chart4")
-        return [[0], [0]]
-      }
-      if (data[0] === undefined || data[1] === undefined) {
-        return [
-          [this.chartHead[0], 'mb'],
-          [0, 0]
-        ]
-      }
-      const range = this.checkRange(data[data.length - 1].value * 1048576)
-      data = data.map((pair) => [
-        new Date(pair.timestamp * 1000),
-        this.fromBytesTo(parseInt(pair.value * 1048576), range)
-      ])
-      data.unshift([this.chartHead[0], range])
-      return data
     }
   },
   watch: {
-    'VM.uuidService' () { this.fetchMonitoring() }
+    images (value) {
+      const os = value.find(({ name }) => name === this.osName)
+
+      this.newOS = os?.id ?? value[0]?.id ?? ''
+    }
   },
-  created () { this.fetchMonitoring() },
+  created () {
+    this.fetchPlans({ sp_uuid: this.VM.sp, anonymously: false })
+  },
   mounted () { this.autoRenew = this.VM.config.auto_renew },
   methods: {
-    ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
-    deployService () {
-      this.actionLoading = true
-      this.$api.services
-        .up(this.VM.uuidService)
-        .then(() => {
-          const opts = {
-            message: `${this.$t('Done')}!`
-          }
-          this.openNotificationWithIcon('success', opts)
-        })
-        .catch((err) => {
-          const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
+    ...mapActions(useInstancesStore, ['invokeAction', 'updateService', 'fetch']),
+    ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
+    searchTafiff (string, option) {
+      const title = this.tariffs[option.key].title.toLowerCase()
 
-          if (err.response?.status >= 500) {
-            opts.message = this.$t('Error: Failed to load data')
-          }
-          this.openNotificationWithIcon('error', opts)
-        })
-        .finally(() => {
-          this.actionLoading = false
-        })
-    },
-    printWidthRange (value) {
-      const range = this.checkRange(value)
-      let newVal = this.fromBytesTo(value, range)
-      if (newVal) {
-        newVal = Math.round(newVal * 1000) / 1000
-      }
-      return `${newVal || ''} ${range}`
-    },
-    checkRange (val) {
-      let count = 0
-      for (; val > 1024; count++) {
-        val = val / 1024
-      }
-      return sizes[count]
-    },
-    fromBytesTo (val, newRange) {
-      let count = sizes.indexOf(newRange)
-      if (count === -1) {
-        console.log("can't get such range")
-        return
-      }
-      while (count > 0) {
-        val = val / 1024
-        count--
-      }
-      return val
-    },
-    chartOption (title) {
-      const newOpt = JSON.parse(JSON.stringify(this.chartOptions))
-      let range = ''
-      let capitalized = ''
-      if (title.toLowerCase() === 'inbound') {
-        range = this.checkRange(this.chart1Data[this.chart1Data.length - 1].value)
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1)
-      } else if (title.toLowerCase() === 'outgoing') {
-        range = this.checkRange(this.chart2Data[this.chart2Data.length - 1].value)
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1)
-      } else if (title.toLowerCase() === 'cpu') {
-        range = '%'
-        capitalized = this.$t(title).toUpperCase()
-      } else if (title.toLowerCase() === 'ram') {
-        range = this.checkRange(this.chart4Data[this.chart4Data.length - 1].value * 1048576)
-        capitalized = this.$t(title).toUpperCase()
-      }
-      newOpt.title = `${capitalized} (${range})`
-      return newOpt
+      return title.includes(string.toLowerCase())
     },
     createSnapshot () {
       // if (this.snapshots.data.lenght >= 3) {
@@ -1169,22 +981,45 @@ export default defineComponent({
       }
     },
     sendNewTariff () {
-      this.isSwitchLoading = true
-      this.sendAction('get_upgrade_price').then((res) => {
-        const { withTax } = res.meta.result.order.prices
+      const service = this.services.find(({ uuid }) =>
+        uuid === this.VM.uuidService
+      )
+      const instance = service.instancesGroups
+        .find(({ sp }) => sp === this.VM.sp).instances
+        .find(({ uuid }) => uuid === this.VM.uuid)
+
+      try {
+        this.isSwitchLoading = true
+        const { price, resources } = this.tariffs[this.planCode]
+
+        instance.config.planCode = this.planCode.split(' ')[1]
+        instance.config.configuration.cloud_os = this.newOS
+        instance.product = this.planCode
+        instance.resources = resources
 
         this.$confirm({
           title: this.$t('Do you want to switch tariff?'),
-          content: `${this.$t('invoice_Price')}: ${withTax.value} NCU`,
+          content: `${this.$t('invoice_Price')}: ${price} ${this.currency.code}`,
           okText: this.$t('Yes'),
           cancelText: this.$t('Cancel'),
-          onOk: () => new Promise((resolve) => setTimeout(resolve, 1000)),
+          onOk: async () => {
+            await this.updateService(service)
+            await this.fetch()
+
+            Modal.destroyAll()
+            this.modal.switch = false
+            this.openNotificationWithIcon('success', { message: this.$t('Done') })
+          },
           onCancel () {}
         })
-      })
-        .finally(() => {
-          this.isSwitchLoading = false
-        })
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.openNotificationWithIcon('error', { message })
+        console.error(error)
+      } finally {
+        this.isSwitchLoading = false
+      }
     },
     sendAddingAddon (action) {
       this.$confirm({
@@ -1256,6 +1091,7 @@ export default defineComponent({
             opts.message = `Error: ${this.$t('Failed to load data')}`
           }
           this.openNotificationWithIcon('error', opts)
+          console.error(err)
         })
     },
     openVNC () {
@@ -1267,9 +1103,6 @@ export default defineComponent({
           location.href = meta.url
         })
         .catch((err) => console.error(err))
-    },
-    fetchMonitoring () {
-      // if (!this.VM?.uuidService) return
     },
     date (string, timestamp) {
       if (timestamp < 1) return '-'

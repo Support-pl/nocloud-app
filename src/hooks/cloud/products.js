@@ -35,10 +35,10 @@ function useCloudProducts (options, tarification, productSize) {
   })
 
   const productKey = computed(() => {
-    const { cpu, ram, disk } = options
+    const { ram, disk } = options
 
-    const values = { cpu, ram: { size: ram.size * 1024 }, disk }
-    const keys = Object.keys({ cpu, ram, disk })
+    const values = { ram: { size: ram.size * 1024 }, disk }
+    const keys = Object.keys({ ram, disk })
     const plan = products.value.find(({ group, resources }) =>
       group === productSize.value && keys.every((key) =>
         resources[key] === values[key].size
@@ -88,7 +88,7 @@ function useCloudProducts (options, tarification, productSize) {
           period.pricingMode = 'default'
       }
 
-      if (!(pub || cloudStore.plan.type === 'ovh cloud')) return
+      if (!pub) return
       if (meta.cpu) resources.cpu = meta.cpu
       if (i === -1) {
         const { addons, datacenter } = meta

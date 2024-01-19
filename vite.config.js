@@ -2,6 +2,7 @@ import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
+import svgLoader from 'vite-svg-loader'
 // import { VitePWA } from 'vite-plugin-pwa'
 
 let prefix = import.meta.env?.titlePrefix ?? ''
@@ -11,7 +12,8 @@ if (prefix.length > 0) prefix = prefix + ' '
 export default defineConfig({
   plugins: [
     vue(),
-    vueJsx()
+    vueJsx(),
+    svgLoader()
     // VitePWA({
     //   // опции воркбокса
     //   registerType: 'autoUpdate',

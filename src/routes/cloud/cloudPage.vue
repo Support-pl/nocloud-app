@@ -150,7 +150,7 @@
                         :title="$t('Click to copy')"
                         @click="addToClipboard"
                       >
-                        {{ VM.config?.ssh_public_key || $t('ip.none') }}
+                        {{ sshKey }}
                       </span>
                     </div>
                   </a-modal>
@@ -228,11 +228,13 @@ import { defineAsyncComponent, h } from 'vue'
 import { mapState, mapActions } from 'pinia'
 import * as icons from '@ant-design/icons-vue'
 import notification from '@/mixins/notification.js'
+import config from '@/appconfig.js'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
 
+import { useChatsStore } from '@/stores/chats.js'
 import { useProductsStore } from '@/stores/products.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
@@ -285,6 +287,7 @@ export default {
   computed: {
     ...mapState(useInstancesStore, ['isActionLoading', 'services', 'getInstances', 'isLoading', 'soket']),
     ...mapState(useAuthStore, ['isLogged', 'baseURL']),
+    ...mapState(useChatsStore, 'getDefaults'),
     ...mapState(useCurrenciesStore, ['currencies']),
     ...mapState(useProductsStore, {
       products: 'products',
@@ -343,14 +346,15 @@ export default {
           title: 'Access manager',
           onclick: this.changeModal,
           params: ['accessManager'],
-          icon: 'SafetyOutlined'
+          icon: 'SafetyOutlined',
+          modules: ['ione', 'ovh vps', 'ovh dedicated', 'keyweb', 'custom']
         },
         {
           title: 'Logs',
           onclick: this.getLogs,
           params: ['logs'],
           icon: 'CodeOutlined',
-          modules: ['ovh']
+          modules: ['ovh vps', 'ovh dedicated']
         },
         {
           title: 'Delete',
@@ -362,12 +366,14 @@ export default {
           modules: ['ione', 'ovh', 'keyweb']
         }
       ]
-      let { type } = this.sp.find(({ uuid }) => uuid === this.VM.sp) || {}
+      let { type } = this.VM.billingPlan || {}
 
       if (this.VM.server_on) type = 'custom'
-      return options.filter((el) =>
-        (el.modules) ? el.modules.includes(type) : true
-      )
+      return options.filter((el) => {
+        if (!el.modules) return true
+
+        return el.modules.find((module) => type.includes(module))
+      })
     },
 
     itemService () {
@@ -387,6 +393,13 @@ export default {
     },
     vmsLoading () {
       return this.isLoading || this.isInfoLoading
+    },
+    sshKey () {
+      const { config } = this.itemService.instancesGroups.find(
+        ({ sp }) => sp === this.VM.sp
+      )
+
+      return this.VM.config?.ssh_public_key ?? config.ssh ?? this.$t('ip.none')
     },
     stateVM () {
       if (this.VM.server_on) {
@@ -515,6 +528,7 @@ export default {
     this.soket.close(1000, 'Work is done')
   },
   methods: {
+    ...mapActions(useChatsStore, ['createChat']),
     ...mapActions(useAuthStore, ['fetchBillingData']),
     ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     ...mapActions(useInstancesStore, [
@@ -561,17 +575,21 @@ export default {
           instance.resources.cpu = +this.resize.VCPU
           instance.resources.ram = this.resize.RAM * 1024
         } else if (!cpuEqual || !ramEqual) {
-          this.$api.get(this.baseURL, {
-            params: {
-              run: 'create_ticket',
+          const { departments } = this.getDefaults
+          const { admins } = departments.find(({ id }) => id === config.department) ?? {}
+
+          this.createChat({
+            admins,
+            department: config.department,
+            gateways: [],
+            chat: {
               subject: `Resize VM - ${this.VM.title}`,
               message: `
                 1. ID: ${this.VM.uuid}
                 2. Resources:
                   - cpu: ${this.resize.VCPU}
                   - ram: ${this.resize.RAM * 1024}
-              `,
-              department: 1
+              `
             }
           })
             .then((resp) => {
@@ -596,8 +614,9 @@ export default {
           this.isRenameLoading = false
           return
         }
-        instance.resources.drive_size = this.resize.size * 1024
 
+        if (diskEqual) return
+        instance.resources.drive_size = this.resize.size * 1024
         this.updateService(this.itemService)
           .then((result) => {
             if (result) {
