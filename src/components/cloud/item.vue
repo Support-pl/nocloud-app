@@ -198,15 +198,16 @@ const title = computed(() =>
 const getModuleProductBtn = computed(() => {
   const serviceType = config.getServiceType(props.instance.groupname)?.toLowerCase()
   const isActive = ['active', 'running'].includes(props.instance.domainstatus?.toLowerCase())
-  const key = props.instance.product ?? props.instance.config?.product
-  const { meta } = props.instance.billingPlan?.products[key] ?? {}
+
+  const { type, products = {} } = props.instance.billingPlan ?? {}
+  const { meta } = products[props.instance.product] ?? {}
 
   const components = import.meta.glob('@/components/services/*/lilbtn.vue')
   const component = Object.keys(components).find((key) =>
     key.includes(`/${serviceType}/lilbtn.vue`)
   )
 
-  if (props.instance.type === 'keyweb') return
+  if (['keyweb', 'ovh cloud'].includes(type)) return
   if (meta?.renew === false) return
   if (props.instance.date === 0) return
   if (props.instance.server_on) return

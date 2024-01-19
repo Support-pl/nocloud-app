@@ -7,8 +7,7 @@ const { globalConfig } = globalThis
 
 export default {
   colors: globalConfig.app?.colors,
-
-  autoTicketDepartment: 9,
+  department: globalConfig.department,
 
   languages: globalConfig.languages ?? ['en'],
   vdcEnabled: globalConfig.vdc_enabled ?? false,

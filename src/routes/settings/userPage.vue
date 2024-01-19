@@ -70,7 +70,7 @@
               :label="(form.countryname === 'PL') ? 'NIP' : 'VAT ID'"
               name="tax_id"
             >
-              <a-input v-model="form.tax_id" :disabled="isDisabled" />
+              <a-input v-model:value="form.tax_id" :disabled="isDisabled" />
             </a-form-item>
 
             <a-form-item
