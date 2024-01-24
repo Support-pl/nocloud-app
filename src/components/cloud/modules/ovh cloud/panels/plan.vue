@@ -22,7 +22,7 @@
     </a-row>
   </template>
 
-  <div v-if="products.length > 0" class="order__grid" style="margin-top: 10px">
+  <div v-if="sortedProducts.length > 0" class="order__grid" style="margin-top: 10px">
     <div
       v-for="item of filteredProducts"
       :key="item.title"
@@ -153,6 +153,7 @@ watch(resources, async (value) => {
 watch(() => props.mode, () => {
   const plan = sortedProducts.value.find((el) => el.title === product.value)
 
+  if (!plan) return
   setResources(plan.value, false)
 })
 
@@ -252,7 +253,10 @@ function setDatacenter () {
   setOptions('config.configuration.cloud_datacenter', extra.region)
 }
 
-watch(() => cloudStore.locationId, setDatacenter)
+watch(() => cloudStore.locationId, () => {
+  setDatacenter()
+  sortProducts()
+})
 setDatacenter()
 </script>
 

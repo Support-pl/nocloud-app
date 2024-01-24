@@ -122,7 +122,7 @@ const locationTitle = computed(() => {
   if (key === 'region') configuration.region = region
 
   return sp.locations?.find(({ extra }) =>
-    extra.region.toLowerCase() === configuration[key].toLowerCase()
+    `${extra.region}`.toLowerCase() === configuration[key].toLowerCase()
   )?.title
 })
 
