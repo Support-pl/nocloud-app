@@ -87,6 +87,8 @@ function useCloudOptions (activeKey, tarification) {
   watch(() => cloudStore.serviceId, setSshKey)
 
   function setSshKey (serviceId) {
+    if (!serviceId) return
+
     const service = instancesStore.services.find(({ uuid }) => uuid === serviceId)
     const group = service.instancesGroups.find(({ type }) =>
       cloudStore.plan.type?.includes(type)
