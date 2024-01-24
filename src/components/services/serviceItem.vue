@@ -1,7 +1,13 @@
 <template>
   <div class="service__item" @click="onClick">
     <div class="service__icon">
-      <component :is="service.icon" />
+      <component :is="service.icon" v-if="!isIconString" />
+
+      <a-icon v-else>
+        <template #component="svgProps">
+          <nc-icon :icon-name="service.icon" v-bind="svgProps" />
+        </template>
+      </a-icon>
     </div>
     <div class="service__title">
       {{ translatedName }}
@@ -12,6 +18,8 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AIcon from '@ant-design/icons-vue'
+import { NcIcon } from 'nocloud-ui'
 import { useAuthStore } from '@/stores/auth.js'
 
 const props = defineProps({
@@ -21,6 +29,10 @@ const props = defineProps({
 
 const i18n = useI18n()
 const authStore = useAuthStore()
+
+const isIconString = computed(() =>
+  typeof props.service.icon === 'string'
+)
 
 const translatedName = computed(() => {
   const { title } = (props.service.promo ?? {})[i18n.locale.value] ?? {}

@@ -2,7 +2,7 @@ import { createI18n } from 'vue-i18n'
 import config from '@/appconfig.js'
 
 function loadLocaleMessages () {
-  const locales = import.meta.globEager('./locales/*.json')
+  const locales = import.meta.glob('./locales/*.json', { eager: true })
   const messages = {}
 
   Object.values(locales).forEach((lang) => {

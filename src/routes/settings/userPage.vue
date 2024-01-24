@@ -237,7 +237,8 @@ function installDataToBuffer () {
     'state',
     'postcode',
     'countryname',
-    'phonenumber'
+    'phonenumber',
+    'tax_id'
   ]
 
   interestedKeys.forEach((key) => {
@@ -246,10 +247,10 @@ function installDataToBuffer () {
   })
 }
 
-async function fetchInfo () {
+async function fetchInfo (update) {
   try {
     isLoading.value = true
-    const response = await authStore.fetchBillingData()
+    const response = await authStore.fetchBillingData(update)
 
     if (localStorage.getItem('oauth')) return
     if (response.ERROR) throw response.ERROR.toLowerCase()
@@ -316,7 +317,7 @@ async function sendInfo () {
     localStorage.removeItem('oauth')
     notification.success({ message: i18n.t('Done') })
 
-    fetchInfo()
+    fetchInfo(true)
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 
