@@ -702,12 +702,12 @@ export default defineComponent({
     tariffTitle () {
       const key = `${this.VM.config.duration} ${this.VM.config.planCode}`
 
-      return this.VM.billingPlan.products[key].title
+      return this.VM.billingPlan.products[key]?.title
     },
     tariffPrice () {
       const key = `${this.VM.config.duration} ${this.VM.config.planCode}`
 
-      return this.VM.billingPlan.products[key].price
+      return this.VM.billingPlan.products[key]?.price ?? 0
     },
     addonsPrice () {
       return this.VM.config.addons.reduce((res, addon) => {
