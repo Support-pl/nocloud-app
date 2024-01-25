@@ -136,7 +136,8 @@ async function filterImages (images) {
   const { configurations } = response.meta.catalog.plans.find(
     ({ planCode }) => planCode === props.productKey
   )
-  const os = configurations[1].values
+  const i = configurations.findIndex(({ name }) => name.includes('_os'))
+  const os = configurations[i].values
 
   return images.filter((image) => os.includes(image))
 }
