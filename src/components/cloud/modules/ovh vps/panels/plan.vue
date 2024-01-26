@@ -113,7 +113,6 @@ const loadingIcon = defineAsyncComponent(
 const props = defineProps({
   plans: { type: Array, default: () => [] },
   products: { type: Array, required: true },
-  productKey: { type: String, required: true, default: '' },
   productSize: { type: String, required: true },
   mode: { type: String, required: true },
   isFlavorsLoading: { type: Boolean, default: false }
@@ -128,17 +127,30 @@ const product = ref('')
 
 if (props.products.length < 1) resetData()
 
+const productKey = computed(() => {
+  const { ram, disk } = options
+
+  const keys = ['ram', 'disk']
+  const values = { ram: { size: ram.size * 1024 }, disk }
+  const plan = props.products.find(({ group, resources }) =>
+    group === product.value && keys.every((key) =>
+      resources[key] === values[key].size
+    )
+  )
+
+  return plan?.value
+})
+
 watch(product, (value) => {
   const product = props.products.find(({ group }) => group === value)
 
   if (!product) return
-  emits('update:product-size', value)
-  setResources(product?.value)
+  setResources(product.value)
 })
 
 watch(() => options.ram.size, async (size) => {
   await nextTick()
-  const plan = props.products.find(({ value }) => value === props.productKey)
+  const plan = props.products.find(({ value }) => value === productKey.value)
 
   if (plan) return
   const { resources } = props.products.find((el) =>
@@ -150,7 +162,7 @@ watch(() => options.ram.size, async (size) => {
 
 watch(() => options.disk.size, async (size) => {
   await nextTick()
-  const plan = props.products.find(({ value }) => value === props.productKey)
+  const plan = props.products.find(({ value }) => value === productKey.value)
 
   if (plan) return
   const { resources } = props.products.find((el) =>
@@ -161,7 +173,7 @@ watch(() => options.disk.size, async (size) => {
 })
 
 watch(() => props.mode, () => {
-  setResources(props.productKey, false)
+  setResources(productKey.value, false)
 })
 
 const products = computed(() =>
@@ -239,8 +251,12 @@ function resetData () {
 }
 
 function setResources (productKey, changeTarifs = true) {
-  const { periods, value, resources } = props.products.find((el) => el.value === productKey) ?? {}
+  const { title, periods, value, resources } = props.products.find(
+    (el) => el.value === productKey
+  ) ?? {}
+
   if (!value) return
+  emits('update:product-size', title)
 
   const tarifs = []
   let product = periods[0]

@@ -63,7 +63,6 @@ import imagesList from '@/components/cloud/create/images.vue'
 
 const props = defineProps({
   mode: { type: String, required: true },
-  productKey: { type: String, required: true },
   productSize: { type: String, required: true },
   isFlavorsLoading: { type: Boolean, default: false }
 })
@@ -84,7 +83,7 @@ if (props.productSize) setImages()
 
 async function setImages () {
   const planProducts = Object.entries(cloudStore.plan.products ?? {}).filter(
-    ([key]) => key.includes(props.productKey)
+    ([, { title }]) => title === props.productSize
   )
 
   if (!planProducts[0]) return
@@ -134,7 +133,7 @@ async function filterImages (images) {
   }
 
   const { configurations } = response.meta.catalog.plans.find(
-    ({ planCode }) => planCode === props.productKey
+    ({ planCode }) => planCode === options.config.planCode
   )
   const i = configurations.findIndex(({ name }) => name.includes('_os'))
   const os = configurations[i].values
