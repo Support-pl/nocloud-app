@@ -41,11 +41,14 @@ func main() {
 		dist = "/dist"
 	}
 
+	id := os.Getenv("GA_ID")
 	api := os.Getenv("BASE_URL")
 	if api == "" {
 		log.Fatal("BASE_URL not set")
 	}
-	err := os.WriteFile(path.Join(dist, "apiurl.js"), []byte(fmt.Sprintf("globalThis.VUE_APP_BASE_URL = '%s';", api)), 0644)
+
+	s := fmt.Sprintf("globalThis.VUE_APP_BASE_URL = '%s'\nglobalThis.VUE_APP_GA_ID = '%s'", api, id)
+	err := os.WriteFile(path.Join(dist, "api.js"), []byte(s), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}

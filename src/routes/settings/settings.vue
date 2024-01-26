@@ -132,7 +132,7 @@
             <div
               v-for="text in authStore.loginButtons"
               :key="text"
-              :class="{ disabled: authStore.userdata.data?.oauth_types?.includes(text) }"
+              :class="{ disabled: checkAuth(text) }"
               class="singleLang"
               @click="authStore.linkAccount(text)"
             >
@@ -145,10 +145,7 @@
                 >
                 {{ capitalize(text) }}
               </span>
-              <span
-                v-if="authStore.userdata.data?.oauth_types?.includes(text)"
-                class="singleLang__current-marker"
-              />
+              <span v-if="checkAuth(text)" class="singleLang__current-marker" />
             </div>
           </a-modal>
         </div>
@@ -423,6 +420,10 @@ export default {
         .finally(() => {
           this.modal.confirmLoading = false
         })
+    },
+    checkAuth (text) {
+      return this.authStore.userdata.data?.oauth_types
+        ?.find((type) => type.includes(text))
     }
   }
 }

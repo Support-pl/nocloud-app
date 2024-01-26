@@ -138,7 +138,6 @@ const leftIcon = defineAsyncComponent(
 const props = defineProps({
   plans: { type: Array, default: () => [] },
   products: { type: Array, required: true },
-  productKey: { type: String, required: true, default: '' },
   productSize: { type: String, required: true },
   mode: { type: String, required: true },
   isFlavorsLoading: { type: Boolean, default: false }
