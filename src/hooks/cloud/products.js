@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import { useCloudStore } from '@/stores/cloud.js'
 import { usePlansStore } from '@/stores/plans.js'
 
-function useCloudProducts (options, tarification, productSize) {
+function useCloudProducts (tarification) {
   const cloudStore = useCloudStore()
   const plansStore = usePlansStore()
 
@@ -32,20 +32,6 @@ function useCloudProducts (options, tarification, productSize) {
       default:
         return 'default'
     }
-  })
-
-  const productKey = computed(() => {
-    const { ram, disk } = options
-
-    const values = { ram: { size: ram.size * 1024 }, disk }
-    const keys = Object.keys({ ram, disk })
-    const plan = products.value.find(({ group, resources }) =>
-      group === productSize.value && keys.every((key) =>
-        resources[key] === values[key].size
-      )
-    )
-
-    return plan?.value
   })
 
   function sortProducts (products) {
@@ -138,7 +124,7 @@ function useCloudProducts (options, tarification, productSize) {
     return result
   }
 
-  return { mode, products, productKey }
+  return { mode, products }
 }
 
 export default useCloudProducts

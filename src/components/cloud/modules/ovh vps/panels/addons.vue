@@ -9,7 +9,7 @@ import ovhAddons from '@/components/cloud/create/ovhAddons.vue'
 
 const props = defineProps({
   mode: { type: String, required: true },
-  productKey: { type: String, required: true },
+  productSize: { type: String, required: true },
   products: { type: Array, required: true }
 })
 
@@ -23,7 +23,7 @@ const addons = computed(() => {
       if (!pub) return
 
       const { addons: addonsKeys } = props.products.find(
-        (el) => el.value === props.productKey
+        (el) => el.title === props.productSize
       ) ?? {}
 
       const [duration, addonKey] = key.split(' ')

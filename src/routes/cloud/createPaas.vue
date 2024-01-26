@@ -69,7 +69,6 @@
                 v-model:product-size="productSize"
                 :plans="filteredPlans"
                 :products="products"
-                :product-key="productKey"
                 :mode="mode"
                 @update:periods="periods = $event"
               />
@@ -125,7 +124,7 @@ const priceOVH = reactive({ value: 0, addons: {} })
 
 const { options, dataLocalStorage, fetch } = useCloudOptions(activeKey, tarification)
 const { filteredPlans, product, productSize, isPlansLoading } = useCloudPlans(tarification, options)
-const { mode, productKey, products } = useProducts(options, tarification, productSize)
+const { mode, products } = useProducts(options, tarification, productSize)
 
 watch(isPlansLoading, () => {
   if (dataLocalStorage.value.billing_plan) {

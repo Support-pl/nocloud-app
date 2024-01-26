@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import Antd from 'ant-design-vue'
 import { createPinia } from 'pinia'
 import VueGoogleCharts from 'vue-google-charts'
+import VueGtag from 'vue-gtag'
 
 import App from '@/App.vue'
 import i18n from '@/i18n'
@@ -18,6 +19,7 @@ const app = createApp(App)
 const pinia = createPinia()
 
 app.use(Antd)
+  .use(VueGtag, { config: { id: VUE_APP_GA_ID } }, router)
   .use(VueGoogleCharts)
   .use(i18n)
   .use(router)

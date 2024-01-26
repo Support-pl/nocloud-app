@@ -9,7 +9,6 @@ import ovhAddons from '@/components/cloud/create/ovhAddons.vue'
 
 const props = defineProps({
   mode: { type: String, required: true },
-  productKey: { type: String, required: true },
   products: { type: Array, required: true }
 })
 

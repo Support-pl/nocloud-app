@@ -71,8 +71,8 @@ function useCloudPlans (tarification, options) {
         }
 
         for (const [key, item] of Object.entries(plan.products)) {
-          const { period, title, group } = item
-          const isEqualSize = [title, group].includes(productSize.value)
+          const { period, title } = item
+          const isEqualSize = title === productSize.value
           let isEqualPeriod = getTarification(period) === tarification.value
 
           if (isDynamic && isIone && isHourly) {
