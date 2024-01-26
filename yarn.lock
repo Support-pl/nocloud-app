@@ -4242,6 +4242,11 @@ vue-google-charts@^1.1.0:
   resolved "https://registry.npmjs.org/vue-google-charts/-/vue-google-charts-1.1.0.tgz"
   integrity sha512-wGAgAynIIUKmP5eJUFlx69e8gjIDpyqHlVsvFyrnd2tGZk3a6FI83dRhdssxPyOc9y41+2QEfqUV9SsR+n6s5A==
 
+vue-gtag@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.npmjs.org/vue-gtag/-/vue-gtag-2.0.1.tgz"
+  integrity sha512-aM4A58FVL0wV2ptYi+xzAjeg+pQVRyUcfBc5UkXAwQrR4t3WBhor50Izp2I+3Oo7+l+vWJ7u78DGcNzReb8S/A==
+
 vue-i18n@^9.9.0:
   version "9.9.0"
   resolved "https://registry.npmjs.org/vue-i18n/-/vue-i18n-9.9.0.tgz"

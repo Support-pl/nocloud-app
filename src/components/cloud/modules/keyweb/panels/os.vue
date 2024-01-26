@@ -105,7 +105,6 @@ import imagesList from '@/components/cloud/create/images.vue'
 
 const props = defineProps({
   mode: { type: String, default: '' },
-  productKey: { type: String, required: true },
   productSize: { type: String, required: true }
 })
 
