@@ -23,6 +23,7 @@ export const useChatsStore = defineStore('chats', () => {
 
   const transport = createGrpcWebTransport({
     baseUrl: (VUE_APP_BASE_URL.endsWith('/') ? VUE_APP_BASE_URL : `${VUE_APP_BASE_URL}/`),
+    // useBinaryFormat: import.meta.env.PROD,
     interceptors: [
       (next) => async (req) => {
         req.header.set('Authorization', `Bearer ${authStore.token}`)

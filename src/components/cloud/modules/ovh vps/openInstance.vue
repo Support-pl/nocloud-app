@@ -170,7 +170,7 @@
               {{ capitalize($t("userService.next payment date")) }}
             </div>
             <div class="block__value">
-              {{ VM.data.expiration }}
+              {{ toDate(VM.data.expiration, '.', false) }}
               <sync-icon :title="$t('renew')" @click="sendRenew" />
             </div>
           </div>
@@ -193,12 +193,36 @@
         :confirm-loading="isSwitchLoading"
         @ok="sendNewTariff"
       >
-        <span style="margin-right: 16px">{{ $t("Select new tariff") }}:</span>
-        <a-select v-model:value="planCode" style="width: 200px">
-          <a-select-option v-for="(item, key) in tariffs" :key="key">
-            {{ item.title }}
-          </a-select-option>
-        </a-select>
+        <a-spin :tip="$t('loading')" :spinning="isPlansLoading">
+          <span style="margin-right: 16px">{{ $t("Select new tariff") }}:</span>
+          <a-select
+            v-model:value="planCode"
+            show-search
+            style="width: 100%"
+            :filter-option="searchTafiff"
+          >
+            <a-select-option v-for="(item, key) in tariffs" :key="key">
+              {{ item.title }}
+            </a-select-option>
+          </a-select>
+
+          <div
+            v-if="planCode"
+            style="
+              display: grid;
+              grid-template-columns: 100px 1fr;
+              margin-top: 10px;
+              text-align: right
+            "
+          >
+            <span style="font-weight: 700; text-align: left">{{ $t('cpu') }}:</span>
+            {{ tariffs[planCode].resources.cpu }} cores
+            <span style="font-weight: 700; text-align: left">{{ $t('ram') }}:</span>
+            {{ tariffs[planCode].resources.ram / 1024 }} Gb
+            <span style="font-weight: 700; text-align: left">{{ $t('disk') }}:</span>
+            {{ tariffs[planCode].resources.disk / 1024 }} Gb
+          </div>
+        </a-spin>
       </a-modal>
 
       <div class="Fcloud__info-block block">
@@ -511,11 +535,13 @@ import { Button, Modal, Switch } from 'ant-design-vue'
 import { mapState, mapActions } from 'pinia'
 import { GChart } from 'vue-google-charts'
 import notification from '@/mixins/notification.js'
+import { toDate } from '@/functions.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInstancesStore } from '@/stores/instances.js'
+import { usePlansStore } from '@/stores/plans.js'
 
 const redoIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RedoOutlined')
@@ -658,6 +684,7 @@ export default defineComponent({
     autoRenew: false
   }),
   computed: {
+    ...mapState(usePlansStore, { plans: 'plans', isPlansLoading: 'isLoading' }),
     ...mapState(useSpStore, ['servicesProviders']),
     ...mapState(useAuthStore, ['userdata', 'baseURL']),
     ...mapState(useCurrenciesStore, ['defaultCurrency']),
@@ -735,16 +762,16 @@ export default defineComponent({
     tariffs () {
       if (!this.VM?.billingPlan) return {}
       const tariffs = {}
-      const { products } = this.VM.billingPlan
-      const productKey = `${this.VM.config.duration} ${this.VM.config.planCode}`
-      const a = Object.values(products[productKey].resources)
-        .reduce((acc, curr) => +acc + +curr)
+      const { products } = this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {}
+      const productKey = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
 
       Object.keys(products).forEach((key) => {
-        const b = Object.values(products[key].resources)
-          .reduce((acc, curr) => +acc + +curr)
+        const [a, b] = [products[productKey], products[key]]
+        const isPriceMore = a.price <= b.price
+        const isPeriodsEqual = a.period === b.period
 
-        if (b > a && products[key].period === products[productKey].period) {
+        if (productKey === key) return
+        if (isPriceMore && isPeriodsEqual) {
           tariffs[key] = products[key]
         }
       })
@@ -843,10 +870,20 @@ export default defineComponent({
   watch: {
     'VM.uuidService' () { this.fetchMonitoring() }
   },
-  created () { this.fetchMonitoring() },
+  created () {
+    this.fetchMonitoring()
+    this.fetchPlans({ sp_uuid: this.VM.sp, anonymously: false })
+  },
   mounted () { this.autoRenew = this.VM.config.auto_renew },
   methods: {
     ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
+    ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
+    toDate,
+    searchTafiff (string, option) {
+      const title = this.tariffs[option.key].title.toLowerCase()
+
+      return title.includes(string.toLowerCase())
+    },
     deployService () {
       this.actionLoading = true
       this.$api.services
@@ -1050,8 +1087,8 @@ export default defineComponent({
     sendRenew () {
       const key = `${this.VM.config.duration} ${this.VM.config.planCode}`
       const { period } = this.VM.billingPlan.products[key]
-      const currentPeriod = this.VM.data.expiration
-      const newPeriod = this.date(this.VM.data.expiration, +period)
+      const currentPeriod = this.toDate(this.VM.data.expiration)
+      const newPeriod = this.toDate(this.VM.data.expiration + +period)
 
       this.$confirm({
         title: this.$t('Do you want to renew server?'),
@@ -1142,22 +1179,44 @@ export default defineComponent({
       }
     },
     sendNewTariff () {
-      this.isSwitchLoading = true
-      this.sendAction('get_upgrade_price').then((res) => {
-        const { withTax } = res.meta.result.order.prices
+      const service = this.services.find(({ uuid }) =>
+        uuid === this.VM.uuidService
+      )
+      const instance = service.instancesGroups
+        .find(({ sp }) => sp === this.VM.sp).instances
+        .find(({ uuid }) => uuid === this.VM.uuid)
+
+      try {
+        this.isSwitchLoading = true
+        const { price, resources } = this.tariffs[this.planCode]
+
+        instance.config.planCode = this.planCode.split(' ')[1]
+        instance.product = this.planCode
+        instance.resources = { ...instance.resources, ...resources }
 
         this.$confirm({
           title: this.$t('Do you want to switch tariff?'),
-          content: `${this.$t('invoice_Price')}: ${withTax.value} NCU`,
+          content: `${this.$t('invoice_Price')}: ${price} ${this.currency.code}`,
           okText: this.$t('Yes'),
           cancelText: this.$t('Cancel'),
-          onOk: () => new Promise((resolve) => setTimeout(resolve, 1000)),
+          onOk: async () => {
+            await this.updateService(service)
+            await this.fetch()
+
+            Modal.destroyAll()
+            this.modal.switch = false
+            this.openNotificationWithIcon('success', { message: this.$t('Done') })
+          },
           onCancel () {}
         })
-      })
-        .finally(() => {
-          this.isSwitchLoading = false
-        })
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.openNotificationWithIcon('error', { message })
+        console.error(error)
+      } finally {
+        this.isSwitchLoading = false
+      }
     },
     sendAddingAddon (action) {
       this.$confirm({
@@ -1269,21 +1328,6 @@ export default defineComponent({
           this.openNotificationWithIcon('error', { message: this.$t(message) })
           console.error(err)
         })
-    },
-    date (string, timestamp) {
-      if (timestamp < 1) return '-'
-
-      const stringDate = new Date(string).getTime()
-      const date = new Date(timestamp * 1000 + stringDate)
-
-      const year = date.getFullYear()
-      let month = date.getMonth() + 1
-      let day = date.getDate()
-
-      if (`${month}`.length < 2) month = `0${month}`
-      if (`${day}`.length < 2) day = `0${day}`
-
-      return `${year}-${month}-${day}`
     }
   }
 })
