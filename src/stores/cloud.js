@@ -27,7 +27,7 @@ export const useCloudStore = defineStore('cloud', () => {
     score: null
   })
   const autoRenew = ref(true)
-  const deployMessage = 'VM created successfully'
+  const deployMessage = i18n.t('VM created successfully')
 
   const locationId = ref('Location')
   const showcaseId = ref('')

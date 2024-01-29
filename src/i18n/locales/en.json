@@ -146,6 +146,7 @@
     "You cannot change disk size while you have a snapshot": "You cannot change disk size while you have a snapshot.",
     "You cannot change networks while you have a snapshot": "You cannot change networks while you have a snapshot.",
     "Please delete snapshot and try again": "Please delete snapshot and try again.",
+    "You cannot change resources while there are snapshots": "You cannot change resources while there are snapshots",
     "Do you want to add an backup?": "Do you want to add an backup?",
     "Do you want to add an snapshot?": "Do you want to add an snapshot?",
     "Network reserve 1": "Reserve IPv4 for your VM for",

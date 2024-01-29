@@ -82,7 +82,7 @@
                   </a-modal>
                   <a-modal
                     v-model:open="modal.expand"
-                    :confirm-loading="loadingResizeVM"
+                    :confirm-loading="isResizeLoading"
                     :title="$t('Resize VM')"
                     @ok="ResizeVM"
                   >
@@ -261,7 +261,7 @@ export default {
     isLogsLoading: false,
     reinstallPass: '',
     renameNewName: '',
-    loadingResizeVM: false,
+    isResizeLoading: false,
     modal: {
       menu: false,
       reinstall: false,
@@ -287,16 +287,10 @@ export default {
   computed: {
     ...mapState(useInstancesStore, ['isActionLoading', 'services', 'getInstances', 'isLoading', 'soket']),
     ...mapState(useAuthStore, ['isLogged', 'baseURL']),
-    ...mapState(useChatsStore, 'getDefaults'),
+    ...mapState(useChatsStore, ['getDefaults']),
     ...mapState(useCurrenciesStore, ['currencies']),
-    ...mapState(useProductsStore, {
-      products: 'products',
-      fetchProducts: 'fetch'
-    }),
-    ...mapState(useSpStore, {
-      sp: 'servicesProviders',
-      fetchProviders: 'fetch'
-    }),
+    ...mapState(useProductsStore, { products: 'products', fetchProducts: 'fetch' }),
+    ...mapState(useSpStore, { sp: 'servicesProviders', fetchProviders: 'fetch' }),
     template () {
       const components = import.meta.glob('@/components/cloud/modules/*/openInstance.vue')
       const component = Object.keys(components).find((key) => key.includes(`/${this.type}/`))
@@ -528,7 +522,7 @@ export default {
     this.soket.close(1000, 'Work is done')
   },
   methods: {
-    ...mapActions(useChatsStore, ['createChat']),
+    ...mapActions(useChatsStore, ['createChat', 'sendMessage', 'fetchDefaults']),
     ...mapActions(useAuthStore, ['fetchBillingData']),
     ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     ...mapActions(useInstancesStore, [
@@ -558,13 +552,19 @@ export default {
       this.modal[name] = false
     },
     ResizeVM () {
-      if (Object.keys(this.VM.state?.meta?.snapshots || {}).length > 0) {
-        this.closeModal('expand')
-        return
-      }
+      // if (Object.keys(this.VM.state?.meta?.snapshots ?? {}).length > 0) {
+      //   this.$message.warn(
+      //     this.$t('You cannot change resources while there are snapshots')
+      //   )
+      //   return
+      // }
 
-      const onOk = () => {
-        this.isRenameLoading = true
+      const onOk = async () => {
+        this.isResizeLoading = true
+        if (this.getDefaults.departments.length < 1) {
+          await this.fetchDefaults()
+        }
+
         const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp)
         const instance = group.instances.find((el) => el.uuid === this.VM.uuid)
         const cpuEqual = instance.resources.cpu === +this.resize.VCPU
@@ -577,41 +577,43 @@ export default {
         } else if (!cpuEqual || !ramEqual) {
           const { departments } = this.getDefaults
           const { admins } = departments.find(({ id }) => id === config.department) ?? {}
+          const message = `
+              1. ID: ${this.VM.uuid}
+              2. Resources:
+                - cpu: ${this.resize.VCPU}
+                - ram: ${this.resize.RAM * 1024}
+            `
 
-          this.createChat({
-            admins,
-            department: config.department,
-            gateways: [],
-            chat: {
-              subject: `Resize VM - ${this.VM.title}`,
-              message: `
-                1. ID: ${this.VM.uuid}
-                2. Resources:
-                  - cpu: ${this.resize.VCPU}
-                  - ram: ${this.resize.RAM * 1024}
-              `
-            }
-          })
-            .then((resp) => {
-              if (resp.result === 'success') {
-                this.$message.success(this.$t('Ticket created successfully'))
-              } else {
-                throw resp
+          try {
+            const response = await this.createChat({
+              admins,
+              department: config.department,
+              gateways: [],
+              chat: {
+                subject: `Resize VM: ${this.VM.title}`,
+                message
               }
             })
-            .catch((err) => {
-              const message = err.response?.data?.message ?? err.message ?? err
 
-              this.openNotificationWithIcon('error', {
-                message: this.$t(message)
-              })
-              console.error(err)
+            await this.sendMessage({
+              uuid: response.uuid,
+              content: message,
+              account: this.userdata.uuid,
+              date: BigInt(Date.now())
             })
+
+            this.$message.success(this.$t('Ticket created successfully'))
+          } catch (error) {
+            const message = error.response?.data?.message ?? error.message ?? error
+
+            this.openNotificationWithIcon('error', { message: this.$t(message) })
+            console.error(error)
+          }
         }
 
         if (cpuEqual && ramEqual && diskEqual) {
           this.closeModal('expand')
-          this.isRenameLoading = false
+          this.isResizeLoading = false
           return
         }
 
@@ -620,17 +622,14 @@ export default {
         this.updateService(this.itemService)
           .then((result) => {
             if (result) {
-              // this.$message.success(this.$t("VM resized successfully"));
               this.openNotificationWithIcon('success', {
                 message: this.$t('VM resized successfully')
               })
-              this.isRenameLoading = false
               this.closeModal('expand')
             } else {
               this.openNotificationWithIcon('error', {
                 message: this.$t("Can't VM resize to same size")
               })
-              // this.$message.error("Can't resize to same size");
             }
           })
           .catch((err) => {
@@ -642,7 +641,7 @@ export default {
             console.error(err)
           })
           .finally(() => {
-            this.modal.confirmLoading = false
+            this.isResizeLoading = false
           })
       }
 

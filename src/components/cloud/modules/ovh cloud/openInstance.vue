@@ -995,7 +995,7 @@ export default defineComponent({
         instance.config.planCode = this.planCode.split(' ')[1]
         instance.config.configuration.cloud_os = this.newOS
         instance.product = this.planCode
-        instance.resources = resources
+        instance.resources = { ...instance.resources, ...resources }
 
         this.$confirm({
           title: this.$t('Do you want to switch tariff?'),
