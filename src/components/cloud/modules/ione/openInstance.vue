@@ -853,7 +853,7 @@ export default defineComponent({
     'VM.uuidService' () { this.fetchMonitoring() }
   },
   created () {
-    this.fetchPlans({ anonymously: false })
+    this.fetchPlans({ anonymously: false, sp_uuid: this.VM.sp })
     this.fetchMonitoring()
   },
   mounted () { this.autoRenew = this.VM.config.auto_renew },
@@ -921,9 +921,7 @@ export default defineComponent({
           })
           break
         case 'renew': {
-          const sum = this.VM.billingPlan?.products[this.VM.product]?.price ?? 0
-
-          if (this.checkBalance(sum)) this.sendRenew()
+          if (this.checkBalance(this.fullPrice)) this.sendRenew()
           break
         }
       }
