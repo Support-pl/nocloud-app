@@ -15,7 +15,7 @@
     "@bufbuild/connect": "^0.13.0",
     "@bufbuild/connect-web": "^0.13.0",
     "@bufbuild/protobuf": "^1.7.0",
-    "ant-design-vue": "^4.1.1",
+    "ant-design-vue": "^4.1.2",
     "core-js": "^3.35.1",
     "dayjs": "^1.11.10",
     "infinimesh-proto": "^3.1.2",
