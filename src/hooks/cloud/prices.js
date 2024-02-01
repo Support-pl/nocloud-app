@@ -124,7 +124,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
       } else {
         const { size } = (activeKey.value === 'location')
           ? { size: options[key]?.min ?? 0 }
-          : options[key] ?? {}
+          : options[key] ?? { size: 0 }
 
         price.push(resource.price / resource.period * 3600 * size)
       }
