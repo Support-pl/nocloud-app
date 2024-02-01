@@ -73,7 +73,7 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
 
-import imagesList from '@/components/cloud/create/images.vue'
+import imagesList from '@/components/ui/images.vue'
 import addSsh from '@/components/ui/addSSH.vue'
 
 const plusIcon = defineAsyncComponent(

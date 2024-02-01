@@ -94,7 +94,7 @@ import passwordMeter from 'vue-simple-password-meter'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
 
-import imagesList from '@/components/cloud/create/images.vue'
+import imagesList from '@/components/ui/images.vue'
 
 const authStore = useAuthStore()
 const cloudStore = useCloudStore()

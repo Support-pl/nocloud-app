@@ -477,76 +477,8 @@ provide('useActiveKey', () => [readonly(activeKey), nextStep])
 .changing__field {
   font-weight: 600;
 }
-.newCloud__template {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 17px;
-}
-.newCloud__template.one-line {
-  flex-wrap: nowrap;
-  justify-content: space-between;
-}
 .ant-collapse-item:last-child > .ant-collapse-content {
   border-radius: 0 0 20px 20px;
-}
-.newCloud__template-item {
-  background-color: var(--bright_font);
-  box-shadow: 3px 2px 6px rgba(0, 0, 0, 0.08), 0px 0px 8px rgba(0, 0, 0, 0.05);
-  border-radius: 15px;
-  transition: all 0.2s ease, transform 0.2s ease;
-  cursor: pointer;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: 30px 1fr;
-  align-items: center;
-  max-width: calc(50% - 9px);
-}
-.newCloud__template-item:hover {
-  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
-}
-.newCloud__template-item.active {
-  box-shadow: 5px 8px 12px rgba(0, 0, 0, 0.08), 0px 0px 13px rgba(0, 0, 0, 0.05);
-  transform: scale(1.02);
-  background-color: var(--main);
-  color: var(--bright_font);
-}
-.newCloud__template-image {
-  padding: 5px 0 5px 10px;
-  overflow: hidden;
-}
-.newCloud__template-image img {
-  object-fit: cover;
-  max-width: 100%;
-  max-height: 80px;
-}
-.newCloud__template-image img::before {
-  width: 16px;
-  display: inline-block;
-  overflow: hidden;
-  height: 15px;
-}
-.newCloud__template-image img::after {
-  content: url('/img/OS/default.png');
-  display: block;
-  position: absolute;
-  transform: translate(-36px, -59px) scale(0.21);
-  background: var(--bright_font);
-  border-radius: 50%;
-  transition: 0.2s;
-}
-.newCloud__template-name {
-  padding: 10px;
-  word-break: break-word;
-}
-.newCloud__template-item.active .newCloud__template-image img {
-  padding: 2px;
-  background: var(--bright_font);
-  border-radius: 50%;
-  transition: 0.2s;
-}
-.newCloud__template-item.active .newCloud__template-image img::after {
-  transform: translate(-37px, -61px) scale(0.18);
-  padding: 2px;
 }
 .ant-collapse > .ant-collapse-item:last-child {
   border-radius: 0 0 15px 15px;
@@ -579,28 +511,6 @@ provide('useActiveKey', () => [readonly(activeKey), nextStep])
   }
 }
 @media screen and (max-width: 575px) {
-  .newCloud__template-item {
-    grid-template-columns: 40px 1fr;
-  }
-  .newCloud__template-image {
-    padding: 7px 0 7px 10px;
-  }
-  .newCloud__template-image__rate {
-    line-height: 42px;
-    font-size: 1.4rem;
-  }
-  .newCloud__template-type {
-    width: 56px;
-  }
-  .newCloud__template-name ul {
-    display: flex;
-    justify-content: space-around;
-    list-style: none;
-    flex: 1;
-  }
-  .newCloud__template-name ul li {
-    margin-left: 20px;
-  }
   .ant-form-item-label {
     line-height: inherit;
   }

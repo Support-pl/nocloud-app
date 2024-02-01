@@ -42,7 +42,7 @@
 import { inject, ref, watch, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCloudStore } from '@/stores/cloud.js'
-import imagesList from '@/components/cloud/create/images.vue'
+import imagesList from '@/components/ui/images.vue'
 
 const props = defineProps({
   mode: { type: String, required: true },
