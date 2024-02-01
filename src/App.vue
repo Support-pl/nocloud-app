@@ -68,7 +68,7 @@ function checkBalance (price = 0) {
       title: i18n.t('You do not have enough funds on your balance'),
       content: i18n.t('Click OK to replenish the account with the missing amount'),
       onOk: () => {
-        modal.value.amount = Math.ceil(parseFloat(price) - balance)
+        modal.value.amount = +(parseFloat(price) - balance).toFixed(2)
         modal.value.visible = true
       }
     })

@@ -192,9 +192,7 @@ function getAddonsValue (key) {
 }
 
 async function createOrder () {
-  const sum = sumOrder.value.$el.firstElementChild.innerText
-
-  if (!checkBalance(sum)) return
+  if (!checkBalance(productFullPrice.value)) return
   await cloudStore.createOrder(options, product)
 }
 </script>
