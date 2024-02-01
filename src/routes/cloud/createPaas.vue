@@ -122,9 +122,9 @@ const periods = ref([])
 const tarification = ref('')
 const priceOVH = reactive({ value: 0, addons: {} })
 
+const { mode, products } = useProducts(tarification)
 const { options, dataLocalStorage, fetch } = useCloudOptions(activeKey, tarification)
 const { filteredPlans, product, productSize, isPlansLoading } = useCloudPlans(tarification, options)
-const { mode, products } = useProducts(options, tarification, productSize)
 
 watch(isPlansLoading, () => {
   if (dataLocalStorage.value.billing_plan) {
