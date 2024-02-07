@@ -290,10 +290,12 @@ async function sendInfo () {
           run: 'update_client',
           user: { ...authStore.billingUser, ...deltaInfo.value }
         }
+    let response
 
     isSendingInfo.value = true
-    if (config.WHMCSsiteurl) await api.get(authStore.baseURL, { params })
-    else {
+    if (config.WHMCSsiteurl) {
+      response = await api.get(authStore.baseURL, { params })
+    } else {
       await api.accounts.update(authStore.userdata.uuid, {
         ...authStore.userdata,
         title: `${deltaInfo.value.firstname} ${deltaInfo.value.lastname}`,
@@ -312,6 +314,12 @@ async function sendInfo () {
           { ...authStore.userdata.data }
         )
       })
+    }
+
+    if (response.error === 'email') {
+      throw new Error(i18n.t('Email is already in use or is empty'))
+    } else if (response.error) {
+      throw new Error(response.error)
     }
 
     localStorage.removeItem('oauth')

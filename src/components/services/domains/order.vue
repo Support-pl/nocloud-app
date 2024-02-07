@@ -308,6 +308,9 @@ import { defineAsyncComponent, reactive, ref } from 'vue'
 import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
+import useCreateInstance from '@/hooks/instances/create.js'
+import { checkPayg, createInvoice } from '@/functions.js'
+
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useInstancesStore } from '@/stores/instances.js'
@@ -352,8 +355,13 @@ export default {
   emits: ['change'],
   setup () {
     const { currency } = useCurrency()
+    const { deployService } = useCreateInstance()
 
     return {
+      deployService,
+      createInvoice,
+      checkPayg,
+
       countries,
       currency,
       products: ref({}),
@@ -386,7 +394,7 @@ export default {
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
-    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser']),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'baseURL']),
     services () {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')
     },
@@ -616,7 +624,21 @@ export default {
           }
 
       this.instancesStore[`${action}Service`](orderData)
-        .then(({ uuid }) => { this.deployService(uuid) })
+        .then(async ({ uuid, instancesGroups }) => {
+          await this.deployService(uuid, this.$t('Domain created successfully'))
+          const { instances } = instancesGroups.find(({ sp }) => sp === this.provider) ?? {}
+          let instance
+
+          for (let i = instances.length - 1; i >= 0; i--) {
+            const { title } = instances[i]
+
+            if (title === this.getProducts.title) {
+              instance = instances[i]
+            }
+          }
+
+          return this.createInvoice(instance, this.baseURL)
+        })
         .catch((err) => {
           const config = { namespace: this.namespace, service: orderData }
           const message = err.response?.data?.message ?? err.message ?? err
@@ -648,25 +670,17 @@ export default {
         this.$message.error(this.$t('domain is wrong'))
         return
       }
-      if (!this.checkBalance(this.getProducts().pricing[this.resources.period])) return
-      this.modal.confirmCreate = true
-    },
-    deployService (uuid) {
-      this.$api.services.up(uuid)
-        .then(() => {
-          this.openNotificationWithIcon('success', {
-            message: this.$t('Domain created successfully')
-          })
-          this.$router.push({ path: '/services' })
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
 
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          })
-        })
-        .finally(() => { this.modal.confirmLoading = false })
+      const instance = {
+        config: {},
+        billingPlan: this.plans.find(({ uuid }) => uuid === this.plan)
+      }
+      const isEnoughBalance = this.checkBalance(
+        this.getProducts().pricing[this.resources.period]
+      )
+
+      if (!isEnoughBalance && this.checkPayg(instance)) return
+      this.modal.confirmCreate = true
     },
     getProducts () {
       const prices = { suffix: this.userdata.currency }
