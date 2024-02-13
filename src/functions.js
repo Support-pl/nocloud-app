@@ -1,3 +1,5 @@
+import api from '@/api.js'
+
 export function debounce (func, ms) {
   let timeout
 
@@ -121,6 +123,24 @@ export function getPeriods (productSize, plans) {
   value.sort((a, b) => (a.value === 'Hourly') ? 1 : a.period - b.period)
 
   return value
+}
+
+export function createInvoice (instance, baseURL) {
+  if (checkPayg(instance)) return
+  return api.get(baseURL,  {
+    params: {
+       run: 'invoice_instans', uuid_instans: instance.uuid
+    }
+  })
+}
+
+export function checkPayg (instance) {
+  const { config } = instance ?? {}
+  const {type,kind}=instance.billingPlan || instance.billing_plan
+
+  if (type === 'openai') return true
+  if (config.duration === 'P1H') return true
+  return type === 'ione' && kind === 'DYNAMIC'
 }
 
 export function onError ({ target }) {

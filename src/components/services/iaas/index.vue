@@ -220,7 +220,6 @@ import promoBlock from '@/components/ui/promo.vue'
 export default {
   name: 'IaasComponent',
   components: { promoBlock },
-  inject: ['checkBalance'],
   data: () => ({
     sizes: [],
     products: [],
@@ -458,7 +457,7 @@ export default {
         this.$message.error(this.$t('Choose your payment method'))
         return
       }
-      if (!this.checkBalance(this.getProducts.price[this.options.period])) return
+      // if (!this.checkBalance(this.getProducts.price[this.options.period])) return
       this.modal.confirmCreate = true
     },
     getPaytoken (invoiceId) {

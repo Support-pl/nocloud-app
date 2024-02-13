@@ -134,8 +134,11 @@ const price = computed(() => {
 })
 
 const isPayg = computed(() => {
-  if (props.instance.groupname === 'OpenAI') return true
-  return props.instance.type === 'ione' && props.instance.billingPlan.kind === 'DYNAMIC'
+  const { groupname, config, billingPlan, type } = props.instance ?? {}
+
+  if (groupname === 'OpenAI') return true
+  if (config.duration === 'P1H') return true
+  return type === 'ione' && billingPlan.kind === 'DYNAMIC'
 })
 
 const isExpired = computed(() => {

@@ -58,6 +58,7 @@
     "Copy link": "Скопировать ссылку",
     "Copy link to share": "Поделиться ссылкой",
     "It’s empty...": "Тут пока ничего нет...",
+    "Email is already in use or is empty": "Почта уже используется или не заполнена",
     "Unknown error.": "Неизвестная ошибка.",
     "Password is too short": "Слишком короткий пароль",
     "pass at least 10 characters": "Пароль должен быть более 10 символов",

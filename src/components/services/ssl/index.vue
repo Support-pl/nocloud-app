@@ -161,6 +161,9 @@ import { defineAsyncComponent } from 'vue'
 import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
+import useCreateInstance from '@/hooks/instances/create.js'
+import { checkPayg, createInvoice } from '@/functions.js'
+
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
@@ -183,35 +186,43 @@ export default {
   components: { passwordMeter, selectsToCreate, promoBlock, rightIcon },
   mixins: [notification],
   inject: ['checkBalance'],
-  data: () => ({
-    products: {},
-    cachedPlans: {},
-    currentStep: 0,
-    plan: null,
-    service: null,
-    namespace: null,
-    provider: null,
-    fetchLoading: false,
+  setup () {
+    const { deployService } = useCreateInstance()
 
-    options: {
-      provider: '',
-      tarif: '',
-      domain: '',
-      period: ''
-    },
-    modal: {
-      confirmCreate: false,
-      confirmLoading: false
-    },
+    return {
+      deployService,
+      createInvoice,
+      checkPayg,
 
-    csr: {},
-    personal: {},
-    verification: {}
-  }),
+      products: {},
+      cachedPlans: {},
+      currentStep: 0,
+      plan: null,
+      service: null,
+      namespace: null,
+      provider: null,
+      fetchLoading: false,
+
+      options: {
+        provider: '',
+        tarif: '',
+        domain: '',
+        period: ''
+      },
+      modal: {
+        confirmCreate: false,
+        confirmLoading: false
+      },
+
+      csr: {},
+      personal: {},
+      verification: {}
+    }
+  },
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
-    ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData']),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL']),
     ...mapState(useCurrenciesStore, [
       'currencies',
       'defaultCurrency',
@@ -455,7 +466,21 @@ export default {
           }
 
       this.instancesStore[`${action}Service`](orderData)
-        .then(({ uuid }) => { this.deployService(uuid) })
+        .then(async ({ uuid, instancesGroups }) => {
+          await this.deployService(uuid, this.$t('SSL created successfully'))
+          const { instances } = instancesGroups.find(({ sp }) => sp === this.provider) ?? {}
+          let instance
+
+          for (let i = instances.length - 1; i >= 0; i--) {
+            const { title } = instances[i]
+
+            if (title === this.getProducts.title) {
+              instance = instances[i]
+            }
+          }
+
+          return this.createInvoice(instance, this.baseURL)
+        })
         .catch((err) => {
           const config = { namespace: this.namespace, service: orderData }
           const message = err.response?.data?.message ?? err.message ?? err
@@ -481,29 +506,19 @@ export default {
         this.$message.error('domain is wrong')
         return
       }
-      if (!this.checkBalance(this.getProducts.prices[this.options.period])) return
+
+      const instance = {
+        config: {},
+        billingPlan: this.plans.find(({ uuid }) => uuid === this.plan)
+      }
+      const isEnoughBalance = this.checkBalance(
+        this.getProducts.prices[this.options.period]
+      )
+
+      if (!isEnoughBalance && this.checkPayg(instance)) return
       if (order) this.modal.confirmCreate = true
 
       return isValid
-    },
-    deployService (uuid) {
-      this.$api.services.up(uuid)
-        .then(() => {
-          this.openNotificationWithIcon('success', {
-            message: this.$t('SSL created successfully')
-          })
-          this.$router.push({ path: '/services' })
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
-
-          this.openNotificationWithIcon('error', {
-            message: this.$t(message)
-          })
-        })
-        .finally(() => {
-          this.modal.confirmLoading = false
-        })
     },
     handleClickPrev (data) {
       if (data.csr) {

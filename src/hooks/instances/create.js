@@ -28,18 +28,20 @@ function useCreateInstance () {
 
   return {
     deployService,
-    async createInstance (action, orderData, namespace, message, deployMessage) {
+    async createInstance (action, service, namespace, message, deployMessage) {
       try {
-        const { uuid } = await store[`${action}Service`](orderData)
+        const response = await store[`${action}Service`](service)
 
-        if (uuid) {
+        if (response.uuid) {
           openMessage.success(message)
-          await deployService(uuid, deployMessage)
+          await deployService(response.uuid, deployMessage)
+
+          return response
         } else {
           throw new Error('[Error]: Service uuid not found')
         }
       } catch (error) {
-        const config = { namespace, service: orderData }
+        const config = { namespace, service }
         const message = error.response?.data?.message ?? error.message ?? error
 
         const { result, errors } = await api.services.testConfig(config)

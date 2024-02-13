@@ -8,6 +8,7 @@ import { usePlansStore } from './plans.js'
 import { useInstancesStore } from './instances.js'
 
 import useCreateInstance from '@/hooks/instances/create.js'
+import { checkPayg, createInvoice } from '@/functions.js'
 
 export const useCloudStore = defineStore('cloud', () => {
   const i18n = useI18n()
@@ -83,6 +84,7 @@ export const useCloudStore = defineStore('cloud', () => {
 
   async function createOrder (options, product) {
     const [newInstance, newGroup] = setInstance(options, product)
+    let instancesGroups
 
     if (newGroup.type === 'ovh') {
       newInstance.config = {
@@ -112,9 +114,22 @@ export const useCloudStore = defineStore('cloud', () => {
     }
 
     if (serviceId.value) {
-      await updateService(newGroup, newInstance, options)
+      const response = await updateService(newGroup, newInstance, options)
+
+      instancesGroups = response.instancesGroups
     } else {
-      await createService(newInstance, options)
+      const response = await createService(newInstance, options)
+
+      instancesGroups = response.instancesGroups
+    }
+
+    if (!checkPayg(newInstance)) {
+      const { instances } = instancesGroups.find(({ sp }) => sp === provider.value.uuid) ?? {}
+      let instance = instances.find(inst=>
+        inst.title===newInstance.title && inst.billingPlan.uuid===newInstance.billing_plan.uuid
+      )
+
+      await createInvoice(instance,authStore.baseURL)
     }
   }
 
@@ -136,7 +151,7 @@ export const useCloudStore = defineStore('cloud', () => {
         ips_private: options.network.private.count,
         ips_public: options.network.public.count
       },
-      billing_plan: { uuid: planId.value }
+      billing_plan: { uuid: planId.value,...plan.value }
     }
 
     if (plan.value.kind === 'STATIC' || plan.value.type !== 'ione') {
@@ -157,7 +172,7 @@ export const useCloudStore = defineStore('cloud', () => {
     return [instance, group]
   }
 
-  async function createService (newInstance, options) {
+  function createService (newInstance, options) {
     const orderData = {
       namespace: namespaceId.value,
       service: {
@@ -184,10 +199,12 @@ export const useCloudStore = defineStore('cloud', () => {
     }
     const message = i18n.t('Order created successfully')
 
-    await createInstance('create', orderData, namespaceId.value, message, deployMessage)
+    return createInstance(
+      'create', orderData, namespaceId.value, message, deployMessage
+    )
   }
 
-  async function updateService (newGroup, newInstance, options) {
+  function updateService (newGroup, newInstance, options) {
     const orderData = Object.assign({}, service.value)
     let group = orderData.instancesGroups.find(
       (el) => el.sp === provider.value.uuid
@@ -212,7 +229,9 @@ export const useCloudStore = defineStore('cloud', () => {
 
     const message = i18n.t('Order update successfully')
 
-    await createInstance('update', orderData, namespaceId.value, message, deployMessage)
+    return createInstance(
+      'update', orderData, namespaceId.value, message, deployMessage
+    )
   }
 
   return {
