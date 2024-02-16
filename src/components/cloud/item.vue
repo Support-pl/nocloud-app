@@ -172,8 +172,8 @@ const localDate = computed(() => {
 })
 
 const dateColor = computed(() => {
-  if (isExpired.value) return 'var(--err)'
   if (isPayg.value) return 'var(--main)'
+  if (isExpired.value) return 'var(--err)'
   if (localDate.value === 'none') return 'var(--gray)'
   return null
 })

@@ -157,7 +157,7 @@ watch(() => options.ram.size, async (size) => {
     el.group === product.value && el.resources.ram / 1024 === size
   ) ?? {}
 
-  setOptions('disk.size', resources.disk)
+  setOptions('disk.size', resources?.disk)
 })
 
 watch(() => options.disk.size, async (size) => {
@@ -169,7 +169,7 @@ watch(() => options.disk.size, async (size) => {
     el.group === product.value && el.resources.disk === size
   ) ?? {}
 
-  setOptions('ram.size', resources.ram / 1024)
+  setOptions('ram.size', resources?.ram / 1024)
 })
 
 watch(() => props.mode, () => {
