@@ -30,10 +30,10 @@
             <a-popover arrow-point-at-center placement="left" :align="{ offset: [-10, 0] }">
               <template #content>
                 <a-input-search
-                  v-model:value="text"
                   enter-button
                   placeholder="Topic"
-                  @update:value="search"
+                  :value="text"
+                  @update:value="text = $event; search()"
                 >
                   <template #suffix>
                     <div style="cursor: pointer" @click="text = ''">
@@ -54,45 +54,7 @@
       <add-ticket v-if="supportStore.isAddingTicket" :instance-id="$route.query.from" />
     </div>
 
-    <a-alert
-      v-if="!isLoading"
-      ref="notification"
-      type="info"
-      class="chat__notification"
-    >
-      <template #message>
-        {{ $t('You can also choose another way of communication') }}
-        <plus-icon v-if="isVisible" :rotate="45" @click="isVisible = false" />
-        <down-icon v-else @click="isVisible = true" />
-      </template>
-
-      <template v-if="isVisible" #description>
-        <div class="order__grid">
-          <div
-            v-for="gate of options"
-            :key="gate.id"
-            class="order__slider-item"
-            :value="gate.id"
-            :class="{ 'order__slider-item--active': gateway === gate.id }"
-            @click="changeGateway(gate.id)"
-          >
-            <span class="order__slider-name" :title="gate.name">
-              <img class="img_prod" :src="`/img/icons/${getImageName(gate.id)}.png`" :alt="gate.id" @error="onError">
-              {{ gate.name }}
-            </span>
-          </div>
-        </div>
-
-        <a-button
-          type="primary"
-          style="display: block; margin-top: 10px"
-          :loading="isEditLoading"
-          @click="updateChat"
-        >
-          OK
-        </a-button>
-      </template>
-    </a-alert>
+    <support-alert v-model:padding-top="chatPaddingTop" :chat="chat" :is-loading="isLoading" />
 
     <loading v-if="isLoading" />
     <div v-else ref="content" class="chat__content">
@@ -203,12 +165,14 @@
 </template>
 
 <script>
-import { defineAsyncComponent, nextTick } from 'vue'
+import { defineAsyncComponent, nextTick, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { mapStores } from 'pinia'
 import markdown from 'markdown-it'
 import { full as emoji } from 'markdown-it-emoji'
 import { Status } from '@/libs/cc_connect/cc_pb'
-import { debounce } from '@/functions.js'
+import { useClipboard } from '@/hooks/utils'
+import { debounce, toDate } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -218,15 +182,13 @@ import { useSupportStore } from '@/stores/support.js'
 import loading from '@/components/ui/loading.vue'
 import ticketItem from '@/components/support/ticketItem.vue'
 import addTicket from '@/components/support/addTicket.vue'
+import supportAlert from '@/components/support/alert.vue'
 
 const leftIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LeftOutlined')
 )
 const reloadIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/ReloadOutlined')
-)
-const downIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/DownOutlined')
 )
 
 const exclamationIcon = defineAsyncComponent(
@@ -266,11 +228,10 @@ export default {
     loading,
     ticketItem,
     addTicket,
+    supportAlert,
 
     leftIcon,
     reloadIcon,
-    downIcon,
-
     exclamationIcon,
     copyIcon,
     editIcon,
@@ -285,23 +246,26 @@ export default {
     this.loadMessages()
     next()
   },
-  data () {
+  setup () {
+    const route = useRoute()
+    const { addToClipboard } = useClipboard()
+
     return {
-      cachedChats: {},
-      status: null,
-      subject: 'SUPPORT',
-      replies: [],
-      messageInput: '',
-      isLoading: true,
-      chatid: this.$route.params.id,
-      showSendFiles: false,
-      editing: null,
-      gateway: '',
-      text: '',
-      searchString: '',
-      isVisible: false,
-      isEditLoading: false,
-      chatPaddingTop: '15px'
+      addToClipboard,
+      cachedChats: ref({}),
+      status: ref(null),
+      subject: ref('SUPPORT'),
+      replies: ref([]),
+
+      messageInput: ref(''),
+      isLoading: ref(true),
+      chatid: ref(route.params.id),
+      showSendFiles: ref(false),
+
+      editing: ref(null),
+      text: ref(''),
+      searchString: ref(''),
+      chatPaddingTop: ref('15px')
     }
   },
   computed: {
@@ -357,31 +321,9 @@ export default {
       )
 
       return [...tickets, ...chatMessages]
-    },
-    options () {
-      const { gateways = [] } = this.chatsStore.getDefaults ?? {}
-      let result = gateways.map((gateway) => ({
-        id: gateway,
-        name: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`
-      }))
-
-      if (this.$route.query.from) {
-        result = result.filter(({ id }) => id === 'telegram')
-      }
-
-      return result
     }
   },
   watch: {
-    chat (value) {
-      this.gateway = value.gateways[0] ?? ''
-    },
-    isLoading (value) {
-      if (value) return
-      nextTick(() => {
-        this.chatPaddingTop = `${this.$refs.notification?.$el.offsetHeight + 15}px`
-      })
-    },
     messages: {
       handler () {
         nextTick(() => {
@@ -398,21 +340,10 @@ export default {
     this.chatsStore.fetchDefaults()
     this.loadMessages()
 
-    window.addEventListener('resize', () => {
-      this.chatPaddingTop = `${this.$refs.notification?.$el.offsetHeight + 15}px`
-    })
-
-    if (localStorage.getItem('gateway')) {
-      this.gateway = localStorage.getItem('gateway')
-      this.isVisible = true
-
-      this.updateChat()
-      localStorage.removeItem('gateway')
-    }
-
     this.search = debounce(() => { this.searchString = this.text }, 200)
   },
   methods: {
+    toDate,
     search () {},
     goBack () {
       if (this.$route.query.from) {
@@ -464,7 +395,7 @@ export default {
         sending: true
       }
 
-      const date = this.appStore.toDate(message.date / 1000, '-', true, true)
+      const date = this.toDate(message.date / 1000, '-', true, true)
 
       this.replies.push({ ...message, date, requestor_type: 'Owner' })
 
@@ -583,60 +514,6 @@ export default {
     },
     getMessage (uuid) {
       return this.replies?.find((reply) => reply.uuid === uuid)?.message
-    },
-    updateChat () {
-      this.isEditLoading = true
-      if (!this.authStore.userdata.data.telegram) {
-        this.$router.push({ name: 'handsfree' })
-      }
-
-      this.chatsStore.changeGateway({
-        ...this.chat, gateways: [this.gateway]
-      })
-        .then(() => {
-          this.$notification.success({ message: this.$t('Done') })
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message
-
-          this.$notification.error({ message: this.$t(message) })
-          console.error(err)
-        })
-        .finally(() => {
-          this.isEditLoading = false
-          this.supportStore.isAddingTicket = false
-        })
-    },
-    changeGateway (value) {
-      if (this.gateway === value) {
-        this.gateway = ''
-      } else {
-        this.gateway = value
-      }
-    },
-    onError ({ target }) {
-      target.src = '/img/OS/default.png'
-    },
-    getImageName (name) {
-      return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0]
-    },
-    addToClipboard (text) {
-      if (navigator?.clipboard) {
-        navigator.clipboard
-          .writeText(text)
-          .then(() => {
-            this.$notification.success({
-              message: this.$t('Text copied')
-            })
-          })
-          .catch((res) => {
-            console.error(res)
-          })
-      } else {
-        this.$notification.error({
-          message: this.$t('Clipboard is not supported')
-        })
-      }
     }
   }
 }
@@ -649,7 +526,7 @@ export default {
   grid-template-columns: min(400px, 35vw - 20px) min(768px, 65vw - 20px);
   grid-template-rows: 1fr auto;
   justify-content: center;
-  gap: 10px 20px;
+  gap: 10px;
   height: 100%;
   padding-top: 64px;
   background: var(--bright_bg);
@@ -673,7 +550,7 @@ export default {
   justify-items: center;
   align-items: center;
   gap: 5px;
-  max-width: calc(768px + 400px + 20px);
+  max-width: calc(768px + 400px + 10px);
   height: 100%;
   width: 100%;
   margin: 0 auto;
@@ -686,72 +563,6 @@ export default {
   padding: 5px 7px;
   margin-right: auto;
   font-size: 18px;
-}
-
-.chat__notification {
-  position: absolute;
-  right: max(25px, (100vw - 1158px) / 2);
-  top: 87px;
-  z-index: 10;
-  width: 100%;
-  max-width: min(65vw - 50px, 768px - 30px);
-  transition: .3s;
-}
-
-.chat__notification.ant-alert-with-description {
-  padding: 15px;
-}
-
-.chat__notification .ant-alert-message {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 14px;
-}
-
-.order__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.order__slider {
-  display: flex;
-  justify-content: space-evenly;
-  margin-bottom: 10px;
-  overflow-x: auto;
-}
-
-.order__slider-item {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-  height: 100%;
-  padding: 7px 10px;
-  cursor: pointer;
-  border-radius: 15px;
-  font-size: 1rem;
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
-}
-
-.order__slider-item:hover {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
-}
-
-.order__slider-item--active {
-  background-color: #1045b4;
-  color: var(--bright_font);
-}
-
-.order__grid .order__slider-name > .img_prod {
-  display: block;
-  max-height: 20px;
-}
-
-.order__grid .order__slider-name {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
 }
 
 .chat__title {
@@ -782,8 +593,10 @@ export default {
 
 .chat__list {
   grid-row: 1 / 3;
-  padding-top: 10px;
+  margin: 10px 0;
   overflow: scroll;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
 }
 
 .chat__footer {
@@ -959,11 +772,6 @@ export default {
 @media (max-width: 768px) {
   .chat {
     grid-template-columns: 1fr;
-  }
-
-  .chat__notification {
-    right: 15px;
-    max-width: calc(100% - 30px);
   }
 
   .chat__list {
