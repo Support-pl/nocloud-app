@@ -130,6 +130,7 @@ import useCloudPrices from '@/hooks/cloud/prices.js'
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
 import cloudResources from '@/components/cloud/create/resources.vue'
 import cloudCreateButton from '@/components/cloud/create/button.vue'
+import { checkPayg } from '@/functions'
 
 const props = defineProps({
   productSize: { type: String, required: true },
@@ -192,7 +193,10 @@ function getAddonsValue (key) {
 }
 
 async function createOrder () {
-  if (!checkBalance(productFullPrice.value)) return
+  const instance = { config: options.config, billingPlan: cloudStore.plan }
+  const isEnoughBalance = checkBalance(productFullPrice.value)
+
+  if (checkPayg(instance) && !isEnoughBalance) return
   await cloudStore.createOrder(options, product)
 }
 </script>

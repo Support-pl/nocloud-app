@@ -5,9 +5,9 @@ import { createPromiseClient } from '@bufbuild/connect'
 import { createGrpcWebTransport } from '@bufbuild/connect-web'
 import { Value } from '@bufbuild/protobuf'
 
-import { useAppStore } from './app.js'
 import { useAuthStore } from './auth.js'
 import { useSupportStore } from './support.js'
+import { toDate } from '@/functions.js'
 
 import {
   Empty, Chat, Message, ChatMeta, Role, Kind, EventType, Users, User, Status
@@ -18,7 +18,6 @@ import {
 
 export const useChatsStore = defineStore('chats', () => {
   const authStore = useAuthStore()
-  const appStore = useAppStore()
   const supportStore = useSupportStore()
 
   const transport = createGrpcWebTransport({
@@ -127,7 +126,7 @@ export const useChatsStore = defineStore('chats', () => {
   function changeMessage (message, user, uuid) {
     return {
       uuid: message.uuid,
-      date: appStore.toDate(Number(message.sent) / 1000, '-', true, true),
+      date: toDate(Number(message.sent) / 1000, '-', true, true),
       sent: message.sent,
       email: user.data?.email ?? 'none',
       message: message.content.trim(),
@@ -285,8 +284,23 @@ export const useChatsStore = defineStore('chats', () => {
     },
     async editChat (chat) {
       try {
+        const editedChat = new Chat({
+          ...chat,
+          meta: new ChatMeta({
+            ...chat.meta,
+            data: Object.entries(chat.meta.data).reduce(
+              (result, [key, value]) => {
+                if (value.toJSON) result[key] = value
+                else result[key] = Value.fromJson(value)
+
+                return result
+              }, {}
+            )
+          })
+        })
+
         const chatsApi = createPromiseClient(ChatsAPI, transport)
-        const createdChat = await chatsApi.update(chat)
+        const createdChat = await chatsApi.update(editedChat)
 
         chats.value.set(createdChat.uuid, createdChat)
         return createdChat

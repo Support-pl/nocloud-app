@@ -57,7 +57,7 @@
                     :title="$t('Rename')"
                     @ok="sendRename"
                   >
-                    <p>{{ $t("Enter new VM name") }}</p>
+                    <p>{{ $t('Enter new VM name') }}</p>
                     <a-input
                       v-model:value="renameNewName"
                       :placeholder="$t('input new name')"
@@ -65,20 +65,14 @@
                   </a-modal>
                   <a-modal
                     v-model:open="modal.reinstall"
+                    :confirm-loading="isRenameLoading"
                     :title="$t('Reinstall')"
                     @ok="sendReinstall"
                   >
-                    <template v-if="!disabledMenu('reinstall')">
-                      <p>{{ $t("Enter new password") }}</p>
-                      <a-input-password
-                        v-model:value="reinstallPass"
-                        :placeholder="$t('input password')"
-                      />
-                    </template>
-                    <template v-else>
-                      <p>{{ $t('We can\'t do it automaticly. Presss OK to create a ticket') }}</p>
-                      <p>{{ $t('All unsaved data will be lost') }}</p>
-                    </template>
+                    <a-spin :spinning="isRenameLoading && images.length < 1">
+                      <p>{{ $t('select OS') }}</p>
+                      <images-list :images="images" :os-name="reinstallOSName" :set-o-s="setOS" />
+                    </a-spin>
                   </a-modal>
                   <a-modal
                     v-model:open="modal.expand"
@@ -241,6 +235,7 @@ import { useInstancesStore } from '@/stores/instances.js'
 import networkControl from '@/components/cloud/options/networkControl.vue'
 import accessManager from '@/components/cloud/options/accessManager.vue'
 import loading from '@/components/ui/loading.vue'
+import imagesList from '@/components/ui/images.vue'
 
 const leftIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LeftOutlined')
@@ -251,7 +246,7 @@ const moreIcon = defineAsyncComponent(
 
 export default {
   name: 'OpenCloud',
-  components: { loading, networkControl, accessManager, leftIcon, moreIcon },
+  components: { loading, imagesList, networkControl, accessManager, leftIcon, moreIcon },
   mixins: [notification],
   data: () => ({
     icons,
@@ -259,9 +254,10 @@ export default {
     isDeleteLoading: false,
     isRenameLoading: false,
     isLogsLoading: false,
-    reinstallPass: '',
-    renameNewName: '',
     isResizeLoading: false,
+    reinstallOS: '',
+    reinstallOSName: '',
+    renameNewName: '',
     modal: {
       menu: false,
       reinstall: false,
@@ -281,6 +277,7 @@ export default {
       scale: 'GB'
     },
     logs: [],
+    images: [],
     resources: {},
     type: ''
   }),
@@ -299,13 +296,14 @@ export default {
       return defineAsyncComponent(() => components[component]())
     },
     menuOptions () {
+      let { type } = this.VM.billingPlan ?? {}
       const options = [
         {
           title: 'Reinstall',
-          onclick: this.sendReinstall,
-          params: [],
+          onclick: (type === 'ovh vps') ? this.openVpsReinstall : this.sendReinstall,
+          params: ['reinstall'],
           icon: 'ExclamationOutlined',
-          modules: ['ione', 'custom']
+          modules: ['ione', 'custom', 'ovh vps']
         },
         {
           title: 'Rename',
@@ -360,7 +358,6 @@ export default {
           modules: ['ione', 'ovh', 'keyweb']
         }
       ]
-      let { type } = this.VM.billingPlan || {}
 
       if (this.VM.server_on) type = 'custom'
       return options.filter((el) => {
@@ -691,25 +688,6 @@ export default {
       }
     },
     sendReinstall () {
-      if (this.disabledMenu('reinstall')) {
-        this.$store
-          .dispatch('utils/createTicket', {
-            subject: `[generated]: Reinstall VM#${this.$route.params.uuid}`,
-            message: `VM#${this.$route.params.uuid} имеет аддон, запрещающий автопереустановку. Необходимо выполнить перустановку вручную.`
-          })
-          .then(() => {
-            this.$message.success(this.$t('Order created successfully'))
-            this.closeModal('reinstall')
-          })
-          .catch((err) => {
-            const message = err.response?.data?.message ?? err.message ?? err
-
-            this.openNotificationWithIcon('error', {
-              message: this.$t(message)
-            })
-          })
-        return
-      }
       this.$confirm({
         title: this.$t('Do you want to reinstall this virtual machine?'),
         okType: 'danger',
@@ -720,33 +698,30 @@ export default {
           { style: 'color: red' },
           this.$t('All data will be deleted!')
         ),
-        onOk: () => {
-          const data = {
-            uuid: this.VM.uuid,
-            uuidService: this.VM.uuidService,
-            action: 'reinstall'
+        onOk: async () => {
+          try {
+            const { type } = this.VM.billingPlan
+
+            await this.invokeAction({
+              uuid: this.VM.uuid,
+              uuidService: this.VM.uuidService,
+              action: (type === 'ovh vps') ? 'rebuild' : 'reinstall',
+              params: (type === 'ovh vps') ? { imageId: this.reinstallOS } : {}
+            })
+
+            this.openNotificationWithIcon('success', {
+              message: `${this.$t('Done')}!`
+            })
+          } catch (error) {
+            const message = error.response?.data?.message ?? error.message ?? error
+
+            this.openNotificationWithIcon('error', {
+              message: this.$t(message)
+            })
+          } finally {
+            this.modal.menu = false
+            this.modal.reinstall = false
           }
-          const promise = (this.VM.server_on)
-            ? this.$refs['open-instance'].sendAction('on_reinstall')
-            : this.invokeAction(data)
-
-          promise
-            .then(() => {
-              const opts = {
-                message: `${this.$t('Done')}!`
-              }
-              this.openNotificationWithIcon('success', opts)
-            })
-            .catch((err) => {
-              const message = err.response?.data?.message ?? err.message ?? err
-
-              this.openNotificationWithIcon('error', {
-                message: this.$t(message)
-              })
-            })
-
-          this.modal.menu = false
-          this.modal.reinstall = false
         },
         onCancel: () => {
           this.modal.reinstall = false
@@ -795,6 +770,34 @@ export default {
           this.modal.delete = false
         }
       })
+    },
+    openVpsReinstall () {
+      this.getImages()
+      this.changeModal('reinstall')
+    },
+    setOS ({ id, name }) {
+      this.reinstallOSName = name
+      this.reinstallOS = id
+    },
+    async getImages () {
+      this.isRenameLoading = true
+      try {
+        const { meta } = await this.invokeAction({
+          uuid: this.VM.uuid,
+          uuidService: this.VM.uuidService,
+          action: 'images'
+        })
+
+        this.images = meta.images
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.openNotificationWithIcon('error', {
+          message: this.$t(message)
+        })
+      } finally {
+        this.isRenameLoading = false
+      }
     },
     getLogs () {
       this.isLogsLoading = true

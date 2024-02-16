@@ -59,6 +59,7 @@
     "Copy link to share": "Copy link to share",
     "It’s empty...": "No information is available yet.",
     "Unknown error.": "Unknown error.",
+    "Email is already in use or is empty": "Email is already in use or is empty",
     "Password is too short": "Password is too short",
     "pass at least 10 characters": "Password must be at least 10 characters",
     "Password must contain uppercase letters, numbers and symbols": "Password must contain uppercase letters, numbers and symbols",
@@ -276,7 +277,7 @@
     "Parameters": "Parameters",
     "Add Funds": "Add Funds",
     "You do not have enough funds on your balance": "You do not have enough funds on your balance.",
-    "Click OK to replenish the account with the missing amount": "Click OK to replenish the account with the missing amount",
+    "Click OK to replenish the account with the missing amount": "Click OK to top up the balance by the missing amount",
     "have no": "have no",
     "ip": {
       "none": "none"
@@ -359,6 +360,10 @@
     "edit": "edit",
     "editing": "editing",
     "You can also choose another way of communication": "You can also choose another way of communication",
+    "Choose another way of communication": "Choose another way of communication",
+    "Select prompts": "Select prompts",
+    "Add prompt": "Add prompt",
+    "prompts": "prompts",
     "all fields are required": "Please fill in all fields",
     "field must contain more characters": "Field must contain more characters",
     "login is required": "Login is required",

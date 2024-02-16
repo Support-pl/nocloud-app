@@ -59,7 +59,7 @@ import passwordMeter from 'vue-simple-password-meter'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
 import api from '@/api.js'
-import imagesList from '@/components/cloud/create/images.vue'
+import imagesList from '@/components/ui/images.vue'
 
 const props = defineProps({
   mode: { type: String, required: true },

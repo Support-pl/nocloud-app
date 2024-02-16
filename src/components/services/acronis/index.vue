@@ -124,12 +124,15 @@
 <script>
 import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
-import { usePeriod } from '@/hooks/utils'
 
+import { usePeriod } from '@/hooks/utils'
+import useCreateInstance from '@/hooks/instances/create.js'
+import { checkPayg, createInvoice } from '@/functions.js'
+
+import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 
-import { useAppStore } from '@/stores/app.js'
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
@@ -144,8 +147,9 @@ export default {
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()
+    const { deployService } = useCreateInstance()
 
-    return { getPeriod }
+    return { getPeriod, deployService, createInvoice, checkPayg }
   },
   data: () => ({
     plan: undefined,
@@ -168,7 +172,7 @@ export default {
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
-    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData']),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData', 'baseURL']),
     ...mapState(useCurrenciesStore, [
       'currencies',
       'defaultCurrency',
@@ -274,10 +278,9 @@ export default {
     }
   },
   mounted () {
-    const { action, info } = this.onLogin
+    const { action } = this.onLogin
 
     if (typeof action !== 'function') return
-    this.modal.goToInvoice = info.goToInvoice
     this.modal.confirmCreate = true
     this.modal.confirmLoading = true
     action()
@@ -371,8 +374,7 @@ export default {
           type: 'acronis',
           title: 'Acronis',
           cost: this.getProducts.price,
-          currency: this.currency.code,
-          goToInvoice: this.modal.goToInvoice
+          currency: this.currency.code
         }
         this.onLogin.action = () => {
           this.createAcronis(info)
@@ -400,7 +402,21 @@ export default {
           }
 
       this.instancesStore[`${action}Service`](orderData)
-        .then(({ uuid }) => { this.deployService(uuid) })
+        .then(async ({ uuid, instancesGroups }) => {
+          await this.deployService(uuid, this.$t('Done'))
+          const { instances } = instancesGroups.find(({ sp }) => sp === this.provider) ?? {}
+          let instance
+
+          for (let i = instances.length - 1; i >= 0; i--) {
+            const { title } = instances[i]
+
+            if (title === this.getProducts.title) {
+              instance = instances[i]
+            }
+          }
+
+          return this.createInvoice(instance, this.baseURL)
+        })
         .catch((err) => {
           const config = { namespace: this.namespace, service: orderData }
           const message = err.response?.data?.message ?? err.message ?? err
@@ -431,23 +447,14 @@ export default {
         return
       }
 
-      if (!this.checkBalance(this.getProducts.price)) return
-      this.modal.confirmCreate = true
-    },
-    deployService (uuid) {
-      this.$api.services.up(uuid)
-        .then(() => {
-          this.$notification.success({ message: this.$t('Done') })
-          this.$router.push({ path: '/services' })
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
+      const instance = {
+        config: {},
+        billingPlan: this.plans.find(({ uuid }) => uuid === this.plan)
+      }
+      const isEnoughBalance = this.checkBalance(this.getProducts.price)
 
-          this.$notification.error({ message: this.$t(message) })
-        })
-        .finally(() => {
-          this.modal.confirmLoading = false
-        })
+      if (this.checkPayg(instance) && !isEnoughBalance) return
+      this.modal.confirmCreate = true
     }
   }
 }
