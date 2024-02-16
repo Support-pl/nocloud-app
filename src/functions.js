@@ -136,7 +136,7 @@ export function createInvoice (instance, baseURL) {
 
 export function checkPayg (instance) {
   const { config } = instance ?? {}
-  const { type, kind } = instance.billingPlan || instance.billing_plan
+  const { type, kind } = instance.billingPlan ?? instance.billing_plan ?? {}
 
   if (type === 'openai') return true
   if (config.duration === 'P1H') return true

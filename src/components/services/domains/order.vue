@@ -675,11 +675,11 @@ export default {
         config: {},
         billingPlan: this.plans.find(({ uuid }) => uuid === this.plan)
       }
-      const isEnoughBalance = t
-
-      if (this.checkPayg(instance) && !this.checkBalance(
+      const isEnoughBalance = this.checkBalance(
         this.getProducts().pricing[this.resources.period]
-      )) return
+      )
+
+      if (this.checkPayg(instance) && !isEnoughBalance) return
       this.modal.confirmCreate = true
     },
     getProducts () {

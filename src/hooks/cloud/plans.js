@@ -31,16 +31,17 @@ function useCloudPlans (tarification, options) {
       return uuid === cloudStore.showcaseId
     }) ?? {}
     const plans = []
+    const publicPlans = plansStore.plans.filter((plan) => plan.public)
 
-    if (!items) return plansStore.plans
+    if (!items) return publicPlans
     items.forEach(({ servicesProvider, plan }) => {
       if (servicesProvider === cloudStore.provider?.uuid) {
         plans.push(plan)
       }
     })
 
-    if (plans.length < 1) return plansStore.plans
-    return plansStore.plans.filter(({ uuid, type }) =>
+    if (plans.length < 1) return publicPlans
+    return publicPlans.filter(({ uuid, type }) =>
       locationItem?.type === type && plans.includes(uuid)
     )
   })
@@ -58,7 +59,7 @@ function useCloudPlans (tarification, options) {
     } else {
       if (!tarification.value || !productSize.value) return
 
-      for (let plan of plansStore.plans) {
+      for (let plan of filteredPlans.value) {
         const isHourly = tarification.value === 'Hourly'
         const isDynamic = plan.kind === 'DYNAMIC'
         const isIone = plan.type === 'ione'

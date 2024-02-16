@@ -52,12 +52,12 @@
           <a-form-item
             v-if="authStore.userdata.uuid"
             class="newCloud__form-item"
-            :label="`${$t('clientinfo.password')}:`"
+            :label="`${capitalize($t('clientinfo.password'))}:`"
           >
             <password-meter
               :style="{
                 height: (authData.password.length > 0) ? '10px' : '0',
-                marginTop: (authData.password.length < 1) ? '0' : null,
+                marginTop: 0,
                 marginBottom: (authData.password.length > 0) ? '4px': null
               }"
               :password="authData.password"

@@ -124,12 +124,21 @@ export const useCloudStore = defineStore('cloud', () => {
     }
 
     if (!checkPayg(newInstance)) {
-      const { instances } = instancesGroups.find(({ sp }) => sp === provider.value.uuid) ?? {}
-      let instance = instances.find(inst=>
-        inst.title===newInstance.title && inst.billingPlan.uuid===newInstance.billing_plan.uuid
-      )
+      const { instances } = instancesGroups.find(
+        ({ sp }) => sp === provider.value.uuid
+      ) ?? {}
+      let instance
 
-      await createInvoice(instance,authStore.baseURL)
+      for (let i = instances.length - 1; i >= 0; i--) {
+        const { title, billingPlan: { uuid } } = instances[i]
+        const isIdsEqual = uuid === newInstance.billing_plan.uuid
+
+        if (title === newInstance.title && isIdsEqual) {
+          instance = instances[i]
+        }
+      }
+
+      await createInvoice(instance, authStore.baseURL)
     }
   }
 
@@ -151,7 +160,7 @@ export const useCloudStore = defineStore('cloud', () => {
         ips_private: options.network.private.count,
         ips_public: options.network.public.count
       },
-      billing_plan: { uuid: planId.value,...plan.value }
+      billing_plan: { uuid: planId.value }
     }
 
     if (plan.value.kind === 'STATIC' || plan.value.type !== 'ione') {
