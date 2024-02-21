@@ -29,7 +29,7 @@ import { notification } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { createPromiseClient } from '@bufbuild/connect'
+import { createPromiseClient } from '@connectrpc/connect'
 import { HandsfreeService } from 'infinimesh-proto/build/es/handsfree/handsfree_connect'
 import { ControlPacket } from 'infinimesh-proto/build/es/handsfree/handsfree_pb'
 

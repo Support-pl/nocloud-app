@@ -106,14 +106,11 @@
                 maxlength="18"
               >
               <span class="login__horisontal-line" />
-              <input
-                v-model="userinfo.password"
-                type="password"
-                name="password"
+              <a-input-password
+                v-model:value="userinfo.password"
                 :placeholder="`${capitalize($t('clientinfo.password'))} *`"
-                readonly
-                onfocus="this.removeAttribute('readonly')"
-              >
+                style="padding: 6px 15px; border: none"
+              />
               <span class="login__horisontal-line" />
             </div>
 

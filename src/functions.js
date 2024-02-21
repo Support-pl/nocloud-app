@@ -19,7 +19,7 @@ export function getDisk (key) {
   }, 0)
 }
 
-export function toDate (timestamp, sep = '.', withTime = true, reverse) {
+export function toDate (timestamp, sep = '.', timeFormat = true, reverse) {
   if (timestamp < 1) return '-'
 
   const date = new Date(timestamp * 1000)
@@ -37,7 +37,12 @@ export function toDate (timestamp, sep = '.', withTime = true, reverse) {
   if (reverse) {
     result = `${year}${sep}${month}${sep}${day}`
   }
-  if (withTime) result += ` ${time}`
+  if (timeFormat === true) result += ` ${time}`
+  else if (timeFormat.split(':').length === 2) {
+    result += ` ${time.slice(0, 5)}`
+  } else if (timeFormat.split(':').length === 3) {
+    result += ` ${time}`
+  }
 
   return result
 }

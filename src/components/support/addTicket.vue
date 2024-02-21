@@ -257,7 +257,7 @@ async function sendNewTicket () {
 }
 
 function closeFields () {
-  supportStore.isAddingTicket = !supportStore.isAddingTicket
+  supportStore.isAddingTicket = false
 }
 
 function sendTelegramMessage () {
