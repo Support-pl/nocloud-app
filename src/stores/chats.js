@@ -1,22 +1,24 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
-import { createPromiseClient } from '@bufbuild/connect'
-import { createGrpcWebTransport } from '@bufbuild/connect-web'
 import { Value } from '@bufbuild/protobuf'
+import { createPromiseClient } from '@connectrpc/connect'
+import { createGrpcWebTransport } from '@connectrpc/connect-web'
 
 import { useAuthStore } from './auth.js'
 import { useSupportStore } from './support.js'
 import { toDate } from '@/functions.js'
 
 import {
-  Empty, Chat, Message, ChatMeta, Role, Kind, EventType, Users, User, Status
+  Empty, Chat, Message, ChatMeta, Role, Kind, EventType, Status
 } from '@/libs/cc_connect/cc_pb'
 import {
   ChatsAPI, MessagesAPI, StreamService, UsersAPI
 } from '@/libs/cc_connect/cc_connect'
 
 export const useChatsStore = defineStore('chats', () => {
+  const route = useRoute()
   const authStore = useAuthStore()
   const supportStore = useSupportStore()
 
@@ -36,7 +38,7 @@ export const useChatsStore = defineStore('chats', () => {
   const defaults = ref({})
   const chats = ref(new Map())
 
-  const messages = ref([])
+  const messages = ref({})
   const rawMessages = ref([])
 
   const getChats = computed(() => {
@@ -89,7 +91,9 @@ export const useChatsStore = defineStore('chats', () => {
 
   function updateMessage (event) {
     const { value: message } = event.item
-    const i = messages.value.findIndex(({ uuid }) => uuid === message.uuid)
+    const { replies } = messages.value[message.chat]
+    const i = replies.findIndex(({ uuid }) => uuid === message.uuid)
+
     const user = accounts.value.users.find(
       (account) => account.uuid === message.sender
     ) ?? {}
@@ -99,25 +103,26 @@ export const useChatsStore = defineStore('chats', () => {
     switch (event.type) {
       case EventType.MESSAGE_SENT: {
         const chat = chats.value.get(message.chat)
-        const i = messages.value.findIndex(({ uuid }) => uuid === event.item.value.uuid)
 
-        if (i === -1) messages.value.push(newMessage)
-        else messages.value.splice(i, 1, newMessage)
+        if (i === -1) replies.push(newMessage)
+        else replies.splice(i, 1, newMessage)
 
         chat.meta = new ChatMeta({
-          unread: chat.meta.unread + 1,
+          unread: (chat.uuid === route.params.id) ? 0 : chat.meta.unread + 1,
           lastMessage: message
         })
         break
       }
       case EventType.MESSAGE_UPDATED: {
-        messages.value.splice(i, 1, newMessage)
-        chats.value.get(message.chat).meta.unread++
+        const chat = chats.value.get(message.chat)
+
+        replies.splice(i, 1, newMessage)
+        if (chat.uuid !== route.params.id) chat.meta.unread++
         break
       }
 
       case EventType.MESSAGE_DELETED: {
-        messages.value.splice(i, 1)
+        replies.splice(i, 1)
         break
       }
     }
@@ -142,8 +147,8 @@ export const useChatsStore = defineStore('chats', () => {
     accounts,
     stream,
     defaults,
-    messages,
     chats,
+    messages,
     rawMessages,
 
     getChats,
@@ -155,8 +160,10 @@ export const useChatsStore = defineStore('chats', () => {
     async fetchChats () {
       try {
         const chatsApi = createPromiseClient(ChatsAPI, transport)
+        const usersApi = createPromiseClient(UsersAPI, transport)
 
         const response = await chatsApi.list(new Empty())
+        if (!accounts.value) accounts.value = await usersApi.getMembers(new Empty())
 
         const chatsArray = response.chats.map((chat) =>
           [chat.uuid, (chat.meta) ? chat : { ...chat, meta: new ChatMeta({ unread: 0 }) }]
@@ -175,11 +182,11 @@ export const useChatsStore = defineStore('chats', () => {
         const messagesApi = createPromiseClient(MessagesAPI, transport)
         const chat = chats.value.get(id)
 
-        const users = [...chat.users, ...chat.admins].map((uuid) => new User({ uuid }))
-        const usersApi = createPromiseClient(UsersAPI, transport)
-        const usersList = new Users({ users })
+        if (!authStore.userdata.uuid) {
+          await new Promise((resolve) => setTimeout(resolve, 200))
+          return this.fetchMessages(id)
+        }
 
-        if (!accounts.value) accounts.value = await usersApi.resolve(usersList)
         const response = await messagesApi.get(chat)
 
         const replies = response.messages.map((message) => {
@@ -190,7 +197,7 @@ export const useChatsStore = defineStore('chats', () => {
           return changeMessage(message, user, authStore.userdata.uuid)
         })
 
-        messages.value = replies
+        messages.value[id] = replies
         rawMessages.value = response.messages
 
         return { status: chat.status, subject: chat.topic, replies }
@@ -323,6 +330,7 @@ export const useChatsStore = defineStore('chats', () => {
           sender: message.account
         }))
 
+        console.log(response)
         if (response.uuid === '') {
           response.uuid = 'last message'
         }

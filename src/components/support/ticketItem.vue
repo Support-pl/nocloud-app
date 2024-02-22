@@ -10,7 +10,7 @@
           #{{ ticket.tid }} - {{ titleDecoded }}
         </div>
         <div class="ticket__status-text">
-          <a-badge :count="ticket.unread" :offset="[10, -15]">
+          <a-badge :count="ticket.unread" :offset="offset">
             {{ $t(`ticketStatus.${ticket.status}`) }}
           </a-badge>
         </div>
@@ -18,7 +18,7 @@
       <div class="ticket__lower">
         <div class="ticket__message" v-html="beauty(ticket.message)" />
         <div class="ticket__time">
-          {{ formatDate(ticket.date) }}
+          {{ toDate(ticket.date / 1000 || ticket.date, '.', '00:00') }}
         </div>
       </div>
     </div>
@@ -28,6 +28,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { toDate } from '@/functions.js'
 import config from '@/appconfig.js'
 
 const props = defineProps({
@@ -38,6 +39,14 @@ const props = defineProps({
 
 const router = useRouter()
 const route = useRoute()
+
+const offset = computed(() => {
+  if (props.ticket.unread > 9) {
+    return [4, -8]
+  } else {
+    return [10, -8]
+  }
+})
 
 const statusColor = computed(() => {
   switch (props.ticket.status.toLowerCase()) {
@@ -74,19 +83,6 @@ function beauty (message) {
   message = message.replace(/<\/?[a-z1-9 #-:=";_!]+>/gi, '')
 
   return message || 'empty'
-}
-
-function formatDate (date) {
-  const d = new Date((date.replace) ? date.replace(/-/g, '/') : date)
-  const ye = new Intl.DateTimeFormat('en', { year: 'numeric' }).format(d)
-  const mo = new Intl.DateTimeFormat('en', { month: '2-digit' }).format(d)
-  const da = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(d)
-  let ho = new Intl.DateTimeFormat('en', { hour: '2-digit', hour12: false }).format(d)
-  let mi = new Intl.DateTimeFormat('en', { minute: '2-digit' }).format(d)
-
-  if (`${ho}`.length < 2) ho = `${ho}0`
-  if (`${mi}`.length < 2) mi = `${mi}0`
-  return `${da}/${mo}/${ye} ${ho}:${mi}`
 }
 
 function decode (text) {

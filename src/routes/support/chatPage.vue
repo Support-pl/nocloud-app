@@ -54,7 +54,7 @@
       <add-ticket v-if="supportStore.isAddingTicket" :instance-id="$route.query.from" />
     </div>
 
-    <support-alert v-model:padding-top="chatPaddingTop" :chat="chat" :is-loading="isLoading" />
+    <support-alert v-if="chat" v-model:padding-top="chatPaddingTop" :chat="chat" :is-loading="isLoading" />
 
     <loading v-if="isLoading" />
     <div v-else ref="content" class="chat__content">
@@ -118,7 +118,7 @@
         v-for="item of chats"
         :key="item.id"
         :ticket="item"
-        :style="(item.id === chatid) ? 'filter: brightness(0.9)' : null"
+        :style="(`${item.id}` === `${chatid}`) ? 'filter: brightness(0.9)' : null"
         compact
       />
     </div>
@@ -252,7 +252,6 @@ export default {
 
     return {
       addToClipboard,
-      cachedChats: ref({}),
       status: ref(null),
       subject: ref('SUPPORT'),
       replies: ref([]),
@@ -313,18 +312,10 @@ export default {
       result.sort((a, b) => b.date - a.date)
 
       return [...result, ...this.supportStore.getTickets]
-    },
-    messages () {
-      const chatMessages = this.chatsStore.messages
-      const tickets = this.replies.filter(({ uuid }) =>
-        !chatMessages.find((message) => message.uuid === uuid)
-      )
-
-      return [...tickets, ...chatMessages]
     }
   },
   watch: {
-    messages: {
+    replies: {
       handler () {
         nextTick(() => {
           if (!this.$refs?.content) return
@@ -335,6 +326,7 @@ export default {
     }
   },
   async mounted () {
+    await this.supportStore.fetch()
     await this.chatsStore.fetchChats()
     this.chatsStore.startStream()
     this.chatsStore.fetchDefaults()
@@ -437,9 +429,9 @@ export default {
       this.messageInput = ''
     },
     loadMessages (update) {
-      if (!update && this.cachedChats[this.chatid]) {
-        const result = this.cachedChats[this.chatid]
+      const result = this.chatsStore.messages[this.chatid]
 
+      if (!update && result) {
         this.status = result.status
         this.replies = result.replies
         this.subject = result.subject
@@ -447,6 +439,10 @@ export default {
         setTimeout(() => {
           this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
         })
+
+        if (this.chatsStore.chats.get(this.chatid)) {
+          this.chatsStore.chats.get(this.chatid).meta.unread = 0
+        }
         return
       }
 
@@ -467,13 +463,17 @@ export default {
           this.subject = resp.subject
 
           this.replies.sort((a, b) => Number(a.sent - b.sent))
-          this.cachedChats[this.chatid] = resp
+          this.chatsStore.messages[this.chatid] = resp
         })
         .finally(() => {
           setTimeout(() => {
             this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
           })
           this.isLoading = false
+
+          if (this.chatsStore.chats.get(this.chatid)) {
+            this.chatsStore.chats.get(this.chatid).meta.unread = 0
+          }
         })
     },
     reload () {
@@ -519,7 +519,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .chat {
   position: relative;
   display: grid;
@@ -621,7 +621,7 @@ export default {
   max-height: calc(50vh - 34px) !important;
 }
 
-.chat__input .ant-input-textarea-clear-icon {
+.chat__input :deep(.ant-input-textarea-clear-icon) {
   margin: 9px 2px 0 0;
 }
 
@@ -666,12 +666,12 @@ export default {
   background: var(--bright_font);
 }
 
-.chat__tooltip .ant-popover-inner {
+.chat__tooltip :deep(.ant-popover-inner) {
   padding: 6px 8px;
 }
 
-.chat__tooltip.error .ant-popover-inner,
-.chat__tooltip.error .ant-popover-arrow {
+.chat__tooltip.error :deep(.ant-popover-inner),
+.chat__tooltip.error :deep(.ant-popover-arrow ){
   background: transparent;
   box-shadow: none;
 }
@@ -781,12 +781,6 @@ export default {
   .chat__footer {
     grid-column: 1;
     padding: 0 10px 10px 0;
-  }
-}
-
-@media screen and (max-width: 576px) {
-  .order__grid {
-    grid-template-columns: 1fr 1fr;
   }
 }
 </style>

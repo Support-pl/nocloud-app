@@ -952,7 +952,7 @@ export default defineComponent({
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
         okButtonProps: { disabled: (this.VM.data.blocked) },
-        onOk: () => this.sendAction('manual_renew'),
+        onOk: () => this.renewInstance(),
         onCancel () {}
       })
     },
@@ -978,6 +978,19 @@ export default defineComponent({
         console.error(error)
       } finally {
         this.isLoading = false
+      }
+    },
+    async renewInstance () {
+      const data = { uuid_instans: this.VM.uuid, run: 'invoice_instans_renew' }
+
+      try {
+        await this.$api.get(this.baseURL, { params: data })
+
+        this.openNotificationWithIcon('success', { message: this.$t('Done') })
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.openNotificationWithIcon('error', { message: this.$t(message) })
       }
     },
     sendNewTariff () {
