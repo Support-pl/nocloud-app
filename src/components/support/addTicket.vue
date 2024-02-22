@@ -34,7 +34,11 @@
           />
         </a-form-item>
 
-        <a-form-item style="margin-bottom: 0; padding-bottom: 0" :label="$t('gateway')">
+        <a-form-item
+          v-if="!authStore.billingUser.only_tickets"
+          style="margin-bottom: 0; padding-bottom: 0"
+          :label="$t('gateway')"
+        >
           <div class="order__grid">
             <div
               v-for="gate of gateways"
@@ -257,7 +261,7 @@ async function sendNewTicket () {
 }
 
 function closeFields () {
-  supportStore.isAddingTicket = !supportStore.isAddingTicket
+  supportStore.isAddingTicket = false
 }
 
 function sendTelegramMessage () {

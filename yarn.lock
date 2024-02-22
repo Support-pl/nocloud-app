@@ -1009,6 +1009,11 @@
   resolved "https://registry.npmjs.org/@bufbuild/protobuf/-/protobuf-1.7.2.tgz"
   integrity sha512-i5GE2Dk5ekdlK1TR7SugY4LWRrKSfb5T1Qn4unpIMbfxoeGKERKQ59HG3iYewacGD10SR7UzevfPnh6my4tNmQ==
 
+"@connectrpc/connect-web@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.npmjs.org/@connectrpc/connect-web/-/connect-web-1.3.0.tgz"
+  integrity sha512-8HSY8x6douX1LcSFsGEUdjs9jwBe9X+LxkCI8hCtH7vKUCZieQqkRWstoApeIJchHYTaQYqwy2ImKnvwyWwruA==
+
 "@connectrpc/connect@^1.3.0":
   version "1.3.0"
   resolved "https://registry.npmjs.org/@connectrpc/connect/-/connect-1.3.0.tgz"
@@ -4185,10 +4190,10 @@ version-guard@^1.1.1:
   resolved "https://registry.npmjs.org/version-guard/-/version-guard-1.1.1.tgz"
   integrity sha512-MGQLX89UxmYHgDvcXyjBI0cbmoW+t/dANDppNPrno64rYr8nH4SHSuElQuSYdXGEs0mUzdQe1BY+FhVPNsAmJQ==
 
-vite-plugin-pwa@^0.18.1:
-  version "0.18.1"
-  resolved "https://registry.npmjs.org/vite-plugin-pwa/-/vite-plugin-pwa-0.18.1.tgz"
-  integrity sha512-2A3BF52l9F8hCkdPy/VP2C+hA+fmBvzJGynCZc9XS6mHTcMvo9046FKc2NqlnkKwTOGtQEwXLEIduML/+eYtdw==
+vite-plugin-pwa@^0.19.0:
+  version "0.19.0"
+  resolved "https://registry.npmjs.org/vite-plugin-pwa/-/vite-plugin-pwa-0.19.0.tgz"
+  integrity sha512-Unfb4Jk/ka4HELtpMLIPCmGcW4LFT+CL7Ri1/Of1544CVKXS2ftP91kUkNzkzeI1sGpOdVGuxprVLB9NjMoCAA==
   dependencies:
     debug "^4.3.4"
     fast-glob "^3.3.2"
@@ -4203,10 +4208,10 @@ vite-svg-loader@^5.1.0:
   dependencies:
     svgo "^3.0.2"
 
-vite@^5.1.2:
-  version "5.1.2"
-  resolved "https://registry.npmjs.org/vite/-/vite-5.1.2.tgz"
-  integrity sha512-uwiFebQbTWRIGbCaTEBVAfKqgqKNKMJ2uPXsXeLIZxM8MVMjoS3j0cG8NrPxdDIadaWnPSjrkLWffLSC+uiP3Q==
+vite@^5.1.4:
+  version "5.1.4"
+  resolved "https://registry.npmjs.org/vite/-/vite-5.1.4.tgz"
+  integrity sha512-n+MPqzq+d9nMVTKyewqw6kSt+R3CkvF9QAKY8obiQn8g1fwTscKxyfaYnC632HtBXAQGc1Yjomphwn1dtwGAHg==
   dependencies:
     esbuild "^0.19.3"
     postcss "^8.4.35"

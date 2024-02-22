@@ -88,7 +88,7 @@
             </div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.next_payment_date * 1000) }}
-              <sync-icon v-if="false" title="Renew" @click="openRenew" />
+              <sync-icon v-if="false" title="Renew" @click="sendRenew" />
             </div>
           </div>
 
@@ -174,17 +174,19 @@
 </template>
 
 <script setup lang="jsx">
-import { computed, defineAsyncComponent, inject, ref, onMounted } from 'vue'
+import { computed, defineAsyncComponent, ref, onMounted } from 'vue'
 import { Button, Modal, Switch } from 'ant-design-vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useSpStore } from '@/stores/sp.js'
+import { useAuthStore } from '@/stores/auth.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import { useCurrency, useNotification } from '@/hooks/utils'
 import { toDate } from '@/functions.js'
+import api from '@/api.js'
 
 import keywebActions from '@/components/cloud/modules/keyweb/actions.vue'
 
@@ -213,12 +215,12 @@ const route = useRoute()
 const i18n = useI18n()
 
 const spStore = useSpStore()
+const authStore = useAuthStore()
 const plansStore = usePlansStore()
 const instancesStore = useInstancesStore()
 
 const { currency } = useCurrency()
 const { openNotification } = useNotification()
-const checkBalance = inject('checkBalance')
 
 const isVNCLoading = ref(false)
 const isLoading = ref(false)
@@ -285,10 +287,6 @@ const productName = computed(() =>
   plan.value.products[props.VM.product]?.title ?? props.VM.product
 )
 
-function openRenew () {
-  if (checkBalance(fullPrice.value)) sendRenew()
-}
-
 function sendRenew () {
   const { period } = plan.value.products[props.VM.product]
   const currentPeriod = toDate(props.VM.data.next_payment_date)
@@ -352,26 +350,22 @@ function sendRenew () {
     okText: i18n.t('Yes'),
     cancelText: i18n.t('Cancel'),
     okButtonProps: { disabled: (props.VM.data.blocked) },
-    onOk: () => sendAction('manual_renew'),
+    onOk: () => renewInstance(),
     onCancel () {}
   })
 }
 
-async function sendAction (action) {
-  try {
-    await instancesStore.invokeAction({
-      uuid: props.VM.uuid,
-      uuidService: props.VM.uuidService,
-      action
-    })
+async function renewInstance () {
+  const data = { uuid_instans: props.VM.uuid, run: 'invoice_instans_renew' }
 
-    openNotification('success', {
-      message: `${useI18n().t('Done')}!`
-    })
+  try {
+    await api.get(authStore.baseURL, { params: data })
+
+    openNotification('success', { message: i18n.t('Done') })
   } catch (error) {
-    openNotification('error', {
-      message: error.response?.data?.message ?? error.message ?? error
-    })
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    openNotification('error', { message: i18n.t(message) })
   }
 }
 

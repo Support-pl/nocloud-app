@@ -463,9 +463,9 @@ export default {
         cancelText: this.$t('Cancel'),
         okButtonProps: { disabled: (this.service.data.blocked) },
         onOk: async () => {
-          const data = { uuid: this.service.uuid, action: 'manual_renew' }
+          const data = { uuid_instans: this.service.uuid, run: 'invoice_instans_renew' }
 
-          return this.instancesStore.invokeAction(data)
+          return this.$api.get(this.baseURL, { params: data })
             .then(() => {
               this.$notification.success({ message: 'Done!' })
               this.service.data.blocked = true

@@ -326,7 +326,7 @@ export default { name: 'SupportAlert' }
 <style scoped>
 .alert__notification {
   position: absolute;
-  right: max(25px, (100vw - 1158px) / 2);
+  right: max(25px, (100vw - 1148px) / 2);
   top: 87px;
   z-index: 10;
   width: 100%;
@@ -403,6 +403,12 @@ export default { name: 'SupportAlert' }
   .alert__notification {
     right: 15px;
     max-width: calc(100% - 30px);
+  }
+}
+
+@media (max-width: 576px) {
+  .order__grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 </style>
