@@ -54,7 +54,7 @@
       <add-ticket v-if="supportStore.isAddingTicket" :instance-id="$route.query.from" />
     </div>
 
-    <support-alert v-model:padding-top="chatPaddingTop" :chat="chat" :is-loading="isLoading" />
+    <support-alert v-if="chat" v-model:padding-top="chatPaddingTop" :chat="chat" :is-loading="isLoading" />
 
     <loading v-if="isLoading" />
     <div v-else ref="content" class="chat__content">
@@ -118,7 +118,7 @@
         v-for="item of chats"
         :key="item.id"
         :ticket="item"
-        :style="(item.id === chatid) ? 'filter: brightness(0.9)' : null"
+        :style="(`${item.id}` === `${chatid}`) ? 'filter: brightness(0.9)' : null"
         compact
       />
     </div>
@@ -326,6 +326,7 @@ export default {
     }
   },
   async mounted () {
+    await this.supportStore.fetch()
     await this.chatsStore.fetchChats()
     this.chatsStore.startStream()
     this.chatsStore.fetchDefaults()
@@ -438,7 +439,10 @@ export default {
         setTimeout(() => {
           this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
         })
-        this.chatsStore.chats.get(this.chatid).meta.unread = 0
+
+        if (this.chatsStore.chats.get(this.chatid)) {
+          this.chatsStore.chats.get(this.chatid).meta.unread = 0
+        }
         return
       }
 
@@ -466,7 +470,10 @@ export default {
             this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
           })
           this.isLoading = false
-          this.chatsStore.chats.get(this.chatid).meta.unread = 0
+
+          if (this.chatsStore.chats.get(this.chatid)) {
+            this.chatsStore.chats.get(this.chatid).meta.unread = 0
+          }
         })
     },
     reload () {

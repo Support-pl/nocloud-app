@@ -15,12 +15,12 @@
 </template>
 
 <script setup lang="jsx">
-import { computed, inject, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Modal, notification } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
-
-import { useAppStore } from '@/stores/app.js'
-import { useInstancesStore } from '@/stores/instances.js'
+import { useAuthStore } from '@/stores/auth.js'
+import { toDate } from '@/functions.js'
+import api from '@/api.js'
 
 const props = defineProps({
   price: { type: Number, required: true },
@@ -29,9 +29,7 @@ const props = defineProps({
 })
 
 const i18n = useI18n()
-const { toDate } = useAppStore()
-const instancesStore = useInstancesStore()
-const checkBalance = inject('checkBalance', () => {})
+const authStore = useAuthStore()
 
 const isDisabled = ref(false)
 const slicedPrice = computed(() => {
@@ -51,8 +49,6 @@ const priceWithoutPrefix = computed(() => {
 })
 
 function moduleEnter () {
-  if (!checkBalance(props.price)) return
-
   const key = props.service.product
   const { period } = props.service.billingPlan.products[key]
 
@@ -84,9 +80,9 @@ function moduleEnter () {
     cancelText: i18n.t('Cancel'),
     okButtonProps: { disabled: isDisabled.value },
     onOk: async () => {
-      const data = { uuid: props.service.uuid, action: 'manual_renew' }
+      const data = { uuid_instans: props.service.uuid, run: 'invoice_instans_renew' }
 
-      return instancesStore.invokeAction(data)
+      return api.get(authStore.baseURL, { params: data })
         .then(() => {
           notification.success({ message: 'Done!' })
           isDisabled.value = true

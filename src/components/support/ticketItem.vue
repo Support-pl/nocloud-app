@@ -18,7 +18,7 @@
       <div class="ticket__lower">
         <div class="ticket__message" v-html="beauty(ticket.message)" />
         <div class="ticket__time">
-          {{ toDate(ticket.date / 1000, '.', '00:00') }}
+          {{ toDate(ticket.date / 1000 || ticket.date, '.', '00:00') }}
         </div>
       </div>
     </div>

@@ -621,7 +621,6 @@ export default defineComponent({
     closeIcon
   },
   mixins: [notification],
-  inject: ['checkBalance'],
   props: {
     VM: { type: Object, required: true }
   },
@@ -921,7 +920,7 @@ export default defineComponent({
           })
           break
         case 'renew': {
-          if (this.checkBalance(this.fullPrice)) this.sendRenew()
+          this.sendRenew()
           break
         }
       }
@@ -1143,7 +1142,7 @@ export default defineComponent({
         okText: this.$t('Yes'),
         cancelText: this.$t('Cancel'),
         okButtonProps: { disabled: (this.VM.data.blocked) },
-        onOk: () => this.sendAction('manual_renew'),
+        onOk: () => this.renewInstance(),
         onCancel () {}
       })
     },
@@ -1220,6 +1219,19 @@ export default defineComponent({
           }
           this.openNotificationWithIcon('error', opts)
         })
+    },
+    async renewInstance () {
+      const data = { uuid_instans: this.VM.uuid, run: 'invoice_instans_renew' }
+
+      try {
+        await this.$api.get(this.baseURL, { params: data })
+
+        this.openNotificationWithIcon('success', { message: this.$t('Done') })
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.openNotificationWithIcon('error', { message: this.$t(message) })
+      }
     },
     fetchMonitoring () {
       if (!this.VM?.uuidService || this.VM.state.state === 'PENDING') return

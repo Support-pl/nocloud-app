@@ -15,10 +15,12 @@
 </template>
 
 <script setup lang="jsx">
-import { computed, inject, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Modal, notification, Switch, Button } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth.js'
 import { useInstancesStore } from '@/stores/instances.js'
+import api from '@/api.js'
 
 const props = defineProps({
   price: { type: Number, required: true },
@@ -27,8 +29,8 @@ const props = defineProps({
 })
 
 const i18n = useI18n()
+const authStore = useAuthStore()
 const instancesStore = useInstancesStore()
-const checkBalance = inject('checkBalance', () => {})
 
 const autoRenew = ref(false)
 const isLoading = ref(false)
@@ -106,8 +108,6 @@ onMounted(() => {
 })
 
 function moduleEnter () {
-  if (!checkBalance(props.price)) return
-
   const key = (!props.service.product)
     ? `${props.service.config.duration} ${props.service.config.planCode}`
     : props.service.product
@@ -180,10 +180,10 @@ function moduleEnter () {
     cancelText: i18n.t('Cancel'),
     okButtonProps: { disabled: isDisabled.value },
     onOk: async () => {
-      const data = { uuid: props.service.orderid, action: 'manual_renew' }
+      const data = { uuid_instans: props.service.orderid, run: 'invoice_instans_renew' }
 
       try {
-        await instancesStore.invokeAction(data)
+        await api.get(authStore.baseURL, { params: data })
 
         isDisabled.value = true
         notification.success({ message: i18n.t('Done') })
