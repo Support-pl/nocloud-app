@@ -124,7 +124,7 @@ import { useInstancesStore } from '@/stores/instances.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
 import { useNotification, useClipboard } from '@/hooks/utils'
-import api from '@/api.js'
+import { createRenewInvoice } from '@/functions.js'
 
 import loading from '@/components/ui/loading.vue'
 
@@ -218,9 +218,7 @@ function sendRenew () {
     cancelText: i18n.t('Cancel'),
     okButtonProps: { disabled: (service.value.data.blocked) },
     onOk: async () => {
-      const data = { uuid_instans: service.value.uuid, run: 'invoice_instans_renew' }
-
-      return api.get(authStore.baseURL, { params: data })
+      return createRenewInvoice(service.value, authStore.baseURL)
         .then(() => {
           openNotification('success', { message: 'Done!' })
           service.value.data.blocked = true

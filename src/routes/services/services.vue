@@ -21,9 +21,9 @@
       />
     </div>
 
-    <div v-if="['services', 'root'].includes(route.name) && !authStore.isLogged" class="logo__wrapper">
-      <div v-if="config.appLogo.path">
-        <img :src="config.appLogo.path" alt="logo" style="width: 100%">
+    <div v-if="['services', 'root'].includes(route.name) && !authStore.isLogged" class="logo">
+      <div v-if="config.appLogo.path" class="logo__wrapper">
+        <img :src="config.appLogo.path" alt="logo">
       </div>
       <div v-if="companyName" class="logo__title">
         {{ companyName }}
@@ -133,7 +133,7 @@ export default { name: 'PageServices' }
   margin-bottom: 10px;
 }
 
-.logo__wrapper {
+.logo {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -141,6 +141,18 @@ export default { name: 'PageServices' }
   height: 40vh;
   padding: 10px;
   background: var(--main);
+}
+
+.logo__wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.logo__wrapper > img {
+  height: 100%;
+  width: auto;
 }
 
 .logo__title {

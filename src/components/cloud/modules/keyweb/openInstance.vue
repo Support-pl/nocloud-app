@@ -185,8 +185,7 @@ import { usePlansStore } from '@/stores/plans.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import { useCurrency, useNotification } from '@/hooks/utils'
-import { toDate } from '@/functions.js'
-import api from '@/api.js'
+import { createRenewInvoice, toDate } from '@/functions.js'
 
 import keywebActions from '@/components/cloud/modules/keyweb/actions.vue'
 
@@ -356,10 +355,8 @@ function sendRenew () {
 }
 
 async function renewInstance () {
-  const data = { uuid_instans: props.VM.uuid, run: 'invoice_instans_renew' }
-
   try {
-    await api.get(authStore.baseURL, { params: data })
+    await createRenewInvoice(props.VM, authStore.baseURL)
 
     openNotification('success', { message: i18n.t('Done') })
   } catch (error) {

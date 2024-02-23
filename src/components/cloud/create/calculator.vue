@@ -194,9 +194,9 @@ function getAddonsValue (key) {
 
 async function createOrder () {
   const instance = { config: options.config, billingPlan: cloudStore.plan }
-  const isEnoughBalance = checkBalance(productFullPrice.value)
+  const price = productFullPrice.value
 
-  if (checkPayg(instance) && !isEnoughBalance) return
+  if (checkPayg(instance) && !checkBalance(price)) return
   await cloudStore.createOrder(options, product)
 }
 </script>
