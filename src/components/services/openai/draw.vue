@@ -1,17 +1,45 @@
 <template>
-  <a-row :gutter="[10, 0]" style="margin-top: 10px">
-    <a-col span="12" style="padding-bottom: 0; font-weight: 700">
-      Input kilotoken:
-    </a-col>
-    <a-col span="12" style="padding-bottom: 0; font-weight: 700">
-      Output kilotoken:
+  <a-row class="module" style="margin-top: 10px" :gutter="[10, 10]">
+    <a-col span="12">
+      <div style="padding-bottom: 0; font-weight: 700">
+        Input kilotoken:
+      </div>
+      <div style="padding-top: 0; font-size: 18px">
+        {{ service.resources.inputKilotoken }} {{ currency.code }}
+      </div>
     </a-col>
 
-    <a-col span="12" style="padding-top: 0; font-size: 18px">
-      {{ service.resources.inputKilotoken }} {{ currency.code }}
+    <a-col span="12">
+      <div style="padding-bottom: 0; font-weight: 700">
+        Output kilotoken:
+      </div>
+      <div style="padding-top: 0; font-size: 18px">
+        {{ service.resources.outputKilotoken }} {{ currency.code }}
+      </div>
     </a-col>
-    <a-col span="12" style="padding-top: 0; font-size: 18px">
-      {{ service.resources.outputKilotoken }} {{ currency.code }}
+
+    <a-col span="24">
+      <div class="token-title">
+        Instance token:
+
+        <visible-icon
+          v-if="isVisible"
+          style="font-size: 18px"
+          @click="isVisible = false"
+        />
+        <invisible-icon
+          v-else
+          style="font-size: 18px"
+          @click="isVisible = true"
+        />
+        <copy-icon
+          style="font-size: 18px"
+          @click="addToClipboard(token)"
+        />
+      </div>
+      <div style="padding-top: 0; font-size: 18px; word-break: break-word">
+        {{ (isVisible) ? token : `${token.slice(0, 15)}...` }}
+      </div>
     </a-col>
 
     <a-col span="24" style="margin-top: 10px">
@@ -45,16 +73,25 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, defineAsyncComponent } from 'vue'
+import { EyeOutlined as visibleIcon } from '@ant-design/icons-vue'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
 
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
-import { useCurrency } from '@/hooks/utils'
+import { useInstancesStore } from '@/stores/instances.js'
+import { useClipboard, useCurrency } from '@/hooks/utils'
 
 import addTicket from '@/components/support/addTicket.vue'
 import ticketItem from '@/components/support/ticketItem.vue'
 import loading from '@/components/ui/loading.vue'
+
+const invisibleIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/EyeInvisibleOutlined')
+)
+const copyIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CopyOutlined')
+)
 
 const props = defineProps({
   service: { type: Object, required: true }
@@ -62,7 +99,9 @@ const props = defineProps({
 
 const chatsStore = useChatsStore()
 const supportStore = useSupportStore()
+const instancesStore = useInstancesStore()
 const { currency } = useCurrency()
+const { addToClipboard } = useClipboard()
 
 const chats = computed(() => {
   const result = []
@@ -88,7 +127,6 @@ const chats = computed(() => {
   })
 
   result.sort((a, b) => b.date - a.date)
-
   return result
 })
 
@@ -96,12 +134,20 @@ function moduleEnter () {
   supportStore.isAddingTicket = !supportStore.isAddingTicket
 }
 
+const isVisible = ref(false)
 const isLoading = ref(false)
+const token = ref('-')
 
 async function fetch () {
   try {
     isLoading.value = true
     await chatsStore.fetchChats()
+
+    const { meta } = await instancesStore.invokeAction({
+      uuid: props.service.uuid, action: 'instance_token'
+    })
+
+    token.value = meta.token
   } catch (error) {
     console.error(error)
   } finally {
@@ -116,19 +162,27 @@ fetch()
 export default { name: 'OpenaiDraw' }
 </script>
 
-<style>
-.module .ticket {
+<style scoped>
+.module :deep(.ticket) {
   background-color: var(--main);
   color: var(--bright_font);
   transition: .2s;
 }
 
-.module .ticket:hover {
+.module :deep(.ticket:hover) {
   background-color: var(--main);
   opacity: 0.8;
 }
 
-.module .ticket__time {
+.module :deep(.ticket__time),
+.module :deep(.ticket__status-text > .ant-badge) {
   color: var(--bright_bg);
+}
+
+.token-title {
+  display: flex;
+  gap: 5px;
+  padding-bottom: 0;
+  font-weight: 700;
 }
 </style>

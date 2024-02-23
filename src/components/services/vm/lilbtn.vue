@@ -20,7 +20,7 @@ import { Modal, notification, Switch, Button } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.js'
 import { useInstancesStore } from '@/stores/instances.js'
-import api from '@/api.js'
+import { createRenewInvoice } from '@/functions.js'
 
 const props = defineProps({
   price: { type: Number, required: true },
@@ -180,10 +180,8 @@ function moduleEnter () {
     cancelText: i18n.t('Cancel'),
     okButtonProps: { disabled: isDisabled.value },
     onOk: async () => {
-      const data = { uuid_instans: props.service.orderid, run: 'invoice_instans_renew' }
-
       try {
-        await api.get(authStore.baseURL, { params: data })
+        await createRenewInvoice(props.service, authStore.baseURL)
 
         isDisabled.value = true
         notification.success({ message: i18n.t('Done') })

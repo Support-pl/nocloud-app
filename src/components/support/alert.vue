@@ -9,16 +9,19 @@
       <span @click="isVisible = !isVisible">
         {{ capitalize($t('settings')) }}
 
-        (<template v-if="chat.gateways[0]">
-          {{ $t('gateway') }}:
-          <span style="margin: 0 -10px 0 -6px; text-decoration: underline">{{ chat.gateways[0] }}</span>;
-        </template>
+        <span v-if="(chat.gateways[0])">
+          ({{ $t('gateway') }}:
+          <span style="text-decoration: underline">
+            {{ chat.gateways[0] }}
+          </span>{{ (chat.department === 'openai') ? ';' : ')' }}
+        </span>
 
-        <span :style="`margin: 0 auto 0 ${(chat.gateways[0]) ? '-4px' : '-8px'}`">
-          {{ capitalize($t('prompts')) }}:
+        <span v-if="chat.department === 'openai'">
+          {{ (chat.gateways[0]) ? '' : '(' }}{{ capitalize($t('prompts')) }}:
+
           <a-tooltip color="var(--bright_font)">
             <template #title>
-              <a-list bordered size="small" :data-source="chat.prompts">
+              <a-list bordered size="small" :data-source="currentPrompts">
                 <template #renderItem="{ item }">
                   <a-list-item>{{ item }}</a-list-item>
                 </template>
@@ -28,8 +31,8 @@
           </a-tooltip>)
         </span>
 
-        <plus-icon v-if="isVisible" :rotate="45" />
-        <down-icon v-else />
+        <plus-icon v-if="isVisible" :rotate="45" style="margin-left: auto" />
+        <down-icon v-else style="margin-left: auto" />
       </span>
     </template>
 
@@ -61,52 +64,54 @@
         OK
       </a-button>
 
-      <template v-if="promptsOptions.length > 0">
-        {{ $t('Select prompts') }}:
-      </template>
-      <a-spin :spinning="isPromptsLoading">
-        <a-checkbox-group
-          v-model:value="prompts"
-          class="alert__checkbox"
-          style="margin-bottom: 15px"
-          :options="promptsOptions"
-          @change="selectPrompts"
+      <template v-if="chat.department === 'openai'">
+        <template v-if="promptsOptions.length > 0">
+          {{ $t('Select prompts') }}:
+        </template>
+        <a-spin :spinning="isPromptsLoading">
+          <a-checkbox-group
+            v-model:value="prompts"
+            class="alert__checkbox"
+            style="margin-bottom: 15px"
+            :options="promptsOptions"
+            @change="selectPrompts"
+          >
+            <template #label="{ label, description }">
+              <a-popover trigger="click" placement="bottom">
+                {{ label }} <down-icon />
+                <template #content>
+                  {{ description }}
+                </template>
+              </a-popover>
+            </template>
+          </a-checkbox-group>
+        </a-spin>
+
+        {{ $t('Add prompt') }}:
+        <a-input
+          v-model:value="title"
+          style="margin-bottom: 10px"
+          :placeholder="`${capitalize($t('title'))}...`"
+        />
+        <a-textarea
+          v-model:value="message"
+          allow-clear
+          :auto-size="{ minRows: 2, maxRows: 100 }"
+          :placeholder="`${capitalize($t('description'))}...`"
+          @keyup.shift.enter.exact="newLine"
+          @keydown.enter.exact.prevent="sendPrompt"
+        />
+
+        <a-button
+          type="primary"
+          style="margin-top: 10px"
+          :disabled="message.trim().length < 2"
+          :loading="isPromptLoading"
+          @click="sendPrompt"
         >
-          <template #label="{ label, description }">
-            <a-popover trigger="click" placement="bottom">
-              {{ label }} <down-icon />
-              <template #content>
-                {{ description }}
-              </template>
-            </a-popover>
-          </template>
-        </a-checkbox-group>
-      </a-spin>
-
-      {{ $t('Add prompt') }}:
-      <a-input
-        v-model:value="title"
-        style="margin-bottom: 10px"
-        :placeholder="`${capitalize($t('title'))}...`"
-      />
-      <a-textarea
-        v-model:value="message"
-        allow-clear
-        :auto-size="{ minRows: 2, maxRows: 100 }"
-        :placeholder="`${capitalize($t('description'))}...`"
-        @keyup.shift.enter.exact="newLine"
-        @keydown.enter.exact.prevent="sendPrompt"
-      />
-
-      <a-button
-        type="primary"
-        style="margin-top: 10px"
-        :disabled="message.trim().length < 2"
-        :loading="isPromptLoading"
-        @click="sendPrompt"
-      >
-        {{ $t('Add') }}
-      </a-button>
+          {{ $t('Add') }}
+        </a-button>
+      </template>
     </template>
   </a-alert>
 </template>
@@ -121,7 +126,7 @@ import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
 
 import { useNotification } from '@/hooks/utils'
-import { getImageName, onError } from '@/functions.js'
+import { getImageName, onError, generateUuid } from '@/functions.js'
 
 const downIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/DownOutlined')
@@ -197,6 +202,11 @@ const options = computed(() => {
 
 const prompts = ref([])
 const promptsOptions = ref([])
+const currentPrompts = computed(() =>
+  (props.chat.meta?.data?.prompts?.toJSON() ?? [])
+    .filter(({ enabled }) => enabled)
+    .map(({ title }) => title)
+)
 
 function newLine () {
   message.value.replace(/$/, '\n')
@@ -246,7 +256,7 @@ async function sendPrompt () {
       : []
 
     result.push({
-      id: Math.random().toFixed(16).slice(2),
+      id: generateUuid(),
       title: title.value,
       description: message.value,
       enabled: true
@@ -341,7 +351,7 @@ export default { name: 'SupportAlert' }
 .alert__notification :deep(.ant-alert-message) > span {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: 5px;
   font-size: 14px;
   cursor: pointer;
 }

@@ -286,7 +286,8 @@ export default {
               ? `${inst.config.duration} ${inst.config.planCode}`
               : inst.product
 
-            res.date = inst.data.expiration ?? (inst.data.next_payment_date * 1000 || 0)
+            res.date = (inst.data.expiration * 1000 || null) ??
+              (inst.data.next_payment_date * 1000 || 0)
             res.orderamount = inst.billingPlan.products[key]?.price ?? 0
 
             inst.config.addons?.forEach((addon) => {

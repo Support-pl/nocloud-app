@@ -38,7 +38,9 @@ export function toDate (timestamp, sep = '.', timeFormat = true, reverse) {
     result = `${year}${sep}${month}${sep}${day}`
   }
   if (timeFormat === true) result += ` ${time}`
-  else if (timeFormat.split(':').length === 2) {
+  else if (typeof timeFormat !== 'string') {
+    result += ''
+  } else if (timeFormat.split(':').length === 2) {
     result += ` ${time.slice(0, 5)}`
   } else if (timeFormat.split(':').length === 3) {
     result += ` ${time}`
@@ -130,13 +132,27 @@ export function getPeriods (productSize, plans) {
   return value
 }
 
-export function createInvoice (instance, baseURL) {
+export async function createInvoice (instance, baseURL) {
   if (checkPayg(instance)) return
-  return api.get(baseURL, {
+  const url = await api.get(baseURL, {
     params: {
       run: 'invoice_instans', uuid_instans: instance.uuid
     }
   })
+
+  setTimeout(() => { window.open(url, '_blank') }, 300)
+  return url
+}
+
+export async function createRenewInvoice (instance, baseURL) {
+  const url = await api.get(baseURL, {
+    params: {
+      run: 'invoice_instans_renew', uuid_instans: instance.uuid
+    }
+  })
+
+  setTimeout(() => { window.open(url, '_blank') }, 300)
+  return url
 }
 
 export function checkPayg (instance) {
@@ -146,6 +162,18 @@ export function checkPayg (instance) {
   if (type === 'openai') return true
   if (config.duration === 'P1H') return true
   return type === 'ione' && kind === 'DYNAMIC'
+}
+
+export function generateUuid () {
+  const result = []
+
+  for (let i = 0; i < 4; i++) {
+    result.push(
+      window.crypto.getRandomValues(new Uint32Array(1))[0].toString(16)
+    )
+  }
+
+  return result.join('-')
 }
 
 export function onError ({ target }) {
