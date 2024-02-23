@@ -157,6 +157,7 @@
 import { defineAsyncComponent, h } from 'vue'
 import { mapStores, mapState } from 'pinia'
 import { usePeriod } from '@/hooks/utils'
+import { createRenewInvoice } from '@/functions.js'
 import config from '@/appconfig.js'
 
 import { useAuthStore } from '@/stores/auth.js'
@@ -446,6 +447,7 @@ export default {
       })
   },
   methods: {
+    createRenewInvoice,
     clickOnInvoice (invoiceId) {
       this.$api.get(this.baseURL, {
         params: {
@@ -463,9 +465,7 @@ export default {
         cancelText: this.$t('Cancel'),
         okButtonProps: { disabled: (this.service.data.blocked) },
         onOk: async () => {
-          const data = { uuid_instans: this.service.uuid, run: 'invoice_instans_renew' }
-
-          return this.$api.get(this.baseURL, { params: data })
+          return this.createRenewInvoice(this.service, this.baseURL)
             .then(() => {
               this.$notification.success({ message: 'Done!' })
               this.service.data.blocked = true

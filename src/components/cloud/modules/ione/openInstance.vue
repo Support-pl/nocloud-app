@@ -537,6 +537,7 @@ import { useInstancesStore } from '@/stores/instances.js'
 import { usePlansStore } from '@/stores/plans.js'
 
 import notification from '@/mixins/notification.js'
+import { createRenewInvoice } from '@/functions.js'
 
 const redoIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RedoOutlined')
@@ -859,6 +860,7 @@ export default defineComponent({
   methods: {
     ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
     ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
+    createRenewInvoice,
     deployService () {
       this.actionLoading = true
       this.$api.services
@@ -1221,10 +1223,8 @@ export default defineComponent({
         })
     },
     async renewInstance () {
-      const data = { uuid_instans: this.VM.uuid, run: 'invoice_instans_renew' }
-
       try {
-        await this.$api.get(this.baseURL, { params: data })
+        await this.createRenewInvoice(this.VM, this.baseURL)
 
         this.openNotificationWithIcon('success', { message: this.$t('Done') })
       } catch (error) {

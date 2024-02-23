@@ -113,7 +113,7 @@
       </template>
     </div>
 
-    <div class="chat__list">
+    <div ref="chatList" class="chat__list">
       <ticket-item
         v-for="item of chats"
         :key="item.id"
@@ -315,18 +315,34 @@ export default {
     }
   },
   watch: {
+    chats: {
+      async handler () {
+        await nextTick()
+        if (!this.$refs?.chatList) return
+        const { scrollHeight, clientHeight, lastElementChild } = this.$refs.chatList
+
+        if (scrollHeight > clientHeight || !lastElementChild) return
+        lastElementChild.style.borderBottom = '1px solid #d9d9d9'
+      },
+      deep: true
+    },
     replies: {
-      handler () {
-        nextTick(() => {
-          if (!this.$refs?.content) return
-          this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
-        })
+      async handler () {
+        await nextTick()
+
+        if (!this.$refs?.content) return
+        this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
       },
       deep: true
     }
   },
   async mounted () {
-    await this.supportStore.fetch()
+    try {
+      await this.supportStore.fetch()
+    } catch (error) {
+      console.error(error)
+    }
+
     await this.chatsStore.fetchChats()
     this.chatsStore.startStream()
     this.chatsStore.fetchDefaults()
@@ -597,6 +613,7 @@ export default {
   overflow: scroll;
   border: 1px solid #d9d9d9;
   border-radius: 6px;
+  background: var(--bright_font);
 }
 
 .chat__footer {

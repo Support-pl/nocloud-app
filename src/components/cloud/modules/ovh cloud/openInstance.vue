@@ -493,6 +493,7 @@ import { defineAsyncComponent, defineComponent } from 'vue'
 import { Button, Modal, Switch } from 'ant-design-vue'
 import { mapState, mapActions } from 'pinia'
 import notification from '@/mixins/notification.js'
+import { createRenewInvoice } from '@/functions.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -748,6 +749,7 @@ export default defineComponent({
   methods: {
     ...mapActions(useInstancesStore, ['invokeAction', 'updateService', 'fetch']),
     ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
+    createRenewInvoice,
     searchTafiff (string, option) {
       const title = this.tariffs[option.key].title.toLowerCase()
 
@@ -981,10 +983,8 @@ export default defineComponent({
       }
     },
     async renewInstance () {
-      const data = { uuid_instans: this.VM.uuid, run: 'invoice_instans_renew' }
-
       try {
-        await this.$api.get(this.baseURL, { params: data })
+        await this.createRenewInvoice(this.VM, this.baseURL)
 
         this.openNotificationWithIcon('success', { message: this.$t('Done') })
       } catch (error) {
