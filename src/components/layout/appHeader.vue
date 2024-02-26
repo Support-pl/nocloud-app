@@ -537,7 +537,7 @@ export default {
     }
   },
   created () {
-    if (config.WHMCSsiteurl) {
+    if (config.whmcsSiteUrl) {
       this.$api.get(this.baseURL, { params: { run: 'get_currencies' } })
         .then((res) => { this.currencies = res.currency })
         .catch(err => {

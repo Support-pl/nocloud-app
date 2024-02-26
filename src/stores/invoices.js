@@ -47,7 +47,7 @@ export const useInvoicesStore = defineStore('invoices', () => {
 
     async fetch (silent) {
       try {
-        if (!config.WHMCSsiteurl) return
+        if (!config.whmcsSiteUrl) return
         if (!silent) isLoading.value = true
         const account = auth.userdata.uuid
         const promises = [

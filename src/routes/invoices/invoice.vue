@@ -22,6 +22,9 @@
           <a-radio-button value="Detail">
             {{ $t('Transactions') }}
           </a-radio-button>
+          <a-radio-button v-if="config.whmcsActs" value="Acts">
+            {{ $t('Acts') }}
+          </a-radio-button>
         </a-radio-group>
 
         <template v-if="currentTab === 'Invoice'">
@@ -46,6 +49,10 @@
           </template>
         </template>
 
+        <template v-if="currentTab === 'Acts'">
+          <acts-list />
+        </template>
+
         <a-pagination
           v-if="currentTab === 'Detail'"
           show-size-changer
@@ -64,7 +71,8 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { notification } from 'ant-design-vue'
+import { useNotification } from '@/hooks/utils'
+import config from '@/appconfig.js'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
@@ -75,12 +83,14 @@ import { useInstancesStore } from '@/stores/instances.js'
 import empty from '@/components/ui/empty.vue'
 import invoiceItem from '@/components/invoice/invoiceItem.vue'
 import transactionItem from '@/components/invoice/transactionItem.vue'
+import actsList from '@/components/invoice/actsList.vue'
 
 const authStore = useAuthStore()
 const currenciesStore = useCurrenciesStore()
 const invoicesStore = useInvoicesStore()
 const transactionsStore = useTransactionsStore()
 const instancesStore = useInstancesStore()
+const { openNotification } = useNotification()
 
 const currentTab = ref('Invoice')
 const percent = ref(0)
@@ -244,7 +254,7 @@ async function fetchInstances () {
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 
-    notification.error({ message })
+    openNotification('error', { message })
     console.error(error)
   }
 }
@@ -256,7 +266,7 @@ fetchInstances()
 export default { name: 'InvoicesView' }
 </script>
 
-<style>
+<style scoped>
 .invoices {
   padding: 0 10px 0;
   overflow: auto;
@@ -264,16 +274,16 @@ export default { name: 'InvoicesView' }
 }
 
 .invoices__wrapper {
-  padding: 20px 10px;
+  padding: 20px 0;
 }
 
-.invoices__wrapper .ant-radio-group {
+.invoices__wrapper :deep(.ant-radio-group ){
   width: 100%;
   margin: 0 1px 20px;
 }
 
-.invoices__wrapper .ant-radio-button-wrapper {
-  width: 50%;
+.invoices__wrapper :deep(.ant-radio-button-wrapper) {
+  width: calc(100% / 3);
   text-align: center;
 }
 

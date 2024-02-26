@@ -216,7 +216,7 @@ const isDisabled = computed(() => {
 })
 
 const isVisible = computed(() => {
-  if (!config.WHMCSsiteurl) return true
+  if (!config.whmcsSiteUrl) return true
   if (localStorage.getItem('oauth')) return true
   return (!isLoading.value && authStore.billingUser.firstname)
 })
@@ -242,7 +242,7 @@ function installDataToBuffer () {
   ]
 
   interestedKeys.forEach((key) => {
-    if (config.WHMCSsiteurl) form.value[key] = authStore.billingUser[key]
+    if (config.whmcsSiteUrl) form.value[key] = authStore.billingUser[key]
     else form.value[key] = authStore.userdata.data[key]
   })
 }
@@ -293,7 +293,7 @@ async function sendInfo () {
     let response
 
     isSendingInfo.value = true
-    if (config.WHMCSsiteurl) {
+    if (config.whmcsSiteUrl) {
       response = await api.get(authStore.baseURL, { params })
     } else {
       await api.accounts.update(authStore.userdata.uuid, {
