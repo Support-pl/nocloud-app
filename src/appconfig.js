@@ -12,19 +12,18 @@ export default {
   languages: globalConfig.languages ?? ['en'],
   vdcEnabled: globalConfig.vdc_enabled ?? false,
   sharedEnabled: globalConfig.shared_enabled ?? false,
-  dangerModeNoSSLCheck: globalConfig.dangerModeNoSSLCheck ?? false,
-  WHMCSsiteurl: globalConfig.whmcs?.site_url ?? '',
+
+  whmcsSiteUrl: globalConfig.whmcs?.site_url ?? '',
+  whmcsRegistration: globalConfig.whmcs?.registration ?? false,
+  whmcsActs: globalConfig.whmcs?.acts ?? false,
   sharedFolder: globalConfig.app?.shared_folder ?? 'virtualHosting',
+
   appTitle: globalConfig.app?.title ?? '',
   appLogo: {
     path: globalConfig.app?.logo ?? '',
     pos: globalConfig.app?.logo_position.toLowerCase() || 'top'
   },
-  currency: {
-    prefix: globalConfig?.currency?.prefix ?? '',
-    suffix: globalConfig?.currency?.suffix ?? 'USD',
-    code: globalConfig?.currency?.code ?? 'USD'
-  },
+
   services: {
     virtual: {
       groupname: ['Виртуальный хостинг', 'Shared Hosting'],

@@ -375,7 +375,7 @@ export default {
     GoToPersonalArea () {
       this.$router.push({ name: 'cabinet' })
       // const close_your_eyes = md5('openWHMCSclientDetails'+this.user.id+this.user.secret);
-      // window.open(config.WHMCSsiteurl + config.appFolder + `/openWHMCSclientDetails.php?userid=${this.user.id}&secret=${close_your_eyes}`);
+      // window.open(config.whmcsSiteUrl + config.appFolder + `/openWHMCSclientDetails.php?userid=${this.user.id}&secret=${close_your_eyes}`);
     },
     copyLink () {
       navigator.clipboard

@@ -280,7 +280,7 @@ export default {
       const key = this.service.product ?? this.service.config?.product
       const { meta } = this.service.billingPlan?.products[key] ?? {}
       let description = this.service.desc_product
-        ?.replace('/templates', `${config.WHMCSsiteurl}$&`)
+        ?.replace('/templates', `${config.whmcsSiteUrl}$&`)
 
       try {
         description = JSON.parse(description)

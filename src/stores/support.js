@@ -47,7 +47,7 @@ export const useSupportStore = defineStore('support', () => {
     filter,
 
     async fetch (silent) {
-      if (!config.WHMCSsiteurl) return
+      if (!config.whmcsSiteUrl) return
       try {
         if (!silent) isLoading.value = true
         const response = await api.get(
@@ -67,7 +67,7 @@ export const useSupportStore = defineStore('support', () => {
     },
 
     async fetchDepartments () {
-      if (!config.WHMCSsiteurl) return
+      if (!config.whmcsSiteUrl) return
       if (departments.value.length > 0) {
         return departments.value
       }

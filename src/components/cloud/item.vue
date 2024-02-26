@@ -137,7 +137,7 @@ const isPayg = computed(() => {
   const { groupname, config, billingPlan, type } = props.instance ?? {}
 
   if (groupname === 'OpenAI') return true
-  if (config.duration === 'P1H') return true
+  if (config?.duration === 'P1H') return true
   return type === 'ione' && billingPlan.kind === 'DYNAMIC'
 })
 
