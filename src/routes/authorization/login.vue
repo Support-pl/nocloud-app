@@ -211,7 +211,7 @@ async function send () {
     await authStore.login({
       login: formatedEmail.trim(),
       password: password.value,
-      type: (type.value || !config.WHMCSsiteurl) ? 'standard' : 'whmcs'
+      type: (type.value || !config.whmcsSiteUrl) ? 'standard' : 'whmcs'
     })
 
     if (localStorage.getItem('data')) {

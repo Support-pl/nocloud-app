@@ -15,7 +15,7 @@ export const useProductsStore = defineStore('products', () => {
   const page = ref(1)
 
   const isLoading = ref(false)
-  const baseURL = `${config.WHMCSsiteurl}${config.sharedFolder}`
+  const baseURL = `${config.whmcsSiteUrl}${config.sharedFolder}`
 
   function setProducts (data) {
     products.value = data.map((product) => ({
@@ -36,7 +36,7 @@ export const useProductsStore = defineStore('products', () => {
     baseURL,
 
     async fetch (userid, silent) {
-      if (!config.WHMCSsiteurl) return {}
+      if (!config.whmcsSiteUrl) return {}
       try {
         if (!silent) isLoading.value = true
         const response = await api.get(
@@ -57,7 +57,7 @@ export const useProductsStore = defineStore('products', () => {
     },
 
     async fetchServices () {
-      if (!config.WHMCSsiteurl) return {}
+      if (!config.whmcsSiteUrl) return {}
       try {
         const response = await api.get(
           store.baseURL,

@@ -371,7 +371,7 @@ export default {
 
           this.products = prod.sort((a, b) => b.name - a.name)
           this.products.forEach(({ description }, i) => {
-            const desc = description.replace('/templates', `${config.WHMCSsiteurl}$&`)
+            const desc = description.replace('/templates', `${config.whmcsSiteUrl}$&`)
             const start = desc.indexOf('<img')
             const end = desc.indexOf('">', start)
             const image = desc.slice(start, end + 2)

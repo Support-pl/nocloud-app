@@ -18,7 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
   const billingUser = ref({})
 
   const loginButtons = ref([])
-  const baseURL = `${config.WHMCSsiteurl}/modules/addons/nocloud/api/index.php`
+  const baseURL = `${config.whmcsSiteUrl}/modules/addons/nocloud/api/index.php`
   const isLogged = computed(() =>
     token.value.length > 0
   )
@@ -102,7 +102,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (billingUser.value.firstname && !update) {
         return billingUser.value
       }
-      if (!config.WHMCSsiteurl) return billingUser.value
+      if (!config.whmcsSiteUrl) return billingUser.value
 
       try {
         const response = await api.get(

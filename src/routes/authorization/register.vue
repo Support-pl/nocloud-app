@@ -214,11 +214,11 @@ const userinfo = ref({
 })
 
 const currencies = computed(() =>
-  (config.WHMCSsiteurl) ? currenciesStore.whmcsCurrencies : currenciesStore.list
+  (config.whmcsSiteUrl) ? currenciesStore.whmcsCurrencies : currenciesStore.list
 )
 
 watch(() => currenciesStore.list, (value) => {
-  if (config.WHMCSsiteurl) return
+  if (config.whmcsSiteUrl) return
   userinfo.value.currency = value[0].id
 })
 
@@ -226,7 +226,7 @@ watch(() => currenciesStore.whmcsCurrencies, (value) => {
   userinfo.value.currency = value[0].id
 })
 
-userinfo.value.currency = (config.WHMCSsiteurl)
+userinfo.value.currency = (config.whmcsSiteUrl)
   ? currenciesStore.whmcsCurrencies[0]?.id ?? 1
   : currenciesStore.defaultCurrency
 
@@ -287,7 +287,7 @@ async function submitHandler () {
 
   try {
     registerLoading.value = true
-    const response = (config.WHMCSsiteurl)
+    const response = (config.whmcsSiteUrl)
       ? await api.get(authStore.baseURL, {
         params: { ...temp, app_language: locale, run: 'create_user' }
       })

@@ -167,7 +167,7 @@ onMounted(async () => {
   if (firstname && localStorage.getItem('oauth')) {
     localStorage.removeItem('oauth')
     appStore.isButtonsVisible = true
-  } else if (!id && config.WHMCSsiteurl) {
+  } else if (!id && config.whmcsSiteUrl) {
     appStore.isButtonsVisible = false
   }
 

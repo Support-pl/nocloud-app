@@ -70,7 +70,7 @@ export const useCurrenciesStore = defineStore('currencies', () => {
       }
     },
     async fetchWhmcsCurrencies () {
-      if (!config.WHMCSsiteurl) return
+      if (!config.whmcsSiteUrl) return
       try {
         const response = await api.get(authStore.baseURL, {
           params: { run: 'get_currencies' }
