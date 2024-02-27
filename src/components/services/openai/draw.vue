@@ -20,7 +20,7 @@
 
     <a-col span="24">
       <div class="token-title">
-        Instance token:
+        Token API:
 
         <visible-icon
           v-if="isVisible"

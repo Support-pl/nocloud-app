@@ -248,10 +248,11 @@ function forgotPass () {
 }
 
 async function restorePass () {
+  tryingLogin.value = true
   try {
     const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(1)}`
 
-    const { result, message } = api.get(authStore.baseURL, {
+    const { result, message } = await api.get(authStore.baseURL, {
       params: {
         run: 'reset_password', email: encodeURIComponent(formatedEmail)
       }

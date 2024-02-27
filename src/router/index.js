@@ -206,6 +206,17 @@ const routes = [
           isNeedBackButton: true
         },
         component: () => import('@/routes/settings/userPage.vue')
+      },
+      {
+        path: 'registration-form',
+        name: 'registration form',
+        meta: {
+          mustBeLoggined: true,
+          footerTitle: 'services',
+          headerTitle: 'registration',
+          isNeedBackButton: true
+        },
+        component: () => import('@/routes/authorization/resourceReg.vue')
       }
     ]
   },

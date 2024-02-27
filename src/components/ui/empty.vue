@@ -3,15 +3,21 @@
     <div class="smile">
       :(
     </div>
-    {{ $t('It’s empty...') }}
+    {{ $t(text) }}
   </div>
 </template>
+
+<script setup>
+defineProps({
+  text: { type: String, default: 'It’s empty...' }
+})
+</script>
 
 <script>
 export default { name: 'EmptyPlaceholder' }
 </script>
 
-<style>
+<style scoped>
 .none {
   display: flex;
   justify-content: center;

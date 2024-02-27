@@ -52,6 +52,9 @@ const clusterIcon = defineAsyncComponent(
 const shoppingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/ShoppingOutlined')
 )
+const formIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/FormOutlined')
+)
 
 export default {
   name: 'ServicesWrapper',
@@ -133,12 +136,25 @@ export default {
       if (config.vdcEnabled) {
         services.push({
           title: 'VDC',
-          translatable: true,
+          translatable: false,
           icon: clusterIcon,
           type: 'VDC',
           onclick: {
             function: this.routeTo,
-            paramsArr: [{ name: 'newVDC', query: {} }]
+            paramsArr: [{ name: 'products', query: { service: 'VDC' } }]
+          }
+        })
+      }
+
+      if (config.whmcsRegistration) {
+        services.push({
+          title: 'registration in BelGIE',
+          translatable: true,
+          icon: formIcon,
+          type: 'BelGIE',
+          onclick: {
+            function: this.routeTo,
+            paramsArr: [{ name: 'registration form', query: {} }]
           }
         })
       }
@@ -240,11 +256,11 @@ export default {
       if (service.type === 'VDC') {
         name = 'newVDC'
       }
+      if (service.type === 'BelGIE') {
+        name = 'registration form'
+      }
 
       this.$router.push({ name, query })
-    },
-    toKebabCase (text) {
-      return text.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
     }
   }
 }
