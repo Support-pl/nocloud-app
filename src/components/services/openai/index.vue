@@ -142,26 +142,13 @@ const getProducts = computed(() => {
   )
   const inputKilotoken = +(products.input_kilotoken * currency.value.rate).toFixed(2)
   const outputKilotoken = +(products.output_kilotoken * currency.value.rate).toFixed(2)
-  let description
-
-  switch (i18n.locale.value) {
-    case 'ru':
-      description = 'Представьте себе, что «токен» - это фрагмент слова, используемый для обработки естественного языка. Для текста на английском 1 токен составляет примерно 4 символа или 0,75 слова. Для русского языка один токен примерно равен 2 символам или 0,25 слова.'
-      break
-
-    default:
-      description = 'You can think of tokens as pieces of words used for natural language processing. For English text, 1 token is approximately 4 characters or 0.75 words.'
-      break
-  }
 
   return {
     title,
     inputKilotoken,
     outputKilotoken,
     price: inputKilotoken + outputKilotoken,
-    description: `<span style="font-size: 18px">
-      ${description}
-    </span>`
+    description: `<span style="font-size: 18px; white-space: pre-line">${i18n.t('openai description')}</span>`
   }
 })
 
@@ -383,7 +370,7 @@ fetch()
 export default { name: 'OpenaiComponent' }
 </script>
 
-<style>
+<style scoped>
 .order_wrapper {
   position: relative;
   width: 100%;
@@ -401,18 +388,6 @@ export default { name: 'OpenaiComponent' }
   margin-top: 15px;
   margin-bottom: 15px;
   transform: translateX(-50%);
-}
-
-.order .ant-slider-mark-text {
-  white-space: nowrap;
-}
-
-.order .ant-slider-mark-text:first-of-type {
-  transform: translateX(-10px) !important;
-}
-
-.order .ant-slider-mark-text:last-of-type {
-  transform: translateX(calc(-100% + 10px)) !important;
 }
 
 .product__specs {
@@ -486,38 +461,6 @@ export default { name: 'OpenaiComponent' }
   font-size: 1.1rem;
 }
 
-.order__slider {
-  display: flex;
-  justify-content: space-evenly;
-  margin-bottom: 10px;
-  overflow-x: auto;
-}
-
-.order__slider-item:not(:last-child) {
-  margin-right: 10px;
-}
-
-.order__slider-item {
-  flex-shrink: 0;
-  /* border: 1px solid rgba(0, 0, 0, .15); */
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
-  height: 100%;
-  padding: 7px 10px;
-  cursor: pointer;
-  border-radius: 15px;
-  font-size: 1.1rem;
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
-}
-
-.order__slider-item:hover {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
-}
-
-.order__slider-item--active {
-  background-color: var(--main);
-  color: var(--bright_font);
-}
-
 .loadingLine {
   min-width: 100px;
   width: 100%;
@@ -528,34 +471,6 @@ export default { name: 'OpenaiComponent' }
   animation-timing-function: ease;
   animation-iteration-count: infinite;
   animation-direction: alternate;
-}
-
-.loadingLine--total {
-  margin-top: 10px;
-  height: 26px;
-}
-
-.loadingLine--image {
-  min-width: 60px;
-  width: 60px;
-  height: 60px;
-  margin: auto;
-  margin-bottom: 15px;
-}
-
-.specs-enter-active,
-.specs-leave-active {
-  transition: all .15s ease;
-}
-
-.specs-enter-from {
-  transform: translateX(-1em);
-  opacity: 0;
-}
-
-.specs-leave-to{
-  transform: translateX(1em);
-  opacity: 0;
 }
 
 @keyframes glowing {

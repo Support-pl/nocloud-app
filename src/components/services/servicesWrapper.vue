@@ -243,6 +243,7 @@ export default {
           break
         case 'openai':
           name = 'service-openai'
+          query.headerTitle = 'ChatGPT'
           break
         case 'ione':
         case 'ovh':
