@@ -375,6 +375,7 @@
     "login is required": "Логин обязателен",
     "email is not valid": "Пожалуйста, введите правильную почту",
     "account created successfully": "Аккаунт создан успешно.",
+    "failed to create user": "Не удалось создать пользователя. Попробуйте позже.",
     "SSH key": "SSH ключ",
     "SSH keys": "SSH ключи",
     "Add a new SSH key": "Добавить новый SSH ключ",
@@ -473,7 +474,7 @@
       "resource info": "Сведения о ресурсе",
       "document data": "Данные документа",
       "registration info": "Сведения о государственной регистрации",
-      "passport": "Пасспорт",
+      "passport": "Паспорт",
       "type": "Вид документа",
       "series": "Серия",
       "number": "Номер",
@@ -486,7 +487,8 @@
       "number decisions": "Номер решения",
       "payer account number": "Учетный номер плательщика",
       "checking account": "Расчетный счет",
-      "bankname": "Название банка"
+      "bankname": "Название банка",
+      "BIC": "BIC"
     },
     "ssl_product": {
       "firstname": "Имя",

@@ -36,6 +36,7 @@
                   :filter-option="field.filter"
                   :disabled="field.disabled"
                   :options="field.options"
+                  :placeholder="field.placeholder"
                 />
 
                 <input
@@ -45,6 +46,7 @@
                   type="tel"
                   :class="field.class"
                   :disabled="field.disabled"
+                  :placeholder="field.placeholder"
                 >
 
                 <a-date-picker
@@ -59,6 +61,7 @@
                   v-else
                   v-model:value="getTarget(form, key)[(key.pop) ? key.at(-1) : key]"
                   :disabled="field.disabled"
+                  :placeholder="field.placeholder"
                 />
               </a-form-item>
             </template>
@@ -139,7 +142,7 @@ function setInfoByType (value) {
 }
 
 function setInfo () {
-  const keys = ['email', 'fullname', 'countryname', 'phonenumber', 'companyname', 'address1']
+  const keys = ['email', 'fullname', 'phonenumber', 'companyname', 'address1']
 
   keys.forEach((key) => {
     if (config.whmcsSiteUrl) {
@@ -181,10 +184,10 @@ async function sendInfo () {
 
   try {
     isSendLoading.value = true
-    const params = JSON.stringify(
+    const params = JSON.parse(JSON.stringify(
       { ...form.value, run: 'registration_domain', payer: type.value },
       objectStringify
-    )
+    ))
 
     const response = await api.get(authStore.baseURL, { params })
 

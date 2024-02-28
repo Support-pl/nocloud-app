@@ -375,6 +375,7 @@
     "login is required": "Login is required",
     "email is not valid": "Email is not valid",
     "account created successfully": "Account created successfully.",
+    "failed to create user": "Failed to create user. Try later.",
     "SSH key": "SSH key",
     "SSH keys": "SSH keys",
     "Add a new SSH key": "Add a new SSH key",
@@ -486,7 +487,8 @@
       "number decisions": "Number decisions",
       "payer account number": "Payer Account Number",
       "checking account": "Checking Account",
-      "bankname": "Bank Name"
+      "bankname": "Bank Name",
+      "BIC": "BIC"
     },
     "ssl_product": {
       "firstname": "First Name",

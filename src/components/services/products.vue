@@ -203,7 +203,7 @@ export default {
 
       if (this.min) return this.products.slice(0, 5)
       else if (this.$route.query.service) {
-        return this.filterProducts(products, this.checkedTypes)
+        return this.filterProducts(this.products, this.checkedTypes)
       }
       return products
     },
