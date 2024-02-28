@@ -231,7 +231,13 @@ export default {
     ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
-      const product = this.products[this.options.size]
+      if (!(this.options.size && this.options.period)) return 'NAN'
+
+      const { title } = this.products[this.options.size]
+      const product = Object.values(this.products).find((product) =>
+        product.title === title && +product.period === this.options.period
+      )
+
       const price = product.price + this.options.addons.reduce(
         (sum, id) => {
           const addon = product.addons?.find(({ key }) => key === id)
@@ -425,20 +431,28 @@ export default {
   },
   methods: {
     changeProducts () {
-      const sortedProducts = this.plans.reduce(
-        (result, plan) => {
-          for (const [key, product] of Object.entries(plan.products)) {
-            const i = result.findIndex(([, { title }]) => title === product.title)
+      const productsAndSizes = this.plans.reduce((result, plan) => {
+        for (const [key, product] of Object.entries(plan.products)) {
+          const i = result.sizes.findIndex(({ label }) => label === product.title)
 
-            if (i === -1) result.push([key, product])
+          if (!product.public) continue
+          result.products.push([key, product])
+
+          if (i === -1) {
+            result.sizes.push({
+              key,
+              label: product.title,
+              group: product.group ?? product.title,
+              sorter: product.sorter
+            })
           }
+        }
 
-          return result
-        }, []
-      ) ?? []
+        return result
+      }, { products: [], sizes: [] })
       const plan = this.plans.at(0)
 
-      sortedProducts.forEach(([productKey, value]) => {
+      productsAndSizes.products.forEach(([productKey, value]) => {
         this.products[productKey] = {
           ...value,
           addons: plan.resources.filter(({ key }) =>
@@ -447,12 +461,8 @@ export default {
         }
       })
 
-      sortedProducts.sort(([, a], [, b]) => a.sorter - b.sorter)
-      this.sizes = sortedProducts.map(([key, value]) => ({
-        key,
-        label: value.title,
-        group: value.group ?? value.title
-      }))
+      productsAndSizes.sizes.sort((a, b) => a.sorter - b.sorter)
+      this.sizes = productsAndSizes.sizes
       this.options.size = this.sizes[0]?.key ?? ''
     },
     changePeriods (key) {

@@ -322,6 +322,7 @@ async function submitHandler () {
         ].reduce((result, key) => ({ ...result, [key]: temp[key] }), {})
       })
 
+    if (!response) throw new Error(`[Error]: ${i18n.t('failed to create user')}`)
     if (response.result === 'error') throw response
     else message.success(i18n.t('account created successfully'))
     router.push({ name: 'login' })

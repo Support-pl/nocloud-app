@@ -1,5 +1,5 @@
 <template>
-  <a style="display: block" :href="url" :download="`${title}.pdf`">
+  <a style="display: block" target="_blank" :href="url" :download="`${title}.pdf`">
     {{ title }}
   </a>
 </template>

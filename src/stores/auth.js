@@ -18,7 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref('')
   const userdata = ref({ data: {} })
   const billingUser = ref({})
-  const isBilingUserLoading = ref(false)
+  const billingUserPromise = ref()
 
   const loginButtons = ref([])
   const baseURL = `${config.whmcsSiteUrl}/modules/addons/nocloud/api/index.php`
@@ -107,12 +107,13 @@ export const useAuthStore = defineStore('auth', () => {
         return billingUser.value
       }
       if (!config.whmcsSiteUrl) return billingUser.value
-      if (isBilingUserLoading.value) return billingUser.value
+      if (billingUserPromise.value) return billingUserPromise.value
 
       try {
-        isBilingUserLoading.value = true
-        const response = await api.get(
-          baseURL, { params: { run: 'client_detail' } })
+        billingUserPromise.value = api.get(
+          baseURL, { params: { run: 'client_detail' } }
+        )
+        const response = await billingUserPromise.value
 
         if (!response.id) response.id = 'none'
         billingUser.value = response
@@ -122,7 +123,7 @@ export const useAuthStore = defineStore('auth', () => {
         console.error(error)
         throw error
       } finally {
-        isBilingUserLoading.value = false
+        billingUserPromise.value = null
       }
     },
 

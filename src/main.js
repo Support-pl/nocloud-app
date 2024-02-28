@@ -35,12 +35,6 @@ app.config.globalProperties.capitalize = (value, isLower) => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-app.config.globalProperties.replace = (value, from, to) => {
-  if (!value) return ''
-  value = value.toString()
-  return value.replace(from, to)
-}
-
 app.config.globalProperties.dateFormat = (value) => {
   if (!value) return ''
   // return   new Intl.DateTimeFormat("en-GB", {
@@ -51,7 +45,11 @@ app.config.globalProperties.dateFormat = (value) => {
 
 app.directive('phone', {
   updated (el, { value: code }) {
+    const start = el.selectionStart
+    const { length } = el.value
+
     el.value = el.value.replace(code, '')
+    if (code.startsWith(el.value)) el.value = ''
 
     const value = el.value.replace(/\D/g, '')
     const num = (value.length > 8) ? value.length - 7 : 1
@@ -65,6 +63,10 @@ app.directive('phone', {
     else el.value = `${x[1]} ${x[2]}-${x[3]}-${x[4]}`
 
     if (code) el.value = `${code} ${el.value}`
+    const currentStart = el.selectionStart
+
+    el.selectionStart = currentStart - length + start
+    el.selectionEnd = currentStart - length + start
   }
 })
 

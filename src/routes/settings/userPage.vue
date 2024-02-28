@@ -16,54 +16,12 @@
             :rules="rules"
           >
             <a-form-item
-              :label="`${capitalize($t('clientinfo.firstname'))}:`"
-              name="firstname"
+              v-for="key of mainKeys"
+              :key="key"
+              :label="`${capitalize($t(`clientinfo.${key}`))}:`"
+              :name="key"
             >
-              <a-input v-model:value="form.firstname" :disabled="isDisabled" />
-            </a-form-item>
-            <a-form-item
-              :label="`${capitalize($t('clientinfo.lastname'))}:`"
-              name="lastname"
-            >
-              <a-input v-model:value="form.lastname" :disabled="isDisabled" />
-            </a-form-item>
-            <a-form-item
-              :label="`${capitalize($t('clientinfo.companyname'))}:`"
-              name="companyname"
-            >
-              <a-input v-model:value="form.companyname" :disabled="isDisabled" />
-            </a-form-item>
-            <a-form-item
-              :label="`${capitalize($t('clientinfo.email'))}:`"
-              name="email"
-            >
-              <a-input v-model:value="form.email" :disabled="isDisabled" />
-            </a-form-item>
-
-            <a-form-item
-              :label="`${capitalize($t('clientinfo.address1'))}:`"
-              name="address1"
-            >
-              <a-input v-model:value="form.address1" :disabled="isDisabled" />
-            </a-form-item>
-
-            <a-form-item
-              :label="`${capitalize($t('clientinfo.city'))}:`"
-              name="city"
-            >
-              <a-input v-model:value="form.city" :disabled="isDisabled" />
-            </a-form-item>
-            <a-form-item
-              :label="`${capitalize($t('clientinfo.state'))}:`"
-              name="state"
-            >
-              <a-input v-model:value="form.state" :disabled="isDisabled" />
-            </a-form-item>
-            <a-form-item
-              :label="`${capitalize($t('clientinfo.postcode'))}:`"
-              name="postcode"
-            >
-              <a-input v-model:value="form.postcode" :disabled="isDisabled" />
+              <a-input v-model:value="form[key]" :disabled="isDisabled" />
             </a-form-item>
 
             <a-form-item
@@ -100,6 +58,15 @@
                 class="user__input"
                 :disabled="!form.countryname || isDisabled"
               >
+            </a-form-item>
+
+            <a-form-item
+              v-for="(title, key) in keys"
+              :key="key"
+              :label="`${capitalize($t(`documents.${title}`))}:`"
+              :name="key"
+            >
+              <a-input v-model:value="form[key]" :disabled="isDisabled" />
             </a-form-item>
 
             <a-form-item
@@ -188,7 +155,11 @@ const rules = computed(() => ({
   address1: [{ required: false }],
   city: [{ required: false }],
   state: [{ required: false }],
-  postcode: [{ required: false }]
+  postcode: [{ required: false }],
+  account_number: [{ required: false }],
+  checking_account: [{ required: false }],
+  bankname: [{ required: false }],
+  bic: [{ required: false }]
 }))
 
 onMounted(() => {
@@ -225,17 +196,19 @@ const isPasswordVisible = computed(() =>
   localStorage.getItem('oauth')
 )
 
+const mainKeys = ['firstname', 'lastname', 'companyname', 'email', 'address1', 'city', 'state', 'postcode']
+const keys = {
+  account_number: 'payer account number',
+  checking_account: 'checking account',
+  bankname: 'bankname',
+  bic: 'BIC'
+}
+
 function installDataToBuffer () {
   const interestedKeys = [
-    'firstname',
-    'lastname',
-    'companyname',
-    'email',
-    'address1',
+    ...mainKeys,
+    ...Object.keys(keys),
     'address2',
-    'city',
-    'state',
-    'postcode',
     'countryname',
     'phonenumber',
     'tax_id'
