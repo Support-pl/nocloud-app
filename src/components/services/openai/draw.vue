@@ -42,6 +42,19 @@
       </div>
     </a-col>
 
+    <a-col span="24">
+      <div class="token-title">
+        API endpoint:
+        <copy-icon
+          style="font-size: 18px"
+          @click="addToClipboard(endpoint)"
+        />
+      </div>
+      <div style="padding-top: 0; font-size: 18px">
+        {{ endpoint }}
+      </div>
+    </a-col>
+
     <a-col span="24" style="margin-top: 10px">
       <a-button
         size="small"
@@ -137,6 +150,7 @@ function moduleEnter () {
 const isVisible = ref(false)
 const isLoading = ref(false)
 const token = ref('-')
+const endpoint = `${VUE_APP_BASE_URL}nocloud/chat/completions`
 
 async function fetch () {
   try {

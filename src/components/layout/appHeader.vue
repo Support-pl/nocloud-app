@@ -481,7 +481,7 @@ export default {
         return this.capitalize(this.$t('Servers'))
       }
 
-      if (this.active === 'custom' && this.$route.query.headerTitle) {
+      if (this.$route.query.headerTitle) {
         return this.$route.query.headerTitle
       }
 
