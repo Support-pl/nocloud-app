@@ -219,6 +219,8 @@ export const useInstancesStore = defineStore('instances', () => {
       services.value = []
       instances.value = []
       allInstances.value = []
+      searchString.value = ''
+      socket.value = null
     }
   }
 })

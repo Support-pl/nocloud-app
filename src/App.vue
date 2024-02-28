@@ -60,7 +60,7 @@ const modal = ref({
 provide('checkBalance', checkBalance)
 
 function checkBalance (price = 0) {
-  const { balance = -1 } = authStore.userdata
+  const { balance = 0 } = authStore.userdata
 
   if (!authStore.isLogged) return true
   if (balance < parseFloat(price)) {
@@ -121,8 +121,8 @@ window.addEventListener('message', ({ data, origin }) => {
     router.replace({ name: 'root' })
   }
 
-  authStore.fetchUserData()
-  authStore.fetchBillingData()
+  authStore.fetchUserData(true)
+  authStore.fetchBillingData(true)
 })
 
 router.beforeEach((to, _, next) => {

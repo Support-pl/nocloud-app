@@ -132,6 +132,14 @@
               <input v-model="userinfo.postcode" :placeholder="`${capitalize($t('clientinfo.postcode'))} *`">
               <span class="login__horisontal-line" />
               <input v-model="userinfo.address1" :placeholder="`${capitalize($t('clientinfo.address'))} *`">
+              <span class="login__horisontal-line" />
+              <input v-model="userinfo.account_number" :placeholder="`${capitalize($t('documents.payer account number'))} *`">
+              <span class="login__horisontal-line" />
+              <input v-model="userinfo.checking_account" :placeholder="`${capitalize($t('documents.checking account'))} *`">
+              <span class="login__horisontal-line" />
+              <input v-model="userinfo.bankname" :placeholder="`${capitalize($t('documents.bankname'))} *`">
+              <span class="login__horisontal-line" />
+              <input v-model="userinfo.bic" placeholder="BIC *">
             </div>
 
             <div class="inputs__log-pas">
@@ -160,7 +168,7 @@
             </div>
           </form>
         </div>
-        <div class="register__already-has" style="margin-top: 40px">
+        <div class="register__already-has" style="margin-top: 20px">
           <router-link :to="{name: 'login'}">
             {{ capitalize($t('clientinfo.already have account?')) }}
           </router-link>
@@ -202,6 +210,7 @@ const userinfo = ref({
   lastname: '',
   email: '',
   password: '',
+
   address1: '',
   city: '',
   // state: '',
@@ -209,8 +218,13 @@ const userinfo = ref({
   country: undefined,
   phonenumber: '',
   currency: 1,
+
   companyname: '',
-  tax_id: ''
+  tax_id: '',
+  account_number: '',
+  checking_account: '',
+  bankname: '',
+  bic: ''
 })
 
 const currencies = computed(() =>
@@ -342,7 +356,8 @@ export default { name: 'RegisterView' }
 <style scoped>
 .logo {
   display: flex;
-  grid-gap: 15px
+  align-items: center;
+  gap: 15px;
 }
 
 .logo__image {
@@ -380,12 +395,14 @@ export default { name: 'RegisterView' }
 
 .login {
   height: 100%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 50% auto;
+  overflow-y: auto;
 }
 
 .login__layout {
-  flex: 1 0;
+  overflow-y: initial;
 }
 
 .login__title {
@@ -397,8 +414,6 @@ export default { name: 'RegisterView' }
   color: var(--bright_font);
   font-size: 36px;
   font-weight: bold;
-  flex-shrink: 0;
-  min-height: 50%;
 }
 
 .login__title::selection {
@@ -412,12 +427,12 @@ export default { name: 'RegisterView' }
 
 .login__UI {
   position: relative;
-  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-around;
-  overflow-y: auto;
+  min-height: 100%;
+  padding-bottom: 15px;
 }
 
 .login__action-info {
@@ -425,11 +440,11 @@ export default { name: 'RegisterView' }
 }
 
 .login__inputs {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 80%;
   max-width: 500px;
-  position: relative;
 }
 
 .login__horisontal-line {
@@ -564,7 +579,13 @@ export default { name: 'RegisterView' }
 
 @media screen and (min-width: 1024px){
   .login {
-    flex-direction: row;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    overflow-y: initial;
+  }
+
+  .login__layout {
+    overflow-y: auto;
   }
 
   .login__title {
@@ -573,6 +594,7 @@ export default { name: 'RegisterView' }
 
   .login__UI {
     justify-content: center;
+    padding: 15px;
   }
 
   #qrcode {

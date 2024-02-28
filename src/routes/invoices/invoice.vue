@@ -116,6 +116,10 @@ const totalSize = computed(() =>
   transactionsStore.total
 )
 
+const radioGroupWidth = computed(() =>
+  (config.whmcsActs) ? 'calc(100% / 3)' : 'calc(100% / 2)'
+)
+
 watch(currentTab, () => {
   localStorage.setItem('order', currentTab.value)
   transactionsStore.tab = currentTab.value
@@ -283,7 +287,7 @@ export default { name: 'InvoicesView' }
 }
 
 .invoices__wrapper :deep(.ant-radio-button-wrapper) {
-  width: calc(100% / 3);
+  width: v-bind('radioGroupWidth');
   text-align: center;
 }
 
