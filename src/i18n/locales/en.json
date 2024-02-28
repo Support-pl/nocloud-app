@@ -357,6 +357,7 @@
     "token": "token",
     "Token expiration date": "Token expiration date",
     "Refresh token": "Refresh token",
+    "openai description": "You can think of tokens as pieces of words used for natural language processing. For English text, 1 token is approximately 4 characters or 0.75 words.",
     "enter": "Enter",
     "next": "next",
     "Done": "Done",
