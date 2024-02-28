@@ -2,8 +2,9 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-
 import cookies from 'js-cookie'
+
+import { useInstancesStore } from './instances.js'
 import api from '@/api.js'
 import config from '@/appconfig.js'
 
@@ -12,10 +13,12 @@ const COOKIES_NAME = 'noCloudinApp-token'
 export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
   const i18n = useI18n()
+  const instances = useInstancesStore()
 
   const token = ref('')
   const userdata = ref({ data: {} })
   const billingUser = ref({})
+  const isBilingUserLoading = ref(false)
 
   const loginButtons = ref([])
   const baseURL = `${config.whmcsSiteUrl}/modules/addons/nocloud/api/index.php`
@@ -67,6 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.clear()
       localStorage.setItem('globalConfig', config)
       localStorage.setItem('lang', lang)
+      instances.$reset()
 
       token.value = ''
       cookies.remove(COOKIES_NAME)
@@ -103,8 +107,10 @@ export const useAuthStore = defineStore('auth', () => {
         return billingUser.value
       }
       if (!config.whmcsSiteUrl) return billingUser.value
+      if (isBilingUserLoading.value) return billingUser.value
 
       try {
+        isBilingUserLoading.value = true
         const response = await api.get(
           baseURL, { params: { run: 'client_detail' } })
 
@@ -115,6 +121,8 @@ export const useAuthStore = defineStore('auth', () => {
       } catch (error) {
         console.error(error)
         throw error
+      } finally {
+        isBilingUserLoading.value = false
       }
     },
 
