@@ -53,7 +53,6 @@ function useResourceRegFields (type, setInfoByType) {
   const fields = computed(() => {
     const result = new Map([
       ['fullname', { rules: [reqRule] }],
-      ['countryname', { rules: [reqRule] }],
       ['address1', { title: 'clientinfo.address', rules: [reqRule] }],
       ['email', { rules: emailRules.value }],
       ['phonenumber', {
@@ -68,10 +67,16 @@ function useResourceRegFields (type, setInfoByType) {
     }
 
     if (type.value === 'ur') {
-      result.set('companyname', { visible: true, rules: [reqRule] })
+      result.set('companyname', {
+        placeholder: 'ОАО "Компания"',
+        visible: true,
+        rules: [reqRule]
+      })
       setRegInfo(result)
       result.set('account_number', {
-        title: 'documents.payer account number', rules: [reqRule]
+        title: 'documents.payer account number',
+        placeholder: '445081569',
+        rules: [reqRule]
       })
     }
 
@@ -79,7 +84,9 @@ function useResourceRegFields (type, setInfoByType) {
       setDocumentData(result)
       setRegInfo(result)
       result.set('account_number', {
-        title: 'documents.payer account number', rules: [reqRule]
+        title: 'documents.payer account number',
+        placeholder: '445081569',
+        rules: [reqRule]
       })
     }
 
@@ -88,7 +95,10 @@ function useResourceRegFields (type, setInfoByType) {
         title: 'description', rules: [reqRule], group: true
       })
       .set('domain', {
-        title: 'ssl_product.domain', rules: domainRules.value, group: true
+        title: 'ssl_product.domain',
+        placeholder: 'example.by',
+        rules: domainRules.value,
+        group: true
       })
 
     return result
@@ -97,22 +107,39 @@ function useResourceRegFields (type, setInfoByType) {
   function setDocumentData (target = new Map()) {
     target.set('document', { title: 'documents.document data', divider: true })
       .set(['document', 'type'], {
-        title: 'documents.type', rules: [reqRule], group: true
+        title: 'documents.type',
+        rules: [reqRule],
+        group: true
       })
       .set(['document', 'series'], {
-        title: 'documents.series', rules: [reqRule], group: true
+        title: 'documents.series',
+        placeholder: 'MC',
+        rules: [reqRule],
+        group: true
       })
       .set(['document', 'number'], {
-        title: 'documents.number', rules: [reqRule], group: true
+        title: 'documents.number',
+        placeholder: '058712',
+        rules: [reqRule],
+        group: true
       })
       .set(['document', 'id_number'], {
-        title: 'documents.id number', rules: [reqRule], group: true
+        title: 'documents.id number',
+        placeholder: '7766008A002PB0',
+        rules: [reqRule],
+        group: true
       })
       .set(['document', 'issued_by'], {
-        title: 'documents.issued by', rules: [reqRule], group: true
+        title: 'documents.issued by',
+        placeholder: 'Ленинское РУВД г. Минска',
+        rules: [reqRule],
+        group: true
       })
       .set(['document', 'date'], {
-        title: 'documents.date of issue', rules: [reqRule], group: true, date: true
+        title: 'documents.date of issue',
+        rules: [reqRule],
+        group: true,
+        date: true
       })
   }
 
@@ -122,13 +149,21 @@ function useResourceRegFields (type, setInfoByType) {
         title: 'documents.type', rules: [reqRule], group: true
       })
       .set(['reg_info', 'issued_by'], {
-        title: 'documents.carried out reg', rules: [reqRule], group: true
+        title: 'documents.carried out reg',
+        placeholder: 'Светлогорский райсполком Гомельской области',
+        rules: [reqRule],
+        group: true
       })
       .set(['reg_info', 'date'], {
-        title: 'documents.date of reg', rules: [reqRule], group: true, date: true
+        title: 'documents.date of reg',
+        rules: [reqRule],
+        group: true,
+        date: true
       })
       .set(['reg_info', 'number'], {
-        title: 'documents.number decisions', group: true
+        title: 'documents.number decisions',
+        placeholder: '178',
+        group: true
       })
   }
 

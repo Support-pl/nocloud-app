@@ -59,7 +59,7 @@
         </div>
 
         <div
-          v-if="!authStore.billingUser.paid_stop && isVisible"
+          v-if="isAddFundsVisible"
           class="settings__item"
           @click="showModal('addFunds')"
         >
@@ -115,40 +115,42 @@
           </a-modal>
         </div>
 
-        <div v-if="isVisible" class="settings__item" @click="showModal('login')">
-          <div class="settings__logo">
-            <login-icon />
-          </div>
-          <div class="settings__title">
-            {{ capitalize($t('link')) }} {{ $t('account') }}
-          </div>
-
-          <a-modal
-            :title="capitalize($t('link'))"
-            :open="modal.login"
-            :footer="false"
-            @cancel="closeModal('login')"
-          >
-            <div
-              v-for="text in authStore.loginButtons"
-              :key="text"
-              :class="{ disabled: checkAuth(text) }"
-              class="singleLang"
-              @click="authStore.linkAccount(text)"
-            >
-              <span class="singleLang__title">
-                <img
-                  :key="text"
-                  :alt="text"
-                  :src="`/img/icons/${getImageName(text)}.png`"
-                  style="width: 32px; margin-right: 5px"
-                >
-                {{ capitalize(text) }}
-              </span>
-              <span v-if="checkAuth(text)" class="singleLang__current-marker" />
+        <a-spin :spinning="isAuthLoading">
+          <div v-if="isVisible" class="settings__item" style="border-bottom: 0" @click="showModal('login')">
+            <div class="settings__logo">
+              <login-icon />
             </div>
-          </a-modal>
-        </div>
+            <div class="settings__title">
+              {{ capitalize($t('link')) }} {{ $t('account') }}
+            </div>
+
+            <a-modal
+              :title="capitalize($t('link'))"
+              :open="modal.login"
+              :footer="false"
+              @cancel="closeModal('login')"
+            >
+              <div
+                v-for="text in authStore.loginButtons"
+                :key="text"
+                :class="{ disabled: checkAuth(text) }"
+                class="singleLang"
+                @click="authStore.linkAccount(text)"
+              >
+                <span class="singleLang__title">
+                  <img
+                    :key="text"
+                    :alt="text"
+                    :src="`/img/icons/${getImageName(text)}.png`"
+                    style="width: 32px; margin-right: 5px"
+                  >
+                  {{ capitalize(text) }}
+                </span>
+                <span v-if="checkAuth(text)" class="singleLang__current-marker" />
+              </div>
+            </a-modal>
+          </div>
+        </a-spin>
 
         <div class="settings__item" @click="showModal('QR')">
           <div class="settings__logo">
@@ -262,6 +264,7 @@ export default {
   mixins: [notification],
   data () {
     return {
+      isAuthLoading: false,
       confirmLoading: false,
       user_btn: false,
       modal: {
@@ -276,7 +279,12 @@ export default {
   computed: {
     ...mapStores(useAuthStore),
     isVisible () {
-      return !localStorage.getItem('oauth')
+      if (this.isAuthLoading) return true
+      return !localStorage.getItem('oauth') && this.authStore.loginButtons.length > 0
+    },
+    isAddFundsVisible () {
+      if (!localStorage.getItem('oauth')) return true
+      return !this.authStore.billingUser.paid_stop
     },
     langs () {
       return config.languages
@@ -291,15 +299,20 @@ export default {
       return this.authStore.userdata?.data?.ssh_keys ?? []
     }
   },
+  async created () {
+    if (this.authStore.loginButtons.length > 0) return
+    try {
+      this.isAuthLoading = true
+      await this.authStore.fetchAuth()
+    } finally {
+      this.isAuthLoading = false
+    }
+  },
   methods: {
     exit () {
       this.$router.push('login')
     },
     showModal (name) {
-      if (name === 'login' && this.authStore.loginButtons.length < 1) {
-        this.authStore.fetchAuth()
-      }
-
       this.modal[name] = true
     },
     closeModal (name) {

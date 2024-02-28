@@ -146,19 +146,6 @@ export default {
         })
       }
 
-      if (config.whmcsRegistration) {
-        services.push({
-          title: 'registration in BelGIE',
-          translatable: true,
-          icon: formIcon,
-          type: 'BelGIE',
-          onclick: {
-            function: this.routeTo,
-            paramsArr: [{ name: 'registration form', query: {} }]
-          }
-        })
-      }
-
       Object.keys(this.services).forEach((service) => {
         services.push({
           title: service,
@@ -181,6 +168,19 @@ export default {
           }
         })
       })
+
+      if (config.whmcsRegistration) {
+        services.push({
+          title: 'registration in BelGIE',
+          translatable: true,
+          icon: formIcon,
+          type: 'BelGIE',
+          onclick: {
+            function: this.routeTo,
+            paramsArr: [{ name: 'registration form', query: {} }]
+          }
+        })
+      }
 
       services.sort((a, b) => {
         if (a.icon === 'shopping' && b.icon !== 'shopping') return -1
