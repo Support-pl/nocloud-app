@@ -81,6 +81,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { isDayjs } from 'dayjs'
 import { useAuthStore } from '@/stores/auth.js'
@@ -90,6 +91,7 @@ import useResourceRegFields from '@/hooks/authorization/resourceRegFields.js'
 import config from '@/appconfig.js'
 import api from '@/api.js'
 
+const router = useRouter()
 const i18n = useI18n()
 const authStore = useAuthStore()
 const { openNotification } = useNotification()
@@ -195,10 +197,12 @@ async function sendInfo () {
       throw new Error(i18n.t('Email is already in use or is empty'))
     } else if (response.error) {
       throw new Error(response.error)
+    } else if (response.result === 'error') {
+      throw new Error(i18n.t('An error has occurred. Please try again later'))
     }
 
     openNotification('success', { message: i18n.t('Done') })
-    fetchInfo(true)
+    router.push({ name: 'services' })
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 

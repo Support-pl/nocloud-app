@@ -231,7 +231,8 @@ export default {
     ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
-      if (!(this.options.size && this.options.period)) return 'NAN'
+      if ((this.options.size ?? true) === true) return 'NAN'
+      if ((this.options.period ?? true) === true) return 'NAN'
 
       const { title } = this.products[this.options.size]
       const product = Object.values(this.products).find((product) =>
@@ -605,19 +606,16 @@ export default {
   position: relative;
   width: 100%;
   min-height: 100%;
+  padding: 15px;
 }
 
 .order {
-  position: absolute;
-  left: 50%;
   display: grid;
   grid-template-columns: calc(72% - 20px) 28%;
   gap: 20px;
   width: 100%;
   max-width: 1024px;
-  margin-top: 15px;
-  margin-bottom: 15px;
-  transform: translateX(-50%);
+  margin: 0 auto;
 }
 
 .order__field {
