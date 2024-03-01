@@ -170,24 +170,24 @@
         </a-col>
       </a-row>
     </div>
+    <renewal-modal v-bind="renewalProps" v-model:visible="isVisible" />
   </div>
 </template>
 
 <script setup lang="jsx">
-import { computed, defineAsyncComponent, ref, onMounted } from 'vue'
-import { Button, Modal, Switch } from 'ant-design-vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useSpStore } from '@/stores/sp.js'
-import { useAuthStore } from '@/stores/auth.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import { useCurrency, useNotification } from '@/hooks/utils'
-import { createRenewInvoice, toDate } from '@/functions.js'
+import { toDate } from '@/functions.js'
 
 import keywebActions from '@/components/cloud/modules/keyweb/actions.vue'
+import renewalModal from '@/components/ui/renewalModal.vue'
 
 const props = defineProps({
   VM: { type: Object, required: true }
@@ -214,7 +214,6 @@ const route = useRoute()
 const i18n = useI18n()
 
 const spStore = useSpStore()
-const authStore = useAuthStore()
 const plansStore = usePlansStore()
 const instancesStore = useInstancesStore()
 
@@ -222,8 +221,7 @@ const { currency } = useCurrency()
 const { openNotification } = useNotification()
 
 const isVNCLoading = ref(false)
-const isLoading = ref(false)
-const autoRenew = ref(false)
+const isVisible = ref(false)
 
 const provider = computed(() =>
   spStore.servicesProviders.find(({ uuid }) => uuid === props.VM.sp)
@@ -286,110 +284,21 @@ const productName = computed(() =>
   plan.value.products[props.VM.product]?.title ?? props.VM.product
 )
 
-function sendRenew () {
+const renewalProps = computed(() => {
   const { period } = plan.value.products[props.VM.product]
   const currentPeriod = toDate(props.VM.data.next_payment_date)
   const newPeriod = toDate(props.VM.data.next_payment_date + +period)
 
-  Modal.confirm({
-    title: i18n.t('Do you want to renew server?'),
-    content: () => (
-      <div>
-        <div style="font-weight: 700">{ `${props.VM.title}` }</div>
-        <div>
-          { `${i18n.t('from')} ` }
-          <span style="font-style: italic">{ `${currentPeriod}` }</span>
-        </div>
-        <div>
-          { `${i18n.t('to')} ` }
-          <span style="font-style: italic">{ `${newPeriod}` }</span>
-        </div>
-
-        <div style="margin-top: 10px">
-          <span style="line-height: 1.7">{ i18n.t('Automatic renewal') }: </span>
-          <Switch
-            size="small"
-            loading={ isLoading.value }
-            checked={ autoRenew.value }
-            onChange={ (value) => { autoRenew.value = value } }
-          />
-          { (props.VM.config.auto_renew !== autoRenew.value) &&
-            <Button
-              size="small"
-              type="primary"
-              style="margin-left: 5px"
-              loading={ isLoading.value }
-              onClick={ onClick }
-            >
-              OK
-            </Button>
-          }
-        </div>
-
-        <div style="margin-top: 10px">
-          <div>{ i18n.t('Manual renewal') }:</div>
-          <span style="font-weight: 700">{ i18n.t('Tariff price') }: </span>
-          { tariffPrice.value } { currency.value.code }
-          <div>
-            <span style="font-weight: 700">{ i18n.t('Addons prices') }:</span>
-            <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
-              { Object.entries(addonsPrice.value).map(([key, value]) =>
-                <li>{ key }: { value } { currency.value.code }</li>
-              ) }
-            </ul>
-          </div>
-
-          <div>
-            <span style="font-weight: 700">{ i18n.t('Total') }: </span>
-            { fullPrice.value } { currency.value.code }
-          </div>
-        </div>
-      </div>
-    ),
-    okText: i18n.t('Yes'),
-    cancelText: i18n.t('Cancel'),
-    okButtonProps: { disabled: (props.VM.data.blocked) },
-    onOk: () => renewInstance(),
-    onCancel () {}
-  })
-}
-
-async function renewInstance () {
-  try {
-    await createRenewInvoice(props.VM, authStore.baseURL)
-
-    openNotification('success', { message: i18n.t('Done') })
-  } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
-
-    openNotification('error', { message: i18n.t(message) })
+  return {
+    title: props.VM.title,
+    currentPeriod,
+    newPeriod,
+    price: tariffPrice.value,
+    addonsPrice: addonsPrice.value,
+    currentAutoRenew: props.VM.config.auto_renew,
+    blocked: props.VM.data.blocked
   }
-}
-
-async function onClick () {
-  const service = instancesStore.services.find(
-    ({ uuid }) => uuid === props.VM.uuidService
-  )
-  const instance = service.instancesGroups
-    .find(({ sp }) => sp === props.VM.sp).instances
-    .find(({ uuid }) => uuid === props.VM.uuid)
-
-  try {
-    isLoading.value = true
-    instance.config.auto_renew = autoRenew.value
-    await instancesStore.updateService(service)
-
-    Modal.destroyAll()
-    openNotification('success', { message: i18n.t('Done') })
-  } catch (error) {
-    openNotification('error', {
-      message: error.response?.data?.message ?? error.message ?? error
-    })
-    console.error(error)
-  } finally {
-    isLoading.value = false
-  }
-}
+})
 
 async function openVNC () {
   try {
@@ -409,10 +318,6 @@ async function openVNC () {
   }
   // router.push({ name: 'VNC', params: { uuid: route.params.uuid } })
 }
-
-onMounted(() => {
-  autoRenew.value = props.VM.config.auto_renew
-})
 
 plansStore.fetch({ anonymously: false, sp_uuid: props.VM.sp })
 </script>

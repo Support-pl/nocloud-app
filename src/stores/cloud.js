@@ -27,7 +27,6 @@ export const useCloudStore = defineStore('cloud', () => {
     sshKey: undefined,
     score: null
   })
-  const autoRenew = ref(true)
   const deployMessage = i18n.t('VM created successfully')
 
   const locationId = ref('Location')
@@ -101,11 +100,8 @@ export const useCloudStore = defineStore('cloud', () => {
         delete newInstance.config.ssh
       }
     } else if (newGroup.type === 'keyweb') {
-      newInstance.config = {
-        ...options.config,
-        auto_renew: autoRenew.value
-      }
-
+      newInstance.config = { ...options.config, auto_renew: false }
+      newInstance.config.auto_renew = checkPayg(newInstance)
       newInstance.resources = {}
     }
 
@@ -149,7 +145,7 @@ export const useCloudStore = defineStore('cloud', () => {
         template_id: options.os.id,
         username: authData.username,
         password: authData.password,
-        auto_renew: autoRenew.value,
+        auto_renew: false,
         auto_start: plan.value.meta.auto_start
       },
       resources: {
@@ -162,6 +158,8 @@ export const useCloudStore = defineStore('cloud', () => {
       },
       billing_plan: { uuid: planId.value }
     }
+
+    instance.config.auto_renew = checkPayg(instance)
 
     if (plan.value.kind === 'STATIC' || plan.value.type !== 'ione') {
       instance.product = product.value.key
@@ -244,7 +242,6 @@ export const useCloudStore = defineStore('cloud', () => {
   }
 
   return {
-    autoRenew,
     authData,
     provider,
     plan,
