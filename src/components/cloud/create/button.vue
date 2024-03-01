@@ -32,12 +32,12 @@
         {{ $t('Virtual machine will be available after paying the invoice') }}
       </template>
 
-      <a-row v-if="cloudStore.authData.score > 3" style="margin-top: 20px">
+      <!-- <a-row v-if="cloudStore.authData.score > 3" style="margin-top: 20px">
         <a-col>
           <a-checkbox v-model:checked="cloudStore.autoRenew" />
           {{ capitalize($t('renew automatically')) }}
         </a-col>
-      </a-row>
+      </a-row> -->
     </template>
 
     <template #after>

@@ -4,7 +4,7 @@
       block
       size="small"
       :disabled="service.data?.blocked"
-      @click.stop="moduleEnter"
+      @click.stop="isVisible = !isVisible"
     >
       {{ capitalize($t('renew')) }}
       <span v-if="currency" style="margin-left: 4px">
@@ -12,15 +12,13 @@
       </span>
     </a-button>
   </div>
+  <renewal-modal v-bind="renewalProps" v-model:visible="isVisible" />
 </template>
 
-<script setup lang="jsx">
-import { computed, onMounted, ref } from 'vue'
-import { Modal, notification, Switch, Button } from 'ant-design-vue'
+<script setup>
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.js'
-import { useInstancesStore } from '@/stores/instances.js'
-import { createRenewInvoice } from '@/functions.js'
+import renewalModal from '@/components/ui/renewalModal.vue'
 
 const props = defineProps({
   price: { type: Number, required: true },
@@ -29,12 +27,7 @@ const props = defineProps({
 })
 
 const i18n = useI18n()
-const authStore = useAuthStore()
-const instancesStore = useInstancesStore()
-
-const autoRenew = ref(false)
-const isLoading = ref(false)
-const isDisabled = ref(false)
+const isVisible = ref(false)
 
 const slicedPrice = computed(() => {
   if (`${props.price}`.replace('.').length > 3) {
@@ -102,12 +95,7 @@ const addonsPrice = computed(() => {
   }
 })
 
-onMounted(() => {
-  autoRenew.value = props.service.config.auto_renew
-  isDisabled.value = props.service.data.blocked
-})
-
-function moduleEnter () {
+const renewalProps = computed(() => {
   const key = (!props.service.product)
     ? `${props.service.config.duration} ${props.service.config.planCode}`
     : props.service.product
@@ -121,104 +109,16 @@ function moduleEnter () {
     ? toDate(props.service.data.expiration, +period)
     : toDate(null, props.service.data.next_payment_date + +period)
 
-  Modal.confirm({
-    title: i18n.t('Do you want to renew server?'),
-    content: () => (
-      <div>
-        <div style="font-weight: 700">{ `${props.service.title}` }</div>
-        <div>
-          { `${i18n.t('from')} ` }
-          <span style="font-style: italic">{ `${currentPeriod}` }</span>
-        </div>
-        <div>
-          { `${i18n.t('to')} ` }
-          <span style="font-style: italic">{ `${newPeriod}` }</span>
-        </div>
-
-        <div style="margin-top: 10px">
-          <span style="line-height: 1.7">{ i18n.t('Automatic renewal') }: </span>
-          <Switch
-            size="small"
-            loading={ isLoading.value }
-            checked={ autoRenew.value }
-            onChange={ (value) => { autoRenew.value = value } }
-          />
-          { (props.service.config.auto_renew !== autoRenew.value) &&
-            <Button
-              size="small"
-              type="primary"
-              style="margin-left: 5px"
-              loading={ isLoading.value }
-              onClick={ onClick }
-            >
-              OK
-            </Button>
-          }
-        </div>
-
-        <div style="margin-top: 10px">
-          <div>{ i18n.t('Manual renewal') }:</div>
-          <span style="font-weight: 700">{ i18n.t('Tariff price') }: </span>
-          { price } { props.currency.code }
-          { addonsPrice.value && <div>
-            <span style="font-weight: 700">{ i18n.t('Addons prices') }:</span>
-            <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
-              { Object.entries(addonsPrice.value).map(([key, value]) =>
-                <li>{ key }: { value } { props.currency.code }</li>
-              ) }
-            </ul>
-          </div> }
-
-          <div>
-            <span style="font-weight: 700">{ i18n.t('Total') }: </span>
-            { props.price } { props.currency.code }
-          </div>
-        </div>
-      </div>
-    ),
-    okText: i18n.t('Yes'),
-    cancelText: i18n.t('Cancel'),
-    okButtonProps: { disabled: isDisabled.value },
-    onOk: async () => {
-      try {
-        await createRenewInvoice(props.service, authStore.baseURL)
-
-        isDisabled.value = true
-        notification.success({ message: i18n.t('Done') })
-      } catch (error) {
-        notification.error({
-          message: `Error: ${error?.response?.data?.message ?? 'Unknown'}.`
-        })
-      }
-    },
-    onCancel () {}
-  })
-}
-
-async function onClick () {
-  const service = instancesStore.services.find(({ uuid }) =>
-    uuid === props.service.uuidService
-  )
-  const instance = service.instancesGroups
-    .find(({ sp }) => sp === props.service.sp).instances
-    .find(({ uuid }) => uuid === props.service.uuid)
-
-  try {
-    isLoading.value = true
-    instance.config.auto_renew = autoRenew.value
-    await instancesStore.updateService(service)
-
-    Modal.destroyAll()
-    notification.success({ message: i18n.t('Done') })
-  } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
-
-    notification.error({ message })
-    console.error(error)
-  } finally {
-    isLoading.value = false
+  return {
+    title: props.service.title,
+    currentPeriod,
+    newPeriod,
+    price,
+    addonsPrice: addonsPrice.value,
+    currentAutoRenew: props.service.config.auto_renew,
+    blocked: props.service.data.blocked
   }
-}
+})
 
 function toDate (string, timestamp) {
   if (timestamp < 1) return '-'
@@ -239,7 +139,7 @@ function toDate (string, timestamp) {
 }
 </script>
 
-<script lang="jsx">
+<script>
 export default { name: 'LittleButton' }
 </script>
 

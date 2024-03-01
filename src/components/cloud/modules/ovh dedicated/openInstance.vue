@@ -102,8 +102,8 @@
               {{ capitalize($t("userService.next payment date")) }}
             </div>
             <div class="block__value">
-              {{ VM.data.expiration }}
-              <sync-icon title="Renew" @click="handleOk('renew')" />
+              {{ toDate(VM.data.expiration, '.', false) }}
+              <sync-icon title="Renew" @click="isVisible = !isVisible" />
             </div>
           </div>
 
@@ -362,20 +362,22 @@
         </a-col>
       </a-row>
     </div>
+    <renewal-modal v-bind="renewalProps" v-model:visible="isVisible" />
   </div>
 </template>
 
 <script lang="jsx">
 import { defineAsyncComponent, defineComponent } from 'vue'
-import { Button, Modal, Switch } from 'ant-design-vue'
 import { mapState, mapActions } from 'pinia'
 import notification from '@/mixins/notification.js'
-import { createRenewInvoice } from '@/functions.js'
+import { toDate } from '@/functions.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInstancesStore } from '@/stores/instances.js'
+
+import renewalModal from '@/components/ui/renewalModal.vue'
 
 const loadingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LoadingOutlined')
@@ -439,6 +441,7 @@ const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB']
 export default defineComponent({
   name: 'OpenInstance',
   components: {
+    renewalModal,
     loadingIcon,
     deploymentIcon,
     flagIcon,
@@ -486,8 +489,7 @@ export default defineComponent({
     planCode: '',
     actionLoading: false,
     isSwitchLoading: false,
-    isLoading: false,
-    autoRenew: false
+    isVisible: false
   }),
   computed: {
     ...mapState(useSpStore, ['servicesProviders']),
@@ -564,6 +566,22 @@ export default defineComponent({
     currency () {
       return { code: this.userdata.currency ?? this.defaultCurrency }
     },
+    renewalProps () {
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`
+      const { period } = this.VM.billingPlan.products[key]
+      const currentPeriod = this.VM.data.expiration
+      const newPeriod = this.date(this.VM.data.expiration, +period)
+
+      return {
+        title: this.VM.title,
+        currentPeriod,
+        newPeriod,
+        price: this.tariffPrice,
+        addonsPrice: this.addonsPrice,
+        currentAutoRenew: this.VM.config.auto_renew,
+        blocked: this.VM.data.blocked
+      }
+    },
 
     tariffs () {
       if (!this.VM?.billingPlan) return {}
@@ -596,10 +614,9 @@ export default defineComponent({
       return { public: publicIPs ?? [], private: privateIPs ?? [] }
     }
   },
-  mounted () { this.autoRenew = this.VM.config.auto_renew },
   methods: {
     ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
-    createRenewInvoice,
+    toDate,
     async openActions () {
       this.actionLoading = true
 
@@ -790,111 +807,6 @@ export default defineComponent({
         },
         onCancel () {}
       })
-    },
-    sendRenew () {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`
-      const { period } = this.VM.billingPlan.products[key]
-      const currentPeriod = this.VM.data.expiration
-      const newPeriod = this.date(this.VM.data.expiration, +period)
-
-      this.$confirm({
-        title: this.$t('Do you want to renew server?'),
-        content: () => (
-          <div>
-            <div style="font-weight: 700">{ `${this.VM.title}` }</div>
-            <div>
-              { `${this.$t('from')} ` }
-              <span style="font-style: italic">{ `${currentPeriod}` }</span>
-            </div>
-            <div>
-              { `${this.$t('to')} ` }
-              <span style="font-style: italic">{ `${newPeriod}` }</span>
-            </div>
-
-            <div style="margin-top: 10px">
-              <span style="line-height: 1.7">{ this.$t('Automatic renewal') }: </span>
-              <Switch
-                size="small"
-                loading={ this.isLoading }
-                checked={ this.autoRenew }
-                onChange={ (value) => { this.autoRenew = value } }
-              />
-              { (this.VM.config.auto_renew !== this.autoRenew) &&
-                <Button
-                  size="small"
-                  type="primary"
-                  style="margin-left: 5px"
-                  loading={ this.isLoading }
-                  onClick={ this.onClick }
-                >
-                  OK
-                </Button>
-              }
-            </div>
-
-            <div style="margin-top: 10px">
-              <div>{ this.$t('Manual renewal') }:</div>
-              <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
-              { this.tariffPrice } { this.currency.code }
-              { Object.keys(this.addonsPrice).length > 0 &&
-                <div>
-                  <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
-                  <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
-                    { Object.entries(this.addonsPrice).map(([key, value]) =>
-                      <li>{ key }: { value } { this.currency.code }</li>
-                    ) }
-                  </ul>
-                </div>
-              }
-
-              <div>
-                <span style="font-weight: 700">{ this.$t('Total') }: </span>
-                { this.fullPrice } { this.currency.code }
-              </div>
-            </div>
-          </div>
-        ),
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
-        okButtonProps: { disabled: (this.VM.data.blocked) },
-        onOk: () => this.renewInstance(),
-        onCancel () {}
-      })
-    },
-    async onClick () {
-      const service = this.services.find(({ uuid }) =>
-        uuid === this.VM.uuidService
-      )
-      const instance = service.instancesGroups
-        .find(({ sp }) => sp === this.VM.sp).instances
-        .find(({ uuid }) => uuid === this.VM.uuid)
-
-      try {
-        this.isLoading = true
-        instance.config.auto_renew = this.autoRenew
-        await this.updateService(service)
-
-        Modal.destroyAll()
-        this.openNotificationWithIcon('success', { message: this.$t('Done') })
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error
-
-        this.openNotificationWithIcon('error', { message })
-        console.error(error)
-      } finally {
-        this.isLoading = false
-      }
-    },
-    async renewInstance () {
-      try {
-        await this.createRenewInvoice(this.VM, this.baseURL)
-
-        this.openNotificationWithIcon('success', { message: this.$t('Done') })
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error
-
-        this.openNotificationWithIcon('error', { message: this.$t(message) })
-      }
     },
     sendNewTariff () {
       this.isSwitchLoading = true
