@@ -224,7 +224,7 @@
             </div>
             <div class="block__value">
               {{ new Intl.DateTimeFormat().format(VM.data.next_payment_date * 1000) }}
-              <sync-icon title="Renew" @click="handleOk('renew')" />
+              <sync-icon title="Renew" @click="isVisible = !isVisible" />
             </div>
           </div>
 
@@ -521,12 +521,12 @@
         </a-col>
       </a-row>
     </div>
+    <renewal-modal v-bind="renewalProps" v-model:visible="isVisible" />
   </div>
 </template>
 
 <script lang="jsx">
 import { defineAsyncComponent, defineComponent } from 'vue'
-import { Button, Modal, Switch } from 'ant-design-vue'
 import { mapState, mapActions } from 'pinia'
 import { GChart } from 'vue-google-charts'
 
@@ -537,7 +537,7 @@ import { useInstancesStore } from '@/stores/instances.js'
 import { usePlansStore } from '@/stores/plans.js'
 
 import notification from '@/mixins/notification.js'
-import { createRenewInvoice } from '@/functions.js'
+import renewalModal from '@/components/ui/renewalModal.vue'
 
 const redoIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RedoOutlined')
@@ -607,6 +607,7 @@ export default defineComponent({
   name: 'OpenInstance',
   components: {
     GChart,
+    renewalModal,
     redoIcon,
     backwardIcon,
     flagIcon,
@@ -669,8 +670,7 @@ export default defineComponent({
     actionLoading: false,
     selectedSP: '',
     deployLoading: false,
-    isLoading: false,
-    autoRenew: false
+    isVisible: false
   }),
   computed: {
     ...mapState(useSpStore, ['servicesProviders']),
@@ -755,6 +755,21 @@ export default defineComponent({
     },
     currency () {
       return { code: this.userdata.currency ?? this.defaultCurrency }
+    },
+    renewalProps () {
+      const { period } = this.VM.billingPlan.products[this.VM.product]
+      const currentPeriod = this.date(this.VM.data.next_payment_date)
+      const newPeriod = this.date(this.VM.data.next_payment_date + +period)
+
+      return {
+        title: this.VM.title,
+        currentPeriod,
+        newPeriod,
+        price: this.tariffPrice,
+        addonsPrice: this.addonsPrice,
+        currentAutoRenew: this.VM.config.auto_renew,
+        blocked: this.VM.data.blocked
+      }
     },
 
     inbChartDataReady () {
@@ -856,11 +871,9 @@ export default defineComponent({
     this.fetchPlans({ anonymously: false, sp_uuid: this.VM.sp })
     this.fetchMonitoring()
   },
-  mounted () { this.autoRenew = this.VM.config.auto_renew },
   methods: {
     ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
     ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
-    createRenewInvoice,
     deployService () {
       this.actionLoading = true
       this.$api.services
@@ -921,10 +934,6 @@ export default defineComponent({
             onCancel () {}
           })
           break
-        case 'renew': {
-          this.sendRenew()
-          break
-        }
       }
     },
     printWidthRange (value) {
@@ -1081,97 +1090,6 @@ export default defineComponent({
       newOpt.title = `${capitalized} (${range})`
       return newOpt
     },
-    sendRenew () {
-      const { period } = this.VM.billingPlan.products[this.VM.product]
-      const currentPeriod = this.date(this.VM.data.next_payment_date)
-      const newPeriod = this.date(this.VM.data.next_payment_date + +period)
-
-      this.$confirm({
-        title: this.$t('Do you want to renew server?'),
-        content: () => (
-          <div>
-            <div style="font-weight: 700">{ `${this.VM.title}` }</div>
-            <div>
-              { `${this.$t('from')} ` }
-              <span style="font-style: italic">{ `${currentPeriod}` }</span>
-            </div>
-            <div>
-              { `${this.$t('to')} ` }
-              <span style="font-style: italic">{ `${newPeriod}` }</span>
-            </div>
-
-            <div style="margin-top: 10px">
-              <span style="line-height: 1.7">{ this.$t('Automatic renewal') }: </span>
-              <Switch
-                size="small"
-                loading={ this.isLoading }
-                checked={ this.autoRenew }
-                onChange={ (value) => { this.autoRenew = value } }
-              />
-              { (this.VM.config.auto_renew !== this.autoRenew) &&
-                <Button
-                  size="small"
-                  type="primary"
-                  style="margin-left: 5px"
-                  loading={ this.isLoading }
-                  onClick={ this.onClick }
-                >
-                  OK
-                </Button>
-              }
-            </div>
-
-            <div style="margin-top: 10px">
-              <div>{ this.$t('Manual renewal') }:</div>
-              <span style="font-weight: 700">{ this.$t('Tariff price') }: </span>
-              { this.tariffPrice } { this.currency.code }
-              <div>
-                <span style="font-weight: 700">{ this.$t('Addons prices') }:</span>
-                <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
-                  { Object.entries(this.addonsPrice).map(([key, value]) =>
-                    <li>{ key }: { value } { this.currency.code }</li>
-                  ) }
-                </ul>
-              </div>
-
-              <div>
-                <span style="font-weight: 700">{ this.$t('Total') }: </span>
-                { this.fullPrice } { this.currency.code }
-              </div>
-            </div>
-          </div>
-        ),
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
-        okButtonProps: { disabled: (this.VM.data.blocked) },
-        onOk: () => this.renewInstance(),
-        onCancel () {}
-      })
-    },
-    async onClick () {
-      const service = this.services.find(({ uuid }) =>
-        uuid === this.VM.uuidService
-      )
-      const instance = service.instancesGroups
-        .find(({ sp }) => sp === this.VM.sp).instances
-        .find(({ uuid }) => uuid === this.VM.uuid)
-
-      try {
-        this.isLoading = true
-        instance.config.auto_renew = this.autoRenew
-        await this.updateService(service)
-
-        Modal.destroyAll()
-        this.openNotificationWithIcon('success', { message: this.$t('Done') })
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error
-
-        this.openNotificationWithIcon('error', { message })
-        console.error(error)
-      } finally {
-        this.isLoading = false
-      }
-    },
     async sendAction (action) {
       const hard = this.option.reboot || action.includes('Hard')
       const data = {
@@ -1221,17 +1139,6 @@ export default defineComponent({
           }
           this.openNotificationWithIcon('error', opts)
         })
-    },
-    async renewInstance () {
-      try {
-        await this.createRenewInvoice(this.VM, this.baseURL)
-
-        this.openNotificationWithIcon('success', { message: this.$t('Done') })
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error
-
-        this.openNotificationWithIcon('error', { message: this.$t(message) })
-      }
     },
     fetchMonitoring () {
       if (!this.VM?.uuidService || this.VM.state.state === 'PENDING') return

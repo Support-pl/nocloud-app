@@ -39,7 +39,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
       } else if (plan.value.type === 'ovh vps') {
         result.resources.drive_type = 'SSD'
       } else {
-        result.resources.drive_type = 'HDD'
+        result.resources.drive_type = getDriveType()
       }
     }
 
@@ -55,6 +55,19 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
 
     return result
   })
+
+  function getDriveType () {
+    const drive = { type: 'HDD', price: Infinity }
+
+    plan.value.resources.forEach(({ key, price }) => {
+      if (key.includes('drive') && price < drive.price) {
+        drive.price = price
+        drive.type = key.split('_').at(-1).toUpperCase()
+      }
+    })
+
+    return drive.type
+  }
 
   function getResource (type, product) {
     let key = ''
@@ -116,7 +129,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
           ? { size: options.disk.min * 1024 }
           : options.disk
         const type = (activeKey.value === 'location')
-          ? 'hdd'
+          ? getDriveType().toLowerCase()
           : options.disk.type.toLowerCase()
 
         if (key !== `drive_${type}`) continue

@@ -282,7 +282,7 @@ export default {
     type: ''
   }),
   computed: {
-    ...mapState(useInstancesStore, ['isActionLoading', 'services', 'getInstances', 'isLoading', 'soket']),
+    ...mapState(useInstancesStore, ['isActionLoading', 'services', 'getInstances', 'isLoading', 'socket']),
     ...mapState(useAuthStore, ['isLogged', 'baseURL']),
     ...mapState(useChatsStore, ['getDefaults']),
     ...mapState(useCurrenciesStore, ['currencies']),
@@ -458,7 +458,7 @@ export default {
         this.resize.size = Math.ceil(this.VM.resources.drive_size / 1024)
 
         this.renameNewName = this.VM.title
-        if (!this.soket) {
+        if (!this.socket) {
           this.subscribeWebSocket(value)
         }
 
@@ -479,10 +479,8 @@ export default {
   created () {
     this.renameNewName = this.VM.title ?? ''
 
-    if (!this.soket) {
-      if (this.VM.uuidService) {
-        this.subscribeWebSocket(this.VM.uuidService)
-      }
+    if (!this.socket && this.VM.uuidService) {
+      this.subscribeWebSocket(this.VM.uuidService)
     }
 
     if (this.isLogged) {
@@ -514,9 +512,9 @@ export default {
 
     if (this.currencies.length < 1) this.fetchCurrencies()
   },
-  unmounted () {
-    if (!this.soket) return
-    this.soket.close(1000, 'Work is done')
+  beforeUnmount () {
+    if (!this.socket) return
+    this.socket.close(1000, 'Work is done')
   },
   methods: {
     ...mapActions(useChatsStore, ['createChat', 'sendMessage', 'fetchDefaults']),

@@ -66,7 +66,7 @@
     <a-checkbox-group v-model:value="checkedTypes" :options="typesOptions" />
     <div class="order__grid">
       <div
-        v-for="item of products"
+        v-for="item of filteredProducts"
         :key="item.value"
         class="order__grid-item"
         :class="{ 'order__grid-item--active': product === item.value }"
@@ -168,17 +168,19 @@ watch(() => props.mode, () => {
   setResources(false)
 })
 
-const products = computed(() =>
+const filteredProducts = computed(() =>
   props.products.filter(({ group, datacenter }) => {
     const key = options.config.configuration.dedicated_datacenter
 
     if (!datacenter?.includes(key)) return false
     if (checkedTypes.value.length < 1) return true
-    return checkedTypes.value.find((type) => group.includes(type))
+    return checkedTypes.value.find(
+      (type) => group.toLowerCase().includes(type.toLowerCase())
+    )
   })
 )
 
-watch(products, (value) => {
+watch(filteredProducts, (value) => {
   if (value.length < 1) {
     resetData()
     return
@@ -225,10 +227,15 @@ const resources = computed(() => {
 const typesOptions = computed(() => {
   const types = []
 
-  props.products.forEach(({ group }) => {
+  props.products.forEach(({ group, datacenter }) => {
     const value = group.split('-')[0]
+    const productType = types.find((type) =>
+      type.value.toLowerCase().includes(value.toLowerCase())
+    )
+    const key = options.config.configuration.dedicated_datacenter
 
-    if (types.find((type) => type.value.includes(value))) return
+    if (productType) return
+    if (!datacenter?.includes(key)) return
     if (group.includes('STOR') || group.includes('SDS')) {
       types.push({ value, label: 'Storage' })
     }
@@ -247,7 +254,7 @@ const typesOptions = computed(() => {
         types.push({ value, label: 'Storage' })
         break
       default:
-        types.push({ value, label: app.capitalize(value) })
+        types.push({ value, label: app.capitalize(value.toLowerCase()) })
     }
   })
 

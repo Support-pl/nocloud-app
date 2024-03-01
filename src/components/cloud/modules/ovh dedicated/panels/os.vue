@@ -46,13 +46,14 @@ import imagesList from '@/components/ui/images.vue'
 
 const props = defineProps({
   mode: { type: String, required: true },
-  productSize: { type: String, required: true }
+  productSize: { type: String, required: true },
+  isFlavorsLoading: { type: Boolean, default: false }
 })
 
 watch(() => props.productSize, setImages)
 onMounted(setImages)
 
-const { authData, plan } = storeToRefs(useCloudStore())
+const { authData, plan, provider } = storeToRefs(useCloudStore())
 
 const images = ref([])
 const [options, setOptions] = inject('useOptions', () => [])()

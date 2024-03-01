@@ -65,6 +65,10 @@ const companyName = computed(() =>
   appStore.domainInfo.name ?? config.appTitle
 )
 
+const checkedTypes = computed(() =>
+  route.query?.service?.split(',').filter((el) => el.length > 0) ?? []
+)
+
 const products = computed(() => {
   const instances = instancesStore.getInstances ?? []
 
@@ -81,10 +85,6 @@ const products = computed(() => {
 watch(products, (value) => {
   productsStore.total = value.length
 })
-
-const checkedTypes = computed(() =>
-  route.query?.service?.split(',').filter((el) => el.length > 0) ?? []
-)
 
 function productsCount (type, filter) {
   return productsComponent.value.productsCount(type, filter)
