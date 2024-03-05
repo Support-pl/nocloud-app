@@ -99,8 +99,8 @@ function useCloudOptions (activeKey, tarification) {
   }
 
   async function fetch () {
-    spStore.fetchShowcases(!authStore.isLogged)
-    spStore.fetch(!authStore.isLogged).then(setReadyData)
+    await spStore.fetchShowcases(!authStore.isLogged)
+    await spStore.fetch(!authStore.isLogged).then(setReadyData)
 
     if (authStore.isLogged) {
       const [services, namespaces] = await Promise.all([
@@ -137,7 +137,7 @@ function useCloudOptions (activeKey, tarification) {
 
         locationId.shift()
         return id.includes(locationId.join('-'))
-      })?.id ?? ''
+      })?.id ?? 'Location'
       activeKey.value = null
 
       if (dataLocalStorage.value.config) {

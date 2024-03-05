@@ -64,12 +64,13 @@
               </a-row>
 
               <component
-                :is="panel"
+                :is="(panel.setup) ? panel : loading"
                 v-else
                 v-model:product-size="productSize"
                 :plans="filteredPlans"
                 :products="products"
                 :mode="mode"
+                :is-flavors-loading="isPlansLoading"
                 @update:periods="periods = $event"
               />
             </a-collapse-panel>
@@ -90,11 +91,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, provide, readonly, computed, defineAsyncComponent, watch, markRaw, onUnmounted } from 'vue'
+import { ref, reactive, provide, readonly, computed, defineAsyncComponent, watch, markRaw, onUnmounted, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NcMap } from 'nocloud-ui'
 
+import { Spin } from 'ant-design-vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
 import { usePlansStore } from '@/stores/plans.js'
@@ -116,6 +118,12 @@ const i18n = useI18n()
 const authStore = useAuthStore()
 const plansStore = usePlansStore()
 const cloudStore = useCloudStore()
+
+const loading = computed(() => h(Spin, {
+  style: 'display: block; margin: 15px auto',
+  tip: i18n.t('loading'),
+  spinning: true
+}))
 
 const activeKey = ref('location')
 const periods = ref([])
@@ -209,6 +217,9 @@ watch(periods, (periods) => {
 })
 
 function setDefaultLocation () {
+  const data = localStorage.getItem('data') ?? route.query.data
+  if (data) return
+
   const item = cloudStore.showcases.find(({ uuid }) =>
     uuid === cloudStore.showcaseId
   )
