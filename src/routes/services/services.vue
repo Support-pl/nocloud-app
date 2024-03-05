@@ -153,6 +153,7 @@ export default { name: 'PageServices' }
 .logo__wrapper > img {
   height: 100%;
   width: auto;
+  max-width: 100%;
 }
 
 .logo__title {

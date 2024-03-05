@@ -17,6 +17,7 @@
   />
 
   <a-slider
+    class="newCloud__slider"
     style="margin-top: 10px"
     :tip-formatter="null"
     :step="options.disk.step"
@@ -74,3 +75,12 @@ const driveTypes = computed(() =>
 <script>
 export default { name: 'IoneDrive' }
 </script>
+
+<style scoped>
+.newCloud__slider.ant-slider :deep(.ant-slider-handle::after) {
+  width: 12px;
+  height: 12px;
+  inset-block-start: -2px;
+  inset-inline-start: 2px;
+}
+</style>
