@@ -194,7 +194,9 @@ watch(filteredProducts, (value) => {
     const data = JSON.parse(dataString)
 
     product.value = data.productSize
+    return
   }
+
   nextTick(() => {
     product.value = value[1]?.value ?? value[0]?.value
   })

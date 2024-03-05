@@ -10,6 +10,7 @@
         <a-col :span="24" :md="20">
           <a-slider
             range
+            class="newCloud__slider"
             style="margin-top: 10px"
             :marks="{ ...resource }"
             :tip-formatter="null"
@@ -133,6 +134,7 @@
 
 <script setup>
 import { computed, inject, nextTick, reactive, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useCloudStore } from '@/stores/cloud.js'
 import { getPeriods, getTarification } from '@/functions.js'
 import ioneDrive from '@/components/cloud/create/ioneDrive.vue'
@@ -145,6 +147,7 @@ const props = defineProps({
 })
 const emits = defineEmits(['update:periods', 'update:product-size'])
 
+const route = useRoute()
 const cloudStore = useCloudStore()
 const [options, setOptions] = inject('useOptions')()
 
@@ -156,8 +159,14 @@ watch(() => props.productSize, (value) => {
   emits('update:periods', getPeriods(value, props.plans))
 })
 
-if (props.products.length > 0) {
+const data = localStorage.getItem('data') ?? route.query.data
+
+if (props.products.length > 0 && !data) {
   setProduct(props.products[1] ?? props.products[0])
+} else if (props.products.length > 0) {
+  const { productSize } = JSON.parse(data)
+
+  if (productSize) setProduct(productSize)
 }
 
 const isProductsExist = computed(() =>
@@ -263,6 +272,13 @@ export default { name: 'IonePlanPanel' }
   grid-template-columns: auto auto 1fr auto;
   align-items: center;
   gap: 10px;
+}
+
+:deep(.ant-slider-horizontal.newCloud__slider .ant-slider-dot) {
+  width: 16px;
+  height: 16px;
+  inset-block-start: -6px;
+  transform: translateX(-8px);
 }
 
 .order__grid {

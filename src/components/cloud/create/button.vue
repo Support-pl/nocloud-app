@@ -187,9 +187,10 @@ function availableLogin (mode) {
     localStorage.setItem('data', JSON.stringify(data))
     router.push({ name: 'login' })
   } else if (mode === 'copy') {
-    const link = location.href
+    const link = new URL(location.href)
 
-    addToClipboard(`${link}?data=${JSON.stringify(data)}`)
+    link.searchParams.set('data', JSON.stringify(data))
+    addToClipboard(link.href)
   } else {
     localStorage.setItem('data', JSON.stringify(data))
   }

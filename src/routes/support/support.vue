@@ -13,7 +13,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { Status } from '@/libs/cc_connect/cc_pb.js'
 
 import { useAuthStore } from '@/stores/auth.js'
@@ -58,55 +58,49 @@ const chats = computed(() => {
   return [...result, ...supportStore.getTickets]
 })
 
-onMounted(() => {
-  supportStore.fetch(supportStore.tickets.length > 0)
-  chatsStore.fetchChats()
-  chatsStore.startStream()
-})
+supportStore.fetch(supportStore.tickets.length > 0)
+chatsStore.fetchChats()
+chatsStore.startStream()
 </script>
 
 <script>
 export default { name: 'SupportView' }
 </script>
 
-<style>
-  .tickets{
-    overflow: auto;
-    height: 100%;
-    position: relative;
-    padding-top: 20px;
-  }
+<style scoped>
+.tickets {
+  position: relative;
+  height: 100%;
+  padding-top: 20px;
+  overflow: auto;
+}
 
-  .ticket__wrapper{
-    height: 100%;
-    overflow: auto;
-    padding: 6px 10px 20px;
-  }
+.ticket__wrapper {
+  height: 100%;
+  padding: 6px 10px 20px;
+  overflow: auto;
+}
 
-  .ticket__add-enter-active.addTicket__wrapper,
-  .ticket__add-leave-active.addTicket__wrapper {
-    transition:
-      opacity .2s ease;
-  }
-  .ticket__add-enter-active .addTicket,
-  .ticket__add-leave-active .addTicket {
-    transition:
-      opacity .2s ease,
-      transform .3s ease;
-  }
-  .ticket__add-enter-active,
-  .ticket__add-leave-active {
-    transition:
-      all .4s ease,
-  }
+.ticket__add-enter-active.addTicket__wrapper,
+.ticket__add-leave-active.addTicket__wrapper {
+  transition: opacity .2s ease;
+}
+.ticket__add-enter-active .addTicket,
+.ticket__add-leave-active .addTicket {
+  transition: opacity .2s ease, transform .3s ease;
+}
+.ticket__add-enter-active,
+.ticket__add-leave-active {
+  transition: all .4s ease;
+}
 
-  .ticket__add-enter-from.addTicket__wrapper,
-  .ticket__add-leave-to.addTicket__wrapper {
-    opacity: 0;
-  }
-  .ticket__add-enter-from .addTicket,
-  .ticket__add-leave-to .addTicket {
-    opacity: 0;
-    transform: translateX(-50%) translateY(100%) !important;
-  }
+.ticket__add-enter-from.addTicket__wrapper,
+.ticket__add-leave-to.addTicket__wrapper {
+  opacity: 0;
+}
+.ticket__add-enter-from .addTicket,
+.ticket__add-leave-to .addTicket {
+  opacity: 0;
+  transform: translateX(-50%) translateY(100%) !important;
+}
 </style>

@@ -200,6 +200,7 @@ watch(products, (value) => {
     const data = JSON.parse(dataString)
 
     product.value = data.productSize
+    return
   }
 
   nextTick(() => {
