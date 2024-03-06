@@ -478,11 +478,10 @@ export default {
 
 .settings__login,
 .settings__exit {
-  background-color: #ee5854;
-  /* background-color: var(--err); */
+  background-color: var(--err);
   border: none;
   outline: none;
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   font-weight: 600;
   width: 100%;
   padding: 12px 0;
@@ -498,11 +497,11 @@ export default {
 }
 
 .settings__exit:hover {
-  background-color: #f76964;
+  filter: brightness(2);
 }
 
 .settings__exit:active {
-  background-color: #d8504b;
+  filter: saturate(0.8);
 }
 
 .singleLang .singleLang__title {

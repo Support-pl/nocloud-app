@@ -97,9 +97,9 @@ export default { name: 'BalanceView' }
   font-size: 12px;
   right: 3px;
   top: 7px;
-  background: #f5222d;
+  background: var(--err);
   border-radius: 50%;
-  border: 1.6px solid var(--bright_font);
+  border: 1.6px solid var(--gloomy_font);
   width: 22px;
   height: 22px;
   display: flex;

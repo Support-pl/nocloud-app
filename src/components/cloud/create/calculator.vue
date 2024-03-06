@@ -111,6 +111,7 @@
     </a-row>
 
     <cloud-create-button
+      :product-size="productSize"
       :tarification="tarification"
       :create-order="createOrder"
       :panels="panels"
@@ -171,7 +172,7 @@ const locationDescription = computed(() => {
   const showcase = cloudStore.showcases.find(({ uuid }) => uuid === id)
 
   if (!showcase?.promo) return
-  return showcase?.promo[i18n.locale.value]?.service.description
+  return showcase?.promo[i18n.locale.value]?.service?.description
 })
 
 const periodColumns = computed(() => {

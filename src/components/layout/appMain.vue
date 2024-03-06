@@ -4,7 +4,7 @@
       <a-layout-header
         :style="{
           padding: 0,
-          color: 'var(--bright_font)',
+          color: 'var(--gloomy_font)',
           backgroundColor: 'var(--main)'
         }"
       >

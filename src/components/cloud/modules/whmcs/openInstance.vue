@@ -127,10 +127,10 @@
             :default-value="1"
           >
             <a-radio :value="0">
-              {{ $t("yesterday") }}
+              {{ toDate(Date.now() / 1000 - 86400, '.', false) }}
             </a-radio>
             <a-radio :value="1">
-              {{ $t("today") }}
+              {{ toDate(Date.now() / 1000, '.', false) }}
             </a-radio>
           </a-radio-group>
         </a-modal>
@@ -417,6 +417,7 @@ import { defineAsyncComponent } from 'vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import notification from '@/mixins/notification.js'
+import { toDate } from '@/functions.js'
 
 const redoIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RedoOutlined')
@@ -519,6 +520,7 @@ export default {
     })
   },
   methods: {
+    toDate,
     startVNC () {
       this.$router.push({ path: `${this.$route.params.uuid}/vnc` })
     },

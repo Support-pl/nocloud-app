@@ -777,11 +777,12 @@ export default {
 
 .ant-select.header__inputs .ant-select-selector {
   background: transparent;
-  color: var(--bright_font);
+  color: var(--gloomy_font);
+  border-color: var(--gloomy_font);
 }
 
 .ant-select.header__inputs.ant-select-open .ant-select-selection-item {
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 
 .header__links {
@@ -790,12 +791,12 @@ export default {
 }
 
 .header__links a {
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   transition: color 0.2s ease, background-color 0.3s ease, opacity 0.2s ease;
 }
 
 .header__links a:hover {
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 
 .header__links a:not(:last-child) {
@@ -817,12 +818,13 @@ export default {
   line-height: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0px 0px 0px 1px var(--bright_font);
+  box-shadow: 0px 0px 0px 1px var(--gloomy_font);
 }
 
 .header__links a:last-child:hover {
   background: var(--bright_font);
   color: var(--main);
+  box-shadow: none;
 }
 
 .header__right {
@@ -915,7 +917,7 @@ export default {
 }
 
 .header__selects .ant-select-arrow {
-  color: inherit;
+  color: var(--gloomy_font);
 }
 
 .header__balance {

@@ -32,8 +32,8 @@ const addons = computed(() => {
       }
 
       const isInclude = (addonsKeys?.some((el) => typeof el === 'string'))
-        ? addonsKeys?.includes(addonKey)
-        : addonsKeys?.find(({ id }) => id.includes(addonKey))?.id
+        ? addonsKeys?.includes(key)
+        : addonsKeys?.find(({ id }) => id.includes(key))?.id
       const isEqualMode = period.pricingMode === props.mode
       const isAddon = (addon === 'Public network')
         ? addonKey.startsWith('bandwidth') || key.includes('traffic')

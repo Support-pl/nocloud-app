@@ -137,7 +137,6 @@ const { filteredPlans, product, productSize, isPlansLoading } = useCloudPlans(ta
 watch(isPlansLoading, () => {
   if (dataLocalStorage.value.billing_plan) {
     cloudStore.planId = dataLocalStorage.value.billing_plan.uuid
-    productSize.value = dataLocalStorage.value.productSize
   } else if (dataLocalStorage.value.locationId) {
     tarification.value = periods.value[0]?.value ?? ''
   }
@@ -275,14 +274,13 @@ provide('useActiveKey', () => [readonly(activeKey), nextStep])
   transform: translateX(calc(-100% + 10px)) !important;
 }
 .newCloud_wrapper .ant-radio-button-wrapper {
-  margin: 1px;
   border-radius: 4px !important;
-  border-left: 1px solid #d9d9d9;
+  border-left: 1px solid var(--bright_bg);
 }
 .newCloud_wrapper .ant-radio-button-wrapper-checked:not(
   .ant-radio-button-wrapper-disabled
  ) {
-  border-left-color: #1890ff;
+  border-left-color: var(--main);
 }
 .newCloud_wrapper .ant-radio-button-wrapper:not(:first-child)::before {
   content: none;
@@ -329,6 +327,10 @@ provide('useActiveKey', () => [readonly(activeKey), nextStep])
   max-width: 1024px;
   padding: 15px 0;
   transform: translateX(-50%);
+}
+
+.newCloud .map_ui > .map__popup {
+  color: #000;
 }
 
 .newCloud__change-tariff {

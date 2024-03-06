@@ -1,5 +1,5 @@
 <template>
-  <a-config-provider :theme="{ algorithm: theme.defaultAlgorithm }">
+  <a-config-provider :theme="{ token }">
     <router-view
       v-slot="{ Component }"
       :style="{
@@ -15,6 +15,18 @@
     </router-view>
     <update-notification />
 
+    <a-float-button
+      v-if="isThemeButtonVisible"
+      type="primary"
+      class="theme-button"
+      @click="isDarkTheme = !isDarkTheme"
+    >
+      <template #icon>
+        <bulb-icon v-if="isDarkTheme" style="color: var(--bright_bg)" />
+        <bulb-icon v-else />
+      </template>
+    </a-float-button>
+
     <add-funds
       v-if="modal.visible"
       :sum="modal.amount"
@@ -25,7 +37,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, provide, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, provide, ref, watch } from 'vue'
 import { Modal, theme } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -38,6 +50,10 @@ import { useAuthStore } from '@/stores/auth.js'
 
 import addFunds from '@/components/ui/addFunds.vue'
 import updateNotification from '@/components/ui/updateNotification.vue'
+
+const bulbIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/BulbFilled')
+)
 
 const router = useRouter()
 const route = useRoute()
@@ -196,18 +212,75 @@ watch(() => appStore.notification, (value) => {
   }, 100)
 })
 
-const cssVars = computed(() =>
-  Object.fromEntries(
-    Object.entries(config.colors).map(
-      ([key, value]) => [`--${key}`, value]
-    )
-  )
+const isThemeButtonVisible = import.meta.env.DEV
+const isDarkTheme = ref(
+  matchMedia('(prefers-color-scheme: dark)') && isThemeButtonVisible
 )
 
+const cssVars = computed(() => {
+  const colors = isDarkTheme.value
+    ? {
+        main: '#3d73da',
+        success: '#328d53',
+        warn: '#f9f038',
+        err: '#e81313',
+        gray: '#919191',
+        gloomy_font: 'rgba(255, 255, 255, 0.85)',
+        bright_font: '#272727',
+        bright_bg: '#424242',
+        border_color: 'rgba(255, 255, 255, 0.85)'
+      }
+    : config.colors
+
+  if (!colors.gloomy_font) {
+    colors.gloomy_font = '#fff'
+  }
+  if (!colors.border_color) {
+    colors.border_color = 'rgba(0, 0, 0, 0.15)'
+  }
+
+  return Object.entries(colors).map(
+    ([key, value]) => [`--${key}`, value]
+  )
+})
+
+const token = computed(() => {
+  if (isDarkTheme.value) {
+    return {
+      ...theme.darkAlgorithm(theme.defaultSeed),
+      colorBgContainer: '#424242',
+      colorPrimary: config.colors.main,
+      colorPrimaryBorder: config.colors.main,
+      colorBorder: '#272727'
+    }
+  }
+  return {
+    ...theme.defaultAlgorithm(theme.defaultSeed)
+  }
+})
+
 document.title = 'Cloud'
-document.body.setAttribute('style',
-  Object.entries(cssVars.value).map(([k, v]) => `${k}:${v}`).join(';')
-)
+if (localStorage.getItem('theme')) {
+  isDarkTheme.value = localStorage.getItem('theme') === 'dark'
+}
+
+setTheme()
+watch(isDarkTheme, setTheme)
+provide('theme', isDarkTheme)
+
+function setTheme () {
+  if (isDarkTheme.value) {
+    document.body.classList.add('dark')
+    localStorage.setItem('theme', 'dark')
+  } else {
+    document.body.classList.remove('dark')
+    localStorage.setItem('theme', 'light')
+  }
+
+  document.body.setAttribute('style',
+    cssVars.value.map(([k, v]) => `${k}:${v}`).join(';')
+  )
+}
 </script>
 
 <script>
@@ -258,4 +331,26 @@ body {
 /* .slide-leave-to {
   transform: translateX(-100%);
 } */
+
+body.dark {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark .ant-select .ant-select-selection-placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.theme-button {
+  width: 60px;
+  height: 60px;
+}
+
+.theme-button .ant-float-btn-body {
+  background: var(--border_color);
+}
+
+.theme-button .ant-float-btn-body .ant-float-btn-content .ant-float-btn-icon {
+  width: auto;
+  font-size: 30px;
+}
 </style>
