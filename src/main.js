@@ -4,14 +4,14 @@ import { createPinia } from 'pinia'
 import VueGoogleCharts from 'vue-google-charts'
 import VueGtag from 'vue-gtag'
 
+import 'ant-design-vue/dist/reset.css'
+import './assets/style.css'
+import './registerServiceWorker'
+
 import App from '@/App.vue'
 import i18n from '@/i18n'
 import router from '@/router'
 import api from '@/api.js'
-
-import 'ant-design-vue/dist/reset.css'
-import './assets/style.css'
-import './registerServiceWorker'
 
 import maintanance from '@/components/ui/maintanance.vue'
 
@@ -49,7 +49,7 @@ app.directive('phone', {
     const { length } = el.value
 
     el.value = el.value.replace(code, '')
-    if (code.startsWith(el.value)) el.value = ''
+    if (code?.startsWith(el.value)) el.value = ''
 
     const value = el.value.replace(/\D/g, '')
     const num = (value.length > 8) ? value.length - 7 : 1

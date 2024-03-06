@@ -64,7 +64,11 @@
               @score="(value) => authData.score = value.score"
             />
 
-            <a-input-password v-model:value="authData.password" class="password" />
+            <a-form :model="{ password: authData.password }">
+              <a-form-item name="password" :rules="rules">
+                <a-input-password v-model:value="authData.password" class="password" />
+              </a-form-item>
+            </a-form>
           </a-form-item>
 
           <a-form-item
@@ -114,6 +118,24 @@ const images = computed(() => {
 
   return images
 })
+
+const rules = [{
+  trigger: 'change',
+  validator: () => {
+    try {
+      if ('+=.-_!*'.includes(authData.value.password.at(-1))) {
+        throw new Error('Error 2')
+      }
+      if (/^(?=.*\d)[\w+=.\-_!*]{9,32}$/.test(authData.value.password)) {
+        return Promise.resolve()
+      } else {
+        throw new Error('Error')
+      }
+    } catch (error) {
+      return Promise.reject(error.message)
+    }
+  }
+}]
 
 onBeforeMount(() => {
   const images = Object.entries(provider.value?.publicData.templates ?? {})

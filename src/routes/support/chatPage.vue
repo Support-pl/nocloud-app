@@ -721,7 +721,7 @@ export default {
   text-align: center;
   border-radius: 7px;
   line-height: 1;
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   background: var(--main);
 }
 

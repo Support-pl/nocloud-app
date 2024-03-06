@@ -60,37 +60,38 @@ export default { name: 'ServiceItem' }
 </script>
 
 <style>
-.service__item{
+.service__item {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: 10px;
-  transition: background-color .2s ease, color .2s ease;
   padding: 10px;
+  border-radius: 10px;
   cursor: pointer;
+  transition: background-color .2s ease, color .2s ease;
 }
 
 /* .service__item:not(:last-of-type){
   margin-right: 10px;
 } */
 
-.service__item:hover{
+.service__item:hover {
   background-color: var(--bright_font);
   color: var(--main);
 }
 
-.service__icon{
+.service__icon {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 2rem;
   margin-bottom: 3px;
-  position: relative;
 }
 
-.service__title{
+.service__title {
   text-align: center;
+  word-break: break-word;
 }
 
 /* .service__icon::after{

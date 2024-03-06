@@ -760,8 +760,8 @@ export default {
 
 .order__slider-item{
   flex-shrink: 0;
-  /* border: 1px solid rgba(0, 0, 0, .15); */
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  /* border: 1px solid var(--border_color); */
+  box-shadow: inset 0 0 0 1px var(--border_color);
   height: 100%;
   padding: 7px 10px;
   text-align: center;

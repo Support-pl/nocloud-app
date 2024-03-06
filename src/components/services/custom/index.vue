@@ -34,8 +34,10 @@
               :key="size.key"
               class="order__grid-item"
               :class="{ 'order__grid-item--active': options.size === size.key }"
+              :style="(size.image) ? 'padding: 10px' : null"
               @click="options.size = size.key"
             >
+              <img v-if="size.image" :src="size.image" :alt="size.label">
               <h1>{{ size.label }}</h1>
               <p v-for="resource of products[size.key].meta?.resources" :key="resource.id">
                 {{ resource.key }}: {{ resource.title }}
@@ -444,7 +446,8 @@ export default {
               key,
               label: product.title,
               group: product.group ?? product.title,
-              sorter: product.sorter
+              sorter: product.sorter,
+              image: product.meta.image
             })
           }
         }
@@ -697,10 +700,14 @@ export default {
 }
 
 .order__grid-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   padding: 10px 20px;
   border-radius: 15px;
+  overflow: hidden;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  box-shadow: inset 0 0 0 1px var(--border_color);
   transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
@@ -718,9 +725,15 @@ export default {
   line-height: 1.2;
 }
 
+.order__grid-item img {
+  max-width: 50px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+}
+
 .order__grid-item--active {
   background-color: var(--main);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 
 .order__option .ant-card-head {
@@ -799,8 +812,8 @@ export default {
 
 .order__slider-item{
   flex-shrink: 0;
-  /* border: 1px solid rgba(0, 0, 0, .15); */
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  /* border: 1px solid var(--border_color); */
+  box-shadow: inset 0 0 0 1px var(--border_color);
   height: 100%;
   padding: 7px 10px;
   cursor: pointer;

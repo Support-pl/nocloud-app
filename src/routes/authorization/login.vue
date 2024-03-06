@@ -61,7 +61,7 @@
               <a-input-password
                 v-model:value="password"
                 placeholder="Password"
-                style="padding: 6px 15px; border: none"
+                style="padding: 6px 15px; border: none; background: var(--bright_font)"
               />
             </template>
           </div>
@@ -217,7 +217,7 @@ async function send () {
     if (localStorage.getItem('data')) {
       try {
         const data = JSON.parse(localStorage.getItem('data'))
-        router.push({ path: data.path })
+        router.push({ path: data.path, query: data.query })
       } catch {
         localStorage.removeItem('data')
       }
@@ -373,7 +373,7 @@ export default { name: 'LoginView' }
   align-items: center;
   background: var(--main);
   clip-path: url(#myCurve);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   font-size: 36px;
   font-weight: bold;
 }
@@ -385,6 +385,10 @@ export default { name: 'LoginView' }
 .login__title::moz-selection {
   color: var(--main);
   background: var(--bright_font);
+}
+
+.login__main {
+  background: var(--bright_bg);
 }
 
 .login__UI {
@@ -409,7 +413,7 @@ export default { name: 'LoginView' }
   width: 95%;
   height: 1px;
   margin: auto;
-  background: #f4f4f4;
+  background: var(--bright_bg);
 }
 
 .inputs__log-pas {
@@ -417,7 +421,7 @@ export default { name: 'LoginView' }
   flex-direction: column;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 3px 8px 20px rgba(164, 180, 244, 0.5);
+  box-shadow: 3px 8px 20px var(--bright_bg);
   margin-bottom: 25px;
 }
 
@@ -431,7 +435,7 @@ export default { name: 'LoginView' }
 .login__submit {
   border: none;
   outline: none;
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   font-weight: 600;
   border-radius: 10px;
   padding: 7px 20px;
@@ -466,6 +470,7 @@ export default { name: 'LoginView' }
   border: none;
   outline: none;
   padding: 10px 15px;
+  background: var(--bright_font);
 }
 
 .login__forgot {

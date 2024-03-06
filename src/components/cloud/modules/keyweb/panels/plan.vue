@@ -1,7 +1,8 @@
 <template>
   <a-row style="margin-bottom: 15px" align="middle">
-    <a-col v-if="products.length < 8 && products.length > 1" span="24">
+    <a-col v-if="products.length < 8 && products.length > 1 && isSlider" span="24">
       <a-slider
+        ref="slider"
         style="margin-top: 10px"
         :marks="{ ...products }"
         :tip-formatter="null"
@@ -39,10 +40,11 @@
 </template>
 
 <script setup>
-import { inject, nextTick, watch, computed } from 'vue'
+import { inject, nextTick, watch, computed, ref } from 'vue'
 import { EditorContainer } from 'nocloud-ui'
 import { useCloudStore } from '@/stores/cloud.js'
 import { getPeriods } from '@/functions.js'
+import { useSlider } from '@/hooks/utils'
 
 const props = defineProps({
   mode: { type: String, required: true },
@@ -121,6 +123,10 @@ async function setProduct (value) {
   setOptions('config', { configurations: {}, id: meta.keywebId, cycle })
   setPrice('value', price)
 }
+
+const slider = ref()
+const [activeKey] = inject('useActiveKey', () => [])()
+const { isSlider } = useSlider(slider, activeKey)
 </script>
 
 <script>
@@ -143,7 +149,7 @@ export default { name: 'KeywebPlanPanel' }
   font-size: 1.1rem;
   border-radius: 15px;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  box-shadow: inset 0 0 0 1px var(--border_color);
   transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
@@ -153,7 +159,7 @@ export default { name: 'KeywebPlanPanel' }
 
 .order__slider-item--active {
   background-color: var(--main);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 
 @media (max-width: 576px) {

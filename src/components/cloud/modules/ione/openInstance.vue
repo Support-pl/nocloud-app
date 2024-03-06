@@ -129,10 +129,10 @@
             :default-value="1"
           >
             <a-radio :value="0">
-              {{ $t("yesterday") }}
+              {{ toDate(Date.now() / 1000 - 86400, '.', false) }}
             </a-radio>
             <a-radio :value="1">
-              {{ $t("today") }}
+              {{ toDate(Date.now() / 1000, '.', false) }}
             </a-radio>
           </a-radio-group>
         </a-modal>
@@ -374,10 +374,8 @@
         <div class="Fcloud__block-header">
           <line-chart-icon /> {{ capitalize($t("graphs")) }}
         </div>
-        <div
-          class="Fcloud__block-content Fcloud__block-content--charts"
-        >
-          <a-row type="flex" justify="space-around" style="width: 100%">
+        <div class="Fcloud__block-content Fcloud__block-content--charts">
+          <a-row ref="charts" type="flex" justify="space-around" style="width: 100%">
             <a-col>
               <g-chart
                 type="LineChart"
@@ -526,9 +524,10 @@
 </template>
 
 <script lang="jsx">
-import { defineAsyncComponent, defineComponent } from 'vue'
+import { defineAsyncComponent, defineComponent, nextTick } from 'vue'
 import { mapState, mapActions } from 'pinia'
 import { GChart } from 'vue-google-charts'
+import { setChartsTheme, toDate } from '@/functions.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -623,6 +622,7 @@ export default defineComponent({
     closeIcon
   },
   mixins: [notification],
+  inject: ['theme'],
   props: {
     VM: { type: Object, required: true }
   },
@@ -865,7 +865,19 @@ export default defineComponent({
     }
   },
   watch: {
-    'VM.uuidService' () { this.fetchMonitoring() }
+    'VM.uuidService' () { this.fetchMonitoring() },
+    async ramChartDataReady () {
+      await nextTick()
+      const charts = this.$refs.charts.$el?.children
+
+      setChartsTheme(charts, this.theme)
+    },
+    async theme (value) {
+      await nextTick()
+      const charts = this.$refs.charts.$el?.children
+
+      setChartsTheme(charts, value)
+    }
   },
   created () {
     this.fetchPlans({ anonymously: false, sp_uuid: this.VM.sp })
@@ -874,6 +886,7 @@ export default defineComponent({
   methods: {
     ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
     ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
+    toDate,
     deployService () {
       this.actionLoading = true
       this.$api.services

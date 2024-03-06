@@ -22,7 +22,7 @@
         <span style="display: inline-block; width: 70px">RAM:</span>
       </a-col>
       <a-col
-        v-if="resources[product].ram.length > 1"
+        v-if="resources[product]?.ram.length > 1"
         :sm="{ span: 18, order: 0 }"
         :xs="{ span: 24, order: 1 }"
       >
@@ -45,7 +45,7 @@
         <span style="display: inline-block; width: 70px">{{ $t("Drive") }}:</span>
       </a-col>
       <a-col
-        v-if="resources[product].disk.length > 1"
+        v-if="resources[product]?.disk.length > 1"
         :sm="{ span: 18, order: 0 }"
         :xs="{ span: 24, order: 1 }"
       >
@@ -419,7 +419,7 @@ export default { name: 'OvhDedicatedPlanPanel' }
   padding: 10px 20px;
   border-radius: 15px;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  box-shadow: inset 0 0 0 1px var(--border_color);
   transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
@@ -434,7 +434,7 @@ export default { name: 'OvhDedicatedPlanPanel' }
 
 .order__grid-item--active {
   background-color: var(--main);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 
 @media (max-width: 576px) {

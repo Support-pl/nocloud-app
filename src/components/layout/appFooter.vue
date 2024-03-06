@@ -116,7 +116,7 @@ export default { name: 'AppFooter' }
   left: 47px;
   border-radius: 50%;
   z-index: 2;
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   transform: translateX(-50%);
 }
 
@@ -140,10 +140,10 @@ export default { name: 'AppFooter' }
 }
 
 .button.active .button__icon{
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 
 .button.active .button__title{
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 </style>

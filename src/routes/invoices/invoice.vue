@@ -289,6 +289,11 @@ export default { name: 'InvoicesView' }
 .invoices__wrapper :deep(.ant-radio-button-wrapper) {
   width: v-bind('radioGroupWidth');
   text-align: center;
+  border-color: var(--border_color);
+}
+
+.invoices__wrapper :deep(.ant-radio-button-wrapper:not(:first-child)::before) {
+  background-color: var(--border_color);
 }
 
 /* .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled){

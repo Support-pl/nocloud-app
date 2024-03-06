@@ -176,6 +176,20 @@ export function generateUuid () {
   return result.join('-')
 }
 
+export function setChartsTheme (charts, isDark = true) {
+  for (const chart of charts) {
+    const rect = chart.querySelector('svg[aria-label] > rect')
+    const texts = chart.querySelectorAll('svg[aria-label] > g text[text-anchor]')
+
+    rect.setAttribute('fill', 'var(--bright_bg)')
+    for (const text of texts) {
+      const color = (isDark) ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.65)'
+
+      text.setAttribute('fill', color)
+    }
+  }
+}
+
 export function onError ({ target }) {
   target.src = '/img/OS/default.png'
 }

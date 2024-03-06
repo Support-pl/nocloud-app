@@ -413,7 +413,7 @@ export default { name: 'AddTicket' }
 }
 
 .order__slider-item {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  box-shadow: inset 0 0 0 1px var(--border_color);
   height: 100%;
   padding: 7px 10px;
   cursor: pointer;
@@ -427,8 +427,8 @@ export default { name: 'AddTicket' }
 }
 
 .order__slider-item--active {
-  background-color: #1045b4;
-  color: var(--bright_font);
+  background-color: var(--main);
+  color: var(--gloomy_font);
 }
 
 .order__grid .order__slider-name > .img_prod {

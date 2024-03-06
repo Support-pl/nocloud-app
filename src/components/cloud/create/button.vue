@@ -59,7 +59,6 @@ import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useSpStore } from '@/stores/sp.js'
-import { usePlansStore } from '@/stores/plans.js'
 import { useCloudStore } from '@/stores/cloud.js'
 import { useClipboard } from '@/hooks/utils'
 
@@ -72,6 +71,7 @@ const copyIcon = defineAsyncComponent(
 const props = defineProps({
   createOrder: { type: Function, required: true },
   tarification: { type: String, required: true },
+  productSize: { type: String, required: true },
   panels: { type: Array, required: true }
 })
 
@@ -80,7 +80,6 @@ const { addToClipboard } = useClipboard()
 
 const authStore = useAuthStore()
 const spStore = useSpStore()
-const plansStore = usePlansStore()
 const cloudStore = useCloudStore()
 
 const [options] = inject('useOptions', () => [])()
@@ -94,10 +93,6 @@ const provider = computed(() => {
 
   return spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? null
 })
-
-const plan = computed(() =>
-  plansStore.plans.find(({ uuid }) => uuid === cloudStore.planId) ?? {}
-)
 
 const modalOptions = computed(() => {
   const isWeakPass = cloudStore.authData.score < 4 && provider.value?.type !== 'ovh'
@@ -122,23 +117,22 @@ const createButtonOptions = computed(() => {
   const result = {
     disabled: true,
     onClick: () => {
-      modal.confirmCreate = true
+      if (authStore.isLogged) modal.confirmCreate = true
+      else availableLogin('login')
     }
   }
 
   if (provider.value?.type === 'ovh') {
     result.disabled =
       cloudStore.authData.vmName === '' ||
-      !cloudStore.namespaceId ||
-      options.os.name === '' ||
-      !authStore.isLogged
+      (!cloudStore.namespaceId && authStore.isLogged) ||
+      options.os.name === ''
   } else {
     result.disabled =
-      cloudStore.authData.password.length === 0 ||
+      (cloudStore.authData.password.length === 0 && authStore.isLogged) ||
       cloudStore.authData.vmName === '' ||
-      !cloudStore.namespaceId ||
-      options.os.name === '' ||
-      !authStore.isLogged
+      (!cloudStore.namespaceId && authStore.isLogged) ||
+      options.os.name === ''
   }
 
   return result
@@ -160,7 +154,8 @@ const isUnlogginedLinkVisible = computed(() => {
 
 function availableLogin (mode) {
   const data = {
-    path: '/cloud/newVM',
+    path: router.currentRoute.value.path,
+    query: router.currentRoute.value.query,
     titleSP: provider.value.title,
     tarification: props.tarification,
     productSize: props.productSize,
@@ -179,7 +174,7 @@ function availableLogin (mode) {
       template_id: options.os.id,
       template_name: options.os.name
     },
-    billing_plan: { uuid: plan.value.uuid },
+    billing_plan: { uuid: cloudStore.plan.uuid },
     ovhConfig: options.config
   }
 
