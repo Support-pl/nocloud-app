@@ -78,7 +78,7 @@ export default { name: 'ImagesList' }
   box-shadow: 5px 8px 12px rgba(0, 0, 0, 0.08), 0px 0px 13px rgba(0, 0, 0, 0.05);
   transform: scale(1.02);
   background-color: var(--main);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 
 .newCloud__template-image {
@@ -104,7 +104,7 @@ export default { name: 'ImagesList' }
   display: block;
   position: absolute;
   transform: translate(-36px, -59px) scale(0.21);
-  background: var(--bright_font);
+  background: var(--gloomy_font);
   border-radius: 50%;
   transition: 0.2s;
 }
@@ -116,7 +116,7 @@ export default { name: 'ImagesList' }
 
 .newCloud__template-item.active .newCloud__template-image img {
   padding: 2px;
-  background: var(--bright_font);
+  background: var(--gloomy_font);
   border-radius: 50%;
   transition: 0.2s;
 }

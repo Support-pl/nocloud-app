@@ -321,7 +321,7 @@ export default { name: 'OvhVpsPlanPanel' }
   font-size: 1.1rem;
   border-radius: 15px;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  box-shadow: inset 0 0 0 1px var(--border_color);
   transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
@@ -331,7 +331,7 @@ export default { name: 'OvhVpsPlanPanel' }
 
 .order__slider-item--active {
   background-color: var(--main);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 
 @media (max-width: 576px) {

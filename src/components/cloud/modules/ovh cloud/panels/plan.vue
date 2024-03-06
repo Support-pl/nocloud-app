@@ -277,7 +277,7 @@ export default { name: 'OvhCloudPlanPanel' }
   padding: 10px 20px;
   border-radius: 15px;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+  box-shadow: inset 0 0 0 1px var(--border_color);
   transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
@@ -293,7 +293,7 @@ export default { name: 'OvhCloudPlanPanel' }
 
 .order__grid-item--active {
   background-color: var(--main);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 
 @media (max-width: 576px) {

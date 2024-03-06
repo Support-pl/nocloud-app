@@ -709,7 +709,7 @@ export default {
   padding: 5px 7px;
   border-radius: 7px;
   background: var(--main);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   font-weight: 700;
   font-size: 18px;
 }

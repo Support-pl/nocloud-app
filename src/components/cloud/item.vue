@@ -264,7 +264,6 @@ export default { name: 'CloudItem' }
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
   background-color: var(--bright_font);
-  color: rgba(0, 0, 0, 0.7);
   cursor: pointer;
   overflow: hidden;
 }
@@ -298,7 +297,7 @@ export default { name: 'CloudItem' }
 }
 .item__status,
 .item__date {
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--gray);
 }
 .item__date {
   justify-self: end;
@@ -307,7 +306,7 @@ export default { name: 'CloudItem' }
   margin: -8px -15px 6px 0;
   border-radius: 0 0 0 20px;
   text-align: center;
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   background: var(--success);
 }
 .item__cost {
@@ -321,7 +320,7 @@ export default { name: 'CloudItem' }
   right: 0;
   bottom: 0;
   background: var(--main);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   padding: 3px 15px;
   border-radius: 20px 0px 0px 0px;
   transition-property: padding, border-radius;

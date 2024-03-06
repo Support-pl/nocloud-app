@@ -179,7 +179,7 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, inject, ref, watch } from 'vue'
 import { notification, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -348,6 +348,11 @@ if (currenciesStore.whmcsCurrencies.length < 1) {
 if (currenciesStore.list.length < 1) {
   currenciesStore.fetch()
 }
+
+const theme = inject('theme')
+const shadowColor = computed(() =>
+  (theme.value) ? 'var(--bright_font)' : 'rgba(164, 180, 244, .5)'
+)
 </script>
 
 <script>
@@ -412,7 +417,7 @@ export default { name: 'RegisterView' }
   align-items: center;
   background: var(--main);
   clip-path: url(#myCurve);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   font-size: 36px;
   font-weight: bold;
 }
@@ -424,6 +429,10 @@ export default { name: 'RegisterView' }
 .login__title::moz-selection {
   color: var(--main);
   background: var(--bright_font);
+}
+
+.login__main {
+  background: var(--bright_bg);
 }
 
 .login__UI {
@@ -453,7 +462,7 @@ export default { name: 'RegisterView' }
   width: 95%;
   height: 1px;
   margin: auto;
-  background: #f4f4f4;
+  background: var(--bright_bg);
 }
 
 .inputs__log-pas {
@@ -461,7 +470,7 @@ export default { name: 'RegisterView' }
   flex-direction: column;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 3px 8px 20px rgba(164, 180, 244, .5);
+  box-shadow: 3px 8px 20px v-bind('shadowColor');
   margin-bottom: 25px;
 }
 
@@ -473,7 +482,7 @@ export default { name: 'RegisterView' }
 .login__submit {
   border: none;
   outline: none;
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   font-weight: 600;
   border-radius: 10px;
   padding: 7px 20px;
@@ -506,6 +515,13 @@ export default { name: 'RegisterView' }
   border: none;
   outline: none;
   padding: 10px 15px;
+  background: var(--bright_font);
+}
+
+.inputs__log-pas :deep(input.ant-input),
+.inputs__log-pas :deep(.ant-input-password),
+.inputs__log-pas :deep(.ant-select-selector) {
+  background: var(--bright_font);
 }
 
 .inputs__log-pas .ant-select-search__field {

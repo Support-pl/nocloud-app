@@ -157,7 +157,7 @@ export default { name: 'PageServices' }
 }
 
 .logo__title {
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   font-size: 36px;
   font-weight: 700;
 }

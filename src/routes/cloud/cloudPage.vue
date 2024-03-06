@@ -867,7 +867,7 @@ export default {
 .Fcloud__header {
   position: sticky;
   padding-top: 10px;
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   top: 0;
   background-color: var(--main);
   display: grid;
@@ -889,7 +889,7 @@ export default {
   text-transform: uppercase;
   font-weight: bold;
   font-size: 14px;
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   opacity: 0.7;
 }
 .Fcloud__status-color {
@@ -917,7 +917,8 @@ export default {
 }
 .Fcloud__BTN-icon {
   padding: 10px;
-  background: var(--bright_bg);
+  background: var(--gloomy_font);
+  color: var(--main);
   border-radius: 14px;
   height: 40px;
   width: 40px;
@@ -929,19 +930,18 @@ export default {
   transition: background-color 0.1s ease, box-shadow 0.1s ease;
 }
 .Fcloud__BTN-title {
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   opacity: 0.8;
   font-weight: 600;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
   transition: color 0.1s ease, text-shadow 0.1s ease, opacity 0.1s ease;
 }
 .Fcloud__button:hover .Fcloud__BTN-icon {
-  background-color: var(--bright_font);
+  background-color: var(--gloomy_font);
   box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.2);
 }
 .Fcloud__button:hover .Fcloud__BTN-title {
   text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-  color: rgba(255, 255, 255, 1);
   opacity: 1;
 }
 .Fcloud__button:active {
@@ -954,7 +954,7 @@ export default {
   pointer-events: none;
 }
 .Fcloud__button.disabled .Fcloud__BTN-title {
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   opacity: 0.8;
 }
 .Fcloud__button.disabled:hover {
@@ -973,7 +973,6 @@ export default {
 }
 .Fcloud__back {
   font-weight: bold;
-  color: var(--bright_font);
   font-size: 1.4rem;
   cursor: pointer;
 }
@@ -993,9 +992,6 @@ export default {
 }
 .Fcloud__table td {
   padding: 0 15px;
-}
-.Fcloud__table td:first-child {
-  color: rgba(0, 0, 0, 0.5);
 }
 .Fcloud__main-info--invoice {
   display: flex;
