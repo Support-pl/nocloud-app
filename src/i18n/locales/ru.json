@@ -423,7 +423,8 @@
       "all": "все"
     },
     "order_services": {
-      "Do you want to order": "Вы хотите заказать"
+      "Do you want to order": "Вы хотите заказать",
+      "Do you want to activate": "Вы хотите активировать"
     },
     "IaaS": {
       "order_info": "Тут вы можете заказать сервер с оплатой по использованию.",

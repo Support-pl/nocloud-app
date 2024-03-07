@@ -113,12 +113,16 @@ const isSending = ref(false)
 const isLoading = ref(false)
 
 const filteredDepartments = computed(() => {
-  const chatsDeparts = chatsStore.getDefaults.departments
+  const chatsDeparts = (props.instanceId)
+    ? chatsStore.getDefaults.departments
+    : chatsStore.getDefaults.departments.filter(
+      ({ id }) => id !== 'openai'
+    )
 
   if (authStore.billingUser.only_tickets) {
     return supportStore.departments
   } else {
-    return chatsDeparts // [...supportStore.departments, ...chatsDeparts]
+    return chatsDeparts.filter((dep) => dep.public) // [...supportStore.departments, ...chatsDeparts]
   }
 })
 
@@ -141,11 +145,13 @@ const gateways = computed(() => {
 })
 
 function setDepartment () {
-  if (filteredDepartments.value.length < 1) return
+  const departments = (props.instanceId)
+    ? chatsStore.getDefaults.departments
+    : filteredDepartments.value
+
+  if (departments.length < 1) return
   if (props.instanceId) {
-    const result = filteredDepartments.value.find(
-      ({ id }) => `${id}`.includes('openai')
-    )
+    const result = departments.find(({ id }) => `${id}`.includes('openai'))
 
     ticketDepartment.value = result?.id ?? filteredDepartments.value[0]?.id ?? -1
     return
@@ -434,6 +440,12 @@ export default { name: 'AddTicket' }
 .order__grid .order__slider-name > .img_prod {
   display: block;
   max-height: 20px;
+}
+
+.order__grid .order__slider-item--active .img_prod {
+  background: var(--gloomy_font);
+  border-radius: 50%;
+  padding: 2px;
 }
 
 .order__grid .order__slider-name {

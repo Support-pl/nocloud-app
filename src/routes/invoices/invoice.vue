@@ -176,7 +176,9 @@ onMounted(() => {
   }
 
   if (localStorage.getItem('order')) {
-    currentTab.value = localStorage.getItem('order')
+    currentTab.value = (authStore.billingUser.paid_stop)
+      ? 'Invoice'
+      : localStorage.getItem('order')
   } else {
     localStorage.setItem('order', currentTab.value)
   }
@@ -194,7 +196,9 @@ onUnmounted(() => {
 
 function setCoordY () {
   setTimeout(() => {
-    const items = (currentTab.value === 'Invoice') ? invoicesStore.getInvoices : transactions.value
+    const items = (currentTab.value === 'Invoice')
+      ? invoicesStore.getInvoices
+      : transactions.value
     const id = sessionStorage.getItem('invoice')
     const i = items.findIndex(({ uuid }) => uuid === id)
 

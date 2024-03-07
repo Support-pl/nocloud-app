@@ -423,7 +423,8 @@
       "all": "all"
     },
     "order_services": {
-      "Do you want to order": "Do you want to order"
+      "Do you want to order": "Do you want to order",
+      "Do you want to activate": "Do you want to activate"
     },
     "IaaS": {
       "order_info": "Here you can order a Cloud Server PAYG",

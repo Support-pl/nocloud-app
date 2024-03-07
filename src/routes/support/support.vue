@@ -30,6 +30,7 @@ const chatsStore = useChatsStore()
 const supportStore = useSupportStore()
 
 const chats = computed(() => {
+  const ids = []
   const result = []
   const { uuid } = authStore.billingUser
 
@@ -49,13 +50,18 @@ const chats = computed(() => {
       status: capitalized,
       unread: (isReaded) ? 0 : ticket.meta.unread
     }
+    const id = ticket.meta.data.whmcs?.toJSON()
 
+    if (id) ids.push(id)
     result.push(value)
   })
 
   result.sort((a, b) => b.date - a.date)
+  const tickets = supportStore.getTickets.filter(
+    ({ id }) => !ids.includes(id)
+  )
 
-  return [...result, ...supportStore.getTickets]
+  return [...result, ...tickets]
 })
 
 supportStore.fetch(supportStore.tickets.length > 0)

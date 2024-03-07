@@ -69,8 +69,7 @@ export const useChatsStore = defineStore('chats', () => {
   const getDefaults = computed(() => ({
     ...defaults.value,
     departments: defaults.value.departments
-      ?.filter((department) => department.public)
-      ?.map(({ admins, title, key }) => ({ id: key, admins, name: title })) ?? []
+      ?.map((dep) => ({ id: dep.key, name: dep.title, ...dep })) ?? []
   }))
 
   function updateChat (event) {
@@ -79,6 +78,14 @@ export const useChatsStore = defineStore('chats', () => {
     switch (event.type) {
       case EventType.CHAT_READ:
       case EventType.CHAT_CREATED:
+        chats.value.set(chat.uuid, chat)
+
+        if (!messages.value[chat.uuid]) {
+          messages.value[chat.uuid] = {
+            replies: [], status: chat.status, subject: chat.topic
+          }
+        }
+        break
       case EventType.CHAT_UPDATED:
         chats.value.set(chat.uuid, chat)
         break
@@ -91,6 +98,16 @@ export const useChatsStore = defineStore('chats', () => {
 
   function updateMessage (event) {
     const { value: message } = event.item
+    if (!messages.value[message.chat]) {
+      const chat = chats.value.get(message.chat)
+
+      messages.value[message.chat] = {
+        replies: [],
+        subject: chat.topic ?? '',
+        status: chat.status ?? Status.OPEN
+      }
+    }
+
     const { replies } = messages.value[message.chat]
     const i = replies.findIndex(({ uuid }) => uuid === message.uuid)
 
@@ -330,7 +347,6 @@ export const useChatsStore = defineStore('chats', () => {
           sender: message.account
         }))
 
-        console.log(response)
         if (response.uuid === '') {
           response.uuid = 'last message'
         }
