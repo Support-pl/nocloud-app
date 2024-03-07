@@ -116,7 +116,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { notification } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import config from '@/appconfig.js'
@@ -315,6 +315,12 @@ function searchCountries (input, option) {
   return country.includes(input.toLowerCase())
 }
 
+const theme = inject('theme')
+const inputColors = computed(() => (theme.value)
+  ? ({ background: 'var(--bright_bg)', border: 'var(--bright_font)' })
+  : ({ background: 'inherit', border: 'var(--border_color)' })
+)
+
 if (!('firstname' in authStore.billingUser)) fetchInfo()
 else installDataToBuffer()
 </script>
@@ -354,15 +360,16 @@ export default { name: 'UserSettingsView' }
   padding: 4px 11px;
   font-size: 14px;
   width: 100%;
-  border: 1px solid #d9d9d9;
+  border: 1px solid v-bind('inputColors.border');
   border-radius: 6px;
   transition: all 0.2s;
+  background: v-bind('inputColors.background');
 }
 
 .user__input:disabled {
   color: rgba(0, 0, 0, 0.25);
   background-color: rgba(0, 0, 0, 0.04);
-  border-color: #d9d9d9;
+  border-color: v-bind('inputColors.border');
   box-shadow: none;
   cursor: not-allowed;
 }
