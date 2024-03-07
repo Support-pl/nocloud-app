@@ -701,7 +701,7 @@ export default {
 
 .order__grid-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   padding: 10px 20px;
   border-radius: 15px;
@@ -718,6 +718,7 @@ export default {
 .order__grid-item h1 {
   margin-bottom: 5px;
   color: inherit;
+  font-size: 18px;
 }
 
 .order__grid-item p {

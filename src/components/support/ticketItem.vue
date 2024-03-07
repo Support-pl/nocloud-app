@@ -9,6 +9,9 @@
         <div class="ticket__title">
           #{{ ticket.tid }} - {{ titleDecoded }}
         </div>
+        <div class="ticket__time" style="margin-left: auto">
+          {{ department }}
+        </div>
         <div class="ticket__status-text">
           <a-badge :count="ticket.unread" :offset="offset">
             {{ $t(`ticketStatus.${ticket.status}`) }}
@@ -28,6 +31,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useChatsStore } from '@/stores/chats.js'
 import { toDate } from '@/functions.js'
 import config from '@/appconfig.js'
 
@@ -39,6 +43,7 @@ const props = defineProps({
 
 const router = useRouter()
 const route = useRoute()
+const chatsStore = useChatsStore()
 
 const offset = computed(() => {
   if (props.ticket.unread > 9) {
@@ -68,6 +73,12 @@ const statusColor = computed(() => {
 const titleDecoded = computed(() =>
   decode(props.ticket.title)
 )
+
+const department = computed(() => {
+  const id = chatsStore.chats.get(props.ticket.id)?.department
+
+  return chatsStore.getDefaults.departments.find((dep) => dep.id === id)?.name
+})
 
 function ticketClick (id) {
   const query = { ...route.query }
@@ -109,7 +120,7 @@ export default { name: 'TicketItem' }
 }
 
 .ticket:hover {
-  background-color: rgba(255, 255, 255, 0.55);
+  filter: contrast(0.7);
   transition: 0.2s;
 }
 
@@ -124,12 +135,14 @@ export default { name: 'TicketItem' }
 
 .ticket.compact:not(:last-child) {
   margin-bottom: 0;
-  border-bottom: 1px solid #d9d9d9;
+  border-bottom: 1px solid var(--border_color);
 }
 
 .ticket__upper {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 10px;
 }
 
 .ticket__lower {
@@ -161,7 +174,7 @@ export default { name: 'TicketItem' }
 
 .ticket__time {
   font-size: 0.8rem;
-  color: rgba(0, 0, 0, 0.3);
+  color: var(--gray);
   font-weight: 600;
   flex-shrink: 0;
 }

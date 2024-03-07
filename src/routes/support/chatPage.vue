@@ -1,59 +1,6 @@
 <template>
   <div class="chat">
-    <div class="chat__header">
-      <div class="chat__container">
-        <div class="chat__back">
-          <div class="icon__wrapper" @click="goBack">
-            <left-icon />
-          </div>
-        </div>
-        <div class="chat__title">
-          {{ titleDecoded }}
-        </div>
-        <div class="chat__actions">
-          <div
-            class="icon__wrapper"
-            :class="{ active: supportStore.isAddingTicket }"
-            @click="supportStore.isAddingTicket = !supportStore.isAddingTicket"
-          >
-            <plus-icon />
-          </div>
-
-          <div
-            class="icon__wrapper"
-            :style="(searchString.length > 0) ? {
-              borderRadius: '50%',
-              background: 'var(--bright_bg)',
-              color: 'var(--main)'
-            } : null"
-          >
-            <a-popover arrow-point-at-center placement="left" :align="{ offset: [-10, 0] }">
-              <template #content>
-                <a-input-search
-                  enter-button
-                  placeholder="Topic"
-                  :value="text"
-                  @update:value="text = $event; search()"
-                >
-                  <template #suffix>
-                    <div style="cursor: pointer" @click="text = ''">
-                      <plus-icon style="color: rgba(0, 0, 0, 0.45)" :rotate="45" />
-                    </div>
-                  </template>
-                </a-input-search>
-              </template>
-              <search-icon />
-            </a-popover>
-          </div>
-
-          <div class="icon__wrapper" @click="reload">
-            <reload-icon />
-          </div>
-        </div>
-      </div>
-      <add-ticket v-if="supportStore.isAddingTicket" :instance-id="$route.query.from" />
-    </div>
-
+    <support-header v-model:searchString="searchString" :chat="chat" :title="subject" @reload="reload" />
     <support-alert v-if="chat" v-model:padding-top="chatPaddingTop" :chat="chat" :is-loading="isLoading" />
 
     <loading v-if="isLoading" />
@@ -118,49 +65,12 @@
         v-for="item of chats"
         :key="item.id"
         :ticket="item"
-        :style="(`${item.id}` === `${chatid}`) ? 'filter: brightness(0.9)' : null"
+        :style="(`${item.id}` === `${chatid}`) ? 'filter: contrast(0.8)' : null"
         compact
       />
     </div>
 
-    <div class="chat__footer">
-      <div
-        class="chat__container"
-        style="grid-template-columns: 1fr auto; align-items: end"
-      >
-        <a-tag
-          v-if="editing"
-          closable
-          color="blue"
-          class="chat__tag"
-          @close="changeEditing"
-        >
-          <span style="margin-bottom: 7px">{{ capitalize($t('editing')) }}:</span>
-          <span style="font-size: 14px; grid-column: 1 / 3; order: 1; white-space: normal">
-            {{ getMessage(editing) }}
-          </span>
-        </a-tag>
-
-        <a-textarea
-          id="message"
-          v-model:value="messageInput"
-          allow-clear
-          type="text"
-          name="message"
-          :disabled="status == 'Closed'"
-          :auto-size="{ minRows: 2, maxRows: 100 }"
-          :placeholder="$t('message') + '...'"
-          @keyup.shift.enter.exact="newLine"
-          @keydown.enter.exact.prevent="sendMessage"
-        />
-        <div class="chat__send" @click="sendMessage">
-          <arrow-up-icon />
-        </div>
-        <div v-if="showSendFiles" class="chat__send">
-          <plus-icon />
-        </div>
-      </div>
-    </div>
+    <support-footer ref="footer" v-model:replies="replies" :status="status" />
   </div>
 </template>
 
@@ -170,9 +80,10 @@ import { useRoute } from 'vue-router'
 import { mapStores } from 'pinia'
 import markdown from 'markdown-it'
 import { full as emoji } from 'markdown-it-emoji'
+
 import { Status } from '@/libs/cc_connect/cc_pb'
 import { useClipboard } from '@/hooks/utils'
-import { debounce, toDate } from '@/functions.js'
+import { toDate } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -181,15 +92,9 @@ import { useSupportStore } from '@/stores/support.js'
 
 import loading from '@/components/ui/loading.vue'
 import ticketItem from '@/components/support/ticketItem.vue'
-import addTicket from '@/components/support/addTicket.vue'
+import supportHeader from '@/components/support/header.vue'
 import supportAlert from '@/components/support/alert.vue'
-
-const leftIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LeftOutlined')
-)
-const reloadIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/ReloadOutlined')
-)
+import supportFooter from '@/components/support/footer.vue'
 
 const exclamationIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/ExclamationCircleOutlined')
@@ -203,15 +108,6 @@ const editIcon = defineAsyncComponent(
 
 const loadingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LoadingOutlined')
-)
-const arrowUpIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/ArrowUpOutlined')
-)
-const plusIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/PlusOutlined')
-)
-const searchIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SearchOutlined')
 )
 
 const md = markdown({
@@ -227,19 +123,14 @@ export default {
   components: {
     loading,
     ticketItem,
-    addTicket,
     supportAlert,
+    supportHeader,
+    supportFooter,
 
-    leftIcon,
-    reloadIcon,
     exclamationIcon,
     copyIcon,
     editIcon,
-
-    loadingIcon,
-    arrowUpIcon,
-    plusIcon,
-    searchIcon
+    loadingIcon
   },
   beforeRouteUpdate (to, from, next) {
     this.chatid = to.params.id
@@ -256,39 +147,30 @@ export default {
       subject: ref('SUPPORT'),
       replies: ref([]),
 
-      messageInput: ref(''),
-      isLoading: ref(true),
+      isLoading: ref(false),
       chatid: ref(route.params.id),
-      showSendFiles: ref(false),
-
-      editing: ref(null),
-      text: ref(''),
       searchString: ref(''),
       chatPaddingTop: ref('15px')
     }
   },
   computed: {
     ...mapStores(useAppStore, useAuthStore, useChatsStore, useSupportStore),
-    titleDecoded () {
-      const txt = document.createElement('textarea')
-      txt.innerHTML = this.subject
-      return txt.value
-    },
     chat () {
       return this.chatsStore.chats.get(this.chatid)
     },
     chats () {
+      const ids = []
       const result = []
       const { uuid } = this.authStore.billingUser
 
       this.chatsStore.getChats.forEach((ticket) => {
-        const instance = ticket.meta.data.instance?.kind.value ?? {}
+        const instance = ticket.meta.data.instance?.toJSON()
         const { from } = this.$route.query
         if (instance !== from && from) return
 
         const string = this.searchString.toLowerCase()
         const topic = ticket.topic.toLowerCase()
-        if (!topic.includes(string)) return
+        if (!topic.includes(string) && string !== '') return
 
         const isReaded = ticket.meta.lastMessage?.readers.includes(uuid)
         const status = Status[ticket.status].toLowerCase().split('_')
@@ -305,13 +187,17 @@ export default {
           status: capitalized,
           unread: (isReaded) ? 0 : ticket.meta.unread
         }
+        const id = ticket.meta.data.whmcs?.toJSON()
 
+        if (id) ids.push(id)
         result.push(value)
       })
 
       result.sort((a, b) => b.date - a.date)
+      const tickets = this.supportStore.getTickets
+        .filter(({ id }) => !ids.includes(id))
 
-      return [...result, ...this.supportStore.getTickets]
+      return [...result, ...tickets]
     }
   },
   watch: {
@@ -322,7 +208,7 @@ export default {
         const { scrollHeight, clientHeight, lastElementChild } = this.$refs.chatList
 
         if (scrollHeight > clientHeight || !lastElementChild) return
-        lastElementChild.style.borderBottom = '1px solid #d9d9d9'
+        lastElementChild.style.borderBottom = '1px solid var(--border_color)'
       },
       deep: true
     },
@@ -347,21 +233,9 @@ export default {
     this.chatsStore.startStream()
     this.chatsStore.fetchDefaults()
     this.loadMessages()
-
-    this.search = debounce(() => { this.searchString = this.text }, 200)
   },
   methods: {
     toDate,
-    search () {},
-    goBack () {
-      if (this.$route.query.from) {
-        const params = { id: this.$route.query.from }
-
-        this.$router.push({ name: 'service', params })
-      } else {
-        this.$router.push({ name: 'support' })
-      }
-    },
     beauty (message) {
       message = md.render(message).trim()
       message = message.replace(/\n/g, '<br>')
@@ -374,75 +248,11 @@ export default {
       if (i === 0) return true
       return replies[i - 1].date.split(' ')[0] !== replies[i].date.split(' ')[0]
     },
-    newLine () {
-      this.messageInput.replace(/$/, '\n')
-    },
     isAdminSent (reply) {
       return reply.requestor_type !== 'Owner'
     },
     isEditable (reply) {
       return reply.userid === this.authStore.userdata.uuid
-    },
-    sendMessage () {
-      if (this.messageInput.trim().length < 1) return
-      if (this.status === 'Closed') return
-      if (this.editing) {
-        this.editMessage(this.editing)
-        return
-      }
-
-      const message = {
-        admin: '',
-        attachment: '',
-        contactid: '0',
-        date: Date.now(),
-        email: this.authStore.userdata.data?.email ?? 'none',
-        message: md.render(this.messageInput).trim().replace(/^<p>/, '').replace(/<\/p>$/, ''),
-        name: this.authStore.userdata.title,
-        userid: this.authStore.userdata.uuid,
-        sending: true
-      }
-
-      const date = this.toDate(message.date / 1000, '-', true, true)
-
-      this.replies.push({ ...message, date, requestor_type: 'Owner' })
-
-      if (this.replies[0].gateways) {
-        this.chatsStore.sendMessage({
-          uuid: this.$route.params.id,
-          content: message.message,
-          account: message.userid,
-          date: BigInt(message.date)
-        })
-          .then(({ uuid }) => {
-            this.replies[this.replies.length - 1].uuid = uuid
-          })
-          .catch((err) => {
-            this.replies[this.replies.length - 1].error = true
-            console.error(err)
-          })
-          .finally(() => {
-            this.replies[this.replies.length - 1].sending = false
-          })
-        this.messageInput = ''
-        return
-      }
-
-      this.$api.get(this.authStore.baseURL, {
-        params: {
-          run: 'answer_ticket',
-          id: this.$route.params.id,
-          message: this.messageInput
-        }
-      })
-        .catch((err) => {
-          this.replies[this.replies.length - 1].error = true
-          console.error(err)
-        })
-        .finally(() => {
-          this.replies[this.replies.length - 1].sending = false
-        })
-      this.messageInput = ''
     },
     loadMessages (update) {
       const result = this.chatsStore.messages[this.chatid]
@@ -496,40 +306,13 @@ export default {
       this.isLoading = true
       this.loadMessages(true)
     },
-    objectToParams (object) {
-      return Object.entries(object)
-        .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
-        .join('&')
-    },
     deleteMessage (message) {
       this.replies.splice(this.replies.indexOf(message), 1)
     },
-    resendMessage (message) {
-      this.deleteMessage(message)
-      this.messageInput = message.message
-      this.sendMessage()
-    },
-    editMessage (uuid) {
-      this.chatsStore.editMessage({
-        content: this.messageInput, uuid
-      })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message
-
-          this.$notification.error({ message: this.$t(message) })
-          console.error(err)
-        })
-
-      this.editing = null
-      this.messageInput = ''
-    },
-    changeEditing (message = {}) {
-      this.editing = message.uuid ?? null
-      this.messageInput = message.message ?? ''
-      document.getElementById('message').focus()
-    },
-    getMessage (uuid) {
-      return this.replies?.find((reply) => reply.uuid === uuid)?.message
+    resendMessage (reply) {
+      this.deleteMessage(reply)
+      this.$refs.footer.message = reply.message
+      this.$refs.footer.sendMessage()
     }
   }
 }
@@ -548,18 +331,7 @@ export default {
   background: var(--bright_bg);
 }
 
-.chat__header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
-  line-height: 64px;
-  background-color: var(--main);
-  color: var(--bright_font);
-}
-
-.chat__container {
+:deep(.chat__container) {
   padding: 0;
   display: grid;
   grid-template-columns: 20% 1fr 20%;
@@ -572,98 +344,13 @@ export default {
   margin: 0 auto;
 }
 
-.chat__tag {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-column: 1 / 3;
-  padding: 5px 7px;
-  margin-right: auto;
-  font-size: 18px;
-}
-
-.chat__title {
-  font-weight: bold;
-  line-height: 1.1rem;
-}
-
-.chat__back {
-  justify-self: start;
-}
-
-.chat__actions {
-  display: flex;
-  justify-self: end;
-}
-
-.chat__back,
-.chat__actions > .icon__wrapper {
-  font-size: 1.4rem;
-  cursor: pointer;
-}
-
-.icon__wrapper.active {
-  background-color: var(--bright_bg);
-  color: var(--main);
-  transform: rotate(45deg);
-}
-
 .chat__list {
   grid-row: 1 / 3;
   margin: 10px 0;
   overflow: scroll;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--border_color);
   border-radius: 6px;
   background: var(--bright_font);
-}
-
-.chat__footer {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  grid-column: 2;
-  padding: 10px 0;
-  background-color: var(--bright_bg);
-}
-
-.chat__input {
-  max-width: 725px;
-  border: 0;
-  outline: 0;
-  border-radius: 40px;
-  flex: 1 0;
-  padding: 7px 0;
-}
-
-.chat__input textarea {
-  max-height: calc(50vh - 34px) !important;
-}
-
-.chat__input :deep(.ant-input-textarea-clear-icon) {
-  margin: 9px 2px 0 0;
-}
-
-.chat__send {
-  background-color: var(--main);
-  color: var(--bright_font);
-  border-radius: 50%;
-  height: 35px;
-  width: 35px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: 5px;
-  margin-bottom: 10px;
-  font-size: 1.2rem;
-  transition: filter 0.2s ease;
-  cursor: pointer;
-}
-
-.chat__send:hover {
-  filter: brightness(1.05);
-}
-
-.chat__send:active {
-  filter: brightness(0.95);
 }
 
 .chat__content {
@@ -677,7 +364,7 @@ export default {
   margin: 10px auto 0;
   padding: v-bind(chatPaddingTop) 15px 6px;
 
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--border_color);
   border-radius: 6px;
   overflow: auto;
   background: var(--bright_font);
@@ -688,7 +375,7 @@ export default {
 }
 
 .chat__tooltip.error :deep(.ant-popover-inner),
-.chat__tooltip.error :deep(.ant-popover-arrow ){
+.chat__tooltip.error :deep(.ant-popover-arrow) {
   background: transparent;
   box-shadow: none;
 }
@@ -764,6 +451,7 @@ export default {
 
 .chat__message--out {
   align-self: flex-end;
+  color: rgba(0, 0, 0, 0.65);
 }
 
 .chat__message--out::after {

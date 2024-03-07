@@ -80,7 +80,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { isDayjs } from 'dayjs'
@@ -144,7 +144,9 @@ function setInfoByType (value) {
 }
 
 function setInfo () {
-  const keys = ['email', 'fullname', 'phonenumber', 'companyname', 'address1']
+  const keys = ['email', 'fullname', 'phonenumber', 'companyname']
+  const addressKeys = ['state', 'city', 'address1', 'postcode']
+  const address = []
 
   keys.forEach((key) => {
     if (config.whmcsSiteUrl) {
@@ -153,6 +155,20 @@ function setInfo () {
       form.value[key] = authStore.userdata.data[key]
     }
   })
+
+  addressKeys.forEach((key) => {
+    if (config.whmcsSiteUrl) {
+      const value = authStore.billingUser[key]
+
+      if (value !== '') address.push(value)
+    } else {
+      const value = authStore.userdata.data[key]
+
+      if (value !== '') address.push(value)
+    }
+  })
+
+  form.value.address1 = address.join(', ')
 }
 
 async function fetchInfo (update) {
@@ -227,6 +243,12 @@ function objectStringify (_, value) {
   return value
 }
 
+const theme = inject('theme')
+const inputColors = computed(() => (theme.value)
+  ? ({ background: 'var(--bright_bg)', border: 'var(--bright_font)' })
+  : ({ background: 'inherit', border: 'var(--border_color)' })
+)
+
 if ('firstname' in authStore.billingUser) setInfo()
 else fetchInfo()
 
@@ -268,15 +290,16 @@ export default { name: 'RegistrationView' }
   padding: 4px 11px;
   font-size: 14px;
   width: 100%;
-  border: 1px solid #d9d9d9;
+  border: 1px solid v-bind('inputColors.border');
   border-radius: 6px;
   transition: all 0.2s;
+  background: v-bind('inputColors.background');
 }
 
 .user__input:disabled {
   color: rgba(0, 0, 0, 0.25);
   background-color: rgba(0, 0, 0, 0.04);
-  border-color: #d9d9d9;
+  border-color: v-bind('inputColors.border');
   box-shadow: none;
   cursor: not-allowed;
 }

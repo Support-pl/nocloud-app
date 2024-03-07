@@ -77,7 +77,7 @@
               @ok="orderClickHandler"
               @cancel="() => { modal.confirmCreate = false }"
             >
-              <p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.title }}</p>
+              <p>{{ $t('order_services.Do you want to activate') }}: {{ getProducts.title }}</p>
             </a-modal>
           </a-col>
         </a-row>
