@@ -67,7 +67,7 @@
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
             <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ capitalize($t("order")) }}
+              {{ capitalize($t('activate')) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"

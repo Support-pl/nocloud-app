@@ -186,6 +186,7 @@
     "processor": "processor",
     "Order": "Order",
     "order": "order",
+    "activate": "activate",
     "open": "Open",
     "or": "or",
     "sign up": "Sign up",
