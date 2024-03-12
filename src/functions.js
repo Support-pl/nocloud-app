@@ -134,22 +134,24 @@ export function getPeriods (productSize, plans) {
 
 export async function createInvoice (instance, baseURL) {
   if (checkPayg(instance)) return
-  const url = await api.get(baseURL, {
+  const response = await api.get(baseURL, {
     params: {
       run: 'invoice_instans', uuid_instans: instance.uuid
     }
   })
+  const url = response.redirect_url ?? response
 
   setTimeout(() => { window.open(url, '_blank') }, 300)
   return url
 }
 
 export async function createRenewInvoice (instance, baseURL) {
-  const url = await api.get(baseURL, {
+  const response = await api.get(baseURL, {
     params: {
       run: 'invoice_instans_renew', uuid_instans: instance.uuid
     }
   })
+  const url = response.redirect_url ?? response
 
   setTimeout(() => { window.open(url, '_blank') }, 300)
   return url

@@ -367,6 +367,8 @@ export default {
         if (this.periods.includes(+product.period)) return
         this.periods.push(+product.period)
       })
+
+      this.periods.sort((a, b) => a - b)
       this.options.period = this.periods[0]
     },
     orderClickHandler () {
