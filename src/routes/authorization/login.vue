@@ -162,7 +162,7 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, inject, onMounted, ref } from 'vue'
 import { notification } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -305,6 +305,11 @@ onMounted(() => {
     )
   }
 })
+
+const theme = inject('theme')
+const shadowColor = computed(() =>
+  (theme.value) ? 'var(--bright_font)' : 'rgba(164, 180, 244, .5)'
+)
 </script>
 
 <script>
@@ -421,7 +426,7 @@ export default { name: 'LoginView' }
   flex-direction: column;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 3px 8px 20px var(--bright_bg);
+  box-shadow: 3px 8px 20px v-bind('shadowColor');
   margin-bottom: 25px;
 }
 

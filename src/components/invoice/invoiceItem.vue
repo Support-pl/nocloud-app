@@ -1,5 +1,5 @@
 <template>
-  <div class="invoice" @click="clickOnInvoice(invoice.id)">
+  <div class="invoice" @click="isLoading = true; getPaytoken(invoice.id)">
     <div class="invoice__header flex-between">
       <div class="invoice__status" :style="{ color: statusColor }">
         {{ $t(`invoice_${invoice.status}`) }}
@@ -34,27 +34,41 @@
       <div class="invoice__id">
         #{{ invoice.id }}
       </div>
-      <div class="invoice__btn">
-        <span v-if="invoice.status === 'Unpaid'" class="invoice__pay">
-          {{ $t('Pay').toLowerCase() }}
-          <component
-            :is="(isLoading) ? loadingIcon : rightIcon"
-            color="success"
-          />
+
+      <div
+        v-if="invoice.paid_balance && invoice.status === 'Unpaid'"
+        class="invoice__btn" style="margin-left: auto"
+        @click="createInvoiceByBalance(invoice.id)"
+      >
+        <span class="invoice__pay invoice__balance-pay">
+          {{ $t('pay by balance') }}
+          <component :is="(isBalanceLoading) ? loadingIcon : rightIcon" color="success" />
         </span>
-        <component :is="(isLoading) ? loadingIcon : rightIcon" v-else />
       </div>
+
+      <div
+        v-if="invoice.status === 'Unpaid'"
+        class="invoice__btn"
+        @click="createInvoice(invoice.id)"
+      >
+        <span class="invoice__pay">
+          {{ $t('Pay').toLowerCase() }}
+          <component :is="(isLoading) ? loadingIcon : rightIcon" color="success" />
+        </span>
+      </div>
+      <component :is="(isLoading) ? loadingIcon : rightIcon" v-else style="margin-top: 5px" />
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, defineAsyncComponent, ref } from 'vue'
-import { notification } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useInvoicesStore } from '@/stores/invoices.js'
+import { useNotification } from '@/hooks/utils'
 
 import api from '@/api'
 import config from '@/appconfig.js'
@@ -66,6 +80,8 @@ const props = defineProps({
 const i18n = useI18n()
 const authStore = useAuthStore()
 const currenciesStore = useCurrenciesStore()
+const invoicesStore = useInvoicesStore()
+const { openNotification } = useNotification()
 
 const loadingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LoadingOutlined')
@@ -75,6 +91,7 @@ const rightIcon = defineAsyncComponent(
 )
 
 const isLoading = ref(false)
+const isBalanceLoading = ref(false)
 const currencyCode = ref('')
 
 const currency = computed(() => {
@@ -120,37 +137,64 @@ const total = computed(() => {
   return Math.abs(((+total + +props.invoice?.credit) * rate)).toFixed(2)
 })
 
-async function clickOnInvoice (uuid) {
+async function createInvoice (id) {
+  isLoading.value = true
   if (props.invoice.status === 'Unpaid') {
-    isLoading.value = true
-    if (props.invoice.meta) {
-      const type = (props.invoice.total > 0) ? 'debit' : 'top-up'
+    getPaytoken(id)
+    return
+  }
 
-      api.get(authStore.baseURL, {
-        params: {
-          run: 'create_inv',
-          invoice_id: uuid,
-          product: props.invoice.meta.description ?? props.invoice.service,
-          invoice_type: props.invoice.meta.invoiceType ?? type,
-          sum: total.value
-        }
-      })
-        .then(({ invoiceid }) => {
-          notification.success({ message: i18n.t('Done') })
-          getPaytoken(invoiceid)
-        })
-    } else getPaytoken(uuid)
-  } else {
-    getPaytoken(uuid)
+  if (!props.invoice.meta) {
+    getPaytoken(id)
+    return
+  }
+
+  try {
+    const type = (props.invoice.total > 0) ? 'debit' : 'top-up'
+
+    const { invoiceid } = api.get(authStore.baseURL, {
+      params: {
+        run: 'create_inv',
+        invoice_id: id,
+        product: props.invoice.meta.description ?? props.invoice.service,
+        invoice_type: props.invoice.meta.invoiceType ?? type,
+        sum: total.value
+      }
+    })
+
+    openNotification('success', { message: i18n.t('Done') })
+    getPaytoken(invoiceid)
+  } catch (error) {
+    openNotification('error', {
+      message: error.response?.data?.message ?? error.message ?? error
+    })
+    console.error(error)
+  }
+}
+
+async function createInvoiceByBalance (id) {
+  isBalanceLoading.value = true
+  try {
+    await api.get(authStore.baseURL, {
+      params: { run: 'balance_paid', invoice_id: id }
+    })
+
+    await invoicesStore.fetch(true)
+    openNotification('success', { message: i18n.t('Done') })
+  } catch (error) {
+    openNotification('error', {
+      message: error.response?.data?.message ?? error.message ?? error
+    })
+    console.error(error)
+  } finally {
+    isBalanceLoading.value = false
   }
 }
 
 async function getPaytoken (id) {
   try {
     const response = await api.get(authStore.baseURL, {
-      params: {
-        run: 'get_pay_token', invoice_id: id
-      }
+      params: { run: 'get_pay_token', invoice_id: id }
     })
 
     window.location.href = response
@@ -170,14 +214,14 @@ if (props.invoice.currencycode === 'NCU') {
 export default { name: 'InvoiceView' }
 </script>
 
-<style>
+<style scoped>
 .invoice {
   position: relative;
   padding: 8px 15px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
   background-color: var(--bright_font);
-  color: rgba(0, 0, 0, 0.7);
+  color: inherit;
   cursor: pointer;
 }
 
@@ -185,6 +229,9 @@ export default { name: 'InvoiceView' }
 .invoice__service {
   font-size: 12px;
   color: var(--gray);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .invoice__pay {
@@ -195,8 +242,13 @@ export default { name: 'InvoiceView' }
   padding: 4px 8px;
   line-height: 1;
   border-radius: 12px;
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   background: var(--success);
+  white-space: nowrap;
+}
+
+.invoice__balance-pay {
+  background: var(--main);
 }
 
 .invoice__status {
@@ -219,7 +271,7 @@ export default { name: 'InvoiceView' }
 .horisontal-line {
   width: 100%;
   height: 1px;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--border_color);
 }
 
 .flex-between {
@@ -252,5 +304,17 @@ export default { name: 'InvoiceView' }
 
 .invoice__footer {
   align-items: center;
+  gap: 5px;
+}
+
+@media (max-width: 576px) {
+  .invoice__middle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .invoice__cost {
+    text-align: right;
+  }
 }
 </style>

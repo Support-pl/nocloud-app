@@ -1,5 +1,6 @@
 import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from './auth.js'
@@ -11,6 +12,7 @@ import useCreateInstance from '@/hooks/instances/create.js'
 import { checkPayg, createInvoice } from '@/functions.js'
 
 export const useCloudStore = defineStore('cloud', () => {
+  const router = useRouter()
   const i18n = useI18n()
   const { createInstance } = useCreateInstance()
 
@@ -135,6 +137,7 @@ export const useCloudStore = defineStore('cloud', () => {
       }
 
       await createInvoice(instance, authStore.baseURL)
+      router.push({ path: '/services' })
     }
   }
 
@@ -204,10 +207,9 @@ export const useCloudStore = defineStore('cloud', () => {
     if (newInstance.config.type === 'cloud') {
       orderData.service.instancesGroups[0].config = { ssh: options.config.ssh }
     }
-    const message = i18n.t('Order created successfully')
 
     return createInstance(
-      'create', orderData, namespaceId.value, message, deployMessage
+      'create', orderData, namespaceId.value, null, deployMessage
     )
   }
 
@@ -234,10 +236,8 @@ export const useCloudStore = defineStore('cloud', () => {
     group.resources.ips_private = res.private
     group.resources.ips_public = res.public
 
-    const message = i18n.t('Order update successfully')
-
     return createInstance(
-      'update', orderData, namespaceId.value, message, deployMessage
+      'update', orderData, namespaceId.value, null, deployMessage
     )
   }
 
