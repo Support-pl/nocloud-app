@@ -76,6 +76,10 @@ export default { name: 'PromoBlock' }
   background-color: var(--bright_font);
 }
 
+.order__field :deep(p) {
+  margin-bottom: 0;
+}
+
 @media screen and (max-width: 1024px) {
   .order__field {
     box-shadow: none;

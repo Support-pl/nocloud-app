@@ -29,40 +29,51 @@
           :sp-list="sp"
         />
 
-        <a-row
-          v-if="getProducts.inputKilotoken > 0"
-          type="flex"
-          justify="space-around"
-          align="middle"
-        >
-          <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
-            Input kilotoken:
-          </a-col>
-          <a-col :xs="12" :sm="18" :lg="12">
-            <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
-              {{ getProducts.inputKilotoken }} {{ currency.code }}
-            </div>
-            <div v-else class="loadingLine" />
-          </a-col>
-        </a-row>
+        <a-badge class="order__pricing">
+          <template #count>
+            <a-tooltip placement="bottom">
+              <template #title>
+                {{ $t('openai description 2') }}
+              </template>
+              <question-icon style="font-size: 22px" two-tone-color="#ff9140" />
+            </a-tooltip>
+          </template>
 
-        <a-row
-          v-if="getProducts.outputKilotoken > 0"
-          style="margin-top: 10px"
-          type="flex"
-          justify="space-around"
-          align="middle"
-        >
-          <a-col :xs="6" :sm="6" :lg="12" style="font-size: 1rem">
-            Output kilotoken:
-          </a-col>
-          <a-col :xs="12" :sm="18" :lg="12">
-            <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
-              {{ getProducts.outputKilotoken }} {{ currency.code }}
-            </div>
-            <div v-else class="loadingLine" />
-          </a-col>
-        </a-row>
+          <a-row
+            v-if="getProducts.inputKilotoken > 0"
+            type="flex"
+            justify="space-around"
+            align="middle"
+          >
+            <a-col :xs="12" :sm="18" :lg="16" style="font-size: 1rem">
+              Input kilotoken:
+            </a-col>
+            <a-col :xs="12" :sm="6" :lg="8">
+              <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
+                {{ getProducts.inputKilotoken }} {{ currency.code }}
+              </div>
+              <div v-else class="loadingLine" />
+            </a-col>
+          </a-row>
+
+          <a-row
+            v-if="getProducts.outputKilotoken > 0"
+            style="margin-top: 10px"
+            type="flex"
+            justify="space-around"
+            align="middle"
+          >
+            <a-col :xs="12" :sm="18" :lg="16" style="font-size: 1rem">
+              Output kilotoken:
+            </a-col>
+            <a-col :xs="12" :sm="6" :lg="8">
+              <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
+                {{ getProducts.outputKilotoken }} {{ currency.code }}
+              </div>
+              <div v-else class="loadingLine" />
+            </a-col>
+          </a-row>
+        </a-badge>
 
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
@@ -89,7 +100,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch, reactive } from 'vue'
+import { computed, onMounted, ref, watch, reactive, defineAsyncComponent } from 'vue'
 import { storeToRefs } from 'pinia'
 import { notification } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -107,6 +118,10 @@ import { useInstancesStore } from '@/stores/instances.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
 import promoBlock from '@/components/ui/promo.vue'
+
+const questionIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/QuestionCircleTwoTone')
+)
 
 const router = useRouter()
 const route = useRoute()
@@ -388,6 +403,13 @@ export default { name: 'OpenaiComponent' }
   margin-top: 15px;
   margin-bottom: 15px;
   transform: translateX(-50%);
+}
+
+.order__pricing {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border_color);
+  border-radius: 10px;
 }
 
 .product__specs {

@@ -93,6 +93,7 @@
 import { computed, inject, onBeforeMount } from 'vue'
 import { message } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import passwordMeter from 'vue-simple-password-meter'
 
 import { useAuthStore } from '@/stores/auth.js'
@@ -100,6 +101,7 @@ import { useCloudStore } from '@/stores/cloud.js'
 
 import imagesList from '@/components/ui/images.vue'
 
+const i18n = useI18n()
 const authStore = useAuthStore()
 const cloudStore = useCloudStore()
 const { authData, provider } = storeToRefs(cloudStore)
@@ -123,13 +125,18 @@ const rules = [{
   trigger: 'change',
   validator: () => {
     try {
-      if ('+=.-_!*'.includes(authData.value.password.at(-1))) {
-        throw new Error('Error 2')
+      if (authData.value.password === '') {
+        throw new Error(i18n.t('ssl_product.field is required'))
+      }
+      if (/[^a-zA-Z0-9]$/.test(authData.value.password)) {
+        throw new Error(i18n.t('The last character must not be special'))
       }
       if (/^(?=.*\d)[\w+=.\-_!*]{9,32}$/.test(authData.value.password)) {
         return Promise.resolve()
       } else {
-        throw new Error('Error')
+        throw new Error(`
+          ${i18n.t('Password must contain uppercase letters, numbers and symbols')} (+-.-_!*)
+        `)
       }
     } catch (error) {
       return Promise.reject(error.message)
