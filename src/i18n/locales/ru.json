@@ -241,6 +241,7 @@
     "Payment method": "Метод оплаты",
     "Do you want to defer payment?": "Вы хотите отложить платеж?",
     "Show full list": "Отобразить полный список",
+    "pay by balance": "оплатить по балансу",
     "cloudState_StartTime": "Время запуска",
     "cloud_StartTime": "Время запуска",
     "cloud_Capacity": "Вместимость",

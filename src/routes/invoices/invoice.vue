@@ -296,6 +296,10 @@ export default { name: 'InvoicesView' }
   border-color: var(--border_color);
 }
 
+.invoices__wrapper :deep(.ant-radio-button-wrapper-checked) {
+  border-color: var(--main);
+}
+
 .invoices__wrapper :deep(.ant-radio-button-wrapper:not(:first-child)::before) {
   background-color: var(--border_color);
 }
