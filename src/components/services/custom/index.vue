@@ -478,6 +478,8 @@ export default {
         if (this.periods.includes(+product.period)) return
         this.periods.push(+product.period)
       })
+
+      this.periods.sort((a, b) => a - b)
       this.options.period = this.periods[0]
     },
     changeAddons (key) {
@@ -728,8 +730,9 @@ export default {
 
 .order__grid-item img {
   max-width: 50px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--border_color);
   border-radius: 10px;
+  background: #fff;
 }
 
 .order__grid-item--active {
