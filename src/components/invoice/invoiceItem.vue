@@ -35,21 +35,26 @@
         #{{ invoice.id }}
       </div>
 
-      <div
+      <a-popconfirm
         v-if="invoice.paid_balance && invoice.status === 'Unpaid'"
-        class="invoice__btn" style="margin-left: auto"
-        @click="createInvoiceByBalance(invoice.id)"
+        :title="$t('Are you sure you want pay invoice by balance?')"
+        :description="$t('The current invoice will be deleted, the service will be paid from the balance.')"
+        :ok-text="$t('Yes')"
+        :cancel-text="$t('Cancel')"
+        @confirm="createInvoiceByBalance(invoice.id)"
       >
-        <span class="invoice__pay invoice__balance-pay">
-          {{ $t('pay by balance') }}
-          <component :is="(isBalanceLoading) ? loadingIcon : rightIcon" color="success" />
-        </span>
-      </div>
+        <div class="invoice__btn" style="margin-left: auto" @click.stop>
+          <span class="invoice__pay invoice__balance-pay">
+            {{ $t('pay by balance') }}
+            <component :is="(isBalanceLoading) ? loadingIcon : rightIcon" color="success" />
+          </span>
+        </div>
+      </a-popconfirm>
 
       <div
         v-if="invoice.status === 'Unpaid'"
         class="invoice__btn"
-        @click="createInvoice(invoice.id)"
+        @click.stop="createInvoice(invoice.id)"
       >
         <span class="invoice__pay">
           {{ $t('Pay').toLowerCase() }}

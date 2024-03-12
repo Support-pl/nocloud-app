@@ -273,6 +273,8 @@
     "Do you want to download a backup?": "Do you want to download a backup?",
     "The payment can be postponed only once. The payment is postponed for 5 days.": "The payment can only be postponed once and has been postponed for 5 days.",
     "All unsaved progress will be lost, are you sure?": "All unsaved progress will be lost, are you sure?",
+    "Are you sure you want pay invoice by balance?": "Are you sure you want pay invoice by balance?",
+    "The current invoice will be deleted, the service will be paid from the balance.": "The current invoice will be deleted, the service will be paid from the balance.",
     "Add": "Add",
     "Save": "Save",
     "Cancel": "Cancel",
