@@ -273,6 +273,8 @@
     "Do you want to download a backup?": "Вы хотите загрузить бэкап?",
     "The payment can be postponed only once. The payment is postponed for 5 days.": "Платеж можно отложить только один раз. Платеж откладывается на 5 дней.",
     "All unsaved progress will be lost, are you sure?": "Весь несохраненный прогресс будет утерян, вы уверены?",
+    "Are you sure you want pay invoice by balance?": "Вы действительно хотите оплатить счёт по балансу?",
+    "The current invoice will be deleted, the service will be paid from the balance.": "Текущий счёт будет удалён, услуга будет оплачена с баланса.",
     "Add": "Добавить",
     "Save": "Сохранить",
     "Cancel": "Отмена",
