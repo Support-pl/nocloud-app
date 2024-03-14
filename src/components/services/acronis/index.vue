@@ -414,8 +414,12 @@ export default {
               instance = instances[i]
             }
           }
+          const { access } = this.namespacesStore.namespaces.find(
+            ({ uuid }) => uuid === this.namespace
+          )
+          const account = access.namespace ?? this.namespace
 
-          return this.createInvoice(instance, this.baseURL)
+          return this.createInvoice(instance, uuid, account, this.baseURL)
         })
         .catch((err) => {
           const config = { namespace: this.namespace, service: orderData }

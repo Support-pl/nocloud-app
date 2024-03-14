@@ -18,7 +18,10 @@
 import { computed, ref } from 'vue'
 import { Modal, notification } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
+
 import { useAuthStore } from '@/stores/auth.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
+import { useInstancesStore } from '@/stores/instances.js'
 import { createRenewInvoice, toDate } from '@/functions.js'
 
 const props = defineProps({
@@ -29,6 +32,8 @@ const props = defineProps({
 
 const i18n = useI18n()
 const authStore = useAuthStore()
+const namespacesStore = useNamespasesStore()
+const instancesStore = useInstancesStore()
 
 const isDisabled = ref(false)
 const slicedPrice = computed(() => {
@@ -79,7 +84,15 @@ function moduleEnter () {
     cancelText: i18n.t('Cancel'),
     okButtonProps: { disabled: isDisabled.value },
     onOk: async () => {
-      return createRenewInvoice(props.service, authStore.baseURL)
+      const { access: { namespace } } = instancesStore.services.find(
+        ({ uuid }) => uuid === props.service.uuidService
+      )
+      const { access } = namespacesStore.namespaces.find(
+        ({ uuid }) => uuid === namespace
+      )
+      const account = access.namespace ?? namespace
+
+      return createRenewInvoice(props.service, props.service.uuidService, account, authStore.baseURL)
         .then(() => {
           notification.success({ message: 'Done!' })
           isDisabled.value = true

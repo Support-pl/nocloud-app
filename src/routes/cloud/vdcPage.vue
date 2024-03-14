@@ -120,9 +120,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
+
 import { useNotification, useClipboard } from '@/hooks/utils'
 import { createRenewInvoice } from '@/functions.js'
 
@@ -139,6 +141,7 @@ const { openNotification } = useNotification()
 const { addToClipboard } = useClipboard()
 
 const authStore = useAuthStore()
+const namespacesStore = useNamespasesStore()
 const instancesStore = useInstancesStore()
 const currenciesStore = useCurrenciesStore()
 const providersStore = useSpStore()
@@ -218,7 +221,15 @@ function sendRenew () {
     cancelText: i18n.t('Cancel'),
     okButtonProps: { disabled: (service.value.data.blocked) },
     onOk: async () => {
-      return createRenewInvoice(service.value, authStore.baseURL)
+      const { access: { namespace } } = instancesStore.services.find(
+        ({ uuid }) => uuid === service.value.uuidService
+      )
+      const { access } = namespacesStore.namespaces.find(
+        ({ uuid }) => uuid === namespace
+      )
+      const account = access.namespace ?? namespace
+
+      return createRenewInvoice(service.value, service.value.uuidService, account, authStore.baseURL)
         .then(() => {
           openNotification('success', { message: 'Done!' })
           service.value.data.blocked = true

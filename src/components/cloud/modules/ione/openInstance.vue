@@ -762,7 +762,7 @@ export default defineComponent({
       const newPeriod = this.date(this.VM.data.next_payment_date + +period)
 
       return {
-        title: this.VM.title,
+        service: this.VM,
         currentPeriod,
         newPeriod,
         price: this.tariffPrice,

@@ -696,6 +696,22 @@ export default defineComponent({
     currency () {
       return { code: this.userdata.currency ?? this.defaultCurrency }
     },
+    renewalProps () {
+      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
+      const { period } = this.VM.billingPlan.products[key]
+      const currentPeriod = this.VM.data.expiration
+      const newPeriod = this.date(this.VM.data.expiration, +period)
+
+      return {
+        service: this.VM,
+        currentPeriod,
+        newPeriod,
+        price: this.tariffPrice,
+        addonsPrice: this.addonsPrice,
+        currentAutoRenew: this.VM.config.auto_renew,
+        blocked: this.VM.data.blocked
+      }
+    },
 
     tariffs () {
       if (!this.VM?.billingPlan) return {}
@@ -888,22 +904,6 @@ export default defineComponent({
         },
         onCancel () {}
       })
-    },
-    sendRenew () {
-      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
-      const { period } = this.VM.billingPlan.products[key]
-      const currentPeriod = this.VM.data.expiration
-      const newPeriod = this.date(this.VM.data.expiration, +period)
-
-      return {
-        title: this.VM.title,
-        currentPeriod,
-        newPeriod,
-        price: this.tariffPrice,
-        addonsPrice: this.addonsPrice,
-        currentAutoRenew: this.VM.config.auto_renew,
-        blocked: this.VM.data.blocked
-      }
     },
     sendNewTariff () {
       const service = this.services.find(({ uuid }) =>

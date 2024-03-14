@@ -766,7 +766,7 @@ export default defineComponent({
       const newPeriod = this.toDate(this.VM.data.expiration + +period)
 
       return {
-        title: this.VM.title,
+        service: this.VM,
         currentPeriod,
         newPeriod,
         price: this.tariffPrice,

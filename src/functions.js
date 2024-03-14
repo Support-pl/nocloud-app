@@ -132,29 +132,49 @@ export function getPeriods (productSize, plans) {
   return value
 }
 
-export async function createInvoice (instance, baseURL) {
+export async function createInvoice (instance, service, account, baseURL) {
   if (checkPayg(instance)) return
-  const response = await api.get(baseURL, {
-    params: {
-      run: 'invoice_instans', uuid_instans: instance.uuid
-    }
-  })
-  const url = response.redirect_url ?? response
+  try {
+    const response = await api.get(baseURL, {
+      params: {
+        run: 'invoice_instans',
+        uuid_instans: instance.uuid,
+        uuid_service: service,
+        uuid_account: account
+      }
+    })
+    const url = response.redirect_url ?? response
 
-  setTimeout(() => { window.open(url, '_blank') }, 300)
-  return url
+    setTimeout(() => { window.open(url, '_blank') }, 300)
+    return url
+  } catch (error) {
+    const url = error.response?.data.redirect_url ?? error.response?.data ?? error
+
+    if (url.startsWith('http')) window.open(url, '_blank')
+    return url
+  }
 }
 
-export async function createRenewInvoice (instance, baseURL) {
-  const response = await api.get(baseURL, {
-    params: {
-      run: 'invoice_instans_renew', uuid_instans: instance.uuid
-    }
-  })
-  const url = response.redirect_url ?? response
+export async function createRenewInvoice (instance, service, account, baseURL) {
+  try {
+    const response = await api.get(baseURL, {
+      params: {
+        run: 'invoice_instans_renew',
+        uuid_instans: instance.uuid,
+        uuid_service: service,
+        uuid_account: account
+      }
+    })
+    const url = response.redirect_url ?? response
 
-  setTimeout(() => { window.open(url, '_blank') }, 300)
-  return url
+    setTimeout(() => { window.open(url, '_blank') }, 300)
+    return url
+  } catch (error) {
+    const url = error.response?.data.redirect_url ?? error.response?.data ?? error
+
+    if (url.startsWith('http')) window.open(url, '_blank')
+    return url
+  }
 }
 
 export function checkPayg (instance) {

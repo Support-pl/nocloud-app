@@ -110,7 +110,7 @@ const renewalProps = computed(() => {
     : toDate(null, props.service.data.next_payment_date + +period)
 
   return {
-    title: props.service.title,
+    service: props.service,
     currentPeriod,
     newPeriod,
     price,
