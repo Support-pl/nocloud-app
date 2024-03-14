@@ -37,15 +37,14 @@
 
       <a-popconfirm
         v-if="invoice.paid_balance && invoice.status === 'Unpaid'"
-        :title="$t('Are you sure you want pay invoice by balance?')"
-        :description="$t('The current invoice will be deleted, the service will be paid from the balance.')"
+        :title="$t('Payment will be made from your account balance.')"
         :ok-text="$t('Yes')"
         :cancel-text="$t('Cancel')"
         @confirm="createInvoiceByBalance(invoice.id)"
       >
         <div class="invoice__btn" style="margin-left: auto" @click.stop>
           <span class="invoice__pay invoice__balance-pay">
-            {{ $t('pay by balance') }}
+            {{ $t('pay from balance') }}
             <component :is="(isBalanceLoading) ? loadingIcon : rightIcon" color="success" />
           </span>
         </div>

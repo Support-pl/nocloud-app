@@ -17,7 +17,7 @@
       </span>
     </template>
     <div style="font-weight: 700">
-      {{ title }}
+      {{ service.title }}
     </div>
     <div>
       {{ $t('from') }}
@@ -77,7 +77,9 @@ import { Modal } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useCurrency, useNotification } from '@/hooks/utils'
 import { createRenewInvoice } from '@/functions.js'
+
 import { useAuthStore } from '@/stores/auth.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 const questionIcon = defineAsyncComponent(
@@ -86,7 +88,7 @@ const questionIcon = defineAsyncComponent(
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
-  title: { type: String, default: '' },
+  service: { type: Object, required: true },
   currentPeriod: { type: String, default: '00.00.0000' },
   newPeriod: { type: String, default: '00.00.0000' },
   price: { type: Number, default: 0 },
@@ -99,7 +101,9 @@ const emits = defineEmits(['update:visible'])
 const i18n = useI18n()
 const { currency } = useCurrency()
 const { openNotification } = useNotification()
+
 const authStore = useAuthStore()
+const namespacesStore = useNamespasesStore()
 const instancesStore = useInstancesStore()
 
 const isLoading = ref(false)
@@ -133,7 +137,15 @@ async function onClick () {
 
 async function sendRenew () {
   try {
-    await createRenewInvoice(props.service, authStore.baseURL)
+    const { access: { namespace } } = instancesStore.services.find(
+      ({ uuid }) => uuid === props.service.uuidService
+    )
+    const { access } = namespacesStore.namespaces.find(
+      ({ uuid }) => uuid === namespace
+    )
+    const account = access.namespace ?? namespace
+
+    await createRenewInvoice(props.service, props.service.uuidService, account, authStore.baseURL)
 
     isDisabled.value = true
     openNotification('success', { message: i18n.t('Done') })

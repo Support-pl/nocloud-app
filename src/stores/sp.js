@@ -69,6 +69,13 @@ export const useSpStore = defineStore('sp', () => {
       } finally {
         isShowcasesLoading.value = false
       }
+    },
+
+    $reset () {
+      servicesProviders.value = []
+      showcases.value = []
+      isLoading.value = false
+      isShowcasesLoading.value = false
     }
   }
 })
