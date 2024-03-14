@@ -290,7 +290,7 @@ const renewalProps = computed(() => {
   const newPeriod = toDate(props.VM.data.next_payment_date + +period)
 
   return {
-    title: props.VM.title,
+    service: props.VM,
     currentPeriod,
     newPeriod,
     price: tariffPrice.value,

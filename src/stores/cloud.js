@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from './auth.js'
 import { useSpStore } from './sp.js'
 import { usePlansStore } from './plans.js'
+import { useNamespasesStore } from './namespaces.js'
 import { useInstancesStore } from './instances.js'
 
 import useCreateInstance from '@/hooks/instances/create.js'
@@ -19,6 +20,7 @@ export const useCloudStore = defineStore('cloud', () => {
   const authStore = useAuthStore()
   const spStore = useSpStore()
   const plansStore = usePlansStore()
+  const namespacesStore = useNamespasesStore()
   const instancesStore = useInstancesStore()
 
   const authData = reactive({
@@ -135,8 +137,12 @@ export const useCloudStore = defineStore('cloud', () => {
           instance = instances[i]
         }
       }
+      const { access } = namespacesStore.namespaces.find(
+        ({ uuid }) => uuid === namespaceId.value
+      )
+      const account = access.namespace ?? namespaceId.value
 
-      await createInvoice(instance, authStore.baseURL)
+      await createInvoice(instance, serviceId.value, account, authStore.baseURL)
       router.push({ path: '/services' })
     }
   }

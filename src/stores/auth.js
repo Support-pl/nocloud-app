@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import cookies from 'js-cookie'
 
+import { useSpStore } from './sp.js'
 import { useInstancesStore } from './instances.js'
 import api from '@/api.js'
 import config from '@/appconfig.js'
@@ -13,6 +14,7 @@ const COOKIES_NAME = 'noCloudinApp-token'
 export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
   const i18n = useI18n()
+  const sp = useSpStore()
   const instances = useInstancesStore()
 
   const token = ref('')
@@ -71,6 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('globalConfig', config)
       localStorage.setItem('lang', lang)
       instances.$reset()
+      sp.$reset()
 
       token.value = ''
       cookies.remove(COOKIES_NAME)

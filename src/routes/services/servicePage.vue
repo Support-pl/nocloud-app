@@ -163,6 +163,7 @@ import config from '@/appconfig.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useProductsStore } from '@/stores/products.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import loading from '@/components/ui/loading.vue'
@@ -215,7 +216,7 @@ export default {
   },
   data: () => ({ service: null, info }),
   computed: {
-    ...mapStores(useChatsStore, useProductsStore, useInstancesStore),
+    ...mapStores(useChatsStore, useProductsStore, useInstancesStore, useNamespasesStore),
     ...mapState(useAuthStore, ['baseURL', 'userdata', 'fetchBillingData']),
     getTagColor () {
       const status = this.service.status.replace('cloudStateItem.', '')
@@ -465,7 +466,15 @@ export default {
         cancelText: this.$t('Cancel'),
         okButtonProps: { disabled: (this.service.data.blocked) },
         onOk: async () => {
-          return this.createRenewInvoice(this.service, this.baseURL)
+          const { access: { namespace } } = this.instancesStore.services.find(
+            ({ uuid }) => uuid === this.service.uuidService
+          )
+          const { access } = this.namespacesStore.namespaces.find(
+            ({ uuid }) => uuid === namespace
+          )
+          const account = access.namespace ?? namespace
+
+          return this.createRenewInvoice(this.service, this.service.uuidService, account, this.baseURL)
             .then(() => {
               this.$notification.success({ message: 'Done!' })
               this.service.data.blocked = true
