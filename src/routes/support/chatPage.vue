@@ -474,6 +474,30 @@ export default {
   display: block;
 }
 
+:deep(.chat__files) {
+  display: flex;
+  justify-self: start;
+  flex-wrap: wrap;
+}
+
+:deep(.chat__files .files__preview) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 114px;
+  height: 100px;
+  padding: 5px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+:deep(.chat__files .files__preview > img) {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: cover;
+}
+
 @media (max-width: 768px) {
   .chat {
     grid-template-columns: 1fr;

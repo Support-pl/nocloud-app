@@ -84,6 +84,10 @@ function moduleEnter () {
     cancelText: i18n.t('Cancel'),
     okButtonProps: { disabled: isDisabled.value },
     onOk: async () => {
+      if (namespacesStore.namespaces.length < 1) {
+        await namespacesStore.fetch()
+      }
+
       const { access: { namespace } } = instancesStore.services.find(
         ({ uuid }) => uuid === props.service.uuidService
       )
@@ -102,6 +106,7 @@ function moduleEnter () {
             message: `Error: ${error?.response?.data?.message ?? 'Unknown'}.`
           })
         })
+        .finally(Modal.destroyAll)
     },
     onCancel () {}
   })

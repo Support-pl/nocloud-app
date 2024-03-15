@@ -62,7 +62,7 @@
     </a-row>
   </template>
 
-  <template v-else-if="products.length > 0">
+  <template v-else-if="filteredProductsByRegion.length > 0">
     <a-checkbox-group v-model:value="checkedTypes" :options="typesOptions" />
     <div class="order__grid">
       <div
@@ -104,7 +104,7 @@
         <a-button
           v-if="product === item.value"
           ghost
-          style="display: block; margin: 5px 0 0 auto"
+          class="config__button"
           @click="$router.push({ query: { ...$route.query, product } })"
         >
           {{ capitalize($t('config')) }}
@@ -168,11 +168,15 @@ watch(() => props.mode, () => {
   setResources(false)
 })
 
-const filteredProducts = computed(() =>
-  props.products.filter(({ group, datacenter }) => {
+const filteredProductsByRegion = computed(() =>
+  props.products.filter(({ datacenter }) => {
     const key = options.config.configuration.dedicated_datacenter
 
-    if (!datacenter?.includes(key)) return false
+    return datacenter?.includes(key)
+  })
+)
+const filteredProducts = computed(() =>
+  filteredProductsByRegion.value.filter(({ group }) => {
     if (checkedTypes.value.length < 1) return true
     return checkedTypes.value.find(
       (type) => group.toLowerCase().includes(type.toLowerCase())
@@ -435,6 +439,13 @@ export default { name: 'OvhDedicatedPlanPanel' }
 .order__grid-item--active {
   background-color: var(--main);
   color: var(--gloomy_font);
+}
+
+.config__button {
+  display: block;
+  margin: 5px 0 0 auto;
+  color: var(--gloomy_font);
+  border-color: var(--gloomy_font);
 }
 
 @media (max-width: 576px) {

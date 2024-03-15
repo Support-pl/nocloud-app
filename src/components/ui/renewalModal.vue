@@ -5,6 +5,7 @@
     :closable="false"
     :ok-text="$t('Yes')"
     :cancel-text="$t('Cancel')"
+    :confirm-loading="isRenewLoading"
     :body-style="{ marginLeft: '34px' }"
     :ok-button-props="{ disabled: isDisabled }"
     @update:open="emits('update:visible', $event)"
@@ -109,6 +110,7 @@ const instancesStore = useInstancesStore()
 const isLoading = ref(false)
 const isDisabled = ref(false)
 const autoRenew = ref(false)
+const isRenewLoading = ref(false)
 
 async function onClick () {
   const service = instancesStore.services.find(({ uuid }) =>
@@ -136,7 +138,12 @@ async function onClick () {
 }
 
 async function sendRenew () {
+  isRenewLoading.value = true
   try {
+    if (namespacesStore.namespaces.length < 1) {
+      await namespacesStore.fetch()
+    }
+
     const { access: { namespace } } = instancesStore.services.find(
       ({ uuid }) => uuid === props.service.uuidService
     )
@@ -153,6 +160,10 @@ async function sendRenew () {
     openNotification('error', {
       message: `Error: ${error?.response?.data?.message ?? 'Unknown'}.`
     })
+    console.error(error)
+  } finally {
+    isRenewLoading.value = false
+    emits('update:visible', false)
   }
 }
 
