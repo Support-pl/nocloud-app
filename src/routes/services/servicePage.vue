@@ -466,6 +466,10 @@ export default {
         cancelText: this.$t('Cancel'),
         okButtonProps: { disabled: (this.service.data.blocked) },
         onOk: async () => {
+          if (this.namespacesStore.namespaces.length < 1) {
+            await this.namespacesStore.fetch()
+          }
+
           const { access: { namespace } } = this.instancesStore.services.find(
             ({ uuid }) => uuid === this.service.uuidService
           )
@@ -485,6 +489,7 @@ export default {
               })
               console.error(err)
             })
+            .finally(this.$destroyAll)
         },
         onCancel () {}
       })

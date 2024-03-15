@@ -1,9 +1,6 @@
 <template>
   <div class="chat__footer">
-    <div
-      class="chat__container"
-      style="grid-template-columns: 1fr auto; align-items: end"
-    >
+    <div class="chat__container footer__container">
       <a-tag
         v-if="editing"
         closable
@@ -31,15 +28,14 @@
       <div class="chat__send" @click="sendMessage">
         <arrow-up-icon />
       </div>
-      <div v-if="showSendFiles" class="chat__send">
-        <plus-icon />
-      </div>
+
+      <upload-files v-if="showSendFiles" @get-send-func="fn.sendFiles = $event" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { defineAsyncComponent, nextTick, ref } from 'vue'
+import { computed, defineAsyncComponent, nextTick, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import markdown from 'markdown-it'
@@ -52,6 +48,8 @@ import { useNotification } from '@/hooks/utils'
 import { toDate } from '@/functions.js'
 import api from '@/api.js'
 
+import uploadFiles from '@/components/support/upload.vue'
+
 const md = markdown({
   html: true,
   linkify: true,
@@ -61,9 +59,6 @@ md.use(emoji)
 
 const arrowUpIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/ArrowUpOutlined')
-)
-const plusIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/PlusOutlined')
 )
 
 const props = defineProps({
@@ -81,7 +76,12 @@ const { openNotification } = useNotification()
 const textarea = ref()
 const message = ref('')
 const editing = ref(false)
-const showSendFiles = ref(false)
+const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET)
+
+const columnsStyle = computed(() =>
+  (showSendFiles.value) ? '1fr auto auto' : '1fr auto'
+)
+const fn = { sendFiles: async () => [] }
 
 function newLine () {
   message.value.replace(/$/, '\n')
@@ -112,9 +112,17 @@ function updateReplies () {
 async function sendChatMessage (result, replies) {
   await nextTick()
   try {
+    const files = await fn.sendFiles()
+    const template = `
+      <div class="chat__files">
+        ${files.map((file) => `<div class="files__preview">
+          <img src="${file.url}" alt="${file.name}">
+        </div>`).join('\n')}
+      </div>
+    `
     const { uuid } = await chatsStore.sendMessage({
       uuid: route.params.id,
-      content: result.message,
+      content: result.message + template,
       account: result.userid,
       date: BigInt(result.date)
     })
@@ -214,6 +222,11 @@ export default { name: 'SupportFooter' }
   grid-column: 2;
   padding: 10px 0;
   background-color: var(--bright_bg);
+}
+
+.chat__container.footer__container {
+  grid-template-columns: v-bind('columnsStyle');
+  align-items: end;
 }
 
 .chat__input {

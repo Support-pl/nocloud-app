@@ -68,6 +68,7 @@ module.exports = {
   },
   globals: {
     VUE_APP_BASE_URL: 'readonly',
-    VUE_APP_GA_ID: 'readonly'
+    VUE_APP_GA_ID: 'readonly',
+    VUE_APP_S3_BUCKET: 'readonly'
   }
 }

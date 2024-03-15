@@ -414,16 +414,29 @@ export default {
               instance = instances[i]
             }
           }
+
+          if (this.namespacesStore.namespaces.length < 1) {
+            await this.namespacesStore.fetch()
+          }
+
           const { access } = this.namespacesStore.namespaces.find(
             ({ uuid }) => uuid === this.namespace
           )
           const account = access.namespace ?? this.namespace
 
-          return this.createInvoice(instance, uuid, account, this.baseURL)
+          await this.createInvoice(instance, uuid, account, this.baseURL)
+          this.$router.push({ path: '/services' })
         })
-        .catch((err) => {
+        .catch((error) => {
+          const url = error.response?.data.redirect_url ?? error.response?.data ?? error
+
+          if (url.startsWith('http')) {
+            this.$router.push({ path: '/services' })
+            return
+          }
+
           const config = { namespace: this.namespace, service: orderData }
-          const message = err.response?.data?.message ?? err.message ?? err
+          const message = error.response?.data?.message ?? error.message ?? error
 
           this.$api.services.testConfig(config)
             .then(({ result, errors }) => {
@@ -434,7 +447,7 @@ export default {
               }
             })
           this.$notification.error({ message: this.$t(message) })
-          console.error(err)
+          console.error(error)
         })
     },
     orderConfirm () {
