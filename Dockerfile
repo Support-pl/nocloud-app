@@ -6,7 +6,7 @@ COPY . .
 RUN yarn set version latest
 RUN yarn install && yarn build
 
-FROM golang:1.19-alpine as server-builder
+FROM golang:1.21-alpine as server-builder
 
 RUN apk add upx
 COPY go.mod go.sum main.go /go/src/github.com/support-pl/nocloud-app/

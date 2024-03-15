@@ -221,6 +221,10 @@ function sendRenew () {
     cancelText: i18n.t('Cancel'),
     okButtonProps: { disabled: (service.value.data.blocked) },
     onOk: async () => {
+      if (namespacesStore.namespaces.length < 1) {
+        await namespacesStore.fetch()
+      }
+
       const { access: { namespace } } = instancesStore.services.find(
         ({ uuid }) => uuid === service.value.uuidService
       )
@@ -242,6 +246,7 @@ function sendRenew () {
           })
           console.error(error)
         })
+        .finally(Modal.destroyAll)
     },
     onCancel () {}
   })
