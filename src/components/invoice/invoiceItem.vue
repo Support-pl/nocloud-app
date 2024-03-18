@@ -138,7 +138,7 @@ const total = computed(() => {
   const total = props.invoice.subtotal ?? props.invoice.total
   const { rate } = currency.value
 
-  return Math.abs(((+total + +props.invoice?.credit) * rate)).toFixed(2)
+  return Math.abs((total * rate)).toFixed(2)
 })
 
 async function createInvoice (id) {
