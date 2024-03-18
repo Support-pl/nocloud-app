@@ -1090,26 +1090,26 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-2.0.2.tgz"
   integrity sha512-6EwiSjwWYP7pTckG6I5eyFANjPhmPjUX9JRLUSfNPC7FX7zK9gyZAfUEaECL6ALTpGX5AjnBq3C9XmVWPitNpw==
 
-"@intlify/core-base@9.10.1":
-  version "9.10.1"
-  resolved "https://registry.npmjs.org/@intlify/core-base/-/core-base-9.10.1.tgz"
-  integrity sha512-0+Wtjj04GIyglh5KKiNjRwgjpHrhqqGZhaKY/QVjjogWKZq5WHROrTi84pNVsRN18QynyPmjtsVUWqFKPQ45xQ==
+"@intlify/core-base@9.10.2":
+  version "9.10.2"
+  resolved "https://registry.npmjs.org/@intlify/core-base/-/core-base-9.10.2.tgz"
+  integrity sha512-HGStVnKobsJL0DoYIyRCGXBH63DMQqEZxDUGrkNI05FuTcruYUtOAxyL3zoAZu/uDGO6mcUvm3VXBaHG2GdZCg==
   dependencies:
-    "@intlify/message-compiler" "9.10.1"
-    "@intlify/shared" "9.10.1"
+    "@intlify/message-compiler" "9.10.2"
+    "@intlify/shared" "9.10.2"
 
-"@intlify/message-compiler@9.10.1":
-  version "9.10.1"
-  resolved "https://registry.npmjs.org/@intlify/message-compiler/-/message-compiler-9.10.1.tgz"
-  integrity sha512-b68UTmRhgZfswJZI7VAgW6BXZK5JOpoi5swMLGr4j6ss2XbFY13kiw+Hu+xYAfulMPSapcHzdWHnq21VGnMCnA==
+"@intlify/message-compiler@9.10.2":
+  version "9.10.2"
+  resolved "https://registry.npmjs.org/@intlify/message-compiler/-/message-compiler-9.10.2.tgz"
+  integrity sha512-ntY/kfBwQRtX5Zh6wL8cSATujPzWW2ZQd1QwKyWwAy5fMqJyyixHMeovN4fmEyCqSu+hFfYOE63nU94evsy4YA==
   dependencies:
-    "@intlify/shared" "9.10.1"
+    "@intlify/shared" "9.10.2"
     source-map-js "^1.0.2"
 
-"@intlify/shared@9.10.1":
-  version "9.10.1"
-  resolved "https://registry.npmjs.org/@intlify/shared/-/shared-9.10.1.tgz"
-  integrity sha512-liyH3UMoglHBUn70iCYcy9CQlInx/lp50W2aeSxqqrvmG+LDj/Jj7tBJhBoQL4fECkldGhbmW0g2ommHfL6Wmw==
+"@intlify/shared@9.10.2":
+  version "9.10.2"
+  resolved "https://registry.npmjs.org/@intlify/shared/-/shared-9.10.2.tgz"
+  integrity sha512-ttHCAJkRy7R5W2S9RVnN9KYQYPIpV2+GiS79T4EE37nrPyH6/1SrOh3bmdCRC1T3ocL8qCDx7x2lBJ0xaITU7Q==
 
 "@jridgewell/gen-mapping@^0.3.0", "@jridgewell/gen-mapping@^0.3.2":
   version "0.3.3"
@@ -1609,7 +1609,7 @@ axios@^1.6.5:
   resolved "https://registry.npmjs.org/axios/-/axios-1.6.7.tgz"
   integrity sha512-/hDJGff6/c7u0hDkvkGxR/oy6CbCs8ziCsC7SqmhjfozqiJGc8Z11wrv9z9lYfY4K8l+H9TpjcMDX0xOZmx+RA==
   dependencies:
-    follow-redirects "^1.15.4"
+    follow-redirects "^1.15.6"
     form-data "^4.0.0"
     proxy-from-env "^1.1.0"
 
@@ -2471,10 +2471,10 @@ flatted@^3.2.9:
   resolved "https://registry.npmjs.org/flatted/-/flatted-3.2.9.tgz"
   integrity sha512-36yxDn5H7OFZQla0/jFJmbIKTdZAQHngCedGxiMmpNfEZM0sdEeT+WczLQrjK6D7o2aiyLYDnkw0R3JK0Qv1RQ==
 
-follow-redirects@^1.15.4:
-  version "1.15.5"
-  resolved "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.5.tgz"
-  integrity sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==
+follow-redirects@^1.15.6:
+  version "1.15.6"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.6.tgz#7f815c0cda4249c74ff09e95ef97c23b5fd0399b"
+  integrity sha512-wWN62YITEaOpSK584EZXJafH1AGpO8RVgElfkuXbTOrPX4fIfOyEpW/CsiNd8JdYrAoOvafRTOEnvsO++qCqFA==
 
 for-each@^0.3.3:
   version "0.3.3"
@@ -3277,10 +3277,10 @@ natural-compare@^1.4.0:
   resolved "https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz"
   integrity sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==
 
-nocloud-ui@^1.0.18:
-  version "1.0.18"
-  resolved "https://registry.npmjs.org/nocloud-ui/-/nocloud-ui-1.0.18.tgz"
-  integrity sha512-PFviDEwA07JWzB/y1LPUU7aCt081yEZDZIX79mcGCRvQm9ohoZ0LzoUjMjUll+hLkJHknVZDp8gVHcfx3v2IMg==
+nocloud-ui@^1.0.19:
+  version "1.0.19"
+  resolved "https://registry.npmjs.org/nocloud-ui/-/nocloud-ui-1.0.19.tgz"
+  integrity sha512-FGJMge4GYg9Wj/EF+E0Kx/aPIr5FhWG5lrzogjhzpY2sPnBiCaWaoZrFgG/aBj6EmQA8R/Z2BTcgczXJ7mrVAw==
 
 nocloudjsrest@^1.5.17:
   version "1.5.17"
@@ -4235,10 +4235,10 @@ version-guard@^1.1.1:
   resolved "https://registry.npmjs.org/version-guard/-/version-guard-1.1.1.tgz"
   integrity sha512-MGQLX89UxmYHgDvcXyjBI0cbmoW+t/dANDppNPrno64rYr8nH4SHSuElQuSYdXGEs0mUzdQe1BY+FhVPNsAmJQ==
 
-vite-plugin-pwa@^0.19.3:
-  version "0.19.3"
-  resolved "https://registry.npmjs.org/vite-plugin-pwa/-/vite-plugin-pwa-0.19.3.tgz"
-  integrity sha512-ajY7Vn39hFbkWyqkyoJT40hPJcfU9AAfCugARJ3AdqK258z3mi3dmG88PB0+1WqJwUsedRRPkScH5HnQBzmRMQ==
+vite-plugin-pwa@^0.19.4:
+  version "0.19.4"
+  resolved "https://registry.npmjs.org/vite-plugin-pwa/-/vite-plugin-pwa-0.19.4.tgz"
+  integrity sha512-KiEFXaYEj2Hg1it+yECy75oqNmlXimI7BaLx7Sxl7Qsd9EIVxaf3GX1mZdLpHe83pDgHBNwm9USGQxSCNp5m7A==
   dependencies:
     debug "^4.3.4"
     fast-glob "^3.3.2"
@@ -4297,13 +4297,13 @@ vue-gtag@^2.0.1:
   resolved "https://registry.npmjs.org/vue-gtag/-/vue-gtag-2.0.1.tgz"
   integrity sha512-aM4A58FVL0wV2ptYi+xzAjeg+pQVRyUcfBc5UkXAwQrR4t3WBhor50Izp2I+3Oo7+l+vWJ7u78DGcNzReb8S/A==
 
-vue-i18n@^9.10.1:
-  version "9.10.1"
-  resolved "https://registry.npmjs.org/vue-i18n/-/vue-i18n-9.10.1.tgz"
-  integrity sha512-37HVJQZ/pZaRXGzFmmMomM1u1k7kndv3xCBPYHKEVfv5W3UVK67U/TpBug71ILYLNmjHLHdvTUPRF81pFT5fFg==
+vue-i18n@^9.10.2:
+  version "9.10.2"
+  resolved "https://registry.npmjs.org/vue-i18n/-/vue-i18n-9.10.2.tgz"
+  integrity sha512-ECJ8RIFd+3c1d3m1pctQ6ywG5Yj8Efy1oYoAKQ9neRdkLbuKLVeW4gaY5HPkD/9ssf1pOnUrmIFjx2/gkGxmEw==
   dependencies:
-    "@intlify/core-base" "9.10.1"
-    "@intlify/shared" "9.10.1"
+    "@intlify/core-base" "9.10.2"
+    "@intlify/shared" "9.10.2"
     "@vue/devtools-api" "^6.5.0"
 
 vue-router@^4.3.0:

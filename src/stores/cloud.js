@@ -143,7 +143,7 @@ export const useCloudStore = defineStore('cloud', () => {
       const account = access.namespace ?? namespaceId.value
 
       await createInvoice(instance, serviceId.value, account, authStore.baseURL)
-      router.push({ path: '/services' })
+      router.push({ path: '/billing' })
     }
   }
 
