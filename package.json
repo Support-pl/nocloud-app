@@ -20,7 +20,7 @@
     "dayjs": "^1.11.10",
     "infinimesh-proto": "^3.1.5",
     "js-cookie": "^3.0.5",
-    "markdown-it": "^14.0.0",
+    "markdown-it": "^14.1.0",
     "markdown-it-emoji": "^3.0.0",
     "nocloud-ui": "^1.0.19",
     "nocloudjsrest": "^1.5.17",
