@@ -113,13 +113,14 @@ async function sendChatMessage (result, replies) {
   await nextTick()
   try {
     const files = await fn.sendFiles()
-    const template = `
-      <div class="chat__files">
-        ${files.map((file) => `<div class="files__preview">
-          <img src="${file.url}" alt="${file.name}">
-        </div>`).join('\n')}
-      </div>
-    `
+    const template = (files.length > 0)
+      ? `<div class="chat__files">
+          ${files.map((file) => `<div class="files__preview">
+            <img src="${file.url}" alt="${file.name}">
+          </div>`).join('\n')}
+        </div>`
+      : ''
+
     const { uuid } = await chatsStore.sendMessage({
       uuid: route.params.id,
       content: result.message + template,
