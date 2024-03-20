@@ -76,13 +76,23 @@ function useCloudProducts (tarification) {
 
       if (!pub) return
       if (meta.cpu) resources.cpu = meta.cpu
+      if (!meta.disk) resources.disk = resources.drive_size
       if (i === -1) {
         const { addons, datacenter } = meta
 
         result.push({
-          value, title, resources, group, periods: [period], addons, datacenter
+          value,
+          title,
+          resources,
+          group,
+          periods: [period],
+          addons: { [period.duration]: addons },
+          datacenter
         })
-      } else result[i].periods.push(period)
+      } else {
+        result[i].periods.push(period)
+        result[i].addons[period.duration] = meta.addons
+      }
     })
 
     sortProducts(result)
