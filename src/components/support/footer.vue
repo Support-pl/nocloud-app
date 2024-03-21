@@ -159,7 +159,7 @@ async function sendTicket (replies) {
   }
 }
 
-function sendMessage () {
+async function sendMessage () {
   if (message.value.trim().length < 1) return
   if (props.status === 'Closed') return
   if (editing.value) {
@@ -169,9 +169,9 @@ function sendMessage () {
 
   const { replies, result } = updateReplies()
   if (props.replies[0].gateways) {
-    sendChatMessage(result, replies)
+    await sendChatMessage(result, replies)
   } else {
-    sendTicket(replies)
+    await sendTicket(replies)
   }
   message.value = ''
 }
