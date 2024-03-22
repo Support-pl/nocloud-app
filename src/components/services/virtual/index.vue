@@ -16,7 +16,7 @@
             <table v-if="getProducts.resources" :key="getProducts.title" class="product__specs">
               <tr v-for="(value, key) in getProducts.resources" :key="key">
                 <td>{{ capitalize($t('virtual_product.' + key)) }}</td>
-                <td>{{ (value === 'Не ограничен') ? $t('virtual_product.unlimited') : value }}</td>
+                <td>{{ (['Не ограничен', 'unlimited'].includes(value)) ? $t('virtual_product.unlimited') : value }}</td>
               </tr>
             </table>
           </transition>
@@ -552,12 +552,10 @@ export default {
 }
 
 .product__specs{
-  --color: rgb(126, 126, 126);
-  color: var(--color);
-  margin: 0 auto;
   --border-color: #dbdbdb;
   --border-line-weight: 1px;
   --border-line-type: solid;
+  margin: 0 auto;
   width: 80%;
   font-size: 1.2rem;
 }
@@ -569,11 +567,11 @@ export default {
 
 .product__specs td:nth-child(1){
   font-weight: 500;
+  color: var(--gray);
 }
 
 .product__specs td:nth-child(2){
   text-align: right;
-  color: rgba(0, 0, 0, .7)
 }
 
 .product__specs tr{

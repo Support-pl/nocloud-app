@@ -31,9 +31,10 @@ const addons = computed(() => {
         pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
       }
 
-      const isInclude = (addonsKeys[props.mode]?.some((el) => typeof el === 'string'))
-        ? addonsKeys[props.mode]?.includes(key)
-        : addonsKeys[props.mode]?.find(({ id }) => id.includes(key))?.id
+      const keys = (addonsKeys ?? {})[period.duration] ?? []
+      const isInclude = (keys?.some((el) => typeof el === 'string'))
+        ? keys?.includes(key)
+        : keys?.find(({ id }) => id.includes(key))?.id
       const isEqualMode = period.pricingMode === props.mode
       const isAddon = (addon === 'Public network')
         ? addonKey.startsWith('bandwidth') || key.includes('traffic')

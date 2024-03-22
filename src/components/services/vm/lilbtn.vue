@@ -11,8 +11,8 @@
         {{ (currency.code === 'USD') ? `$${slicedPrice}` : priceWithoutPrefix }}
       </span>
     </a-button>
+    <renewal-modal v-bind="renewalProps" v-model:visible="isVisible" />
   </div>
-  <renewal-modal v-bind="renewalProps" v-model:visible="isVisible" />
 </template>
 
 <script setup>
