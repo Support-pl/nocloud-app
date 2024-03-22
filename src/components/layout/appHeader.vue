@@ -519,7 +519,7 @@ export default {
     plainOptions (statuses) {
       Object.assign(this, {
         checkedList: statuses.filter((status) =>
-          (this.active === 'support') ? status !== 'Closed' : true
+          (this.active === 'support') ? status !== this.$t('filterHeader.Closed') : true
         ),
         indeterminate: false,
         checkAll: true

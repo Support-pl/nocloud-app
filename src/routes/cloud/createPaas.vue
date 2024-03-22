@@ -25,22 +25,22 @@
                     :message="$t('Please select a suitable location')"
                   />
 
-                  <!-- <a-select
-                    v-model="locationId"
-                    :placeholder="$t('select location')"
-                    style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
-                  >
-                    <a-select-option v-for="item in locations" :key="item.id" :value="item.id">
-                      {{ item.title }}
-                    </a-select-option>
-                  </a-select> -->
-
                   <a-select
                     v-model:value="cloudStore.showcaseId"
                     :placeholder="$t('select service')"
-                    style="width: 180px; position: relative; z-index: 4"
+                    style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
                   >
                     <a-select-option v-for="item in cloudStore.showcases" :key="item.uuid">
+                      {{ item.title }}
+                    </a-select-option>
+                  </a-select>
+
+                  <a-select
+                    v-model:value="cloudStore.locationId"
+                    :placeholder="$t('select location')"
+                    style="width: 180px; position: relative; z-index: 4"
+                  >
+                    <a-select-option v-for="item in cloudStore.locations" :key="item.id">
                       {{ item.title }}
                     </a-select-option>
                   </a-select>

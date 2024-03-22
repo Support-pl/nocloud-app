@@ -489,13 +489,15 @@ export default {
           const account = access.namespace ?? this.namespace
 
           await this.createInvoice(instance, uuid, account, this.baseURL)
-          this.$router.push({ path: '/services' })
+          localStorage.setItem('order', 'Invoice')
+          this.$router.push({ path: '/billing' })
         })
         .catch((error) => {
           const url = error.response?.data.redirect_url ?? error.response?.data ?? error
 
           if (url.startsWith('http')) {
-            this.$router.push({ path: '/services' })
+            localStorage.setItem('order', 'Invoice')
+            this.$router.push({ path: '/billing' })
             return
           }
 
