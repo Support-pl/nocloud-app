@@ -190,6 +190,10 @@ watch(filteredProducts, (value) => {
     return
   }
 
+  value.sort((a, b) =>
+    a.periods[0].price.value - b.periods[0].price.value
+  )
+
   const dataString = (localStorage.getItem('data'))
     ? localStorage.getItem('data')
     : route.query.data ?? '{}'
