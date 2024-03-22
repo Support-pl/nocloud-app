@@ -46,6 +46,19 @@
         :price="price"
         :currency="currency"
       />
+      <a-button
+        v-else-if="instance.domainstatus.toLowerCase() === 'pending' && !isPayg"
+        block
+        size="small"
+        style="
+          grid-column: 2 / 4;
+          justify-self: end;
+          width: fit-content;
+        "
+        @click.stop="toInvoices"
+      >
+        {{ $t('pay from balance') }}: {{ price }} {{ currency.code }}
+      </a-button>
 
       <div v-else-if="currency.code && price" class="item__cost">
         {{ currency.code === 'USD' ? `$${price}` : `${price} ${currency.code}` }}
@@ -199,8 +212,9 @@ const title = computed(() =>
 )
 
 const getModuleProductBtn = computed(() => {
-  const serviceType = config.getServiceType(props.instance.groupname)?.toLowerCase()
-  const isActive = ['active', 'running'].includes(props.instance.domainstatus?.toLowerCase())
+  const { groupname: group, domainstatus: status } = props.instance
+  const serviceType = config.getServiceType(group)?.toLowerCase()
+  const isActive = ['active', 'running'].includes(status?.toLowerCase())
 
   const { type, products = {} } = props.instance.billingPlan ?? {}
   const { meta } = products[props.instance.product] ?? {}
@@ -233,6 +247,11 @@ function cloudClick (service, { target }) {
   } else {
     router.push({ name: 'service', params: { id: orderid } })
   }
+}
+
+function toInvoices () {
+  localStorage.setItem('order', 'Invoice')
+  router.push({ name: 'billing' })
 }
 
 async function fetch () {
