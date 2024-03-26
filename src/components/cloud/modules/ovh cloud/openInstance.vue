@@ -623,7 +623,9 @@ export default defineComponent({
     ...mapState(useCurrenciesStore, ['defaultCurrency']),
     ...mapState(useInstancesStore, ['services']),
     statusVM () {
-      if (!this.VM) return
+      if (!this.VM?.state) {
+        return { shutdown: true, reboot: true, start: true, recover: true }
+      }
       const isPending = ['PENDING', 'OPERATION'].includes(this.VM.state.state)
       const isSuspended = this.VM.state.state === 'SUSPENDED' || this.VM.data.suspended_manually
 

@@ -126,19 +126,20 @@ function redirectByType ({ uuid, type }) {
   }
 }
 
-window.addEventListener('message', ({ data, origin }) => {
+window.addEventListener('message', async ({ data, origin }) => {
   if (!origin.includes('https://api.')) return
   api.applyToken(data.token)
   authStore.setToken(data.token)
   authStore.load()
 
-  if (data.uuid) redirectByType(data)
+  await authStore.fetchUserData(true)
+  await authStore.fetchBillingData(true)
+
+  if (data.chatId) router.replace({ name: 'ticket', params: { id: data.chatId } })
+  else if (data.uuid) redirectByType(data)
   else if (route.name.includes('login')) {
     router.replace({ name: 'root' })
   }
-
-  authStore.fetchUserData(true)
-  authStore.fetchBillingData(true)
 })
 
 router.beforeEach((to, _, next) => {
