@@ -94,13 +94,17 @@ export default { name: 'ServiceItem' }
   word-break: break-word;
 }
 
-/* .service__icon .cls-1 {
-  fill: inherit;
+.service__icon .cls-1 {
+  fill: var(--main) !important;
 }
 
 .service__icon .cls-2 {
-  fill: var(--main);
-} */
+  fill: inherit;
+}
+
+.service__icon g path {
+  fill: inherit !important;
+}
 
 /* .service__icon::after{
   color: var(--main);
