@@ -523,17 +523,17 @@ export default {
   position: relative;
   font-size: 1rem;
   padding: 16px 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--border_color);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: filter 0.2s ease;
 }
 
 .singleLang:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  filter: brightness(0.8);
 }
 
 .singleLang:last-of-type {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--border_color);
 }
 
 .singleLang.disabled {
@@ -547,17 +547,17 @@ export default {
   position: relative;
   font-size: 1rem;
   padding: 16px 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--border_color);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: filter 0.2s ease;
 }
 
 .settings__item:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  filter: brightness(0.8);
 }
 
 .settings__item:last-of-type {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--border_color);
 }
 
 .settings__logo {

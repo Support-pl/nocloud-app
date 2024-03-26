@@ -33,7 +33,10 @@
               v-for="size of filteredSizes"
               :key="size.key"
               class="order__grid-item"
-              :class="{ 'order__grid-item--active': options.size === size.key }"
+              :class="{
+                'order__grid-item--active': options.size === size.key,
+                'order__grid-item--grid': size.image
+              }"
               :style="(size.image) ? 'padding: 10px' : null"
               @click="options.size = size.key"
             >
@@ -625,7 +628,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .order_wrapper {
   position: relative;
   width: 100%;
@@ -657,15 +660,15 @@ export default {
   font-size: 1.1rem;
 }
 
-.order .ant-slider-mark-text {
+.order :deep(.ant-slider-mark-text) {
   white-space: nowrap;
 }
 
-.order .ant-slider-mark-text:first-of-type {
+.order :deep(.ant-slider-mark-text:first-of-type) {
   transform: translateX(-10px) !important;
 }
 
-.order .ant-slider-mark-text:last-of-type {
+.order :deep(.ant-slider-mark-text:last-of-type) {
   transform: translateX(calc(-100% + 10px)) !important;
 }
 
@@ -721,12 +724,8 @@ export default {
 }
 
 .order__grid-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   padding: 10px 20px;
   border-radius: 15px;
-  overflow: hidden;
   cursor: pointer;
   box-shadow: inset 0 0 0 1px var(--border_color);
   transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
@@ -759,17 +758,24 @@ export default {
   color: var(--gloomy_font);
 }
 
-.order__option .ant-card-head {
+.order__grid-item--grid {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.order__option :deep(.ant-card-head) {
   background: var(--bright_bg);
 }
 
-.order__option .ant-card-body {
+.order__option :deep(.ant-card-body) {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
 }
 
-.order__option .ant-card-loading-content {
+.order__option :deep(.ant-card-loading-content) {
   width: 100%;
 }
 
@@ -786,7 +792,7 @@ export default {
   gap: 5px;
 }
 
-.order__option .order__slider-name .ant-checkbox {
+.order__option .order__slider-name :deep(.ant-checkbox) {
   box-shadow: 0 0 5px var(--main);
 }
 
@@ -809,7 +815,7 @@ export default {
   }
 }
 
-.removeMarginSkeleton .ant-skeleton-title{
+.removeMarginSkeleton :deep(.ant-skeleton-title) {
   margin: 0;
   margin-top: 4px;
 }

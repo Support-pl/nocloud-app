@@ -8,16 +8,16 @@
     @cancel="hideModal"
   >
     <p v-if="authStore.isLogged">
-      {{ $t("Enter value") }}
-      ({{ authStore.userdata.currency || 'USD' }}):
+      {{ $t('Enter value') }} ({{ currency.code }}):
     </p>
     <a-input allow-clear style="width: 100%" :value="amount" @change="onChange" />
+
     <a-row
       type="flex"
       justify="space-around"
       align="middle"
       :gutter="[10, 10]"
-      style="margin-top: 10px"
+      style="margin-top: 10px; margin-bottom: 10px"
     >
       <a-col v-for="add in btns" :key="add" :xl="6" :xs="8">
         <a-button style="width: 100%" @click="addAmount(add)">
@@ -25,14 +25,11 @@
         </a-button>
       </a-col>
     </a-row>
-    <a-row style="margin-top: 10px">
-      <a-col>
-        <label>
-          <a-checkbox v-model:checked="stay" />
-          {{ $t("stay on page") }}
-        </label>
-      </a-col>
-    </a-row>
+
+    <label style="margin-top: 10px">
+      <a-checkbox v-model:checked="stay" />
+      {{ $t('stay on page') }}
+    </label>
   </a-modal>
 </template>
 
@@ -41,6 +38,7 @@ import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
+import { useCurrency } from '@/hooks/utils'
 import api from '@/api.js'
 
 const props = defineProps({
@@ -51,6 +49,7 @@ const props = defineProps({
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { currency } = useCurrency()
 
 const confirmLoading = ref(false)
 const amount = ref(5)
@@ -80,7 +79,7 @@ async function handleOk () {
       localStorage.setItem('order', 'Invoice')
       router.push('/billing')
     } else {
-      message.success(`Now look invoice#${response.invoiceid}`)
+      message.success(`Now look invoice #${response.invoiceid}`)
     }
   } catch (error) {
     console.error(error)

@@ -2,7 +2,7 @@
   <div v-if="authStore.isLogged" class="balance">
     <a-spin v-if="isLoading" :spinning="isLoading">
       <template #indicator>
-        <LoadingOutlined style="color: var(--bright_font)" />
+        <LoadingOutlined style="color: var(--gloomy_font)" />
       </template>
     </a-spin>
     <div

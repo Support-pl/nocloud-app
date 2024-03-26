@@ -29,7 +29,7 @@ function useCreateInstance () {
         const response = await store[`${action}Service`](service)
 
         if (response.uuid) {
-          openMessage.success(message)
+          if (message) openMessage.success(message)
           await deployService(response.uuid, deployMessage)
 
           return response
