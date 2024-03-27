@@ -65,7 +65,9 @@ function setAddon (code, addon, key) {
 
   if (code === '-1') {
     delete addonsPrices[key]
-    addonsCodes.splice(addonsCodes.indexOf(code), 1)
+    const i = addonsCodes.findIndex((code) => code.includes(key))
+
+    addonsCodes.splice(i, 1)
   } else {
     const period = addon.periods.find(({ pricingMode }) => pricingMode === props.mode)
 
