@@ -17,7 +17,7 @@
             </div>
           </a-form-item>
 
-          <a-form-item v-if="!options.isSSHExist" :label="`${$t('SSH key')}:`">
+          <a-form-item :label="`${$t('SSH key')}:`">
             <div style="display: flex; align-items: center; gap: 10px">
               <a-select
                 style="width: 100%"

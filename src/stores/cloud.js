@@ -99,13 +99,15 @@ export const useCloudStore = defineStore('cloud', () => {
       if (newInstance.config.type === 'cloud') {
         const { resources } = plan.value.products[newInstance.product]
 
+        newInstance.config.auto_renew = true
         newInstance.resources = { ...resources, ips_private: 0, ips_public: 1 }
         newGroup.config = { ssh: newInstance.config.ssh }
         delete newInstance.config.ssh
       }
     } else if (newGroup.type === 'keyweb') {
-      newInstance.config = { ...options.config, auto_renew: false }
-      newInstance.config.auto_renew = checkPayg(newInstance)
+      newInstance.config = {
+        ...options.config, auto_renew: checkPayg(newInstance)
+      }
       newInstance.resources = {}
     }
 

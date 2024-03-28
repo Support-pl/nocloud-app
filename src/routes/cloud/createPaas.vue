@@ -57,7 +57,7 @@
                       :markers="cloudStore.locations"
                       :marker-color="cloudStore.provider?.meta.markerColor"
                       :marker-url="cloudStore.provider?.meta.markerUrl"
-                      @input="(value) => cloudStore.locationId = value"
+                      @input="setLocation"
                     />
                   </a-spin>
                 </a-col>
@@ -96,7 +96,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NcMap } from 'nocloud-ui'
 
-import { Spin } from 'ant-design-vue'
+import { Modal, Spin } from 'ant-design-vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
 import { usePlansStore } from '@/stores/plans.js'
@@ -215,6 +215,36 @@ watch(periods, (periods) => {
   tarification.value = periods[0]?.value ?? ''
 })
 
+function setLocation (value) {
+  if (!(localStorage.getItem('data') && authStore.isLogged)) {
+    cloudStore.locationId = value
+    return
+  }
+
+  openModal(() => {
+    cloudStore.locationId = value
+  })
+}
+
+function openModal (onOk, onCancel) {
+  Modal.confirm({
+    title: i18n.t('disk_manage.Do you want to proceed?'),
+    content: h(
+      'div',
+      { style: 'color: red' },
+      i18n.t('Data will be lost')
+    ),
+    okText: i18n.t('Yes'),
+    cancelText: i18n.t('Cancel'),
+    onOk: () => {
+      dataLocalStorage.value = ''
+      localStorage.removeItem('data')
+      onOk()
+    },
+    onCancel
+  })
+}
+
 function setDefaultLocation () {
   const data = localStorage.getItem('data') ?? route.query.data
   if (data) return
@@ -242,10 +272,7 @@ router.beforeEach((_, from, next) => {
       localStorage.getItem('data') &&
       authStore.isLogged
   ) {
-    if (window.confirm(i18n.t('Data will be lost'))) {
-      localStorage.removeItem('data')
-      next()
-    } else next(false)
+    openModal(next, () => next(false))
   } else next()
 })
 fetch()
@@ -345,6 +372,23 @@ provide('useActiveKey', () => [readonly(activeKey), nextStep])
     0px 0px 12px rgba(0, 0, 0, .05);
   background-color: var(--bright_font);
   height: max-content;
+}
+
+.newCloud .ant-slider-horizontal .ant-slider-rail {
+  width: calc(100% + 10px);
+  transform: translateX(-5px);
+}
+
+.newCloud .ant-slider-horizontal .ant-slider-dot {
+  width: 16px;
+  height: 16px;
+  inset-block-start: -6px;
+  transform: translateX(-8px);
+  background-color: var(--gloomy_font);
+}
+
+.newCloud .ant-slider .ant-slider-handle::after {
+  background-color: var(--gloomy_font);
 }
 
 .newCloud__inputs.order__field {

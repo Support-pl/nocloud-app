@@ -144,8 +144,13 @@ const productKey = computed(() => {
 watch(product, (value) => {
   const product = props.products.find(({ group }) => group === value)
 
+  const dataString = (localStorage.getItem('data'))
+    ? localStorage.getItem('data')
+    : route.query.data ?? '{}'
+  const data = JSON.parse(dataString)
+
   if (!product) return
-  setResources(product.value)
+  setResources(data?.ovhConfig?.planCode ?? product.value)
 })
 
 watch(() => options.ram.size, async (size) => {
@@ -186,7 +191,7 @@ const products = computed(() =>
   ))
 )
 
-watch(products, (value) => {
+watch(products, async (value) => {
   if (value.length < 1) {
     resetData()
     return
@@ -199,7 +204,13 @@ watch(products, (value) => {
   if (dataString.includes('productSize')) {
     const data = JSON.parse(dataString)
 
+    if (options.config.planCode === data.ovhConfig.planCode) {
+      return
+    }
     product.value = data.productSize
+    await nextTick()
+
+    setOptions('config', data.ovhConfig)
     return
   }
 

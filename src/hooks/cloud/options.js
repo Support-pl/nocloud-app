@@ -22,7 +22,6 @@ function useCloudOptions (activeKey, tarification) {
 
   const dataLocalStorage = ref('')
   const options = reactive({
-    isSSHExist: false,
     highCPU: false,
     cpu: { size: 1, min: 1, max: 8 },
     ram: { size: 1, min: 1, max: 12 },
@@ -94,8 +93,9 @@ function useCloudOptions (activeKey, tarification) {
       cloudStore.plan.type?.includes(type)
     ) ?? {}
 
-    if (group.config?.ssh) options.isSSHExist = true
-    else options.isSSHExist = false
+    if (group.config?.ssh) {
+      cloudStore.authData.sshKey = group.config.ssh
+    }
   }
 
   async function fetch () {

@@ -95,7 +95,8 @@ function useCloudProducts (tarification) {
       }
     })
 
-    sortProducts(result)
+    if (cloudStore.plan.type === 'ovh vps') sortProducts(result)
+    else result.sort((a, b) => a.price - b.price)
     return result
   }
 
@@ -108,7 +109,7 @@ function useCloudProducts (tarification) {
 
     const values = Object.values(productsList ?? {})
 
-    values.sort((a, b) => a.sorter - b.sorter)
+    values.sort((a, b) => a.price - b.price).sort((a, b) => a.sorter - b.sorter)
     const result = []
 
     values.forEach((product) => {
@@ -123,7 +124,7 @@ function useCloudProducts (tarification) {
   function getKeywebProducts () {
     const values = Object.values(cloudStore.plan.products)
 
-    values.sort((a, b) => a.sorter - b.sorter)
+    values.sort((a, b) => a.price - b.price).sort((a, b) => a.sorter - b.sorter)
     const result = []
 
     values.forEach(({ title }) => {

@@ -449,6 +449,7 @@ export default {
               key,
               label: product.title,
               group: product.group ?? product.title,
+              price: product.price,
               sorter: product.sorter,
               image: product.meta.image
             })
@@ -468,7 +469,9 @@ export default {
         }
       })
 
-      productsAndSizes.sizes.sort((a, b) => a.sorter - b.sorter)
+      productsAndSizes.sizes
+        .sort((a, b) => a.price - b.price)
+        .sort((a, b) => a.sorter - b.sorter)
       this.sizes = productsAndSizes.sizes
       this.options.size = this.sizes[0]?.key ?? ''
     },
