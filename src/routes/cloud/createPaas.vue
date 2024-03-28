@@ -374,6 +374,23 @@ provide('useActiveKey', () => [readonly(activeKey), nextStep])
   height: max-content;
 }
 
+.newCloud .ant-slider-horizontal .ant-slider-rail {
+  width: calc(100% + 10px);
+  transform: translateX(-5px);
+}
+
+.newCloud .ant-slider-horizontal .ant-slider-dot {
+  width: 16px;
+  height: 16px;
+  inset-block-start: -6px;
+  transform: translateX(-8px);
+  background-color: var(--gloomy_font);
+}
+
+.newCloud .ant-slider .ant-slider-handle::after {
+  background-color: var(--gloomy_font);
+}
+
 .newCloud__inputs.order__field {
   padding: 0;
 }

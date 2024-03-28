@@ -347,14 +347,16 @@ export default {
           result.products.push({ key, ...product })
           if (i === -1) {
             result.sizes.push({
-              title: product.title, sorter: product.sorter
+              title: product.title, sorter: product.sorter, price: product.price
             })
           }
         }
 
         return result
       }, { products: [], sizes: [] })
-      productsAndSizes.sizes.sort((a, b) => a.sorter - b.sorter)
+      productsAndSizes.sizes
+        .sort((a, b) => a.price - b.price)
+        .sort((a, b) => a.sorter - b.sorter)
 
       this.products = productsAndSizes.products
       this.sizes = productsAndSizes.sizes.map(({ title }) => title)
