@@ -528,15 +528,18 @@ import { defineAsyncComponent, defineComponent, nextTick } from 'vue'
 import { mapState, mapActions } from 'pinia'
 import { GChart } from 'vue-google-charts'
 import { setChartsTheme, toDate } from '@/functions.js'
+import config from '@/appconfig.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInstancesStore } from '@/stores/instances.js'
 import { usePlansStore } from '@/stores/plans.js'
+import { useChatsStore } from '@/stores/chats.js'
 
 import notification from '@/mixins/notification.js'
 import renewalModal from '@/components/ui/renewalModal.vue'
+import { useNamespasesStore } from '@/stores/namespaces'
 
 const redoIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RedoOutlined')
@@ -678,6 +681,8 @@ export default defineComponent({
     ...mapState(useCurrenciesStore, ['defaultCurrency']),
     ...mapState(useInstancesStore, ['services']),
     ...mapState(usePlansStore, ['plans']),
+    ...mapState(useNamespasesStore, ['namespaces']),
+    ...mapState(useChatsStore, ['getDefaults']),
     statusVM () {
       if (!this.VM?.state) {
         return {
@@ -770,6 +775,17 @@ export default defineComponent({
         currentAutoRenew: this.VM.config.auto_renew,
         blocked: this.VM.data.blocked
       }
+    },
+
+    currentUser () {
+      const { access: { namespace } } = this.services.find(
+        ({ uuid }) => uuid === this.VM.uuidService
+      )
+      const { access } = this.namespaces.find(
+        ({ uuid }) => uuid === namespace
+      )
+
+      return access.namespace ?? this.userdata.uuid
     },
 
     inbChartDataReady () {
@@ -886,6 +902,8 @@ export default defineComponent({
   methods: {
     ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
     ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
+    ...mapActions(useChatsStore, ['createChat', 'sendMessage', 'fetchDefaults']),
+    ...mapActions(useNamespasesStore, { fetchNamespaces: 'fetch' }),
     toDate,
     deployService () {
       this.actionLoading = true
@@ -936,17 +954,70 @@ export default defineComponent({
             content: this.$t('All unsaved progress will be lost, are you sure?'),
             okText: this.$t('Yes'),
             cancelText: this.$t('Cancel'),
-            onOk: () => {
-              if (this.option.recover) {
-                this.sendAction('recoverToday')
-              } else {
-                this.sendAction('recoverYesterday')
-              }
+            onOk: async () => {
+              await this.sendRecover()
+              // if (this.option.recover) {
+              //   this.sendAction('recoverToday')
+              // } else {
+              //   this.sendAction('recoverYesterday')
+              // }
               this.modal.recover = false
             },
             onCancel () {}
           })
           break
+      }
+    },
+    async sendRecover () {
+      if (this.getDefaults.departments.length < 1) {
+        await this.fetchDefaults()
+      }
+      if (this.namespaces.length < 1) {
+        await this.fetchNamespaces()
+      }
+      await nextTick()
+
+      const { departments } = this.getDefaults
+      const { admins } = departments.find(({ id }) => id === config.department) ?? {}
+
+      const period = (this.modal.recover)
+        ? toDate(Date.now() / 1000 - 86400, '.', false)
+        : toDate(Date.now() / 1000, '.', false)
+
+      const text = [
+        `ID: ${this.VM.uuid}`,
+        `Public IP's: ${this.VM.state?.meta.networking.public.join(', ') || '-'}`,
+        `Private IP's: ${this.VM.state?.meta.networking.private.join(', ') || '-'}`,
+        `Date: ${period}`
+      ]
+      const message = `<ol style="margin-bottom: 0px">${
+        text.map((el) => `<li>${el}</li>`).join('')
+      }</ol>`
+
+      try {
+        const response = await this.createChat({
+          admins,
+          department: config.department,
+          gateways: [],
+          chat: {
+            subject: `Restore VM: ${this.VM.title}`,
+            message
+          }
+        })
+
+        await this.sendMessage({
+          uuid: response.uuid,
+          content: message,
+          account: this.currentUser,
+          date: BigInt(Date.now())
+        })
+
+        this.$message.success(this.$t('Ticket created successfully'))
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error
+
+        this.openNotificationWithIcon('error', { message: this.$t(message) })
+        console.error(error)
       }
     },
     printWidthRange (value) {

@@ -1,38 +1,20 @@
 <template>
   <template v-if="cloudStore.plan?.uuid">
-    <template v-for="(resource, key) in resources" :key="key">
-      <a-row
-        v-if="Array.isArray(resource) && resource.length > 0"
-        justify="space-between"
-        align="middle"
-      >
-        <a-col>{{ $t(key) }}: ({{ prefixes[key] }})</a-col>
-        <a-col :span="24" :md="20">
-          <a-slider
-            range
-            class="newCloud__slider"
-            style="margin-top: 10px"
-            :marks="{ ...resource }"
-            :tip-formatter="null"
-            :default-value="[0, resource.length - 1]"
-            :max="resource.length - 1"
-            :min="0"
-            @change="([i, j]) => filters[key] = [resource[i], resource[j]]"
-          />
-        </a-col>
-      </a-row>
-
-      <div
-        v-else-if="resource === true"
-        style="display: inline-flex; gap: 10px; width: 50%; margin-top: 10px"
-      >
-        <span style="display: inline-block">{{ capitalize($t(key)) }}:</span>
-
-        <a-switch v-model:checked="filters[key]" size="small" />
-      </div>
-    </template>
-
+    <ione-filters
+      :products="products"
+      :plans="plans"
+      @update:filter="(key, value) => filters[key] = value"
+    />
     <a-divider style="margin: 10px 0" />
+
+    <ione-products
+      v-if="products.length > 5"
+      :type="(groups.length > 1) ? 'slider' : 'grid'"
+      :products="filteredProducts"
+      :product-size="productSize"
+      :get-product="getProduct"
+      @update:product="setProduct"
+    />
 
     <div v-if="products.length > 5" class="newCloud__drive">
       <ione-drive :is-products-exist="isProductsExist" />
@@ -48,24 +30,6 @@
       :value="products.indexOf(productSize)"
       @update:value="setProduct(products[$event])"
     />
-
-    <div v-else class="order__grid">
-      <div
-        v-for="item of filteredProducts"
-        :key="item"
-        class="order__grid-item"
-        :class="{ 'order__grid-item--active': productSize === item }"
-        @click="setProduct(item)"
-      >
-        <h1>{{ item }}</h1>
-        <div>
-          {{ $t('cpu') }}: {{ getProduct(item)?.cpu ?? '?' }} vCPU
-        </div>
-        <div>
-          {{ $t('ram') }}: {{ getProduct(item)?.ram / 1024 ?? '?' }} Gb
-        </div>
-      </div>
-    </div>
 
     <a-row
       v-if="products.length < 6"
@@ -138,6 +102,8 @@ import { useRoute } from 'vue-router'
 import { useCloudStore } from '@/stores/cloud.js'
 import { getPeriods, getTarification } from '@/functions.js'
 import ioneDrive from '@/components/cloud/create/ioneDrive.vue'
+import ioneFilters from '@/components/cloud/create/ioneFilters.vue'
+import ioneProducts from '@/components/cloud/create/ioneProducts.vue'
 
 const props = defineProps({
   mode: { type: String, required: true },
@@ -152,9 +118,6 @@ const route = useRoute()
 const cloudStore = useCloudStore()
 const [options, setOptions] = inject('useOptions')()
 
-const filters = reactive({ cpu: [], ram: [] })
-const prefixes = reactive({ cpu: 'cores', ram: 'Gb' })
-
 emits('update:periods', getPeriods(props.productSize, props.plans))
 watch(() => props.productSize, (value) => {
   emits('update:periods', getPeriods(value, props.plans))
@@ -162,9 +125,7 @@ watch(() => props.productSize, (value) => {
 
 const data = localStorage.getItem('data') ?? route.query.data
 
-if (props.products.length > 0 && !data) {
-  setProduct(props.products[1] ?? props.products[0])
-} else if (props.products.length > 0) {
+if (data && props.products.length > 0) {
   const { productSize } = JSON.parse(data)
 
   if (productSize) setProduct(productSize)
@@ -173,46 +134,7 @@ if (props.products.length > 0 && !data) {
 const isProductsExist = computed(() =>
   props.products.length > 0
 )
-
-const resources = computed(() => {
-  const { highCPU, withAdministration } = cloudStore.provider?.vars ?? {}
-  const cpu = []
-  const ram = []
-
-  if (props.products.length < 6) return { cpu, ram }
-  props.plans.forEach(({ products }) => {
-    Object.values(products).forEach(({ resources, title }) => {
-      if (!props.products.includes(title)) return
-      if (!cpu.includes(resources.cpu)) {
-        cpu.push(resources.cpu)
-      }
-      if (!ram.includes(Math.round(resources.ram / 1024))) {
-        ram.push(Math.round(resources.ram / 1024))
-      }
-    })
-  })
-
-  cpu.sort((a, b) => a - b)
-  ram.sort((a, b) => a - b)
-
-  return { cpu, ram, highCPU, withAdministration }
-})
-
-if (resources.value.cpu.length > 1) {
-  filters.cpu = [resources.value.cpu.at(0), resources.value.cpu.at(-1)]
-}
-
-if (resources.value.ram.length > 1) {
-  filters.ram = [resources.value.ram.at(0), resources.value.ram.at(-1)]
-}
-
-watch(() => resources.value.cpu, (value) => {
-  filters.cpu = [value.at(0), value.at(-1)]
-})
-
-watch(() => resources.value.ram, (value) => {
-  filters.ram = [value.at(0), value.at(-1)]
-})
+const filters = reactive({ cpu: [], ram: [] })
 
 const filteredProducts = computed(() => {
   const result = []
@@ -234,6 +156,18 @@ const filteredProducts = computed(() => {
   return result
 })
 
+const groups = computed(() =>
+  filteredProducts.value.reduce((result, product) => {
+    const resources = getProduct(product)
+
+    if (!result.includes(resources.group)) {
+      result.push(resources.group)
+    }
+
+    return result
+  }, [])
+)
+
 function getProduct (size, plan = cloudStore.plan) {
   const isDynamic = cloudStore.plan.kind === 'DYNAMIC'
   const products = Object.values(plan.products)
@@ -243,7 +177,7 @@ function getProduct (size, plan = cloudStore.plan) {
     )
   )
 
-  return product?.resources
+  return { ...product?.resources, group: product?.group }
 }
 
 async function setProduct (value) {
@@ -273,48 +207,5 @@ export default { name: 'IonePlanPanel' }
   grid-template-columns: auto auto 1fr auto;
   align-items: center;
   gap: 10px;
-}
-
-:deep(.ant-slider-horizontal.newCloud__slider .ant-slider-dot) {
-  width: 16px;
-  height: 16px;
-  inset-block-start: -6px;
-  transform: translateX(-8px);
-}
-
-.order__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin: 10px 0;
-}
-
-.order__grid-item {
-  padding: 10px 20px;
-  border-radius: 15px;
-  cursor: pointer;
-  box-shadow: inset 0 0 0 1px var(--border_color);
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
-}
-
-.order__grid-item:hover {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
-}
-
-.order__grid-item h1 {
-  margin-bottom: 5px;
-  word-break: break-all;
-  color: inherit;
-}
-
-.order__grid-item--active {
-  background-color: var(--main);
-  color: var(--gloomy_font);
-}
-
-@media (max-width: 576px) {
-  .order__grid {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 </style>

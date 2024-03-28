@@ -24,7 +24,7 @@ const addons = computed(() => {
 
       const { addons: addonsKeys } = props.products.find(
         (el) => el.title === props.productSize
-      ) ?? {}
+      ) ?? { addons: {} }
 
       const [duration, addonKey] = key.split(' ')
       const period = {

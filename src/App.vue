@@ -319,6 +319,15 @@ body {
   background: rgba(0, 0, 0, 0.3);
 }
 
+.ant-divider.ant-divider-horizontal:not(.ant-divider-with-text) {
+  background-color: var(--gloomy_font);
+}
+
+.ant-divider-horizontal.ant-divider-with-text::before,
+.ant-divider-horizontal.ant-divider-with-text::after {
+  background-color: var(--gloomy_font);
+}
+
 .slide-enter-active,
 .slide-leave-active {
   /* transition: transform .5s; */

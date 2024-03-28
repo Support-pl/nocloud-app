@@ -10,7 +10,7 @@
         class="products__unregistred"
         style="margin-top: 15px; text-align: center"
       >
-        {{ $t('unregistered.will be able after') }}
+        {{ capitalize($t('unregistered.will be able after')) }}
         <a href="#" @click.prevent="availableLogin('login')">
           {{ $t('unregistered.login') }}
         </a>.
