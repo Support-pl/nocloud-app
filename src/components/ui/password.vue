@@ -39,6 +39,7 @@ export default { name: 'PasswordShower' }
   display: inline-block;
   padding: 2px 5px;
   background: rgb(236, 236, 236);
+  color: rgba(0, 0, 0, 0.88);
   border-radius: 4px;
   font-family: 'Consolas';
 }

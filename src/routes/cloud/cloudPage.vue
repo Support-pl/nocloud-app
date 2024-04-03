@@ -22,7 +22,7 @@
                   :style="{ 'background-color': stateColor }"
                 />
                 <div class="Fcloud__title">
-                  {{ VM.title ?? VM.resources.NAME ?? '-' }}
+                  {{ VM.title ?? VM.vm_info.NAME ?? '-' }}
                 </div>
                 <div
                   class="Fcloud__status"
@@ -250,7 +250,6 @@ export default {
   mixins: [notification],
   data: () => ({
     icons,
-    isInfoLoading: false,
     isDeleteLoading: false,
     isRenameLoading: false,
     isLogsLoading: false,
@@ -286,7 +285,7 @@ export default {
     ...mapState(useAuthStore, ['isLogged', 'baseURL']),
     ...mapState(useChatsStore, ['getDefaults']),
     ...mapState(useCurrenciesStore, ['currencies']),
-    ...mapState(useProductsStore, { products: 'products', fetchProducts: 'fetch' }),
+    ...mapState(useProductsStore, { products: 'products', fetchProducts: 'fetch', isInfoLoading: 'isLoading' }),
     ...mapState(useSpStore, { sp: 'servicesProviders', fetchProviders: 'fetch' }),
     template () {
       const components = import.meta.glob('@/components/cloud/modules/*/openInstance.vue')
@@ -394,7 +393,7 @@ export default {
     },
     stateVM () {
       if (this.VM.server_on) {
-        return this.VM.resources?.STATE?.replaceAll('_', ' ') ?? 'UNKNOWN'
+        return this.VM.vm_info?.STATE?.replaceAll('_', ' ') ?? 'UNKNOWN'
       }
       if (!this.VM.state) return 'UNKNOWN'
 
@@ -413,14 +412,14 @@ export default {
       }
     },
     stateColor () {
-      if (!this.VM.state && !this.VM.resources?.STATE) return 'var(--err)'
+      if (!this.VM.state && !this.VM.vm_info?.STATE) return 'var(--err)'
       if (this.VM.data?.suspended_manually) return '#ff9140'
 
       let state
       if (this.VM?.billingPlan?.type === 'ione') {
         state = this.VM.state.meta.lcm_state_str ?? this.VM.state.state
       } else if (this.VM.server_on) {
-        state = this.VM.resources.STATE
+        state = this.VM.vm_info.STATE
       } else {
         state = this.VM.state.state
       }
@@ -477,7 +476,7 @@ export default {
     }
   },
   created () {
-    this.renameNewName = this.VM.title ?? ''
+    this.renameNewName = this.VM.vm_info?.NAME ?? this.VM.title ?? ''
 
     if (!this.socket && this.VM.uuidService) {
       this.subscribeWebSocket(this.VM.uuidService)
@@ -490,24 +489,7 @@ export default {
         })
 
       this.fetchProviders()
-      this.fetch().then(() => {
-        const inst = this.getInstances.find(({ uuid }) => uuid === this.$route.params.uuid)
-
-        if (inst) return
-
-        this.isInfoLoading = true
-        this.$api.get(this.baseURL, {
-          params: {
-            run: 'on_info',
-            server_id: this.$route.params.uuid
-          }
-        })
-          .then((response) => {
-            this.resources = response
-            this.renameNewName = response.NAME
-          })
-          .finally(() => { this.isInfoLoading = false })
-      })
+      this.fetch()
     }
 
     if (this.currencies.length < 1) this.fetchCurrencies()

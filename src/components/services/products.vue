@@ -211,7 +211,7 @@ export default {
       const products = this.productsStore.products.map((el) => ({
         ...el.ORDER_INFO,
         groupname: el.groupname,
-        productname: el.name,
+        productname: el.vm_info?.NAME ?? el.name,
         server_on: el.server_on,
         id: el.id
       }))
