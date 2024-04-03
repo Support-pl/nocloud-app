@@ -31,18 +31,18 @@
           <div class="order__grid">
             <div
               v-for="size of filteredSizes"
-              :key="size.key"
+              :key="size.keys[options.period]"
               class="order__grid-item"
               :class="{
-                'order__grid-item--active': options.size === size.key,
+                'order__grid-item--active': options.size === size.keys[options.period],
                 'order__grid-item--grid': size.image
               }"
               :style="(size.image) ? 'padding: 10px' : null"
-              @click="options.size = size.key"
+              @click="options.size = size.keys[options.period]"
             >
               <img v-if="size.image" :src="size.image" :alt="size.label">
               <h1>{{ size.label }}</h1>
-              <p v-for="resource of products[size.key].meta?.resources" :key="resource.id">
+              <p v-for="resource of products[size.keys[options.period]]?.meta?.resources" :key="resource.id">
                 {{ resource.key }}: {{ resource.title }}
               </p>
             </div>
@@ -236,7 +236,7 @@ export default {
     ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
-      if ((this.options.size ?? true) === true) return 'NAN'
+      if ((this.options.size || true) === true) return 'NAN'
       if ((this.options.period ?? true) === true) return 'NAN'
 
       const { title } = this.products[this.options.size]
@@ -264,7 +264,8 @@ export default {
       const result = {}
 
       this.sizes.forEach((size) => {
-        const value = this.products[size.key].meta.resources ?? []
+        const key = size.keys[this.options.period]
+        const value = this.products[key]?.meta.resources ?? []
 
         value.forEach(({ key, value }) => {
           if (!key) return
@@ -295,12 +296,12 @@ export default {
       return types
     },
     filteredSizes () {
-      return this.sizes.filter(({ group, key }) => {
+      return this.sizes.filter(({ group, keys }) => {
         const isIncluded = (this.checkedTypes.length > 0)
           ? this.checkedTypes.includes(group)
           : true
 
-        const { meta } = this.products[key] ?? {}
+        const { meta } = this.products[keys[this.options.period]] ?? {}
 
         if (!meta?.resources) return isIncluded
         return isIncluded && meta?.resources?.every(({ key, value }) => {
@@ -386,8 +387,11 @@ export default {
         this.filters[key] = [resource.at(0), resource.at(-1)]
       })
     },
-    'options.size' (value) {
-      this.changePeriods(value)
+    'options.size' (value, prev) {
+      const size = this.sizes.find(({ keys }) => Object.values(keys).includes(prev))
+      const keys = Object.values(size?.keys ?? {})
+
+      if (!keys.includes(value)) this.changePeriods(value)
       this.options.addons = []
 
       this.getProducts.addons.forEach(({ meta, key }) => {
@@ -395,6 +399,17 @@ export default {
       })
 
       this.fetchLoading = false
+    },
+    'options.period' (value) {
+      const { title } = this.products[this.options.size]
+      const [key, product] = Object.entries(this.products).find(([, product]) =>
+        product.title === title && +product.period === value
+      )
+
+      this.options.size = key
+      this.plan = this.cachedPlans[this.provider].find(
+        ({ uuid }) => uuid === product.planId
+      )?.uuid
     }
   },
   mounted () {
@@ -442,17 +457,19 @@ export default {
           const i = result.sizes.findIndex(({ label }) => label === product.title)
 
           if (!product.public) continue
-          result.products.push([key, product])
+          result.products.push([key, product, plan.uuid])
 
           if (i === -1) {
             result.sizes.push({
-              key,
+              keys: { [product.period]: key },
               label: product.title,
               group: product.group ?? product.title,
               price: product.price,
               sorter: product.sorter,
               image: product.meta.image
             })
+          } else {
+            result.sizes[i].keys[product.period] = key
           }
         }
 
@@ -460,9 +477,10 @@ export default {
       }, { products: [], sizes: [] })
       const plan = this.plans.at(0)
 
-      productsAndSizes.products.forEach(([productKey, value]) => {
+      productsAndSizes.products.forEach(([productKey, value, planId]) => {
         this.products[productKey] = {
           ...value,
+          planId,
           addons: plan.resources.filter(({ key }) =>
             value.meta.addons?.includes(key)
           )
@@ -473,7 +491,7 @@ export default {
         .sort((a, b) => a.price - b.price)
         .sort((a, b) => a.sorter - b.sorter)
       this.sizes = productsAndSizes.sizes
-      this.options.size = this.sizes[0]?.key ?? ''
+      this.options.size = Object.values(this.sizes[0]?.keys)[0] ?? ''
     },
     changePeriods (key) {
       const { title } = this.products[key]
@@ -486,6 +504,7 @@ export default {
       })
 
       this.periods.sort((a, b) => a - b)
+      if (this.periods.includes(this.options.period)) return
       this.options.period = this.periods[0]
     },
     changeAddons (key) {

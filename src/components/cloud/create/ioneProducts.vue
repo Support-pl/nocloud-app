@@ -85,6 +85,7 @@ const groups = computed(() =>
   props.products.reduce((result, product) => {
     const resources = props.getProduct(product)
 
+    if (!resources.group) return result
     if (!result.includes(resources.group)) {
       result.push(resources.group)
     }
@@ -95,10 +96,16 @@ const groups = computed(() =>
 
 if (groups.value.length > 0) {
   group.value = groups.value[1] ?? groups.value[0]
+} else if (props.products.length > 0) {
+  emits('update:product', props.products[1] ?? props.products[0])
 }
 
 watch(groups, (value) => {
-  group.value = value[1] ?? value[0]
+  if (value.length < 1 && props.products.length > 0) {
+    emits('update:product', props.products[1] ?? props.products[0])
+  }
+  if (value.includes(group.value)) return
+  group.value = value[1] ?? value[0] ?? group.value
 })
 
 watch(group, setProduct)

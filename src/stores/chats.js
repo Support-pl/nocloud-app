@@ -288,13 +288,10 @@ export const useChatsStore = defineStore('chats', () => {
           role: Role.OWNER,
           meta: new ChatMeta({
             lastMessage: data.chat.message,
-            data: (data.chat.instanceId)
-              ? {
-                  instance: new Value({
-                    kind: { case: 'stringValue', value: data.chat.instanceId }
-                  })
-                }
-              : {}
+            data: {
+              dept_id: Value.fromJson(data.chat.whmcsId),
+              instance: Value.fromJson(data.chat.instanceId)
+            }
           })
         })
         const createdChat = await chatsApi.create(newChat)
