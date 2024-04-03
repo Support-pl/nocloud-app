@@ -53,6 +53,7 @@
 
             <div class="inputs__log-pas">
               <input
+                v-if="fields.firstname"
                 v-model="userinfo.firstname"
                 type="text"
                 name="firstname"
@@ -60,8 +61,9 @@
                 readonly
                 onfocus="this.removeAttribute('readonly')"
               >
-              <span class="login__horisontal-line" />
+              <span v-if="fields.firstname" class="login__horisontal-line" />
               <input
+                v-if="fields.lastname"
                 v-model="userinfo.lastname"
                 type="text"
                 name="lastname"
@@ -69,8 +71,9 @@
                 readonly
                 onfocus="this.removeAttribute('readonly')"
               >
-              <span class="login__horisontal-line" />
+              <span v-if="fields.lastname" class="login__horisontal-line" />
               <input
+                v-if="fields.email"
                 v-model="userinfo.email"
                 type="email"
                 name="email"
@@ -79,8 +82,9 @@
                 onfocus="this.removeAttribute('readonly')"
               >
 
-              <span class="login__horisontal-line" />
+              <span v-if="fields.email" class="login__horisontal-line" />
               <a-select
+                v-if="fields.country"
                 id="country"
                 v-model:value="userinfo.country"
                 name="country"
@@ -94,8 +98,9 @@
                 </a-select-option>
               </a-select>
 
-              <span class="login__horisontal-line" />
+              <span v-if="fields.country" class="login__horisontal-line" />
               <input
+                v-if="fields.phonenumber"
                 v-model="userinfo.phonenumber"
                 v-phone="phonecode"
                 type="tel"
@@ -105,13 +110,13 @@
                 autocomplete="tel"
                 maxlength="18"
               >
-              <span class="login__horisontal-line" />
+              <span v-if="fields.phonenumber" class="login__horisontal-line" />
               <a-input-password
+                v-if="fields.password"
                 v-model:value="userinfo.password"
                 :placeholder="`${capitalize($t('clientinfo.password'))} *`"
                 style="padding: 6px 15px; border: none"
               />
-              <span class="login__horisontal-line" />
             </div>
 
             <div class="inputs__log-pas" style="padding: 8px 16px">
@@ -121,25 +126,61 @@
             </div>
 
             <div v-if="invoiceChecked" class="inputs__log-pas">
-              <input v-model="userinfo.companyname" :placeholder="`${capitalize($t('clientinfo.companyname'))} *`">
-              <span class="login__horisontal-line" />
-              <input v-model="userinfo.tax_id" :placeholder="(userinfo.country === 'PL') ? 'NIP' : 'VAT ID'">
+              <input
+                v-if="fields.company.companyname"
+                v-model="userinfo.companyname"
+                :placeholder="`${capitalize($t('clientinfo.companyname'))} *`"
+              >
+              <span v-if="fields.company.companyname" class="login__horisontal-line" />
+              <input
+                v-if="fields.company.tax_id"
+                v-model="userinfo.tax_id"
+                :placeholder="(userinfo.country === 'PL') ? 'NIP' : 'VAT ID'"
+              >
               <!-- <span class="login__horisontal-line"></span>
               <input :placeholder="capitalize($t('clientinfo.state'))" v-model="userinfo.state"> -->
-              <span class="login__horisontal-line" />
-              <input v-model="userinfo.city" :placeholder="`${capitalize($t('clientinfo.city'))} *`">
-              <span class="login__horisontal-line" />
-              <input v-model="userinfo.postcode" :placeholder="`${capitalize($t('clientinfo.postcode'))} *`">
-              <span class="login__horisontal-line" />
-              <input v-model="userinfo.address1" :placeholder="`${capitalize($t('clientinfo.address'))} *`">
-              <span class="login__horisontal-line" />
-              <input v-model="userinfo.account_number" :placeholder="`${capitalize($t('documents.payer account number'))} *`">
-              <span class="login__horisontal-line" />
-              <input v-model="userinfo.checking_account" :placeholder="`${capitalize($t('documents.checking account'))} *`">
-              <span class="login__horisontal-line" />
-              <input v-model="userinfo.bankname" :placeholder="`${capitalize($t('documents.bankname'))} *`">
-              <span class="login__horisontal-line" />
-              <input v-model="userinfo.bic" placeholder="BIC *">
+              <span v-if="fields.company.tax_id" class="login__horisontal-line" />
+              <input
+                v-if="fields.company.city"
+                v-model="userinfo.city"
+                :placeholder="`${capitalize($t('clientinfo.city'))} *`"
+              >
+              <span v-if="fields.company.city" class="login__horisontal-line" />
+              <input
+                v-if="fields.company.postcode"
+                v-model="userinfo.postcode"
+                :placeholder="`${capitalize($t('clientinfo.postcode'))} *`"
+              >
+              <span v-if="fields.company.postcode" class="login__horisontal-line" />
+              <input
+                v-if="fields.company.address1"
+                v-model="userinfo.address1"
+                :placeholder="`${capitalize($t('clientinfo.address'))} *`"
+              >
+              <span v-if="fields.company.address1" class="login__horisontal-line" />
+              <input
+                v-if="fields.company.account_number"
+                v-model="userinfo.account_number"
+                :placeholder="`${capitalize($t('documents.payer account number'))} *`"
+              >
+              <span v-if="fields.company.account_number" class="login__horisontal-line" />
+              <input
+                v-if="fields.company.checking_account"
+                v-model="userinfo.checking_account"
+                :placeholder="`${capitalize($t('documents.checking account'))} *`"
+              >
+              <span v-if="fields.company.checking_account" class="login__horisontal-line" />
+              <input
+                v-if="fields.company.bankname"
+                v-model="userinfo.bankname"
+                :placeholder="`${capitalize($t('documents.bankname'))} *`"
+              >
+              <span v-if="fields.company.bankname" class="login__horisontal-line" />
+              <input
+                v-if="fields.company.bic"
+                v-model="userinfo.bic"
+                placeholder="BIC *"
+              >
             </div>
 
             <div class="inputs__log-pas">
@@ -260,28 +301,42 @@ const phonecode = computed(() =>
   countries.find(({ code }) => code === userinfo.value.country)?.dial_code
 )
 
-async function submitHandler () {
-  const info = (invoiceChecked.value)
-    ? { ...userinfo.value }
-    : {
-        firstname: '',
-        lastname: '',
-        email: '',
-        password: '',
-        country: 'BY',
-        phonenumber: '',
-        currency: 1
-      }
-  delete info.tax_id
+const fields = ref({})
 
-  if (Object.keys(info).some(key => !`${userinfo.value[key]}`.length)) {
-    message.warn(i18n.t('all fields are required'))
-    return
+async function fetchFields () {
+  try {
+    const response = await api.get(authStore.baseURL, {
+      params: { run: 'fields_register' }
+    })
+
+    fields.value = response
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
+  }
+}
+
+fetchFields()
+
+async function submitHandler () {
+  let info = JSON.parse(JSON.stringify(fields.value))
+
+  if (!invoiceChecked.value) {
+    delete info.company
+  } else {
+    info = { ...info, ...info.company }
+    delete info.company
   }
 
-  for (const key in info) {
+  for (const [key, value] of Object.entries(info)) {
+    if (value === 'require' && userinfo.value[key].length === 0) {
+      message.warn(`${key} - ${i18n.t('ssl_product.field is required')}`)
+      return
+    }
     if (userinfo.value[key].length < 2) {
-      message.warn(`${key} ${i18n.t('field must contain more characters')}`)
+      message.warn(`${key} - ${i18n.t('field must contain more characters')}`)
       return
     }
   }
