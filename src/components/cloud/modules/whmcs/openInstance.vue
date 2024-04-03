@@ -1,10 +1,10 @@
 <template>
   <div class="Fcloud">
     <slot name="header" />
-    <div v-if="VM.resources?.STATE" class="Fcloud__buttons">
+    <div v-if="VM.vm_info?.STATE" class="Fcloud__buttons">
       <div
         v-if="
-          !['POWEROFF', 'BOOT_POWEROFF', 'SHUTDOWN_POWEROFF'].includes(VM.resources.STATE)
+          !['POWEROFF', 'BOOT_POWEROFF', 'SHUTDOWN_POWEROFF'].includes(VM.vm_info.STATE)
         "
         class="Fcloud__button"
         :class="{ disabled: statusVM.shutdown }"
@@ -238,7 +238,7 @@
         </div>
       </div>
 
-      <div v-if="VM.resources" class="Fcloud__info-block block">
+      <div v-if="VM.vm_info" class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
           <setting-icon /> {{ capitalize($t("cloud_system")) }}
         </div>
@@ -249,7 +249,7 @@
               CPU
             </div>
             <div class="block__value">
-              {{ VM.resources.CPU }}
+              {{ VM.vm_info.CPU }}
             </div>
           </div>
 
@@ -258,13 +258,13 @@
               {{ $t("cloud_Memory") }}
             </div>
             <div class="block__value">
-              {{ mbToGb(VM.resources.RAM) }} GB
+              {{ mbToGb(VM.vm_info.RAM) }} GB
             </div>
           </div>
         </div>
       </div>
 
-      <div v-if="VM.resources" class="Fcloud__info-block block">
+      <div v-if="VM.vm_info" class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
           <database-icon /> {{ $t("cloud_Storage") }}
         </div>
@@ -275,7 +275,7 @@
               {{ $t("cloud_Type") }}
             </div>
             <div class="block__value">
-              {{ VM.resources.DS_TYPE }}
+              {{ VM.vm_info.DS_TYPE }}
             </div>
           </div>
           <div class="block__column">
@@ -283,7 +283,7 @@
               {{ $t("cloud_Size") }}
             </div>
             <div class="block__value">
-              {{ mbToGb(VM.resources.DRIVE) }} GB
+              {{ mbToGb(VM.vm_info.DRIVE) }} GB
             </div>
           </div>
         </div>
@@ -400,7 +400,7 @@
             type="primary"
             shape="round"
             size="large"
-            :disabled="VM.resources.STATE !== 'RUNNING'"
+            :disabled="VM.vm_info.STATE !== 'RUNNING'"
             @click="startVNC"
           >
             VNC
@@ -503,8 +503,8 @@ export default {
       return { code: this.userdata.currency ?? this.defaultCurrency }
     },
     statusVM () {
-      if (!this.VM?.resources?.STATE) return {}
-      const state = this.VM.resources.STATE.toLowerCase()
+      if (!this.VM?.vm_info?.STATE) return {}
+      const state = this.VM.vm_info.STATE.toLowerCase()
 
       return {
         shutdown: ['poweroff', 'boot_poweroff', 'shutdown_poweroff'].includes(state),

@@ -215,8 +215,12 @@ function installDataToBuffer () {
   ]
 
   interestedKeys.forEach((key) => {
-    if (config.whmcsSiteUrl) form.value[key] = authStore.billingUser[key]
-    else form.value[key] = authStore.userdata.data[key]
+    if (config.whmcsSiteUrl) {
+      if (!authStore.billingUser[key]) return
+      form.value[key] = authStore.billingUser[key]
+    } else {
+      form.value[key] = authStore.userdata.data[key]
+    }
   })
 }
 

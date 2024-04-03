@@ -160,6 +160,7 @@ const groups = computed(() =>
   filteredProducts.value.reduce((result, product) => {
     const resources = getProduct(product)
 
+    if (!resources.group) return result
     if (!result.includes(resources.group)) {
       result.push(resources.group)
     }

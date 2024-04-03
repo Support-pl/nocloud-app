@@ -21,41 +21,32 @@
             </table>
           </transition>
 
-          <a-row class="order__prop">
-            <a-col span="8" :xs="6">
-              {{ capitalize($t('ssl_product.domain')) }}:
-            </a-col>
-            <a-col span="16" :xs="18">
+          <a-form
+            style="margin-top: 15px"
+            :model="config"
+            :rules="rules"
+            :label-col="{ span: 8, xs: 6 }"
+            :wrapper-col="{ span: 16, xs: 18 }"
+          >
+            <a-form-item name="domain" :label="capitalize($t('ssl_product.domain'))">
               <a-input
                 v-if="!fetchLoading"
                 v-model:value="config.domain"
                 placeholder="example.com"
-                :rules="rules.req"
               />
               <div v-else class="loadingLine" />
-            </a-col>
-          </a-row>
+            </a-form-item>
 
-          <a-row class="order__prop">
-            <a-col span="8" :xs="6">
-              {{ capitalize($t('ssl_product.email')) }}:
-            </a-col>
-            <a-col span="16" :xs="18">
+            <a-form-item name="email" :label="capitalize($t('ssl_product.email'))">
               <a-input
                 v-if="!fetchLoading"
                 v-model:value="config.email"
                 placeholder="email"
-                :rules="rules.req"
               />
               <div v-else class="loadingLine" />
-            </a-col>
-          </a-row>
+            </a-form-item>
 
-          <a-row class="order__prop">
-            <a-col span="8" :xs="6">
-              {{ capitalize($t('clientinfo.password')) }}:
-            </a-col>
-            <a-col span="16" :xs="18">
+            <a-form-item name="password" :label="capitalize($t('clientinfo.password'))">
               <password-meter
                 :style="{
                   height: (config.password.length > 0) ? '10px' : '0',
@@ -70,11 +61,10 @@
                 v-if="!fetchLoading"
                 v-model:value="config.password"
                 placeholder="password"
-                :rules="rules.req"
               />
               <div v-else class="loadingLine" />
-            </a-col>
-          </a-row>
+            </a-form-item>
+          </a-form>
         </div>
       </div>
 
@@ -153,6 +143,7 @@
 import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
+import { nextTick } from 'vue'
 import { usePeriod } from '@/hooks/utils'
 import useCreateInstance from '@/hooks/instances/create.js'
 import { checkPayg, createInvoice } from '@/functions.js'
@@ -266,9 +257,28 @@ export default {
       )
     },
     rules () {
-      const message = this.$t('ssl_product.field is required')
+      const req = { required: true, message: this.$t('ssl_product.field is required') }
 
-      return { req: [{ required: true, message }] }
+      return {
+        domain: [req, {
+          message: this.$t('domain is wrong'),
+          pattern: /.+\..+/
+        }],
+        email: [req, {
+          message: this.$t('email is not valid'),
+          pattern: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
+        }],
+        password: [req, {
+          validator: async (_, value) => {
+            await nextTick()
+            if (value === '') return Promise.resolve()
+            return (this.score > 3)
+              ? Promise.resolve()
+              : Promise.reject(this.$t('Password must contain uppercase letters, numbers and symbols'))
+          }
+        }
+        ]
+      }
     }
   },
   watch: {
@@ -301,6 +311,15 @@ export default {
     'options.size' (value) {
       this.changePeriods(value)
       this.fetchLoading = false
+    },
+    'options.period' (value) {
+      const product = this.products.find(({ title, period }) =>
+        title === this.options.size && +period === value
+      )
+
+      this.plan = this.cachedPlans[this.provider].find(
+        ({ uuid }) => uuid === product.planId
+      )?.uuid
     }
   },
   mounted () {
@@ -344,7 +363,7 @@ export default {
         for (const [key, product] of Object.entries(plan.products)) {
           const i = result.sizes.findIndex(({ title }) => title === product.title)
 
-          result.products.push({ key, ...product })
+          result.products.push({ key, ...product, planId: plan.uuid })
           if (i === -1) {
             result.sizes.push({
               title: product.title, sorter: product.sorter, price: product.price
@@ -497,7 +516,8 @@ export default {
         return
       }
 
-      if (this.config.email === '') {
+      const regexEmail = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
+      if (this.config.email.match(regexEmail)) {
         this.$message.error(this.$t('email is not valid'))
         return
       }
