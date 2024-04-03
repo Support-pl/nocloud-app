@@ -301,6 +301,15 @@ export default {
     'options.size' (value) {
       this.changePeriods(value)
       this.fetchLoading = false
+    },
+    'options.period' (value) {
+      const product = this.products.find(({ title, period }) =>
+        title === this.options.size && +period === value
+      )
+
+      this.plan = this.cachedPlans[this.provider].find(
+        ({ uuid }) => uuid === product.planId
+      )?.uuid
     }
   },
   mounted () {
@@ -344,7 +353,7 @@ export default {
         for (const [key, product] of Object.entries(plan.products)) {
           const i = result.sizes.findIndex(({ title }) => title === product.title)
 
-          result.products.push({ key, ...product })
+          result.products.push({ key, ...product, planId: plan.uuid })
           if (i === -1) {
             result.sizes.push({
               title: product.title, sorter: product.sorter, price: product.price
