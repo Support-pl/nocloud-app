@@ -201,7 +201,7 @@ async function createTicket () {
 
 async function createChat () {
   const { departments } = chatsStore.getDefaults
-  const { admins, id: key, whmcsid } = departments.find(({ id }) => id === ticketDepartment.value) ?? {}
+  const { admins, id: key, whmcsId } = departments.find(({ id }) => id === ticketDepartment.value) ?? {}
 
   try {
     const message = md.render(ticketMessage.value)
@@ -216,7 +216,7 @@ async function createChat () {
         message,
         subject: ticketTitle.value,
         instanceId: props.instanceId,
-        whmcsId: whmcsid
+        whmcsId
       }
     })
 
