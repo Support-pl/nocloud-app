@@ -1,11 +1,13 @@
 <template>
   <template v-if="cloudStore.plan?.uuid">
-    <ione-filters
-      :products="products"
-      :plans="plans"
-      @update:filter="(key, value) => filters[key] = value"
-    />
-    <a-divider style="margin: 10px 0" />
+    <div v-show="false">
+      <ione-filters
+        :products="products"
+        :plans="plans"
+        @update:filter="(key, value) => filters[key] = value"
+      />
+      <a-divider style="margin: 10px 0" />
+    </div>
 
     <ione-products
       v-if="products.length > 5"
