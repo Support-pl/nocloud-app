@@ -163,8 +163,10 @@ export default {
       const result = []
       const { uuid } = this.authStore.billingUser
 
-      this.chatsStore.getChats.forEach((ticket) => {
-        const instance = ticket.meta.data.instance?.toJSON()
+      this.chatsStore.chats.forEach((ticket) => {
+        const { whmcs, instance: inst } = ticket.meta.data
+        const instance = (inst?.kind.case) ? inst?.toJSON() : null
+
         const { from } = this.$route.query
         if (instance !== from && from) return
 
@@ -187,7 +189,7 @@ export default {
           status: capitalized,
           unread: (isReaded) ? 0 : ticket.meta.unread
         }
-        const id = ticket.meta.data.whmcs?.toJSON()
+        const id = (whmcs?.kind.case) ? whmcs?.toJSON() : null
 
         if (id) ids.push(id)
         result.push(value)

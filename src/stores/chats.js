@@ -289,8 +289,8 @@ export const useChatsStore = defineStore('chats', () => {
           meta: new ChatMeta({
             lastMessage: data.chat.message,
             data: {
-              dept_id: Value.fromJson(data.chat.whmcsId),
-              instance: Value.fromJson(data.chat.instanceId)
+              dept_id: Value.fromJson(data.chat.whmcsId ?? null),
+              instance: Value.fromJson(data.chat.instanceId ?? null)
             }
           })
         })
