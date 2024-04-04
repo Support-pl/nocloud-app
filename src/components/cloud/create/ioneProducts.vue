@@ -1,7 +1,6 @@
 <template>
-  <template v-if="type === 'slider'">
+  <div v-if="type === 'slider'">
     <a-slider
-      style="margin-top: 20px"
       :marks="{ ...groups }"
       :tip-formatter="null"
       :max="groups.length - 1"
@@ -42,7 +41,7 @@
         </a-col>
       </transition>
     </a-row>
-  </template>
+  </div>
 
   <div v-else class="order__grid">
     <div
@@ -101,14 +100,16 @@ if (groups.value.length > 0) {
 }
 
 watch(groups, (value) => {
-  if (value.length < 1 && props.products.length > 0) {
-    emits('update:product', props.products[1] ?? props.products[0])
-  }
   if (value.includes(group.value)) return
   group.value = value[1] ?? value[0] ?? group.value
 })
-
 watch(group, setProduct)
+
+watch(() => props.products, (value) => {
+  if (groups.value.length < 1 && value.length > 0) {
+    emits('update:product', props.products[1] ?? props.products[0])
+  }
+})
 
 const resources = computed(() => {
   const cpu = []

@@ -182,6 +182,7 @@ export const Department = proto3.makeMessageType(
     { no: 3, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "admins", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 5, name: "public", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "whmcs_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ],
 );
 
