@@ -9,7 +9,7 @@
         <div class="ticket__title">
           #{{ ticket.tid }} - {{ titleDecoded }}
         </div>
-        <div class="ticket__time" style="margin-left: auto">
+        <div class="ticket__department" style="margin-left: auto">
           {{ department }}
         </div>
         <div class="ticket__status-text">
@@ -172,10 +172,18 @@ export default { name: 'TicketItem' }
   font-weight: bold;
 }
 
+.ticket__department,
 .ticket__time {
   font-size: 0.8rem;
   color: var(--gray);
   font-weight: 600;
   flex-shrink: 0;
+}
+
+.ticket__department {
+  max-width: 140px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 </style>

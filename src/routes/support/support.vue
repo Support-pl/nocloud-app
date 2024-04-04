@@ -50,10 +50,12 @@ const chats = computed(() => {
       status: capitalized,
       unread: (isReaded) ? 0 : ticket.meta.unread
     }
-    const id = ticket.meta.data.whmcs?.toJSON()
+    const { whmcs, instance } = ticket.meta.data
+    const id = (whmcs?.kind.case) ? whmcs?.toJSON() : null
+    const inst = (instance?.kind.case) ? instance?.toJSON() : null
 
     if (id) ids.push(id)
-    result.push(value)
+    if (!inst) result.push(value)
   })
 
   result.sort((a, b) => b.date - a.date)
