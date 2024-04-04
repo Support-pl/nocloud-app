@@ -517,10 +517,19 @@ export default {
       this.updateFilter()
     },
     plainOptions (statuses) {
+      if (statuses.length < 1) return
       Object.assign(this, {
-        checkedList: statuses.filter((status) =>
-          (this.active === 'support') ? status !== this.$t('filterHeader.Closed') : true
-        ),
+        checkedList: statuses.filter((status) => {
+          const filters = JSON.parse(localStorage.getItem('supportFilters') ?? '[]')
+          const isIncluded = filters.includes(this.$t('filterHeader.Closed'))
+
+          if (this.active !== 'support') return true
+          if (isIncluded) {
+            return true
+          } else {
+            return status !== this.$t('filterHeader.Closed')
+          }
+        }),
         indeterminate: false,
         checkAll: true
       })
