@@ -120,9 +120,9 @@ const filteredDepartments = computed(() => {
     )
 
   if (authStore.billingUser.only_tickets) {
-    return supportStore.departments
+    return chatsDeparts.filter(({ id }) => id === 'colobridge')
   } else {
-    return chatsDeparts.filter((dep) => dep.public) // [...supportStore.departments, ...chatsDeparts]
+    return chatsDeparts.filter((dep) => dep.public && dep.id !== 'colobridge') // [...supportStore.departments, ...chatsDeparts]
   }
 })
 
