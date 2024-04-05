@@ -37,7 +37,7 @@
               <div v-else class="loadingLine" />
             </a-form-item>
 
-            <a-form-item name="email" :label="capitalize($t('ssl_product.email'))">
+            <a-form-item v-if="!billingUser.email" name="email" :label="capitalize($t('ssl_product.email'))">
               <a-input
                 v-if="!fetchLoading"
                 v-model:value="config.email"
@@ -190,7 +190,7 @@ export default {
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
-    ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL']),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL', 'billingUser']),
     ...mapState(useCurrenciesStore, [
       'currencies',
       'defaultCurrency',
@@ -282,6 +282,9 @@ export default {
     }
   },
   watch: {
+    billingUser (value) {
+      this.config.email = value.email
+    },
     sp (value) {
       if (value.length > 0) this.provider = value[0].uuid
     },
@@ -329,6 +332,8 @@ export default {
     this.modal.confirmCreate = true
     this.modal.confirmLoading = true
     action()
+
+    this.config.email = this.billingUser.email
   },
   created () {
     const promises = [
@@ -488,7 +493,7 @@ export default {
         .catch((error) => {
           const url = error.response?.data.redirect_url ?? error.response?.data ?? error
 
-          if (url.startsWith('http')) {
+          if (url.startsWith && url.startsWith('http')) {
             localStorage.setItem('order', 'Invoice')
             this.$router.push({ path: '/billing' })
             return
@@ -516,11 +521,11 @@ export default {
         return
       }
 
-      const regexEmail = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
-      if (this.config.email.match(regexEmail)) {
-        this.$message.error(this.$t('email is not valid'))
-        return
-      }
+      // const regexEmail = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
+      // if (this.config.email.match(regexEmail)) {
+      //   this.$message.error(this.$t('email is not valid'))
+      //   return
+      // }
 
       if (this.config.password === '') {
         this.$message.error(this.$t('Password is too short'))

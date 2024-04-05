@@ -491,7 +491,7 @@ export default {
         .sort((a, b) => a.price - b.price)
         .sort((a, b) => a.sorter - b.sorter)
       this.sizes = productsAndSizes.sizes
-      this.options.size = Object.values(this.sizes[0]?.keys)[0] ?? ''
+      this.options.size = Object.values(this.sizes[0]?.keys ?? {})[0] ?? ''
     },
     changePeriods (key) {
       const { title } = this.products[key]

@@ -192,7 +192,7 @@ export default {
         const id = (whmcs?.kind.case) ? whmcs?.toJSON() : null
 
         if (id) ids.push(id)
-        result.push(value)
+        if (!inst) result.push(value)
       })
 
       result.sort((a, b) => b.date - a.date)
