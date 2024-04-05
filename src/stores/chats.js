@@ -287,13 +287,16 @@ export const useChatsStore = defineStore('chats', () => {
           topic: data.chat.subject,
           role: Role.OWNER,
           meta: new ChatMeta({
-            lastMessage: data.chat.message,
-            data: {
-              dept_id: Value.fromJson(data.chat.whmcsId ?? null),
-              instance: Value.fromJson(data.chat.instanceId ?? null)
-            }
+            lastMessage: data.chat.message, data: {}
           })
         })
+
+        if (data.chat.whmcsId) {
+          newChat.meta.data.dept_id = Value.fromJson(data.chat.whmcsId)
+        }
+        if (data.chat.instance) {
+          newChat.meta.data.instance = Value.fromJson(data.chat.instanceId)
+        }
         const createdChat = await chatsApi.create(newChat)
 
         chats.value.set(createdChat.uuid, createdChat)
