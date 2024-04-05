@@ -306,7 +306,7 @@ export default {
 
             domain.data.expiry = {
               expiredate: this.date(domain.data.next_payment_date ?? 0),
-              regdate: domain.data.creation ?? '0000-00-00'
+              regdate: (domain.data.creation * 1000) || '0000-00-00'
             }
             domain.resources.period = this.getPeriod(period)
             groupname = 'Shared Hosting'
@@ -328,7 +328,7 @@ export default {
 
             domain.data.expiry = {
               expiredate: this.date(domain.data.next_payment_date ?? 0),
-              regdate: domain.data.creation ?? '0000-00-00'
+              regdate: (domain.data.creation * 1000) || '0000-00-00'
             }
             groupname = 'OpenAI'
 
@@ -342,7 +342,7 @@ export default {
 
             domain.data.expiry = {
               expiredate: this.date(domain.data.next_payment_date ?? 0),
-              regdate: domain.data.creation ?? '0000-00-00'
+              regdate: (domain.data.creation * 1000) || '0000-00-00'
             }
             domain.resources.period = this.getPeriod(period)
             groupname = 'Custom'
@@ -352,7 +352,7 @@ export default {
           case 'goget': {
             domain.data.expiry = {
               expiredate: '0000-00-00',
-              regdate: domain.data.creation ?? '0000-00-00'
+              regdate: (domain.data.creation * 1000) || '0000-00-00'
             }
             groupname = 'SSL'
             date = 'month'
@@ -382,7 +382,7 @@ export default {
             }
             domain.data.expiry = {
               expiredate: domain.data.expires_at.split('T')[0],
-              regdate: domain.data.creation ?? '0000-00-00'
+              regdate: (domain.data.creation * 1000) || '0000-00-00'
             }
           }
         }
