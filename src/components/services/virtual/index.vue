@@ -320,20 +320,19 @@ export default {
         title === this.options.size && +period === value
       )
 
-      this.plan = this.cachedPlans[this.provider].find(
+      this.plan = this.cachedPlans[this.provider]?.find(
         ({ uuid }) => uuid === product.planId
       )?.uuid
     }
   },
   mounted () {
+    this.config.email = this.billingUser.email
     const { action } = this.onLogin
 
     if (typeof action !== 'function') return
     this.modal.confirmCreate = true
     this.modal.confirmLoading = true
     action()
-
-    this.config.email = this.billingUser.email
   },
   created () {
     const promises = [
