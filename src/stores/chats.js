@@ -125,6 +125,7 @@ export const useChatsStore = defineStore('chats', () => {
         else replies.splice(i, 1, newMessage)
 
         chat.meta = new ChatMeta({
+          ...chat.meta,
           unread: (chat.uuid === route.params.id) ? 0 : chat.meta.unread + 1,
           lastMessage: message
         })

@@ -192,13 +192,16 @@ export default {
         const id = (whmcs?.kind.case) ? whmcs?.toJSON() : null
 
         if (id) ids.push(id)
-        if (!inst) result.push(value)
+        if (from || (!from && !instance)) result.push(value)
       })
 
       result.sort((a, b) => b.date - a.date)
       const tickets = this.supportStore.getTickets
         .filter(({ id }) => !ids.includes(id))
 
+      if (this.$route.query.from) {
+        return result
+      }
       return [...result, ...tickets]
     }
   },
