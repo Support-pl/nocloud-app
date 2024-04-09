@@ -285,9 +285,10 @@ export default { name: 'CloudItem' }
   background-color: var(--bright_font);
   cursor: pointer;
   overflow: hidden;
+  transition: 0.2s;
 }
 .cloud__item-wrapper:hover {
-  background-color: rgba(255, 255, 255, 0.55);
+  filter: brightness(0.9);
 }
 .cloud__item {
   position: relative;

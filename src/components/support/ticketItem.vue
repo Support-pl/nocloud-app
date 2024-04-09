@@ -91,7 +91,7 @@ function beauty (message) {
   message = decode(message)
   message = message.replace(/-{2,}.*/gi, '')
   message = message.replace(/IP Address.*/gi, '')
-  message = message.replace(/<\/?[a-z1-9 #-:=";_!]+>/gi, '')
+  message = message.replace(/<\/?[a-zA-Zа-яА-Я1-9 #-:=";_!]+>/gi, '')
 
   return message || 'empty'
 }

@@ -62,16 +62,20 @@ function useCloudOptions (activeKey, tarification) {
     options.config = { configuration: {}, addons: [] }
   })
 
-  watch(() => cloudStore.provider, setMinMaxDisk)
-  watch(() => options.disk.type, setMinMaxDisk)
+  watch(() => cloudStore.provider, (value) => {
+    const { min_drive_size: minSize, max_drive_size: maxSize } = value.vars
 
-  watch(() => cloudStore.plan, (value) => {
-    if (value.meta?.minDisk) {
-      options.disk.min = +value.meta.minDisk
+    if (minSize) {
+      options.disk.min = minSize.value[options.disk.type]
     }
-    if (value.meta?.maxDisk) {
-      options.disk.max = +value.meta.maxDisk
+    if (maxSize) {
+      options.disk.max = maxSize.value[options.disk.type]
     }
+  })
+
+  watch(() => options.disk.type, setMinMaxDisk)
+  watch(() => cloudStore.plan, () => {
+    setMinMaxDisk()
     setSshKey(cloudStore.serviceId)
   })
 
@@ -91,13 +95,13 @@ function useCloudOptions (activeKey, tarification) {
   }
 
   function setMinMaxDisk () {
-    const { min_drive_size: minSize, max_drive_size: maxSize } = cloudStore.provider.vars
+    const { minDiskSize, maxDiskSize } = cloudStore.plan.meta ?? {}
 
-    if (minSize) {
-      options.disk.min = minSize.value[options.disk.type]
+    if (minDiskSize) {
+      options.disk.min = +minDiskSize[options.disk.type]
     }
-    if (maxSize) {
-      options.disk.max = maxSize.value[options.disk.type]
+    if (maxDiskSize) {
+      options.disk.max = +maxDiskSize[options.disk.type]
     }
   }
 

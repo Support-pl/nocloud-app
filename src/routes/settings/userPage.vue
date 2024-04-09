@@ -196,18 +196,31 @@ const isPasswordVisible = computed(() =>
   localStorage.getItem('oauth')
 )
 
-const mainKeys = ['firstname', 'lastname', 'companyname', 'email', 'address1', 'city', 'state', 'postcode']
-const keys = {
-  account_number: 'payer account number',
-  checking_account: 'checking account',
-  bankname: 'bankname',
-  bic: 'BIC'
-}
+const mainKeys = computed(() => {
+  const result = ['firstname', 'lastname', 'companyname', 'email', 'address1', 'city', 'state', 'postcode']
+
+  return result.filter((key) => authStore.billingUser[key])
+})
+const keys = computed(() => {
+  const result = {
+    account_number: 'payer account number',
+    checking_account: 'checking account',
+    bankname: 'bankname',
+    bic: 'BIC'
+  }
+
+  Object.keys(result).forEach((key) => {
+    if (!authStore.billingUser[key]) {
+      delete result[key]
+    }
+  })
+  return result
+})
 
 function installDataToBuffer () {
   const interestedKeys = [
-    ...mainKeys,
-    ...Object.keys(keys),
+    ...mainKeys.value,
+    ...Object.keys(keys.value),
     'address2',
     'countryname',
     'phonenumber',
@@ -216,7 +229,6 @@ function installDataToBuffer () {
 
   interestedKeys.forEach((key) => {
     if (config.whmcsSiteUrl) {
-      if (!authStore.billingUser[key]) return
       form.value[key] = authStore.billingUser[key]
     } else {
       form.value[key] = authStore.userdata.data[key]
