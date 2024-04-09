@@ -134,7 +134,7 @@ export const Message = proto3.makeMessageType(
     { no: 2, name: "kind", kind: "enum", T: proto3.getEnumType(Kind) },
     { no: 3, name: "sender", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "content", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "attachments", kind: "message", T: Attachment, repeated: true },
+    { no: 5, name: "attachments", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 6, name: "gateways", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 7, name: "chat", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 8, name: "sent", kind: "scalar", T: 3 /* ScalarType.INT64 */ },

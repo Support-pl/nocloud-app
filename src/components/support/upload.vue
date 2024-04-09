@@ -16,18 +16,19 @@
       v-for="file of fileList"
       :key="file.uid"
       :class="{ files__preview: true, active: (hovered === file.uid) }"
-      @mouseenter="hovered = file.uid"
+      @mouseenter="hovered = (file.uuid) ? '' : file.uid"
       @mouseleave="hovered = ''"
-      @click="removeFile"
+      @click="removeFile(file)"
     >
       <img :src="file.preview" :alt="file.name">
-      <plus-icon style="color: var(--gloomy_font)" :rotate="45" />
+      <plus-icon v-if="!file.uuid" style="color: var(--gloomy_font)" :rotate="45" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { defineAsyncComponent, ref } from 'vue'
+import { defineAsyncComponent, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import api from '@/api.js'
 
 const uploadIcon = defineAsyncComponent(
@@ -37,9 +38,34 @@ const plusIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/PlusOutlined')
 )
 
+const props = defineProps({
+  editing: { type: String, default: null },
+  replies: { type: Array, default: () => [] }
+})
 const emits = defineEmits(['get-send-func'])
+const route = useRoute()
+
 const fileList = ref([])
 const hovered = ref('')
+
+watch(() => props.editing, (value) => {
+  if (value) {
+    const { message, attachments } = props.replies?.find(
+      (reply) => reply.uuid === value
+    ) ?? {}
+    const template = message.match(/<div class="chat__files">[\s\S]{1,}<\/div>$/g)[0]
+    const urls = template.match(/https:\/\/[\s\S]{1,}\.\w{1,}/g)
+
+    urls.forEach((url) => {
+      const [preview, name] = url.split('" alt="')
+      const uuid = attachments.find((id) => preview.includes(id))
+
+      fileList.value.push({ preview, name, uuid })
+    })
+  } else {
+    fileList.value = []
+  }
+})
 
 async function beforeUpload (file) {
   await setPreview(file)
@@ -48,6 +74,7 @@ async function beforeUpload (file) {
 }
 
 function removeFile (file) {
+  if (file.uuid) return
   const i = fileList.value.indexOf(file)
 
   fileList.value.splice(i, 1)
@@ -67,29 +94,19 @@ function getBase64 (file) {
   })
 }
 
-function sendFiles () {
-  fileList.value.forEach(async (file) => {
-    const url = await api.get('/presignedUrl', {
-      params: {
-        method: 'PUT',
-        name: file.name,
-        bucket: VUE_APP_S3_BUCKET ?? 'chats'
-      }
-    })
-    await fetch(url, { method: 'PUT', body: file })
+async function sendFiles () {
+  for await (const file of fileList.value) {
+    if (file.uuid) continue
 
-    const imageUrl = await api.get('/presignedUrl', {
-      params: {
-        method: 'GET',
-        name: file.name,
-        bucket: VUE_APP_S3_BUCKET ?? 'chats'
-      }
+    const { uuid, object_id: objectId } = await api.put('/attachments', {
+      title: file.name, chat: route.params.id
     })
-    file.url = imageUrl
+    await fetch(objectId, { method: 'PUT', body: file })
 
-    // const response = await fetch(imageUrl)
-    // console.log('GET Response:', await getBase64(await response.blob()))
-  })
+    const { url } = await api.get(`/attachments/${uuid}`)
+    file.url = `https://${url}`
+    file.uuid = uuid
+  }
 
   return fileList.value
 }
