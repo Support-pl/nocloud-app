@@ -156,7 +156,8 @@ export const useChatsStore = defineStore('chats', () => {
       name: user.title ?? 'anonymous',
       userid: user.uuid,
       requestor_type: (uuid === user.uuid) ? 'Owner' : 'Other',
-      gateways: message.gateways
+      gateways: message.gateways,
+      attachments: message.attachments
     }
   }
 
@@ -338,15 +339,17 @@ export const useChatsStore = defineStore('chats', () => {
     async sendMessage (message) {
       try {
         const messagesApi = createPromiseClient(MessagesAPI, transport)
-
-        const response = await messagesApi.send(new Message({
+        const mes = new Message({
           kind: Kind.DEFAULT,
           underReview: false,
           content: message.content,
           chat: message.uuid,
           sent: message.date,
-          sender: message.account
-        }))
+          sender: message.account,
+          attachments: message.attachments
+        })
+
+        const response = await messagesApi.send(mes)
 
         if (response.uuid === '') {
           response.uuid = 'last message'

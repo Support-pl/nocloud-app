@@ -29,7 +29,12 @@
         <arrow-up-icon />
       </div>
 
-      <upload-files v-if="showSendFiles" @get-send-func="fn.sendFiles = $event" />
+      <upload-files
+        v-if="showSendFiles"
+        :editing="editing"
+        :replies="replies"
+        @get-send-func="fn.sendFiles = $event"
+      />
     </div>
   </div>
 </template>
@@ -75,7 +80,7 @@ const { openNotification } = useNotification()
 
 const textarea = ref()
 const message = ref('')
-const editing = ref(false)
+const editing = ref(null)
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET)
 
 const columnsStyle = computed(() =>
@@ -125,12 +130,14 @@ async function sendChatMessage (result, replies) {
       uuid: route.params.id,
       content: result.message + template,
       account: result.userid,
-      date: BigInt(result.date)
+      date: BigInt(result.date),
+      attachments: files.map(({ uuid }) => uuid)
     })
 
     replies[replies.length - 1].uuid = uuid
     emits('update:replies', replies)
-  } catch {
+  } catch (error) {
+    console.error(error)
     replies[replies.length - 1].error = true
     emits('update:replies', replies)
   } finally {
@@ -191,15 +198,25 @@ function editMessage (uuid) {
   message.value = ''
 }
 
-function changeEditing (message = {}) {
-  editing.value = message.uuid ?? null
-  message.value = message.message ?? ''
-  document.getElementById('message').focus()
+function changeEditing (reply = {}) {
+  editing.value = reply.uuid ?? null
+  message.value = reply.message?.replace(
+    /<div class="chat__files">[\s\S]{1,}<\/div>$/g, ''
+  ) ?? ''
+  textarea.value.focus()
 }
 
 function getMessage (uuid) {
-  return props.replies?.find((reply) => reply.uuid === uuid)?.message
+  const result = props.replies?.find((reply) => reply.uuid === uuid)?.message
+
+  return result.replace(/<div class="chat__files">[\s\S]{1,}<\/div>$/g, '')
 }
+
+const tagGridColumn = computed(() =>
+  (showSendFiles.value) ? '1 / 4' : '1 / 3'
+)
+
+defineExpose({ message, sendMessage, changeEditing })
 </script>
 
 <script>
@@ -210,7 +227,7 @@ export default { name: 'SupportFooter' }
 .chat__tag {
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-column: 1 / 3;
+  grid-column: v-bind('tagGridColumn');
   padding: 5px 7px;
   margin-right: auto;
   font-size: 18px;

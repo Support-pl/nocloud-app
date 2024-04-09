@@ -35,7 +35,7 @@
               <div
                 v-if="isEditable(reply)"
                 style="cursor: pointer; margin-top: 5px"
-                @click="changeEditing(reply)"
+                @click="footer.changeEditing(reply)"
               >
                 <edit-icon /> {{ capitalize($t('edit')) }}
               </div>
@@ -70,22 +70,29 @@
       />
     </div>
 
+    <a-modal
+      :open="currentImage.visible"
+      :title="currentImage.alt"
+      :footer="null"
+      @cancel="currentImage.visible = false"
+    >
+      <img style="width: 100%" :alt="currentImage.alt" :src="currentImage.src">
+    </a-modal>
+
     <support-footer ref="footer" v-model:replies="replies" :status="status" />
   </div>
 </template>
 
-<script>
-import { defineAsyncComponent, nextTick, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { mapStores } from 'pinia'
+<script setup>
+import { defineAsyncComponent, nextTick, ref, computed, watch, onMounted } from 'vue'
+import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import markdown from 'markdown-it'
 import { full as emoji } from 'markdown-it-emoji'
 
 import { Status } from '@/libs/cc_connect/cc_pb'
 import { useClipboard } from '@/hooks/utils'
-import { toDate } from '@/functions.js'
+import api from '@/api'
 
-import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
@@ -110,217 +117,210 @@ const loadingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LoadingOutlined')
 )
 
-const md = markdown({
-  html: true,
-  linkify: true,
-  typographer: true
+const route = useRoute()
+const { addToClipboard } = useClipboard()
+const md = markdown({ html: true, linkify: true, typographer: true }).use(emoji)
+
+const authStore = useAuthStore()
+const chatsStore = useChatsStore()
+const supportStore = useSupportStore()
+
+onBeforeRouteUpdate((to, from, next) => {
+  chatid.value = to.params.id
+  loadMessages()
+  next()
 })
 
-md.use(emoji)
+const status = ref(null)
+const subject = ref('SUPPORT')
+const replies = ref([])
 
-export default {
-  name: 'TicketChat',
-  components: {
-    loading,
-    ticketItem,
-    supportAlert,
-    supportHeader,
-    supportFooter,
+const isLoading = ref(false)
+const chatid = ref(route.params.id)
+const searchString = ref('')
+const chatPaddingTop = ref('15px')
 
-    exclamationIcon,
-    copyIcon,
-    editIcon,
-    loadingIcon
-  },
-  beforeRouteUpdate (to, from, next) {
-    this.chatid = to.params.id
-    this.loadMessages()
-    next()
-  },
-  setup () {
-    const route = useRoute()
-    const { addToClipboard } = useClipboard()
+const content = ref()
+const chatList = ref()
+const footer = ref()
 
-    return {
-      addToClipboard,
-      status: ref(null),
-      subject: ref('SUPPORT'),
-      replies: ref([]),
+const chat = computed(() =>
+  chatsStore.chats.get(chatid.value)
+)
 
-      isLoading: ref(false),
-      chatid: ref(route.params.id),
-      searchString: ref(''),
-      chatPaddingTop: ref('15px')
+const chats = computed(() => {
+  const ids = []
+  const result = []
+  const { uuid } = authStore.billingUser
+
+  chatsStore.chats.forEach((ticket) => {
+    const { whmcs, instance: inst } = ticket.meta.data
+    const instance = (inst?.kind.case) ? inst?.toJSON() : null
+
+    const { from } = route.query
+    if (instance !== from && from) return
+
+    const string = searchString.value.toLowerCase()
+    const topic = ticket.topic.toLowerCase()
+    if (!topic.includes(string) && string !== '') return
+
+    const isReaded = ticket.meta.lastMessage?.readers.includes(uuid)
+    const status = Status[ticket.status].toLowerCase().split('_')
+    const capitalized = status.map((el) =>
+      `${el[0].toUpperCase()}${el.slice(1)}`
+    ).join(' ')
+
+    const value = {
+      id: ticket.uuid,
+      tid: ticket.uuid.slice(0, 8),
+      title: ticket.topic,
+      date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
+      message: ticket.meta.lastMessage?.content ?? '',
+      status: capitalized,
+      unread: (isReaded) ? 0 : ticket.meta.unread
     }
-  },
-  computed: {
-    ...mapStores(useAppStore, useAuthStore, useChatsStore, useSupportStore),
-    chat () {
-      return this.chatsStore.chats.get(this.chatid)
-    },
-    chats () {
-      const ids = []
-      const result = []
-      const { uuid } = this.authStore.billingUser
+    const id = (whmcs?.kind.case) ? whmcs?.toJSON() : null
 
-      this.chatsStore.chats.forEach((ticket) => {
-        const { whmcs, instance: inst } = ticket.meta.data
-        const instance = (inst?.kind.case) ? inst?.toJSON() : null
+    if (id) ids.push(id)
+    if (from || (!from && !instance)) result.push(value)
+  })
 
-        const { from } = this.$route.query
-        if (instance !== from && from) return
+  result.sort((a, b) => b.date - a.date)
+  const tickets = supportStore.getTickets.filter(({ id }) => !ids.includes(id))
 
-        const string = this.searchString.toLowerCase()
-        const topic = ticket.topic.toLowerCase()
-        if (!topic.includes(string) && string !== '') return
+  if (route.query.from) {
+    return result
+  }
+  return [...result, ...tickets]
+})
 
-        const isReaded = ticket.meta.lastMessage?.readers.includes(uuid)
-        const status = Status[ticket.status].toLowerCase().split('_')
-        const capitalized = status.map((el) =>
-          `${el[0].toUpperCase()}${el.slice(1)}`
-        ).join(' ')
+watch(chats, async () => {
+  await nextTick()
+  if (!chatList.value) return
+  const { scrollHeight, clientHeight, lastElementChild } = chatList.value
 
-        const value = {
-          id: ticket.uuid,
-          tid: ticket.uuid.slice(0, 8),
-          title: ticket.topic,
-          date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
-          message: ticket.meta.lastMessage?.content ?? '',
-          status: capitalized,
-          unread: (isReaded) ? 0 : ticket.meta.unread
-        }
-        const id = (whmcs?.kind.case) ? whmcs?.toJSON() : null
+  if (scrollHeight > clientHeight || !lastElementChild) return
+  lastElementChild.style.borderBottom = '1px solid var(--border_color)'
+}, { deep: true })
 
-        if (id) ids.push(id)
-        if (from || (!from && !instance)) result.push(value)
+watch(replies, async (value) => {
+  await nextTick()
+
+  if (value.length > 0) addImageClick()
+  if (!content.value) return
+  content.value.scrollTo(0, content.value.scrollHeight)
+}, { deep: true })
+
+onMounted(async () => {
+  try {
+    await supportStore.fetch()
+  } catch (error) {
+    console.error(error)
+  }
+
+  await chatsStore.fetchChats()
+  chatsStore.startStream()
+  chatsStore.fetchDefaults()
+  loadMessages()
+})
+
+function beauty (message) {
+  message = md.render(message).trim()
+  message = message.replace(/\n/g, '<br>')
+  message = message.replace(/[\s\uFEFF\xA0]{2,}/g, ' ')
+  message = message.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '')
+
+  return message.replace(/^<p>/, '').replace(/<\/p>$/, '')
+}
+
+function isDateVisible (replies, i) {
+  if (i === 0) return true
+  return replies[i - 1].date.split(' ')[0] !== replies[i].date.split(' ')[0]
+}
+
+function isAdminSent (reply) {
+  return reply.requestor_type !== 'Owner'
+}
+
+function isEditable (reply) {
+  return reply.userid === authStore.userdata.uuid
+}
+
+async function loadMessages (update) {
+  const result = chatsStore.messages[chatid.value]
+
+  if (!update && result) {
+    status.value = result.status
+    replies.value = result.replies
+    subject.value = result.subject
+
+    setTimeout(() => {
+      content.value.scrollTo(0, content.value.scrollHeight)
+    })
+
+    if (chatsStore.chats.get(chatid.value)) {
+      chatsStore.chats.get(chatid.value).meta.unread = 0
+    }
+    return
+  }
+
+  isLoading.value = true
+  try {
+    const response = (chatsStore.chats.get(chatid.value))
+      ? await chatsStore.fetchMessages(chatid.value)
+      : await api.get(authStore.baseURL, {
+        params: { run: 'get_ticket_full', ticket_id: chatid.value }
       })
 
-      result.sort((a, b) => b.date - a.date)
-      const tickets = this.supportStore.getTickets
-        .filter(({ id }) => !ids.includes(id))
+    status.value = response.status
+    replies.value = response.replies ?? []
+    subject.value = response.subject
 
-      if (this.$route.query.from) {
-        return result
-      }
-      return [...result, ...tickets]
-    }
-  },
-  watch: {
-    chats: {
-      async handler () {
-        await nextTick()
-        if (!this.$refs?.chatList) return
-        const { scrollHeight, clientHeight, lastElementChild } = this.$refs.chatList
+    replies.value.sort((a, b) => Number(a.sent - b.sent))
+    chatsStore.messages[chatid.value] = response
+  } finally {
+    setTimeout(() => {
+      content.value.scrollTo(0, content.value.scrollHeight)
+    })
+    isLoading.value = false
 
-        if (scrollHeight > clientHeight || !lastElementChild) return
-        lastElementChild.style.borderBottom = '1px solid var(--border_color)'
-      },
-      deep: true
-    },
-    replies: {
-      async handler () {
-        await nextTick()
-
-        if (!this.$refs?.content) return
-        this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
-      },
-      deep: true
-    }
-  },
-  async mounted () {
-    try {
-      await this.supportStore.fetch()
-    } catch (error) {
-      console.error(error)
-    }
-
-    await this.chatsStore.fetchChats()
-    this.chatsStore.startStream()
-    this.chatsStore.fetchDefaults()
-    this.loadMessages()
-  },
-  methods: {
-    toDate,
-    beauty (message) {
-      message = md.render(message).trim()
-      message = message.replace(/\n/g, '<br>')
-      message = message.replace(/[\s\uFEFF\xA0]{2,}/g, ' ')
-      message = message.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '')
-
-      return message.replace(/^<p>/, '').replace(/<\/p>$/, '')
-    },
-    isDateVisible (replies, i) {
-      if (i === 0) return true
-      return replies[i - 1].date.split(' ')[0] !== replies[i].date.split(' ')[0]
-    },
-    isAdminSent (reply) {
-      return reply.requestor_type !== 'Owner'
-    },
-    isEditable (reply) {
-      return reply.userid === this.authStore.userdata.uuid
-    },
-    loadMessages (update) {
-      const result = this.chatsStore.messages[this.chatid]
-
-      if (!update && result) {
-        this.status = result.status
-        this.replies = result.replies
-        this.subject = result.subject
-
-        setTimeout(() => {
-          this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
-        })
-
-        if (this.chatsStore.chats.get(this.chatid)) {
-          this.chatsStore.chats.get(this.chatid).meta.unread = 0
-        }
-        return
-      }
-
-      this.isLoading = true
-      const response = (this.chatsStore.chats.get(this.chatid))
-        ? this.chatsStore.fetchMessages(this.chatid)
-        : this.$api.get(this.authStore.baseURL, {
-          params: {
-            run: 'get_ticket_full',
-            ticket_id: this.chatid
-          }
-        })
-
-      response
-        .then((resp) => {
-          this.status = resp.status
-          this.replies = resp.replies ?? []
-          this.subject = resp.subject
-
-          this.replies.sort((a, b) => Number(a.sent - b.sent))
-          this.chatsStore.messages[this.chatid] = resp
-        })
-        .finally(() => {
-          setTimeout(() => {
-            this.$refs.content.scrollTo(0, this.$refs.content.scrollHeight)
-          })
-          this.isLoading = false
-
-          if (this.chatsStore.chats.get(this.chatid)) {
-            this.chatsStore.chats.get(this.chatid).meta.unread = 0
-          }
-        })
-    },
-    reload () {
-      this.isLoading = true
-      this.loadMessages(true)
-    },
-    deleteMessage (message) {
-      this.replies.splice(this.replies.indexOf(message), 1)
-    },
-    resendMessage (reply) {
-      this.deleteMessage(reply)
-      this.$refs.footer.message = reply.message
-      this.$refs.footer.sendMessage()
+    if (chatsStore.chats.get(chatid.value)) {
+      chatsStore.chats.get(chatid.value).meta.unread = 0
     }
   }
 }
+
+function reload () {
+  isLoading.value = true
+  loadMessages(true)
+}
+
+function deleteMessage (message) {
+  replies.value.splice(replies.value.indexOf(message), 1)
+}
+
+function resendMessage (reply) {
+  deleteMessage(reply)
+  footer.value.message = reply.message
+  footer.value.sendMessage()
+}
+
+const currentImage = ref({})
+function addImageClick () {
+  const files = document.querySelectorAll('.chat__message .chat__files img')
+
+  files.forEach((file) => {
+    file.addEventListener('click', (e) => {
+      currentImage.value.src = e.target.src
+      currentImage.value.alt = e.target.alt
+      currentImage.value.visible = true
+    })
+  })
+}
+</script>
+
+<script>
+export default { name: 'TicketChat' }
 </script>
 
 <style scoped>
@@ -367,7 +367,7 @@ export default {
   width: 100%;
   height: 100%;
   margin: 10px auto 0;
-  padding: v-bind(chatPaddingTop) 15px 6px;
+  padding: v-bind('chatPaddingTop') 15px 6px;
 
   border: 1px solid var(--border_color);
   border-radius: 6px;
@@ -494,6 +494,7 @@ export default {
   padding: 5px;
   border-radius: 10px;
   overflow: hidden;
+  cursor: pointer;
 }
 
 :deep(.chat__files .files__preview > img) {
