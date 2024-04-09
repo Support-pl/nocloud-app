@@ -16,7 +16,32 @@
       justify="space-between"
       align="middle"
     >
-      <a-col>
+      <a-col v-if="slider.key == 'cpu' && isHighCPUExist" style="display: flex; width: 70px">
+        <a-tooltip v-if="options.highCPU" title="High CPU">
+          <span
+            style="
+              margin-right: 5px;
+              border-bottom: 3px double var(--main);
+              cursor: help;
+              transition: 0.2s;
+            "
+          >
+            {{ slider.prefix }}
+          </span>
+        </a-tooltip>
+        <span v-else style="margin-right: 5px; border-bottom: 3px solid transparent">
+          {{ slider.prefix }}
+        </span>
+
+        <up-icon
+          style="font-size: 18px; cursor: pointer; transition: 0.2s"
+          :style="(options.highCPU) ? 'color: var(--main)' : null"
+          :rotate="90"
+          @click="setOptions('highCPU', !options.highCPU)"
+        />
+      </a-col>
+
+      <a-col v-else>
         <span style="display: inline-block; width: 70px">{{ slider.prefix }}</span>
       </a-col>
       <a-col
@@ -63,7 +88,12 @@
 </template>
 
 <script setup>
-import { watch, nextTick, ref, computed, inject } from 'vue'
+import { defineAsyncComponent, watch, nextTick, ref, computed, inject } from 'vue'
+import { usePlansStore } from '@/stores/plans.js'
+
+const upIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/DoubleLeftOutlined')
+)
 
 const props = defineProps({
   type: { type: String, default: 'grid' },
@@ -72,6 +102,8 @@ const props = defineProps({
   getProduct: { type: Function, default: (item) => item }
 })
 const emits = defineEmits(['update:product'])
+
+const plansStore = usePlansStore()
 const [options, setOptions] = inject('useOptions')()
 
 const sliders = [
@@ -151,6 +183,10 @@ watch(() => options.ram.size, async (size) => {
 
   setOptions('cpu.size', resources?.cpu)
 })
+
+const isHighCPUExist = computed(() =>
+  plansStore.plans.find((plan) => plan.meta.highCPU)
+)
 
 function setProduct () {
   for (const product of props.products) {
