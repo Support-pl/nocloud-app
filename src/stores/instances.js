@@ -205,6 +205,26 @@ export const useInstancesStore = defineStore('instances', () => {
         isActionLoading.value = false
       }
     },
+    async loginToCpanel (id) {
+      const instance = instances.value.find(({ uuid }) => uuid === id)
+
+      if (instance) {
+        const response = await this.invokeAction({
+          uuid: id, action: 'session'
+        })
+
+        if (!response.result) throw new Error(response)
+        return response.meta.url
+      } else {
+        const response = await api.get(authStore.baseURL, {
+          params: { run: 'shared_start', orderid: id }
+        })
+
+        if (response.cpanelresult?.error) throw response
+        if (!response.data.url) throw new Error('[Error]: Failed to sign in')
+        return response.data.url
+      }
+    },
     async deleteInstance (uuid) {
       try {
         const response = await api.delete(`/instances/${uuid}`)
