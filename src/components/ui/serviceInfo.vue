@@ -34,7 +34,7 @@
           </template>
 
           <template v-else-if="elem.type === 'text'">
-            {{ capitalize($t(service[elem.key].toLowerCase())) }}
+            {{ capitalize($t(service[elem.key]?.toLowerCase() ?? '-')) }}
           </template>
 
           <template v-else>

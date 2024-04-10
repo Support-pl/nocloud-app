@@ -1,5 +1,5 @@
 <template>
-  <a-row :gutter="[10, 10]">
+  <a-row v-if="serviceUsed" :gutter="[10, 10]">
     <a-col :md="12" :xs="12" :sm="12">
       <div class="service-page__info">
         <div class="service-page__info-title">
@@ -31,9 +31,9 @@
     </a-col>
   </a-row>
 
-  <a-row :gutter="[10, 10]">
+  <a-row :gutter="[10, 10]" :style="{ marginTop: (!serviceUsed) ? '10px' : null }">
     <a-col :md="12" :xs="24" :sm="12">
-      <a-button size="large" type="primary" :loading="isLoginLoading" @click="logIntoCpanel">
+      <a-button size="large" type="primary" :loading="isLoginLoading" @click="loginToCpanel">
         {{ capitalize($t('enter')) }}
       </a-button>
     </a-col>
@@ -93,15 +93,12 @@ function getPercent (value) {
   return parseFloat(count) / parseFloat(max) * 100
 }
 
-async function logIntoCpanel () {
+async function loginToCpanel () {
+  isLoginLoading.value = true
   try {
-    isLoginLoading.value = true
-    const response = await instancesStore.invokeAction({
-      uuid: route.params.id, action: 'session'
-    })
+    const url = await instancesStore.loginToCpanel(route.params.id)
 
-    if (!response.result) throw new Error(response)
-    window.open(response.meta.url)
+    window.open(url)
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 
