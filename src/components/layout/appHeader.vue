@@ -310,7 +310,7 @@ export default {
               icon: reloadIcon,
               onClickFuncion: () => {
                 this.fetchTickets()
-                this.fetchUserData()
+                this.fetchUserData(true)
               }
             }
           ]
@@ -330,7 +330,7 @@ export default {
               onClickFuncion: () => {
                 this.fetchClouds()
                 this.fetchProducts(this.billingUser.client_id)
-                this.fetchUserData()
+                this.fetchUserData(true)
               }
             }
           ]
@@ -359,7 +359,7 @@ export default {
 
                 if (this.activeInvoiceTab === 'Invoice') this.fetchInvoices()
                 else this.fetchTransactions(params, true)
-                this.fetchUserData()
+                this.fetchUserData(true)
               }
             }
           ]
