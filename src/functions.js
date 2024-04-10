@@ -148,9 +148,11 @@ export async function createInvoice (instance, service, account, baseURL) {
     setTimeout(() => { window.open(url, '_blank') }, 300)
     return url
   } catch (error) {
-    const url = error.response?.data.redirect_url ?? error.response?.data ?? error
+    const url = error.response?.data.redirect_url ?? error.response?.data[0] ?? error[0]
 
-    if (url.startsWith('http')) window.open(url, '_blank')
+    if (url.startsWith && url.startsWith('http')) {
+      window.open(url, '_blank')
+    }
     return url
   }
 }
@@ -170,9 +172,11 @@ export async function createRenewInvoice (instance, service, account, baseURL) {
     setTimeout(() => { window.open(url, '_blank') }, 300)
     return url
   } catch (error) {
-    const url = error.response?.data.redirect_url ?? error.response?.data ?? error
+    const url = error.response?.data.redirect_url ?? error.response?.data[0] ?? error[0]
 
-    if (url.startsWith('http')) window.open(url, '_blank')
+    if (url.startsWith && url.startsWith('http')) {
+      window.open(url, '_blank')
+    }
     return url
   }
 }
