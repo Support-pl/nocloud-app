@@ -1,6 +1,6 @@
 <template>
   <div class="btn">
-    <a-button block size="small" :loading="isLoading" @click.stop="logIntoCpanel">
+    <a-button block size="small" :loading="isLoading" @click.stop="loginToCpanel">
       {{ capitalize($t('enter')) }}
     </a-button>
   </div>
@@ -21,17 +21,12 @@ const instancesStore = useInstancesStore()
 
 const isLoading = ref(false)
 
-async function logIntoCpanel () {
+async function loginToCpanel () {
+  isLoading.value = true
   try {
-    isLoading.value = true
-    const response = await instancesStore.invokeAction({
-      uuid: props.service.uuid, action: 'session'
-    })
+    const url = await instancesStore.loginToCpanel(props.service.uuid ?? props.service.id)
 
-    if (!response.result) throw response
-    if (response.cpanelresult?.error) throw response
-
-    window.open(response.meta.url)
+    window.open(url)
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 
