@@ -491,7 +491,13 @@ export default {
         .sort((a, b) => a.price - b.price)
         .sort((a, b) => a.sorter - b.sorter)
       this.sizes = productsAndSizes.sizes
-      this.options.size = Object.values(this.sizes[0]?.keys ?? {})[0] ?? ''
+
+      const data = JSON.parse(this.$route.query.data ?? '{}')
+
+      if (data.productSize) this.options.size = data.productSize
+      else {
+        this.options.size = Object.values(this.sizes[0]?.keys ?? {})[0] ?? ''
+      }
     },
     changePeriods (key) {
       const { title } = this.products[key]
@@ -505,7 +511,13 @@ export default {
 
       this.periods.sort((a, b) => a - b)
       if (this.periods.includes(this.options.period)) return
-      this.options.period = this.periods[0]
+      const data = JSON.parse(this.$route.query.data ?? '{}')
+
+      if (data.period && this.periods.includes(+data.period)) {
+        this.options.period = +data.period
+      } else {
+        this.options.period = this.periods[0]
+      }
     },
     changeAddons (key) {
       if (this.options.addons.includes(key)) {
