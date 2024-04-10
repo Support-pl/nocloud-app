@@ -203,14 +203,15 @@ watch(products, async (value) => {
 
   if (dataString.includes('productSize')) {
     const data = JSON.parse(dataString)
+    const code = data.ovhConfig?.planCode
 
-    if (options.config.planCode === data.ovhConfig.planCode) {
+    if (code && options.config.planCode === code) {
       return
     }
     product.value = data.productSize
     await nextTick()
 
-    setOptions('config', data.ovhConfig)
+    if (data.ovhConfig) setOptions('config', data.ovhConfig)
     return
   }
 

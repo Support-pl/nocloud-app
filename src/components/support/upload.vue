@@ -112,6 +112,7 @@ async function sendFiles () {
 }
 
 emits('get-send-func', sendFiles)
+defineExpose({ fileList })
 </script>
 
 <script>
