@@ -430,7 +430,7 @@ export default {
         .catch((error) => {
           const url = error.response?.data.redirect_url ?? error.response?.data ?? error
 
-          if (url.startsWith('http')) {
+          if (url.startsWith && url.startsWith('http')) {
             this.$router.push({ path: '/billing' })
             return
           }

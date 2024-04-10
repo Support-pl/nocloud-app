@@ -31,6 +31,7 @@
 
       <upload-files
         v-if="showSendFiles"
+        ref="upload"
         :editing="editing"
         :replies="replies"
         @get-send-func="fn.sendFiles = $event"
@@ -78,6 +79,7 @@ const authStore = useAuthStore()
 const chatsStore = useChatsStore()
 const { openNotification } = useNotification()
 
+const upload = ref()
 const textarea = ref()
 const message = ref('')
 const editing = ref(null)
@@ -135,6 +137,7 @@ async function sendChatMessage (result, replies) {
     })
 
     replies[replies.length - 1].uuid = uuid
+    replies[replies.length - 1].message += template
     emits('update:replies', replies)
   } catch (error) {
     console.error(error)
@@ -181,6 +184,7 @@ async function sendMessage () {
     await sendTicket(replies)
   }
   message.value = ''
+  upload.value.fileList = []
 }
 
 function editMessage (uuid) {

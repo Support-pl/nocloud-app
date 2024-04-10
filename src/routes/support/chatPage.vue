@@ -16,30 +16,16 @@
           :placement="(isAdminSent(reply)) ? 'rightBottom' : 'leftBottom'"
         >
           <template #content>
-            <a-popover v-if="reply.error" :title="$t('Send error')">
-              <template #content>
-                <a class="popover-link" @click="deleteMessage(reply)">
-                  {{ $t("chat_Delete_message") }}
-                </a>
-                <a class="popover-link" @click="resendMessage(reply)">
-                  {{ $t("chat_Resend_message") }}
-                </a>
-              </template>
-              <exclamation-icon class="msgStatus error" />
-            </a-popover>
-
-            <template v-else>
-              <div style="cursor: pointer" @click="addToClipboard(reply.message)">
-                <copy-icon /> {{ capitalize($t('copy')) }}
-              </div>
-              <div
-                v-if="isEditable(reply)"
-                style="cursor: pointer; margin-top: 5px"
-                @click="footer.changeEditing(reply)"
-              >
-                <edit-icon /> {{ capitalize($t('edit')) }}
-              </div>
-            </template>
+            <div style="cursor: pointer" @click="addToClipboard(reply.message)">
+              <copy-icon /> {{ capitalize($t('copy')) }}
+            </div>
+            <div
+              v-if="isEditable(reply)"
+              style="cursor: pointer; margin-top: 5px"
+              @click="footer.changeEditing(reply)"
+            >
+              <edit-icon /> {{ capitalize($t('edit')) }}
+            </div>
           </template>
 
           <div
@@ -54,7 +40,21 @@
               <span>{{ reply.name }}</span>
               <span>{{ reply.date.slice(-8, -3) }}</span>
             </div>
+
             <loading-icon v-if="reply.sending" class="msgStatus loading" />
+            <a-popover v-else-if="reply.error" :title="$t('Send error')">
+              <template #content>
+                <a class="popover-link" @click="deleteMessage(reply)">
+                  {{ $t("chat_Delete_message") }}
+                </a>
+                <a class="popover-link" @click="resendMessage(reply)">
+                  {{ $t("chat_Resend_message") }}
+                </a>
+              </template>
+              <div class="msgStatus error">
+                <exclamation-icon />
+              </div>
+            </a-popover>
           </div>
         </a-popover>
       </template>
@@ -434,15 +434,16 @@ export default { name: 'TicketChat' }
 }
 
 .msgStatus.error {
-  position: static;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 20px;
   height: 20px;
-  line-height: 1.9;
   border-radius: 50%;
   background: var(--err);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
   cursor: pointer;
-  transform: translate(15px, 5px);
+  transform: translate(-5px, 5px);
 }
 
 .chat__message::after {
