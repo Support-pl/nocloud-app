@@ -383,7 +383,11 @@ export default {
 
       this.products = productsAndSizes.products
       this.sizes = productsAndSizes.sizes.map(({ title }) => title)
-      this.options.size = this.sizes[0]
+
+      const data = JSON.parse(this.$route.query.data ?? '{}')
+
+      if (data.productSize) this.options.size = data.productSize
+      else this.options.size = this.sizes[0]
     },
     changePeriods (title) {
       this.periods = []
@@ -394,7 +398,13 @@ export default {
       })
 
       this.periods.sort((a, b) => a - b)
-      this.options.period = this.periods[0]
+      const data = JSON.parse(this.$route.query.data ?? '{}')
+
+      if (data.period && this.periods.includes(+data.period)) {
+        this.options.period = +data.period
+      } else {
+        this.options.period = this.periods[0]
+      }
     },
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
