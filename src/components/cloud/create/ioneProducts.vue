@@ -89,6 +89,7 @@
 
 <script setup>
 import { defineAsyncComponent, watch, nextTick, ref, computed, inject } from 'vue'
+import { useRoute } from 'vue-router'
 import { usePlansStore } from '@/stores/plans.js'
 
 const upIcon = defineAsyncComponent(
@@ -103,6 +104,7 @@ const props = defineProps({
 })
 const emits = defineEmits(['update:product'])
 
+const route = useRoute()
 const plansStore = usePlansStore()
 const [options, setOptions] = inject('useOptions')()
 
@@ -124,10 +126,15 @@ const groups = computed(() =>
     return result
   }, [])
 )
+const data = localStorage.getItem('data') ?? route.query.data
+const { productSize: size } = JSON.parse(data)
 
 if (groups.value.length > 0) {
-  group.value = groups.value[1] ?? groups.value[0]
-} else if (props.products.length > 0) {
+  const { group: productGroup } = props.getProduct(size)
+
+  group.value = productGroup ?? groups.value[1] ?? groups.value[0]
+  if (size) nextTick(() => emits('update:product', size))
+} else if (props.products.length > 0 && !size) {
   emits('update:product', props.products[1] ?? props.products[0])
 }
 
@@ -140,6 +147,9 @@ watch(group, setProduct)
 watch(() => props.products, (value) => {
   if (groups.value.length < 1 && value.length > 0) {
     emits('update:product', props.products[1] ?? props.products[0])
+  } else if (size) {
+    group.value = props.getProduct(size)?.group ?? group.value
+    nextTick(() => emits('update:product', size))
   }
 })
 
