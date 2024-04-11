@@ -49,7 +49,9 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
       } else if (result.resources.disk) {
         result.resources.drive_size = result.resources.disk
       } else {
-        result.resources.drive_size = plan.value.meta?.minSize ?? 20 * 1024
+        const minDisk = (plan.value.meta.minDiskSize ?? {})[result.resources.drive_type]
+
+        result.resources.drive_size = (minDisk ?? 20) * 1024
       }
     }
 
@@ -126,7 +128,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
         price.push(resource.price / resource.period * 3600 * count)
       } else if (key.includes('drive')) {
         const { size } = (activeKey.value === 'location')
-          ? { size: options.disk.min * 1024 }
+          ? { size: product.value.resources.drive_size }
           : options.disk
         const type = (activeKey.value === 'location')
           ? getDriveType().toLowerCase()
