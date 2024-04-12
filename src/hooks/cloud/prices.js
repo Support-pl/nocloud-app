@@ -128,7 +128,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
         price.push(resource.price / resource.period * 3600 * count)
       } else if (key.includes('drive')) {
         const { size } = (activeKey.value === 'location')
-          ? { size: product.value.resources.drive_size }
+          ? { size: product.value?.resources.drive_size ?? options.disk.min * 1024 }
           : options.disk
         const type = (activeKey.value === 'location')
           ? getDriveType().toLowerCase()
