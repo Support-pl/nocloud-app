@@ -127,7 +127,7 @@ const groups = computed(() =>
   }, [])
 )
 const data = localStorage.getItem('data') ?? route.query.data
-const { productSize: size } = JSON.parse(data)
+const { productSize: size } = JSON.parse(data ?? '{}')
 
 if (groups.value.length > 0) {
   const { group: productGroup } = props.getProduct(size)
