@@ -3,16 +3,19 @@
     <div class="order">
       <div class="order__field">
         <div class="order__option">
-          <template v-if="typesOptions.length > 1">
-            <div style="margin-bottom: 7px">
-              {{ capitalize($t('filter')) }}:
-            </div>
-            <a-checkbox-group
-              v-model:value="checkedTypes"
-              style="margin-bottom: 15px"
-              :options="typesOptions"
-            />
-          </template>
+          <a-radio-group
+            v-if="typesOptions.length > 1"
+            v-model:value="checkedType"
+            style="margin-bottom: 30px"
+            class="order__radio-group"
+          >
+            <a-radio-button v-for="group of typesOptions" :key="group" :value="group">
+              <img v-if="getGroupImage(group)" :src="getGroupImage(group)" :alt="group">
+              <h1 style="margin-bottom: 4px">
+                {{ capitalize(group) }}
+              </h1>
+            </a-radio-button>
+          </a-radio-group>
 
           <div v-for="(resource, key) in resources" :key="key">
             <span>{{ capitalize($t('filter')) }} {{ $t('by') }} {{ key }}:</span>
@@ -28,7 +31,7 @@
             />
           </div>
 
-          <div class="order__grid">
+          <div v-if="filteredSizes.length > 0" class="order__grid">
             <div
               v-for="size of filteredSizes"
               :key="size.keys[options.period]"
@@ -48,7 +51,7 @@
             </div>
           </div>
 
-          <transition name="specs" mode="out-in">
+          <transition v-if="filteredSizes.length > 0" name="specs" mode="out-in">
             <div
               v-if="typeof getProducts.meta?.description === 'string'"
               style="margin-top: 15px"
@@ -220,7 +223,7 @@ export default {
     products: {},
     sizes: [],
     periods: [],
-    checkedTypes: [],
+    checkedType: '',
     filters: {},
     cachedPlans: {}
   }),
@@ -297,9 +300,7 @@ export default {
     },
     filteredSizes () {
       return this.sizes.filter(({ group, keys }) => {
-        const isIncluded = (this.checkedTypes.length > 0)
-          ? this.checkedTypes.includes(group)
-          : true
+        const isIncluded = this.checkedType === group
 
         const { meta } = this.products[keys[this.options.period]] ?? {}
 
@@ -360,6 +361,10 @@ export default {
       const message = this.$t('ssl_product.field is required')
 
       return { req: [{ required: true, message }] }
+    },
+
+    groupWidthStyle () {
+      return `${100 / this.typesOptions.length}%`
     }
   },
   watch: {
@@ -536,6 +541,7 @@ export default {
         price: +(price * this.currency.rate).toFixed(2)
       }
     },
+
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
       const plan = this.plans.find(({ uuid }) => uuid === this.plan)
@@ -657,6 +663,12 @@ export default {
 
       if (isPayg && !this.checkBalance(price)) return
       this.modal.confirmCreate = true
+    },
+
+    getGroupImage (group) {
+      const { image } = this.sizes.find((size) => size.group === group) ?? {}
+
+      return image
     }
   }
 }
@@ -704,6 +716,11 @@ export default {
 
 .order :deep(.ant-slider-mark-text:last-of-type) {
   transform: translateX(calc(-100% + 10px)) !important;
+}
+
+.order__radio-group {
+  display: flex;
+  gap: 20px;
 }
 
 .product__specs{
@@ -780,11 +797,35 @@ export default {
   line-height: 1.2;
 }
 
+.order__radio-group img,
 .order__grid-item img {
   max-width: 50px;
+  padding: 2px;
   border: 1px solid var(--border_color);
   border-radius: 10px;
   background: #fff;
+}
+
+.order__radio-group > * {
+  display: flex;
+  align-items: center;
+  flex-basis: v-bind(groupWidthStyle);
+  height: auto;
+  padding: 5px 15px;
+  border-radius: 10px;
+  border-inline-start-width: 1px;
+}
+
+.order__radio-group > *::before {
+  content: none;
+}
+
+.order__radio-group > :deep(* > span) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 .order__grid-item--active {
