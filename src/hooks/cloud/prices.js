@@ -46,6 +46,8 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
     if (!result.resources.drive_size) {
       if (plan.value.type === 'ovh dedicated') {
         result.resources.drive_size = getResource('disk-size', result)
+      } else if (plan.value.type === 'keyweb') {
+        result.resources.drive_size = 0
       } else if (result.resources.disk) {
         result.resources.drive_size = result.resources.disk
       } else {

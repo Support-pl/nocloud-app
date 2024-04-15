@@ -127,10 +127,13 @@ watch(() => props.productSize, (value) => {
 
 const data = localStorage.getItem('data') ?? route.query.data
 
-if (data && props.products.length > 0) {
-  const { productSize } = JSON.parse(data)
+if (props.products.length > 0) {
+  const { productSize } = JSON.parse(data ?? '{}')
 
   if (productSize) setProduct(productSize)
+  else if (props.products.length < 6) {
+    setProduct(props.products[1] ?? props.products[0])
+  }
 }
 
 const isProductsExist = computed(() =>
