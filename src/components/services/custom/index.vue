@@ -6,13 +6,13 @@
           <a-radio-group
             v-if="typesOptions.length > 1"
             v-model:value="checkedType"
-            style="margin-bottom: 30px"
             class="order__radio-group"
+            :style="(filteredSizes.length > 0) ? 'margin-bottom: 30px' : null"
           >
             <a-radio-button v-for="group of typesOptions" :key="group" :value="group">
               <img v-if="getGroupImage(group)" :src="getGroupImage(group)" :alt="group">
               <h1 style="margin-bottom: 4px">
-                {{ capitalize(group) }}
+                {{ group }}
               </h1>
             </a-radio-button>
           </a-radio-group>
@@ -151,7 +151,7 @@
           <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
               <template v-if="!fetchLoading">
-                {{ getProducts.price }} {{ currency.code }}
+                {{ getProducts.price ?? 0 }} {{ currency.code }}
               </template>
               <div v-else class="loadingLine loadingLine--total" />
             </transition>
@@ -184,6 +184,7 @@
 
 <script>
 import { mapStores, mapState } from 'pinia'
+import { nextTick } from 'vue'
 import { usePeriod } from '@/hooks/utils'
 import useCreateInstance from '@/hooks/instances/create.js'
 import { checkPayg, createInvoice } from '@/functions.js'
@@ -300,7 +301,7 @@ export default {
     },
     filteredSizes () {
       return this.sizes.filter(({ group, keys }) => {
-        const isIncluded = this.checkedType === group
+        const isIncluded = (this.typesOptions.length > 1) ? this.checkedType === group : true
 
         const { meta } = this.products[keys[this.options.period]] ?? {}
 
@@ -385,12 +386,23 @@ export default {
         const message = error.response?.data?.message ?? error.message ?? error
 
         this.$notification.error({ message })
+      } finally {
+        this.fetchLoading = false
       }
     },
     resources (value) {
       Object.entries(value).forEach(([key, resource]) => {
         this.filters[key] = [resource.at(0), resource.at(-1)]
       })
+    },
+    checkedType (value) {
+      const { keys } = this.sizes.find(({ group }) => group === value) ?? {}
+
+      if (keys && this.options.period) {
+        this.options.size = keys[this.options.period]
+      } else if (keys) {
+        this.options.size = Object.values(keys)[0]
+      }
     },
     'options.size' (value, prev) {
       const size = this.sizes.find(({ keys }) => Object.values(keys).includes(prev))
@@ -402,8 +414,6 @@ export default {
       this.getProducts.addons.forEach(({ meta, key }) => {
         if (meta.autoEnable) this.options.addons.push(key)
       })
-
-      this.fetchLoading = false
     },
     'options.period' (value) {
       const { title } = this.products[this.options.size]
@@ -500,8 +510,10 @@ export default {
       const data = JSON.parse(this.$route.query.data ?? '{}')
 
       if (data.productSize) this.options.size = data.productSize
-      else {
-        this.options.size = Object.values(this.sizes[0]?.keys ?? {})[0] ?? ''
+      else if (this.typesOptions.length < 2) {
+        nextTick(() => {
+          this.options.size = Object.values(this.sizes[0]?.keys ?? {})[0] ?? ''
+        })
       }
     },
     changePeriods (key) {
