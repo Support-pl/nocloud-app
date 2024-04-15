@@ -99,6 +99,8 @@ function useCloudOptions (activeKey, tarification) {
 
     if (minDiskSize) {
       options.disk.min = +minDiskSize[options.disk.type]
+    } else {
+      options.disk.min = 20
     }
     if (maxDiskSize) {
       options.disk.max = +maxDiskSize[options.disk.type]

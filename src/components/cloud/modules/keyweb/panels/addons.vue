@@ -24,7 +24,11 @@ import { useCurrency } from '@/hooks/utils'
 import { getTarification } from '@/functions.js'
 
 const props = defineProps({
-  mode: { type: String, required: true }
+  mode: { type: String, required: true },
+  productSize: { type: String, required: true },
+  plans: { type: Array, default: () => [] },
+  products: { type: Array, default: () => [] },
+  isFlavorsLoading: { type: Boolean, default: false }
 })
 
 const cloudStore = useCloudStore()
