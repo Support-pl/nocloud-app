@@ -1,5 +1,5 @@
 import Api from 'nocloudjsrest'
-import { useAppStore } from './stores/app.js'
+import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 
 // const api = new Api()
