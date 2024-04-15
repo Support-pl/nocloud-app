@@ -28,7 +28,7 @@
               :style="{
                 boxShadow: (authData.username.length < 2) ? '0 0 2px 2px var(--err)' : null
               }"
-              @update:value="setOptions('config.username', $event)"
+              @change="setOptions('config.username', $event)"
             />
 
             <div v-if="authData.username.length < 2" style="line-height: 1.5; color: var(--err)">
@@ -47,7 +47,7 @@
               :style="{
                 boxShadow: (authData.hostname.length < 2) ? '0 0 2px 2px var(--err)' : null
               }"
-              @update:value="setOptions('config.hostname', $event)"
+              @change="setOptions('config.hostname', $event)"
             />
 
             <div v-if="authData.hostname.length < 2" style="line-height: 1.5; color: var(--err)">
@@ -70,7 +70,7 @@
             <a-input-password
               v-model:value="authData.password"
               class="password"
-              @update:value="setOptions('config.password', $event)"
+              @change="setOptions('config.password', $event)"
             />
           </a-form-item>
         </a-col>
@@ -105,7 +105,10 @@ import imagesList from '@/components/ui/images.vue'
 
 const props = defineProps({
   mode: { type: String, default: '' },
-  productSize: { type: String, required: true }
+  productSize: { type: String, required: true },
+  plans: { type: Array, default: () => [] },
+  products: { type: Array, default: () => [] },
+  isFlavorsLoading: { type: Boolean, default: false }
 })
 
 const cloudStore = useCloudStore()
