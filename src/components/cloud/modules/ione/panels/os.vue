@@ -113,6 +113,7 @@ const images = computed(() => {
   const images = {}
 
   Object.entries(templates ?? {}).forEach(([key, value]) => {
+    if (cloudStore.plan.meta.hidedOs?.includes(key)) return
     if (value.is_public !== false) {
       images[key] = value
     }

@@ -17,7 +17,7 @@
       align="middle"
     >
       <a-col v-if="slider.key == 'cpu' && isHighCPUExist" style="display: flex; width: 70px">
-        <a-tooltip v-if="options.highCPU" title="High CPU">
+        <a-tooltip v-if="options.highCPU" :title="$t('highCPU')">
           <span
             style="
               margin-right: 5px;
@@ -108,10 +108,10 @@ const route = useRoute()
 const plansStore = usePlansStore()
 const [options, setOptions] = inject('useOptions')()
 
-const sliders = [
-  { key: 'cpu', prefix: 'CPU:', postfix: 'vCPU' },
+const sliders = computed(() => [
+  { key: 'cpu', prefix: 'CPU:', postfix: (options.highCPU) ? 'hCPU' : 'vCPU' },
   { key: 'ram', prefix: 'RAM:', postfix: 'Gb' }
-]
+])
 
 const group = ref('')
 const groups = computed(() =>

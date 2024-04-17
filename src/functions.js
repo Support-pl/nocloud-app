@@ -101,6 +101,7 @@ export function getPeriods (productSize, plans) {
       .filter(({ title }) => title === productSize)
       .map((el) => +el.period)
 
+    if (value.find(({ period }) => periods.includes(period))) return
     if (periods.includes(day)) {
       value.push(
         { value: 'Daily', label: 'daily', period: day }
