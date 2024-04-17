@@ -42,7 +42,6 @@ const props = defineProps({
   editing: { type: String, default: null },
   replies: { type: Array, default: () => [] }
 })
-const emits = defineEmits(['get-send-func'])
 const route = useRoute()
 
 const fileList = ref([])
@@ -111,8 +110,7 @@ async function sendFiles () {
   return fileList.value
 }
 
-emits('get-send-func', sendFiles)
-defineExpose({ fileList })
+defineExpose({ fileList, sendFiles })
 </script>
 
 <script>

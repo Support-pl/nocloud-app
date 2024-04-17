@@ -57,8 +57,9 @@ const tariffTitle = computed(() =>
 
 const cpuSize = computed(() => {
   const result = props.minProduct.resources?.cpu ?? options.cpu.size
+  const text = (options.highCPU) ? 'hCPU' : 'vCPU'
 
-  return `${result} ${(isNaN(+result)) ? '' : 'vCPU'}`
+  return `${result} ${(isNaN(+result)) ? '' : text}`
 })
 
 const ramSize = computed(() => {

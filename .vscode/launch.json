@@ -1,0 +1,29 @@
+{
+  // Используйте IntelliSense, чтобы узнать о возможных атрибутах.
+  // Наведите указатель мыши, чтобы просмотреть описания существующих атрибутов.
+  // Для получения дополнительной информации посетите: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+    "compounds": [
+      {
+        "name": "Launch All",
+        "stopAll": true,
+        "configurations": ["Launch App", "Launch Proxy"]
+      }
+    ],
+  "configurations": [
+    {
+      "name": "Launch App",
+      "command": "npm run serve",
+      "request": "launch",
+      "type": "node-terminal",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Launch Proxy",
+      "command": "node index.js",
+      "request": "launch",
+      "type": "node-terminal",
+      "cwd": "${workspaceFolder}/../proxy"
+    }
+  ]
+}
