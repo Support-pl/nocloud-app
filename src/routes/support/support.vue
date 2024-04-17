@@ -50,7 +50,7 @@ const chats = computed(() => {
       status: capitalized,
       unread: (isReaded) ? 0 : ticket.meta.unread
     }
-    const { whmcs, instance } = ticket.meta.data
+    const { whmcs, instance } = ticket.meta.data ?? {}
     const id = (whmcs?.kind.case) ? whmcs?.toJSON() : null
     const inst = (instance?.kind.case) ? instance?.toJSON() : null
 

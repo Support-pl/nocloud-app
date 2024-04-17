@@ -154,7 +154,7 @@ const chats = computed(() => {
   const { uuid } = authStore.billingUser
 
   chatsStore.chats.forEach((ticket) => {
-    const { whmcs, instance: inst } = ticket.meta.data
+    const { whmcs, instance: inst } = ticket.meta.data ?? {}
     const instance = (inst?.kind.case) ? inst?.toJSON() : null
 
     const { from } = route.query
@@ -205,6 +205,7 @@ watch(chats, async () => {
 
 watch(replies, async (value) => {
   await nextTick()
+  await new Promise((resolve) => setTimeout(resolve, 300))
 
   if (value.length > 0) addImageClick()
   if (!content.value) return

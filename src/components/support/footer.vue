@@ -19,7 +19,7 @@
         v-model:value="message"
         allow-clear
         type="text"
-        :disabled="status === 'Closed'"
+        :disabled="['Closed', 3].includes(status)"
         :auto-size="{ minRows: 2, maxRows: 100 }"
         :placeholder="$t('message') + '...'"
         @keyup.shift.enter.exact="newLine"
@@ -29,13 +29,7 @@
         <arrow-up-icon />
       </div>
 
-      <upload-files
-        v-if="showSendFiles"
-        ref="upload"
-        :editing="editing"
-        :replies="replies"
-        @get-send-func="fn.sendFiles = $event"
-      />
+      <upload-files v-if="showSendFiles" ref="upload" :editing="editing" :replies="replies" />
     </div>
   </div>
 </template>
@@ -88,7 +82,6 @@ const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET)
 const columnsStyle = computed(() =>
   (showSendFiles.value) ? '1fr auto auto' : '1fr auto'
 )
-const fn = { sendFiles: async () => [] }
 
 function newLine () {
   message.value.replace(/$/, '\n')
@@ -119,7 +112,7 @@ function updateReplies () {
 async function sendChatMessage (result, replies) {
   await nextTick()
   try {
-    const files = await fn.sendFiles()
+    const files = await upload.value.sendFiles()
     const template = (files.length > 0)
       ? `<div class="chat__files">
           ${files.map((file) => `<div class="files__preview">
