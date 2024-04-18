@@ -684,9 +684,9 @@ export default {
         [...this.tickets, ...this.chats.values()].forEach((el) => {
           const status = (typeof el.status === 'number')
             ? Status[el.status].toLowerCase()
-            : el.status
+            : el.status ?? 'new'
           const capitalized = `${status[0].toUpperCase()}${status.slice(1)}`
-          const key = this.$t(`filterHeader.${el.status}`)
+          const key = this.$t(`filterHeader.${el.status ?? 0}`)
 
           filtered[key] = capitalized
         })

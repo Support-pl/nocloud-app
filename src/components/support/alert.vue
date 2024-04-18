@@ -305,6 +305,7 @@ onMounted(() => {
   window.addEventListener('resize', () => {
     emits('update:paddingTop', `${notification.value?.$el.offsetHeight + 15}px`)
   })
+  emits('update:paddingTop', `${notification.value?.$el.offsetHeight + 15}px`)
 
   if (localStorage.getItem('gateway')) {
     gateway.value = localStorage.getItem('gateway')

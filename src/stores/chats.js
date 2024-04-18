@@ -86,9 +86,21 @@ export const useChatsStore = defineStore('chats', () => {
           }
         }
         break
-      case EventType.CHAT_UPDATED:
-        chats.value.set(chat.uuid, chat)
+
+      case EventType.CHAT_UPDATED: {
+        const oldChat = chats.value.get(chat.uuid)
+
+        chats.value.set(chat.uuid, {
+          ...chat,
+          meta: new ChatMeta({
+            ...chat.meta, data: oldChat.meta.data
+          })
+        })
+
+        messages.value[chat.uuid].subject = chat.topic
+        messages.value[chat.uuid].status = chat.status
         break
+      }
 
       case EventType.CHAT_DELETED:
         chats.value.delete(chat.uuid)
@@ -97,8 +109,6 @@ export const useChatsStore = defineStore('chats', () => {
   }
 
   function updateMessage (event) {
-    console.log('Update message:', event)
-
     const { value: message } = event.item
     if (!messages.value[message.chat]) {
       const chat = chats.value.get(message.chat)
@@ -126,7 +136,6 @@ export const useChatsStore = defineStore('chats', () => {
         if (i === -1) replies.push(newMessage)
         else replies.splice(i, 1, newMessage)
 
-        console.log(i, replies, chat)
         chat.meta = new ChatMeta({
           ...chat.meta,
           unread: (chat.uuid === route.params.id) ? 0 : chat.meta.unread + 1,

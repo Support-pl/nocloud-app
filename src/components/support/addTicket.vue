@@ -60,20 +60,28 @@
           </div>
         </a-form-item>
 
-        <a-button
-          type="primary"
-          style="display: block; margin-left: auto"
-          @click="(gateway === 'telegram') ? sendTelegramMessage() : sendNewTicket()"
-        >
-          OK
-        </a-button>
+        <a-form-item :label="(upload?.fileList.length > 0) ? $t('files') : null">
+          <div class="addTicket__buttons">
+            <upload-files v-if="showSendFiles" ref="upload" file-list-style="order: -1; grid-column: 1 / 3">
+              <a-button type="primary">
+                <upload-icon />
+              </a-button>
+            </upload-files>
+            <a-button
+              type="primary"
+              @click="(gateway === 'telegram') ? sendTelegramMessage() : sendNewTicket()"
+            >
+              OK
+            </a-button>
+          </div>
+        </a-form-item>
       </a-form>
     </a-spin>
   </a-modal>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { message, notification } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -85,6 +93,12 @@ import api from '@/api'
 import { useAuthStore } from '@/stores/auth.js'
 import { useChatsStore } from '@/stores/chats.js'
 import { useSupportStore } from '@/stores/support.js'
+
+import uploadFiles from '@/components/support/upload.vue'
+
+const uploadIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/UploadOutlined')
+)
 
 const md = markdown({
   html: true,
@@ -111,6 +125,9 @@ const ticketTitle = ref('')
 const ticketMessage = ref('')
 const isSending = ref(false)
 const isLoading = ref(false)
+
+const upload = ref()
+const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET)
 
 const filteredDepartments = computed(() => {
   const chatsDeparts = (props.instanceId)
@@ -204,9 +221,17 @@ async function createChat () {
   const { admins, id: key, whmcsId } = departments.find(({ id }) => id === ticketDepartment.value) ?? {}
 
   try {
-    const message = md.render(ticketMessage.value)
-      .trim()
-      .replace(/^<p>/, '').replace(/<\/p>$/, '')
+    const files = await upload.value.sendFiles()
+    const template = (files.length > 0)
+      ? `<div class="chat__files">
+          ${files.map((file) => `<div class="files__preview">
+            <img src="${file.url}" alt="${file.name}">
+          </div>`).join('\n')}
+        </div>`
+      : ''
+
+    const message = md.render(ticketMessage.value).trim()
+      .replace(/^<p>/, '').replace(/<\/p>$/, '') + template
 
     const response = await chatsStore.createChat({
       admins,
@@ -221,21 +246,18 @@ async function createChat () {
     })
 
     if (response.uuid) {
-      if (!response.meta.lastMessage?.uuid) {
-        await chatsStore.sendMessage({
-          uuid: response.uuid,
-          content: message,
-          account: authStore.userdata.uuid,
-          date: BigInt(Date.now())
-        })
-      }
-
-      const query = { from: props.instanceId }
-
-      router.push({ path: `/ticket/${response.uuid}`, query })
-    } else {
-      throw response
+      await chatsStore.sendMessage({
+        uuid: response.uuid,
+        content: message,
+        account: authStore.userdata.uuid,
+        date: BigInt(Date.now()),
+        attachments: files.map(({ uuid }) => uuid)
+      })
     }
+
+    const query = { from: props.instanceId }
+
+    router.push({ path: `/ticket/${response.uuid}`, query })
     return { result: 'success' }
   } catch (error) {
     return { result: 'error', error }
@@ -381,8 +403,11 @@ export default { name: 'AddTicket' }
 }
 
 .addTicket__buttons {
-  display: flex;
-  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  justify-items: end;
+  gap: 10px;
 }
 
 .addTicket__button {
@@ -404,6 +429,10 @@ export default { name: 'AddTicket' }
 .addTicket__button--send {
   background-color: var(--success);
   border-radius: 0 0 25px 0;
+}
+
+:deep(.ant-form-item:last-child) {
+  margin-bottom: 0;
 }
 
 .order__grid {

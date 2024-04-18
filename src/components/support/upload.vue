@@ -7,11 +7,14 @@
     :show-upload-list="false"
     @remove="removeFile"
   >
-    <div class="upload__button">
-      <upload-icon />
-    </div>
+    <slot>
+      <div class="upload__button">
+        <upload-icon />
+      </div>
+    </slot>
   </a-upload>
-  <div v-if="fileList.length > 0" class="files">
+
+  <div v-if="fileList.length > 0" class="files" :style="fileListStyle">
     <div
       v-for="file of fileList"
       :key="file.uid"
@@ -40,7 +43,8 @@ const plusIcon = defineAsyncComponent(
 
 const props = defineProps({
   editing: { type: String, default: null },
-  replies: { type: Array, default: () => [] }
+  replies: { type: Array, default: () => [] },
+  fileListStyle: { type: [String, Array, Object], default: null }
 })
 const route = useRoute()
 
