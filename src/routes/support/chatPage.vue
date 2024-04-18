@@ -253,7 +253,6 @@ async function loadMessages (update) {
   const result = chatsStore.messages[chatid.value]
 
   if (!update && result) {
-    console.log(result)
     status.value = result.status
     replies.value = result.replies ?? []
     subject.value = result.subject
