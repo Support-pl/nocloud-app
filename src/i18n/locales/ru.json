@@ -631,6 +631,7 @@
     "gateway": "Канал общения",
     "message": "Сообщение",
     "description": "Описание",
+    "files": "Файлы",
     "ticketStatus": {
       "Closed": "Закрыт",
       "Close-Ticket": "Обращение закрыто",

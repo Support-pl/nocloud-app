@@ -161,11 +161,11 @@ const chats = computed(() => {
     if (instance !== from && from) return
 
     const string = searchString.value.toLowerCase()
-    const topic = ticket.topic.toLowerCase()
+    const topic = ticket.topic?.toLowerCase() ?? ''
     if (!topic.includes(string) && string !== '') return
 
     const isReaded = ticket.meta.lastMessage?.readers.includes(uuid)
-    const status = Status[ticket.status].toLowerCase().split('_')
+    const status = Status[ticket.status]?.toLowerCase().split('_') ?? ticket.status
     const capitalized = status.map((el) =>
       `${el[0].toUpperCase()}${el.slice(1)}`
     ).join(' ')
@@ -212,6 +212,8 @@ watch(replies, async (value) => {
   content.value.scrollTo(0, content.value.scrollHeight)
 }, { deep: true })
 
+watch(() => chatsStore.messages[chatid.value], () => loadMessages(), { deep: true })
+
 onMounted(async () => {
   try {
     await supportStore.fetch()
@@ -252,7 +254,7 @@ async function loadMessages (update) {
 
   if (!update && result) {
     status.value = result.status
-    replies.value = result.replies
+    replies.value = result.replies ?? []
     subject.value = result.subject
 
     setTimeout(() => {
