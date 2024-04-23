@@ -57,7 +57,7 @@ watch(() => props.editing, (value) => {
       (reply) => reply.uuid === value
     ) ?? {}
     const template = message.match(/<div class="chat__files">[\s\S]{1,}<\/div>$/g)[0]
-    const urls = template.match(/https:\/\/[\s\S]{1,}\.\w{1,}/g)
+    const urls = template.match(/https:\/\/[\S ]{1,}\.\w{1,}/g)
 
     urls.forEach((url) => {
       const [preview, name] = url.split('" alt="')

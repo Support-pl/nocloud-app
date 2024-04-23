@@ -12,13 +12,34 @@
       </span>
     </a-button>
     <renewal-modal v-bind="renewalProps" v-model:visible="isVisible" />
+
+    <a-button
+      block
+      size="small"
+      style="width: auto; padding: 2px 6px; font-size: 12px"
+      :icon="h(settingsIcon)"
+      @click.stop="isAccessManagerVisible = true"
+    />
+    <a-modal
+      v-model:open="isAccessManagerVisible"
+      destroy-on-close
+      :title="$t('Access manager')"
+      :footer="null"
+    >
+      <access-manager :instance="service" />
+    </a-modal>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, defineAsyncComponent, h } from 'vue'
 import { useI18n } from 'vue-i18n'
 import renewalModal from '@/components/ui/renewalModal.vue'
+import accessManager from '@/components/cloud/options/accessManager.vue'
+
+const settingsIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/SettingFilled')
+)
 
 const props = defineProps({
   price: { type: Number, required: true },
@@ -28,6 +49,7 @@ const props = defineProps({
 
 const i18n = useI18n()
 const isVisible = ref(false)
+const isAccessManagerVisible = ref(false)
 
 const slicedPrice = computed(() => {
   if (`${props.price}`.replace('.').length > 3) {
@@ -145,6 +167,9 @@ export default { name: 'LittleButton' }
 
 <style scoped>
 .btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   grid-column: 2 / 4;
   justify-self: end;
   width: fit-content;
