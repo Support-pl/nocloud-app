@@ -177,7 +177,9 @@ export const useCloudStore = defineStore('cloud', () => {
     if (plan.value.kind === 'STATIC' || plan.value.type !== 'ione') {
       instance.product = product.value.key
     }
-    if (authData.sshKey) {
+    if (authData.sshKey && plan.value.type === 'ovh cloud') {
+      instance.config.ssh = authData.sshKey
+    } else if (authData.sshKey) {
       instance.config.ssh_public_key = authData.sshKey
     }
 
