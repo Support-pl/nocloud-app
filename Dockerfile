@@ -3,8 +3,8 @@ FROM node:latest AS ui-builder
 WORKDIR /app
 
 COPY . .
-RUN yarn set version latest
-RUN yarn install && yarn build
+RUN npm install -g pnpm
+RUN pnpm install && pnpm build
 
 FROM golang:1.21-alpine as server-builder
 

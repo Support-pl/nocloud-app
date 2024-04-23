@@ -147,7 +147,7 @@ const fetchLoading = ref(false)
 const modal = ref({ confirmCreate: false, confirmLoading: false })
 
 const getProducts = computed(() => {
-  const { resources, title } = plans.value.find(({ uuid }) => uuid === plan.value) ?? {}
+  const { resources, title, meta } = plans.value.find(({ uuid }) => uuid === plan.value) ?? {}
   if (!resources) return 'NAN'
 
   const products = Object.values(resources).reduce(
@@ -163,7 +163,9 @@ const getProducts = computed(() => {
     inputKilotoken,
     outputKilotoken,
     price: inputKilotoken + outputKilotoken,
-    description: `<span style="font-size: 18px; white-space: pre-line">${i18n.t('openai description')}</span>`
+    description: `<span style="font-size: 18px; white-space: pre-line">${
+      meta.description || i18n.t('openai description')
+    }</span>`
   }
 })
 

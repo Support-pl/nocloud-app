@@ -13,7 +13,7 @@
   "configurations": [
     {
       "name": "Launch App",
-      "command": "npm run serve",
+      "command": "pnpm serve",
       "request": "launch",
       "type": "node-terminal",
       "cwd": "${workspaceFolder}"

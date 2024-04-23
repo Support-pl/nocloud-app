@@ -122,6 +122,14 @@ const [options, setOptions] = inject('useOptions')()
 
 emits('update:periods', getPeriods(props.productSize, props.plans))
 watch(() => props.productSize, (value) => {
+  const product = getProduct(value)
+
+  if (product?.meta?.minDiskSize) {
+    setOptions('disk.min', product.meta.minDiskSize)
+  }
+  if (product?.meta?.maxDiskSize) {
+    setOptions('disk.max', product.meta.maxDiskSize)
+  }
   emits('update:periods', getPeriods(value, props.plans))
 })
 
@@ -183,7 +191,7 @@ function getProduct (size, plan = cloudStore.plan) {
     )
   )
 
-  return { ...product?.resources, group: product?.group }
+  return { ...product?.resources, group: product?.group, meta: product?.meta }
 }
 
 async function setProduct (value) {
