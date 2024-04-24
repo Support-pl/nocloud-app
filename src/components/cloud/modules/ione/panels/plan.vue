@@ -124,12 +124,16 @@ emits('update:periods', getPeriods(props.productSize, props.plans))
 watch(() => props.productSize, (value) => {
   const product = getProduct(value)
 
-  if (product?.meta?.minDiskSize) {
-    setOptions('disk.min', product.meta.minDiskSize)
-  }
-  if (product?.meta?.maxDiskSize) {
-    setOptions('disk.max', product.meta.maxDiskSize)
-  }
+  nextTick(() => {
+    if (product?.meta?.minDiskSize) {
+      setOptions('disk.size', product.meta.minDiskSize * 1024)
+      setOptions('disk.min', product.meta.minDiskSize)
+    }
+    if (product?.meta?.maxDiskSize) {
+      setOptions('disk.max', product.meta.maxDiskSize)
+    }
+  })
+
   emits('update:periods', getPeriods(value, props.plans))
 })
 
