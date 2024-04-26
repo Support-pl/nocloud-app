@@ -1,8 +1,10 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { useAuthStore } from './auth.js'
 import api from '@/api.js'
 
 export const useNamespasesStore = defineStore('namespaces', () => {
+  const authStore = useAuthStore()
   const namespaces = ref([])
   const isLoading = ref(false)
 
@@ -13,7 +15,9 @@ export const useNamespasesStore = defineStore('namespaces', () => {
     async fetch () {
       try {
         isLoading.value = true
-        const response = await api.namespaces.list()
+        const response = await api.post('/namespaces', {
+          filters: { account: authStore.userdata.uuid }
+        })
 
         namespaces.value = response.pool
         return response
