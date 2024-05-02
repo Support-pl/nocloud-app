@@ -326,6 +326,7 @@
     "select OS": "Выберите ОС",
     "select tariff": "Выберите тариф",
     "loading": "Загрузка...",
+    "bot is typing": "бот печатает",
     "inbound": "входящий",
     "outgoing": "исходящий",
     "graphs": "графики",
