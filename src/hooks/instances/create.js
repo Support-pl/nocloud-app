@@ -37,16 +37,15 @@ function useCreateInstance () {
           throw new Error('[Error]: Service uuid not found')
         }
       } catch (error) {
-        const config = { namespace, service }
-        const message = error.response?.data?.message ?? error.message ?? error
+        const matched = (error.response?.data?.message ?? error.message ?? '').split(/error:"|error: "/)
+        const message = matched.at(-1).split('" ').at(0)
 
-        const { result, errors } = await api.services.testConfig(config)
+        if (message) {
+          openNotification('error', { message })
+        } else {
+          const message = error.response?.data?.message ?? error.message ?? error
 
-        openNotification('error', { message: i18n.t(message) })
-        if (!result) {
-          errors.forEach(({ error }) => {
-            openNotification('error', { message: error })
-          })
+          openNotification('error', { message })
         }
       }
     }

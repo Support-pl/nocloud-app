@@ -58,6 +58,8 @@
           </div>
         </a-popover>
       </template>
+
+      <typing-placeholder v-if="isPlaceholderVisible" />
     </div>
 
     <div ref="chatList" class="chat__list">
@@ -102,6 +104,7 @@ import ticketItem from '@/components/support/ticketItem.vue'
 import supportHeader from '@/components/support/header.vue'
 import supportAlert from '@/components/support/alert.vue'
 import supportFooter from '@/components/support/footer.vue'
+import typingPlaceholder from '@/components/support/typingPlaceholder.vue'
 
 const exclamationIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/ExclamationCircleOutlined')
@@ -139,6 +142,7 @@ const isLoading = ref(false)
 const chatid = ref(route.params.id)
 const searchString = ref('')
 const chatPaddingTop = ref('15px')
+const isPlaceholderVisible = ref(false)
 
 const content = ref()
 const chatList = ref()
@@ -203,9 +207,10 @@ watch(chats, async () => {
   lastElementChild.style.borderBottom = '1px solid var(--border_color)'
 }, { deep: true })
 
-watch(replies, async (value) => {
+watch(replies, async (value, oldValue) => {
   await nextTick()
   await new Promise((resolve) => setTimeout(resolve, 300))
+  setPlaceholderVisible(value, oldValue)
 
   if (value.length > 0) addImageClick()
   if (!content.value) return
@@ -226,6 +231,21 @@ onMounted(async () => {
   chatsStore.fetchDefaults()
   loadMessages()
 })
+
+let timeout
+function setPlaceholderVisible (replies, oldReplies) {
+  if (chat.value.department !== 'openai') return
+  if (replies.length !== oldReplies.length + 1) return
+
+  if (isAdminSent(replies.at(-1))) {
+    timeout = setTimeout(() => {
+      isPlaceholderVisible.value = true
+    }, 2000)
+  } else {
+    clearTimeout(timeout)
+    isPlaceholderVisible.value = false
+  }
+}
 
 function beauty (message) {
   message = md.render(message).trim()
@@ -259,7 +279,7 @@ async function loadMessages (update) {
 
     setTimeout(() => {
       content.value.scrollTo(0, content.value.scrollHeight)
-    })
+    }, 100)
 
     if (chatsStore.chats.get(chatid.value)) {
       chatsStore.chats.get(chatid.value).meta.unread = 0
