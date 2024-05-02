@@ -326,6 +326,7 @@
     "select OS": "Select OS",
     "select tariff": "Select tariff",
     "loading": "Loading...",
+    "bot is typing": "bot is typing",
     "inbound": "Inbound",
     "outgoing": "Outgoing",
     "graphs": "Graphs",

@@ -135,7 +135,7 @@
               <input
                 v-if="fields.company.tax_id"
                 v-model="userinfo.tax_id"
-                :placeholder="(userinfo.country === 'PL') ? 'NIP' : 'VAT ID'"
+                :placeholder="(userinfo.country === 'PL') ? 'NIP' : 'VAT ID / Tax ID'"
               >
               <!-- <span class="login__horisontal-line"></span>
               <input :placeholder="capitalize($t('clientinfo.state'))" v-model="userinfo.state"> -->
@@ -331,7 +331,8 @@ async function submitHandler () {
   }
 
   for (const [key, value] of Object.entries(info)) {
-    if (value === 'require' && userinfo.value[key].length === 0) {
+    if (value !== 'require') continue
+    if (userinfo.value[key].length === 0) {
       message.warn(`${key} - ${i18n.t('ssl_product.field is required')}`)
       return
     }

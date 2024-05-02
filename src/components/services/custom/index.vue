@@ -650,18 +650,16 @@ export default {
             return
           }
 
-          const config = { namespace: this.namespace, service: orderData }
-          const message = error.response?.data?.message ?? error.message ?? error
+          const matched = (error.response?.data?.message ?? error.message ?? '').split(/error:"|error: "/)
+          const message = matched.at(-1).split('" ').at(0)
 
-          this.$api.services.testConfig(config)
-            .then(({ result, errors }) => {
-              if (!result) {
-                errors.forEach(({ error }) => {
-                  this.$notification.error({ message: error })
-                })
-              }
-            })
-          this.$notification.error({ message: this.$t(message) })
+          if (message) {
+            this.$notification.error({ message })
+          } else {
+            const message = error.response?.data?.message ?? error.message ?? error
+
+            this.$notification.error({ message })
+          }
           console.error(error)
         })
     },

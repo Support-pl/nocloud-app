@@ -281,18 +281,16 @@ async function createVDC (info) {
 
     await deployService(uuid)
   } catch (error) {
-    const config = { namespace: namespace.value, service: orderData }
-    const message = error.response?.data?.message ?? error.message ?? error
+    const matched = (error.response?.data?.message ?? error.message ?? '').split(/error:"|error: "/)
+    const message = matched.at(-1).split('" ').at(0)
 
-    const { result, errors } = await api.services.testConfig(config)
+    if (message) {
+      openNotification('error', { message })
+    } else {
+      const message = error.response?.data?.message ?? error.message ?? error
 
-    if (!result) {
-      errors.forEach(({ error }) => {
-        openNotification('error', { message: error })
-      })
+      openNotification('error', { message })
     }
-
-    openNotification('error', { message: i18n.t(message) })
     console.error(error)
   }
 }

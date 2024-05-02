@@ -112,7 +112,9 @@ export const useInstancesStore = defineStore('instances', () => {
     async fetch (silent) {
       try {
         isLoading.value = !silent
-        const response = await api.services.list()
+        const response = await api.post('/services', {
+          filters: { account: authStore.userdata.uuid }
+        })
 
         if (currenciesStore.currencies.length < 1) {
           await currenciesStore.fetchCurrencies()
@@ -134,7 +136,9 @@ export const useInstancesStore = defineStore('instances', () => {
 
     async fetchAll () {
       try {
-        const response = await api.get('/services', { params: { show_deleted: true } })
+        const response = await api.post('/services?show_deleted=true', {
+          filters: { account: authStore.userdata.uuid }
+        })
 
         response.pool.forEach((service) => {
           setInstances(service, allInstances)

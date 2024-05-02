@@ -102,9 +102,9 @@
 <script setup>
 import { computed, onMounted, ref, watch, reactive, defineAsyncComponent } from 'vue'
 import { storeToRefs } from 'pinia'
-import { notification } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useNotification } from '@/hooks/utils'
 import api from '@/api.js'
 
 import { useAppStore } from '@/stores/app.js'
@@ -126,6 +126,7 @@ const questionIcon = defineAsyncComponent(
 const router = useRouter()
 const route = useRoute()
 const i18n = useI18n()
+const { openNotification } = useNotification()
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
@@ -236,7 +237,7 @@ watch(provider, async (uuid) => {
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 
-    notification.error({ message })
+    openNotification('error', { message })
   }
 })
 
@@ -305,17 +306,17 @@ async function createOpenAI (info) {
 
     deployService(uuid)
   } catch (error) {
-    const config = { namespace: namespace.value, service: orderData }
-    const message = error.response?.data?.message ?? error.message ?? error
+    const matched = (error.response?.data?.message ?? error.message ?? '').split(/error:"|error: "/)
+    const message = matched.at(-1).split('" ').at(0)
 
-    const { result, errors } = await api.services.testConfig(config)
+    if (message) {
+      openNotification('error', { message })
+    } else {
+      const message = error.response?.data?.message ?? error.message ?? error
 
-    notification.error({ message: i18n.t(message) })
-    if (!result) {
-      errors.forEach(({ error }) => {
-        notification.error({ message: error })
-      })
+      openNotification('error', { message })
     }
+    console.error(error)
   }
 }
 
@@ -327,12 +328,12 @@ async function deployService (uuid) {
   try {
     await api.services.up(uuid)
 
-    notification.success({ message: i18n.t('Done') })
+    openNotification('success', { message: i18n.t('Done') })
     router.push({ path: '/services' })
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error
 
-    notification.error({ message: i18n.t(message) })
+    openNotification('error', { message: i18n.t(message) })
   } finally {
     modal.value.confirmLoading = false
   }
@@ -368,7 +369,7 @@ async function fetch () {
     const message = error.response?.data?.message ?? error.message ?? error
 
     if (error.response?.data?.code === 16) return
-    notification.error({ message: i18n.t(message) })
+    openNotification('error', { message: i18n.t(message) })
 
     console.error(error)
   } finally {
