@@ -15,7 +15,7 @@
     "@bufbuild/protobuf": "^1.9.0",
     "@connectrpc/connect": "^1.4.0",
     "@connectrpc/connect-web": "^1.4.0",
-    "ant-design-vue": "^4.2.0",
+    "ant-design-vue": "^4.2.1",
     "core-js": "^3.37.0",
     "dayjs": "^1.11.10",
     "infinimesh-proto": "^3.1.5",
