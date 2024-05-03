@@ -102,8 +102,9 @@ function updateReplies () {
 
   const date = toDate(result.date / 1000, '-', true, true)
   const replies = [...props.replies]
+  const { from } = route.query
 
-  replies.push({ ...result, date, requestor_type: 'Owner' })
+  replies.push({ ...result, date, from, requestor_type: 'Owner' })
   emits('update:replies', replies)
 
   return { replies, result }
@@ -133,11 +134,7 @@ async function sendChatMessage (result, replies) {
     replies[replies.length - 1].message += template
     emits('update:replies', replies)
   } catch (error) {
-    console.error(error)
     replies[replies.length - 1].error = true
-    emits('update:replies', replies)
-  } finally {
-    replies[replies.length - 1].sending = false
     emits('update:replies', replies)
   }
 }
