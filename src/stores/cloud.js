@@ -152,9 +152,11 @@ export const useCloudStore = defineStore('cloud', () => {
   }
 
   function setInstance (options, product) {
+    const locationItem = locations.value.find(({ id }) => id === locationId.value)
     const instance = {
       title: authData.vmName,
       config: {
+        location: locationItem.title,
         template_id: options.os.id,
         username: authData.username,
         password: authData.password,
