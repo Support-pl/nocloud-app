@@ -37,7 +37,7 @@
               <div v-else class="loadingLine" />
             </a-form-item>
 
-            <a-form-item v-if="!billingUser.email" name="email" :label="capitalize($t('ssl_product.email'))">
+            <a-form-item v-if="!billingUser.email && isLogged" name="email" :label="capitalize($t('ssl_product.email'))">
               <a-input
                 v-if="!fetchLoading"
                 v-model:value="config.email"
