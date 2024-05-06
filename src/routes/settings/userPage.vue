@@ -199,7 +199,7 @@ const isPasswordVisible = computed(() =>
 const mainKeys = computed(() => {
   const result = ['firstname', 'lastname', 'companyname', 'email', 'address1', 'city', 'state', 'postcode']
 
-  return result.filter((key) => authStore.billingUser[key])
+  return result.filter((key) => key in authStore.billingUser)
 })
 const keys = computed(() => {
   const result = {
@@ -210,10 +210,11 @@ const keys = computed(() => {
   }
 
   Object.keys(result).forEach((key) => {
-    if (!authStore.billingUser[key]) {
+    if (!(key in authStore.billingUser)) {
       delete result[key]
     }
   })
+
   return result
 })
 
