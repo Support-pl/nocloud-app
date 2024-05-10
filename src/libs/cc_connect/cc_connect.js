@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Empty, Event, Merge, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -90,6 +90,24 @@ export const ChatsAPI = {
     changeGateway: {
       name: "ChangeGateway",
       I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.ChatsAPI.ChangeStatus
+     */
+    changeStatus: {
+      name: "ChangeStatus",
+      I: Chat,
+      O: Chat,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.ChatsAPI.MergeChats
+     */
+    mergeChats: {
+      name: "MergeChats",
+      I: Merge,
       O: Chat,
       kind: MethodKind.Unary,
     },

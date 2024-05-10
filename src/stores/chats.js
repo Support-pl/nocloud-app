@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { Value } from '@bufbuild/protobuf'
 import { createPromiseClient } from '@connectrpc/connect'
@@ -18,6 +18,7 @@ import {
 } from '@/libs/cc_connect/cc_connect'
 
 export const useChatsStore = defineStore('chats', () => {
+  const router = useRouter()
   const route = useRoute()
   const authStore = useAuthStore()
   const supportStore = useSupportStore()
@@ -248,7 +249,18 @@ export const useChatsStore = defineStore('chats', () => {
 
         for await (const event of stream.value) {
           if (event.type === +EventType.PING) continue
-          else if (event.type >= EventType.MESSAGE_SENT) {
+          if (
+            event.type === +EventType.CHAT_DEPARTMENT_CHANGED ||
+              event.type === +EventType.CHAT_STATUS_CHANGED
+          ) {
+            updateChat(event)
+          } else if (event.type === +EventType.CHATS_MERGED) {
+            const { uuid: id } = event.item.value
+
+            await this.fetchChats()
+            await this.fetchMessages(id)
+            router.replace({ name: 'ticket', params: { id } })
+          } else if (event.type >= EventType.MESSAGE_SENT) {
             updateMessage({ ...event, uuid: authStore.userdata.uuid })
           } else {
             updateChat(event)
