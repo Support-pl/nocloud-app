@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, nextTick, ref, computed, watch, onMounted } from 'vue'
+import { defineAsyncComponent, nextTick, ref, computed, watch } from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import markdown from 'markdown-it'
 import { full as emoji } from 'markdown-it-emoji'
@@ -219,18 +219,24 @@ watch(replies, async (value, oldValue) => {
 
 watch(() => chatsStore.messages[chatid.value], () => loadMessages(), { deep: true })
 
-onMounted(async () => {
+async function fetch () {
+  isLoading.value = true
   try {
     await supportStore.fetch()
   } catch (error) {
     console.error(error)
   }
 
-  await chatsStore.fetchChats()
+  await Promise.all([
+    chatsStore.fetchChats(),
+    chatsStore.fetchDefaults()
+  ])
+
+  await loadMessages(true)
   chatsStore.startStream()
-  chatsStore.fetchDefaults()
-  loadMessages()
-})
+}
+
+fetch()
 
 let timeout
 function setPlaceholderVisible (replies) {
@@ -428,6 +434,7 @@ export default { name: 'TicketChat' }
 .chat__message pre {
   font-size: 14px;
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .chat__message pre img {

@@ -28,6 +28,11 @@ export const Status = proto3.makeEnum(
     {no: 1, name: "OPEN"},
     {no: 2, name: "RESOLVE"},
     {no: 3, name: "CLOSE"},
+    {no: 4, name: "ANSWERED"},
+    {no: 5, name: "CUSTOMER_REPLY"},
+    {no: 6, name: "WAITING_FOR_REPLY"},
+    {no: 7, name: "ON_HOLD"},
+    {no: 8, name: "IN_PROGRESS"},
   ],
 );
 
@@ -57,6 +62,9 @@ export const EventType = proto3.makeEnum(
     {no: 5, name: "MESSAGE_SENT"},
     {no: 6, name: "MESSAGE_UPDATED"},
     {no: 7, name: "MESSAGE_DELETED"},
+    {no: 8, name: "CHAT_DEPARTMENT_CHANGED"},
+    {no: 9, name: "CHAT_STATUS_CHANGED"},
+    {no: 10, name: "CHATS_MERGED"},
   ],
 );
 
@@ -110,6 +118,16 @@ export const Chats = proto3.makeMessageType(
   "cc.Chats",
   () => [
     { no: 1, name: "chats", kind: "message", T: Chat, repeated: true },
+  ],
+);
+
+/**
+ * @generated from message cc.Merge
+ */
+export const Merge = proto3.makeMessageType(
+  "cc.Merge",
+  () => [
+    { no: 1, name: "chats", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ],
 );
 

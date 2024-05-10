@@ -710,7 +710,11 @@
       "1": "Open",
       "2": "Resolved",
       "3": "Closed",
-      "4": "In progress"
+      "4": "Answered",
+      "5": "Customer reply",
+      "6": "Waiting for reply",
+      "7": "On hold",
+      "8": "In progress"
     },
     "virtual": "virtual",
     "ssl": "SSL",
