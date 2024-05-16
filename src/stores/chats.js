@@ -88,6 +88,8 @@ export const useChatsStore = defineStore('chats', () => {
         }
         break
 
+      case EventType.CHAT_DEPARTMENT_CHANGED:
+      case EventType.CHAT_STATUS_CHANGED:
       case EventType.CHAT_UPDATED: {
         const oldChat = chats.value.get(chat.uuid)
 
@@ -255,6 +257,7 @@ export const useChatsStore = defineStore('chats', () => {
           ) {
             updateChat(event)
           } else if (event.type === +EventType.CHATS_MERGED) {
+            if (route.name !== 'ticket') continue
             const { uuid: id } = event.item.value
 
             await this.fetchChats()
@@ -304,6 +307,10 @@ export const useChatsStore = defineStore('chats', () => {
     async createChat (data) {
       try {
         const chatsApi = createPromiseClient(ChatsAPI, transport)
+        const metaData = [
+          { key: 'dept_id', value: data.chat.whmcsId },
+          { key: 'instance', value: data.chat.instanceId }
+        ]
 
         const newChat = new Chat({
           department: data.department,
@@ -313,16 +320,14 @@ export const useChatsStore = defineStore('chats', () => {
           topic: data.chat.subject,
           role: Role.OWNER,
           meta: new ChatMeta({
-            lastMessage: data.chat.message, data: {}
+            lastMessage: data.chat.message,
+            data: metaData.reduce((result, { key, value }) => {
+              if (value) result[key] = Value.fromJson(value)
+
+              return result
+            }, {})
           })
         })
-
-        if (data.chat.whmcsId) {
-          newChat.meta.data.dept_id = Value.fromJson(data.chat.whmcsId)
-        }
-        if (data.chat.instance) {
-          newChat.meta.data.instance = Value.fromJson(data.chat.instanceId)
-        }
         const createdChat = await chatsApi.create(newChat)
 
         chats.value.set(createdChat.uuid, createdChat)
