@@ -210,7 +210,7 @@ watch(chats, async () => {
 watch(replies, async (value, oldValue) => {
   await nextTick()
   await new Promise((resolve) => setTimeout(resolve, 300))
-  setPlaceholderVisible(oldValue)
+  setPlaceholderVisible((oldValue.length > 0) ? oldValue : value)
 
   if (value.length > 0) addImageClick()
   if (!content.value) return
@@ -241,8 +241,9 @@ fetch()
 let timeout
 function setPlaceholderVisible (replies) {
   if (chat.value.department !== 'openai') return
+  const isUserSent = replies.at(-1)?.from || replies.length === 1
 
-  if (!isAdminSent(replies.at(-1) ?? {}) && replies.at(-1)?.from) {
+  if (!isAdminSent(replies.at(-1) ?? {}) && isUserSent) {
     timeout = setTimeout(async () => {
       isPlaceholderVisible.value = true
 
@@ -250,7 +251,10 @@ function setPlaceholderVisible (replies) {
       content.value.scrollTo(0, content.value.scrollHeight)
     }, 1000)
 
-    setTimeout(() => { clearTimeout(timeout) }, 20 * 1000)
+    setTimeout(() => {
+      clearTimeout(timeout)
+      isPlaceholderVisible.value = false
+    }, 20 * 1000)
   } else {
     clearTimeout(timeout)
     isPlaceholderVisible.value = false

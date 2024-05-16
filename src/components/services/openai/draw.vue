@@ -55,6 +55,17 @@
       </div>
     </a-col>
 
+    <a-col span="24">
+      <div class="token-title">
+        API example:
+        <copy-icon
+          style="font-size: 18px"
+          @click="addToClipboard(example)"
+        />
+      </div>
+      <code>{{ example }}</code>
+    </a-col>
+
     <a-col span="24" style="margin-top: 10px">
       <a-button
         size="small"
@@ -151,6 +162,16 @@ const isVisible = ref(false)
 const isLoading = ref(false)
 const token = ref('-')
 const endpoint = `${VUE_APP_BASE_URL}nocloud/chat/completions`
+
+const example = `
+  curl \`<endpoint>\`
+  -H "Content-Type: application/json"
+  -H "Authorization: Bearer \`<token>\`"
+  -d '[
+    { "role": "system", "content": "You are a helpful assistant." },
+    { "role": "user", "content": "Hello!" }
+  ]'
+`
 
 async function fetch () {
   try {
