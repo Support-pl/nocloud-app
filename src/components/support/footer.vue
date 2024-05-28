@@ -14,28 +14,6 @@
         </span>
       </a-tag>
 
-      <div class="chat__generate">
-        <a-radio-group v-model:value="genImage.checked">
-          <a-radio-button value="default">
-            {{ capitalize($t('send message')) }}
-          </a-radio-button>
-          <a-radio-button value="generate">
-            {{ capitalize($t('generate image')) }}
-          </a-radio-button>
-        </a-radio-group>
-
-        <a-select
-          v-if="genImage.checked === 'generate'"
-          v-model:value="genImage.size"
-          :options="sizes"
-        />
-        <a-select
-          v-if="genImage.checked === 'generate'"
-          v-model:value="genImage.quality"
-          :options="qualityList"
-        />
-      </div>
-
       <a-textarea
         ref="textarea"
         v-model:value="message"
@@ -57,7 +35,7 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, nextTick, reactive, ref } from 'vue'
+import { computed, defineAsyncComponent, nextTick, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import markdown from 'markdown-it'
@@ -100,17 +78,6 @@ const textarea = ref()
 const message = ref('')
 const editing = ref(null)
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET)
-
-const genImage = reactive({
-  checked: 'default',
-  size: '1024*1024',
-  quality: 'standard'
-})
-const sizes = [{ value: '1024*1024' }, { value: '1024*1792' }]
-const qualityList = [
-  { label: 'HD', value: 'hd' },
-  { label: 'Standard', value: 'standard' }
-]
 
 const columnsStyle = computed(() =>
   (showSendFiles.value) ? '1fr auto auto' : '1fr auto'
@@ -155,25 +122,13 @@ async function sendChatMessage (result, replies) {
         </div>`
       : ''
 
-    const message = {
+    const { uuid } = await chatsStore.sendMessage({
       uuid: route.params.id,
       content: result.message + template,
       account: result.userid,
       date: BigInt(result.date),
-      attachments: files.map(({ uuid }) => uuid),
-      meta: [
-        { key: 'mode', value: genImage.checked }
-      ]
-    }
-
-    if (genImage.checked) {
-      result.meta.push(
-        { key: 'size', value: genImage.size },
-        { key: 'quality', value: genImage.quality }
-      )
-    }
-
-    const { uuid } = await chatsStore.sendMessage(message)
+      attachments: files.map(({ uuid }) => uuid)
+    })
 
     replies[replies.length - 1].uuid = uuid
     replies[replies.length - 1].message += template
@@ -284,20 +239,6 @@ export default { name: 'SupportFooter' }
 .chat__container.footer__container {
   grid-template-columns: v-bind('columnsStyle');
   align-items: end;
-}
-
-.chat__generate {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  grid-column: 1 / 4;
-  justify-self: start;
-  border-color: var(--border_color);
-}
-
-.chat__generate :deep(.ant-radio-button-wrapper),
-.chat__generate :deep(.ant-select-selector) {
-  border-color: inherit;
 }
 
 .chat__input {
