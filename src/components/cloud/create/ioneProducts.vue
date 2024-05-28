@@ -17,28 +17,29 @@
       align="middle"
     >
       <a-col v-if="slider.key == 'cpu' && isHighCPUExist" style="display: flex; width: 70px">
-        <a-tooltip v-if="options.highCPU" :title="$t('highCPU')">
+        <a-badge>
+          <template #count>
+            <span>
+              <a-tooltip :title="$t('highCPU')">
+                <question-circle-icon style="color: #ff9140" />
+              </a-tooltip>
+            </span>
+          </template>
+
           <span
-            style="
-              margin-right: 5px;
-              border-bottom: 3px double var(--main);
-              cursor: help;
-              transition: 0.2s;
-            "
+            style="margin-right: 5px; transition: 0.2s"
+            :style="{ borderBottom: `3px double ${(options.highCPU) ? 'var(--main)' : 'transparent'}` }"
           >
             {{ slider.prefix }}
           </span>
-        </a-tooltip>
-        <span v-else style="margin-right: 5px; border-bottom: 3px solid transparent">
-          {{ slider.prefix }}
-        </span>
 
-        <up-icon
-          style="font-size: 18px; cursor: pointer; transition: 0.2s"
-          :style="(options.highCPU) ? 'color: var(--main)' : null"
-          :rotate="90"
-          @click="setOptions('highCPU', !options.highCPU)"
-        />
+          <up-icon
+            style="font-size: 18px; cursor: pointer; transition: 0.2s"
+            :style="(options.highCPU) ? 'color: var(--main)' : null"
+            :rotate="90"
+            @click="setOptions('highCPU', !options.highCPU)"
+          />
+        </a-badge>
       </a-col>
 
       <a-col v-else>
@@ -94,6 +95,9 @@ import { usePlansStore } from '@/stores/plans.js'
 
 const upIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/DoubleLeftOutlined')
+)
+const questionCircleIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/QuestionCircleOutlined')
 )
 
 const props = defineProps({
