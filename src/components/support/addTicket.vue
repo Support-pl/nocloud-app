@@ -60,6 +60,30 @@
           </div>
         </a-form-item>
 
+        <a-form-item
+          v-if="!authStore.billingUser.only_tickets"
+          style="margin-bottom: 0; padding-bottom: 0"
+          :label="capitalize($t('generate image'))"
+        >
+          <a-switch v-model:checked="genImage.checked" />
+        </a-form-item>
+
+        <a-form-item
+          v-if="genImage.checked"
+          style="margin-bottom: 0; padding-bottom: 0"
+          :label="capitalize($t('resolution'))"
+        >
+          <a-select v-model:value="genImage.size" :options="sizes" />
+        </a-form-item>
+
+        <a-form-item
+          v-if="genImage.checked"
+          style="margin-bottom: 0; padding-bottom: 0"
+          :label="capitalize($t('quality'))"
+        >
+          <a-select v-model:value="genImage.quality" :options="qualityList" />
+        </a-form-item>
+
         <a-form-item :label="(upload?.fileList.length > 0) ? $t('files') : null">
           <div class="addTicket__buttons">
             <upload-files v-if="showSendFiles" ref="upload" file-list-style="order: -1; grid-column: 1 / 3">
@@ -81,7 +105,7 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 import { message, notification } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -125,6 +149,17 @@ const ticketTitle = ref('')
 const ticketMessage = ref('')
 const isSending = ref(false)
 const isLoading = ref(false)
+
+const genImage = reactive({
+  checked: false,
+  size: '1024*1024',
+  quality: 'standard'
+})
+const sizes = [{ value: '1024*1024' }, { value: '1024*1792' }]
+const qualityList = [
+  { label: 'HD', value: 'hd' },
+  { label: 'Standard', value: 'standard' }
+]
 
 const upload = ref()
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET)
@@ -240,19 +275,33 @@ async function createChat () {
       chat: {
         message,
         subject: ticketTitle.value,
-        instanceId: props.instanceId,
-        whmcsId
+        meta: [
+          { key: 'dept_id', value: whmcsId },
+          { key: 'instance', value: props.instanceId }
+        ]
       }
     })
 
     if (response.uuid) {
-      await chatsStore.sendMessage({
+      const result = {
         uuid: response.uuid,
         content: message,
         account: authStore.userdata.uuid,
         date: BigInt(Date.now()),
-        attachments: files.map(({ uuid }) => uuid)
-      })
+        attachments: files.map(({ uuid }) => uuid),
+        meta: [
+          { key: 'mode', value: (genImage.checked) ? 'generate' : 'default' }
+        ]
+      }
+
+      if (genImage.checked) {
+        result.meta.push(
+          { key: 'size', value: genImage.size },
+          { key: 'quality', value: genImage.quality }
+        )
+      }
+
+      await chatsStore.sendMessage(result)
     }
 
     const query = { from: props.instanceId }
