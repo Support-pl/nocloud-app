@@ -9,14 +9,14 @@ dependencies:
     specifier: ^7.0.1
     version: 7.0.1(vue@3.4.27)
   '@bufbuild/protobuf':
-    specifier: ^1.9.0
-    version: 1.9.0
+    specifier: ^1.10.0
+    version: 1.10.0
   '@connectrpc/connect':
     specifier: ^1.4.0
-    version: 1.4.0(@bufbuild/protobuf@1.9.0)
+    version: 1.4.0(@bufbuild/protobuf@1.10.0)
   '@connectrpc/connect-web':
     specifier: ^1.4.0
-    version: 1.4.0(@bufbuild/protobuf@1.9.0)(@connectrpc/connect@1.4.0)
+    version: 1.4.0(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.4.0)
   ant-design-vue:
     specifier: ^4.2.1
     version: 4.2.1(vue@3.4.27)
@@ -1352,45 +1352,45 @@ packages:
       '@babel/helper-validator-identifier': 7.24.5
       to-fast-properties: 2.0.0
 
-  /@bufbuild/connect-web@0.13.0(@bufbuild/protobuf@1.9.0):
+  /@bufbuild/connect-web@0.13.0(@bufbuild/protobuf@1.10.0):
     resolution: {integrity: sha512-Ys9VFDWYktD9yFQSLOlkpsD42LonDNMCysLCfjXFuxlupYuf4f7qg0zkT5bESyTfqk4xtRDSSGR3xygaj/ONIQ==}
     deprecated: Connect has moved to its own org @connectrpc and has a stable v1. Run `npx @connectrpc/connect-migrate@latest` to update. See https://github.com/connectrpc/connect-es/releases/tag/v0.13.1 for details.
     peerDependencies:
       '@bufbuild/protobuf': ^1.2.1
     dependencies:
-      '@bufbuild/connect': 0.13.0(@bufbuild/protobuf@1.9.0)
-      '@bufbuild/protobuf': 1.9.0
+      '@bufbuild/connect': 0.13.0(@bufbuild/protobuf@1.10.0)
+      '@bufbuild/protobuf': 1.10.0
     dev: false
 
-  /@bufbuild/connect@0.13.0(@bufbuild/protobuf@1.9.0):
+  /@bufbuild/connect@0.13.0(@bufbuild/protobuf@1.10.0):
     resolution: {integrity: sha512-eZSMbVLyUFtXiZNORgCEvv580xKZeYQdMOWj2i/nxOcpXQcrEzTMTA7SZzWv4k4gveWCOSRoWmYDeOhfWXJv0g==}
     deprecated: Connect has moved to its own org @connectrpc and has a stable v1. Run `npx @connectrpc/connect-migrate@latest` to update. See https://github.com/connectrpc/connect-es/releases/tag/v0.13.1 for details.
     peerDependencies:
       '@bufbuild/protobuf': ^1.2.1
     dependencies:
-      '@bufbuild/protobuf': 1.9.0
+      '@bufbuild/protobuf': 1.10.0
     dev: false
 
-  /@bufbuild/protobuf@1.9.0:
-    resolution: {integrity: sha512-W7gp8Q/v1NlCZLsv8pQ3Y0uCu/SHgXOVFK+eUluUKWXmsb6VHkpNx0apdOWWcDbB9sJoKeP8uPrjmehJz6xETQ==}
+  /@bufbuild/protobuf@1.10.0:
+    resolution: {integrity: sha512-QDdVFLoN93Zjg36NoQPZfsVH9tZew7wKDKyV5qRdj8ntT4wQCOradQjRaTdwMhWUYsgKsvCINKKm87FdEk96Ag==}
     dev: false
 
-  /@connectrpc/connect-web@1.4.0(@bufbuild/protobuf@1.9.0)(@connectrpc/connect@1.4.0):
+  /@connectrpc/connect-web@1.4.0(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.4.0):
     resolution: {integrity: sha512-13aO4psFbbm7rdOFGV0De2Za64DY/acMspgloDlcOKzLPPs0yZkhp1OOzAQeiAIr7BM/VOHIA3p8mF0inxCYTA==}
     peerDependencies:
       '@bufbuild/protobuf': ^1.4.2
       '@connectrpc/connect': 1.4.0
     dependencies:
-      '@bufbuild/protobuf': 1.9.0
-      '@connectrpc/connect': 1.4.0(@bufbuild/protobuf@1.9.0)
+      '@bufbuild/protobuf': 1.10.0
+      '@connectrpc/connect': 1.4.0(@bufbuild/protobuf@1.10.0)
     dev: false
 
-  /@connectrpc/connect@1.4.0(@bufbuild/protobuf@1.9.0):
+  /@connectrpc/connect@1.4.0(@bufbuild/protobuf@1.10.0):
     resolution: {integrity: sha512-vZeOkKaAjyV4+RH3+rJZIfDFJAfr+7fyYr6sLDKbYX3uuTVszhFe9/YKf5DNqrDb5cKdKVlYkGn6DTDqMitAnA==}
     peerDependencies:
       '@bufbuild/protobuf': ^1.4.2
     dependencies:
-      '@bufbuild/protobuf': 1.9.0
+      '@bufbuild/protobuf': 1.10.0
     dev: false
 
   /@ctrl/tinycolor@3.6.1:
@@ -3324,6 +3324,7 @@ packages:
 
   /glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
     dependencies:
       fs.realpath: 1.0.0
       inflight: 1.0.6
@@ -3442,15 +3443,16 @@ packages:
   /infinimesh-proto@3.1.5:
     resolution: {integrity: sha512-MSRn55X5cDQ7deBz5446mPyH11cEBREc2/fUA6NA3idMKDWPQ+7NFcfFH8ak9ssLBl9Rz+jc0JYRjuxbWV9TIg==}
     dependencies:
-      '@bufbuild/connect': 0.13.0(@bufbuild/protobuf@1.9.0)
-      '@bufbuild/connect-web': 0.13.0(@bufbuild/protobuf@1.9.0)
-      '@bufbuild/protobuf': 1.9.0
-      '@connectrpc/connect': 1.4.0(@bufbuild/protobuf@1.9.0)
+      '@bufbuild/connect': 0.13.0(@bufbuild/protobuf@1.10.0)
+      '@bufbuild/connect-web': 0.13.0(@bufbuild/protobuf@1.10.0)
+      '@bufbuild/protobuf': 1.10.0
+      '@connectrpc/connect': 1.4.0(@bufbuild/protobuf@1.10.0)
       uuid: 9.0.1
     dev: false
 
   /inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
     dependencies:
       once: 1.4.0
       wrappy: 1.0.2
