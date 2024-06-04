@@ -103,10 +103,10 @@ const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET)
 
 const genImage = reactive({
   checked: 'default',
-  size: '1024*1024',
+  size: '1024x1024',
   quality: 'standard'
 })
-const sizes = [{ value: '1024*1024' }, { value: '1024*1792' }]
+const sizes = [{ value: '1024x1024' }, { value: '1024x1792' }, { value: '1792x1024' }]
 const qualityList = [
   { label: 'HD', value: 'hd' },
   { label: 'Standard', value: 'standard' }
