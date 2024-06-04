@@ -140,13 +140,13 @@ const getProducts = computed(() => {
       ...result, [resource.key]: resource.price
     }), {}
   )
-  const inputKilotoken = +(products.input_kilotoken * currency.value.rate).toFixed(2)
-  const outputKilotoken = +(products.output_kilotoken * currency.value.rate).toFixed(2)
+  const inputKilotoken = +(products.input_kilotoken * currency.value.rate).toFixed(4)
+  const outputKilotoken = +(products.output_kilotoken * currency.value.rate).toFixed(4)
 
-  const size1024x1024 = +(products.image_size_1024x1024_quality_standard * currency.value.rate).toFixed(2)
-  const size1024x1792 = +(products.image_size_1024x1792_quality_standard * currency.value.rate).toFixed(2)
-  const size1024x1024HD = +(products.image_size_1024x1024_quality_hd * currency.value.rate).toFixed(2)
-  const size1024x1792HD = +(products.image_size_1024x1792_quality_hd * currency.value.rate).toFixed(2)
+  const size1024x1024 = +(products.image_size_1024x1024_quality_standard * currency.value.rate).toFixed(4)
+  const size1024x1792 = +(products.image_size_1024x1792_quality_standard * currency.value.rate).toFixed(4)
+  const size1024x1024HD = +(products.image_size_1024x1024_quality_hd * currency.value.rate).toFixed(4)
+  const size1024x1792HD = +(products.image_size_1024x1792_quality_hd * currency.value.rate).toFixed(4)
 
   return {
     title,
@@ -166,12 +166,12 @@ const getProducts = computed(() => {
 })
 
 const keys = [
-  { title: 'Input kilotoken', value: 'inputKilotoken'}, 
-  { title: 'Output kilotoken', value: 'outputKilotoken'}, 
-  { title: 'Image 1024x1024', value: 'size1024x1024'}, 
-  { title: 'HD image 1024x1024', value: 'size1024x1024HD'}, 
-  { title: 'Image 1024x1792', value: 'size1024x1792'}, 
-  { title: 'HD image 1024x1792', value: 'size1024x1792HD'}
+  { title: 'Input kilotoken', value: 'inputKilotoken' },
+  { title: 'Output kilotoken', value: 'outputKilotoken' },
+  { title: 'Image 1024x1024', value: 'size1024x1024' },
+  { title: 'HD image 1024x1024', value: 'size1024x1024HD' },
+  { title: 'Image 1024x1792', value: 'size1024x1792' },
+  { title: 'HD image 1024x1792', value: 'size1024x1792HD' }
 ]
 
 const currency = computed(() => {

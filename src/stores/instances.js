@@ -67,9 +67,12 @@ export const useInstancesStore = defineStore('instances', () => {
           el.to === defaultCurrency && el.from === code
         ) ?? { rate: 1 }
 
-        const resources = inst.billingPlan.resources.map((res) => ({
-          ...res, price: +(res.price * (rate || reverseRate)).toFixed(2)
-        }))
+        const resources = inst.billingPlan.resources.map((res) => {
+          const k = rate || reverseRate
+          const n = (inst.billingPlan.type === 'openai') ? 4 : 2
+
+          return { ...res, price: +(res.price * k).toFixed(n) }
+        })
         const products = {}
 
         Object.entries(inst.billingPlan.products).forEach(([key, value]) => {
