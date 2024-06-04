@@ -35,7 +35,20 @@
               isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
             ]"
           >
-            <pre v-html="beauty(reply.message)" />
+            <pre>
+              <span v-html="beauty(reply.message)" />
+              <div class="chat__files">
+                <div v-for="file of files[reply.uuid]" :key="file.url" class="files__preview">
+                  <img
+                    :src="file.url"
+                    :alt="file.name"
+                    :onerror="onImageError"
+                    @click="openModal"
+                  >
+                </div>
+              </div>
+            </pre>
+
             <div class="chat__info">
               <span>{{ reply.name }}</span>
               <span>{{ reply.date.slice(-8, -3) }}</span>
@@ -86,7 +99,8 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, nextTick, ref, computed, watch } from 'vue'
+import { defineAsyncComponent, nextTick, ref, computed, watch, h } from 'vue'
+import { renderToString } from 'vue/server-renderer'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import markdown from 'markdown-it'
 import { full as emoji } from 'markdown-it-emoji'
@@ -116,6 +130,9 @@ const editIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/EditOutlined')
 )
 
+const fileIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/FileOutlined')
+)
 const loadingIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LoadingOutlined')
 )
@@ -192,11 +209,34 @@ const chats = computed(() => {
   result.sort((a, b) => b.date - a.date)
   const tickets = supportStore.getTickets.filter(({ id }) => !ids.includes(id))
 
-  if (route.query.from) {
-    return result
-  }
+  if (route.query.from) return result
   return [...result, ...tickets]
 })
+
+const files = computed(() =>
+  replies.value.reduce((result, { uuid, meta }) => {
+    if (meta.attachments) {
+      result[uuid] = meta.attachments?.toJSON()
+    }
+
+    return result
+  }, {})
+)
+
+async function onImageError (e) {
+  const element = await renderToString(h(fileIcon))
+  const parent = e.target.parentElement
+  const ext = e.target.alt.split('.').at(-1)
+
+  e.target.outerHTML = `
+    ${element}
+    <span style="font-size: 14px">${ext}</span>
+  `
+  parent.classList.add('files__preview--placeholder')
+  parent.onclick = () => {
+    window.open(e.target.src)
+  }
+}
 
 watch(chats, async () => {
   await nextTick()
@@ -212,7 +252,6 @@ watch(replies, async (value, oldValue) => {
   await new Promise((resolve) => setTimeout(resolve, 300))
   setPlaceholderVisible((oldValue.length > 0) ? oldValue : value)
 
-  if (value.length > 0) addImageClick()
   if (!content.value) return
   content.value.scrollTo(0, content.value.scrollHeight)
 }, { deep: true })
@@ -316,7 +355,7 @@ async function loadMessages (update) {
     replies.value.sort((a, b) => Number(a.sent - b.sent))
     chatsStore.messages[chatid.value] = response
   } finally {
-    setTimeout(() => {
+    nextTick(() => {
       content.value.scrollTo(0, content.value.scrollHeight)
     })
     isLoading.value = false
@@ -343,16 +382,10 @@ function resendMessage (reply) {
 }
 
 const currentImage = ref({})
-function addImageClick () {
-  const files = document.querySelectorAll('.chat__message .chat__files img')
-
-  files.forEach((file) => {
-    file.addEventListener('click', (e) => {
-      currentImage.value.src = e.target.src
-      currentImage.value.alt = e.target.alt
-      currentImage.value.visible = true
-    })
-  })
+function openModal (e) {
+  currentImage.value.src = e.target.src
+  currentImage.value.alt = e.target.alt
+  currentImage.value.visible = true
 }
 </script>
 
@@ -437,7 +470,7 @@ export default { name: 'TicketChat' }
 
 .chat__message pre {
   font-size: 14px;
-  white-space: pre-wrap;
+  white-space: collapse;
   word-break: break-word;
 }
 
@@ -520,7 +553,7 @@ export default { name: 'TicketChat' }
 
 :deep(.chat__files) {
   display: flex;
-  justify-self: start;
+  align-items: center;
   flex-wrap: wrap;
 }
 
@@ -541,6 +574,15 @@ export default { name: 'TicketChat' }
   width: auto;
   max-width: 100%;
   object-fit: cover;
+}
+
+:deep(.chat__files .files__preview--placeholder) {
+  flex-direction: column;
+  gap: 4px;
+  width: 104px;
+  height: 90px;
+  font-size: 24px;
+  border: 1px solid var(--bright_font);
 }
 
 @media (max-width: 768px) {

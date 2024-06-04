@@ -172,7 +172,8 @@ export const useChatsStore = defineStore('chats', () => {
       userid: user.uuid,
       requestor_type: (uuid === user.uuid) ? 'Owner' : 'Other',
       gateways: message.gateways,
-      attachments: message.attachments
+      attachments: message.attachments,
+      meta: message.meta
     }
   }
 

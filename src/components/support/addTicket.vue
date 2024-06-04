@@ -222,16 +222,8 @@ async function createChat () {
 
   try {
     const files = await upload.value.sendFiles()
-    const template = (files.length > 0)
-      ? `<div class="chat__files">
-          ${files.map((file) => `<div class="files__preview">
-            <img src="${file.url}" alt="${file.name}">
-          </div>`).join('\n')}
-        </div>`
-      : ''
-
     const message = md.render(ticketMessage.value).trim()
-      .replace(/^<p>/, '').replace(/<\/p>$/, '') + template
+      .replace(/^<p>/, '').replace(/<\/p>$/, '')
 
     const response = await chatsStore.createChat({
       admins,
