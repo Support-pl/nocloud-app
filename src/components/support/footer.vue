@@ -147,17 +147,9 @@ async function sendChatMessage (result, replies) {
   await nextTick()
   try {
     const files = await upload.value.sendFiles()
-    const template = (files.length > 0)
-      ? `<div class="chat__files">
-          ${files.map((file) => `<div class="files__preview">
-            <img src="${file.url}" alt="${file.name}">
-          </div>`).join('\n')}
-        </div>`
-      : ''
-
     const message = {
       uuid: route.params.id,
-      content: result.message + template,
+      content: result.message,
       account: result.userid,
       date: BigInt(result.date),
       attachments: files.map(({ uuid }) => uuid),
@@ -176,7 +168,6 @@ async function sendChatMessage (result, replies) {
     const { uuid } = await chatsStore.sendMessage(message)
 
     replies[replies.length - 1].uuid = uuid
-    replies[replies.length - 1].message += template
     emits('update:replies', replies)
   } catch (error) {
     replies[replies.length - 1].error = true
