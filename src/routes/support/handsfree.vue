@@ -94,9 +94,10 @@ async function sendCode () {
         department: key,
         gateways: (chat.gateway === 'userApp') ? [] : [chat.gateway],
         chat: {
-          message: chat.message, subject: chat.title
-        },
-        meta: [{ key: 'instance', value: chat.instanceId }]
+          message: chat.message,
+          subject: chat.title,
+          instanceId: chat.instanceId
+        }
       })
 
       uuid = response.uuid

@@ -1160,6 +1160,7 @@ export default defineComponent({
           const key = `${this.VM.config.duration} ${this.VM.config.planCode}`
           const planCode = this.VM.billingPlan.products[key].meta.addons
             .find((addon) => addon.includes(action))
+
           this.actionLoading = true
           this.invokeAction({
             uuid: this.VM.uuid,

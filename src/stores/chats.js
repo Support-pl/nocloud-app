@@ -308,6 +308,10 @@ export const useChatsStore = defineStore('chats', () => {
     async createChat (data) {
       try {
         const chatsApi = createPromiseClient(ChatsAPI, transport)
+        const metaData = [
+          { key: 'dept_id', value: data.chat.whmcsId },
+          { key: 'instance', value: data.chat.instanceId }
+        ]
 
         const newChat = new Chat({
           department: data.department,
@@ -318,7 +322,7 @@ export const useChatsStore = defineStore('chats', () => {
           role: Role.OWNER,
           meta: new ChatMeta({
             lastMessage: data.chat.message,
-            data: data.chat.meta.reduce((result, { key, value }) => {
+            data: metaData.reduce((result, { key, value }) => {
               if (value) result[key] = Value.fromJson(value)
 
               return result
@@ -372,12 +376,7 @@ export const useChatsStore = defineStore('chats', () => {
           chat: message.uuid,
           sent: message.date,
           sender: message.account,
-          attachments: message.attachments,
-          meta: message.meta.reduce((result, { key, value }) => {
-            if (value) result[key] = Value.fromJson(value)
-
-            return result
-          }, {})
+          attachments: message.attachments
         })
 
         const response = await messagesApi.send(mes)
