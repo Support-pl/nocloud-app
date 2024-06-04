@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useChatsStore } from '@/stores/chats.js'
 import { toDate } from '@/functions.js'
@@ -52,8 +52,6 @@ const offset = computed(() => {
     return [10, -8]
   }
 })
-
-console.log(reactive)
 
 const statusColor = computed(() => {
   switch (props.ticket.status.toLowerCase()) {

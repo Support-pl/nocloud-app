@@ -379,8 +379,10 @@ export const useChatsStore = defineStore('chats', () => {
           attachments: message.attachments
         })
 
+        console.log(mes)
         const response = await messagesApi.send(mes)
 
+        console.log(response)
         if (response.uuid === '') {
           response.uuid = 'last message'
         }

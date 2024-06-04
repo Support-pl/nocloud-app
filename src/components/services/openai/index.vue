@@ -50,7 +50,7 @@
                 {{ key.title }}:
               </a-col>
               <a-col :xs="12" :sm="6" :lg="8">
-                <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
+                <div v-if="!fetchLoading" class="order__price">
                   {{ getProducts[key.value] }} {{ currency.code }}
                 </div>
                 <div v-else class="loadingLine" />
@@ -421,6 +421,12 @@ export default { name: 'OpenaiComponent' }
 
 .order__pricing > :deep(.ant-row:not(:first-child)) {
   margin-top: 10px;
+}
+
+.order__price {
+  font-size: 1.1rem;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .product__specs {
