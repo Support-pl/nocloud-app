@@ -215,7 +215,7 @@ const chats = computed(() => {
 
 const files = computed(() =>
   replies.value.reduce((result, { uuid, meta }) => {
-    if (meta.attachments) {
+    if (meta?.attachments) {
       result[uuid] = meta.attachments?.toJSON()
     }
 
