@@ -158,8 +158,8 @@ async function sendChatMessage (result, replies) {
       ]
     }
 
-    if (genImage.checked) {
-      result.meta.push(
+    if (genImage.checked === 'generate') {
+      message.meta.push(
         { key: 'size', value: genImage.size },
         { key: 'quality', value: genImage.quality }
       )
