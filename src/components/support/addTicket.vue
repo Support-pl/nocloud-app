@@ -61,7 +61,7 @@
         </a-form-item>
 
         <a-form-item
-          v-if="!authStore.billingUser.only_tickets"
+          v-if="!authStore.billingUser.only_tickets && instanceId"
           style="margin-bottom: 0; padding-bottom: 0"
           :label="capitalize($t('generate image'))"
         >
@@ -286,7 +286,7 @@ async function createChat () {
         ]
       }
 
-      if (genImage.checked) {
+      if (genImage.checked === 'generate') {
         result.meta.push(
           { key: 'size', value: genImage.size },
           { key: 'quality', value: genImage.quality }
