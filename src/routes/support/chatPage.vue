@@ -594,15 +594,9 @@ export default { name: 'TicketChat' }
     display: none;
   }
 
-  .chat__content {
-    margin: 0;
-    border: 0;
-    border-radius: 0;
-  }
-
   .chat__footer {
     grid-column: 1;
-    padding: 0 10px 10px;
+    padding: 0 10px 10px 0;
   }
 }
 </style>

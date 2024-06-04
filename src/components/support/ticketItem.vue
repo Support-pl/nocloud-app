@@ -19,9 +19,7 @@
         </div>
       </div>
       <div class="ticket__lower">
-        <div class="ticket__message">
-          {{ beauty(ticket.message) }}
-        </div>
+        <div class="ticket__message" v-html="beauty(ticket.message)" />
         <div class="ticket__time">
           {{ toDate(ticket.date / 1000 || ticket.date, '.', '00:00') }}
         </div>
@@ -93,9 +91,9 @@ function beauty (message) {
   message = decode(message)
   message = message.replace(/-{2,}.*/gi, '')
   message = message.replace(/IP Address.*/gi, '')
-  message = message.replace(/<\/?[a-zA-Zа-яА-Я1-9 #-:=";_!?]+>/gi, '')
+  message = message.replace(/<\/?[a-zA-Zа-яА-Я1-9 #-:=";_!]+>/gi, '')
 
-  return message.trim() || 'empty'
+  return message || 'empty'
 }
 
 function decode (text) {
@@ -187,9 +185,5 @@ export default { name: 'TicketItem' }
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.ticket__status-text {
-  white-space: nowrap;
 }
 </style>
