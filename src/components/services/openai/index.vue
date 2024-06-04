@@ -39,40 +39,24 @@
             </a-tooltip>
           </template>
 
-          <a-row
-            v-if="getProducts.inputKilotoken > 0"
-            type="flex"
-            justify="space-around"
-            align="middle"
-          >
-            <a-col :xs="12" :sm="18" :lg="16" style="font-size: 1rem">
-              Input kilotoken:
-            </a-col>
-            <a-col :xs="12" :sm="6" :lg="8">
-              <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
-                {{ getProducts.inputKilotoken }} {{ currency.code }}
-              </div>
-              <div v-else class="loadingLine" />
-            </a-col>
-          </a-row>
-
-          <a-row
-            v-if="getProducts.outputKilotoken > 0"
-            style="margin-top: 10px"
-            type="flex"
-            justify="space-around"
-            align="middle"
-          >
-            <a-col :xs="12" :sm="18" :lg="16" style="font-size: 1rem">
-              Output kilotoken:
-            </a-col>
-            <a-col :xs="12" :sm="6" :lg="8">
-              <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
-                {{ getProducts.outputKilotoken }} {{ currency.code }}
-              </div>
-              <div v-else class="loadingLine" />
-            </a-col>
-          </a-row>
+          <template v-for="key of keys" :key="key.value">
+            <a-row
+              v-if="getProducts[key.value] > 0"
+              type="flex"
+              justify="space-around"
+              align="middle"
+            >
+              <a-col :xs="12" :sm="18" :lg="16" style="font-size: 1rem">
+                {{ key.title }}:
+              </a-col>
+              <a-col :xs="12" :sm="6" :lg="8">
+                <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
+                  {{ getProducts[key.value] }} {{ currency.code }}
+                </div>
+                <div v-else class="loadingLine" />
+              </a-col>
+            </a-row>
+          </template>
         </a-badge>
 
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
@@ -159,16 +143,36 @@ const getProducts = computed(() => {
   const inputKilotoken = +(products.input_kilotoken * currency.value.rate).toFixed(2)
   const outputKilotoken = +(products.output_kilotoken * currency.value.rate).toFixed(2)
 
+  const size1024x1024 = +(products.image_size_1024x1024_quality_standard * currency.value.rate).toFixed(2)
+  const size1024x1792 = +(products.image_size_1024x1792_quality_standard * currency.value.rate).toFixed(2)
+  const size1024x1024HD = +(products.image_size_1024x1024_quality_hd * currency.value.rate).toFixed(2)
+  const size1024x1792HD = +(products.image_size_1024x1792_quality_hd * currency.value.rate).toFixed(2)
+
   return {
     title,
     inputKilotoken,
     outputKilotoken,
+
+    size1024x1024,
+    size1024x1792,
+    size1024x1024HD,
+    size1024x1792HD,
+
     price: inputKilotoken + outputKilotoken,
     description: `<span style="font-size: 18px; white-space: pre-line">${
       meta.description || i18n.t('openai description')
     }</span>`
   }
 })
+
+const keys = [
+  { title: 'Input kilotoken', value: 'inputKilotoken'}, 
+  { title: 'Output kilotoken', value: 'outputKilotoken'}, 
+  { title: 'Image 1024x1024', value: 'size1024x1024'}, 
+  { title: 'HD image 1024x1024', value: 'size1024x1024HD'}, 
+  { title: 'Image 1024x1792', value: 'size1024x1792'}, 
+  { title: 'HD image 1024x1792', value: 'size1024x1792HD'}
+]
 
 const currency = computed(() => {
   const { currencies, defaultCurrency } = storeToRefs(currenciesStore)
@@ -399,7 +403,7 @@ export default { name: 'OpenaiComponent' }
   position: absolute;
   left: 50%;
   display: grid;
-  grid-template-columns: calc(72% - 20px) 28%;
+  grid-template-columns: calc(70% - 20px) 30%;
   gap: 20px;
   width: 100%;
   max-width: 1024px;
@@ -413,6 +417,10 @@ export default { name: 'OpenaiComponent' }
   padding: 7px 10px;
   border: 1px solid var(--border_color);
   border-radius: 10px;
+}
+
+.order__pricing > :deep(.ant-row:not(:first-child)) {
+  margin-top: 10px;
 }
 
 .product__specs {
