@@ -126,6 +126,17 @@ const ticketMessage = ref('')
 const isSending = ref(false)
 const isLoading = ref(false)
 
+const genImage = reactive({
+  checked: false,
+  size: '1024x1024',
+  quality: 'standard'
+})
+const sizes = [{ value: '1024x1024' }, { value: '1024x1792' }, { value: '1792x1024' }]
+const qualityList = [
+  { label: 'HD', value: 'hd' },
+  { label: 'Standard', value: 'standard' }
+]
+
 const upload = ref()
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET)
 
