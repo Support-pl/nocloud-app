@@ -167,10 +167,12 @@ const example = `
   curl \`<endpoint>\`
   -H "Content-Type: application/json"
   -H "Authorization: Bearer \`<token>\`"
-  -d '[
-    { "role": "system", "content": "You are a helpful assistant." },
-    { "role": "user", "content": "Hello!" }
-  ]'
+  -d '{
+    "messages": [
+      { "role": "system", "content": "You are a helpful assistant." },
+      { "role": "user", "content": "Hello!" }
+    ]
+  }'
 `
 
 async function fetch () {
