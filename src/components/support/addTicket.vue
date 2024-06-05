@@ -286,7 +286,7 @@ async function createChat () {
         ]
       }
 
-      if (genImage.checked === 'generate') {
+      if (genImage.checked) {
         result.meta.push(
           { key: 'size', value: genImage.size },
           { key: 'quality', value: genImage.quality }
