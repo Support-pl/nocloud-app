@@ -139,6 +139,7 @@ export const useChatsStore = defineStore('chats', () => {
         if (i === -1) replies.push(newMessage)
         else replies.splice(i, 1, newMessage)
 
+        console.log('Sent:', replies, newMessage)
         chat.meta = new ChatMeta({
           ...chat.meta,
           unread: (chat.uuid === route.params.id) ? 0 : chat.meta.unread + 1,
@@ -251,6 +252,7 @@ export const useChatsStore = defineStore('chats', () => {
         stream.value = streaming.stream(new Empty())
 
         for await (const event of stream.value) {
+          console.log(event)
           if (event.type === +EventType.PING) continue
           if (
             event.type === +EventType.CHAT_DEPARTMENT_CHANGED ||

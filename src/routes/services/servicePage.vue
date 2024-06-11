@@ -351,7 +351,7 @@ export default {
 
           case 'goget': {
             domain.data.expiry = {
-              expiredate: '0000-00-00',
+              expiredate: this.date(domain.data.next_payment_date ?? 0),
               regdate: (domain.data.creation * 1000) || '0000-00-00'
             }
             groupname = 'SSL'
@@ -360,12 +360,10 @@ export default {
           }
 
           case 'opensrs': {
-            const { period } = domain.resources
-            const { expiredate } = domain.data?.expiry ?? { expiredate: '0000-00-00' }
-            const year = parseInt(expiredate) - period
-
-            if (!domain.data.expiry) domain.data.expiry = { regdate: '0000-00-00' }
-            else domain.data.expiry.regdate = `${year}${expiredate.slice(4)}`
+            domain.data.expiry = {
+              expiredate: this.date(domain.data.next_payment_date ?? 0),
+              regdate: (domain.data.creation * 1000) || '0000-00-00'
+            }
             groupname = 'Domains'
             break
           }
