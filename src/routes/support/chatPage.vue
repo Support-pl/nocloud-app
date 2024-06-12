@@ -94,7 +94,7 @@
       <img style="width: 100%" :alt="currentImage.alt" :src="currentImage.src">
     </a-modal>
 
-    <support-footer ref="footer" v-model:replies="replies" :status="status" />
+    <support-footer ref="footer" v-model:replies="replies" :status="status" :ticket="chat" />
   </div>
 </template>
 
@@ -582,7 +582,7 @@ export default { name: 'TicketChat' }
   width: 104px;
   height: 90px;
   font-size: 24px;
-  border: 1px solid var(--bright_font);
+  border: 1px solid var(--border_color);
 }
 
 @media (max-width: 768px) {

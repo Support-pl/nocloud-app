@@ -14,7 +14,7 @@
         </span>
       </a-tag>
 
-      <div class="chat__generate">
+      <div v-if="ticket.department === 'openai'" class="chat__generate">
         <a-radio-group v-model:value="genImage.checked">
           <a-radio-button value="default">
             {{ capitalize($t('send message')) }}
@@ -84,6 +84,7 @@ const arrowUpIcon = defineAsyncComponent(
 )
 
 const props = defineProps({
+  ticket: { type: Object, default: () => ({}) },
   replies: { type: Array, required: true },
   status: { type: [String, Number], default: 'Unknown' }
 })
@@ -288,7 +289,12 @@ export default { name: 'SupportFooter' }
 
 .chat__generate :deep(.ant-radio-button-wrapper),
 .chat__generate :deep(.ant-select-selector) {
-  border-color: inherit;
+  border-color: var(--border_color);
+}
+
+.chat__generate :deep(.ant-radio-button-wrapper-checked),
+.chat__generate :deep(.ant-select-selector-checked) {
+  border-color: var(--main);
 }
 
 .chat__input {
