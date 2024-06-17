@@ -155,7 +155,8 @@ async function sendChatMessage (result, replies) {
       date: BigInt(result.date),
       attachments: files.map(({ uuid }) => uuid),
       meta: [
-        { key: 'mode', value: genImage.checked }
+        { key: 'mode', value: genImage.checked },
+        { key: 'attachments', value: files.map(({ name, url }) => ({ name, url })) }
       ]
     }
 
