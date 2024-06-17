@@ -286,6 +286,12 @@ async function createChat () {
         ]
       }
 
+      if (files.length > 0) {
+        result.meta.push({
+          key: 'attachments', value: files.map(({ name, url }) => ({ name, url }))
+        })
+      }
+
       if (genImage.checked) {
         result.meta.push(
           { key: 'size', value: genImage.size },
