@@ -60,7 +60,7 @@ watch(() => props.productSize, (value) => {
 })
 
 const cloudStore = useCloudStore()
-const product = inject('product')
+const [product] = inject('useProduct', () => [])()
 const [, setOptions] = inject('useOptions', () => [])()
 const [, setPrice] = inject('usePriceOVH', () => [])()
 
