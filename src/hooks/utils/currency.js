@@ -25,7 +25,7 @@ function useCurrency () {
       const currencyCode = userdata.value.currency ?? store.defaultCurrency
 
       if (!isLogged.value) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: (+currencyCode === 5) ? 'EUR' : currencyCode }
+      return { rate: 1, code: currencyCode.split('_').at(0) }
     })
   }
 }

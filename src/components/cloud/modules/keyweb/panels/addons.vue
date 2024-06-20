@@ -33,7 +33,7 @@ const props = defineProps({
 
 const cloudStore = useCloudStore()
 const { currency } = useCurrency()
-const product = inject('product')
+const [product] = inject('useProduct', () => [])()
 const [options, setOptions] = inject('useOptions', () => [])()
 const [price, setPrice] = inject('usePriceOVH', () => [])()
 

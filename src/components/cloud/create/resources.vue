@@ -32,7 +32,7 @@ const i18n = useI18n()
 const { currency } = useCurrency()
 const cloudStore = useCloudStore()
 
-const product = inject('product', {})
+const [product] = inject('useProduct', () => [])()
 const [options] = inject('useOptions', () => [])()
 const [priceOVH] = inject('usePriceOVH', () => [])()
 
