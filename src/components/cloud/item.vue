@@ -143,7 +143,7 @@ const price = computed(() => {
   const amount = prices.value[props.instance.resources?.period] ??
     props.instance.recurringamount ?? props.instance.orderamount
 
-  return +(+amount)?.toFixed(2) ?? 0
+  return (amount) ? +(+amount)?.toFixed(2) : 0
 })
 
 const isPayg = computed(() => {

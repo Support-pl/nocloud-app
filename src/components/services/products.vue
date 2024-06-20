@@ -303,7 +303,12 @@ export default {
             break
           }
           case 'ione': {
+            const keys = []
+
             res.orderamount += +inst.billingPlan.resources.reduce((prev, curr) => {
+              if (keys.includes(curr.key)) return prev
+              else keys.push(curr.key)
+
               if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
                 return prev + curr.price * inst.resources.drive_size / 1024
               } else if (curr.key === 'ram') {

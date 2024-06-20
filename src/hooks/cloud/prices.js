@@ -10,10 +10,17 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
   const plan = computed(() => cloudStore.plan ?? {})
 
   const product = computed(() => {
-    if (activeKey.value !== 'location' && tarification.value !== '-') {
+    const isActiveKeyNotLoc = activeKey.value !== 'location'
+    const isTarificationValid = tarification.value !== '-'
+
+    if (isActiveKeyNotLoc && isTarificationValid) {
       return currentProduct.value
     }
 
+    return getMinProduct()
+  })
+
+  function getMinProduct () {
     const config = options.config.configuration ?? {}
     const datacenter = Object.keys(config).find((key) => key.includes('datacenter'))
     const values = Object.values(plan.value.products ?? {})
@@ -26,39 +33,45 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
       )
     )
 
-    if (!result) return
+    if (!result) return {}
     if (result.meta.cpu) result.resources.cpu = result.meta.cpu
 
     if (!result.resources.ram) {
       result.resources.ram = getResource('ram', result)
     }
 
-    if (!result.resources.drive_type) {
-      if (plan.value.type === 'ovh dedicated') {
-        result.resources.drive_type = getResource('disk-type', result)
-      } else if (plan.value.type === 'ovh vps') {
-        result.resources.drive_type = 'SSD'
-      } else {
-        result.resources.drive_type = getDriveType()
-      }
-    }
-
-    if (!result.resources.drive_size) {
-      if (plan.value.type === 'ovh dedicated') {
-        result.resources.drive_size = getResource('disk-size', result)
-      } else if (plan.value.type === 'keyweb') {
-        result.resources.drive_size = 0
-      } else if (result.resources.disk) {
-        result.resources.drive_size = result.resources.disk
-      } else {
-        const minDisk = (plan.value.meta.minDiskSize ?? {})[result.resources.drive_type]
-
-        result.resources.drive_size = (minDisk ?? 20) * 1024
-      }
-    }
-
+    setDriveType(result)
+    setDriveSize(result)
     return result
-  })
+  }
+
+  function setDriveType (target) {
+    if (!target.resources.drive_type) {
+      if (plan.value.type === 'ovh dedicated') {
+        target.resources.drive_type = getResource('disk-type', target)
+      } else if (plan.value.type === 'ovh vps') {
+        target.resources.drive_type = 'SSD'
+      } else {
+        target.resources.drive_type = getDriveType()
+      }
+    }
+  }
+
+  function setDriveSize (target) {
+    if (!target.resources.drive_size) {
+      if (plan.value.type === 'ovh dedicated') {
+        target.resources.drive_size = getResource('disk-size', target)
+      } else if (plan.value.type === 'keyweb') {
+        target.resources.drive_size = 0
+      } else if (target.resources.disk) {
+        target.resources.drive_size = target.resources.disk
+      } else {
+        const minDisk = (plan.value.meta.minDiskSize ?? {})[target.resources.drive_type]
+
+        target.resources.drive_size = (minDisk ?? 20) * 1024
+      }
+    }
+  }
 
   function getDriveType () {
     const drive = { type: 'HDD', price: Infinity }
@@ -130,7 +143,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
         price.push(resource.price / resource.period * 3600 * count)
       } else if (key.includes('drive')) {
         const { size } = (activeKey.value === 'location')
-          ? { size: product.value?.resources.drive_size ?? options.disk.min * 1024 }
+          ? { size: product.value.resources?.drive_size ?? options.disk.min * 1024 }
           : options.disk
         const type = (activeKey.value === 'location')
           ? getDriveType().toLowerCase()
@@ -154,7 +167,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
     const addonsPrice = Object.values(addons).reduce((a, b) => a + b, 0)
 
     if (activeKey.value === 'location') {
-      return product.value?.price ?? value
+      return product.value.price ?? value
     }
     // let percent = (plan.value.fee?.default ?? 0) / 100 + 1;
 
@@ -171,7 +184,7 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
   })
 
   return {
-    minProduct: computed(() => product.value ?? {}),
+    minProduct: product,
     productFullPrice: computed(() => {
       const resourcesPrice = (plan.value.type === 'ione')
         ? productFullPriceCustom.value * 24 * 30 * currency.value.rate
@@ -204,7 +217,8 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
         price = productFullPriceStatic.value
       }
 
-      price += product.value?.installationFee ?? 0
+      console.log(productFullPriceOVH.value)
+      price += product.value.installationFee ?? 0
       price *= currency.value.rate
 
       switch (period) {

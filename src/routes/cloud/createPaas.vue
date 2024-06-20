@@ -277,7 +277,7 @@ router.beforeEach((_, from, next) => {
 })
 fetch()
 
-provide('product', readonly(product))
+provide('useProduct', () => [readonly(product)])
 provide('usePriceOVH', () => [readonly(priceOVH), setPrice])
 provide('useOptions', () => [readonly(options), setOptions])
 provide('useActiveKey', () => [readonly(activeKey), nextStep])
