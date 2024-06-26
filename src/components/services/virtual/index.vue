@@ -45,25 +45,6 @@
               />
               <div v-else class="loadingLine" />
             </a-form-item>
-
-            <a-form-item name="password" :label="capitalize($t('clientinfo.password'))">
-              <password-meter
-                :style="{
-                  height: (config.password.length > 0) ? '10px' : '0',
-                  marginBottom: (config.password.length < 1) ? null : '5px',
-                  marginTop: 0
-                }"
-                :password="config.password"
-                @score="(value) => score = value.score"
-              />
-
-              <a-input-password
-                v-if="!fetchLoading"
-                v-model:value="config.password"
-                placeholder="password"
-              />
-              <div v-else class="loadingLine" />
-            </a-form-item>
           </a-form>
         </div>
       </div>
@@ -141,9 +122,7 @@
 
 <script>
 import { mapStores, mapState } from 'pinia'
-import passwordMeter from 'vue-simple-password-meter'
 
-import { nextTick } from 'vue'
 import { usePeriod } from '@/hooks/utils'
 import useCreateInstance from '@/hooks/instances/create.js'
 import { checkPayg, createInvoice } from '@/functions.js'
@@ -162,7 +141,7 @@ import promoBlock from '@/components/ui/promo.vue'
 
 export default {
   name: 'VirtualComponent',
-  components: { passwordMeter, selectsToCreate, promoBlock },
+  components: { selectsToCreate, promoBlock },
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()
@@ -180,7 +159,7 @@ export default {
 
     cachedPlans: {},
     options: { size: '', model: '', period: '' },
-    config: { domain: '', email: '', password: '' },
+    config: { domain: '', email: '' },
     modal: { confirmCreate: false, confirmLoading: false },
 
     products: [],
@@ -267,17 +246,7 @@ export default {
         email: [req, {
           message: this.$t('email is not valid'),
           pattern: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
-        }],
-        password: [req, {
-          validator: async (_, value) => {
-            await nextTick()
-            if (value === '') return Promise.resolve()
-            return (this.score > 3)
-              ? Promise.resolve()
-              : Promise.reject(this.$t('Password must contain uppercase letters, numbers and symbols'))
-          }
-        }
-        ]
+        }]
       }
     }
   },
@@ -533,11 +502,6 @@ export default {
       //   this.$message.error(this.$t('email is not valid'))
       //   return
       // }
-
-      if (this.config.password === '') {
-        this.$message.error(this.$t('Password is too short'))
-        return
-      }
 
       const instance = {
         config: {},
