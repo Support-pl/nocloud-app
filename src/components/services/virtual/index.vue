@@ -96,7 +96,6 @@
               block
               shape="round"
               type="primary"
-              :disabled="score < 4"
               @click="orderConfirm"
             >
               {{ capitalize($t("order")) }}
@@ -155,7 +154,6 @@ export default {
     namespace: null,
     provider: null,
     fetchLoading: false,
-    score: 0,
 
     cachedPlans: {},
     options: { size: '', model: '', period: '' },
