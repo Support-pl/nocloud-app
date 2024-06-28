@@ -36,7 +36,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
     "@vitejs/plugin-vue-jsx": "^4.0.0",
-    "@vue/shared": "^3.4.29",
+    "@vue/shared": "^3.4.31",
     "eslint": "^9.5.0",
     "eslint-config-standard": "17.1.0",
     "eslint-plugin-vue": "^9.26.0",
