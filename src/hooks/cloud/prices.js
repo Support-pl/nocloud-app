@@ -183,65 +183,64 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
     // return value + addonsPrice * percent;
   })
 
-  return {
-    minProduct: product,
-    productFullPrice: computed(() => {
-      const resourcesPrice = (plan.value.type === 'ione')
-        ? productFullPriceCustom.value * 24 * 30 * currency.value.rate
-        : 0
-      let price = 0
-      let period = ''
+  const productFullPrice = computed(() => {
+    const resourcesPrice = (plan.value.type === 'ione')
+      ? productFullPriceCustom.value * 24 * 30 * currency.value.rate
+      : 0
+    let price = 0
+    let period = ''
 
-      switch (tarification.value) {
-        case 'Annually':
-          period = 'year'
-          break
-        case 'Biennially':
-          period = '2 years'
-          break
-        case 'Monthly':
-          period = 'month'
-          break
-        case 'Daily':
-          period = 'day'
-          break
-        case 'Hourly':
-          period = 'hour'
-          price = productFullPriceCustom.value
-      }
-
-      if (plan.value.type?.includes('ovh') || plan.value.type === 'keyweb') {
+    switch (tarification.value) {
+      case 'Annually':
+        period = 'year'
+        break
+      case 'Biennially':
+        period = '2 years'
+        break
+      case 'Monthly':
+        period = 'month'
+        break
+      case 'Daily':
+        period = 'day'
+        break
+      case 'Hourly':
         period = 'hour'
-        price = productFullPriceOVH.value
-      } else if (plan.value.kind === 'STATIC') {
-        price = productFullPriceStatic.value
-      }
+        price = productFullPriceCustom.value
+    }
 
-      console.log(productFullPriceOVH.value)
-      price += product.value.installationFee ?? 0
-      price *= currency.value.rate
+    if (plan.value.type?.includes('ovh') || plan.value.type === 'keyweb') {
+      period = 'hour'
+      price = productFullPriceOVH.value
+    } else if (plan.value.kind === 'STATIC') {
+      price = productFullPriceStatic.value
+    }
 
-      switch (period) {
-        case 'minute':
-          return price / 60
-        case 'week':
-          return (price / 30) * 7
-        case 'hour':
-          return price
-        case 'day':
-          return (price + resourcesPrice) / 30
-        case 'month':
-          return price + resourcesPrice
-        case 'year':
-          return ((price + resourcesPrice) / 30) * 365
-        case '2 years':
-          return ((price + resourcesPrice) / 30) * 365 * 2
-        default:
-          console.error('[VDC Calculator]: Wrong period in calc.', period)
-          return 0
-      }
-    })
-  }
+    console.log(productFullPriceOVH.value, productFullPriceStatic.value)
+    price += product.value.installationFee ?? 0
+    price *= currency.value.rate
+
+    switch (period) {
+      case 'minute':
+        return price / 60
+      case 'week':
+        return (price / 30) * 7
+      case 'hour':
+        return price
+      case 'day':
+        return (price + resourcesPrice) / 30
+      case 'month':
+        return price + resourcesPrice
+      case 'year':
+        return ((price + resourcesPrice) / 30) * 365
+      case '2 years':
+        return ((price + resourcesPrice) / 30) * 365 * 2
+      default:
+        console.error('[VDC Calculator]: Wrong period in calc.', period)
+        return 0
+    }
+  })
+
+  return { minProduct: product, productFullPrice }
 }
 
 export default useCloudPrices
