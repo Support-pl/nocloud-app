@@ -26,7 +26,7 @@
     "nocloudjsrest": "^1.5.17",
     "pinia": "^2.1.7",
     "vnc-ui-vue": "^1.0.0",
-    "vue": "^3.4.29",
+    "vue": "^3.4.31",
     "vue-google-charts": "^1.1.0",
     "vue-gtag": "2.0.2-beta.0",
     "vue-i18n": "^9.13.1",
