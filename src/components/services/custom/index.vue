@@ -2,12 +2,25 @@
   <div class="order_wrapper">
     <div class="order">
       <div class="order__field">
+        <h3>{{ capitalize($t('filters')) }}:</h3>
+        <filters-view
+          v-if="Object.keys(filters).length > 0"
+          :type="filtersType"
+          :filters="filters"
+          :resources="resources"
+          @update:filter="(key, value) => filters[key] = value"
+        />
+        {{ capitalize($t('select group or product')) }}
+        <a-divider v-if="viewport < 1024" style="margin: 20px 0 0" />
+      </div>
+
+      <div class="order__field order__main">
         <div class="order__option">
           <a-radio-group
             v-if="typesOptions.length > 1"
             v-model:value="checkedType"
             class="order__radio-group"
-            :style="(filteredSizes.length > 0) ? 'margin-bottom: 30px' : null"
+            :style="radioGroupStyle"
           >
             <a-radio-button v-for="group of typesOptions" :key="group" :value="group">
               <img v-if="getGroupImage(group)" :src="getGroupImage(group)" :alt="group">
@@ -16,20 +29,6 @@
               </h1>
             </a-radio-button>
           </a-radio-group>
-
-          <div v-for="(resource, key) in resources" :key="key">
-            <span>{{ capitalize($t('filter')) }} {{ $t('by') }} {{ key }}:</span>
-            <a-slider
-              range
-              style="margin-top: 10px"
-              :marks="{ ...resource }"
-              :tip-formatter="null"
-              :default-value="[0, resource.length - 1]"
-              :max="resource.length - 1"
-              :min="0"
-              @change="([i, j]) => filters[key] = [resource[i], resource[j]]"
-            />
-          </div>
 
           <div v-if="filteredSizes.length > 0" class="order__grid">
             <div
@@ -199,11 +198,12 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
+import filtersView from '@/components/ui/filters.vue'
 import promoBlock from '@/components/ui/promo.vue'
 
 export default {
   name: 'CustomComponent',
-  components: { selectsToCreate, promoBlock },
+  components: { selectsToCreate, filtersView, promoBlock },
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()
@@ -226,6 +226,7 @@ export default {
     periods: [],
     checkedType: '',
     filters: {},
+    filtersType: 'range-with-prefixes',
     cachedPlans: {}
   }),
   computed: {
@@ -309,7 +310,12 @@ export default {
         return isIncluded && meta?.resources?.every(({ key, value }) => {
           const a = this.filters[key]?.at(0) <= value
           const b = this.filters[key]?.at(-1) >= value
+          const isNotNumber = this.filters[key]?.some((value) => isNaN(value))
 
+          if (this.filters[key]?.length < 1) return true
+          if (isNotNumber) {
+            return this.filters[key].includes(value)
+          }
           return (this.filters[key]) ? a && b : true
         })
       })
@@ -364,8 +370,18 @@ export default {
       return { req: [{ required: true, message }] }
     },
 
+    viewport () {
+      return document.documentElement.offsetWidth
+    },
     groupWidthStyle () {
-      return `${100 / this.typesOptions.length}%`
+      return (this.viewport >= 1024)
+        ? `${100 / this.typesOptions.length}%`
+        : '100%'
+    },
+    radioGroupStyle () {
+      if (this.viewport < 1024) return 'margin-bottom: 15px'
+
+      return (this.filteredSizes.length > 0) ? 'margin-bottom: 30px' : null
     }
   },
   watch: {
@@ -392,7 +408,11 @@ export default {
     },
     resources (value) {
       Object.entries(value).forEach(([key, resource]) => {
-        this.filters[key] = [resource.at(0), resource.at(-1)]
+        if (this.filtersType.includes('slider')) {
+          this.filters[key] = [resource.at(0), resource.at(-1)]
+        } else {
+          this.filters[key] = []
+        }
       })
     },
     checkedType (value) {
@@ -694,10 +714,10 @@ export default {
 
 .order {
   display: grid;
-  grid-template-columns: calc(72% - 20px) 28%;
+  grid-template-columns: 15% calc(65% - 40px) 20%;
   gap: 20px;
   width: 100%;
-  max-width: 1024px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -992,6 +1012,9 @@ export default {
 }
 
 @media screen and (max-width: 1024px) {
+  .order_wrapper {
+    padding: 0;
+  }
   .order {
     grid-template-columns: 1fr;
     gap: 0;
@@ -1000,8 +1023,12 @@ export default {
     overflow: auto;
   }
   .order__field {
+    padding: 10px;
     box-shadow: none;
     border-radius: 20px 20px 0 0;
+  }
+  .order__main {
+    border-radius: 0;
   }
   .order__calculate {
     width: auto;
@@ -1057,6 +1084,10 @@ export default {
   }
   .order__template-name ul li{
     margin-left: 20px;
+  }
+  .order__radio-group {
+    flex-wrap: wrap;
+    gap: 10px;
   }
   .product__specs {
     width: 100%;
