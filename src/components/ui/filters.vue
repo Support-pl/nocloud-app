@@ -5,14 +5,18 @@
       justify="space-between"
       align="middle"
     >
-      <a-col>
+      <a-col v-if="type.includes('with-prefixes')">
         {{ $t(key) }}:
         <template v-if="prefixes[key]">
           ({{ prefixes[key] }})
         </template>
       </a-col>
 
-      <a-col :span="24" :md="20">
+      <a-col v-else>
+        <span>{{ capitalize($t('filter')) }} {{ $t('by') }} {{ key }}:</span>
+      </a-col>
+
+      <a-col v-if="type.includes('slider')" :span="24" :md="(type === 'slider') ? 24 : 20">
         <a-slider
           range
           class="slider"
@@ -24,6 +28,48 @@
           :min="0"
           @change="([i, j]) => emits('update:filter', key, [resource[i], resource[j]] )"
         />
+      </a-col>
+
+      <a-col v-else style="display: flex; gap: 5px; align-items: center" :span="24">
+        <a-select
+          v-if="resource.some((value) => isNaN(value))"
+          mode="multiple"
+          style="width: 100%"
+          placeholder="Select"
+          :options="getOptions(resource)"
+          :value="filters[key]"
+          @update:value="emits('update:filter', key, $event)"
+        />
+
+        <a-input-number
+          v-else-if="type.includes('block')"
+          style="width: 100%"
+          :placeholder="`${getMax(resource)}`"
+          :min="getMin(resource)"
+          :max="getMax(resource)"
+          :value="filters[key].at(0)"
+          @update:value="emits('update:filter', key, [$event, $event])"
+        />
+
+        <template v-else>
+          <a-input-number
+            style="width: 100%"
+            :placeholder="`${getMin(resource)}`"
+            :min="getMin(resource)"
+            :max="getMax(resource)"
+            :value="filters[key].at(0)"
+            @update:value="emits('update:filter', key, [$event, resource.at(-1)])"
+          />
+          -
+          <a-input-number
+            style="width: 100%"
+            :placeholder="`${getMax(resource)}`"
+            :min="getMin(resource)"
+            :max="getMax(resource)"
+            :value="filters[key].at(-1)"
+            @update:value="emits('update:filter', key, [resource.at(0), $event])"
+          />
+        </template>
       </a-col>
     </a-row>
 
@@ -44,11 +90,24 @@
 
 <script setup>
 defineProps({
+  type: { type: String, default: 'slider-with-prefixes' },
   filters: { type: Object, required: true },
   resources: { type: Object, required: true },
   prefixes: { type: Object, default: () => ({}) }
 })
 const emits = defineEmits(['update:filter'])
+
+function getMin (resource) {
+  return Math.min(...resource)
+}
+
+function getMax (resource) {
+  return Math.max(...resource)
+}
+
+function getOptions (resource) {
+  return resource.map((value) => ({ label: value, value }))
+}
 </script>
 
 <script>
