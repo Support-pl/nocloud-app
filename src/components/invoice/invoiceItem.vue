@@ -114,7 +114,7 @@ const currency = computed(() => {
 })
 
 const statusColor = computed(() => {
-  switch (props.invoice.status.toLowerCase()) {
+  switch (props.invoice.status?.toLowerCase()) {
     case 'paid':
       return config.colors.success
     case 'cancelled':
