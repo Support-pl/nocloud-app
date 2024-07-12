@@ -47,6 +47,7 @@
           :placeholder="`${getMax(resource)}`"
           :min="getMin(resource)"
           :max="getMax(resource)"
+          :step="getStep(resource)"
           :value="filters[key].at(0)"
           @update:value="emits('update:filter', key, [$event, $event])"
         />
@@ -57,6 +58,7 @@
             :placeholder="`${getMin(resource)}`"
             :min="getMin(resource)"
             :max="getMax(resource)"
+            :step="getStep(resource)"
             :value="filters[key].at(0)"
             @update:value="emits('update:filter', key, [$event, resource.at(-1)])"
           />
@@ -66,6 +68,7 @@
             :placeholder="`${getMax(resource)}`"
             :min="getMin(resource)"
             :max="getMax(resource)"
+            :step="getStep(resource)"
             :value="filters[key].at(-1)"
             @update:value="emits('update:filter', key, [resource.at(0), $event])"
           />
@@ -107,6 +110,19 @@ function getMax (resource) {
 
 function getOptions (resource) {
   return resource.map((value) => ({ label: value, value }))
+}
+
+function getStep (resource) {
+  const nums = resource.map((value) =>
+    `${value}`.length - `${parseInt(value)}`.length - 1
+  )
+  const isFloat = resource.some((value) => !Number.isInteger(value))
+  const simbolsAfterComma = nums.reduce((result, value) =>
+    (value > result) ? value : result
+  )
+  const float = (isFloat) ? 1 / Math.pow(10, simbolsAfterComma) : 1
+
+  return float
 }
 </script>
 

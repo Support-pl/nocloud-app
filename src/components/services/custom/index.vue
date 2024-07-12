@@ -2,7 +2,7 @@
   <div class="order_wrapper">
     <div class="order">
       <div class="order__field">
-        <h3>{{ capitalize($t('filters')) }}:</h3>
+        <h3>{{ capitalize($t('filters')) }}</h3>
         <filters-view
           v-if="Object.keys(filters).length > 0"
           :type="filtersType"
@@ -10,25 +10,39 @@
           :resources="resources"
           @update:filter="(key, value) => filters[key] = value"
         />
-        {{ capitalize($t('select group or product')) }}
+        <template v-else>
+          {{ capitalize($t('select group or product')) }}
+        </template>
+
+        <a-button type="primary" style="margin-top: 10px" @click="resetFilters">
+          {{ $t('Reset') }}
+        </a-button>
         <a-divider v-if="viewport < 1024" style="margin: 20px 0 0" />
       </div>
 
       <div class="order__field order__main">
         <div class="order__option">
-          <a-radio-group
-            v-if="typesOptions.length > 1"
-            v-model:value="checkedType"
-            class="order__radio-group"
-            :style="radioGroupStyle"
-          >
-            <a-radio-button v-for="group of typesOptions" :key="group" :value="group">
-              <img v-if="getGroupImage(group)" :src="getGroupImage(group)" :alt="group">
-              <h1 style="margin-bottom: 4px">
-                {{ group }}
-              </h1>
-            </a-radio-button>
-          </a-radio-group>
+          <a-collapse v-model:activeKey="activeKey">
+            <a-collapse-panel key="groups" :header="capitalize($t('groups'))">
+              <a-radio-group
+                v-if="typesOptions.length > 1"
+                class="order__radio-group"
+                :value="checkedType"
+              >
+                <a-radio-button
+                  v-for="group of typesOptions"
+                  :key="group"
+                  :value="group"
+                  @click="(checkedType === group) ? checkedType = '' : checkedType = group"
+                >
+                  <img v-if="getGroupImage(group)" :src="getGroupImage(group)" :alt="group">
+                  <h1 style="margin-bottom: 4px">
+                    {{ group }}
+                  </h1>
+                </a-radio-button>
+              </a-radio-group>
+            </a-collapse-panel>
+          </a-collapse>
 
           <div v-if="filteredSizes.length > 0" class="order__grid">
             <div
@@ -43,8 +57,13 @@
               @click="options.size = size.keys[options.period]"
             >
               <img v-if="size.image" :src="size.image" :alt="size.label">
-              <h1>{{ size.label }}</h1>
-              <p v-for="resource of products[size.keys[options.period]]?.meta?.resources" :key="resource.id">
+
+              <h1 :style="(getResources(size)) ? null : 'margin-bottom: 0'">
+                {{ size.label }}
+              </h1>
+              <a-divider v-if="getResources(size)" style="margin: -2px 0 7px" />
+
+              <p v-for="resource of getResources(size)" :key="resource.id">
                 {{ resource.key }}: {{ resource.title }}
               </p>
             </div>
@@ -227,6 +246,7 @@ export default {
     checkedType: '',
     filters: {},
     filtersType: 'range-with-prefixes',
+    activeKey: 'groups',
     cachedPlans: {}
   }),
   computed: {
@@ -302,11 +322,12 @@ export default {
     },
     filteredSizes () {
       return this.sizes.filter(({ group, keys }) => {
-        const isIncluded = (this.typesOptions.length > 1) ? this.checkedType === group : true
-
         const { meta } = this.products[keys[this.options.period]] ?? {}
+        let isIncluded = (this.typesOptions.length > 1) ? this.checkedType === group : true
 
+        if (!this.checkedType) isIncluded = true
         if (!meta?.resources) return isIncluded
+
         return isIncluded && meta?.resources?.every(({ key, value }) => {
           const a = this.filters[key]?.at(0) <= value
           const b = this.filters[key]?.at(-1) >= value
@@ -374,14 +395,15 @@ export default {
       return document.documentElement.offsetWidth
     },
     groupWidthStyle () {
-      return (this.viewport >= 1024)
-        ? `${100 / this.typesOptions.length}%`
-        : '100%'
-    },
-    radioGroupStyle () {
-      if (this.viewport < 1024) return 'margin-bottom: 15px'
+      const count = (this.typesOptions.length > 3)
+        ? 3
+        : this.typesOptions.length
 
-      return (this.filteredSizes.length > 0) ? 'margin-bottom: 30px' : null
+      return (this.viewport >= 1024) ? `calc(${100 / count}% - 10px)` : '100%'
+    },
+    groupWrapStyle () {
+      if (this.typesOptions.length > 3) return 'wrap'
+      return null
     }
   },
   watch: {
@@ -415,6 +437,15 @@ export default {
         }
       })
     },
+    sizes (value) {
+      const { keys } = value?.at(0) ?? {}
+
+      if (keys && this.options.period) {
+        this.options.size = keys[this.options.period]
+      } else if (keys) {
+        this.options.size = Object.values(keys)[0]
+      }
+    },
     checkedType (value) {
       const { keys } = this.sizes.find(({ group }) => group === value) ?? {}
 
@@ -423,6 +454,7 @@ export default {
       } else if (keys) {
         this.options.size = Object.values(keys)[0]
       }
+      this.activeKey = ''
     },
     'options.size' (value, prev) {
       const size = this.sizes.find(({ keys }) => Object.values(keys).includes(prev))
@@ -573,6 +605,17 @@ export default {
         price: +(price * this.currency.rate).toFixed(2)
       }
     },
+    getResources (size) {
+      const key = size.keys[this.options.period]
+
+      return this.products[key]?.meta?.resources
+    },
+
+    resetFilters () {
+      Object.keys(this.filters).forEach((key) => {
+        this.filters[key] = []
+      })
+    },
 
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
@@ -714,8 +757,8 @@ export default {
 
 .order {
   display: grid;
-  grid-template-columns: 15% calc(65% - 40px) 20%;
-  gap: 20px;
+  grid-template-columns: 15% calc(65% - 30px) 20%;
+  gap: 15px;
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
@@ -750,7 +793,8 @@ export default {
 
 .order__radio-group {
   display: flex;
-  gap: 20px;
+  flex-wrap: v-bind(groupWrapStyle);
+  gap: 15px;
 }
 
 .product__specs{
@@ -820,6 +864,7 @@ export default {
   margin-bottom: 5px;
   color: inherit;
   font-size: 18px;
+  font-weight: 700;
 }
 
 .order__grid-item p {
@@ -844,6 +889,7 @@ export default {
   padding: 5px 15px;
   border-radius: 10px;
   border-inline-start-width: 1px;
+  border-color: var(--border-color);
 }
 
 .order__radio-group > *::before {
