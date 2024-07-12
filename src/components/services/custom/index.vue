@@ -298,8 +298,13 @@ export default {
           if (result[key].includes(value)) return
 
           result[key].push(value)
-          result[key].sort((a, b) => a - b)
+          result[key].sort((a, b) => parseFloat(a) - parseFloat(b))
         })
+
+        if (!result.$price) result.$price = []
+        if (this.products[key]) {
+          result.$price.push(this.products[key].price)
+        }
       })
 
       Object.keys(result).forEach((key) => {
