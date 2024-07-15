@@ -14,6 +14,17 @@
           {{ capitalize($t('select group or product')) }}
         </template>
 
+        <template v-if="isResourcesExist">
+          {{ capitalize($t('group')) }}:
+          <a-select
+            v-model:value="checkedType"
+            allow-clear
+            style="width: 100%"
+            placeholder="Select"
+            :options="typesOptions.map((value) => ({ value, label: value }))"
+          />
+        </template>
+
         <a-button type="primary" style="margin-top: 10px" @click="resetFilters">
           {{ $t('Reset') }}
         </a-button>
@@ -22,31 +33,28 @@
 
       <div class="order__field order__main">
         <div class="order__option">
-          <a-collapse v-model:activeKey="activeKey">
-            <a-collapse-panel key="groups" :header="capitalize($t('groups'))">
-              <a-radio-group
-                v-if="typesOptions.length > 1"
-                class="order__radio-group"
-                :value="checkedType"
-              >
-                <a-radio-button
-                  v-for="group of typesOptions"
-                  :key="group"
-                  :value="group"
-                  @click="(checkedType === group) ? checkedType = '' : checkedType = group"
-                >
-                  <img v-if="getGroupImage(group)" :src="getGroupImage(group)" :alt="group">
-                  <h1 style="margin-bottom: 4px">
-                    {{ group }}
-                  </h1>
-                </a-radio-button>
-              </a-radio-group>
-            </a-collapse-panel>
-          </a-collapse>
+          <a-radio-group
+            v-if="typesOptions.length > 1 && !isResourcesExist"
+            class="order__radio-group"
+            :style="radioGroupStyle"
+            :value="checkedType"
+          >
+            <a-radio-button
+              v-for="group of typesOptions"
+              :key="group"
+              :value="group"
+              @click="(checkedType === group) ? checkedType = '' : checkedType = group"
+            >
+              <img v-if="getGroupImage(group)" :src="getGroupImage(group)" :alt="group">
+              <h1 style="margin-bottom: 4px">
+                {{ group }}
+              </h1>
+            </a-radio-button>
+          </a-radio-group>
 
-          <div v-if="filteredSizes.length > 0" class="order__grid">
+          <div v-if="sizesByPage.length > 0" class="order__grid">
             <div
-              v-for="size of filteredSizes"
+              v-for="size of sizesByPage"
               :key="size.keys[options.period]"
               class="order__grid-item"
               :class="{
@@ -69,7 +77,7 @@
             </div>
           </div>
 
-          <transition v-if="filteredSizes.length > 0" name="specs" mode="out-in">
+          <transition v-if="sizesByPage.length > 0" name="specs" mode="out-in">
             <div
               v-if="typeof getProducts.meta?.description === 'string'"
               style="margin-top: 15px"
@@ -117,6 +125,14 @@
               </a-card-grid>
             </template>
           </a-card>
+
+          <custom-pagination
+            v-if="isResourcesExist"
+            name="customPagination"
+            :visible="filteredSizes.length > 15"
+            :options="paginationOptions"
+            @update:options="(key, value) => paginationOptions[key] = value"
+          />
         </div>
       </div>
 
@@ -217,12 +233,13 @@ import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
+import customPagination from '@/components/ui/pagination.vue'
 import filtersView from '@/components/ui/filters.vue'
 import promoBlock from '@/components/ui/promo.vue'
 
 export default {
   name: 'CustomComponent',
-  components: { selectsToCreate, filtersView, promoBlock },
+  components: { selectsToCreate, customPagination, filtersView, promoBlock },
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()
@@ -246,7 +263,7 @@ export default {
     checkedType: '',
     filters: {},
     filtersType: 'range-with-prefixes',
-    activeKey: 'groups',
+    paginationOptions: { total: 0, size: 10, page: 1 },
     cachedPlans: {}
   }),
   computed: {
@@ -330,7 +347,9 @@ export default {
         const { meta } = this.products[keys[this.options.period]] ?? {}
         let isIncluded = (this.typesOptions.length > 1) ? this.checkedType === group : true
 
-        if (!this.checkedType) isIncluded = true
+        if (!this.checkedType && this.isResourcesExist) {
+          isIncluded = true
+        }
         if (!meta?.resources) return isIncluded
 
         return isIncluded && meta?.resources?.every(({ key, value }) => {
@@ -345,6 +364,14 @@ export default {
           return (this.filters[key]) ? a && b : true
         })
       })
+    },
+    sizesByPage () {
+      if (!this.isResourcesExist) return this.filteredSizes
+
+      const start = this.paginationOptions.size * (this.paginationOptions.page - 1)
+      const end = start + this.paginationOptions.size
+
+      return this.filteredSizes.slice(start, end)
     },
     currency () {
       const code = this.unloginedCurrency
@@ -390,10 +417,16 @@ export default {
         items.find((item) => uuid === item.servicesProvider)
       )
     },
+
     rules () {
       const message = this.$t('ssl_product.field is required')
 
       return { req: [{ required: true, message }] }
+    },
+    isResourcesExist () {
+      return Object.values(this.products).every(
+        ({ meta }) => meta.resources?.length > 0
+      )
     },
 
     viewport () {
@@ -409,6 +442,11 @@ export default {
     groupWrapStyle () {
       if (this.typesOptions.length > 3) return 'wrap'
       return null
+    },
+    radioGroupStyle () {
+      if (this.viewport < 1024) return 'margin-bottom: 15px'
+
+      return (this.filteredSizes.length > 0) ? 'margin-bottom: 30px' : null
     }
   },
   watch: {
@@ -451,6 +489,9 @@ export default {
         this.options.size = Object.values(keys)[0]
       }
     },
+    filteredSizes (value) {
+      this.paginationOptions.total = value.length
+    },
     checkedType (value) {
       const { keys } = this.sizes.find(({ group }) => group === value) ?? {}
 
@@ -459,7 +500,6 @@ export default {
       } else if (keys) {
         this.options.size = Object.values(keys)[0]
       }
-      this.activeKey = ''
     },
     'options.size' (value, prev) {
       const size = this.sizes.find(({ keys }) => Object.values(keys).includes(prev))
@@ -620,6 +660,10 @@ export default {
       Object.keys(this.filters).forEach((key) => {
         this.filters[key] = []
       })
+
+      if (this.isResourcesExist) {
+        this.checkedType = ''
+      }
     },
 
     orderClickHandler () {
