@@ -77,7 +77,7 @@
             </div>
           </div>
 
-          <transition v-if="sizesByPage.length > 0" name="specs" mode="out-in">
+          <transition v-if="sizesByPage.length > 0 && !isResourcesExist" name="specs" mode="out-in">
             <div
               v-if="typeof getProducts.meta?.description === 'string'"
               style="margin-top: 15px"
@@ -150,6 +150,20 @@
             <div v-else class="loadingLine" />
           </a-col>
         </a-row>
+
+        <transition v-if="sizesByPage.length > 0 && isResourcesExist" name="specs" mode="out-in">
+          <div
+            v-if="typeof getProducts.meta?.description === 'string'"
+            style="margin-top: 15px"
+            v-html="getProducts.meta?.description"
+          />
+          <table v-else-if="getProducts.meta?.description" class="product__specs">
+            <tr v-for="resource in getProducts.meta?.description" :key="resource.name">
+              <td>{{ resource.name }}</td>
+              <td>{{ resource.value }}</td>
+            </tr>
+          </table>
+        </transition>
 
         <a-row
           v-for="addon of options.addons"
