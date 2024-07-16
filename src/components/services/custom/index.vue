@@ -14,7 +14,7 @@
           {{ capitalize($t('select group or product')) }}
         </template>
 
-        <template v-if="isResourcesExist">
+        <template v-if="isResourcesExist && Object.keys(filters).length > 0">
           {{ capitalize($t('group')) }}:
           <a-select
             v-model:value="checkedType"
@@ -128,7 +128,6 @@
 
           <custom-pagination
             v-if="isResourcesExist"
-            name="customPagination"
             :visible="filteredSizes.length > 15"
             :options="paginationOptions"
             @update:options="(key, value) => paginationOptions[key] = value"
@@ -309,13 +308,22 @@ export default {
         const key = size.keys[this.options.period]
         const value = this.products[key]?.meta.resources ?? []
 
-        value.forEach(({ key, value }) => {
+        value.forEach(({ key, value, group }) => {
           if (!key) return
           if (!result[key]) result[key] = []
-          if (result[key].includes(value)) return
+          if (result[key].includes(group || value)) return
 
-          result[key].push(value)
-          result[key].sort((a, b) => parseFloat(a) - parseFloat(b))
+          result[key].push(group || value)
+          result[key].sort((a, b) => {
+            if (isNaN(parseFloat(a)) && isNaN(parseFloat(b))) {
+              return a.localeCompare(b)
+            } else if (isNaN(parseFloat(a))) {
+              return -1
+            } else if (isNaN(parseFloat(b))) {
+              return 1
+            }
+            return parseFloat(a) - parseFloat(b)
+          })
         })
 
         if (!result.$price) result.$price = []
@@ -352,14 +360,21 @@ export default {
         }
         if (!meta?.resources) return isIncluded
 
-        return isIncluded && meta?.resources?.every(({ key, value }) => {
-          const a = this.filters[key]?.at(0) <= value
-          const b = this.filters[key]?.at(-1) >= value
+        const groups = []
+        meta?.resources?.forEach(({ group }) => {
+          if (!group || groups.includes(group)) return
+
+          groups.push(group)
+        })
+
+        return isIncluded && meta?.resources?.every(({ key, value, group }) => {
+          const a = this.filters[key]?.at(0) <= (group || value)
+          const b = this.filters[key]?.at(-1) >= (group || value)
           const isNotNumber = this.filters[key]?.some((value) => isNaN(value))
 
           if (this.filters[key]?.length < 1) return true
           if (isNotNumber) {
-            return this.filters[key].includes(value)
+            return this.filters[key].includes(group || value)
           }
           return (this.filters[key]) ? a && b : true
         })

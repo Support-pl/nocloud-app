@@ -16,7 +16,7 @@
 import { onMounted } from 'vue'
 
 const props = defineProps({
-  name: { type: String, required: true },
+  name: { type: String, default: null },
   visible: { type: Boolean, required: true },
   options: { type: Object, required: true }
 })
@@ -31,6 +31,7 @@ function onShowSizeChange (page, limit) {
     emits('update:options', 'size', limit)
   }
 
+  if (!props.name) return
   localStorage.setItem(props.name, JSON.stringify({ page, limit }))
 }
 
