@@ -308,10 +308,15 @@ export default {
           return sum + addon.price * ((period >= 1) ? period : 1 / period)
         }, 0
       )
+      const description = product.meta.description.replace(
+        /[\wА-ЯЁа-яё \-_+]{1,};/,
+        '<span style="font-weight: 700">$&</span>'
+      )
 
       return {
         ...product,
-        price: +(price * this.currency.rate).toFixed(2)
+        price: +(price * this.currency.rate).toFixed(2),
+        meta: { ...product.meta, description }
       }
     },
     resources () {

@@ -60,7 +60,7 @@
             :max="getMax(resource)"
             :step="getStep(resource)"
             :value="filters[key].at(0)"
-            @update:value="emits('update:filter', key, [$event, resource.at(-1)])"
+            @update:value="emits('update:filter', key, [$event, filters[key].at(-1)])"
           />
           -
           <a-input-number
@@ -70,7 +70,7 @@
             :max="getMax(resource)"
             :step="getStep(resource)"
             :value="filters[key].at(-1)"
-            @update:value="emits('update:filter', key, [resource.at(0), $event])"
+            @update:value="emits('update:filter', key, [filters[key].at(0), $event])"
           />
         </template>
       </a-col>
