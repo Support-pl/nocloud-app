@@ -128,6 +128,7 @@
 
           <custom-pagination
             v-if="isResourcesExist"
+            style="margin-top: 20px"
             :visible="filteredSizes.length > 15"
             :options="paginationOptions"
             @update:options="(key, value) => paginationOptions[key] = value"
@@ -308,10 +309,12 @@ export default {
           return sum + addon.price * ((period >= 1) ? period : 1 / period)
         }, 0
       )
-      const description = product.meta.description.replace(
-        /[\wА-ЯЁа-яё \-_+]{1,};/,
-        '<span style="font-weight: 700">$&</span>'
-      )
+      const description = (this.isResourcesExist)
+        ? product.meta.description?.replace(
+          /[\wА-ЯЁа-яё \-_+]{1,};/,
+          '<span style="font-weight: 700">$&</span>'
+        )
+        : product.meta.description
 
       return {
         ...product,
@@ -374,6 +377,7 @@ export default {
         const { meta } = this.products[keys[this.options.period]] ?? {}
         let isIncluded = (this.typesOptions.length > 1) ? this.checkedType === group : true
 
+        if (!keys[this.options.period]) return false
         if (!this.checkedType && this.isResourcesExist) {
           isIncluded = true
         }
