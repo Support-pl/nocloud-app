@@ -101,8 +101,6 @@ export const useCloudStore = defineStore('cloud', () => {
 
         newInstance.config.auto_renew = true
         newInstance.resources = { ...resources, ips_private: 0, ips_public: 1 }
-        newGroup.config = { ssh: newInstance.config.ssh }
-        delete newInstance.config.ssh
       }
     } else if (newGroup.type === 'keyweb') {
       newInstance.config = {
@@ -120,7 +118,7 @@ export const useCloudStore = defineStore('cloud', () => {
 
       instancesGroups = response.instancesGroups
     } else {
-      const response = await createService(newInstance, options)
+      const response = await createService(newInstance)
 
       instancesGroups = response.instancesGroups
     }
@@ -196,7 +194,7 @@ export const useCloudStore = defineStore('cloud', () => {
     return [instance, group]
   }
 
-  function createService (newInstance, options) {
+  function createService (newInstance) {
     const orderData = {
       namespace: namespaceId.value,
       service: {
@@ -218,16 +216,12 @@ export const useCloudStore = defineStore('cloud', () => {
       }
     }
 
-    if (newInstance.config.type === 'cloud') {
-      orderData.service.instancesGroups[0].config = { ssh: options.config.ssh }
-    }
-
     return createInstance(
       'create', orderData, namespaceId.value, null, deployMessage
     )
   }
 
-  function updateService (newGroup, newInstance, options) {
+  function updateService (newGroup, newInstance) {
     const orderData = Object.assign({}, service.value)
     let group = orderData.instancesGroups.find(
       (el) => el.sp === provider.value.uuid
@@ -236,9 +230,6 @@ export const useCloudStore = defineStore('cloud', () => {
     if (!group) {
       orderData.instancesGroups.push(newGroup)
       group = orderData.instancesGroups.at(-1)
-    }
-    if (newInstance.config.type === 'cloud') {
-      group.config = { ssh: options.config.ssh }
     }
     group.instances.push(newInstance)
 
