@@ -133,6 +133,154 @@ export function getPeriods (productSize, plans) {
   return value
 }
 
+export function getInstStatusColor (status) {
+  switch (status) {
+    case 'RUNNING':
+    case 'Active':
+      return 'var(--success)'
+    // останавливающийся и запускающийся
+    case 'BOOT':
+    case 'BUILD':
+    case 'BOOT_POWEROFF':
+    case 'SHUTDOWN_POWEROFF':
+      return 'var(--warn)'
+    case 'LCM_INIT':
+    case 'STOPPED':
+    case 'SUSPENDED':
+      return '#ff9140'
+    case 'OPERATION':
+    case 'PENDING':
+    case 'Pending':
+      return 'var(--main)'
+    default:
+      return 'var(--err)'
+  }
+}
+
+export function transformInstances (instances) {
+  return instances.map((inst) => {
+    const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
+
+    const publicIPs = inst.state?.meta?.networking?.public?.filter((el) => !regexp.test(el))
+    const state = inst.state?.meta?.lcm_state_str ?? inst.state?.state
+    let status = 'UNKNOWN'
+
+    switch (state) {
+      case 'LCM_INIT':
+        status = 'POWEROFF'
+        break
+      default:
+        if (state) status = state.replaceAll('_', ' ')
+    }
+
+    if (inst.state?.meta.state === 1) status = 'PENDING'
+    if (inst.state?.meta.state === 5) status = 'SUSPENDED'
+    if (inst.data.suspended_manually) status = 'SUSPENDED'
+    if (inst.state?.meta.state === 'BUILD') status = 'BUILD'
+
+    const result = {
+      ...inst,
+      sp: inst.sp,
+      orderid: inst.uuid,
+      groupname: 'Self-Service VDS SSD HC',
+      invoicestatus: null,
+      domainstatus: status,
+      productname: inst.title,
+      domain: publicIPs?.at(0),
+      date: inst.data.next_payment_date * 1000 || 0,
+      orderamount: inst.billingPlan.products[inst.product]?.price ?? 0
+    }
+
+    setInstByType(inst, result)
+    return result
+  })
+}
+
+function setInstByType (inst, result) {
+  switch (inst.type) {
+    case 'vdc':
+      result.groupname = 'VDC'
+      break
+    case 'cpanel':
+      result.groupname = 'Shared Hosting'
+      result.domain = inst.config.domain
+      break
+    case 'openai':
+      result.groupname = 'OpenAI'
+      break
+    case 'empty':
+    case 'virtual':
+      result.groupname = 'Custom'
+      break
+    case 'acronis':
+      result.groupname = 'Acronis'
+      break
+    case 'opensrs':
+      result.groupname = 'Domains'
+      result.date = inst.data.expiry?.expiredate ?? 0
+      result.domain = inst.resources.domain
+      break
+    case 'goget':
+      setGogetInst(inst, result)
+      break
+
+    case 'ovh':
+      setOvhInst(inst, result)
+      break
+
+    case 'ione':
+      setIoneInst(inst, result)
+  }
+}
+
+function setGogetInst (inst, result) {
+  const key = `${inst.resources.period} ${inst.resources.id}`
+
+  result.groupname = 'SSL'
+  result.date = +`${inst.resources.period}`
+  result.domain = inst.resources.domain
+  result.orderamount = inst.billingPlan.products[key]?.price ?? 0
+}
+
+function setOvhInst (inst, result) {
+  const key = (!inst.product)
+    ? `${inst.config.duration} ${inst.config.planCode}`
+    : inst.product
+
+  result.date = (inst.data.expiration * 1000 || null) ??
+              (inst.data.next_payment_date * 1000 || 0)
+  result.orderamount = inst.billingPlan.products[key]?.price ?? 0
+
+  inst.config.addons?.forEach((addon) => {
+    const addonKey = (inst.billingPlan.type.includes('dedicated'))
+      ? `${inst.config.duration} ${inst.config.planCode} ${addon}`
+      : `${inst.config.duration} ${addon}`
+
+    const { price } = inst.billingPlan.resources
+      .find(({ key }) => key === addonKey) ?? { price: 0 }
+
+    result.orderamount += +price
+  })
+}
+
+function setIoneInst (inst, result) {
+  const keys = []
+
+  result.orderamount += +inst.billingPlan.resources.reduce((prev, curr) => {
+    if (keys.includes(curr.key)) return prev
+    else keys.push(curr.key)
+
+    if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
+      return prev + curr.price * inst.resources.drive_size / 1024
+    } else if (curr.key === 'ram') {
+      return prev + curr.price * inst.resources.ram / 1024
+    } else if (inst.resources[curr.key]) {
+      return prev + curr.price * inst.resources[curr.key]
+    }
+    return prev
+  }, 0)?.toFixed(2)
+}
+
 export async function createInvoice (instance, service, account, baseURL) {
   if (checkPayg(instance)) return
   try {

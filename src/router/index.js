@@ -83,6 +83,14 @@ const routes = [
         component: () => import('@/routes/services/services.vue')
       },
       {
+        path: 'cloud',
+        name: 'cloud',
+        meta: {
+          mustBeLoggined: true
+        },
+        component: () => import('@/routes/cloud/vdcCloud.vue')
+      },
+      {
         path: 'services',
         name: 'services',
         meta: {
@@ -129,7 +137,7 @@ const routes = [
         path: 'cloud/newVM',
         name: 'newPaaS',
         meta: {
-          footerTitle: 'cloud',
+          footerTitle: 'services',
           isFromRoute: true
         },
         component: () => import('@/routes/cloud/createPaas.vue')
@@ -142,6 +150,17 @@ const routes = [
           footerTitle: 'cloud'
         },
         component: () => import('@/routes/cloud/createVdc.vue')
+      },
+      {
+        path: 'cloud/networking',
+        name: 'VDCNetworking',
+        meta: {
+          mustBeLoggined: true,
+          footerTitle: 'cloud',
+          headerTitle: 'VDC Networking',
+          isNeedBackButton: true
+        },
+        component: () => import('@/routes/cloud/vdcNetworking.vue')
       },
       {
         path: 'service/:id',

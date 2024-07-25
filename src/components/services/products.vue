@@ -148,6 +148,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useProductsStore } from '@/stores/products.js'
 import { useInstancesStore } from '@/stores/instances.js'
+import { transformInstances } from '@/functions'
 
 import loading from '@/components/ui/loading.vue'
 import cloudItem from '@/components/cloud/item.vue'
@@ -215,135 +216,9 @@ export default {
         server_on: el.server_on,
         id: el.id
       }))
+      const instances = transformInstances(this.instancesStore.getInstances)
 
-      const instances = this.instancesStore.getInstances.map((inst) => {
-        const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
-
-        const publicIPs = inst.state?.meta?.networking?.public?.filter((el) => !regexp.test(el))
-        const state = inst.state?.meta?.lcm_state_str ?? inst.state?.state
-        let status = 'UNKNOWN'
-
-        switch (state) {
-          case 'LCM_INIT':
-            status = 'POWEROFF'
-            break
-          default:
-            if (state) status = state.replaceAll('_', ' ')
-        }
-
-        if (inst.state?.meta.state === 1) status = 'PENDING'
-        if (inst.state?.meta.state === 5) status = 'SUSPENDED'
-        if (inst.data.suspended_manually) status = 'SUSPENDED'
-        if (inst.state?.meta.state === 'BUILD') status = 'BUILD'
-
-        const res = {
-          ...inst,
-          sp: inst.sp,
-          orderid: inst.uuid,
-          groupname: 'Self-Service VDS SSD HC',
-          invoicestatus: null,
-          domainstatus: status,
-          productname: inst.title,
-          domain: publicIPs?.at(0),
-          date: inst.data.next_payment_date * 1000 || 0,
-          orderamount: inst.billingPlan.products[inst.product]?.price ?? 0
-        }
-
-        switch (inst.type) {
-          case 'vdc':
-            res.groupname = 'VDC'
-            break
-          case 'cpanel':
-            res.groupname = 'Shared Hosting'
-            res.domain = inst.config.domain
-            break
-          case 'openai':
-            res.groupname = 'OpenAI'
-            break
-          case 'empty':
-          case 'virtual':
-            res.groupname = 'Custom'
-            break
-          case 'acronis':
-            res.groupname = 'Acronis'
-            break
-          case 'opensrs':
-            res.groupname = 'Domains'
-            res.date = inst.data.expiry?.expiredate ?? 0
-            res.domain = inst.resources.domain
-            break
-          case 'goget': {
-            const key = `${inst.resources.period} ${inst.resources.id}`
-
-            res.groupname = 'SSL'
-            res.date = +`${inst.resources.period}`
-            res.domain = inst.resources.domain
-            res.orderamount = inst.billingPlan.products[key]?.price ?? 0
-            break
-          }
-          case 'ovh': {
-            const key = (!inst.product)
-              ? `${inst.config.duration} ${inst.config.planCode}`
-              : inst.product
-
-            res.date = (inst.data.expiration * 1000 || null) ??
-              (inst.data.next_payment_date * 1000 || 0)
-            res.orderamount = inst.billingPlan.products[key]?.price ?? 0
-
-            inst.config.addons?.forEach((addon) => {
-              const addonKey = (inst.billingPlan.type.includes('dedicated'))
-                ? `${inst.config.duration} ${inst.config.planCode} ${addon}`
-                : `${inst.config.duration} ${addon}`
-
-              const { price } = inst.billingPlan.resources
-                .find(({ key }) => key === addonKey) ?? { price: 0 }
-
-              res.orderamount += +price
-            })
-            break
-          }
-          case 'ione': {
-            const keys = []
-
-            res.orderamount += +inst.billingPlan.resources.reduce((prev, curr) => {
-              if (keys.includes(curr.key)) return prev
-              else keys.push(curr.key)
-
-              if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
-                return prev + curr.price * inst.resources.drive_size / 1024
-              } else if (curr.key === 'ram') {
-                return prev + curr.price * inst.resources.ram / 1024
-              } else if (inst.resources[curr.key]) {
-                return prev + curr.price * inst.resources[curr.key]
-              }
-              return prev
-            }, 0)?.toFixed(2)
-          }
-        }
-
-        return res
-      })
-
-      return [...products, ...instances]
-        .sort((a, b) => {
-          if (this.sortType === 'sort-ascending') [b, a] = [a, b]
-          if (this.min) {
-            if (this.isExpired(a) && !this.isExpired(b)) return 1
-            else if (!this.isExpired(a) && this.isExpired(b)) return -1
-            else return 0
-          }
-
-          switch (this.sortBy) {
-            case 'Date':
-              return new Date(a.date).getTime() - new Date(b.date).getTime()
-            case 'Name' :
-              return a.productname?.toLowerCase() < b.productname?.toLowerCase()
-            case 'Cost':
-              return parseFloat(a.orderamount) - parseFloat(b.orderamount)
-            default:
-              return 0
-          }
-        })
+      return this.sortProducts([...products, ...instances])
     },
     productsLoading () {
       const productsLoading = this.productsStore.isLoading
@@ -484,6 +359,29 @@ export default {
   },
   mounted () { this.createObserver() },
   methods: {
+    sortProducts (products) {
+      products.sort((a, b) => {
+        if (this.sortType === 'sort-ascending') [b, a] = [a, b]
+        if (this.min) {
+          if (this.isExpired(a) && !this.isExpired(b)) return 1
+          else if (!this.isExpired(a) && this.isExpired(b)) return -1
+          else return 0
+        }
+
+        switch (this.sortBy) {
+          case 'Date':
+            return new Date(a.date).getTime() - new Date(b.date).getTime()
+          case 'Name' :
+            return a.productname?.toLowerCase() < b.productname?.toLowerCase()
+          case 'Cost':
+            return parseFloat(a.orderamount) - parseFloat(b.orderamount)
+          default:
+            return 0
+        }
+      })
+
+      return products
+    },
     productClickHandler ({ groupname, orderid, hostingid, config }) {
       if (config.is_vdc) {
         this.$router.push({ name: 'openVDC', params: { uuid: orderid } })
