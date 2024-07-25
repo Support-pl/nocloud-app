@@ -1,7 +1,7 @@
 import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { defineStore } from 'pinia'
-import { AppstoreOutlined, FundOutlined, MessageOutlined, SettingFilled } from '@ant-design/icons-vue'
+import { AppstoreOutlined, DatabaseFilled, FundOutlined, MessageOutlined, SettingFilled } from '@ant-design/icons-vue'
 import config from '@/appconfig.js'
 /*
 ROUTER WORKS THERE!
@@ -39,7 +39,7 @@ export const useAppStore = defineStore('app', () => {
   const buttons = computed(() =>
     (isButtonsVisible.value)
       ? [
-          // { icon: 'database', title: 'cloud', theme: 'filled' },
+          { icon: DatabaseFilled, title: 'cloud' },
           { icon: AppstoreOutlined, title: 'services' },
           { icon: MessageOutlined, title: 'support' },
           { icon: FundOutlined, title: 'billing' },

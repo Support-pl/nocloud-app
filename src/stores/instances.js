@@ -112,11 +112,12 @@ export const useInstancesStore = defineStore('instances', () => {
     socket,
     searchString,
 
-    async fetch (silent) {
+    async fetch (silent, options = {}) {
       try {
         isLoading.value = !silent
         const response = await api.post('/services', {
-          filters: { account: authStore.userdata.uuid }
+          filters: { account: authStore.userdata.uuid },
+          ...options
         })
 
         if (currenciesStore.currencies.length < 1) {
