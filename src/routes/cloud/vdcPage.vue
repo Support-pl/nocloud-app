@@ -125,7 +125,7 @@ import { useInstancesStore } from '@/stores/instances.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
 
-import { useNotification, useClipboard } from '@/hooks/utils'
+import { useNotification, useClipboard, useCurrency } from '@/hooks/utils'
 import { createRenewInvoice } from '@/functions.js'
 
 import loading from '@/components/ui/loading.vue'
@@ -139,6 +139,7 @@ const route = useRoute()
 const i18n = useI18n()
 const { openNotification } = useNotification()
 const { addToClipboard } = useClipboard()
+const { currency } = useCurrency()
 
 const authStore = useAuthStore()
 const namespacesStore = useNamespasesStore()
@@ -179,12 +180,6 @@ const info = computed(() => {
     { title: 'password', key: 'password', type: 'password' },
     ...resources
   ]
-})
-
-const currency = computed(() => {
-  const { currency: code } = authStore.userdata
-
-  return { code: code ?? currenciesStore.defaultCurrency }
 })
 
 const getTagColor = computed(() => {

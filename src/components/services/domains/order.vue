@@ -319,8 +319,7 @@ import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 
-import { useCurrency } from '@/hooks/utils'
-import notification from '@/mixins/notification.js'
+import { useCurrency, useNotification } from '@/hooks/utils'
 import countries from '@/assets/countries.json'
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
 
@@ -342,7 +341,6 @@ export default {
     shoppingCartIcon,
     questionCircleIcon
   },
-  mixins: [notification],
   inject: ['checkBalance'],
   props: {
     data: { type: Object, required: true },
@@ -356,11 +354,13 @@ export default {
   setup () {
     const { currency } = useCurrency()
     const { deployService } = useCreateInstance()
+    const { openNotification } = useNotification()
 
     return {
       deployService,
       createInvoice,
       checkPayg,
+      openNotification,
 
       countries,
       currency,
@@ -482,7 +482,7 @@ export default {
         const message = err.response?.data?.message ?? err.message ?? err
 
         if (err.response?.data?.code === 16) return
-        this.openNotificationWithIcon('error', {
+        this.openNotification('error', {
           message: this.$t(message)
         })
         console.error(err)
@@ -518,7 +518,7 @@ export default {
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err
 
-          this.openNotificationWithIcon('error', {
+          this.openNotification('error', {
             message: this.$t(message)
           })
         })
@@ -603,7 +603,7 @@ export default {
         await this.$refs.form.validate()
         this.createDomains(info)
       } catch {
-        this.openNotificationWithIcon('error', {
+        this.openNotification('error', {
           message: this.$t('all fields are required')
         })
       }
@@ -676,7 +676,7 @@ export default {
       const domains = Object.keys(this.products)
 
       if (this.resources.reg_password.length < 10) {
-        this.openNotificationWithIcon('error', {
+        this.openNotification('error', {
           message: this.$t('pass at least 10 characters')
         })
         return

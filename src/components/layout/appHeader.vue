@@ -208,7 +208,7 @@
             </a-select>
 
             <a-select
-              v-model:value="unloginedCurrency"
+              v-model:value="unloginedCurrency.title"
               style="width: 100%; color: var(--bright_font)"
               class="header__inputs"
             >

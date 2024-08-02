@@ -233,8 +233,9 @@
 <script>
 import { mapStores, mapState } from 'pinia'
 import { nextTick } from 'vue'
-import { usePeriod } from '@/hooks/utils'
+
 import useCreateInstance from '@/hooks/instances/create.js'
+import { useCurrency, usePeriod } from '@/hooks/utils'
 import { checkPayg, createInvoice } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
@@ -257,9 +258,10 @@ export default {
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()
+    const { currency } = useCurrency()
     const { deployService } = useCreateInstance()
 
-    return { getPeriod, deployService, createInvoice, checkPayg }
+    return { currency, getPeriod, deployService, createInvoice, checkPayg }
   },
   data: () => ({
     plan: null,
@@ -284,12 +286,7 @@ export default {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL']),
-    ...mapState(useCurrenciesStore, [
-      'currencies',
-      'defaultCurrency',
-      'unloginedCurrency',
-      'fetchCurrencies'
-    ]),
+    ...mapState(useCurrenciesStore, ['currencies', 'fetchCurrencies']),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       if ((this.options.size || true) === true) return 'NAN'
@@ -410,19 +407,6 @@ export default {
       const end = start + this.paginationOptions.size
 
       return this.filteredSizes.slice(start, end)
-    },
-    currency () {
-      const code = this.unloginedCurrency
-      const { rate } = this.currencies.find((el) =>
-        el.to === code && el.from === this.defaultCurrency
-      ) ?? {}
-
-      const { rate: reverseRate } = this.currencies.find((el) =>
-        el.from === code && el.to === this.defaultCurrency
-      ) ?? { rate: 1 }
-
-      if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
     services () {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')

@@ -40,8 +40,7 @@
 import { computed, getCurrentInstance, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useCurrency } from '@/hooks/utils'
 import api from '@/api.js'
 
 const props = defineProps({
@@ -50,9 +49,7 @@ const props = defineProps({
 
 const app = getCurrentInstance().appContext.config.globalProperties
 const i18n = useI18n()
-
-const authStore = useAuthStore()
-const currenciesStore = useCurrenciesStore()
+const { currency } = useCurrency()
 
 const isLoading = ref(false)
 const isRefreshLoading = ref(false)
@@ -103,12 +100,6 @@ async function refreshToken () {
     isRefreshLoading.value = false
   }
 }
-
-const currency = computed(() => {
-  const { currency: code } = authStore.userdata
-
-  return { code: code ?? currenciesStore.defaultCurrency }
-})
 
 const acronisData = computed(() =>
   Object.entries(props.service.config.items)

@@ -10,21 +10,17 @@ export const useCurrenciesStore = defineStore('currencies', () => {
   const list = ref([])
   const currencies = ref([])
   const whmcsCurrencies = ref([])
-  const defaultCurrency = ref('USD')
-  const unloginedCurrency = ref('USD')
+  const defaultCurrency = ref({ id: 0, title: 'USD' })
+  const unloginedCurrency = ref({ id: 0, title: 'USD' })
   const isLoading = ref(false)
-
-  function setCurrencies (rates) {
-    currencies.value = rates.map((el) => ({ ...el, id: `${el.from} ${el.to}` }))
-  }
 
   function setDefaultCurrency (currencies) {
     const currency = currencies.find((el) =>
-      el.rate === 1 && [el.from, el.to].includes('NCU')
+      el.rate === 1 && [el.from.title, el.to.title].includes('NCU')
     )
 
     if (!currency) return
-    defaultCurrency.value = (currency.from === 'NCU') ? currency.to : currency.from
+    defaultCurrency.value = (currency.from.title === 'NCU') ? currency.to : currency.from
   }
 
   return {
@@ -34,13 +30,12 @@ export const useCurrenciesStore = defineStore('currencies', () => {
     defaultCurrency,
     unloginedCurrency,
 
-    setCurrencies,
     setDefaultCurrency,
-
     async fetch () {
       try {
         const response = await api.get('/billing/currencies')
 
+        console.log(response)
         list.value = response.currencies
           .filter((code) => code !== 'NCU')
           .map((code) => ({ code, id: code }))
@@ -58,7 +53,7 @@ export const useCurrenciesStore = defineStore('currencies', () => {
         isLoading.value = true
         const response = await api.get('/billing/currencies/rates')
 
-        setCurrencies(response.rates)
+        currencies.value = response.rates
         setDefaultCurrency(response.rates)
 
         return response

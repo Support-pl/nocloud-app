@@ -527,19 +527,18 @@
 import { defineAsyncComponent, defineComponent, nextTick } from 'vue'
 import { mapState, mapActions } from 'pinia'
 import { GChart } from 'vue-google-charts'
+import { useCurrency, useNotification } from '@/hooks/utils'
 import { setChartsTheme, toDate } from '@/functions.js'
 import config from '@/appconfig.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInstancesStore } from '@/stores/instances.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useChatsStore } from '@/stores/chats.js'
 
-import notification from '@/mixins/notification.js'
 import renewalModal from '@/components/ui/renewalModal.vue'
-import { useNamespasesStore } from '@/stores/namespaces'
 
 const redoIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RedoOutlined')
@@ -624,10 +623,15 @@ export default defineComponent({
     caretRightIcon,
     closeIcon
   },
-  mixins: [notification],
   inject: ['theme'],
   props: {
     VM: { type: Object, required: true }
+  },
+  setup () {
+    const { currency } = useCurrency()
+    const { openNotification } = useNotification()
+
+    return { currency, openNotification }
   },
   data: () => ({
     chart1Data: [['Time', '']],
@@ -678,7 +682,6 @@ export default defineComponent({
   computed: {
     ...mapState(useSpStore, ['servicesProviders']),
     ...mapState(useAuthStore, ['userdata', 'baseURL']),
-    ...mapState(useCurrenciesStore, ['defaultCurrency']),
     ...mapState(useInstancesStore, ['services']),
     ...mapState(usePlansStore, ['plans']),
     ...mapState(useNamespasesStore, ['namespaces']),
@@ -757,9 +760,6 @@ export default defineComponent({
     fullPrice () {
       return this.tariffPrice + Object.values(this.addonsPrice)
         .reduce((sum, curr) => sum + curr, 0)
-    },
-    currency () {
-      return { code: this.userdata.currency ?? this.defaultCurrency }
     },
     renewalProps () {
       const { period } = this.VM.billingPlan.products[this.VM.product]
@@ -913,13 +913,13 @@ export default defineComponent({
           const opts = {
             message: 'Done!'
           }
-          this.openNotificationWithIcon('success', opts)
+          this.openNotification('success', opts)
         })
         .catch((err) => {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
           }
-          this.openNotificationWithIcon('error', opts)
+          this.openNotification('error', opts)
         })
         .finally(() => {
           this.actionLoading = false
@@ -1016,7 +1016,7 @@ export default defineComponent({
       } catch (error) {
         const message = error.response?.data?.message ?? error.message ?? error
 
-        this.openNotificationWithIcon('error', { message: this.$t(message) })
+        this.openNotification('error', { message: this.$t(message) })
         console.error(error)
       }
     },
@@ -1046,7 +1046,7 @@ export default defineComponent({
       this.invokeAction(data)
         .then((res) => {
           this.VM.state.meta.snapshots = res?.meta.snapshots
-          this.openNotificationWithIcon('success', {
+          this.openNotification('success', {
             message: this.$t('Create snapshot')
           })
           this.snapshots.addSnap.modal = false
@@ -1055,7 +1055,7 @@ export default defineComponent({
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
           }
-          this.openNotificationWithIcon('error', opts)
+          this.openNotification('error', opts)
         })
         .finally(() => {
           this.snapshots.addSnap.loading = false
@@ -1072,7 +1072,7 @@ export default defineComponent({
       this.invokeAction(data)
         .then(() => {
           delete this.VM.state.meta.snapshots[index]
-          this.openNotificationWithIcon('success', {
+          this.openNotification('success', {
             message: this.$t('Delete snapshot')
           })
         })
@@ -1080,7 +1080,7 @@ export default defineComponent({
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
           }
-          this.openNotificationWithIcon('error', opts)
+          this.openNotification('error', opts)
         })
         .finally(() => {
           this.snapshots.loading = false
@@ -1096,7 +1096,7 @@ export default defineComponent({
       this.snapshots.addSnap.loading = true
       this.invokeAction(data)
         .then(() => {
-          this.openNotificationWithIcon('success', {
+          this.openNotification('success', {
             message: this.$t('Revert snapshot')
           })
         })
@@ -1104,7 +1104,7 @@ export default defineComponent({
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
           }
-          this.openNotificationWithIcon('error', opts)
+          this.openNotification('error', opts)
         })
         .finally(() => {
           this.snapshots.addSnap.loading = false
@@ -1203,7 +1203,7 @@ export default defineComponent({
           .catch((err) => {
             const message = err.response?.data?.message ?? err.message ?? err
 
-            this.openNotificationWithIcon('error', {
+            this.openNotification('error', {
               message: this.$t(message)
             })
             console.error(err)
@@ -1215,13 +1215,13 @@ export default defineComponent({
           const opts = {
             message: `${this.$t('Done')}!`
           }
-          this.openNotificationWithIcon('success', opts)
+          this.openNotification('success', opts)
         })
         .catch((err) => {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
           }
-          this.openNotificationWithIcon('error', opts)
+          this.openNotification('error', opts)
         })
     },
     fetchMonitoring () {
@@ -1249,7 +1249,7 @@ export default defineComponent({
         })
         .catch((err) => {
           console.error(err)
-          this.openNotificationWithIcon('error', {
+          this.openNotification('error', {
             message: `Error: ${err.response?.data?.message ?? 'Unknown'}.`
           })
         })

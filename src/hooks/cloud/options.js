@@ -31,7 +31,8 @@ function useCloudOptions (activeKey, tarification) {
       public: { status: true, count: 1 },
       private: { status: false, count: 0 }
     },
-    config: { addons: [], configuration: {} }
+    config: { addons: [], configuration: {} },
+    addons: []
   })
 
   watch(() => options.os.name, () => {

@@ -122,8 +122,8 @@
 <script>
 import { mapStores, mapState } from 'pinia'
 
-import { usePeriod } from '@/hooks/utils'
 import useCreateInstance from '@/hooks/instances/create.js'
+import { useCurrency, usePeriod } from '@/hooks/utils'
 import { checkPayg, createInvoice } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
@@ -144,9 +144,10 @@ export default {
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()
+    const { currency } = useCurrency()
     const { deployService } = useCreateInstance()
 
-    return { getPeriod, deployService, createInvoice, checkPayg }
+    return { currency, getPeriod, deployService, createInvoice, checkPayg }
   },
   data: () => ({
     plan: null,
@@ -168,12 +169,7 @@ export default {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL', 'billingUser']),
-    ...mapState(useCurrenciesStore, [
-      'currencies',
-      'defaultCurrency',
-      'unloginedCurrency',
-      'fetchCurrencies'
-    ]),
+    ...mapState(useCurrenciesStore, ['currencies', 'fetchCurrencies']),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       if (!(this.options.size && this.options.period)) return 'NAN'
@@ -188,19 +184,6 @@ export default {
       product.resources.ssd = `${product.resources.ssd / 1024} Gb`
 
       return product
-    },
-    currency () {
-      const code = this.unloginedCurrency
-      const { rate } = this.currencies.find((el) =>
-        el.to === this.defaultCurrency && el.from === code
-      ) ?? {}
-
-      const { rate: reverseRate } = this.currencies.find((el) =>
-        el.from === this.defaultCurrency && el.to === code
-      ) ?? { rate: 1 }
-
-      if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
     services () {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')
