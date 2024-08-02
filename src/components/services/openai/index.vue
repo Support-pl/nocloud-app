@@ -85,10 +85,9 @@
 
 <script setup>
 import { computed, onMounted, ref, watch, reactive, defineAsyncComponent } from 'vue'
-import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useNotification } from '@/hooks/utils'
+import { useCurrency, useNotification } from '@/hooks/utils'
 import api from '@/api.js'
 
 import { useAppStore } from '@/stores/app.js'
@@ -111,6 +110,7 @@ const router = useRouter()
 const route = useRoute()
 const i18n = useI18n()
 const { openNotification } = useNotification()
+const { currency } = useCurrency()
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
@@ -173,23 +173,6 @@ const keys = [
   { title: 'Image 1024x1792', value: 'size1024x1792' },
   { title: 'HD image 1024x1792', value: 'size1024x1792HD' }
 ]
-
-const currency = computed(() => {
-  const { currencies, defaultCurrency } = storeToRefs(currenciesStore)
-  const { userdata: user } = storeToRefs(authStore)
-  const code = currenciesStore.unloginedCurrency
-
-  const { rate } = currencies.value.find((el) =>
-    el.to === code && el.from === defaultCurrency.value
-  ) ?? {}
-
-  const { rate: reverseRate } = currencies.value.find((el) =>
-    el.from === code && el.to === defaultCurrency.value
-  ) ?? { rate: 1 }
-
-  if (!authStore.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-  return { rate: 1, code: user.value.currency ?? defaultCurrency.value }
-})
 
 const services = computed(() =>
   instancesStore.services.filter((el) => el.status !== 'DEL')

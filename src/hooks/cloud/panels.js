@@ -83,12 +83,12 @@ function useCloudPanels (tarification, options, productSize) {
     network: {
       title: `${i18n.t('Network')}: ${networkHeader.value}`,
       disabled: (cloudStore.provider) ? null : 'disabled',
-      visible: false && cloudStore.plan.kind === 'STATIC'
+      visible: false // cloudStore.plan.kind === 'STATIC'
     },
     addons: {
       title: `${i18n.t('Addons')}:`,
       disabled: (!cloudStore.provider || !cloudStore.plan || isProductExist.value) ? 'disabled' : null,
-      visible: !['ione', 'ovh cloud'].includes(cloudStore.plan?.type)
+      visible: !['ovh cloud'].includes(cloudStore.plan?.type)
     }
   }))
 

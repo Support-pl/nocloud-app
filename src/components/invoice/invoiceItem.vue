@@ -208,7 +208,7 @@ async function getPaytoken (id) {
 }
 
 if (props.invoice.currencycode === 'NCU') {
-  currencyCode.value = currenciesStore.defaultCurrency
+  currencyCode.value = currenciesStore.defaultCurrency.title
 } else {
   currencyCode.value = props.invoice.currencycode
 }

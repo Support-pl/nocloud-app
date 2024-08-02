@@ -16,13 +16,13 @@
       <!-- addons -->
       <transition-group v-if="activeKey !== 'location'" name="networkApear">
         <a-row
-          v-for="(addon, key) in addons"
-          :key="addon"
+          v-for="(price, key) in addons"
+          :key="key"
           justify="space-between"
           style="font-size: 1.1rem"
         >
           <a-col> {{ capitalize($t(key)) }}{{ getAddonsValue(key) }}: </a-col>
-          <a-col> {{ +(addon * currency.rate).toFixed(2) }} {{ currency.code }} </a-col>
+          <a-col> {{ +(price * currency.rate).toFixed(2) }} {{ currency.code }} </a-col>
         </a-row>
       </transition-group>
 
@@ -125,13 +125,13 @@ import { useI18n } from 'vue-i18n'
 import { EditorContainer } from 'nocloud-ui'
 
 import { useCloudStore } from '@/stores/cloud.js'
-import { useCurrency } from '@/hooks/utils'
 import useCloudPrices from '@/hooks/cloud/prices.js'
+import { useCurrency } from '@/hooks/utils'
+import { checkPayg } from '@/functions.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
 import cloudResources from '@/components/cloud/create/resources.vue'
 import cloudCreateButton from '@/components/cloud/create/button.vue'
-import { checkPayg } from '@/functions'
 
 const props = defineProps({
   productSize: { type: String, required: true },

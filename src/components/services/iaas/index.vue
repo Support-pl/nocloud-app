@@ -301,8 +301,8 @@ export default {
     },
     currency () {
       const code = (this.isLogged)
-        ? this.userdata.currency ?? this.defaultCurrency
-        : this.unloginedCurrency
+        ? this.userdata.currency.title ?? this.defaultCurrency.title
+        : this.unloginedCurrency.title
       const { id = -1 } = this.whmcsCurrencies?.find((currency) => currency.code === code) ?? {}
 
       return { code, id }
