@@ -533,6 +533,8 @@ export default {
       this.getProducts.addons.forEach(({ meta, key }) => {
         if (meta.autoEnable) this.options.addons.push(key)
       })
+
+      this.plan = this.getProducts.planId
     },
     'options.period' (value) {
       const { title } = this.products[this.options.size]
