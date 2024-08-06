@@ -520,6 +520,14 @@ export default {
     },
     sizes (value) {
       const { keys } = value?.at(0) ?? {}
+      const data = JSON.parse(this.$route.query.data ?? '{}')
+
+      if (data.productSize) {
+        const { group } = this.products[data.productSize] ?? {}
+
+        this.checkedType = group
+        this.options.size = data.productSize
+      } else return
 
       if (keys && this.options.period) {
         this.options.size = keys[this.options.period]
@@ -557,8 +565,17 @@ export default {
       const [key, product] = Object.entries(this.products).find(([, product]) =>
         product.title === title && +product.period === value
       )
+      const data = JSON.parse(this.$route.query.data ?? '{}')
 
-      this.options.size = key
+      if (data.productSize) {
+        const { group } = this.products[data.productSize] ?? {}
+
+        this.checkedType = group
+        this.options.size = data.productSize
+      } else {
+        this.options.size = key
+      }
+
       this.plan = this.cachedPlans[this.provider].find(
         ({ uuid }) => uuid === product.planId
       )?.uuid
@@ -646,8 +663,12 @@ export default {
 
       const data = JSON.parse(this.$route.query.data ?? '{}')
 
-      if (data.productSize) this.options.size = data.productSize
-      else if (this.typesOptions.length < 2) {
+      if (data.productSize) {
+        const { group } = this.products[data.productSize] ?? {}
+
+        this.checkedType = group
+        this.options.size = data.productSize
+      } else if (this.typesOptions.length < 2) {
         nextTick(() => {
           this.options.size = Object.values(this.sizes[0]?.keys ?? {})[0] ?? ''
         })
