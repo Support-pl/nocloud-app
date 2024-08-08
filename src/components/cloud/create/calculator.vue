@@ -21,7 +21,7 @@
           justify="space-between"
           style="font-size: 1.1rem"
         >
-          <a-col> {{ capitalize($t(key)) }}{{ getAddonsValue(key) }}: </a-col>
+          <a-col> {{ capitalize(getAddonsTitle(key)) }}{{ getAddonsValue(key) }}: </a-col>
           <a-col> {{ +(price * currency.rate).toFixed(2) }} {{ currency.code }} </a-col>
         </a-row>
       </transition-group>
@@ -126,6 +126,7 @@ import { EditorContainer } from 'nocloud-ui'
 
 import { useCloudStore } from '@/stores/cloud.js'
 import useCloudPrices from '@/hooks/cloud/prices.js'
+import { useAddonsStore } from '@/stores/addons.js'
 import { useCurrency } from '@/hooks/utils'
 import { checkPayg } from '@/functions.js'
 
@@ -145,6 +146,7 @@ const emits = defineEmits(['update:tarification'])
 const i18n = useI18n()
 const { currency } = useCurrency()
 const cloudStore = useCloudStore()
+const addonsStore = useAddonsStore()
 
 const [product] = inject('useProduct', () => [])()
 const [options] = inject('useOptions', () => [])()
@@ -191,6 +193,14 @@ function getAddonsValue (key) {
   const value = parseFloat(addon?.split('-')?.at(-1))
 
   return isFinite(value) ? ` (${value} Gb)` : ''
+}
+
+function getAddonsTitle (key) {
+  if (cloudStore.plan.type === 'ione') {
+    return addonsStore.addons.find(({ uuid }) => uuid === key)?.title ?? key
+  } else {
+    return i18n.t(key)
+  }
 }
 
 async function createOrder () {

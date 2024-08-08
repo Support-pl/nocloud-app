@@ -15,5 +15,5 @@ defineProps({
 </script>
 
 <script>
-export default { name: 'IoneAddonsPanel' }
+export default { name: 'OvhCloudAddonsPanel' }
 </script>
