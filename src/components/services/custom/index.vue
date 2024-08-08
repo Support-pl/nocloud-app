@@ -731,8 +731,14 @@ export default {
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
       const plan = this.plans.find(({ uuid }) => uuid === this.plan)
+      const { resources = [] } = this.getProducts.meta
 
       const instances = [{
+        resources: resources.reduce((result, { key, title }) => {
+          result[key] = title
+          return result
+        }, {}),
+
         config: {
           addons: this.options.addons,
           auto_start: plan.meta.auto_start
