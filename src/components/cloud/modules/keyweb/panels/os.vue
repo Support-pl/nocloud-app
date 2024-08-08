@@ -24,11 +24,11 @@
             :label="`${capitalize($t('clientinfo.username'))}:`"
           >
             <a-input
-              v-model:value="authData.username"
+              :value="authData.username"
               :style="{
                 boxShadow: (authData.username.length < 2) ? '0 0 2px 2px var(--err)' : null
               }"
-              @change="setOptions('config.username', $event)"
+              @update:value="authData.username = $event; setOptions('config.username', $event)"
             />
 
             <div v-if="authData.username.length < 2" style="line-height: 1.5; color: var(--err)">
@@ -43,11 +43,11 @@
             :label="`${capitalize($t('hostname'))}:`"
           >
             <a-input
-              v-model:value="authData.hostname"
+              :value="authData.hostname"
               :style="{
                 boxShadow: (authData.hostname.length < 2) ? '0 0 2px 2px var(--err)' : null
               }"
-              @change="setOptions('config.hostname', $event)"
+              @update:value="authData.hostname = $event; setOptions('config.hostname', $event)"
             />
 
             <div v-if="authData.hostname.length < 2" style="line-height: 1.5; color: var(--err)">
@@ -68,9 +68,9 @@
             />
 
             <a-input-password
-              v-model:value="authData.password"
+              :value="authData.password"
               class="password"
-              @change="setOptions('config.password', $event)"
+              @update:value="authData.password = $event; setOptions('config.password', $event)"
             />
           </a-form-item>
         </a-col>

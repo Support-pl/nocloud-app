@@ -41,7 +41,9 @@
 
 <script setup>
 import { inject, nextTick, watch, computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { EditorContainer } from 'nocloud-ui'
+
 import { useCloudStore } from '@/stores/cloud.js'
 import { getPeriods } from '@/functions.js'
 import { useSlider } from '@/hooks/utils'
@@ -59,13 +61,21 @@ watch(() => props.productSize, (value) => {
   emits('update:periods', getPeriods(value, props.plans))
 })
 
+const route = useRoute()
 const cloudStore = useCloudStore()
 const [product] = inject('useProduct', () => [])()
 const [, setOptions] = inject('useOptions', () => [])()
 const [, setPrice] = inject('usePriceOVH', () => [])()
 
-if (props.products.length > 0) setProduct(props.products[1] ?? props.products[0])
-else resetData()
+if (props.products.length > 0) {
+  const data = localStorage.getItem('data') ?? route.query.data
+  const { productSize } = JSON.parse(data ?? '{}')
+
+  if (productSize) setProduct(productSize)
+  else setProduct(props.products[1] ?? props.products[0])
+} else {
+  resetData()
+}
 
 watch(() => props.products, (value) => {
   if (value.length < 1) resetData()
