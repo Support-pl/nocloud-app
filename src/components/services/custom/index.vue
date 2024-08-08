@@ -526,7 +526,8 @@ export default {
 
         this.checkedType = group
         this.options.size = data.productSize
-      } else return
+        return
+      }
 
       if (keys && this.options.period) {
         this.options.size = keys[this.options.period]
