@@ -99,8 +99,9 @@ import { inject, ref, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
-import { getTarification } from '@/functions.js'
 import { useCloudStore } from '@/stores/cloud.js'
+import { useAddonsStore } from '@/stores/addons.js'
+
 import imagesList from '@/components/ui/images.vue'
 
 const props = defineProps({
@@ -112,30 +113,46 @@ const props = defineProps({
 })
 
 const cloudStore = useCloudStore()
+const addonsStore = useAddonsStore()
 const images = ref([])
 
 const { authData } = storeToRefs(useCloudStore())
+const [product] = inject('useProduct', () => [])()
 const [options, setOptions] = inject('useOptions', () => [])()
 const [price, setPrice] = inject('usePriceOVH', () => [])()
 
+watch(() => addonsStore.addons, setImages)
 watch(() => props.productSize, setImages)
 if (props.productSize) setImages()
 
 async function setImages () {
   await nextTick()
-  const values = Object.values(cloudStore.plan.products ?? {})
-  const product = values.find(({ title, period }) =>
-    title === props.productSize && getTarification(period) === props.mode
+
+  if (!product.value) return
+  const filtered = addonsStore.addons.filter(({ uuid }) =>
+    cloudStore.plan.addons.includes(uuid) || product.value.addons?.includes(uuid)
   )
+  const list = []
 
-  if (!product) return
-  product.meta.os.sort()
-  images.value = product.meta.os.map((el) => {
-    const { title, price, meta } = cloudStore.plan
-      .resources.find(({ key }) => key === el) ?? {}
+  filtered.forEach((item) => {
+    const { uuid, title, periods, meta, system, group, public: enabled } = item
+    const isEqualGroup = group === cloudStore.plan.uuid
+    const isIncluded = meta.type?.toJson().includes('OS')
 
-    return { key: el, type: meta.type, name: title, desc: title, price }
+    if (title.toLowerCase().includes('disabled')) return
+    if (!system || !isIncluded) return
+    if (!enabled || !isEqualGroup) return
+
+    list.push({
+      key: uuid,
+      name: title,
+      desc: title,
+      type: meta.type?.toJson(),
+      price: periods[product.value.period]
+    })
   })
+
+  images.value = list
 }
 
 function setOS (item, index) {

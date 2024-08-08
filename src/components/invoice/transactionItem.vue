@@ -6,7 +6,7 @@
   >
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
-        {{ -(invoice.total * currency.rate).toFixed(2) }} {{ currency.code }}
+        {{ -(invoice.cost * currency.rate).toFixed(2) }} {{ currency.code }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -50,48 +50,39 @@
 <script setup>
 import { computed, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
-import config from '@/appconfig.js'
 
 import { useAppStore } from '@/stores/app.js'
-import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInstancesStore } from '@/stores/instances.js'
+import { useCurrency } from '@/hooks/utils'
+import config from '@/appconfig.js'
+
+const rightIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/RightOutlined')
+)
 
 const props = defineProps({
   invoice: { type: Object, required: true }
 })
 
 const router = useRouter()
-
+const { currency: baseCurrency } = useCurrency()
 const { toDate } = useAppStore()
-const authStore = useAuthStore()
-const currenciesStore = useCurrenciesStore()
 const instancesStore = useInstancesStore()
 
-const rightIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/RightOutlined')
+const currency = computed(() =>
+  (props.invoice.currency)
+    ? { code: props.invoice.currency?.title, rate: 1 }
+    : baseCurrency.value
 )
+
 const costColor = computed(() => {
-  if (props.invoice?.total < 0) {
+  if (props.invoice?.cost < 0) {
     return config.colors.success
-  } else if (props.invoice?.total > 0) {
+  } else if (props.invoice?.cost > 0) {
     return config.colors.err
   } else {
     return null
   }
-})
-
-const currency = computed(() => {
-  const code = authStore.userdata.currency ?? 'USD'
-  const { rate } = currenciesStore.currencies.find((el) =>
-    el.to === code && el.from === props.invoice.currency
-  ) ?? {}
-
-  const { rate: reverseRate } = currenciesStore.currencies.find(
-    (el) => el.from === code && el.to === props.invoice.currency
-  ) ?? { rate: 1 }
-
-  return { code, rate: (rate) || 1 / reverseRate }
 })
 
 const isClickable = computed(() => {
@@ -126,7 +117,6 @@ export default { name: 'SingleInvoice' }
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
   background-color: var(--bright_font);
-  color: rgba(0, 0, 0, 0.7);
   cursor: pointer;
 }
 

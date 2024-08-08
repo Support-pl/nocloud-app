@@ -50,7 +50,7 @@ watch(() => props.addons, (value) => {
   if (!data.ovhConfig) return
   if (data.ovhConfig.addons.length < 1) return
 
-  options.config.addons.forEach((addon) => {
+  options.addons.forEach((addon) => {
     const keys = Object.keys(value)
     const key = keys.find((el) => addon.includes(el))
 
@@ -61,7 +61,7 @@ watch(() => props.addons, (value) => {
 
 function setAddon (code, addon, key) {
   const addonsPrices = JSON.parse(JSON.stringify(price.addons))
-  const addonsCodes = JSON.parse(JSON.stringify(options.config.addons))
+  const addonsCodes = JSON.parse(JSON.stringify(options.addons))
 
   if (code === '-1') {
     delete addonsPrices[key]
@@ -76,13 +76,20 @@ function setAddon (code, addon, key) {
   }
 
   setPrice('addons', addonsPrices)
-  setOptions('config.addons', addonsCodes)
+  setOptions('addons', addonsCodes)
 }
+
+// function selectorMode (addons) {
+//   const values = Object.values(addons)
+
+//   if (values.length < 1) return null
+//   return values.every(({ multiple }) => multiple) ? 'multiple' : null
+// }
 
 function addonName (addons) {
   const keys = Object.keys(addons)
 
-  return options.config.addons.find((el) => keys.includes(el)) ?? '-1'
+  return options.addons.find((el) => keys.includes(el)) ?? '-1'
 }
 
 function addonPrice ({ periods }) {

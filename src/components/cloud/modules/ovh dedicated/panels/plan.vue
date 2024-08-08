@@ -124,7 +124,10 @@
 import { getCurrentInstance, watch, inject, computed, ref, nextTick, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+
 import { useCloudStore } from '@/stores/cloud.js'
+import { useAddonsStore } from '@/stores/addons.js'
+
 import { useCurrency } from '@/hooks/utils'
 import { getDisk } from '@/functions.js'
 
@@ -148,7 +151,9 @@ const app = getCurrentInstance().appContext.config.globalProperties
 const route = useRoute()
 const i18n = useI18n()
 const cloudStore = useCloudStore()
+const addonsStore = useAddonsStore()
 
+const [productItem] = inject('useProduct', () => [])()
 const [options, setOptions] = inject('useOptions', () => [])()
 const [price, setPrice] = inject('usePriceOVH', () => [])()
 const { currency } = useCurrency()
@@ -184,13 +189,13 @@ const filteredProducts = computed(() =>
   })
 )
 
-watch(filteredProducts, (value) => {
-  if (value.length < 1) {
+watch([filteredProducts, () => addonsStore.addons], ([products, addons]) => {
+  if (products.length < 1 || addons.length < 1) {
     resetData()
     return
   }
 
-  value.sort((a, b) =>
+  products.sort((a, b) =>
     a.periods[0].price.value - b.periods[0].price.value
   )
 
@@ -206,7 +211,7 @@ watch(filteredProducts, (value) => {
   }
 
   nextTick(() => {
-    product.value = value[1]?.value ?? value[0]?.value
+    product.value = products[1]?.value ?? products[0]?.value
   })
 })
 
@@ -308,12 +313,16 @@ async function setResource (resource, changeTarifs = true) {
   const prod = Object.entries(cloudStore.plan.products)
     .find(([key]) => key.includes(value))
 
-  const { meta: { addons } } = cloudStore.plan
-    .products[`${duration} ${value}`] ?? prod[1]
+  const { addons } = cloudStore.plan.products[`${duration} ${value}`] ?? prod[1]
 
-  let addonKey = (addons?.some((el) => typeof el === 'string'))
-    ? addons?.find((id) => id.includes(resource.value))
-    : addons?.find(({ id }) => id.includes(resource.value))?.id
+  let addon = addonsStore.addons.find(({ uuid, meta }) => {
+    const isIncluded = addons?.includes(uuid)
+    const addonId = meta.id?.toJson() ?? ''
+
+    return isIncluded && addonId.includes(resource.value)
+  })
+  let addonKey = addon?.meta.id?.toJson()
+
   let item = periods[0]
   const tarifs = []
 
@@ -321,13 +330,14 @@ async function setResource (resource, changeTarifs = true) {
     setOptions('ram.size', parseInt(addonKey?.split(' ').at(-1).split('-')[1] ?? 0))
   }
   if (resource.key === 'disk') {
-    addonKey = addons?.find((id) => {
-      if (typeof id !== 'string') id = id.id
-      const isDisk = id.includes('raid')
+    addon = addonsStore.addons.find(({ uuid, meta }) => {
+      const isIncluded = addons?.includes(uuid)
+      const addonId = meta.id?.toJson() ?? ''
+      const isDisk = addonId.includes('raid')
 
-      return isDisk && (getDisk(id) * 1024) === resource.value
+      return isIncluded && isDisk && (getDisk(addonId) * 1024) === resource.value
     })
-    if (addonKey?.id) addonKey = addonKey.id
+    addonKey = addon?.meta.id?.toJson()
 
     setOptions('disk.size', getDisk(addonKey) * 1024)
     if (addonKey?.includes('hybrid')) setOptions('disk.type', 'SSD + HDD')
@@ -354,8 +364,7 @@ async function setResource (resource, changeTarifs = true) {
   setPrice('value', item.price.value)
   setPrice('addons', {
     ...price.addons,
-    [resource.key]: cloudStore.plan.resources
-      .find((el) => el.key.includes(addonKey))?.price ?? 0
+    [resource.key]: addon?.periods[productItem.value.period] ?? 0
   })
 
   setOptions('config.planCode', value)
@@ -375,23 +384,23 @@ function setResources (changeTarifs = true) {
 
 function getResources (ram, disk, value) {
   const entries = Object.entries(cloudStore.plan.products)
-  const { meta: { addons } } = entries.find(([key]) => key.includes(value))[1]
+  const { addons } = entries.find(([key]) => key.includes(value))[1]
 
   addons?.forEach((id) => {
-    if (typeof id !== 'string') id = id.id
-    const resource = cloudStore.plan.resources.find(({ key }) => key === id)
+    const resource = addonsStore.addons.find(({ uuid }) => uuid === id)
+    const addonKey = resource?.meta.id?.toJson()
 
     if (!resource || !resource?.public) return
-    if (id.includes('ram')) {
-      const value = parseInt(id.split(' ').at(-1).split('-')[1])
+    if (addonKey.includes('ram')) {
+      const value = parseInt(addonKey.split(' ').at(-1).split('-')[1])
       const i = ram.findIndex((item) => item.value === value)
 
       if (i !== -1) return
       ram.push({ value, label: resource.title, price: resource.price })
     }
 
-    if (id.includes('raid')) {
-      const value = getDisk(id)
+    if (addonKey.includes('raid')) {
+      const value = getDisk(addonKey)
       const i = disk.findIndex((item) => item.value === value)
 
       if (i !== -1) return

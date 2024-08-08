@@ -88,6 +88,7 @@ const price = computed(() => {
 
     const { price = 0, period = 2592000 } = billingPlan.products[product] ?? {}
 
+    if (+period === 0) return 0
     return price / (period / 2592000)
   })
 
@@ -99,8 +100,9 @@ const price = computed(() => {
       switch (key) {
         case `drive_${type}`: {
           const size = inst.resources.drive_size / 1024
+          const value = price / (period / 2592000) * size
 
-          result.push(price / (period / 2592000) * size)
+          if (value) result.push(value)
           break
         }
 

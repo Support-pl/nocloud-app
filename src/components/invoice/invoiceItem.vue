@@ -40,7 +40,7 @@
         :title="$t('Payment will be made from your account balance.')"
         :ok-text="$t('Yes')"
         :cancel-text="$t('Cancel')"
-        @confirm="createInvoiceByBalance(invoice.id)"
+        @confirm="createInvoiceByBalance"
       >
         <div class="invoice__btn" style="margin-left: auto" @click.stop>
           <span class="invoice__pay invoice__balance-pay">
@@ -53,7 +53,7 @@
       <div
         v-if="invoice.status === 'Unpaid'"
         class="invoice__btn"
-        @click.stop="createInvoice(invoice.id)"
+        @click.stop="paidInvoice"
       >
         <span class="invoice__pay">
           {{ $t('Pay').toLowerCase() }}
@@ -99,15 +99,15 @@ const isBalanceLoading = ref(false)
 const currencyCode = ref('')
 
 const currency = computed(() => {
-  const code = authStore.userdata.currency ?? 'USD'
+  const code = authStore.userdata.currency.title ?? 'USD'
   if (code === currencyCode.value) return { code, rate: 1 }
 
   const { rate } = currenciesStore.currencies.find((el) =>
-    el.from === code && el.to === currencyCode.value
+    el.from.title === code && el.to.title === currencyCode.value
   ) ?? {}
 
   const { rate: reverseRate } = currenciesStore.currencies.find(
-    (el) => el.to === code && el.from === currencyCode.value
+    (el) => el.to.title === code && el.from.title === currencyCode.value
   ) ?? { rate: 1 }
 
   return { code, rate: (rate) || 1 / reverseRate }
@@ -141,46 +141,53 @@ const total = computed(() => {
   return Math.abs((total * rate)).toFixed(2)
 })
 
-async function createInvoice (id) {
+async function paidInvoice () {
   isLoading.value = true
-  if (props.invoice.status === 'Unpaid') {
-    getPaytoken(id)
-    return
-  }
-
-  if (!props.invoice.meta) {
-    getPaytoken(id)
-    return
-  }
-
   try {
-    const type = (props.invoice.total > 0) ? 'debit' : 'top-up'
+    if (props.invoice.type) {
+      await invoicesStore.updateStatus(props.invoice.id, 'PAID')
 
-    const { invoiceid } = api.get(authStore.baseURL, {
-      params: {
-        run: 'create_inv',
-        invoice_id: id,
-        product: props.invoice.meta.description ?? props.invoice.service,
-        invoice_type: props.invoice.meta.invoiceType ?? type,
-        sum: total.value
-      }
-    })
-
-    openNotification('success', { message: i18n.t('Done') })
-    getPaytoken(invoiceid)
+      openNotification('success', { message: i18n.t('Done') })
+    } else {
+      await createInvoice()
+    }
   } catch (error) {
     openNotification('error', {
       message: error.response?.data?.message ?? error.message ?? error
     })
     console.error(error)
+  } finally {
+    isLoading.value = false
   }
 }
 
-async function createInvoiceByBalance (id) {
+async function createInvoice () {
+  if (props.invoice.status === 'Unpaid' || !props.invoice.meta) {
+    getPaytoken(props.invoice.id)
+    return
+  }
+
+  const type = (props.invoice.total > 0) ? 'debit' : 'top-up'
+
+  const { invoiceid } = api.get(authStore.baseURL, {
+    params: {
+      run: 'create_inv',
+      invoice_id: props.invoice.id,
+      product: props.invoice.meta.description ?? props.invoice.service,
+      invoice_type: props.invoice.meta.invoiceType ?? type,
+      sum: total.value
+    }
+  })
+
+  openNotification('success', { message: i18n.t('Done') })
+  await getPaytoken(invoiceid)
+}
+
+async function createInvoiceByBalance () {
   isBalanceLoading.value = true
   try {
     await api.get(authStore.baseURL, {
-      params: { run: 'balance_paid', invoice_id: id }
+      params: { run: 'balance_paid', invoice_id: props.invoice.id }
     })
 
     await invoicesStore.fetch(true)
@@ -196,15 +203,11 @@ async function createInvoiceByBalance (id) {
 }
 
 async function getPaytoken (id) {
-  try {
-    const response = await api.get(authStore.baseURL, {
-      params: { run: 'get_pay_token', invoice_id: id }
-    })
+  const response = await api.get(authStore.baseURL, {
+    params: { run: 'get_pay_token', invoice_id: id }
+  })
 
-    window.location.href = response
-  } finally {
-    isLoading.value = false
-  }
+  window.location.href = response
 }
 
 if (props.invoice.currencycode === 'NCU') {
@@ -225,7 +228,6 @@ export default { name: 'InvoiceView' }
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
   background-color: var(--bright_font);
-  color: inherit;
   cursor: pointer;
 }
 

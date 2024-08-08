@@ -3,48 +3,57 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useCloudStore } from '@/stores/cloud.js'
+import { useAddonsStore } from '@/stores/addons.js'
+
 import ovhAddons from '@/components/cloud/create/ovhAddons.vue'
 
-const props = defineProps({
+defineProps({
   mode: { type: String, required: true },
   productSize: { type: String, required: true },
   products: { type: Array, required: true }
 })
 
 const cloudStore = useCloudStore()
+const addonsStore = useAddonsStore()
+const [product] = inject('useProduct', () => [])()
 
 const addons = computed(() => {
-  const addons = { backup: {}, snapshot: {}, disk: {} }
+  const result = { backup: {}, snapshot: {}, disk: {} }
 
-  Object.keys(addons).forEach((addon) => {
-    cloudStore.plan.resources?.forEach(({ price, key, title, public: pub }) => {
-      if (!pub) return
+  const filtered = addonsStore.addons.filter(({ uuid }) =>
+    cloudStore.plan.addons.includes(uuid) || product.value.addons?.includes(uuid)
+  )
 
-      const { addons: addonsKeys } = props.products.find(
-        (el) => el.title === props.productSize
-      ) ?? { addons: {} }
+  filtered.forEach(({ uuid, title, periods, meta, system, group, public: enabled }) => {
+    const addonGroups = ['backup', 'snapshot', 'disk']
+    const addonGroup = addonGroups.find((key) =>
+      meta.key?.toJson().toLowerCase().includes(key)
+    )
+    const isEqualGroup = group === cloudStore.plan.uuid
+    const key = (system && addonGroup) ? addonGroup : group
 
-      const [duration, addonKey] = key.split(' ')
-      const period = {
-        price: { value: price },
-        duration,
-        pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
-      }
+    if (!enabled || (!isEqualGroup && system)) return
+    if (system && !addonGroup) return
+    if (!result[key]) result[key] = {}
 
-      const isInclude = addonsKeys[duration]?.includes(key)
-      const isEqualMode = period.pricingMode === props.mode
+    const [duration] = meta.key?.toJson().split(' ') ?? []
+    const period = {
+      price: { value: periods[product.value.period] },
+      duration,
+      pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
+    }
 
-      if (title === '') title = addonKey
-      if (isInclude && key.includes(addon) && isEqualMode) {
-        addons[addon][addonKey] = { periods: [period], title }
-      }
-    })
+    result[key][uuid] = { title, periods: [period], multiple: !system }
   })
 
-  return addons
+  return result
 })
+
+if (addonsStore.addons.length < 1) {
+  addonsStore.fetch()
+}
 </script>
 
 <script>

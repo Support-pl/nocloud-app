@@ -92,7 +92,7 @@
           </transition>
 
           <a-card
-            v-if="fetchLoading || getProducts.addons && getProducts.addons.length > 0"
+            v-if="fetchLoading || filteredAddons.length > 0"
             style="margin-top: 15px"
             :title="`${$t('Addons')} (${$t('choose addons you want')})`"
             :loading="fetchLoading"
@@ -102,10 +102,10 @@
             </div>
             <template v-else>
               <a-card-grid
-                v-for="addon of getProducts.addons"
-                :key="addon.id"
+                v-for="addon of filteredAddons"
+                :key="addon.uuid"
                 class="card-item"
-                @click="changeAddons(addon.key)"
+                @click="changeAddons(addon.uuid)"
               >
                 <div
                   class="order__slider-name"
@@ -116,11 +116,11 @@
                   </span>
 
                   <span style="font-weight: 700">
-                    {{ getPeriod(addon.period) }}
+                    {{ getPeriod(getProducts.period) }}
                   </span>
 
-                  <a-checkbox :checked="options.addons.includes(addon.key)" />
-                  <span style="grid-column: 1 / 4" v-html="addon.meta?.description ?? ''" />
+                  <a-checkbox :checked="options.addons.includes(addon.uuid)" />
+                  <span style="grid-column: 1 / 4" v-html="addon.description ?? ''" />
                 </div>
               </a-card-grid>
             </template>
@@ -199,7 +199,7 @@
           <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
               <template v-if="!fetchLoading">
-                {{ getProducts.price ?? 0 }} {{ currency.code }}
+                {{ (getProducts.price ?? 0) + addonsPrice }} {{ currency.code }}
               </template>
               <div v-else class="loadingLine loadingLine--total" />
             </transition>
@@ -241,6 +241,7 @@ import { checkPayg, createInvoice } from '@/functions.js'
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useAddonsStore } from '@/stores/addons.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
@@ -287,6 +288,7 @@ export default {
     ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL']),
     ...mapState(useCurrenciesStore, ['currencies', 'fetchCurrencies']),
+    ...mapState(useAddonsStore, { addons: 'addons', fetchAddons: 'fetch' }),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       if ((this.options.size || true) === true) return 'NAN'
@@ -358,6 +360,19 @@ export default {
       })
 
       return result
+    },
+    filteredAddons () {
+      const product = this.products[this.options.size]
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
+
+      return this.addons.filter(({ uuid }) =>
+        plan.addons.includes(uuid) || product.addons.includes(uuid)
+      )
+    },
+    addonsPrice () {
+      return this.options.addons.reduce((result, uuid) =>
+        result + (this.getAddon(uuid)?.price ?? 0), 0
+      )
     },
     typesOptions () {
       const types = []
@@ -538,8 +553,8 @@ export default {
       if (!keys.includes(value)) this.changePeriods(value)
       this.options.addons = []
 
-      this.getProducts.addons.forEach(({ meta, key }) => {
-        if (meta.autoEnable) this.options.addons.push(key)
+      this.filteredAddons.forEach(({ meta, uuid }) => {
+        if (meta.autoEnable) this.options.addons.push(uuid)
       })
 
       this.plan = this.getProducts.planId
@@ -591,6 +606,10 @@ export default {
 
     if (this.spStore.showcases.length < 1) {
       this.spStore.fetchShowcases(!this.isLogged)
+    }
+
+    if (this.addons.length < 1) {
+      this.fetchAddons()
     }
 
     Promise.all(promises).catch((err) => {
@@ -678,17 +697,16 @@ export default {
         this.options.period = this.periods[0]
       }
     },
-    changeAddons (key) {
-      if (this.options.addons.includes(key)) {
-        this.options.addons = this.options.addons.filter((addon) => addon !== key)
+    changeAddons (uuid) {
+      if (this.options.addons.includes(uuid)) {
+        this.options.addons = this.options.addons.filter((addon) => addon !== uuid)
       } else {
-        this.options.addons.push(key)
+        this.options.addons.push(uuid)
       }
     },
     getAddon (addon) {
-      const item = this.getProducts.addons.find(({ key }) => key === addon)
-      const period = item.period / this.getProducts.period
-      const price = item.price * ((period >= 1) ? period : 1 / period)
+      const item = this.filteredAddons.find(({ uuid }) => uuid === addon)
+      const price = item.periods[this.getProducts.period]
 
       return {
         ...item,
@@ -716,13 +734,11 @@ export default {
       const plan = this.plans.find(({ uuid }) => uuid === this.plan)
 
       const instances = [{
-        config: {
-          addons: this.options.addons,
-          auto_start: plan.meta.auto_start
-        },
+        config: { auto_start: plan.meta.auto_start },
         title: this.getProducts.title,
         billing_plan: { uuid: this.plan },
-        product: this.options.size
+        product: this.options.size,
+        addons: this.options.addons
       }]
       const newGroup = {
         title: this.userdata.title + Date.now(),

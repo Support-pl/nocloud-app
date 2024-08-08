@@ -697,7 +697,7 @@ export default {
       this.modal.confirmCreate = true
     },
     getProducts () {
-      const prices = { suffix: this.userdata.currency }
+      const prices = { suffix: this.userdata.currency.title }
 
       if (this.onCart.length === 0) {
         return {
