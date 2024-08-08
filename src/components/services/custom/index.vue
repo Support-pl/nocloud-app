@@ -733,9 +733,14 @@ export default {
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
       const plan = this.plans.find(({ uuid }) => uuid === this.plan)
+      const { resources = [] } = this.getProducts.meta
 
       const instances = [{
         config: { auto_start: plan.meta.auto_start },
+        resources: resources.reduce((result, { key, title }) => {
+          result[key] = title
+          return result
+        }, {}),
         title: this.getProducts.title,
         billing_plan: { uuid: this.plan },
         product: this.options.size,
