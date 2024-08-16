@@ -374,7 +374,7 @@ export default {
     },
     filteredSizes () {
       return this.sizes.filter(({ group, keys }) => {
-        const { meta } = this.products[keys[this.options.period]] ?? {}
+        const { meta, price } = this.products[keys[this.options.period]] ?? {}
         let isIncluded = (this.typesOptions.length > 1) ? this.checkedType === group : true
 
         if (!keys[this.options.period]) return false
@@ -390,17 +390,20 @@ export default {
           groups.push(group)
         })
 
-        return isIncluded && meta?.resources?.every(({ key, value, group }) => {
-          const a = this.filters[key]?.at(0) <= (group || value)
-          const b = this.filters[key]?.at(-1) >= (group || value)
-          const isNotNumber = this.filters[key]?.some((value) => isNaN(value))
+        const isPricesEqual = this.checkPricesEqual(price, this.filters.$price)
 
-          if (this.filters[key]?.length < 1) return true
-          if (isNotNumber) {
-            return this.filters[key].includes(group || value)
-          }
-          return (this.filters[key]) ? a && b : true
-        })
+        return isIncluded && isPricesEqual &&
+          meta?.resources?.every(({ key, value, group }) => {
+            const a = this.filters[key]?.at(0) <= (group || value)
+            const b = this.filters[key]?.at(-1) >= (group || value)
+            const isNotNumber = this.filters[key]?.some((value) => isNaN(value))
+
+            if (this.filters[key]?.length < 1) return true
+            if (isNotNumber) {
+              return this.filters[key].includes(group || value)
+            }
+            return (this.filters[key]) ? a && b : true
+          })
       })
     },
     sizesByPage () {
@@ -718,6 +721,12 @@ export default {
       return this.products[key]?.meta?.resources
     },
 
+    checkPricesEqual (price, [minPrice, maxPrice]) {
+      const a = (minPrice) ? price >= minPrice : true
+      const b = (maxPrice) ? price <= maxPrice : true
+
+      return a && b
+    },
     resetFilters () {
       Object.keys(this.filters).forEach((key) => {
         this.filters[key] = []
