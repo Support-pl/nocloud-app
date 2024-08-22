@@ -177,6 +177,7 @@ export function transformInstances (instances) {
     if (inst.state?.meta.state === 5) status = 'SUSPENDED'
     if (inst.data.suspended_manually) status = 'SUSPENDED'
     if (inst.state?.meta.state === 'BUILD') status = 'BUILD'
+    if (!inst.state && !inst.data.is_monitored) status = 'INIT'
 
     const result = {
       ...inst,

@@ -152,6 +152,47 @@
           </div>
         </a-spin>
 
+        <div class="settings__item" @click="showModal('accounts')">
+          <div class="settings__logo">
+            <accounts-icon />
+          </div>
+          <div class="settings__title">
+            {{ capitalize($t('subaccounts')) }}
+          </div>
+
+          <a-modal
+            :title="capitalize($t('subaccounts'))"
+            :open="modal.accounts"
+            :footer="false"
+            @cancel="closeModal('accounts')"
+          >
+            <account-create
+              v-if="isAccountCreateVisible"
+              :account="currentAccount"
+              @cancel="currentAccount = null; isAccountCreateVisible = false"
+            />
+            <template v-else>
+              <div
+                v-for="account of subaccounts"
+                :key="account.uuid"
+                class="singleLang"
+                @click="currentAccount = account; isAccountCreateVisible = true"
+              >
+                <span class="singleLang__title">
+                  {{ account.title }}
+                </span>
+              </div>
+
+              <a-button type="primary" style="margin-top: 10px" @click="isAccountCreateVisible = true">
+                {{ $t('Add') }}
+                <template #icon>
+                  <account-add-icon />
+                </template>
+              </a-button>
+            </template>
+          </a-modal>
+        </div>
+
         <div class="settings__item" @click="showModal('QR')">
           <div class="settings__logo">
             <qrcode-icon />
@@ -208,12 +249,15 @@
 import { defineAsyncComponent } from 'vue'
 import { mapStores } from 'pinia'
 import config from '@/appconfig.js'
+
 import { useAuthStore } from '@/stores/auth.js'
+import { useNamespasesStore } from '@/stores/namespaces.js'
 
 import notification from '@/mixins/notification.js'
 import balance from '@/components/ui/balance.vue'
 import addFunds from '@/components/ui/addFunds.vue'
 import addSSH from '@/components/ui/addSSH.vue'
+import accountCreate from '@/components/settings/accountCreate.vue'
 
 const rightIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/RightOutlined')
@@ -245,12 +289,21 @@ const qrcodeIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/QrcodeOutlined')
 )
 
+const accountsIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/TeamOutlined')
+)
+const accountAddIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/UsergroupAddOutlined')
+)
+
 export default {
   name: 'SettingsView',
   components: {
     balance,
     addFunds,
     addSSH,
+    accountCreate,
+
     rightIcon,
     userIcon,
     globalIcon,
@@ -259,7 +312,9 @@ export default {
     closeIcon,
     copyIcon,
     loginIcon,
-    qrcodeIcon
+    qrcodeIcon,
+    accountsIcon,
+    accountAddIcon
   },
   mixins: [notification],
   data () {
@@ -267,17 +322,20 @@ export default {
       isAuthLoading: false,
       confirmLoading: false,
       user_btn: false,
+      isAccountCreateVisible: false,
+      currentAccount: null,
       modal: {
         login: false,
         language: false,
         addFunds: false,
+        accounts: false,
         SSH: false,
         QR: false
       }
     }
   },
   computed: {
-    ...mapStores(useAuthStore),
+    ...mapStores(useAuthStore, useNamespasesStore),
     isVisible () {
       if (this.isAuthLoading) return true
       return !localStorage.getItem('oauth') && this.authStore.loginButtons.length > 0
@@ -285,6 +343,11 @@ export default {
     isAddFundsVisible () {
       if (!localStorage.getItem('oauth')) return true
       return !this.authStore.billingUser.paid_stop
+    },
+    subaccounts () {
+      return this.namespacesStore.accounts.filter(({ uuid }) =>
+        uuid !== this.authStore.userdata.uuid
+      )
     },
     langs () {
       return config.languages
@@ -300,10 +363,19 @@ export default {
     }
   },
   async created () {
-    if (this.authStore.loginButtons.length > 0) return
+    try {
+      await this.namespacesStore.fetchAccounts()
+    } catch (error) {
+      this.openNotificationWithIcon('error', {
+        message: error.response?.data.message ?? error.message ?? error
+      })
+    }
+
     try {
       this.isAuthLoading = true
-      await this.authStore.fetchAuth()
+      if (this.authStore.loginButtons.length < 1) {
+        await this.authStore.fetchAuth()
+      }
     } finally {
       this.isAuthLoading = false
     }
