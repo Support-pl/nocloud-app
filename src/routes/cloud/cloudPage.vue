@@ -395,6 +395,10 @@ export default {
       if (this.VM.server_on) {
         return this.VM.vm_info?.STATE?.replaceAll('_', ' ') ?? 'UNKNOWN'
       }
+
+      if (!this.VM.state && !this.VM.data.is_monitored) {
+        return 'INIT'
+      }
       if (!this.VM.state) return 'UNKNOWN'
 
       const state = this.VM.state.meta?.lcm_state_str ?? this.VM.state.state
