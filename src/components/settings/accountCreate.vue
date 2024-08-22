@@ -141,6 +141,7 @@ async function createAccount () {
         data: [form.value.email, form.value.password]
       },
       namespace: namespace.uuid,
+      accountOwner: authStore.userdata.uuid,
       currency: authStore.userdata.currency,
       data: {
         email: form.value.email,
