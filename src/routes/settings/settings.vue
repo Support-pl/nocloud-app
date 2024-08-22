@@ -152,7 +152,7 @@
           </div>
         </a-spin>
 
-        <div class="settings__item" @click="showModal('accounts')">
+        <div v-if="authStore.userdata.subaccounts" class="settings__item" @click="showModal('accounts')">
           <div class="settings__logo">
             <accounts-icon />
           </div>
@@ -346,7 +346,7 @@ export default {
     },
     subaccounts () {
       return this.namespacesStore.accounts.filter(({ uuid }) =>
-        uuid !== this.authStore.userdata.uuid
+        this.authStore.userdata.subaccounts?.includes(uuid)
       )
     },
     langs () {
