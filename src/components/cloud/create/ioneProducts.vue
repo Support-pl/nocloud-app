@@ -28,7 +28,8 @@
           </template>
 
           <a-switch
-            size="small"
+            checked-children="hCPU"
+            un-checked-children="CPU"
             :checked="options.highCPU"
             @click="setOptions('highCPU', !options.highCPU)"
           />
@@ -41,8 +42,9 @@
 
       <a-col
         v-if="resources[slider.key].length > 1"
-        :sm="{ span: 18, order: 0 }"
+        :sm="{ span: (slider.key === 'cpu') ? 16 : 18, order: 0 }"
         :xs="{ span: 24, order: 1 }"
+        :style="(slider.key === 'cpu') ? 'margin-left: auto' : null"
       >
         <a-slider
           style="margin-top: 10px"
@@ -258,7 +260,7 @@ function findProduct (group, cpu = options.cpu.size, ram = options.ram.size) {
 .hcpu-block {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   width: 75px;
 }
 
