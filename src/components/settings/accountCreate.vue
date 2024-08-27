@@ -14,33 +14,33 @@
       <a-input v-model:value="form[key]" :disabled="isDisabled" />
     </a-form-item>
 
-    <a-form-item
-      :label="`${capitalize($t('clientinfo.countryname'))}:`"
-      name="countryname"
-    >
-      <a-select
-        v-model:value="form.countryname"
-        show-search
-        :filter-option="searchCountries"
-        :disabled="isDisabled"
-      >
-        <a-select-option v-for="country in countries" :key="country.code">
-          {{ $t(`country.${country.code}`) }}
-        </a-select-option>
-      </a-select>
-    </a-form-item>
+    <a-form-item :label="`${capitalize($t('clientinfo.phonenumber'))}:`">
+      <a-row :gutter="8">
+        <a-col :span="5">
+          <a-select
+            v-model:value="phonecode"
+            show-search
+            :filter-option="searchCountries"
+            :disabled="isDisabled"
+          >
+            <a-select-option v-for="country in countries" :key="country.dial_code">
+              {{ country.dial_code }}
+            </a-select-option>
+          </a-select>
+        </a-col>
 
-    <a-form-item
-      :label="`${capitalize($t('clientinfo.phonenumber'))}:`"
-      name="phonenumber"
-    >
-      <input
-        v-model="form.phonenumber"
-        v-phone="phonecode"
-        type="tel"
-        class="user__input"
-        :disabled="!form.countryname || isDisabled"
-      >
+        <a-col :span="19">
+          <a-form-item no-style name="phonenumber">
+            <input
+              v-model="form.phonenumber"
+              v-phone.hidden="phonecode"
+              type="tel"
+              class="user__input"
+              :disabled="!phonecode || isDisabled"
+            >
+          </a-form-item>
+        </a-col>
+      </a-row>
     </a-form-item>
 
     <a-form-item
@@ -49,6 +49,14 @@
       name="password"
     >
       <a-input v-model:value="form.password" />
+    </a-form-item>
+
+    <a-form-item
+      v-if="isPasswordVisible"
+      :label="`${capitalize($t('clientinfo.password again'))}:`"
+      name="passwordAgain"
+    >
+      <a-input v-model:value="form.passwordAgain" />
     </a-form-item>
 
     <a-space style="margin-top: 10px">
@@ -103,14 +111,20 @@ const rules = computed(() => ({
   email: [reqRule],
   lastname: [reqRule],
   firstname: [reqRule],
-  countryname: [reqRule],
   phonenumber: [reqRule],
-  password: [reqRule]
+  password: [reqRule],
+  passwordAgain: [{
+    required: true,
+    trigger: 'change',
+    validator (_, value) {
+      if (value !== form.value.password) {
+        return Promise.reject(i18n.t('Password mismatch'))
+      }
+      return Promise.resolve()
+    }
+  }]
 }))
-
-const phonecode = computed(() =>
-  countries.find(({ code }) => code === form.value.countryname)?.dial_code
-)
+const phonecode = ref('')
 
 function searchCountries (input, option) {
   const country = option.children(option)[0].children.toLowerCase()
@@ -145,8 +159,7 @@ async function createAccount () {
       currency: authStore.userdata.currency,
       data: {
         email: form.value.email,
-        country: form.value.countryname,
-        phone: form.value.phonenumber
+        phone: `${phonecode.value} ${form.value.phonenumber}`
       }
     })
 
@@ -169,7 +182,6 @@ onMounted(() => {
       email: props.account.data.email,
       lastname: props.account.title.split(' ').at(0),
       firstname: props.account.title.split(' ').at(-1),
-      countryname: props.account.data.country,
       phonenumber: props.account.data.phone
     }
   }
