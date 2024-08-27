@@ -44,7 +44,7 @@ app.config.globalProperties.dateFormat = (value) => {
 }
 
 app.directive('phone', {
-  updated (el, { value: code }) {
+  updated (el, { value: code, modifiers }) {
     const start = el.selectionStart
     const { length } = el.value
 
@@ -62,7 +62,11 @@ app.directive('phone', {
     else if (x[4] === '') el.value = `${x[1]} ${x[2]}-${x[3]}`
     else el.value = `${x[1]} ${x[2]}-${x[3]}-${x[4]}`
 
-    if (code) el.value = `${code} ${el.value}`
+    if (code && !modifiers.hidden) {
+      el.value = `${code} ${el.value}`
+    } else {
+      el.value = el.value.replace(`${code} `, '')
+    }
     const currentStart = el.selectionStart
 
     el.selectionStart = currentStart - length + start
