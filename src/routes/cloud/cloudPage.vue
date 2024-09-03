@@ -446,7 +446,7 @@ export default {
         case 'suspended':
         case 'suspend':
         case 'pending':
-          return 'var(--bright_font)'
+          return 'var(--gloomy_font)'
         default:
           return 'var(--err)'
       }
