@@ -374,7 +374,7 @@ export default {
     },
     filteredSizes () {
       return this.sizes.filter(({ group, keys }) => {
-        const { meta } = this.products[keys[this.options.period]] ?? {}
+        const { meta, price } = this.products[keys[this.options.period]] ?? {}
         let isIncluded = (this.typesOptions.length > 1) ? this.checkedType === group : true
 
         if (!keys[this.options.period]) return false
@@ -390,17 +390,20 @@ export default {
           groups.push(group)
         })
 
-        return isIncluded && meta?.resources?.every(({ key, value, group }) => {
-          const a = this.filters[key]?.at(0) <= (group || value)
-          const b = this.filters[key]?.at(-1) >= (group || value)
-          const isNotNumber = this.filters[key]?.some((value) => isNaN(value))
+        const isPricesEqual = this.checkPricesEqual(price, this.filters.$price)
 
-          if (this.filters[key]?.length < 1) return true
-          if (isNotNumber) {
-            return this.filters[key].includes(group || value)
-          }
-          return (this.filters[key]) ? a && b : true
-        })
+        return isIncluded && isPricesEqual &&
+          meta?.resources?.every(({ key, value, group }) => {
+            const a = this.filters[key]?.at(0) <= (group || value)
+            const b = this.filters[key]?.at(-1) >= (group || value)
+            const isNotNumber = this.filters[key]?.some((value) => isNaN(value))
+
+            if (this.filters[key]?.length < 1) return true
+            if (isNotNumber) {
+              return this.filters[key].includes(group || value)
+            }
+            return (this.filters[key]) ? a && b : true
+          })
       })
     },
     sizesByPage () {
@@ -520,6 +523,15 @@ export default {
     },
     sizes (value) {
       const { keys } = value?.at(0) ?? {}
+      const data = JSON.parse(this.$route.query.data ?? '{}')
+
+      if (data.productSize) {
+        const { group } = this.products[data.productSize] ?? {}
+
+        this.checkedType = group
+        this.options.size = data.productSize
+        return
+      }
 
       if (keys && this.options.period) {
         this.options.size = keys[this.options.period]
@@ -549,14 +561,25 @@ export default {
       this.getProducts.addons.forEach(({ meta, key }) => {
         if (meta.autoEnable) this.options.addons.push(key)
       })
+
+      this.plan = this.getProducts.planId
     },
     'options.period' (value) {
       const { title } = this.products[this.options.size]
       const [key, product] = Object.entries(this.products).find(([, product]) =>
         product.title === title && +product.period === value
       )
+      const data = JSON.parse(this.$route.query.data ?? '{}')
 
-      this.options.size = key
+      if (data.productSize) {
+        const { group } = this.products[data.productSize] ?? {}
+
+        this.checkedType = group
+        this.options.size = data.productSize
+      } else {
+        this.options.size = key
+      }
+
       this.plan = this.cachedPlans[this.provider].find(
         ({ uuid }) => uuid === product.planId
       )?.uuid
@@ -644,8 +667,12 @@ export default {
 
       const data = JSON.parse(this.$route.query.data ?? '{}')
 
-      if (data.productSize) this.options.size = data.productSize
-      else if (this.typesOptions.length < 2) {
+      if (data.productSize) {
+        const { group } = this.products[data.productSize] ?? {}
+
+        this.checkedType = group
+        this.options.size = data.productSize
+      } else if (this.typesOptions.length < 2) {
         nextTick(() => {
           this.options.size = Object.values(this.sizes[0]?.keys ?? {})[0] ?? ''
         })
@@ -694,6 +721,12 @@ export default {
       return this.products[key]?.meta?.resources
     },
 
+    checkPricesEqual (price, [minPrice, maxPrice]) {
+      const a = (minPrice) ? price >= minPrice : true
+      const b = (maxPrice) ? price <= maxPrice : true
+
+      return a && b
+    },
     resetFilters () {
       Object.keys(this.filters).forEach((key) => {
         this.filters[key] = []
@@ -707,8 +740,14 @@ export default {
     orderClickHandler () {
       const service = this.services.find(({ uuid }) => uuid === this.service)
       const plan = this.plans.find(({ uuid }) => uuid === this.plan)
+      const { resources = [] } = this.getProducts.meta
 
       const instances = [{
+        resources: resources.reduce((result, { key, title }) => {
+          result[key] = title
+          return result
+        }, {}),
+
         config: {
           addons: this.options.addons,
           auto_start: plan.meta.auto_start
@@ -787,7 +826,9 @@ export default {
           )
           const account = access.namespace ?? this.namespace
 
-          await this.createInvoice(instance, uuid, account, this.baseURL)
+          if (this.getProducts.price > 0) {
+            await this.createInvoice(instance, uuid, account, this.baseURL)
+          }
           localStorage.setItem('order', 'Invoice')
           this.$router.push({ path: '/billing' })
         })
@@ -864,6 +905,16 @@ export default {
 .order__calculate {
   padding: 10px 15px 10px;
   font-size: 1.1rem;
+}
+
+.order__promo {
+  grid-column: 2;
+}
+
+.order__promo img {
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .order :deep(.ant-slider-mark-text) {
@@ -1168,6 +1219,7 @@ export default {
     border-radius: 0 0 20px 20px;
   }
   .order__promo {
+    grid-column: 1;
     margin-top: 20px;
   }
 }

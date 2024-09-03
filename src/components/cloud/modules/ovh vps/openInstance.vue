@@ -220,7 +220,7 @@
             <span style="font-weight: 700; text-align: left">{{ $t('ram') }}:</span>
             {{ tariffs[planCode].resources.ram / 1024 }} Gb
             <span style="font-weight: 700; text-align: left">{{ $t('disk') }}:</span>
-            {{ tariffs[planCode].resources.disk / 1024 }} Gb
+            {{ driveSize }} Gb
           </div>
         </a-spin>
       </a-modal>
@@ -322,7 +322,7 @@
               {{ $t("cloud_Size") }}
             </div>
             <div class="block__value">
-              {{ (VM.resources.drive_size / 1024).toFixed(2) }} GB
+              {{ ((VM.resources.drive_size ?? VM.resources.disk) / 1024).toFixed(2) }} GB
             </div>
           </div>
         </div>
@@ -760,8 +760,10 @@ export default defineComponent({
       return { code: this.userdata.currency ?? this.defaultCurrency }
     },
     renewalProps () {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`
-      const { period } = this.VM.billingPlan.products[key]
+      const { products = {} } = this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {}
+      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
+      const { period } = products[key] ?? {}
+
       const currentPeriod = this.toDate(this.VM.data.expiration)
       const newPeriod = this.toDate(this.VM.data.expiration + +period)
 
@@ -794,6 +796,11 @@ export default defineComponent({
       })
 
       return tariffs
+    },
+    driveSize () {
+      const { disk, drive_size: size } = this.tariffs[this.planCode].resources
+
+      return (size ?? disk) / 1024
     },
     networking () {
       const { networking } = this.VM?.state?.meta
@@ -1116,7 +1123,9 @@ export default defineComponent({
       const service = this.services.find(({ uuid }) =>
         uuid === this.VM.uuidService
       )
-      const instance = service.instancesGroups
+      const newService = JSON.parse(JSON.stringify(service))
+
+      const instance = newService.instancesGroups
         .find(({ sp }) => sp === this.VM.sp).instances
         .find(({ uuid }) => uuid === this.VM.uuid)
 
@@ -1130,15 +1139,15 @@ export default defineComponent({
 
         this.$confirm({
           title: this.$t('Do you want to switch tariff?'),
-          content: `${this.$t('invoice_Price')}: ${price} ${this.currency.code}`,
+          content: `${this.$t('Tariff price')}: ${price} ${this.currency.code}`,
           okText: this.$t('Yes'),
           cancelText: this.$t('Cancel'),
           onOk: async () => {
-            await this.updateService(service)
+            await this.updateService(newService)
+            await this.sendAction('upgrade')
             await this.fetch()
 
             this.modal.switch = false
-            this.openNotificationWithIcon('success', { message: this.$t('Done') })
           },
           onCancel () {}
         })
@@ -1200,8 +1209,8 @@ export default defineComponent({
         data.action = 'backup_restore'
         data.params = { type: 'full', restorePoint: this.option.recover }
       }
-      if (action === 'get_upgrade_price') {
-        data.params = { newPlanCode: this.planCode }
+      if (['get_upgrade_price', 'upgrade'].includes(action)) {
+        data.params = { newPlanCode: this.planCode.split(' ')[1] }
       }
 
       return this.invokeAction(data)

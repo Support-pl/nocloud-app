@@ -16,7 +16,8 @@
       justify="space-between"
       align="middle"
     >
-      <a-col v-if="slider.key == 'cpu' && isHighCPUExist" style="display: flex; width: 70px">
+      <a-col v-if="slider.key === 'cpu' && isHighCPUExist" class="hcpu-block">
+        <span style="display: inline-block">{{ slider.prefix }}</span>
         <a-badge>
           <template #count>
             <span>
@@ -26,29 +27,24 @@
             </span>
           </template>
 
-          <span
-            style="margin-right: 5px; transition: 0.2s"
-            :style="{ borderBottom: `3px double ${(options.highCPU) ? 'var(--main)' : 'transparent'}` }"
-          >
-            {{ slider.prefix }}
-          </span>
-
-          <up-icon
-            style="font-size: 18px; cursor: pointer; transition: 0.2s"
-            :style="(options.highCPU) ? 'color: var(--main)' : null"
-            :rotate="90"
+          <a-switch
+            checked-children="hCPU"
+            un-checked-children="CPU"
+            :checked="options.highCPU"
             @click="setOptions('highCPU', !options.highCPU)"
           />
         </a-badge>
       </a-col>
 
       <a-col v-else>
-        <span style="display: inline-block; width: 70px">{{ slider.prefix }}</span>
+        <span style="display: inline-block; width: 75px">{{ slider.prefix }}</span>
       </a-col>
+
       <a-col
         v-if="resources[slider.key].length > 1"
-        :sm="{ span: 18, order: 0 }"
+        :sm="{ span: (slider.key === 'cpu') ? 16 : 18, order: 0 }"
         :xs="{ span: 24, order: 1 }"
+        :style="(slider.key === 'cpu') ? 'margin-left: auto' : null"
       >
         <a-slider
           style="margin-top: 10px"
@@ -93,9 +89,6 @@ import { defineAsyncComponent, watch, nextTick, ref, computed, inject } from 'vu
 import { useRoute } from 'vue-router'
 import { usePlansStore } from '@/stores/plans.js'
 
-const upIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/DoubleLeftOutlined')
-)
 const questionCircleIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/QuestionCircleOutlined')
 )
@@ -262,6 +255,13 @@ function findProduct (group, cpu = options.cpu.size, ram = options.ram.size) {
 .order__grid-item--active {
   background-color: var(--main);
   color: var(--gloomy_font);
+}
+
+.hcpu-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 75px;
 }
 
 @media (max-width: 576px) {

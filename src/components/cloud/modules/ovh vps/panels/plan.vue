@@ -40,6 +40,18 @@
       <a-col>
         <span style="display: inline-block; width: 70px">CPU:</span>
       </a-col>
+      <a-col v-if="resources.cpu.length > 1" :sm="{ span: 18, order: 0 }" :xs="{ span: 24, order: 1 }">
+        <a-slider
+          style="margin-top: 10px"
+          :marks="{ ...resources.cpu }"
+          :tip-formatter="null"
+          :max="resources.cpu.length - 1"
+          :min="0"
+          :value="resources.cpu.indexOf(options.cpu.size)"
+          @change="(i) => setOptions('cpu.size', resources.cpu[i])"
+          @after-change="setResources(productKey)"
+        />
+      </a-col>
       <a-col class="changing__field" style="text-align: right">
         <loading-icon v-if="options.cpu.size === 'loading'" />
         <template v-else>
@@ -221,19 +233,22 @@ watch(products, async (value) => {
 })
 
 const resources = computed(() => {
+  const cpu = new Set()
   const ram = new Set()
   const disk = new Set()
 
   const filteredPlans = props.products.filter(({ group }) => group === product.value)
 
   filteredPlans.forEach(({ resources }) => {
+    cpu.add(resources.cpu)
     ram.add(resources.ram / 1024)
     disk.add(resources.disk / 1024)
   })
 
   return {
-    ram: Array.from(ram).sort((a, b) => a - b),
-    disk: Array.from(disk).sort((a, b) => a - b)
+    cpu: Array.from(cpu).toSorted((a, b) => a - b),
+    ram: Array.from(ram).toSorted((a, b) => a - b),
+    disk: Array.from(disk).toSorted((a, b) => a - b)
   }
 })
 

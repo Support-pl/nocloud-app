@@ -4,6 +4,8 @@
       <div class="order__field">
         <div class="order_option">
           <a-slider
+            v-if="isSlider"
+            ref="slider"
             :marks="{ ...sizes }"
             :value="sizes.indexOf(options.size)"
             :tip-formatter="null"
@@ -11,6 +13,18 @@
             :min="0"
             @change="(value) => options.size = sizes[value]"
           />
+
+          <div v-else class="order__grid">
+            <div
+              v-for="item of sizes"
+              :key="item"
+              class="order__slider-item"
+              :class="{ 'order__slider-item--active': options.size === item }"
+              @click="options.size = item"
+            >
+              {{ item }}
+            </div>
+          </div>
 
           <transition name="specs" mode="out-in">
             <table v-if="getProducts.resources" :key="getProducts.title" class="product__specs">
@@ -120,9 +134,10 @@
 </template>
 
 <script>
+import { ref, reactive } from 'vue'
 import { mapStores, mapState } from 'pinia'
 
-import { usePeriod } from '@/hooks/utils'
+import { usePeriod, useSlider } from '@/hooks/utils'
 import useCreateInstance from '@/hooks/instances/create.js'
 import { checkPayg, createInvoice } from '@/functions.js'
 
@@ -143,27 +158,37 @@ export default {
   components: { selectsToCreate, promoBlock },
   inject: ['checkBalance'],
   setup () {
+    const plan = ref(null)
+    const slider = ref()
+    const { isSlider } = useSlider(slider, plan)
     const { getPeriod } = usePeriod()
     const { deployService } = useCreateInstance()
 
-    return { getPeriod, deployService, createInvoice, checkPayg }
+    return {
+      plan,
+      service: ref(null),
+      namespace: ref(null),
+      provider: ref(null),
+      fetchLoading: ref(false),
+
+      cachedPlans: ref({}),
+      options: reactive({ size: '', model: '', period: '' }),
+      config: reactive({ domain: '', email: '' }),
+      modal: reactive({ confirmCreate: false, confirmLoading: false }),
+
+      products: ref([]),
+      sizes: ref([]),
+      periods: ref([]),
+
+      slider,
+      isSlider,
+
+      getPeriod,
+      deployService,
+      createInvoice,
+      checkPayg
+    }
   },
-  data: () => ({
-    plan: null,
-    service: null,
-    namespace: null,
-    provider: null,
-    fetchLoading: false,
-
-    cachedPlans: {},
-    options: { size: '', model: '', period: '' },
-    config: { domain: '', email: '' },
-    modal: { confirmCreate: false, confirmLoading: false },
-
-    products: [],
-    sizes: [],
-    periods: []
-  }),
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
@@ -462,7 +487,9 @@ export default {
           )
           const account = access.namespace ?? this.namespace
 
-          await this.createInvoice(instance, uuid, account, this.baseURL)
+          if (this.getProducts.price > 0) {
+            await this.createInvoice(instance, uuid, account, this.baseURL)
+          }
           localStorage.setItem('order', 'Invoice')
           this.$router.push({ path: '/billing' })
         })
@@ -704,32 +731,32 @@ export default {
   overflow-x: auto;
 }
 
-.order__slider-item:not(:last-child){
-  margin-right: 10px;
+.order__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.order__slider-item{
-  flex-shrink: 0;
-  /* border: 1px solid var(--border_color); */
-  box-shadow: inset 0 0 0 1px var(--border_color);
+.order__slider-item {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 150px;
-  height: 70px;
-  cursor: pointer;
-  border-radius: 15px;
+  padding: 10px 20px;
   font-size: 1.1rem;
+  border-radius: 15px;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--border_color);
   transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
-.order__slider-item:hover{
+.order__slider-item:hover {
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
 }
 
-.order__slider-item--active{
+.order__slider-item--active {
   background-color: var(--main);
-  color: var(--bright_font);
+  color: var(--gloomy_font);
 }
 
 .order__slider-item--loading{
@@ -792,6 +819,9 @@ export default {
 }
 
 @media screen and (max-width: 576px) {
+  .order__grid {
+    grid-template-columns: 1fr 1fr;
+  }
   .order__template{
     flex-direction: column;
     flex-wrap: nowrap;

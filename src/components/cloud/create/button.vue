@@ -23,7 +23,7 @@
 
     <template #modalContent>
       <span
-        v-if="cloudStore.authData.score < 4 && provider.type !== 'ovh'"
+        v-if="cloudStore.authData.score < 4 && cloudStore.provider.type !== 'ovh'"
         style="color: var(--err)"
       >
         {{ $t('Password must contain uppercase letters, numbers and symbols') }}
@@ -42,7 +42,7 @@
 
     <template #after>
       <a-col
-        v-if="provider?.type !== 'ovh' && tarification === 'Hourly'"
+        v-if="cloudStore.provider?.type !== 'ovh' && tarification === 'Hourly'"
         style="font-size: 14px; margin: 16px 16px 0"
       >
         <span style="position: absolute; left: -8px">*</span>
@@ -53,12 +53,10 @@
 </template>
 
 <script setup>
-
 import { defineAsyncComponent, computed, reactive, inject } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth.js'
-import { useSpStore } from '@/stores/sp.js'
 import { useCloudStore } from '@/stores/cloud.js'
 import { useClipboard } from '@/hooks/utils'
 
@@ -76,26 +74,16 @@ const props = defineProps({
 })
 
 const router = useRouter()
-const { addToClipboard } = useClipboard()
-
 const authStore = useAuthStore()
-const spStore = useSpStore()
 const cloudStore = useCloudStore()
+const { addToClipboard } = useClipboard()
 
 const [options] = inject('useOptions', () => [])()
 const [activeKey, nextStep] = inject('useActiveKey', () => [])()
 const modal = reactive({ confirmCreate: false, confirmLoading: false })
 
-const provider = computed(() => {
-  const { sp } = cloudStore.locations.find(
-    ({ id }) => id === cloudStore.locationId
-  ) ?? {}
-
-  return spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? null
-})
-
 const modalOptions = computed(() => {
-  const isWeakPass = cloudStore.authData.score < 4 && provider.value?.type !== 'ovh'
+  const isWeakPass = cloudStore.authData.score < 4 && cloudStore.provider?.type !== 'ovh'
 
   return {
     title: (isWeakPass) ? 'Weak pass' : 'Confirm',
@@ -122,7 +110,7 @@ const createButtonOptions = computed(() => {
     }
   }
 
-  if (provider.value?.type === 'ovh') {
+  if (cloudStore.provider?.type === 'ovh') {
     result.disabled =
       cloudStore.authData.vmName === '' ||
       (!cloudStore.namespaceId && authStore.isLogged) ||
@@ -146,7 +134,7 @@ const nextButtonOptions = computed(() => ({
 const isUnlogginedLinkVisible = computed(() => {
   const { score, password, vmName } = cloudStore.authData
   const isStrongPass = score > 3 && password.length > 0
-  const isNotOvh = provider.value?.type !== 'ovh'
+  const isNotOvh = cloudStore.provider?.type !== 'ovh'
 
   if (authStore.isLogged) return false
   return (isNotOvh && isStrongPass) || (options.os.name && vmName)
@@ -156,7 +144,7 @@ function availableLogin (mode) {
   const data = {
     path: router.currentRoute.value.path,
     query: router.currentRoute.value.query,
-    titleSP: provider.value.title,
+    titleSP: cloudStore.provider.title,
     tarification: props.tarification,
     productSize: props.productSize,
     titleVM: cloudStore.authData.vmName,
