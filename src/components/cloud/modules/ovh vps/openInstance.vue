@@ -781,7 +781,7 @@ export default defineComponent({
     tariffs () {
       if (!this.VM?.billingPlan) return {}
       const tariffs = {}
-      const { products } = this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {}
+      const { products = {} } = this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {}
       const productKey = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
 
       Object.keys(products).forEach((key) => {
