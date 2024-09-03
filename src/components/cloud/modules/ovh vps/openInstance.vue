@@ -1131,7 +1131,21 @@ export default defineComponent({
 
       try {
         this.isSwitchLoading = true
-        const { price, resources } = this.tariffs[this.planCode]
+        const { price, resources, meta } = this.tariffs[this.planCode] ?? {}
+        const backupIndex = instance.config.addons.findIndex((key) => key.includes('backup'))
+        const snapshotIndex = instance.config.addons.findIndex((key) => key.includes('snapshot'))
+
+        if (backupIndex !== -1) {
+          const backup = meta.addons.find((key) => key.includes('backup'))
+
+          instance.config.addons.splice(backupIndex, 1, backup)
+        }
+
+        if (snapshotIndex !== -1) {
+          const snapshot = meta.addons.find((key) => key.includes('snapshot'))
+
+          instance.config.addons.splice(snapshotIndex, 1, snapshot)
+        }
 
         instance.config.planCode = this.planCode.split(' ')[1]
         instance.product = this.planCode
