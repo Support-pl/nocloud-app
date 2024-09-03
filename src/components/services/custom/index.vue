@@ -826,7 +826,9 @@ export default {
           )
           const account = access.namespace ?? this.namespace
 
-          await this.createInvoice(instance, uuid, account, this.baseURL)
+          if (this.getProducts.price > 0) {
+            await this.createInvoice(instance, uuid, account, this.baseURL)
+          }
           localStorage.setItem('order', 'Invoice')
           this.$router.push({ path: '/billing' })
         })
