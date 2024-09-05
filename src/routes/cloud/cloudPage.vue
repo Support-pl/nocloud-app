@@ -331,7 +331,7 @@ export default {
           params: ['networkControl'],
           icon: 'GlobalOutlined',
           forVNC: true,
-          modules: ['ione']
+          modules: []
         },
         {
           title: 'Access manager',
