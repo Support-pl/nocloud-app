@@ -156,9 +156,7 @@ const productKey = computed(() => {
 watch(product, (value) => {
   const product = props.products.find(({ group }) => group === value)
 
-  const dataString = (localStorage.getItem('data'))
-    ? localStorage.getItem('data')
-    : route.query.data ?? '{}'
+  const dataString = localStorage.getItem('data') ?? route.query.data ?? '{}'
   const data = JSON.parse(dataString)
 
   if (!product) return
@@ -209,9 +207,7 @@ watch(products, async (value) => {
     return
   }
 
-  const dataString = (localStorage.getItem('data'))
-    ? localStorage.getItem('data')
-    : route.query.data ?? '{}'
+  const dataString = localStorage.getItem('data') ?? route.query.data ?? '{}'
 
   if (dataString.includes('productSize')) {
     const data = JSON.parse(dataString)

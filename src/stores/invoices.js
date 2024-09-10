@@ -18,10 +18,10 @@ export const useInvoicesStore = defineStore('invoices', () => {
     if (filter.value[0] === 'all' || filter.value.length === 0) {
       filtered = invoices.value
     } else {
-      filtered = invoices.value.filter(ticket => filter.value.includes(ticket.status))
+      filtered = invoices.value.filter(({ status }) => filter.value.includes(status))
     }
 
-    return filtered.sort((a, b) => {
+    return filtered.toSorted((a, b) => {
       const dictionary = {
         Cancelled: 1,
         Paid: 1,
@@ -73,8 +73,11 @@ export const useInvoicesStore = defineStore('invoices', () => {
         })
 
         result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        if (!response[0]?.ERROR) invoices.value = result
-        else return response[0].ERROR
+        if (!response[0]?.ERROR) {
+          invoices.value = result.filter(({ id }) => id)
+        } else {
+          return response[0].ERROR
+        }
 
         return result
       } catch (error) {
