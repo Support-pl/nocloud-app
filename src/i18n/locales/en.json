@@ -760,7 +760,7 @@
     "cpu": "CPU",
     "ram": "RAM",
     "gpu": "GPU",
-    "highCPU": "high CPU",
+    "highCPU": "high CPU from 3.50GHz",
     "withAdministration": "with administration",
     "country": {
       "VN": "Vietnam",
