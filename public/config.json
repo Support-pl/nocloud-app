@@ -22,5 +22,6 @@
   "languages": ["en", "ru", "vi", "fr", "pl"],
   "department": "nocloud",
   "vdc_enabled": true,
-  "shared_enabled": true
+  "shared_enabled": true,
+  "cloud_enabled": true
 }

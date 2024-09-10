@@ -103,6 +103,7 @@ import { computed, inject, nextTick, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCloudStore } from '@/stores/cloud.js'
 import { getPeriods, getTarification } from '@/functions.js'
+
 import ioneDrive from '@/components/cloud/create/ioneDrive.vue'
 import ioneFilters from '@/components/cloud/create/ioneFilters.vue'
 import ioneProducts from '@/components/cloud/create/ioneProducts.vue'
@@ -137,13 +138,14 @@ watch(() => props.productSize, (value) => {
   emits('update:periods', getPeriods(value, props.plans))
 })
 
-const data = localStorage.getItem('data') ?? route.query.data
+const data = localStorage.getItem('data') ?? route.query.data ?? '{}'
 
 if (props.products.length > 0) {
-  const { productSize } = JSON.parse(data ?? '{}')
+  const { productSize } = JSON.parse(data)
 
-  if (productSize) setProduct(productSize)
-  else if (props.products.length < 6) {
+  if (productSize && props.products.includes(productSize)) {
+    setProduct(productSize)
+  } else if (props.products.length < 6) {
     setProduct(props.products[1] ?? props.products[0])
   }
 }
