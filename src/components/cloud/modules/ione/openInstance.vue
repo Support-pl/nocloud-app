@@ -160,7 +160,9 @@
               <table class="Fcloud__table">
                 <tbody>
                   <tr v-for="nic in VM.state?.meta.networking.public" :key="nic">
-                    <td>{{ nic }}</td>
+                    <td>
+                      {{ nic }}{{ (ports[nic]) ? `:${ports[nic]}` : '' }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -169,7 +171,9 @@
               <table class="Fcloud__table">
                 <tbody>
                   <tr v-for="nic in VM.state?.meta.networking.private" :key="nic">
-                    <td>{{ nic }}</td>
+                    <td>
+                      {{ nic }}{{ (ports[nic]) ? `:${ports[nic]}` : '' }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -720,6 +724,15 @@ export default defineComponent({
           (this.VM.state.meta.lcm_state === 20 &&
             this.VM.state.meta.state === 3)
       }
+    },
+    ports () {
+      const result = {}
+
+      this.VM.state?.interfaces?.forEach(({ data }) => {
+        result[data.host] = data.port
+      })
+
+      return result
     },
 
     tariffPrice () {
