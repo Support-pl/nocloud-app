@@ -73,6 +73,10 @@ function useCloudPlans (tarification, options) {
 
         for (const [key, item] of Object.entries(plan.products)) {
           const { period, title } = item
+          const isEqualKey = (plan.type.includes('ovh'))
+            ? key.split(' ').at(-1) === options.config.planCode
+            : true
+
           const isEqualSize = title === productSize.value
           const isHighCpu = options.highCPU === (plan.meta.highCPU ?? false)
           let isEqualPeriod = getTarification(period) === tarification.value
@@ -81,7 +85,7 @@ function useCloudPlans (tarification, options) {
             isEqualPeriod = true
           }
 
-          if (isEqualPeriod && isEqualSize && isHighCpu) {
+          if (isEqualPeriod && isEqualKey && isEqualSize && isHighCpu) {
             product.value = { ...item, key }
             cloudStore.planId = uuid ?? plan.uuid
 
@@ -94,9 +98,10 @@ function useCloudPlans (tarification, options) {
     }
   }
 
-  watch(() => options.highCPU, setProduct)
-  watch(tarification, setProduct)
-  watch(productSize, setProduct, { flush: 'sync' })
+  watch(
+    [() => options.highCPU, () => options.config.planCode, tarification, productSize],
+    setProduct
+  )
 
   watch(() => [cloudStore.provider, cloudStore.locationId], async ([value]) => {
     options.highCPU = false
