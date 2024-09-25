@@ -97,6 +97,8 @@ export const useAuthStore = defineStore('auth', () => {
         const response = await api.accounts.get('me')
 
         if (!response.data) response.data = {}
+
+        response.currency = response.currency?.split('_')?.at(0)
         userdata.value = response
         return response
       } catch (error) {
