@@ -99,8 +99,11 @@ const isBalanceLoading = ref(false)
 const currencyCode = ref('')
 
 const currency = computed(() => {
-  const code = authStore.userdata.currency ?? 'USD'
-  if (code === currencyCode.value) return { code, rate: 1 }
+  const code = authStore.userdata.currency?.split('_')?.at(0) ?? 'USD'
+
+  if (code === currencyCode.value) {
+    return { code, rate: 1 }
+  }
 
   const { rate } = currenciesStore.currencies.find((el) =>
     el.from === code && el.to === currencyCode.value
