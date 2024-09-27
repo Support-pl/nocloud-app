@@ -4,53 +4,28 @@
 
     <a-row>
       <a-col :xs="24" :sm="10">
-        <a-form no-style autocomplete="off" layout="vertical">
+        <a-form no-style autocomplete="off" layout="vertical" :rules="rules">
           <a-form-item
             style="margin-top: 15px"
             class="newCloud__form-item"
+            name="vmName"
             :label="`${capitalize($t('server name'))}:`"
           >
-            <a-input
-              v-model:value="authData.vmName"
-              :style="{
-                boxShadow: (authData.vmName.length < 2)
-                  ? '0 0 2px 2px var(--err)'
-                  : null
-              }"
-            />
-
-            <div
-              v-if="authData.vmName.length < 2"
-              style="line-height: 1.5; color: var(--err)"
-            >
-              {{ $t('ssl_product.field is required') }}
-            </div>
+            <a-input v-model:value="authData.vmName" />
           </a-form-item>
 
           <a-form-item
             style="margin-top: 15px"
             class="newCloud__form-item"
+            name="username"
             :label="`${capitalize($t('clientinfo.username'))}:`"
           >
-            <a-input
-              v-model:value="authData.username"
-              :style="{
-                boxShadow: (authData.username.length < 2)
-                  ? '0 0 2px 2px var(--err)'
-                  : null
-              }"
-            />
-
-            <div
-              v-if="authData.username.length < 2"
-              style="line-height: 1.5; color: var(--err)"
-            >
-              {{ $t('ssl_product.field is required') }}
-            </div>
+            <a-input v-model:value="authData.username" />
           </a-form-item>
 
           <a-form-item
             v-if="authStore.userdata.uuid"
+            name="password"
             class="newCloud__form-item"
             :label="`${capitalize($t('clientinfo.password'))}:`"
           >
@@ -64,11 +39,7 @@
               @score="(value) => authData.score = value.score"
             />
 
-            <a-form :model="{ password: authData.password }">
-              <a-form-item name="password" :rules="rules">
-                <a-input-password v-model:value="authData.password" class="password" />
-              </a-form-item>
-            </a-form>
+            <a-input-password v-model:value="authData.password" class="password" />
           </a-form-item>
 
           <a-form-item
@@ -122,28 +93,46 @@ const images = computed(() => {
   return images
 })
 
-const rules = [{
-  trigger: 'change',
-  validator: () => {
-    try {
-      if (authData.value.password === '') {
-        throw new Error(i18n.t('ssl_product.field is required'))
-      }
-      if (/[^a-zA-Z0-9]$/.test(authData.value.password)) {
-        throw new Error(i18n.t('The last character must not be special'))
-      }
-      if (/^(?=.*\d)[\w+=.\-_!*]{9,32}$/.test(authData.value.password)) {
-        return Promise.resolve()
-      } else {
-        throw new Error(`
+const rules = {
+  vmName: {
+    trigger: 'change',
+    validator: () => (
+      (authData.value.vmName.length < 2)
+        ? Promise.reject(i18n.t('ssl_product.field is required'))
+        : Promise.resolve()
+    )
+  },
+  username: {
+    trigger: 'change',
+    validator: () => (
+      (authData.value.username.length < 2)
+        ? Promise.reject(i18n.t('ssl_product.field is required'))
+        : Promise.resolve()
+    )
+  },
+  password: {
+    trigger: 'change',
+    validator: () => {
+      try {
+        if (authData.value.password === '') {
+          throw new Error(i18n.t('ssl_product.field is required'))
+        }
+        if (/[^a-zA-Z0-9]$/.test(authData.value.password)) {
+          throw new Error(i18n.t('The last character must not be special'))
+        }
+        if (/^(?=.*\d)[\w+=._!*-]{9,32}$/.test(authData.value.password)) {
+          return Promise.resolve()
+        } else {
+          throw new Error(`
           ${i18n.t('Password must contain uppercase letters, numbers and symbols')} (+-.-_!*)
         `)
+        }
+      } catch (error) {
+        return Promise.reject(error.message)
       }
-    } catch (error) {
-      return Promise.reject(error.message)
     }
   }
-}]
+}
 
 onBeforeMount(() => {
   const images = Object.entries(provider.value?.publicData.templates ?? {})
