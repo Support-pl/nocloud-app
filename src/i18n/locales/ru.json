@@ -72,6 +72,7 @@
     "pass at least 10 characters": "Пароль должен быть более 10 символов",
     "Password must contain uppercase letters, numbers and symbols": "Пароль должен содержать заглавные буквы, цифры и символы",
     "The last character must not be special": "Последний символ не должен быть специальным",
+    "The username must be without special characters": "Имя пользователя должно не содержать спец. символы",
     "Create VM": "Создать VM",
     "Create": "Создать",
     "Confirm": "Подтвердить",

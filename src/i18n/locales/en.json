@@ -72,6 +72,7 @@
     "pass at least 10 characters": "Password must be at least 10 characters",
     "Password must contain uppercase letters, numbers and symbols": "Password must contain uppercase letters, numbers and symbols",
     "The last character must not be special": "The last character must not be special",
+    "The username must be without special characters":"The username must be without special characters",
     "Create VM": "Create VM",
     "Create": "Create",
     "Confirm": "Confirm",

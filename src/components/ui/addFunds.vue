@@ -40,6 +40,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 import { useCurrency } from '@/hooks/utils'
 import api from '@/api.js'
+import { useInvoicesStore } from '@/stores/invoices'
 
 const props = defineProps({
   modalVisible: { type: Boolean, required: true },
@@ -49,6 +50,7 @@ const props = defineProps({
 
 const router = useRouter()
 const authStore = useAuthStore()
+const invoicesStore = useInvoicesStore()
 const { currency } = useCurrency()
 
 const confirmLoading = ref(false)
@@ -81,6 +83,8 @@ async function handleOk () {
     } else {
       message.success(`Now look invoice #${response.invoiceid}`)
     }
+
+    invoicesStore.fetch();
   } catch (error) {
     console.error(error)
   } finally {
