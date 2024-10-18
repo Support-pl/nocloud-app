@@ -5,7 +5,7 @@
         :style="{
           padding: 0,
           color: 'var(--gloomy_font)',
-          backgroundColor: 'var(--main)'
+          backgroundColor: 'var(--main)',
         }"
       >
         <app-header v-model:is-button-visible="isButtonsVisible" />
@@ -17,7 +17,7 @@
         <router-view
           v-slot="{ Component }"
           class="frame"
-          :style="{ paddingTop: (isButtonsVisible) ? '50px' : null }"
+          :style="{ paddingTop: isButtonsVisible ? '50px' : null }"
         >
           <transition name="main-frame-anim">
             <component :is="Component" />
@@ -33,31 +33,31 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAppStore } from '@/stores/app.js'
-import { useAuthStore } from '@/stores/auth.js'
-import appFooter from '@/components/layout/appFooter.vue'
-import appHeader from '@/components/layout/appHeader.vue'
+import { ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useAppStore } from "@/stores/app.js";
+import { useAuthStore } from "@/stores/auth.js";
+import appFooter from "@/components/layout/appFooter.vue";
+import appHeader from "@/components/layout/appHeader/appHeader.vue";
 
-const router = useRouter()
-const route = useRoute()
+const router = useRouter();
+const route = useRoute();
 
-const appStore = useAppStore()
-const authStore = useAuthStore()
-const isButtonsVisible = ref(false)
+const appStore = useAppStore();
+const authStore = useAuthStore();
+const isButtonsVisible = ref(false);
 
 router.isReady().then(() => {
-  appStore.setTabByNameNoRoute(route.name)
-})
+  appStore.setTabByNameNoRoute(route.name);
+});
 router.beforeEach((to, _, next) => {
-  appStore.setTabByNameNoRoute(to.name)
-  next()
-})
+  appStore.setTabByNameNoRoute(to.name);
+  next();
+});
 </script>
 
 <script>
-export default { name: 'AppMain' }
+export default { name: "AppMain" };
 </script>
 
 <style scoped>
@@ -75,7 +75,6 @@ export default { name: 'AppMain' }
 </style>
 
 <style>
-
 .ant-layout {
   height: 100%;
 }
@@ -89,7 +88,7 @@ export default { name: 'AppMain' }
 
 .main-frame-anim-enter-active,
 .main-frame-anim-leave-active {
-  transition: all .25s ease;
+  transition: all 0.25s ease;
 }
 
 .main-frame-anim-enter-from {

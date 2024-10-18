@@ -7,7 +7,7 @@
         </div>
       </div>
       <div class="chat__title">
-        {{ titleDecoded }} {{ (department) ? `(${department})` : '' }}
+        {{ titleDecoded }} {{ department ? `(${department})` : "" }}
       </div>
       <div class="chat__actions">
         <div
@@ -20,23 +20,37 @@
 
         <div
           class="icon__wrapper"
-          :style="(searchString.length > 0) ? {
-            borderRadius: '50%',
-            background: 'var(--bright_bg)',
-            color: 'var(--main)'
-          } : null"
+          :style="
+            searchString.length > 0
+              ? {
+                  borderRadius: '50%',
+                  background: 'var(--bright_bg)',
+                  color: 'var(--main)',
+                }
+              : null
+          "
         >
-          <a-popover arrow-point-at-center placement="left" :align="{ offset: [-10, 0] }">
+          <a-popover
+            arrow-point-at-center
+            placement="left"
+            :align="{ offset: [-10, 0] }"
+          >
             <template #content>
               <a-input-search
                 enter-button
                 placeholder="Topic"
                 :value="text"
-                @update:value="text = $event; search()"
+                @update:value="
+                  text = $event;
+                  search();
+                "
               >
                 <template #suffix>
                   <div style="cursor: pointer" @click="text = ''">
-                    <plus-icon style="color: rgba(0, 0, 0, 0.45)" :rotate="45" />
+                    <plus-icon
+                      style="color: rgba(0, 0, 0, 0.45)"
+                      :rotate="45"
+                    />
                   </div>
                 </template>
               </a-input-search>
@@ -50,74 +64,79 @@
         </div>
       </div>
     </div>
-    <add-ticket v-if="supportStore.isAddingTicket" :instance-id="$route.query.from" />
+    <add-ticket
+      v-if="supportStore.isAddingTicket"
+      :instance-id="$route.query.from"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useSupportStore } from '@/stores/support.js'
-import { useChatsStore } from '@/stores/chats.js'
-import { debounce } from '@/functions.js'
-import addTicket from '@/components/support/addTicket.vue'
+import { computed, defineAsyncComponent, onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useSupportStore } from "@/stores/support.js";
+import { useChatsStore } from "@/stores/chats.js";
+import { debounce } from "@/functions.js";
+import addTicket from "@/components/support/addTicket.vue";
 
-const plusIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/PlusOutlined')
-)
-const leftIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LeftOutlined')
-)
-const reloadIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/ReloadOutlined')
-)
-const searchIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SearchOutlined')
-)
+const plusIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PlusOutlined")
+);
+const leftIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LeftOutlined")
+);
+const reloadIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ReloadOutlined")
+);
+const searchIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SearchOutlined")
+);
 
 const props = defineProps({
   chat: { type: Object, required: true, default: () => ({}) },
-  title: { type: String, default: '' },
-  searchString: { type: String, required: true }
-})
-const emits = defineEmits(['update:searchString', 'reload'])
+  title: { type: String, default: "" },
+  searchString: { type: String, required: true },
+});
+const emits = defineEmits(["update:searchString", "reload"]);
 
-const route = useRoute()
-const router = useRouter()
-const supportStore = useSupportStore()
-const chatsStore = useChatsStore()
+const route = useRoute();
+const router = useRouter();
+const supportStore = useSupportStore();
+const chatsStore = useChatsStore();
 
-const text = ref('')
+const text = ref("");
 const titleDecoded = computed(() => {
-  const txt = document.createElement('textarea')
-  txt.innerHTML = props.title
-  return txt.value
-})
+  const txt = document.createElement("textarea");
+  txt.innerHTML = props.title;
+  return txt.value;
+});
 
 const department = computed(() => {
-  const id = chatsStore.chats.get(props.chat.uuid)?.department
+  const id = chatsStore.chats.get(props.chat.uuid)?.department;
 
-  return chatsStore.getDefaults.departments.find((dep) => dep.id === id)?.name
-})
+  return chatsStore.getDefaults.departments.find((dep) => dep.id === id)?.name;
+});
 
-let search = () => {}
-function goBack () {
+let search = () => {};
+function goBack() {
   if (route.query.from) {
-    const params = { id: route.query.from }
+    const params = { id: route.query.from };
 
-    router.push({ name: 'service', params })
+    router.push({ name: "service", params });
   } else {
-    router.push({ name: 'support' })
+    router.push({ name: "support" });
   }
 }
 
 onMounted(() => {
-  search = debounce(() => { emits('update:searchString', text.value) }, 200)
-})
+  search = debounce(() => {
+    emits("update:searchString", text.value);
+  }, 200);
+});
 </script>
 
 <script>
-export default { name: 'SupportHeader' }
+export default { name: "SupportHeader" };
 </script>
 
 <style scoped>

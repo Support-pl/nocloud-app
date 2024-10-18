@@ -5,12 +5,7 @@
         <LoadingOutlined style="color: var(--gloomy_font)" />
       </template>
     </a-spin>
-    <div
-      v-else
-      class="balance__item"
-      :class="{ clickable }"
-      @click="showModal"
-    >
+    <div v-else class="balance__item" :class="{ clickable }" @click="showModal">
       {{ (authStore.userdata.balance || 0).toFixed(2) }}
 
       <span class="currency__suffix">{{ currency.code }}</span>
@@ -23,25 +18,25 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, ref } from 'vue'
-import { LoadingOutlined } from '@ant-design/icons-vue'
-import { useAuthStore } from '@/stores/auth.js'
-import { useCurrency } from '@/hooks/utils'
-import addFunds from '@/components/ui/addFunds.vue'
+import { defineAsyncComponent, ref } from "vue";
+import { LoadingOutlined } from "@ant-design/icons-vue";
+import { useAuthStore } from "@/stores/auth.js";
+import { useCurrency } from "@/hooks/utils";
+import addFunds from "@/components/ui/addFunds.vue";
 
 const props = defineProps({
-  clickable: { type: Boolean, default: true }
-})
+  clickable: { type: Boolean, default: true },
+});
 
-const authStore = useAuthStore()
-const { currency } = useCurrency()
+const authStore = useAuthStore();
+const { currency } = useCurrency();
 
-const plusIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/PlusOutlined')
-)
+const plusIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PlusOutlined")
+);
 
-const isLoading = ref(false)
-const modalVisible = ref(false)
+const isLoading = ref(false);
+const modalVisible = ref(false);
 
 // function URLparameter (obj, outer = '') {
 //   let str = ''
@@ -59,30 +54,30 @@ const modalVisible = ref(false)
 //   return str
 // }
 
-function showModal () {
-  if (props.clickable) modalVisible.value = true
+function showModal() {
+  if (props.clickable) modalVisible.value = true;
 }
 
-function hideModal () {
-  modalVisible.value = false
+function hideModal() {
+  modalVisible.value = false;
 }
 
-async function fetch () {
+async function fetch() {
   try {
-    isLoading.value = true
-    await authStore.fetchBillingData()
+    isLoading.value = true;
+    await authStore.fetchBillingData();
   } catch (error) {
-    console.error(error)
+    console.error(error);
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
-fetch()
+fetch();
 </script>
 
 <script>
-export default { name: 'BalanceView' }
+export default { name: "BalanceView" };
 </script>
 
 <style>
@@ -106,5 +101,4 @@ export default { name: 'BalanceView' }
   justify-content: center;
   align-items: center;
 }
-
 </style>
