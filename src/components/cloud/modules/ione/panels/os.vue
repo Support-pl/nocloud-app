@@ -104,11 +104,17 @@ const rules = {
   },
   username: {
     trigger: 'change',
-    validator: () => (
-      (authData.value.username.length < 2)
-        ? Promise.reject(i18n.t('ssl_product.field is required'))
-        : Promise.resolve()
-    )
+    validator: () => {
+      if(authData.value.username.length < 2){
+        return Promise.reject(i18n.t('ssl_product.field is required'))
+      }
+
+      if(/[^a-zA-Z0-9]/.test(authData.value.username)){
+        return Promise.reject(i18n.t(i18n.t('The username must be without special characters')))
+      }
+
+      return Promise.resolve();
+    }
   },
   password: {
     trigger: 'change',
