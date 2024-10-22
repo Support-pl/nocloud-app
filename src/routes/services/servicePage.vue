@@ -168,6 +168,7 @@ import { useInstancesStore } from '@/stores/instances.js'
 
 import loading from '@/components/ui/loading.vue'
 import serviceInfo from '@/components/ui/serviceInfo.vue'
+import { useInvoicesStore } from '@/stores/invoices'
 
 const info = [
   // {
@@ -216,7 +217,7 @@ export default {
   },
   data: () => ({ service: null, info }),
   computed: {
-    ...mapStores(useChatsStore, useProductsStore, useInstancesStore, useNamespasesStore),
+    ...mapStores(useChatsStore, useProductsStore, useInstancesStore, useNamespasesStore,useInvoicesStore),
     ...mapState(useAuthStore, ['baseURL', 'userdata', 'fetchBillingData']),
     getTagColor () {
       const status = this.service.status.replace('cloudStateItem.', '')
@@ -447,15 +448,10 @@ export default {
   },
   methods: {
     createRenewInvoice,
-    clickOnInvoice (invoiceId) {
-      this.$api.get(this.baseURL, {
-        params: {
-          run: 'get_pay_token', invoice_id: invoiceId
-        }
-      })
-        .then((res) => {
-          window.location.href = res
-        })
+    async clickOnInvoice (uuid) {
+      const paymentLink = await this.invoicesStore.getPaymentLink(uuid)
+
+      window.location.href = paymentLink
     },
     sendRenew () {
       this.$confirm({

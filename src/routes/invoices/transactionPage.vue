@@ -120,6 +120,7 @@
 import { defineAsyncComponent } from 'vue'
 import config from '@/appconfig.js'
 import loading from '@/components/ui/loading.vue'
+import { useInvoicesStore } from '@/stores/invoices';
 
 const leftIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/LeftOutlined')
@@ -295,13 +296,11 @@ export default {
           this.isPayLoading = false
         })
     },
-    getPaytoken (invoiceId) {
-      this.$api.get(this.baseURL, {
-        params: {
-          run: 'get_pay_token', invoice_id: invoiceId
-        }
-      })
-        .then((res) => { window.location.href = res })
+    async getPaytoken (invoiceId) {
+      const invoicesStore = useInvoicesStore();
+      const paymentLink = await invoicesStore.getPaymentLink(invoiceId);
+
+      window.location.href = paymentLink;
     }
   }
 }

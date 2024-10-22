@@ -216,6 +216,7 @@ import { useProductsStore } from '@/stores/products.js'
 
 import config from '@/appconfig.js'
 import promoBlock from '@/components/ui/promo.vue'
+import { useInvoicesStore } from '@/stores/invoices'
 
 export default {
   name: 'IaasComponent',
@@ -460,13 +461,11 @@ export default {
       // if (!this.checkBalance(this.getProducts.price[this.options.period])) return
       this.modal.confirmCreate = true
     },
-    getPaytoken (invoiceId) {
-      this.$api.get(this.baseURL, {
-        params: {
-          run: 'get_pay_token', invoice_id: invoiceId
-        }
-      })
-        .then((res) => { window.location.href = res })
+    async getPaytoken (invoiceId) {
+      const invoicesStore = useInvoicesStore();
+      const paymentLink = await invoicesStore.getPaymentLink(invoiceId);
+
+      window.location.href = paymentLink;
     }
   }
 }

@@ -1,14 +1,18 @@
 <template>
-  <div class="invoice" @click="isLoading = true; getPaytoken(invoice.id)">
+  <div
+    class="invoice"
+    @click="
+      isLoading = true;
+      openInvoiceDocument(invoice.uuid);
+    "
+  >
     <div class="invoice__header flex-between">
       <div class="invoice__status" :style="{ color: statusColor }">
         {{ $t(`invoice_${invoice.status}`) }}
       </div>
     </div>
     <div class="invoice__middle">
-      <div class="invoice__prefix">
-        {{ capitalize($t('net total')) }}:
-      </div>
+      <div class="invoice__prefix">{{ capitalize($t("net total")) }}:</div>
       <div class="invoice__cost" :style="{ color: statusColor }">
         {{ total }} {{ currency.code }}
       </div>
@@ -25,200 +29,180 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ (invoice.status === 'Unpaid') ? '-' : (invoice.datepaid ?? invoice.duedate) }}
+          {{
+            invoice.status === "Unpaid"
+              ? "-"
+              : invoice.datepaid ?? invoice.duedate
+          }}
         </div>
       </div>
     </div>
     <div class="horisontal-line" />
     <div class="invoice__footer flex-between">
-      <div class="invoice__id">
-        #{{ invoice.id }}
-      </div>
+      <div class="invoice__id">#{{ invoice.id }}</div>
 
-      <a-popconfirm
-        v-if="invoice.paid_balance && invoice.status === 'Unpaid'"
-        :title="$t('Payment will be made from your account balance.')"
-        :ok-text="$t('Yes')"
-        :cancel-text="$t('Cancel')"
-        @confirm="createInvoiceByBalance"
-      >
-        <div class="invoice__btn" style="margin-left: auto" @click.stop>
-          <span class="invoice__pay invoice__balance-pay">
-            {{ $t('pay from balance') }}
-            <component :is="(isBalanceLoading) ? loadingIcon : rightIcon" color="success" />
+      <template v-if="invoice.status === 'Unpaid'">
+        <template
+          v-if="
+            invoice.total <= authStore.userdata.balance &&
+            ActionType[invoice.type] !== ActionType.BALANCE
+          "
+        >
+          <a-popconfirm
+            :title="$t('Payment will be made from your account balance.')"
+            :ok-text="$t('Yes')"
+            :cancel-text="$t('Cancel')"
+            @confirm="payByBalance"
+          >
+            <div class="invoice__btn" style="margin-left: auto" @click.stop>
+              <span class="invoice__pay invoice__balance-pay">
+                {{ $t("pay from balance") }}
+                <component
+                  :is="isBalanceLoading ? loadingIcon : rightIcon"
+                  color="success"
+                />
+              </span>
+            </div>
+          </a-popconfirm>
+        </template>
+
+        <div class="invoice__btn" @click.stop="paidInvoice">
+          <span class="invoice__pay">
+            {{ $t("Pay").toLowerCase() }}
+            <component
+              :is="isLoading ? loadingIcon : rightIcon"
+              color="success"
+            />
           </span>
         </div>
-      </a-popconfirm>
+      </template>
 
-      <div
-        v-if="invoice.status === 'Unpaid'"
-        class="invoice__btn"
-        @click.stop="paidInvoice"
-      >
-        <span class="invoice__pay">
-          {{ $t('Pay').toLowerCase() }}
-          <component :is="(isLoading) ? loadingIcon : rightIcon" color="success" />
-        </span>
-      </div>
-      <component :is="(isLoading) ? loadingIcon : rightIcon" v-else style="margin-top: 5px" />
+      <component
+        :is="isLoading ? loadingIcon : rightIcon"
+        v-else
+        style="margin-top: 5px"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { computed, defineAsyncComponent, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { ActionType } from "nocloud-proto/proto/es/billing/billing_pb";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
-import { useInvoicesStore } from '@/stores/invoices.js'
-import { useNotification } from '@/hooks/utils'
+import { useAuthStore } from "@/stores/auth.js";
+import { useCurrenciesStore } from "@/stores/currencies.js";
+import { useInvoicesStore } from "@/stores/invoices.js";
+import { useNotification } from "@/hooks/utils";
 
-import api from '@/api'
-import config from '@/appconfig.js'
+import config from "@/appconfig.js";
 
 const props = defineProps({
-  invoice: { type: Object, required: true }
-})
+  invoice: { type: Object, required: true },
+});
 
-const i18n = useI18n()
-const authStore = useAuthStore()
-const currenciesStore = useCurrenciesStore()
-const invoicesStore = useInvoicesStore()
-const { openNotification } = useNotification()
+const i18n = useI18n();
+const authStore = useAuthStore();
+const currenciesStore = useCurrenciesStore();
+const invoicesStore = useInvoicesStore();
+const { openNotification } = useNotification();
 
-const loadingIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LoadingOutlined')
-)
-const rightIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/RightOutlined')
-)
+const loadingIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LoadingOutlined")
+);
+const rightIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RightOutlined")
+);
 
-const isLoading = ref(false)
-const isBalanceLoading = ref(false)
-const currencyCode = ref('')
+const isLoading = ref(false);
+const isBalanceLoading = ref(false);
+const currencyCode = ref("");
 
 const currency = computed(() => {
-  const code = authStore.userdata.currency.title ?? 'USD'
-  if (code === currencyCode.value) return { code, rate: 1 }
+  const code = authStore.userdata.currency.title ?? "USD";
+  if (code === currencyCode.value) return { code, rate: 1 };
 
-  const { rate } = currenciesStore.currencies.find((el) =>
-    el.from.title === code && el.to.title === currencyCode.value
-  ) ?? {}
+  const { rate } =
+    currenciesStore.currencies.find(
+      (el) => el.from.title === code && el.to.title === currencyCode.value
+    ) ?? {};
 
   const { rate: reverseRate } = currenciesStore.currencies.find(
     (el) => el.to.title === code && el.from.title === currencyCode.value
-  ) ?? { rate: 1 }
+  ) ?? { rate: 1 };
 
-  return { code, rate: (rate) || 1 / reverseRate }
-})
+  return { code, rate: rate || 1 / reverseRate };
+});
 
 const statusColor = computed(() => {
   switch (props.invoice.status?.toLowerCase()) {
-    case 'paid':
-      return config.colors.success
-    case 'cancelled':
-      return config.colors.gray
+    case "paid":
+      return config.colors.success;
+    case "cancelled":
+      return config.colors.gray;
     default:
-      return config.colors.err
+      return config.colors.err;
   }
-})
-
-// const costColor = computed(() => {
-//   if (props.invoice.subtotal > 0) {
-//     return config.colors.success
-//   } else if (props.invoice.subtotal < 0) {
-//     return config.colors.err
-//   } else {
-//     return null
-//   }
-// })
+});
 
 const total = computed(() => {
-  const total = props.invoice.subtotal ?? props.invoice.total
-  const { rate } = currency.value
+  const total = props.invoice.subtotal ?? props.invoice.total;
+  const { rate } = currency.value;
 
-  return Math.abs((total * rate)).toFixed(2)
-})
+  return Math.abs(total * rate).toFixed(2);
+});
 
-async function paidInvoice () {
-  isLoading.value = true
+async function paidInvoice() {
+  isLoading.value = true;
   try {
-    if (props.invoice.type) {
-      await invoicesStore.updateStatus(props.invoice.id, 'PAID')
+    await openInvoiceDocument(props.invoice.uuid);
 
-      openNotification('success', { message: i18n.t('Done') })
-    } else {
-      await createInvoice()
-    }
+    openNotification("success", { message: i18n.t("Done") });
   } catch (error) {
-    openNotification('error', {
-      message: error.response?.data?.message ?? error.message ?? error
-    })
-    console.error(error)
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+    console.error(error);
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
-async function createInvoice () {
-  if (props.invoice.status === 'Unpaid' || !props.invoice.meta) {
-    getPaytoken(props.invoice.id)
-    return
-  }
+async function openInvoiceDocument(uuid) {
+  const paymentLink = await invoicesStore.getPaymentLink(uuid);
 
-  const type = (props.invoice.total > 0) ? 'debit' : 'top-up'
-
-  const { invoiceid } = api.get(authStore.baseURL, {
-    params: {
-      run: 'create_inv',
-      invoice_id: props.invoice.id,
-      product: props.invoice.meta.description ?? props.invoice.service,
-      invoice_type: props.invoice.meta.invoiceType ?? type,
-      sum: total.value
-    }
-  })
-
-  openNotification('success', { message: i18n.t('Done') })
-  await getPaytoken(invoiceid)
+  window.location.href = paymentLink;
 }
 
-async function createInvoiceByBalance () {
-  isBalanceLoading.value = true
+async function payByBalance() {
+  isLoading.value = true;
   try {
-    await api.get(authStore.baseURL, {
-      params: { run: 'balance_paid', invoice_id: props.invoice.id }
-    })
+    await invoicesStore.payWithBalance(props.invoice.uuid);
 
-    await invoicesStore.fetch(true)
-    openNotification('success', { message: i18n.t('Done') })
+    invoicesStore.fetch();
+    authStore.fetchUserData(true);
+
+    openNotification("success", { message: i18n.t("Done") });
   } catch (error) {
-    openNotification('error', {
-      message: error.response?.data?.message ?? error.message ?? error
-    })
-    console.error(error)
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+    console.error(error);
   } finally {
-    isBalanceLoading.value = false
+    isLoading.value = false;
   }
 }
 
-async function getPaytoken (id) {
-  const response = await api.get(authStore.baseURL, {
-    params: { run: 'get_pay_token', invoice_id: id }
-  })
-
-  window.location.href = response
-}
-
-if (props.invoice.currencycode === 'NCU') {
-  currencyCode.value = currenciesStore.defaultCurrency.title
+if (props.invoice.currencycode === "NCU") {
+  currencyCode.value = currenciesStore.defaultCurrency.title;
 } else {
-  currencyCode.value = props.invoice.currencycode
+  currencyCode.value = props.invoice.currencycode;
 }
 </script>
 
 <script>
-export default { name: 'InvoiceView' }
+export default { name: "InvoiceView" };
 </script>
 
 <style scoped>
