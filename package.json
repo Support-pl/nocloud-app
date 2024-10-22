@@ -25,7 +25,7 @@
     "nocloud-proto": "https://github.com/slntopp/nocloud-proto#116cd4edc9097e3f7bda39cd0c2368655b5e4783",
     "nocloud-ui": "^1.0.19",
     "nocloudjsrest": "^1.5.17",
-    "pinia": "^2.2.0",
+    "pinia": "^2.2.4",
     "vnc-ui-vue": "^1.0.0",
     "vue": "^3.4.35",
     "vue-google-charts": "^1.1.0",
