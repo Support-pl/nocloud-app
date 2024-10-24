@@ -1,12 +1,12 @@
 <template>
   <div class="login">
     <div class="login__title login__layout">
-      <div class="logo" :class="['pos_' + config.appLogo.pos]">
+      <div class="logo" :class="['pos_'+config.appLogo.pos]">
         <div v-if="companyName" class="logo__title">
           {{ companyName }}
         </div>
         <div v-if="companyLogo" class="logo__image">
-          <img :src="companyLogo" alt="logo" />
+          <img :src="companyLogo" alt="logo">
         </div>
       </div>
       <svg class="clipPathSvg" width="0" height="0">
@@ -22,20 +22,17 @@
     <div class="login__main login__layout">
       <div class="login__UI">
         <div v-if="appStore.onLogin.info" class="login__action-info">
-          {{ $t("comp_services.Your orders") }}:
+          {{ $t('comp_services.Your orders') }}:
           <div class="order__card">
             <div class="order__icon">
-              <component
-                :is="config.services[appStore.onLogin.info.type]?.icon"
-              />
+              <component :is="config.services[appStore.onLogin.info.type]?.icon" />
             </div>
             <div class="order__info">
               <div class="order__title">
                 {{ appStore.onLogin.info.title }}
               </div>
               <div class="order__cost">
-                {{ +appStore.onLogin.info.cost.toFixed(2) }}
-                {{ appStore.onLogin.info.currency }}
+                {{ +appStore.onLogin.info.cost.toFixed(2) }} {{ appStore.onLogin.info.currency }}
               </div>
             </div>
             <div class="order__remove" @click="appStore.clearOnLogin">
@@ -63,7 +60,7 @@
                 :placeholder="`${capitalize($t('clientinfo.firstname'))} *`"
                 readonly
                 onfocus="this.removeAttribute('readonly')"
-              />
+              >
               <span v-if="fields.firstname" class="login__horisontal-line" />
               <input
                 v-if="fields.lastname"
@@ -73,7 +70,7 @@
                 :placeholder="`${capitalize($t('clientinfo.lastname'))} *`"
                 readonly
                 onfocus="this.removeAttribute('readonly')"
-              />
+              >
               <span v-if="fields.lastname" class="login__horisontal-line" />
               <input
                 v-if="fields.email"
@@ -83,7 +80,7 @@
                 :placeholder="`${capitalize($t('clientinfo.email'))} *`"
                 readonly
                 onfocus="this.removeAttribute('readonly')"
-              />
+              >
 
               <span v-if="fields.email" class="login__horisontal-line" />
               <a-select
@@ -96,10 +93,7 @@
                 :filter-option="searchCountries"
                 :placeholder="`${capitalize($t('clientinfo.countryname'))} *`"
               >
-                <a-select-option
-                  v-for="country in countries"
-                  :key="country.code"
-                >
+                <a-select-option v-for="country in countries" :key="country.code">
                   {{ $t(`country.${country.code}`) }}
                 </a-select-option>
               </a-select>
@@ -115,7 +109,7 @@
                 :disabled="!userinfo.country"
                 autocomplete="tel"
                 maxlength="18"
-              />
+              >
               <span v-if="fields.phonenumber" class="login__horisontal-line" />
               <a-input-password
                 v-if="fields.password"
@@ -127,7 +121,7 @@
 
             <div class="inputs__log-pas" style="padding: 8px 16px">
               <a-checkbox v-model:checked="invoiceChecked">
-                {{ $t("Company Details") }}
+                {{ $t('Company Details') }}
               </a-checkbox>
             </div>
 
@@ -136,118 +130,76 @@
                 v-if="fields.company.companyname"
                 v-model="userinfo.companyname"
                 :placeholder="`${capitalize($t('clientinfo.companyname'))} *`"
-              />
-              <span
-                v-if="fields.company.companyname"
-                class="login__horisontal-line"
-              />
+              >
+              <span v-if="fields.company.companyname" class="login__horisontal-line" />
               <input
                 v-if="fields.company.tax_id"
                 v-model="userinfo.tax_id"
-                :placeholder="
-                  userinfo.country === 'PL' ? 'NIP' : 'VAT ID / Tax ID'
-                "
-              />
+                :placeholder="(userinfo.country === 'PL') ? 'NIP' : 'VAT ID / Tax ID'"
+              >
               <!-- <span class="login__horisontal-line"></span>
               <input :placeholder="capitalize($t('clientinfo.state'))" v-model="userinfo.state"> -->
-              <span
-                v-if="fields.company.tax_id"
-                class="login__horisontal-line"
-              />
+              <span v-if="fields.company.tax_id" class="login__horisontal-line" />
               <input
                 v-if="fields.company.city"
                 v-model="userinfo.city"
                 :placeholder="`${capitalize($t('clientinfo.city'))} *`"
-              />
+              >
               <span v-if="fields.company.city" class="login__horisontal-line" />
               <input
                 v-if="fields.company.postcode"
                 v-model="userinfo.postcode"
                 :placeholder="`${capitalize($t('clientinfo.postcode'))} *`"
-              />
-              <span
-                v-if="fields.company.postcode"
-                class="login__horisontal-line"
-              />
+              >
+              <span v-if="fields.company.postcode" class="login__horisontal-line" />
               <input
                 v-if="fields.company.address1"
                 v-model="userinfo.address1"
                 :placeholder="`${capitalize($t('clientinfo.address'))} *`"
-              />
-              <span
-                v-if="fields.company.address1"
-                class="login__horisontal-line"
-              />
+              >
+              <span v-if="fields.company.address1" class="login__horisontal-line" />
               <input
                 v-if="fields.company.account_number"
                 v-model="userinfo.account_number"
-                :placeholder="`${capitalize(
-                  $t('documents.payer account number')
-                )} *`"
-              />
-              <span
-                v-if="fields.company.account_number"
-                class="login__horisontal-line"
-              />
+                :placeholder="`${capitalize($t('documents.payer account number'))} *`"
+              >
+              <span v-if="fields.company.account_number" class="login__horisontal-line" />
               <input
                 v-if="fields.company.checking_account"
                 v-model="userinfo.checking_account"
-                :placeholder="`${capitalize(
-                  $t('documents.checking account')
-                )} *`"
-              />
-              <span
-                v-if="fields.company.checking_account"
-                class="login__horisontal-line"
-              />
+                :placeholder="`${capitalize($t('documents.checking account'))} *`"
+              >
+              <span v-if="fields.company.checking_account" class="login__horisontal-line" />
               <input
                 v-if="fields.company.bankname"
                 v-model="userinfo.bankname"
                 :placeholder="`${capitalize($t('documents.bankname'))} *`"
-              />
-              <span
-                v-if="fields.company.bankname"
-                class="login__horisontal-line"
-              />
+              >
+              <span v-if="fields.company.bankname" class="login__horisontal-line" />
               <input
                 v-if="fields.company.bic"
                 v-model="userinfo.bic"
                 placeholder="BIC *"
-              />
+              >
             </div>
 
             <div class="inputs__log-pas">
-              <a-select
-                v-model:value="$i18n.locale"
-                class="register__select"
-                style="width: 100%; border: none"
-              >
+              <a-select v-model:value="$i18n.locale" class="register__select" style="width: 100%; border: none">
                 <a-select-option v-for="lang in config.languages" :key="lang">
-                  {{ $t("localeLang", lang) }}
+                  {{ $t('localeLang', lang) }}
                 </a-select-option>
               </a-select>
 
               <span class="login__horisontal-line" />
-              <a-select
-                v-model:value="userinfo.currency"
-                class="register__select"
-                style="width: 100%; border: none"
-              >
-                <a-select-option
-                  v-for="currency in currencies"
-                  :key="currency.id"
-                >
-                  {{ currency.title }}
+              <a-select v-model:value="userinfo.currency" class="register__select" style="width: 100%; border: none">
+                <a-select-option v-for="currency in currencies" :key="currency.id">
+                  {{ currency.code }}
                 </a-select-option>
               </a-select>
             </div>
 
-            <button
-              v-if="!registerLoading"
-              class="login__submit"
-              @click.prevent="submitHandler"
-            >
-              {{ capitalize($t("clientinfo.register")) }}
+            <button v-if="!registerLoading" class="login__submit" @click.prevent="submitHandler">
+              {{ capitalize($t('clientinfo.register')) }}
             </button>
 
             <div v-else class="login__loading">
@@ -258,8 +210,8 @@
           </form>
         </div>
         <div class="register__already-has" style="margin-top: 20px">
-          <router-link :to="{ name: 'login' }">
-            {{ capitalize($t("clientinfo.already have account?")) }}
+          <router-link :to="{name: 'login'}">
+            {{ capitalize($t('clientinfo.already have account?')) }}
           </router-link>
         </div>
       </div>
@@ -268,192 +220,199 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, inject, ref, watch } from "vue";
-import { notification, message } from "ant-design-vue";
-import { useRouter } from "vue-router";
-import { useI18n } from "vue-i18n";
+import { computed, defineAsyncComponent, inject, ref, watch } from 'vue'
+import { notification, message } from 'ant-design-vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
-import api from "@/api.js";
-import config from "@/appconfig.js";
+import api from '@/api.js'
+import config from '@/appconfig.js'
 
-import { useAppStore } from "@/stores/app.js";
-import { useCurrenciesStore } from "@/stores/currencies.js";
-import countries from "@/assets/countries.json";
+import { useAppStore } from '@/stores/app.js'
+import { useAuthStore } from '@/stores/auth.js'
+import { useCurrenciesStore } from '@/stores/currencies.js'
+import countries from '@/assets/countries.json'
 
-const router = useRouter();
-const i18n = useI18n();
+const router = useRouter()
+const i18n = useI18n()
 
-const appStore = useAppStore();
-const currenciesStore = useCurrenciesStore();
+const appStore = useAppStore()
+const authStore = useAuthStore()
+const currenciesStore = useCurrenciesStore()
 
-const closeIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CloseOutlined")
-);
+const closeIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/CloseOutlined')
+)
 
-const registerLoading = ref(false);
-const invoiceChecked = ref(false);
+const registerLoading = ref(false)
+const invoiceChecked = ref(false)
 const userinfo = ref({
-  firstname: "",
-  lastname: "",
-  email: "",
-  password: "",
+  firstname: '',
+  lastname: '',
+  email: '',
+  password: '',
 
-  address1: "",
-  city: "",
+  address1: '',
+  city: '',
   // state: '',
-  postcode: "",
+  postcode: '',
   country: undefined,
-  phonenumber: "",
+  phonenumber: '',
   currency: 1,
 
-  companyname: "",
-  tax_id: "",
-  account_number: "",
-  checking_account: "",
-  bankname: "",
-  bic: "",
-});
+  companyname: '',
+  tax_id: '',
+  account_number: '',
+  checking_account: '',
+  bankname: '',
+  bic: ''
+})
 
-const currencies = computed(() => currenciesStore.list);
+const currencies = computed(() =>
+  (config.whmcsSiteUrl) ? currenciesStore.whmcsCurrencies : currenciesStore.list
+)
 
-watch(
-  () => currenciesStore.list,
-  (value) => {
-    userinfo.value.currency = value[0].id;
-  }
-);
+watch(() => currenciesStore.list, (value) => {
+  if (config.whmcsSiteUrl) return
+  userinfo.value.currency = value[0].id
+})
 
-userinfo.value.currency = currenciesStore.defaultCurrency;
+watch(() => currenciesStore.whmcsCurrencies, (value) => {
+  userinfo.value.currency = value[0].id
+})
 
-const companyName = computed(() => appStore.domainInfo.name ?? config.appTitle);
+userinfo.value.currency = (config.whmcsSiteUrl)
+  ? currenciesStore.whmcsCurrencies[0]?.id ?? 1
+  : currenciesStore.defaultCurrency
+
+const companyName = computed(() =>
+  appStore.domainInfo.name ?? config.appTitle
+)
 
 const companyLogo = computed(() => {
-  const { settings } = appStore.domainInfo;
+  const { settings } = appStore.domainInfo
 
-  if (settings.logo && typeof settings.logo === "string") {
-    return settings.logo;
+  if (settings.logo && typeof settings.logo === 'string') {
+    return settings.logo
   }
-  return config.appLogo.path;
-});
-const phonecode = computed(
-  () => countries.find(({ code }) => code === userinfo.value.country)?.dial_code
-);
+  return config.appLogo.path
+})
+const phonecode = computed(() =>
+  countries.find(({ code }) => code === userinfo.value.country)?.dial_code
+)
 
-const fields = ref({
-  firstname: true,
-  lastname: true,
-  country: true,
-  phonenumber: true,
-  password: true,
-  email: true,
-  company: {
-    companyname: true,
-    tax_id: true,
-    city: true,
-    postcode: true,
-    address1: true,
-    account_number: true,
-    bankname: true,
-    checking_account: true,
-    bic: true,
-  },
-});
+const fields = ref({})
 
-async function submitHandler() {
-  let info = JSON.parse(JSON.stringify(fields.value));
+async function fetchFields () {
+  try {
+    const response = await api.get(authStore.baseURL, {
+      params: { run: 'fields_register' }
+    })
+
+    fields.value = response
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error
+
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
+  }
+}
+
+fetchFields()
+
+async function submitHandler () {
+  let info = JSON.parse(JSON.stringify(fields.value))
 
   if (!invoiceChecked.value) {
-    delete info.company;
+    delete info.company
   } else {
-    info = { ...info, ...info.company };
-    delete info.company;
+    info = { ...info, ...info.company }
+    delete info.company
   }
 
   for (const [key, value] of Object.entries(info)) {
-    if (value !== "require") continue;
+    if (value !== 'require') continue
     if (userinfo.value[key].length === 0) {
-      message.warn(`${key} - ${i18n.t("ssl_product.field is required")}`);
-      return;
+      message.warn(`${key} - ${i18n.t('ssl_product.field is required')}`)
+      return
     }
     if (userinfo.value[key].length < 2) {
-      message.warn(`${key} - ${i18n.t("field must contain more characters")}`);
-      return;
+      message.warn(`${key} - ${i18n.t('field must contain more characters')}`)
+      return
     }
   }
 
-  const regexEmail = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
+  const regexEmail = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
 
   if (!userinfo.value.email.match(regexEmail)) {
-    message.warn(i18n.t("email is not valid"));
-    return;
+    message.warn(i18n.t('email is not valid'))
+    return
   }
 
-  const temp = JSON.parse(JSON.stringify(userinfo.value));
-  const { locale } = i18n.getLocaleMessage(i18n.locale.value);
+  const temp = JSON.parse(JSON.stringify(userinfo.value))
+  const { locale } = i18n.getLocaleMessage(i18n.locale.value)
 
-  temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`;
-  temp.phonenumber = temp.phonenumber
-    .replace(phonecode.value, "")
-    .replace(/[\s-]/g, "");
+  temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`
+  temp.phonenumber = temp.phonenumber.replace(phonecode.value, '').replace(/[\s-]/g, '')
 
   try {
-    registerLoading.value = true;
+    registerLoading.value = true
+    const response = (config.whmcsSiteUrl)
+      ? await api.get(authStore.baseURL, {
+        params: { ...temp, app_language: locale, run: 'create_user' }
+      })
+      : await api.post('/accounts/signup', {
+        title: `${temp.firstname} ${temp.lastname}`,
+        auth: { type: 'standard', data: [temp.email, temp.password] },
+        currency: temp.currency,
+        data: [
+          'firstname',
+          'lastname',
+          'email',
+          'address1',
+          'city',
+          'postcode',
+          'country',
+          'phonenumber',
+          'companyname'
+        ].reduce((result, key) => ({ ...result, [key]: temp[key] }), {})
+      })
 
-    const response = await api.post("/accounts/signup", {
-      title: `${temp.firstname} ${temp.lastname}`,
-      auth: { type: "standard", data: [temp.email, temp.password] },
-      currency: currencies.value.find((c) => c.id === temp.currency),
-      data: [
-        "firstname",
-        "lastname",
-        "email",
-        "address1",
-        "city",
-        "postcode",
-        "country",
-        "phonenumber",
-        "companyname",
-        "bankname",
-        "tax_id",
-        "account_number",
-        "checking_account",
-        "bic",
-      ].reduce((result, key) => ({ ...result, [key]: temp[key]?.toString() }), {}),
-    });
-
-    if (!response)
-      throw new Error(`[Error]: ${i18n.t("failed to create user")}`);
-    if (response.result === "error") throw response;
-    else message.success(i18n.t("account created successfully"));
-    router.push({ name: "login" });
+    if (!response) throw new Error(`[Error]: ${i18n.t('failed to create user')}`)
+    if (response.result === 'error') throw response
+    else message.success(i18n.t('account created successfully'))
+    router.push({ name: 'login' })
   } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error;
+    const message = error.response?.data?.message ?? error.message ?? error
 
-    notification.error({ message: i18n.t(message) });
-    console.error(error);
+    notification.error({ message: i18n.t(message) })
+    console.error(error)
   } finally {
-    registerLoading.value = false;
+    registerLoading.value = false
   }
 }
 
-function searchCountries(input, option) {
-  const country = option.children(option)[0].children.toLowerCase();
+function searchCountries (input, option) {
+  const country = option.children(option)[0].children.toLowerCase()
 
-  return country.includes(input.toLowerCase());
+  return country.includes(input.toLowerCase())
 }
 
+if (currenciesStore.whmcsCurrencies.length < 1) {
+  currenciesStore.fetchWhmcsCurrencies()
+}
 if (currenciesStore.list.length < 1) {
-  currenciesStore.fetch();
+  currenciesStore.fetch()
 }
 
-const theme = inject("theme");
+const theme = inject('theme')
 const shadowColor = computed(() =>
-  theme.value ? "var(--bright_font)" : "rgba(164, 180, 244, .5)"
-);
+  (theme.value) ? 'var(--bright_font)' : 'rgba(164, 180, 244, .5)'
+)
 </script>
 
 <script>
-export default { name: "RegisterView" };
+export default { name: 'RegisterView' }
 </script>
 
 <style scoped>
@@ -567,7 +526,7 @@ export default { name: "RegisterView" };
   flex-direction: column;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 3px 8px 20px v-bind("shadowColor");
+  box-shadow: 3px 8px 20px v-bind('shadowColor');
   margin-bottom: 25px;
 }
 
@@ -599,12 +558,11 @@ export default { name: "RegisterView" };
 }
 
 @keyframes gradient {
-  0%,
-  100% {
-    background-position: 0% 50%;
+  0%, 100% {
+    background-position: 0% 50%
   }
   50% {
-    background-position: 100% 50%;
+    background-position: 100% 50%
   }
 }
 
@@ -627,7 +585,7 @@ export default { name: "RegisterView" };
 }
 
 .inputs__log-pas input::placeholder {
-  opacity: 0.5;
+  opacity: .5;
 }
 
 .register__already-has a {
@@ -638,7 +596,9 @@ export default { name: "RegisterView" };
   text-decoration: underline;
 }
 
-.inputs__log-pas .ant-select-selection--single .ant-select-selection__rendered {
+.inputs__log-pas
+.ant-select-selection--single
+.ant-select-selection__rendered {
   margin-left: 15px;
 }
 
@@ -649,7 +609,7 @@ export default { name: "RegisterView" };
   height: 35px;
 }
 
-.load__item:not(:first-child) {
+.load__item:not(:first-child){
   margin-left: 10px;
 }
 
@@ -661,14 +621,14 @@ export default { name: "RegisterView" };
   border-radius: 50%;
 }
 
-.load__item:nth-child(1) {
-  animation: loading 1.4s 0.2s ease infinite;
+.load__item:nth-child(1){
+  animation: loading 1.4s .2s ease infinite;
 }
-.load__item:nth-child(2) {
-  animation: loading 1.4s 0.4s ease infinite;
+.load__item:nth-child(2){
+  animation: loading 1.4s .4s ease infinite;
 }
-.load__item:nth-child(3) {
-  animation: loading 1.4s 0.6s ease infinite;
+.load__item:nth-child(3){
+  animation: loading 1.4s .6s ease infinite;
 }
 
 .inputs__log-pas .ant-select-selection {
@@ -676,13 +636,8 @@ export default { name: "RegisterView" };
 }
 
 @keyframes loading {
-  from,
-  to {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(0.2);
-  }
+  from, to {transform: scale(1)}
+  50% {transform: scale(.2);}
 }
 
 .login__error {
@@ -695,7 +650,7 @@ export default { name: "RegisterView" };
   width: 90%;
 }
 
-@media screen and (min-width: 1024px) {
+@media screen and (min-width: 1024px){
   .login {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto;
@@ -719,4 +674,5 @@ export default { name: "RegisterView" };
     display: inline-block;
   }
 }
+
 </style>

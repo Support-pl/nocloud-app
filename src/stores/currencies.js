@@ -37,7 +37,8 @@ export const useCurrenciesStore = defineStore('currencies', () => {
 
         console.log(response)
         list.value = response.currencies
-          .filter((code) => code.title !== 'NCU')
+          .filter((code) => code !== 'NCU')
+          .map((code) => ({ code, id: code }))
 
         return response
       } catch (error) {
