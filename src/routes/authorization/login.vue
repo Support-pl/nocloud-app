@@ -116,7 +116,7 @@
           >
         </div>
 
-        <!-- <div class="login__forgot" style="margin-top: 30px">
+        <div class="login__forgot" style="margin-top: 30px">
           <a-dropdown :trigger="['click']" placement="bottom">
             <a class="ant-dropdown-link" @click.prevent>
               {{ $t('advanced options') }}
@@ -132,7 +132,7 @@
               </a-menu>
             </template>
           </a-dropdown>
-        </div> -->
+        </div>
         <div class="login__forgot">
           <a href="#" @click.prevent="forgotPass">{{
             capitalize(remember ? $t("forgotPass") : $t("I have a password"))
@@ -211,7 +211,7 @@ async function send () {
     await authStore.login({
       login: formatedEmail.trim(),
       password: password.value,
-      type: 'standard'
+      type: (type.value || !config.whmcsSiteUrl) ? 'standard' : 'whmcs'
     })
 
     if (localStorage.getItem('data')) {
