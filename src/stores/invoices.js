@@ -7,15 +7,18 @@ import {
   GetInvoicesRequest,
   CreateTopUpBalanceInvoiceRequest,
   PayRequest,
-  PayWithBalanceRequest
+  PayWithBalanceRequest,
 } from "nocloud-proto/proto/es/billing/billing_pb";
 
 import { useAppStore } from "./app.js";
 
 import { toDate } from "@/functions.js";
+import api from "@/api.js";
+import { useAuthStore } from "./auth.js";
 
 export const useInvoicesStore = defineStore("invoices", () => {
   const app = useAppStore();
+  const auth = useAuthStore();
   const invoicesApi = createPromiseClient(BillingService, app.transport);
 
   const isLoading = ref(false);
@@ -80,15 +83,28 @@ export const useInvoicesStore = defineStore("invoices", () => {
 
         if (!silent) isLoading.value = true;
 
-        const response = await this.fetchNcInvoices({
-          field: "created",
-          sort: "DESC",
-          page,
-          limit,
-        });
+        const [response, whmcsInvoices] = await Promise.all([
+          this.fetchNcInvoices({
+            field: "created",
+            sort: "DESC",
+            page,
+            limit,
+          }),
+          api.get(auth.baseURL, {
+            params: { run: "get_invoices" },
+          }),
+        ]);
 
         response.toJson().pool.forEach((el) => {
           result.push(toInvoice(el));
+        });
+
+        whmcsInvoices.invoices.invoice.forEach((el) => {
+          if (
+            result.find((invoice) => invoice?.meta?.whmcs_invoice_id == el.id)
+          )
+            return;
+          result.push(el);
         });
 
         result.sort(
