@@ -19,7 +19,9 @@ export const useAppStore = defineStore('app', () => {
     useBinaryFormat: import.meta.env.PROD,
     interceptors: [
       (next) => (req) => {
-        req.header.set('Authorization', `Bearer ${auth.token}`)
+        if(auth.token){
+          req.header.set('Authorization', `Bearer ${auth.token}`)
+        }
         return next(req)
       }
     ]
