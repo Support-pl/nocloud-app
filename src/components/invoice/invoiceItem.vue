@@ -140,8 +140,11 @@ const statusColor = computed(() => {
   switch (props.invoice.status?.toLowerCase()) {
     case "paid":
       return config.colors.success;
-    case "cancelled":
+    case "canceled":
+    case "terminated":
       return config.colors.gray;
+    case "returned":
+      return config.colors.warn;
     default:
       return config.colors.err;
   }
