@@ -39,7 +39,7 @@
     </div>
     <div class="horisontal-line" />
     <div class="invoice__footer flex-between">
-      <div class="invoice__id">#{{ invoice.id }}</div>
+      <div class="invoice__id">#{{ getInvoiceNumber(invoice) }}</div>
 
       <template v-if="invoice.status === 'Unpaid'">
         <template
@@ -97,6 +97,7 @@ import { useInvoicesStore } from "@/stores/invoices.js";
 import { useNotification } from "@/hooks/utils";
 
 import config from "@/appconfig.js";
+import { getInvoiceNumber } from "@/functions";
 
 const props = defineProps({
   invoice: { type: Object, required: true },
