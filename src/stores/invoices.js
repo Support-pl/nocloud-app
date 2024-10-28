@@ -1,4 +1,4 @@
-import { capitalize, computed, ref } from "vue";
+import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 
 import { createPromiseClient } from "@connectrpc/connect";
@@ -12,7 +12,7 @@ import {
 
 import { useAppStore } from "./app.js";
 
-import { toDate } from "@/functions.js";
+import { toInvoice } from "@/functions.js";
 import api from "@/api.js";
 import { useAuthStore } from "./auth.js";
 
@@ -53,24 +53,6 @@ export const useInvoicesStore = defineStore("invoices", () => {
     });
   });
 
-  function toInvoice(transaction) {
-    const status = capitalize(transaction.status.toLowerCase());
-
-    return {
-      id: transaction.number,
-      uuid: transaction.uuid,
-      date: toDate(Number(transaction.created), "-", false, true),
-      duedate: toDate(Number(transaction.deadline), "-", false, true),
-      total: transaction.total,
-      status,
-      credit: 0,
-      service: transaction.service,
-      currencycode: transaction.currency,
-      meta: transaction.meta,
-      type: transaction.type,
-    };
-  }
-
   return {
     invoices,
     isLoading,
@@ -100,11 +82,10 @@ export const useInvoicesStore = defineStore("invoices", () => {
         });
 
         whmcsInvoices.invoices.invoice.forEach((el) => {
-          if (
-            result.find((invoice) => invoice?.meta?.whmcs_invoice_id == el.id)
-          )
+          if (result.find((invoice) => invoice?.payment_invoice_id == el.id))
             return;
-          result.push(el);
+
+          result.push(toInvoice(el, "whmcs"));
         });
 
         result.sort(
@@ -143,7 +124,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
           })
         );
 
-        return response;
+        return response.toJson();
       } catch (error) {
         console.error(error);
         throw error;

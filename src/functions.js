@@ -1,4 +1,5 @@
 import api from '@/api.js'
+import { capitalize } from 'vue'
 
 export function debounce (func, ms) {
   let timeout
@@ -382,4 +383,64 @@ export function toPascalCase (text) {
   return text.replace(/(^\w|-\w)/g, (text) =>
     text.replace(/-/, '').toUpperCase()
   )
+}
+
+export function toInvoice(transaction, type = "default") {
+  if (type == "whmcs") {
+    let status = "Unpaid";
+
+    if (Number(+new Date(transaction.datepaid) / 1000 > 0)) {
+      status = "Paid";
+    }
+
+    return {
+      id: transaction.id,
+      payment_invoice_id: transaction.id,
+      uuid: null,
+      date: toDate(
+        Number(+new Date(transaction.created_at) / 1000),
+        "-",
+        false,
+        true
+      ),
+      duedate: toDate(
+        Number(+new Date(transaction.duedate) / 1000),
+        "-",
+        false,
+        true
+      ),
+      total: transaction.total,
+      status,
+      credit: transaction.credit,
+      service: transaction.service,
+      currencycode: transaction.currencycode,
+      meta: transaction.meta,
+      type: "NO_ACTION",
+    };
+  } else {
+    const status = capitalize(transaction.status.toLowerCase());
+
+    return {
+      id: transaction.number,
+      payment_invoice_id: transaction.meta?.whmcs_invoice_id,
+      uuid: transaction.uuid,
+      date: toDate(Number(transaction.created), "-", false, true),
+      duedate: toDate(Number(transaction.deadline), "-", false, true),
+      total: transaction.total,
+      status,
+      credit: 0,
+      service: transaction.service,
+      currencycode: transaction.currency,
+      meta: transaction.meta,
+      type: transaction.type,
+    };
+  }
+}
+
+export function getInvoiceNumber(invoice) {
+  if (invoice.status === "Paid") {
+    return invoice.id;
+  }
+
+  return invoice.payment_invoice_id || invoice.id;
 }
