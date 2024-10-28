@@ -24,6 +24,14 @@
           {{ invoice.created }}
         </div>
       </div>
+      <div class="invoice__date-item invoice__deadlineDate">
+        <div class="invoice__date-title">
+          {{ $t("deadlineDate") }}
+        </div>
+        <div class="invoice__date">
+          {{ invoice.deadline ? invoice.deadline : "-" }}
+        </div>
+      </div>
       <div class="invoice__date-item invoice__dueDate">
         <div class="invoice__date-title">
           {{ $t("dueDate") }}
@@ -283,6 +291,9 @@ export default { name: "InvoiceView" };
   flex: 1 1 0;
 }
 .invoice__dueDate {
+  flex: 1 1 0;
+}
+.invoice__deadlineDate {
   flex: 1 1 0;
 }
 
