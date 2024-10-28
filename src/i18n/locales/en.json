@@ -58,6 +58,7 @@
     "services": "Services",
     "invoiceDate": "Order Date",
     "dueDate": "Payment Date",
+    "deadlineDate": "Due date",
     "onetime": "one-time",
     "Choice payment": "Choose payment",
     "one time payment": "one time payment",

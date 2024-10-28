@@ -43,6 +43,7 @@
     "service": "Un service",
     "services": "Prestations de service",
     "invoiceDate": "Date de commande",
+    "deadlineDate": "Date d'échéance",
     "dueDate": "Paiement dû",
     "onetime": "unique",
     "Choice payment": "Choisissez le paiement",

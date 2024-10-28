@@ -57,6 +57,7 @@
     "service": "услуга",
     "services": "услуги",
     "invoiceDate": "Дата счёта",
+    "deadlineDate": "Срок оплаты",
     "dueDate": "Дата оплаты",
     "onetime": "одноразовая",
     "Choice payment": "Способ оплаты",
