@@ -89,7 +89,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
         });
 
         result.sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
         );
         invoices.value = result;
 
