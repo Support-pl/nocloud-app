@@ -45,6 +45,7 @@ import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth.js";
 import { useCurrency } from "@/hooks/utils";
 import { useInvoicesStore } from "@/stores/invoices";
+import { toInvoice,getInvoiceNumber } from "@/functions";
 
 const props = defineProps({
   modalVisible: { type: Boolean, required: true },
@@ -81,12 +82,13 @@ async function handleOk() {
     invoicesStore.fetch();
 
     props.hideModal();
-
     if (!stay.value) {
       localStorage.setItem("order", "Invoice");
       router.push("/billing");
     } else {
-      message.success(`Now look invoice #${response.invoiceid}`);
+      message.success(
+        `Now look invoice #${getInvoiceNumber(toInvoice(response))}`
+      );
     }
   } catch (error) {
     console.error(error);
