@@ -225,7 +225,6 @@ import { useNotification } from '@/hooks/utils'
 import config from '@/appconfig.js'
 
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
 
 import { useChatsStore } from '@/stores/chats.js'
@@ -288,7 +287,6 @@ export default {
     ...mapState(useInstancesStore, ['isActionLoading', 'services', 'getInstances', 'isLoading', 'socket']),
     ...mapState(useAuthStore, ['isLogged', 'baseURL']),
     ...mapState(useChatsStore, ['getDefaults']),
-    ...mapState(useCurrenciesStore, ['currencies']),
     ...mapState(useProductsStore, { products: 'products', fetchProducts: 'fetch', isInfoLoading: 'isLoading' }),
     ...mapState(useSpStore, { sp: 'servicesProviders', fetchProviders: 'fetch' }),
     template () {
@@ -499,8 +497,6 @@ export default {
       this.fetchProviders()
       this.fetch()
     }
-
-    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   beforeUnmount () {
     if (!this.socket) return
@@ -509,7 +505,6 @@ export default {
   methods: {
     ...mapActions(useChatsStore, ['createChat', 'sendMessage', 'fetchDefaults']),
     ...mapActions(useAuthStore, ['fetchBillingData']),
-    ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     ...mapActions(useInstancesStore, [
       'fetch', 'subscribeWebSocket',
       'updateService', 'deleteInstance', 'invokeAction'

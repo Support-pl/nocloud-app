@@ -6,7 +6,7 @@
         position: 'absolute',
         width: '100%',
         height: '100%',
-        minHeight: (authStore.isLogged) ? 'auto' : '100vh'
+        minHeight: authStore.isLogged ? 'auto' : '100vh',
       }"
     >
       <transition name="slide">
@@ -31,261 +31,292 @@
       v-if="modal.visible"
       :sum="modal.amount"
       :modal-visible="modal.visible"
-      :hide-modal="() => modal.visible = false"
+      :hide-modal="() => (modal.visible = false)"
     />
   </a-config-provider>
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onMounted, provide, ref, watch } from 'vue'
-import { Modal, theme } from 'ant-design-vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import {
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  provide,
+  ref,
+  watch,
+} from "vue";
+import { Modal, theme } from "ant-design-vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
-import api from '@/api.js'
-import config from '@/appconfig.js'
+import api from "@/api.js";
+import config from "@/appconfig.js";
 
-import { useAppStore } from '@/stores/app.js'
-import { useAuthStore } from '@/stores/auth.js'
+import { useAppStore } from "@/stores/app.js";
+import { useAuthStore } from "@/stores/auth.js";
 
-import addFunds from '@/components/ui/addFunds.vue'
-import updateNotification from '@/components/ui/updateNotification.vue'
+import addFunds from "@/components/ui/addFunds.vue";
+import updateNotification from "@/components/ui/updateNotification.vue";
+import { useCurrenciesStore } from "./stores/currencies";
 
-const bulbIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/BulbFilled')
-)
+const bulbIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/BulbFilled")
+);
 
-const router = useRouter()
-const route = useRoute()
-const i18n = useI18n()
+const router = useRouter();
+const route = useRoute();
+const i18n = useI18n();
 
-const appStore = useAppStore()
-const authStore = useAuthStore()
+const appStore = useAppStore();
+const authStore = useAuthStore();
+const currenciesStore = useCurrenciesStore();
 
-watch(() => authStore.billingUser, (value) => {
-  const isServicesExist = value.roles && !value.roles.services
+watch(
+  () => authStore.billingUser,
+  (value) => {
+    const isServicesExist = value.roles && !value.roles.services;
 
-  if (isServicesExist && ['root', 'services'].includes(route.name)) {
-    router.replace('settings')
+    if (isServicesExist && ["root", "services"].includes(route.name)) {
+      router.replace("settings");
+    }
   }
-})
+);
 
 const modal = ref({
-  amount: 0, visible: false
-})
-provide('checkBalance', checkBalance)
+  amount: 0,
+  visible: false,
+});
+provide("checkBalance", checkBalance);
 
-function checkBalance (price = 0) {
-  const { balance = 0 } = authStore.userdata
+function checkBalance(price = 0) {
+  const { balance = 0 } = authStore.userdata;
 
-  if (!authStore.isLogged) return true
+  if (!authStore.isLogged) return true;
   if (balance < parseFloat(price)) {
     Modal.confirm({
-      title: i18n.t('You do not have enough funds on your balance'),
-      content: i18n.t('Click OK to replenish the account with the missing amount'),
+      title: i18n.t("You do not have enough funds on your balance"),
+      content: i18n.t(
+        "Click OK to replenish the account with the missing amount"
+      ),
       onOk: () => {
-        modal.value.amount = +(parseFloat(price) - balance).toFixed(2)
-        modal.value.visible = true
-      }
-    })
-    return false
+        modal.value.amount = +(parseFloat(price) - balance).toFixed(2);
+        modal.value.visible = true;
+      },
+    });
+    return false;
   }
-  return true
+  return true;
 }
 
-function isRouteExist (name) {
-  if (name === 'root') name = 'services'
-  if (!authStore.billingUser.roles) return true
+function isRouteExist(name) {
+  if (name === "root") name = "services";
+  if (!authStore.billingUser.roles) return true;
 
   switch (name) {
-    case 'billing':
-      return authStore.billingUser.roles?.invoice
+    case "billing":
+      return authStore.billingUser.roles?.invoice;
 
-    case 'settings':
-      return true
+    case "settings":
+      return true;
 
     default:
       if (!(name in authStore.billingUser.roles)) {
-        return true
+        return true;
       }
-      return authStore.billingUser.roles[name]
+      return authStore.billingUser.roles[name];
   }
 }
 
-function redirectByType ({ uuid, type }) {
+function redirectByType({ uuid, type }) {
   switch (type) {
-    case 'ovh':
-    case 'ione':
-    case 'keyweb':
-      router.replace({ name: 'openCloud', params: { uuid } })
-      break
+    case "ovh":
+    case "ione":
+    case "keyweb":
+      router.replace({ name: "openCloud", params: { uuid } });
+      break;
 
     default:
-      router.replace({ name: 'service', params: { id: uuid } })
-      break
+      router.replace({ name: "service", params: { id: uuid } });
+      break;
   }
 }
 
-window.addEventListener('message', async ({ data, origin }) => {
-  if (!origin.includes('https://api.')) return
-  api.applyToken(data.token)
-  authStore.setToken(data.token)
-  authStore.load()
+window.addEventListener("message", async ({ data, origin }) => {
+  if (!origin.includes("https://api.")) return;
+  api.applyToken(data.token);
+  authStore.setToken(data.token);
+  authStore.load();
 
-  await authStore.fetchUserData(true)
-  await authStore.fetchBillingData(true)
+  await authStore.fetchUserData(true);
+  await authStore.fetchBillingData(true);
 
-  if (data.chatId) router.replace({ name: 'ticket', params: { id: data.chatId } })
-  else if (data.uuid) redirectByType(data)
-  else if (route.name.includes('login')) {
-    router.replace({ name: 'root' })
+  if (data.chatId)
+    router.replace({ name: "ticket", params: { id: data.chatId } });
+  else if (data.uuid) redirectByType(data);
+  else if (route.name.includes("login")) {
+    router.replace({ name: "root" });
   }
-})
+});
 
 router.beforeEach((to, _, next) => {
-  const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined)
+  const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined);
 
-  if (localStorage.getItem('oauth')) {
-    appStore.isButtonsVisible = false
+  if (localStorage.getItem("oauth")) {
+    appStore.isButtonsVisible = false;
   } else {
-    appStore.isButtonsVisible = true
+    appStore.isButtonsVisible = true;
   }
 
   if (mustBeLoggined && !authStore.isLogged) {
-    next({ name: 'login' })
+    next({ name: "login" });
   } else if (!isRouteExist(to.name)) {
     if (!authStore.billingUser.roles?.services) {
-      next({ name: 'settings' })
+      next({ name: "settings" });
     } else {
-      next({ name: 'root' })
+      next({ name: "root" });
     }
-  } else if (to.name === 'login' && authStore.isLogged) {
-    next({ name: 'root' })
-  } else next()
-})
+  } else if (to.name === "login" && authStore.isLogged) {
+    next({ name: "root" });
+  } else next();
+});
 
-authStore.load()
-if (authStore.isLogged) authStore.fetchUserData()
+authStore.load();
+if (authStore.isLogged) authStore.fetchUserData();
 
 onMounted(async () => {
-  const lang = route.query.lang ?? localStorage.getItem('lang')
+  const lang = route.query.lang ?? localStorage.getItem("lang");
 
-  if (lang) i18n.locale.value = lang
+  if (lang) i18n.locale.value = lang;
   if (window.opener) {
-    window.opener.postMessage('ready', '*')
-    window.opener = null
+    window.opener.postMessage("ready", "*");
+    window.opener = null;
   }
-  await router.isReady()
+  await router.isReady();
 
-  const mustUnloggined = route.meta.mustBeUnloggined && authStore.isLogged
-  const isIncluded = ['cabinet', 'settings'].includes(route.name)
-  const { firstname, id } = await authStore.fetchBillingData()
+  const mustUnloggined = route.meta.mustBeUnloggined && authStore.isLogged;
+  const isIncluded = ["cabinet", "settings"].includes(route.name);
+  const { firstname, id } = await authStore.fetchBillingData();
 
-  if (firstname && localStorage.getItem('oauth')) {
-    localStorage.removeItem('oauth')
-    appStore.isButtonsVisible = true
+  if (firstname && localStorage.getItem("oauth")) {
+    localStorage.removeItem("oauth");
+    appStore.isButtonsVisible = true;
   } else if (!id && config.whmcsSiteUrl) {
-    appStore.isButtonsVisible = false
+    appStore.isButtonsVisible = false;
   }
 
   if (route.meta?.mustBeLoggined && !authStore.isLogged) {
-    router.replace('login')
-  } else if (localStorage.getItem('oauth') && !isIncluded) {
-    router.replace('cabinet')
+    router.replace("login");
+  } else if (localStorage.getItem("oauth") && !isIncluded) {
+    router.replace("cabinet");
   } else if (mustUnloggined) {
-    router.replace('/')
+    router.replace("/");
   }
-})
 
-watch(() => appStore.notification, (value) => {
-  if (!value) return
-  setTimeout(() => {
-    const app = document.getElementById('app')
-    const elements = document.querySelectorAll('.ant-notification-notice-close')
-    const close = Array.from(elements)
-    const open = () => {
-      if (close.length > 1) close.pop()
-      else app.classList.remove('block-page')
-    }
+  currenciesStore.fetchCurrencies();
+});
 
-    close.forEach((el) => { el.addEventListener('click', open) })
-    app.classList.add('block-page')
-  }, 100)
-})
+watch(
+  () => appStore.notification,
+  (value) => {
+    if (!value) return;
+    setTimeout(() => {
+      const app = document.getElementById("app");
+      const elements = document.querySelectorAll(
+        ".ant-notification-notice-close"
+      );
+      const close = Array.from(elements);
+      const open = () => {
+        if (close.length > 1) close.pop();
+        else app.classList.remove("block-page");
+      };
 
-const isThemeButtonVisible = import.meta.env.DEV
+      close.forEach((el) => {
+        el.addEventListener("click", open);
+      });
+      app.classList.add("block-page");
+    }, 100);
+  }
+);
+
+watch(
+  () => authStore.isLogged,
+  () => {
+    currenciesStore.fetchCurrencies();
+  }
+);
+
+const isThemeButtonVisible = import.meta.env.DEV;
 const isDarkTheme = ref(
-  matchMedia('(prefers-color-scheme: dark)') && isThemeButtonVisible
-)
+  matchMedia("(prefers-color-scheme: dark)") && isThemeButtonVisible
+);
 
 const cssVars = computed(() => {
   const colors = isDarkTheme.value
     ? {
-        main: '#3d73da',
-        success: '#328d53',
-        warn: '#f9f038',
-        err: '#e81313',
-        gray: '#919191',
-        gloomy_font: 'rgba(255, 255, 255, 0.85)',
-        bright_font: '#272727',
-        bright_bg: '#424242',
-        border_color: 'rgba(255, 255, 255, 0.85)'
+        main: "#3d73da",
+        success: "#328d53",
+        warn: "#f9f038",
+        err: "#e81313",
+        gray: "#919191",
+        gloomy_font: "rgba(255, 255, 255, 0.85)",
+        bright_font: "#272727",
+        bright_bg: "#424242",
+        border_color: "rgba(255, 255, 255, 0.85)",
       }
-    : config.colors
+    : config.colors;
 
   if (!colors.gloomy_font) {
-    colors.gloomy_font = '#fff'
+    colors.gloomy_font = "#fff";
   }
   if (!colors.border_color) {
-    colors.border_color = 'rgba(0, 0, 0, 0.15)'
+    colors.border_color = "rgba(0, 0, 0, 0.15)";
   }
 
-  return Object.entries(colors).map(
-    ([key, value]) => [`--${key}`, value]
-  )
-})
+  return Object.entries(colors).map(([key, value]) => [`--${key}`, value]);
+});
 
 const token = computed(() => {
   if (isDarkTheme.value) {
     return {
       ...theme.darkAlgorithm(theme.defaultSeed),
-      colorBgContainer: '#424242',
+      colorBgContainer: "#424242",
       colorPrimary: config.colors.main,
       colorPrimaryBorder: config.colors.main,
-      colorBorder: '#272727'
-    }
+      colorBorder: "#272727",
+    };
   }
   return {
-    ...theme.defaultAlgorithm(theme.defaultSeed)
-  }
-})
+    ...theme.defaultAlgorithm(theme.defaultSeed),
+  };
+});
 
-document.title = 'Cloud'
-if (localStorage.getItem('theme')) {
-  isDarkTheme.value = localStorage.getItem('theme') === 'dark'
+document.title = "Cloud";
+if (localStorage.getItem("theme")) {
+  isDarkTheme.value = localStorage.getItem("theme") === "dark";
 }
 
-setTheme()
-watch(isDarkTheme, setTheme)
-provide('theme', isDarkTheme)
+setTheme();
+watch(isDarkTheme, setTheme);
+provide("theme", isDarkTheme);
 
-function setTheme () {
+function setTheme() {
   if (isDarkTheme.value) {
-    document.body.classList.add('dark')
-    localStorage.setItem('theme', 'dark')
+    document.body.classList.add("dark");
+    localStorage.setItem("theme", "dark");
   } else {
-    document.body.classList.remove('dark')
-    localStorage.setItem('theme', 'light')
+    document.body.classList.remove("dark");
+    localStorage.setItem("theme", "light");
   }
 
-  document.body.setAttribute('style',
-    cssVars.value.map(([k, v]) => `${k}:${v}`).join(';')
-  )
+  document.body.setAttribute(
+    "style",
+    cssVars.value.map(([k, v]) => `${k}:${v}`).join(";")
+  );
 }
 </script>
 
 <script>
-export default { name: 'App' }
+export default { name: "App" };
 </script>
 
 <style>
@@ -311,7 +342,7 @@ body {
 }
 
 .block-page::before {
-  content: '';
+  content: "";
   position: absolute;
   z-index: 1001;
   height: 100%;

@@ -128,7 +128,6 @@ import { checkPayg, createInvoice } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
@@ -169,7 +168,6 @@ export default {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL', 'billingUser']),
-    ...mapState(useCurrenciesStore, ['currencies', 'fetchCurrencies']),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       if (!(this.options.size && this.options.period)) return 'NAN'
@@ -308,8 +306,6 @@ export default {
     }).finally(() => {
       this.fetchLoading = false
     })
-
-    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
     changeProducts () {

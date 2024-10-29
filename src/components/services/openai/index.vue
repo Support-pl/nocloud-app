@@ -92,7 +92,6 @@ import api from '@/api.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
@@ -114,7 +113,6 @@ const { currency } = useCurrency()
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
-const currenciesStore = useCurrenciesStore()
 
 const spStore = useSpStore()
 const plansStore = usePlansStore()
@@ -361,10 +359,6 @@ async function fetch () {
     console.error(error)
   } finally {
     fetchLoading.value = false
-  }
-
-  if (currenciesStore.currencies.length < 1) {
-    currenciesStore.fetchCurrencies()
   }
 }
 
