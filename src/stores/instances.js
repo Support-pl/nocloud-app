@@ -120,10 +120,6 @@ export const useInstancesStore = defineStore('instances', () => {
           ...options
         })
 
-        if (currenciesStore.currencies.length < 1) {
-          await currenciesStore.fetchCurrencies()
-        }
-
         services.value = response.pool
         response.pool.forEach((service) => {
           setInstances(service)

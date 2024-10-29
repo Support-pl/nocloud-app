@@ -122,7 +122,6 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
 
 import { useNotification, useClipboard, useCurrency } from '@/hooks/utils'
@@ -144,7 +143,6 @@ const { currency } = useCurrency()
 const authStore = useAuthStore()
 const namespacesStore = useNamespasesStore()
 const instancesStore = useInstancesStore()
-const currenciesStore = useCurrenciesStore()
 const providersStore = useSpStore()
 
 const service = computed(() => {
@@ -282,7 +280,6 @@ async function fetch () {
     await Promise.all([
       instancesStore.fetch(),
       authStore.fetchBillingData(),
-      currenciesStore.fetchCurrencies(),
       providersStore.fetch(!authStore.isLogged)
     ])
   } catch (error) {

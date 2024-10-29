@@ -7,10 +7,6 @@ function useCurrency () {
   const store = useCurrenciesStore()
   const { isLogged, userdata } = storeToRefs(useAuthStore())
 
-  if (store.currencies.length < 1) {
-    store.fetchCurrencies()
-  }
-
   return {
     currency: computed(() => {
       const code = store.unloginedCurrency.title
