@@ -328,9 +328,13 @@ const currencies = computed(() => currenciesStore.list);
 watch(
   () => currenciesStore.list,
   () => {
-    userinfo.value.currency = currenciesStore.defaultCurrency.id;
+    setDefaultCurrency();
   }
 );
+
+const setDefaultCurrency = () => {
+  userinfo.value.currency = currenciesStore.defaultCurrency.id;
+};
 
 //rm after register refactor to nocloud
 const whmcsCurrencies = ref([]);
@@ -348,7 +352,10 @@ const fetchWhmcsCurrencies = async () => {
     throw error;
   }
 };
-onMounted(() => fetchWhmcsCurrencies());
+onMounted(() => {
+  fetchWhmcsCurrencies();
+  setDefaultCurrency();
+});
 
 userinfo.value.currency = currenciesStore.defaultCurrency;
 
