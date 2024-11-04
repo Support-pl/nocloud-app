@@ -43,6 +43,8 @@
     "service": "Un service",
     "services": "Prestations de service",
     "invoiceDate": "Date de commande",
+    "transactionDate": "Date de création",
+    "transactionPaymentDate":"Date d'exécution",
     "deadlineDate": "Date d'échéance",
     "dueDate": "Paiement dû",
     "onetime": "unique",

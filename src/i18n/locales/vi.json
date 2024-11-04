@@ -38,6 +38,8 @@
     "service": "Dịch vụ",
     "services": "Các dịch vụ",
     "invoiceDate": "Ngày đặt hàng",
+    "transactionDate": "Ngày tạo",
+    "transactionPaymentDate":"Ngày thực hiện",
     "deadlineDate": "Ngày đến hạn",
     "dueDate": "Thanh toán trước ngày",
     "Choice payment": "Chọn thanh toán",

@@ -46,6 +46,8 @@
     "service": "Usługa",
     "services": "Usługi",
     "invoiceDate": "Data zamówienia",
+    "transactionDate": "Data utworzenia",
+    "transactionPaymentDate":"Data wykonania",
     "deadlineDate": "Termin",
     "dueDate": "Termin płatności",
     "onetime": "jednorazowa",

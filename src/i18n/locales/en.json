@@ -57,6 +57,8 @@
     "service": "Service",
     "services": "Services",
     "invoiceDate": "Order Date",
+    "transactionDate": "Created Date",
+    "transactionPaymentDate":"Executed date",
     "dueDate": "Payment Date",
     "deadlineDate": "Due date",
     "onetime": "one-time",
