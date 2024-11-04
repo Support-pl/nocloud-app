@@ -309,7 +309,7 @@ import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
 import useCreateInstance from '@/hooks/instances/create.js'
-import { checkPayg, createInvoice } from '@/functions.js'
+import { checkPayg } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -358,7 +358,6 @@ export default {
 
     return {
       deployService,
-      createInvoice,
       checkPayg,
       openNotification,
 
@@ -646,7 +645,6 @@ export default {
           )
           const account = access.namespace ?? this.namespace
 
-          await this.createInvoice(instance, uuid, account, this.baseURL)
           localStorage.setItem('order', 'Invoice')
           this.$router.push({ path: '/billing' })
         })

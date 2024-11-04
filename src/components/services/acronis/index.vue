@@ -127,7 +127,7 @@ import passwordMeter from 'vue-simple-password-meter'
 
 import useCreateInstance from '@/hooks/instances/create.js'
 import { useCurrency, usePeriod } from '@/hooks/utils'
-import { checkPayg, createInvoice } from '@/functions.js'
+import { checkPayg } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -149,7 +149,7 @@ export default {
     const { currency } = useCurrency()
     const { deployService } = useCreateInstance()
 
-    return { currency, getPeriod, deployService, createInvoice, checkPayg }
+    return { currency, getPeriod, deployService, checkPayg }
   },
   data: () => ({
     plan: undefined,
@@ -403,7 +403,6 @@ export default {
           )
           const account = access.namespace ?? this.namespace
 
-          await this.createInvoice(instance, uuid, account, this.baseURL)
           this.$router.push({ path: '/billing' })
         })
         .catch((error) => {

@@ -236,7 +236,7 @@ import { nextTick } from 'vue'
 
 import useCreateInstance from '@/hooks/instances/create.js'
 import { useCurrency, usePeriod } from '@/hooks/utils'
-import { checkPayg, createInvoice } from '@/functions.js'
+import { checkPayg } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -261,7 +261,7 @@ export default {
     const { currency } = useCurrency()
     const { deployService } = useCreateInstance()
 
-    return { currency, getPeriod, deployService, createInvoice, checkPayg }
+    return { currency, getPeriod, deployService, checkPayg }
   },
   data: () => ({
     plan: null,
@@ -821,7 +821,6 @@ export default {
           )
           const account = access.namespace ?? this.namespace
 
-          await this.createInvoice(instance, uuid, account, this.baseURL)
           localStorage.setItem('order', 'Invoice')
           this.$router.push({ path: '/billing' })
         })
