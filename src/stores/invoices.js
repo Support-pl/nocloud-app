@@ -53,6 +53,31 @@ export const useInvoicesStore = defineStore("invoices", () => {
     });
   });
 
+  async function fetchNcInvoices(params) {
+    try {
+      const response = await invoicesApi.getInvoices(
+        new GetInvoicesRequest(params)
+      );
+
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  async function fetchWhmcsInvoices(params) {
+    try {
+      const response = await api.get(auth.baseURL, {
+        params: { run: "get_invoices" },
+      });
+
+      return response.invoices.invoice;
+    } catch (error) {
+      return [];
+    }
+  }
+
   async function fetchInvoices(silent, page = 1, limit = 10) {
     try {
       const result = [];
@@ -60,22 +85,20 @@ export const useInvoicesStore = defineStore("invoices", () => {
       if (!silent) isLoading.value = true;
 
       const [response, whmcsInvoices] = await Promise.all([
-        this.fetchNcInvoices({
+        fetchNcInvoices({
           field: "created",
           sort: "DESC",
           page,
           limit,
         }),
-        api.get(auth.baseURL, {
-          params: { run: "get_invoices" },
-        }),
+        fetchWhmcsInvoices(),
       ]);
 
       response.toJson().pool.forEach((el) => {
         result.push(toInvoice(el));
       });
 
-      whmcsInvoices.invoices.invoice.forEach((el) => {
+      whmcsInvoices.forEach((el) => {
         if (result.find((invoice) => invoice?.payment_invoice_id == el.id))
           return;
 
@@ -105,19 +128,6 @@ export const useInvoicesStore = defineStore("invoices", () => {
     filter,
     getInvoices,
     fetch,
-
-    async fetchNcInvoices(params) {
-      try {
-        const response = await invoicesApi.getInvoices(
-          new GetInvoicesRequest(params)
-        );
-
-        return response;
-      } catch (error) {
-        console.error(error);
-        throw error;
-      }
-    },
 
     async createTopUpBalanceInvoice(sum = 0) {
       try {
