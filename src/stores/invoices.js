@@ -12,7 +12,7 @@ import {
 
 import { useAppStore } from "./app.js";
 
-import { toInvoice } from "@/functions.js";
+import { debounce, toInvoice } from "@/functions.js";
 import api from "@/api.js";
 import { useAuthStore } from "./auth.js";
 
@@ -53,55 +53,58 @@ export const useInvoicesStore = defineStore("invoices", () => {
     });
   });
 
+  async function fetchInvoices(silent, page = 1, limit = 10) {
+    try {
+      const result = [];
+
+      if (!silent) isLoading.value = true;
+
+      const [response, whmcsInvoices] = await Promise.all([
+        this.fetchNcInvoices({
+          field: "created",
+          sort: "DESC",
+          page,
+          limit,
+        }),
+        api.get(auth.baseURL, {
+          params: { run: "get_invoices" },
+        }),
+      ]);
+
+      response.toJson().pool.forEach((el) => {
+        result.push(toInvoice(el));
+      });
+
+      whmcsInvoices.invoices.invoice.forEach((el) => {
+        if (result.find((invoice) => invoice?.payment_invoice_id == el.id))
+          return;
+
+        result.push(toInvoice(el, "whmcs"));
+      });
+
+      result.sort(
+        (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+      );
+      invoices.value = result;
+
+      if (!response[0]?.ERROR) return result;
+      else return response[0].ERROR;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  const fetch = debounce(fetchInvoices, 1000);
+
   return {
     invoices,
     isLoading,
     filter,
     getInvoices,
-
-    async fetch(silent, page = 1, limit = 10) {
-      try {
-        const result = [];
-
-        if (!silent) isLoading.value = true;
-
-        const [response, whmcsInvoices] = await Promise.all([
-          this.fetchNcInvoices({
-            field: "created",
-            sort: "DESC",
-            page,
-            limit,
-          }),
-          api.get(auth.baseURL, {
-            params: { run: "get_invoices" },
-          }),
-        ]);
-
-        response.toJson().pool.forEach((el) => {
-          result.push(toInvoice(el));
-        });
-
-        whmcsInvoices.invoices.invoice.forEach((el) => {
-          if (result.find((invoice) => invoice?.payment_invoice_id == el.id))
-            return;
-
-          result.push(toInvoice(el, "whmcs"));
-        });
-
-        result.sort(
-          (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
-        );
-        invoices.value = result;
-
-        if (!response[0]?.ERROR) return result;
-        else return response[0].ERROR;
-      } catch (error) {
-        console.error(error);
-        throw error;
-      } finally {
-        isLoading.value = false;
-      }
-    },
+    fetch,
 
     async fetchNcInvoices(params) {
       try {
