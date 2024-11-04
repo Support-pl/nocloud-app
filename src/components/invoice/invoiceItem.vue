@@ -3,7 +3,7 @@
     class="invoice"
     @click="
       isLoading = true;
-      openInvoiceDocument(invoice.uuid);
+      openInvoiceDocument(invoice);
     "
   >
     <div class="invoice__header flex-between">
@@ -102,6 +102,7 @@ import { useNotification } from "@/hooks/utils";
 
 import config from "@/appconfig.js";
 import { getInvoiceNumber } from "@/functions";
+import api from "@/api";
 
 const props = defineProps({
   invoice: { type: Object, required: true },
@@ -164,7 +165,7 @@ const total = computed(() => {
 async function paidInvoice() {
   isLoading.value = true;
   try {
-    await openInvoiceDocument(props.invoice.uuid);
+    await openInvoiceDocument(props.invoice);
 
     openNotification("success", { message: i18n.t("Done") });
   } catch (error) {
@@ -177,8 +178,22 @@ async function paidInvoice() {
   }
 }
 
-async function openInvoiceDocument(uuid) {
-  const paymentLink = await invoicesStore.getPaymentLink(uuid);
+async function openInvoiceDocument(invoice) {
+  let paymentLink;
+
+  if (!invoice.uuid) {
+    //whmcs
+    const response = await api.get(authStore.baseURL, {
+      params: {
+        run: "download_invoice",
+        account: authStore.billingUser.userid,
+        invoiceid: getInvoiceNumber(invoice),
+      },
+    });
+    paymentLink = response[0];
+  } else {
+    paymentLink = await invoicesStore.getPaymentLink(invoice.uuid);
+  }
 
   window.location.href = paymentLink;
 }
