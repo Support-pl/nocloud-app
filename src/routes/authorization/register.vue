@@ -345,7 +345,14 @@ const fetchWhmcsCurrencies = async () => {
       params: { run: "get_currencies" },
     });
 
-    whmcsCurrencies.value = response.currency;
+    if (Array.isArray(response.currency)) {
+      whmcsCurrencies.value = response.currency;
+    } else {
+      whmcsCurrencies.value = Object.keys(response.currency).map(
+        (key) => response.currency[key]
+      );
+    }
+
     return response;
   } catch (error) {
     console.error(error);
