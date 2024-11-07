@@ -49,7 +49,8 @@
         <template
           v-if="
             invoice.total <= authStore.userdata.balance &&
-            ActionType[invoice.type] !== ActionType.BALANCE
+            ActionType[invoice.type] !== ActionType.BALANCE &&
+            invoice.uuid != null
           "
         >
           <a-popconfirm
