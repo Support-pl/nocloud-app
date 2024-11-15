@@ -30,17 +30,6 @@
         @change="(value) => emits('update:plan', value)"
       />
     </a-col>
-
-    <a-col v-if="services.length > 1" span="24">
-      <a-select
-        placeholder="Services"
-        style="width: 100%"
-        :value="service"
-        :options="services"
-        :field-names="fieldNames"
-        @change="(value) => emits('update:service', value)"
-      />
-    </a-col>
   </a-row>
 </template>
 
