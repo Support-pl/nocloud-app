@@ -8,6 +8,7 @@ import {
   CreateTopUpBalanceInvoiceRequest,
   PayRequest,
   PayWithBalanceRequest,
+  CreateRenewalInvoiceRequest,
 } from "nocloud-proto/proto/es/billing/billing_pb";
 
 import { useAppStore } from "./app.js";
@@ -164,6 +165,21 @@ export const useInvoicesStore = defineStore("invoices", () => {
         const response = await invoicesApi.payWithBalance(
           new PayWithBalanceRequest({
             invoiceUuid,
+          })
+        );
+
+        return response;
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    },
+
+    async createRenewInvoice(instance) {
+      try {
+        const response = await invoicesApi.createRenewalInvoice(
+          new CreateRenewalInvoiceRequest({
+            instance: instance.uuid,
           })
         );
 

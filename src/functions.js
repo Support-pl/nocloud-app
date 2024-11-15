@@ -288,28 +288,6 @@ function setIoneInst(inst, result) {
     ?.toFixed(2);
 }
 
-export async function createRenewInvoice(instance, service, account, baseURL) {
-  // try {
-  //   // const response = await api.get(baseURL, {
-  //   //   params: {
-  //   //     run: 'invoice_instans_renew',
-  //   //     uuid_instans: instance.uuid,
-  //   //     uuid_service: service,
-  //   //     uuid_account: account
-  //   //   }
-  //   // })
-  //   // const url = response.redirect_url ?? response
-  //   // setTimeout(() => { window.open(url, '_blank') }, 300)
-  //   return url
-  // } catch (error) {
-  //   const url = error.response?.data.redirect_url ?? error.response?.data[0] ?? error[0]
-  //   if (url.startsWith && url.startsWith('http')) {
-  //     window.open(url, '_blank')
-  //   }
-  //   return url
-  // }
-}
-
 export function checkPayg(instance) {
   const { config } = instance ?? {};
   const { type, kind } = instance.billingPlan ?? instance.billing_plan ?? {};
