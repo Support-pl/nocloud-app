@@ -78,7 +78,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
     }
   }
 
-  async function fetchInvoices(silent, page = 1, limit = 10) {
+  async function fetchInvoices(silent, page = 1, limit = 1000) {
     try {
       const result = [];
 
