@@ -197,7 +197,7 @@ export default {
         this.products.find(({ title, period }) =>
           title === this.options.size && +period === this.options.period
         )
-      );
+      ))
 
       delete product.resources.model;
       if (`${product.resources.ssd}`.includes("Gb")) return product;
