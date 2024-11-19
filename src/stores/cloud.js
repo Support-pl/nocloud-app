@@ -10,7 +10,7 @@ import { useNamespasesStore } from './namespaces.js'
 import { useInstancesStore } from './instances.js'
 
 import useCreateInstance from '@/hooks/instances/create.js'
-import { checkPayg, createInvoice } from '@/functions.js'
+import { checkPayg, } from '@/functions.js'
 
 export const useCloudStore = defineStore('cloud', () => {
   const router = useRouter()
@@ -142,7 +142,6 @@ export const useCloudStore = defineStore('cloud', () => {
       )
       const account = access.namespace ?? namespaceId.value
 
-      await createInvoice(instance, serviceId.value, account, authStore.baseURL)
       router.push({ path: '/billing' })
     } else {
       router.push({ path: '/services' })
@@ -169,7 +168,8 @@ export const useCloudStore = defineStore('cloud', () => {
         ips_private: options.network.private.count,
         ips_public: options.network.public.count
       },
-      billing_plan: { uuid: planId.value }
+      billing_plan: { uuid: planId.value },
+      addons: options.addons
     }
 
     instance.config.auto_renew = checkPayg(instance)

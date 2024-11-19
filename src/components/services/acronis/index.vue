@@ -125,13 +125,12 @@
 import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
-import { usePeriod } from '@/hooks/utils'
 import useCreateInstance from '@/hooks/instances/create.js'
-import { checkPayg, createInvoice } from '@/functions.js'
+import { useCurrency, usePeriod } from '@/hooks/utils'
+import { checkPayg } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
@@ -147,9 +146,10 @@ export default {
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()
+    const { currency } = useCurrency()
     const { deployService } = useCreateInstance()
 
-    return { getPeriod, deployService, createInvoice, checkPayg }
+    return { currency, getPeriod, deployService, checkPayg }
   },
   data: () => ({
     plan: undefined,
@@ -173,12 +173,6 @@ export default {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, ['isLogged', 'userdata', 'billingUser', 'fetchBillingData', 'baseURL']),
-    ...mapState(useCurrenciesStore, [
-      'currencies',
-      'defaultCurrency',
-      'unloginedCurrency',
-      'fetchCurrencies'
-    ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const title = []
@@ -200,19 +194,6 @@ export default {
       price = +(price * this.currency.rate).toFixed(2)
 
       return { title: title.join(', '), price, base, adv }
-    },
-    currency () {
-      const code = this.unloginedCurrency
-      const { rate } = this.currencies.find((el) =>
-        el.to === code && el.from === this.defaultCurrency
-      ) ?? {}
-
-      const { rate: reverseRate } = this.currencies.find((el) =>
-        el.from === code && el.to === this.defaultCurrency
-      ) ?? { rate: 1 }
-
-      if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
     services () {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')
@@ -306,8 +287,6 @@ export default {
       this.$notification.error({ message: this.$t(message) })
       console.error(err)
     })
-
-    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
     changeProducts (plan) {
@@ -424,7 +403,6 @@ export default {
           )
           const account = access.namespace ?? this.namespace
 
-          await this.createInvoice(instance, uuid, account, this.baseURL)
           this.$router.push({ path: '/billing' })
         })
         .catch((error) => {

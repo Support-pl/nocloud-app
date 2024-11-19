@@ -71,18 +71,6 @@
 
             <a-form-item
               v-if="isPasswordVisible"
-              :label="`${capitalize('currency')}:`"
-              name="currency"
-            >
-              <a-select v-model:value="form.currency">
-                <a-select-option v-for="currency in currenciesStore.whmcsCurrencies" :key="currency.id">
-                  {{ currency.code }}
-                </a-select-option>
-              </a-select>
-            </a-form-item>
-
-            <a-form-item
-              v-if="isPasswordVisible"
               :label="`${capitalize($t('clientinfo.password'))}:`"
               name="password"
             >
@@ -123,7 +111,6 @@ import config from '@/appconfig.js'
 import api from '@/api.js'
 
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 import countries from '@/assets/countries.json'
 
 import empty from '@/components/ui/empty.vue'
@@ -131,7 +118,6 @@ import loading from '@/components/ui/loading.vue'
 
 const i18n = useI18n()
 const authStore = useAuthStore()
-const currenciesStore = useCurrenciesStore()
 
 const formRef = ref(null)
 const form = ref({})

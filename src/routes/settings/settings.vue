@@ -246,14 +246,14 @@
 </template>
 
 <script>
-import { defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, ref, reactive } from 'vue'
 import { mapStores } from 'pinia'
 import config from '@/appconfig.js'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
+import { useNotification } from '@/hooks/utils'
 
-import notification from '@/mixins/notification.js'
 import balance from '@/components/ui/balance.vue'
 import addFunds from '@/components/ui/addFunds.vue'
 import addSSH from '@/components/ui/addSSH.vue'
@@ -316,22 +316,25 @@ export default {
     accountsIcon,
     accountAddIcon
   },
-  mixins: [notification],
-  data () {
+  setup () {
+    const { openNotification } = useNotification()
+
     return {
-      isAuthLoading: false,
-      confirmLoading: false,
-      user_btn: false,
-      isAccountCreateVisible: false,
-      currentAccount: null,
-      modal: {
+      openNotification,
+
+      isAuthLoading: ref(false),
+      confirmLoading: ref(false),
+      user_btn: ref(false),
+      isAccountCreateVisible: ref(false),
+      currentAccount: ref(null),
+      modal: reactive({
         login: false,
         language: false,
         addFunds: false,
         accounts: false,
         SSH: false,
         QR: false
-      }
+      })
     }
   },
   computed: {
@@ -419,7 +422,7 @@ export default {
     //     })
     //     .catch((err) => {
     //       console.error(err);
-    //       this.openNotificationWithIcon('error', {
+    //       this.openNotification('error', {
     //         message: this.$t(err.response?.data?.message)
     //       });
     //     })
@@ -486,18 +489,18 @@ export default {
       this.authStore.addSSH(dataSSH)
         .then((result) => {
           if (result) {
-            this.openNotificationWithIcon('success', {
+            this.openNotification('success', {
               message: this.$t('delete SSH key successfully')
             })
             this.authStore.fetchUserData()
           } else {
-            this.openNotificationWithIcon('error', {
+            this.openNotification('error', {
               message: this.$t('error delete SSH key')
             })
           }
         })
         .catch((err) => {
-          this.openNotificationWithIcon('error', {
+          this.openNotification('error', {
             message: this.$t('error delete SSH key')
           })
           console.error(err)

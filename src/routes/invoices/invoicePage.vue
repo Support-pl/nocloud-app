@@ -17,9 +17,9 @@
                 />
                 {{
                   $t("singleInvoice") +
-                    " " +
-                    "#" +
-                    parseInt($route.params.uuid, 10)
+                  " " +
+                  "#" +
+                  parseInt($route.params.uuid, 10)
                 }}
               </div>
             </div>
@@ -83,7 +83,8 @@
                           <tr>
                             <td
                               v-if="
-                                invoice.items.item[0].description === 'Add funds'
+                                invoice.items.item[0].description ===
+                                'Add funds'
                               "
                             >
                               {{ $t("Add funds") }}
@@ -116,7 +117,9 @@
                       class="table__show-full"
                       @click="showFullTable = true"
                     >
-                      {{ $t("Show full list") }} ({{ invoice.items.item.length }})
+                      {{ $t("Show full list") }} ({{
+                        invoice.items.item.length
+                      }})
                     </div>
                   </div>
                 </div>
@@ -130,7 +133,11 @@
                     </div>
 
                     <!-- <div class="info__button info__button--pay"> -->
-                    <a-button class="info__button" :loading="confirmLoading" @click="showPayModal">
+                    <a-button
+                      class="info__button"
+                      :loading="confirmLoading"
+                      @click="showPayModal"
+                    >
                       {{ $t("Pay") }}
                     </a-button>
                     <!-- </div> -->
@@ -141,118 +148,114 @@
           </div>
         </div>
       </div>
-      <loading
-        v-else key="loading" color="#fff" :style="{'position': 'absolute', 'height':
-          '100%', 'width': '100%'}" duration:
-      />
+      <loading v-else key="loading" color="#fff" :style="{'position':
+      'absolute', 'height': '100%', 'width': '100%'}" duration: />
     </transition>
   </div>
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
-import { Modal } from 'ant-design-vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import {
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue";
+import { Modal } from "ant-design-vue";
+import { useRouter, useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 
-import api from '@/api.js'
-import config from '@/appconfig.js'
+import config from "@/appconfig.js";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useInvoicesStore } from '@/stores/invoices.js'
+import { useInvoicesStore } from "@/stores/invoices.js";
 
-import loading from '@/components/ui/loading.vue'
+import loading from "@/components/ui/loading.vue";
 
-const router = useRouter()
-const route = useRoute()
-const i18n = useI18n()
+const router = useRouter();
+const route = useRoute();
+const i18n = useI18n();
 
-const authStore = useAuthStore()
-const invoicesStore = useInvoicesStore()
+const invoicesStore = useInvoicesStore();
 
-const leftIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LeftOutlined')
-)
-const clockCircleIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/ClockCircleOutlined')
-)
+const leftIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LeftOutlined")
+);
+const clockCircleIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ClockCircleOutlined")
+);
 
-const showFullTable = ref(false)
-const confirmLoading = ref(false)
+const showFullTable = ref(false);
+const confirmLoading = ref(false);
 
 const invoice = computed(() => {
-  const { uuid } = route.params
+  const { uuid } = route.params;
 
-  return invoicesStore.getInvoices.find(({ id }) => id === +uuid)
-})
+  return invoicesStore.getInvoices.find(({ id }) => id === +uuid);
+});
 
 const statusColor = computed(() => {
-  return invoice.value?.status.toLowerCase() === 'paid'
+  return invoice.value?.status.toLowerCase() === "paid"
     ? config.colors.success
-    : config.colors.err
-})
+    : config.colors.err;
+});
 
 const total = computed(() =>
   invoice.value.items.item.reduce((a, b) => a + +b.amount, 0)
-)
+);
 
 onMounted(() => {
   setTimeout(() => {
-    const { uuid } = route.params
+    const { uuid } = route.params;
 
-    sessionStorage.setItem('invoice', uuid)
-  })
+    sessionStorage.setItem("invoice", uuid);
+  });
 
   invoicesStore.fetch().catch((err) => {
-    router.push('/billing')
-    console.error(err)
-  })
-})
+    router.push("/billing");
+    console.error(err);
+  });
+});
 
 onUnmounted(() => {
-  if (!route.name.includes('billing')) {
-    sessionStorage.removeItem('invoice')
+  if (!route.name.includes("billing")) {
+    sessionStorage.removeItem("invoice");
   }
-})
+});
 
-function goBack () {
-  router.push('/billing')
+function goBack() {
+  router.push("/billing");
 }
 
-async function showPayModal () {
+async function showPayModal() {
   try {
-    confirmLoading.value = true
-    const response = await api.get(authStore.baseURL, {
-      params: {
-        run: 'get_pay_token',
-        invoice_id: invoice.value.id
-      }
-    })
+    confirmLoading.value = true;
+    const paymentLink = await invoicesStore.getPaymentLink(invoice.value.uuid);
 
-    window.location.href = response
-    // window.location.href = invoice.value.paytoken.checkout.redirect_url
+    window.location.href = paymentLink;
   } finally {
-    confirmLoading.value = false
+    confirmLoading.value = false;
   }
 }
 
-function showConfirm () {
+function showConfirm() {
   Modal.confirm({
-    title: i18n.t('Do you want to defer payment?'),
+    title: i18n.t("Do you want to defer payment?"),
     maskClosable: true,
-    content: i18n.t('The payment can be postponed only once. The payment is postponed for 5 days.'),
-    okText: i18n.t('Yes'),
-    cancelText: i18n.t('Cancel'),
-    onOk () {},
-    onCancel () {},
-    class: 'test'
-  })
+    content: i18n.t(
+      "The payment can be postponed only once. The payment is postponed for 5 days."
+    ),
+    okText: i18n.t("Yes"),
+    cancelText: i18n.t("Cancel"),
+    onOk() {},
+    onCancel() {},
+    class: "test",
+  });
 }
-
 </script>
 
 <script>
-export default { name: 'OpenInvoice' }
+export default { name: "OpenInvoice" };
 </script>
 
 <style>

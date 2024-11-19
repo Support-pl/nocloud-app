@@ -16,13 +16,13 @@
       <!-- addons -->
       <transition-group v-if="activeKey !== 'location'" name="networkApear">
         <a-row
-          v-for="(addon, key) in addons"
-          :key="addon"
+          v-for="(price, key) in addons"
+          :key="key"
           justify="space-between"
           style="font-size: 1.1rem"
         >
-          <a-col> {{ capitalize($t(key)) }}{{ getAddonsValue(key) }}: </a-col>
-          <a-col> {{ +(addon * currency.rate).toFixed(2) }} {{ currency.code }} </a-col>
+          <a-col> {{ capitalize(getAddonsTitle(key)) }}{{ getAddonsValue(key) }}: </a-col>
+          <a-col> {{ +(price * currency.rate).toFixed(2) }} {{ currency.code }} </a-col>
         </a-row>
       </transition-group>
 
@@ -125,13 +125,14 @@ import { useI18n } from 'vue-i18n'
 import { EditorContainer } from 'nocloud-ui'
 
 import { useCloudStore } from '@/stores/cloud.js'
-import { useCurrency } from '@/hooks/utils'
 import useCloudPrices from '@/hooks/cloud/prices.js'
+import { useAddonsStore } from '@/stores/addons.js'
+import { useCurrency } from '@/hooks/utils'
+import { checkPayg } from '@/functions.js'
 
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
 import cloudResources from '@/components/cloud/create/resources.vue'
 import cloudCreateButton from '@/components/cloud/create/button.vue'
-import { checkPayg } from '@/functions'
 
 const props = defineProps({
   productSize: { type: String, required: true },
@@ -145,6 +146,7 @@ const emits = defineEmits(['update:tarification'])
 const i18n = useI18n()
 const { currency } = useCurrency()
 const cloudStore = useCloudStore()
+const addonsStore = useAddonsStore()
 
 const [product] = inject('useProduct', () => [])()
 const [options] = inject('useOptions', () => [])()
@@ -191,6 +193,14 @@ function getAddonsValue (key) {
   const value = parseFloat(addon?.split('-')?.at(-1))
 
   return isFinite(value) ? ` (${value} Gb)` : ''
+}
+
+function getAddonsTitle (key) {
+  if (cloudStore.plan.type === 'ione') {
+    return addonsStore.addons.find(({ uuid }) => uuid === key)?.title ?? key
+  } else {
+    return i18n.t(key)
+  }
 }
 
 async function createOrder () {

@@ -221,11 +221,10 @@
 import { defineAsyncComponent, h } from 'vue'
 import { mapState, mapActions } from 'pinia'
 import * as icons from '@ant-design/icons-vue'
-import notification from '@/mixins/notification.js'
+import { useNotification } from '@/hooks/utils'
 import config from '@/appconfig.js'
 
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useSpStore } from '@/stores/sp.js'
 
 import { useChatsStore } from '@/stores/chats.js'
@@ -247,7 +246,11 @@ const moreIcon = defineAsyncComponent(
 export default {
   name: 'OpenCloud',
   components: { loading, imagesList, networkControl, accessManager, leftIcon, moreIcon },
-  mixins: [notification],
+  setup () {
+    const { openNotification } = useNotification()
+
+    return { openNotification }
+  },
   data: () => ({
     icons,
     isDeleteLoading: false,
@@ -284,7 +287,6 @@ export default {
     ...mapState(useInstancesStore, ['isActionLoading', 'services', 'getInstances', 'isLoading', 'socket']),
     ...mapState(useAuthStore, ['isLogged', 'baseURL']),
     ...mapState(useChatsStore, ['getDefaults']),
-    ...mapState(useCurrenciesStore, ['currencies']),
     ...mapState(useProductsStore, { products: 'products', fetchProducts: 'fetch', isInfoLoading: 'isLoading' }),
     ...mapState(useSpStore, { sp: 'servicesProviders', fetchProviders: 'fetch' }),
     template () {
@@ -495,8 +497,6 @@ export default {
       this.fetchProviders()
       this.fetch()
     }
-
-    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   beforeUnmount () {
     if (!this.socket) return
@@ -505,7 +505,6 @@ export default {
   methods: {
     ...mapActions(useChatsStore, ['createChat', 'sendMessage', 'fetchDefaults']),
     ...mapActions(useAuthStore, ['fetchBillingData']),
-    ...mapActions(useCurrenciesStore, ['fetchCurrencies']),
     ...mapActions(useInstancesStore, [
       'fetch', 'subscribeWebSocket',
       'updateService', 'deleteInstance', 'invokeAction'
@@ -587,7 +586,7 @@ export default {
           } catch (error) {
             const message = error.response?.data?.message ?? error.message ?? error
 
-            this.openNotificationWithIcon('error', { message: this.$t(message) })
+            this.openNotification('error', { message: this.$t(message) })
             console.error(error)
           }
         }
@@ -603,12 +602,12 @@ export default {
         this.updateService(this.itemService)
           .then((result) => {
             if (result) {
-              this.openNotificationWithIcon('success', {
+              this.openNotification('success', {
                 message: this.$t('VM resized successfully')
               })
               this.closeModal('expand')
             } else {
-              this.openNotificationWithIcon('error', {
+              this.openNotification('error', {
                 message: this.$t("Can't VM resize to same size")
               })
             }
@@ -616,7 +615,7 @@ export default {
           .catch((err) => {
             const message = err.response?.data?.message ?? err.message ?? err
 
-            this.openNotificationWithIcon('error', {
+            this.openNotification('error', {
               message: this.$t(`Can't VM resize to same size: [error] - ${message}`)
             })
             console.error(err)
@@ -654,7 +653,7 @@ export default {
               this.closeModal('rename')
               this.closeModal('menu')
             } else {
-              this.openNotificationWithIcon('error', {
+              this.openNotification('error', {
                 message: this.$t("Can't VM name changes")
               })
             }
@@ -662,7 +661,7 @@ export default {
           .catch((err) => {
             const message = err.response?.data?.message ?? err.message ?? err
 
-            this.openNotificationWithIcon('error', {
+            this.openNotification('error', {
               message: this.$t(message)
             })
           })
@@ -693,13 +692,13 @@ export default {
               params: (type === 'ovh vps') ? { imageId: this.reinstallOS } : {}
             })
 
-            this.openNotificationWithIcon('success', {
+            this.openNotification('success', {
               message: `${this.$t('Done')}!`
             })
           } catch (error) {
             const message = error.response?.data?.message ?? error.message ?? error
 
-            this.openNotificationWithIcon('error', {
+            this.openNotification('error', {
               message: this.$t(message)
             })
           } finally {
@@ -728,13 +727,13 @@ export default {
           this.deleteInstance(this.VM.uuid)
             .then((result) => {
               if (result) {
-                this.openNotificationWithIcon('success', {
+                this.openNotification('success', {
                   message: this.$t('VM deleted successfully')
                 })
 
                 this.$router.push({ path: '/services' })
               } else {
-                this.openNotificationWithIcon('error', {
+                this.openNotification('error', {
                   message: this.$t('Failed to delete VM')
                 })
               }
@@ -742,7 +741,7 @@ export default {
             .catch((err) => {
               const message = err.response?.data?.message ?? err.message ?? err
 
-              this.openNotificationWithIcon('error', {
+              this.openNotification('error', {
                 message: this.$t(message)
               })
             })
@@ -776,7 +775,7 @@ export default {
       } catch (error) {
         const message = error.response?.data?.message ?? error.message ?? error
 
-        this.openNotificationWithIcon('error', {
+        this.openNotification('error', {
           message: this.$t(message)
         })
       } finally {
@@ -795,7 +794,7 @@ export default {
           const message = err.response?.data?.message ?? err.message ?? err
 
           console.error(err)
-          this.openNotificationWithIcon('error', {
+          this.openNotification('error', {
             message: this.$t(message)
           })
         })
@@ -806,7 +805,7 @@ export default {
         navigator.clipboard
           .writeText(target.innerText)
           .then(() => {
-            this.openNotificationWithIcon('success', {
+            this.openNotification('success', {
               message: this.$t('Text copied')
             })
           })
@@ -814,7 +813,7 @@ export default {
             console.error(res)
           })
       } else {
-        this.openNotificationWithIcon('error', {
+        this.openNotification('error', {
           message: this.$t('Clipboard is not supported')
         })
       }

@@ -3,7 +3,6 @@ import { useRoute } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth.js'
 import { useCloudStore } from '@/stores/cloud.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 
 import { useInstancesStore } from '@/stores/instances.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
@@ -14,7 +13,6 @@ function useCloudOptions (activeKey, tarification) {
 
   const authStore = useAuthStore()
   const cloudStore = useCloudStore()
-  const currenciesStore = useCurrenciesStore()
 
   const instancesStore = useInstancesStore()
   const namespasesStore = useNamespasesStore()
@@ -31,7 +29,8 @@ function useCloudOptions (activeKey, tarification) {
       public: { status: true, count: 1 },
       private: { status: false, count: 0 }
     },
-    config: { addons: [], configuration: {} }
+    config: { addons: [], configuration: {} },
+    addons: []
   })
 
   watch(() => options.os.name, () => {
@@ -124,10 +123,6 @@ function useCloudOptions (activeKey, tarification) {
       if (namespaces.pool.length === 1) {
         cloudStore.namespaceId = namespaces.pool[0].uuid
       }
-    }
-
-    if (currenciesStore.currencies.length < 1) {
-      currenciesStore.fetchCurrencies()
     }
   }
 

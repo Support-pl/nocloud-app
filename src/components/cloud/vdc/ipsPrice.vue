@@ -52,7 +52,7 @@ const price = computed(() => {
       ({ key }) => key.includes('ips')
     )
 
-    resources.forEach(({ price, period }) => {
+    resources.forEach(({ price = 0, period = 2592000 }) => {
       const k = period / 2592000
 
       result.push(+(price / k).toFixed(2))

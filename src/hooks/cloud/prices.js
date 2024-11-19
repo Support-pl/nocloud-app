@@ -187,6 +187,10 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
     const resourcesPrice = (plan.value.type === 'ione')
       ? productFullPriceCustom.value * 24 * 30 * currency.value.rate
       : 0
+    const addonsPrice = Object.values(priceOVH.addons).reduce(
+      (result, value) => result + value, 0
+    )
+
     let price = 0
     let period = ''
 
@@ -227,13 +231,13 @@ function useCloudPrices (currentProduct, tarification, activeKey, options, price
       case 'hour':
         return price
       case 'day':
-        return (price + resourcesPrice) / 30
+        return (price + resourcesPrice) / 30 + addonsPrice
       case 'month':
-        return price + resourcesPrice
+        return price + resourcesPrice + addonsPrice
       case 'year':
-        return ((price + resourcesPrice) / 30) * 365
+        return ((price + resourcesPrice) / 30) * 365 + addonsPrice
       case '2 years':
-        return ((price + resourcesPrice) / 30) * 365 * 2
+        return ((price + resourcesPrice) / 30) * 365 * 2 + addonsPrice
       default:
         console.error('[VDC Calculator]: Wrong period in calc.', period)
         return 0

@@ -82,7 +82,8 @@ const plusIcon = defineAsyncComponent(
 
 const props = defineProps({
   mode: { type: String, required: true },
-  productSize: { type: String, required: true }
+  productSize: { type: String, required: true },
+  isFlavorsLoading: { type: Boolean, default: false }
 })
 
 watch(() => props.productSize, setImages)

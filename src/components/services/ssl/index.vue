@@ -162,18 +162,17 @@ import { mapStores, mapState } from 'pinia'
 import passwordMeter from 'vue-simple-password-meter'
 
 import useCreateInstance from '@/hooks/instances/create.js'
-import { checkPayg, createInvoice } from '@/functions.js'
+import { useCurrency, useNotification } from '@/hooks/utils'
+import { checkPayg,  } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
 import { useNamespasesStore } from '@/stores/namespaces.js'
 import { useInstancesStore } from '@/stores/instances.js'
 
-import notification from '@/mixins/notification.js'
 import selectsToCreate from '@/components/ui/selectsToCreate.vue'
 import promoBlock from '@/components/ui/promo.vue'
 
@@ -184,16 +183,18 @@ const rightIcon = defineAsyncComponent(
 export default {
   name: 'SslComponent',
   components: { passwordMeter, selectsToCreate, promoBlock, rightIcon },
-  mixins: [notification],
   inject: ['checkBalance'],
   setup () {
+    const { currency } = useCurrency()
+    const { openNotification } = useNotification()
     const { deployService } = useCreateInstance()
 
     return {
       deployService,
-      createInvoice,
       checkPayg,
+      openNotification,
 
+      currency,
       products: {},
       cachedPlans: {},
       currentStep: 0,
@@ -223,12 +224,6 @@ export default {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL']),
-    ...mapState(useCurrenciesStore, [
-      'currencies',
-      'defaultCurrency',
-      'unloginedCurrency',
-      'fetchCurrencies'
-    ]),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       const product = this.products[this.options.provider]
@@ -247,19 +242,6 @@ export default {
         default:
           return null
       }
-    },
-    currency () {
-      const code = this.unloginedCurrency
-      const { rate } = this.currencies.find((el) =>
-        el.to === this.defaultCurrency && el.from === code
-      ) ?? {}
-
-      const { rate: reverseRate } = this.currencies.find((el) =>
-        el.from === this.defaultCurrency && el.to === code
-      ) ?? { rate: 1 }
-
-      if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
     periods () {
       return Object.keys(this.getProducts.prices || {})
@@ -313,7 +295,7 @@ export default {
       } catch (error) {
         const message = error.response?.data?.message ?? error.message ?? error
 
-        this.$notification.error({ message })
+        this.openNotification('error', { message })
       }
     },
     'options.provider' (value) {
@@ -345,7 +327,7 @@ export default {
           const message = err.response?.data?.message ?? err.message ?? err
 
           if (err.response?.data?.code === 16) return
-          this.openNotificationWithIcon('error', {
+          this.openNotification('error', {
             message: this.$t(message)
           })
           console.error(err)
@@ -356,14 +338,12 @@ export default {
           const message = err.response?.data?.message ?? err.message ?? err
 
           if (err.response?.data?.code === 16) return
-          this.openNotificationWithIcon('error', {
+          this.openNotification('error', {
             message: this.$t(message)
           })
           console.error(err)
         })
     }
-
-    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
     fetch () {
@@ -488,7 +468,6 @@ export default {
           )
           const account = access.namespace ?? this.namespace
 
-          await this.createInvoice(instance, uuid, account, this.baseURL)
           localStorage.setItem('order', 'Invoice')
           this.$router.push({ path: '/billing' })
         })
@@ -505,11 +484,11 @@ export default {
           const message = matched.at(-1).split('" ').at(0)
 
           if (message) {
-            this.$notification.error({ message })
+            this.openNotification('error', { message })
           } else {
             const message = error.response?.data?.message ?? error.message ?? error
 
-            this.$notification.error({ message })
+            this.openNotification('error', { message })
           }
           console.error(error)
         })

@@ -48,7 +48,6 @@
 
 <script setup>
 import { useCurrency } from '@/hooks/utils'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 
 defineProps({
   service: { type: Object, required: true },
@@ -56,11 +55,6 @@ defineProps({
 })
 
 const { currency } = useCurrency()
-const currenciesStore = useCurrenciesStore()
-
-if (currenciesStore.currencies.length < 1) {
-  currenciesStore.fetchCurrencies()
-}
 </script>
 
 <script>

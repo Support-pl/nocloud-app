@@ -160,14 +160,12 @@
 <script>
 import { ref, reactive } from "vue";
 import { mapStores, mapState } from "pinia";
+import useCreateInstance from '@/hooks/instances/create.js'
+import { useCurrency, usePeriod } from '@/hooks/utils'
+import { checkPayg } from '@/functions.js'
 
-import { usePeriod, useSlider } from "@/hooks/utils";
-import useCreateInstance from "@/hooks/instances/create.js";
-import { checkPayg, createInvoice } from "@/functions.js";
-
-import { useAppStore } from "@/stores/app.js";
-import { useAuthStore } from "@/stores/auth.js";
-import { useCurrenciesStore } from "@/stores/currencies.js";
+import { useAppStore } from '@/stores/app.js'
+import { useAuthStore } from '@/stores/auth.js'
 
 import { useSpStore } from "@/stores/sp.js";
 import { usePlansStore } from "@/stores/plans.js";
@@ -180,69 +178,24 @@ import promoBlock from "@/components/ui/promo.vue";
 export default {
   name: "VirtualComponent",
   components: { selectsToCreate, promoBlock },
-  inject: ["checkBalance"],
-  setup() {
-    const plan = ref(null);
-    const slider = ref();
-    const { isSlider } = useSlider(slider, plan);
-    const { getPeriod } = usePeriod();
-    const { deployService } = useCreateInstance();
+  inject: ['checkBalance'],
+  setup () {
+    const { getPeriod } = usePeriod()
+    const { currency } = useCurrency()
+    const { deployService } = useCreateInstance()
 
-    return {
-      plan,
-      service: ref(null),
-      namespace: ref(null),
-      provider: ref(null),
-      fetchLoading: ref(false),
-
-      cachedPlans: ref({}),
-      options: reactive({ size: "", model: "", period: "" }),
-      config: reactive({ domain: "", email: "" }),
-      modal: reactive({ confirmCreate: false, confirmLoading: false }),
-
-      products: ref([]),
-      sizes: ref([]),
-      periods: ref([]),
-
-      slider,
-      isSlider,
-
-      getPeriod,
-      deployService,
-      createInvoice,
-      checkPayg,
-    };
+    return { currency, getPeriod, deployService, checkPayg }
   },
   computed: {
-    ...mapStores(
-      useNamespasesStore,
-      useSpStore,
-      usePlansStore,
-      useInstancesStore
-    ),
-    ...mapState(useAppStore, ["onLogin"]),
-    ...mapState(useAuthStore, [
-      "isLogged",
-      "userdata",
-      "fetchBillingData",
-      "baseURL",
-      "billingUser",
-    ]),
-    ...mapState(useCurrenciesStore, [
-      "currencies",
-      "defaultCurrency",
-      "unloginedCurrency",
-      "fetchCurrencies",
-    ]),
-    getProducts() {
-      if (Object.keys(this.products).length === 0) return "NAN";
-      if (!(this.options.size && this.options.period)) return "NAN";
-      const product = JSON.parse(
-        JSON.stringify(
-          this.products.find(
-            ({ title, period }) =>
-              title === this.options.size && +period === this.options.period
-          )
+    ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
+    ...mapState(useAppStore, ['onLogin']),
+    ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL', 'billingUser']),
+    getProducts () {
+      if (Object.keys(this.products).length === 0) return 'NAN'
+      if (!(this.options.size && this.options.period)) return 'NAN'
+      const product = JSON.parse(JSON.stringify(
+        this.products.find(({ title, period }) =>
+          title === this.options.size && +period === this.options.period
         )
       );
 
@@ -395,16 +348,12 @@ export default {
     Promise.all(promises)
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
-
-        if (err.response?.data?.code === 16) return;
-        this.$notification.error({ message: this.$t(message) });
-        console.error(err);
-      })
-      .finally(() => {
-        this.fetchLoading = false;
-      });
-
-    if (this.currencies.length < 1) this.fetchCurrencies();
+      if (err.response?.data?.code === 16) return
+      this.$notification.error({ message: this.$t(message) })
+      console.error(err)
+    }).finally(() => {
+      this.fetchLoading = false
+    })
   },
   methods: {
     changeProducts() {
@@ -555,11 +504,8 @@ export default {
           );
           const account = access.namespace ?? this.namespace;
 
-          if (this.getProducts.price > 0) {
-            await this.createInvoice(instance, uuid, account, this.baseURL);
-          }
-          localStorage.setItem("order", "Invoice");
-          this.$router.push({ path: "/billing" });
+          localStorage.setItem('order', 'Invoice')
+          this.$router.push({ path: '/billing' })
         })
         .catch((error) => {
           const url =

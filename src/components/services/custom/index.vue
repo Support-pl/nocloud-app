@@ -92,7 +92,7 @@
           </transition>
 
           <a-card
-            v-if="fetchLoading || getProducts.addons && getProducts.addons.length > 0"
+            v-if="fetchLoading || filteredAddons.length > 0"
             style="margin-top: 15px"
             :title="`${$t('Addons')} (${$t('choose addons you want')})`"
             :loading="fetchLoading"
@@ -102,10 +102,10 @@
             </div>
             <template v-else>
               <a-card-grid
-                v-for="addon of getProducts.addons"
-                :key="addon.id"
+                v-for="addon of filteredAddons"
+                :key="addon.uuid"
                 class="card-item"
-                @click="changeAddons(addon.key)"
+                @click="changeAddons(addon.uuid)"
               >
                 <div
                   class="order__slider-name"
@@ -116,11 +116,11 @@
                   </span>
 
                   <span style="font-weight: 700">
-                    {{ getPeriod(addon.period) }}
+                    {{ getPeriod(getProducts.period) }}
                   </span>
 
-                  <a-checkbox :checked="options.addons.includes(addon.key)" />
-                  <span style="grid-column: 1 / 4" v-html="addon.meta?.description ?? ''" />
+                  <a-checkbox :checked="options.addons.includes(addon.uuid)" />
+                  <span style="grid-column: 1 / 4" v-html="addon.description ?? ''" />
                 </div>
               </a-card-grid>
             </template>
@@ -199,7 +199,7 @@
           <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
               <template v-if="!fetchLoading">
-                {{ getProducts.price ?? 0 }} {{ currency.code }}
+                {{ (getProducts.price ?? 0) + addonsPrice }} {{ currency.code }}
               </template>
               <div v-else class="loadingLine loadingLine--total" />
             </transition>
@@ -233,13 +233,14 @@
 <script>
 import { mapStores, mapState } from 'pinia'
 import { nextTick } from 'vue'
-import { usePeriod } from '@/hooks/utils'
+
 import useCreateInstance from '@/hooks/instances/create.js'
-import { checkPayg, createInvoice } from '@/functions.js'
+import { useCurrency, usePeriod } from '@/hooks/utils'
+import { checkPayg } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
+import { useAddonsStore } from '@/stores/addons.js'
 
 import { useSpStore } from '@/stores/sp.js'
 import { usePlansStore } from '@/stores/plans.js'
@@ -257,9 +258,10 @@ export default {
   inject: ['checkBalance'],
   setup () {
     const { getPeriod } = usePeriod()
+    const { currency } = useCurrency()
     const { deployService } = useCreateInstance()
 
-    return { getPeriod, deployService, createInvoice, checkPayg }
+    return { currency, getPeriod, deployService, checkPayg }
   },
   data: () => ({
     plan: null,
@@ -284,12 +286,7 @@ export default {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL']),
-    ...mapState(useCurrenciesStore, [
-      'currencies',
-      'defaultCurrency',
-      'unloginedCurrency',
-      'fetchCurrencies'
-    ]),
+    ...mapState(useAddonsStore, { addons: 'addons', fetchAddons: 'fetch' }),
     getProducts () {
       if (Object.keys(this.products).length === 0) return 'NAN'
       if ((this.options.size || true) === true) return 'NAN'
@@ -362,6 +359,19 @@ export default {
 
       return result
     },
+    filteredAddons () {
+      const product = this.products[this.options.size]
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
+
+      return this.addons.filter(({ uuid }) =>
+        plan.addons.includes(uuid) || product.addons.includes(uuid)
+      )
+    },
+    addonsPrice () {
+      return this.options.addons.reduce((result, uuid) =>
+        result + (this.getAddon(uuid)?.price ?? 0), 0
+      )
+    },
     typesOptions () {
       const types = []
 
@@ -413,19 +423,6 @@ export default {
       const end = start + this.paginationOptions.size
 
       return this.filteredSizes.slice(start, end)
-    },
-    currency () {
-      const code = this.unloginedCurrency
-      const { rate } = this.currencies.find((el) =>
-        el.to === code && el.from === this.defaultCurrency
-      ) ?? {}
-
-      const { rate: reverseRate } = this.currencies.find((el) =>
-        el.from === code && el.to === this.defaultCurrency
-      ) ?? { rate: 1 }
-
-      if (!this.isLogged) return { rate: (rate) || 1 / reverseRate, code }
-      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency }
     },
     services () {
       return this.instancesStore.services.filter((el) => el.status !== 'DEL')
@@ -558,8 +555,8 @@ export default {
       if (!keys.includes(value)) this.changePeriods(value)
       this.options.addons = []
 
-      this.getProducts.addons.forEach(({ meta, key }) => {
-        if (meta.autoEnable) this.options.addons.push(key)
+      this.filteredAddons.forEach(({ meta, uuid }) => {
+        if (meta.autoEnable) this.options.addons.push(uuid)
       })
 
       this.plan = this.getProducts.planId
@@ -613,6 +610,10 @@ export default {
       this.spStore.fetchShowcases(!this.isLogged)
     }
 
+    if (this.addons.length < 1) {
+      this.fetchAddons()
+    }
+
     Promise.all(promises).catch((err) => {
       const message = err.response?.data?.message ?? err.message ?? err
 
@@ -620,8 +621,6 @@ export default {
       this.$notification.error({ message: this.$t(message) })
       console.error(err)
     })
-
-    if (this.currencies.length < 1) this.fetchCurrencies()
   },
   methods: {
     changeProducts () {
@@ -698,17 +697,16 @@ export default {
         this.options.period = this.periods[0]
       }
     },
-    changeAddons (key) {
-      if (this.options.addons.includes(key)) {
-        this.options.addons = this.options.addons.filter((addon) => addon !== key)
+    changeAddons (uuid) {
+      if (this.options.addons.includes(uuid)) {
+        this.options.addons = this.options.addons.filter((addon) => addon !== uuid)
       } else {
-        this.options.addons.push(key)
+        this.options.addons.push(uuid)
       }
     },
     getAddon (addon) {
-      const item = this.getProducts.addons.find(({ key }) => key === addon)
-      const period = item.period / this.getProducts.period
-      const price = item.price * ((period >= 1) ? period : 1 / period)
+      const item = this.filteredAddons.find(({ uuid }) => uuid === addon)
+      const price = item.periods[this.getProducts.period]
 
       return {
         ...item,
@@ -743,18 +741,15 @@ export default {
       const { resources = [] } = this.getProducts.meta
 
       const instances = [{
+        config: { auto_start: plan.meta.auto_start },
         resources: resources.reduce((result, { key, title }) => {
           result[key] = title
           return result
         }, {}),
-
-        config: {
-          addons: this.options.addons,
-          auto_start: plan.meta.auto_start
-        },
         title: this.getProducts.title,
         billing_plan: { uuid: this.plan },
-        product: this.options.size
+        product: this.options.size,
+        addons: this.options.addons
       }]
       const newGroup = {
         title: this.userdata.title + Date.now(),
@@ -826,9 +821,6 @@ export default {
           )
           const account = access.namespace ?? this.namespace
 
-          if (this.getProducts.price > 0) {
-            await this.createInvoice(instance, uuid, account, this.baseURL)
-          }
           localStorage.setItem('order', 'Invoice')
           this.$router.push({ path: '/billing' })
         })

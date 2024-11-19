@@ -106,12 +106,13 @@
 
 <script setup>
 import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
-import { message, notification } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import markdown from 'markdown-it'
 import { full as emoji } from 'markdown-it-emoji'
+import { useNotification } from '@/hooks/utils'
 import api from '@/api'
 
 import { useAuthStore } from '@/stores/auth.js'
@@ -138,6 +139,7 @@ const props = defineProps({
 
 const router = useRouter()
 const i18n = useI18n()
+const { openNotification } = useNotification()
 
 const authStore = useAuthStore()
 const chatsStore = useChatsStore()
@@ -324,11 +326,11 @@ async function sendNewTicket () {
       : await createTicket()
 
     if (response.result === 'error') throw response.error
-    else notification.success({ message: i18n.t('Done') })
+    else openNotification('success', { message: i18n.t('Done') })
   } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
-
-    notification.error(i18n.t(message))
+    openNotification('error', {
+      message: error.response?.data?.message ?? error.message ?? error
+    })
     console.error(error)
   } finally {
     isSending.value = false
