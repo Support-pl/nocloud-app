@@ -90,6 +90,8 @@ async function handleOk() {
         `Now look invoice #${getInvoiceNumber(toInvoice(response))}`
       );
     }
+
+    invoicesStore.fetch();
   } catch (error) {
     console.error(error);
   } finally {

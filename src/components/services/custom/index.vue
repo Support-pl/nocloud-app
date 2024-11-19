@@ -899,6 +899,16 @@ export default {
   font-size: 1.1rem;
 }
 
+.order__promo {
+  grid-column: 2;
+}
+
+.order__promo img {
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
 .order :deep(.ant-slider-mark-text) {
   white-space: nowrap;
 }
@@ -1201,6 +1211,7 @@ export default {
     border-radius: 0 0 20px 20px;
   }
   .order__promo {
+    grid-column: 1;
     margin-top: 20px;
   }
 }

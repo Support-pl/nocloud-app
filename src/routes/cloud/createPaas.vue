@@ -136,7 +136,7 @@ const { filteredPlans, product, productSize, isPlansLoading } = useCloudPlans(ta
 
 watch(isPlansLoading, () => {
   if (dataLocalStorage.value.billing_plan) {
-    cloudStore.planId = dataLocalStorage.value.billing_plan.uuid
+    // cloudStore.planId = dataLocalStorage.value.billing_plan.uuid
   } else if (dataLocalStorage.value.locationId) {
     tarification.value = periods.value[0]?.value ?? ''
   }
@@ -216,6 +216,14 @@ watch(periods, (periods) => {
 })
 
 function setLocation (value) {
+  if (route.query.data) {
+    const query = { ...route.query }
+
+    delete query.data
+    dataLocalStorage.value = ''
+    router.push({ query })
+  }
+
   if (!(localStorage.getItem('data') && authStore.isLogged)) {
     cloudStore.locationId = value
     return

@@ -12,6 +12,7 @@ export default {
   languages: globalConfig.languages ?? ['en'],
   vdcEnabled: globalConfig.vdc_enabled ?? false,
   sharedEnabled: globalConfig.shared_enabled ?? false,
+  cloudEnabled: globalConfig.cloud_enabled ?? false,
 
   whmcsSiteUrl: globalConfig.whmcs?.site_url ?? '',
   whmcsRegistration: globalConfig.whmcs?.registration ?? false,

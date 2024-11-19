@@ -1,9 +1,9 @@
 <template>
-  <a-row>
-    <a-col style="margin-bottom: 10px" :span="6">
+  <a-row :gutter="[5, 10]">
+    <a-col :span="6">
       {{ $t('Login') }}:
     </a-col>
-    <a-col style="margin-bottom: 10px" :span="18">
+    <a-col :span="18">
       {{ instance.state?.meta.login ?? instance.config?.username ?? '-' }}
     </a-col>
     <a-col style="line-height: 2" :span="6">
@@ -11,6 +11,12 @@
     </a-col>
     <a-col :span="18">
       <password-view :password="password" />
+    </a-col>
+    <a-col :span="6">
+      {{ $t('Port') }}:
+    </a-col>
+    <a-col :span="18">
+      {{ instance.state?.interfaces?.at(0)?.data.port ?? '-' }}
     </a-col>
   </a-row>
 </template>

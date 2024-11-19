@@ -53,17 +53,23 @@ export const useAppStore = defineStore('app', () => {
     })
   })
 
-  const buttons = computed(() =>
-    (isButtonsVisible.value)
-      ? [
-          { icon: DatabaseFilled, title: 'cloud' },
-          { icon: AppstoreOutlined, title: 'services' },
-          { icon: MessageOutlined, title: 'support' },
-          { icon: FundOutlined, title: 'billing' },
-          { icon: SettingFilled, title: 'settings' }
-        ]
-      : []
-  )
+  const buttons = computed(() => {
+    if (isButtonsVisible.value) {
+      const result = [
+        { icon: AppstoreOutlined, title: 'services' },
+        { icon: MessageOutlined, title: 'support' },
+        { icon: FundOutlined, title: 'billing' },
+        { icon: SettingFilled, title: 'settings' }
+      ]
+
+      if (config.cloudEnabled) {
+        result.unshift({ icon: DatabaseFilled, title: 'cloud' })
+      }
+      return result
+    }
+
+    return []
+  })
 
   function toDate (timestamp, sep = '.', withTime = true, reverse) {
     if (timestamp < 1) return '-'

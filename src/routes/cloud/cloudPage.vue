@@ -333,7 +333,7 @@ export default {
           params: ['networkControl'],
           icon: 'GlobalOutlined',
           forVNC: true,
-          modules: ['ione']
+          modules: []
         },
         {
           title: 'Access manager',
@@ -448,7 +448,7 @@ export default {
         case 'suspended':
         case 'suspend':
         case 'pending':
-          return 'var(--bright_font)'
+          return 'var(--gloomy_font)'
         default:
           return 'var(--err)'
       }
