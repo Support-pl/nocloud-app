@@ -317,11 +317,11 @@ async function setResource (resource, changeTarifs = true) {
 
   let addon = addonsStore.addons.find(({ uuid, meta }) => {
     const isIncluded = addons?.includes(uuid)
-    const addonId = meta.id?.toJson() ?? ''
+    const addonId = meta.id ?? ''
 
     return isIncluded && addonId.includes(resource.value)
   })
-  let addonKey = addon?.meta.id?.toJson()
+  let addonKey = addon?.meta.id
 
   let item = periods[0]
   const tarifs = []
@@ -332,12 +332,12 @@ async function setResource (resource, changeTarifs = true) {
   if (resource.key === 'disk') {
     addon = addonsStore.addons.find(({ uuid, meta }) => {
       const isIncluded = addons?.includes(uuid)
-      const addonId = meta.id?.toJson() ?? ''
+      const addonId = meta.id ?? ''
       const isDisk = addonId.includes('raid')
 
       return isIncluded && isDisk && (getDisk(addonId) * 1024) === resource.value
     })
-    addonKey = addon?.meta.id?.toJson()
+    addonKey = addon?.meta.id
 
     setOptions('disk.size', getDisk(addonKey) * 1024)
     if (addonKey?.includes('hybrid')) setOptions('disk.type', 'SSD + HDD')
@@ -388,7 +388,9 @@ function getResources (ram, disk, value) {
 
   addons?.forEach((id) => {
     const resource = addonsStore.addons.find(({ uuid }) => uuid === id)
-    const addonKey = resource?.meta.id?.toJson()
+    console.log(id,resource);
+    
+    const addonKey = resource?.meta.id
 
     if (!resource || !resource?.public) return
     if (addonKey.includes('ram')) {

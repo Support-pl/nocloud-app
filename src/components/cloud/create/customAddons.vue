@@ -40,80 +40,67 @@
 </template>
 
 <script setup>
-import { computed, inject, ref } from 'vue'
-import { useAddonsStore } from '@/stores/addons.js'
-import { useCloudStore } from '@/stores/cloud.js'
-import { useNotification, usePeriod } from '@/hooks/utils'
+import { computed, inject, ref } from "vue";
+import { useAddonsStore } from "@/stores/addons.js";
+import { useCloudStore } from "@/stores/cloud.js";
+import { useNotification, usePeriod } from "@/hooks/utils";
 
-const addonsStore = useAddonsStore()
-const cloudStore = useCloudStore()
+const addonsStore = useAddonsStore();
+const cloudStore = useCloudStore();
 
-const { getPeriod } = usePeriod()
-const { openNotification } = useNotification()
+const { getPeriod } = usePeriod();
 
-const [product] = inject('useProduct')()
-const [options, setOptions] = inject('useOptions')()
-const [price, setPrice] = inject('usePriceOVH')()
+const [product] = inject("useProduct")();
+const [options, setOptions] = inject("useOptions")();
+const [price, setPrice] = inject("usePriceOVH")();
 
 const addons = computed(() =>
-  addonsStore.addons.filter(({ uuid }) =>
-    cloudStore.plan.addons.includes(uuid) || product.value.addons?.includes(uuid)
+  addonsStore.addons.filter(
+    ({ uuid }) =>
+      cloudStore.plan.addons.includes(uuid) ||
+      product.value.addons?.includes(uuid)
   )
-)
+);
 
 const groups = computed(() =>
   Object.groupBy(addons.value, ({ group }) => group)
-)
+);
 
-function changeAddons ({ uuid, periods }) {
+function changeAddons({ uuid, periods }) {
   if (options.addons.includes(uuid)) {
-    const value = { ...price.addons }
+    const value = { ...price.addons };
 
-    delete value[uuid]
-    setOptions('addons', options.addons.filter((addon) => addon !== uuid))
-    setPrice('addons', value)
+    delete value[uuid];
+    setOptions(
+      "addons",
+      options.addons.filter((addon) => addon !== uuid)
+    );
+    setPrice("addons", value);
   } else {
-    setOptions('addons', [...options.addons, uuid])
-    setPrice('addons', {
-      ...price.addons, [uuid]: periods[product.value.period]
-    })
+    setOptions("addons", [...options.addons, uuid]);
+    setPrice("addons", {
+      ...price.addons,
+      [uuid]: periods[product.value.period],
+    });
   }
 }
 
-const isLoading = ref(false)
+const isLoading = ref(false);
 
-async function fetch () {
-  isLoading.value = true
-  try {
-    await addonsStore.fetch({ filters: {} })
-
-    console.log(addonsStore.addons)
-  } catch (error) {
-    openNotification('error', {
-      message: error.response?.data?.message ?? error.message ?? error
-    })
-    console.error(error)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-fetch()
-
-const theme = inject('theme')
+const theme = inject("theme");
 const backgroundStyle = computed(() =>
-  (theme.value) ? 'var(--bright_font)' : 'var(--bright_bg)'
-)
+  theme.value ? "var(--bright_font)" : "var(--bright_bg)"
+);
 </script>
 
 <script>
-export default { name: 'CustomAddons' }
+export default { name: "CustomAddons" };
 </script>
 
 <style scoped>
 .addons :deep(.ant-card-head) {
   padding: 0 16px;
-  background: v-bind('backgroundStyle');
+  background: v-bind("backgroundStyle");
 }
 
 .addons :deep(.ant-card-body) {
@@ -131,7 +118,7 @@ export default { name: 'CustomAddons' }
   padding: 12px 16px;
   cursor: pointer;
   border: 0 solid transparent;
-  background: v-bind('backgroundStyle');
+  background: v-bind("backgroundStyle");
 }
 
 .addons .order__slider-name {

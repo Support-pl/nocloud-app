@@ -137,7 +137,7 @@ async function setImages () {
   filtered.forEach((item) => {
     const { uuid, title, periods, meta, system, group, public: enabled } = item
     const isEqualGroup = group === cloudStore.plan.uuid
-    const isIncluded = meta.type?.toJson().includes('OS')
+    const isIncluded = meta.type?.includes('OS')
 
     if (title.toLowerCase().includes('disabled')) return
     if (!system || !isIncluded) return
@@ -147,7 +147,7 @@ async function setImages () {
       key: uuid,
       name: title,
       desc: title,
-      type: meta.type?.toJson(),
+      type: meta.type,
       price: periods[product.value.period]
     })
   })

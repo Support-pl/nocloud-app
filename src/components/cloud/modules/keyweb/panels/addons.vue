@@ -51,7 +51,7 @@ const addons = computed(() => {
   )
 
   filtered.forEach(({ uuid, title, periods, meta, system, group, public: enabled }) => {
-    const isInclude = meta.key?.toJson().toLowerCase().includes('backup')
+    const isInclude = meta.key.toLowerCase().includes('backup')
     const isEqualGroup = group === cloudStore.plan.uuid
     const key = (system && isInclude) ? 'backup' : group
 
@@ -62,7 +62,7 @@ const addons = computed(() => {
     result[key][uuid] = {
       title,
       required: system,
-      type: meta.type?.toJson() ?? 'custom',
+      type: meta.type ?? 'custom',
       price: periods[product.value.period]
     }
   })
@@ -72,10 +72,6 @@ const addons = computed(() => {
 
 watch(addons, setAddons)
 setAddons(addons.value)
-
-if (addonsStore.addons.length < 1) {
-  addonsStore.fetch()
-}
 
 async function setAddons (value) {
   await nextTick()

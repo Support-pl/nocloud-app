@@ -29,7 +29,7 @@ const addons = computed(() => {
   filtered.forEach(({ uuid, title, periods, meta, system, group, public: enabled }) => {
     const addonGroups = ['backup', 'snapshot', 'disk']
     const addonGroup = addonGroups.find((key) =>
-      meta.key?.toJson().toLowerCase().includes(key)
+      meta.key.toLowerCase().includes(key)
     )
     const isEqualGroup = group === cloudStore.plan.uuid
     const key = (system && addonGroup) ? addonGroup : group
@@ -38,7 +38,7 @@ const addons = computed(() => {
     if (system && !addonGroup) return
     if (!result[key]) result[key] = {}
 
-    const [duration] = meta.key?.toJson().split(' ') ?? []
+    const [duration] = meta.key.split(' ') ?? []
     const period = {
       price: { value: periods[product.value.period] },
       duration,
@@ -50,10 +50,6 @@ const addons = computed(() => {
 
   return result
 })
-
-if (addonsStore.addons.length < 1) {
-  addonsStore.fetch()
-}
 </script>
 
 <script>

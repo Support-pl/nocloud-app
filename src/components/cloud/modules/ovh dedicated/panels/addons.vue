@@ -29,12 +29,12 @@ const addons = computed(() => {
   filtered.forEach(({ uuid, title, periods, meta, system, group, public: enabled }) => {
     const addonGroups = ['bandwidth', 'traffic', 'vrack']
     const addonGroup = addonGroups.find((key) =>
-      meta.key?.toJson().toLowerCase().includes(key)
+      meta.key.toLowerCase().includes(key)
     )
 
     let addon = (system && addonGroup) ? addonGroup : group
     const isEqualGroup = group === cloudStore.plan.uuid
-    const key = meta.id?.toJson() ?? ''
+    const key = meta.id ?? ''
 
     const [duration, , addonKey] = key.split(' ') ?? []
     const isPublic = addonKey?.startsWith('bandwidth') || key.includes('traffic')
@@ -58,10 +58,6 @@ const addons = computed(() => {
 
   return result
 })
-
-if (addonsStore.addons.length < 1) {
-  addonsStore.fetch()
-}
 </script>
 
 <script>
