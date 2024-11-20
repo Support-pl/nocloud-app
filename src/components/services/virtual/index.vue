@@ -161,7 +161,7 @@
 import { ref, reactive } from "vue";
 import { mapStores, mapState } from "pinia";
 import useCreateInstance from '@/hooks/instances/create.js'
-import { useCurrency, usePeriod } from '@/hooks/utils'
+import { useCurrency, usePeriod, useSlider } from '@/hooks/utils'
 import { checkPayg } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
@@ -184,14 +184,43 @@ export default {
     const { currency } = useCurrency()
     const { deployService } = useCreateInstance()
 
-    return { currency, getPeriod, deployService, checkPayg }
+    // return { currency, getPeriod, deployService, checkPayg }
+
+    const plan = ref(null);
+    const slider = ref();
+    const { isSlider } = useSlider(slider, plan);
+
+    return {
+      plan,
+      service: ref(null),
+      namespace: ref(null),
+      provider: ref(null),
+      fetchLoading: ref(false),
+
+      cachedPlans: ref({}),
+      options: reactive({ size: "", model: "", period: "" }),
+      config: reactive({ domain: "", email: "" }),
+      modal: reactive({ confirmCreate: false, confirmLoading: false }),
+
+      products: ref([]),
+      sizes: ref([]),
+      periods: ref([]),
+
+      slider,
+      isSlider,
+
+      currency,
+      getPeriod,
+      deployService,
+      checkPayg,
+    };
   },
   computed: {
     ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
     ...mapState(useAppStore, ['onLogin']),
     ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL', 'billingUser']),
     getProducts () {
-      if (Object.keys(this.products).length === 0) return 'NAN'
+      if (Object.keys(this.products || {}).length === 0) return 'NAN'
       if (!(this.options.size && this.options.period)) return 'NAN'
       const product = JSON.parse(JSON.stringify(
         this.products.find(({ title, period }) =>
@@ -205,26 +234,12 @@ export default {
 
       return product;
     },
-    currency() {
-      const code = this.unloginedCurrency;
-      const { rate } =
-        this.currencies.find(
-          (el) => el.from === this.defaultCurrency && el.to === code
-        ) ?? {};
-
-      const { rate: reverseRate } = this.currencies.find(
-        (el) => el.from === this.defaultCurrency && el.to === code
-      ) ?? { rate: 1 };
-
-      if (!this.isLogged) return { rate: rate || 1 / reverseRate, code };
-      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency };
-    },
     services() {
       return this.instancesStore.services.filter((el) => el.status !== "DEL");
     },
     plans() {
       return (
-        this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
+        this.cachedPlans?.[this.provider]?.filter(({ type, uuid }) => {
           const { items } =
             this.spStore.showcases.find(
               ({ uuid }) => uuid === this.$route.query.service
@@ -280,7 +295,9 @@ export default {
   },
   watch: {
     billingUser(value) {
-      this.config.email = value.email;
+      if(this.config){
+        this.config.email = value.email;
+      }
     },
     sp(value) {
       if (value.length > 0) this.provider = value[0].uuid;
