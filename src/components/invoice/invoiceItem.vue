@@ -14,7 +14,7 @@
     <div class="invoice__middle">
       <div class="invoice__prefix">{{ capitalize($t("net total")) }}:</div>
       <div class="invoice__cost" :style="{ color: statusColor }">
-        {{ total }} {{ currency.code }}
+        {{ total }} {{ invoice.currencycode.title || invoice.currencycode }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -97,7 +97,6 @@ import { useI18n } from "vue-i18n";
 import { ActionType } from "nocloud-proto/proto/es/billing/billing_pb";
 
 import { useAuthStore } from "@/stores/auth.js";
-import { useCurrenciesStore } from "@/stores/currencies.js";
 import { useInvoicesStore } from "@/stores/invoices.js";
 import { useNotification } from "@/hooks/utils";
 
@@ -111,7 +110,6 @@ const props = defineProps({
 
 const i18n = useI18n();
 const authStore = useAuthStore();
-const currenciesStore = useCurrenciesStore();
 const invoicesStore = useInvoicesStore();
 const { openNotification } = useNotification();
 
@@ -124,23 +122,6 @@ const rightIcon = defineAsyncComponent(() =>
 
 const isLoading = ref(false);
 const isBalanceLoading = ref(false);
-const currencyCode = ref("");
-
-const currency = computed(() => {
-  const code = authStore.userdata.currency.title ?? "USD";
-  if (code === currencyCode.value) return { code, rate: 1 };
-
-  const { rate } =
-    currenciesStore.currencies.find(
-      (el) => el.from.title === code && el.to.title === currencyCode.value
-    ) ?? {};
-
-  const { rate: reverseRate } = currenciesStore.currencies.find(
-    (el) => el.to.title === code && el.from.title === currencyCode.value
-  ) ?? { rate: 1 };
-
-  return { code, rate: rate || 1 / reverseRate };
-});
 
 const statusColor = computed(() => {
   switch (props.invoice.status?.toLowerCase()) {
@@ -158,9 +139,8 @@ const statusColor = computed(() => {
 
 const total = computed(() => {
   const total = props.invoice.subtotal ?? props.invoice.total;
-  const { rate } = currency.value;
 
-  return Math.abs(total * rate).toFixed(2);
+  return Math.abs(total).toFixed(2);
 });
 
 async function paidInvoice() {
@@ -216,12 +196,6 @@ async function payByBalance() {
   } finally {
     isLoading.value = false;
   }
-}
-
-if (props.invoice.currencycode === "NCU") {
-  currencyCode.value = currenciesStore.defaultCurrency.title;
-} else {
-  currencyCode.value = props.invoice.currencycode;
 }
 </script>
 
