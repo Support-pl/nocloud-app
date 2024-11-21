@@ -357,6 +357,8 @@ export function toInvoice(transaction, type = "default") {
         : "Unpaid";
     }
 
+    const isPaid = status == "Paid";
+
     return {
       id: transaction.id,
       payment_invoice_id: transaction.id,
@@ -367,13 +369,20 @@ export function toInvoice(transaction, type = "default") {
         false,
         true
       ),
-      deadline: null,
-      payment: toDate(
+      deadline: toDate(
         Number(+new Date(transaction.duedate) / 1000),
         "-",
         false,
         true
       ),
+      payment:
+        isPaid &&
+        toDate(
+          Number(+new Date(transaction.datepaid) / 1000),
+          "-",
+          false,
+          true
+        ),
       total: transaction.total,
       status,
       credit: transaction.credit,
