@@ -49,8 +49,7 @@
         <template
           v-if="
             invoice.total <= authStore.userdata.balance &&
-            ActionType[invoice.type] !== ActionType.BALANCE &&
-            invoice.uuid != null
+            ActionType[invoice.type] !== ActionType.BALANCE
           "
         >
           <a-popconfirm
@@ -182,7 +181,11 @@ async function openInvoiceDocument(invoice) {
 async function payByBalance() {
   isLoading.value = true;
   try {
-    await invoicesStore.payWithBalance(props.invoice.uuid);
+    if (props.invoice.uuid) {
+      await invoicesStore.payWithBalance({ invoiceUuid: props.invoice.uuid });
+    } else {
+      await invoicesStore.payWithBalance({ whmcsId: props.invoice.id });
+    }
 
     invoicesStore.fetch();
     authStore.fetchUserData(true);

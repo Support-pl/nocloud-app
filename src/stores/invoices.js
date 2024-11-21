@@ -160,11 +160,12 @@ export const useInvoicesStore = defineStore("invoices", () => {
       }
     },
 
-    async payWithBalance(invoiceUuid) {
+    async payWithBalance({ invoiceUuid, whmcsId }) {
       try {
         const response = await invoicesApi.payWithBalance(
           new PayWithBalanceRequest({
             invoiceUuid,
+            whmcsId,
           })
         );
 
