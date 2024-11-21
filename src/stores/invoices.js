@@ -95,7 +95,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
         fetchWhmcsInvoices(),
       ]);
 
-      response.toJson().pool.forEach((el) => {
+      (response.toJson().pool || []).forEach((el) => {
         result.push(toInvoice(el));
       });
 
