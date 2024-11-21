@@ -21,7 +21,7 @@ export function getDisk(key) {
 }
 
 export function toDate(timestamp, sep = ".", timeFormat = true, reverse) {
-  if (timestamp < 1) return "-";
+  if (!timestamp || timestamp < 1) return "-";
 
   const date = new Date(isNaN(+timestamp) ? timestamp : timestamp * 1000);
   const time = date.toTimeString().split(" ")[0];
