@@ -350,10 +350,11 @@ export function toPascalCase(text) {
 
 export function toInvoice(transaction, type = "default") {
   if (type == "whmcs") {
-    let status = "Unpaid";
-
-    if (Number(+new Date(transaction.datepaid) / 1000 > 0)) {
-      status = "Paid";
+    let status = transaction.status;
+    if (!status) {
+      status = Number(+new Date(transaction.datepaid) / 1000 > 0)
+        ? "Paid"
+        : "Unpaid";
     }
 
     return {
