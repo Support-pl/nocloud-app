@@ -64,6 +64,7 @@ import passwordMeter from "vue-simple-password-meter";
 import { useCloudStore } from "@/stores/cloud.js";
 import imagesList from "@/components/ui/images.vue";
 import { useAddonsStore } from "@/stores/addons";
+import { useCurrency } from "@/hooks/utils";
 
 const props = defineProps({
   mode: { type: String, required: true },
@@ -72,6 +73,7 @@ const props = defineProps({
 });
 
 const cloudStore = useCloudStore();
+const { currency, formatPrice } = useCurrency();
 const { addons, loading } = storeToRefs(useAddonsStore());
 
 const images = ref([]);
@@ -81,7 +83,7 @@ const { authData } = storeToRefs(useCloudStore());
 const [options, setOptions] = inject("useOptions", () => [])();
 const [price, setPrice] = inject("usePriceOVH", () => [])();
 
-watch([() => props.productSize, loading], setImages);
+watch([() => props.productSize, loading, currency], setImages);
 if (props.productSize) setImages();
 
 async function setImages() {
@@ -96,7 +98,7 @@ async function setImages() {
     .filter((a) => product.addons.includes(a.uuid) && a.meta?.type == "os")
     .map((os) => ({
       name: os.title,
-      prices: [+os.periods[product.period]],
+      prices: [formatPrice(os.periods[product.period])],
       desc: os.title,
       uuid: os.uuid,
     }));

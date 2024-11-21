@@ -8,7 +8,7 @@
     <template v-else>
       <!-- Location Tarif CPU RAM GPU Drive os network -->
       <cloud-resources
-        :min-product="(activeKey === 'location') ? minProduct : {}"
+        :min-product="activeKey === 'location' ? minProduct : {}"
         :product-size="productSize"
         :tarification="tarification"
       />
@@ -21,8 +21,10 @@
           justify="space-between"
           style="font-size: 1.1rem"
         >
-          <a-col> {{ capitalize(getAddonsTitle(key)) }}{{ getAddonsValue(key) }}: </a-col>
-          <a-col> {{ +(price * currency.rate).toFixed(2) }} {{ currency.code }} </a-col>
+          <a-col>
+            {{ capitalize(getAddonsTitle(key)) }}{{ getAddonsValue(key) }}:
+          </a-col>
+          <a-col> {{ formatPrice(price) }} {{ currency.code }} </a-col>
         </a-row>
       </transition-group>
 
@@ -46,9 +48,9 @@
           border-top: 1px solid #e8e8e8;
         "
       >
-        <a-col> {{ capitalize($t('installation')) }}: </a-col>
+        <a-col> {{ capitalize($t("installation")) }}: </a-col>
         <a-col style="margin-left: auto">
-          {{ +(minProduct.installationFee * currency.rate).toFixed(2) }} {{ currency.code }}
+          {{ formatPrice(minProduct.installationFee) }} {{ currency.code }}
         </a-col>
       </a-row>
     </transition>
@@ -57,23 +59,27 @@
       <a-row
         justify="space-between"
         style="font-size: 1.2rem; gap: 5px"
-        :style="(!minProduct.installationFee) ? {
-          paddingTop: '5px',
-          marginTop: '10px',
-          borderTop: '1px solid #e8e8e8'
-        } : null"
+        :style="
+          !minProduct.installationFee
+            ? {
+                paddingTop: '5px',
+                marginTop: '10px',
+                borderTop: '1px solid #e8e8e8',
+              }
+            : null
+        "
       >
-        <a-col> {{ capitalize($t('recurring payment')) }}: </a-col>
+        <a-col> {{ capitalize($t("recurring payment")) }}: </a-col>
         <a-col style="margin-left: auto">
-          {{ +(productFullPrice - (minProduct.installationFee ?? 0)).toFixed(2) }} {{ currency.code }}
+          {{
+            +(productFullPrice - (minProduct.installationFee ?? 0)).toFixed(2)
+          }}
+          {{ currency.code }}
         </a-col>
       </a-row>
     </transition>
 
-    <a-divider
-      orientation="left"
-      style="margin-bottom: 0; margin-top: 5px"
-    >
+    <a-divider orientation="left" style="margin-bottom: 0; margin-top: 5px">
       {{ $t("Total") }}:
     </a-divider>
     <a-row justify="center" style="margin-top: 15px">
@@ -81,7 +87,11 @@
         <a-radio-group
           default-value="Monthly"
           :value="tarification"
-          :style="{ display: 'grid', textAlign: 'center', gridTemplateColumns: periodColumns }"
+          :style="{
+            display: 'grid',
+            textAlign: 'center',
+            gridTemplateColumns: periodColumns,
+          }"
           @update:value="emits('update:tarification', $event)"
         >
           <a-radio-button
@@ -100,13 +110,14 @@
       justify="center"
       :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
     >
-      <a-col v-if="activeKey === 'location' && tarification" style="margin-right: 4px">
-        {{ capitalize($t('from')) }}:
+      <a-col
+        v-if="activeKey === 'location' && tarification"
+        style="margin-right: 4px"
+      >
+        {{ capitalize($t("from")) }}:
       </a-col>
       <transition name="textchange" mode="out-in">
-        <a-col>
-          {{ +(productFullPrice).toFixed(2) }} {{ currency.code }}
-        </a-col>
+        <a-col> {{ +productFullPrice.toFixed(2) }} {{ currency.code }} </a-col>
       </transition>
     </a-row>
 
@@ -120,98 +131,103 @@
 </template>
 
 <script setup>
-import { computed, inject, toRefs, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { EditorContainer } from 'nocloud-ui'
+import { computed, inject, toRefs, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { EditorContainer } from "nocloud-ui";
 
-import { useCloudStore } from '@/stores/cloud.js'
-import useCloudPrices from '@/hooks/cloud/prices.js'
-import { useAddonsStore } from '@/stores/addons.js'
-import { useCurrency } from '@/hooks/utils'
-import { checkPayg } from '@/functions.js'
+import { useCloudStore } from "@/stores/cloud.js";
+import useCloudPrices from "@/hooks/cloud/prices.js";
+import { useAddonsStore } from "@/stores/addons.js";
+import { useCurrency } from "@/hooks/utils";
+import { checkPayg } from "@/functions.js";
 
-import selectsToCreate from '@/components/ui/selectsToCreate.vue'
-import cloudResources from '@/components/cloud/create/resources.vue'
-import cloudCreateButton from '@/components/cloud/create/button.vue'
+import selectsToCreate from "@/components/ui/selectsToCreate.vue";
+import cloudResources from "@/components/cloud/create/resources.vue";
+import cloudCreateButton from "@/components/cloud/create/button.vue";
 
 const props = defineProps({
   productSize: { type: String, required: true },
   tarification: { type: String, required: true },
   filteredPlans: { type: Array, required: true },
   periods: { type: Object, required: true },
-  panels: { type: Array, required: true }
-})
-const emits = defineEmits(['update:tarification'])
+  panels: { type: Array, required: true },
+});
+const emits = defineEmits(["update:tarification"]);
 
-const i18n = useI18n()
-const { currency } = useCurrency()
-const cloudStore = useCloudStore()
-const addonsStore = useAddonsStore()
+const i18n = useI18n();
+const { currency, formatPrice } = useCurrency();
+const cloudStore = useCloudStore();
+const addonsStore = useAddonsStore();
 
-const [product] = inject('useProduct', () => [])()
-const [options] = inject('useOptions', () => [])()
-const [priceOVH] = inject('usePriceOVH', () => [])()
+const [product] = inject("useProduct", () => [])();
+const [options] = inject("useOptions", () => [])();
+const [priceOVH] = inject("usePriceOVH", () => [])();
 
-const sumOrder = ref()
-const checkBalance = inject('checkBalance', () => {})
+const sumOrder = ref();
+const checkBalance = inject("checkBalance", () => {});
 
 const addons = computed(() => {
-  const addons = { ...priceOVH.addons }
+  const addons = { ...priceOVH.addons };
 
-  if (cloudStore.plan.type?.includes('dedicated')) {
-    delete addons.disk
+  if (cloudStore.plan.type?.includes("dedicated")) {
+    delete addons.disk;
   }
 
-  delete addons.os
-  delete addons.ram
-  return addons
-})
+  delete addons.os;
+  delete addons.ram;
+  return addons;
+});
 
 const locationDescription = computed(() => {
-  const { showcase: id } = cloudStore.locations.find(
-    (el) => el.id === cloudStore.locationId
-  ) ?? {}
-  const showcase = cloudStore.showcases.find(({ uuid }) => uuid === id)
+  const { showcase: id } =
+    cloudStore.locations.find((el) => el.id === cloudStore.locationId) ?? {};
+  const showcase = cloudStore.showcases.find(({ uuid }) => uuid === id);
 
-  if (!showcase?.promo) return
-  return showcase?.promo[i18n.locale.value]?.service?.description
-})
+  if (!showcase?.promo) return;
+  return showcase?.promo[i18n.locale.value]?.service?.description;
+});
 
 const periodColumns = computed(() => {
-  const { length } = Object.keys(props.periods)
+  const { length } = Object.keys(props.periods);
 
-  if (length === 4) return 'repeat(2, 1fr)'
-  return `repeat(${(length < 3) ? length : 3}, 1fr)`
-})
+  if (length === 4) return "repeat(2, 1fr)";
+  return `repeat(${length < 3 ? length : 3}, 1fr)`;
+});
 
-const [activeKey] = inject('useActiveKey', () => [])()
-const { tarification, productSize } = toRefs(props)
-const { productFullPrice, minProduct } = useCloudPrices(product, tarification, activeKey, options, priceOVH)
+const [activeKey] = inject("useActiveKey", () => [])();
+const { tarification, productSize } = toRefs(props);
+const { productFullPrice, minProduct } = useCloudPrices(
+  product,
+  tarification,
+  activeKey,
+  options,
+  priceOVH
+);
 
-function getAddonsValue (key) {
-  const addon = options.config.addons?.find((el) => el.includes(key))
-  const value = parseFloat(addon?.split('-')?.at(-1))
+function getAddonsValue(key) {
+  const addon = options.config.addons?.find((el) => el.includes(key));
+  const value = parseFloat(addon?.split("-")?.at(-1));
 
-  return isFinite(value) ? ` (${value} Gb)` : ''
+  return isFinite(value) ? ` (${value} Gb)` : "";
 }
 
-function getAddonsTitle (key) {
-  if (cloudStore.plan.type === 'ione') {
-    return addonsStore.addons.find(({ uuid }) => uuid === key)?.title ?? key
+function getAddonsTitle(key) {
+  if (cloudStore.plan.type === "ione") {
+    return addonsStore.addons.find(({ uuid }) => uuid === key)?.title ?? key;
   } else {
-    return i18n.t(key)
+    return i18n.t(key);
   }
 }
 
-async function createOrder () {
-  const instance = { config: options.config, billingPlan: cloudStore.plan }
-  const price = productFullPrice.value
+async function createOrder() {
+  const instance = { config: options.config, billingPlan: cloudStore.plan };
+  const price = productFullPrice.value;
 
-  if (checkPayg(instance) && !checkBalance(price)) return
-  await cloudStore.createOrder(options, product)
+  if (checkPayg(instance) && !checkBalance(price)) return;
+  await cloudStore.createOrder(options, product);
 }
 </script>
 
 <script>
-export default { name: 'CalculatorBlock' }
+export default { name: "CalculatorBlock" };
 </script>

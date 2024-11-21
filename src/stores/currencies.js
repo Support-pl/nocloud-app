@@ -9,7 +9,7 @@ import { useAppStore } from "./app.js";
 import { createPromiseClient } from "@connectrpc/connect";
 
 export const useCurrenciesStore = defineStore("currencies", () => {
-  const app=useAppStore()
+  const app = useAppStore();
 
   const list = ref([]);
   const currencies = ref([]);
@@ -47,8 +47,12 @@ export const useCurrenciesStore = defineStore("currencies", () => {
         ]);
 
         list.value = currenciesResponse
-          .toJson().currencies
-          .map((currency) => ({ id: currency.id, code: currency.title }))
+          .toJson()
+          .currencies.map((currency) => ({
+            id: currency.id,
+            code: currency.title,
+            precision: currency.precision,
+          }))
           .filter((currency) => currency.code !== "NCU");
 
         currencies.value = ratesResponse.toJson().rates;

@@ -19,13 +19,13 @@
             :verification-back="verification"
             @handle-click-next="handleClickNext"
             @handle-click-prev="handleClickPrev"
-            @get-verification="(data) => verification = data"
+            @get-verification="(data) => (verification = data)"
           />
 
           <template v-if="currentStep === 0">
             <a-row class="order__prop" style="margin-bottom: 5px">
               <a-col span="8" :xs="6">
-                {{ capitalize($t('provider')) }}:
+                {{ capitalize($t("provider")) }}:
               </a-col>
             </a-row>
 
@@ -35,7 +35,9 @@
                   v-for="product of Object.keys(products)"
                   :key="product"
                   class="order__slider-item"
-                  :class="{ 'order__slider-item--active': options.provider === product }"
+                  :class="{
+                    'order__slider-item--active': options.provider === product,
+                  }"
                   @click="options.provider = product"
                 >
                   {{ product }}
@@ -52,11 +54,18 @@
 
             <a-row class="order__prop">
               <a-col span="8" :xs="6">
-                {{ capitalize($t('product_name')) }}:
+                {{ capitalize($t("product_name")) }}:
               </a-col>
               <a-col span="16" :xs="18">
-                <a-select v-if="!fetchLoading" v-model:value="options.tarif" style="width: 100%">
-                  <a-select-option v-for="kind of products[options.provider]" :key="kind.product">
+                <a-select
+                  v-if="!fetchLoading"
+                  v-model:value="options.tarif"
+                  style="width: 100%"
+                >
+                  <a-select-option
+                    v-for="kind of products[options.provider]"
+                    :key="kind.product"
+                  >
                     {{ kind.product }}
                   </a-select-option>
                 </a-select>
@@ -65,9 +74,7 @@
             </a-row>
 
             <a-row class="order__prop">
-              <a-col span="8" :xs="6">
-                {{ $t('ssl_product.domain') }}:
-              </a-col>
+              <a-col span="8" :xs="6"> {{ $t("ssl_product.domain") }}: </a-col>
               <a-col span="16" :xs="18">
                 <a-input
                   v-if="!fetchLoading"
@@ -85,7 +92,11 @@
                     {{ $t("ssl_product.generate") }} CSR
                   </a-button>
                 </router-link>
-                <a-button type="primary" style="margin-left: 10px" @click="handleClickNext">
+                <a-button
+                  type="primary"
+                  style="margin-left: 10px"
+                  @click="handleClickNext"
+                >
                   {{ $t("ssl_product.continue") }} <right-icon />
                 </a-button>
               </a-col>
@@ -97,13 +108,17 @@
       <div class="order__calculate order__field">
         <a-row type="flex" justify="space-around" style="margin-top: 20px">
           <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
-            {{ $t('Payment period') }}:
+            {{ $t("Payment period") }}:
           </a-col>
 
           <a-col :xs="12" :sm="18" :lg="12">
-            <a-select v-if="!fetchLoading" v-model:value="options.period" style="width: 100%">
+            <a-select
+              v-if="!fetchLoading"
+              v-model:value="options.period"
+              style="width: 100%"
+            >
               <a-select-option v-for="period in periods" :key="period">
-                {{ $tc('month', period) }}
+                {{ $tc("month", period) }}
               </a-select-option>
             </a-select>
             <div v-else class="loadingLine" />
@@ -119,11 +134,15 @@
           :sp-list="sp"
         />
 
-        <a-divider orientation="left" :style="{'margin-bottom': '0'}">
-          {{ $t('Total') }}:
+        <a-divider orientation="left" :style="{ 'margin-bottom': '0' }">
+          {{ $t("Total") }}:
         </a-divider>
 
-        <a-row type="flex" justify="space-around" :style="{'font-size': '1.5rem'}">
+        <a-row
+          type="flex"
+          justify="space-around"
+          :style="{ 'font-size': '1.5rem' }"
+        >
           <a-col v-if="getProducts.prices">
             <template v-if="!fetchLoading">
               {{ getProducts.prices[options.period] }} {{ currency.code }}
@@ -132,9 +151,19 @@
           </a-col>
         </a-row>
 
-        <a-row type="flex" justify="space-around" style="margin-top: 24px; margin-bottom: 10px">
+        <a-row
+          type="flex"
+          justify="space-around"
+          style="margin-top: 24px; margin-bottom: 10px"
+        >
           <a-col :span="22">
-            <a-button type="primary" block shape="round" :disabled="currentStep !== 3" @click="orderConfirm">
+            <a-button
+              type="primary"
+              block
+              shape="round"
+              :disabled="currentStep !== 3"
+              @click="orderConfirm"
+            >
               {{ capitalize($t("order")) }}
             </a-button>
             <a-modal
@@ -143,9 +172,16 @@
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
-              @cancel="() => { modal.confirmCreate = false }"
+              @cancel="
+                () => {
+                  modal.confirmCreate = false;
+                }
+              "
             >
-              <p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.product }}</p>
+              <p>
+                {{ $t("order_services.Do you want to order") }}:
+                {{ getProducts.product }}
+              </p>
             </a-modal>
           </a-col>
         </a-row>
@@ -157,37 +193,37 @@
 </template>
 
 <script>
-import { defineAsyncComponent } from 'vue'
-import { mapStores, mapState } from 'pinia'
-import passwordMeter from 'vue-simple-password-meter'
+import { defineAsyncComponent } from "vue";
+import { mapStores, mapState } from "pinia";
+import passwordMeter from "vue-simple-password-meter";
 
-import useCreateInstance from '@/hooks/instances/create.js'
-import { useCurrency, useNotification } from '@/hooks/utils'
-import { checkPayg,  } from '@/functions.js'
+import useCreateInstance from "@/hooks/instances/create.js";
+import { useCurrency, useNotification } from "@/hooks/utils";
+import { checkPayg } from "@/functions.js";
 
-import { useAppStore } from '@/stores/app.js'
-import { useAuthStore } from '@/stores/auth.js'
+import { useAppStore } from "@/stores/app.js";
+import { useAuthStore } from "@/stores/auth.js";
 
-import { useSpStore } from '@/stores/sp.js'
-import { usePlansStore } from '@/stores/plans.js'
-import { useNamespasesStore } from '@/stores/namespaces.js'
-import { useInstancesStore } from '@/stores/instances.js'
+import { useSpStore } from "@/stores/sp.js";
+import { usePlansStore } from "@/stores/plans.js";
+import { useNamespasesStore } from "@/stores/namespaces.js";
+import { useInstancesStore } from "@/stores/instances.js";
 
-import selectsToCreate from '@/components/ui/selectsToCreate.vue'
-import promoBlock from '@/components/ui/promo.vue'
+import selectsToCreate from "@/components/ui/selectsToCreate.vue";
+import promoBlock from "@/components/ui/promo.vue";
 
-const rightIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/RightOutlined')
-)
+const rightIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RightOutlined")
+);
 
 export default {
-  name: 'SslComponent',
+  name: "SslComponent",
   components: { passwordMeter, selectsToCreate, promoBlock, rightIcon },
-  inject: ['checkBalance'],
-  setup () {
-    const { currency } = useCurrency()
-    const { openNotification } = useNotification()
-    const { deployService } = useCreateInstance()
+  inject: ["checkBalance"],
+  setup() {
+    const { currency, formatPrice } = useCurrency();
+    const { openNotification } = useNotification();
+    const { deployService } = useCreateInstance();
 
     return {
       deployService,
@@ -195,6 +231,7 @@ export default {
       openNotification,
 
       currency,
+      formatPrice,
       products: {},
       cachedPlans: {},
       currentStep: 0,
@@ -205,337 +242,366 @@ export default {
       fetchLoading: false,
 
       options: {
-        provider: '',
-        tarif: '',
-        domain: '',
-        period: ''
+        provider: "",
+        tarif: "",
+        domain: "",
+        period: "",
       },
       modal: {
         confirmCreate: false,
-        confirmLoading: false
+        confirmLoading: false,
       },
 
       csr: {},
       personal: {},
-      verification: {}
-    }
+      verification: {},
+    };
   },
   computed: {
-    ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
-    ...mapState(useAppStore, ['onLogin']),
-    ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL']),
-    getProducts () {
-      if (Object.keys(this.products).length === 0) return 'NAN'
-      const product = this.products[this.options.provider]
-        .find(el => el.product === this.options.tarif)
+    ...mapStores(
+      useNamespasesStore,
+      useSpStore,
+      usePlansStore,
+      useInstancesStore
+    ),
+    ...mapState(useAppStore, ["onLogin"]),
+    ...mapState(useAuthStore, [
+      "isLogged",
+      "userdata",
+      "fetchBillingData",
+      "baseURL",
+    ]),
+    getProducts() {
+      if (Object.keys(this.products).length === 0) return "NAN";
+      const product = this.products[this.options.provider].find(
+        (el) => el.product === this.options.tarif
+      );
 
-      return { ...product, price: +(product.price * this.currency.rate).toFixed(2) }
+      return { ...product, price: this.formatPrice(product.price) };
     },
-    template () {
+    template() {
       switch (this.currentStep) {
         case 1:
-          return () => import('@/components/services/ssl/csr.vue')
+          return () => import("@/components/services/ssl/csr.vue");
         case 2:
-          return () => import('@/components/services/ssl/personal.vue')
+          return () => import("@/components/services/ssl/personal.vue");
         case 3:
-          return () => import('@/components/services/ssl/verification.vue')
+          return () => import("@/components/services/ssl/verification.vue");
         default:
-          return null
+          return null;
       }
     },
-    periods () {
-      return Object.keys(this.getProducts.prices || {})
-        .filter((el) => isFinite(+el))
+    periods() {
+      return Object.keys(this.getProducts.prices || {}).filter((el) =>
+        isFinite(+el)
+      );
     },
-    services () {
-      return this.instancesStore.services.filter((el) => el.status !== 'DEL')
+    services() {
+      return this.instancesStore.services.filter((el) => el.status !== "DEL");
     },
-    plans () {
-      return this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
-        const { items } = this.spStore.showcases.find(
+    plans() {
+      return (
+        this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
+          const { items } =
+            this.spStore.showcases.find(
+              ({ uuid }) => uuid === this.$route.query.service
+            ) ?? {};
+          const plans = [];
+
+          if (!items) return type === "goget";
+          items.forEach(({ servicesProvider, plan }) => {
+            if (servicesProvider === this.provider) {
+              plans.push(plan);
+            }
+          });
+
+          if (plans.length < 1) return type === "goget";
+          return type === "goget" && plans.includes(uuid);
+        }) ?? []
+      );
+    },
+    sp() {
+      const { items } =
+        this.spStore.showcases.find(
           ({ uuid }) => uuid === this.$route.query.service
-        ) ?? {}
-        const plans = []
+        ) ?? {};
 
-        if (!items) return type === 'goget'
-        items.forEach(({ servicesProvider, plan }) => {
-          if (servicesProvider === this.provider) {
-            plans.push(plan)
-          }
-        })
-
-        if (plans.length < 1) return type === 'goget'
-        return type === 'goget' && plans.includes(uuid)
-      }) ?? []
-    },
-    sp () {
-      const { items } = this.spStore.showcases.find(
-        ({ uuid }) => uuid === this.$route.query.service
-      ) ?? {}
-
-      if (!items) return []
+      if (!items) return [];
       return this.spStore.servicesProviders.filter(({ uuid }) =>
         items.find((item) => uuid === item.servicesProvider)
-      )
-    }
+      );
+    },
   },
   watch: {
-    sp (value) {
-      if (value.length > 0) this.provider = value[0].uuid
+    sp(value) {
+      if (value.length > 0) this.provider = value[0].uuid;
     },
-    async provider (uuid) {
-      if (this.cachedPlans[uuid]) return
+    async provider(uuid) {
+      if (this.cachedPlans[uuid]) return;
       try {
         const { pool } = await this.plansStore.fetch({
-          anonymously: !this.isLogged, sp_uuid: uuid
-        })
+          anonymously: !this.isLogged,
+          sp_uuid: uuid,
+        });
 
-        this.cachedPlans[uuid] = pool
-        this.plan = this.plans[0]?.uuid
+        this.cachedPlans[uuid] = pool;
+        this.plan = this.plans[0]?.uuid;
       } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error
+        const message = error.response?.data?.message ?? error.message ?? error;
 
-        this.openNotification('error', { message })
+        this.openNotification("error", { message });
       }
     },
-    'options.provider' (value) {
-      this.options.tarif = this.products[value][0].product
+    "options.provider"(value) {
+      this.options.tarif = this.products[value][0].product;
     },
-    periods (value) {
-      this.options.period = value[0]
+    periods(value) {
+      this.options.period = value[0];
     },
-    currentStep (value) {
-      if (value === 1) this.csr.domain = this.options.domain
-    }
+    currentStep(value) {
+      if (value === 1) this.csr.domain = this.options.domain;
+    },
   },
-  mounted () {
-    const { action } = this.onLogin
+  mounted() {
+    const { action } = this.onLogin;
 
-    if (typeof action !== 'function') return
-    this.modal.confirmCreate = true
-    this.modal.confirmLoading = true
-    action()
+    if (typeof action !== "function") return;
+    this.modal.confirmCreate = true;
+    this.modal.confirmLoading = true;
+    action();
   },
-  created () {
-    this.fetchBillingData()
-    this.spStore.fetch(!this.isLogged).then(() => this.fetch())
-    this.spStore.fetchShowcases(!this.isLogged)
+  created() {
+    this.fetchBillingData();
+    this.spStore.fetch(!this.isLogged).then(() => this.fetch());
+    this.spStore.fetchShowcases(!this.isLogged);
 
     if (this.isLogged) {
-      this.namespacesStore.fetch()
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
+      this.namespacesStore.fetch().catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
 
-          if (err.response?.data?.code === 16) return
-          this.openNotification('error', {
-            message: this.$t(message)
-          })
-          console.error(err)
-        })
+        if (err.response?.data?.code === 16) return;
+        this.openNotification("error", {
+          message: this.$t(message),
+        });
+        console.error(err);
+      });
 
-      this.instancesStore.fetch()
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
+      this.instancesStore.fetch().catch((err) => {
+        const message = err.response?.data?.message ?? err.message ?? err;
 
-          if (err.response?.data?.code === 16) return
-          this.openNotification('error', {
-            message: this.$t(message)
-          })
-          console.error(err)
-        })
+        if (err.response?.data?.code === 16) return;
+        this.openNotification("error", {
+          message: this.$t(message),
+        });
+        console.error(err);
+      });
     }
   },
   methods: {
-    fetch () {
-      this.fetchLoading = true
-      this.$api.post(`/sp/${this.provider}/invoke`, {
-        method: 'get_certificate'
-      })
+    fetch() {
+      this.fetchLoading = true;
+      this.$api
+        .post(`/sp/${this.provider}/invoke`, {
+          method: "get_certificate",
+        })
         .then(({ meta }) => {
-          const plan = this.plans.find(({ uuid }) => uuid === this.plan)
+          const plan = this.plans.find(({ uuid }) => uuid === this.plan);
 
           meta.cert.products.forEach((product) => {
-            const prices = {}
+            const prices = {};
 
             Object.keys(product.prices).forEach((period) => {
-              const key = `${period} ${product.id}`
+              const key = `${period} ${product.id}`;
 
-              if (plan.products[key]) prices[period] = plan.products[key].price
-            })
+              if (plan.products[key]) prices[period] = plan.products[key].price;
+            });
 
             if (Object.keys(prices).length > 0) {
               if (!(product.brand in this.products)) {
-                this.products[product.brand] = []
+                this.products[product.brand] = [];
               }
-              this.products[product.brand].push({ ...product, prices })
+              this.products[product.brand].push({ ...product, prices });
             }
-          })
+          });
 
-          this.options.provider = Object.keys(this.products)[0]
-          this.options.tarif = this.products[this.options.provider][0].product
-          this.products = Object.assign({}, this.products)
+          this.options.provider = Object.keys(this.products)[0];
+          this.options.tarif = this.products[this.options.provider][0].product;
+          this.products = Object.assign({}, this.products);
         })
-        .catch(err => console.error(err))
+        .catch((err) => console.error(err))
         .finally(() => {
-          this.fetchLoading = false
-        })
+          this.fetchLoading = false;
+        });
     },
-    orderClickHandler () {
-      const service = this.services.find(({ uuid }) => uuid === this.service)
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan)
+    orderClickHandler() {
+      const service = this.services.find(({ uuid }) => uuid === this.service);
+      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
 
-      const instances = [{
-        config: { auto_start: plan.meta.auto_start },
-        resources: {
-          id: this.getProducts.id,
-          user: this.personal,
-          domain: this.options.domain,
-          period: this.options.period,
-          csr: this.csr.csr,
-          dcv: this.verification.dcv,
-          approver_email: this.verification.email
+      const instances = [
+        {
+          config: { auto_start: plan.meta.auto_start },
+          resources: {
+            id: this.getProducts.id,
+            user: this.personal,
+            domain: this.options.domain,
+            period: this.options.period,
+            csr: this.csr.csr,
+            dcv: this.verification.dcv,
+            approver_email: this.verification.email,
+          },
+          title: this.options.tarif,
+          billing_plan: { uuid: this.plan },
+          product: this.options.provider,
         },
-        title: this.options.tarif,
-        billing_plan: { uuid: this.plan },
-        product: this.options.provider
-      }]
+      ];
       const newGroup = {
         title: this.userdata.title + Date.now(),
-        type: 'goget',
+        type: "goget",
         sp: this.provider,
-        instances
-      }
+        instances,
+      };
 
-      const info = (!this.service) ? newGroup : JSON.parse(JSON.stringify(service))
-      const group = info.instancesGroups?.find(({ sp }) => sp === this.provider)
+      const info = !this.service
+        ? newGroup
+        : JSON.parse(JSON.stringify(service));
+      const group = info.instancesGroups?.find(
+        ({ sp }) => sp === this.provider
+      );
 
-      if (group) group.instances = [...group.instances, ...instances]
-      else if (this.service) info.instancesGroups.push(newGroup)
+      if (group) group.instances = [...group.instances, ...instances];
+      else if (this.service) info.instancesGroups.push(newGroup);
 
       if (!this.isLogged) {
-        this.onLogin.redirect = this.$route.name
+        this.onLogin.redirect = this.$route.name;
         this.onLogin.info = {
-          type: 'ssl',
-          title: 'SSL Certificate',
+          type: "ssl",
+          title: "SSL Certificate",
           cost: this.getProducts.prices[this.options.period],
-          currency: this.currency.code
-        }
+          currency: this.currency.code,
+        };
         this.onLogin.action = () => {
-          this.createSSL(info)
-        }
+          this.createSSL(info);
+        };
 
-        this.$router.push({ name: 'login' })
-        return
+        this.$router.push({ name: "login" });
+        return;
       }
 
-      this.createSSL(info)
+      this.createSSL(info);
     },
-    createSSL (info) {
-      this.modal.confirmLoading = true
-      const action = (this.service) ? 'update' : 'create'
-      const orderData = (this.service)
+    createSSL(info) {
+      this.modal.confirmLoading = true;
+      const action = this.service ? "update" : "create";
+      const orderData = this.service
         ? info
         : {
             namespace: this.namespace,
             service: {
               title: this.userdata.title,
               context: {},
-              version: '1',
-              instancesGroups: [info]
-            }
-          }
+              version: "1",
+              instancesGroups: [info],
+            },
+          };
 
       this.instancesStore[`${action}Service`](orderData)
         .then(async ({ uuid, instancesGroups }) => {
-          await this.deployService(uuid, this.$t('SSL created successfully'))
-          const { instances } = instancesGroups.find(({ sp }) => sp === this.provider) ?? {}
-          let instance
+          await this.deployService(uuid, this.$t("SSL created successfully"));
+          const { instances } =
+            instancesGroups.find(({ sp }) => sp === this.provider) ?? {};
+          let instance;
 
           for (let i = instances.length - 1; i >= 0; i--) {
-            const { title } = instances[i]
+            const { title } = instances[i];
 
             if (title === this.getProducts.title) {
-              instance = instances[i]
+              instance = instances[i];
             }
           }
 
           if (this.namespacesStore.namespaces.length < 1) {
-            await this.namespacesStore.fetch()
+            await this.namespacesStore.fetch();
           }
 
           const { access } = this.namespacesStore.namespaces.find(
             ({ uuid }) => uuid === this.namespace
-          )
-          const account = access.namespace ?? this.namespace
+          );
+          const account = access.namespace ?? this.namespace;
 
-          localStorage.setItem('order', 'Invoice')
-          this.$router.push({ path: '/billing' })
+          localStorage.setItem("order", "Invoice");
+          this.$router.push({ path: "/billing" });
         })
         .catch((error) => {
-          const url = error.response?.data.redirect_url ?? error.response?.data ?? error
+          const url =
+            error.response?.data.redirect_url ?? error.response?.data ?? error;
 
-          if (url.startsWith && url.startsWith('http')) {
-            localStorage.setItem('order', 'Invoice')
-            this.$router.push({ path: '/billing' })
-            return
+          if (url.startsWith && url.startsWith("http")) {
+            localStorage.setItem("order", "Invoice");
+            this.$router.push({ path: "/billing" });
+            return;
           }
 
-          const matched = (error.response?.data?.message ?? error.message ?? '').split(/error:"|error: "/)
-          const message = matched.at(-1).split('" ').at(0)
+          const matched = (
+            error.response?.data?.message ??
+            error.message ??
+            ""
+          ).split(/error:"|error: "/);
+          const message = matched.at(-1).split('" ').at(0);
 
           if (message) {
-            this.openNotification('error', { message })
+            this.openNotification("error", { message });
           } else {
-            const message = error.response?.data?.message ?? error.message ?? error
+            const message =
+              error.response?.data?.message ?? error.message ?? error;
 
-            this.openNotification('error', { message })
+            this.openNotification("error", { message });
           }
-          console.error(error)
-        })
+          console.error(error);
+        });
     },
-    orderConfirm (order = true) {
-      const isValid = this.options.domain.match(/.+\..+/)
+    orderConfirm(order = true) {
+      const isValid = this.options.domain.match(/.+\..+/);
 
       if (!isValid) {
-        this.$message.error('domain is wrong')
-        return
+        this.$message.error("domain is wrong");
+        return;
       }
 
       const instance = {
         config: {},
-        billingPlan: this.plans.find(({ uuid }) => uuid === this.plan)
-      }
-      const isPayg = this.checkPayg(instance)
-      const price = this.getProducts.prices[this.options.period]
+        billingPlan: this.plans.find(({ uuid }) => uuid === this.plan),
+      };
+      const isPayg = this.checkPayg(instance);
+      const price = this.getProducts.prices[this.options.period];
 
-      if (isPayg && !this.checkBalance(price)) return
-      if (order) this.modal.confirmCreate = true
+      if (isPayg && !this.checkBalance(price)) return;
+      if (order) this.modal.confirmCreate = true;
 
-      return isValid
+      return isValid;
     },
-    handleClickPrev (data) {
+    handleClickPrev(data) {
       if (data.csr) {
-        this.csr = data
+        this.csr = data;
       } else if (data.firstname) {
-        this.personal = data
+        this.personal = data;
       } else if (data.dcv) {
-        this.verification = data
+        this.verification = data;
       }
-      this.currentStep--
+      this.currentStep--;
     },
-    handleClickNext (data) {
+    handleClickNext(data) {
       if (data.csr) {
-        this.csr = data
+        this.csr = data;
       } else if (data.firstname) {
-        this.personal = data
+        this.personal = data;
       }
 
       if (this.orderConfirm(false)) {
-        this.currentStep++
+        this.currentStep++;
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style>
@@ -558,15 +624,13 @@ export default {
   transform: translateX(-50%);
 }
 
-.order__prop:not(:first-child){
+.order__prop:not(:first-child) {
   margin-top: 15px;
 }
 
 .order__field {
   border-radius: 20px;
-  box-shadow:
-    5px 8px 10px rgba(0, 0, 0, .08),
-    0px 0px 12px rgba(0, 0, 0, .05);
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
   padding: 20px;
   background-color: var(--bright_font);
   height: max-content;
@@ -585,33 +649,31 @@ export default {
   flex: none;
 }
 
-.order__field-header{
+.order__field-header {
   text-align: center;
   font-size: 1.2rem;
   font-weight: bold;
   margin-bottom: 20px;
 }
 
-.order__template{
+.order__template {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
 }
 
-.order__template.one-line{
+.order__template.one-line {
   flex-wrap: nowrap;
   justify-content: space-between;
 }
 
-.order__template-item{
+.order__template-item {
   width: 116px;
   margin-bottom: 10px;
   background-color: var(--bright_font);
-  box-shadow:
-    3px 2px 6px rgba(0, 0, 0, .08),
-    0px 0px 8px rgba(0, 0, 0, .05);
+  box-shadow: 3px 2px 6px rgba(0, 0, 0, 0.08), 0px 0px 8px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
-  transition: box-shadow .2s ease, transform .2s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
   cursor: pointer;
   text-align: center;
   overflow: hidden;
@@ -621,76 +683,72 @@ export default {
   grid-template-rows: max-content auto;
 }
 
-.order__template-item:not(:last-child){
+.order__template-item:not(:last-child) {
   margin-right: 10px;
 }
 
-.order__template-item:hover{
-  box-shadow:
-    5px 8px 10px rgba(0, 0, 0, .08),
-    0px 0px 12px rgba(0, 0, 0, .05);
+.order__template-item:hover {
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
 }
 
-.order__template-item.active{
-  box-shadow:
-    5px 8px 12px rgba(0, 0, 0, .08),
-    0px 0px 13px rgba(0, 0, 0, .05);
+.order__template-item.active {
+  box-shadow: 5px 8px 12px rgba(0, 0, 0, 0.08), 0px 0px 13px rgba(0, 0, 0, 0.05);
   transform: scale(1.02);
 }
 
-.order__template-image{
+.order__template-image {
   padding: 10px;
 }
 
-.order__template-image__rate{
+.order__template-image__rate {
   font-size: 2rem;
 }
 
-.order__template-name{
+.order__template-name {
   padding: 10px;
 }
 
-.order__template-item.active .order__template-name{
+.order__template-item.active .order__template-name {
   background-color: var(--main);
   color: var(--bright_font);
 }
 
-.max-width{
+.max-width {
   width: 100%;
 }
 
-.ant-collapse-item:last-of-type .ant-collapse-content{
+.ant-collapse-item:last-of-type .ant-collapse-content {
   border-radius: 0 0 28px 28px;
 }
 
-.slider_btn{
+.slider_btn {
   cursor: pointer;
 }
 
-.removeMarginSkeleton .ant-skeleton-title{
+.removeMarginSkeleton .ant-skeleton-title {
   margin: 0;
   margin-top: 4px;
 }
 
-.removeMarginSkeleton{
+.removeMarginSkeleton {
   min-width: 75px;
 }
 
-.total.removeMarginSkeleton{
+.total.removeMarginSkeleton {
   width: 100%;
 }
 
-.order__slider{
+.order__slider {
   display: flex;
   overflow-x: auto;
   padding-bottom: 10px;
 }
 
-.order__slider-item:not(:last-child){
+.order__slider-item:not(:last-child) {
   margin-right: 10px;
 }
 
-.order__slider-item{
+.order__slider-item {
   flex-shrink: 0;
   /* border: 1px solid var(--border_color); */
   box-shadow: inset 0 0 0 1px var(--border_color);
@@ -702,19 +760,19 @@ export default {
   cursor: pointer;
   border-radius: 15px;
   font-size: 1.1rem;
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.order__slider-item:hover{
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+.order__slider-item:hover {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
-.order__slider-item--active{
+.order__slider-item--active {
   background-color: var(--main);
   color: var(--bright_font);
 }
 
-.order__slider-item--loading{
+.order__slider-item--loading {
   /* background-color: #f2f2f2; */
   box-shadow: none;
   /* animation: glowing .5s ease infinite; */
@@ -725,7 +783,7 @@ export default {
   animation-direction: alternate;
 }
 
-.loadingLine{
+.loadingLine {
   min-width: 100px;
   width: 100%;
   height: 2rem;
@@ -737,7 +795,7 @@ export default {
   animation-direction: alternate;
 }
 
-.loadingLine--total{
+.loadingLine--total {
   margin-top: 10px;
   height: 26px;
 }
@@ -774,58 +832,60 @@ export default {
 }
 
 @media screen and (max-width: 576px) {
-  .order__template{
+  .order__template {
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
   }
-  .order__template-item{
+  .order__template-item {
     grid-template-columns: max-content auto;
     grid-template-rows: 1fr;
     width: auto;
     height: 50px;
   }
-  .order__template-item:not(:last-child){
+  .order__template-item:not(:last-child) {
     margin-right: 0px;
   }
-  .order__template-image{
+  .order__template-image {
     width: 50px;
     height: 50px;
     padding: 4px;
   }
-  .order__template-image__rate{
+  .order__template-image__rate {
     line-height: 42px;
     font-size: 1.4rem;
   }
-  .order__template-image img{
+  .order__template-image img {
     object-fit: contain;
     width: 100%;
     height: 100%;
   }
-  .order__template-name{
+  .order__template-name {
     text-align: left;
     line-height: 30px;
     display: flex;
   }
-  .order__template-type{
+  .order__template-type {
     width: 56px;
   }
-  .order__template-name ul{
+  .order__template-name ul {
     display: flex;
     justify-content: space-around;
     list-style: none;
-    flex: 1
+    flex: 1;
   }
-  .order__template-name ul li{
+  .order__template-name ul li {
     margin-left: 20px;
   }
 }
 
-.networkApear-enter-active, .networkApear-leave-active {
-  transition: opacity .5s, height .5s;
+.networkApear-enter-active,
+.networkApear-leave-active {
+  transition: opacity 0.5s, height 0.5s;
   height: 26px;
 }
-.networkApear-enter-from, .networkApear-leave-to {
+.networkApear-enter-from,
+.networkApear-leave-to {
   opacity: 0;
   height: 0;
 }
