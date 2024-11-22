@@ -34,7 +34,12 @@
         />
       </a-col>
       <transition name="textchange" mode="out-in">
-        <a-col class="changing__field" :sm="3" :xs="18" style="text-align: right">
+        <a-col
+          class="changing__field"
+          :sm="3"
+          :xs="18"
+          style="text-align: right"
+        >
           {{ options.ram.size }} Gb
         </a-col>
       </transition>
@@ -42,7 +47,9 @@
 
     <a-row justify="space-between" align="middle" class="newCloud__prop">
       <a-col>
-        <span style="display: inline-block; width: 70px">{{ $t("Drive") }}:</span>
+        <span style="display: inline-block; width: 70px"
+          >{{ $t("Drive") }}:</span
+        >
       </a-col>
       <a-col
         v-if="resources[product]?.disk.length > 1"
@@ -53,7 +60,9 @@
           style="width: 100%"
           :value="options.disk.size / 1024"
           :options="resources[product].disk"
-          @update:value="setResource({ key: 'disk', value: $event * 1024 }, false)"
+          @update:value="
+            setResource({ key: 'disk', value: $event * 1024 }, false)
+          "
         />
       </a-col>
       <a-col class="changing__field" :sm="3" :xs="18" style="text-align: right">
@@ -74,30 +83,32 @@
       >
         <h1>{{ item.title }}</h1>
         <div>
-          {{ $t('cpu') }}:
-          <loading-icon v-if="options.cpu.size === 'loading' && product === item.value" />
+          {{ $t("cpu") }}:
+          <loading-icon
+            v-if="options.cpu.size === 'loading' && product === item.value"
+          />
           <template v-else>
-            {{ item.resources.cpu ?? '?' }}
+            {{ item.resources.cpu ?? "?" }}
           </template>
         </div>
         <div style="margin-top: 6px; line-height: 1.3">
-          {{ $t('ram') }}: {{ $t('from') }}
-          {{ resources[item.value]?.ram[0]?.label ?? '?' }}
+          {{ $t("ram") }}: {{ $t("from") }}
+          {{ resources[item.value]?.ram[0]?.label ?? "?" }}
         </div>
         <div style="margin-top: 6px; line-height: 1.3">
-          {{ $t('Drive') }}: {{ $t('from') }}
-          {{ resources[item.value]?.disk[0]?.label ?? '?' }}
+          {{ $t("Drive") }}: {{ $t("from") }}
+          {{ resources[item.value]?.disk[0]?.label ?? "?" }}
         </div>
         <div style="margin-top: 5px">
-          {{ capitalize($t('from')) }}
+          {{ capitalize($t("from")) }}
           <span
             :style="{
               fontSize: '18px',
               fontWeight: 700,
-              color: (product === item.value) ? null : 'var(--main)'
+              color: product === item.value ? null : 'var(--main)',
             }"
           >
-            {{ +((resources[item.value]?.prices[mode] ?? 0) * currency.rate).toFixed(2) }}
+            {{ formatPrice(resources[item.value]?.prices[mode] ?? 0) }}
             {{ currency.code }}
           </span>
         </div>
@@ -107,7 +118,7 @@
           class="config__button"
           @click="$router.push({ query: { ...$route.query, product } })"
         >
-          {{ capitalize($t('config')) }}
+          {{ capitalize($t("config")) }}
         </a-button>
       </div>
     </div>
@@ -121,111 +132,120 @@
 </template>
 
 <script setup>
-import { getCurrentInstance, watch, inject, computed, ref, nextTick, defineAsyncComponent } from 'vue'
-import { useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import {
+  getCurrentInstance,
+  watch,
+  inject,
+  computed,
+  ref,
+  nextTick,
+  defineAsyncComponent,
+} from "vue";
+import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 
-import { useCloudStore } from '@/stores/cloud.js'
-import { useAddonsStore } from '@/stores/addons.js'
+import { useCloudStore } from "@/stores/cloud.js";
+import { useAddonsStore } from "@/stores/addons.js";
 
-import { useCurrency } from '@/hooks/utils'
-import { getDisk } from '@/functions.js'
+import { useCurrency } from "@/hooks/utils";
+import { getDisk } from "@/functions.js";
 
-const loadingIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LoadingOutlined')
-)
-const leftIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LeftOutlined')
-)
+const loadingIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LoadingOutlined")
+);
+const leftIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LeftOutlined")
+);
 
 const props = defineProps({
   plans: { type: Array, default: () => [] },
   products: { type: Array, required: true },
   productSize: { type: String, required: true },
   mode: { type: String, required: true },
-  isFlavorsLoading: { type: Boolean, default: false }
-})
-const emits = defineEmits(['update:periods', 'update:product-size'])
+  isFlavorsLoading: { type: Boolean, default: false },
+});
+const emits = defineEmits(["update:periods", "update:product-size"]);
 
-const app = getCurrentInstance().appContext.config.globalProperties
-const route = useRoute()
-const i18n = useI18n()
-const cloudStore = useCloudStore()
-const addonsStore = useAddonsStore()
+const app = getCurrentInstance().appContext.config.globalProperties;
+const route = useRoute();
+const i18n = useI18n();
+const cloudStore = useCloudStore();
+const addonsStore = useAddonsStore();
 
-const [productItem] = inject('useProduct', () => [])()
-const [options, setOptions] = inject('useOptions', () => [])()
-const [price, setPrice] = inject('usePriceOVH', () => [])()
-const { currency } = useCurrency()
+const [productItem] = inject("useProduct", () => [])();
+const [options, setOptions] = inject("useOptions", () => [])();
+const [price, setPrice] = inject("usePriceOVH", () => [])();
+const { currency, formatPrice } = useCurrency();
 
-const product = ref('')
-const checkedTypes = ref([])
+const product = ref("");
+const checkedTypes = ref([]);
 
 watch(product, (value) => {
-  const product = props.products.find((item) => item.value === value)
+  const product = props.products.find((item) => item.value === value);
 
-  if (!product) return
-  emits('update:product-size', product?.title)
-  setResources()
-})
+  if (!product) return;
+  emits("update:product-size", product?.title);
+  setResources();
+});
 
-watch(() => props.mode, () => {
-  setResources(false)
-})
+watch(
+  () => props.mode,
+  () => {
+    setResources(false);
+  }
+);
 
 const filteredProductsByRegion = computed(() =>
   props.products.filter(({ datacenter }) => {
-    const key = options.config.configuration.dedicated_datacenter
+    const key = options.config.configuration.dedicated_datacenter;
 
-    return datacenter?.includes(key)
+    return datacenter?.includes(key);
   })
-)
+);
 const filteredProducts = computed(() =>
   filteredProductsByRegion.value.filter(({ group }) => {
-    if (checkedTypes.value.length < 1) return true
-    return checkedTypes.value.find(
-      (type) => group.toLowerCase().includes(type.toLowerCase())
-    )
+    if (checkedTypes.value.length < 1) return true;
+    return checkedTypes.value.find((type) =>
+      group.toLowerCase().includes(type.toLowerCase())
+    );
   })
-)
+);
 
 watch([filteredProducts, () => addonsStore.addons], ([products, addons]) => {
   if (products.length < 1 || addons.length < 1) {
-    resetData()
-    return
+    resetData();
+    return;
   }
 
-  products.sort((a, b) =>
-    a.periods[0].price.value - b.periods[0].price.value
-  )
+  products.sort((a, b) => a.periods[0].price.value - b.periods[0].price.value);
 
-  const dataString = (localStorage.getItem('data'))
-    ? localStorage.getItem('data')
-    : route.query.data ?? '{}'
+  const dataString = localStorage.getItem("data")
+    ? localStorage.getItem("data")
+    : route.query.data ?? "{}";
 
-  if (dataString.includes('productSize')) {
-    const data = JSON.parse(dataString)
+  if (dataString.includes("productSize")) {
+    const data = JSON.parse(dataString);
 
-    product.value = data.productSize
-    return
+    product.value = data.productSize;
+    return;
   }
 
   nextTick(() => {
-    product.value = products[1]?.value ?? products[0]?.value
-  })
-})
+    product.value = products[1]?.value ?? products[0]?.value;
+  });
+});
 
 const resources = computed(() => {
-  if (!cloudStore.plan.products) return {}
+  if (!cloudStore.plan.products) return {};
 
   return props.products.reduce((result, { value, periods }) => {
-    const ram = []
-    const disk = []
-    const prices = {}
+    const ram = [];
+    const disk = [];
+    const prices = {};
 
-    getResources(ram, disk, value)
+    getResources(ram, disk, value);
     for (const item of periods) {
-      prices[item.pricingMode] = item.price.value
+      prices[item.pricingMode] = item.price.value;
     }
 
     return {
@@ -233,197 +253,203 @@ const resources = computed(() => {
       [value]: {
         prices,
         ram: ram.sort((a, b) => a.price - b.price),
-        disk: disk.sort((a, b) => a.price - b.price)
-      }
-    }
-  }, {})
-})
+        disk: disk.sort((a, b) => a.price - b.price),
+      },
+    };
+  }, {});
+});
 
 const typesOptions = computed(() => {
-  const types = []
+  const types = [];
 
   props.products.forEach(({ group, datacenter }) => {
-    const value = group.split('-')[0]
+    const value = group.split("-")[0];
     const productType = types.find((type) =>
       type.value.toLowerCase().includes(value.toLowerCase())
-    )
-    const key = options.config.configuration.dedicated_datacenter
+    );
+    const key = options.config.configuration.dedicated_datacenter;
 
-    if (productType) return
-    if (!datacenter?.includes(key)) return
-    if (group.includes('STOR') || group.includes('SDS')) {
-      types.push({ value, label: 'Storage' })
+    if (productType) return;
+    if (!datacenter?.includes(key)) return;
+    if (group.includes("STOR") || group.includes("SDS")) {
+      types.push({ value, label: "Storage" });
     }
 
     switch (value) {
-      case 'HGR':
-        types.push({ value, label: 'High grade' })
-        break
-      case 'HOST':
-        types.push({ value, label: 'Hosting' })
-        break
-      case 'MG':
-        types.push({ value, label: 'Enterprise' })
-        break
-      case 'FS':
-        types.push({ value, label: 'Storage' })
-        break
+      case "HGR":
+        types.push({ value, label: "High grade" });
+        break;
+      case "HOST":
+        types.push({ value, label: "Hosting" });
+        break;
+      case "MG":
+        types.push({ value, label: "Enterprise" });
+        break;
+      case "FS":
+        types.push({ value, label: "Storage" });
+        break;
       default:
-        types.push({ value, label: app.capitalize(value.toLowerCase()) })
+        types.push({ value, label: app.capitalize(value.toLowerCase()) });
     }
-  })
+  });
 
-  return types
-})
+  return types;
+});
 
 const diskSize = computed(() => {
-  const size = options.disk.size / 1024
+  const size = options.disk.size / 1024;
 
-  if (size > 1024) return `${(size / 1024).toFixed(1)} Tb`
-  if (size >= 1) return `${size.toFixed(1)} Gb`
-  return `${options.disk.size.toFixed(1)} Mb`
-})
+  if (size > 1024) return `${(size / 1024).toFixed(1)} Tb`;
+  if (size >= 1) return `${size.toFixed(1)} Gb`;
+  return `${options.disk.size.toFixed(1)} Mb`;
+});
 
-function resetData () {
-  product.value = ''
-  emits('update:product-size', '-')
-  emits('update:periods', [{ value: '-', label: 'unknown' }])
+function resetData() {
+  product.value = "";
+  emits("update:product-size", "-");
+  emits("update:periods", [{ value: "-", label: "unknown" }]);
 
-  setOptions('cpu.size', 0)
-  setOptions('ram.size', 0)
-  setOptions('disk.size', 0)
+  setOptions("cpu.size", 0);
+  setOptions("ram.size", 0);
+  setOptions("disk.size", 0);
 
-  setPrice('value', 0)
-  setPrice('addons', {})
+  setPrice("value", 0);
+  setPrice("addons", {});
 
-  setOptions('config.planCode', '')
-  setOptions('config.duration', '')
-  setOptions('config.pricingMode', '')
-  setOptions('config.addons', [])
+  setOptions("config.planCode", "");
+  setOptions("config.duration", "");
+  setOptions("config.pricingMode", "");
+  setOptions("config.addons", []);
 }
 
-async function setResource (resource, changeTarifs = true) {
-  await nextTick()
-  const duration = (props.mode === 'upfront12') ? 'P1Y' : 'P1M'
-  const { periods, value } = props.products.find(
-    (el) => el.value === product.value
-  ) ?? {}
-  if (!value) return
+async function setResource(resource, changeTarifs = true) {
+  await nextTick();
+  const duration = props.mode === "upfront12" ? "P1Y" : "P1M";
+  const { periods, value } =
+    props.products.find((el) => el.value === product.value) ?? {};
+  if (!value) return;
 
-  const prod = Object.entries(cloudStore.plan.products)
-    .find(([key]) => key.includes(value))
+  const prod = Object.entries(cloudStore.plan.products).find(([key]) =>
+    key.includes(value)
+  );
 
-  const { addons } = cloudStore.plan.products[`${duration} ${value}`] ?? prod[1]
+  const { addons } =
+    cloudStore.plan.products[`${duration} ${value}`] ?? prod[1];
 
   let addon = addonsStore.addons.find(({ uuid, meta }) => {
-    const isIncluded = addons?.includes(uuid)
-    const addonId = meta.id ?? ''
+    const isIncluded = addons?.includes(uuid);
+    const addonId = meta.id ?? "";
 
-    return isIncluded && addonId.includes(resource.value)
-  })
-  let addonKey = addon?.meta.id
+    return isIncluded && addonId.includes(resource.value);
+  });
+  let addonKey = addon?.meta.id;
 
-  let item = periods[0]
-  const tarifs = []
+  let item = periods[0];
+  const tarifs = [];
 
-  if (resource.key === 'ram') {
-    setOptions('ram.size', parseInt(addonKey?.split(' ').at(-1).split('-')[1] ?? 0))
+  if (resource.key === "ram") {
+    setOptions(
+      "ram.size",
+      parseInt(addonKey?.split(" ").at(-1).split("-")[1] ?? 0)
+    );
   }
-  if (resource.key === 'disk') {
+  if (resource.key === "disk") {
     addon = addonsStore.addons.find(({ uuid, meta }) => {
-      const isIncluded = addons?.includes(uuid)
-      const addonId = meta.id ?? ''
-      const isDisk = addonId.includes('raid')
+      const isIncluded = addons?.includes(uuid);
+      const addonId = meta.id ?? "";
+      const isDisk = addonId.includes("raid");
 
-      return isIncluded && isDisk && (getDisk(addonId) * 1024) === resource.value
-    })
-    addonKey = addon?.meta.id
+      return isIncluded && isDisk && getDisk(addonId) * 1024 === resource.value;
+    });
+    addonKey = addon?.meta.id;
 
-    setOptions('disk.size', getDisk(addonKey) * 1024)
-    if (addonKey?.includes('hybrid')) setOptions('disk.type', 'SSD + HDD')
-    else if (addonKey?.match(/[0-9]x[0-9]{1,}sa/g)) setOptions('disk.type', 'HDD')
-    else setOptions('disk.type', 'SSD')
+    setOptions("disk.size", getDisk(addonKey) * 1024);
+    if (addonKey?.includes("hybrid")) setOptions("disk.type", "SSD + HDD");
+    else if (addonKey?.match(/[0-9]x[0-9]{1,}sa/g))
+      setOptions("disk.type", "HDD");
+    else setOptions("disk.type", "SSD");
   }
-  if (!addons || !addonKey) return
+  if (!addons || !addonKey) return;
 
   periods.forEach((period) => {
-    if (period.pricingMode === props.mode) item = period
+    if (period.pricingMode === props.mode) item = period;
     switch (period.pricingMode) {
-      case 'upfront12':
-        tarifs.push({ value: 'Annually', label: 'annually' })
-        break
-      case 'upfront24':
-        tarifs.push({ value: 'Biennially', label: 'biennially' })
-        break
-      case 'default':
-        tarifs.push({ value: 'Monthly', label: 'ssl_product.Monthly' })
+      case "upfront12":
+        tarifs.push({ value: "Annually", label: "annually" });
+        break;
+      case "upfront24":
+        tarifs.push({ value: "Biennially", label: "biennially" });
+        break;
+      case "default":
+        tarifs.push({ value: "Monthly", label: "ssl_product.Monthly" });
     }
-  })
+  });
 
-  if (changeTarifs) emits('update:periods', tarifs)
-  setPrice('value', item.price.value)
-  setPrice('addons', {
+  if (changeTarifs) emits("update:periods", tarifs);
+  setPrice("value", item.price.value);
+  setPrice("addons", {
     ...price.addons,
-    [resource.key]: addon?.periods[productItem.value.period] ?? 0
-  })
+    [resource.key]: addon?.periods[productItem.value.period] ?? 0,
+  });
 
-  setOptions('config.planCode', value)
-  setOptions('config.duration', item.duration)
-  setOptions('config.pricingMode', item.pricingMode)
-  setOptions('config.addons', [])
+  setOptions("config.planCode", value);
+  setOptions("config.duration", item.duration);
+  setOptions("config.pricingMode", item.pricingMode);
+  setOptions("config.addons", []);
 }
 
-function setResources (changeTarifs = true) {
-  const item = props.products.find((item) => item.value === product.value)
-  const { ram, disk } = resources.value[item.value]
+function setResources(changeTarifs = true) {
+  const item = props.products.find((item) => item.value === product.value);
+  const { ram, disk } = resources.value[item.value];
 
-  setOptions('cpu.size', item.resources.cpu ?? i18n.t('ip.none'))
-  setResource({ key: 'ram', value: ram[0].value }, changeTarifs)
-  setResource({ key: 'disk', value: disk[0].value * 1024 }, false)
+  setOptions("cpu.size", item.resources.cpu ?? i18n.t("ip.none"));
+  setResource({ key: "ram", value: ram[0].value }, changeTarifs);
+  setResource({ key: "disk", value: disk[0].value * 1024 }, false);
 }
 
-function getResources (ram, disk, value) {
-  const entries = Object.entries(cloudStore.plan.products)
-  const { addons } = entries.find(([key]) => key.includes(value))[1]
+function getResources(ram, disk, value) {
+  const entries = Object.entries(cloudStore.plan.products);
+  const { addons } = entries.find(([key]) => key.includes(value))[1];
 
   addons?.forEach((id) => {
-    const resource = addonsStore.addons.find(({ uuid }) => uuid === id)
-    console.log(id,resource);
-    
-    const addonKey = resource?.meta.id
+    const resource = addonsStore.addons.find(({ uuid }) => uuid === id);
+    console.log(id, resource);
 
-    if (!resource || !resource?.public) return
-    if (addonKey.includes('ram')) {
-      const value = parseInt(addonKey.split(' ').at(-1).split('-')[1])
-      const i = ram.findIndex((item) => item.value === value)
+    const addonKey = resource?.meta.id;
 
-      if (i !== -1) return
-      ram.push({ value, label: resource.title, price: resource.price })
+    if (!resource || !resource?.public) return;
+    if (addonKey.includes("ram")) {
+      const value = parseInt(addonKey.split(" ").at(-1).split("-")[1]);
+      const i = ram.findIndex((item) => item.value === value);
+
+      if (i !== -1) return;
+      ram.push({ value, label: resource.title, price: resource.price });
     }
 
-    if (addonKey.includes('raid')) {
-      const value = getDisk(addonKey)
-      const i = disk.findIndex((item) => item.value === value)
+    if (addonKey.includes("raid")) {
+      const value = getDisk(addonKey);
+      const i = disk.findIndex((item) => item.value === value);
 
-      if (i !== -1) return
-      disk.push({ value, label: resource.title, price: resource.price })
+      if (i !== -1) return;
+      disk.push({ value, label: resource.title, price: resource.price });
     }
-  })
+  });
 }
 
-function setDatacenter () {
-  const { extra } = cloudStore.locations
-    .find(({ id }) => cloudStore.locationId.includes(id)) ?? {}
+function setDatacenter() {
+  const { extra } =
+    cloudStore.locations.find(({ id }) => cloudStore.locationId.includes(id)) ??
+    {};
 
-  setOptions('config.configuration.dedicated_datacenter', extra.region)
+  setOptions("config.configuration.dedicated_datacenter", extra.region);
 }
 
-watch(() => cloudStore.locationId, setDatacenter)
-setDatacenter()
+watch(() => cloudStore.locationId, setDatacenter);
+setDatacenter();
 </script>
 
 <script>
-export default { name: 'OvhDedicatedPlanPanel' }
+export default { name: "OvhDedicatedPlanPanel" };
 </script>
 
 <style scoped>
@@ -439,11 +465,11 @@ export default { name: 'OvhDedicatedPlanPanel' }
   border-radius: 15px;
   cursor: pointer;
   box-shadow: inset 0 0 0 1px var(--border_color);
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .order__grid-item:hover {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 .order__grid-item h1 {

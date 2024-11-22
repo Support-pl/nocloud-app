@@ -118,7 +118,7 @@
           <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
               <template v-if="!fetchLoading">
-                {{ (getProducts.price * currency.rate).toFixed(2) }}
+                {{ formatPrice(getProducts.price) }}
                 {{ currency.code }}
               </template>
               <div v-else class="loadingLine loadingLine--total" />
@@ -160,12 +160,12 @@
 <script>
 import { ref, reactive } from "vue";
 import { mapStores, mapState } from "pinia";
-import useCreateInstance from '@/hooks/instances/create.js'
-import { useCurrency, usePeriod, useSlider } from '@/hooks/utils'
-import { checkPayg } from '@/functions.js'
+import useCreateInstance from "@/hooks/instances/create.js";
+import { useCurrency, usePeriod, useSlider } from "@/hooks/utils";
+import { checkPayg } from "@/functions.js";
 
-import { useAppStore } from '@/stores/app.js'
-import { useAuthStore } from '@/stores/auth.js'
+import { useAppStore } from "@/stores/app.js";
+import { useAuthStore } from "@/stores/auth.js";
 
 import { useSpStore } from "@/stores/sp.js";
 import { usePlansStore } from "@/stores/plans.js";
@@ -178,11 +178,11 @@ import promoBlock from "@/components/ui/promo.vue";
 export default {
   name: "VirtualComponent",
   components: { selectsToCreate, promoBlock },
-  inject: ['checkBalance'],
-  setup () {
-    const { getPeriod } = usePeriod()
-    const { currency } = useCurrency()
-    const { deployService } = useCreateInstance()
+  inject: ["checkBalance"],
+  setup() {
+    const { getPeriod } = usePeriod();
+    const { currency, formatPrice } = useCurrency();
+    const { deployService } = useCreateInstance();
 
     // return { currency, getPeriod, deployService, checkPayg }
 
@@ -210,23 +210,38 @@ export default {
       isSlider,
 
       currency,
+      formatPrice,
       getPeriod,
       deployService,
       checkPayg,
     };
   },
   computed: {
-    ...mapStores(useNamespasesStore, useSpStore, usePlansStore, useInstancesStore),
-    ...mapState(useAppStore, ['onLogin']),
-    ...mapState(useAuthStore, ['isLogged', 'userdata', 'fetchBillingData', 'baseURL', 'billingUser']),
-    getProducts () {
-      if (Object.keys(this.products || {}).length === 0) return 'NAN'
-      if (!(this.options.size && this.options.period)) return 'NAN'
-      const product = JSON.parse(JSON.stringify(
-        this.products.find(({ title, period }) =>
-          title === this.options.size && +period === this.options.period
+    ...mapStores(
+      useNamespasesStore,
+      useSpStore,
+      usePlansStore,
+      useInstancesStore
+    ),
+    ...mapState(useAppStore, ["onLogin"]),
+    ...mapState(useAuthStore, [
+      "isLogged",
+      "userdata",
+      "fetchBillingData",
+      "baseURL",
+      "billingUser",
+    ]),
+    getProducts() {
+      if (Object.keys(this.products || {}).length === 0) return "NAN";
+      if (!(this.options.size && this.options.period)) return "NAN";
+      const product = JSON.parse(
+        JSON.stringify(
+          this.products.find(
+            ({ title, period }) =>
+              title === this.options.size && +period === this.options.period
+          )
         )
-      ))
+      );
 
       delete product.resources.model;
       if (`${product.resources.ssd}`.includes("Gb")) return product;
@@ -295,7 +310,7 @@ export default {
   },
   watch: {
     billingUser(value) {
-      if(this.config){
+      if (this.config) {
         this.config.email = value.email;
       }
     },
@@ -365,12 +380,13 @@ export default {
     Promise.all(promises)
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
-      if (err.response?.data?.code === 16) return
-      this.$notification.error({ message: this.$t(message) })
-      console.error(err)
-    }).finally(() => {
-      this.fetchLoading = false
-    })
+        if (err.response?.data?.code === 16) return;
+        this.$notification.error({ message: this.$t(message) });
+        console.error(err);
+      })
+      .finally(() => {
+        this.fetchLoading = false;
+      });
   },
   methods: {
     changeProducts() {
@@ -521,8 +537,8 @@ export default {
           );
           const account = access.namespace ?? this.namespace;
 
-          localStorage.setItem('order', 'Invoice')
-          this.$router.push({ path: '/billing' })
+          localStorage.setItem("order", "Invoice");
+          this.$router.push({ path: "/billing" });
         })
         .catch((error) => {
           const url =

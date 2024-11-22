@@ -6,7 +6,7 @@
   >
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
-        {{ -(invoice.cost * currency.rate).toFixed(2) }} {{ currency.code }}
+        {{ -formatPrice(invoice.cost) }} {{ currency.code }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -63,7 +63,7 @@ const props = defineProps({
 });
 
 const router = useRouter();
-const { currency: baseCurrency } = useCurrency();
+const { currency: baseCurrency, formatPrice } = useCurrency();
 const { toDate } = useAppStore();
 const instancesStore = useInstancesStore();
 
