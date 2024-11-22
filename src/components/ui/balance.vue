@@ -43,7 +43,7 @@ const formatedBalance = computed(() => {
   if (Math.abs(balance) === 0) {
     return 0;
   }
-  return balance.toFixed(currency.value.precision);
+  return (authStore.userdata.balance || 0).toFixed(currency.value.precision);
 });
 
 // function URLparameter (obj, outer = '') {
