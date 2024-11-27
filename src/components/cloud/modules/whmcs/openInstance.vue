@@ -414,9 +414,9 @@
 <script lang="jsx">
 import { mapState } from 'pinia'
 import { defineAsyncComponent } from 'vue'
+
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
-import notification from '@/mixins/notification.js'
+import { useCurrency, useNotification } from '@/hooks/utils'
 import { toDate } from '@/functions.js'
 
 const redoIcon = defineAsyncComponent(
@@ -466,12 +466,17 @@ export default {
     caretRightIcon,
     closeIcon
   },
-  mixins: [notification],
   props: {
     // eslint-disable-next-line vue/prop-name-casing
     VM: { type: Object, required: true }
   },
   emits: ['update:password'],
+  setup () {
+    const { currency } = useCurrency()
+    const { openNotification } = useNotification()
+
+    return { currency, openNotification }
+  },
   data: () => ({
     modal: {
       reboot: false,
@@ -498,10 +503,6 @@ export default {
   }),
   computed: {
     ...mapState(useAuthStore, ['userdata', 'baseURL']),
-    ...mapState(useCurrenciesStore, ['defaultCurrency']),
-    currency () {
-      return { code: this.userdata.currency ?? this.defaultCurrency }
-    },
     statusVM () {
       if (!this.VM?.vm_info?.STATE) return {}
       const state = this.VM.vm_info.STATE.toLowerCase()
@@ -570,7 +571,7 @@ export default {
         .then(({ response }) => {
           if (response?.error) throw response?.error
 
-          this.openNotificationWithIcon('success', {
+          this.openNotification('success', {
             message: this.$t('Create snapshot')
           })
           this.snapshots.addSnap.modal = false
@@ -579,7 +580,7 @@ export default {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? err ?? 'Unknown'}.`
           }
-          this.openNotificationWithIcon('error', opts)
+          this.openNotification('error', opts)
         })
         .finally(() => {
           this.snapshots.addSnap.loading = false
@@ -593,7 +594,7 @@ export default {
           const i = this.snapshots.data.find(({ SNAPSHOT_ID }) => SNAPSHOT_ID === id)
 
           this.snapshots.data.splice(i, 1)
-          this.openNotificationWithIcon('success', {
+          this.openNotification('success', {
             message: this.$t('Delete snapshot')
           })
         })
@@ -601,7 +602,7 @@ export default {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? err ?? 'Unknown'}.`
           }
-          this.openNotificationWithIcon('error', opts)
+          this.openNotification('error', opts)
         })
         .finally(() => {
           this.snapshots.deleteLoading = false
@@ -611,7 +612,7 @@ export default {
       this.snapshots.addSnap.loading = true
       this.sendAction('on_snapshot_setup', { snap_id: id })
         .then(() => {
-          this.openNotificationWithIcon('success', {
+          this.openNotification('success', {
             message: this.$t('Revert snapshot')
           })
         })
@@ -619,7 +620,7 @@ export default {
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? err ?? 'Unknown'}.`
           }
-          this.openNotificationWithIcon('error', opts)
+          this.openNotification('error', opts)
         })
         .finally(() => {
           this.snapshots.addSnap.loading = false
@@ -678,7 +679,7 @@ export default {
         .catch((err) => {
           const message = err.response?.data?.message ?? err.message ?? err
 
-          this.openNotificationWithIcon('error', { message: this.$t(message) })
+          this.openNotification('error', { message: this.$t(message) })
           console.error(err)
         })
     },

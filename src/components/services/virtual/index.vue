@@ -118,7 +118,7 @@
           <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
               <template v-if="!fetchLoading">
-                {{ (getProducts.price * currency.rate).toFixed(2) }}
+                {{ formatPrice(getProducts.price) }}
                 {{ currency.code }}
               </template>
               <div v-else class="loadingLine loadingLine--total" />
@@ -160,14 +160,12 @@
 <script>
 import { ref, reactive } from "vue";
 import { mapStores, mapState } from "pinia";
-
-import { usePeriod, useSlider } from "@/hooks/utils";
 import useCreateInstance from "@/hooks/instances/create.js";
-import { checkPayg, createInvoice } from "@/functions.js";
+import { useCurrency, usePeriod, useSlider } from "@/hooks/utils";
+import { checkPayg } from "@/functions.js";
 
 import { useAppStore } from "@/stores/app.js";
 import { useAuthStore } from "@/stores/auth.js";
-import { useCurrenciesStore } from "@/stores/currencies.js";
 
 import { useSpStore } from "@/stores/sp.js";
 import { usePlansStore } from "@/stores/plans.js";
@@ -182,11 +180,15 @@ export default {
   components: { selectsToCreate, promoBlock },
   inject: ["checkBalance"],
   setup() {
+    const { getPeriod } = usePeriod();
+    const { currency, formatPrice } = useCurrency();
+    const { deployService } = useCreateInstance();
+
+    // return { currency, getPeriod, deployService, checkPayg }
+
     const plan = ref(null);
     const slider = ref();
     const { isSlider } = useSlider(slider, plan);
-    const { getPeriod } = usePeriod();
-    const { deployService } = useCreateInstance();
 
     return {
       plan,
@@ -207,9 +209,10 @@ export default {
       slider,
       isSlider,
 
+      currency,
+      formatPrice,
       getPeriod,
       deployService,
-      createInvoice,
       checkPayg,
     };
   },
@@ -228,14 +231,8 @@ export default {
       "baseURL",
       "billingUser",
     ]),
-    ...mapState(useCurrenciesStore, [
-      "currencies",
-      "defaultCurrency",
-      "unloginedCurrency",
-      "fetchCurrencies",
-    ]),
     getProducts() {
-      if (Object.keys(this.products).length === 0) return "NAN";
+      if (Object.keys(this.products || {}).length === 0) return "NAN";
       if (!(this.options.size && this.options.period)) return "NAN";
       const product = JSON.parse(
         JSON.stringify(
@@ -252,26 +249,12 @@ export default {
 
       return product;
     },
-    currency() {
-      const code = this.unloginedCurrency;
-      const { rate } =
-        this.currencies.find(
-          (el) => el.from === this.defaultCurrency && el.to === code
-        ) ?? {};
-
-      const { rate: reverseRate } = this.currencies.find(
-        (el) => el.from === this.defaultCurrency && el.to === code
-      ) ?? { rate: 1 };
-
-      if (!this.isLogged) return { rate: rate || 1 / reverseRate, code };
-      return { rate: 1, code: this.userdata.currency ?? this.defaultCurrency };
-    },
     services() {
       return this.instancesStore.services.filter((el) => el.status !== "DEL");
     },
     plans() {
       return (
-        this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
+        this.cachedPlans?.[this.provider]?.filter(({ type, uuid }) => {
           const { items } =
             this.spStore.showcases.find(
               ({ uuid }) => uuid === this.$route.query.service
@@ -327,7 +310,9 @@ export default {
   },
   watch: {
     billingUser(value) {
-      this.config.email = value.email;
+      if (this.config) {
+        this.config.email = value.email;
+      }
     },
     sp(value) {
       if (value.length > 0) this.provider = value[0].uuid;
@@ -395,7 +380,6 @@ export default {
     Promise.all(promises)
       .catch((err) => {
         const message = err.response?.data?.message ?? err.message ?? err;
-
         if (err.response?.data?.code === 16) return;
         this.$notification.error({ message: this.$t(message) });
         console.error(err);
@@ -403,8 +387,6 @@ export default {
       .finally(() => {
         this.fetchLoading = false;
       });
-
-    if (this.currencies.length < 1) this.fetchCurrencies();
   },
   methods: {
     changeProducts() {
@@ -555,9 +537,6 @@ export default {
           );
           const account = access.namespace ?? this.namespace;
 
-          if (this.getProducts.price > 0) {
-            await this.createInvoice(instance, uuid, account, this.baseURL);
-          }
           localStorage.setItem("order", "Invoice");
           this.$router.push({ path: "/billing" });
         })

@@ -5,49 +5,58 @@
 <script setup>
 import { computed, inject } from 'vue'
 import { useCloudStore } from '@/stores/cloud.js'
+import { useAddonsStore } from '@/stores/addons.js'
+
 import ovhAddons from '@/components/cloud/create/ovhAddons.vue'
 
-const props = defineProps({
+defineProps({
   mode: { type: String, required: true },
   products: { type: Array, required: true }
 })
 
 const cloudStore = useCloudStore()
-const [options] = inject('useOptions', () => [])()
+const addonsStore = useAddonsStore()
+const [product] = inject('useProduct', () => [])()
 
 const addons = computed(() => {
-  const addons = { 'Public network': {}, 'Private network': {} }
+  const result = { 'Public network': {}, 'Private network': {} }
 
-  Object.keys(addons).forEach((addon) => {
-    cloudStore.plan.resources?.forEach(({ price, key, title }) => {
-      const { addons: addonsKeys } = props.products.find(
-        (el) => el.value === options.config.planCode
-      ) ?? {}
+  const filtered = addonsStore.addons.filter(({ uuid }) =>
+    cloudStore.plan.addons.includes(uuid) || product.value.addons?.includes(uuid)
+  )
+  console.log(filtered)
 
-      const [duration, , addonKey] = key.split(' ')
-      const period = {
-        price: { value: price },
-        duration,
-        pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
-      }
+  filtered.forEach(({ uuid, title, periods, meta, system, group, public: enabled }) => {
+    const addonGroups = ['bandwidth', 'traffic', 'vrack']
+    const addonGroup = addonGroups.find((key) =>
+      meta.key.toLowerCase().includes(key)
+    )
 
-      const keys = (addonsKeys ?? {})[period.duration] ?? []
-      const isInclude = (keys?.some((el) => typeof el === 'string'))
-        ? keys?.includes(key)
-        : keys?.find(({ id }) => id.includes(key))?.id
-      const isEqualMode = period.pricingMode === props.mode
-      const isAddon = (addon === 'Public network')
-        ? addonKey.startsWith('bandwidth') || key.includes('traffic')
-        : key.includes('vrack')
+    let addon = (system && addonGroup) ? addonGroup : group
+    const isEqualGroup = group === cloudStore.plan.uuid
+    const key = meta.id ?? ''
 
-      if (title === '') title = addonKey
-      if (isInclude && isAddon && isEqualMode) {
-        addons[addon][addonKey] = { periods: [period], title }
-      }
-    })
+    const [duration, , addonKey] = key.split(' ') ?? []
+    const isPublic = addonKey?.startsWith('bandwidth') || key.includes('traffic')
+
+    if (isPublic) addon = 'Public network'
+    else if (key.includes('vrack')) addon = 'Private network'
+
+    if (!enabled || (!isEqualGroup && system)) return
+    if (system && !addonGroup) return
+    if (!result[addon]) result[addon] = {}
+
+    const period = {
+      price: { value: periods[product.value.period] },
+      duration,
+      pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
+    }
+
+    if (title === '') title = addonKey
+    result[addon][uuid] = { periods: [period], title, multiple: !system }
   })
 
-  return addons
+  return result
 })
 </script>
 

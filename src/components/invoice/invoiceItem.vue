@@ -1,23 +1,35 @@
 <template>
-  <div class="invoice" @click="isLoading = true; getPaytoken(invoice.id)">
+  <div
+    class="invoice"
+    @click="
+      isLoading = true;
+      openInvoiceDocument(invoice);
+    "
+  >
     <div class="invoice__header flex-between">
       <div class="invoice__status" :style="{ color: statusColor }">
         {{ $t(`invoice_${invoice.status}`) }}
       </div>
     </div>
     <div class="invoice__middle">
-      <div class="invoice__prefix">
-        {{ capitalize($t('net total')) }}:
-      </div>
+      <div class="invoice__prefix">{{ capitalize($t("net total")) }}:</div>
       <div class="invoice__cost" :style="{ color: statusColor }">
-        {{ total }} {{ currency.code }}
+        {{ total }} {{ invoice.currencycode.title || invoice.currencycode }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
           {{ $t("invoiceDate") }}
         </div>
         <div class="invoice__date">
-          {{ invoice.date }}
+          {{ invoice.created }}
+        </div>
+      </div>
+      <div class="invoice__date-item invoice__deadlineDate">
+        <div class="invoice__date-title">
+          {{ $t("deadlineDate") }}
+        </div>
+        <div class="invoice__date">
+          {{ invoice.deadline ? invoice.deadline : "-" }}
         </div>
       </div>
       <div class="invoice__date-item invoice__dueDate">
@@ -25,200 +37,173 @@
           {{ $t("dueDate") }}
         </div>
         <div class="invoice__date">
-          {{ (invoice.status === 'Unpaid') ? '-' : (invoice.datepaid ?? invoice.duedate) }}
+          {{ invoice.payment ? invoice.payment : "-" }}
         </div>
       </div>
     </div>
     <div class="horisontal-line" />
     <div class="invoice__footer flex-between">
-      <div class="invoice__id">
-        #{{ invoice.id }}
-      </div>
+      <div class="invoice__id">#{{ getInvoiceNumber(invoice) }}</div>
 
-      <a-popconfirm
-        v-if="invoice.paid_balance && invoice.status === 'Unpaid'"
-        :title="$t('Payment will be made from your account balance.')"
-        :ok-text="$t('Yes')"
-        :cancel-text="$t('Cancel')"
-        @confirm="createInvoiceByBalance(invoice.id)"
-      >
-        <div class="invoice__btn" style="margin-left: auto" @click.stop>
-          <span class="invoice__pay invoice__balance-pay">
-            {{ $t('pay from balance') }}
-            <component :is="(isBalanceLoading) ? loadingIcon : rightIcon" color="success" />
+      <template v-if="invoice.status === 'Unpaid'">
+        <template
+          v-if="
+            invoice.total <= authStore.userdata.balance &&
+            ActionType[invoice.type] !== ActionType.BALANCE
+          "
+        >
+          <a-popconfirm
+            :title="$t('Payment will be made from your account balance.')"
+            :ok-text="$t('Yes')"
+            :cancel-text="$t('Cancel')"
+            @confirm="payByBalance"
+          >
+            <div class="invoice__btn" style="margin-left: auto" @click.stop>
+              <span class="invoice__pay invoice__balance-pay">
+                {{ $t("pay from balance") }}
+                <component
+                  :is="isBalanceLoading ? loadingIcon : rightIcon"
+                  color="success"
+                />
+              </span>
+            </div>
+          </a-popconfirm>
+        </template>
+
+        <div class="invoice__btn" @click.stop="paidInvoice">
+          <span class="invoice__pay">
+            {{ $t("Pay").toLowerCase() }}
+            <component
+              :is="isLoading ? loadingIcon : rightIcon"
+              color="success"
+            />
           </span>
         </div>
-      </a-popconfirm>
+      </template>
 
-      <div
-        v-if="invoice.status === 'Unpaid'"
-        class="invoice__btn"
-        @click.stop="createInvoice(invoice.id)"
-      >
-        <span class="invoice__pay">
-          {{ $t('Pay').toLowerCase() }}
-          <component :is="(isLoading) ? loadingIcon : rightIcon" color="success" />
-        </span>
-      </div>
-      <component :is="(isLoading) ? loadingIcon : rightIcon" v-else style="margin-top: 5px" />
+      <component
+        :is="isLoading ? loadingIcon : rightIcon"
+        v-else
+        style="margin-top: 5px"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { computed, defineAsyncComponent, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { ActionType } from "nocloud-proto/proto/es/billing/billing_pb";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
-import { useInvoicesStore } from '@/stores/invoices.js'
-import { useNotification } from '@/hooks/utils'
+import { useAuthStore } from "@/stores/auth.js";
+import { useInvoicesStore } from "@/stores/invoices.js";
+import { useNotification } from "@/hooks/utils";
 
-import api from '@/api'
-import config from '@/appconfig.js'
+import config from "@/appconfig.js";
+import { getInvoiceNumber } from "@/functions";
+import api from "@/api";
 
 const props = defineProps({
-  invoice: { type: Object, required: true }
-})
+  invoice: { type: Object, required: true },
+});
 
-const i18n = useI18n()
-const authStore = useAuthStore()
-const currenciesStore = useCurrenciesStore()
-const invoicesStore = useInvoicesStore()
-const { openNotification } = useNotification()
+const i18n = useI18n();
+const authStore = useAuthStore();
+const invoicesStore = useInvoicesStore();
+const { openNotification } = useNotification();
 
-const loadingIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LoadingOutlined')
-)
-const rightIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/RightOutlined')
-)
+const loadingIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LoadingOutlined")
+);
+const rightIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RightOutlined")
+);
 
-const isLoading = ref(false)
-const isBalanceLoading = ref(false)
-const currencyCode = ref('')
-
-const currency = computed(() => {
-  const code = authStore.userdata.currency?.split('_')?.at(0) ?? 'USD'
-
-  if (code === currencyCode.value) {
-    return { code, rate: 1 }
-  }
-
-  const { rate } = currenciesStore.currencies.find((el) =>
-    el.from === code && el.to === currencyCode.value
-  ) ?? {}
-
-  const { rate: reverseRate } = currenciesStore.currencies.find(
-    (el) => el.to === code && el.from === currencyCode.value
-  ) ?? { rate: 1 }
-
-  return { code, rate: (rate) || 1 / reverseRate }
-})
+const isLoading = ref(false);
+const isBalanceLoading = ref(false);
 
 const statusColor = computed(() => {
   switch (props.invoice.status?.toLowerCase()) {
-    case 'paid':
-      return config.colors.success
-    case 'cancelled':
-      return config.colors.gray
+    case "paid":
+      return config.colors.success;
+    case "canceled":
+    case "terminated":
+      return config.colors.gray;
+    case "returned":
+      return config.colors.warn;
     default:
-      return config.colors.err
+      return config.colors.err;
   }
-})
-
-// const costColor = computed(() => {
-//   if (props.invoice.subtotal > 0) {
-//     return config.colors.success
-//   } else if (props.invoice.subtotal < 0) {
-//     return config.colors.err
-//   } else {
-//     return null
-//   }
-// })
+});
 
 const total = computed(() => {
-  const total = props.invoice.subtotal ?? props.invoice.total
-  const { rate } = currency.value
+  const total = props.invoice.subtotal ?? props.invoice.total;
 
-  return Math.abs((total * rate)).toFixed(2)
-})
+  return Math.abs(total).toFixed(2);
+});
 
-async function createInvoice (id) {
-  isLoading.value = true
-  if (props.invoice.status === 'Unpaid') {
-    getPaytoken(id)
-    return
-  }
-
-  if (!props.invoice.meta) {
-    getPaytoken(id)
-    return
-  }
-
+async function paidInvoice() {
+  isLoading.value = true;
   try {
-    const type = (props.invoice.total > 0) ? 'debit' : 'top-up'
+    await openInvoiceDocument(props.invoice);
 
-    const { invoiceid } = api.get(authStore.baseURL, {
-      params: {
-        run: 'create_inv',
-        invoice_id: id,
-        product: props.invoice.meta.description ?? props.invoice.service,
-        invoice_type: props.invoice.meta.invoiceType ?? type,
-        sum: total.value
-      }
-    })
-
-    openNotification('success', { message: i18n.t('Done') })
-    getPaytoken(invoiceid)
+    openNotification("success", { message: i18n.t("Done") });
   } catch (error) {
-    openNotification('error', {
-      message: error.response?.data?.message ?? error.message ?? error
-    })
-    console.error(error)
-  }
-}
-
-async function createInvoiceByBalance (id) {
-  isBalanceLoading.value = true
-  try {
-    await api.get(authStore.baseURL, {
-      params: { run: 'balance_paid', invoice_id: id }
-    })
-
-    await invoicesStore.fetch(true)
-    openNotification('success', { message: i18n.t('Done') })
-  } catch (error) {
-    openNotification('error', {
-      message: error.response?.data?.message ?? error.message ?? error
-    })
-    console.error(error)
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+    console.error(error);
   } finally {
-    isBalanceLoading.value = false
+    isLoading.value = false;
   }
 }
 
-async function getPaytoken (id) {
-  try {
+async function openInvoiceDocument(invoice) {
+  let paymentLink;
+
+  if (!invoice.uuid) {
+    //whmcs
     const response = await api.get(authStore.baseURL, {
-      params: { run: 'get_pay_token', invoice_id: id }
-    })
-
-    window.location.href = response
-  } finally {
-    isLoading.value = false
+      params: {
+        run: "download_invoice",
+        account: authStore.billingUser.userid,
+        invoiceid: getInvoiceNumber(invoice),
+      },
+    });
+    paymentLink = response[0];
+  } else {
+    paymentLink = await invoicesStore.getPaymentLink(invoice.uuid);
   }
+
+  window.location.href = paymentLink;
 }
 
-if (props.invoice.currencycode === 'NCU') {
-  currencyCode.value = currenciesStore.defaultCurrency
-} else {
-  currencyCode.value = props.invoice.currencycode
+async function payByBalance() {
+  isLoading.value = true;
+  try {
+    if (props.invoice.uuid) {
+      await invoicesStore.payWithBalance({ invoiceUuid: props.invoice.uuid });
+    } else {
+      await invoicesStore.payWithBalance({ whmcsId: props.invoice.id });
+    }
+
+    invoicesStore.fetch();
+    authStore.fetchUserData(true);
+
+    openNotification("success", { message: i18n.t("Done") });
+  } catch (error) {
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+    console.error(error);
+  } finally {
+    isLoading.value = false;
+  }
 }
 </script>
 
 <script>
-export default { name: 'InvoiceView' }
+export default { name: "InvoiceView" };
 </script>
 
 <style scoped>
@@ -228,7 +213,6 @@ export default { name: 'InvoiceView' }
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
   background-color: var(--bright_font);
-  color: inherit;
   cursor: pointer;
 }
 
@@ -300,6 +284,9 @@ export default { name: 'InvoiceView' }
   flex: 1 1 0;
 }
 .invoice__dueDate {
+  flex: 1 1 0;
+}
+.invoice__deadlineDate {
   flex: 1 1 0;
 }
 

@@ -1,148 +1,184 @@
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from "vue";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useCloudStore } from '@/stores/cloud.js'
-import { usePlansStore } from '@/stores/plans.js'
+import { useAuthStore } from "@/stores/auth.js";
+import { useCloudStore } from "@/stores/cloud.js";
+import { usePlansStore } from "@/stores/plans.js";
 
-import { useNotification } from '@/hooks/utils'
-import { getTarification } from '@/functions.js'
+import { useNotification } from "@/hooks/utils";
+import { getTarification } from "@/functions.js";
+import { useAddonsStore } from "@/stores/addons.js";
+import { storeToRefs } from "pinia";
 
-function useCloudPlans (tarification, options) {
-  const { openNotification } = useNotification()
+function useCloudPlans(tarification, options) {
+  const { openNotification } = useNotification();
 
-  const authStore = useAuthStore()
-  const plansStore = usePlansStore()
-  const cloudStore = useCloudStore()
+  const authStore = useAuthStore();
+  const plansStore = usePlansStore();
+  const {
+    locationId,
+    locations,
+    provider,
+    plan,
+    planId,
+    showcases,
+    showcaseId,
+  } = storeToRefs(useCloudStore());
+  const addonsStore = useAddonsStore();
 
-  const isPlansLoading = ref(false)
-  const productSize = ref('')
-  const product = ref({})
-  const cachedPlans = ref({})
+  const isPlansLoading = ref(false);
+  const productSize = ref("");
+  const product = ref({});
+  const cachedPlans = ref({});
 
   const filteredPlans = computed(() => {
-    const locationItem = cloudStore.locations.find(({ id }) =>
-      id === cloudStore.locationId
-    )
+    const locationItem = locations.value.find(
+      ({ id }) => id === locationId.value
+    );
 
-    const { items } = cloudStore.showcases.find(({ uuid }) => {
-      if (cloudStore.showcaseId === '') {
-        return uuid === locationItem?.showcase
-      }
-      return uuid === cloudStore.showcaseId
-    }) ?? {}
-    const plans = []
-    const publicPlans = plansStore.plans.filter((plan) => plan.public)
+    const { items } =
+      showcases.value.find(({ uuid }) => {
+        if (showcaseId.value === "") {
+          return uuid === locationItem?.showcase;
+        }
+        return uuid === showcaseId.value;
+      }) ?? {};
+    const plans = [];
+    const publicPlans = plansStore.plans.filter((plan) => plan.public);
 
-    if (!items) return publicPlans
+    if (!items) return publicPlans;
     items.forEach(({ servicesProvider, plan }) => {
-      if (servicesProvider === cloudStore.provider?.uuid) {
-        plans.push(plan)
+      if (servicesProvider === provider.value?.uuid) {
+        plans.push(plan);
       }
-    })
+    });
 
-    if (plans.length < 1) return publicPlans
-    return publicPlans.filter(({ uuid, type }) =>
-      locationItem?.type === type && plans.includes(uuid)
-    )
-  })
+    if (plans.length < 1) return publicPlans;
+    return publicPlans.filter(
+      ({ uuid, type }) => locationItem?.type === type && plans.includes(uuid)
+    );
+  });
 
-  async function setProduct () {
-    await nextTick()
-    if (cloudStore.plan.type?.includes('cloud')) {
-      const period = (options.config.monthlyBilling) ? 'P1M' : 'P1H'
-      const { planCode } = options.config
+  async function setProduct() {
+    await nextTick();
+    if (plan.value.type?.includes("cloud")) {
+      const period = options.config.monthlyBilling ? "P1M" : "P1H";
+      const { planCode } = options.config;
 
       product.value = {
-        ...cloudStore.plan.products[`${period} ${planCode}`],
-        key: `${period} ${planCode}`
-      }
+        ...plan.value.products[`${period} ${planCode}`],
+        key: `${period} ${planCode}`,
+      };
     } else {
-      if (!tarification.value || !productSize.value) return
+      if (!tarification.value || !productSize.value) return;
 
       for (let plan of filteredPlans.value) {
-        const isHourly = tarification.value === 'Hourly'
-        const isDynamic = plan.kind === 'DYNAMIC'
-        const isIone = plan.type === 'ione'
-        let result = false
-        let uuid = null
+        const isHourly = tarification.value === "Hourly";
+        const isDynamic = plan.kind === "DYNAMIC";
+        const isIone = plan.type === "ione";
+        let result = false;
+        let uuid = null;
 
         if (isDynamic && isIone && isHourly) {
-          uuid = plan.uuid
-          plan = plansStore.plans.find(({ uuid }) => uuid === plan.meta.linkedPlan)
+          uuid = plan.uuid;
+          plan = plansStore.plans.find(
+            ({ uuid }) => uuid === plan.meta.linkedPlan
+          );
         }
 
         for (const [key, item] of Object.entries(plan.products)) {
-          const { period, title } = item
-          const isEqualKey = (plan.type.includes('ovh'))
-            ? key.split(' ').at(-1) === options.config.planCode
-            : true
+          const { period, title } = item;
+          const isEqualKey = plan.type.includes("ovh")
+            ? key.split(" ").at(-1) === options.config.planCode
+            : true;
 
-          const isEqualSize = title === productSize.value
-          const isHighCpu = options.highCPU === (plan.meta.highCPU ?? false)
-          let isEqualPeriod = getTarification(period) === tarification.value
+          const isEqualSize = title === productSize.value;
+          const isHighCpu = options.highCPU === (plan.meta.highCPU ?? false);
+          let isEqualPeriod = getTarification(period) === tarification.value;
 
           if (isDynamic && isIone && isHourly) {
-            isEqualPeriod = true
+            isEqualPeriod = true;
           }
 
           if (isEqualPeriod && isEqualKey && isEqualSize && isHighCpu) {
-            product.value = { ...item, key }
-            cloudStore.planId = uuid ?? plan.uuid
+            product.value = { ...item, key };
+            planId.value = uuid ?? plan.uuid;
 
-            result = true
-            break
+            result = true;
+            break;
           }
         }
-        if (result) break
+        if (result) break;
       }
     }
   }
 
   watch(
-    [() => options.highCPU, () => options.config.planCode, tarification, productSize],
+    [
+      () => options.highCPU,
+      () => options.config.planCode,
+      tarification,
+      productSize,
+    ],
     setProduct
-  )
+  );
 
-  watch(() => [cloudStore.provider, cloudStore.locationId], async ([value]) => {
-    options.highCPU = false
-    if (!value?.uuid) return
-    if (cachedPlans.value[value.uuid]) {
-      plansStore.setPlans(cachedPlans.value[value.uuid])
+  watch(planId, () => {
+    fetchAddons();
+  });
 
-      const { items } = cloudStore.showcases.find(
-        ({ uuid }) => uuid === cloudStore.showcaseId
-      ) ?? {}
-      const { plan } = items?.find((item) =>
-        item.locations.includes(cloudStore.locationId)
-      ) ?? {}
+  watch(
+    () => [provider.value, locationId.value],
+    async ([value]) => {
+      options.highCPU = false;
+      if (!value?.uuid) return;
+      if (cachedPlans.value[value.uuid]) {
+        plansStore.setPlans(cachedPlans.value[value.uuid]);
 
-      cloudStore.planId = plan ?? filteredPlans.value[0]?.uuid ?? ''
-      return
+        const { items } =
+          showcases.value.find(({ uuid }) => uuid === showcaseId.value) ?? {};
+        const { plan } =
+          items?.find((item) => item.locations.includes(locationId.value)) ??
+          {};
+
+        planId.value = plan ?? filteredPlans.value[0]?.uuid ?? "";
+        return;
+      }
+
+      await fetchPlans(value);
     }
+  );
 
-    await fetchPlans(value)
-  })
-
-  async function fetchPlans (provider) {
+  async function fetchAddons() {
     try {
-      isPlansLoading.value = true
-      const { pool } = await plansStore.fetch({
-        sp_uuid: provider.uuid,
-        anonymously: !authStore.isLogged
-      })
-
-      cachedPlans.value[provider.uuid] = pool
-      cloudStore.planId = filteredPlans.value[0]?.uuid ?? pool[0]?.uuid ?? ''
-    } catch (error) {
-      openNotification('error', {
-        message: error.response?.data.message ?? error.message ?? error
-      })
+      isPlansLoading.value = true;
+      await addonsStore.fetch({
+        filters: { plan_uuid: [planId.value] },
+      });
     } finally {
-      isPlansLoading.value = false
+      isPlansLoading.value = false;
     }
   }
 
-  return { filteredPlans, product, productSize, isPlansLoading }
+  async function fetchPlans(provider) {
+    try {
+      isPlansLoading.value = true;
+      const { pool } = await plansStore.fetch({
+        sp_uuid: provider.uuid,
+        anonymously: !authStore.isLogged,
+      });
+
+      cachedPlans.value[provider.uuid] = pool;
+      planId.value = filteredPlans.value[0]?.uuid ?? pool[0]?.uuid ?? "";
+    } catch (error) {
+      openNotification("error", {
+        message: error.response?.data.message ?? error.message ?? error,
+      });
+    } finally {
+      isPlansLoading.value = false;
+    }
+  }
+
+  return { filteredPlans, product, productSize, isPlansLoading };
 }
 
-export default useCloudPlans
+export default useCloudPlans;

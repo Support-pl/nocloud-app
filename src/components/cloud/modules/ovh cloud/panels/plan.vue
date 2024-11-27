@@ -66,8 +66,11 @@ import { useRoute } from 'vue-router'
 import { useCloudStore } from '@/stores/cloud.js'
 
 const props = defineProps({
+  mode: { type: String, required: true },
+  plans: { type: Array, required: true },
   products: { type: Array, required: true },
-  mode: { type: String, required: true }
+  productSize: { type: String, required: true },
+  isFlavorsLoading: { type: Boolean, default: false }
 })
 const emits = defineEmits(['update:periods', 'update:product-size'])
 

@@ -2,6 +2,9 @@ import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { defineStore } from 'pinia'
 import { AppstoreOutlined, DatabaseFilled, FundOutlined, MessageOutlined, SettingFilled } from '@ant-design/icons-vue'
+import { createConnectTransport } from '@connectrpc/connect-web'
+
+import { useAuthStore } from './auth.js'
 import config from '@/appconfig.js'
 /*
 ROUTER WORKS THERE!
@@ -9,6 +12,20 @@ ROUTER WORKS THERE!
 export const useAppStore = defineStore('app', () => {
   const router = useRouter()
   const route = useRoute()
+  const auth = useAuthStore()
+
+  const transport = createConnectTransport({
+    baseUrl: (VUE_APP_BASE_URL.endsWith('/') ? VUE_APP_BASE_URL : `${VUE_APP_BASE_URL}/`),
+    useBinaryFormat: import.meta.env.PROD,
+    interceptors: [
+      (next) => (req) => {
+        if(auth.token){
+          req.header.set('Authorization', `Bearer ${auth.token}`)
+        }
+        return next(req)
+      }
+    ]
+  })
 
   const notification = ref(false)
   const activeTabName = ref('')
@@ -87,6 +104,7 @@ export const useAppStore = defineStore('app', () => {
     isMaintananceMode,
     isButtonsVisible,
     domainInfo,
+    transport,
 
     setTabByName (value) {
       if (['root', 'openVDC'].includes(value)) value = 'services'

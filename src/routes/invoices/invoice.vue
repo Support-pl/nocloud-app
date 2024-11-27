@@ -75,7 +75,6 @@ import { useNotification } from '@/hooks/utils'
 import config from '@/appconfig.js'
 
 import { useAuthStore } from '@/stores/auth.js'
-import { useCurrenciesStore } from '@/stores/currencies.js'
 import { useInvoicesStore } from '@/stores/invoices.js'
 import { useTransactionsStore } from '@/stores/transactions.js'
 import { useInstancesStore } from '@/stores/instances.js'
@@ -86,7 +85,6 @@ import transactionItem from '@/components/invoice/transactionItem.vue'
 import actsList from '@/components/invoice/actsList.vue'
 
 const authStore = useAuthStore()
-const currenciesStore = useCurrenciesStore()
 const invoicesStore = useInvoicesStore()
 const transactionsStore = useTransactionsStore()
 const instancesStore = useInstancesStore()
@@ -181,10 +179,6 @@ onMounted(() => {
       : localStorage.getItem('order')
   } else {
     localStorage.setItem('order', currentTab.value)
-  }
-
-  if (currenciesStore.currencies.length < 1) {
-    currenciesStore.fetchCurrencies()
   }
 
   setCoordY()

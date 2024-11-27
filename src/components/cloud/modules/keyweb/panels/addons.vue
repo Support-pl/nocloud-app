@@ -9,6 +9,10 @@
         :value="getAddon(addon)"
         @update:value="setAddon($event, addon[$event], key)"
       >
+        <a-select-option v-if="!Object.values(addon).at(0)?.required" value="-1">
+          {{ $t('ip.none') }}
+        </a-select-option>
+
         <a-select-option v-for="(item, id) in addon" :key="id">
           {{ item.title }} ({{ item.price }} {{ currency.code }})
         </a-select-option>
@@ -20,10 +24,10 @@
 <script setup>
 import { computed, inject, nextTick, watch } from 'vue'
 import { useCloudStore } from '@/stores/cloud.js'
+import { useAddonsStore } from '@/stores/addons.js'
 import { useCurrency } from '@/hooks/utils'
-import { getTarification } from '@/functions.js'
 
-const props = defineProps({
+defineProps({
   mode: { type: String, required: true },
   productSize: { type: String, required: true },
   plans: { type: Array, default: () => [] },
@@ -32,31 +36,38 @@ const props = defineProps({
 })
 
 const cloudStore = useCloudStore()
+const addonsStore = useAddonsStore()
 const { currency } = useCurrency()
+
 const [product] = inject('useProduct', () => [])()
 const [options, setOptions] = inject('useOptions', () => [])()
 const [price, setPrice] = inject('usePriceOVH', () => [])()
 
 const addons = computed(() => {
-  const addons = { backup: {} }
+  const result = { backup: {} }
 
-  Object.keys(addons).forEach((addon) => {
-    const { meta } = cloudStore.plan.products[product.value.key] ?? {}
+  const filtered = addonsStore.addons.filter(({ uuid }) =>
+    cloudStore.plan.addons.includes(uuid) || product.value.addons?.includes(uuid)
+  )
 
-    meta?.addons?.forEach((addonKey) => {
-      const resource = cloudStore.plan.resources.find(({ key }) => addonKey === key) ?? {}
-      const { title, price, meta: { type } } = resource
+  filtered.forEach(({ uuid, title, periods, meta, system, group, public: enabled }) => {
+    const isInclude = meta.key.toLowerCase().includes('backup')
+    const isEqualGroup = group === cloudStore.plan.uuid
+    const key = (system && isInclude) ? 'backup' : group
 
-      const isEqualMode = getTarification(resource.period) === props.mode
-      const isInclude = resource.key.toLowerCase().includes(addon)
+    if (!enabled || (!isEqualGroup && system)) return
+    if (system && !isInclude) return
+    if (!result[key]) result[key] = {}
 
-      if (addonKey && isInclude && isEqualMode && resource.public) {
-        addons[addon][resource.key] = { price, title, type }
-      }
-    })
+    result[key][uuid] = {
+      title,
+      required: system,
+      type: meta.type ?? 'custom',
+      price: periods[product.value.period]
+    }
   })
 
-  return addons
+  return result
 })
 
 watch(addons, setAddons)
@@ -67,28 +78,40 @@ async function setAddons (value) {
   Object.entries(value).forEach(([key, value]) => {
     const [code, addon] = Object.entries(value)[0] ?? []
 
-    if (!code) return
+    if (!code || !addon.required) return
     setAddon(code, addon, key)
   })
 }
 
 async function setAddon (code, addon, key) {
-  const addonsPrices = JSON.parse(JSON.stringify(price.addons))
+  const addonsPrices = { ...price.addons }
+  const addonsKeys = [...options.addons]
+  const keys = Object.keys(addons.value[key])
 
   if (code === '-1') {
+    addonsKeys.forEach((code, i) => {
+      if (keys.includes(code)) {
+        addonsKeys.splice(i, 1)
+
+        addon = addons.value[key][code]
+      }
+    })
+
     delete addonsPrices[key]
   } else {
     addonsPrices[key] = addon.price
+    addonsKeys.push(code)
   }
 
   setPrice('addons', addonsPrices)
+  setOptions('addons', addonsKeys)
+
+  if (addon.type === 'custom') return
   setOptions(`config.configurations.${addon.type}`, code.split('$')[0])
 }
 
 function getAddon (addons) {
-  const keys = Object.values(options.config.configurations ?? {})
-
-  return Object.keys(addons).find((item) => keys.find((key) => item.includes(key)))
+  return Object.keys(addons).find((key) => options.addons.includes(key))
 }
 </script>
 

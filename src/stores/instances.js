@@ -60,11 +60,11 @@ export const useInstancesStore = defineStore('instances', () => {
         } = authStore
 
         const { rate } = currencies.find((el) =>
-          el.from === defaultCurrency && el.to === code
+          el.from.id === defaultCurrency.id && el.to.id === code.id
         ) ?? {}
 
         const { rate: reverseRate } = currencies.find((el) =>
-          el.to === defaultCurrency && el.from === code
+          el.to.id === defaultCurrency.id && el.from.id === code.id
         ) ?? { rate: 1 }
 
         const resources = inst.billingPlan.resources.map((res) => {
@@ -119,10 +119,6 @@ export const useInstancesStore = defineStore('instances', () => {
           filters: { account: authStore.userdata.uuid },
           ...options
         })
-
-        if (currenciesStore.currencies.length < 1) {
-          await currenciesStore.fetchCurrencies()
-        }
 
         services.value = response.pool
         response.pool.forEach((service) => {
