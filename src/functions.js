@@ -383,7 +383,7 @@ export function toInvoice(transaction, type = "default") {
           false,
           true
         ),
-      total: transaction.total,
+      total: transaction.total || 0,
       status,
       credit: transaction.credit,
       service: transaction.service,
@@ -403,7 +403,7 @@ export function toInvoice(transaction, type = "default") {
         ? toDate(Number(transaction.payment), "-", false, true)
         : null,
       deadline: toDate(Number(transaction.deadline), "-", false, true),
-      total: transaction.total,
+      total: transaction.total || 0,
       status,
       credit: 0,
       service: transaction.service,
