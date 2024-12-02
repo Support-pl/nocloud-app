@@ -29,7 +29,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
   const getInvoices = computed(() => {
     let filtered;
 
-    if (filter.value[0] === "all" || filter.value.length === 0) {
+    if (filter.value[0] === "all" || filter.value?.length === 0) {
       filtered = invoices.value;
     } else {
       filtered = invoices.value.filter((ticket) =>
