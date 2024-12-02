@@ -28,7 +28,7 @@
         </a-radio-group>
 
         <template v-if="currentTab === 'Invoice'">
-          <empty v-if="invoicesStore.getInvoices.length === 0" style="margin: 50px 0" />
+          <empty v-if="invoicesStore.getInvoices?.length === 0" style="margin: 50px 0" />
           <template v-else>
             <invoice-item
               v-for="(invoice, index) in invoicesStore.getInvoices"
@@ -39,7 +39,7 @@
         </template>
 
         <template v-if="currentTab === 'Detail'">
-          <empty v-if="transactions.length === 0" style="margin: 50px 0" />
+          <empty v-if="transactions?.length === 0" style="margin: 50px 0" />
           <template v-else>
             <transaction-item
               v-for="(invoice, index) in transactions"
@@ -123,7 +123,7 @@ watch(currentTab, () => {
   transactionsStore.tab = currentTab.value
 
   if (currentTab.value === 'Invoice') return
-  if (transactions.value.length > 0) return
+  if (transactions.value?.length > 0) return
   if (!authStore.userdata.uuid) return
 
   transactionsStore.fetch({
@@ -138,7 +138,7 @@ watch(currentTab, () => {
 
 watch(() => authStore.userdata, () => {
   if (transactionsStore.isLoading) return
-  invoicesStore.fetch(invoicesStore.getInvoices.length)
+  invoicesStore.fetch(invoicesStore.getInvoices?.length)
 
   transactionsStore.fetch({
     account: authStore.userdata.uuid,
@@ -165,7 +165,7 @@ watch(() => invoicesStore.isLoading, setCoordY)
 
 onMounted(() => {
   if (authStore.isLogged && authStore.userdata.uuid) {
-    invoicesStore.fetch(invoicesStore.getInvoices.length)
+    invoicesStore.fetch(invoicesStore.getInvoices?.length)
 
     transactionsStore.fetchCount({
       account: authStore.userdata.uuid, type: 'transaction'
@@ -250,7 +250,7 @@ function onShowSizeChange (page, limit) {
 }
 
 async function fetchInstances () {
-  if (instancesStore.allInstances.length > 0) return
+  if (instancesStore.allInstances?.length > 0) return
   try {
     await instancesStore.fetchAll()
   } catch (error) {
