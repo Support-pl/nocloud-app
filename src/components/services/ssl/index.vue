@@ -145,7 +145,7 @@
         >
           <a-col v-if="getProducts.prices">
             <template v-if="!fetchLoading">
-              {{ getProducts.prices[options.period] }} {{ currency.code }}
+              {{ getProducts.prices[options.period] }} {{ currency.title }}
             </template>
             <div v-else class="loadingLine loadingLine--total" />
           </a-col>
@@ -211,6 +211,7 @@ import { useInstancesStore } from "@/stores/instances.js";
 
 import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import promoBlock from "@/components/ui/promo.vue";
+import { useCurrenciesStore } from "@/stores/currencies";
 
 const rightIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/RightOutlined")
@@ -262,7 +263,8 @@ export default {
       useNamespasesStore,
       useSpStore,
       usePlansStore,
-      useInstancesStore
+      useInstancesStore,
+      useCurrenciesStore
     ),
     ...mapState(useAppStore, ["onLogin"]),
     ...mapState(useAuthStore, [
@@ -301,23 +303,25 @@ export default {
     },
     plans() {
       return (
-        this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
-          const { items } =
-            this.spStore.showcases.find(
-              ({ uuid }) => uuid === this.$route.query.service
-            ) ?? {};
-          const plans = [];
+        this.cachedPlans[`${this.provider}_${this.userCurrency.code}`]?.filter(
+          ({ type, uuid }) => {
+            const { items } =
+              this.spStore.showcases.find(
+                ({ uuid }) => uuid === this.$route.query.service
+              ) ?? {};
+            const plans = [];
 
-          if (!items) return type === "goget";
-          items.forEach(({ servicesProvider, plan }) => {
-            if (servicesProvider === this.provider) {
-              plans.push(plan);
-            }
-          });
+            if (!items) return type === "goget";
+            items.forEach(({ servicesProvider, plan }) => {
+              if (servicesProvider === this.provider) {
+                plans.push(plan);
+              }
+            });
 
-          if (plans.length < 1) return type === "goget";
-          return type === "goget" && plans.includes(uuid);
-        }) ?? []
+            if (plans.length < 1) return type === "goget";
+            return type === "goget" && plans.includes(uuid);
+          }
+        ) ?? []
       );
     },
     sp() {
@@ -331,26 +335,19 @@ export default {
         items.find((item) => uuid === item.servicesProvider)
       );
     },
+    userCurrency() {
+      return this.currenciesStore.userCurrency;
+    },
   },
   watch: {
     sp(value) {
       if (value.length > 0) this.provider = value[0].uuid;
     },
-    async provider(uuid) {
-      if (this.cachedPlans[uuid]) return;
-      try {
-        const { pool } = await this.plansStore.fetch({
-          anonymously: !this.isLogged,
-          sp_uuid: uuid,
-        });
-
-        this.cachedPlans[uuid] = pool;
-        this.plan = this.plans[0]?.uuid;
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error;
-
-        this.openNotification("error", { message });
-      }
+    provider(uuid) {
+      this.fetchPlans(uuid);
+    },
+    userCurrency() {
+      this.fetchPlans(this.provider);
     },
     "options.provider"(value) {
       this.options.tarif = this.products[value][0].product;
@@ -598,6 +595,24 @@ export default {
 
       if (this.orderConfirm(false)) {
         this.currentStep++;
+      }
+    },
+    async fetchPlans(sp) {
+      const cacheKey = `${sp}_${this.userCurrency.code}`;
+
+      if (this.cachedPlans[cacheKey]) return;
+      try {
+        const { pool } = await this.plansStore.fetch({
+          anonymously: !this.isLogged,
+          sp_uuid: sp,
+        });
+
+        this.cachedPlans[cacheKey] = pool;
+        this.plan = this.plans[0]?.uuid;
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error;
+
+        this.openNotification("error", { message });
       }
     },
   },

@@ -8,7 +8,7 @@
     <div v-else class="balance__item" :class="{ clickable }" @click="showModal">
       {{ formatedBalance }}
 
-      <span class="currency__suffix">{{ currency.code }}</span>
+      <span class="currency__suffix">{{ currency.title }}</span>
       <span v-if="clickable" class="badge">
         <plus-icon />
       </span>
@@ -29,7 +29,7 @@ const props = defineProps({
 });
 
 const authStore = useAuthStore();
-const { currency } = useCurrency();
+const { currency, formatPrice } = useCurrency();
 
 const plusIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlusOutlined")
@@ -40,10 +40,10 @@ const modalVisible = ref(false);
 
 const formatedBalance = computed(() => {
   const balance = (authStore.userdata.balance || 0).toFixed(2);
-  if (Math.abs(balance) === 0) {
+  if (Math.abs(balance) == 0) {
     return 0;
   }
-  return (authStore.userdata.balance || 0).toFixed(currency.value.precision);
+  return formatPrice(authStore.userdata.balance);
 });
 
 // function URLparameter (obj, outer = '') {

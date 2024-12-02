@@ -1,20 +1,16 @@
 <template>
   <a-row class="module" style="margin-top: 10px" :gutter="[10, 10]">
     <a-col span="12">
-      <div style="padding-bottom: 0; font-weight: 700">
-        Input kilotoken:
-      </div>
+      <div style="padding-bottom: 0; font-weight: 700">Input kilotoken:</div>
       <div style="padding-top: 0; font-size: 18px">
-        {{ service.resources.inputKilotoken }} {{ currency.code }}
+        {{ service.resources.inputKilotoken }} {{ currency.title }}
       </div>
     </a-col>
 
     <a-col span="12">
-      <div style="padding-bottom: 0; font-weight: 700">
-        Output kilotoken:
-      </div>
+      <div style="padding-bottom: 0; font-weight: 700">Output kilotoken:</div>
       <div style="padding-top: 0; font-size: 18px">
-        {{ service.resources.outputKilotoken }} {{ currency.code }}
+        {{ service.resources.outputKilotoken }} {{ currency.title }}
       </div>
     </a-col>
 
@@ -32,23 +28,17 @@
           style="font-size: 18px"
           @click="isVisible = true"
         />
-        <copy-icon
-          style="font-size: 18px"
-          @click="addToClipboard(token)"
-        />
+        <copy-icon style="font-size: 18px" @click="addToClipboard(token)" />
       </div>
       <div style="padding-top: 0; font-size: 18px; word-break: break-word">
-        {{ (isVisible) ? token : `${token.slice(0, 15)}...` }}
+        {{ isVisible ? token : `${token.slice(0, 15)}...` }}
       </div>
     </a-col>
 
     <a-col span="24">
       <div class="token-title">
         API endpoint:
-        <copy-icon
-          style="font-size: 18px"
-          @click="addToClipboard(endpoint)"
-        />
+        <copy-icon style="font-size: 18px" @click="addToClipboard(endpoint)" />
       </div>
       <div style="padding-top: 0; font-size: 18px">
         {{ endpoint }}
@@ -58,10 +48,7 @@
     <a-col span="24">
       <div class="token-title">
         API example:
-        <copy-icon
-          style="font-size: 18px"
-          @click="addToClipboard(example)"
-        />
+        <copy-icon style="font-size: 18px" @click="addToClipboard(example)" />
       </div>
       <code>{{ example }}</code>
     </a-col>
@@ -73,7 +60,7 @@
         :disabled="!service.status.includes('RUNNING')"
         @click="moduleEnter"
       >
-        {{ capitalize($t('new chat')) }}
+        {{ capitalize($t("new chat")) }}
       </a-button>
     </a-col>
 
@@ -97,71 +84,71 @@
 </template>
 
 <script setup>
-import { computed, ref, defineAsyncComponent } from 'vue'
-import { EyeOutlined as visibleIcon } from '@ant-design/icons-vue'
-import { Status } from '@/libs/cc_connect/cc_pb.js'
+import { computed, ref, defineAsyncComponent } from "vue";
+import { EyeOutlined as visibleIcon } from "@ant-design/icons-vue";
+import { Status } from "@/libs/cc_connect/cc_pb.js";
 
-import { useChatsStore } from '@/stores/chats.js'
-import { useSupportStore } from '@/stores/support.js'
-import { useInstancesStore } from '@/stores/instances.js'
-import { useClipboard, useCurrency } from '@/hooks/utils'
+import { useChatsStore } from "@/stores/chats.js";
+import { useSupportStore } from "@/stores/support.js";
+import { useInstancesStore } from "@/stores/instances.js";
+import { useClipboard, useCurrency } from "@/hooks/utils";
 
-import addTicket from '@/components/support/addTicket.vue'
-import ticketItem from '@/components/support/ticketItem.vue'
-import loading from '@/components/ui/loading.vue'
+import addTicket from "@/components/support/addTicket.vue";
+import ticketItem from "@/components/support/ticketItem.vue";
+import loading from "@/components/ui/loading.vue";
 
-const invisibleIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/EyeInvisibleOutlined')
-)
-const copyIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CopyOutlined')
-)
+const invisibleIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EyeInvisibleOutlined")
+);
+const copyIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CopyOutlined")
+);
 
 const props = defineProps({
-  service: { type: Object, required: true }
-})
+  service: { type: Object, required: true },
+});
 
-const chatsStore = useChatsStore()
-const supportStore = useSupportStore()
-const instancesStore = useInstancesStore()
-const { currency } = useCurrency()
-const { addToClipboard } = useClipboard()
+const chatsStore = useChatsStore();
+const supportStore = useSupportStore();
+const instancesStore = useInstancesStore();
+const { currency } = useCurrency();
+const { addToClipboard } = useClipboard();
 
 const chats = computed(() => {
-  const result = []
+  const result = [];
 
   chatsStore.chats.forEach((chat) => {
-    const { value } = chat.meta.data.instance?.kind ?? {}
-    if (value !== props.service.uuid) return
+    const { value } = chat.meta.data.instance?.kind ?? {};
+    if (value !== props.service.uuid) return;
 
-    const status = Status[chat.status].toLowerCase().split('_')
-    const capitalized = status.map((el) =>
-      `${el[0].toUpperCase()}${el.slice(1)}`
-    ).join(' ')
+    const status = Status[chat.status].toLowerCase().split("_");
+    const capitalized = status
+      .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
+      .join(" ");
 
     result.push({
       id: chat.uuid,
       tid: `${chat.uuid.slice(0, 8)}...`,
       title: chat.topic,
       date: Number(chat.meta.lastMessage?.sent ?? chat.created),
-      message: chat.meta.lastMessage?.content ?? '',
+      message: chat.meta.lastMessage?.content ?? "",
       status: capitalized,
-      unread: chat.meta.unread
-    })
-  })
+      unread: chat.meta.unread,
+    });
+  });
 
-  result.sort((a, b) => b.date - a.date)
-  return result
-})
+  result.sort((a, b) => b.date - a.date);
+  return result;
+});
 
-function moduleEnter () {
-  supportStore.isAddingTicket = !supportStore.isAddingTicket
+function moduleEnter() {
+  supportStore.isAddingTicket = !supportStore.isAddingTicket;
 }
 
-const isVisible = ref(false)
-const isLoading = ref(false)
-const token = ref('-')
-const endpoint = `${VUE_APP_BASE_URL}nocloud/chat/completions`
+const isVisible = ref(false);
+const isLoading = ref(false);
+const token = ref("-");
+const endpoint = `${VUE_APP_BASE_URL}nocloud/chat/completions`;
 
 const example = `
   curl \`<endpoint>\`
@@ -173,37 +160,38 @@ const example = `
       { "role": "user", "content": "Hello!" }
     ]
   }'
-`
+`;
 
-async function fetch () {
+async function fetch() {
   try {
-    isLoading.value = true
-    await chatsStore.fetchChats()
+    isLoading.value = true;
+    await chatsStore.fetchChats();
 
     const { meta } = await instancesStore.invokeAction({
-      uuid: props.service.uuid, action: 'instance_token'
-    })
+      uuid: props.service.uuid,
+      action: "instance_token",
+    });
 
-    token.value = meta.token
+    token.value = meta.token;
   } catch (error) {
-    console.error(error)
+    console.error(error);
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
-fetch()
+fetch();
 </script>
 
 <script>
-export default { name: 'OpenaiDraw' }
+export default { name: "OpenaiDraw" };
 </script>
 
 <style scoped>
 .module :deep(.ticket) {
   background-color: var(--main);
   color: var(--bright_font);
-  transition: .2s;
+  transition: 0.2s;
 }
 
 .module :deep(.ticket:hover) {

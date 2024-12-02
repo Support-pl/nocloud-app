@@ -8,6 +8,7 @@ import { useNotification } from "@/hooks/utils";
 import { getTarification } from "@/functions.js";
 import { useAddonsStore } from "@/stores/addons.js";
 import { storeToRefs } from "pinia";
+import { useCurrenciesStore } from "@/stores/currencies.js";
 
 function useCloudPlans(tarification, options) {
   const { openNotification } = useNotification();
@@ -24,6 +25,7 @@ function useCloudPlans(tarification, options) {
     showcaseId,
   } = storeToRefs(useCloudStore());
   const addonsStore = useAddonsStore();
+  const { userCurrency } = storeToRefs(useCurrenciesStore());
 
   const isPlansLoading = ref(false);
   const productSize = ref("");
@@ -122,17 +124,18 @@ function useCloudPlans(tarification, options) {
     setProduct
   );
 
-  watch(planId, () => {
-    fetchAddons();
-  });
+  watch([provider, locationId, userCurrency], async ([value]) => {
+    if (!value?.uuid) return;
 
-  watch(
-    () => [provider.value, locationId.value],
-    async ([value]) => {
-      options.highCPU = false;
-      if (!value?.uuid) return;
-      if (cachedPlans.value[value.uuid]) {
-        plansStore.setPlans(cachedPlans.value[value.uuid]);
+    const cacheKey = `${value.uuid}_${userCurrency.value.code}`;
+
+    options.highCPU = false;
+
+    try {
+      isPlansLoading.value = true;
+
+      if (cachedPlans.value[cacheKey]) {
+        plansStore.setPlans(cachedPlans.value[cacheKey]);
 
         const { items } =
           showcases.value.find(({ uuid }) => uuid === showcaseId.value) ?? {};
@@ -141,34 +144,18 @@ function useCloudPlans(tarification, options) {
           {};
 
         planId.value = plan ?? filteredPlans.value[0]?.uuid ?? "";
-        return;
+      } else {
+        const { pool } = await plansStore.fetch({
+          sp_uuid: provider.uuid,
+          anonymously: !authStore.isLogged,
+        });
+        cachedPlans.value[cacheKey] = pool;
+        planId.value = filteredPlans.value[0]?.uuid ?? pool[0]?.uuid ?? "";
       }
 
-      await fetchPlans(value);
-    }
-  );
-
-  async function fetchAddons() {
-    try {
-      isPlansLoading.value = true;
       await addonsStore.fetch({
         filters: { plan_uuid: [planId.value] },
       });
-    } finally {
-      isPlansLoading.value = false;
-    }
-  }
-
-  async function fetchPlans(provider) {
-    try {
-      isPlansLoading.value = true;
-      const { pool } = await plansStore.fetch({
-        sp_uuid: provider.uuid,
-        anonymously: !authStore.isLogged,
-      });
-
-      cachedPlans.value[provider.uuid] = pool;
-      planId.value = filteredPlans.value[0]?.uuid ?? pool[0]?.uuid ?? "";
     } catch (error) {
       openNotification("error", {
         message: error.response?.data.message ?? error.message ?? error,
@@ -176,7 +163,7 @@ function useCloudPlans(tarification, options) {
     } finally {
       isPlansLoading.value = false;
     }
-  }
+  });
 
   return { filteredPlans, product, productSize, isPlansLoading };
 }

@@ -9,7 +9,7 @@
     >
       <template v-if="item.warning">
         <div class="newCloud__template-image">
-          <img src="/img/OS/default.png" :alt="item.desc">
+          <img src="/img/OS/default.png" :alt="item.desc" />
         </div>
         <div class="newCloud__template-name">
           {{ item.name }}
@@ -18,13 +18,17 @@
 
       <template v-else-if="!item.name.includes('none')">
         <div class="newCloud__template-image">
-          <img :src="`/img/OS/${getImageName(item.name)}.png`" :alt="item.desc" @error="onError">
+          <img
+            :src="`/img/OS/${getImageName(item.name)}.png`"
+            :alt="item.desc"
+            @error="onError"
+          />
         </div>
 
         <div class="newCloud__template-name">
-          {{ item.name }} <br>
+          {{ item.name }} <br />
           <template v-if="item.prices || item.price">
-            ({{ osPrice(item.prices ?? item) }} {{ currency.code }})
+            ({{ osPrice(item.prices ?? item) }} {{ currency.title }})
           </template>
         </div>
       </template>
@@ -33,21 +37,21 @@
 </template>
 
 <script setup>
-import { getImageName, onError } from '@/functions.js'
-import { useCurrency } from '@/hooks/utils'
+import { getImageName, onError } from "@/functions.js";
+import { useCurrency } from "@/hooks/utils";
 
 defineProps({
   images: { type: [Array, Object], required: true },
   osName: { type: String, required: true },
   setOS: { type: Function, required: true },
-  osPrice: { type: Function, default: (prices) => prices[0] ?? 0 }
-})
+  osPrice: { type: Function, default: (prices) => prices[0] ?? 0 },
+});
 
-const { currency } = useCurrency()
+const { currency } = useCurrency();
 </script>
 
 <script>
-export default { name: 'ImagesList' }
+export default { name: "ImagesList" };
 </script>
 
 <style scoped>
@@ -100,7 +104,7 @@ export default { name: 'ImagesList' }
 }
 
 .newCloud__template-image img::after {
-  content: url('/img/OS/default.png');
+  content: url("/img/OS/default.png");
   display: block;
   position: absolute;
   transform: translate(-36px, -59px) scale(0.21);

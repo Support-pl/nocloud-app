@@ -126,7 +126,7 @@
           <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
               <template v-if="!fetchLoading">
-                {{ getProducts.price }} {{ currency.code }}
+                {{ getProducts.price }} {{ currency.title }}
               </template>
               <div v-else class="loadingLine loadingLine--total" />
             </transition>
@@ -178,6 +178,7 @@ import { useInstancesStore } from "@/stores/instances.js";
 
 import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import promoBlock from "@/components/ui/promo.vue";
+import { useCurrenciesStore } from "@/stores/currencies";
 
 export default {
   name: "AcronisComponent",
@@ -223,6 +224,7 @@ export default {
       "fetchBillingData",
       "baseURL",
     ]),
+    ...mapState(useCurrenciesStore, ["userCurrency"]),
     getProducts() {
       if (Object.keys(this.products).length === 0) return "NAN";
       const title = [];
@@ -251,23 +253,25 @@ export default {
     },
     plans() {
       return (
-        this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
-          const { items } =
-            this.spStore.showcases.find(
-              ({ uuid }) => uuid === this.$route.query.service
-            ) ?? {};
-          const plans = [];
+        this.cachedPlans[`${this.provider}${this.userCurrency.code}`]?.filter(
+          ({ type, uuid }) => {
+            const { items } =
+              this.spStore.showcases.find(
+                ({ uuid }) => uuid === this.$route.query.service
+              ) ?? {};
+            const plans = [];
 
-          if (!items) return type === "acronis";
-          items.forEach(({ servicesProvider, plan }) => {
-            if (servicesProvider === this.provider) {
-              plans.push(plan);
-            }
-          });
+            if (!items) return type === "acronis";
+            items.forEach(({ servicesProvider, plan }) => {
+              if (servicesProvider === this.provider) {
+                plans.push(plan);
+              }
+            });
 
-          if (plans.length < 1) return type === "acronis";
-          return type === "acronis" && plans.includes(uuid);
-        }) ?? []
+            if (plans.length < 1) return type === "acronis";
+            return type === "acronis" && plans.includes(uuid);
+          }
+        ) ?? []
       );
     },
     sp() {
@@ -291,21 +295,11 @@ export default {
     sp(value) {
       if (value.length > 0) this.provider = value[0].uuid;
     },
-    async provider(uuid) {
-      if (this.cachedPlans[uuid]) return;
-      try {
-        const { pool } = await this.plansStore.fetch({
-          anonymously: !this.isLogged,
-          sp_uuid: uuid,
-        });
-
-        this.cachedPlans[uuid] = pool;
-        this.plan = this.plans[0]?.uuid;
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error;
-
-        this.$notification.error({ message });
-      }
+    provider(uuid) {
+      this.fetchPlans(uuid);
+    },
+    userCurrency() {
+      this.fetchPlans(this.provider);
     },
     plan(value) {
       const plan = this.plans.find(({ uuid }) => uuid === value);
@@ -444,7 +438,6 @@ export default {
           await this.deployService(uuid, this.$t("Done"));
           const { instances } =
             instancesGroups.find(({ sp }) => sp === this.provider) ?? {};
-          let instance;
 
           for (let i = instances.length - 1; i >= 0; i--) {
             const { title } = instances[i];
@@ -457,11 +450,6 @@ export default {
           if (this.namespacesStore.namespaces.length < 1) {
             await this.namespacesStore.fetch();
           }
-
-          const { access } = this.namespacesStore.namespaces.find(
-            ({ uuid }) => uuid === this.namespace
-          );
-          const account = access.namespace ?? this.namespace;
 
           this.$router.push({ path: "/billing" });
         })
@@ -515,6 +503,24 @@ export default {
 
       if (isPayg && !this.checkBalance(price)) return;
       this.modal.confirmCreate = true;
+    },
+    async fetchPlans(provider) {
+      const cacheKey = `${provider} ${this.userCurrency.code}`;
+
+      if (this.cachedPlans[cacheKey]) return;
+      try {
+        const { pool } = await this.plansStore.fetch({
+          anonymously: !this.isLogged,
+          sp_uuid: provider,
+        });
+
+        this.cachedPlans[cacheKey] = pool;
+        this.plan = this.plans[0]?.uuid;
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error;
+
+        this.$notification.error({ message });
+      }
     },
   },
 };

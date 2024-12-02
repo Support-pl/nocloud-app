@@ -8,7 +8,7 @@
     @cancel="hideModal"
   >
     <p v-if="authStore.isLogged">
-      {{ $t("Enter value") }} ({{ currency.code }}):
+      {{ $t("Enter value") }} ({{ currency.title }}):
     </p>
     <a-input
       allow-clear
@@ -45,7 +45,7 @@ import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth.js";
 import { useCurrency } from "@/hooks/utils";
 import { useInvoicesStore } from "@/stores/invoices";
-import { toInvoice,getInvoiceNumber } from "@/functions";
+import { toInvoice, getInvoiceNumber } from "@/functions";
 
 const props = defineProps({
   modalVisible: { type: Boolean, required: true },

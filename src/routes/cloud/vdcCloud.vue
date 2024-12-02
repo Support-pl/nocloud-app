@@ -12,19 +12,27 @@
             <dollar-icon style="font-size: 25px" />
             <h3 class="cloud__title">
               <span style="white-space: nowrap">
-                {{ capitalize($t('usage')) }}:
+                {{ capitalize($t("usage")) }}:
               </span>
 
               <span style="white-space: nowrap">
-                {{ price }} {{ currency.code }}/{{ $tc('month', 0) }}
+                {{ formatPrice(price) }} {{ currency.title }}/{{
+                  $tc("month", 0)
+                }}
               </span>
             </h3>
           </a-flex>
         </a-col>
 
         <a-col :span="12">
-          <a-button block type="text" size="large" class="button button--secondary" @click="toNetworking">
-            {{ $t('Networking') }}
+          <a-button
+            block
+            type="text"
+            size="large"
+            class="button button--secondary"
+            @click="toNetworking"
+          >
+            {{ $t("Networking") }}
             <template #icon>
               <global-icon style="font-size: 25px" />
             </template>
@@ -32,8 +40,14 @@
         </a-col>
 
         <a-col :span="12">
-          <a-button block type="primary" size="large" class="button" @click="orderVM">
-            {{ $t('Order') }} VM
+          <a-button
+            block
+            type="primary"
+            size="large"
+            class="button"
+            @click="orderVM"
+          >
+            {{ $t("Order") }} VM
           </a-button>
         </a-col>
       </a-row>
@@ -50,115 +64,115 @@
 </template>
 
 <script setup>
-import { ref, computed, defineAsyncComponent, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth.js'
-import { useInstancesStore } from '@/stores/instances.js'
+import { ref, computed, defineAsyncComponent, watch } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth.js";
+import { useInstancesStore } from "@/stores/instances.js";
 
-import { useCurrency, useNotification } from '@/hooks/utils'
-import useVdcOptions from '@/hooks/cloud/vdcOptions.js'
+import { useCurrency, useNotification } from "@/hooks/utils";
+import useVdcOptions from "@/hooks/cloud/vdcOptions.js";
 
-import loading from '@/components/ui/loading.vue'
-import cloudItem from '@/components/cloud/item.vue'
-import vdcSelect from '@/components/cloud/vdc/select.vue'
-import { transformInstances } from '@/functions'
+import loading from "@/components/ui/loading.vue";
+import cloudItem from "@/components/cloud/item.vue";
+import vdcSelect from "@/components/cloud/vdc/select.vue";
+import { transformInstances } from "@/functions";
 
-const dollarIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/DollarCircleOutlined')
-)
-const globalIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/GlobalOutlined')
-)
+const dollarIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/DollarCircleOutlined")
+);
+const globalIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/GlobalOutlined")
+);
 
-const router = useRouter()
-const authStore = useAuthStore()
-const instancesStore = useInstancesStore()
+const router = useRouter();
+const authStore = useAuthStore();
+const instancesStore = useInstancesStore();
 
-const { currency } = useCurrency()
-const { instances, options } = useVdcOptions()
-const { openNotification } = useNotification()
+const { currency, formatPrice } = useCurrency();
+const { instances, options } = useVdcOptions();
+const { openNotification } = useNotification();
 
-const selected = ref('')
-const isLoading = ref(false)
+const selected = ref("");
+const isLoading = ref(false);
 
 const price = computed(() => {
   const result = instances.value.map((inst) => {
-    const { product, billingPlan, groupUuid } = inst
-    if (selected.value && selected.value !== groupUuid) return 0
+    const { product, billingPlan, groupUuid } = inst;
+    if (selected.value && selected.value !== groupUuid) return 0;
 
-    const { price = 0, period = 2592000 } = billingPlan.products[product] ?? {}
+    const { price = 0, period = 2592000 } = billingPlan.products[product] ?? {};
 
-    if (+period === 0) return 0
-    return price / (period / 2592000)
-  })
+    if (+period === 0) return 0;
+    return price / (period / 2592000);
+  });
 
   instances.value.forEach((inst) => {
-    if (selected.value && selected.value !== inst.groupUuid) return
-    const type = inst.resources.drive_type.toLowerCase()
+    if (selected.value && selected.value !== inst.groupUuid) return;
+    const type = inst.resources.drive_type.toLowerCase();
 
     inst.billingPlan.resources.forEach(({ key, price, period }) => {
       switch (key) {
         case `drive_${type}`: {
-          const size = inst.resources.drive_size / 1024
-          const value = price / (period / 2592000) * size
+          const size = inst.resources.drive_size / 1024;
+          const value = (price / (period / 2592000)) * size;
 
-          if (value) result.push(value)
-          break
+          if (value) result.push(value);
+          break;
         }
 
-        case 'drive_type':
-          break
+        case "drive_type":
+          break;
 
         default: {
-          const size = inst.resources[key]
-          const value = price / (period / 2592000) * size
+          const size = inst.resources[key];
+          const value = (price / (period / 2592000)) * size;
 
-          if (value) result.push(value)
+          if (value) result.push(value);
         }
       }
-    })
-  })
+    });
+  });
 
-  return +(result.reduce((sum, num) => sum + num, 0)).toFixed(2)
-})
+  return +result.reduce((sum, num) => sum + num, 0).toFixed(2);
+});
 
 const filteredInstances = computed(() =>
   transformInstances(instances.value).filter((inst) => {
     if (selected.value && selected.value !== inst.groupUuid) {
-      return false
+      return false;
     }
-    return true
+    return true;
   })
-)
+);
 
-function orderVM () {
-  router.push({ name: 'services' })
+function orderVM() {
+  router.push({ name: "services" });
 }
 
-function toNetworking () {
-  router.push({ name: 'VDCNetworking' })
+function toNetworking() {
+  router.push({ name: "VDCNetworking" });
 }
 
-async function fetchInstances () {
-  isLoading.value = true
+async function fetchInstances() {
+  isLoading.value = true;
   try {
-    await instancesStore.fetch()
+    await instancesStore.fetch();
   } catch (error) {
-    openNotification('error', {
-      message: error.response?.data?.message ?? error.message ?? error
-    })
-    console.error(error)
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+    console.error(error);
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
-if (authStore.userdata.uuid) fetchInstances()
-watch(() => authStore.userdata, fetchInstances)
+if (authStore.userdata.uuid) fetchInstances();
+watch(() => authStore.userdata, fetchInstances);
 </script>
 
 <script>
-export default { name: 'VDCCloud' }
+export default { name: "VDCCloud" };
 </script>
 
 <style scoped>
@@ -175,9 +189,7 @@ export default { name: 'VDCCloud' }
   padding: 20px;
   margin: 15px auto;
   border-radius: 20px;
-  box-shadow:
-    5px 8px 10px rgba(0, 0, 0, .08),
-    0px 0px 12px rgba(0, 0, 0, .05);
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
   background-color: var(--bright_font);
 }
 

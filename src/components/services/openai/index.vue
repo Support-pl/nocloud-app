@@ -9,7 +9,10 @@
               v-html="getProducts.description"
             />
             <table v-else-if="getProducts.description" class="product__specs">
-              <tr v-for="resource in getProducts.description" :key="resource.name">
+              <tr
+                v-for="resource in getProducts.description"
+                :key="resource.name"
+              >
                 <td>{{ resource.name }}</td>
                 <td>{{ resource.value }}</td>
               </tr>
@@ -33,7 +36,7 @@
           <template #count>
             <a-tooltip placement="bottom">
               <template #title>
-                {{ $t('openai description 2') }}
+                {{ $t("openai description 2") }}
               </template>
               <question-icon style="font-size: 22px" two-tone-color="#ff9140" />
             </a-tooltip>
@@ -51,7 +54,7 @@
               </a-col>
               <a-col :xs="12" :sm="6" :lg="8">
                 <div v-if="!fetchLoading" class="order__price">
-                  {{ getProducts[key.value] }} {{ currency.code }}
+                  {{ getProducts[key.value] }} {{ currency.title }}
                 </div>
                 <div v-else class="loadingLine" />
               </a-col>
@@ -62,7 +65,7 @@
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
             <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ capitalize($t('activate')) }}
+              {{ capitalize($t("activate")) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
@@ -70,9 +73,16 @@
               :confirm-loading="modal.confirmLoading"
               :cancel-text="$t('Cancel')"
               @ok="orderClickHandler"
-              @cancel="() => { modal.confirmCreate = false }"
+              @cancel="
+                () => {
+                  modal.confirmCreate = false;
+                }
+              "
             >
-              <p>{{ $t('order_services.Do you want to activate') }}: {{ getProducts.title }}</p>
+              <p>
+                {{ $t("order_services.Do you want to activate") }}:
+                {{ getProducts.title }}
+              </p>
             </a-modal>
           </a-col>
         </a-row>
@@ -84,67 +94,92 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch, reactive, defineAsyncComponent } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useCurrency, useNotification } from '@/hooks/utils'
-import api from '@/api.js'
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+  reactive,
+  defineAsyncComponent,
+} from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { useCurrency, useNotification } from "@/hooks/utils";
+import api from "@/api.js";
 
-import { useAppStore } from '@/stores/app.js'
-import { useAuthStore } from '@/stores/auth.js'
+import { useAppStore } from "@/stores/app.js";
+import { useAuthStore } from "@/stores/auth.js";
 
-import { useSpStore } from '@/stores/sp.js'
-import { usePlansStore } from '@/stores/plans.js'
-import { useNamespasesStore } from '@/stores/namespaces.js'
-import { useInstancesStore } from '@/stores/instances.js'
+import { useSpStore } from "@/stores/sp.js";
+import { usePlansStore } from "@/stores/plans.js";
+import { useNamespasesStore } from "@/stores/namespaces.js";
+import { useInstancesStore } from "@/stores/instances.js";
 
-import selectsToCreate from '@/components/ui/selectsToCreate.vue'
-import promoBlock from '@/components/ui/promo.vue'
+import selectsToCreate from "@/components/ui/selectsToCreate.vue";
+import promoBlock from "@/components/ui/promo.vue";
+import { useCurrenciesStore } from "@/stores/currencies";
+import { storeToRefs } from "pinia";
 
-const questionIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/QuestionCircleTwoTone')
-)
+const questionIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/QuestionCircleTwoTone")
+);
 
-const router = useRouter()
-const route = useRoute()
-const i18n = useI18n()
-const { openNotification } = useNotification()
-const { currency } = useCurrency()
+const router = useRouter();
+const route = useRoute();
+const i18n = useI18n();
+const { openNotification } = useNotification();
+const { currency } = useCurrency();
 
-const appStore = useAppStore()
-const authStore = useAuthStore()
+const appStore = useAppStore();
+const authStore = useAuthStore();
 
-const spStore = useSpStore()
-const plansStore = usePlansStore()
-const namespacesStore = useNamespasesStore()
-const instancesStore = useInstancesStore()
+const spStore = useSpStore();
+const plansStore = usePlansStore();
+const namespacesStore = useNamespasesStore();
+const instancesStore = useInstancesStore();
+const { userCurrency } = storeToRefs(useCurrenciesStore());
 
-const plan = ref(null)
-const service = ref(null)
-const namespace = ref(null)
-const provider = ref(null)
+const plan = ref(null);
+const service = ref(null);
+const namespace = ref(null);
+const provider = ref(null);
 
-const cachedPlans = reactive({})
-const fetchLoading = ref(false)
+const cachedPlans = reactive({});
+const fetchLoading = ref(false);
 
-const modal = ref({ confirmCreate: false, confirmLoading: false })
+const modal = ref({ confirmCreate: false, confirmLoading: false });
 
 const getProducts = computed(() => {
-  const { resources, title, meta } = plans.value.find(({ uuid }) => uuid === plan.value) ?? {}
-  if (!resources) return 'NAN'
+  const { resources, title, meta } =
+    plans.value.find(({ uuid }) => uuid === plan.value) ?? {};
+  if (!resources) return "NAN";
 
   const products = Object.values(resources).reduce(
     (result, resource) => ({
-      ...result, [resource.key]: resource.price
-    }), {}
-  )
-  const inputKilotoken = +(products.input_kilotoken * currency.value.rate).toFixed(4)
-  const outputKilotoken = +(products.output_kilotoken * currency.value.rate).toFixed(4)
+      ...result,
+      [resource.key]: resource.price,
+    }),
+    {}
+  );
+  const inputKilotoken = +(
+    products.input_kilotoken * currency.value.rate
+  ).toFixed(4);
+  const outputKilotoken = +(
+    products.output_kilotoken * currency.value.rate
+  ).toFixed(4);
 
-  const size1024x1024 = +(products.image_size_1024x1024_quality_standard * currency.value.rate).toFixed(4)
-  const size1024x1792 = +(products.image_size_1024x1792_quality_standard * currency.value.rate).toFixed(4)
-  const size1024x1024HD = +(products.image_size_1024x1024_quality_hd * currency.value.rate).toFixed(4)
-  const size1024x1792HD = +(products.image_size_1024x1792_quality_hd * currency.value.rate).toFixed(4)
+  const size1024x1024 = +(
+    products.image_size_1024x1024_quality_standard * currency.value.rate
+  ).toFixed(4);
+  const size1024x1792 = +(
+    products.image_size_1024x1792_quality_standard * currency.value.rate
+  ).toFixed(4);
+  const size1024x1024HD = +(
+    products.image_size_1024x1024_quality_hd * currency.value.rate
+  ).toFixed(4);
+  const size1024x1792HD = +(
+    products.image_size_1024x1792_quality_hd * currency.value.rate
+  ).toFixed(4);
 
   return {
     title,
@@ -158,215 +193,229 @@ const getProducts = computed(() => {
 
     price: inputKilotoken + outputKilotoken,
     description: `<span style="font-size: 18px; white-space: pre-line">${
-      meta.description || i18n.t('openai description')
-    }</span>`
-  }
-})
+      meta.description || i18n.t("openai description")
+    }</span>`,
+  };
+});
 
 const keys = [
-  { title: 'Input kilotoken', value: 'inputKilotoken' },
-  { title: 'Output kilotoken', value: 'outputKilotoken' },
-  { title: 'Image 1024x1024', value: 'size1024x1024' },
-  { title: 'HD image 1024x1024', value: 'size1024x1024HD' },
-  { title: 'Image 1024x1792', value: 'size1024x1792' },
-  { title: 'HD image 1024x1792', value: 'size1024x1792HD' }
-]
+  { title: "Input kilotoken", value: "inputKilotoken" },
+  { title: "Output kilotoken", value: "outputKilotoken" },
+  { title: "Image 1024x1024", value: "size1024x1024" },
+  { title: "HD image 1024x1024", value: "size1024x1024HD" },
+  { title: "Image 1024x1792", value: "size1024x1792" },
+  { title: "HD image 1024x1792", value: "size1024x1792HD" },
+];
 
 const services = computed(() =>
-  instancesStore.services.filter((el) => el.status !== 'DEL')
-)
+  instancesStore.services.filter((el) => el.status !== "DEL")
+);
 
-const plans = computed(() =>
-  cachedPlans[provider.value]?.filter(({ type, uuid }) => {
-    const { items } = spStore.showcases.find(
-      ({ uuid }) => uuid === route.query.service
-    ) ?? {}
-    const plans = []
+const plans = computed(
+  () =>
+    cachedPlans[`${provider.value}_${userCurrency.value.code}`]?.filter(
+      ({ type, uuid }) => {
+        const { items } =
+          spStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
+          {};
+        const plans = [];
 
-    if (!items) return type === 'openai'
-    items.forEach(({ servicesProvider, plan }) => {
-      if (servicesProvider === provider.value) {
-        plans.push(plan)
+        if (!items) return type === "openai";
+        items.forEach(({ servicesProvider, plan }) => {
+          if (servicesProvider === provider.value) {
+            plans.push(plan);
+          }
+        });
+
+        if (plans.length < 1) return type === "openai";
+        return type === "openai" && plans.includes(uuid);
       }
-    })
-
-    if (plans.length < 1) return type === 'openai'
-    return type === 'openai' && plans.includes(uuid)
-  }) ?? []
-)
+    ) ?? []
+);
 
 const sp = computed(() => {
-  const { items } = spStore.showcases.find(
-    ({ uuid }) => uuid === route.query.service
-  ) ?? {}
+  const { items } =
+    spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
 
-  if (!items) return []
+  if (!items) return [];
   return spStore.servicesProviders.filter(({ uuid }) =>
     items.find((item) => uuid === item.servicesProvider)
-  )
-})
+  );
+});
 
 watch(sp, (value) => {
-  if (value.length > 0) provider.value = value[0].uuid
-})
+  if (value.length > 0) provider.value = value[0].uuid;
+});
 
-watch(provider, async (uuid) => {
-  if (cachedPlans[uuid]) return
+async function fetchPlans(sp) {
+  const cacheKey = `${sp}_${userCurrency.value.code}`;
+
+  if (cachedPlans[cacheKey]) return;
   try {
     const { pool } = await plansStore.fetch({
-      anonymously: !authStore.isLogged, sp_uuid: uuid
-    })
+      anonymously: !authStore.isLogged,
+      sp_uuid: sp,
+    });
 
-    cachedPlans[uuid] = pool
-    plan.value = plans.value[0]?.uuid
+    cachedPlans[cacheKey] = pool;
+    plan.value = plans.value[0]?.uuid;
   } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
+    const message = error.response?.data?.message ?? error.message ?? error;
 
-    openNotification('error', { message })
+    openNotification("error", { message });
   }
-})
-
-function orderClickHandler () {
-  const serviceItem = services.value.find(({ uuid }) => uuid === service.value)
-  const planItem = plans.value.find(({ uuid }) => uuid === plan.value)
-
-  const instances = [{
-    config: {
-      user: authStore.userdata.uuid,
-      auto_start: planItem.meta.auto_start
-    },
-    title: getProducts.value.title,
-    billing_plan: { uuid: plan.value },
-    product: ''
-  }]
-  const newGroup = {
-    title: authStore.userdata.title + Date.now(),
-    type: 'openai',
-    sp: provider.value,
-    instances
-  }
-
-  const info = (!service.value) ? newGroup : JSON.parse(JSON.stringify(serviceItem))
-  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value)
-
-  if (group) group.instances = [...group.instances, ...instances]
-  else if (service.value) info.instancesGroups.push(newGroup)
-
-  if (!authStore.userdata.uuid) {
-    appStore.onLogin.redirect = route.name
-    appStore.onLogin.info = {
-      type: 'openai',
-      title: 'OpenAI',
-      cost: getProducts.value.price,
-      currency: currency.value.code
-    }
-    appStore.onLogin.action = () => {
-      createOpenAI(info)
-    }
-
-    router.push({ name: 'login' })
-    return
-  }
-
-  createOpenAI(info)
 }
 
-async function createOpenAI (info) {
-  modal.value.confirmLoading = true
-  const action = (service.value) ? 'update' : 'create'
-  const orderData = (service.value)
+watch(provider, (uuid) => fetchPlans(uuid));
+
+watch(userCurrency, () => fetchPlans(provider.value));
+
+function orderClickHandler() {
+  const serviceItem = services.value.find(({ uuid }) => uuid === service.value);
+  const planItem = plans.value.find(({ uuid }) => uuid === plan.value);
+
+  const instances = [
+    {
+      config: {
+        user: authStore.userdata.uuid,
+        auto_start: planItem.meta.auto_start,
+      },
+      title: getProducts.value.title,
+      billing_plan: { uuid: plan.value },
+      product: "",
+    },
+  ];
+  const newGroup = {
+    title: authStore.userdata.title + Date.now(),
+    type: "openai",
+    sp: provider.value,
+    instances,
+  };
+
+  const info = !service.value
+    ? newGroup
+    : JSON.parse(JSON.stringify(serviceItem));
+  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
+
+  if (group) group.instances = [...group.instances, ...instances];
+  else if (service.value) info.instancesGroups.push(newGroup);
+
+  if (!authStore.userdata.uuid) {
+    appStore.onLogin.redirect = route.name;
+    appStore.onLogin.info = {
+      type: "openai",
+      title: "OpenAI",
+      cost: getProducts.value.price,
+      currency: currency.value.code,
+    };
+    appStore.onLogin.action = () => {
+      createOpenAI(info);
+    };
+
+    router.push({ name: "login" });
+    return;
+  }
+
+  createOpenAI(info);
+}
+
+async function createOpenAI(info) {
+  modal.value.confirmLoading = true;
+  const action = service.value ? "update" : "create";
+  const orderData = service.value
     ? info
     : {
         namespace: namespace.value,
         service: {
           title: authStore.userdata.title,
           context: {},
-          version: '1',
-          instancesGroups: [info]
-        }
-      }
+          version: "1",
+          instancesGroups: [info],
+        },
+      };
 
   try {
-    const { uuid } = await instancesStore[`${action}Service`](orderData)
+    const { uuid } = await instancesStore[`${action}Service`](orderData);
 
-    deployService(uuid)
+    deployService(uuid);
   } catch (error) {
-    const matched = (error.response?.data?.message ?? error.message ?? '').split(/error:"|error: "/)
-    const message = matched.at(-1).split('" ').at(0)
+    const matched = (
+      error.response?.data?.message ??
+      error.message ??
+      ""
+    ).split(/error:"|error: "/);
+    const message = matched.at(-1).split('" ').at(0);
 
     if (message) {
-      openNotification('error', { message })
+      openNotification("error", { message });
     } else {
-      const message = error.response?.data?.message ?? error.message ?? error
+      const message = error.response?.data?.message ?? error.message ?? error;
 
-      openNotification('error', { message })
+      openNotification("error", { message });
     }
-    console.error(error)
+    console.error(error);
   }
 }
 
-function orderConfirm () {
-  modal.value.confirmCreate = true
+function orderConfirm() {
+  modal.value.confirmCreate = true;
 }
 
-async function deployService (uuid) {
+async function deployService(uuid) {
   try {
-    await api.services.up(uuid)
+    await api.services.up(uuid);
 
-    openNotification('success', { message: i18n.t('Done') })
-    router.push({ path: '/services' })
+    openNotification("success", { message: i18n.t("Done") });
+    router.push({ path: "/services" });
   } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
+    const message = error.response?.data?.message ?? error.message ?? error;
 
-    openNotification('error', { message: i18n.t(message) })
+    openNotification("error", { message: i18n.t(message) });
   } finally {
-    modal.value.confirmLoading = false
+    modal.value.confirmLoading = false;
   }
 }
 
 onMounted(() => {
-  const { action } = appStore.onLogin
+  const { action } = appStore.onLogin;
 
-  if (typeof action !== 'function') return
-  modal.value.confirmCreate = true
-  modal.value.confirmLoading = true
-  action()
-})
+  if (typeof action !== "function") return;
+  modal.value.confirmCreate = true;
+  modal.value.confirmLoading = true;
+  action();
+});
 
-async function fetch () {
+async function fetch() {
   try {
-    fetchLoading.value = true
+    fetchLoading.value = true;
     const promises = [
       authStore.fetchBillingData(),
       spStore.fetch(!authStore.isLogged),
-      spStore.fetchShowcases(!authStore.isLogged)
-    ]
+      spStore.fetchShowcases(!authStore.isLogged),
+    ];
 
     if (authStore.isLogged) {
-      promises.push(
-        namespacesStore.fetch(),
-        instancesStore.fetch()
-      )
+      promises.push(namespacesStore.fetch(), instancesStore.fetch());
     }
 
-    await Promise.all(promises)
+    await Promise.all(promises);
   } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
+    const message = error.response?.data?.message ?? error.message ?? error;
 
-    if (error.response?.data?.code === 16) return
-    openNotification('error', { message: i18n.t(message) })
+    if (error.response?.data?.code === 16) return;
+    openNotification("error", { message: i18n.t(message) });
 
-    console.error(error)
+    console.error(error);
   } finally {
-    fetchLoading.value = false
+    fetchLoading.value = false;
   }
 }
 
-fetch()
+fetch();
 </script>
 
 <script>
-export default { name: 'OpenaiComponent' }
+export default { name: "OpenaiComponent" };
 </script>
 
 <style scoped>
@@ -428,15 +477,16 @@ export default { name: 'OpenaiComponent' }
 
 .product__specs td:nth-child(2) {
   text-align: right;
-  color: rgba(0, 0, 0, .7)
+  color: rgba(0, 0, 0, 0.7);
 }
 
 .product__specs tr {
-  border-bottom: var(--border-line-weight) var(--border-line-type) var(--border-color);
+  border-bottom: var(--border-line-weight) var(--border-line-type)
+    var(--border-color);
 }
 
 .product__specs td:last-child::before {
-  content: '';
+  content: "";
   width: 2px;
   height: 50%;
   background: #f5f5f5;
@@ -446,7 +496,7 @@ export default { name: 'OpenaiComponent' }
   transform: translateY(-50%);
 }
 
-.order__option div>.img_prod {
+.order__option div > .img_prod {
   display: block;
   max-width: 200px;
   margin: 0 auto 10px;
@@ -464,9 +514,7 @@ export default { name: 'OpenaiComponent' }
 
 .order__field {
   border-radius: 20px;
-  box-shadow:
-    5px 8px 10px rgba(0, 0, 0, .08),
-    0px 0px 12px rgba(0, 0, 0, .05);
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
   padding: 20px;
   background-color: var(--bright_font);
   height: max-content;

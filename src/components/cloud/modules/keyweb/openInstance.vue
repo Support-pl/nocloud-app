@@ -9,21 +9,17 @@
           {{ $t("Information") }}
         </div>
       </div>
-      <div
-        v-if="VM.state?.meta.networking"
-        class="Fcloud__info-block block"
-      >
-        <div class="Fcloud__block-header">
-          <flag-icon /> IP
-        </div>
+      <div v-if="VM.state?.meta.networking" class="Fcloud__info-block block">
+        <div class="Fcloud__block-header"><flag-icon /> IP</div>
         <div class="Fcloud__block-content">
           <div class="block__column" style="flex-direction: row">
-            <div
-              v-if="provider" class="block__value" style="font-size: 18px"
-            >
+            <div v-if="provider" class="block__value" style="font-size: 18px">
               <table class="Fcloud__table">
                 <tbody>
-                  <tr v-for="nic in VM.state?.meta.networking.public" :key="nic">
+                  <tr
+                    v-for="nic in VM.state?.meta.networking.public"
+                    :key="nic"
+                  >
                     <td>{{ nic }}</td>
                   </tr>
                 </tbody>
@@ -32,7 +28,10 @@
             <div v-if="provider" class="block__value" style="font-size: 18px">
               <table class="Fcloud__table">
                 <tbody>
-                  <tr v-for="nic in VM.state?.meta.networking.private" :key="nic">
+                  <tr
+                    v-for="nic in VM.state?.meta.networking.private"
+                    :key="nic"
+                  >
                     <td>{{ nic }}</td>
                   </tr>
                 </tbody>
@@ -48,11 +47,7 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div
-              v-if="provider"
-              class="block__value"
-              style="font-size: 18px"
-            >
+            <div v-if="provider" class="block__value" style="font-size: 18px">
               {{ provider.locations[0].title }}
             </div>
           </div>
@@ -65,20 +60,18 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div class="block__title">
-              OS
-            </div>
+            <div class="block__title">OS</div>
             <div class="block__value">
-              {{ OSName || $t('No Data') }}
+              {{ OSName || $t("No Data") }}
             </div>
           </div>
 
           <div v-if="VM.product" class="block__column">
             <div class="block__title">
-              {{ $t('Product') }}
+              {{ $t("Product") }}
             </div>
             <div class="block__value">
-              {{ productName || $t('No Data') }}
+              {{ productName || $t("No Data") }}
             </div>
           </div>
 
@@ -87,17 +80,21 @@
               {{ capitalize($t("userService.next payment date")) }}
             </div>
             <div class="block__value">
-              {{ new Intl.DateTimeFormat().format(VM.data.next_payment_date * 1000) }}
+              {{
+                new Intl.DateTimeFormat().format(
+                  VM.data.next_payment_date * 1000
+                )
+              }}
               <sync-icon v-if="false" title="Renew" @click="sendRenew" />
             </div>
           </div>
 
           <div class="block__column">
             <div class="block__title">
-              {{ capitalize($t('userService.auto renew')) }}
+              {{ capitalize($t("userService.auto renew")) }}
             </div>
             <div class="block__value">
-              {{ VM.config.auto_renew ? $t('enabled') : $t('disabled') }}
+              {{ VM.config.auto_renew ? $t("enabled") : $t("disabled") }}
             </div>
           </div>
         </div>
@@ -112,22 +109,22 @@
           <template v-if="tariffPrice">
             <div class="block__column block__column_table">
               <div class="block__title">
-                {{ capitalize($t('tariff')) }}
+                {{ capitalize($t("tariff")) }}
               </div>
             </div>
             <div class="block__column block__column_table block__column_price">
               <div class="block__title">
-                {{ productName || $t('No Data') }}:
+                {{ productName || $t("No Data") }}:
               </div>
               <div class="block__value">
-                {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
+                {{ +tariffPrice.toFixed(2) }} {{ currency.title }}
               </div>
             </div>
           </template>
 
           <div class="block__column block__column_table">
             <div class="block__title">
-              {{ $t('Addons') }}
+              {{ $t("Addons") }}
             </div>
           </div>
           <div
@@ -135,20 +132,16 @@
             :key="addon"
             class="block__column block__column_table block__column_price"
           >
-            <div class="block__title">
-              {{ addon }}:
-            </div>
+            <div class="block__title">{{ addon }}:</div>
             <div class="block__value">
-              {{ +price.toFixed(2) }} {{ currency.code }}
+              {{ +price.toFixed(2) }} {{ currency.title }}
             </div>
           </div>
 
           <div class="block__column block__column_table block__column_total">
-            <div class="block__title">
-              {{ $t('Total') }}:
-            </div>
+            <div class="block__title">{{ $t("Total") }}:</div>
             <div class="block__value">
-              {{ +fullPrice.toFixed(2) }} {{ currency.code }}
+              {{ +fullPrice.toFixed(2) }} {{ currency.title }}
             </div>
           </div>
         </div>
@@ -175,119 +168,121 @@
 </template>
 
 <script setup lang="jsx">
-import { computed, defineAsyncComponent, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import { computed, defineAsyncComponent, ref } from "vue";
+import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 
-import { useSpStore } from '@/stores/sp.js'
-import { usePlansStore } from '@/stores/plans.js'
-import { useInstancesStore } from '@/stores/instances.js'
+import { useSpStore } from "@/stores/sp.js";
+import { usePlansStore } from "@/stores/plans.js";
+import { useInstancesStore } from "@/stores/instances.js";
 
-import { useCurrency, useNotification } from '@/hooks/utils'
-import { toDate } from '@/functions.js'
+import { useCurrency, useNotification } from "@/hooks/utils";
+import { toDate } from "@/functions.js";
 
-import keywebActions from '@/components/cloud/modules/keyweb/actions.vue'
-import renewalModal from '@/components/ui/renewalModal.vue'
+import keywebActions from "@/components/cloud/modules/keyweb/actions.vue";
+import renewalModal from "@/components/ui/renewalModal.vue";
 
 const props = defineProps({
-  VM: { type: Object, required: true }
-})
+  VM: { type: Object, required: true },
+});
 
-const flagIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/FlagFilled')
-)
-const envIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/EnvironmentOutlined')
-)
-const infoIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/InfoCircleOutlined')
-)
+const flagIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FlagFilled")
+);
+const envIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EnvironmentOutlined")
+);
+const infoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/InfoCircleOutlined")
+);
 
-const syncIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SyncOutlined')
-)
-const cardIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CreditCardOutlined')
-)
+const syncIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SyncOutlined")
+);
+const cardIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CreditCardOutlined")
+);
 
-const route = useRoute()
-const i18n = useI18n()
+const route = useRoute();
+const i18n = useI18n();
 
-const spStore = useSpStore()
-const plansStore = usePlansStore()
-const instancesStore = useInstancesStore()
+const spStore = useSpStore();
+const plansStore = usePlansStore();
+const instancesStore = useInstancesStore();
 
-const { currency } = useCurrency()
-const { openNotification } = useNotification()
+const { currency } = useCurrency();
+const { openNotification } = useNotification();
 
-const isVNCLoading = ref(false)
-const isVisible = ref(false)
+const isVNCLoading = ref(false);
+const isVisible = ref(false);
 
 const provider = computed(() =>
   spStore.servicesProviders.find(({ uuid }) => uuid === props.VM.sp)
-)
+);
 
 const plan = computed(() => {
-  const { products, uuid } = props.VM.billingPlan
+  const { products, uuid } = props.VM.billingPlan;
 
   if (products[props.VM.product]?.meta) {
-    return props.VM.billingPlan
+    return props.VM.billingPlan;
   }
 
-  return plansStore.plans.find((plan) => plan.uuid === uuid)
-})
+  return plansStore.plans.find((plan) => plan.uuid === uuid);
+});
 
-const tariffPrice = computed(() =>
-  plan.value.products[props.VM.product]?.price ?? 0
-)
+const tariffPrice = computed(
+  () => plan.value.products[props.VM.product]?.price ?? 0
+);
 
 const addonsPrice = computed(() => {
-  if (!plan.value) return {}
-  const configs = props.VM.config.configurations
+  if (!plan.value) return {};
+  const configs = props.VM.config.configurations;
 
   return Object.values(configs).reduce((prev, curr) => {
-    const productKey = `${curr}$${props.VM.product}`
-    let key = i18n.t('os')
+    const productKey = `${curr}$${props.VM.product}`;
+    let key = i18n.t("os");
 
-    if (curr.toLowerCase().includes('backup')) {
-      key = i18n.t('backup')
+    if (curr.toLowerCase().includes("backup")) {
+      key = i18n.t("backup");
     }
     return {
       ...prev,
-      [key]: plan.value.resources.find(({ key }) => key === productKey)?.price ?? 0
-    }
-  }, {})
-})
+      [key]:
+        plan.value.resources.find(({ key }) => key === productKey)?.price ?? 0,
+    };
+  }, {});
+});
 
-const fullPrice = computed(() =>
-  tariffPrice.value + Object.values(addonsPrice.value)
-    .reduce((sum, curr) => sum + curr, 0)
-)
+const fullPrice = computed(
+  () =>
+    tariffPrice.value +
+    Object.values(addonsPrice.value).reduce((sum, curr) => sum + curr, 0)
+);
 
 const OSName = computed(() => {
-  const product = plan.value.products[props.VM.product]
-  if (!product?.meta.os) return
+  const product = plan.value.products[props.VM.product];
+  if (!product?.meta.os) return;
 
-  const configs = props.VM.config.configurations
+  const configs = props.VM.config.configurations;
   const image = product.meta.os.find((key) =>
-    Object.values(configs).includes(key.split('$')[0])
-  )
-  const { meta: { type } } = plan.value.resources.find(
-    ({ key }) => key === image
-  ) ?? { meta: {} }
-  const key = `${configs[type]}$${props.VM.product}`
+    Object.values(configs).includes(key.split("$")[0])
+  );
+  const {
+    meta: { type },
+  } = plan.value.resources.find(({ key }) => key === image) ?? { meta: {} };
+  const key = `${configs[type]}$${props.VM.product}`;
 
-  return plan.value.resources.find((resource) => resource.key === key)?.title
-})
+  return plan.value.resources.find((resource) => resource.key === key)?.title;
+});
 
-const productName = computed(() =>
-  plan.value.products[props.VM.product]?.title ?? props.VM.product
-)
+const productName = computed(
+  () => plan.value.products[props.VM.product]?.title ?? props.VM.product
+);
 
 const renewalProps = computed(() => {
-  const { period } = plan.value.products[props.VM.product]
-  const currentPeriod = toDate(props.VM.data.next_payment_date)
-  const newPeriod = toDate(props.VM.data.next_payment_date + +period)
+  const { period } = plan.value.products[props.VM.product];
+  const currentPeriod = toDate(props.VM.data.next_payment_date);
+  const newPeriod = toDate(props.VM.data.next_payment_date + +period);
 
   return {
     service: props.VM,
@@ -296,34 +291,35 @@ const renewalProps = computed(() => {
     price: tariffPrice.value,
     addonsPrice: addonsPrice.value,
     currentAutoRenew: props.VM.config.auto_renew,
-    blocked: props.VM.data.blocked
-  }
-})
+    blocked: props.VM.data.blocked,
+  };
+});
 
-async function openVNC () {
+async function openVNC() {
   try {
-    isVNCLoading.value = true
+    isVNCLoading.value = true;
     const response = await instancesStore.invokeAction({
-      uuid: route.params.uuid, action: 'start_vnc'
-    })
+      uuid: route.params.uuid,
+      action: "start_vnc",
+    });
 
-    location.replace(response.meta.url)
+    location.replace(response.meta.url);
   } catch (error) {
-    openNotification('error', {
-      message: error.response?.data?.message ?? error.message ?? error
-    })
-    console.error(error)
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+    console.error(error);
   } finally {
-    isVNCLoading.value = false
+    isVNCLoading.value = false;
   }
   // router.push({ name: 'VNC', params: { uuid: route.params.uuid } })
 }
 
-plansStore.fetch({ anonymously: false, sp_uuid: props.VM.sp })
+plansStore.fetch({ anonymously: false, sp_uuid: props.VM.sp });
 </script>
 
 <script lang="jsx">
-export default { name: 'OpenInstanceKeyweb' }
+export default { name: "OpenInstanceKeyweb" };
 </script>
 
 <style scoped>
@@ -334,7 +330,7 @@ export default { name: 'OpenInstanceKeyweb' }
 }
 
 .block-content_table::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 40px;
   left: 15px;

@@ -11,7 +11,7 @@ function useCloudPrices(
   priceOVH
 ) {
   const cloudStore = useCloudStore();
-  const { currency, formatPrice } = useCurrency();
+  const { formatPrice } = useCurrency();
 
   const plan = computed(() => cloudStore.plan ?? {});
 

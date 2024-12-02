@@ -1,31 +1,43 @@
-import Api from 'nocloudjsrest'
-import { useAppStore } from '@/stores/app.js'
-import { useAuthStore } from '@/stores/auth.js'
+import Api from "nocloudjsrest";
+import { useAppStore } from "@/stores/app.js";
+import { useAuthStore } from "@/stores/auth.js";
+import { useCurrenciesStore } from "./stores/currencies.js";
 
 // const api = new Api()
-const api = new Api(VUE_APP_BASE_URL)
+const api = new Api(VUE_APP_BASE_URL);
 
 api.axios.interceptors.response.use(
   (response) => {
     if (response.data?.maintenance) {
-      console.log(response, 'maintanance mode')
-      useAppStore().isMaintananceMode = response.data.maintenance
+      console.log(response, "maintanance mode");
+      useAppStore().isMaintananceMode = response.data.maintenance;
     }
 
-    return response
+    return response;
   },
   (error) => {
     if (
-      error.response && (
-        [7, 16].includes(error.response?.data?.code) ||
-        error.response?.data.message === 'Token is expired'
-      )
+      error.response &&
+      ([7, 16].includes(error.response?.data?.code) ||
+        error.response?.data.message === "Token is expired")
     ) {
-      console.log('credentials are not actual')
-      useAuthStore().logout()
+      console.log("credentials are not actual");
+      useAuthStore().logout();
     }
 
-    return Promise.reject(error) // this is the important part
-  })
+    return Promise.reject(error); // this is the important part
+  }
+);
 
-export default api
+api.axios.interceptors.request.use((request) => {
+  const store = useCurrenciesStore();
+
+  if (store.userCurrency?.code) {
+    request.headers["grpc-metadata-nocloud-primary-currency-code"] =
+      store.userCurrency.code;
+  }
+
+  return request;
+});
+
+export default api;

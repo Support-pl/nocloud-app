@@ -1,6 +1,7 @@
 <template>
   <a-config-provider :theme="{ token }">
     <router-view
+      v-if="!isInitLoading"
       v-slot="{ Component }"
       :style="{
         position: 'absolute',
@@ -81,6 +82,8 @@ watch(
     }
   }
 );
+
+const isInitLoading = ref(true);
 
 const modal = ref({
   amount: 0,
@@ -211,8 +214,6 @@ onMounted(async () => {
   } else if (mustUnloggined) {
     router.replace("/");
   }
-
-  currenciesStore.fetchCurrencies();
 });
 
 watch(
@@ -294,6 +295,18 @@ document.title = "Cloud";
 if (localStorage.getItem("theme")) {
   isDarkTheme.value = localStorage.getItem("theme") === "dark";
 }
+
+async function firstLoad() {
+  try {
+    isInitLoading.value = true;
+
+    await currenciesStore.fetchCurrencies();
+  } finally {
+    isInitLoading.value = false;
+  }
+}
+
+firstLoad();
 
 setTheme();
 watch(isDarkTheme, setTheme);

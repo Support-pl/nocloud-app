@@ -52,7 +52,10 @@
               {{ getProducts.resources[key].title }}:
             </a-col>
             <a-col :xs="12" :sm="18" :lg="12">
-              <div v-if="!fetchLoading" style="font-size: 1.1rem; text-align: right">
+              <div
+                v-if="!fetchLoading"
+                style="font-size: 1.1rem; text-align: right"
+              >
                 {{ resource }} {{ getProducts.resources[key].postfix }}
               </div>
               <div v-else class="loadingLine" />
@@ -64,7 +67,11 @@
 
         <a-row :gutter="[10, 10]" style="margin-bottom: 10px">
           <a-col v-if="providers.length > 1" span="24">
-            <a-select v-model:value="sp" style="width: 100%" placeholder="providers">
+            <a-select
+              v-model:value="sp"
+              style="width: 100%"
+              placeholder="providers"
+            >
               <a-select-option v-for="item of providers" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
@@ -72,15 +79,26 @@
           </a-col>
 
           <a-col v-if="namespacesStore.namespaces.length > 1" span="24">
-            <a-select v-model:value="namespace" style="width: 100%" placeholder="namespaces">
-              <a-select-option v-for="item of namespacesStore.namespaces" :key="item.uuid">
+            <a-select
+              v-model:value="namespace"
+              style="width: 100%"
+              placeholder="namespaces"
+            >
+              <a-select-option
+                v-for="item of namespacesStore.namespaces"
+                :key="item.uuid"
+              >
                 {{ item.title }}
               </a-select-option>
             </a-select>
           </a-col>
 
           <a-col v-if="plans.length > 1" span="24">
-            <a-select v-model:value="plan" style="width: 100%" placeholder="plans">
+            <a-select
+              v-model:value="plan"
+              style="width: 100%"
+              placeholder="plans"
+            >
               <a-select-option v-for="item of plans" :key="item.uuid">
                 {{ item.title }}
               </a-select-option>
@@ -89,14 +107,14 @@
         </a-row>
 
         <a-divider orientation="left" style="margin: 10px 0 0">
-          {{ $t('Total') }}:
+          {{ $t("Total") }}:
         </a-divider>
 
         <a-row type="flex" justify="space-around">
           <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
               <template v-if="!fetchLoading">
-                {{ getProducts.price }} {{ currency.code }}
+                {{ getProducts.price }} {{ currency.title }}
               </template>
               <div v-else class="loadingLine loadingLine--total" />
             </transition>
@@ -106,7 +124,7 @@
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
             <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ capitalize($t('order')) }}
+              {{ capitalize($t("order")) }}
             </a-button>
             <a-modal
               :title="$t('Confirm')"
@@ -116,7 +134,10 @@
               @ok="orderClickHandler"
               @cancel="modal.confirmCreate = false"
             >
-              <p>{{ $t('order_services.Do you want to order') }}: {{ getProducts.title }}</p>
+              <p>
+                {{ $t("order_services.Do you want to order") }}:
+                {{ getProducts.title }}
+              </p>
             </a-modal>
           </a-col>
         </a-row>
@@ -126,241 +147,245 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import api from '@/api.js'
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import api from "@/api.js";
 
-import { useAppStore } from '@/stores/app.js'
-import { useAuthStore } from '@/stores/auth.js'
-import { useCurrency, useNotification } from '@/hooks/utils'
+import { useAppStore } from "@/stores/app.js";
+import { useAuthStore } from "@/stores/auth.js";
+import { useCurrency, useNotification } from "@/hooks/utils";
 
-import { useSpStore } from '@/stores/sp.js'
-import { usePlansStore } from '@/stores/plans.js'
-import { useNamespasesStore } from '@/stores/namespaces.js'
-import { useInstancesStore } from '@/stores/instances.js'
+import { useSpStore } from "@/stores/sp.js";
+import { usePlansStore } from "@/stores/plans.js";
+import { useNamespasesStore } from "@/stores/namespaces.js";
+import { useInstancesStore } from "@/stores/instances.js";
 
-const router = useRouter()
-const route = useRoute()
-const i18n = useI18n()
+const router = useRouter();
+const route = useRoute();
+const i18n = useI18n();
 
-const appStore = useAppStore()
-const authStore = useAuthStore()
-const { currency } = useCurrency()
-const { openNotification } = useNotification()
+const appStore = useAppStore();
+const authStore = useAuthStore();
+const { currency } = useCurrency();
+const { openNotification } = useNotification();
 
-const spStore = useSpStore()
-const plansStore = usePlansStore()
-const namespacesStore = useNamespasesStore()
-const instancesStore = useInstancesStore()
+const spStore = useSpStore();
+const plansStore = usePlansStore();
+const namespacesStore = useNamespasesStore();
+const instancesStore = useInstancesStore();
 
-const plan = ref(null)
-const sp = ref(null)
-const namespace = ref(null)
-const fetchLoading = ref(false)
+const plan = ref(null);
+const sp = ref(null);
+const namespace = ref(null);
+const fetchLoading = ref(false);
 
-const modal = ref({ confirmCreate: false, confirmLoading: false })
-const resources = ref({})
+const modal = ref({ confirmCreate: false, confirmLoading: false });
+const resources = ref({});
 
 const getProducts = computed(() => {
   return {
-    title: 'VDC',
+    title: "VDC",
     resources: {
-      cpu: { max: 12, postfix: 'cores', title: 'CPU' },
-      ram: { max: 32, postfix: 'Gb', title: 'RAM' },
-      ips_public: { max: 10, postfix: '', title: 'Public IP\'s' },
-      ips_private: { max: 10, postfix: '', title: 'Private IP\'s' },
+      cpu: { max: 12, postfix: "cores", title: "CPU" },
+      ram: { max: 32, postfix: "Gb", title: "RAM" },
+      ips_public: { max: 10, postfix: "", title: "Public IP's" },
+      ips_private: { max: 10, postfix: "", title: "Private IP's" },
       drive_ssd: {
         max: 300,
-        postfix: 'Gb',
-        title: 'SSD',
+        postfix: "Gb",
+        title: "SSD",
         slider: true,
-        step: 10
+        step: 10,
       },
       drive_hdd: {
         max: 1000,
-        postfix: 'Gb',
-        title: 'HDD',
+        postfix: "Gb",
+        title: "HDD",
         slider: true,
-        step: 10
-      }
+        step: 10,
+      },
     },
-    price: '-',
-    description: ''
-  }
-})
+    price: "-",
+    description: "",
+  };
+});
 
 watch(getProducts, (value) => {
   Object.keys(value.resources).forEach((key) => {
-    resources.value[key] = 0
-  })
-})
+    resources.value[key] = 0;
+  });
+});
 
 const providers = computed(() =>
-  spStore.servicesProviders.filter((sp) => sp.type === 'ione')
-)
+  spStore.servicesProviders.filter((sp) => sp.type === "ione")
+);
 
 const plans = computed(() =>
   plansStore.plans.filter(({ type, uuid }) => {
-    const { plans } = spStore.getShowcases.find(
-      ({ uuid }) => uuid === route.query.service
-    ) ?? {}
+    const { plans } =
+      spStore.getShowcases.find(({ uuid }) => uuid === route.query.service) ??
+      {};
 
-    if (!plans) return type === 'vdc'
+    if (!plans) return type === "vdc";
 
-    if (plans.length < 1) return type === 'vdc'
-    return type === 'vdc' && plans.includes(uuid)
+    if (plans.length < 1) return type === "vdc";
+    return type === "vdc" && plans.includes(uuid);
   })
-)
+);
 
-watch(() => namespacesStore.namespaces, (value) => {
-  namespace.value = value[0]?.uuid
-})
+watch(
+  () => namespacesStore.namespaces,
+  (value) => {
+    namespace.value = value[0]?.uuid;
+  }
+);
 
 watch(providers, (value) => {
-  sp.value = value[0]?.uuid
-})
+  sp.value = value[0]?.uuid;
+});
 
 watch(plans, (value) => {
-  plan.value = value[0]?.uuid
-})
+  plan.value = value[0]?.uuid;
+});
 
-function orderClickHandler () {
-  const result = {}
+function orderClickHandler() {
+  const result = {};
 
   Object.entries(resources.value).forEach(([key, value]) => {
-    if (getProducts.value.resources[key].postfix === 'Gb') {
-      result[key] = value * 1024
+    if (getProducts.value.resources[key].postfix === "Gb") {
+      result[key] = value * 1024;
     } else {
-      result[key] = value
+      result[key] = value;
     }
-  })
+  });
 
   const newGroup = {
     title: authStore.userdata.title + Date.now(),
-    type: 'ione',
+    type: "ione",
     sp: sp.value,
     instances: [],
     config: { is_vdc: true },
-    resources: result
-  }
+    resources: result,
+  };
 
   if (!authStore.userdata.uuid) {
-    appStore.onLogin.redirect = route.name
+    appStore.onLogin.redirect = route.name;
     appStore.onLogin.info = {
-      type: 'vdc',
-      title: 'VDC',
+      type: "vdc",
+      title: "VDC",
       cost: getProducts.value.price,
-      currency: currency.value.code
-    }
+      currency: currency.value.code,
+    };
     appStore.onLogin.action = () => {
-      createVDC(newGroup)
-    }
+      createVDC(newGroup);
+    };
 
-    router.push({ name: 'login' })
-    return
+    router.push({ name: "login" });
+    return;
   }
 
-  createVDC(newGroup)
+  createVDC(newGroup);
 }
 
-async function createVDC (info) {
-  modal.value.confirmLoading = true
+async function createVDC(info) {
+  modal.value.confirmLoading = true;
   const orderData = {
     namespace: namespace.value,
     service: {
       title: `VDC-${Date.now()}`,
       context: {},
-      version: '1',
-      instancesGroups: [info]
-    }
-  }
+      version: "1",
+      instancesGroups: [info],
+    },
+  };
 
   try {
-    const { uuid } = await instancesStore.createService(orderData)
+    const { uuid } = await instancesStore.createService(orderData);
 
-    await deployService(uuid)
+    await deployService(uuid);
   } catch (error) {
-    const matched = (error.response?.data?.message ?? error.message ?? '').split(/error:"|error: "/)
-    const message = matched.at(-1).split('" ').at(0)
+    const matched = (
+      error.response?.data?.message ??
+      error.message ??
+      ""
+    ).split(/error:"|error: "/);
+    const message = matched.at(-1).split('" ').at(0);
 
     if (message) {
-      openNotification('error', { message })
+      openNotification("error", { message });
     } else {
-      const message = error.response?.data?.message ?? error.message ?? error
+      const message = error.response?.data?.message ?? error.message ?? error;
 
-      openNotification('error', { message })
+      openNotification("error", { message });
     }
-    console.error(error)
+    console.error(error);
   }
 }
 
-function orderConfirm () {
-  modal.value.confirmCreate = true
+function orderConfirm() {
+  modal.value.confirmCreate = true;
 }
 
-async function deployService (uuid) {
+async function deployService(uuid) {
   try {
-    await api.services.up(uuid)
+    await api.services.up(uuid);
 
-    openNotification('success', { message: i18n.t('Done') })
-    router.push({ path: '/services' })
+    openNotification("success", { message: i18n.t("Done") });
+    router.push({ path: "/services" });
   } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
+    const message = error.response?.data?.message ?? error.message ?? error;
 
-    openNotification('error', { message: i18n.t(message) })
+    openNotification("error", { message: i18n.t(message) });
   } finally {
-    modal.value.confirmLoading = false
+    modal.value.confirmLoading = false;
   }
 }
 
 onMounted(() => {
-  const { action } = appStore.onLogin
+  const { action } = appStore.onLogin;
 
   Object.keys(getProducts.value.resources).forEach((key) => {
-    resources.value[key] = 0
-  })
+    resources.value[key] = 0;
+  });
 
-  if (typeof action !== 'function') return
-  modal.value.confirmCreate = true
-  modal.value.confirmLoading = true
-  action()
-})
+  if (typeof action !== "function") return;
+  modal.value.confirmCreate = true;
+  modal.value.confirmLoading = true;
+  action();
+});
 
-async function fetch () {
+async function fetch() {
   try {
-    fetchLoading.value = true
+    fetchLoading.value = true;
     const promises = [
       authStore.fetchBillingData(),
       plansStore.fetch({ anonymously: !authStore.isLogged }),
-      spStore.fetch(!authStore.isLogged)
-    ]
+      spStore.fetch(!authStore.isLogged),
+    ];
 
     if (authStore.isLogged) {
-      promises.push(
-        namespacesStore.fetch(),
-        instancesStore.fetch()
-      )
+      promises.push(namespacesStore.fetch(), instancesStore.fetch());
     }
 
-    await Promise.all(promises)
+    await Promise.all(promises);
   } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
+    const message = error.response?.data?.message ?? error.message ?? error;
 
-    if (error.response?.data?.code === 16) return
+    if (error.response?.data?.code === 16) return;
 
-    openNotification('error', { message: i18n.t(message) })
-    console.error(error)
+    openNotification("error", { message: i18n.t(message) });
+    console.error(error);
   } finally {
-    fetchLoading.value = false
+    fetchLoading.value = false;
   }
 }
 
-fetch()
+fetch();
 </script>
 
 <script>
-export default { name: 'CreateVdc' }
+export default { name: "CreateVdc" };
 </script>
 
 <style scoped>
@@ -395,9 +420,7 @@ export default { name: 'CreateVdc' }
 
 .order__field {
   border-radius: 20px;
-  box-shadow:
-    5px 8px 10px rgba(0, 0, 0, .08),
-    0px 0px 12px rgba(0, 0, 0, .05);
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
   padding: 20px;
   background-color: var(--bright_font);
   height: max-content;
@@ -428,7 +451,7 @@ export default { name: 'CreateVdc' }
 
 .specs-enter-active,
 .specs-leave-active {
-  transition: all .15s ease;
+  transition: all 0.15s ease;
 }
 
 .specs-enter-from {
@@ -436,7 +459,7 @@ export default { name: 'CreateVdc' }
   opacity: 0;
 }
 
-.specs-leave-to{
+.specs-leave-to {
   transform: translateX(1em);
   opacity: 0;
 }

@@ -101,7 +101,7 @@ function addonPrice({ periods }) {
   ) ?? { price: { value: 0 } };
   const price = formatPrice(period.price.value);
 
-  return `${price} ${currency.value.code}`;
+  return `${price} ${currency.value.title}`;
 }
 </script>
 

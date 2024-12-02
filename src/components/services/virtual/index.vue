@@ -116,13 +116,11 @@
 
         <a-row type="flex" justify="space-around">
           <a-col style="font-size: 1.5rem">
-            <transition name="textchange" mode="out-in">
-              <template v-if="!fetchLoading">
-                {{ formatPrice(getProducts.price) }}
-                {{ currency.code }}
-              </template>
-              <div v-else class="loadingLine loadingLine--total" />
-            </transition>
+            <template v-if="!fetchLoading && !isPlansLoading">
+              {{ formatPrice(getProducts.price, currency) }}
+              {{ currency.title }}
+            </template>
+            <div v-else class="loadingLine loadingLine--total" />
           </a-col>
         </a-row>
 
@@ -174,6 +172,7 @@ import { useInstancesStore } from "@/stores/instances.js";
 
 import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import promoBlock from "@/components/ui/promo.vue";
+import { useCurrenciesStore } from "@/stores/currencies";
 
 export default {
   name: "VirtualComponent",
@@ -196,6 +195,7 @@ export default {
       namespace: ref(null),
       provider: ref(null),
       fetchLoading: ref(false),
+      isPlansLoading: ref(false),
 
       cachedPlans: ref({}),
       options: reactive({ size: "", model: "", period: "" }),
@@ -231,6 +231,7 @@ export default {
       "baseURL",
       "billingUser",
     ]),
+    ...mapState(useCurrenciesStore, ["userCurrency"]),
     getProducts() {
       if (Object.keys(this.products || {}).length === 0) return "NAN";
       if (!(this.options.size && this.options.period)) return "NAN";
@@ -254,7 +255,9 @@ export default {
     },
     plans() {
       return (
-        this.cachedPlans?.[this.provider]?.filter(({ type, uuid }) => {
+        this.cachedPlans?.[
+          `${this.provider}_${this.userCurrency.code}`
+        ]?.filter(({ type, uuid }) => {
           const { items } =
             this.spStore.showcases.find(
               ({ uuid }) => uuid === this.$route.query.service
@@ -317,22 +320,11 @@ export default {
     sp(value) {
       if (value.length > 0) this.provider = value[0].uuid;
     },
-    async provider(uuid) {
-      if (this.cachedPlans[uuid]) return;
-      try {
-        const { pool } = await this.plansStore.fetch({
-          anonymously: !this.isLogged,
-          sp_uuid: uuid,
-        });
-
-        this.cachedPlans[uuid] = pool;
-        this.plan = this.plans[0]?.uuid;
-        this.changeProducts();
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error;
-
-        this.$notification.error({ message });
-      }
+    provider(uuid) {
+      this.fetchPlans(uuid);
+    },
+    userCurrency() {
+      this.fetchPlans(this.provider);
     },
     getProducts() {
       const product = this.products.find(
@@ -351,9 +343,9 @@ export default {
         ({ title, period }) => title === this.options.size && +period === value
       );
 
-      this.plan = this.cachedPlans[this.provider]?.find(
-        ({ uuid }) => uuid === product.planId
-      )?.uuid;
+      this.plan = this.cachedPlans[
+        `${this.provider}_${this.userCurrency.code}`
+      ]?.find(({ uuid }) => uuid === product.planId)?.uuid;
     },
   },
   mounted() {
@@ -590,6 +582,33 @@ export default {
 
       if (isPayg && !this.checkBalance(price)) return;
       this.modal.confirmCreate = true;
+    },
+    async fetchPlans(sp) {
+      const cacheKey = `${sp}_${this.userCurrency.code}`;
+
+      if (this.cachedPlans[cacheKey]) {
+        this.changeProducts();
+        return;
+      }
+
+      this.isPlansLoading = true;
+
+      try {
+        const { pool } = await this.plansStore.fetch({
+          anonymously: !this.isLogged,
+          sp_uuid: sp,
+        });
+
+        this.cachedPlans[cacheKey] = pool;
+        this.plan = this.plans[0]?.uuid;
+        this.changeProducts();
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error;
+
+        this.$notification.error({ message });
+      } finally {
+        this.isPlansLoading = false;
+      }
     },
   },
 };

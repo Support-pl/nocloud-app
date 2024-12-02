@@ -312,16 +312,14 @@ export default {
               ({ currency }) => currency === this.currency.id
             ) ?? {};
         }
-        product.price.currency = this.currency.code;
+        product.price.currency = this.currency.title;
 
         return product;
       } else {
-        product.description = product.description
-          .split("\r\n")
-          .map((res) => ({
-            name: res.split(": ")[0],
-            value: res.split(": ")[1],
-          }));
+        product.description = product.description.split("\r\n").map((res) => ({
+          name: res.split(": ")[0],
+          value: res.split(": ")[1],
+        }));
         product.description.pop();
 
         if (product.paytype === "free") {
@@ -370,8 +368,8 @@ export default {
     },
     currency() {
       const code = this.isLogged
-        ? this.userdata.currency.title ?? this.defaultCurrency.title
-        : this.unloginedCurrency.title;
+        ? this.userdata.currency.code ?? this.defaultCurrency.code
+        : this.unloginedCurrency.code;
       const { id = -1 } =
         this.currencies?.find((currency) => currency.code === code) ?? {};
 

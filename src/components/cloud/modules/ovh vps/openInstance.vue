@@ -5,7 +5,7 @@
       <div
         v-if="VM.state && VM.state.state !== 'STOPPED'"
         class="Fcloud__button"
-        :class="{ disabled: statusVM.shutdown, }"
+        :class="{ disabled: statusVM.shutdown }"
         @click="sendAction('poweroff')"
       >
         <div class="Fcloud__BTN-icon">
@@ -18,7 +18,7 @@
       <div
         v-else
         class="Fcloud__button"
-        :class="{ disabled: statusVM.start, }"
+        :class="{ disabled: statusVM.start }"
         @click="sendAction('resume')"
       >
         <div class="Fcloud__BTN-icon">
@@ -56,7 +56,9 @@
           :title="$t('cloud_Recover_modal')"
           @ok="sendRecover"
         >
-          <template v-if="VM.config.addons?.find((el) => el.includes('backup'))">
+          <template
+            v-if="VM.config.addons?.find((el) => el.includes('backup'))"
+          >
             <p>{{ $t("cloud_Recover_invite_line1") }}</p>
             <p>{{ $t("cloud_Recover_invite_line2") }}</p>
             <p>{{ $t("cloud_Recover_invite_line3") }}</p>
@@ -95,14 +97,10 @@
         v-if="VM.state && VM.state.meta.networking"
         class="Fcloud__info-block block"
       >
-        <div class="Fcloud__block-header">
-          <flag-icon /> IP
-        </div>
+        <div class="Fcloud__block-header"><flag-icon /> IP</div>
         <div class="Fcloud__block-content">
           <div class="block__column" style="flex-direction: row">
-            <div
-              v-if="dataSP" class="block__value" style="font-size: 18px"
-            >
+            <div v-if="dataSP" class="block__value" style="font-size: 18px">
               <table class="Fcloud__table">
                 <tbody>
                   <tr v-for="nic in networking.public" :key="nic">
@@ -130,11 +128,7 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div
-              v-if="dataSP"
-              class="block__value"
-              style="font-size: 18px"
-            >
+            <div v-if="dataSP" class="block__value" style="font-size: 18px">
               {{ locationTitle }}
             </div>
           </div>
@@ -147,20 +141,18 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div class="block__title">
-              OS
-            </div>
+            <div class="block__title">OS</div>
             <div class="block__value">
-              {{ osName || $t('No Data') }}
+              {{ osName || $t("No Data") }}
             </div>
           </div>
 
           <div v-if="VM.config.planCode" class="block__column">
             <div class="block__title">
-              {{ capitalize($t('tariff')) }}
+              {{ capitalize($t("tariff")) }}
             </div>
             <div class="block__value">
-              {{ tariffTitle || $t('No Data') }}
+              {{ tariffTitle || $t("No Data") }}
               <swap-icon title="Switch tariff" @click="openModal('switch')" />
             </div>
           </div>
@@ -170,17 +162,17 @@
               {{ capitalize($t("userService.next payment date")) }}
             </div>
             <div class="block__value">
-              {{ toDate(VM.data.expiration, '.', false) }}
+              {{ toDate(VM.data.expiration, ".", false) }}
               <sync-icon :title="$t('renew')" @click="isVisible = !isVisible" />
             </div>
           </div>
 
           <div class="block__column">
             <div class="block__title">
-              {{ capitalize($t('userService.auto renew')) }}
+              {{ capitalize($t("userService.auto renew")) }}
             </div>
             <div class="block__value">
-              {{ VM.config.auto_renew ? $t('enabled') : $t('disabled') }}
+              {{ VM.config.auto_renew ? $t("enabled") : $t("disabled") }}
             </div>
           </div>
         </div>
@@ -212,14 +204,20 @@
               display: grid;
               grid-template-columns: 100px 1fr;
               margin-top: 10px;
-              text-align: right
+              text-align: right;
             "
           >
-            <span style="font-weight: 700; text-align: left">{{ $t('cpu') }}:</span>
+            <span style="font-weight: 700; text-align: left"
+              >{{ $t("cpu") }}:</span
+            >
             {{ tariffs[planCode].resources.cpu }} cores
-            <span style="font-weight: 700; text-align: left">{{ $t('ram') }}:</span>
+            <span style="font-weight: 700; text-align: left"
+              >{{ $t("ram") }}:</span
+            >
             {{ tariffs[planCode].resources.ram / 1024 }} Gb
-            <span style="font-weight: 700; text-align: left">{{ $t('disk') }}:</span>
+            <span style="font-weight: 700; text-align: left"
+              >{{ $t("disk") }}:</span
+            >
             {{ driveSize }} Gb
           </div>
         </a-spin>
@@ -233,21 +231,19 @@
         <div class="Fcloud__block-content block-content_table">
           <div class="block__column block__column_table">
             <div class="block__title">
-              {{ capitalize($t('tariff')) }}
+              {{ capitalize($t("tariff")) }}
             </div>
           </div>
           <div class="block__column block__column_table block__column_price">
-            <div class="block__title">
-              {{ tariffTitle || $t('No Data') }}:
-            </div>
+            <div class="block__title">{{ tariffTitle || $t("No Data") }}:</div>
             <div class="block__value">
-              {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
+              {{ +tariffPrice.toFixed(2) }} {{ currency.title }}
             </div>
           </div>
 
           <div class="block__column block__column_table">
             <div class="block__title">
-              {{ $t('Addons') }}
+              {{ $t("Addons") }}
             </div>
           </div>
           <template v-if="Object.keys(addonsPrice).length > 0">
@@ -256,26 +252,20 @@
               :key="addon"
               class="block__column block__column_table block__column_price"
             >
-              <div class="block__title">
-                {{ addon }}:
-              </div>
+              <div class="block__title">{{ addon }}:</div>
               <div class="block__value">
-                {{ +price.toFixed(2) }} {{ currency.code }}
+                {{ +price.toFixed(2) }} {{ currency.title }}
               </div>
             </div>
           </template>
           <div v-else class="block__column" style="align-items: flex-end">
-            <div class="block__value">
-              0 {{ currency.code }}
-            </div>
+            <div class="block__value">0 {{ currency.title }}</div>
           </div>
 
           <div class="block__column block__column_table block__column_total">
-            <div class="block__title">
-              {{ $t('Total') }}:
-            </div>
+            <div class="block__title">{{ $t("Total") }}:</div>
             <div class="block__value">
-              {{ +fullPrice.toFixed(2) }} {{ currency.code }}
+              {{ +fullPrice.toFixed(2) }} {{ currency.title }}
             </div>
           </div>
         </div>
@@ -287,9 +277,7 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div class="block__title">
-              CPU
-            </div>
+            <div class="block__title">CPU</div>
             <div class="block__value">
               {{ VM.resources.cpu }}
             </div>
@@ -322,7 +310,12 @@
               {{ $t("cloud_Size") }}
             </div>
             <div class="block__value">
-              {{ ((VM.resources.drive_size ?? VM.resources.disk) / 1024).toFixed(2) }} GB
+              {{
+                ((VM.resources.drive_size ?? VM.resources.disk) / 1024).toFixed(
+                  2
+                )
+              }}
+              GB
             </div>
           </div>
         </div>
@@ -341,9 +334,7 @@
               {{ capitalize($t("inbound")) }}
             </div>
             <div class="block__value">
-              {{
-                printWidthRange(chart1Data[chart1Data.length - 1].value)
-              }}
+              {{ printWidthRange(chart1Data[chart1Data.length - 1].value) }}
             </div>
           </div>
           <div class="block__column">
@@ -351,9 +342,7 @@
               {{ capitalize($t("outgoing")) }}
             </div>
             <div class="block__value">
-              {{
-                printWidthRange(chart2Data[chart2Data.length - 1].value)
-              }}
+              {{ printWidthRange(chart2Data[chart2Data.length - 1].value) }}
             </div>
           </div>
         </div>
@@ -366,7 +355,12 @@
           <line-chart-icon /> {{ capitalize($t("graphs")) }}
         </div>
         <div class="Fcloud__block-content Fcloud__block-content--charts">
-          <a-row ref="charts" type="flex" justify="space-around" style="width: 100%">
+          <a-row
+            ref="charts"
+            type="flex"
+            justify="space-around"
+            style="width: 100%"
+          >
             <a-col>
               <g-chart
                 type="LineChart"
@@ -427,7 +421,7 @@
                     {{ item.name }}
                   </div>
                   <div style="width: 70%">
-                    {{ dateFormat((item.ts * 1000)) }}
+                    {{ dateFormat(item.ts * 1000) }}
                   </div>
                 </div>
               </a-col>
@@ -452,10 +446,10 @@
 
             <div class="modal__buttons">
               <a-button
-                v-if="(
+                v-if="
                   VM.config.addons &&
                   VM.config.addons.find((el) => el.includes('snapshot'))
-                )"
+                "
                 type="primary"
                 shape="round"
                 size="large"
@@ -479,7 +473,11 @@
               :footer="null"
               :title="$t('Create snapshot')"
             >
-              <p>{{ $t("Each snapshot exists for 24 hours and is then deleted.") }}</p>
+              <p>
+                {{
+                  $t("Each snapshot exists for 24 hours and is then deleted.")
+                }}
+              </p>
               <p>{{ $t("Choose a name for the new snapshot:") }}</p>
               <a-input
                 ref="snapNameInput"
@@ -529,88 +527,88 @@
 </template>
 
 <script lang="jsx">
-import { defineAsyncComponent, defineComponent, nextTick } from 'vue'
-import { mapState, mapActions } from 'pinia'
-import { GChart } from 'vue-google-charts'
-import { useCurrency, useNotification } from '@/hooks/utils'
-import { setChartsTheme, toDate } from '@/functions.js'
+import { defineAsyncComponent, defineComponent, nextTick } from "vue";
+import { mapState, mapActions } from "pinia";
+import { GChart } from "vue-google-charts";
+import { useCurrency, useNotification } from "@/hooks/utils";
+import { setChartsTheme, toDate } from "@/functions.js";
 
-import { useSpStore } from '@/stores/sp.js'
-import { useAuthStore } from '@/stores/auth.js'
-import { useInstancesStore } from '@/stores/instances.js'
-import { usePlansStore } from '@/stores/plans.js'
+import { useSpStore } from "@/stores/sp.js";
+import { useAuthStore } from "@/stores/auth.js";
+import { useInstancesStore } from "@/stores/instances.js";
+import { usePlansStore } from "@/stores/plans.js";
 
-import renewalModal from '@/components/ui/renewalModal.vue'
+import renewalModal from "@/components/ui/renewalModal.vue";
 
-const redoIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/RedoOutlined')
-)
-const backwardIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/BackwardOutlined')
-)
+const redoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RedoOutlined")
+);
+const backwardIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/BackwardOutlined")
+);
 
-const flagIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/FlagFilled')
-)
-const envIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/EnvironmentFilled')
-)
-const infoIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/InfoCircleOutlined')
-)
+const flagIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FlagFilled")
+);
+const envIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EnvironmentFilled")
+);
+const infoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/InfoCircleOutlined")
+);
 
-const swapIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SwapOutlined')
-)
-const syncIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SyncOutlined')
-)
-const cardIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CreditCardOutlined')
-)
+const swapIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SwapOutlined")
+);
+const syncIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SyncOutlined")
+);
+const cardIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CreditCardOutlined")
+);
 
-const settingIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SettingFilled')
-)
-const databaseIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/DatabaseFilled')
-)
-const apartmentIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/ApartmentOutlined')
-)
+const settingIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SettingFilled")
+);
+const databaseIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/DatabaseFilled")
+);
+const apartmentIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ApartmentOutlined")
+);
 
-const lineChartIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LineChartOutlined')
-)
-const caretRightIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CaretRightOutlined')
-)
-const closeIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CloseOutlined')
-)
+const lineChartIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LineChartOutlined")
+);
+const caretRightIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CaretRightOutlined")
+);
+const closeIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CloseOutlined")
+);
 
 const columns = [
   {
-    title: 'Name',
-    key: 'Name',
-    dataIndex: 'NAME'
+    title: "Name",
+    key: "Name",
+    dataIndex: "NAME",
   },
   {
-    title: 'Time',
-    dataIndex: 'TIME',
-    key: 'Time',
-    scopedSlots: { customRender: 'time' }
+    title: "Time",
+    dataIndex: "TIME",
+    key: "Time",
+    scopedSlots: { customRender: "time" },
   },
   {
-    title: 'Actions',
-    key: 'Actions',
-    scopedSlots: { customRender: 'actions' }
-  }
-]
-const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB']
+    title: "Actions",
+    key: "Actions",
+    scopedSlots: { customRender: "actions" },
+  },
+];
+const sizes = ["bytes", "KB", "MB", "GB", "TB", "PB"];
 
 export default defineComponent({
-  name: 'OpenInstance',
+  name: "OpenInstance",
   components: {
     GChart,
     renewalModal,
@@ -627,34 +625,34 @@ export default defineComponent({
     apartmentIcon,
     lineChartIcon,
     caretRightIcon,
-    closeIcon
+    closeIcon,
   },
-  inject: ['theme'],
+  inject: ["theme"],
   props: {
-    VM: { type: Object, required: true }
+    VM: { type: Object, required: true },
   },
-  setup () {
-    const { currency } = useCurrency()
-    const { openNotification } = useNotification()
+  setup() {
+    const { currency } = useCurrency();
+    const { openNotification } = useNotification();
 
-    return { currency, openNotification }
+    return { currency, openNotification };
   },
   data: () => ({
-    chart1Data: [['Time', '']],
-    chart2Data: [['Time', '']],
-    chart3Data: [['Time', '']],
-    chart4Data: [['Time', '']],
-    chartHead: ['Timestamp'],
+    chart1Data: [["Time", ""]],
+    chart2Data: [["Time", ""]],
+    chart3Data: [["Time", ""]],
+    chart4Data: [["Time", ""]],
+    chartHead: ["Timestamp"],
     chartOptions: {
-      title: 'network',
-      curveType: 'function',
-      legend: 'none',
+      title: "network",
+      curveType: "function",
+      legend: "none",
       width: 300,
       height: 150,
       vAxis: {
-        viewWindowMode: 'explicit',
-        viewWindow: { min: 0 }
-      }
+        viewWindowMode: "explicit",
+        viewWindow: { min: 0 },
+      },
     },
 
     modal: {
@@ -662,7 +660,7 @@ export default defineComponent({
       shutdown: false,
       recover: false,
       snapshot: false,
-      switch: false
+      switch: false,
     },
     snapshots: {
       modal: false,
@@ -672,100 +670,112 @@ export default defineComponent({
       loadingSnaps: [],
       addSnap: {
         modal: false,
-        snapname: 'Snapshot',
-        loading: false
-      }
+        snapname: "Snapshot",
+        loading: false,
+      },
     },
     option: {
       reboot: 0,
       shutdown: 0,
-      recover: 0
+      recover: 0,
     },
 
     dates: [],
-    planCode: '',
+    planCode: "",
     actionLoading: false,
     isSwitchLoading: false,
-    isVisible: false
+    isVisible: false,
   }),
   computed: {
-    ...mapState(usePlansStore, { plans: 'plans', isPlansLoading: 'isLoading' }),
-    ...mapState(useSpStore, ['servicesProviders']),
-    ...mapState(useAuthStore, ['userdata', 'baseURL']),
-    ...mapState(useInstancesStore, ['services']),
-    statusVM () {
-      if (!this.VM) return
-      const isPending = ['PENDING', 'OPERATION'].includes(this.VM.state.state)
-      const isSuspended = this.VM.state.state === 'SUSPENDED' || this.VM.data.suspended_manually
+    ...mapState(usePlansStore, { plans: "plans", isPlansLoading: "isLoading" }),
+    ...mapState(useSpStore, ["servicesProviders"]),
+    ...mapState(useAuthStore, ["userdata", "baseURL"]),
+    ...mapState(useInstancesStore, ["services"]),
+    statusVM() {
+      if (!this.VM) return;
+      const isPending = ["PENDING", "OPERATION"].includes(this.VM.state.state);
+      const isSuspended =
+        this.VM.state.state === "SUSPENDED" || this.VM.data.suspended_manually;
 
       if (isPending || isSuspended || this.VM.data.lock) {
-        return { shutdown: true, reboot: true, start: true, recover: true }
+        return { shutdown: true, reboot: true, start: true, recover: true };
       }
 
       return {
-        shutdown: this.VM.state.state !== 'RUNNING' &&
-          this.VM.state.state !== 'STOPPED',
-        reboot: this.VM.state.meta.state === 'BUILD' ||
-          this.VM.state.state === 'STOPPED',
-        start: this.VM.state.state !== 'RUNNING' &&
-          this.VM.state.state !== 'STOPPED',
-        recover: this.VM.state.state !== 'RUNNING' &&
-          this.VM.state.state !== 'STOPPED'
-      }
+        shutdown:
+          this.VM.state.state !== "RUNNING" &&
+          this.VM.state.state !== "STOPPED",
+        reboot:
+          this.VM.state.meta.state === "BUILD" ||
+          this.VM.state.state === "STOPPED",
+        start:
+          this.VM.state.state !== "RUNNING" &&
+          this.VM.state.state !== "STOPPED",
+        recover:
+          this.VM.state.state !== "RUNNING" &&
+          this.VM.state.state !== "STOPPED",
+      };
     },
 
-    dataSP () {
-      return this.servicesProviders.find((el) => el.uuid === this.VM.sp)
+    dataSP() {
+      return this.servicesProviders.find((el) => el.uuid === this.VM.sp);
     },
-    osName () {
-      const type = this.VM.billingPlan.type.split(' ')[1]
+    osName() {
+      const type = this.VM.billingPlan.type.split(" ")[1];
 
-      return this.VM.config.configuration[`${type}_os`]
+      return this.VM.config.configuration[`${type}_os`];
     },
-    locationTitle () {
-      if (!this.VM?.config.configuration) return this.dataSP.title
-      const type = this.VM.billingPlan.type.split(' ')[1]
-      const region = this.VM.config.configuration[`${type}_datacenter`]
-      const locationItem = this.dataSP.locations.find((el) => el.extra.region === region)
+    locationTitle() {
+      if (!this.VM?.config.configuration) return this.dataSP.title;
+      const type = this.VM.billingPlan.type.split(" ")[1];
+      const region = this.VM.config.configuration[`${type}_datacenter`];
+      const locationItem = this.dataSP.locations.find(
+        (el) => el.extra.region === region
+      );
 
-      return locationItem?.title ?? this.$t('No Data')
+      return locationItem?.title ?? this.$t("No Data");
     },
-    tariffTitle () {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`
+    tariffTitle() {
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
 
-      return this.VM.billingPlan.products[key]?.title
+      return this.VM.billingPlan.products[key]?.title;
     },
-    tariffPrice () {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`
+    tariffPrice() {
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
 
-      return this.VM.billingPlan.products[key]?.price ?? 0
+      return this.VM.billingPlan.products[key]?.price ?? 0;
     },
-    addonsPrice () {
+    addonsPrice() {
       return this.VM.config.addons.reduce((res, addon) => {
         const { price } = this.VM.billingPlan.resources.find(
           ({ key }) => key === `${this.VM.config.duration} ${addon}`
-        )
-        let key = ''
+        );
+        let key = "";
 
-        if (addon.includes('additional')) key = this.$t('adds drive')
-        if (addon.includes('snapshot')) key = this.$t('Snapshot')
-        if (addon.includes('backup')) key = this.$t('Backup')
-        if (addon.includes('windows')) key = this.$t('Windows')
+        if (addon.includes("additional")) key = this.$t("adds drive");
+        if (addon.includes("snapshot")) key = this.$t("Snapshot");
+        if (addon.includes("backup")) key = this.$t("Backup");
+        if (addon.includes("windows")) key = this.$t("Windows");
 
-        return { ...res, [key]: +price }
-      }, {})
+        return { ...res, [key]: +price };
+      }, {});
     },
-    fullPrice () {
-      return this.tariffPrice + Object.values(this.addonsPrice)
-        .reduce((sum, curr) => sum + curr, 0)
+    fullPrice() {
+      return (
+        this.tariffPrice +
+        Object.values(this.addonsPrice).reduce((sum, curr) => sum + curr, 0)
+      );
     },
-    renewalProps () {
-      const { products = {} } = this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {}
-      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
-      const { period } = products[key] ?? {}
+    renewalProps() {
+      const { products = {} } =
+        this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {};
+      const key =
+        this.VM.product ??
+        `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const { period } = products[key] ?? {};
 
-      const currentPeriod = this.toDate(this.VM.data.expiration)
-      const newPeriod = this.toDate(this.VM.data.expiration + +period)
+      const currentPeriod = this.toDate(this.VM.data.expiration);
+      const newPeriod = this.toDate(this.VM.data.expiration + +period);
 
       return {
         service: this.VM,
@@ -774,219 +784,234 @@ export default defineComponent({
         price: this.tariffPrice,
         addonsPrice: this.addonsPrice,
         currentAutoRenew: this.VM.config.auto_renew,
-        blocked: this.VM.data.blocked
-      }
+        blocked: this.VM.data.blocked,
+      };
     },
 
-    tariffs () {
-      if (!this.VM?.billingPlan) return {}
-      const tariffs = {}
-      const { products = {} } = this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {}
-      const productKey = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
+    tariffs() {
+      if (!this.VM?.billingPlan) return {};
+      const tariffs = {};
+      const { products = {} } =
+        this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {};
+      const productKey =
+        this.VM.product ??
+        `${this.VM.config.duration} ${this.VM.config.planCode}`;
 
       Object.keys(products).forEach((key) => {
-        const [a, b] = [products[productKey], products[key]]
-        const isPriceMore = a.price <= b.price
-        const isPeriodsEqual = a.period === b.period
+        const [a, b] = [products[productKey], products[key]];
+        const isPriceMore = a.price <= b.price;
+        const isPeriodsEqual = a.period === b.period;
 
-        if (productKey === key) return
+        if (productKey === key) return;
         if (isPriceMore && isPeriodsEqual) {
-          tariffs[key] = products[key]
+          tariffs[key] = products[key];
         }
-      })
+      });
 
-      return tariffs
+      return tariffs;
     },
-    driveSize () {
-      const { disk, drive_size: size } = this.tariffs[this.planCode].resources
+    driveSize() {
+      const { disk, drive_size: size } = this.tariffs[this.planCode].resources;
 
-      return (size ?? disk) / 1024
+      return (size ?? disk) / 1024;
     },
-    networking () {
-      const { networking } = this.VM?.state?.meta
+    networking() {
+      const { networking } = this.VM?.state?.meta;
 
-      if (!networking) return { public: [], private: [] }
-      const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
+      if (!networking) return { public: [], private: [] };
+      const regexp =
+        /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
 
-      const publicIPs = networking.public?.filter((el) => !regexp.test(el))
-      const privateIPs = networking.private?.filter((el) => !regexp.test(el))
+      const publicIPs = networking.public?.filter((el) => !regexp.test(el));
+      const privateIPs = networking.private?.filter((el) => !regexp.test(el));
 
-      return { public: publicIPs ?? [], private: privateIPs ?? [] }
+      return { public: publicIPs ?? [], private: privateIPs ?? [] };
     },
 
-    inbChartDataReady () {
-      let data = this.chart1Data
+    inbChartDataReady() {
+      let data = this.chart1Data;
       if (data === undefined) {
-        console.error("can't get chart1")
-        return [[0], [0]]
+        console.error("can't get chart1");
+        return [[0], [0]];
       }
       if (data[0] === undefined || data[1] === undefined) {
         return [
-          [this.chartHead[0], 'bytes'],
-          [0, 0]
-        ]
+          [this.chartHead[0], "bytes"],
+          [0, 0],
+        ];
       }
-      const range = this.checkRange(data[data.length - 1].value)
+      const range = this.checkRange(data[data.length - 1].value);
       data = data.map((pair) => [
         new Date(pair.timestamp * 1000),
-        this.fromBytesTo(parseInt(pair.value), range)
-      ])
-      data.unshift([this.chartHead[0], range])
-      return data
+        this.fromBytesTo(parseInt(pair.value), range),
+      ]);
+      data.unshift([this.chartHead[0], range]);
+      return data;
     },
-    outChartDataReady () {
-      let data = this.chart2Data
+    outChartDataReady() {
+      let data = this.chart2Data;
       if (data === undefined) {
-        console.error("can't get chart2")
-        return [[0], [0]]
+        console.error("can't get chart2");
+        return [[0], [0]];
       }
       if (data[0] === undefined || data[1] === undefined) {
         return [
-          [this.chartHead[0], 'bytes'],
-          [0, 0]
-        ]
+          [this.chartHead[0], "bytes"],
+          [0, 0],
+        ];
       }
-      const range = this.checkRange(data[data.length - 1].value)
+      const range = this.checkRange(data[data.length - 1].value);
       data = data.map((pair) => [
         new Date(pair.timestamp * 1000),
-        this.fromBytesTo(parseInt(pair.value), range)
-      ])
-      data.unshift([this.chartHead[0], range])
-      return data
+        this.fromBytesTo(parseInt(pair.value), range),
+      ]);
+      data.unshift([this.chartHead[0], range]);
+      return data;
     },
-    cpuChartDataReady () {
-      let data = this.chart3Data
+    cpuChartDataReady() {
+      let data = this.chart3Data;
       if (data === undefined) {
-        console.error("can't get chart3")
-        return [[0], [0]]
+        console.error("can't get chart3");
+        return [[0], [0]];
       }
       if (data[0] === undefined || data[1] === undefined) {
         return [
-          [this.chartHead[0], '%'],
-          [0, 0]
-        ]
+          [this.chartHead[0], "%"],
+          [0, 0],
+        ];
       }
-      data = data.map((pair) => [new Date(pair.timestamp * 1000), parseInt(pair.value)])
-      data.unshift([this.chartHead[0], 'usage'])
-      return data
-    },
-    ramChartDataReady () {
-      let data = this.chart4Data
-      if (data === undefined) {
-        console.error("can't get chart4")
-        return [[0], [0]]
-      }
-      if (data[0] === undefined || data[1] === undefined) {
-        return [
-          [this.chartHead[0], 'mb'],
-          [0, 0]
-        ]
-      }
-      const range = this.checkRange(data[data.length - 1].value * 1048576)
       data = data.map((pair) => [
         new Date(pair.timestamp * 1000),
-        this.fromBytesTo(parseInt(pair.value * 1048576), range)
-      ])
-      data.unshift([this.chartHead[0], range])
-      return data
-    }
+        parseInt(pair.value),
+      ]);
+      data.unshift([this.chartHead[0], "usage"]);
+      return data;
+    },
+    ramChartDataReady() {
+      let data = this.chart4Data;
+      if (data === undefined) {
+        console.error("can't get chart4");
+        return [[0], [0]];
+      }
+      if (data[0] === undefined || data[1] === undefined) {
+        return [
+          [this.chartHead[0], "mb"],
+          [0, 0],
+        ];
+      }
+      const range = this.checkRange(data[data.length - 1].value * 1048576);
+      data = data.map((pair) => [
+        new Date(pair.timestamp * 1000),
+        this.fromBytesTo(parseInt(pair.value * 1048576), range),
+      ]);
+      data.unshift([this.chartHead[0], range]);
+      return data;
+    },
   },
   watch: {
-    'VM.uuidService' () { this.fetchMonitoring() },
-    async ramChartDataReady () {
-      await nextTick()
-      const charts = this.$refs.charts.$el?.children
-
-      setChartsTheme(charts, this.theme)
+    "VM.uuidService"() {
+      this.fetchMonitoring();
     },
-    async theme (value) {
-      await nextTick()
-      const charts = this.$refs.charts.$el?.children
+    async ramChartDataReady() {
+      await nextTick();
+      const charts = this.$refs.charts.$el?.children;
 
-      setChartsTheme(charts, value)
-    }
+      setChartsTheme(charts, this.theme);
+    },
+    async theme(value) {
+      await nextTick();
+      const charts = this.$refs.charts.$el?.children;
+
+      setChartsTheme(charts, value);
+    },
   },
-  created () {
-    this.fetchMonitoring()
-    this.fetchPlans({ sp_uuid: this.VM.sp, anonymously: false })
+  created() {
+    this.fetchMonitoring();
+    this.fetchPlans({ sp_uuid: this.VM.sp, anonymously: false });
   },
   methods: {
-    ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
-    ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
+    ...mapActions(useInstancesStore, ["invokeAction", "updateService"]),
+    ...mapActions(usePlansStore, { fetchPlans: "fetch" }),
     toDate,
-    searchTafiff (string, option) {
-      const title = this.tariffs[option.key].title.toLowerCase()
+    searchTafiff(string, option) {
+      const title = this.tariffs[option.key].title.toLowerCase();
 
-      return title.includes(string.toLowerCase())
+      return title.includes(string.toLowerCase());
     },
-    deployService () {
-      this.actionLoading = true
+    deployService() {
+      this.actionLoading = true;
       this.$api.services
         .up(this.VM.uuidService)
         .then(() => {
           const opts = {
-            message: `${this.$t('Done')}!`
-          }
-          this.openNotification('success', opts)
+            message: `${this.$t("Done")}!`,
+          };
+          this.openNotification("success", opts);
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.actionLoading = false
-        })
+          this.actionLoading = false;
+        });
     },
-    printWidthRange (value) {
-      const range = this.checkRange(value)
-      let newVal = this.fromBytesTo(value, range)
+    printWidthRange(value) {
+      const range = this.checkRange(value);
+      let newVal = this.fromBytesTo(value, range);
       if (newVal) {
-        newVal = Math.round(newVal * 1000) / 1000
+        newVal = Math.round(newVal * 1000) / 1000;
       }
-      return `${newVal || ''} ${range}`
+      return `${newVal || ""} ${range}`;
     },
-    checkRange (val) {
-      let count = 0
+    checkRange(val) {
+      let count = 0;
       for (; val > 1024; count++) {
-        val = val / 1024
+        val = val / 1024;
       }
-      return sizes[count]
+      return sizes[count];
     },
-    fromBytesTo (val, newRange) {
-      let count = sizes.indexOf(newRange)
+    fromBytesTo(val, newRange) {
+      let count = sizes.indexOf(newRange);
       if (count === -1) {
-        console.log("can't get such range")
-        return
+        console.log("can't get such range");
+        return;
       }
       while (count > 0) {
-        val = val / 1024
-        count--
+        val = val / 1024;
+        count--;
       }
-      return val
+      return val;
     },
-    chartOption (title) {
-      const newOpt = JSON.parse(JSON.stringify(this.chartOptions))
-      let range = ''
-      let capitalized = ''
-      if (title.toLowerCase() === 'inbound') {
-        range = this.checkRange(this.chart1Data[this.chart1Data.length - 1].value)
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1)
-      } else if (title.toLowerCase() === 'outgoing') {
-        range = this.checkRange(this.chart2Data[this.chart2Data.length - 1].value)
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1)
-      } else if (title.toLowerCase() === 'cpu') {
-        range = '%'
-        capitalized = this.$t(title).toUpperCase()
-      } else if (title.toLowerCase() === 'ram') {
-        range = this.checkRange(this.chart4Data[this.chart4Data.length - 1].value * 1048576)
-        capitalized = this.$t(title).toUpperCase()
+    chartOption(title) {
+      const newOpt = JSON.parse(JSON.stringify(this.chartOptions));
+      let range = "";
+      let capitalized = "";
+      if (title.toLowerCase() === "inbound") {
+        range = this.checkRange(
+          this.chart1Data[this.chart1Data.length - 1].value
+        );
+        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
+      } else if (title.toLowerCase() === "outgoing") {
+        range = this.checkRange(
+          this.chart2Data[this.chart2Data.length - 1].value
+        );
+        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
+      } else if (title.toLowerCase() === "cpu") {
+        range = "%";
+        capitalized = this.$t(title).toUpperCase();
+      } else if (title.toLowerCase() === "ram") {
+        range = this.checkRange(
+          this.chart4Data[this.chart4Data.length - 1].value * 1048576
+        );
+        capitalized = this.$t(title).toUpperCase();
       }
-      newOpt.title = `${capitalized} (${range})`
-      return newOpt
+      newOpt.title = `${capitalized} (${range})`;
+      return newOpt;
     },
-    createSnapshot () {
+    createSnapshot() {
       // if (this.snapshots.data.lenght >= 3) {
       //   this.$error({
       //     title: this.$t("You can't have more than 3 snaps at the same time"),
@@ -997,298 +1022,305 @@ export default defineComponent({
       const data = {
         uuid: this.VM.uuid,
         params: { snap_name: this.snapshots.addSnap.snapname },
-        action: 'snap_create'
-      }
+        action: "snap_create",
+      };
 
-      this.snapshots.addSnap.loading = true
+      this.snapshots.addSnap.loading = true;
       this.invokeAction(data)
         .then((res) => {
-          this.VM.state.meta.snapshots = res?.meta.snapshots
-          this.openNotification('success', {
-            message: this.$t('Create snapshot')
-          })
-          this.snapshots.addSnap.modal = false
+          this.VM.state.meta.snapshots = res?.meta.snapshots;
+          this.openNotification("success", {
+            message: this.$t("Create snapshot"),
+          });
+          this.snapshots.addSnap.modal = false;
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.addSnap.loading = false
-        })
+          this.snapshots.addSnap.loading = false;
+        });
     },
-    deleteSnapshot (index) {
+    deleteSnapshot(index) {
       const data = {
         uuid: this.VM.uuid,
         params: { snap_id: +index },
-        action: 'snap_delete'
-      }
+        action: "snap_delete",
+      };
 
-      this.snapshots.loading = true
+      this.snapshots.loading = true;
       this.invokeAction(data)
         .then(() => {
-          delete this.VM.state.meta.snapshots[index]
-          this.openNotification('success', {
-            message: this.$t('Delete snapshot')
-          })
+          delete this.VM.state.meta.snapshots[index];
+          this.openNotification("success", {
+            message: this.$t("Delete snapshot"),
+          });
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.loading = false
-        })
+          this.snapshots.loading = false;
+        });
     },
-    revSnapshot (index) {
+    revSnapshot(index) {
       const data = {
         uuid: this.VM.uuid,
         params: { snap_id: +index },
-        action: 'snap_revert'
-      }
+        action: "snap_revert",
+      };
 
-      this.snapshots.addSnap.loading = true
+      this.snapshots.addSnap.loading = true;
       this.invokeAction(data)
         .then(() => {
-          this.openNotification('success', {
-            message: this.$t('Revert snapshot')
-          })
+          this.openNotification("success", {
+            message: this.$t("Revert snapshot"),
+          });
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.addSnap.loading = false
-        })
+          this.snapshots.addSnap.loading = false;
+        });
     },
-    openModal (name) {
+    openModal(name) {
       switch (name) {
-        case 'start':
-          if (this.statusVM.start) return
-          break
-        case 'shutdown':
-          if (this.statusVM.shutdown) return
-          break
-        case 'reboot':
-          if (this.statusVM.reboot) return
-          break
-        case 'delete':
-          if (this.statusVM.delete) return
-          break
-        case 'recover':
-          if (this.statusVM.recover) return
-          this.actionLoading = true
+        case "start":
+          if (this.statusVM.start) return;
+          break;
+        case "shutdown":
+          if (this.statusVM.shutdown) return;
+          break;
+        case "reboot":
+          if (this.statusVM.reboot) return;
+          break;
+        case "delete":
+          if (this.statusVM.delete) return;
+          break;
+        case "recover":
+          if (this.statusVM.recover) return;
+          this.actionLoading = true;
           this.invokeAction({
             uuid: this.VM.uuid,
             uuidService: this.VM.uuidService,
-            action: 'backup_restore_points'
+            action: "backup_restore_points",
           })
             .then(({ meta }) => {
-              this.dates = meta.restorePoints
+              this.dates = meta.restorePoints;
             })
             .finally(() => {
-              this.actionLoading = false
-            })
-          break
-        case 'snapshot':
-          this.snapshots.modal = true
-          break
-        case 'createSnapshot':
-          this.snapshots.addSnap.modal = true
+              this.actionLoading = false;
+            });
+          break;
+        case "snapshot":
+          this.snapshots.modal = true;
+          break;
+        case "createSnapshot":
+          this.snapshots.addSnap.modal = true;
       }
-      this.modal[name] = true
+      this.modal[name] = true;
     },
-    sendRecover () {
+    sendRecover() {
       this.$confirm({
-        title: this.$t('Do you want to download a backup?'),
+        title: this.$t("Do you want to download a backup?"),
         maskClosable: true,
-        content: this.$t('All unsaved progress will be lost, are you sure?'),
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
+        content: this.$t("All unsaved progress will be lost, are you sure?"),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
         onOk: () => {
-          this.sendAction('recover')
-          this.modal.recover = false
+          this.sendAction("recover");
+          this.modal.recover = false;
         },
-        onCancel () {}
-      })
+        onCancel() {},
+      });
     },
-    sendNewTariff () {
-      const service = this.services.find(({ uuid }) =>
-        uuid === this.VM.uuidService
-      )
-      const newService = JSON.parse(JSON.stringify(service))
+    sendNewTariff() {
+      const service = this.services.find(
+        ({ uuid }) => uuid === this.VM.uuidService
+      );
+      const newService = JSON.parse(JSON.stringify(service));
 
       const instance = newService.instancesGroups
-        .find(({ sp }) => sp === this.VM.sp).instances
-        .find(({ uuid }) => uuid === this.VM.uuid)
+        .find(({ sp }) => sp === this.VM.sp)
+        .instances.find(({ uuid }) => uuid === this.VM.uuid);
 
       try {
-        this.isSwitchLoading = true
-        const { price, resources, meta } = this.tariffs[this.planCode] ?? {}
-        const backupIndex = instance.config.addons.findIndex((key) => key.includes('backup'))
-        const snapshotIndex = instance.config.addons.findIndex((key) => key.includes('snapshot'))
+        this.isSwitchLoading = true;
+        const { price, resources, meta } = this.tariffs[this.planCode] ?? {};
+        const backupIndex = instance.config.addons.findIndex((key) =>
+          key.includes("backup")
+        );
+        const snapshotIndex = instance.config.addons.findIndex((key) =>
+          key.includes("snapshot")
+        );
 
         if (backupIndex !== -1) {
-          const backup = meta.addons.find((key) => key.includes('backup'))
+          const backup = meta.addons.find((key) => key.includes("backup"));
 
-          instance.config.addons.splice(backupIndex, 1, backup)
+          instance.config.addons.splice(backupIndex, 1, backup);
         }
 
         if (snapshotIndex !== -1) {
-          const snapshot = meta.addons.find((key) => key.includes('snapshot'))
+          const snapshot = meta.addons.find((key) => key.includes("snapshot"));
 
-          instance.config.addons.splice(snapshotIndex, 1, snapshot)
+          instance.config.addons.splice(snapshotIndex, 1, snapshot);
         }
 
-        instance.config.planCode = this.planCode.split(' ')[1]
-        instance.product = this.planCode
-        instance.resources = { ...instance.resources, ...resources }
+        instance.config.planCode = this.planCode.split(" ")[1];
+        instance.product = this.planCode;
+        instance.resources = { ...instance.resources, ...resources };
 
         this.$confirm({
-          title: this.$t('Do you want to switch tariff?'),
-          content: `${this.$t('Tariff price')}: ${price} ${this.currency.code}`,
-          okText: this.$t('Yes'),
-          cancelText: this.$t('Cancel'),
+          title: this.$t("Do you want to switch tariff?"),
+          content: `${this.$t("Tariff price")}: ${price} ${
+            this.currency.title
+          }`,
+          okText: this.$t("Yes"),
+          cancelText: this.$t("Cancel"),
           onOk: async () => {
-            await this.updateService(newService)
-            await this.sendAction('upgrade')
-            await this.fetch()
+            await this.updateService(newService);
+            await this.sendAction("upgrade");
+            await this.fetch();
 
-            this.modal.switch = false
-            this.openNotification('success', { message: this.$t('Done') })
+            this.modal.switch = false;
+            this.openNotification("success", { message: this.$t("Done") });
           },
-          onCancel () {}
-        })
+          onCancel() {},
+        });
       } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error
+        const message = error.response?.data?.message ?? error.message ?? error;
 
-        this.openNotification('error', { message })
-        console.error(error)
+        this.openNotification("error", { message });
+        console.error(error);
       } finally {
-        this.isSwitchLoading = false
+        this.isSwitchLoading = false;
       }
     },
-    sendAddingAddon (action) {
+    sendAddingAddon(action) {
       this.$confirm({
         title: this.$t(`Do you want to add an ${action}?`),
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
         onOk: () => {
-          const key = `${this.VM.config.duration} ${this.VM.config.planCode}`
-          const planCode = this.VM.billingPlan.products[key].meta.addons
-            .find((addon) => addon.includes(action))
+          const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+          const planCode = this.VM.billingPlan.products[key].meta.addons.find(
+            (addon) => addon.includes(action)
+          );
 
-          this.actionLoading = true
+          this.actionLoading = true;
           this.invokeAction({
             uuid: this.VM.uuid,
             uuidService: this.VM.uuidService,
-            action: 'add_addon',
-            params: { planCode }
+            action: "add_addon",
+            params: { planCode },
           })
             .then(() => {
-              this.openNotification('success', { message: 'Done!' })
+              this.openNotification("success", { message: "Done!" });
             })
             .catch((err) => {
               const opts = {
-                message: `Error: ${err.response?.data?.message ?? 'Unknown'}.`
-              }
+                message: `Error: ${err.response?.data?.message ?? "Unknown"}.`,
+              };
 
               if (err.response?.status >= 500) {
-                opts.message = `Error: ${this.$t('Failed to load data')}`
+                opts.message = `Error: ${this.$t("Failed to load data")}`;
               }
-              this.openNotification('error', opts)
-              console.error(err)
+              this.openNotification("error", opts);
+              console.error(err);
             })
             .finally(() => {
-              this.actionLoading = false
-            })
+              this.actionLoading = false;
+            });
         },
-        onCancel () {}
-      })
+        onCancel() {},
+      });
     },
-    async sendAction (action) {
+    async sendAction(action) {
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
-        action
-      }
+        action,
+      };
 
-      if (action === 'recover') {
-        data.action = 'backup_restore'
-        data.params = { type: 'full', restorePoint: this.option.recover }
+      if (action === "recover") {
+        data.action = "backup_restore";
+        data.params = { type: "full", restorePoint: this.option.recover };
       }
-      if (['get_upgrade_price', 'upgrade'].includes(action)) {
-        data.params = { newPlanCode: this.planCode.split(' ')[1] }
+      if (["get_upgrade_price", "upgrade"].includes(action)) {
+        data.params = { newPlanCode: this.planCode.split(" ")[1] };
       }
 
       return this.invokeAction(data)
         .then((res) => {
-          this.openNotification('success', { message: 'Done!' })
+          this.openNotification("success", { message: "Done!" });
 
-          return res
+          return res;
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
 
           if (err.response?.status >= 500) {
-            opts.message = `Error: ${this.$t('Failed to load data')}`
+            opts.message = `Error: ${this.$t("Failed to load data")}`;
           }
-          this.openNotification('error', opts)
-        })
+          this.openNotification("error", opts);
+        });
     },
-    openVNC () {
+    openVNC() {
       this.invokeAction({
         uuid: this.$route.params.uuid,
-        action: 'start_vnc'
+        action: "start_vnc",
       })
         .then(({ meta }) => {
-          location.href = meta.url
+          location.href = meta.url;
         })
-        .catch((err) => console.error(err))
+        .catch((err) => console.error(err));
     },
-    fetchMonitoring () {
-      if (!this.VM?.uuidService || this.VM.state.state === 'PENDING') return
+    fetchMonitoring() {
+      if (!this.VM?.uuidService || this.VM.state.state === "PENDING") return;
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
-        action: 'monitoring',
-        params: { period: 'lastday' }
-      }
+        action: "monitoring",
+        params: { period: "lastday" },
+      };
 
       this.invokeAction(data)
         .then((res) => {
-          if (res.meta['net:rx'] !== undefined) {
-            this.chart1Data = res.meta['net:rx'].values
+          if (res.meta["net:rx"] !== undefined) {
+            this.chart1Data = res.meta["net:rx"].values;
           }
-          if (res.meta['net:tx'] !== undefined) {
-            this.chart2Data = res.meta['net:tx'].values
+          if (res.meta["net:tx"] !== undefined) {
+            this.chart2Data = res.meta["net:tx"].values;
           }
           if (res.meta?.cpu !== undefined) {
-            this.chart3Data = res.meta.cpu.values
+            this.chart3Data = res.meta.cpu.values;
           }
           if (res.meta?.mem !== undefined) {
-            this.chart4Data = res.meta.mem.values
+            this.chart4Data = res.meta.mem.values;
           }
         })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
+          const message = err.response?.data?.message ?? err.message ?? err;
 
-          if (err.response?.status >= 500) return
-          this.openNotification('error', { message: this.$t(message) })
-          console.error(err)
-        })
-    }
-  }
-})
+          if (err.response?.status >= 500) return;
+          this.openNotification("error", { message: this.$t(message) });
+          console.error(err);
+        });
+    },
+  },
+});
 </script>
 
 <style scoped>
@@ -1299,7 +1331,7 @@ export default defineComponent({
 }
 
 .block-content_table::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 40px;
   left: 15px;

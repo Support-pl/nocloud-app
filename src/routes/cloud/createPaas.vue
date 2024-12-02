@@ -83,6 +83,7 @@
         :filtered-plans="filteredPlans"
         :product-size="productSize"
         :periods="periods"
+        :is-flavors-loading="isPlansLoading"
         :panels="panelsKeys"
       />
       <promo-block class="order__promo" />
