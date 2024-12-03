@@ -95,9 +95,17 @@ export const useInvoicesStore = defineStore("invoices", () => {
         fetchWhmcsInvoices(),
       ]);
 
-      (response.toJson().pool || []).forEach((el) => {
-        result.push(toInvoice(el));
-      });
+      (response.toJson().pool || [])
+        .filter(
+          (invoice) =>
+            !(
+              invoice?.meta?.whmcs_sync_required &&
+              !invoice?.meta?.whmcs_invoice_id
+            )
+        )
+        .forEach((el) => {
+          result.push(toInvoice(el));
+        });
 
       whmcsInvoices.forEach((el) => {
         if (result.find((invoice) => invoice?.payment_invoice_id == el.id))
