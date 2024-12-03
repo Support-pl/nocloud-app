@@ -35,6 +35,10 @@ function useCurrency() {
         return 0;
       }
 
+      if (price < 0.01) {
+        return price;
+      }
+
       if (Rounding.ROUND_HALF === Rounding[rounding]) {
         return +price.toFixed(precision).toString();
       }
