@@ -9,7 +9,7 @@ function useCurrency() {
   );
 
   const currency = computed(() => {
-    const { id, code, title, precision, rounding } = userCurrency.value;
+    const { id, code, title, precision, rounding } = userCurrency.value || {};
     const { rate } =
       currencies.value.find(
         (el) => el.to.id === id && el.from.id === defaultCurrency.value.id
@@ -33,6 +33,10 @@ function useCurrency() {
 
       if (price == 0) {
         return 0;
+      }
+
+      if (price < 0.01) {
+        return price;
       }
 
       if (Rounding.ROUND_HALF === Rounding[rounding]) {
