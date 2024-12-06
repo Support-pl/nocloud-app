@@ -132,7 +132,7 @@ if (groups.value.length > 1) {
   group.value = productGroup ?? groups.value[1] ?? groups.value[0]
   if (size) nextTick(() => emits('update:product', size))
 } else if (props.products.length > 0 && !size) {
-  emits('update:product', props.products[1] ?? props.products[0])
+  emits('update:product', props.products[0])
 }
 
 watch(groups, (value) => {
@@ -143,7 +143,7 @@ watch(group, setProduct)
 
 watch(() => props.products, (value) => {
   if (groups.value.length < 2 && value.length > 0) {
-    emits('update:product', props.products[1] ?? props.products[0])
+    emits('update:product', props.products[0])
   } else if (size) {
     group.value = props.getProduct(size)?.group ?? group.value
     nextTick(() => emits('update:product', size))

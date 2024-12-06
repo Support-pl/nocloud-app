@@ -35,7 +35,7 @@ function useCurrency() {
         return 0;
       }
 
-      if (price < 0.01) {
+      if (price < 0.01 && price > -1) {
         return price;
       }
 
