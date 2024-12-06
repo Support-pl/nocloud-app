@@ -19,9 +19,6 @@ import { computed, ref } from "vue";
 import { Modal, notification } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 
-import { useAuthStore } from "@/stores/auth.js";
-import { useNamespasesStore } from "@/stores/namespaces.js";
-import { useInstancesStore } from "@/stores/instances.js";
 import { toDate } from "@/functions.js";
 import { useInvoicesStore } from "@/stores/invoices";
 
@@ -32,9 +29,6 @@ const props = defineProps({
 });
 
 const i18n = useI18n();
-const authStore = useAuthStore();
-const namespacesStore = useNamespasesStore();
-const instancesStore = useInstancesStore();
 const invoicesStore = useInvoicesStore();
 
 const isDisabled = ref(false);
@@ -50,7 +44,7 @@ const slicedPrice = computed(() => {
 
 const priceWithoutPrefix = computed(() => {
   const code =
-    `${props.price}`.replace(".").length > 3 ? "" : props.currency.code;
+    `${props.price}`.replace(".").length > 3 ? "" : props.currency.title;
 
   return `${slicedPrice.value} ${code}`;
 });
@@ -79,7 +73,7 @@ function moduleEnter() {
 
         <div style="margin-top: 10px">
           <span style="font-weight: 700">{i18n.t("Tariff price")}: </span>
-          {props.price} {props.currency.code}
+          {props.price} {props.currency.title}
         </div>
       </div>
     ),
