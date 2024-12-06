@@ -4,9 +4,7 @@
     <div class="Fcloud__buttons">
       <div
         v-if="
-          VM.state &&
-            VM.state.meta.state !== 8 &&
-            VM.state.meta.lcm_state !== 0
+          VM.state && VM.state.meta.state !== 8 && VM.state.meta.lcm_state !== 0
         "
         class="Fcloud__button"
         :class="{
@@ -33,14 +31,12 @@
           >
             <a-radio :value="0" :style="{ 'margin-bottom': '10px' }">
               <a-tag color="green" :style="{ margin: '0 2px 0 0' }">
-                {{ $t('cloud_Regular') }}
+                {{ $t("cloud_Regular") }}
               </a-tag>
-              {{ $t('cloud_Shutdown') }}
+              {{ $t("cloud_Shutdown") }}
             </a-radio>
             <a-radio :value="1">
-              <a-tag color="red" :style="{ margin: '0 2px 0 0' }">
-                HARD
-              </a-tag>
+              <a-tag color="red" :style="{ margin: '0 2px 0 0' }"> HARD </a-tag>
               {{ $t("cloud_Shutdown") }}
             </a-radio>
           </a-radio-group>
@@ -93,9 +89,7 @@
               {{ $t("cloud_Reboot_modal") }}
             </a-radio>
             <a-radio :value="1">
-              <a-tag color="red">
-                HARD
-              </a-tag>
+              <a-tag color="red"> HARD </a-tag>
               {{ $t("cloud_Reboot_modal") }}
             </a-radio>
           </a-radio-group>
@@ -129,10 +123,10 @@
             :default-value="1"
           >
             <a-radio :value="0">
-              {{ toDate(Date.now() / 1000 - 86400, '.', false) }}
+              {{ toDate(Date.now() / 1000 - 86400, ".", false) }}
             </a-radio>
             <a-radio :value="1">
-              {{ toDate(Date.now() / 1000, '.', false) }}
+              {{ toDate(Date.now() / 1000, ".", false) }}
             </a-radio>
           </a-radio-group>
         </a-modal>
@@ -149,20 +143,17 @@
         v-if="VM.state && VM.state.meta.networking"
         class="Fcloud__info-block block"
       >
-        <div class="Fcloud__block-header">
-          <flag-icon /> IP
-        </div>
+        <div class="Fcloud__block-header"><flag-icon /> IP</div>
         <div class="Fcloud__block-content">
           <div class="block__column" style="flex-direction: row">
-            <div
-              v-if="dataSP" class="block__value" style="font-size: 18px"
-            >
+            <div v-if="dataSP" class="block__value" style="font-size: 18px">
               <table class="Fcloud__table">
                 <tbody>
-                  <tr v-for="nic in VM.state?.meta.networking.public" :key="nic">
-                    <td>
-                      {{ nic }}{{ (ports[nic]) ? `:${ports[nic]}` : '' }}
-                    </td>
+                  <tr
+                    v-for="nic in VM.state?.meta.networking.public"
+                    :key="nic"
+                  >
+                    <td>{{ nic }}{{ ports[nic] ? `:${ports[nic]}` : "" }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -170,10 +161,11 @@
             <div v-if="dataSP" class="block__value" style="font-size: 18px">
               <table class="Fcloud__table">
                 <tbody>
-                  <tr v-for="nic in VM.state?.meta.networking.private" :key="nic">
-                    <td>
-                      {{ nic }}{{ (ports[nic]) ? `:${ports[nic]}` : '' }}
-                    </td>
+                  <tr
+                    v-for="nic in VM.state?.meta.networking.private"
+                    :key="nic"
+                  >
+                    <td>{{ nic }}{{ ports[nic] ? `:${ports[nic]}` : "" }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -188,11 +180,7 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div
-              v-if="dataSP"
-              class="block__value"
-              style="font-size: 18px"
-            >
+            <div v-if="dataSP" class="block__value" style="font-size: 18px">
               {{ dataSP.locations[0].title }}
             </div>
           </div>
@@ -205,20 +193,18 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div class="block__title">
-              OS
-            </div>
+            <div class="block__title">OS</div>
             <div class="block__value">
-              {{ OSName || $t('No Data') }}
+              {{ OSName || $t("No Data") }}
             </div>
           </div>
 
           <div v-if="VM.product" class="block__column">
             <div class="block__title">
-              {{ $t('Product') }}
+              {{ $t("Product") }}
             </div>
             <div class="block__value">
-              {{ productName || $t('No Data') }}
+              {{ productName || $t("No Data") }}
             </div>
           </div>
 
@@ -227,17 +213,21 @@
               {{ capitalize($t("userService.next payment date")) }}
             </div>
             <div class="block__value">
-              {{ new Intl.DateTimeFormat().format(VM.data.next_payment_date * 1000) }}
+              {{
+                new Intl.DateTimeFormat().format(
+                  VM.data.next_payment_date * 1000
+                )
+              }}
               <sync-icon title="Renew" @click="isVisible = !isVisible" />
             </div>
           </div>
 
           <div class="block__column">
             <div class="block__title">
-              {{ capitalize($t('userService.auto renew')) }}
+              {{ capitalize($t("userService.auto renew")) }}
             </div>
             <div class="block__value">
-              {{ VM.config.auto_renew ? $t('enabled') : $t('disabled') }}
+              {{ VM.config.auto_renew ? $t("enabled") : $t("disabled") }}
             </div>
           </div>
         </div>
@@ -252,22 +242,22 @@
           <template v-if="tariffPrice">
             <div class="block__column block__column_table">
               <div class="block__title">
-                {{ capitalize($t('tariff')) }}
+                {{ capitalize($t("tariff")) }}
               </div>
             </div>
             <div class="block__column block__column_table block__column_price">
               <div class="block__title">
-                {{ productName || $t('No Data') }}:
+                {{ productName || $t("No Data") }}:
               </div>
               <div class="block__value">
-                {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
+                {{ +tariffPrice.toFixed(2) }} {{ currency.title }}
               </div>
             </div>
           </template>
 
           <div class="block__column block__column_table">
             <div class="block__title">
-              {{ $t('Addons') }}
+              {{ $t("Addons") }}
             </div>
           </div>
           <div
@@ -275,20 +265,16 @@
             :key="addon"
             class="block__column block__column_table block__column_price"
           >
-            <div class="block__title">
-              {{ capitalize(addon) }}:
-            </div>
+            <div class="block__title">{{ capitalize(addon) }}:</div>
             <div class="block__value">
-              {{ +price.toFixed(2) }} {{ currency.code }}
+              {{ +price.toFixed(2) }} {{ currency.title }}
             </div>
           </div>
 
           <div class="block__column block__column_table block__column_total">
-            <div class="block__title">
-              {{ $t('Total') }}:
-            </div>
+            <div class="block__title">{{ $t("Total") }}:</div>
             <div class="block__value">
-              {{ +fullPrice.toFixed(2) }} {{ currency.code }}
+              {{ +fullPrice.toFixed(2) }} {{ currency.title }}
             </div>
           </div>
         </div>
@@ -300,9 +286,7 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div class="block__title">
-              CPU
-            </div>
+            <div class="block__title">CPU</div>
             <div class="block__value">
               {{ VM.resources && VM.resources.cpu }}
             </div>
@@ -354,9 +338,7 @@
               {{ capitalize($t("inbound")) }}
             </div>
             <div class="block__value">
-              {{
-                printWidthRange(chart1Data[chart1Data.length - 1][1])
-              }}
+              {{ printWidthRange(chart1Data[chart1Data.length - 1][1]) }}
             </div>
           </div>
           <div class="block__column">
@@ -364,9 +346,7 @@
               {{ capitalize($t("outgoing")) }}
             </div>
             <div class="block__value">
-              {{
-                printWidthRange(chart2Data[chart2Data.length - 1][1])
-              }}
+              {{ printWidthRange(chart2Data[chart2Data.length - 1][1]) }}
             </div>
           </div>
         </div>
@@ -379,7 +359,12 @@
           <line-chart-icon /> {{ capitalize($t("graphs")) }}
         </div>
         <div class="Fcloud__block-content Fcloud__block-content--charts">
-          <a-row ref="charts" type="flex" justify="space-around" style="width: 100%">
+          <a-row
+            ref="charts"
+            type="flex"
+            justify="space-around"
+            style="width: 100%"
+          >
             <a-col>
               <g-chart
                 type="LineChart"
@@ -479,7 +464,11 @@
               :title="$t('Create snapshot')"
             >
               <p>{{ $t("You can only have 3 snapshots at a time.") }}</p>
-              <p>{{ $t("Each snapshot exists for 24 hours and is then deleted.") }}</p>
+              <p>
+                {{
+                  $t("Each snapshot exists for 24 hours and is then deleted.")
+                }}
+              </p>
               <p>{{ $t("Choose a name for the new snapshot:") }}</p>
               <a-input
                 ref="snapNameInput"
@@ -515,7 +504,10 @@
             type="primary"
             shape="round"
             size="large"
-            :disabled="!(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3) || VM.data.lock"
+            :disabled="
+              !(VM.state.meta.state === 3 || VM.state.meta.lcm_state === 3) ||
+              VM.data.lock
+            "
             @click="openVNC"
           >
             VNC
@@ -528,88 +520,88 @@
 </template>
 
 <script lang="jsx">
-import { defineAsyncComponent, defineComponent, nextTick } from 'vue'
-import { mapState, mapActions } from 'pinia'
-import { GChart } from 'vue-google-charts'
-import { useCurrency, useNotification } from '@/hooks/utils'
-import { setChartsTheme, toDate } from '@/functions.js'
-import config from '@/appconfig.js'
+import { defineAsyncComponent, defineComponent, nextTick } from "vue";
+import { mapState, mapActions } from "pinia";
+import { GChart } from "vue-google-charts";
+import { useCurrency, useNotification } from "@/hooks/utils";
+import { setChartsTheme, toDate } from "@/functions.js";
+import config from "@/appconfig.js";
 
-import { useSpStore } from '@/stores/sp.js'
-import { useAuthStore } from '@/stores/auth.js'
-import { useInstancesStore } from '@/stores/instances.js'
-import { useNamespasesStore } from '@/stores/namespaces.js'
-import { usePlansStore } from '@/stores/plans.js'
-import { useChatsStore } from '@/stores/chats.js'
+import { useSpStore } from "@/stores/sp.js";
+import { useAuthStore } from "@/stores/auth.js";
+import { useInstancesStore } from "@/stores/instances.js";
+import { useNamespasesStore } from "@/stores/namespaces.js";
+import { usePlansStore } from "@/stores/plans.js";
+import { useChatsStore } from "@/stores/chats.js";
 
-import renewalModal from '@/components/ui/renewalModal.vue'
+import renewalModal from "@/components/ui/renewalModal.vue";
 
-const redoIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/RedoOutlined')
-)
-const backwardIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/BackwardOutlined')
-)
+const redoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RedoOutlined")
+);
+const backwardIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/BackwardOutlined")
+);
 
-const flagIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/FlagFilled')
-)
-const envIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/EnvironmentOutlined')
-)
-const infoIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/InfoCircleOutlined')
-)
+const flagIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FlagFilled")
+);
+const envIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EnvironmentOutlined")
+);
+const infoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/InfoCircleOutlined")
+);
 
-const syncIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SyncOutlined')
-)
-const cardIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CreditCardOutlined')
-)
+const syncIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SyncOutlined")
+);
+const cardIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CreditCardOutlined")
+);
 
-const settingIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SettingFilled')
-)
-const databaseIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/DatabaseFilled')
-)
-const apartmentIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/ApartmentOutlined')
-)
+const settingIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SettingFilled")
+);
+const databaseIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/DatabaseFilled")
+);
+const apartmentIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ApartmentOutlined")
+);
 
-const lineChartIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LineChartOutlined')
-)
-const caretRightIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CaretRightOutlined')
-)
-const closeIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CloseOutlined')
-)
+const lineChartIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LineChartOutlined")
+);
+const caretRightIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CaretRightOutlined")
+);
+const closeIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CloseOutlined")
+);
 
 const columns = [
   {
-    title: 'Name',
-    key: 'Name',
-    dataIndex: 'NAME'
+    title: "Name",
+    key: "Name",
+    dataIndex: "NAME",
   },
   {
-    title: 'Time',
-    dataIndex: 'TIME',
-    key: 'Time',
-    scopedSlots: { customRender: 'time' }
+    title: "Time",
+    dataIndex: "TIME",
+    key: "Time",
+    scopedSlots: { customRender: "time" },
   },
   {
-    title: 'Actions',
-    key: 'Actions',
-    scopedSlots: { customRender: 'actions' }
-  }
-]
-const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB']
+    title: "Actions",
+    key: "Actions",
+    scopedSlots: { customRender: "actions" },
+  },
+];
+const sizes = ["bytes", "KB", "MB", "GB", "TB", "PB"];
 
 export default defineComponent({
-  name: 'OpenInstance',
+  name: "OpenInstance",
   components: {
     GChart,
     renewalModal,
@@ -625,40 +617,40 @@ export default defineComponent({
     apartmentIcon,
     lineChartIcon,
     caretRightIcon,
-    closeIcon
+    closeIcon,
   },
-  inject: ['theme'],
+  inject: ["theme"],
   props: {
-    VM: { type: Object, required: true }
+    VM: { type: Object, required: true },
   },
-  setup () {
-    const { currency } = useCurrency()
-    const { openNotification } = useNotification()
+  setup() {
+    const { currency } = useCurrency();
+    const { openNotification } = useNotification();
 
-    return { currency, openNotification }
+    return { currency, openNotification };
   },
   data: () => ({
-    chart1Data: [['Time', '']],
-    chart2Data: [['Time', '']],
-    chart3Data: [['Time', '']],
-    chart4Data: [['Time', '']],
-    chartHead: ['Timestamp'],
+    chart1Data: [["Time", ""]],
+    chart2Data: [["Time", ""]],
+    chart3Data: [["Time", ""]],
+    chart4Data: [["Time", ""]],
+    chartHead: ["Timestamp"],
     chartOptions: {
-      title: 'network',
-      curveType: 'function',
-      legend: 'none',
+      title: "network",
+      curveType: "function",
+      legend: "none",
       width: 300,
       height: 150,
       vAxis: {
-        viewWindowMode: 'explicit',
-        viewWindow: { min: 0 }
-      }
+        viewWindowMode: "explicit",
+        viewWindow: { min: 0 },
+      },
     },
     modal: {
       reboot: false,
       shutdown: false,
       recover: false,
-      snapshot: false
+      snapshot: false,
     },
     snapshots: {
       modal: false,
@@ -668,40 +660,51 @@ export default defineComponent({
       loadingSnaps: [],
       addSnap: {
         modal: false,
-        snapname: 'Snapshot',
-        loading: false
-      }
+        snapname: "Snapshot",
+        loading: false,
+      },
     },
     option: {
       reboot: 0,
       shutdown: 0,
-      recover: 0
+      recover: 0,
     },
-    actualAction: '',
+    actualAction: "",
     actionLoading: false,
-    selectedSP: '',
+    selectedSP: "",
     deployLoading: false,
-    isVisible: false
+    isVisible: false,
   }),
   computed: {
-    ...mapState(useSpStore, ['servicesProviders']),
-    ...mapState(useAuthStore, ['userdata', 'baseURL']),
-    ...mapState(useInstancesStore, ['services']),
-    ...mapState(usePlansStore, ['plans']),
-    ...mapState(useNamespasesStore, ['namespaces']),
-    ...mapState(useChatsStore, ['getDefaults']),
-    statusVM () {
+    ...mapState(useSpStore, ["servicesProviders"]),
+    ...mapState(useAuthStore, ["userdata", "baseURL"]),
+    ...mapState(useInstancesStore, ["services"]),
+    ...mapState(usePlansStore, ["plans"]),
+    ...mapState(useNamespasesStore, ["namespaces"]),
+    ...mapState(useChatsStore, ["getDefaults"]),
+    statusVM() {
       if (!this.VM?.state) {
         return {
-          start: true, shutdown: true, reboot: true, recover: true
-        }
+          start: true,
+          shutdown: true,
+          reboot: true,
+          recover: true,
+        };
       }
-      const isSuspended = this.VM.state.meta.state === 1 || this.VM.data.suspended_manually
+      const isSuspended =
+        this.VM.state.meta.state === 1 || this.VM.data.suspended_manually;
 
-      if (isSuspended || this.VM.data.lock || this.VM.state.state === 'PENDING') {
+      if (
+        isSuspended ||
+        this.VM.data.lock ||
+        this.VM.state.state === "PENDING"
+      ) {
         return {
-          start: true, shutdown: true, reboot: true, recover: true
-        }
+          start: true,
+          shutdown: true,
+          reboot: true,
+          recover: true,
+        };
       }
       return {
         shutdown:
@@ -725,59 +728,66 @@ export default defineComponent({
           (this.VM.state.meta.lcm_state === 18 &&
             this.VM.state.meta.state === 3) ||
           (this.VM.state.meta.lcm_state === 20 &&
-            this.VM.state.meta.state === 3)
-      }
+            this.VM.state.meta.state === 3),
+      };
     },
-    ports () {
-      const result = {}
+    ports() {
+      const result = {};
 
       this.VM.state?.interfaces?.forEach(({ data }) => {
-        result[data.host] = data.port
-      })
+        result[data.host] = data.port;
+      });
 
-      return result
+      return result;
     },
 
-    tariffPrice () {
-      const key = this.VM.product
+    tariffPrice() {
+      const key = this.VM.product;
 
-      return this.VM.billingPlan.products[key]?.price ?? 0
+      return this.VM.billingPlan.products[key]?.price ?? 0;
     },
-    addonsPrice () {
+    addonsPrice() {
       return this.VM.billingPlan.resources.reduce((prev, curr) => {
-        if (curr.key === `drive_${this.VM.resources.drive_type.toLowerCase()}`) {
-          const key = this.$t('Drive')
+        if (
+          curr.key === `drive_${this.VM.resources.drive_type.toLowerCase()}`
+        ) {
+          const key = this.$t("Drive");
 
           return {
             ...prev,
-            [key]: +(curr.price * this.VM.resources.drive_size / 1024).toFixed(2)
-          }
-        } else if (curr.key === 'ram') {
-          const key = this.$t('ram')
+            [key]: +(
+              (curr.price * this.VM.resources.drive_size) /
+              1024
+            ).toFixed(2),
+          };
+        } else if (curr.key === "ram") {
+          const key = this.$t("ram");
 
           return {
             ...prev,
-            [key]: +(curr.price * this.VM.resources.ram / 1024).toFixed(2)
-          }
+            [key]: +((curr.price * this.VM.resources.ram) / 1024).toFixed(2),
+          };
         } else if (this.VM.resources[curr.key]) {
-          const key = this.$t(curr.key.replace('_', ' '))
+          const key = this.$t(curr.key.replace("_", " "));
 
           return {
             ...prev,
-            [key]: +(curr.price * this.VM.resources[curr.key]).toFixed(2)
-          }
+            [key]: +(curr.price * this.VM.resources[curr.key]).toFixed(2),
+          };
         }
-        return prev
-      }, {})
+        return prev;
+      }, {});
     },
-    fullPrice () {
-      return this.tariffPrice + Object.values(this.addonsPrice)
-        .reduce((sum, curr) => sum + curr, 0)
+    fullPrice() {
+      return (
+        this.tariffPrice +
+        Object.values(this.addonsPrice).reduce((sum, curr) => sum + curr, 0)
+      );
     },
-    renewalProps () {
-      const { period } = this.VM.billingPlan.products[this.VM.product]
-      const currentPeriod = this.date(this.VM.data.next_payment_date)
-      const newPeriod = this.date(this.VM.data.next_payment_date + +period)
+    renewalProps() {
+      const { period } = this.VM.billingPlan.products[this.VM.product];
+      const currentPeriod = this.date(this.VM.data.next_payment_date);
+      const newPeriod = this.date(this.VM.data.next_payment_date + +period);
 
       return {
         service: this.VM,
@@ -786,226 +796,240 @@ export default defineComponent({
         price: this.tariffPrice,
         addonsPrice: this.addonsPrice,
         currentAutoRenew: this.VM.config.auto_renew,
-        blocked: this.VM.data.blocked
-      }
+        blocked: this.VM.data.blocked,
+      };
     },
 
-    currentUser () {
-      const { access: { namespace } } = this.services.find(
-        ({ uuid }) => uuid === this.VM.uuidService
-      )
-      const { access } = this.namespaces.find(
-        ({ uuid }) => uuid === namespace
-      )
+    currentUser() {
+      const {
+        access: { namespace },
+      } = this.services.find(({ uuid }) => uuid === this.VM.uuidService);
+      const { access } = this.namespaces.find(({ uuid }) => uuid === namespace);
 
-      return access.namespace ?? this.userdata.uuid
+      return access.namespace ?? this.userdata.uuid;
     },
 
-    inbChartDataReady () {
-      let data = this.chart1Data
+    inbChartDataReady() {
+      let data = this.chart1Data;
       if (data === undefined) {
-        console.error("can't get chart1")
-        return [[0], [0]]
+        console.error("can't get chart1");
+        return [[0], [0]];
       }
       if (data[0] === undefined || data[1] === undefined) {
         return [
-          [this.chartHead[0], 'bytes'],
-          [0, 0]
-        ]
+          [this.chartHead[0], "bytes"],
+          [0, 0],
+        ];
       }
-      const range = this.checkRange(data[data.length - 1][1])
+      const range = this.checkRange(data[data.length - 1][1]);
       data = data.map((pair) => [
         new Date(pair[0] * 1000),
-        this.fromBytesTo(parseInt(pair[1]), range)
-      ])
-      data.unshift([this.chartHead[0], range])
-      return data
+        this.fromBytesTo(parseInt(pair[1]), range),
+      ]);
+      data.unshift([this.chartHead[0], range]);
+      return data;
     },
-    outChartDataReady () {
-      let data = this.chart2Data
+    outChartDataReady() {
+      let data = this.chart2Data;
       if (data === undefined) {
-        console.error("can't get chart2")
-        return [[0], [0]]
+        console.error("can't get chart2");
+        return [[0], [0]];
       }
       if (data[0] === undefined || data[1] === undefined) {
         return [
-          [this.chartHead[0], 'bytes'],
-          [0, 0]
-        ]
+          [this.chartHead[0], "bytes"],
+          [0, 0],
+        ];
       }
-      const range = this.checkRange(data[data.length - 1][1])
+      const range = this.checkRange(data[data.length - 1][1]);
       data = data.map((pair) => [
         new Date(pair[0] * 1000),
-        this.fromBytesTo(parseInt(pair[1]), range)
-      ])
-      data.unshift([this.chartHead[0], range])
-      return data
+        this.fromBytesTo(parseInt(pair[1]), range),
+      ]);
+      data.unshift([this.chartHead[0], range]);
+      return data;
     },
-    cpuChartDataReady () {
-      let data = this.chart3Data
+    cpuChartDataReady() {
+      let data = this.chart3Data;
       if (data === undefined) {
-        console.error("can't get chart3")
-        return [[0], [0]]
+        console.error("can't get chart3");
+        return [[0], [0]];
       }
       if (data[0] === undefined || data[1] === undefined) {
         return [
-          [this.chartHead[0], '%'],
-          [0, 0]
-        ]
+          [this.chartHead[0], "%"],
+          [0, 0],
+        ];
       }
-      data = data.map((pair) => [new Date(pair[0] * 1000), parseInt(pair[1])])
-      data.unshift([this.chartHead[0], 'usage'])
-      return data
+      data = data.map((pair) => [new Date(pair[0] * 1000), parseInt(pair[1])]);
+      data.unshift([this.chartHead[0], "usage"]);
+      return data;
     },
-    ramChartDataReady () {
-      let data = this.chart4Data
+    ramChartDataReady() {
+      let data = this.chart4Data;
       if (data === undefined) {
-        console.error("can't get chart4")
-        return [[0], [0]]
+        console.error("can't get chart4");
+        return [[0], [0]];
       }
       if (data[0] === undefined || data[1] === undefined) {
         return [
-          [this.chartHead[0], 'mb'],
-          [0, 0]
-        ]
+          [this.chartHead[0], "mb"],
+          [0, 0],
+        ];
       }
-      const range = this.checkRange(data[data.length - 1][1])
+      const range = this.checkRange(data[data.length - 1][1]);
       data = data.map((pair) => [
         new Date(pair[0] * 1000),
-        this.fromBytesTo(parseInt(pair[1]), range)
-      ])
-      data.unshift([this.chartHead[0], range])
-      return data
+        this.fromBytesTo(parseInt(pair[1]), range),
+      ]);
+      data.unshift([this.chartHead[0], range]);
+      return data;
     },
 
-    dataSP () {
-      return this.servicesProviders.find((el) => el.uuid === this.VM.sp)
+    dataSP() {
+      return this.servicesProviders.find((el) => el.uuid === this.VM.sp);
     },
-    OSName () {
-      const i = this.VM?.config?.template_id
+    OSName() {
+      const i = this.VM?.config?.template_id;
 
-      return this.dataSP?.publicData.templates[i]?.name
+      return this.dataSP?.publicData.templates[i]?.name;
     },
-    productName () {
-      const key = this.VM.product
-      const plan = this.plans.find(({ products }) => products[key])
+    productName() {
+      const key = this.VM.product;
+      const plan = this.plans.find(({ products }) => products[key]);
 
-      return plan?.products[key]?.title ?? key
-    }
+      return plan?.products[key]?.title ?? key;
+    },
   },
   watch: {
-    'VM.uuidService' () { this.fetchMonitoring() },
-    async ramChartDataReady () {
-      await nextTick()
-      const charts = this.$refs.charts.$el?.children
-
-      setChartsTheme(charts, this.theme)
+    "VM.uuidService"() {
+      this.fetchMonitoring();
     },
-    async theme (value) {
-      await nextTick()
-      const charts = this.$refs.charts.$el?.children
+    async ramChartDataReady() {
+      await nextTick();
+      const charts = this.$refs.charts.$el?.children;
 
-      setChartsTheme(charts, value)
-    }
+      setChartsTheme(charts, this.theme);
+    },
+    async theme(value) {
+      await nextTick();
+      const charts = this.$refs.charts.$el?.children;
+
+      setChartsTheme(charts, value);
+    },
   },
-  created () {
-    this.fetchPlans({ anonymously: false, sp_uuid: this.VM.sp })
-    this.fetchMonitoring()
+  created() {
+    this.fetchPlans({ anonymously: false, sp_uuid: this.VM.sp });
+    this.fetchMonitoring();
   },
   methods: {
-    ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
-    ...mapActions(useInstancesStore, ['invokeAction', 'updateService']),
-    ...mapActions(useChatsStore, ['createChat', 'sendMessage', 'fetchDefaults']),
-    ...mapActions(useNamespasesStore, { fetchNamespaces: 'fetch' }),
+    ...mapActions(usePlansStore, { fetchPlans: "fetch" }),
+    ...mapActions(useInstancesStore, ["invokeAction", "updateService"]),
+    ...mapActions(useChatsStore, [
+      "createChat",
+      "sendMessage",
+      "fetchDefaults",
+    ]),
+    ...mapActions(useNamespasesStore, { fetchNamespaces: "fetch" }),
     toDate,
-    deployService () {
-      this.actionLoading = true
+    deployService() {
+      this.actionLoading = true;
       this.$api.services
         .up(this.VM.uuidService)
         .then(() => {
           const opts = {
-            message: 'Done!'
-          }
-          this.openNotification('success', opts)
+            message: "Done!",
+          };
+          this.openNotification("success", opts);
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.actionLoading = false
-        })
+          this.actionLoading = false;
+        });
     },
-    mbToGb (mb) {
-      return (mb / 1024).toFixed(1)
+    mbToGb(mb) {
+      return (mb / 1024).toFixed(1);
     },
-    openVNC () {
-      this.$router.push({ name: 'VNC', params: { uuid: this.$route.params.uuid } })
+    openVNC() {
+      this.$router.push({
+        name: "VNC",
+        params: { uuid: this.$route.params.uuid },
+      });
     },
-    handleOk (from) {
-      this.VM.state.meta.state = 0
+    handleOk(from) {
+      this.VM.state.meta.state = 0;
 
       switch (from) {
-        case 'reboot':
-          this.sendAction('reboot')
-          this.modal.reboot = false
-          break
-        case 'shutdown':
+        case "reboot":
+          this.sendAction("reboot");
+          this.modal.reboot = false;
+          break;
+        case "shutdown":
           if (this.option.shutdown) {
-            this.sendAction('poweroffHard')
+            this.sendAction("poweroffHard");
           } else {
-            this.sendAction('poweroff')
+            this.sendAction("poweroff");
           }
-          this.modal.shutdown = false
-          break
-        case 'recover':
+          this.modal.shutdown = false;
+          break;
+        case "recover":
           this.$confirm({
-            title: this.$t('Do you want to download a backup?'),
+            title: this.$t("Do you want to download a backup?"),
             maskClosable: true,
-            content: this.$t('All unsaved progress will be lost, are you sure?'),
-            okText: this.$t('Yes'),
-            cancelText: this.$t('Cancel'),
+            content: this.$t(
+              "All unsaved progress will be lost, are you sure?"
+            ),
+            okText: this.$t("Yes"),
+            cancelText: this.$t("Cancel"),
             onOk: async () => {
-              await this.sendRecover()
+              await this.sendRecover();
               // if (this.option.recover) {
               //   this.sendAction('recoverToday')
               // } else {
               //   this.sendAction('recoverYesterday')
               // }
-              this.modal.recover = false
+              this.modal.recover = false;
             },
-            onCancel () {}
-          })
-          break
+            onCancel() {},
+          });
+          break;
       }
     },
-    async sendRecover () {
+    async sendRecover() {
       if (this.getDefaults.departments.length < 1) {
-        await this.fetchDefaults()
+        await this.fetchDefaults();
       }
       if (this.namespaces.length < 1) {
-        await this.fetchNamespaces()
+        await this.fetchNamespaces();
       }
-      await nextTick()
+      await nextTick();
 
-      const { departments } = this.getDefaults
-      const { admins } = departments.find(({ id }) => id === config.department) ?? {}
+      const { departments } = this.getDefaults;
+      const { admins } =
+        departments.find(({ id }) => id === config.department) ?? {};
 
-      const period = (this.modal.recover)
-        ? toDate(Date.now() / 1000 - 86400, '.', false)
-        : toDate(Date.now() / 1000, '.', false)
+      const period = this.modal.recover
+        ? toDate(Date.now() / 1000 - 86400, ".", false)
+        : toDate(Date.now() / 1000, ".", false);
 
       const text = [
         `ID: ${this.VM.uuid}`,
-        `Public IP's: ${this.VM.state?.meta.networking.public.join(', ') || '-'}`,
-        `Private IP's: ${this.VM.state?.meta.networking.private.join(', ') || '-'}`,
-        `Date: ${period}`
-      ]
-      const message = `<ol style="margin-bottom: 0px">${
-        text.map((el) => `<li>${el}</li>`).join('')
-      }</ol>`
+        `Public IP's: ${
+          this.VM.state?.meta.networking.public.join(", ") || "-"
+        }`,
+        `Private IP's: ${
+          this.VM.state?.meta.networking.private.join(", ") || "-"
+        }`,
+        `Date: ${period}`,
+      ];
+      const message = `<ol style="margin-bottom: 0px">${text
+        .map((el) => `<li>${el}</li>`)
+        .join("")}</ol>`;
 
       try {
         const response = await this.createChat({
@@ -1014,34 +1038,34 @@ export default defineComponent({
           gateways: [],
           chat: {
             subject: `Restore VM: ${this.VM.title}`,
-            message
-          }
-        })
+            message,
+          },
+        });
 
         await this.sendMessage({
           uuid: response.uuid,
           content: message,
           account: this.currentUser,
-          date: BigInt(Date.now())
-        })
+          date: BigInt(Date.now()),
+        });
 
-        this.$message.success(this.$t('Ticket created successfully'))
+        this.$message.success(this.$t("Ticket created successfully"));
       } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error
+        const message = error.response?.data?.message ?? error.message ?? error;
 
-        this.openNotification('error', { message: this.$t(message) })
-        console.error(error)
+        this.openNotification("error", { message: this.$t(message) });
+        console.error(error);
       }
     },
-    printWidthRange (value) {
-      const range = this.checkRange(value)
-      let newVal = this.fromBytesTo(value, range)
+    printWidthRange(value) {
+      const range = this.checkRange(value);
+      let newVal = this.fromBytesTo(value, range);
       if (newVal) {
-        newVal = Math.round(newVal * 1000) / 1000
+        newVal = Math.round(newVal * 1000) / 1000;
       }
-      return `${newVal} ${range}`
+      return `${newVal} ${range}`;
     },
-    createSnapshot () {
+    createSnapshot() {
       // if (this.snapshots.data.lenght >= 3) {
       //   this.$error({
       //     title: this.$t("You can't have more than 3 snaps at the same time"),
@@ -1052,238 +1076,239 @@ export default defineComponent({
       const data = {
         uuid: this.VM.uuid,
         params: { snap_name: this.snapshots.addSnap.snapname },
-        action: 'snapcreate'
-      }
+        action: "snapcreate",
+      };
 
-      this.snapshots.addSnap.loading = true
+      this.snapshots.addSnap.loading = true;
       this.invokeAction(data)
         .then((res) => {
-          this.VM.state.meta.snapshots = res?.meta.snapshots
-          this.openNotification('success', {
-            message: this.$t('Create snapshot')
-          })
-          this.snapshots.addSnap.modal = false
+          this.VM.state.meta.snapshots = res?.meta.snapshots;
+          this.openNotification("success", {
+            message: this.$t("Create snapshot"),
+          });
+          this.snapshots.addSnap.modal = false;
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.addSnap.loading = false
-        })
+          this.snapshots.addSnap.loading = false;
+        });
     },
-    deleteSnapshot (index) {
+    deleteSnapshot(index) {
       const data = {
         uuid: this.VM.uuid,
         params: { snap_id: +index },
-        action: 'snapdelete'
-      }
+        action: "snapdelete",
+      };
 
-      this.snapshots.loading = true
+      this.snapshots.loading = true;
       this.invokeAction(data)
         .then(() => {
-          delete this.VM.state.meta.snapshots[index]
-          this.openNotification('success', {
-            message: this.$t('Delete snapshot')
-          })
+          delete this.VM.state.meta.snapshots[index];
+          this.openNotification("success", {
+            message: this.$t("Delete snapshot"),
+          });
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.loading = false
-        })
+          this.snapshots.loading = false;
+        });
     },
-    revSnapshot (index) {
+    revSnapshot(index) {
       const data = {
         uuid: this.VM.uuid,
         params: { snap_id: +index },
-        action: 'snaprevert'
-      }
+        action: "snaprevert",
+      };
 
-      this.snapshots.addSnap.loading = true
+      this.snapshots.addSnap.loading = true;
       this.invokeAction(data)
         .then(() => {
-          this.openNotification('success', {
-            message: this.$t('Revert snapshot')
-          })
+          this.openNotification("success", {
+            message: this.$t("Revert snapshot"),
+          });
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.addSnap.loading = false
-        })
+          this.snapshots.addSnap.loading = false;
+        });
     },
-    openModal (name) {
+    openModal(name) {
       switch (name) {
-        case 'start':
-          if (this.statusVM.start) return
-          break
-        case 'shutdown':
-          if (this.statusVM.shutdown) return
-          break
-        case 'reboot':
-          if (this.statusVM.reboot) return
-          break
-        case 'delete':
-          if (this.statusVM.delete) return
-          break
-        case 'recover':
-          if (this.statusVM.recover) return
-          break
-        case 'snapshot':
-          this.snapshots.modal = true
-          break
-        case 'createSnapshot':
-          this.snapshots.addSnap.modal = true
+        case "start":
+          if (this.statusVM.start) return;
+          break;
+        case "shutdown":
+          if (this.statusVM.shutdown) return;
+          break;
+        case "reboot":
+          if (this.statusVM.reboot) return;
+          break;
+        case "delete":
+          if (this.statusVM.delete) return;
+          break;
+        case "recover":
+          if (this.statusVM.recover) return;
+          break;
+        case "snapshot":
+          this.snapshots.modal = true;
+          break;
+        case "createSnapshot":
+          this.snapshots.addSnap.modal = true;
       }
-      this.modal[name] = true
+      this.modal[name] = true;
     },
-    checkRange (val) {
-      let count = 0
+    checkRange(val) {
+      let count = 0;
       for (; val > 1024; count++) {
-        val = val / 1024
+        val = val / 1024;
       }
-      return sizes[count]
+      return sizes[count];
     },
-    fromBytesTo (val, newRange) {
-      let count = sizes.indexOf(newRange)
+    fromBytesTo(val, newRange) {
+      let count = sizes.indexOf(newRange);
       if (count === -1) {
-        console.log("can't get such range")
-        return
+        console.log("can't get such range");
+        return;
       }
       while (count > 0) {
-        val = val / 1024
-        count--
+        val = val / 1024;
+        count--;
       }
-      return val
+      return val;
     },
-    chartOption (title) {
-      const newOpt = JSON.parse(JSON.stringify(this.chartOptions))
-      let range = ''
-      let capitalized = ''
-      if (title.toLowerCase() === 'inbound') {
-        range = this.checkRange(this.chart1Data[this.chart1Data.length - 1][1])
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1)
-      } else if (title.toLowerCase() === 'outgoing') {
-        range = this.checkRange(this.chart2Data[this.chart2Data.length - 1][1])
-        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1)
-      } else if (title.toLowerCase() === 'cpu') {
-        range = '%'
-        capitalized = this.$t(title).toUpperCase()
-      } else if (title.toLowerCase() === 'ram') {
-        range = this.checkRange(this.chart4Data[this.chart4Data.length - 1][1])
-        capitalized = this.$t(title).toUpperCase()
+    chartOption(title) {
+      const newOpt = JSON.parse(JSON.stringify(this.chartOptions));
+      let range = "";
+      let capitalized = "";
+      if (title.toLowerCase() === "inbound") {
+        range = this.checkRange(this.chart1Data[this.chart1Data.length - 1][1]);
+        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
+      } else if (title.toLowerCase() === "outgoing") {
+        range = this.checkRange(this.chart2Data[this.chart2Data.length - 1][1]);
+        capitalized = this.$t(title)[0].toUpperCase() + this.$t(title).slice(1);
+      } else if (title.toLowerCase() === "cpu") {
+        range = "%";
+        capitalized = this.$t(title).toUpperCase();
+      } else if (title.toLowerCase() === "ram") {
+        range = this.checkRange(this.chart4Data[this.chart4Data.length - 1][1]);
+        capitalized = this.$t(title).toUpperCase();
       }
-      newOpt.title = `${capitalized} (${range})`
-      return newOpt
+      newOpt.title = `${capitalized} (${range})`;
+      return newOpt;
     },
-    async sendAction (action) {
-      const hard = this.option.reboot || action.includes('Hard')
+    async sendAction(action) {
+      const hard = this.option.reboot || action.includes("Hard");
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
-        action: action.replace('Hard', ''),
-        params: (hard) ? { hard: true } : {}
-      }
+        action: action.replace("Hard", ""),
+        params: hard ? { hard: true } : {},
+      };
 
-      if (action === 'recoverYesterday' || action === 'recoverToday') {
-        action = action.replace('recover', '')
-        this.$api.get(this.baseURL, {
-          params: {
-            run: 'create_ticket',
-            subject: `Recover VM - ${this.VM.title}`,
-            message: `1. ID: ${this.VM.uuid}\n2. Date: ${action}`,
-            department: 1
-          }
-        })
+      if (action === "recoverYesterday" || action === "recoverToday") {
+        action = action.replace("recover", "");
+        this.$api
+          .get(this.baseURL, {
+            params: {
+              run: "create_ticket",
+              subject: `Recover VM - ${this.VM.title}`,
+              message: `1. ID: ${this.VM.uuid}\n2. Date: ${action}`,
+              department: 1,
+            },
+          })
           .then((resp) => {
-            if (resp.result === 'success') {
-              this.$message.success(this.$t('Ticket created successfully'))
+            if (resp.result === "success") {
+              this.$message.success(this.$t("Ticket created successfully"));
             } else {
-              throw resp
+              throw resp;
             }
           })
           .catch((err) => {
-            const message = err.response?.data?.message ?? err.message ?? err
+            const message = err.response?.data?.message ?? err.message ?? err;
 
-            this.openNotification('error', {
-              message: this.$t(message)
-            })
-            console.error(err)
-          })
-        return
+            this.openNotification("error", {
+              message: this.$t(message),
+            });
+            console.error(err);
+          });
+        return;
       }
       return this.invokeAction(data)
         .then(() => {
           const opts = {
-            message: `${this.$t('Done')}!`
-          }
-          this.openNotification('success', opts)
+            message: `${this.$t("Done")}!`,
+          };
+          this.openNotification("success", opts);
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
-        })
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
+        });
     },
-    fetchMonitoring () {
-      if (!this.VM?.uuidService || this.VM.state.state === 'PENDING') return
+    fetchMonitoring() {
+      if (!this.VM?.uuidService || this.VM.state.state === "PENDING") return;
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
-        action: 'monitoring'
-      }
+        action: "monitoring",
+      };
 
       this.invokeAction(data)
         .then((res) => {
           if (res.meta?.NETRX !== undefined) {
-            this.chart1Data = res.meta.NETRX
+            this.chart1Data = res.meta.NETRX;
           }
           if (res.meta?.NETTX !== undefined) {
-            this.chart2Data = res.meta.NETTX
+            this.chart2Data = res.meta.NETTX;
           }
           if (res.meta?.CPU !== undefined) {
-            this.chart3Data = res.meta.CPU
+            this.chart3Data = res.meta.CPU;
           }
           if (res.meta?.MEMORY !== undefined) {
-            this.chart4Data = res.meta.MEMORY
+            this.chart4Data = res.meta.MEMORY;
           }
         })
         .catch((err) => {
-          console.error(err)
-          this.openNotification('error', {
-            message: `Error: ${err.response?.data?.message ?? 'Unknown'}.`
-          })
-        })
+          console.error(err);
+          this.openNotification("error", {
+            message: `Error: ${err.response?.data?.message ?? "Unknown"}.`,
+          });
+        });
     },
-    date (timestamp) {
-      if (timestamp < 1) return '-'
+    date(timestamp) {
+      if (timestamp < 1) return "-";
 
-      const date = new Date(timestamp * 1000)
-      const time = date.toTimeString().split(' ')[0]
+      const date = new Date(timestamp * 1000);
+      const time = date.toTimeString().split(" ")[0];
 
-      const year = date.getFullYear()
-      let month = date.getMonth() + 1
-      let day = date.getDate()
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
 
-      if (`${month}`.length < 2) month = `0${month}`
-      if (`${day}`.length < 2) day = `0${day}`
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
 
-      return `${day}.${month}.${year} ${time}`
-    }
-  }
-})
+      return `${day}.${month}.${year} ${time}`;
+    },
+  },
+});
 </script>
 
 <style scoped>
@@ -1294,7 +1319,7 @@ export default defineComponent({
 }
 
 .block-content_table::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 40px;
   left: 15px;

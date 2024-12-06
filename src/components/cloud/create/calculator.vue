@@ -24,7 +24,14 @@
           <a-col>
             {{ capitalize(getAddonsTitle(key)) }}{{ getAddonsValue(key) }}:
           </a-col>
-          <a-col> {{ formatPrice(price) }} {{ currency.code }} </a-col>
+          <a-col>
+            <template v-if="isFlavorsLoading">
+              <a-spin class="price__spin" size="small" spinning />
+            </template>
+            <template v-else>
+              {{ formatPrice(price) }} {{ currency.title }}
+            </template>
+          </a-col>
         </a-row>
       </transition-group>
 
@@ -50,7 +57,12 @@
       >
         <a-col> {{ capitalize($t("installation")) }}: </a-col>
         <a-col style="margin-left: auto">
-          {{ formatPrice(minProduct.installationFee) }} {{ currency.code }}
+          <template v-if="isFlavorsLoading">
+            <a-spin class="price__spin" size="small" spinning />
+          </template>
+          <template v-else>
+            {{ formatPrice(minProduct.installationFee) }} {{ currency.title }}
+          </template>
         </a-col>
       </a-row>
     </transition>
@@ -71,10 +83,18 @@
       >
         <a-col> {{ capitalize($t("recurring payment")) }}: </a-col>
         <a-col style="margin-left: auto">
-          {{
-            +(productFullPrice - (minProduct.installationFee ?? 0)).toFixed(2)
-          }}
-          {{ currency.code }}
+          <template v-if="isFlavorsLoading">
+            <a-spin class="price__spin" size="small" spinning />
+          </template>
+          <template v-else>
+            {{
+              formatPrice(
+                productFullPrice - (minProduct.installationFee ?? 0),
+                currency
+              )
+            }}
+            {{ currency.title }}
+          </template>
         </a-col>
       </a-row>
     </transition>
@@ -117,7 +137,14 @@
         {{ capitalize($t("from")) }}:
       </a-col>
       <transition name="textchange" mode="out-in">
-        <a-col> {{ +productFullPrice.toFixed(2) }} {{ currency.code }} </a-col>
+        <a-col>
+          <template v-if="isFlavorsLoading">
+            <a-spin class="price__spin" size="small" spinning />
+          </template>
+          <template v-else>
+            {{ formatPrice(productFullPrice, currency) }} {{ currency.title }}
+          </template>
+        </a-col>
       </transition>
     </a-row>
 
@@ -151,6 +178,7 @@ const props = defineProps({
   filteredPlans: { type: Array, required: true },
   periods: { type: Object, required: true },
   panels: { type: Array, required: true },
+  isFlavorsLoading: { type: Boolean, default: false },
 });
 const emits = defineEmits(["update:tarification"]);
 
@@ -231,3 +259,10 @@ async function createOrder() {
 <script>
 export default { name: "CalculatorBlock" };
 </script>
+
+<style>
+.price__spin {
+  margin-left: 5px;
+  margin-top: 3px;
+}
+</style>

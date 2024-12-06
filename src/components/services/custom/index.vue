@@ -216,7 +216,7 @@
             :lg="12"
             style="font-size: 1.1rem; text-align: right"
           >
-            {{ getAddon(addon).price }} {{ currency.code }}
+            {{ getAddon(addon).price }} {{ currency.title }}
           </a-col>
         </a-row>
 
@@ -238,7 +238,8 @@
           <a-col style="font-size: 1.5rem">
             <transition name="textchange" mode="out-in">
               <template v-if="!fetchLoading">
-                {{ (getProducts.price ?? 0) + addonsPrice }} {{ currency.code }}
+                {{ (getProducts.price ?? 0) + addonsPrice }}
+                {{ currency.title }}
               </template>
               <div v-else class="loadingLine loadingLine--total" />
             </transition>
@@ -293,6 +294,7 @@ import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import customPagination from "@/components/ui/pagination.vue";
 import filtersView from "@/components/ui/filters.vue";
 import promoBlock from "@/components/ui/promo.vue";
+import { useCurrenciesStore } from "@/stores/currencies";
 
 export default {
   name: "CustomComponent",
@@ -338,6 +340,7 @@ export default {
       "fetchBillingData",
       "baseURL",
     ]),
+    ...mapState(useCurrenciesStore, ["userCurrency"]),
     ...mapState(useAddonsStore, { addons: "addons", fetchAddons: "fetch" }),
     getProducts() {
       if (Object.keys(this.products).length === 0) return "NAN";
@@ -491,23 +494,25 @@ export default {
     },
     plans() {
       return (
-        this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
-          const { items } =
-            this.spStore.showcases.find(
-              ({ uuid }) => uuid === this.$route.query.service
-            ) ?? {};
-          const plans = [];
+        this.cachedPlans[`${this.provider}_${this.userCurrency.code}`]?.filter(
+          ({ type, uuid }) => {
+            const { items } =
+              this.spStore.showcases.find(
+                ({ uuid }) => uuid === this.$route.query.service
+              ) ?? {};
+            const plans = [];
 
-          if (!items) return type === "empty";
-          items.forEach(({ servicesProvider, plan }) => {
-            if (servicesProvider === this.provider) {
-              plans.push(plan);
-            }
-          });
+            if (!items) return type === "empty";
+            items.forEach(({ servicesProvider, plan }) => {
+              if (servicesProvider === this.provider) {
+                plans.push(plan);
+              }
+            });
 
-          if (plans.length < 1) return type === "empty";
-          return type === "empty" && plans.includes(uuid);
-        }) ?? []
+            if (plans.length < 1) return type === "empty";
+            return type === "empty" && plans.includes(uuid);
+          }
+        ) ?? []
       );
     },
     sp() {
@@ -556,23 +561,10 @@ export default {
       if (value.length > 0) this.provider = value[0].uuid;
     },
     async provider(uuid) {
-      if (this.cachedPlans[uuid]) return;
-      try {
-        const { pool } = await this.plansStore.fetch({
-          anonymously: !this.isLogged,
-          sp_uuid: uuid,
-        });
-
-        this.cachedPlans[uuid] = pool;
-        this.plan = this.plans[0]?.uuid;
-        this.changeProducts();
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error;
-
-        this.$notification.error({ message });
-      } finally {
-        this.fetchLoading = false;
-      }
+      this.fetchPlans(uuid);
+    },
+    async userCurrency() {
+      this.fetchPlans(this.provider);
     },
     resources(value) {
       Object.entries(value).forEach(([key, resource]) => {
@@ -644,9 +636,9 @@ export default {
         this.options.size = key;
       }
 
-      this.plan = this.cachedPlans[this.provider].find(
-        ({ uuid }) => uuid === product.planId
-      )?.uuid;
+      this.plan = this.cachedPlans[
+        `${this.provider}_${this.userCurrency.code}`
+      ].find(({ uuid }) => uuid === product.planId)?.uuid;
     },
   },
   mounted() {
@@ -946,6 +938,27 @@ export default {
       const { image } = this.sizes.find((size) => size.group === group) ?? {};
 
       return image;
+    },
+    async fetchPlans(provider) {
+      const cacheKey = `${provider}_${this.userCurrency.code}`;
+
+      if (this.cachedPlans[cacheKey]) return;
+      try {
+        const { pool } = await this.plansStore.fetch({
+          anonymously: !this.isLogged,
+          sp_uuid: provider,
+        });
+
+        this.cachedPlans[cacheKey] = pool;
+        this.plan = this.plans[0]?.uuid;
+        this.changeProducts();
+      } catch (error) {
+        const message = error.response?.data?.message ?? error.message ?? error;
+
+        this.$notification.error({ message });
+      } finally {
+        this.fetchLoading = false;
+      }
     },
   },
 };

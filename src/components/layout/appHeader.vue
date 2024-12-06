@@ -251,16 +251,16 @@
             </a-select>
 
             <a-select
-              v-model:value="unloginedCurrency.title"
+              :value="unloginedCurrency.code"
+              @change="
+                unloginedCurrency = currencies.find((c) => c.code == $event)
+              "
               style="width: 100%; color: var(--bright_font)"
               class="header__inputs"
+              :options="
+                currencies.map((c) => ({ label: c.title, value: c.code }))
+              "
             >
-              <a-select-option
-                v-for="currency in currencies"
-                :key="currency.code"
-              >
-                {{ currency.code }}
-              </a-select-option>
             </a-select>
           </div>
           <div v-if="!isLogged" class="header__links">
@@ -468,10 +468,7 @@ export default {
       fetchInvoices: "fetch",
     }),
     ...mapWritableState(useInstancesStore, ["searchString"]),
-    ...mapWritableState(useCurrenciesStore, [
-      "defaultCurrency",
-      "unloginedCurrency",
-    ]),
+    ...mapWritableState(useCurrenciesStore, ["unloginedCurrency"]),
     ...mapWritableState(useSupportStore, {
       isAddingTicket: "isAddingTicket",
       supportFilter: "filter",
@@ -594,9 +591,6 @@ export default {
     isButtonsVisible(value) {
       this.$emit("update:isButtonVisible", value);
     },
-    defaultCurrency(value) {
-      this.unloginedCurrency = value;
-    },
     "$i18n.locale"(value) {
       localStorage.setItem("lang", value);
     },
@@ -615,7 +609,6 @@ export default {
     if (this.langs.includes(lang) && !localStorage.getItem("lang")) {
       this.$i18n.locale = lang;
     }
-    this.unloginedCurrency = this.defaultCurrency;
   },
   methods: {
     ...mapActions(useAuthStore, ["fetchUserData"]),
@@ -833,6 +826,7 @@ export default {
   background: transparent;
   color: var(--gloomy_font);
   border-color: var(--gloomy_font);
+  width: 100px;
 }
 
 .ant-select.header__inputs.ant-select-open .ant-select-selection-item {

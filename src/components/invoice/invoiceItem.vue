@@ -97,7 +97,7 @@ import { ActionType } from "nocloud-proto/proto/es/billing/billing_pb";
 
 import { useAuthStore } from "@/stores/auth.js";
 import { useInvoicesStore } from "@/stores/invoices.js";
-import { useNotification } from "@/hooks/utils";
+import { useCurrency, useNotification } from "@/hooks/utils";
 
 import config from "@/appconfig.js";
 import { getInvoiceNumber } from "@/functions";
@@ -111,6 +111,7 @@ const i18n = useI18n();
 const authStore = useAuthStore();
 const invoicesStore = useInvoicesStore();
 const { openNotification } = useNotification();
+const { formatPrice } = useCurrency();
 
 const loadingIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LoadingOutlined")
@@ -139,7 +140,7 @@ const statusColor = computed(() => {
 const total = computed(() => {
   const total = props.invoice.subtotal ?? props.invoice.total;
 
-  return Math.abs(total).toFixed(2);
+  return formatPrice(Math.abs(total));
 });
 
 async function paidInvoice() {

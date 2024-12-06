@@ -127,7 +127,7 @@ const resources = computed(() => ({
     title: i18n.t('os'),
     value: `${options.os.name} ${
       (priceOVH.addons.os)
-        ? `(${priceOVH.addons.os} ${currency.value.code})`
+        ? `(${priceOVH.addons.os} ${currency.value.title})`
         : ''
     }`,
     visible: options.os.name && !options.os.name.includes('none'),

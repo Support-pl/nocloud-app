@@ -109,7 +109,7 @@
             }"
           >
             {{ formatPrice(resources[item.value]?.prices[mode] ?? 0) }}
-            {{ currency.code }}
+            {{ currency.title }}
           </span>
         </div>
         <a-button
@@ -140,6 +140,7 @@ import {
   ref,
   nextTick,
   defineAsyncComponent,
+  toRefs,
 } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -164,6 +165,7 @@ const props = defineProps({
   mode: { type: String, required: true },
   isFlavorsLoading: { type: Boolean, default: false },
 });
+const { isFlavorsLoading } = toRefs(props);
 const emits = defineEmits(["update:periods", "update:product-size"]);
 
 const app = getCurrentInstance().appContext.config.globalProperties;
@@ -302,6 +304,12 @@ const diskSize = computed(() => {
   if (size > 1024) return `${(size / 1024).toFixed(1)} Tb`;
   if (size >= 1) return `${size.toFixed(1)} Gb`;
   return `${options.disk.size.toFixed(1)} Mb`;
+});
+
+watch(isFlavorsLoading, () => {
+  if (isFlavorsLoading.value) {
+    resetData();
+  }
 });
 
 function resetData() {

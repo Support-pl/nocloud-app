@@ -6,7 +6,7 @@
   >
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
-        {{ -formatPrice(invoice.cost) }} {{ currency.code }}
+        {{ -formatPrice(invoice.cost) }} {{ currency.title }}
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -69,7 +69,7 @@ const instancesStore = useInstancesStore();
 
 const currency = computed(() =>
   props.invoice.currency
-    ? { code: props.invoice.currency?.title, rate: 1 }
+    ? { title: props.invoice.currency?.title, rate: 1 }
     : baseCurrency.value
 );
 

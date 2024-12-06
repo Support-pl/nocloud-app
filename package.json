@@ -22,7 +22,7 @@
     "js-cookie": "^3.0.5",
     "markdown-it": "^14.1.0",
     "markdown-it-emoji": "^3.0.0",
-    "nocloud-proto": "https://github.com/slntopp/nocloud-proto#1c5df3724bedf9450587bfa1808013f9e876a3bf",
+    "nocloud-proto": "https://github.com/slntopp/nocloud-proto#3ce07cbbd1bf0a7f42203d293e118e2d5b93d39d",
     "nocloud-ui": "^1.0.19",
     "nocloudjsrest": "^1.5.17",
     "pinia": "^2.2.0",

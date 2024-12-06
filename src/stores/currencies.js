@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 import { CurrencyService } from "nocloud-proto/proto/es/billing/billing_connect";
 import {
@@ -7,9 +7,11 @@ import {
 } from "nocloud-proto/proto/es/billing/billing_pb";
 import { useAppStore } from "./app.js";
 import { createPromiseClient } from "@connectrpc/connect";
+import { useAuthStore } from "./auth.js";
 
 export const useCurrenciesStore = defineStore("currencies", () => {
   const app = useAppStore();
+  const auth = useAuthStore();
 
   const list = ref([]);
   const currencies = ref([]);
@@ -18,22 +20,23 @@ export const useCurrenciesStore = defineStore("currencies", () => {
   const isLoading = ref(false);
 
   function setDefaultCurrency(currencies) {
-    const currency = currencies.find(
-      (el) => el.rate === 1 && [el.from.title, el.to.title].includes("NCU")
-    );
+    const currency = currencies.find((el) => el.default);
 
     if (!currency) return;
-    defaultCurrency.value =
-      currency.from.title === "NCU" ? currency.to : currency.from;
+    defaultCurrency.value = JSON.parse(JSON.stringify(currency));
+    unloginedCurrency.value = JSON.parse(JSON.stringify(currency));
   }
+
+  const userCurrency = computed(() =>
+    auth.isLogged ? auth.userdata.currency : unloginedCurrency.value
+  );
 
   return {
     list,
     currencies,
     defaultCurrency,
     unloginedCurrency,
-
-    setDefaultCurrency,
+    userCurrency,
 
     async fetchCurrencies() {
       const currenciesApi = createPromiseClient(CurrencyService, app.transport);
@@ -46,17 +49,10 @@ export const useCurrenciesStore = defineStore("currencies", () => {
           currenciesApi.getExchangeRates(GetExchangeRatesRequest.fromJson({})),
         ]);
 
-        list.value = currenciesResponse
-          .toJson()
-          .currencies.map((currency) => ({
-            id: currency.id,
-            code: currency.title,
-            precision: currency.precision,
-          }))
-          .filter((currency) => currency.code !== "NCU");
+        list.value = currenciesResponse.toJson().currencies;
+        setDefaultCurrency(list.value);
 
         currencies.value = ratesResponse.toJson().rates;
-        setDefaultCurrency(currencies.value);
 
         return list.value;
       } catch (error) {

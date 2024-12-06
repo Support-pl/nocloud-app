@@ -55,13 +55,13 @@
     <div style="margin-top: 10px">
       <div>{{ $t("Manual renewal") }}:</div>
       <span style="font-weight: 700">{{ $t("Tariff price") }}: </span>
-      {{ price }} {{ currency.code }}
+      {{ formatPrice(price) }} {{ currency.title }}
 
       <div v-if="addonsPrice">
         <span style="font-weight: 700">{{ $t("Addons prices") }}:</span>
         <ul style="list-style: '-  '; padding-left: 25px; margin-bottom: 5px">
           <li v-for="(value, key) in addonsPrice" :key="key">
-            {{ capitalize(key) }}: {{ value }} {{ currency.code }}
+            {{ capitalize(key) }}: {{ formatPrice(value) }} {{ currency.title }}
           </li>
         </ul>
       </div>
@@ -69,9 +69,12 @@
       <div>
         <span style="font-weight: 700">{{ $t("Total") }}: </span>
         {{
-          price + Object.values(addonsPrice).reduce((sum, cur) => sum + +cur, 0)
+          formatPrice(
+            price +
+              Object.values(addonsPrice).reduce((sum, cur) => sum + +cur, 0)
+          )
         }}
-        {{ currency.code }}
+        {{ currency.title }}
       </div>
     </div>
   </a-modal>
@@ -83,8 +86,6 @@ import { Modal } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 import { useCurrency, useNotification } from "@/hooks/utils";
 
-import { useAuthStore } from "@/stores/auth.js";
-import { useNamespasesStore } from "@/stores/namespaces.js";
 import { useInstancesStore } from "@/stores/instances.js";
 import { useInvoicesStore } from "@/stores/invoices";
 
@@ -105,11 +106,9 @@ const props = defineProps({
 const emits = defineEmits(["update:visible"]);
 
 const i18n = useI18n();
-const { currency } = useCurrency();
+const { currency, formatPrice } = useCurrency();
 const { openNotification } = useNotification();
 
-const authStore = useAuthStore();
-const namespacesStore = useNamespasesStore();
 const instancesStore = useInstancesStore();
 const invoicesStore = useInvoicesStore();
 

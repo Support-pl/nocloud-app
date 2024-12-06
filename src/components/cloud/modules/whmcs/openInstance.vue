@@ -4,7 +4,9 @@
     <div v-if="VM.vm_info?.STATE" class="Fcloud__buttons">
       <div
         v-if="
-          !['POWEROFF', 'BOOT_POWEROFF', 'SHUTDOWN_POWEROFF'].includes(VM.vm_info.STATE)
+          !['POWEROFF', 'BOOT_POWEROFF', 'SHUTDOWN_POWEROFF'].includes(
+            VM.vm_info.STATE
+          )
         "
         class="Fcloud__button"
         :class="{ disabled: statusVM.shutdown }"
@@ -35,9 +37,7 @@
               {{ $t("cloud_Shutdown") }}
             </a-radio>
             <a-radio :value="1">
-              <a-tag color="red">
-                HARD
-              </a-tag>
+              <a-tag color="red"> HARD </a-tag>
               {{ $t("cloud_Shutdown") }}
             </a-radio>
           </a-radio-group>
@@ -88,9 +88,7 @@
               {{ $t("cloud_Reboot_modal") }}
             </a-radio>
             <a-radio :value="1">
-              <a-tag color="red">
-                HARD
-              </a-tag>
+              <a-tag color="red"> HARD </a-tag>
               {{ $t("cloud_Reboot_modal") }}
             </a-radio>
           </a-radio-group>
@@ -127,10 +125,10 @@
             :default-value="1"
           >
             <a-radio :value="0">
-              {{ toDate(Date.now() / 1000 - 86400, '.', false) }}
+              {{ toDate(Date.now() / 1000 - 86400, ".", false) }}
             </a-radio>
             <a-radio :value="1">
-              {{ toDate(Date.now() / 1000, '.', false) }}
+              {{ toDate(Date.now() / 1000, ".", false) }}
             </a-radio>
           </a-radio-group>
         </a-modal>
@@ -145,9 +143,7 @@
       </div>
 
       <div v-if="VM.domain" class="Fcloud__info-block block">
-        <div class="Fcloud__block-header">
-          <flag-icon /> IP
-        </div>
+        <div class="Fcloud__block-header"><flag-icon /> IP</div>
 
         <div class="Fcloud__block-content">
           <div class="block__column" style="flex-direction: row">
@@ -179,20 +175,18 @@
 
         <div class="Fcloud__block-content">
           <div v-if="VM.os" class="block__column">
-            <div class="block__title">
-              OS
-            </div>
+            <div class="block__title">OS</div>
             <div class="block__value">
-              {{ VM.os.name ?? VM.os ?? $t('No Data') }}
+              {{ VM.os.name ?? VM.os ?? $t("No Data") }}
             </div>
           </div>
 
           <div v-if="VM.name" class="block__column">
             <div class="block__title">
-              {{ $t('Product') }}
+              {{ $t("Product") }}
             </div>
             <div class="block__value">
-              {{ VM.name ?? $t('No Data') }}
+              {{ VM.name ?? $t("No Data") }}
             </div>
           </div>
 
@@ -215,24 +209,20 @@
         <div class="Fcloud__block-content block-content_table">
           <div class="block__column block__column_table">
             <div class="block__title">
-              {{ capitalize($t('tariff')) }}
+              {{ capitalize($t("tariff")) }}
             </div>
           </div>
           <div class="block__column block__column_table block__column_price">
-            <div class="block__title">
-              {{ VM.name ?? $t('No Data') }}:
-            </div>
+            <div class="block__title">{{ VM.name ?? $t("No Data") }}:</div>
             <div class="block__value">
-              {{ VM.recurringamount }} {{ currency.code }}
+              {{ VM.recurringamount }} {{ currency.title }}
             </div>
           </div>
 
           <div class="block__column block__column_table block__column_total">
-            <div class="block__title">
-              {{ $t('Total') }}:
-            </div>
+            <div class="block__title">{{ $t("Total") }}:</div>
             <div class="block__value">
-              {{ VM.recurringamount }} {{ currency.code }}
+              {{ VM.recurringamount }} {{ currency.title }}
             </div>
           </div>
         </div>
@@ -245,9 +235,7 @@
 
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div class="block__title">
-              CPU
-            </div>
+            <div class="block__title">CPU</div>
             <div class="block__value">
               {{ VM.vm_info.CPU }}
             </div>
@@ -257,9 +245,7 @@
             <div class="block__title">
               {{ $t("cloud_Memory") }}
             </div>
-            <div class="block__value">
-              {{ mbToGb(VM.vm_info.RAM) }} GB
-            </div>
+            <div class="block__value">{{ mbToGb(VM.vm_info.RAM) }} GB</div>
           </div>
         </div>
       </div>
@@ -282,9 +268,7 @@
             <div class="block__title">
               {{ $t("cloud_Size") }}
             </div>
-            <div class="block__value">
-              {{ mbToGb(VM.vm_info.DRIVE) }} GB
-            </div>
+            <div class="block__value">{{ mbToGb(VM.vm_info.DRIVE) }} GB</div>
           </div>
         </div>
       </div>
@@ -364,7 +348,11 @@
               :title="$t('Create snapshot')"
             >
               <p>{{ $t("You can only have 3 snapshots at a time.") }}</p>
-              <p>{{ $t("Each snapshot exists for 24 hours and is then deleted.") }}</p>
+              <p>
+                {{
+                  $t("Each snapshot exists for 24 hours and is then deleted.")
+                }}
+              </p>
               <p>{{ $t("Choose a name for the new snapshot:") }}</p>
               <a-input
                 ref="snapNameInput"
@@ -412,48 +400,48 @@
 </template>
 
 <script lang="jsx">
-import { mapState } from 'pinia'
-import { defineAsyncComponent } from 'vue'
+import { mapState } from "pinia";
+import { defineAsyncComponent } from "vue";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useCurrency, useNotification } from '@/hooks/utils'
-import { toDate } from '@/functions.js'
+import { useAuthStore } from "@/stores/auth.js";
+import { useCurrency, useNotification } from "@/hooks/utils";
+import { toDate } from "@/functions.js";
 
-const redoIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/RedoOutlined')
-)
-const backwardIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/BackwardOutlined')
-)
+const redoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RedoOutlined")
+);
+const backwardIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/BackwardOutlined")
+);
 
-const flagIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/FlagFilled')
-)
-const envIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/EnvironmentOutlined')
-)
-const infoIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/InfoCircleOutlined')
-)
-const cardIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CreditCardOutlined')
-)
+const flagIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FlagFilled")
+);
+const envIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EnvironmentOutlined")
+);
+const infoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/InfoCircleOutlined")
+);
+const cardIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CreditCardOutlined")
+);
 
-const settingIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SettingFilled')
-)
-const databaseIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/DatabaseFilled')
-)
-const caretRightIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CaretRightOutlined')
-)
-const closeIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CloseOutlined')
-)
+const settingIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SettingFilled")
+);
+const databaseIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/DatabaseFilled")
+);
+const caretRightIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CaretRightOutlined")
+);
+const closeIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CloseOutlined")
+);
 
 export default {
-  name: 'OpenInstance',
+  name: "OpenInstance",
   components: {
     redoIcon,
     backwardIcon,
@@ -464,25 +452,25 @@ export default {
     settingIcon,
     databaseIcon,
     caretRightIcon,
-    closeIcon
+    closeIcon,
   },
   props: {
     // eslint-disable-next-line vue/prop-name-casing
-    VM: { type: Object, required: true }
+    VM: { type: Object, required: true },
   },
-  emits: ['update:password'],
-  setup () {
-    const { currency } = useCurrency()
-    const { openNotification } = useNotification()
+  emits: ["update:password"],
+  setup() {
+    const { currency } = useCurrency();
+    const { openNotification } = useNotification();
 
-    return { currency, openNotification }
+    return { currency, openNotification };
   },
   data: () => ({
     modal: {
       reboot: false,
       shutdown: false,
       recover: false,
-      snapshot: false
+      snapshot: false,
     },
     snapshots: {
       modal: false,
@@ -491,215 +479,232 @@ export default {
       data: [],
       addSnap: {
         modal: false,
-        snapname: 'Snapshot',
-        loading: false
-      }
+        snapname: "Snapshot",
+        loading: false,
+      },
     },
     option: {
       reboot: 0,
       shutdown: 0,
-      recover: 0
-    }
+      recover: 0,
+    },
   }),
   computed: {
-    ...mapState(useAuthStore, ['userdata', 'baseURL']),
-    statusVM () {
-      if (!this.VM?.vm_info?.STATE) return {}
-      const state = this.VM.vm_info.STATE.toLowerCase()
+    ...mapState(useAuthStore, ["userdata", "baseURL"]),
+    statusVM() {
+      if (!this.VM?.vm_info?.STATE) return {};
+      const state = this.VM.vm_info.STATE.toLowerCase();
 
       return {
-        shutdown: ['poweroff', 'boot_poweroff', 'shutdown_poweroff'].includes(state),
-        reboot: ['poweroff', 'boot_poweroff', 'shutdown_poweroff'].includes(state),
-        start: ['running', 'boot_poweroff', 'shutdown_poweroff'].includes(state),
-        recover: ['boot_poweroff', 'shutdown_poweroff'].includes(state)
-      }
-    }
+        shutdown: ["poweroff", "boot_poweroff", "shutdown_poweroff"].includes(
+          state
+        ),
+        reboot: ["poweroff", "boot_poweroff", "shutdown_poweroff"].includes(
+          state
+        ),
+        start: ["running", "boot_poweroff", "shutdown_poweroff"].includes(
+          state
+        ),
+        recover: ["boot_poweroff", "shutdown_poweroff"].includes(state),
+      };
+    },
   },
-  created () {
-    this.sendAction('on_get_hash').then((password) => {
-      this.$emit('update:password', password)
-    })
+  created() {
+    this.sendAction("on_get_hash").then((password) => {
+      this.$emit("update:password", password);
+    });
   },
   methods: {
     toDate,
-    startVNC () {
-      this.$router.push({ path: `${this.$route.params.uuid}/vnc` })
+    startVNC() {
+      this.$router.push({ path: `${this.$route.params.uuid}/vnc` });
     },
-    mbToGb (mb) {
-      return +(mb / 1024).toFixed(2)
+    mbToGb(mb) {
+      return +(mb / 1024).toFixed(2);
     },
-    handleOk (from) {
+    handleOk(from) {
       switch (from) {
-        case 'reboot':
-          this.sendAction('on_reboot', { hard: !!this.option.reboot })
-          this.modal.reboot = false
-          break
-        case 'shutdown':
-          if (this.option.shutdown) this.sendAction('on_stop_hard')
-          else this.sendAction('on_stop')
-          this.modal.shutdown = false
-          break
-        case 'recover':
+        case "reboot":
+          this.sendAction("on_reboot", { hard: !!this.option.reboot });
+          this.modal.reboot = false;
+          break;
+        case "shutdown":
+          if (this.option.shutdown) this.sendAction("on_stop_hard");
+          else this.sendAction("on_stop");
+          this.modal.shutdown = false;
+          break;
+        case "recover":
           this.$confirm({
-            title: this.$t('Do you want to download a backup?'),
+            title: this.$t("Do you want to download a backup?"),
             maskClosable: true,
-            content: this.$t('All unsaved progress will be lost, are you sure?'),
-            okText: this.$t('Yes'),
-            cancelText: this.$t('Cancel'),
+            content: this.$t(
+              "All unsaved progress will be lost, are you sure?"
+            ),
+            okText: this.$t("Yes"),
+            cancelText: this.$t("Cancel"),
             onOk: () => {
-              if (this.option.recover) this.sendAction('on_recover_today')
-              else this.sendAction('on_recover_yesterday')
-              this.modal.recover = false
+              if (this.option.recover) this.sendAction("on_recover_today");
+              else this.sendAction("on_recover_yesterday");
+              this.modal.recover = false;
             },
-            onCancel () {}
-          })
-          break
+            onCancel() {},
+          });
+          break;
       }
     },
-    createSnapshot () {
+    createSnapshot() {
       if (this.snapshots.data.lenght >= 3) {
         this.$error({
           title: this.$t("You can't have more than 3 snaps at the same time"),
-          content: this.$t('remove or commit old ones to create new')
-        })
+          content: this.$t("remove or commit old ones to create new"),
+        });
       }
 
-      this.snapshots.addSnap.loading = true
-      this.sendAction('on_snapshot_create', {
-        snap_name: this.snapshots.addSnap.snapname
+      this.snapshots.addSnap.loading = true;
+      this.sendAction("on_snapshot_create", {
+        snap_name: this.snapshots.addSnap.snapname,
       })
         .then(({ response }) => {
-          if (response?.error) throw response?.error
+          if (response?.error) throw response?.error;
 
-          this.openNotification('success', {
-            message: this.$t('Create snapshot')
-          })
-          this.snapshots.addSnap.modal = false
+          this.openNotification("success", {
+            message: this.$t("Create snapshot"),
+          });
+          this.snapshots.addSnap.modal = false;
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? err ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${
+              err?.response?.data?.message ?? err ?? "Unknown"
+            }.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.addSnap.loading = false
-        })
+          this.snapshots.addSnap.loading = false;
+        });
     },
-    deleteSnapshot (id) {
-      this.snapshots.deleteLoading = true
-      this.sendAction('on_snapshot_delete', { snap_id: id })
+    deleteSnapshot(id) {
+      this.snapshots.deleteLoading = true;
+      this.sendAction("on_snapshot_delete", { snap_id: id })
         .then(({ response }) => {
-          if (response?.error) throw response?.error
-          const i = this.snapshots.data.find(({ SNAPSHOT_ID }) => SNAPSHOT_ID === id)
+          if (response?.error) throw response?.error;
+          const i = this.snapshots.data.find(
+            ({ SNAPSHOT_ID }) => SNAPSHOT_ID === id
+          );
 
-          this.snapshots.data.splice(i, 1)
-          this.openNotification('success', {
-            message: this.$t('Delete snapshot')
-          })
+          this.snapshots.data.splice(i, 1);
+          this.openNotification("success", {
+            message: this.$t("Delete snapshot"),
+          });
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? err ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${
+              err?.response?.data?.message ?? err ?? "Unknown"
+            }.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.deleteLoading = false
-        })
+          this.snapshots.deleteLoading = false;
+        });
     },
-    revSnapshot (id) {
-      this.snapshots.addSnap.loading = true
-      this.sendAction('on_snapshot_setup', { snap_id: id })
+    revSnapshot(id) {
+      this.snapshots.addSnap.loading = true;
+      this.sendAction("on_snapshot_setup", { snap_id: id })
         .then(() => {
-          this.openNotification('success', {
-            message: this.$t('Revert snapshot')
-          })
+          this.openNotification("success", {
+            message: this.$t("Revert snapshot"),
+          });
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? err ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${
+              err?.response?.data?.message ?? err ?? "Unknown"
+            }.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.addSnap.loading = false
-        })
+          this.snapshots.addSnap.loading = false;
+        });
     },
-    openModal (name) {
+    openModal(name) {
       switch (name) {
-        case 'start':
-          if (this.statusVM.start) return
-          break
-        case 'shutdown':
-          if (this.statusVM.shutdown) return
-          break
-        case 'reboot':
-          if (this.statusVM.reboot) return
-          break
-        case 'delete':
-          if (this.statusVM.delete) return
-          break
-        case 'recover':
-          if (this.statusVM.recover) return
-          break
-        case 'snapshot':
-          this.snapshots.modal = true
-          this.snapshots.loading = true
-          this.sendAction('on_snapshot_list')
+        case "start":
+          if (this.statusVM.start) return;
+          break;
+        case "shutdown":
+          if (this.statusVM.shutdown) return;
+          break;
+        case "reboot":
+          if (this.statusVM.reboot) return;
+          break;
+        case "delete":
+          if (this.statusVM.delete) return;
+          break;
+        case "recover":
+          if (this.statusVM.recover) return;
+          break;
+        case "snapshot":
+          this.snapshots.modal = true;
+          this.snapshots.loading = true;
+          this.sendAction("on_snapshot_list")
             .then(({ response }) => {
-              const snapshots = response.snapshots ?? response
+              const snapshots = response.snapshots ?? response;
 
-              if (snapshots.some((el) => el === null)) return
+              if (snapshots.some((el) => el === null)) return;
               if (Array.isArray(snapshots)) {
-                this.snapshots.data = snapshots
+                this.snapshots.data = snapshots;
               }
             })
             .finally(() => {
-              this.snapshots.loading = false
-            })
-          break
-        case 'createSnapshot':
-          this.snapshots.addSnap.modal = true
+              this.snapshots.loading = false;
+            });
+          break;
+        case "createSnapshot":
+          this.snapshots.addSnap.modal = true;
       }
-      this.modal[name] = true
+      this.modal[name] = true;
     },
-    async sendAction (action, params) {
-      return this.$api.get(this.baseURL, {
-        params: {
-          ...params,
-          run: action,
-          server_id: this.$route.params.uuid
-        }
-      })
+    async sendAction(action, params) {
+      return this.$api
+        .get(this.baseURL, {
+          params: {
+            ...params,
+            run: action,
+            server_id: this.$route.params.uuid,
+          },
+        })
         .then((response) => {
-          if (!response) throw response
-          return response
+          if (!response) throw response;
+          return response;
         })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
+          const message = err.response?.data?.message ?? err.message ?? err;
 
-          this.openNotification('error', { message: this.$t(message) })
-          console.error(err)
-        })
+          this.openNotification("error", { message: this.$t(message) });
+          console.error(err);
+        });
     },
-    date (timestamp) {
-      if (timestamp < 1) return '-'
+    date(timestamp) {
+      if (timestamp < 1) return "-";
 
-      const date = new Date(timestamp * 1000)
-      const time = date.toTimeString().split(' ')[0]
+      const date = new Date(timestamp * 1000);
+      const time = date.toTimeString().split(" ")[0];
 
-      const year = date.getFullYear()
-      let month = date.getMonth() + 1
-      let day = date.getDate()
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
 
-      if (`${month}`.length < 2) month = `0${month}`
-      if (`${day}`.length < 2) day = `0${day}`
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
 
-      return `${day}.${month}.${year} ${time}`
-    }
-  }
-}
+      return `${day}.${month}.${year} ${time}`;
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -710,7 +715,7 @@ export default {
 }
 
 .block-content_table::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 40px;
   left: 15px;

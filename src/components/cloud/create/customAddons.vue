@@ -43,7 +43,7 @@
 import { computed, inject, ref } from "vue";
 import { useAddonsStore } from "@/stores/addons.js";
 import { useCloudStore } from "@/stores/cloud.js";
-import { useNotification, usePeriod } from "@/hooks/utils";
+import { usePeriod } from "@/hooks/utils";
 
 const addonsStore = useAddonsStore();
 const cloudStore = useCloudStore();

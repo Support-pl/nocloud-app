@@ -4,14 +4,14 @@
       <ione-filters
         :products="products"
         :plans="plans"
-        @update:filter="(key, value) => filters[key] = value"
+        @update:filter="(key, value) => (filters[key] = value)"
       />
       <a-divider style="margin: 10px 0" />
     </div>
 
     <ione-products
       v-if="products.length > 5"
-      :type="(groups.length > 1) ? 'slider' : 'grid'"
+      :type="groups.length > 1 ? 'slider' : 'grid'"
       :products="filteredProducts"
       :product-size="productSize"
       :get-product="getProduct"
@@ -38,9 +38,11 @@
       class="newCloud__prop"
       justify="space-between"
       align="middle"
-      :style="{ marginTop: (!products.length < 2) ? null : '50px' }"
+      :style="{ marginTop: !products.length < 2 ? null : '50px' }"
     >
-      <a-col> <span style="display: inline-block; width: 70px">CPU:</span> </a-col>
+      <a-col>
+        <span style="display: inline-block; width: 70px">CPU:</span>
+      </a-col>
       <transition name="textchange" mode="out-in">
         <a-col class="changing__field" span="6" style="text-align: right">
           <template v-if="isProductsExist">
@@ -54,7 +56,8 @@
               :min="0"
               :max="32"
               @update:value="setOptions('cpu.size', $event)"
-            /> vCPU
+            />
+            vCPU
           </template>
         </a-col>
       </transition>
@@ -66,7 +69,9 @@
       justify="space-between"
       align="middle"
     >
-      <a-col> <span style="display: inline-block; width: 70px">RAM:</span> </a-col>
+      <a-col>
+        <span style="display: inline-block; width: 70px">RAM:</span>
+      </a-col>
       <transition name="textchange" mode="out-in">
         <a-col class="changing__field" span="6" style="text-align: right">
           <template v-if="isProductsExist">
@@ -80,7 +85,8 @@
               :min="0"
               :max="64"
               @update:value="setOptions('ram.size', $event)"
-            /> Gb
+            />
+            Gb
           </template>
         </a-col>
       </transition>
@@ -99,127 +105,144 @@
 </template>
 
 <script setup>
-import { computed, inject, nextTick, reactive, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { useCloudStore } from '@/stores/cloud.js'
-import { getPeriods, getTarification } from '@/functions.js'
+import { computed, inject, nextTick, reactive, toRefs, watch } from "vue";
+import { useRoute } from "vue-router";
+import { useCloudStore } from "@/stores/cloud.js";
+import { getPeriods, getTarification } from "@/functions.js";
 
-import ioneDrive from '@/components/cloud/create/ioneDrive.vue'
-import ioneFilters from '@/components/cloud/create/ioneFilters.vue'
-import ioneProducts from '@/components/cloud/create/ioneProducts.vue'
+import ioneDrive from "@/components/cloud/create/ioneDrive.vue";
+import ioneFilters from "@/components/cloud/create/ioneFilters.vue";
+import ioneProducts from "@/components/cloud/create/ioneProducts.vue";
 
 const props = defineProps({
   mode: { type: String, required: true },
   plans: { type: Array, required: true },
   products: { type: Array, required: true },
   productSize: { type: String, required: true },
-  isFlavorsLoading: { type: Boolean, default: false }
-})
-const emits = defineEmits(['update:periods', 'update:product-size'])
+  isFlavorsLoading: { type: Boolean, default: false },
+});
+const { isFlavorsLoading } = toRefs(props);
 
-const route = useRoute()
-const cloudStore = useCloudStore()
-const [options, setOptions] = inject('useOptions')()
+const emits = defineEmits(["update:periods", "update:product-size"]);
 
-emits('update:periods', getPeriods(props.productSize, props.plans))
-watch(() => props.productSize, (value) => {
-  const product = getProduct(value)
+const route = useRoute();
+const cloudStore = useCloudStore();
+const [options, setOptions] = inject("useOptions")();
 
-  nextTick(() => {
-    if (product?.meta?.minDiskSize) {
-      setOptions('disk.size', product.meta.minDiskSize * 1024)
-      setOptions('disk.min', product.meta.minDiskSize)
-    }
-    if (product?.meta?.maxDiskSize) {
-      setOptions('disk.max', product.meta.maxDiskSize)
-    }
-  })
+emits("update:periods", getPeriods(props.productSize, props.plans));
+watch(
+  () => props.productSize,
+  (value) => {
+    const product = getProduct(value);
 
-  emits('update:periods', getPeriods(value, props.plans))
-})
+    nextTick(() => {
+      if (product?.meta?.minDiskSize) {
+        setOptions("disk.size", product.meta.minDiskSize * 1024);
+        setOptions("disk.min", product.meta.minDiskSize);
+      }
+      if (product?.meta?.maxDiskSize) {
+        setOptions("disk.max", product.meta.maxDiskSize);
+      }
+    });
 
-const data = localStorage.getItem('data') ?? route.query.data ?? '{}'
+    emits("update:periods", getPeriods(value, props.plans));
+  }
+);
+
+const data = localStorage.getItem("data") ?? route.query.data ?? "{}";
 
 if (props.products.length > 0) {
-  const { productSize } = JSON.parse(data)
+  const { productSize } = JSON.parse(data);
 
   if (productSize && props.products.includes(productSize)) {
-    setProduct(productSize)
+    setProduct(productSize);
   } else if (props.products.length < 6) {
-    setProduct(props.products[1] ?? props.products[0])
+    setProduct(props.products[1] ?? props.products[0]);
   }
 }
 
-const isProductsExist = computed(() =>
-  props.products.length > 0
-)
-const filters = reactive({ cpu: [], ram: [] })
+const isProductsExist = computed(() => props.products.length > 0);
+const filters = reactive({ cpu: [], ram: [] });
 
 const filteredProducts = computed(() => {
-  const result = []
+  const result = [];
 
   props.plans.forEach(({ products }) => {
     Object.values(products).forEach(({ resources, title }) => {
-      if (!props.products.includes(title)) return
-      const byCpu = resources.cpu >= filters.cpu.at(0) &&
-        resources.cpu <= filters.cpu.at(-1)
+      if (!props.products.includes(title)) return;
+      const byCpu =
+        resources.cpu >= filters.cpu.at(0) &&
+        resources.cpu <= filters.cpu.at(-1);
 
-      const byRam = Math.round(resources.ram / 1024) >= filters.ram.at(0) &&
-        Math.round(resources.ram / 1024) <= filters.ram.at(-1)
+      const byRam =
+        Math.round(resources.ram / 1024) >= filters.ram.at(0) &&
+        Math.round(resources.ram / 1024) <= filters.ram.at(-1);
 
-      if (byCpu && byRam && !result.includes(title)) result.push(title)
-    })
-  })
+      if (byCpu && byRam && !result.includes(title)) result.push(title);
+    });
+  });
 
-  result.sort((a, b) => props.products.indexOf(a) - props.products.indexOf(b))
-  return result
-})
+  result.sort((a, b) => props.products.indexOf(a) - props.products.indexOf(b));
+  return result;
+});
 
 const groups = computed(() =>
   filteredProducts.value.reduce((result, product) => {
-    const resources = getProduct(product)
+    const resources = getProduct(product);
 
-    if (!resources.group) return result
+    if (!resources.group) return result;
     if (!result.includes(resources.group)) {
-      result.push(resources.group)
+      result.push(resources.group);
     }
 
-    return result
+    return result;
   }, [])
-)
+);
 
-function getProduct (size, plan = cloudStore.plan) {
-  const isDynamic = cloudStore.plan.kind === 'DYNAMIC'
-  const products = Object.values(plan.products)
-  const product = products.find(({ title, period }) =>
-    title === size && (
-      getTarification(period) === props.mode || isDynamic
-    )
-  )
+function getProduct(size, plan = cloudStore.plan) {
+  const isDynamic = cloudStore.plan.kind === "DYNAMIC";
+  const products = Object.values(plan.products);
+  const product = products.find(
+    ({ title, period }) =>
+      title === size && (getTarification(period) === props.mode || isDynamic)
+  );
 
-  return { ...product?.resources, group: product?.group, meta: product?.meta }
+  return { ...product?.resources, group: product?.group, meta: product?.meta };
 }
 
-async function setProduct (value) {
-  emits('update:product-size', value)
+async function setProduct(value) {
+  emits("update:product-size", value);
 
-  await nextTick()
-  const plan = (cloudStore.plan.kind === 'DYNAMIC' && cloudStore.plan.type === 'ione')
-    ? props.plans.find(({ uuid }) => uuid === cloudStore.plan.meta.linkedPlan)
-    : cloudStore.plan
+  await nextTick();
+  const plan =
+    cloudStore.plan.kind === "DYNAMIC" && cloudStore.plan.type === "ione"
+      ? props.plans.find(({ uuid }) => uuid === cloudStore.plan.meta.linkedPlan)
+      : cloudStore.plan;
 
-  if (!plan) return
-  const resources = getProduct(value, plan) ?? {}
-  const minDisk = (plan.meta.minDiskSize ?? {})[options.disk.type]
+  if (!plan) return;
+  const resources = getProduct(value, plan) ?? {};
+  const minDisk = (plan.meta.minDiskSize ?? {})[options.disk.type];
 
-  setOptions('cpu.size', resources.cpu ?? 0)
-  setOptions('ram.size', (resources.ram ?? 0) / 1024)
-  setOptions('disk.size', resources.disk ?? (minDisk ?? 20) * 1024)
+  setOptions("cpu.size", resources.cpu ?? 0);
+  setOptions("ram.size", (resources.ram ?? 0) / 1024);
+  setOptions("disk.size", resources.disk ?? (minDisk ?? 20) * 1024);
 }
+
+watch(isFlavorsLoading, () => {
+  if (isFlavorsLoading.value) {
+    const { productSize } = JSON.parse(data);
+
+    if (productSize && props.products.includes(productSize)) {
+      setProduct(productSize);
+    } else if (props.products.length < 6) {
+      setProduct(props.products[1] ?? props.products[0]);
+    }
+  }
+});
 </script>
 
 <script>
-export default { name: 'IonePlanPanel' }
+export default { name: "IonePlanPanel" };
 </script>
 
 <style scoped>

@@ -5,7 +5,7 @@
       <div
         v-if="VM.state && VM.state.state !== 'STOPPED'"
         class="Fcloud__button"
-        :class="{ disabled: statusVM.shutdown, }"
+        :class="{ disabled: statusVM.shutdown }"
         @click="sendAction('stop_vm')"
       >
         <div class="Fcloud__BTN-icon">
@@ -18,7 +18,7 @@
       <div
         v-else
         class="Fcloud__button"
-        :class="{ disabled: statusVM.start, }"
+        :class="{ disabled: statusVM.start }"
         @click="sendAction('start_vm')"
       >
         <div class="Fcloud__BTN-icon">
@@ -57,9 +57,7 @@
               {{ $t("cloud_Reboot_modal") }}
             </a-radio>
             <a-radio value="hard">
-              <a-tag color="red">
-                HARD
-              </a-tag>
+              <a-tag color="red"> HARD </a-tag>
               {{ $t("cloud_Reboot_modal") }}
             </a-radio>
           </a-radio-group>
@@ -82,7 +80,9 @@
           :title="$t('cloud_Recover_modal')"
           @ok="sendRecover"
         >
-          <template v-if="VM.config.addons?.find((el) => el.includes('backup'))">
+          <template
+            v-if="VM.config.addons?.find((el) => el.includes('backup'))"
+          >
             <p>{{ $t("cloud_Recover_invite_line1") }}</p>
             <p>{{ $t("cloud_Recover_invite_line2") }}</p>
             <p>{{ $t("cloud_Recover_invite_line3") }}</p>
@@ -119,14 +119,10 @@
         v-if="VM.state && VM.state.meta.networking"
         class="Fcloud__info-block block"
       >
-        <div class="Fcloud__block-header">
-          <flag-icon /> IP
-        </div>
+        <div class="Fcloud__block-header"><flag-icon /> IP</div>
         <div class="Fcloud__block-content">
           <div class="block__column" style="flex-direction: row">
-            <div
-              v-if="dataSP" class="block__value" style="font-size: 18px"
-            >
+            <div v-if="dataSP" class="block__value" style="font-size: 18px">
               <table class="Fcloud__table">
                 <tbody>
                   <tr v-for="nic in networking.public" :key="nic">
@@ -154,11 +150,7 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div
-              v-if="dataSP"
-              class="block__value"
-              style="font-size: 18px"
-            >
+            <div v-if="dataSP" class="block__value" style="font-size: 18px">
               {{ locationTitle }}
             </div>
           </div>
@@ -171,20 +163,18 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div class="block__title">
-              OS
-            </div>
+            <div class="block__title">OS</div>
             <div class="block__value">
-              {{ osName || $t('No Data') }}
+              {{ osName || $t("No Data") }}
             </div>
           </div>
 
           <div v-if="VM.config.planCode" class="block__column">
             <div class="block__title">
-              {{ capitalize($t('tariff')) }}
+              {{ capitalize($t("tariff")) }}
             </div>
             <div class="block__value">
-              {{ tariffTitle || $t('No Data') }}
+              {{ tariffTitle || $t("No Data") }}
               <swap-icon title="Switch tariff" @click="openModal('switch')" />
             </div>
           </div>
@@ -194,17 +184,21 @@
               {{ capitalize($t("userService.next payment date")) }}
             </div>
             <div class="block__value">
-              {{ toDate(VM.data.expiration, '.', false) }}
-              <sync-icon v-if="false" title="Renew" @click="isVisible = !isVisible" />
+              {{ toDate(VM.data.expiration, ".", false) }}
+              <sync-icon
+                v-if="false"
+                title="Renew"
+                @click="isVisible = !isVisible"
+              />
             </div>
           </div>
 
           <div class="block__column">
             <div class="block__title">
-              {{ capitalize($t('userService.auto renew')) }}
+              {{ capitalize($t("userService.auto renew")) }}
             </div>
             <div class="block__value">
-              {{ VM.config.auto_renew ? $t('enabled') : $t('disabled') }}
+              {{ VM.config.auto_renew ? $t("enabled") : $t("disabled") }}
             </div>
           </div>
         </div>
@@ -219,7 +213,9 @@
       >
         <a-spin :tip="$t('loading')" :spinning="isPlansLoading">
           <div style="display: grid; grid-template-columns: auto 1fr; gap: 5px">
-            <span style="margin-right: 16px">{{ $t('Select new tariff') }}:</span>
+            <span style="margin-right: 16px"
+              >{{ $t("Select new tariff") }}:</span
+            >
             <a-select
               v-model:value="planCode"
               show-search
@@ -230,7 +226,7 @@
               </a-select-option>
             </a-select>
 
-            <span style="margin-right: 16px">{{ $t('Select new OS') }}:</span>
+            <span style="margin-right: 16px">{{ $t("Select new OS") }}:</span>
             <a-select v-model:value="newOS">
               <a-select-option v-for="item of images" :key="item.id">
                 {{ item.name }}
@@ -244,14 +240,20 @@
               display: grid;
               grid-template-columns: 100px 1fr;
               margin-top: 10px;
-              text-align: right
+              text-align: right;
             "
           >
-            <span style="font-weight: 700; text-align: left">{{ $t('cpu') }}:</span>
+            <span style="font-weight: 700; text-align: left"
+              >{{ $t("cpu") }}:</span
+            >
             {{ tariffs[planCode].resources.cpu }} cores
-            <span style="font-weight: 700; text-align: left">{{ $t('ram') }}:</span>
+            <span style="font-weight: 700; text-align: left"
+              >{{ $t("ram") }}:</span
+            >
             {{ tariffs[planCode].resources.ram / 1000 }} Gb
-            <span style="font-weight: 700; text-align: left">{{ $t('disk') }}:</span>
+            <span style="font-weight: 700; text-align: left"
+              >{{ $t("disk") }}:</span
+            >
             {{ tariffs[planCode].resources.drive_size / 1024 }} Gb
           </div>
         </a-spin>
@@ -265,21 +267,19 @@
         <div class="Fcloud__block-content block-content_table">
           <div class="block__column block__column_table">
             <div class="block__title">
-              {{ capitalize($t('tariff')) }}
+              {{ capitalize($t("tariff")) }}
             </div>
           </div>
           <div class="block__column block__column_table block__column_price">
-            <div class="block__title">
-              {{ tariffTitle || $t('No Data') }}:
-            </div>
+            <div class="block__title">{{ tariffTitle || $t("No Data") }}:</div>
             <div class="block__value">
-              {{ +tariffPrice.toFixed(2) }} {{ currency.code }}
+              {{ +tariffPrice.toFixed(2) }} {{ currency.title }}
             </div>
           </div>
 
           <div class="block__column block__column_table">
             <div class="block__title">
-              {{ $t('Addons') }}
+              {{ $t("Addons") }}
             </div>
           </div>
           <template v-if="Object.keys(addonsPrice ?? {}).length > 0">
@@ -288,26 +288,20 @@
               :key="addon"
               class="block__column block__column_table block__column_price"
             >
-              <div class="block__title">
-                {{ addon }}:
-              </div>
+              <div class="block__title">{{ addon }}:</div>
               <div class="block__value">
-                {{ +price.toFixed(2) }} {{ currency.code }}
+                {{ +price.toFixed(2) }} {{ currency.title }}
               </div>
             </div>
           </template>
           <div class="block__column" style="align-items: flex-end">
-            <div class="block__value">
-              0 {{ currency.code }}
-            </div>
+            <div class="block__value">0 {{ currency.title }}</div>
           </div>
 
           <div class="block__column block__column_table block__column_total">
-            <div class="block__title">
-              {{ $t('Total') }}:
-            </div>
+            <div class="block__title">{{ $t("Total") }}:</div>
             <div class="block__value">
-              {{ +fullPrice.toFixed(2) }} {{ currency.code }}
+              {{ +fullPrice.toFixed(2) }} {{ currency.title }}
             </div>
           </div>
         </div>
@@ -319,9 +313,7 @@
         </div>
         <div class="Fcloud__block-content">
           <div class="block__column">
-            <div class="block__title">
-              CPU
-            </div>
+            <div class="block__title">CPU</div>
             <div class="block__value">
               {{ VM.resources.cpu }}
             </div>
@@ -346,7 +338,7 @@
               {{ $t("cloud_Type") }}
             </div>
             <div class="block__value">
-              {{ VM.resources.drive_type ?? 'SSD' }}
+              {{ VM.resources.drive_type ?? "SSD" }}
             </div>
           </div>
           <div class="block__column">
@@ -414,10 +406,10 @@
 
             <div class="modal__buttons">
               <a-button
-                v-if="(
+                v-if="
                   VM.config.addons &&
                   VM.config.addons.find((el) => el.includes('snapshot'))
-                )"
+                "
                 type="primary"
                 shape="round"
                 size="large"
@@ -441,7 +433,11 @@
               :footer="null"
               :title="$t('Create snapshot')"
             >
-              <p>{{ $t("Each snapshot exists for 24 hours and is then deleted.") }}</p>
+              <p>
+                {{
+                  $t("Each snapshot exists for 24 hours and is then deleted.")
+                }}
+              </p>
               <p>{{ $t("Choose a name for the new snapshot:") }}</p>
               <a-input
                 ref="snapNameInput"
@@ -490,79 +486,79 @@
 </template>
 
 <script lang="jsx">
-import { defineAsyncComponent, defineComponent } from 'vue'
-import { mapState, mapActions } from 'pinia'
-import { useCurrency, useNotification } from '@/hooks/utils'
-import { toDate } from '@/functions.js'
+import { defineAsyncComponent, defineComponent } from "vue";
+import { mapState, mapActions } from "pinia";
+import { useCurrency, useNotification } from "@/hooks/utils";
+import { toDate } from "@/functions.js";
 
-import { useSpStore } from '@/stores/sp.js'
-import { useAuthStore } from '@/stores/auth.js'
-import { useInstancesStore } from '@/stores/instances.js'
-import { usePlansStore } from '@/stores/plans.js'
+import { useSpStore } from "@/stores/sp.js";
+import { useAuthStore } from "@/stores/auth.js";
+import { useInstancesStore } from "@/stores/instances.js";
+import { usePlansStore } from "@/stores/plans.js";
 
-import renewalModal from '@/components/ui/renewalModal.vue'
+import renewalModal from "@/components/ui/renewalModal.vue";
 
-const redoIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/RedoOutlined')
-)
-const backwardIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/BackwardOutlined')
-)
+const redoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RedoOutlined")
+);
+const backwardIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/BackwardOutlined")
+);
 
-const flagIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/FlagFilled')
-)
-const envIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/EnvironmentOutlined')
-)
-const infoIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/InfoCircleOutlined')
-)
+const flagIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FlagFilled")
+);
+const envIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EnvironmentOutlined")
+);
+const infoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/InfoCircleOutlined")
+);
 
-const swapIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SwapOutlined')
-)
-const syncIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SyncOutlined')
-)
-const cardIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CreditCardOutlined')
-)
+const swapIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SwapOutlined")
+);
+const syncIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SyncOutlined")
+);
+const cardIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CreditCardOutlined")
+);
 
-const settingIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/SettingFilled')
-)
-const databaseIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/DatabaseFilled')
-)
-const caretRightIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CaretRightOutlined')
-)
-const closeIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CloseOutlined')
-)
+const settingIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SettingFilled")
+);
+const databaseIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/DatabaseFilled")
+);
+const caretRightIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CaretRightOutlined")
+);
+const closeIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CloseOutlined")
+);
 
 const columns = [
   {
-    title: 'Name',
-    key: 'Name',
-    dataIndex: 'NAME'
+    title: "Name",
+    key: "Name",
+    dataIndex: "NAME",
   },
   {
-    title: 'Time',
-    dataIndex: 'TIME',
-    key: 'Time',
-    scopedSlots: { customRender: 'time' }
+    title: "Time",
+    dataIndex: "TIME",
+    key: "Time",
+    scopedSlots: { customRender: "time" },
   },
   {
-    title: 'Actions',
-    key: 'Actions',
-    scopedSlots: { customRender: 'actions' }
-  }
-]
+    title: "Actions",
+    key: "Actions",
+    scopedSlots: { customRender: "actions" },
+  },
+];
 
 export default defineComponent({
-  name: 'OpenInstance',
+  name: "OpenInstance",
   components: {
     renewalModal,
     redoIcon,
@@ -576,16 +572,16 @@ export default defineComponent({
     settingIcon,
     databaseIcon,
     caretRightIcon,
-    closeIcon
+    closeIcon,
   },
   props: {
-    VM: { type: Object, required: true }
+    VM: { type: Object, required: true },
   },
-  setup () {
-    const { currency } = useCurrency()
-    const { openNotification } = useNotification()
+  setup() {
+    const { currency } = useCurrency();
+    const { openNotification } = useNotification();
 
-    return { currency, openNotification }
+    return { currency, openNotification };
   },
   data: () => ({
     modal: {
@@ -593,7 +589,7 @@ export default defineComponent({
       shutdown: false,
       recover: false,
       snapshot: false,
-      switch: false
+      switch: false,
     },
     snapshots: {
       modal: false,
@@ -603,106 +599,126 @@ export default defineComponent({
       loadingSnaps: [],
       addSnap: {
         modal: false,
-        snapname: 'Snapshot',
-        loading: false
-      }
+        snapname: "Snapshot",
+        loading: false,
+      },
     },
     option: {
-      reboot: 'soft',
+      reboot: "soft",
       shutdown: 0,
-      recover: 0
+      recover: 0,
     },
 
     dates: [],
-    planCode: '',
-    newOS: '',
+    planCode: "",
+    newOS: "",
     actionLoading: false,
     isSwitchLoading: false,
-    isVisible: false
+    isVisible: false,
   }),
   computed: {
-    ...mapState(usePlansStore, { plans: 'plans', isPlansLoading: 'isLoading' }),
-    ...mapState(useSpStore, ['servicesProviders']),
-    ...mapState(useAuthStore, ['userdata', 'baseURL']),
-    ...mapState(useInstancesStore, ['services']),
-    statusVM () {
+    ...mapState(usePlansStore, { plans: "plans", isPlansLoading: "isLoading" }),
+    ...mapState(useSpStore, ["servicesProviders"]),
+    ...mapState(useAuthStore, ["userdata", "baseURL"]),
+    ...mapState(useInstancesStore, ["services"]),
+    statusVM() {
       if (!this.VM?.state) {
-        return { shutdown: true, reboot: true, start: true, recover: true }
+        return { shutdown: true, reboot: true, start: true, recover: true };
       }
-      const isPending = ['PENDING', 'OPERATION'].includes(this.VM.state.state)
-      const isSuspended = this.VM.state.state === 'SUSPENDED' || this.VM.data.suspended_manually
+      const isPending = ["PENDING", "OPERATION"].includes(this.VM.state.state);
+      const isSuspended =
+        this.VM.state.state === "SUSPENDED" || this.VM.data.suspended_manually;
 
       if (isPending || isSuspended || this.VM.data.lock) {
-        return { shutdown: true, reboot: true, start: true, recover: true }
+        return { shutdown: true, reboot: true, start: true, recover: true };
       }
 
       return {
-        shutdown: this.VM.state.state !== 'RUNNING' &&
-          this.VM.state.state !== 'STOPPED',
-        reboot: this.VM.state.meta.state === 'BUILD' ||
-          this.VM.state.state === 'STOPPED',
-        start: this.VM.state.state !== 'RUNNING' &&
-          this.VM.state.state !== 'STOPPED',
-        recover: this.VM.state.state !== 'RUNNING' &&
-          this.VM.state.state !== 'STOPPED'
-      }
+        shutdown:
+          this.VM.state.state !== "RUNNING" &&
+          this.VM.state.state !== "STOPPED",
+        reboot:
+          this.VM.state.meta.state === "BUILD" ||
+          this.VM.state.state === "STOPPED",
+        start:
+          this.VM.state.state !== "RUNNING" &&
+          this.VM.state.state !== "STOPPED",
+        recover:
+          this.VM.state.state !== "RUNNING" &&
+          this.VM.state.state !== "STOPPED",
+      };
     },
 
-    dataSP () {
-      return this.servicesProviders.find((el) => el.uuid === this.VM.sp)
+    dataSP() {
+      return this.servicesProviders.find((el) => el.uuid === this.VM.sp);
     },
-    osName () {
-      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
-      const type = this.VM.billingPlan.type.split(' ')[1]
-      const imageId = this.VM.config.configuration[`${type}_os`]
+    osName() {
+      const key =
+        this.VM.product ??
+        `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const type = this.VM.billingPlan.type.split(" ")[1];
+      const imageId = this.VM.config.configuration[`${type}_os`];
 
-      const { os } = this.VM.billingPlan.products[key].meta
-      const { name } = os.find(({ id }) => id === imageId) ?? {}
+      const { os } = this.VM.billingPlan.products[key].meta;
+      const { name } = os.find(({ id }) => id === imageId) ?? {};
 
-      return name ?? this.$t('No Data')
+      return name ?? this.$t("No Data");
     },
-    locationTitle () {
-      if (!this.VM?.config.configuration) return this.dataSP.title
-      const type = this.VM.billingPlan.type.split(' ')[1]
-      const region = this.VM.config.configuration[`${type}_datacenter`]
-      const locationItem = this.dataSP.locations.find((el) => el.extra.region === region)
+    locationTitle() {
+      if (!this.VM?.config.configuration) return this.dataSP.title;
+      const type = this.VM.billingPlan.type.split(" ")[1];
+      const region = this.VM.config.configuration[`${type}_datacenter`];
+      const locationItem = this.dataSP.locations.find(
+        (el) => el.extra.region === region
+      );
 
-      return locationItem?.title ?? this.$t('No Data')
+      return locationItem?.title ?? this.$t("No Data");
     },
-    tariffTitle () {
-      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
+    tariffTitle() {
+      const key =
+        this.VM.product ??
+        `${this.VM.config.duration} ${this.VM.config.planCode}`;
 
-      return this.VM.billingPlan.products[key].title
+      return this.VM.billingPlan.products[key].title;
     },
-    tariffPrice () {
-      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
+    tariffPrice() {
+      const key =
+        this.VM.product ??
+        `${this.VM.config.duration} ${this.VM.config.planCode}`;
 
-      return this.VM.billingPlan.products[key].price
+      return this.VM.billingPlan.products[key].price;
     },
-    addonsPrice () {
+    addonsPrice() {
       return this.VM.config.addons?.reduce((res, addon) => {
         const { price } = this.VM.billingPlan.resources.find(
           ({ key }) => key === `${this.VM.config.duration} ${addon}`
+        );
+        let key = "";
+
+        if (addon.includes("additional")) key = this.$t("adds drive");
+        if (addon.includes("snapshot")) key = this.$t("Snapshot");
+        if (addon.includes("backup")) key = this.$t("Backup");
+        if (addon.includes("windows")) key = this.$t("Windows");
+
+        return { ...res, [key]: +price };
+      }, {});
+    },
+    fullPrice() {
+      return (
+        this.tariffPrice +
+        Object.values(this.addonsPrice ?? {}).reduce(
+          (sum, curr) => sum + curr,
+          0
         )
-        let key = ''
-
-        if (addon.includes('additional')) key = this.$t('adds drive')
-        if (addon.includes('snapshot')) key = this.$t('Snapshot')
-        if (addon.includes('backup')) key = this.$t('Backup')
-        if (addon.includes('windows')) key = this.$t('Windows')
-
-        return { ...res, [key]: +price }
-      }, {})
+      );
     },
-    fullPrice () {
-      return this.tariffPrice + Object.values(this.addonsPrice ?? {})
-        .reduce((sum, curr) => sum + curr, 0)
-    },
-    renewalProps () {
-      const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
-      const { period } = this.VM.billingPlan.products[key]
-      const currentPeriod = this.VM.data.expiration
-      const newPeriod = this.date(this.VM.data.expiration, +period)
+    renewalProps() {
+      const key =
+        this.VM.product ??
+        `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const { period } = this.VM.billingPlan.products[key];
+      const currentPeriod = this.VM.data.expiration;
+      const newPeriod = this.date(this.VM.data.expiration, +period);
 
       return {
         service: this.VM,
@@ -711,70 +727,78 @@ export default defineComponent({
         price: this.tariffPrice,
         addonsPrice: this.addonsPrice,
         currentAutoRenew: this.VM.config.auto_renew,
-        blocked: this.VM.data.blocked
-      }
+        blocked: this.VM.data.blocked,
+      };
     },
 
-    tariffs () {
-      if (!this.VM?.billingPlan) return {}
-      const tariffs = {}
-      const { products } = this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {}
-      const productKey = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
-      const keys = Object.keys(products ?? {}).sort((a, b) =>
-        products[a].price - products[b].price
-      )
+    tariffs() {
+      if (!this.VM?.billingPlan) return {};
+      const tariffs = {};
+      const { products } =
+        this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {};
+      const productKey =
+        this.VM.product ??
+        `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const keys = Object.keys(products ?? {}).sort(
+        (a, b) => products[a].price - products[b].price
+      );
 
       keys.forEach((key) => {
-        const { cloud_datacenter: region } = this.VM.config.configuration
-        const [a, b] = [products[productKey], products[key]]
+        const { cloud_datacenter: region } = this.VM.config.configuration;
+        const [a, b] = [products[productKey], products[key]];
 
-        const isPriceMore = a.price <= b.price
-        const isPeriodsEqual = a.period === b.period
-        const isRegionIncluded = b.meta.datacenter.includes(region)
+        const isPriceMore = a.price <= b.price;
+        const isPeriodsEqual = a.period === b.period;
+        const isRegionIncluded = b.meta.datacenter.includes(region);
 
-        if (productKey === key) return
+        if (productKey === key) return;
         if (isPriceMore && isPeriodsEqual && isRegionIncluded) {
-          tariffs[key] = products[key]
+          tariffs[key] = products[key];
         }
-      })
+      });
 
-      return tariffs
+      return tariffs;
     },
-    images () {
-      return this.tariffs[this.planCode]?.meta.os ?? []
+    images() {
+      return this.tariffs[this.planCode]?.meta.os ?? [];
     },
-    networking () {
-      const { networking } = this.VM?.state?.meta
+    networking() {
+      const { networking } = this.VM?.state?.meta;
 
-      if (!networking) return { public: [], private: [] }
-      const regexp = /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
+      if (!networking) return { public: [], private: [] };
+      const regexp =
+        /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
 
-      const publicIPs = networking.public?.filter((el) => !regexp.test(el))
-      const privateIPs = networking.private?.filter((el) => !regexp.test(el))
+      const publicIPs = networking.public?.filter((el) => !regexp.test(el));
+      const privateIPs = networking.private?.filter((el) => !regexp.test(el));
 
-      return { public: publicIPs ?? [], private: privateIPs ?? [] }
-    }
+      return { public: publicIPs ?? [], private: privateIPs ?? [] };
+    },
   },
   watch: {
-    images (value) {
-      const os = value.find(({ name }) => name === this.osName)
+    images(value) {
+      const os = value.find(({ name }) => name === this.osName);
 
-      this.newOS = os?.id ?? value[0]?.id ?? ''
-    }
+      this.newOS = os?.id ?? value[0]?.id ?? "";
+    },
   },
-  created () {
-    this.fetchPlans({ sp_uuid: this.VM.sp, anonymously: false })
+  created() {
+    this.fetchPlans({ sp_uuid: this.VM.sp, anonymously: false });
   },
   methods: {
-    ...mapActions(useInstancesStore, ['invokeAction', 'updateService', 'fetch']),
-    ...mapActions(usePlansStore, { fetchPlans: 'fetch' }),
+    ...mapActions(useInstancesStore, [
+      "invokeAction",
+      "updateService",
+      "fetch",
+    ]),
+    ...mapActions(usePlansStore, { fetchPlans: "fetch" }),
     toDate,
-    searchTafiff (string, option) {
-      const title = this.tariffs[option.key].title.toLowerCase()
+    searchTafiff(string, option) {
+      const title = this.tariffs[option.key].title.toLowerCase();
 
-      return title.includes(string.toLowerCase())
+      return title.includes(string.toLowerCase());
     },
-    createSnapshot () {
+    createSnapshot() {
       // if (this.snapshots.data.lenght >= 3) {
       //   this.$error({
       //     title: this.$t("You can't have more than 3 snaps at the same time"),
@@ -785,268 +809,273 @@ export default defineComponent({
       const data = {
         uuid: this.VM.uuid,
         params: { snap_name: this.snapshots.addSnap.snapname },
-        action: 'snap_create'
-      }
+        action: "snap_create",
+      };
 
-      this.snapshots.addSnap.loading = true
+      this.snapshots.addSnap.loading = true;
       this.invokeAction(data)
         .then((res) => {
-          this.VM.state.meta.snapshots = res?.meta.snapshots
-          this.openNotification('success', {
-            message: this.$t('Create snapshot')
-          })
-          this.snapshots.addSnap.modal = false
+          this.VM.state.meta.snapshots = res?.meta.snapshots;
+          this.openNotification("success", {
+            message: this.$t("Create snapshot"),
+          });
+          this.snapshots.addSnap.modal = false;
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.addSnap.loading = false
-        })
+          this.snapshots.addSnap.loading = false;
+        });
     },
-    deleteSnapshot (index) {
+    deleteSnapshot(index) {
       const data = {
         uuid: this.VM.uuid,
         params: { snap_id: +index },
-        action: 'snap_delete'
-      }
+        action: "snap_delete",
+      };
 
-      this.snapshots.loading = true
+      this.snapshots.loading = true;
       this.invokeAction(data)
         .then(() => {
-          delete this.VM.state.meta.snapshots[index]
-          this.openNotification('success', {
-            message: this.$t('Delete snapshot')
-          })
+          delete this.VM.state.meta.snapshots[index];
+          this.openNotification("success", {
+            message: this.$t("Delete snapshot"),
+          });
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.loading = false
-        })
+          this.snapshots.loading = false;
+        });
     },
-    revSnapshot (index) {
+    revSnapshot(index) {
       const data = {
         uuid: this.VM.uuid,
         params: { snap_id: +index },
-        action: 'snap_revert'
-      }
+        action: "snap_revert",
+      };
 
-      this.snapshots.addSnap.loading = true
+      this.snapshots.addSnap.loading = true;
       this.invokeAction(data)
         .then(() => {
-          this.openNotification('success', {
-            message: this.$t('Revert snapshot')
-          })
+          this.openNotification("success", {
+            message: this.$t("Revert snapshot"),
+          });
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
-          this.openNotification('error', opts)
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
+          this.openNotification("error", opts);
         })
         .finally(() => {
-          this.snapshots.addSnap.loading = false
-        })
+          this.snapshots.addSnap.loading = false;
+        });
     },
-    openModal (name) {
+    openModal(name) {
       switch (name) {
-        case 'start':
-          if (this.statusVM.start) return
-          break
-        case 'shutdown':
-          if (this.statusVM.shutdown) return
-          break
-        case 'reboot':
-          if (this.statusVM.reboot) return
-          break
-        case 'delete':
-          if (this.statusVM.delete) return
-          break
-        case 'recover':
-          if (this.statusVM.recover) return
-          this.actionLoading = true
+        case "start":
+          if (this.statusVM.start) return;
+          break;
+        case "shutdown":
+          if (this.statusVM.shutdown) return;
+          break;
+        case "reboot":
+          if (this.statusVM.reboot) return;
+          break;
+        case "delete":
+          if (this.statusVM.delete) return;
+          break;
+        case "recover":
+          if (this.statusVM.recover) return;
+          this.actionLoading = true;
           this.invokeAction({
             uuid: this.VM.uuid,
             uuidService: this.VM.uuidService,
-            action: 'backup_restore_points'
+            action: "backup_restore_points",
           })
             .then(({ meta }) => {
-              this.dates = meta.restorePoints
+              this.dates = meta.restorePoints;
             })
             .finally(() => {
-              this.actionLoading = false
-            })
-          break
-        case 'snapshot':
-          this.snapshots.modal = true
-          break
-        case 'createSnapshot':
-          this.snapshots.addSnap.modal = true
+              this.actionLoading = false;
+            });
+          break;
+        case "snapshot":
+          this.snapshots.modal = true;
+          break;
+        case "createSnapshot":
+          this.snapshots.addSnap.modal = true;
       }
-      this.modal[name] = true
+      this.modal[name] = true;
     },
-    sendRecover () {
+    sendRecover() {
       this.$confirm({
-        title: this.$t('Do you want to download a backup?'),
+        title: this.$t("Do you want to download a backup?"),
         maskClosable: true,
-        content: this.$t('All unsaved progress will be lost, are you sure?'),
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
+        content: this.$t("All unsaved progress will be lost, are you sure?"),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
         onOk: () => {
-          this.sendAction('recover')
-          this.modal.recover = false
+          this.sendAction("recover");
+          this.modal.recover = false;
         },
-        onCancel () {}
-      })
+        onCancel() {},
+      });
     },
-    sendNewTariff () {
-      const service = this.services.find(({ uuid }) =>
-        uuid === this.VM.uuidService
-      )
+    sendNewTariff() {
+      const service = this.services.find(
+        ({ uuid }) => uuid === this.VM.uuidService
+      );
       const instance = service.instancesGroups
-        .find(({ sp }) => sp === this.VM.sp).instances
-        .find(({ uuid }) => uuid === this.VM.uuid)
+        .find(({ sp }) => sp === this.VM.sp)
+        .instances.find(({ uuid }) => uuid === this.VM.uuid);
 
       try {
-        this.isSwitchLoading = true
-        const { price, resources } = this.tariffs[this.planCode]
+        this.isSwitchLoading = true;
+        const { price, resources } = this.tariffs[this.planCode];
 
-        instance.config.planCode = this.planCode.split(' ')[1]
-        instance.config.configuration.cloud_os = this.newOS
-        instance.product = this.planCode
-        instance.resources = { ...instance.resources, ...resources }
+        instance.config.planCode = this.planCode.split(" ")[1];
+        instance.config.configuration.cloud_os = this.newOS;
+        instance.product = this.planCode;
+        instance.resources = { ...instance.resources, ...resources };
 
         this.$confirm({
-          title: this.$t('Do you want to switch tariff?'),
-          content: `${this.$t('invoice_Price')}: ${price} ${this.currency.code}`,
-          okText: this.$t('Yes'),
-          cancelText: this.$t('Cancel'),
+          title: this.$t("Do you want to switch tariff?"),
+          content: `${this.$t("invoice_Price")}: ${price} ${
+            this.currency.title
+          }`,
+          okText: this.$t("Yes"),
+          cancelText: this.$t("Cancel"),
           onOk: async () => {
-            await this.updateService(service)
-            await this.fetch()
+            await this.updateService(service);
+            await this.fetch();
 
-            this.modal.switch = false
-            this.openNotification('success', { message: this.$t('Done') })
+            this.modal.switch = false;
+            this.openNotification("success", { message: this.$t("Done") });
           },
-          onCancel () {}
-        })
+          onCancel() {},
+        });
       } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error
+        const message = error.response?.data?.message ?? error.message ?? error;
 
-        this.openNotification('error', { message })
-        console.error(error)
+        this.openNotification("error", { message });
+        console.error(error);
       } finally {
-        this.isSwitchLoading = false
+        this.isSwitchLoading = false;
       }
     },
-    sendAddingAddon (action) {
+    sendAddingAddon(action) {
       this.$confirm({
         title: this.$t(`Do you want to add an ${action}?`),
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
         onOk: () => {
-          const key = this.VM.product ?? `${this.VM.config.duration} ${this.VM.config.planCode}`
-          const planCode = this.VM.billingPlan.products[key].meta.addons
-            .find((addon) => addon.includes(action))
-          this.actionLoading = true
+          const key =
+            this.VM.product ??
+            `${this.VM.config.duration} ${this.VM.config.planCode}`;
+          const planCode = this.VM.billingPlan.products[key].meta.addons.find(
+            (addon) => addon.includes(action)
+          );
+          this.actionLoading = true;
           this.invokeAction({
             uuid: this.VM.uuid,
             uuidService: this.VM.uuidService,
-            action: 'add_addon',
-            params: { planCode }
+            action: "add_addon",
+            params: { planCode },
           })
             .then(() => {
-              this.openNotification('success', { message: 'Done!' })
+              this.openNotification("success", { message: "Done!" });
             })
             .catch((err) => {
               const opts = {
-                message: `Error: ${err.response?.data?.message ?? 'Unknown'}.`
-              }
+                message: `Error: ${err.response?.data?.message ?? "Unknown"}.`,
+              };
 
               if (err.response?.status >= 500) {
-                opts.message = `Error: ${this.$t('Failed to load data')}`
+                opts.message = `Error: ${this.$t("Failed to load data")}`;
               }
-              this.openNotification('error', opts)
-              console.error(err)
+              this.openNotification("error", opts);
+              console.error(err);
             })
             .finally(() => {
-              this.actionLoading = false
-            })
+              this.actionLoading = false;
+            });
         },
-        onCancel () {}
-      })
+        onCancel() {},
+      });
     },
-    async sendAction (action) {
+    async sendAction(action) {
       const data = {
         uuid: this.VM.uuid,
         uuidService: this.VM.uuidService,
-        action
-      }
+        action,
+      };
 
-      if (action === 'recover') {
-        data.action = 'backup_restore'
-        data.params = { type: 'full', restorePoint: this.option.recover }
+      if (action === "recover") {
+        data.action = "backup_restore";
+        data.params = { type: "full", restorePoint: this.option.recover };
       }
-      if (action === 'get_upgrade_price') {
-        data.params = { newPlanCode: this.planCode }
+      if (action === "get_upgrade_price") {
+        data.params = { newPlanCode: this.planCode };
       }
-      if (action === 'reboot_vm') {
-        data.params = { type: this.option.reboot }
+      if (action === "reboot_vm") {
+        data.params = { type: this.option.reboot };
       }
 
       return this.invokeAction(data)
         .then((res) => {
-          this.openNotification('success', { message: 'Done!' })
+          this.openNotification("success", { message: "Done!" });
 
-          return res
+          return res;
         })
         .catch((err) => {
           const opts = {
-            message: `Error: ${err?.response?.data?.message ?? 'Unknown'}.`
-          }
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          };
 
           if (err.response?.status >= 500) {
-            opts.message = `Error: ${this.$t('Failed to load data')}`
+            opts.message = `Error: ${this.$t("Failed to load data")}`;
           }
-          this.openNotification('error', opts)
-          console.error(err)
-        })
+          this.openNotification("error", opts);
+          console.error(err);
+        });
     },
-    openVNC () {
+    openVNC() {
       this.invokeAction({
         uuid: this.$route.params.uuid,
-        action: 'start_vnc_vm'
+        action: "start_vnc_vm",
       })
         .then(({ meta }) => {
-          location.href = meta.url
+          location.href = meta.url;
         })
-        .catch((err) => console.error(err))
+        .catch((err) => console.error(err));
     },
-    date (string, timestamp) {
-      if (timestamp < 1) return '-'
+    date(string, timestamp) {
+      if (timestamp < 1) return "-";
 
-      const stringDate = new Date(string).getTime()
-      const date = new Date(timestamp * 1000 + stringDate)
+      const stringDate = new Date(string).getTime();
+      const date = new Date(timestamp * 1000 + stringDate);
 
-      const year = date.getFullYear()
-      let month = date.getMonth() + 1
-      let day = date.getDate()
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
 
-      if (`${month}`.length < 2) month = `0${month}`
-      if (`${day}`.length < 2) day = `0${day}`
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
 
-      return `${year}-${month}-${day}`
-    }
-  }
-})
+      return `${year}-${month}-${day}`;
+    },
+  },
+});
 </script>
 
 <style scoped>
@@ -1057,7 +1086,7 @@ export default defineComponent({
 }
 
 .block-content_table::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 40px;
   left: 15px;

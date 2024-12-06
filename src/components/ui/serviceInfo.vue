@@ -3,30 +3,26 @@
     <a-col
       v-for="elem in info"
       :key="elem.key"
-      :md="(elem.key === 'autorenew') ? 24 : 12"
-      :xs="(elem.key === 'autorenew') ? 24 : 12"
-      :sm="(elem.key === 'autorenew') ? 24 : 12"
+      :md="elem.key === 'autorenew' ? 24 : 12"
+      :xs="elem.key === 'autorenew' ? 24 : 12"
+      :sm="elem.key === 'autorenew' ? 24 : 12"
     >
       <div class="service-page__info">
         <div class="service-page__info-title">
-          {{ capitalize($t('userService.' + elem.title)) }}:
+          {{ capitalize($t("userService." + elem.title)) }}:
         </div>
 
         <div class="service-page__info-value">
           <template v-if="elem.type === 'money'">
-            <template v-if="service.groupname === 'OpenAI'">
-              -
-            </template>
+            <template v-if="service.groupname === 'OpenAI'"> - </template>
 
             <template v-else>
-              {{ service[elem.key] }} {{ currency.code }}
+              {{ service[elem.key] }} {{ currency.title }}
             </template>
           </template>
 
           <template v-else-if="elem.type === 'date'">
-            <template v-if="service[elem.key] === '0000-00-00'">
-              -
-            </template>
+            <template v-if="service[elem.key] === '0000-00-00'"> - </template>
 
             <template v-else>
               {{ dateFormat(new Date(service[elem.key])) }}
@@ -34,7 +30,7 @@
           </template>
 
           <template v-else-if="elem.type === 'text'">
-            {{ capitalize($t(service[elem.key]?.toLowerCase() ?? '-')) }}
+            {{ capitalize($t(service[elem.key]?.toLowerCase() ?? "-")) }}
           </template>
 
           <template v-else>
@@ -47,18 +43,18 @@
 </template>
 
 <script setup>
-import { useCurrency } from '@/hooks/utils'
+import { useCurrency } from "@/hooks/utils";
 
 defineProps({
   service: { type: Object, required: true },
-  info: { type: Array, required: true }
-})
+  info: { type: Array, required: true },
+});
 
-const { currency } = useCurrency()
+const { currency } = useCurrency();
 </script>
 
 <script>
-export default { name: 'ServiceInfo' }
+export default { name: "ServiceInfo" };
 </script>
 
 <style scoped>

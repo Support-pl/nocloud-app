@@ -61,7 +61,7 @@
                   v-if="item.type === 'money'"
                   class="service-page__info-value"
                 >
-                  {{ service[item.key] }} {{ currency.code }}
+                  {{ formatPrice(service[item.key]) }} {{ currency.title }}
                 </div>
 
                 <div
@@ -131,7 +131,6 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import { useAuthStore } from "@/stores/auth.js";
-import { useNamespasesStore } from "@/stores/namespaces.js";
 import { useInstancesStore } from "@/stores/instances.js";
 import { useSpStore } from "@/stores/sp.js";
 
@@ -149,10 +148,9 @@ const route = useRoute();
 const i18n = useI18n();
 const { openNotification } = useNotification();
 const { addToClipboard } = useClipboard();
-const { currency } = useCurrency();
+const { currency, formatPrice } = useCurrency();
 
 const authStore = useAuthStore();
-const namespacesStore = useNamespasesStore();
 const instancesStore = useInstancesStore();
 const invoicesStore = useInvoicesStore();
 const providersStore = useSpStore();
