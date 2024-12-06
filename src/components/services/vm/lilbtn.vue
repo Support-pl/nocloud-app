@@ -62,7 +62,7 @@ const slicedPrice = computed(() => {
 })
 
 const priceWithoutPrefix = computed(() => {
-  const code = (`${props.price}`.replace('.').length > 3) ? '' : props.currency.code
+  const code = (`${props.price}`.replace('.').length > 3) ? '' : props.currency.title
 
   return `${slicedPrice.value} ${code}`
 })
