@@ -61,6 +61,7 @@
           </a-radio-group>
 
           <a-collapse
+            collapsible="icon"
             v-model:activeKey="activeCollapseKey"
             v-if="sizesByPage.length > 0"
             class="order__grid"
@@ -986,7 +987,6 @@ export default {
     },
     selectCollapsePanel(keys) {
       this.options.size = keys[this.options.period];
-      console.log(this.activeCollapseKey, keys[this.options.period]);
       if (this.activeCollapseKey.length > 0) {
         this.activeCollapseKey = [keys[this.options.period]];
       }
