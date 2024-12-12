@@ -11,7 +11,7 @@
             <a-collapse-panel
               v-if="panels[key].visible ?? true"
               :key="key"
-              :force-render="(cloudStore.provider) ? true : false"
+              :force-render="cloudStore.provider ? true : false"
               :header="capitalize(panels[key].title)"
               :collapsible="panels[key].disabled"
             >
@@ -28,9 +28,17 @@
                   <a-select
                     v-model:value="cloudStore.showcaseId"
                     :placeholder="$t('select service')"
-                    style="width: 180px; position: relative; z-index: 4; margin-right: 8px"
+                    style="
+                      width: 180px;
+                      position: relative;
+                      z-index: 4;
+                      margin-right: 8px;
+                    "
                   >
-                    <a-select-option v-for="item in cloudStore.showcases" :key="item.uuid">
+                    <a-select-option
+                      v-for="item in cloudStore.showcases"
+                      :key="item.uuid"
+                    >
                       {{ item.title }}
                     </a-select-option>
                   </a-select>
@@ -40,7 +48,10 @@
                     :placeholder="$t('select location')"
                     style="width: 180px; position: relative; z-index: 4"
                   >
-                    <a-select-option v-for="item in cloudStore.locations" :key="item.id">
+                    <a-select-option
+                      v-for="item in cloudStore.locations"
+                      :key="item.id"
+                    >
                       {{ item.title }}
                     </a-select-option>
                   </a-select>
@@ -64,7 +75,7 @@
               </a-row>
 
               <component
-                :is="(panel.setup) ? panel : loading"
+                :is="panel.setup ? panel : loading"
                 v-else
                 v-model:product-size="productSize"
                 :plans="filteredPlans"
@@ -92,204 +103,253 @@
 </template>
 
 <script setup>
-import { ref, reactive, provide, readonly, computed, defineAsyncComponent, watch, markRaw, onUnmounted, h } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { NcMap } from 'nocloud-ui'
+import {
+  ref,
+  reactive,
+  provide,
+  readonly,
+  computed,
+  defineAsyncComponent,
+  watch,
+  markRaw,
+  onUnmounted,
+  h,
+} from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { NcMap } from "nocloud-ui";
 
-import { Modal, Spin } from 'ant-design-vue'
-import { useAuthStore } from '@/stores/auth.js'
-import { useCloudStore } from '@/stores/cloud.js'
-import { usePlansStore } from '@/stores/plans.js'
+import { Modal, Spin } from "ant-design-vue";
+import { useAuthStore } from "@/stores/auth.js";
+import { useCloudStore } from "@/stores/cloud.js";
+import { usePlansStore } from "@/stores/plans.js";
 
-import useProducts from '@/hooks/cloud/products.js'
-import useCloudPlans from '@/hooks/cloud/plans.js'
-import useCloudOptions from '@/hooks/cloud/options.js'
-import useCloudPanels from '@/hooks/cloud/panels.js'
+import useProducts from "@/hooks/cloud/products.js";
+import useCloudPlans from "@/hooks/cloud/plans.js";
+import useCloudOptions from "@/hooks/cloud/options.js";
+import useCloudPanels from "@/hooks/cloud/panels.js";
 
-import { setValue } from '@/functions.js'
+import { setValue } from "@/functions.js";
 
-import promoBlock from '@/components/ui/promo.vue'
-import calculatorBlock from '@/components/cloud/create/calculator.vue'
+import promoBlock from "@/components/ui/promo.vue";
+import calculatorBlock from "@/components/cloud/create/calculator.vue";
 
-const router = useRouter()
-const route = useRoute()
-const i18n = useI18n()
+const router = useRouter();
+const route = useRoute();
+const i18n = useI18n();
 
-const authStore = useAuthStore()
-const plansStore = usePlansStore()
-const cloudStore = useCloudStore()
+const authStore = useAuthStore();
+const plansStore = usePlansStore();
+const cloudStore = useCloudStore();
 
-const loading = computed(() => h(Spin, {
-  style: 'display: block; margin: 15px auto',
-  tip: i18n.t('loading'),
-  spinning: true
-}))
+const loading = computed(() =>
+  h(Spin, {
+    style: "display: block; margin: 15px auto",
+    tip: i18n.t("loading"),
+    spinning: true,
+  })
+);
 
-const activeKey = ref('location')
-const periods = ref([])
-const tarification = ref('')
-const priceOVH = reactive({ value: 0, addons: {} })
+const activeKey = ref("location");
+const periods = ref([]);
+const tarification = ref("");
+const priceOVH = reactive({ value: 0, addons: {} });
 
-const { mode, products } = useProducts(tarification)
-const { options, dataLocalStorage, fetch } = useCloudOptions(activeKey, tarification)
-const { filteredPlans, product, productSize, isPlansLoading } = useCloudPlans(tarification, options)
+const { mode, products } = useProducts(tarification);
+const { options, dataLocalStorage, fetch } = useCloudOptions(
+  activeKey,
+  tarification
+);
+const { filteredPlans, product, productSize, isPlansLoading } = useCloudPlans(
+  tarification,
+  options
+);
 
 watch(isPlansLoading, () => {
   if (dataLocalStorage.value.billing_plan) {
     // cloudStore.planId = dataLocalStorage.value.billing_plan.uuid
   } else if (dataLocalStorage.value.locationId) {
-    tarification.value = periods.value[0]?.value ?? ''
+    tarification.value = periods.value[0]?.value ?? "";
   }
 
-  activeKey.value = dataLocalStorage.value?.activeKey ?? 'location'
-})
+  activeKey.value = dataLocalStorage.value?.activeKey ?? "location";
+});
 
-const isProductExist = computed(() =>
-  !route.query.product && cloudStore.plan.type?.includes('dedicated')
-)
+const isProductExist = computed(
+  () => !route.query.product && cloudStore.plan.type?.includes("dedicated")
+);
 
-const components = import.meta.glob('@/components/cloud/modules/*/panels/*.vue')
-const { panels } = useCloudPanels(tarification, options, productSize)
+const components = import.meta.glob(
+  "@/components/cloud/modules/*/panels/*.vue"
+);
+const { panels } = useCloudPanels(tarification, options, productSize);
 const panelsComponents = ref(
-  Object.keys(panels.value).reduce((result, key) =>
-    ({ ...result, [key]: markRaw(getComponent(key)) }), {}
+  Object.keys(panels.value).reduce(
+    (result, key) => ({ ...result, [key]: markRaw(getComponent(key)) }),
+    {}
   )
-)
+);
 
 const panelsKeys = computed(() =>
   Object.entries(panels.value)
     .filter(([, { visible }]) => visible ?? true)
+    .filter(([key]) => key !== "addons" || isAddonsExists.value)
     .map(([key]) => key)
-)
+);
 
-watch(() => cloudStore.plan.type, () => {
-  panelsComponents.value = Object.keys(panels.value).reduce((result, key) =>
-    ({ ...result, [key]: markRaw(getComponent(key)) }), {}
-  )
-})
+const isAddonsExists = computed(
+  () =>
+    isPlansLoading.value ||
+    !!(
+      (product.value?.addons || []).length ||
+      (cloudStore.plan?.addons || []).length
+    )
+);
 
-function getComponent (name) {
+watch(
+  () => cloudStore.plan.type,
+  () => {
+    panelsComponents.value = Object.keys(panels.value).reduce(
+      (result, key) => ({ ...result, [key]: markRaw(getComponent(key)) }),
+      {}
+    );
+  }
+);
+
+watch(
+  () => isAddonsExists.value,
+  () => {
+    panelsComponents.value = Object.keys(panels.value).reduce(
+      (result, key) => ({ ...result, [key]: markRaw(getComponent(key)) }),
+      {}
+    );
+
+    if (!isAddonsExists.value) {
+      delete panelsComponents.value["addons"];
+    }
+  }
+);
+
+function getComponent(name) {
   const result = Object.keys(components).find((key) =>
     key.includes(`/${cloudStore.plan.type}/panels/${name}.vue`)
-  )
+  );
 
-  if (!components[result]) return {}
-  return defineAsyncComponent(() => components[result]())
+  if (!components[result]) return {};
+  return defineAsyncComponent(() => components[result]());
 }
 
-function setOptions (path, value) {
+function setOptions(path, value) {
   if (/configuration\.\w{1,}_/.test(path)) {
-    options.config.configuration[path.split('.').at(-1)] = value
-    return
+    options.config.configuration[path.split(".").at(-1)] = value;
+    return;
   }
-  setValue(path, value, options)
+  setValue(path, value, options);
 }
 
-function setPrice (path, value) {
-  setValue(path, value, priceOVH)
+function setPrice(path, value) {
+  setValue(path, value, priceOVH);
 }
 
-function nextStep () {
-  if (activeKey.value === 'location') {
-    activeKey.value = 'plan'
-  } else if (activeKey.value === 'plan') {
+function nextStep() {
+  if (activeKey.value === "location") {
+    activeKey.value = "plan";
+  } else if (activeKey.value === "plan") {
     if (!isProductExist.value) {
-      activeKey.value = 'os'
-      return
+      activeKey.value = "os";
+      return;
     }
-    router.push({ query: { ...route.query, product: productSize.value } })
-  } else if (activeKey.value === 'os') {
-    activeKey.value = 'addons'
+    router.push({ query: { ...route.query, product: productSize.value } });
+  } else if (activeKey.value === "os" && isAddonsExists.value) {
+    activeKey.value = "addons";
   }
 }
 
-watch(() => [cloudStore.provider, cloudStore.locationId], () => {
-  priceOVH.addons = {}
-})
+watch(
+  () => [cloudStore.provider, cloudStore.locationId],
+  () => {
+    priceOVH.addons = {};
+  }
+);
 
-watch(() => cloudStore.locations, setDefaultLocation)
+watch(() => cloudStore.locations, setDefaultLocation);
 
 watch(periods, (periods) => {
-  if (dataLocalStorage.value.productSize) return
-  if (periods.find(({ value }) => value === tarification.value)) return
-  tarification.value = periods[0]?.value ?? ''
-})
+  if (dataLocalStorage.value.productSize) return;
+  if (periods.find(({ value }) => value === tarification.value)) return;
+  tarification.value = periods[0]?.value ?? "";
+});
 
-function setLocation (value) {
+function setLocation(value) {
   if (route.query.data) {
-    const query = { ...route.query }
+    const query = { ...route.query };
 
-    delete query.data
-    dataLocalStorage.value = ''
-    router.push({ query })
+    delete query.data;
+    dataLocalStorage.value = "";
+    router.push({ query });
   }
 
-  if (!(localStorage.getItem('data') && authStore.isLogged)) {
-    cloudStore.locationId = value
-    return
+  if (!(localStorage.getItem("data") && authStore.isLogged)) {
+    cloudStore.locationId = value;
+    return;
   }
 
   openModal(() => {
-    cloudStore.locationId = value
-  })
+    cloudStore.locationId = value;
+  });
 }
 
-function openModal (onOk, onCancel) {
+function openModal(onOk, onCancel) {
   Modal.confirm({
-    title: i18n.t('disk_manage.Do you want to proceed?'),
-    content: h(
-      'div',
-      { style: 'color: red' },
-      i18n.t('Data will be lost')
-    ),
-    okText: i18n.t('Yes'),
-    cancelText: i18n.t('Cancel'),
+    title: i18n.t("disk_manage.Do you want to proceed?"),
+    content: h("div", { style: "color: red" }, i18n.t("Data will be lost")),
+    okText: i18n.t("Yes"),
+    cancelText: i18n.t("Cancel"),
     onOk: () => {
-      dataLocalStorage.value = ''
-      localStorage.removeItem('data')
-      onOk()
+      dataLocalStorage.value = "";
+      localStorage.removeItem("data");
+      onOk();
     },
-    onCancel
-  })
+    onCancel,
+  });
 }
 
-function setDefaultLocation () {
-  const data = localStorage.getItem('data') ?? route.query.data
-  if (data) return
+function setDefaultLocation() {
+  const data = localStorage.getItem("data") ?? route.query.data;
+  if (data) return;
 
-  const item = cloudStore.showcases.find(({ uuid }) =>
-    uuid === cloudStore.showcaseId
-  )
+  const item = cloudStore.showcases.find(
+    ({ uuid }) => uuid === cloudStore.showcaseId
+  );
   const locationItem = cloudStore.locations.find(({ id }) =>
     id.includes(item?.promo?.main?.default)
-  )
+  );
 
-  if (!locationItem) return
-  cloudStore.locationId = locationItem.id
+  if (!locationItem) return;
+  cloudStore.locationId = locationItem.id;
 }
 
 onUnmounted(() => {
-  plansStore.setPlans([])
-  cloudStore.$reset()
-})
+  plansStore.setPlans([]);
+  cloudStore.$reset();
+});
 
-cloudStore.showcaseId = route.query.service ?? ''
+cloudStore.showcaseId = route.query.service ?? "";
 router.beforeEach((_, from, next) => {
   if (
-    from.path === '/cloud/newVM' &&
-      localStorage.getItem('data') &&
-      authStore.isLogged
+    from.path === "/cloud/newVM" &&
+    localStorage.getItem("data") &&
+    authStore.isLogged
   ) {
-    openModal(next, () => next(false))
-  } else next()
-})
-fetch()
+    openModal(next, () => next(false));
+  } else next();
+});
+fetch();
 
-provide('useProduct', () => [readonly(product)])
-provide('usePriceOVH', () => [readonly(priceOVH), setPrice])
-provide('useOptions', () => [readonly(options), setOptions])
-provide('useActiveKey', () => [readonly(activeKey), nextStep])
+provide("useProduct", () => [readonly(product)]);
+provide("usePriceOVH", () => [readonly(priceOVH), setPrice]);
+provide("useOptions", () => [readonly(options), setOptions]);
+provide("useActiveKey", () => [readonly(activeKey), nextStep]);
 </script>
 
 <style>
@@ -313,9 +373,8 @@ provide('useActiveKey', () => [readonly(activeKey), nextStep])
   border-radius: 4px !important;
   border-left: 1px solid var(--bright_bg);
 }
-.newCloud_wrapper .ant-radio-button-wrapper-checked:not(
-  .ant-radio-button-wrapper-disabled
- ) {
+.newCloud_wrapper
+  .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
   border-left-color: var(--main);
 }
 .newCloud_wrapper .ant-radio-button-wrapper:not(:first-child)::before {
@@ -376,9 +435,7 @@ provide('useActiveKey', () => [readonly(activeKey), nextStep])
 
 .order__field {
   border-radius: 20px;
-  box-shadow:
-    5px 8px 10px rgba(0, 0, 0, .08),
-    0px 0px 12px rgba(0, 0, 0, .05);
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
   background-color: var(--bright_font);
   height: max-content;
 }
@@ -594,7 +651,7 @@ provide('useActiveKey', () => [readonly(activeKey), nextStep])
 
 .textchange-enter-active,
 .textchange-leave-active {
-  transition: all .15s ease;
+  transition: all 0.15s ease;
 }
 
 .textchange-enter-from {

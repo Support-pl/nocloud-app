@@ -60,55 +60,71 @@
             </a-radio-button>
           </a-radio-group>
 
-          <div v-if="sizesByPage.length > 0" class="order__grid">
-            <div
+          <a-collapse
+            collapsible="icon"
+            v-model:activeKey="activeCollapseKey"
+            v-if="sizesByPage.length > 0"
+            class="order__grid"
+            :bordered="false"
+            expand-icon-position="end"
+          >
+            <a-collapse-panel
               v-for="size of sizesByPage"
               :key="size.keys[options.period]"
               class="order__grid-item"
               :class="{
+                'order__grid-item--grid': size.image,
                 'order__grid-item--active':
                   options.size === size.keys[options.period],
-                'order__grid-item--grid': size.image,
               }"
               :style="size.image ? 'padding: 10px' : null"
-              @click="options.size = size.keys[options.period]"
+              :showArrow="!!getProducts.meta?.description"
+              @click="selectCollapsePanel(size.keys)"
             >
-              <img v-if="size.image" :src="size.image" :alt="size.label" />
+              <template #header>
+                <div>
+                  <img v-if="size.image" :src="size.image" :alt="size.label" />
 
-              <h1 :style="getResources(size) ? null : 'margin-bottom: 0'">
-                {{ size.label }}
-              </h1>
-              <a-divider v-if="getResources(size)" style="margin: -2px 0 7px" />
+                  <h1 :style="getResources(size) ? null : 'margin-bottom: 0'">
+                    {{ size.label }}
+                  </h1>
+                  <a-divider
+                    v-if="getResources(size)"
+                    style="margin: -2px 0 7px"
+                  />
 
-              <p v-for="resource of getResources(size)" :key="resource.id">
-                {{ resource.key }}: {{ resource.title }}
-              </p>
-            </div>
-          </div>
+                  <p v-for="resource of getResources(size)" :key="resource.id">
+                    {{ resource.key }}: {{ resource.title }}
+                  </p>
+                </div>
+              </template>
 
-          <transition
-            v-if="sizesByPage.length > 0 && !isResourcesExist"
-            name="specs"
-            mode="out-in"
-          >
-            <div
-              v-if="typeof getProducts.meta?.description === 'string'"
-              style="margin-top: 15px"
-              v-html="getProducts.meta?.description"
-            />
-            <table
-              v-else-if="getProducts.meta?.description"
-              class="product__specs"
-            >
-              <tr
-                v-for="resource in getProducts.meta?.description"
-                :key="resource.name"
+              <template #expandIcon="{ isActive }">
+                <caret-right-outlined
+                  style="font-size: 204px"
+                  :rotate="isActive ? 90 : 0"
+                />
+              </template>
+
+              <div
+                v-if="typeof getProducts.meta?.description === 'string'"
+                style="margin-top: 15px"
+                v-html="getProducts.meta?.description"
+              />
+              <table
+                v-else-if="getProducts.meta?.description"
+                class="product__specs"
               >
-                <td>{{ resource.name }}</td>
-                <td>{{ resource.value }}</td>
-              </tr>
-            </table>
-          </transition>
+                <tr
+                  v-for="resource in getProducts.meta?.description"
+                  :key="resource.name"
+                >
+                  <td>{{ resource.name }}</td>
+                  <td>{{ resource.value }}</td>
+                </tr>
+              </table>
+            </a-collapse-panel>
+          </a-collapse>
 
           <a-card
             v-if="fetchLoading || filteredAddons.length > 0"
@@ -295,10 +311,17 @@ import customPagination from "@/components/ui/pagination.vue";
 import filtersView from "@/components/ui/filters.vue";
 import promoBlock from "@/components/ui/promo.vue";
 import { useCurrenciesStore } from "@/stores/currencies";
+import { CaretRightOutlined } from "@ant-design/icons-vue";
 
 export default {
   name: "CustomComponent",
-  components: { selectsToCreate, customPagination, filtersView, promoBlock },
+  components: {
+    selectsToCreate,
+    customPagination,
+    filtersView,
+    promoBlock,
+    CaretRightOutlined,
+  },
   inject: ["checkBalance"],
   setup() {
     const { getPeriod } = usePeriod();
@@ -325,6 +348,8 @@ export default {
     filtersType: "range-with-prefixes",
     paginationOptions: { total: 0, size: 10, page: 1 },
     cachedPlans: {},
+
+    activeCollapseKey: [],
   }),
   computed: {
     ...mapStores(
@@ -960,6 +985,12 @@ export default {
         this.fetchLoading = false;
       }
     },
+    selectCollapsePanel(keys) {
+      this.options.size = keys[this.options.period];
+      if (this.activeCollapseKey.length > 0) {
+        this.activeCollapseKey = [keys[this.options.period]];
+      }
+    },
   },
 };
 </script>
@@ -1075,7 +1106,6 @@ export default {
 }
 
 .order__grid-item {
-  padding: 10px 20px;
   border-radius: 15px;
   cursor: pointer;
   box-shadow: inset 0 0 0 1px var(--border_color);
@@ -1401,5 +1431,14 @@ export default {
 .textchange-leave-to {
   transform: translateY(0.5em);
   opacity: 0;
+}
+</style>
+
+<style>
+.anticon.anticon-right.ant-collapse-arrow {
+  font-size: 25px !important;
+}
+.ant-collapse-item.order__grid-item {
+  border-radius: 15px !important;
 }
 </style>
