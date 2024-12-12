@@ -241,7 +241,7 @@ export const useCloudStore = defineStore("cloud", () => {
   function updateService(newGroup, newInstance) {
     const orderData = Object.assign({}, service.value);
     let group = orderData.instancesGroups.find(
-      (el) => el.sp === provider.value.uuid
+      (el) => el.sp === provider.value.uuid && !el.data?.imported
     );
 
     if (!group) {
