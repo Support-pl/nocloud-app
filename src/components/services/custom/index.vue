@@ -82,8 +82,13 @@
               @click="selectCollapsePanel(size.keys)"
             >
               <template #header>
-                <div>
-                  <img v-if="size.image" :src="size.image" :alt="size.label" />
+                <div :style="{ display: size.image ? 'flex' : '' }">
+                  <img
+                    v-if="size.image"
+                    style="margin-right: 5px"
+                    :src="size.image"
+                    :alt="size.label"
+                  />
 
                   <h1 :style="getResources(size) ? null : 'margin-bottom: 0'">
                     {{ size.label }}
@@ -107,6 +112,7 @@
               </template>
 
               <div
+                class="collapse_description"
                 v-if="typeof getProducts.meta?.description === 'string'"
                 style="margin-top: 15px"
                 v-html="getProducts.meta?.description"
@@ -1170,6 +1176,7 @@ export default {
   align-items: center;
   gap: 10px;
   overflow: hidden;
+  flex-direction: column;
 }
 
 .order__option :deep(.ant-card-head) {
@@ -1431,6 +1438,11 @@ export default {
 .textchange-leave-to {
   transform: translateY(0.5em);
   opacity: 0;
+}
+
+.collapse_description * {
+  background-color: var(--main) !important;
+  color: var(--bright_font) !important;
 }
 </style>
 
