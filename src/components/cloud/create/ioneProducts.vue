@@ -162,6 +162,8 @@ watch(
       group.value = props.getProduct(size)?.group ?? group.value;
       nextTick(() => emits("update:product", size));
     }
+
+    nextTick(() => setProduct());
   }
 );
 
