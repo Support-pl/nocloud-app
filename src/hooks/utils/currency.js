@@ -36,7 +36,7 @@ function useCurrency() {
       }
 
       if (price < 0.01 && price > -1) {
-        return price;
+        return parseFloat(price.toFixed(10));
       }
 
       if (Rounding.ROUND_HALF === Rounding[rounding]) {
