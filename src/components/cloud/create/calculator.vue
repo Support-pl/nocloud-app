@@ -87,12 +87,7 @@
             <a-spin class="price__spin" size="small" spinning />
           </template>
           <template v-else>
-            {{
-              formatPrice(
-                productFullPrice - (minProduct.installationFee ?? 0),
-                currency
-              )
-            }}
+            {{ formatPrice(periodicPrice, currency) }}
             {{ currency.title }}
           </template>
         </a-col>
@@ -142,11 +137,13 @@
             <a-spin class="price__spin" size="small" spinning />
           </template>
           <template v-else>
-            {{ formatPrice(productFullPrice, currency) }} {{ currency.title }}
+            {{ formatPrice(startPrice, currency) }} {{ currency.title }}
           </template>
         </a-col>
       </transition>
     </a-row>
+
+    <cloud-promocode :is-flavors-loading="isFlavorsLoading" />
 
     <cloud-create-button
       :product-size="productSize"
@@ -171,6 +168,7 @@ import { checkPayg } from "@/functions.js";
 import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import cloudResources from "@/components/cloud/create/resources.vue";
 import cloudCreateButton from "@/components/cloud/create/button.vue";
+import cloudPromocode from "@/components/cloud/create/promocode.vue";
 
 const props = defineProps({
   productSize: { type: String, required: true },
@@ -224,7 +222,7 @@ const periodColumns = computed(() => {
 
 const [activeKey] = inject("useActiveKey", () => [])();
 const { tarification, productSize } = toRefs(props);
-const { productFullPrice, minProduct } = useCloudPrices(
+const { periodicPrice, startPrice, minProduct } = useCloudPrices(
   product,
   tarification,
   activeKey,
@@ -249,7 +247,7 @@ function getAddonsTitle(key) {
 
 async function createOrder() {
   const instance = { config: options.config, billingPlan: cloudStore.plan };
-  const price = productFullPrice.value;
+  const price = startPrice.value;
 
   if (checkPayg(instance) && !checkBalance(price)) return;
   await cloudStore.createOrder(options, product);
