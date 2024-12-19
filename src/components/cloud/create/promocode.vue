@@ -37,6 +37,9 @@ import { computed, ref, toRefs, watch } from "vue";
 import { GetPromocodeByCodeRequest } from "nocloud-proto/proto/es/billing/promocodes/promocodes_pb";
 import { useCloudStore } from "@/stores/cloud";
 import { storeToRefs } from "pinia";
+import { Code } from "@connectrpc/connect";
+import { useI18n } from "vue-i18n";
+import { useNotification } from "@/hooks/utils";
 
 const props = defineProps({
   isFlavorsLoading: { type: Boolean, default: false },
@@ -46,6 +49,8 @@ const { isFlavorsLoading } = toRefs(props);
 
 const { promocode: storePromocode, planId } = storeToRefs(useCloudStore());
 const promocodesStore = usePromocodesStore();
+const { openNotification } = useNotification();
+const { t } = useI18n();
 
 const promocode = ref("");
 const isPromocodeLoading = ref(false);
@@ -83,6 +88,35 @@ const applyPromocode = async () => {
 
     storePromocode.value = response;
   } catch (e) {
+    let msg = "promocodeErrors.";
+
+    switch (e.code || 5) {
+      case Code.FailedPrecondition: {
+        msg += "wrong_plan";
+        break;
+      }
+      case Code.ResourceExhausted:
+      case Code.OutOfRange: {
+        msg += "expired";
+        break;
+      }
+      case Code.Internal: {
+        msg += "iternal";
+        break;
+      }
+      case Code.AlreadyExists: {
+        msg += "already_used";
+        break;
+      }
+      case Code.NotFound:
+      default: {
+        msg += "not_found";
+        break;
+      }
+    }
+
+    openNotification("error", { message: t(msg) });
+
     storePromocode.value = null;
 
     isPromocodeError.value = true;
