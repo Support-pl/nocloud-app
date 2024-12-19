@@ -11,22 +11,23 @@
         :status="isFailedPromocode ? 'error' : ''"
         :value="promocode"
         @change="onPromocodeChange"
-        placeholder="FFFFFF"
+        :placeholder="t('promocode.placeholder')"
         :maxlength="6"
         style="width: 100px"
-      >
-        <template #prefix>
-          <span>#</span>
-        </template>
-      </a-input>
+      />
     </a-col>
     <a-col>
       <a-button
         :disabled="isPromocodeApplyDisabled"
         :loading="isPromocodeLoading"
-        @click="applyPromocode"
-        >Apply</a-button
+        @click="!isPromocodeAlreadyApply ? applyPromocode() : resetPromocode()"
       >
+        {{
+          $t(
+            `promocode.actions.${isPromocodeAlreadyApply ? "delete" : "apply"}`
+          )
+        }}
+      </a-button>
     </a-col>
   </a-row>
 </template>
@@ -58,10 +59,7 @@ const isPromocodeError = ref(false);
 const lastApplyPromocode = ref("");
 
 const isPromocodeApplyDisabled = computed(
-  () =>
-    promocode.value.length !== 6 ||
-    isFailedPromocode.value ||
-    isPromocodeAlreadyApply.value
+  () => promocode.value.length !== 6 || isFailedPromocode.value
 );
 
 const isFailedPromocode = computed(
@@ -88,7 +86,7 @@ const applyPromocode = async () => {
 
     storePromocode.value = response;
   } catch (e) {
-    let msg = "promocodeErrors.";
+    let msg = "promocode.errors.";
 
     switch (e.code || 5) {
       case Code.FailedPrecondition: {
@@ -101,7 +99,7 @@ const applyPromocode = async () => {
         break;
       }
       case Code.Internal: {
-        msg += "iternal";
+        msg += "internal";
         break;
       }
       case Code.AlreadyExists: {
@@ -124,6 +122,10 @@ const applyPromocode = async () => {
   } finally {
     isPromocodeLoading.value = false;
   }
+};
+
+const resetPromocode = async () => {
+  storePromocode.value = null;
 };
 
 watch(isFlavorsLoading, () => {
