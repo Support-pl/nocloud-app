@@ -36,19 +36,19 @@
 import { usePromocodesStore } from "@/stores/promocodes";
 import { computed, ref, toRefs, watch } from "vue";
 import { GetPromocodeByCodeRequest } from "nocloud-proto/proto/es/billing/promocodes/promocodes_pb";
-import { useCloudStore } from "@/stores/cloud";
-import { storeToRefs } from "pinia";
 import { Code } from "@connectrpc/connect";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
 
 const props = defineProps({
   isFlavorsLoading: { type: Boolean, default: false },
+  planId: { type: String, default: "" },
+  applyedPromocode: { type: Object, default: () => null },
 });
+const { isFlavorsLoading, applyedPromocode, planId } = toRefs(props);
 
-const { isFlavorsLoading } = toRefs(props);
+const emit = defineEmits(["update:promocode"]);
 
-const { promocode: storePromocode, planId } = storeToRefs(useCloudStore());
 const promocodesStore = usePromocodesStore();
 const { openNotification } = useNotification();
 const { t } = useI18n();
@@ -66,7 +66,7 @@ const isFailedPromocode = computed(
   () => isPromocodeError.value && promocode.value == lastApplyPromocode.value
 );
 
-const isPromocodeAlreadyApply = computed(() => !!storePromocode.value);
+const isPromocodeAlreadyApply = computed(() => !!applyedPromocode.value);
 
 const onPromocodeChange = (v) => {
   promocode.value = v.target.value.toUpperCase().replaceAll(" ", "");
@@ -84,7 +84,9 @@ const applyPromocode = async () => {
       })
     );
 
-    storePromocode.value = response;
+    emit("update:promocode", response);
+    console.log(response);
+    
   } catch (e) {
     let msg = "promocode.errors.";
 
@@ -115,7 +117,7 @@ const applyPromocode = async () => {
 
     openNotification("error", { message: t(msg) });
 
-    storePromocode.value = null;
+    emit("update:promocode", null);
 
     isPromocodeError.value = true;
     lastApplyPromocode.value = promocode.value;
@@ -125,11 +127,10 @@ const applyPromocode = async () => {
 };
 
 const resetPromocode = async () => {
-  storePromocode.value = null;
+  emit("update:promocode", null);
 };
 
 watch(isFlavorsLoading, () => {
   isPromocodeError.value = false;
-  promocode.value = "";
 });
 </script>

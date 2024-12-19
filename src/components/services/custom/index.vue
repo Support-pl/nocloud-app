@@ -78,7 +78,7 @@
                   options.size === size.keys[options.period],
               }"
               :style="size.image ? 'padding: 10px' : null"
-              :showArrow="!!getProducts.meta?.description"
+              :showArrow="!!currentProduct.meta?.description"
               @click="selectCollapsePanel(size.keys)"
             >
               <template #header>
@@ -113,16 +113,16 @@
 
               <div
                 class="collapse_description"
-                v-if="typeof getProducts.meta?.description === 'string'"
+                v-if="typeof currentProduct.meta?.description === 'string'"
                 style="margin-top: 15px"
-                v-html="getProducts.meta?.description"
+                v-html="currentProduct.meta?.description"
               />
               <table
-                v-else-if="getProducts.meta?.description"
+                v-else-if="currentProduct.meta?.description"
                 class="product__specs"
               >
                 <tr
-                  v-for="resource in getProducts.meta?.description"
+                  v-for="resource in currentProduct.meta?.description"
                   :key="resource.name"
                 >
                   <td>{{ resource.name }}</td>
@@ -155,7 +155,7 @@
                   </span>
 
                   <span style="font-weight: 700">
-                    {{ getPeriod(getProducts.period) }}
+                    {{ getPeriod(currentProduct.period) }}
                   </span>
 
                   <a-checkbox :checked="options.addons.includes(addon.uuid)" />
@@ -204,16 +204,16 @@
           mode="out-in"
         >
           <div
-            v-if="typeof getProducts.meta?.description === 'string'"
+            v-if="typeof currentProduct.meta?.description === 'string'"
             style="margin-top: 15px"
-            v-html="getProducts.meta?.description"
+            v-html="currentProduct.meta?.description"
           />
           <table
-            v-else-if="getProducts.meta?.description"
+            v-else-if="currentProduct.meta?.description"
             class="product__specs"
           >
             <tr
-              v-for="resource in getProducts.meta?.description"
+              v-for="resource in currentProduct.meta?.description"
               :key="resource.name"
             >
               <td>{{ resource.name }}</td>
@@ -258,15 +258,33 @@
 
         <a-row justify="space-around">
           <a-col style="font-size: 1.5rem">
-            <transition name="textchange" mode="out-in">
-              <template v-if="!fetchLoading">
-                {{ (getProducts.price ?? 0) + addonsPrice }}
+            <template v-if="!fetchLoading">
+              <div class="price__sale" v-if="isSaleApply">
+                <span class="without_sale">
+                  {{ formatPrice(currentProduct.price, currency) }}
+                  {{ currency.title }}
+                </span>
+
+                <span>
+                  {{ formatPrice(currentProductWithSale.price, currency) }}
+                  {{ currency.title }}
+                </span>
+              </div>
+              <template v-else>
+                {{ (currentProduct.price ?? 0) + addonsPrice }}
                 {{ currency.title }}
               </template>
-              <div v-else class="loadingLine loadingLine--total" />
-            </transition>
+            </template>
+            <div v-else class="loadingLine loadingLine--total" />
           </a-col>
         </a-row>
+
+        <promocode-menu
+          :plan-id="plan"
+          :applyed-promocode="planWithApplyedPromocode"
+          :is-flavors-loading="fetchLoading"
+          @update:promocode="promocode = $event"
+        />
 
         <a-row justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
@@ -283,7 +301,7 @@
             >
               <p>
                 {{ $t("order_services.Do you want to order") }}:
-                {{ getProducts.title }}
+                {{ currentProduct.title }}
               </p>
             </a-modal>
           </a-col>
@@ -295,12 +313,12 @@
   </div>
 </template>
 
-<script>
-import { mapStores, mapState } from "pinia";
-import { nextTick } from "vue";
+<script setup>
+import { storeToRefs } from "pinia";
+import { computed, inject, nextTick, onMounted, watch } from "vue";
 
 import useCreateInstance from "@/hooks/instances/create.js";
-import { useCurrency, usePeriod } from "@/hooks/utils";
+import { useCurrency, useNotification, usePeriod } from "@/hooks/utils";
 import { checkPayg } from "@/functions.js";
 
 import { useAppStore } from "@/stores/app.js";
@@ -316,688 +334,665 @@ import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import customPagination from "@/components/ui/pagination.vue";
 import filtersView from "@/components/ui/filters.vue";
 import promoBlock from "@/components/ui/promo.vue";
-import { useCurrenciesStore } from "@/stores/currencies";
 import { CaretRightOutlined } from "@ant-design/icons-vue";
+import { ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import promocodeMenu from "@/components/ui/promocode-menu.vue";
+import { usePromocodesStore } from "@/stores/promocodes";
 
-export default {
-  name: "CustomComponent",
-  components: {
-    selectsToCreate,
-    customPagination,
-    filtersView,
-    promoBlock,
-    CaretRightOutlined,
-  },
-  inject: ["checkBalance"],
-  setup() {
-    const { getPeriod } = usePeriod();
-    const { currency, formatPrice } = useCurrency();
-    const { deployService } = useCreateInstance();
+const namespacesStore = useNamespasesStore();
+const spStore = useSpStore();
+const plansStore = usePlansStore();
+const instancesStore = useInstancesStore();
+const promocodesStore = usePromocodesStore();
+const addonsStore = useAddonsStore();
+const authStore = useAuthStore();
+const { onLogin } = storeToRefs(useAppStore());
+const { isLogged, userdata } = storeToRefs(useAuthStore());
 
-    return { currency, getPeriod, deployService, checkPayg, formatPrice };
-  },
-  data: () => ({
-    plan: null,
-    service: null,
-    namespace: null,
-    provider: null,
-    fetchLoading: false,
+const { addons } = storeToRefs(useAddonsStore());
 
-    options: { size: "", period: "", addons: [] },
-    modal: { confirmCreate: false, confirmLoading: false },
+const route = useRoute();
+const router = useRouter();
+const { t } = useI18n();
+const notification = useNotification();
 
-    products: {},
-    sizes: [],
-    periods: [],
-    checkedType: "",
-    filters: {},
-    filtersType: "range-with-prefixes",
-    paginationOptions: { total: 0, size: 10, page: 1 },
-    cachedPlans: {},
+const checkBalance = inject("checkBalance", () => {});
 
-    activeCollapseKey: [],
-  }),
-  computed: {
-    ...mapStores(
-      useNamespasesStore,
-      useSpStore,
-      usePlansStore,
-      useInstancesStore
-    ),
-    ...mapState(useAppStore, ["onLogin"]),
-    ...mapState(useAuthStore, [
-      "isLogged",
-      "userdata",
-      "fetchBillingData",
-      "baseURL",
-    ]),
-    ...mapState(useCurrenciesStore, ["userCurrency"]),
-    ...mapState(useAddonsStore, { addons: "addons", fetchAddons: "fetch" }),
-    getProducts() {
-      if (Object.keys(this.products).length === 0) return "NAN";
-      if ((this.options.size || true) === true) return "NAN";
-      if ((this.options.period ?? true) === true) return "NAN";
+const { getPeriod } = usePeriod();
+const { currency, formatPrice } = useCurrency();
+const { createInstance } = useCreateInstance();
 
-      const { title } = this.products[this.options.size];
-      const product = Object.values(this.products).find(
-        (product) =>
-          product.title === title && +product.period === this.options.period
-      );
+const plan = ref(null);
+const planWithApplyedPromocode = ref(null);
+const service = ref(null);
+const namespace = ref(null);
+const provider = ref(null);
+const promocode = ref(null);
+const fetchLoading = ref(false);
+const options = ref({ size: "", period: "", addons: [] });
+const modal = ref({ confirmCreate: false, confirmLoading: false });
+const products = ref({});
+const periods = ref([]);
+const sizes = ref([]);
+const filters = ref({});
+const checkedType = ref("");
+const filtersType = ref("range-with-prefixes");
+const paginationOptions = ref({ total: 0, size: 10, page: 1 });
+const cachedPlans = ref({});
+const activeCollapseKey = ref([]);
 
-      const price =
-        product.price +
-        this.options.addons.reduce((sum, id) => {
-          const addon = product.addons?.find(({ key }) => key === id);
-          const period = addon?.period / product.period;
+onMounted(() => {
+  const { action, info } = onLogin.value;
 
-          if (!addon) return sum;
-          return sum + addon.price * (period >= 1 ? period : 1 / period);
-        }, 0);
-      const description = this.isResourcesExist
-        ? product.meta.description?.replace(
-            /[\wА-ЯЁа-яё \-_+]{1,};/,
-            '<span style="font-weight: 700">$&</span>'
-          )
-        : product.meta.description;
+  if (typeof action !== "function") return;
+  modal.value.goToInvoice = info.goToInvoice;
+  modal.value.confirmCreate = true;
+  modal.value.confirmLoading = true;
+  action();
+});
 
-      return {
-        ...product,
-        price: this.formatPrice(price),
-        meta: { ...product.meta, description },
-      };
-    },
-    resources() {
-      if (this.sizes.length < 2) return {};
-      const result = {};
+function onCreated() {
+  fetchLoading.value = true;
+  const promises = [
+    authStore.fetchBillingData(),
+    spStore.fetch(!isLogged.value),
+    spStore.fetchShowcases(!isLogged.value),
+  ];
 
-      this.sizes.forEach((size) => {
-        const key = size.keys[this.options.period];
-        const value = this.products[key]?.meta.resources ?? [];
+  if (isLogged.value) {
+    promises.push(namespacesStore.fetch(), instancesStore.fetch());
+  }
 
-        value.forEach(({ key, value, group }) => {
-          if (!key) return;
-          if (!result[key]) result[key] = [];
-          if (result[key].includes(group || value)) return;
+  if (spStore.showcases.length < 1) {
+    spStore.fetchShowcases(!isLogged.value);
+  }
 
-          result[key].push(group || value);
-          result[key].sort((a, b) => {
-            if (isNaN(parseFloat(a)) && isNaN(parseFloat(b))) {
-              return a.localeCompare(b);
-            } else if (isNaN(parseFloat(a))) {
-              return -1;
-            } else if (isNaN(parseFloat(b))) {
-              return 1;
-            }
-            return parseFloat(a) - parseFloat(b);
-          });
+  if (addons.value.length < 1) {
+    addonsStore.fetch();
+  }
+
+  Promise.all(promises).catch((err) => {
+    const message = err.response?.data?.message ?? err.message ?? err;
+    if (err.response?.data?.code === 16) return;
+    notification.openNotification("error", { message: t(message) });
+    console.error(err);
+  });
+}
+
+onCreated();
+
+function getProduct(products, options) {
+  if (Object.keys(products).length === 0) return "NAN";
+  if ((options.size || true) === true) return "NAN";
+  if ((options.period ?? true) === true) return "NAN";
+
+  const { title } = products[options.size];
+
+  const product = Object.values(products).find(
+    (product) =>
+      product.title == title && +(product.period || 0) == (options.period || 0)
+  );
+
+  const price =
+    product.price +
+    options.addons.reduce((sum, id) => {
+      const addon = product.addons?.find(({ key }) => key === id);
+      const period = addon?.period / product.period;
+
+      if (!addon) return sum;
+      return sum + addon.price * (period >= 1 ? period : 1 / period);
+    }, 0);
+  const description = isResourcesExist.value
+    ? product.meta.description?.replace(
+        /[\wА-ЯЁа-яё \-_+]{1,};/,
+        '<span style="font-weight: 700">$&</span>'
+      )
+    : product.meta.description;
+
+  return {
+    ...product,
+    price: formatPrice(price),
+    meta: { ...product.meta, description },
+  };
+}
+
+const currentProduct = computed(() => {
+  return getProduct(products.value, options.value);
+});
+
+const isSaleApply = computed(() => !!planWithApplyedPromocode.value);
+const currentProductWithSale = computed(() => {
+  if (!isSaleApply.value) {
+    return {};
+  }
+
+  return getProduct(planWithApplyedPromocode.value.products, options.value);
+});
+const resources = computed(() => {
+  if (sizes.value.length < 2) return {};
+  const result = {};
+
+  sizes.value.forEach((size) => {
+    const key = size.keys[options.value.period];
+    const value = products.value[key]?.meta.resources ?? [];
+
+    value.forEach(({ key, value, group }) => {
+      if (!key) return;
+      if (!result[key]) result[key] = [];
+      if (result[key].includes(group || value)) return;
+
+      result[key].push(group || value);
+      result[key].sort((a, b) => {
+        if (isNaN(parseFloat(a)) && isNaN(parseFloat(b))) {
+          return a.localeCompare(b);
+        } else if (isNaN(parseFloat(a))) {
+          return -1;
+        } else if (isNaN(parseFloat(b))) {
+          return 1;
+        }
+        return parseFloat(a) - parseFloat(b);
+      });
+    });
+
+    if (!result.$price) result.$price = [];
+    if (products.value[key]) {
+      result.$price.push(products.value[key].price);
+    }
+  });
+
+  Object.keys(result).forEach((key) => {
+    if (result[key].length < 2) {
+      delete result[key];
+    }
+  });
+
+  return result;
+});
+const filteredAddons = computed(() => {
+  const product = products.value[options.value.size];
+  const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
+
+  return addons.value.filter(
+    ({ uuid }) =>
+      fullPlan.addons.includes(uuid) || product.addons.includes(uuid)
+  );
+});
+const addonsPrice = computed(() => {
+  return options.value.addons.reduce(
+    (result, uuid) => result + (getAddon(uuid)?.price ?? 0),
+    0
+  );
+});
+const typesOptions = computed(() => {
+  const types = [];
+
+  sizes.value.forEach(({ group, label }) => {
+    if (types.includes(group)) return;
+    types.push(group ?? label);
+  });
+
+  return types;
+});
+const filteredSizes = computed(() => {
+  return sizes.value.filter(({ group, keys }) => {
+    const { meta, price } = products.value[keys[options.value.period]] ?? {};
+    let isIncluded =
+      typesOptions.value.length > 1 ? checkedType.value === group : true;
+
+    if (!keys[options.value.period]) return false;
+    if (!checkedType.value && isResourcesExist.value) {
+      isIncluded = true;
+    }
+    if (!meta?.resources) return isIncluded;
+
+    const groups = [];
+    meta?.resources?.forEach(({ group }) => {
+      if (!group || groups.includes(group)) return;
+
+      groups.push(group);
+    });
+
+    const isPricesEqual = checkPricesEqual(price, filters.value.$price);
+
+    return (
+      isIncluded &&
+      isPricesEqual &&
+      meta?.resources?.every(({ key, value, group }) => {
+        const a = filters.value[key]?.at(0) <= (group || value);
+        const b = filters.value[key]?.at(-1) >= (group || value);
+        const isNotNumber = filters.value[key]?.some((value) => isNaN(value));
+
+        if (filters.value[key]?.length < 1) return true;
+        if (isNotNumber) {
+          return filters.value[key].includes(group || value);
+        }
+        return filters.value[key] ? a && b : true;
+      })
+    );
+  });
+});
+const sizesByPage = computed(() => {
+  if (!isResourcesExist.value) return filteredSizes.value;
+
+  const start =
+    paginationOptions.value.size * (paginationOptions.value.page - 1);
+  const end = start + paginationOptions.value.size;
+
+  return filteredSizes.value.slice(start, end);
+});
+const services = computed(() => {
+  return instancesStore.services.filter((el) => el.status !== "DEL");
+});
+const plans = computed(() => {
+  return (
+    cachedPlans.value[`${provider.value}_${currency.value.code}`]?.filter(
+      ({ type, uuid }) => {
+        const { items } =
+          spStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
+          {};
+        const plans = [];
+
+        if (!items) return type === "empty";
+        items.forEach(({ servicesProvider, plan }) => {
+          if (servicesProvider === provider.value) {
+            plans.push(plan);
+          }
         });
 
-        if (!result.$price) result.$price = [];
-        if (this.products[key]) {
-          result.$price.push(this.products[key].price);
-        }
-      });
+        if (plans.length < 1) return type === "empty";
+        return type === "empty" && plans.includes(uuid);
+      }
+    ) ?? []
+  );
+});
 
-      Object.keys(result).forEach((key) => {
-        if (result[key].length < 2) {
-          delete result[key];
+const sp = computed(() => {
+  const { items } =
+    spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+
+  if (!items) return [];
+  return spStore.servicesProviders.filter(({ uuid }) =>
+    items.find((item) => uuid === item.servicesProvider)
+  );
+});
+
+const isResourcesExist = computed(() => {
+  return Object.values(products.value).every(
+    ({ meta }) => meta.resources?.length > 0
+  );
+});
+
+const viewport = computed(() => {
+  return document.documentElement.offsetWidth;
+});
+const groupWidthStyle = computed(() => {
+  const count = typesOptions.value.length > 3 ? 3 : typesOptions.value.length;
+
+  return viewport.value >= 1024 ? `calc(${100 / count}% - 10px)` : "100%";
+});
+const groupWrapStyle = computed(() => {
+  if (typesOptions.value.length > 3) return "wrap";
+  return null;
+});
+const radioGroupStyle = computed(() => {
+  if (viewport.value < 1024) return "margin-bottom: 15px";
+
+  return filteredSizes.value.length > 0 ? "margin-bottom: 30px" : null;
+});
+
+const changeProducts = () => {
+  const productsAndSizes = plans.value.reduce(
+    (result, plan) => {
+      for (const [key, product] of Object.entries(plan.products)) {
+        const i = result.sizes.findIndex(
+          ({ label }) => label === product.title
+        );
+
+        if (!product.public) continue;
+        result.products.push([key, product, plan.uuid]);
+
+        if (i === -1) {
+          result.sizes.push({
+            keys: { [product.period]: key },
+            label: product.title,
+            group: product.group ?? product.title,
+            price: product.price,
+            sorter: product.sorter,
+            image: product.meta.image,
+          });
+        } else {
+          result.sizes[i].keys[product.period] = key;
         }
-      });
+      }
 
       return result;
     },
-    filteredAddons() {
-      const product = this.products[this.options.size];
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
+    { products: [], sizes: [] }
+  );
+  const plan = plans.value.at(0);
 
-      return this.addons.filter(
-        ({ uuid }) =>
-          plan.addons.includes(uuid) || product.addons.includes(uuid)
-      );
-    },
-    addonsPrice() {
-      return this.options.addons.reduce(
-        (result, uuid) => result + (this.getAddon(uuid)?.price ?? 0),
-        0
-      );
-    },
-    typesOptions() {
-      const types = [];
+  productsAndSizes.products.forEach(([productKey, value, planId]) => {
+    products.value[productKey] = {
+      ...value,
+      planId,
+      addons: plan.resources.filter(({ key }) =>
+        value.meta.addons?.includes(key)
+      ),
+    };
+  });
 
-      this.sizes.forEach(({ group, label }) => {
-        if (types.includes(group)) return;
-        types.push(group ?? label);
-      });
+  productsAndSizes.sizes
+    .sort((a, b) => a.price - b.price)
+    .sort((a, b) => a.sorter - b.sorter);
+  sizes.value = productsAndSizes.sizes;
 
-      return types;
-    },
-    filteredSizes() {
-      return this.sizes.filter(({ group, keys }) => {
-        const { meta, price } = this.products[keys[this.options.period]] ?? {};
-        let isIncluded =
-          this.typesOptions.length > 1 ? this.checkedType === group : true;
+  const data = JSON.parse(route.query.data ?? "{}");
 
-        if (!keys[this.options.period]) return false;
-        if (!this.checkedType && this.isResourcesExist) {
-          isIncluded = true;
-        }
-        if (!meta?.resources) return isIncluded;
+  if (data.productSize) {
+    const { group } = products.value[data.productSize] ?? {};
 
-        const groups = [];
-        meta?.resources?.forEach(({ group }) => {
-          if (!group || groups.includes(group)) return;
-
-          groups.push(group);
-        });
-
-        const isPricesEqual = this.checkPricesEqual(price, this.filters.$price);
-
-        return (
-          isIncluded &&
-          isPricesEqual &&
-          meta?.resources?.every(({ key, value, group }) => {
-            const a = this.filters[key]?.at(0) <= (group || value);
-            const b = this.filters[key]?.at(-1) >= (group || value);
-            const isNotNumber = this.filters[key]?.some((value) =>
-              isNaN(value)
-            );
-
-            if (this.filters[key]?.length < 1) return true;
-            if (isNotNumber) {
-              return this.filters[key].includes(group || value);
-            }
-            return this.filters[key] ? a && b : true;
-          })
-        );
-      });
-    },
-    sizesByPage() {
-      if (!this.isResourcesExist) return this.filteredSizes;
-
-      const start =
-        this.paginationOptions.size * (this.paginationOptions.page - 1);
-      const end = start + this.paginationOptions.size;
-
-      return this.filteredSizes.slice(start, end);
-    },
-    services() {
-      return this.instancesStore.services.filter((el) => el.status !== "DEL");
-    },
-    plans() {
-      return (
-        this.cachedPlans[`${this.provider}_${this.userCurrency.code}`]?.filter(
-          ({ type, uuid }) => {
-            const { items } =
-              this.spStore.showcases.find(
-                ({ uuid }) => uuid === this.$route.query.service
-              ) ?? {};
-            const plans = [];
-
-            if (!items) return type === "empty";
-            items.forEach(({ servicesProvider, plan }) => {
-              if (servicesProvider === this.provider) {
-                plans.push(plan);
-              }
-            });
-
-            if (plans.length < 1) return type === "empty";
-            return type === "empty" && plans.includes(uuid);
-          }
-        ) ?? []
-      );
-    },
-    sp() {
-      const { items } =
-        this.spStore.showcases.find(
-          ({ uuid }) => uuid === this.$route.query.service
-        ) ?? {};
-
-      if (!items) return [];
-      return this.spStore.servicesProviders.filter(({ uuid }) =>
-        items.find((item) => uuid === item.servicesProvider)
-      );
-    },
-
-    rules() {
-      const message = this.$t("ssl_product.field is required");
-
-      return { req: [{ required: true, message }] };
-    },
-    isResourcesExist() {
-      return Object.values(this.products).every(
-        ({ meta }) => meta.resources?.length > 0
-      );
-    },
-
-    viewport() {
-      return document.documentElement.offsetWidth;
-    },
-    groupWidthStyle() {
-      const count = this.typesOptions.length > 3 ? 3 : this.typesOptions.length;
-
-      return this.viewport >= 1024 ? `calc(${100 / count}% - 10px)` : "100%";
-    },
-    groupWrapStyle() {
-      if (this.typesOptions.length > 3) return "wrap";
-      return null;
-    },
-    radioGroupStyle() {
-      if (this.viewport < 1024) return "margin-bottom: 15px";
-
-      return this.filteredSizes.length > 0 ? "margin-bottom: 30px" : null;
-    },
-  },
-  watch: {
-    sp(value) {
-      if (value.length > 0) this.provider = value[0].uuid;
-    },
-    async provider(uuid) {
-      this.fetchPlans(uuid);
-    },
-    async userCurrency() {
-      this.fetchPlans(this.provider);
-    },
-    resources(value) {
-      Object.entries(value).forEach(([key, resource]) => {
-        if (this.filtersType.includes("slider")) {
-          this.filters[key] = [resource.at(0), resource.at(-1)];
-        } else {
-          this.filters[key] = [];
-        }
-      });
-    },
-    sizes(value) {
-      const { keys } = value?.at(0) ?? {};
-      const data = JSON.parse(this.$route.query.data ?? "{}");
-
-      if (data.productSize) {
-        const { group } = this.products[data.productSize] ?? {};
-
-        this.checkedType = group;
-        this.options.size = data.productSize;
-        return;
-      }
-
-      if (keys && this.options.period) {
-        this.options.size = keys[this.options.period];
-      } else if (keys) {
-        this.options.size = Object.values(keys)[0];
-      }
-    },
-    filteredSizes(value) {
-      this.paginationOptions.total = value.length;
-    },
-    checkedType(value) {
-      const { keys } = this.sizes.find(({ group }) => group === value) ?? {};
-
-      if (keys && this.options.period) {
-        this.options.size = keys[this.options.period];
-      } else if (keys) {
-        this.options.size = Object.values(keys)[0];
-      }
-    },
-    "options.size"(value, prev) {
-      const size = this.sizes.find(({ keys }) =>
-        Object.values(keys).includes(prev)
-      );
-      const keys = Object.values(size?.keys ?? {});
-
-      if (!keys.includes(value)) this.changePeriods(value);
-      this.options.addons = [];
-
-      this.filteredAddons.forEach(({ meta, uuid }) => {
-        if (meta.autoEnable) this.options.addons.push(uuid);
-      });
-
-      this.plan = this.getProducts.planId;
-    },
-    "options.period"(value) {
-      const { title } = this.products[this.options.size];
-      const [key, product] = Object.entries(this.products).find(
-        ([, product]) => product.title === title && +product.period === value
-      );
-      const data = JSON.parse(this.$route.query.data ?? "{}");
-
-      if (data.productSize) {
-        const { group } = this.products[data.productSize] ?? {};
-
-        this.checkedType = group;
-        this.options.size = data.productSize;
-      } else {
-        this.options.size = key;
-      }
-
-      this.plan = this.cachedPlans[
-        `${this.provider}_${this.userCurrency.code}`
-      ].find(({ uuid }) => uuid === product.planId)?.uuid;
-    },
-  },
-  mounted() {
-    const { action, info } = this.onLogin;
-
-    if (typeof action !== "function") return;
-    this.modal.goToInvoice = info.goToInvoice;
-    this.modal.confirmCreate = true;
-    this.modal.confirmLoading = true;
-    action();
-  },
-  created() {
-    this.fetchLoading = true;
-    const promises = [
-      this.fetchBillingData(),
-      this.spStore.fetch(!this.isLogged),
-      this.spStore.fetchShowcases(!this.isLogged),
-    ];
-
-    if (this.isLogged) {
-      promises.push(this.namespacesStore.fetch(), this.instancesStore.fetch());
-    }
-
-    if (this.spStore.showcases.length < 1) {
-      this.spStore.fetchShowcases(!this.isLogged);
-    }
-
-    if (this.addons.length < 1) {
-      this.fetchAddons();
-    }
-
-    Promise.all(promises).catch((err) => {
-      const message = err.response?.data?.message ?? err.message ?? err;
-
-      if (err.response?.data?.code === 16) return;
-      this.$notification.error({ message: this.$t(message) });
-      console.error(err);
+    checkedType.value = group;
+    options.value.size = data.productSize;
+  } else if (typesOptions.value.length < 2) {
+    nextTick(() => {
+      options.value.size = Object.values(sizes.value[0]?.keys ?? {})[0] ?? "";
     });
-  },
-  methods: {
-    changeProducts() {
-      const productsAndSizes = this.plans.reduce(
-        (result, plan) => {
-          for (const [key, product] of Object.entries(plan.products)) {
-            const i = result.sizes.findIndex(
-              ({ label }) => label === product.title
-            );
+  }
+};
+const changePeriods = (key) => {
+  const { title } = products.value[key];
 
-            if (!product.public) continue;
-            result.products.push([key, product, plan.uuid]);
+  periods.value = [];
+  Object.values(products.value).forEach((product) => {
+    if (product.title !== title) return;
+    if (periods.value.includes(+product.period)) return;
+    periods.value.push(+product.period);
+  });
 
-            if (i === -1) {
-              result.sizes.push({
-                keys: { [product.period]: key },
-                label: product.title,
-                group: product.group ?? product.title,
-                price: product.price,
-                sorter: product.sorter,
-                image: product.meta.image,
-              });
-            } else {
-              result.sizes[i].keys[product.period] = key;
-            }
-          }
+  periods.value.sort((a, b) => a - b);
+  if (periods.value.includes(options.value.period)) return;
+  const data = JSON.parse(route.query.data ?? "{}");
 
-          return result;
+  if (data.period && periods.value.includes(+data.period)) {
+    options.value.period = +data.period;
+  } else {
+    options.value.period = periods.value[0];
+  }
+};
+const changeAddons = (uuid) => {
+  if (options.value.addons.includes(uuid)) {
+    options.value.addons = options.value.addons.filter(
+      (addon) => addon !== uuid
+    );
+  } else {
+    options.value.addons.push(uuid);
+  }
+};
+const getAddon = (addon) => {
+  const item = filteredAddons.value.find(({ uuid }) => uuid === addon);
+  const price = item.periods[currentProduct.value.period];
+
+  return {
+    ...item,
+    price: formatPrice(price),
+  };
+};
+const getResources = (size) => {
+  const key = size.keys[options.value.period];
+
+  return products.value[key]?.meta?.resources;
+};
+
+const checkPricesEqual = (price, [minPrice, maxPrice]) => {
+  const a = minPrice ? price >= minPrice : true;
+  const b = maxPrice ? price <= maxPrice : true;
+
+  return a && b;
+};
+const resetFilters = () => {
+  Object.keys(filters.value).forEach((key) => {
+    filters.value[key] = [];
+  });
+
+  if (isResourcesExist.value) {
+    checkedType.value = "";
+  }
+};
+
+const orderClickHandler = () => {
+  const fullService = services.value.find(({ uuid }) => uuid === service.value);
+  const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
+  const { resources = [] } = currentProduct.value.meta;
+
+  const instance = {
+    config: { auto_start: fullPlan.meta.auto_start },
+    resources: resources.reduce((result, { key, title }) => {
+      result[key] = title;
+      return result;
+    }, {}),
+    title: currentProduct.value.title,
+    billing_plan: { uuid: plan.value },
+    product: options.value.size,
+    addons: options.value.addons,
+  };
+
+  const newGroup = {
+    title: userdata.value.title + Date.now(),
+    type: "empty",
+    sp: provider.value,
+    instances: [],
+  };
+
+  const info = !service.value
+    ? newGroup
+    : JSON.parse(JSON.stringify(fullService));
+  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
+
+  if (!group && service.value) info.instancesGroups.push(newGroup);
+
+  if (!userdata.value.uuid) {
+    onLogin.value.redirect = route.name;
+    onLogin.value.info = {
+      type: "custom",
+      title: "Custom",
+      cost: currentProduct.value.price,
+      currency: currency.value.code,
+      goToInvoice: modal.value.goToInvoice,
+    };
+    onLogin.value.action = () => {
+      createVirtual(info, instance);
+    };
+
+    router.push({ name: "login" });
+    return;
+  }
+
+  createVirtual(info, instance);
+};
+const createVirtual = async (info, instance) => {
+  modal.value.confirmLoading = true;
+  const action = service.value ? "update" : "create";
+  const orderData = service.value
+    ? info
+    : {
+        namespace: namespace.value,
+        service: {
+          title: userdata.value.title,
+          context: {},
+          version: "1",
+          instancesGroups: [info],
         },
-        { products: [], sizes: [] }
-      );
-      const plan = this.plans.at(0);
-
-      productsAndSizes.products.forEach(([productKey, value, planId]) => {
-        this.products[productKey] = {
-          ...value,
-          planId,
-          addons: plan.resources.filter(({ key }) =>
-            value.meta.addons?.includes(key)
-          ),
-        };
-      });
-
-      productsAndSizes.sizes
-        .sort((a, b) => a.price - b.price)
-        .sort((a, b) => a.sorter - b.sorter);
-      this.sizes = productsAndSizes.sizes;
-
-      const data = JSON.parse(this.$route.query.data ?? "{}");
-
-      if (data.productSize) {
-        const { group } = this.products[data.productSize] ?? {};
-
-        this.checkedType = group;
-        this.options.size = data.productSize;
-      } else if (this.typesOptions.length < 2) {
-        nextTick(() => {
-          this.options.size = Object.values(this.sizes[0]?.keys ?? {})[0] ?? "";
-        });
-      }
-    },
-    changePeriods(key) {
-      const { title } = this.products[key];
-
-      this.periods = [];
-      Object.values(this.products).forEach((product) => {
-        if (product.title !== title) return;
-        if (this.periods.includes(+product.period)) return;
-        this.periods.push(+product.period);
-      });
-
-      this.periods.sort((a, b) => a - b);
-      if (this.periods.includes(this.options.period)) return;
-      const data = JSON.parse(this.$route.query.data ?? "{}");
-
-      if (data.period && this.periods.includes(+data.period)) {
-        this.options.period = +data.period;
-      } else {
-        this.options.period = this.periods[0];
-      }
-    },
-    changeAddons(uuid) {
-      if (this.options.addons.includes(uuid)) {
-        this.options.addons = this.options.addons.filter(
-          (addon) => addon !== uuid
-        );
-      } else {
-        this.options.addons.push(uuid);
-      }
-    },
-    getAddon(addon) {
-      const item = this.filteredAddons.find(({ uuid }) => uuid === addon);
-      const price = item.periods[this.getProducts.period];
-
-      return {
-        ...item,
-        price: this.formatPrice(price),
-      };
-    },
-    getResources(size) {
-      const key = size.keys[this.options.period];
-
-      return this.products[key]?.meta?.resources;
-    },
-
-    checkPricesEqual(price, [minPrice, maxPrice]) {
-      const a = minPrice ? price >= minPrice : true;
-      const b = maxPrice ? price <= maxPrice : true;
-
-      return a && b;
-    },
-    resetFilters() {
-      Object.keys(this.filters).forEach((key) => {
-        this.filters[key] = [];
-      });
-
-      if (this.isResourcesExist) {
-        this.checkedType = "";
-      }
-    },
-
-    orderClickHandler() {
-      const service = this.services.find(({ uuid }) => uuid === this.service);
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
-      const { resources = [] } = this.getProducts.meta;
-
-      const instances = [
-        {
-          config: { auto_start: plan.meta.auto_start },
-          resources: resources.reduce((result, { key, title }) => {
-            result[key] = title;
-            return result;
-          }, {}),
-          title: this.getProducts.title,
-          billing_plan: { uuid: this.plan },
-          product: this.options.size,
-          addons: this.options.addons,
-        },
-      ];
-      const newGroup = {
-        title: this.userdata.title + Date.now(),
-        type: "empty",
-        sp: this.provider,
-        instances,
       };
 
-      const info = !this.service
-        ? newGroup
-        : JSON.parse(JSON.stringify(service));
-      const group = info.instancesGroups?.find(
-        ({ sp }) => sp === this.provider
-      );
+  try {
+    await createInstance(
+      action,
+      orderData,
+      instance,
+      provider.value,
+      promocode.value?.uuid,
+      null,
+      t("Done")
+    );
+    router.push({ path: "/billing" });
+  } catch {
+    console.error(error);
+  }
+};
+const orderConfirm = () => {
+  const instance = {
+    config: {},
+    billingPlan: plans.value.find(({ uuid }) => uuid === plan.value),
+  };
+  const isPayg = checkPayg(instance);
+  const { price } = currentProduct;
 
-      if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instancesGroups.push(newGroup);
+  if (isPayg && !checkBalance(price)) return;
+  modal.value.confirmCreate = true;
+};
 
-      if (!this.userdata.uuid) {
-        this.onLogin.redirect = this.$route.name;
-        this.onLogin.info = {
-          type: "custom",
-          title: "Custom",
-          cost: this.getProducts.price,
-          currency: this.currency.code,
-          goToInvoice: this.modal.goToInvoice,
-        };
-        this.onLogin.action = () => {
-          this.createVirtual(info);
-        };
+const getGroupImage = (group) => {
+  const { image } = sizes.value.find((size) => size.group === group) ?? {};
 
-        this.$router.push({ name: "login" });
-        return;
-      }
+  return image;
+};
+const fetchPlans = async (provider) => {
+  const cacheKey = `${provider}_${currency.value.code}`;
 
-      this.createVirtual(info);
-    },
-    createVirtual(info) {
-      this.modal.confirmLoading = true;
-      const action = this.service ? "update" : "create";
-      const orderData = this.service
-        ? info
-        : {
-            namespace: this.namespace,
-            service: {
-              title: this.userdata.title,
-              context: {},
-              version: "1",
-              instancesGroups: [info],
-            },
-          };
+  if (cachedPlans.value[cacheKey]) return;
+  try {
+    const { pool } = await plansStore.fetch({
+      anonymously: !isLogged.value,
+      sp_uuid: provider,
+    });
 
-      this.instancesStore[`${action}Service`](orderData)
-        .then(async ({ uuid, instancesGroups }) => {
-          await this.deployService(uuid, this.$t("Done"));
-          const { instances } =
-            instancesGroups.find(({ sp }) => sp === this.provider) ?? {};
-          let instance;
+    cachedPlans.value[cacheKey] = pool;
+    plan.value = plans.value[0]?.uuid;
+    changeProducts();
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error;
 
-          for (let i = instances.length - 1; i >= 0; i--) {
-            const { title } = instances[i];
+    notification.openNotification("error", { message });
+  } finally {
+    fetchLoading.value = false;
+  }
+};
+const selectCollapsePanel = (keys) => {
+  options.value.size = keys[options.value.period];
+  if (activeCollapseKey.value.length > 0) {
+    activeCollapseKey.value = [keys[options.value.period]];
+  }
+};
 
-            if (title === this.getProducts.title) {
-              instance = instances[i];
-            }
-          }
+watch(sp, (value) => {
+  if (value.length > 0) provider.value = value[0].uuid;
+});
+watch([provider, currency], () => {
+  fetchPlans(provider.value);
+});
+watch(resources, (value) => {
+  Object.entries(value).forEach(([key, resource]) => {
+    if (filtersType.value.includes("slider")) {
+      filters.value[key] = [resource.at(0), resource.at(-1)];
+    } else {
+      filters.value[key] = [];
+    }
+  });
+});
+watch(sizes, (value) => {
+  const { keys } = value?.at(0) ?? {};
+  const data = JSON.parse(route.query.data ?? "{}");
 
-          if (this.namespacesStore.namespaces.length < 1) {
-            await this.namespacesStore.fetch();
-          }
+  if (data.productSize) {
+    const { group } = products.value[data.productSize] ?? {};
 
-          const { access } = this.namespacesStore.namespaces.find(
-            ({ uuid }) => uuid === this.namespace
-          );
-          const account = access.namespace ?? this.namespace;
+    checkedType.value = group;
+    options.value.size = data.productSize;
+    return;
+  }
 
-          localStorage.setItem("order", "Invoice");
-          this.$router.push({ path: "/billing" });
-        })
-        .catch((error) => {
-          const url =
-            error.response?.data.redirect_url ?? error.response?.data ?? error;
+  if (keys && options.value.period) {
+    options.value.size = keys[options.value.period];
+  } else if (keys) {
+    options.value.size = Object.values(keys)[0];
+  }
+});
+watch(filteredSizes, (value) => {
+  paginationOptions.value.total = value.length;
+});
+watch(checkedType, (value) => {
+  const { keys } = sizes.value.find(({ group }) => group === value) ?? {};
 
-          if (url.startsWith && url.startsWith("http")) {
-            localStorage.setItem("order", "Invoice");
-            this.$router.push({ path: "/billing" });
-            return;
-          }
+  if (keys && options.value.period) {
+    options.value.size = keys[options.value.period];
+  } else if (keys) {
+    options.value.size = Object.values(keys)[0];
+  }
+});
+watch(
+  () => options.value.size,
+  (value, prev) => {
+    const size = sizes.value.find(({ keys }) =>
+      Object.values(keys).includes(prev)
+    );
+    const keys = Object.values(size?.keys ?? {});
 
-          const matched = (
-            error.response?.data?.message ??
-            error.message ??
-            ""
-          ).split(/error:"|error: "/);
-          const message = matched.at(-1).split('" ').at(0);
+    if (!keys.includes(value)) changePeriods(value);
+    options.value.addons = [];
 
-          if (message) {
-            this.$notification.error({ message });
-          } else {
-            const message =
-              error.response?.data?.message ?? error.message ?? error;
+    filteredAddons.value.forEach(({ meta, uuid }) => {
+      if (meta.autoEnable) options.value.addons.push(uuid);
+    });
 
-            this.$notification.error({ message });
-          }
-          console.error(error);
-        });
-    },
-    orderConfirm() {
-      const instance = {
-        config: {},
-        billingPlan: this.plans.find(({ uuid }) => uuid === this.plan),
-      };
-      const isPayg = this.checkPayg(instance);
-      const { price } = this.getProducts;
+    plan.value = currentProduct.value.planId;
+  }
+);
 
-      if (isPayg && !this.checkBalance(price)) return;
-      this.modal.confirmCreate = true;
-    },
+watch(
+  () => options.value.period,
+  (value) => {
+    const { title } = products.value[options.value.size];
+    const [key, product] = Object.entries(products.value).find(
+      ([, product]) => product.title === title && +product.period === value
+    );
+    const data = JSON.parse(route.query.data ?? "{}");
 
-    getGroupImage(group) {
-      const { image } = this.sizes.find((size) => size.group === group) ?? {};
+    if (data.productSize) {
+      const { group } = products.value[data.productSize] ?? {};
 
-      return image;
-    },
-    async fetchPlans(provider) {
-      const cacheKey = `${provider}_${this.userCurrency.code}`;
+      checkedType.value = group;
+      options.value.size = data.productSize;
+    } else {
+      options.value.size = key;
+    }
 
-      if (this.cachedPlans[cacheKey]) return;
-      try {
-        const { pool } = await this.plansStore.fetch({
-          anonymously: !this.isLogged,
-          sp_uuid: provider,
-        });
+    plan.value = cachedPlans.value[
+      `${provider.value}_${currency.value.code}`
+    ].find(({ uuid }) => uuid === product.planId)?.uuid;
+  }
+);
 
-        this.cachedPlans[cacheKey] = pool;
-        this.plan = this.plans[0]?.uuid;
-        this.changeProducts();
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error;
+watch([promocode, currency], async () => {
+  if (!promocode.value || !currency.value || !plan.value) {
+    planWithApplyedPromocode.value = null;
+    return;
+  }
 
-        this.$notification.error({ message });
-      } finally {
-        this.fetchLoading = false;
-      }
-    },
-    selectCollapsePanel(keys) {
-      this.options.size = keys[this.options.period];
-      if (this.activeCollapseKey.length > 0) {
-        this.activeCollapseKey = [keys[this.options.period]];
-      }
-    },
-  },
+  const response = await promocodesStore.applyToPlan({
+    promocodes: [promocode.value.uuid],
+    billingPlan: plan.value,
+    addons: [],
+  });
+
+  planWithApplyedPromocode.value = response.toJson().billingPlans[0];
+});
+</script>
+
+<script>
+export default {
+  name: "CustomComponent",
 };
 </script>
 
@@ -1452,5 +1447,15 @@ export default {
 }
 .ant-collapse-item.order__grid-item {
   border-radius: 15px !important;
+}
+
+.price__sale {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.price__sale .without_sale {
+  text-decoration: line-through;
+  margin-right: 10px;
 }
 </style>

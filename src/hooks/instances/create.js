@@ -23,7 +23,7 @@ function useCreateInstance() {
     }
   }
 
-  async function createInstanceV2(
+  async function createInstance(
     action,
     service,
     instance,
@@ -44,9 +44,12 @@ function useCreateInstance() {
         (el) => el.sp === sp && !el.data?.imported
       );
 
-      await store.instancesApi.create(
-        CreateRequest.fromJson({ ig: ig.uuid, instance, promocode })
-      );
+      const data = { ig: ig.uuid, instance };
+      if (promocode) {
+        data.promocode = promocode;
+      }
+
+      await store.instancesApi.create(CreateRequest.fromJson(data));
 
       if (response.uuid) {
         if (message) openMessage.success(message);
@@ -71,43 +74,15 @@ function useCreateInstance() {
 
         openNotification("error", { message });
       }
+
+      throw new Error();
     }
   }
 
   return {
     deployService,
-    async createInstance(action, service, namespace, message, deployMessage) {
-      try {
-        const response = await store[`${action}Service`](service);
 
-        if (response.uuid) {
-          if (message) openMessage.success(message);
-          await deployService(response.uuid, deployMessage);
-
-          return response;
-        } else {
-          throw new Error("[Error]: Service uuid not found");
-        }
-      } catch (error) {
-        const matched = (
-          error.response?.data?.message ??
-          error.message ??
-          ""
-        ).split(/error:"|error: "/);
-        const message = matched.at(-1).split('" ').at(0);
-
-        if (message) {
-          openNotification("error", { message });
-        } else {
-          const message =
-            error.response?.data?.message ?? error.message ?? error;
-
-          openNotification("error", { message });
-        }
-      }
-    },
-
-    createInstanceV2,
+    createInstance,
   };
 }
 

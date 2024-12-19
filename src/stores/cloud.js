@@ -13,11 +13,13 @@ import { checkPayg } from "@/functions.js";
 import { usePromocodesStore } from "./promocodes.js";
 import { ApplySaleRequest } from "nocloud-proto/proto/es/billing/billing_pb";
 import { useAddonsStore } from "./addons.js";
+import useCurrency from "@/hooks/utils/currency.js";
 
 export const useCloudStore = defineStore("cloud", () => {
   const router = useRouter();
   const i18n = useI18n();
-  const { createInstanceV2 } = useCreateInstance();
+  const { createInstance } = useCreateInstance();
+  const { currency } = useCurrency();
 
   const authStore = useAuthStore();
   const spStore = useSpStore();
@@ -235,7 +237,7 @@ export const useCloudStore = defineStore("cloud", () => {
       },
     };
 
-    return createInstanceV2(
+    return createInstance(
       "create",
       orderData,
       newInstance,
@@ -271,7 +273,7 @@ export const useCloudStore = defineStore("cloud", () => {
     group.resources.ips_private = res.private;
     group.resources.ips_public = res.public;
 
-    return createInstanceV2(
+    return createInstance(
       "update",
       orderData,
       newInstance,
@@ -282,19 +284,17 @@ export const useCloudStore = defineStore("cloud", () => {
     );
   }
 
-  watch(promocode, async (value) => {
-    if (!value) {
+  watch([promocode, currency, planId], async () => {
+    if (!promocode.value || !planId.value) {
       planWithApplyedPromocode.value = null;
       return;
     }
 
-    const response = await promocodesStore.promocodesApi.applySale(
-      ApplySaleRequest.fromJson({
-        promocodes: [promocode.value.uuid],
-        billingPlan: planId.value,
-        addons: addonsStore.addons.map((a) => a.uuid),
-      })
-    );
+    const response = await promocodesStore.applyToPlan({
+      promocodes: [promocode.value.uuid],
+      billingPlan: planId.value,
+      addons: addonsStore.addons.map((a) => a.uuid),
+    });
 
     planWithApplyedPromocode.value = response.toJson().billingPlans[0];
   });
