@@ -155,7 +155,12 @@
       </transition>
     </a-row>
 
-    <cloud-promocode :is-flavors-loading="isFlavorsLoading" />
+    <promocode-menu
+      :is-flavors-loading="isFlavorsLoading"
+      :plan-id="cloudStore.planId"
+      :applyed-promocode="promocode"
+      @update:promocode="promocode = $event"
+    />
 
     <cloud-create-button
       :product-size="productSize"
@@ -180,7 +185,8 @@ import { checkPayg } from "@/functions.js";
 import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import cloudResources from "@/components/cloud/create/resources.vue";
 import cloudCreateButton from "@/components/cloud/create/button.vue";
-import cloudPromocode from "@/components/cloud/create/promocode.vue";
+import promocodeMenu from "@/components/ui/promocode-menu.vue";
+import { storeToRefs } from "pinia";
 
 const props = defineProps({
   productSize: { type: String, required: true },
@@ -195,6 +201,7 @@ const emits = defineEmits(["update:tarification"]);
 const i18n = useI18n();
 const { currency, formatPrice } = useCurrency();
 const cloudStore = useCloudStore();
+const { promocode } = storeToRefs(useCloudStore());
 const addonsStore = useAddonsStore();
 
 const [product] = inject("useProduct", () => [])();
