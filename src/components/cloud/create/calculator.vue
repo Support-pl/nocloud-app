@@ -137,7 +137,19 @@
             <a-spin class="price__spin" size="small" spinning />
           </template>
           <template v-else>
-            {{ formatPrice(startPrice, currency) }} {{ currency.title }}
+            <div v-if="isSaleApply" class="price__sale" style="">
+              <span class="without_sale">
+                {{ formatPrice(startPrice, currency) }} {{ currency.title }}
+              </span>
+
+              <span>
+                {{ formatPrice(startPriceWithSale, currency) }}
+                {{ currency.title }}
+              </span>
+            </div>
+            <template v-else>
+              {{ formatPrice(startPrice, currency) }} {{ currency.title }}
+            </template>
           </template>
         </a-col>
       </transition>
@@ -222,13 +234,13 @@ const periodColumns = computed(() => {
 
 const [activeKey] = inject("useActiveKey", () => [])();
 const { tarification, productSize } = toRefs(props);
-const { periodicPrice, startPrice, minProduct } = useCloudPrices(
-  product,
-  tarification,
-  activeKey,
-  options,
-  priceOVH
-);
+const {
+  periodicPrice,
+  startPrice,
+  minProduct,
+  startPriceWithSale,
+  isSaleApply,
+} = useCloudPrices(product, tarification, activeKey, options, priceOVH);
 
 function getAddonsValue(key) {
   const addon = options.config.addons?.find((el) => el.includes(key));
@@ -262,5 +274,15 @@ export default { name: "CalculatorBlock" };
 .price__spin {
   margin-left: 5px;
   margin-top: 3px;
+}
+
+.price__sale {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.price__sale .without_sale {
+  text-decoration: line-through;
+  margin-right: 10px;
 }
 </style>
