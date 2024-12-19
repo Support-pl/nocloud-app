@@ -58,7 +58,7 @@
     "services": "Services",
     "invoiceDate": "Order Date",
     "transactionDate": "Created Date",
-    "transactionPaymentDate":"Executed date",
+    "transactionPaymentDate": "Executed date",
     "dueDate": "Payment Date",
     "deadlineDate": "Due date",
     "onetime": "one-time",
@@ -75,7 +75,7 @@
     "pass at least 10 characters": "Password must be at least 10 characters",
     "Password must contain uppercase letters, numbers and symbols": "Password must contain uppercase letters, numbers and symbols",
     "The last character must not be special": "The last character must not be special",
-    "The username must be without special characters":"The username must be without special characters",
+    "The username must be without special characters": "The username must be without special characters",
     "Create VM": "Create VM",
     "Create": "Create",
     "Confirm": "Confirm",
@@ -638,7 +638,6 @@
     "product_name": "Product Name",
     "VNDExcludeVAT": "Prices quoted in VND, subject to 10% VAT",
     "Company Details": "Use company details (for invoices)",
-
     "reload": "reload",
     "new content is avaliable": "New content is avaliable",
     "accept terms": "Please accept terms of use to proceed.",
@@ -686,7 +685,6 @@
     "text": "text",
     "data": "data",
     "no data": "No information available",
-
     "add funds": "Add funds",
     "attach new NIC": "Attach new NIC",
     "there are no aliases": "There are no aliases",
@@ -704,7 +702,6 @@
       "UNKNOWN": "UNKNOWN"
     },
     "public": "Public",
-
     "virtualSlider": {
       "Single": "Single",
       "Standard": "Standard",
@@ -767,6 +764,13 @@
     "gpu": "GPU",
     "highCPU": "high CPU from 3.50GHz",
     "withAdministration": "with administration",
+    "promocodeErrors": {
+      "not_found": "Promocode not found",
+      "wrong_plan": "Promocode doesn't affect on selected product",
+      "expired": "Promocode expired",
+      "iternal": "Iternal error, please try later",
+      "already_used": "Promocode already used by you"
+    },
     "country": {
       "VN": "Vietnam",
       "BY": "Belarus",

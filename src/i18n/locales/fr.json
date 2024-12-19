@@ -44,7 +44,7 @@
     "services": "Prestations de service",
     "invoiceDate": "Date de commande",
     "transactionDate": "Date de création",
-    "transactionPaymentDate":"Date d'exécution",
+    "transactionPaymentDate": "Date d'exécution",
     "deadlineDate": "Date d'échéance",
     "dueDate": "Paiement dû",
     "onetime": "unique",
@@ -592,6 +592,13 @@
     "gpu": "GPU",
     "highCPU": "high CPU",
     "withAdministration": "with administration",
+    "promocodeErrors": {
+      "not_found": "Code promotionnel introuvable",
+      "wrong_plan": "Le code promotionnel n'affecte pas le produit sélectionné",
+      "expired": "Code promotionnel expiré",
+      "iternal": "Erreur interne, veuillez réessayer plus tard",
+      "already_used": "Code promotionnel déjà utilisé par vous"
+    },
     "country": {
       "VN": "Viêt Nam",
       "BY": "Biélorussie",

@@ -58,7 +58,7 @@
     "services": "услуги",
     "invoiceDate": "Дата счёта",
     "transactionDate": "Дата создания",
-    "transactionPaymentDate":"Дата исполнения",
+    "transactionPaymentDate": "Дата исполнения",
     "deadlineDate": "Срок оплаты",
     "dueDate": "Дата оплаты",
     "onetime": "одноразовая",
@@ -638,7 +638,6 @@
     "product_name": "Имя продукта",
     "VNDExcludeVAT": "Цены указаны в VND с учетом 10% НДС.",
     "Company Details": "Использовать данные компании (для счетов)",
-
     "reload": "перезагрузка",
     "new content is avaliable": "Доступен новый контент",
     "accept terms": "Пожалуйста, примите условия использования, чтобы продолжить.",
@@ -686,7 +685,6 @@
     "text": "текст",
     "data": "данные",
     "no data": "Нет доступной информации",
-
     "add funds": "Добавить средств",
     "attach new NIC": "Прикрепить новую NIC",
     "there are no aliases": "Нет псевдонимов",
@@ -704,7 +702,6 @@
       "UNKNOWN": "НЕИЗВЕСТНО"
     },
     "public": "Публичный",
-
     "virtualSlider": {
       "Single": "Одиночный",
       "Standard": "Стандартный",
@@ -767,6 +764,13 @@
     "gpu": "ГП",
     "highCPU": "ЦП с повышенной частотой от 3.50GHz",
     "withAdministration": "с администрированием",
+    "promocodeErrors": {
+      "not_found": "Промокод не найден",
+      "wrong_plan": "Промокод не действует на выбранный товар.",
+      "expired": "Срок действия промокода истек",
+      "iternal": "Внутренняя ошибка, попробуйте позже",
+      "already_used": "Промокод уже использован вами"
+    },
     "country": {
       "BY": "Беларусь",
       "RU": "Россия",
