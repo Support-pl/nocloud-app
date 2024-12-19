@@ -468,12 +468,19 @@
     "volatile disk": "Bộ nhớ linh hoạt",
     "No Data": "Không có dữ liệu",
     "Add funds": "Nạp tiền",
-    "promocodeErrors": {
-      "not_found": "Không tìm thấy mã khuyến mãi",
-      "wrong_plan": "Promocode không ảnh hưởng tới sản phẩm đã chọn",
-      "expired": "Mã khuyến mại đã hết hạn",
-      "iternal": "Lỗi nội bộ, vui lòng thử lại sau",
-      "already_used": "Mã khuyến mại đã được bạn sử dụng"
+    "promocode": {
+      "errors": {
+        "not_found": "Không tìm thấy mã khuyến mãi",
+        "wrong_plan": "Promocode không ảnh hưởng tới sản phẩm đã chọn",
+        "expired": "Mã khuyến mại đã hết hạn",
+        "internal": "Lỗi nội bộ, vui lòng thử lại sau",
+        "already_used": "Mã khuyến mại đã được bạn sử dụng"
+      },
+      "actions": {
+        "apply": "Áp dụng",
+        "delete": "Xóa bỏ"
+      },
+      "placeholder": "Mã khuyến mãi"
     },
     "country": {
       "VN": "Vietnam",

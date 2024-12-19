@@ -664,12 +664,19 @@
     "gpu": "GPU",
     "highCPU": "high CPU",
     "withAdministration": "with administration",
-    "promocodeErrors": {
-      "not_found": "Nie znaleziono kodu promocyjnego",
-      "wrong_plan": "Kod promocyjny nie ma wpływu na wybrany produkt",
-      "expired": "Kod promocyjny wygasł",
-      "iternal": "Błąd wewnętrzny. Spróbuj później",
-      "already_used": "Kod promocyjny już wykorzystany przez Ciebie"
+    "promocode": {
+      "errors": {
+        "not_found": "Nie znaleziono kodu promocyjnego",
+        "wrong_plan": "Kod promocyjny nie ma wpływu na wybrany produkt",
+        "expired": "Kod promocyjny wygasł",
+        "internal": "Błąd wewnętrzny. Spróbuj później",
+        "already_used": "Kod promocyjny już wykorzystany przez Ciebie"
+      },
+      "actions": {
+        "apply": "Stosować",
+        "delete": "Usuwać"
+      },
+      "placeholder": "Kod promocyjny"
     },
     "country": {
       "VN": "Vietnam",

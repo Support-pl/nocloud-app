@@ -764,12 +764,19 @@
     "gpu": "GPU",
     "highCPU": "high CPU from 3.50GHz",
     "withAdministration": "with administration",
-    "promocodeErrors": {
-      "not_found": "Promocode not found",
-      "wrong_plan": "Promocode doesn't affect on selected product",
-      "expired": "Promocode expired",
-      "iternal": "Iternal error, please try later",
-      "already_used": "Promocode already used by you"
+    "promocode": {
+      "errors": {
+        "not_found": "Promocode not found",
+        "wrong_plan": "Promocode doesn't affect on selected product",
+        "expired": "Promocode expired",
+        "internal": "Internal error, please try later",
+        "already_used": "Promocode already used by you"
+      },
+      "actions": {
+        "apply": "Apply",
+        "delete": "Delete"
+      },
+      "placeholder": "Promocode"
     },
     "country": {
       "VN": "Vietnam",
