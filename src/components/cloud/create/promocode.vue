@@ -11,22 +11,23 @@
         :status="isFailedPromocode ? 'error' : ''"
         :value="promocode"
         @change="onPromocodeChange"
-        placeholder="FFFFFF"
+        :placeholder="t('promocode.placeholder')"
         :maxlength="6"
         style="width: 100px"
-      >
-        <template #prefix>
-          <span>#</span>
-        </template>
-      </a-input>
+      />
     </a-col>
     <a-col>
       <a-button
         :disabled="isPromocodeApplyDisabled"
         :loading="isPromocodeLoading"
-        @click="applyPromocode"
-        >Apply</a-button
+        @click="!isPromocodeAlreadyApply ? applyPromocode() : resetPromocode()"
       >
+        {{
+          $t(
+            `promocode.actions.${isPromocodeAlreadyApply ? "delete" : "apply"}`
+          )
+        }}
+      </a-button>
     </a-col>
   </a-row>
 </template>
@@ -37,6 +38,9 @@ import { computed, ref, toRefs, watch } from "vue";
 import { GetPromocodeByCodeRequest } from "nocloud-proto/proto/es/billing/promocodes/promocodes_pb";
 import { useCloudStore } from "@/stores/cloud";
 import { storeToRefs } from "pinia";
+import { Code } from "@connectrpc/connect";
+import { useI18n } from "vue-i18n";
+import { useNotification } from "@/hooks/utils";
 
 const props = defineProps({
   isFlavorsLoading: { type: Boolean, default: false },
@@ -46,6 +50,8 @@ const { isFlavorsLoading } = toRefs(props);
 
 const { promocode: storePromocode, planId } = storeToRefs(useCloudStore());
 const promocodesStore = usePromocodesStore();
+const { openNotification } = useNotification();
+const { t } = useI18n();
 
 const promocode = ref("");
 const isPromocodeLoading = ref(false);
@@ -53,10 +59,7 @@ const isPromocodeError = ref(false);
 const lastApplyPromocode = ref("");
 
 const isPromocodeApplyDisabled = computed(
-  () =>
-    promocode.value.length !== 6 ||
-    isFailedPromocode.value ||
-    isPromocodeAlreadyApply.value
+  () => promocode.value.length !== 6 || isFailedPromocode.value
 );
 
 const isFailedPromocode = computed(
@@ -83,6 +86,35 @@ const applyPromocode = async () => {
 
     storePromocode.value = response;
   } catch (e) {
+    let msg = "promocode.errors.";
+
+    switch (e.code || 5) {
+      case Code.FailedPrecondition: {
+        msg += "wrong_plan";
+        break;
+      }
+      case Code.ResourceExhausted:
+      case Code.OutOfRange: {
+        msg += "expired";
+        break;
+      }
+      case Code.Internal: {
+        msg += "internal";
+        break;
+      }
+      case Code.AlreadyExists: {
+        msg += "already_used";
+        break;
+      }
+      case Code.NotFound:
+      default: {
+        msg += "not_found";
+        break;
+      }
+    }
+
+    openNotification("error", { message: t(msg) });
+
     storePromocode.value = null;
 
     isPromocodeError.value = true;
@@ -90,6 +122,10 @@ const applyPromocode = async () => {
   } finally {
     isPromocodeLoading.value = false;
   }
+};
+
+const resetPromocode = async () => {
+  storePromocode.value = null;
 };
 
 watch(isFlavorsLoading, () => {

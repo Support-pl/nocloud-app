@@ -12,6 +12,7 @@ function useCloudPrices(
   const cloudStore = useCloudStore();
 
   const startPrice = ref();
+  const startPriceWithSale = ref();
   const periodicPrice = ref();
 
   const plan = computed(() => cloudStore.plan ?? {});
@@ -19,6 +20,8 @@ function useCloudPrices(
   const planWithSale = computed(
     () => cloudStore.planWithApplyedPromocode ?? plan.value
   );
+
+  const isSaleApply = computed(() => !!cloudStore.planWithApplyedPromocode);
 
   const product = computed(() => {
     const isActiveKeyNotLoc = activeKey.value !== "location";
@@ -276,10 +279,17 @@ function useCloudPrices(
 
   watch([plan, planWithSale, currentProduct, product, options], () => {
     periodicPrice.value = getFullPrice(plan.value);
-    startPrice.value = getFullPrice(planWithSale.value, true);
+    startPrice.value = getFullPrice(plan.value, true);
+    startPriceWithSale.value = getFullPrice(planWithSale.value, true);
   });
 
-  return { minProduct: product, startPrice, periodicPrice };
+  return {
+    minProduct: product,
+    startPrice,
+    periodicPrice,
+    isSaleApply,
+    startPriceWithSale,
+  };
 }
 
 export default useCloudPrices;

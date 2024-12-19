@@ -47,7 +47,7 @@
     "services": "Usługi",
     "invoiceDate": "Data zamówienia",
     "transactionDate": "Data utworzenia",
-    "transactionPaymentDate":"Data wykonania",
+    "transactionPaymentDate": "Data wykonania",
     "deadlineDate": "Termin",
     "dueDate": "Termin płatności",
     "onetime": "jednorazowa",
@@ -552,7 +552,6 @@
     "product_name": "Nazwa",
     "VNDExcludeVAT": "Ceny podane w PLN, nie zawierają podatek VAT 23%.",
     "Company Details": "Użyj dane firmowe (dla faktur)",
-
     "reload": "odswież",
     "new content is available": "Nowy kontent",
     "accept terms": "Aby kontynuować, zaakceptuj warunki.",
@@ -593,7 +592,6 @@
     "text": "tekst",
     "data": "data",
     "no data": "Brak informacji",
-
     "add funds": "Dodać środki",
     "attach new NIC": "Podłącz nową NIC",
     "there are no aliases": "Nie ma aliasów",
@@ -610,7 +608,6 @@
       "UNKNOWN": "UNKNOWN"
     },
     "public": "Public",
-
     "virtualSlider": {
       "Single": "Single",
       "Standard": "Standard",
@@ -667,6 +664,20 @@
     "gpu": "GPU",
     "highCPU": "high CPU",
     "withAdministration": "with administration",
+    "promocode": {
+      "errors": {
+        "not_found": "Nie znaleziono kodu promocyjnego",
+        "wrong_plan": "Kod promocyjny nie ma wpływu na wybrany produkt",
+        "expired": "Kod promocyjny wygasł",
+        "internal": "Błąd wewnętrzny. Spróbuj później",
+        "already_used": "Kod promocyjny już wykorzystany przez Ciebie"
+      },
+      "actions": {
+        "apply": "Stosować",
+        "delete": "Usuwać"
+      },
+      "placeholder": "Kod promocyjny"
+    },
     "country": {
       "VN": "Vietnam",
       "BY": "Belarus",
