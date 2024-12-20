@@ -421,3 +421,14 @@ export function getInvoiceNumber(invoice) {
 
   return invoice.payment_invoice_id || invoice.id;
 }
+
+export function removeEmptyValues(obj) {
+  Object.keys(obj).forEach(
+    (key) =>
+      (obj[key] &&
+        typeof obj[key] === "object" &&
+        removeEmptyValues(obj[key])) ||
+      ((obj[key] === undefined || obj[key] === null) && delete obj[key])
+  );
+  return obj;
+}
