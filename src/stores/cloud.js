@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { defineStore } from "pinia";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -8,20 +8,26 @@ import { useSpStore } from "./sp.js";
 import { usePlansStore } from "./plans.js";
 import { useNamespasesStore } from "./namespaces.js";
 import { useInstancesStore } from "./instances.js";
-
 import useCreateInstance from "@/hooks/instances/create.js";
 import { checkPayg } from "@/functions.js";
+import { usePromocodesStore } from "./promocodes.js";
+import { ApplySaleRequest } from "nocloud-proto/proto/es/billing/billing_pb";
+import { useAddonsStore } from "./addons.js";
+import useCurrency from "@/hooks/utils/currency.js";
 
 export const useCloudStore = defineStore("cloud", () => {
   const router = useRouter();
   const i18n = useI18n();
   const { createInstance } = useCreateInstance();
+  const { currency } = useCurrency();
 
   const authStore = useAuthStore();
   const spStore = useSpStore();
   const plansStore = usePlansStore();
   const namespacesStore = useNamespasesStore();
   const instancesStore = useInstancesStore();
+  const promocodesStore = usePromocodesStore();
+  const addonsStore = useAddonsStore();
 
   const authData = reactive({
     vmName: "",
@@ -36,6 +42,8 @@ export const useCloudStore = defineStore("cloud", () => {
   const locationId = ref("Location");
   const showcaseId = ref("");
   const planId = ref();
+  const promocode = ref();
+  const planWithApplyedPromocode = ref();
   const serviceId = ref();
   const namespaceId = ref();
 
@@ -222,7 +230,7 @@ export const useCloudStore = defineStore("cloud", () => {
               ips_public: newInstance.resources.ips_public,
             },
             type: provider.value.type,
-            instances: [newInstance],
+            instances: [],
             sp: provider.value.uuid,
           },
         ],
@@ -232,7 +240,9 @@ export const useCloudStore = defineStore("cloud", () => {
     return createInstance(
       "create",
       orderData,
-      namespaceId.value,
+      newInstance,
+      provider.value.uuid,
+      promocode.value.uuid,
       null,
       deployMessage
     );
@@ -248,14 +258,16 @@ export const useCloudStore = defineStore("cloud", () => {
       orderData.instancesGroups.push(newGroup);
       group = orderData.instancesGroups.at(-1);
     }
-    group.instances.push(newInstance);
 
     const res = group.instances.reduce(
       (prev, curr) => ({
         private: prev.private + (curr.resources.ips_private ?? 0),
         public: prev.public + (curr.resources.ips_public ?? 0),
       }),
-      { private: 0, public: 0 }
+      {
+        private: newInstance.resources.ips_private ?? 0,
+        public: newInstance.resources.ips_public ?? 0,
+      }
     );
 
     group.resources.ips_private = res.private;
@@ -264,11 +276,32 @@ export const useCloudStore = defineStore("cloud", () => {
     return createInstance(
       "update",
       orderData,
-      namespaceId.value,
+      newInstance,
+      provider.value.uuid,
+      promocode.value.uuid,
       null,
       deployMessage
     );
   }
+
+  watch([promocode, currency, planId], async () => {
+    if (!promocode.value || !planId.value) {
+      planWithApplyedPromocode.value = null;
+      return;
+    }
+
+    const response = await promocodesStore.applyToPlan({
+      promocodes: [promocode.value.uuid],
+      billingPlan: planId.value,
+      addons: addonsStore.addons.map((a) => a.uuid),
+    });
+
+    planWithApplyedPromocode.value = response.toJson().billingPlans[0];
+  });
+
+  watch(planId, () => {
+    promocode.value = null;
+  });
 
   return {
     authData,
@@ -279,6 +312,8 @@ export const useCloudStore = defineStore("cloud", () => {
     showcaseId,
 
     planId,
+    promocode,
+    planWithApplyedPromocode,
     serviceId,
     namespaceId,
 
@@ -296,6 +331,7 @@ export const useCloudStore = defineStore("cloud", () => {
       locationId.value = "Location";
       showcaseId.value = "";
       planId.value = null;
+      promocode.value = null;
       serviceId.value = null;
       namespaceId.value = null;
     },

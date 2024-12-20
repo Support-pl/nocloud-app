@@ -28,11 +28,11 @@
 
           <transition name="specs" mode="out-in">
             <table
-              v-if="getProducts.resources"
-              :key="getProducts.title"
+              v-if="currentProduct.resources"
+              :key="currentProduct.title"
               class="product__specs"
             >
-              <tr v-for="(value, key) in getProducts.resources" :key="key">
+              <tr v-for="(value, key) in currentProduct.resources" :key="key">
                 <td>{{ capitalize($t("virtual_product." + key)) }}</td>
                 <td>
                   {{
@@ -117,12 +117,32 @@
         <a-row type="flex" justify="space-around">
           <a-col style="font-size: 1.5rem">
             <template v-if="!fetchLoading && !isPlansLoading">
-              {{ formatPrice(getProducts.price, currency) }}
-              {{ currency.title }}
+              <div class="price__sale" v-if="isSaleApply">
+                <span class="without_sale">
+                  {{ formatPrice(currentProduct.price, userCurrency) }}
+                  {{ userCurrency.title }}
+                </span>
+
+                <span>
+                  {{ formatPrice(currentProductWithSale.price, userCurrency) }}
+                  {{ userCurrency.title }}
+                </span>
+              </div>
+              <template v-else>
+                {{ formatPrice(currentProduct.price, userCurrency) }}
+                {{ userCurrency.title }}
+              </template>
             </template>
             <div v-else class="loadingLine loadingLine--total" />
           </a-col>
         </a-row>
+
+        <promocode-menu
+          :plan-id="plan"
+          :applyed-promocode="planWithApplyedPromocode"
+          :is-flavors-loading="fetchLoading || isPlansLoading"
+          @update:promocode="promocode = $event"
+        />
 
         <a-row type="flex" justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
@@ -143,7 +163,7 @@
             >
               <p>
                 {{ $t("order_services.Do you want to order") }}:
-                {{ getProducts.title }}
+                {{ currentProduct.title }}
               </p>
             </a-modal>
           </a-col>
@@ -155,462 +175,456 @@
   </div>
 </template>
 
-<script>
-import { ref, reactive } from "vue";
-import { mapStores, mapState } from "pinia";
+<script setup>
+import { ref, reactive, computed, onMounted, watch, inject } from "vue";
+import { storeToRefs } from "pinia";
 import useCreateInstance from "@/hooks/instances/create.js";
-import { useCurrency, usePeriod, useSlider } from "@/hooks/utils";
+import {
+  useCurrency,
+  useNotification,
+  usePeriod,
+  useSlider,
+} from "@/hooks/utils";
 import { checkPayg } from "@/functions.js";
 
 import { useAppStore } from "@/stores/app.js";
 import { useAuthStore } from "@/stores/auth.js";
 
 import { useSpStore } from "@/stores/sp.js";
-import { usePlansStore } from "@/stores/plans.js";
 import { useNamespasesStore } from "@/stores/namespaces.js";
 import { useInstancesStore } from "@/stores/instances.js";
 
 import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import promoBlock from "@/components/ui/promo.vue";
-import { useCurrenciesStore } from "@/stores/currencies";
+import promocodeMenu from "@/components/ui/promocode-menu.vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { usePlansStore } from "@/stores/plans";
+import { usePromocodesStore } from "@/stores/promocodes";
 
+const instancesStore = useInstancesStore();
+const namespacesStore = useNamespasesStore();
+const plansStore = usePlansStore();
+const promocodesStore = usePromocodesStore();
+const spStore = useSpStore();
+const { isLogged, userdata, billingUser } = storeToRefs(useAuthStore());
+const authStore = useAuthStore();
+
+const { onLogin } = storeToRefs(useAppStore());
+
+const checkBalance = inject("checkBalance", () => {});
+
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+const notification = useNotification();
+
+const { getPeriod } = usePeriod();
+const { createInstance } = useCreateInstance();
+const { currency: userCurrency, formatPrice } = useCurrency();
+
+const plan = ref(null);
+const planWithApplyedPromocode = ref(null);
+const promocode = ref(null);
+const service = ref(null);
+const namespace = ref(null);
+const provider = ref(null);
+const fetchLoading = ref(false);
+const isPlansLoading = ref(false);
+const cachedPlans = ref({});
+const products = ref([]);
+const sizes = ref([]);
+const periods = ref([]);
+
+const options = reactive({ size: "", model: "", period: "" });
+const config = reactive({ domain: "", email: "" });
+const modal = reactive({ confirmCreate: false, confirmLoading: false });
+
+const slider = ref();
+const { isSlider } = useSlider(slider, plan);
+
+onMounted(() => {
+  config.email = billingUser.value.email;
+  const { action } = onLogin.value;
+
+  if (typeof action !== "function") return;
+  modal.confirmCreate = true;
+  modal.confirmLoading = true;
+  action();
+});
+
+function onCreated() {
+  const promises = [
+    authStore.fetchBillingData(),
+    spStore.fetch(!isLogged.value),
+    spStore.fetchShowcases(!isLogged.value),
+  ];
+
+  if (isLogged.value) {
+    promises.push(namespacesStore.fetch(), instancesStore.fetch());
+  }
+
+  fetchLoading.value = true;
+  Promise.all(promises)
+    .catch((err) => {
+      const message = err.response?.data?.message ?? err.message ?? err;
+      if (err.response?.data?.code === 16) return;
+      notification.openNotification("error", { message: t(message) });
+
+      console.error(err);
+    })
+    .finally(() => {
+      fetchLoading.value = false;
+    });
+}
+
+onCreated();
+
+const isSaleApply = computed(() => planWithApplyedPromocode.value);
+
+const currentProduct = computed(() => {
+  if (Object.keys(products.value || {}).length === 0) return "NAN";
+  if (!(options.size && options.period)) return "NAN";
+  const product = JSON.parse(
+    JSON.stringify(
+      products.value.find(
+        ({ title, period }) =>
+          title === options.size && +period === options.period
+      )
+    )
+  );
+
+  delete product.resources.model;
+  if (`${product.resources.ssd}`.includes("Gb")) return product;
+  product.resources.ssd = `${product.resources.ssd / 1024} Gb`;
+
+  return product;
+});
+
+const currentProductWithSale = computed(() => {
+  if (!isSaleApply.value) {
+    return {};
+  }
+
+  const products = Object.values(planWithApplyedPromocode.value.products);
+
+  if (Object.keys(products || {}).length === 0) return "NAN";
+  if (!(options.size && options.period)) return "NAN";
+  const product = JSON.parse(
+    JSON.stringify(
+      products.find(
+        ({ title, period }) =>
+          title === options.size && +period === options.period
+      )
+    )
+  );
+
+  delete product.resources.model;
+  if (`${product.resources.ssd}`.includes("Gb")) return product;
+  product.resources.ssd = `${product.resources.ssd / 1024} Gb`;
+
+  return product;
+});
+
+const services = computed(() => {
+  return instancesStore.services.filter((el) => el.status !== "DEL");
+});
+
+const plans = computed(() => {
+  return (
+    cachedPlans.value?.[`${provider.value}_${userCurrency.value.code}`]?.filter(
+      ({ type, uuid }) => {
+        const { items } =
+          spStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
+          {};
+        const plans = [];
+
+        if (!items) return type === "cpanel";
+        items.forEach(({ servicesProvider, plan }) => {
+          if (servicesProvider === provider.value) {
+            plans.push(plan);
+          }
+        });
+
+        if (plans.length < 1) return type === "cpanel";
+        return type === "cpanel" && plans.includes(uuid);
+      }
+    ) ?? []
+  );
+});
+
+const sp = computed(() => {
+  const { items } =
+    spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+
+  if (!items) return [];
+  return spStore.servicesProviders.filter(({ uuid }) =>
+    items.find((item) => uuid === item.servicesProvider)
+  );
+});
+
+const rules = computed(() => {
+  const req = {
+    required: true,
+    message: t("ssl_product.field is required"),
+  };
+
+  return {
+    domain: [
+      req,
+      {
+        message: t("domain is wrong"),
+        pattern: /.+\..+/,
+      },
+    ],
+    email: [
+      req,
+      {
+        message: t("email is not valid"),
+        pattern: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/,
+      },
+    ],
+  };
+});
+
+const changeProducts = () => {
+  const productsAndSizes = plans.value.reduce(
+    (result, plan) => {
+      for (const [key, product] of Object.entries(plan.products)) {
+        const i = result.sizes.findIndex(
+          ({ title }) => title === product.title
+        );
+
+        result.products.push({ key, ...product, planId: plan.uuid });
+        if (i === -1) {
+          result.sizes.push({
+            title: product.title,
+            sorter: product.sorter,
+            price: product.price,
+          });
+        }
+      }
+
+      return result;
+    },
+    { products: [], sizes: [] }
+  );
+  productsAndSizes.sizes
+    .sort((a, b) => a.price - b.price)
+    .sort((a, b) => a.sorter - b.sorter);
+
+  products.value = productsAndSizes.products;
+  sizes.value = productsAndSizes.sizes.map(({ title }) => title);
+
+  const data = JSON.parse(route.query.data ?? "{}");
+
+  if (data.productSize) options.size = data.productSize;
+  else options.size = sizes.value[0];
+};
+const changePeriods = (title) => {
+  periods.value = [];
+  products.value.forEach((product) => {
+    if (product.title !== title) return;
+    if (periods.value.includes(+product.period)) return;
+    periods.value.push(+product.period);
+  });
+
+  periods.value.sort((a, b) => a - b);
+  const data = JSON.parse(route.query.data ?? "{}");
+
+  if (data.period && periods.value.includes(+data.period)) {
+    options.period = +data.period;
+  } else {
+    options.period = periods.value[0];
+  }
+};
+const orderClickHandler = () => {
+  const fullService = services.value.find(({ uuid }) => uuid === service.value);
+  const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
+  const { key } = products.value.find(
+    ({ title, period }) => title === options.size && +period === options.period
+  );
+
+  const instance = {
+    config: { ...config, auto_start: fullPlan.meta.auto_start },
+    resources: {
+      ...currentProduct.value.resources,
+      ssd: `${parseFloat(currentProduct.value.resources.ssd) * 1024}`,
+      model: options.model,
+      plan: options.model,
+    },
+    title: currentProduct.value.title,
+    billing_plan: { uuid: plan.value },
+    product: key,
+  };
+  const newGroup = {
+    title: userdata.value.title + Date.now(),
+    type: "cpanel",
+    sp: provider.value,
+    instances: [],
+  };
+
+  const info = !service.value
+    ? newGroup
+    : JSON.parse(JSON.stringify(fullService));
+  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
+
+  if (!group && service.value) info.instancesGroups.push(newGroup);
+
+  if (!userdata.value.uuid) {
+    onLogin.value.redirect = route.name;
+    onLogin.value.info = {
+      type: "virtual",
+      title: "Virtual Hosting",
+      cost: currentProductWithSale.value.price || currentProduct.value.price,
+      currency: userCurrency.value.code,
+    };
+    onLogin.value.action = () => {
+      createVirtual(info, instance);
+    };
+
+    router.push({ name: "login" });
+    return;
+  }
+
+  createVirtual(info, instance);
+};
+const createVirtual = async (info, instance) => {
+  modal.confirmLoading = true;
+  const action = service.value ? "update" : "create";
+  const orderData = service.value
+    ? info
+    : {
+        namespace: namespace.value,
+        service: {
+          title: userdata.value.title,
+          context: {},
+          version: "1",
+          instancesGroups: [info],
+        },
+      };
+
+  try {
+    await createInstance(
+      action,
+      orderData,
+      instance,
+      provider.value,
+      promocode.value?.uuid,
+      null,
+      t("Done")
+    );
+    router.push({ path: "/billing" });
+  } catch {
+    console.error(error);
+  }
+};
+const orderConfirm = () => {
+  if (!config.domain.match(/.+\..+/)) {
+    notification.openNotification("error", { message: t("domain is wrong") });
+    return;
+  }
+
+  const instance = {
+    config: {},
+    billingPlan: plans.value.find(({ uuid }) => uuid === plan.value),
+  };
+  const isPayg = checkPayg(instance);
+  const { price } = currentProduct.value;
+
+  if (isPayg && !checkBalance(price)) return;
+  modal.confirmCreate = true;
+};
+
+const fetchPlans = async (sp) => {
+  const cacheKey = `${sp}_${userCurrency.value.code}`;
+
+  if (cachedPlans.value[cacheKey]) {
+    changeProducts();
+    return;
+  }
+
+  isPlansLoading.value = true;
+
+  try {
+    const { pool } = await plansStore.fetch({
+      anonymously: !isLogged.value,
+      sp_uuid: sp,
+    });
+
+    cachedPlans.value[cacheKey] = pool;
+    plan.value = plans.value[0]?.uuid;
+    changeProducts();
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error;
+
+    notification.openNotification("error", { message });
+  } finally {
+    isPlansLoading.value = false;
+  }
+};
+
+watch(billingUser, (value) => {
+  if (config) {
+    config.email = value.email;
+  }
+});
+watch(sp, (value) => {
+  if (value.length > 0) provider.value = value[0].uuid;
+});
+
+watch([provider, userCurrency], () => {
+  fetchPlans(provider.value);
+});
+
+watch(currentProduct, () => {
+  const product = products.value.find(
+    ({ title, period }) => title === options.size && +period === options.period
+  );
+
+  options.model = product?.resources.model ?? "";
+});
+
+watch(
+  () => options.size,
+  (value) => {
+    changePeriods(value);
+    fetchLoading.value = false;
+  }
+);
+
+watch(
+  () => options.period,
+  (value) => {
+    const product = products.value.find(
+      ({ title, period }) => title === options.size && +period === value
+    );
+
+    plan.value = cachedPlans.value[
+      `${provider.value}_${userCurrency.value.code}`
+    ]?.find(({ uuid }) => uuid === product.planId)?.uuid;
+  }
+);
+
+watch([promocode, userCurrency], async () => {
+  if (!promocode.value || !userCurrency.value || !plan.value) {
+    planWithApplyedPromocode.value = null;
+    return;
+  }
+
+  const response = await promocodesStore.applyToPlan({
+    promocodes: [promocode.value.uuid],
+    billingPlan: plan.value,
+    addons: [],
+  });
+
+  planWithApplyedPromocode.value = response.toJson().billingPlans[0];
+});
+</script>
+
+<script>
 export default {
   name: "VirtualComponent",
-  components: { selectsToCreate, promoBlock },
-  inject: ["checkBalance"],
-  setup() {
-    const { getPeriod } = usePeriod();
-    const { currency, formatPrice } = useCurrency();
-    const { deployService } = useCreateInstance();
-
-    // return { currency, getPeriod, deployService, checkPayg }
-
-    const plan = ref(null);
-    const slider = ref();
-    const { isSlider } = useSlider(slider, plan);
-
-    return {
-      plan,
-      service: ref(null),
-      namespace: ref(null),
-      provider: ref(null),
-      fetchLoading: ref(false),
-      isPlansLoading: ref(false),
-
-      cachedPlans: ref({}),
-      options: reactive({ size: "", model: "", period: "" }),
-      config: reactive({ domain: "", email: "" }),
-      modal: reactive({ confirmCreate: false, confirmLoading: false }),
-
-      products: ref([]),
-      sizes: ref([]),
-      periods: ref([]),
-
-      slider,
-      isSlider,
-
-      currency,
-      formatPrice,
-      getPeriod,
-      deployService,
-      checkPayg,
-    };
-  },
-  computed: {
-    ...mapStores(
-      useNamespasesStore,
-      useSpStore,
-      usePlansStore,
-      useInstancesStore
-    ),
-    ...mapState(useAppStore, ["onLogin"]),
-    ...mapState(useAuthStore, [
-      "isLogged",
-      "userdata",
-      "fetchBillingData",
-      "baseURL",
-      "billingUser",
-    ]),
-    ...mapState(useCurrenciesStore, ["userCurrency"]),
-    getProducts() {
-      if (Object.keys(this.products || {}).length === 0) return "NAN";
-      if (!(this.options.size && this.options.period)) return "NAN";
-      const product = JSON.parse(
-        JSON.stringify(
-          this.products.find(
-            ({ title, period }) =>
-              title === this.options.size && +period === this.options.period
-          )
-        )
-      );
-
-      delete product.resources.model;
-      if (`${product.resources.ssd}`.includes("Gb")) return product;
-      product.resources.ssd = `${product.resources.ssd / 1024} Gb`;
-
-      return product;
-    },
-    services() {
-      return this.instancesStore.services.filter((el) => el.status !== "DEL");
-    },
-    plans() {
-      return (
-        this.cachedPlans?.[
-          `${this.provider}_${this.userCurrency.code}`
-        ]?.filter(({ type, uuid }) => {
-          const { items } =
-            this.spStore.showcases.find(
-              ({ uuid }) => uuid === this.$route.query.service
-            ) ?? {};
-          const plans = [];
-
-          if (!items) return type === "cpanel";
-          items.forEach(({ servicesProvider, plan }) => {
-            if (servicesProvider === this.provider) {
-              plans.push(plan);
-            }
-          });
-
-          if (plans.length < 1) return type === "cpanel";
-          return type === "cpanel" && plans.includes(uuid);
-        }) ?? []
-      );
-    },
-    sp() {
-      const { items } =
-        this.spStore.showcases.find(
-          ({ uuid }) => uuid === this.$route.query.service
-        ) ?? {};
-
-      if (!items) return [];
-      return this.spStore.servicesProviders.filter(({ uuid }) =>
-        items.find((item) => uuid === item.servicesProvider)
-      );
-    },
-    rules() {
-      const req = {
-        required: true,
-        message: this.$t("ssl_product.field is required"),
-      };
-
-      return {
-        domain: [
-          req,
-          {
-            message: this.$t("domain is wrong"),
-            pattern: /.+\..+/,
-          },
-        ],
-        email: [
-          req,
-          {
-            message: this.$t("email is not valid"),
-            pattern: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/,
-          },
-        ],
-      };
-    },
-  },
-  watch: {
-    billingUser(value) {
-      if (this.config) {
-        this.config.email = value.email;
-      }
-    },
-    sp(value) {
-      if (value.length > 0) this.provider = value[0].uuid;
-    },
-    provider(uuid) {
-      this.fetchPlans(uuid);
-    },
-    userCurrency() {
-      this.fetchPlans(this.provider);
-    },
-    getProducts() {
-      const product = this.products.find(
-        ({ title, period }) =>
-          title === this.options.size && +period === this.options.period
-      );
-
-      this.options.model = product?.resources.model ?? "";
-    },
-    "options.size"(value) {
-      this.changePeriods(value);
-      this.fetchLoading = false;
-    },
-    "options.period"(value) {
-      const product = this.products.find(
-        ({ title, period }) => title === this.options.size && +period === value
-      );
-
-      this.plan = this.cachedPlans[
-        `${this.provider}_${this.userCurrency.code}`
-      ]?.find(({ uuid }) => uuid === product.planId)?.uuid;
-    },
-  },
-  mounted() {
-    this.config.email = this.billingUser.email;
-    const { action } = this.onLogin;
-
-    if (typeof action !== "function") return;
-    this.modal.confirmCreate = true;
-    this.modal.confirmLoading = true;
-    action();
-  },
-  created() {
-    const promises = [
-      this.fetchBillingData(),
-      this.spStore.fetch(!this.isLogged),
-      this.spStore.fetchShowcases(!this.isLogged),
-    ];
-
-    if (this.isLogged) {
-      promises.push(this.namespacesStore.fetch(), this.instancesStore.fetch());
-    }
-
-    this.fetchLoading = true;
-    Promise.all(promises)
-      .catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
-        if (err.response?.data?.code === 16) return;
-        this.$notification.error({ message: this.$t(message) });
-        console.error(err);
-      })
-      .finally(() => {
-        this.fetchLoading = false;
-      });
-  },
-  methods: {
-    changeProducts() {
-      const productsAndSizes = this.plans.reduce(
-        (result, plan) => {
-          for (const [key, product] of Object.entries(plan.products)) {
-            const i = result.sizes.findIndex(
-              ({ title }) => title === product.title
-            );
-
-            result.products.push({ key, ...product, planId: plan.uuid });
-            if (i === -1) {
-              result.sizes.push({
-                title: product.title,
-                sorter: product.sorter,
-                price: product.price,
-              });
-            }
-          }
-
-          return result;
-        },
-        { products: [], sizes: [] }
-      );
-      productsAndSizes.sizes
-        .sort((a, b) => a.price - b.price)
-        .sort((a, b) => a.sorter - b.sorter);
-
-      this.products = productsAndSizes.products;
-      this.sizes = productsAndSizes.sizes.map(({ title }) => title);
-
-      const data = JSON.parse(this.$route.query.data ?? "{}");
-
-      if (data.productSize) this.options.size = data.productSize;
-      else this.options.size = this.sizes[0];
-    },
-    changePeriods(title) {
-      this.periods = [];
-      this.products.forEach((product) => {
-        if (product.title !== title) return;
-        if (this.periods.includes(+product.period)) return;
-        this.periods.push(+product.period);
-      });
-
-      this.periods.sort((a, b) => a - b);
-      const data = JSON.parse(this.$route.query.data ?? "{}");
-
-      if (data.period && this.periods.includes(+data.period)) {
-        this.options.period = +data.period;
-      } else {
-        this.options.period = this.periods[0];
-      }
-    },
-    orderClickHandler() {
-      const service = this.services.find(({ uuid }) => uuid === this.service);
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
-
-      const instances = [
-        {
-          config: { ...this.config, auto_start: plan.meta.auto_start },
-          resources: {
-            ...this.getProducts.resources,
-            ssd: `${parseFloat(this.getProducts.resources.ssd) * 1024}`,
-            model: this.options.model,
-            plan: this.options.model,
-          },
-          title: this.getProducts.title,
-          billing_plan: { uuid: this.plan },
-        },
-      ];
-      const newGroup = {
-        title: this.userdata.title + Date.now(),
-        type: "cpanel",
-        sp: this.provider,
-        instances,
-      };
-      const { key } = this.products.find(
-        ({ title, period }) =>
-          title === this.options.size && +period === this.options.period
-      );
-
-      instances[0].product = key;
-
-      const info = !this.service
-        ? newGroup
-        : JSON.parse(JSON.stringify(service));
-      const group = info.instancesGroups?.find(
-        ({ sp }) => sp === this.provider
-      );
-
-      if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instancesGroups.push(newGroup);
-
-      if (!this.userdata.uuid) {
-        this.onLogin.redirect = this.$route.name;
-        this.onLogin.info = {
-          type: "virtual",
-          title: "Virtual Hosting",
-          cost: this.getProducts.price,
-          currency: this.currency.code,
-        };
-        this.onLogin.action = () => {
-          this.createVirtual(info);
-        };
-
-        this.$router.push({ name: "login" });
-        return;
-      }
-
-      this.createVirtual(info);
-    },
-    createVirtual(info) {
-      this.modal.confirmLoading = true;
-      const action = this.service ? "update" : "create";
-      const orderData = this.service
-        ? info
-        : {
-            namespace: this.namespace,
-            service: {
-              title: this.userdata.title,
-              context: {},
-              version: "1",
-              instancesGroups: [info],
-            },
-          };
-
-      this.instancesStore[`${action}Service`](orderData)
-        .then(async ({ uuid, instancesGroups }) => {
-          await this.deployService(uuid, this.$t("Done"));
-          const { instances } =
-            instancesGroups.find(({ sp }) => sp === this.provider) ?? {};
-          let instance;
-
-          for (let i = instances.length - 1; i >= 0; i--) {
-            const { title } = instances[i];
-
-            if (title === this.getProducts.title) {
-              instance = instances[i];
-            }
-          }
-
-          if (this.namespacesStore.namespaces.length < 1) {
-            await this.namespacesStore.fetch();
-          }
-
-          const { access } = this.namespacesStore.namespaces.find(
-            ({ uuid }) => uuid === this.namespace
-          );
-          const account = access.namespace ?? this.namespace;
-
-          localStorage.setItem("order", "Invoice");
-          this.$router.push({ path: "/billing" });
-        })
-        .catch((error) => {
-          const url =
-            error.response?.data.redirect_url ?? error.response?.data ?? error;
-
-          if (url.startsWith && url.startsWith("http")) {
-            localStorage.setItem("order", "Invoice");
-            this.$router.push({ path: "/billing" });
-            return;
-          }
-
-          const matched = (
-            error.response?.data?.message ??
-            error.message ??
-            ""
-          ).split(/error:"|error: "/);
-          const message = matched.at(-1).split('" ').at(0);
-
-          if (message) {
-            this.$notification.error({ message });
-          } else {
-            const message =
-              error.response?.data?.message ?? error.message ?? error;
-
-            this.$notification.error({ message });
-          }
-          this.modal.confirmLoading = false;
-          console.error(error);
-        });
-    },
-    orderConfirm() {
-      if (!this.config.domain.match(/.+\..+/)) {
-        this.$message.error(this.$t("domain is wrong"));
-        return;
-      }
-
-      // const regexEmail = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
-      // if (this.config.email.match(regexEmail)) {
-      //   this.$message.error(this.$t('email is not valid'))
-      //   return
-      // }
-
-      const instance = {
-        config: {},
-        billingPlan: this.plans.find(({ uuid }) => uuid === this.plan),
-      };
-      const isPayg = this.checkPayg(instance);
-      const { price } = this.getProducts;
-
-      if (isPayg && !this.checkBalance(price)) return;
-      this.modal.confirmCreate = true;
-    },
-    async fetchPlans(sp) {
-      const cacheKey = `${sp}_${this.userCurrency.code}`;
-
-      if (this.cachedPlans[cacheKey]) {
-        this.changeProducts();
-        return;
-      }
-
-      this.isPlansLoading = true;
-
-      try {
-        const { pool } = await this.plansStore.fetch({
-          anonymously: !this.isLogged,
-          sp_uuid: sp,
-        });
-
-        this.cachedPlans[cacheKey] = pool;
-        this.plan = this.plans[0]?.uuid;
-        this.changeProducts();
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error;
-
-        this.$notification.error({ message });
-      } finally {
-        this.isPlansLoading = false;
-      }
-    },
-  },
 };
 </script>
 
@@ -971,5 +985,16 @@ export default {
 .textchange-leave-to {
   transform: translateY(0.5em);
   opacity: 0;
+}
+
+.price__sale {
+  justify-content: center;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.price__sale .without_sale {
+  text-decoration: line-through;
+  margin-right: 10px;
 }
 </style>

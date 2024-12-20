@@ -1,6 +1,5 @@
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { useCloudStore } from "@/stores/cloud.js";
-import { useCurrency } from "@/hooks/utils";
 import { getDisk, getTarification } from "@/functions.js";
 
 function useCloudPrices(
@@ -11,9 +10,18 @@ function useCloudPrices(
   priceOVH
 ) {
   const cloudStore = useCloudStore();
-  const { formatPrice } = useCurrency();
+
+  const startPrice = ref();
+  const startPriceWithSale = ref();
+  const periodicPrice = ref();
 
   const plan = computed(() => cloudStore.plan ?? {});
+
+  const planWithSale = computed(
+    () => cloudStore.planWithApplyedPromocode ?? plan.value
+  );
+
+  const isSaleApply = computed(() => !!cloudStore.planWithApplyedPromocode);
 
   const product = computed(() => {
     const isActiveKeyNotLoc = activeKey.value !== "location";
@@ -23,37 +31,8 @@ function useCloudPrices(
       return currentProduct.value;
     }
 
-    return getMinProduct();
+    return getMinProduct(plan.value);
   });
-
-  function getMinProduct() {
-    const config = options.config.configuration ?? {};
-    const datacenter = Object.keys(config).find((key) =>
-      key.includes("datacenter")
-    );
-    const values = Object.values(plan.value.products ?? {}).filter(
-      (product) => product.public
-    );
-
-    values.sort((a, b) => a.price - b.price);
-    const result = values.find(
-      ({ period, meta }) =>
-        tarification.value === getTarification(period) &&
-        (meta.datacenter?.includes(config[datacenter]) ||
-          !plan.value.type.includes("ovh"))
-    );
-
-    if (!result) return {};
-    if (result.meta.cpu) result.resources.cpu = result.meta.cpu;
-
-    if (!result.resources.ram) {
-      result.resources.ram = getResource("ram", result);
-    }
-
-    setDriveType(result);
-    setDriveSize(result);
-    return result;
-  }
 
   function setDriveType(target) {
     if (!target.resources.drive_type) {
@@ -130,23 +109,11 @@ function useCloudPrices(
     return addons[0]?.key ?? "";
   }
 
-  const productFullPriceStatic = computed(() => {
-    if (!plan.value) return 0;
-    const values = Object.values(plan.value.products ?? {}).filter(
-      (product) => product.public
-    );
-    const value =
-      activeKey.value !== "location"
-        ? values.find(({ title }) => title === product.value.title)
-        : product.value;
+  function getResourcesPrice(plan) {
+    const product = getProduct(plan);
 
-    if (!value) return 0;
-    return (value.price / value.period) * 3600 * 24 * 30;
-  });
-
-  const productFullPriceCustom = computed(() => {
     const price = [];
-    for (const resource of plan.value.resources ?? []) {
+    for (const resource of plan.resources ?? []) {
       const key = resource.key.toLowerCase();
 
       if (key.includes("ip")) {
@@ -160,9 +127,7 @@ function useCloudPrices(
         const { size } =
           activeKey.value === "location"
             ? {
-                size:
-                  product.value.resources?.drive_size ??
-                  options.disk.min * 1024,
+                size: product.resources?.drive_size ?? options.disk.min * 1024,
               }
             : options.disk;
         const type =
@@ -182,34 +147,78 @@ function useCloudPrices(
       }
     }
     return price.reduce((accum, item) => accum + item, 0);
-  });
+  }
 
-  const productFullPriceOVH = computed(() => {
+  function getProduct(plan) {
+    const isActiveKeyNotLoc = activeKey.value !== "location";
+    const isTarificationValid = tarification.value !== "-";
+
+    if (isActiveKeyNotLoc && isTarificationValid) {
+      return plan.products[currentProduct.value.key];
+    }
+
+    return getMinProduct(plan);
+  }
+
+  function getMinProduct(plan) {
+    const config = options.config.configuration ?? {};
+    const datacenter = Object.keys(config).find((key) =>
+      key.includes("datacenter")
+    );
+    const values = Object.values(plan.products ?? {}).filter(
+      (product) => product.public
+    );
+
+    values.sort((a, b) => a.price - b.price);
+    const result = values.find(
+      ({ period, meta = {} }) =>
+        tarification.value === getTarification(period) &&
+        (meta.datacenter?.includes(config[datacenter]) ||
+          !plan.type.includes("ovh"))
+    );
+
+    if (!result) return {};
+    if (result.meta?.cpu) result.resources.cpu = result.meta?.cpu;
+
+    if (!result.resources.ram) {
+      result.resources.ram = getResource("ram", result);
+    }
+
+    setDriveType(result);
+    setDriveSize(result);
+    return result;
+  }
+
+  function getProductPrice(plan) {
+    if (!plan) return 0;
+    const values = Object.values(plan.products ?? {}).filter(
+      (product) => product.public
+    );
+    const product = getProduct(plan);
+    const value =
+      activeKey.value !== "location"
+        ? values.find(({ title }) => title === product.title)
+        : product;
+
+    if (!value) return 0;
+    return (value.price / value.period) * 3600 * 24 * 30;
+  }
+
+  function getOvhprice(plan) {
     const { value, addons } = priceOVH;
     const addonsPrice = Object.values(addons).reduce((a, b) => a + b, 0);
 
     if (activeKey.value === "location") {
-      return product.value.price ?? value;
+      const product = getProduct(plan);
+      return product.price ?? value;
     }
-    // let percent = (plan.value.fee?.default ?? 0) / 100 + 1;
 
     return value + addonsPrice;
-    // if (!plan.value.fee?.ranges) return value + addonsPrice;
+  }
 
-    // for (let range of plan.value.fee.ranges) {
-    //   if (value <= range.from) continue;
-    //   if (value > range.to) continue;
-    //   percent = range.factor / 100 + 1;
-    // }
-
-    // return value + addonsPrice * percent;
-  });
-
-  const productFullPrice = computed(() => {
+  function getFullPrice(plan, withInstallationFee = false) {
     const resourcesPrice =
-      plan.value.type === "ione"
-        ? formatPrice(productFullPriceCustom.value * 24 * 30)
-        : 0;
+      plan.type === "ione" ? getResourcesPrice(plan) * 24 * 30 : 0;
     const addonsPrice = Object.values(priceOVH.addons).reduce(
       (result, value) => result + value,
       0
@@ -233,19 +242,19 @@ function useCloudPrices(
         break;
       case "Hourly":
         period = "hour";
-        price = productFullPriceCustom.value;
+        price = getResourcesPrice(plan);
     }
 
-    if (plan.value.type?.includes("ovh") || plan.value.type === "keyweb") {
+    if (plan.type?.includes("ovh") || plan.type === "keyweb") {
       period = "hour";
-      price = productFullPriceOVH.value;
-    } else if (plan.value.kind === "STATIC") {
-      price = productFullPriceStatic.value;
+      price = getOvhprice(plan);
+    } else if (plan.kind === "STATIC") {
+      price = getProductPrice(plan);
     }
-
-    console.log(productFullPriceOVH.value, productFullPriceStatic.value);
-    price += product.value.installationFee ?? 0;
-    price = formatPrice(price);
+    if (withInstallationFee) {
+      const product = getProduct(plan);
+      price += product.installationFee ?? 0;
+    }
 
     switch (period) {
       case "minute":
@@ -266,9 +275,21 @@ function useCloudPrices(
         console.error("[VDC Calculator]: Wrong period in calc.", period);
         return 0;
     }
+  }
+
+  watch([plan, planWithSale, currentProduct, product, options], () => {
+    periodicPrice.value = getFullPrice(plan.value);
+    startPrice.value = getFullPrice(plan.value, true);
+    startPriceWithSale.value = getFullPrice(planWithSale.value, true);
   });
 
-  return { minProduct: product, productFullPrice };
+  return {
+    minProduct: product,
+    startPrice,
+    periodicPrice,
+    isSaleApply,
+    startPriceWithSale,
+  };
 }
 
 export default useCloudPrices;

@@ -87,12 +87,7 @@
             <a-spin class="price__spin" size="small" spinning />
           </template>
           <template v-else>
-            {{
-              formatPrice(
-                productFullPrice - (minProduct.installationFee ?? 0),
-                currency
-              )
-            }}
+            {{ formatPrice(periodicPrice, currency) }}
             {{ currency.title }}
           </template>
         </a-col>
@@ -142,11 +137,30 @@
             <a-spin class="price__spin" size="small" spinning />
           </template>
           <template v-else>
-            {{ formatPrice(productFullPrice, currency) }} {{ currency.title }}
+            <div v-if="isSaleApply" class="price__sale" style="">
+              <span class="without_sale">
+                {{ formatPrice(startPrice, currency) }} {{ currency.title }}
+              </span>
+
+              <span>
+                {{ formatPrice(startPriceWithSale, currency) }}
+                {{ currency.title }}
+              </span>
+            </div>
+            <template v-else>
+              {{ formatPrice(startPrice, currency) }} {{ currency.title }}
+            </template>
           </template>
         </a-col>
       </transition>
     </a-row>
+
+    <promocode-menu
+      :is-flavors-loading="isFlavorsLoading"
+      :plan-id="cloudStore.planId"
+      :applyed-promocode="promocode"
+      @update:promocode="promocode = $event"
+    />
 
     <cloud-create-button
       :product-size="productSize"
@@ -171,6 +185,8 @@ import { checkPayg } from "@/functions.js";
 import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import cloudResources from "@/components/cloud/create/resources.vue";
 import cloudCreateButton from "@/components/cloud/create/button.vue";
+import promocodeMenu from "@/components/ui/promocode-menu.vue";
+import { storeToRefs } from "pinia";
 
 const props = defineProps({
   productSize: { type: String, required: true },
@@ -185,6 +201,7 @@ const emits = defineEmits(["update:tarification"]);
 const i18n = useI18n();
 const { currency, formatPrice } = useCurrency();
 const cloudStore = useCloudStore();
+const { promocode } = storeToRefs(useCloudStore());
 const addonsStore = useAddonsStore();
 
 const [product] = inject("useProduct", () => [])();
@@ -224,13 +241,13 @@ const periodColumns = computed(() => {
 
 const [activeKey] = inject("useActiveKey", () => [])();
 const { tarification, productSize } = toRefs(props);
-const { productFullPrice, minProduct } = useCloudPrices(
-  product,
-  tarification,
-  activeKey,
-  options,
-  priceOVH
-);
+const {
+  periodicPrice,
+  startPrice,
+  minProduct,
+  startPriceWithSale,
+  isSaleApply,
+} = useCloudPrices(product, tarification, activeKey, options, priceOVH);
 
 function getAddonsValue(key) {
   const addon = options.config.addons?.find((el) => el.includes(key));
@@ -249,7 +266,7 @@ function getAddonsTitle(key) {
 
 async function createOrder() {
   const instance = { config: options.config, billingPlan: cloudStore.plan };
-  const price = productFullPrice.value;
+  const price = startPrice.value;
 
   if (checkPayg(instance) && !checkBalance(price)) return;
   await cloudStore.createOrder(options, product);
@@ -264,5 +281,16 @@ export default { name: "CalculatorBlock" };
 .price__spin {
   margin-left: 5px;
   margin-top: 3px;
+}
+
+.price__sale {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.price__sale .without_sale {
+  text-decoration: line-through;
+  margin-right: 10px;
 }
 </style>
