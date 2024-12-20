@@ -286,6 +286,7 @@ export default { name: "CalculatorBlock" };
 .price__sale {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .price__sale .without_sale {

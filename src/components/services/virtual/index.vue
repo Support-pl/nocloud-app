@@ -988,6 +988,7 @@ export default {
 }
 
 .price__sale {
+  justify-content: center;
   display: flex;
   flex-wrap: wrap;
 }
