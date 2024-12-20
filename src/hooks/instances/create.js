@@ -4,6 +4,7 @@ import { useNotification } from "@/hooks/utils";
 import { useInstancesStore } from "@/stores/instances.js";
 import api from "@/api.js";
 import { CreateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
+import { removeEmptyValues } from "@/functions.js";
 
 function useCreateInstance() {
   const i18n = useI18n();
@@ -49,7 +50,9 @@ function useCreateInstance() {
         data.promocode = promocode;
       }
 
-      await store.instancesApi.create(CreateRequest.fromJson(data));
+      await store.instancesApi.create(
+        CreateRequest.fromJson(removeEmptyValues(data))
+      );
 
       if (response.uuid) {
         if (message) openMessage.success(message);
