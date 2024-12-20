@@ -242,7 +242,7 @@ export const useCloudStore = defineStore("cloud", () => {
       orderData,
       newInstance,
       provider.value.uuid,
-      promocode.value.uuid,
+      promocode.value?.uuid,
       null,
       deployMessage
     );
@@ -278,7 +278,7 @@ export const useCloudStore = defineStore("cloud", () => {
       orderData,
       newInstance,
       provider.value.uuid,
-      promocode.value.uuid,
+      promocode.value?.uuid,
       null,
       deployMessage
     );
