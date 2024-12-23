@@ -476,10 +476,6 @@
         "internal": "Lỗi nội bộ, vui lòng thử lại sau",
         "already_used": "Mã khuyến mại đã được bạn sử dụng"
       },
-      "actions": {
-        "apply": "Áp dụng",
-        "delete": "Xóa bỏ"
-      },
       "placeholder": "Mã khuyến mãi"
     },
     "country": {

@@ -772,10 +772,6 @@
         "internal": "Internal error, please try later",
         "already_used": "Promocode already used by you"
       },
-      "actions": {
-        "apply": "Apply",
-        "delete": "Delete"
-      },
       "placeholder": "Promocode"
     },
     "country": {

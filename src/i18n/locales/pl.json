@@ -672,10 +672,6 @@
         "internal": "Błąd wewnętrzny. Spróbuj później",
         "already_used": "Kod promocyjny już wykorzystany przez Ciebie"
       },
-      "actions": {
-        "apply": "Stosować",
-        "delete": "Usuwać"
-      },
       "placeholder": "Kod promocyjny"
     },
     "country": {
