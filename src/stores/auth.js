@@ -8,6 +8,7 @@ import { useSpStore } from "./sp.js";
 import { useInstancesStore } from "./instances.js";
 import api, { addApiInterceptors } from "@/api.js";
 import config from "@/appconfig.js";
+import { useProductsStore } from "./products.js";
 
 const COOKIES_NAME = "noCloudinApp-token";
 
@@ -16,6 +17,7 @@ export const useAuthStore = defineStore("auth", () => {
   const i18n = useI18n();
   const sp = useSpStore();
   const instances = useInstancesStore();
+  const products = useProductsStore();
 
   const token = ref("");
   const userdata = ref({ data: {} });
@@ -73,6 +75,7 @@ export const useAuthStore = defineStore("auth", () => {
       localStorage.setItem("globalConfig", config);
       localStorage.setItem("lang", lang);
       instances.$reset();
+      products.resetProducts();
       sp.$reset();
 
       token.value = "";
