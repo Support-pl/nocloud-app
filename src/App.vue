@@ -185,9 +185,6 @@ router.beforeEach((to, _, next) => {
   } else next();
 });
 
-authStore.load();
-if (authStore.isLogged) authStore.fetchUserData();
-
 onMounted(async () => {
   const lang = route.query.lang ?? localStorage.getItem("lang");
 
@@ -303,6 +300,11 @@ async function firstLoad() {
     isInitLoading.value = true;
 
     await currenciesStore.fetchCurrencies();
+
+    authStore.load();
+    if (authStore.isLogged) {
+      await authStore.fetchUserData();
+    }
   } finally {
     isInitLoading.value = false;
   }

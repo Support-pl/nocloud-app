@@ -33,8 +33,6 @@ export function addApiInterceptors() {
   api.axios.interceptors.request.use((request) => {
     const store = useCurrenciesStore();
 
-    console.log(store.userCurrency?.code);
-
     if (store.userCurrency?.code) {
       request.headers["grpc-metadata-nocloud-primary-currency-code"] =
         store.userCurrency.code;
