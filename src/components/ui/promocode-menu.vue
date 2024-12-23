@@ -20,25 +20,21 @@
       <a-button
         :disabled="isPromocodeApplyDisabled"
         :loading="isPromocodeLoading"
+        :icon="h(isPromocodeAlreadyApply ? CloseOutlined : ArrowRightOutlined)"
         @click="!isPromocodeAlreadyApply ? applyPromocode() : resetPromocode()"
-      >
-        {{
-          $t(
-            `promocode.actions.${isPromocodeAlreadyApply ? "delete" : "apply"}`
-          )
-        }}
-      </a-button>
+      />
     </a-col>
   </a-row>
 </template>
 
 <script setup>
 import { usePromocodesStore } from "@/stores/promocodes";
-import { computed, ref, toRefs, watch } from "vue";
+import { computed, ref, toRefs, watch, h } from "vue";
 import { GetPromocodeByCodeRequest } from "nocloud-proto/proto/es/billing/promocodes/promocodes_pb";
 import { Code } from "@connectrpc/connect";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
+import { ArrowRightOutlined, CloseOutlined } from "@ant-design/icons-vue";
 
 const props = defineProps({
   isFlavorsLoading: { type: Boolean, default: false },
@@ -86,7 +82,6 @@ const applyPromocode = async () => {
 
     emit("update:promocode", response);
     console.log(response);
-    
   } catch (e) {
     let msg = "promocode.errors.";
 
