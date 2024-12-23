@@ -600,10 +600,6 @@
         "internal": "Erreur interne, veuillez réessayer plus tard",
         "already_used": "Code promotionnel déjà utilisé par vous"
       },
-      "actions": {
-        "apply": "Appliquer",
-        "delete": "Supprimer"
-      },
       "placeholder": "Code promotionnel"
     },
     "country": {
