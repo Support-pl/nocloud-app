@@ -50,7 +50,7 @@ import { Modal, theme } from "ant-design-vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
-import api from "@/api.js";
+import api, { addApiInterceptors } from "@/api.js";
 import config from "@/appconfig.js";
 
 import { useAppStore } from "@/stores/app.js";
@@ -149,6 +149,8 @@ window.addEventListener("message", async ({ data, origin }) => {
   api.applyToken(data.token);
   authStore.setToken(data.token);
   authStore.load();
+
+  addApiInterceptors();
 
   await authStore.fetchUserData(true);
   await authStore.fetchBillingData(true);
