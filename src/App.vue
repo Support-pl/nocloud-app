@@ -50,7 +50,7 @@ import { Modal, theme } from "ant-design-vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
-import api from "@/api.js";
+import api, { addApiInterceptors } from "@/api.js";
 import config from "@/appconfig.js";
 
 import { useAppStore } from "@/stores/app.js";
@@ -150,6 +150,8 @@ window.addEventListener("message", async ({ data, origin }) => {
   authStore.setToken(data.token);
   authStore.load();
 
+  addApiInterceptors();
+
   await authStore.fetchUserData(true);
   await authStore.fetchBillingData(true);
 
@@ -182,9 +184,6 @@ router.beforeEach((to, _, next) => {
     next({ name: "root" });
   } else next();
 });
-
-authStore.load();
-if (authStore.isLogged) authStore.fetchUserData();
 
 onMounted(async () => {
   const lang = route.query.lang ?? localStorage.getItem("lang");
@@ -301,6 +300,11 @@ async function firstLoad() {
     isInitLoading.value = true;
 
     await currenciesStore.fetchCurrencies();
+
+    authStore.load();
+    if (authStore.isLogged) {
+      await authStore.fetchUserData();
+    }
   } finally {
     isInitLoading.value = false;
   }
