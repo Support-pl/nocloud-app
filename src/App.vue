@@ -172,7 +172,7 @@ router.beforeEach((to, _, next) => {
     appStore.isButtonsVisible = true;
   }
 
-  if (mustBeLoggined && !authStore.isLogged) {
+  if (mustBeLoggined && !authStore.isLogged && !isInitLoading.value) {
     next({ name: "login" });
   } else if (!isRouteExist(to.name)) {
     if (!authStore.billingUser.roles?.services) {
@@ -206,7 +206,7 @@ onMounted(async () => {
     appStore.isButtonsVisible = false;
   }
 
-  if (route.meta?.mustBeLoggined && !authStore.isLogged) {
+  if (route.meta?.mustBeLoggined && !authStore.isLogged && !isInitLoading.value) {
     router.replace("login");
   } else if (localStorage.getItem("oauth") && !isIncluded) {
     router.replace("cabinet");
