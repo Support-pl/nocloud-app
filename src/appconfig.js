@@ -1,100 +1,112 @@
-import * as icons from '@ant-design/icons-vue'
+import * as icons from "@ant-design/icons-vue";
 
-const config = localStorage.getItem('globalConfig')
+const config = localStorage.getItem("globalConfig");
 
-if (config) globalThis.globalConfig = JSON.parse(config)
-const { globalConfig } = globalThis
+if (config) globalThis.globalConfig = JSON.parse(config);
+const { globalConfig } = globalThis;
 
 export default {
   colors: globalConfig.app?.colors,
   department: globalConfig.department,
 
-  languages: globalConfig.languages ?? ['en'],
+  languages: globalConfig.languages ?? ["en"],
   vdcEnabled: globalConfig.vdc_enabled ?? false,
   sharedEnabled: globalConfig.shared_enabled ?? false,
   cloudEnabled: globalConfig.cloud_enabled ?? false,
 
-  whmcsSiteUrl: globalConfig.whmcs?.site_url ?? '',
+  whmcsSiteUrl: globalConfig.whmcs?.site_url ?? "",
   whmcsRegistration: globalConfig.whmcs?.registration ?? false,
   whmcsActs: globalConfig.whmcs?.acts ?? false,
-  sharedFolder: globalConfig.app?.shared_folder ?? 'virtualHosting',
+  sharedFolder: globalConfig.app?.shared_folder ?? "virtualHosting",
 
-  appTitle: globalConfig.app?.title ?? '',
+  appTitle: globalConfig.app?.title ?? "",
   appLogo: {
-    path: globalConfig.app?.logo ?? '',
-    pos: globalConfig.app?.logo_position.toLowerCase() || 'top'
+    path: globalConfig.app?.logo ?? "",
+    pos: globalConfig.app?.logo_position.toLowerCase() || "top",
   },
 
   services: {
     virtual: {
-      groupname: ['Виртуальный хостинг', 'Shared Hosting'],
-      creationRouteName: 'service-virtual',
-      icon: icons.SolutionOutlined
+      groupname: ["Виртуальный хостинг", "Shared Hosting"],
+      creationRouteName: "service-virtual",
+      icon: icons.SolutionOutlined,
     },
     domains: {
-      groupname: ['Domains'],
-      creationRouteName: 'service-domains',
-      icon: icons.SolutionOutlined
+      groupname: ["Domains"],
+      creationRouteName: "service-domains",
+      icon: icons.SolutionOutlined,
     },
     ssl: {
-      groupname: ['GoGet SSL 2.5.6', 'SSL', 'SSL сертификаты'],
-      creationRouteName: 'service-ssl',
+      groupname: ["GoGet SSL 2.5.6", "SSL", "SSL сертификаты"],
+      creationRouteName: "service-ssl",
       icon: icons.LockOutlined,
       additionalRoutes: [
         {
-          path: 'SSL/generator/:id',
-          name: 'generator-SSL',
+          path: "SSL/generator/:id",
+          name: "generator-SSL",
           meta: {
-            footerTitle: 'services',
+            footerTitle: "services",
             isNeedBackButton: true,
-            headerTitle: 'CSR generator'
+            headerTitle: "CSR generator",
           },
-          componentName: 'generator'
-        }
-      ]
+          componentName: "generator",
+        },
+      ],
     },
     vm: {
-      groupname: ['Self-Service VDS (2018)', 'Self-Service VDS SSD HC', 'Self-Service VDS SSD (2018)'],
-      creationRouteName: 'newPaaS',
-      icon: icons.DatabaseOutlined
+      groupname: [
+        "Self-Service VDS (2018)",
+        "Self-Service VDS SSD HC",
+        "Self-Service VDS SSD (2018)",
+      ],
+      creationRouteName: "newPaaS",
+      icon: icons.DatabaseOutlined,
     },
     iaas: {
-      groupname: ['VDS SSD', 'VDC IaaS'],
-      creationRouteName: 'service-iaas',
-      icon: icons.ShoppingOutlined
+      groupname: ["VDS SSD", "VDC IaaS"],
+      creationRouteName: "service-iaas",
+      icon: icons.ShoppingOutlined,
     },
     acronis: {
-      groupname: ['Acronis'],
-      creationRouteName: 'service-acronis',
-      icon: icons.RollbackOutlined
+      groupname: ["Acronis"],
+      creationRouteName: "service-acronis",
+      icon: icons.RollbackOutlined,
     },
     custom: {
-      groupname: ['Custom'],
-      creationRouteName: 'service-custom',
-      icon: icons.AppstoreOutlined
+      groupname: ["Custom"],
+      creationRouteName: "service-custom",
+      icon: icons.AppstoreOutlined,
+    },
+    vpn: {
+      groupname: ["VPN"],
+      creationRouteName: "service-vpn",
+      icon: icons.AppstoreOutlined,
     },
     openai: {
-      groupname: ['OpenAI'],
-      creationRouteName: 'service-openai',
-      icon: icons.RobotOutlined
+      groupname: ["OpenAI"],
+      creationRouteName: "service-openai",
+      icon: icons.RobotOutlined,
     },
     vdc: {
-      groupname: ['VDC'],
-      creationRouteName: 'newVDC',
-      icon: icons.ClusterOutlined
-    }
+      groupname: ["VDC"],
+      creationRouteName: "newVDC",
+      icon: icons.ClusterOutlined,
+    },
   },
-  getServiceType (groupname) {
-    const services = this.services
+  getServiceType(groupname) {
+    const services = this.services;
     for (const service in services) {
-      const serviceGroup = services[service].groupname
-      if (typeof serviceGroup === 'object') {
-        const indexOf = serviceGroup.map(el => el.toLowerCase()).indexOf(groupname?.toLowerCase())
-        if (indexOf !== -1) return service
+      const serviceGroup = services[service].groupname;
+      if (typeof serviceGroup === "object") {
+        const indexOf = serviceGroup
+          .map((el) => el.toLowerCase())
+          .indexOf(groupname?.toLowerCase());
+        if (indexOf !== -1) return service;
       } else {
-        if (serviceGroup.toLowerCase() === groupname?.toLowerCase()) return service
+        if (serviceGroup.toLowerCase() === groupname?.toLowerCase())
+          return service;
       }
     }
-    return null
-  }
-}
+    return null;
+  },
+};
