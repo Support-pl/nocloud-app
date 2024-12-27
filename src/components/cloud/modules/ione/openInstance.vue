@@ -131,6 +131,15 @@
           </a-radio-group>
         </a-modal>
       </div>
+
+      <div class="Fcloud__button" @click="onVpnButtonClick">
+        <div class="Fcloud__BTN-icon">
+          <cluster-outlined />
+        </div>
+        <div class="Fcloud__BTN-title">
+          {{ $t("VPN") }}
+        </div>
+      </div>
     </div>
 
     <div class="Fcloud__info">
@@ -542,6 +551,9 @@ const redoIcon = defineAsyncComponent(() =>
 const backwardIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/BackwardOutlined")
 );
+const clusterOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ClusterOutlined")
+);
 
 const flagIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/FlagFilled")
@@ -607,6 +619,7 @@ export default defineComponent({
     renewalModal,
     redoIcon,
     backwardIcon,
+    clusterOutlined,
     flagIcon,
     envIcon,
     infoIcon,
@@ -959,6 +972,12 @@ export default defineComponent({
       this.$router.push({
         name: "VNC",
         params: { uuid: this.$route.params.uuid },
+      });
+    },
+    onVpnButtonClick() {
+      this.$router.push({
+        name: "service-vpn",
+        query: { instance: this.$route.params.uuid },
       });
     },
     handleOk(from) {
