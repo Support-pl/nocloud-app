@@ -602,6 +602,54 @@
       },
       "placeholder": "Code promotionnel"
     },
+    "vpn": {
+      "fields": {
+        "password": "Mot de passe",
+        "host": "Hôte",
+        "port": "Port",
+        "username": "Nom d'utilisateur"
+      },
+      "actions": {
+        "start": "Commencer",
+        "stop": "Arrêt",
+        "hard_reset": "Réinitialisation matérielle",
+        "delete": "Supprimer",
+        "install": "Installer",
+        "download_config_file": "Télécharger le fichier",
+        "copy_config": "Copier dans le presse-papier"
+      },
+      "labels": {
+        "select_server": "Sélectionnez le serveur",
+        "change_client_info": "Modifier les informations client ?",
+        "or": "ou",
+        "free": "Gratuit",
+        "server": "Serveur",
+        "buy_vds": "Acheter des DVD",
+        "hard_reset_help_message": "Votre VPN sera complètement supprimé et installé complètement bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla",
+        "connect_to_vpn_instruction": "Insérez la configuration dans l'application Wireguard \n "
+      },
+      "errors": {
+        "unreachable": {
+          "title": "Le client est inaccessible",
+          "message": ""
+        },
+        "not_included_os": {
+          "title": "Le système d'exploitation des clients n'est pas pris en charge",
+          "message": ""
+        },
+        "unknown": {
+          "title": "Erreur inconnue",
+          "message": "S'il vous plaît, réessayez plus tard"
+        }
+      },
+      "status": {
+        "stopped": "Arrêté",
+        "init": "Initialisation",
+        "error": "Erreur",
+        "active": "Actif",
+        "unreachable": "Injoignable"
+      }
+    },
     "country": {
       "VN": "Viêt Nam",
       "BY": "Biélorussie",
