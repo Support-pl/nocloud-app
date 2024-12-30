@@ -2,47 +2,87 @@
   <div class="order_wrapper">
     <div class="order">
       <div class="order__field order__main">
-        <div class="order_description">
-          <span>Select server or Buy VDS</span>
-        </div>
         <div class="config">
-          <a-select
-            v-model:value="selectedInstance"
-            :options="instances"
-            style="width: 350px"
-            allow-clear
-            placeholder="Server"
-          />
+          <div class="additional_actions">
+            <span class="description">{{ t("vpn.labels.select_server") }}</span>
 
-          <div>
-            <a-button type="primary">Buy VDS</a-button>
+            <a-select
+              class="server"
+              v-model:value="selectedInstance"
+              :options="instances"
+              style="width: 350px"
+              allow-clear
+              :placeholder="t('vpn.labels.server')"
+            />
+
+            <span class="description or">
+              {{ t("vpn.labels.or") }}
+            </span>
+
+            <div>
+              <a-button type="primary">
+                {{ t("vpn.labels.buy_vds") }}
+              </a-button>
+            </div>
           </div>
 
-          <a-input
-            class="config__field"
+          <a-form
+            ref="formRef"
+            class="form"
+            :model="options.config"
+            name="basic"
+            autocomplete="off"
             :disabled="!selectedInstance"
-            v-model:value="options.config.username"
-            placeholder="Username"
-          />
-          <a-input-password
-            class="config__field"
-            :disabled="!selectedInstance"
-            v-model:value="options.config.password"
-            placeholder="Password"
-            type="password"
-          />
-          <a-input
-            class="config__field"
-            :disabled="!selectedInstance"
-            v-model:value="options.config.host"
-            placeholder="Host"
-          />
-          <a-input
-            class="config__field"
-            :disabled="!selectedInstance"
-            v-model:value="options.config.port"
-            placeholder="Port"
-          />
+          >
+            <a-form-item
+              class="config__field"
+              name="username"
+              :label="t('vpn.fields.username')"
+              :rules="[requiredRule]"
+            >
+              <a-input
+                v-model:value="options.config.username"
+                :placeholder="t('vpn.fields.username')"
+              />
+            </a-form-item>
+
+            <a-form-item
+              name="password"
+              :rules="[requiredRule]"
+              class="config__field"
+              :label="t('vpn.fields.password')"
+            >
+              <a-input-password
+                v-model:value="options.config.password"
+                :placeholder="t('vpn.fields.password')"
+              />
+            </a-form-item>
+
+            <a-form-item
+              name="host"
+              :rules="[requiredRule]"
+              class="config__field"
+              :label="t('vpn.fields.host')"
+            >
+              <a-input
+                v-model:value="options.config.host"
+                :placeholder="t('vpn.fields.host')"
+              />
+            </a-form-item>
+
+            <a-form-item
+              :label="t('vpn.fields.port')"
+              name="port"
+              :rules="[requiredRule]"
+              class="config__field"
+            >
+              <a-input
+                v-model:value="options.config.port"
+                :placeholder="t('vpn.fields.port')"
+                type="number"
+              />
+            </a-form-item>
+          </a-form>
         </div>
       </div>
 
@@ -58,7 +98,7 @@
         />
 
         <a-divider orientation="left" :style="{ 'margin-bottom': '0' }">
-          {{ $t("Total") }}:
+          {{ t("Total") }}:
         </a-divider>
 
         <a-row justify="space-around">
@@ -69,7 +109,7 @@
                 {{ currency.title }}
               </template>
               <template v-else>
-                {{ t("Free") }}
+                {{ t("vpn.labels.free") }}
               </template>
             </template>
             <div v-else class="loadingLine loadingLine--total" />
@@ -78,19 +118,25 @@
 
         <a-row justify="space-around" style="margin: 10px 0">
           <a-col :span="22">
-            <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ capitalize($t("order")) }}
+            <a-button
+              type="primary"
+              block
+              shape="round"
+              :disabled="!selectedInstance"
+              @click="orderConfirm"
+            >
+              {{ capitalize(t("vpn.actions.install")) }}
             </a-button>
             <a-modal
-              :title="$t('Confirm')"
+              :title="t('Confirm')"
               :open="modal.confirmCreate"
               :confirm-loading="modal.confirmLoading"
-              :cancel-text="$t('Cancel')"
+              :cancel-text="t('Cancel')"
               @ok="orderClickHandler"
               @cancel="modal.confirmCreate = false"
             >
               <p>
-                {{ $t("order_services.Do you want to order") }}:
+                {{ t("order_services.Do you want to order") }}:
                 {{ `${options.product.title} (${selectedInstance})` }}
               </p>
             </a-modal>
@@ -101,13 +147,13 @@
       <promo-block class="order__promo" />
 
       <a-modal
-        :title="$t(errModal.title)"
+        :title="t(errModal.title)"
         :open="errModal.open"
         @ok="errModal.open = false"
         @cancel="errModal.open = false"
       >
         <p>
-          {{ $t(errModal.message) }}
+          {{ t(errModal.message) }}
         </p>
       </a-modal>
     </div>
@@ -166,6 +212,7 @@ const options = ref({
   config: { username: "", password: "", host: "", port: "", instance: "" },
   product: "",
 });
+const formRef = ref(null);
 const modal = ref({ confirmCreate: false, confirmLoading: false });
 const errModal = ref({ open: false, title: "", message: "" });
 
@@ -251,6 +298,12 @@ const services = computed(() => {
   return instancesStore.services.filter((el) => el.status !== "DEL");
 });
 
+const requiredRule = computed(() => ({
+  required: true,
+  message: t("ssl_product.field is required"),
+  trigger: "blur",
+}));
+
 const fetchPlans = async (provider) => {
   const cacheKey = `${provider}_${currency.value.code}`;
 
@@ -263,7 +316,6 @@ const fetchPlans = async (provider) => {
 
     cachedPlans.value[cacheKey] = pool;
     plan.value = plans.value[0]?.uuid;
-    console.log(plans.value);
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
@@ -362,14 +414,13 @@ const createVirtual = async (info, instance) => {
     errModal.value.open = true;
     switch (err.message) {
       case "UNREACHABLE": {
-        errModal.value.title = "UNREACHABLE";
-        errModal.value.message =
-          "Please check your sdcnjscndjsccsdvd,bdl v,wedlfm gdkemdqkf dmfkqwmf jd";
+        errModal.value.title = "vpn.errors.unreachable.title";
+        errModal.value.message = "vpn.errors.unreachable.message";
         break;
       }
       default: {
-        errModal.value.title = "Unknown error";
-        errModal.value.message = "Please try again later";
+        errModal.value.title = "vpn.errors.unknown.title";
+        errModal.value.message = "vpn.errors.unknown.message";
         break;
       }
     }
@@ -380,7 +431,9 @@ const createVirtual = async (info, instance) => {
   }
 };
 
-const orderConfirm = () => {
+const orderConfirm = async () => {
+  await formRef.value.validate();
+
   const { price } = options.value.product;
 
   if (!checkBalance(price)) return;
@@ -405,7 +458,7 @@ watch(plan, () => {
   }
 });
 
-watch(selectedInstance, (value) => {
+watch(selectedInstance, async (value) => {
   if (value) {
     const instance = instancesStore.instances.find(
       (instance) => instance.title === selectedInstance.value
@@ -425,6 +478,8 @@ watch(selectedInstance, (value) => {
       options.value.config.host = "";
       options.value.config.port = "";
     }
+
+    await formRef.value.validate();
   } else {
     options.value.config.instance = null;
     options.value.config.password = "";
@@ -725,26 +780,39 @@ export default {
 
 .config {
   display: grid;
-  grid-template-columns: 350px 350px;
-  grid-template-rows: 1fr 1fr 1fr;
-  grid-column-gap: 20px;
 }
 
-.config .config__field {
-  margin: 5px 5px 5px 20px;
-}
 .config div {
   margin: 5px 5px 5px 20px;
 }
 
-.order_description {
+.config .form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.config .additional_actions {
   display: flex;
-  justify-content: start;
-  margin-left: 25px;
   align-items: center;
 }
 
-.order_description span {
+.config .additional_actions .server {
+  max-width: 300px;
+}
+
+.config .additional_actions .description {
   font-size: 1.3rem;
+}
+
+.config .additional_actions .or {
+  margin-left: 5px;
+}
+</style>
+
+<style>
+.ant-col.ant-form-item-label {
+  min-width: 100px;
+  display: flex;
 }
 </style>

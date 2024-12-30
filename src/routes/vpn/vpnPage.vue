@@ -13,7 +13,7 @@
                 {{ capitalize(t("status")) }}:
                 <a-tag size="large" :color="instanceStatus.color">
                   <span style="font-size: 1rem">
-                    {{ t(capitalize(instanceStatus.title)) }}
+                    {{ t(`vpn.status.${instanceStatus.title}`) }}
                   </span>
                 </a-tag>
               </div>
@@ -25,49 +25,50 @@
                 :loading="loadingAction == 'start'"
                 :disabled="isStartDisabled"
                 :icon="h(startIcon)"
-                >Start</a-button
+                >{{ t("vpn.actions.start") }}</a-button
               >
               <a-button
                 :loading="loadingAction == 'stop'"
                 :disabled="isStopDisabled"
                 @click="stopInstance"
                 :icon="h(stopIcon)"
-                >Stop</a-button
               >
+                {{ t("vpn.actions.stop") }}
+              </a-button>
               <a-button
                 @click="isHardResetOpen = true"
                 :loading="loadingAction == 'hard-reset'"
                 danger
                 :icon="h(hardResetIcon)"
-                >Hard reset</a-button
+                >{{ t("vpn.actions.hard_reset") }}</a-button
               >
               <a-button
                 @click="deleteInstance"
                 :loading="loadingAction == 'delete'"
                 danger
                 :icon="h(deleteIcon)"
-                >Delete</a-button
+                >{{ t("vpn.actions.delete") }}</a-button
               >
             </div>
 
-            <div v-if="wgConfig" class="connect_window">
+            <div v-if="isConnectVisible" class="connect_window">
               <div class="instruction">
-                <span>Insert the config into the Wireguard application</span>
-                <span>Bla bla bla bla bla bla bla bla bla</span>
-                <span>Bla bla bla bla bla bla bla bla bla</span>
+                {{ t("vpn.labels.connect_to_vpn_instruction") }}
               </div>
 
               <div class="copy-button">
                 <a-button
                   @click="copyConfigToClipboard"
                   style="margin-right: 10px"
-                  >Copy to clipboard</a-button
+                  >{{ t("vpn.actions.copy_config") }}</a-button
                 >
-                <a-button @click="downloadConfigFile">Download file</a-button>
+                <a-button @click="downloadConfigFile">{{
+                  t("vpn.actions.download_config_file")
+                }}</a-button>
               </div>
 
               <div class="or">
-                <span>Or</span>
+                <span>{{ t("vpn.labels.or") }}</span>
               </div>
 
               <div class="qr-code">
@@ -91,48 +92,78 @@
 
     <a-modal
       v-model:open="isHardResetOpen"
-      title="Hard reset"
+      :title="t('vpn.actions.hard_reset')"
       @ok="hardResetInstance"
+      :ok-text="t('Ok')"
+      :cancel-text="t('Cancel')"
     >
       <div>
-        <span>{{
-          t(
-            "Your vpn will be full delete & full install bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla"
-          )
-        }}</span>
+        <span>{{ t("vpn.labels.hard_reset_help_message") }}</span>
 
         <div class="hard_reset_override">
-          <span style="margin-right: 10px">Change data</span>
+          <span style="margin-right: 10px">{{
+            t("vpn.labels.change_client_info")
+          }}</span>
           <a-switch v-model:checked="hardResetData.isOverride" />
         </div>
 
-        <div class="hard_reset_config">
-          <a-input
+        <a-form
+          ref="hardResetForm"
+          class="hard_reset_config_form"
+          :model="hardResetData.config"
+          name="basic"
+          autocomplete="off"
+          :disabled="!hardResetData.isOverride"
+        >
+          <a-form-item
             class="config__field"
-            :disabled="!hardResetData.isOverride"
-            v-model:value="hardResetData.config.username"
-            placeholder="Username"
-          />
-          <a-input-password
+            name="username"
+            :label="t('vpn.fields.username')"
+            :rules="[requiredRule]"
+          >
+            <a-input
+              v-model:value="hardResetData.config.username"
+              :placeholder="t('vpn.fields.username')"
+            />
+          </a-form-item>
+
+          <a-form-item
+            name="password"
+            :rules="[requiredRule]"
             class="config__field"
-            :disabled="!hardResetData.isOverride"
-            v-model:value="hardResetData.config.password"
-            placeholder="Password"
-            type="password"
-          />
-          <a-input
+            :label="t('vpn.fields.password')"
+          >
+            <a-input-password
+              v-model:value="hardResetData.config.password"
+              :placeholder="t('vpn.fields.password')"
+            />
+          </a-form-item>
+
+          <a-form-item
+            name="host"
+            :rules="[requiredRule]"
             class="config__field"
-            :disabled="!hardResetData.isOverride"
-            v-model:value="hardResetData.config.host"
-            placeholder="Host"
-          />
-          <a-input
+            :label="t('vpn.fields.host')"
+          >
+            <a-input
+              v-model:value="hardResetData.config.host"
+              :placeholder="t('vpn.fields.host')"
+            />
+          </a-form-item>
+
+          <a-form-item
+            :label="t('vpn.fields.port')"
+            name="port"
+            :rules="[requiredRule]"
             class="config__field"
-            :disabled="!hardResetData.isOverride"
-            v-model:value="hardResetData.config.port"
-            placeholder="Port"
-          />
-        </div>
+          >
+            <a-input
+              v-model:value="hardResetData.config.port"
+              :placeholder="t('vpn.fields.port')"
+              type="number"
+            />
+          </a-form-item>
+        </a-form>
       </div>
     </a-modal>
   </div>
@@ -183,6 +214,7 @@ const hardResetData = ref({
   isOverride: false,
   config: {},
 });
+const hardResetForm = ref(null);
 
 onMounted(async () => {
   setInstance();
@@ -225,6 +257,13 @@ const instanceStatus = computed(() => {
     : { color: "error", title: "unreachable" };
 });
 
+const isConnectVisible = computed(
+  () =>
+    !["error", "init", "stopped", "unreachable"].includes(
+      instanceStatus.value.title
+    ) && wgConfig.value
+);
+
 const isStartDisabled = computed(
   () =>
     instanceStatus.value.title !== "stopped" ||
@@ -237,6 +276,12 @@ const isStopDisabled = computed(
 );
 
 const wgConfig = computed(() => instance.value.state?.meta?.wireguard_config);
+
+const requiredRule = computed(() => ({
+  required: true,
+  message: t("ssl_product.field is required"),
+  trigger: "blur",
+}));
 
 const setInstance = () => {
   instance.value = instancesStore.instances.find(
@@ -278,6 +323,8 @@ const startInstance = async () => {
 };
 
 const hardResetInstance = async () => {
+  await hardResetForm.value.validate();
+
   try {
     loadingAction.value = "hard-reset";
 
@@ -333,14 +380,13 @@ const hardResetInstance = async () => {
 
     switch (err.message) {
       case "UNREACHABLE": {
-        title = "UNREACHABLE";
-        message =
-          "Please check your sdcnjscndjsccsdvd,bdl v,wedlfm gdkemdqkf dmfkqwmf jd";
+        title = "vpn.errors.unreachable.title";
+        message = "vpn.errors.unreachable.message";
         break;
       }
       default: {
-        title = "Unknown error";
-        message = "Please try again later";
+        title = "vpn.errors.unknown.title";
+        message = "vpn.errors.unknown.message";
         break;
       }
     }
@@ -354,6 +400,9 @@ const deleteInstance = async () => {
   Modal.confirm({
     title: t("Do you want to delete this service?"),
     content: t("All data will be deleted!"),
+    okText: t("Confirm"),
+    okType: "danger",
+    cancelText: t("Cancel"),
     onOk: async () => {
       try {
         loadingAction.value = "delete";
@@ -485,12 +534,9 @@ watch(isHardResetOpen, () => {
 }
 
 .connect_window .instruction {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
   font-size: 1.3rem;
   margin: 10px 0px;
+  text-align: center;
 }
 
 .connect_window .copy-button {
@@ -513,5 +559,12 @@ watch(isHardResetOpen, () => {
 }
 .hard_reset_override {
   margin: 10px 0px;
+}
+</style>
+
+<style>
+.ant-col.ant-form-item-label {
+  min-width: 90px;
+  display: flex;
 }
 </style>
