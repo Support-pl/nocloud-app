@@ -478,6 +478,54 @@
       },
       "placeholder": "Mã khuyến mãi"
     },
+    "vpn": {
+      "fields": {
+        "password": "Mật khẩu",
+        "host": "Chủ nhà",
+        "port": "Cảng",
+        "username": "Tên người dùng"
+      },
+      "actions": {
+        "start": "Bắt đầu",
+        "stop": "Dừng lại",
+        "hard_reset": "Thiết lập lại cứng",
+        "delete": "Xóa bỏ",
+        "install": "Cài đặt",
+        "download_config_file": "Tải tập tin xuống",
+        "copy_config": "Sao chép vào bảng nhớ tạm"
+      },
+      "labels": {
+        "select_server": "Chọn máy chủ",
+        "change_client_info": "Thay đổi thông tin khách hàng?",
+        "or": "hoặc",
+        "free": "Miễn phí",
+        "server": "Máy chủ",
+        "buy_vds": "Mua vds",
+        "hard_reset_help_message": "VPN của bạn sẽ được xóa hoàn toàn và cài đặt đầy đủ bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla",
+        "connect_to_vpn_instruction": "Chèn config vào ứng dụng Wireguard \n "
+      },
+      "errors": {
+        "unreachable": {
+          "title": "Khách hàng không thể truy cập được",
+          "message": ""
+        },
+        "not_included_os": {
+          "title": "Hệ điều hành khách hàng không được hỗ trợ",
+          "message": ""
+        },
+        "unknown": {
+          "title": "Lỗi không xác định",
+          "message": "Vui lòng thử lại sau"
+        }
+      },
+      "status": {
+        "stopped": "Đã dừng",
+        "init": "Ban đầu",
+        "error": "Lỗi",
+        "active": "Tích cực",
+        "unreachable": "Không thể truy cập"
+      }
+    },
     "country": {
       "VN": "Vietnam",
       "BY": "Belarus",

@@ -774,6 +774,54 @@
       },
       "placeholder": "Promocode"
     },
+    "vpn": {
+      "fields": {
+        "password": "Password",
+        "host": "Host",
+        "port": "Port",
+        "username": "Username"
+      },
+      "actions": {
+        "start": "Start",
+        "stop": "Stop",
+        "hard_reset": "Hard reset",
+        "delete": "Delete",
+        "install": "Install",
+        "download_config_file": "Download file",
+        "copy_config": "Copy to clipboard"
+      },
+      "status": {
+        "stopped": "Stopped",
+        "init": "Init",
+        "error": "Error",
+        "active": "Active",
+        "unreachable": "Unreachable"
+      },
+      "labels": {
+        "select_server": "Select server",
+        "change_client_info": "Change client info?",
+        "or": "or",
+        "free": "Free",
+        "server": "Server",
+        "buy_vds": "Buy vds",
+        "hard_reset_help_message": "Your vpn will be full delete & full install bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla",
+        "connect_to_vpn_instruction": "Insert the config into the Wireguard application \nbla bla bla bla \n bla bla bla bla laldksdkd sjnjcsnjnjcndjfnvjdnfncdsjd njcnjncdjnfsjdnsfjncsd "
+      },
+      "errors": {
+        "unreachable": {
+          "title": "Client is unreachable",
+          "message": ""
+        },
+        "not_included_os": {
+          "title": "Clients os is not supported",
+          "message": ""
+        },
+        "unknown": {
+          "title": "Unknown error",
+          "message": "Please, try again later"
+        }
+      }
+    },
     "country": {
       "VN": "Vietnam",
       "BY": "Belarus",
