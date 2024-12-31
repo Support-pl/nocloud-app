@@ -527,6 +527,13 @@ export default {
   margin: 0 auto;
 }
 
+@media (max-width: 576px) {
+  .order {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
 .order__field {
   border-radius: 20px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
@@ -556,47 +563,6 @@ export default {
 
 .order :deep(.ant-slider-mark-text:last-of-type) {
   transform: translateX(calc(-100% + 10px)) !important;
-}
-
-.product__specs {
-  --color: rgb(126, 126, 126);
-  color: var(--color);
-  margin: 0 auto;
-  --border-color: #dbdbdb;
-  --border-line-weight: 1px;
-  --border-line-type: solid;
-  width: 80%;
-  font-size: 1.2rem;
-}
-
-.product__specs td {
-  padding: 10px 20px;
-  position: relative;
-}
-
-.product__specs td:nth-child(1) {
-  font-weight: 500;
-}
-
-.product__specs td:nth-child(2) {
-  text-align: right;
-  color: rgba(0, 0, 0, 0.7);
-}
-
-.product__specs tr {
-  border-bottom: var(--border-line-weight) var(--border-line-type)
-    var(--border-color);
-}
-
-.product__specs td:last-child::before {
-  content: "";
-  width: 2px;
-  height: 50%;
-  background: #f5f5f5;
-  display: block;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
 }
 
 .order__prop:not(:first-child) {
@@ -732,52 +698,6 @@ export default {
   }
 }
 
-@media screen and (max-width: 1024px) {
-  .order_wrapper {
-    padding: 0;
-  }
-  .order {
-    grid-template-columns: 1fr;
-    gap: 0;
-    padding: 10px;
-    margin-top: 0px;
-    overflow: auto;
-  }
-  .order__field {
-    padding: 10px;
-    box-shadow: none;
-    border-radius: 20px 20px 0 0;
-  }
-  .order__main {
-    border-radius: 0;
-  }
-  .order__calculate {
-    width: auto;
-    border-radius: 0 0 20px 20px;
-  }
-  .order__promo {
-    grid-column: 1;
-    margin-top: 20px;
-  }
-}
-
-@media screen and (max-width: 576px) {
-  .order__template {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: stretch;
-  }
-  .order__template-item {
-    grid-template-columns: max-content auto;
-    grid-template-rows: 1fr;
-    width: auto;
-    height: 50px;
-  }
-  .order__template-item:not(:last-child) {
-    margin-right: 0px;
-  }
-}
-
 .config {
   display: grid;
 }
@@ -795,6 +715,7 @@ export default {
 .config .additional_actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .config .additional_actions .server {
@@ -808,11 +729,22 @@ export default {
 .config .additional_actions .or {
   margin-left: 5px;
 }
+
+@media (max-width: 900px) {
+  .config .form {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, 1fr);
+  }
+
+  .config .form input {
+    max-width: 80vw;
+  }
+}
 </style>
 
 <style>
 .ant-col.ant-form-item-label {
-  min-width: 100px;
+  min-width: 150px;
   display: flex;
 }
 </style>
