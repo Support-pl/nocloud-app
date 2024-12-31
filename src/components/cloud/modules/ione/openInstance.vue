@@ -691,7 +691,7 @@ export default defineComponent({
   computed: {
     ...mapState(useSpStore, ["servicesProviders"]),
     ...mapState(useAuthStore, ["userdata", "baseURL"]),
-    ...mapState(useInstancesStore, ["services"]),
+    ...mapState(useInstancesStore, ["services", "getInstances"]),
     ...mapState(usePlansStore, ["plans"]),
     ...mapState(useNamespasesStore, ["namespaces"]),
     ...mapState(useChatsStore, ["getDefaults"]),
@@ -975,6 +975,19 @@ export default defineComponent({
       });
     },
     onVpnButtonClick() {
+      for (const instance of this.getInstances) {
+        if (
+          instance.billingPlan?.type == "vpn" &&
+          instance.config?.instance === this.$route.params.uuid
+        ) {
+          this.$router.push({
+            name: "openVpn",
+            params: { uuid: this.$route.params.uuid },
+          });
+          return;
+        }
+      }
+
       this.$router.push({
         name: "service-vpn",
         query: { instance: this.$route.params.uuid },
