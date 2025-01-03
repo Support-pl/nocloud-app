@@ -160,11 +160,19 @@
       </a-modal>
     </div>
   </div>
+  <div class="anonim_user_message" v-else>
+    <span style="max-width: 400px; text-align: center">
+      {{ t("vpn.labels.unlogin_message") }}
+    </span>
+    <a-button @click="goToLogin" style="margin-top: 10px" type="primary">
+      {{ capitalize(t("login")) }}
+    </a-button>
+  </div>
 </template>
 
 <script setup>
 import { storeToRefs } from "pinia";
-import { inject, watch } from "vue";
+import { capitalize, inject, watch } from "vue";
 
 import { useCurrency, useNotification } from "@/hooks/utils";
 
@@ -284,6 +292,10 @@ const plans = computed(() => {
           {};
         const plans = [];
 
+        if (!items) {
+          return [];
+        }
+
         items.forEach(({ servicesProvider, plan }) => {
           if (servicesProvider === provider.value) {
             plans.push(plan);
@@ -330,6 +342,7 @@ const fetchPlans = async (provider) => {
     plan.value = plans.value[0]?.uuid;
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
+    console.log(error);
 
     notification.openNotification("error", { message });
   } finally {
@@ -456,6 +469,12 @@ const goToBuyVds = () => {
   router.push({
     name: "newPaaS",
     query: { service: vdsVpnShowcase.value?.uuid },
+  });
+};
+
+const goToLogin = () => {
+  router.push({
+    name: "login",
   });
 };
 
@@ -758,6 +777,14 @@ export default {
   .config .form input {
     max-width: 80vw;
   }
+}
+
+.anonim_user_message {
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 </style>
 
