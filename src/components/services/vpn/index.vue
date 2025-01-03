@@ -1,5 +1,5 @@
 <template>
-  <div class="order_wrapper">
+  <div class="order_wrapper" v-if="authStore.isLogged">
     <div class="order">
       <div class="order__field order__main">
         <div class="config">
@@ -15,15 +15,17 @@
               :placeholder="t('vpn.labels.server')"
             />
 
-            <span class="description or">
-              {{ t("vpn.labels.or") }}
-            </span>
+            <template v-if="isBuyVdsEnabled">
+              <span class="description or">
+                {{ t("vpn.labels.or") }}
+              </span>
 
-            <div>
-              <a-button type="primary">
-                {{ t("vpn.labels.buy_vds") }}
-              </a-button>
-            </div>
+              <div>
+                <a-button @click="goToBuyVds" type="primary">
+                  {{ t("vpn.labels.buy_vds") }}
+                </a-button>
+              </div>
+            </template>
           </div>
 
           <a-form
@@ -298,6 +300,16 @@ const services = computed(() => {
   return instancesStore.services.filter((el) => el.status !== "DEL");
 });
 
+const vdsVpnShowcase = computed(() => {
+  return spStore.showcases.find(
+    (showcase) => showcase?.meta?.type === "ione-vpn"
+  );
+});
+
+const isBuyVdsEnabled = computed(
+  () => vdsVpnShowcase.value && vdsVpnShowcase.value.items?.[0].servicesProvider
+);
+
 const requiredRule = computed(() => ({
   required: true,
   message: t("ssl_product.field is required"),
@@ -438,6 +450,13 @@ const orderConfirm = async () => {
 
   if (!checkBalance(price)) return;
   modal.value.confirmCreate = true;
+};
+
+const goToBuyVds = () => {
+  router.push({
+    name: "newPaaS",
+    query: { service: vdsVpnShowcase.value?.uuid },
+  });
 };
 
 watch(sp, (value) => {
