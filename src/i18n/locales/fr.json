@@ -610,9 +610,9 @@
         "username": "Nom d'utilisateur"
       },
       "actions": {
-        "start": "Commencer",
+        "start": "Lancement",
         "stop": "Arrêt",
-        "hard_reset": "Réinitialisation matérielle",
+        "hard_reset": "Réinstallation complète",
         "delete": "Supprimer",
         "install": "Installer",
         "download_config_file": "Télécharger le fichier",
@@ -622,32 +622,34 @@
         "select_server": "Sélectionnez le serveur",
         "change_client_info": "Modifier les informations client ?",
         "or": "ou",
-        "free": "Gratuit",
+        "free": "Gratuitement",
         "server": "Serveur",
-        "buy_vds": "Acheter des DVD",
-        "hard_reset_help_message": "Votre VPN sera complètement supprimé et installé complètement bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla",
-        "connect_to_vpn_instruction": "Insérez la configuration dans l'application Wireguard \n "
+        "buy_vds": "Acheter du VDS",
+        "unlogin_message": "Vous devez vous connecter à votre compte pour installer le VPN sur votre serveur.",
+        "hard_reset_help_message": "Le serveur VPN sera complètement supprimé de votre serveur virtuel ou dédié et réinstallé. ",
+        "connect_to_vpn_instruction": "Instructions pour installer un client VPN sur votre appareil :",
+        "error_state_message": "Quelque chose s'est mal passé, essayez une réinstallation complète ou contactez notre support, nous essaierons de vous aider."
       },
       "errors": {
         "unreachable": {
-          "title": "Le client est inaccessible",
-          "message": ""
+          "title": "Client indisponible",
+          "message": "Veuillez vérifier les données d'accès au serveur spécifiées (IP, port SSH, mot de passe). "
         },
         "not_included_os": {
-          "title": "Le système d'exploitation des clients n'est pas pris en charge",
-          "message": ""
+          "title": "Système d'exploitation client non pris en charge",
+          "message": "Le système d'exploitation n'est pas pris en charge. "
         },
         "unknown": {
           "title": "Erreur inconnue",
-          "message": "S'il vous plaît, réessayez plus tard"
+          "message": "Veuillez réessayer plus tard"
         }
       },
       "status": {
         "stopped": "Arrêté",
-        "init": "Initialisation",
+        "init": "Installation",
         "error": "Erreur",
-        "active": "Actif",
-        "unreachable": "Injoignable"
+        "active": "Activement",
+        "unreachable": "Pas d'accès"
       }
     },
     "country": {

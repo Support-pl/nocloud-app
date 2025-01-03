@@ -486,32 +486,34 @@
         "username": "Tên người dùng"
       },
       "actions": {
-        "start": "Bắt đầu",
+        "start": "Phóng",
         "stop": "Dừng lại",
-        "hard_reset": "Thiết lập lại cứng",
+        "hard_reset": "Hoàn tất cài đặt lại",
         "delete": "Xóa bỏ",
         "install": "Cài đặt",
         "download_config_file": "Tải tập tin xuống",
-        "copy_config": "Sao chép vào bảng nhớ tạm"
+        "copy_config": "Sao chép vào khay nhớ tạm"
       },
       "labels": {
         "select_server": "Chọn máy chủ",
         "change_client_info": "Thay đổi thông tin khách hàng?",
         "or": "hoặc",
-        "free": "Miễn phí",
+        "free": "miễn phí",
         "server": "Máy chủ",
-        "buy_vds": "Mua vds",
-        "hard_reset_help_message": "VPN của bạn sẽ được xóa hoàn toàn và cài đặt đầy đủ bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla",
-        "connect_to_vpn_instruction": "Chèn config vào ứng dụng Wireguard \n "
+        "buy_vds": "Mua VDS",
+        "unlogin_message": "Bạn cần đăng nhập vào tài khoản của mình để cài đặt VPN trên máy chủ của mình.",
+        "hard_reset_help_message": "Máy chủ VPN sẽ bị xóa hoàn toàn khỏi máy chủ ảo hoặc máy chủ chuyên dụng của bạn và được cài đặt lại. ",
+        "connect_to_vpn_instruction": "Hướng dẫn cách cài đặt máy khách VPN trên thiết bị của bạn:",
+        "error_state_message": "Đã xảy ra lỗi, hãy thử cài đặt lại hoàn toàn hoặc liên hệ với bộ phận hỗ trợ của chúng tôi, chúng tôi sẽ cố gắng trợ giúp."
       },
       "errors": {
         "unreachable": {
-          "title": "Khách hàng không thể truy cập được",
-          "message": ""
+          "title": "Khách hàng không có sẵn",
+          "message": "Vui lòng kiểm tra dữ liệu truy cập máy chủ được chỉ định (IP, cổng SSH, mật khẩu). "
         },
         "not_included_os": {
-          "title": "Hệ điều hành khách hàng không được hỗ trợ",
-          "message": ""
+          "title": "Hệ điều hành máy khách không được hỗ trợ",
+          "message": "Hệ điều hành không được hỗ trợ. "
         },
         "unknown": {
           "title": "Lỗi không xác định",
@@ -520,10 +522,10 @@
       },
       "status": {
         "stopped": "Đã dừng",
-        "init": "Ban đầu",
+        "init": "Cài đặt",
         "error": "Lỗi",
-        "active": "Tích cực",
-        "unreachable": "Không thể truy cập"
+        "active": "tích cực",
+        "unreachable": "Không có quyền truy cập"
       }
     },
     "country": {

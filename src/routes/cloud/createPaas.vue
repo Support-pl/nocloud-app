@@ -99,6 +99,16 @@
       />
       <promo-block class="order__promo" />
     </div>
+    <component
+      v-if="initComponent.setup"
+      :is="initComponent"
+      v-model:product-size="productSize"
+      :plans="filteredPlans"
+      :products="products"
+      :mode="mode"
+      :is-flavors-loading="isPlansLoading"
+      @update:periods="periods = $event"
+    />
   </div>
 </template>
 
@@ -182,13 +192,22 @@ const isProductExist = computed(
 const components = import.meta.glob(
   "@/components/cloud/modules/*/panels/*.vue"
 );
+const initComponents = import.meta.glob(
+  "@/components/cloud/modules/*/init.vue"
+);
+
 const { panels } = useCloudPanels(tarification, options, productSize);
 const panelsComponents = ref(
   Object.keys(panels.value).reduce(
-    (result, key) => ({ ...result, [key]: markRaw(getComponent(key)) }),
+    (result, key) => ({
+      ...result,
+      [key]: markRaw(getComponent(`panels/${key}`)),
+    }),
     {}
   )
 );
+
+const initComponent = ref(markRaw(getComponent("init")));
 
 const panelsKeys = computed(() =>
   Object.entries(panels.value)
@@ -210,9 +229,14 @@ watch(
   () => cloudStore.plan.type,
   () => {
     panelsComponents.value = Object.keys(panels.value).reduce(
-      (result, key) => ({ ...result, [key]: markRaw(getComponent(key)) }),
+      (result, key) => ({
+        ...result,
+        [key]: markRaw(getComponent(`panels/${key}`)),
+      }),
       {}
     );
+
+    initComponent.value = markRaw(getComponent("init"));
   }
 );
 
@@ -220,7 +244,10 @@ watch(
   () => isAddonsExists.value,
   () => {
     panelsComponents.value = Object.keys(panels.value).reduce(
-      (result, key) => ({ ...result, [key]: markRaw(getComponent(key)) }),
+      (result, key) => ({
+        ...result,
+        [key]: markRaw(getComponent(`panels/${key}`)),
+      }),
       {}
     );
 
@@ -231,12 +258,14 @@ watch(
 );
 
 function getComponent(name) {
-  const result = Object.keys(components).find((key) =>
-    key.includes(`/${cloudStore.plan.type}/panels/${name}.vue`)
+  const allComponents = { ...components, ...initComponents };
+
+  const result = Object.keys(allComponents).find((key) =>
+    key.includes(`/${cloudStore.plan.type}/${name}.vue`)
   );
 
-  if (!components[result]) return {};
-  return defineAsyncComponent(() => components[result]());
+  if (!allComponents[result]) return {};
+  return defineAsyncComponent(() => allComponents[result]());
 }
 
 function setOptions(path, value) {

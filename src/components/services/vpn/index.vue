@@ -1,5 +1,5 @@
 <template>
-  <div class="order_wrapper">
+  <div class="order_wrapper" v-if="authStore.isLogged">
     <div class="order">
       <div class="order__field order__main">
         <div class="config">
@@ -15,15 +15,17 @@
               :placeholder="t('vpn.labels.server')"
             />
 
-            <span class="description or">
-              {{ t("vpn.labels.or") }}
-            </span>
+            <template v-if="isBuyVdsEnabled">
+              <span class="description or">
+                {{ t("vpn.labels.or") }}
+              </span>
 
-            <div>
-              <a-button type="primary">
-                {{ t("vpn.labels.buy_vds") }}
-              </a-button>
-            </div>
+              <div>
+                <a-button @click="goToBuyVds" type="primary">
+                  {{ t("vpn.labels.buy_vds") }}
+                </a-button>
+              </div>
+            </template>
           </div>
 
           <a-form
@@ -158,11 +160,19 @@
       </a-modal>
     </div>
   </div>
+  <div class="anonim_user_message" v-else>
+    <span style="max-width: 400px; text-align: center">
+      {{ t("vpn.labels.unlogin_message") }}
+    </span>
+    <a-button @click="goToLogin" style="margin-top: 10px" type="primary">
+      {{ capitalize(t("login")) }}
+    </a-button>
+  </div>
 </template>
 
 <script setup>
 import { storeToRefs } from "pinia";
-import { inject, watch } from "vue";
+import { capitalize, inject, watch } from "vue";
 
 import { useCurrency, useNotification } from "@/hooks/utils";
 
@@ -282,6 +292,10 @@ const plans = computed(() => {
           {};
         const plans = [];
 
+        if (!items) {
+          return [];
+        }
+
         items.forEach(({ servicesProvider, plan }) => {
           if (servicesProvider === provider.value) {
             plans.push(plan);
@@ -297,6 +311,16 @@ const plans = computed(() => {
 const services = computed(() => {
   return instancesStore.services.filter((el) => el.status !== "DEL");
 });
+
+const vdsVpnShowcase = computed(() => {
+  return spStore.showcases.find(
+    (showcase) => showcase?.meta?.type === "ione-vpn"
+  );
+});
+
+const isBuyVdsEnabled = computed(
+  () => vdsVpnShowcase.value && vdsVpnShowcase.value.items?.[0].servicesProvider
+);
 
 const requiredRule = computed(() => ({
   required: true,
@@ -318,6 +342,7 @@ const fetchPlans = async (provider) => {
     plan.value = plans.value[0]?.uuid;
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
+    console.log(error);
 
     notification.openNotification("error", { message });
   } finally {
@@ -438,6 +463,19 @@ const orderConfirm = async () => {
 
   if (!checkBalance(price)) return;
   modal.value.confirmCreate = true;
+};
+
+const goToBuyVds = () => {
+  router.push({
+    name: "newPaaS",
+    query: { service: vdsVpnShowcase.value?.uuid },
+  });
+};
+
+const goToLogin = () => {
+  router.push({
+    name: "login",
+  });
 };
 
 watch(sp, (value) => {
@@ -739,6 +777,14 @@ export default {
   .config .form input {
     max-width: 80vw;
   }
+}
+
+.anonim_user_message {
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 </style>
 

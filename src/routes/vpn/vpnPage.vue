@@ -54,6 +54,13 @@
             <div v-if="isConnectVisible" class="connect_window">
               <div class="instruction">
                 {{ t("vpn.labels.connect_to_vpn_instruction") }}
+
+                <a
+                  style="display: block"
+                  d
+                  href="https://www.wireguard.com/install/"
+                  >https://www.wireguard.com/install/</a
+                >
               </div>
 
               <div class="copy-button">
@@ -82,6 +89,13 @@
                   {{ t("your QR code") }}
                 </span>
               </div>
+            </div>
+
+            <div class="error_state_message" v-if="isWarningMessageVisible">
+              <warning-icon class="warning_icon" />
+              <span>
+                {{ t("vpn.labels.error_state_message") }}
+              </span>
             </div>
           </div>
         </template>
@@ -199,6 +213,9 @@ const hardResetIcon = defineAsyncComponent(() =>
 const deleteIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DeleteOutlined")
 );
+const warningIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/WarningOutlined")
+);
 
 const route = useRoute();
 const router = useRouter();
@@ -274,6 +291,10 @@ const isStopDisabled = computed(
     instanceStatus.value.title !== "active" ||
     (!!loadingAction.value && loadingAction.value != "stop")
 );
+
+const isWarningMessageVisible = computed(() => {
+  return ["error", "unreachable"].includes(instanceStatus.value.title);
+});
 
 const wgConfig = computed(() => instance.value.state?.meta?.wireguard_config);
 
@@ -407,9 +428,9 @@ const deleteInstance = async () => {
       try {
         loadingAction.value = "delete";
 
-        await instancesStore.deleteInstance({
-          uuid: instance.value.uuid,
-        });
+        await instancesStore.deleteInstance(instance.value.uuid);
+
+        router.go(-1);
 
         notification.success({ message: t("Done"), duration: 1 });
         router.push({ name: "services" });
@@ -559,6 +580,26 @@ watch(isHardResetOpen, () => {
 }
 .hard_reset_override {
   margin: 10px 0px;
+}
+
+.error_state_message {
+  display: flex;
+  margin-top: 10px;
+  flex-direction: column;
+  min-height: 20vh;
+  justify-content: center;
+  align-items: center;
+}
+
+.error_state_message span {
+  text-align: center;
+  font-size: 1.5rem;
+  max-width: 450px;
+}
+
+.error_state_message .warning_icon {
+  font-size: 2rem;
+  color: var(--err);
 }
 </style>
 

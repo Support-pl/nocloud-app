@@ -682,9 +682,9 @@
         "username": "Nazwa użytkownika"
       },
       "actions": {
-        "start": "Start",
+        "start": "Początek",
         "stop": "Zatrzymywać się",
-        "hard_reset": "Twardy reset",
+        "hard_reset": "Całkowita ponowna instalacja",
         "delete": "Usuwać",
         "install": "Zainstalować",
         "download_config_file": "Pobierz plik",
@@ -694,32 +694,34 @@
         "select_server": "Wybierz serwer",
         "change_client_info": "Zmienić dane klienta?",
         "or": "Lub",
-        "free": "Bezpłatny",
+        "free": "Za darmo",
         "server": "Serwer",
-        "buy_vds": "Kup vd",
-        "hard_reset_help_message": "Twoja sieć VPN będzie całkowicie usunięta i pełna instalacja bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla",
-        "connect_to_vpn_instruction": "Wstaw konfigurację do aplikacji Wireguard \n "
+        "buy_vds": "Kup VDS",
+        "unlogin_message": "Aby zainstalować VPN na swoim serwerze, musisz zalogować się na swoje konto.",
+        "hard_reset_help_message": "Serwer VPN zostanie całkowicie usunięty z Twojego serwera wirtualnego lub dedykowanego i zainstalowany ponownie. ",
+        "connect_to_vpn_instruction": "Instrukcje dotyczące instalacji klienta VPN na swoim urządzeniu:",
+        "error_state_message": "Coś poszło nie tak, spróbuj pełnej ponownej instalacji lub skontaktuj się z naszym wsparciem, postaramy się pomóc."
       },
       "errors": {
         "unreachable": {
-          "title": "Klient jest nieosiągalny",
-          "message": ""
+          "title": "Klient niedostępny",
+          "message": "Proszę sprawdzić podane dane dostępowe do serwera (IP, port SSH, hasło). "
         },
         "not_included_os": {
           "title": "System operacyjny klienta nie jest obsługiwany",
-          "message": ""
+          "message": "System operacyjny nie jest obsługiwany. "
         },
         "unknown": {
           "title": "Nieznany błąd",
-          "message": "Proszę spróbować ponownie później"
+          "message": "Spróbuj ponownie później"
         }
       },
       "status": {
         "stopped": "Zatrzymany",
-        "init": "Rozpoczęcie",
+        "init": "Instalacja",
         "error": "Błąd",
-        "active": "Aktywny",
-        "unreachable": "Nieosiągalny"
+        "active": "Aktywnie",
+        "unreachable": "Dostęp wzbroniony"
       }
     },
     "country": {

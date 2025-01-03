@@ -164,18 +164,20 @@ export default {
         });
       });
 
-      this.showcases.forEach((showcase) => {
-        services.push({
-          ...showcase,
-          icon: icons[showcase.icon] ?? showcase.icon,
-          onclick: {
-            function: this.routeTo,
-            paramsArr: [
-              { name: "products", query: { service: showcase.uuid } },
-            ],
-          },
+      this.showcases
+        .filter((showcase) => showcase?.meta?.type !== "ione-vpn")
+        .forEach((showcase) => {
+          services.push({
+            ...showcase,
+            icon: icons[showcase.icon] ?? showcase.icon,
+            onclick: {
+              function: this.routeTo,
+              paramsArr: [
+                { name: "products", query: { service: showcase.uuid } },
+              ],
+            },
+          });
         });
-      });
 
       if (config.whmcsRegistration) {
         services.push({
