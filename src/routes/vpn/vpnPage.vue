@@ -97,6 +97,15 @@
                 {{ t("vpn.labels.error_state_message") }}
               </span>
             </div>
+
+            <iframe
+              width="100%"
+              height="600px"
+              style="border: none; display: none"
+              onload="this.style.display = 'block';"
+              v-if="iframeWgEasyLink"
+              :src="iframeWgEasyLink"
+            />
           </div>
         </template>
 
@@ -200,6 +209,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 import { removeEmptyValues } from "@/functions";
+import api from "@/api";
 
 const startIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlayCircleOutlined")
@@ -219,7 +229,7 @@ const warningIcon = defineAsyncComponent(() =>
 
 const route = useRoute();
 const router = useRouter();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const instancesStore = useInstancesStore();
 
@@ -232,6 +242,7 @@ const hardResetData = ref({
   config: {},
 });
 const hardResetForm = ref(null);
+const wgEasyToken = ref("");
 
 onMounted(async () => {
   setInstance();
@@ -297,6 +308,20 @@ const isWarningMessageVisible = computed(() => {
 });
 
 const wgConfig = computed(() => instance.value.state?.meta?.wireguard_config);
+
+const wgEasyHost = computed(() => `http://${instance.value.config.host}:51821`);
+
+const iframeWgEasyLink = computed(() => {
+  console.log("iframeWgEasyLink", wgEasyToken.value);
+
+  if (!wgEasyToken.value) {
+    return "";
+  }
+
+  return `${wgEasyHost.value}/?token=${
+    wgEasyToken.value
+  }&theme=${localStorage.getItem("theme")}&lang=${locale.value}`;
+});
 
 const requiredRule = computed(() => ({
   required: true,
@@ -491,6 +516,20 @@ watch(isHardResetOpen, () => {
     host: instance.value.config.host,
     port: instance.value.config.port,
   };
+});
+
+watch(instanceStatus, async (state) => {
+  if (state.title === "active") {
+    wgEasyToken.value = "";
+
+    const response = await api.post(`${wgEasyHost.value}/api/token`, {
+      password: instance.value.config.meta.wg_easy_password,
+    });
+
+    wgEasyToken.value = response.data.token;
+  } else {
+    wgEasyToken.value = "";
+  }
 });
 </script>
 
