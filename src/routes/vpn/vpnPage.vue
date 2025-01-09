@@ -309,7 +309,7 @@ const isWarningMessageVisible = computed(() => {
 
 const wgConfig = computed(() => instance.value.state?.meta?.wireguard_config);
 
-const wgEasyHost = computed(() => `http://${instance.value.config.host}:51821`);
+const wgEasyHost = computed(() => `https://${instance.value.config.host}`);
 
 const iframeWgEasyLink = computed(() => {
   console.log("iframeWgEasyLink", wgEasyToken.value);
