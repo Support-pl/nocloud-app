@@ -616,7 +616,8 @@
         "delete": "Supprimer",
         "install": "Installer",
         "download_config_file": "Télécharger le fichier",
-        "copy_config": "Copier dans le presse-papier"
+        "copy_config": "Copier dans le presse-papier",
+        "go_to_admin_menu": "Aller dans le menu administrateur"
       },
       "labels": {
         "select_server": "Sélectionnez le serveur",

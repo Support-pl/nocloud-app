@@ -788,7 +788,8 @@
         "delete": "Удалить",
         "install": "Установить",
         "download_config_file": "Скачать файл",
-        "copy_config": "Скопировать в буфер обмена"
+        "copy_config": "Скопировать в буфер обмена",
+        "go_to_admin_menu": "Перейти в меню админа"
       },
       "labels": {
         "select_server": "Выберите сервер",

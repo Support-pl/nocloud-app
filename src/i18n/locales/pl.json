@@ -688,7 +688,8 @@
         "delete": "Usuwać",
         "install": "Zainstalować",
         "download_config_file": "Pobierz plik",
-        "copy_config": "Skopiuj do schowka"
+        "copy_config": "Skopiuj do schowka",
+        "go_to_admin_menu": "Przejdź do menu administratora"
       },
       "labels": {
         "select_server": "Wybierz serwer",
