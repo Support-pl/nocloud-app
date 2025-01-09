@@ -788,7 +788,8 @@
         "delete": "Delete",
         "install": "Install",
         "download_config_file": "Download file",
-        "copy_config": "Copy to clipboard"
+        "copy_config": "Copy to clipboard",
+        "go_to_admin_menu":"Go to admin menu"
       },
       "labels": {
         "select_server": "Select server",

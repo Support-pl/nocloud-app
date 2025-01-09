@@ -492,7 +492,8 @@
         "delete": "Xóa bỏ",
         "install": "Cài đặt",
         "download_config_file": "Tải tập tin xuống",
-        "copy_config": "Sao chép vào khay nhớ tạm"
+        "copy_config": "Sao chép vào khay nhớ tạm",
+        "go_to_admin_menu": "Di tới menu quản trị"
       },
       "labels": {
         "select_server": "Chọn máy chủ",
