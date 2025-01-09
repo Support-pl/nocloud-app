@@ -982,7 +982,7 @@ export default defineComponent({
         ) {
           this.$router.push({
             name: "openVpn",
-            params: { uuid: this.$route.params.uuid },
+            params: { uuid: instance.uuid },
           });
           return;
         }
