@@ -98,6 +98,15 @@
               </span>
             </div>
 
+            <div
+              style="display: flex; justify-content: center; margin-top: 30px"
+            >
+              <a-button type="primary" v-if="wgEasyLink" @click="goToAdminMenu">
+                {{ t("vpn.actions.go_to_admin_menu") }}
+              </a-button>
+            </div>
+
+            <!-- 
             <iframe
               width="100%"
               height="600px"
@@ -106,6 +115,7 @@
               v-if="iframeWgEasyLink"
               :src="iframeWgEasyLink"
             />
+            -->
           </div>
         </template>
 
@@ -242,7 +252,6 @@ const hardResetData = ref({
   config: {},
 });
 const hardResetForm = ref(null);
-const wgEasyToken = ref("");
 
 onMounted(async () => {
   setInstance();
@@ -309,17 +318,15 @@ const isWarningMessageVisible = computed(() => {
 
 const wgConfig = computed(() => instance.value.state?.meta?.wireguard_config);
 
-const wgEasyHost = computed(() => `https://${instance.value.config.host}`);
+const wgEasyHost = computed(() => `http://${instance.value.config.host}:51821`);
 
-const iframeWgEasyLink = computed(() => {
-  console.log("iframeWgEasyLink", wgEasyToken.value);
-
-  if (!wgEasyToken.value) {
+const wgEasyLink = computed(() => {
+  if (!instance.value.config.meta.wg_easy_password) {
     return "";
   }
 
-  return `${wgEasyHost.value}/?token=${
-    wgEasyToken.value
+  return `${wgEasyHost.value}/?password=${
+    instance.value.config.meta.wg_easy_password
   }&theme=${localStorage.getItem("theme")}&lang=${locale.value}`;
 });
 
@@ -499,6 +506,10 @@ const downloadConfigFile = async () => {
   }
 };
 
+const goToAdminMenu = () => {
+  window.open(wgEasyLink.value, "_blanc");
+};
+
 watch(instance, () => {
   if (instance.value) {
     instancesStore.subscribeWebSocket(instance.value.uuidService);
@@ -518,19 +529,19 @@ watch(isHardResetOpen, () => {
   };
 });
 
-watch(instanceStatus, async (state) => {
-  if (state.title === "active") {
-    wgEasyToken.value = "";
+// watch(instanceStatus, async (state) => {
+//   if (state.title === "active") {
+//     wgEasyToken.value = "";
 
-    const response = await api.post(`${wgEasyHost.value}/api/token`, {
-      password: instance.value.config.meta.wg_easy_password,
-    });
+//     const response = await api.post(`${wgEasyHost.value}/api/token`, {
+//       password: instance.value.config.meta.wg_easy_password,
+//     });
 
-    wgEasyToken.value = response.data.token;
-  } else {
-    wgEasyToken.value = "";
-  }
-});
+//     wgEasyToken.value = response.data.token;
+//   } else {
+//     wgEasyToken.value = "";
+//   }
+// });
 </script>
 
 <style scoped>
