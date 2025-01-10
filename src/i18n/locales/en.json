@@ -787,9 +787,9 @@
         "hard_reset": "Hard reset",
         "delete": "Delete",
         "install": "Install",
-        "download_config_file": "Download file",
-        "copy_config": "Copy to clipboard",
-        "go_to_admin_menu":"Go to admin menu"
+        "download_config_file": "Download configuration",
+        "copy_config": "Copy configuration",
+        "go_to_admin_menu": "Go to admin menu"
       },
       "labels": {
         "select_server": "Select server",
@@ -801,7 +801,8 @@
         "unlogin_message": "You need to log into your account to install the VPN on your server.",
         "hard_reset_help_message": "The VPN server will be completely removed from your virtual or dedicated server and reinstalled. ",
         "connect_to_vpn_instruction": "Instructions on how to install a VPN client on your device:",
-        "error_state_message": "Something went wrong, try a complete reinstallation or contact our support, we will try to help."
+        "error_state_message": "Something went wrong, try a complete reinstallation or contact our support, we will try to help.",
+        "configuration_qr_code": "Configuration QR code"
       },
       "errors": {
         "unreachable": {
@@ -821,7 +822,7 @@
         "stopped": "Stopped",
         "init": "Installation",
         "error": "Error",
-        "active": "Actively",
+        "active": "Active",
         "unreachable": "No access"
       }
     },
