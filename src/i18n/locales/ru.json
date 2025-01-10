@@ -789,7 +789,7 @@
         "install": "Установить",
         "download_config_file": "Скачать конфигурацию",
         "copy_config": "Скопировать конфигурацию",
-        "go_to_admin_menu": "Перейти в меню админа"
+        "go_to_admin_menu": "Панель управления"
       },
       "labels": {
         "select_server": "Выберите сервер",

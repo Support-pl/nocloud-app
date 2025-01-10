@@ -789,7 +789,7 @@
         "install": "Install",
         "download_config_file": "Download configuration",
         "copy_config": "Copy configuration",
-        "go_to_admin_menu": "Go to admin menu"
+        "go_to_admin_menu": "Control Panel"
       },
       "labels": {
         "select_server": "Select server",

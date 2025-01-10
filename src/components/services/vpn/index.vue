@@ -1,33 +1,8 @@
 <template>
   <div class="order_wrapper" v-if="authStore.isLogged">
-    <div class="order">
+    <div v-if="route.query.instance" class="order">
       <div class="order__field order__main">
         <div class="config">
-          <div class="additional_actions">
-            <span class="description">{{ t("vpn.labels.select_server") }}</span>
-
-            <a-select
-              class="server"
-              v-model:value="selectedInstance"
-              :options="instances"
-              style="width: 350px"
-              allow-clear
-              :placeholder="t('vpn.labels.server')"
-            />
-
-            <template v-if="isBuyVdsEnabled">
-              <span class="description or">
-                {{ t("vpn.labels.or") }}
-              </span>
-
-              <div>
-                <a-button @click="goToBuyVds" type="primary">
-                  {{ t("vpn.labels.buy_vds") }}
-                </a-button>
-              </div>
-            </template>
-          </div>
-
           <a-form
             ref="formRef"
             class="form"
@@ -158,6 +133,21 @@
           {{ t(errModal.message) }}
         </p>
       </a-modal>
+    </div>
+
+    <div v-else class="order">
+      <promo-block class="order__promo" />
+
+      <div class="next">
+        <a-button
+          type="primary"
+          block
+          shape="round"
+          @click="goToBuyVds"
+        >
+          {{ capitalize(t("next")) }}
+        </a-button>
+      </div>
     </div>
   </div>
   <div class="anonim_user_message" v-else>
@@ -580,6 +570,14 @@ export default {
 }
 
 .order__field {
+  border-radius: 20px;
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  background-color: var(--bright_font);
+  height: max-content;
+}
+
+.next{
   border-radius: 20px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
   padding: 20px;
