@@ -24,9 +24,19 @@
                 @click="startInstance"
                 :loading="loadingAction == 'start'"
                 :disabled="isStartDisabled"
+                v-if="!isStartDisabled"
                 :icon="h(startIcon)"
                 >{{ t("vpn.actions.start") }}</a-button
               >
+              <a-button
+                type="primary"
+                v-else-if="wgEasyLink"
+                @click="goToAdminMenu"
+                :icon="h(controlPanelIcon)"
+              >
+                {{ t("vpn.actions.go_to_admin_menu") }}
+              </a-button>
+
               <a-button
                 :loading="loadingAction == 'stop'"
                 :disabled="isStopDisabled"
@@ -96,14 +106,6 @@
               <span>
                 {{ t("vpn.labels.error_state_message") }}
               </span>
-            </div>
-
-            <div
-              style="display: flex; justify-content: center; margin-top: 30px"
-            >
-              <a-button type="primary" v-if="wgEasyLink" @click="goToAdminMenu">
-                {{ t("vpn.actions.go_to_admin_menu") }}
-              </a-button>
             </div>
 
             <!-- 
@@ -219,7 +221,6 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 import { removeEmptyValues } from "@/functions";
-import api from "@/api";
 
 const startIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlayCircleOutlined")
@@ -235,6 +236,9 @@ const deleteIcon = defineAsyncComponent(() =>
 );
 const warningIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/WarningOutlined")
+);
+const controlPanelIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ControlOutlined")
 );
 
 const route = useRoute();
