@@ -86,7 +86,7 @@
                   type="svg"
                 />
                 <span>
-                  {{ t("your QR code") }}
+                  {{ t("vpn.labels.configuration_qr_code") }}
                 </span>
               </div>
             </div>
