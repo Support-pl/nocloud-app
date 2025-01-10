@@ -321,7 +321,10 @@ const wgConfig = computed(() => instance.value.state?.meta?.wireguard_config);
 const wgEasyHost = computed(() => `http://${instance.value.config.host}:51821`);
 
 const wgEasyLink = computed(() => {
-  if (!instance.value.config.meta?.wg_easy_password) {
+  if (
+    !instance.value.config.meta?.wg_easy_password ||
+    instanceStatus.value.title !== "active"
+  ) {
     return "";
   }
 
