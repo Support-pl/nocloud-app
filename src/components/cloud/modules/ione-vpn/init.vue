@@ -10,6 +10,7 @@ import { computed, inject, nextTick, toRefs, watch } from "vue";
 import { useCloudStore } from "@/stores/cloud.js";
 import { getPeriods, getTarification } from "@/functions.js";
 import { GeneratePassword } from "js-generate-password";
+import { useInstancesStore } from "@/stores/instances";
 
 const props = defineProps({
   mode: { type: String, required: true },
@@ -23,6 +24,7 @@ const { isFlavorsLoading } = toRefs(props);
 const emits = defineEmits(["update:periods", "update:product-size"]);
 
 const cloudStore = useCloudStore();
+const instancesStore = useInstancesStore();
 const { provider, authData } = storeToRefs(useCloudStore());
 const [options, setOptions] = inject("useOptions")();
 
@@ -90,7 +92,17 @@ async function setProduct(value) {
   setOptions("os.id", +osKey);
   setOptions("os.name", osName);
 
-  authData.value.vmName = `VPN Server (${osName})`;
+  const name = `VPN Server ${osName}`;
+
+  let count = 1;
+  instancesStore.instances.forEach((instance) => {
+    if (instance.title.startsWith(name)) {
+      count++;
+    }
+  });
+
+  authData.value.vmName = name + (count > 1 ? " " + count : "");
+
   authData.value.username = `root`;
   authData.value.password = GeneratePassword({ length: 32 });
 }
