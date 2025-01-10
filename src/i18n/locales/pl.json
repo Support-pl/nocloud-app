@@ -701,7 +701,8 @@
         "unlogin_message": "Aby zainstalować VPN na swoim serwerze, musisz zalogować się na swoje konto.",
         "hard_reset_help_message": "Serwer VPN zostanie całkowicie usunięty z Twojego serwera wirtualnego lub dedykowanego i zainstalowany ponownie. ",
         "connect_to_vpn_instruction": "Instrukcje dotyczące instalacji klienta VPN na swoim urządzeniu:",
-        "error_state_message": "Coś poszło nie tak, spróbuj pełnej ponownej instalacji lub skontaktuj się z naszym wsparciem, postaramy się pomóc."
+        "error_state_message": "Coś poszło nie tak, spróbuj pełnej ponownej instalacji lub skontaktuj się z naszym wsparciem, postaramy się pomóc.",
+        "configuration_qr_code": "Konfiguracja kodu QR"
       },
       "errors": {
         "unreachable": {

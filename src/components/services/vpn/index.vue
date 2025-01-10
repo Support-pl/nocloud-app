@@ -277,7 +277,14 @@ const sp = computed(() => {
 
 const instances = computed(() =>
   instancesStore.instances
-    .filter((instance) => ["ione"].includes(instance.type))
+    .filter(
+      (instance) =>
+        ["ione"].includes(instance.type) &&
+        instance.state.state === "RUNNING" &&
+        !instancesStore.instances.find(
+          (i) => i.type === "empty" && i.config?.instance == instance.uuid
+        )
+    )
     .map((instance) => ({
       value: instance.title,
     }))

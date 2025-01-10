@@ -86,7 +86,7 @@
                   type="svg"
                 />
                 <span>
-                  {{ t("your QR code") }}
+                  {{ t("vpn.labels.configuration_qr_code") }}
                 </span>
               </div>
             </div>
@@ -321,7 +321,10 @@ const wgConfig = computed(() => instance.value.state?.meta?.wireguard_config);
 const wgEasyHost = computed(() => `http://${instance.value.config.host}:51821`);
 
 const wgEasyLink = computed(() => {
-  if (!instance.value.config.meta?.wg_easy_password) {
+  if (
+    !instance.value.config.meta?.wg_easy_password ||
+    instanceStatus.value.title !== "active"
+  ) {
     return "";
   }
 
@@ -426,8 +429,6 @@ const hardResetInstance = async () => {
       );
     }
   } catch (err) {
-    console.log(err);
-
     let title = "",
       message = "";
 
@@ -443,7 +444,7 @@ const hardResetInstance = async () => {
         break;
       }
     }
-    Modal.error({ title, content: h("span", message) });
+    Modal.error({ title, content: h("span", t(message)) });
   } finally {
     loadingAction.value = "";
   }

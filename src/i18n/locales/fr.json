@@ -626,6 +626,7 @@
         "free": "Gratuitement",
         "server": "Serveur",
         "buy_vds": "Acheter du VDS",
+        "configuration_qr_code": "Code QR de configuration",
         "unlogin_message": "Vous devez vous connecter à votre compte pour installer le VPN sur votre serveur.",
         "hard_reset_help_message": "Le serveur VPN sera complètement supprimé de votre serveur virtuel ou dédié et réinstallé. ",
         "connect_to_vpn_instruction": "Instructions pour installer un client VPN sur votre appareil :",
