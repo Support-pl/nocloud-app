@@ -429,8 +429,6 @@ const hardResetInstance = async () => {
       );
     }
   } catch (err) {
-    console.log(err);
-
     let title = "",
       message = "";
 
@@ -446,7 +444,7 @@ const hardResetInstance = async () => {
         break;
       }
     }
-    Modal.error({ title, content: h("span", message) });
+    Modal.error({ title, content: h("span", t(message)) });
   } finally {
     loadingAction.value = "";
   }
