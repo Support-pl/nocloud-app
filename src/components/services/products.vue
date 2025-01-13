@@ -211,7 +211,9 @@ export default {
         server_on: el.server_on,
         id: el.id,
       }));
-      const instances = transformInstances(this.instancesStore.getInstances);
+      const instances = transformInstances(
+        this.instancesStore.getInstances
+      ).filter((instance) => instance.billingPlan?.type !== "ione-vpn");
 
       return this.sortProducts([...products, ...instances]);
     },
@@ -445,7 +447,7 @@ export default {
         case "empty":
         case "virtual": {
           console.log(showcase);
-          
+
           if (showcase?.meta?.type === "vpn") {
             name = "service-vpn";
           } else {

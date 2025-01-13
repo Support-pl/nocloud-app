@@ -49,6 +49,7 @@
                 @click="isHardResetOpen = true"
                 :loading="loadingAction == 'hard-reset'"
                 danger
+                :disabled="isInstancePending || isInstanceInit"
                 :icon="h(hardResetIcon)"
                 >{{ t("vpn.actions.hard_reset") }}</a-button
               >
@@ -281,6 +282,10 @@ const lastMonitoring = computed(() => {
 });
 
 const instanceStatus = computed(() => {
+  if (instance.value.state.state != "RUNNING") {
+    return { color: "blue", title: "pending" };
+  }
+
   if (lastMonitoring.value === 0) {
     return { color: "orange", title: "stopped" };
   }
@@ -297,6 +302,12 @@ const instanceStatus = computed(() => {
     ? { color: "success", title: "active" }
     : { color: "error", title: "unreachable" };
 });
+
+const isInstancePending = computed(
+  () => instanceStatus.value.title === "pending"
+);
+
+const isInstanceInit = computed(() => instanceStatus.value.title === "init");
 
 const isConnectVisible = computed(
   () =>
@@ -322,7 +333,9 @@ const isWarningMessageVisible = computed(() => {
 
 const wgConfig = computed(() => instance.value.state?.meta?.wireguard_config);
 
-const wgEasyHost = computed(() => `http://${instance.value.config.host}:51821`);
+const wgEasyHost = computed(
+  () => `http://${instanceConnectData.value.host}:51821`
+);
 
 const wgEasyLink = computed(() => {
   if (
@@ -335,6 +348,46 @@ const wgEasyLink = computed(() => {
   return `${wgEasyHost.value}/?password=${
     instance.value.config.meta?.wg_easy_password
   }&theme=${localStorage.getItem("theme")}&lang=${locale.value}`;
+});
+
+const parentInstance = computed(() =>
+  instancesStore.instances.find(
+    ({ uuid }) => uuid === instance.value.config.instance
+  )
+);
+
+const isInstanceConfigData = computed(
+  () =>
+    instance.value.config.host &&
+    instance.value.config.password &&
+    instance.value.config.username &&
+    instance.value.config.port
+);
+
+const instanceConnectData = computed(() => {
+  if (isInstanceConfigData.value) {
+    return {
+      password: instance.value.config.password,
+      username: instance.value.config.username,
+      host: instance.value.config.host,
+      port: instance.value.config.port,
+    };
+  }
+
+  if (parentInstance) {
+    const { host, port } = parentInstance.value.state?.interfaces?.find(
+      (int) => int.kind == "SSH"
+    )?.data;
+
+    return {
+      password: parentInstance.value.config.password,
+      username: parentInstance.value.config.username,
+      host: host || "",
+      port: port || "",
+    };
+  }
+
+  return {};
 });
 
 const requiredRule = computed(() => ({
@@ -394,10 +447,7 @@ const hardResetInstance = async () => {
       data = { ...hardResetData.value.config };
     } else {
       data = {
-        password: instance.value.config.password,
-        username: instance.value.config.username,
-        host: instance.value.config.host,
-        port: instance.value.config.port,
+        ...instanceConnectData.value,
       };
     }
 
@@ -416,7 +466,7 @@ const hardResetInstance = async () => {
       throw new Error(response.meta.errors[0].code);
     }
 
-    if (hardResetData.value.isOverride) {
+    if (hardResetData.value.isOverride && isInstanceConfigData.value) {
       const updateData = removeEmptyValues({
         ...instance.value,
         config: { ...instance.value.config, ...data },
@@ -466,6 +516,9 @@ const deleteInstance = async () => {
         loadingAction.value = "delete";
 
         await instancesStore.deleteInstance(instance.value.uuid);
+        if (!isInstanceConfigData.value) {
+          await instancesStore.deleteInstance(instance.value.config.instance);
+        }
 
         router.go(-1);
 
@@ -527,10 +580,7 @@ watch(lastMonitoring, () => {
 
 watch(isHardResetOpen, () => {
   hardResetData.value.config = {
-    password: instance.value.config.password,
-    username: instance.value.config.username,
-    host: instance.value.config.host,
-    port: instance.value.config.port,
+    ...instanceConnectData.value,
   };
 });
 

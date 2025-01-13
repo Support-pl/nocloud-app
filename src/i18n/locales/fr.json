@@ -651,7 +651,8 @@
         "init": "Installation",
         "error": "Erreur",
         "active": "Activement",
-        "unreachable": "Pas d'accès"
+        "unreachable": "Pas d'accès",
+        "pending": "EN ATTENDANT"
       }
     },
     "country": {
