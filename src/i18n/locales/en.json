@@ -823,7 +823,8 @@
         "init": "Installation",
         "error": "Error",
         "active": "Active",
-        "unreachable": "No access"
+        "unreachable": "No access",
+        "pending": "Pending"
       }
     },
     "country": {

@@ -723,7 +723,8 @@
         "init": "Instalacja",
         "error": "Błąd",
         "active": "Aktywnie",
-        "unreachable": "Dostęp wzbroniony"
+        "unreachable": "Dostęp wzbroniony",
+        "pending": "Pendning"
       }
     },
     "country": {

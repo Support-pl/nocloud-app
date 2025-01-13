@@ -823,7 +823,8 @@
         "init": "Установка",
         "error": "Ошибка",
         "active": "Активно",
-        "unreachable": "Нет доступа"
+        "unreachable": "Нет доступа",
+        "pending": "Ожидание"
       }
     },
     "country": {
