@@ -272,7 +272,7 @@ onMounted(async () => {
     if (!instance.value) {
       throw new Error();
     }
-    
+
     subscribeToUpdates();
   } catch {
     router.replace({ name: "services" });
@@ -351,9 +351,9 @@ const wgEasyLink = computed(() => {
     return "";
   }
 
-  return `${wgEasyHost.value}/?password=${
+  return `${wgEasyHost.value}/?password=${btoa(
     instance.value.config.meta?.wg_easy_password
-  }&theme=${localStorage.getItem("theme")}&lang=${locale.value}`;
+  )}&theme=${localStorage.getItem("theme")}&lang=${locale.value}`;
 });
 
 const parentInstance = computed(() =>
