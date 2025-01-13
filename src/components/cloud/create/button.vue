@@ -92,7 +92,7 @@ const modalOptions = computed(() => {
     cloudStore.authData.score < 4 && cloudStore.provider?.type !== "ovh";
 
   return {
-    title: isWeakPass ? "Weak pass" : "Confirm",
+    title: isWeakPass && !props.skipPasswordCheck ? "Weak pass" : "Confirm",
     visible: modal.confirmCreate,
     loading: modal.confirmLoading,
     okProps: { disabled: isWeakPass },
