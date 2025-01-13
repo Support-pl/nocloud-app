@@ -222,6 +222,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 import { removeEmptyValues } from "@/functions";
+import { storeToRefs } from "pinia";
 
 const startIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlayCircleOutlined")
@@ -247,8 +248,8 @@ const router = useRouter();
 const { t, locale } = useI18n();
 
 const instancesStore = useInstancesStore();
+const { instances } = storeToRefs(useInstancesStore());
 
-const instance = ref();
 const nowDate = ref();
 const loadingAction = ref("");
 const isHardResetOpen = ref(false);
@@ -259,30 +260,35 @@ const hardResetData = ref({
 const hardResetForm = ref(null);
 
 onMounted(async () => {
-  setInstance();
-
   if (instance.value) {
+    nowDate.value = Date.now() / 1000;
+    subscribeToUpdates();
     return;
   }
 
   try {
     await instancesStore.fetch();
-    setInstance();
 
     if (!instance.value) {
       throw new Error();
     }
+    
+    subscribeToUpdates();
   } catch {
     router.replace({ name: "services" });
   }
 });
+
+const instance = computed(() =>
+  instances.value.find((instance) => instance.uuid === route.params.uuid)
+);
 
 const lastMonitoring = computed(() => {
   return +instance.value?.state?.meta?.monitored;
 });
 
 const instanceStatus = computed(() => {
-  if (instance.value.state.state != "RUNNING") {
+  if (instance.value?.state?.state != "RUNNING") {
     return { color: "blue", title: "pending" };
   }
 
@@ -351,9 +357,7 @@ const wgEasyLink = computed(() => {
 });
 
 const parentInstance = computed(() =>
-  instancesStore.instances.find(
-    ({ uuid }) => uuid === instance.value.config.instance
-  )
+  instances.value.find(({ uuid }) => uuid === instance.value.config.instance)
 );
 
 const isInstanceConfigData = computed(
@@ -396,13 +400,6 @@ const requiredRule = computed(() => ({
   trigger: "blur",
 }));
 
-const setInstance = () => {
-  instance.value = instancesStore.instances.find(
-    (instance) => instance.uuid === route.params.uuid
-  );
-  nowDate.value = Date.now() / 1000;
-};
-
 const stopInstance = async () => {
   try {
     loadingAction.value = "stop";
@@ -433,6 +430,10 @@ const startInstance = async () => {
   } finally {
     loadingAction.value = "";
   }
+};
+
+const subscribeToUpdates = () => {
+  instancesStore.subscribeWebSocket(instance.value.uuidService);
 };
 
 const hardResetInstance = async () => {
@@ -568,14 +569,14 @@ const goToAdminMenu = () => {
   window.open(wgEasyLink.value, "_blanc");
 };
 
-watch(instance, () => {
-  if (instance.value) {
-    instancesStore.subscribeWebSocket(instance.value.uuidService);
-  }
-});
-
 watch(lastMonitoring, () => {
   nowDate.value = Date.now() / 1000;
+});
+
+watch(instanceStatus, (curr, prev) => {
+  if (curr.title == "active" && !["active", "pending"].includes(prev.title)) {
+    instancesStore.fetchOne(false, { uuid: instance.value.uuid });
+  }
 });
 
 watch(isHardResetOpen, () => {

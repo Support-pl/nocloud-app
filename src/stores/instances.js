@@ -102,11 +102,21 @@ export const useInstancesStore = defineStore("instances", () => {
     });
   }
 
+  function setInstance(data) {
+    const index = instances.value.findIndex((item) => item.uuid === data.uuid);
+
+    if (index === -1) return;
+
+    instances.value[index] = { ...instances.value[index], ...data };
+  }
+
   function setInstanceInvoke(data) {
     const inst = instances.value.find((item) => item.uuid === data.uuid);
 
     if (!inst) return;
-    data.state.meta.networking = inst.state.meta.networking;
+    if (data.state) {
+      data.state.meta.networking = inst.state.meta.networking;
+    }
     inst.state = JSON.parse(JSON.stringify(data.state));
   }
 
@@ -138,6 +148,20 @@ export const useInstancesStore = defineStore("instances", () => {
         });
 
         return response;
+      } catch (error) {
+        console.error(error);
+        throw error;
+      } finally {
+        isLoading.value = false;
+      }
+    },
+
+    async fetchOne(silent, { uuid }) {
+      try {
+        isLoading.value = !silent;
+        const response = await instancesApi.value.get({ uuid });
+
+        setInstance(response.toJson().instance);
       } catch (error) {
         console.error(error);
         throw error;
