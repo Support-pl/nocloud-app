@@ -136,7 +136,7 @@
       <div>
         <span>{{ t("vpn.labels.hard_reset_help_message") }}</span>
 
-        <div class="hard_reset_override">
+        <div v-if="isInstanceConfigData" class="hard_reset_override">
           <span style="margin-right: 10px">{{
             t("vpn.labels.change_client_info")
           }}</span>
@@ -144,6 +144,7 @@
         </div>
 
         <a-form
+          v-if="isInstanceConfigData"
           ref="hardResetForm"
           class="hard_reset_config_form"
           :model="hardResetData.config"
