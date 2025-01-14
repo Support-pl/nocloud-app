@@ -478,6 +478,58 @@
       },
       "placeholder": "Mã khuyến mãi"
     },
+    "vpn": {
+      "fields": {
+        "password": "Mật khẩu",
+        "host": "Chủ nhà",
+        "port": "Cảng",
+        "username": "Tên người dùng"
+      },
+      "actions": {
+        "start": "Phóng",
+        "stop": "Dừng lại",
+        "hard_reset": "Hoàn tất cài đặt lại",
+        "delete": "Xóa bỏ",
+        "install": "Cài đặt",
+        "download_config_file": "Tải tập tin xuống",
+        "copy_config": "Sao chép vào khay nhớ tạm",
+        "go_to_admin_menu": "Bảng điều khiển"
+      },
+      "labels": {
+        "select_server": "Chọn máy chủ",
+        "change_client_info": "Thay đổi thông tin khách hàng?",
+        "or": "hoặc",
+        "free": "miễn phí",
+        "server": "Máy chủ",
+        "buy_vds": "Mua VDS",
+        "unlogin_message": "Bạn cần đăng nhập vào tài khoản của mình để cài đặt VPN trên máy chủ của mình.",
+        "hard_reset_help_message": "Máy chủ VPN sẽ bị xóa hoàn toàn khỏi máy chủ ảo hoặc máy chủ chuyên dụng của bạn và được cài đặt lại. ",
+        "connect_to_vpn_instruction": "Hướng dẫn cách cài đặt máy khách VPN trên thiết bị của bạn:",
+        "error_state_message": "Đã xảy ra lỗi, hãy thử cài đặt lại hoàn toàn hoặc liên hệ với bộ phận hỗ trợ của chúng tôi, chúng tôi sẽ cố gắng trợ giúp.",
+        "configuration_qr_code": "Mã QR cấu hình"
+      },
+      "errors": {
+        "unreachable": {
+          "title": "Khách hàng không có sẵn",
+          "message": "Vui lòng kiểm tra dữ liệu truy cập máy chủ được chỉ định (IP, cổng SSH, mật khẩu). "
+        },
+        "not_included_os": {
+          "title": "Hệ điều hành máy khách không được hỗ trợ",
+          "message": "Hệ điều hành không được hỗ trợ. "
+        },
+        "unknown": {
+          "title": "Lỗi không xác định",
+          "message": "Vui lòng thử lại sau"
+        }
+      },
+      "status": {
+        "stopped": "Đã dừng",
+        "init": "Cài đặt",
+        "error": "Lỗi",
+        "active": "tích cực",
+        "unreachable": "Không có quyền truy cập"
+      }
+    },
     "country": {
       "VN": "Vietnam",
       "BY": "Belarus",

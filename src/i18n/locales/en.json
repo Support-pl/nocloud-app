@@ -774,6 +774,59 @@
       },
       "placeholder": "Promocode"
     },
+    "vpn": {
+      "fields": {
+        "password": "Password",
+        "host": "Host",
+        "port": "Port",
+        "username": "Username"
+      },
+      "actions": {
+        "start": "Launch",
+        "stop": "Stop",
+        "hard_reset": "Hard reset",
+        "delete": "Delete",
+        "install": "Install",
+        "download_config_file": "Download configuration",
+        "copy_config": "Copy configuration",
+        "go_to_admin_menu": "Control Panel"
+      },
+      "labels": {
+        "select_server": "Select server",
+        "change_client_info": "Change customer information?",
+        "or": "or",
+        "free": "For free",
+        "server": "Server",
+        "buy_vds": "Buy VDS",
+        "unlogin_message": "You need to log into your account to install the VPN on your server.",
+        "hard_reset_help_message": "The VPN server will be completely removed from your virtual or dedicated server and reinstalled. ",
+        "connect_to_vpn_instruction": "Instructions on how to install a VPN client on your device:",
+        "error_state_message": "Something went wrong, try a complete reinstallation or contact our support, we will try to help.",
+        "configuration_qr_code": "Configuration QR code"
+      },
+      "errors": {
+        "unreachable": {
+          "title": "Client unavailable",
+          "message": "Please check the specified server access data (IP, SSH port, password). "
+        },
+        "not_included_os": {
+          "title": "Client operating system not supported",
+          "message": "Operating system is not supported. "
+        },
+        "unknown": {
+          "title": "Unknown error",
+          "message": "Please try again later"
+        }
+      },
+      "status": {
+        "stopped": "Stopped",
+        "init": "Installation",
+        "error": "Error",
+        "active": "Active",
+        "unreachable": "No access",
+        "pending": "Pending"
+      }
+    },
     "country": {
       "VN": "Vietnam",
       "BY": "Belarus",

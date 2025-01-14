@@ -213,7 +213,11 @@ function setInstByType(inst, result) {
       break;
     case "empty":
     case "virtual":
-      result.groupname = "Custom";
+      if (inst.billingPlan?.type === "vpn") {
+        result.groupname = "VPN";
+      } else {
+        result.groupname = "Custom";
+      }
       break;
     case "acronis":
       result.groupname = "Acronis";

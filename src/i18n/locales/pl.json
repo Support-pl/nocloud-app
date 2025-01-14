@@ -674,6 +674,59 @@
       },
       "placeholder": "Kod promocyjny"
     },
+    "vpn": {
+      "fields": {
+        "password": "Hasło",
+        "host": "Gospodarz",
+        "port": "Port",
+        "username": "Nazwa użytkownika"
+      },
+      "actions": {
+        "start": "Początek",
+        "stop": "Zatrzymywać się",
+        "hard_reset": "Całkowita ponowna instalacja",
+        "delete": "Usuwać",
+        "install": "Zainstalować",
+        "download_config_file": "Pobierz plik",
+        "copy_config": "Skopiuj do schowka",
+        "go_to_admin_menu": "Panelu sterowania"
+      },
+      "labels": {
+        "select_server": "Wybierz serwer",
+        "change_client_info": "Zmienić dane klienta?",
+        "or": "Lub",
+        "free": "Za darmo",
+        "server": "Serwer",
+        "buy_vds": "Kup VDS",
+        "unlogin_message": "Aby zainstalować VPN na swoim serwerze, musisz zalogować się na swoje konto.",
+        "hard_reset_help_message": "Serwer VPN zostanie całkowicie usunięty z Twojego serwera wirtualnego lub dedykowanego i zainstalowany ponownie. ",
+        "connect_to_vpn_instruction": "Instrukcje dotyczące instalacji klienta VPN na swoim urządzeniu:",
+        "error_state_message": "Coś poszło nie tak, spróbuj pełnej ponownej instalacji lub skontaktuj się z naszym wsparciem, postaramy się pomóc.",
+        "configuration_qr_code": "Konfiguracja kodu QR"
+      },
+      "errors": {
+        "unreachable": {
+          "title": "Klient niedostępny",
+          "message": "Proszę sprawdzić podane dane dostępowe do serwera (IP, port SSH, hasło). "
+        },
+        "not_included_os": {
+          "title": "System operacyjny klienta nie jest obsługiwany",
+          "message": "System operacyjny nie jest obsługiwany. "
+        },
+        "unknown": {
+          "title": "Nieznany błąd",
+          "message": "Spróbuj ponownie później"
+        }
+      },
+      "status": {
+        "stopped": "Zatrzymany",
+        "init": "Instalacja",
+        "error": "Błąd",
+        "active": "Aktywnie",
+        "unreachable": "Dostęp wzbroniony",
+        "pending": "Pendning"
+      }
+    },
     "country": {
       "VN": "Vietnam",
       "BY": "Belarus",

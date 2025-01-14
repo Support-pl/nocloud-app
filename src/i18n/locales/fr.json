@@ -602,6 +602,59 @@
       },
       "placeholder": "Code promotionnel"
     },
+    "vpn": {
+      "fields": {
+        "password": "Mot de passe",
+        "host": "Hôte",
+        "port": "Port",
+        "username": "Nom d'utilisateur"
+      },
+      "actions": {
+        "start": "Lancement",
+        "stop": "Arrêt",
+        "hard_reset": "Réinstallation complète",
+        "delete": "Supprimer",
+        "install": "Installer",
+        "download_config_file": "Télécharger le fichier",
+        "copy_config": "Copier dans le presse-papier",
+        "go_to_admin_menu": "Panneau de contrôle"
+      },
+      "labels": {
+        "select_server": "Sélectionnez le serveur",
+        "change_client_info": "Modifier les informations client ?",
+        "or": "ou",
+        "free": "Gratuitement",
+        "server": "Serveur",
+        "buy_vds": "Acheter du VDS",
+        "configuration_qr_code": "Code QR de configuration",
+        "unlogin_message": "Vous devez vous connecter à votre compte pour installer le VPN sur votre serveur.",
+        "hard_reset_help_message": "Le serveur VPN sera complètement supprimé de votre serveur virtuel ou dédié et réinstallé. ",
+        "connect_to_vpn_instruction": "Instructions pour installer un client VPN sur votre appareil :",
+        "error_state_message": "Quelque chose s'est mal passé, essayez une réinstallation complète ou contactez notre support, nous essaierons de vous aider."
+      },
+      "errors": {
+        "unreachable": {
+          "title": "Client indisponible",
+          "message": "Veuillez vérifier les données d'accès au serveur spécifiées (IP, port SSH, mot de passe). "
+        },
+        "not_included_os": {
+          "title": "Système d'exploitation client non pris en charge",
+          "message": "Le système d'exploitation n'est pas pris en charge. "
+        },
+        "unknown": {
+          "title": "Erreur inconnue",
+          "message": "Veuillez réessayer plus tard"
+        }
+      },
+      "status": {
+        "stopped": "Arrêté",
+        "init": "Installation",
+        "error": "Erreur",
+        "active": "Activement",
+        "unreachable": "Pas d'accès",
+        "pending": "EN ATTENDANT"
+      }
+    },
     "country": {
       "VN": "Viêt Nam",
       "BY": "Biélorussie",

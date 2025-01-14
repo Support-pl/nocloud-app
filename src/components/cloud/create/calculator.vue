@@ -167,6 +167,7 @@
       :tarification="tarification"
       :create-order="createOrder"
       :panels="panels"
+      :skip-password-check="cloudStore.plan?.type == 'ione-vpn'"
     />
   </div>
 </template>

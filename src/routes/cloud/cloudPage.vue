@@ -6,12 +6,15 @@
           :is="template"
           ref="open-instance"
           :VM="VM"
-          @update:password="(value) => resources.password = value"
+          @update:password="(value) => (resources.password = value)"
         >
           <template #header>
             <div class="Fcloud__header">
               <div class="Fcloud__back-wrapper">
-                <div class="Fcloud__back icon__wrapper" @click="$router.push('/services')">
+                <div
+                  class="Fcloud__back icon__wrapper"
+                  @click="$router.push('/services')"
+                >
                   <left-icon />
                 </div>
               </div>
@@ -22,7 +25,7 @@
                   :style="{ 'background-color': stateColor }"
                 />
                 <div class="Fcloud__title">
-                  {{ VM.title ?? VM.vm_info.NAME ?? '-' }}
+                  {{ VM.title ?? VM.vm_info.NAME ?? "-" }}
                 </div>
                 <div
                   class="Fcloud__status"
@@ -34,7 +37,11 @@
               <div class="Fcloud__menu-wrapper">
                 <div class="Fcloud__menu-btn icon__wrapper">
                   <more-icon @click="changeModal('menu')" />
-                  <a-modal v-model:open="modal.menu" :title="$t('Menu')" :footer="null">
+                  <a-modal
+                    v-model:open="modal.menu"
+                    :title="$t('Menu')"
+                    :footer="null"
+                  >
                     <a-button
                       v-for="btn in menuOptions"
                       :key="btn.title"
@@ -42,7 +49,7 @@
                       class="menu__button"
                       :danger="btn.isDanger"
                       :disabled="disabledMenu(btn.title.toLowerCase())"
-                      :loading="(btn.icon === 'delete') ? isDeleteLoading : false"
+                      :loading="btn.icon === 'delete' ? isDeleteLoading : false"
                       @click="btn.onclick(...btn.params)"
                     >
                       <template #icon>
@@ -57,7 +64,7 @@
                     :title="$t('Rename')"
                     @ok="sendRename"
                   >
-                    <p>{{ $t('Enter new VM name') }}</p>
+                    <p>{{ $t("Enter new VM name") }}</p>
                     <a-input
                       v-model:value="renameNewName"
                       :placeholder="$t('input new name')"
@@ -70,8 +77,12 @@
                     @ok="sendReinstall"
                   >
                     <a-spin :spinning="isRenameLoading && images.length < 1">
-                      <p>{{ $t('select OS') }}</p>
-                      <images-list :images="images" :os-name="reinstallOSName" :set-o-s="setOS" />
+                      <p>{{ $t("select OS") }}</p>
+                      <images-list
+                        :images="images"
+                        :os-name="reinstallOSName"
+                        :set-o-s="setOS"
+                      />
                     </a-spin>
                   </a-modal>
                   <a-modal
@@ -81,9 +92,7 @@
                     @ok="ResizeVM"
                   >
                     <a-row style="margin-bottom: 5px">
-                      <a-col style="width: 75px">
-                        CPU
-                      </a-col>
+                      <a-col style="width: 75px"> CPU </a-col>
                       <a-col style="width: 100%">
                         <a-input-number
                           v-model:value="resize.VCPU"
@@ -96,9 +105,7 @@
                     </a-row>
 
                     <a-row style="margin: 10px 0; width: 100%">
-                      <a-col style="width: 75px">
-                        RAM (GB)
-                      </a-col>
+                      <a-col style="width: 75px"> RAM (GB) </a-col>
                       <a-col style="width: 100%">
                         <a-input-number
                           v-model:value="resize.RAM"
@@ -110,15 +117,24 @@
                       </a-col>
                     </a-row>
 
-                    <template v-if="VM.state && Object.keys(VM.state.meta.snapshots || {}).length > 0">
-                      <p>{{ $t('You cannot change disk size while you have a snapshot') }}</p>
-                      <p>{{ $t('Please delete snapshot and try again') }}</p>
+                    <template
+                      v-if="
+                        VM.state &&
+                        Object.keys(VM.state.meta.snapshots || {}).length > 0
+                      "
+                    >
+                      <p>
+                        {{
+                          $t(
+                            "You cannot change disk size while you have a snapshot"
+                          )
+                        }}
+                      </p>
+                      <p>{{ $t("Please delete snapshot and try again") }}</p>
                     </template>
 
                     <a-row v-else>
-                      <a-col style="width: 75px">
-                        {{ $t('disk') }} (GB)
-                      </a-col>
+                      <a-col style="width: 75px"> {{ $t("disk") }} (GB) </a-col>
                       <a-col style="width: 100%">
                         <a-input-number
                           v-model:value="resize.size"
@@ -126,8 +142,10 @@
                           :min="VM.resources && VM.resources.drive_size / 1024"
                           default-value="1"
                         />
-                        <div :style="{ color: 'var(--err)', textAlign: 'center' }">
-                          {{ $t('Can\'t reduce disk size') }}
+                        <div
+                          :style="{ color: 'var(--err)', textAlign: 'center' }"
+                        >
+                          {{ $t("Can't reduce disk size") }}
                         </div>
                       </a-col>
                     </a-row>
@@ -138,7 +156,9 @@
                     :footer="null"
                   >
                     <div>
-                      <span style="font-weight: 700">{{ capitalize($t('key')) }}: </span>
+                      <span style="font-weight: 700"
+                        >{{ capitalize($t("key")) }}:
+                      </span>
                       <span
                         class="ssh-text"
                         :title="$t('Click to copy')"
@@ -154,8 +174,7 @@
                     :footer="null"
                   >
                     <a-spin
-                      style="display: block;
-                      margin: 0 auto"
+                      style="display: block; margin: 0 auto"
                       :tip="$t('loading')"
                       :spinning="isLogsLoading"
                     >
@@ -165,16 +184,26 @@
                           :key="log.date"
                           size="small"
                           :body-style="{ display: 'flex' }"
-                          :style="{ marginBottom: (logs.length - 1 !== i) ? '24px' : null }"
+                          :style="{
+                            marginBottom: logs.length - 1 !== i ? '24px' : null,
+                          }"
                         >
                           <template #extra>
-                            <a-badge :status="(log.state === 'done') ? 'success' : 'error'" />
+                            <a-badge
+                              :status="
+                                log.state === 'done' ? 'success' : 'error'
+                              "
+                            />
                           </template>
                           <template #title>
                             <span style="font-weight: 700">{{ log.type }}</span>
                           </template>
-                          <span style="margin-right: auto">{{ log.date.replace('T', ' ') }}</span>
-                          <span v-if="log.progress < 100">{{ `${log.progress}%` }}</span>
+                          <span style="margin-right: auto">{{
+                            log.date.replace("T", " ")
+                          }}</span>
+                          <span v-if="log.progress < 100">{{
+                            `${log.progress}%`
+                          }}</span>
                         </a-card>
                       </template>
                       <a-empty v-else />
@@ -187,9 +216,20 @@
                     :title="$t('Network control')"
                     :footer="null"
                   >
-                    <template v-if="VM.state && Object.keys(VM.state.meta.snapshots || {}).length > 0">
-                      <p>{{ $t('You cannot change networks while you have a snapshot') }}</p>
-                      <p>{{ $t('Please delete snapshot and try again') }}</p>
+                    <template
+                      v-if="
+                        VM.state &&
+                        Object.keys(VM.state.meta.snapshots || {}).length > 0
+                      "
+                    >
+                      <p>
+                        {{
+                          $t(
+                            "You cannot change networks while you have a snapshot"
+                          )
+                        }}
+                      </p>
+                      <p>{{ $t("Please delete snapshot and try again") }}</p>
                     </template>
                     <network-control
                       v-else
@@ -212,44 +252,56 @@
           </template>
         </component>
       </div>
-      <loading v-else-if="vmsLoading" key="loading" color="var(--bright_font)" class="loading" />
+      <loading
+        v-else-if="vmsLoading"
+        key="loading"
+        color="var(--bright_font)"
+        class="loading"
+      />
     </transition>
   </div>
 </template>
 
 <script>
-import { defineAsyncComponent, h } from 'vue'
-import { mapState, mapActions } from 'pinia'
-import * as icons from '@ant-design/icons-vue'
-import { useNotification } from '@/hooks/utils'
-import config from '@/appconfig.js'
+import { defineAsyncComponent, h } from "vue";
+import { mapState, mapActions } from "pinia";
+import * as icons from "@ant-design/icons-vue";
+import { useNotification } from "@/hooks/utils";
+import config from "@/appconfig.js";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useSpStore } from '@/stores/sp.js'
+import { useAuthStore } from "@/stores/auth.js";
+import { useSpStore } from "@/stores/sp.js";
 
-import { useChatsStore } from '@/stores/chats.js'
-import { useProductsStore } from '@/stores/products.js'
-import { useInstancesStore } from '@/stores/instances.js'
+import { useChatsStore } from "@/stores/chats.js";
+import { useProductsStore } from "@/stores/products.js";
+import { useInstancesStore } from "@/stores/instances.js";
 
-import networkControl from '@/components/cloud/options/networkControl.vue'
-import accessManager from '@/components/cloud/options/accessManager.vue'
-import loading from '@/components/ui/loading.vue'
-import imagesList from '@/components/ui/images.vue'
+import networkControl from "@/components/cloud/options/networkControl.vue";
+import accessManager from "@/components/cloud/options/accessManager.vue";
+import loading from "@/components/ui/loading.vue";
+import imagesList from "@/components/ui/images.vue";
 
-const leftIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LeftOutlined')
-)
-const moreIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/MoreOutlined')
-)
+const leftIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LeftOutlined")
+);
+const moreIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/MoreOutlined")
+);
 
 export default {
-  name: 'OpenCloud',
-  components: { loading, imagesList, networkControl, accessManager, leftIcon, moreIcon },
-  setup () {
-    const { openNotification } = useNotification()
+  name: "OpenCloud",
+  components: {
+    loading,
+    imagesList,
+    networkControl,
+    accessManager,
+    leftIcon,
+    moreIcon,
+  },
+  setup() {
+    const { openNotification } = useNotification();
 
-    return { openNotification }
+    return { openNotification };
   },
   data: () => ({
     icons,
@@ -257,9 +309,9 @@ export default {
     isRenameLoading: false,
     isLogsLoading: false,
     isResizeLoading: false,
-    reinstallOS: '',
-    reinstallOSName: '',
-    renameNewName: '',
+    reinstallOS: "",
+    reinstallOSName: "",
+    renameNewName: "",
     modal: {
       menu: false,
       reinstall: false,
@@ -270,268 +322,296 @@ export default {
       networkControl: false,
       accessManager: false,
       rename: false,
-      resize: false
+      resize: false,
     },
     resize: {
       VCPU: 0,
       RAM: 0,
       size: 0,
-      scale: 'GB'
+      scale: "GB",
     },
     logs: [],
     images: [],
     resources: {},
-    type: ''
+    type: "",
   }),
   computed: {
-    ...mapState(useInstancesStore, ['isActionLoading', 'services', 'getInstances', 'isLoading', 'socket']),
-    ...mapState(useAuthStore, ['isLogged', 'baseURL']),
-    ...mapState(useChatsStore, ['getDefaults']),
-    ...mapState(useProductsStore, { products: 'products', fetchProducts: 'fetch', isInfoLoading: 'isLoading' }),
-    ...mapState(useSpStore, { sp: 'servicesProviders', fetchProviders: 'fetch' }),
-    template () {
-      const components = import.meta.glob('@/components/cloud/modules/*/openInstance.vue')
-      const component = Object.keys(components).find((key) => key.includes(`/${this.type}/`))
+    ...mapState(useInstancesStore, [
+      "isActionLoading",
+      "services",
+      "getInstances",
+      "isLoading",
+      "socket",
+    ]),
+    ...mapState(useAuthStore, ["isLogged", "baseURL"]),
+    ...mapState(useChatsStore, ["getDefaults"]),
+    ...mapState(useProductsStore, {
+      products: "products",
+      fetchProducts: "fetch",
+      isInfoLoading: "isLoading",
+    }),
+    ...mapState(useSpStore, {
+      sp: "servicesProviders",
+      fetchProviders: "fetch",
+    }),
+    template() {
+      const components = import.meta.glob(
+        "@/components/cloud/modules/*/openInstance.vue"
+      );
+      const component = Object.keys(components).find((key) =>
+        key.includes(`/${this.type}/`)
+      );
 
-      if (!component) return () => ({})
-      return defineAsyncComponent(() => components[component]())
+      if (!component) return () => ({});
+      return defineAsyncComponent(() => components[component]());
     },
-    menuOptions () {
-      let { type } = this.VM.billingPlan ?? {}
+    menuOptions() {
+      let { type } = this.VM.billingPlan ?? {};
       const options = [
         {
-          title: 'Reinstall',
-          onclick: (type === 'ovh vps') ? this.openVpsReinstall : this.sendReinstall,
-          params: ['reinstall'],
-          icon: 'ExclamationOutlined',
-          modules: ['ione', 'custom', 'ovh vps']
+          title: "Reinstall",
+          onclick:
+            type === "ovh vps" ? this.openVpsReinstall : this.sendReinstall,
+          params: ["reinstall"],
+          icon: "ExclamationOutlined",
+          modules: ["ione", "custom", "ovh vps"],
         },
         {
-          title: 'Rename',
+          title: "Rename",
           onclick: this.changeModal,
-          params: ['rename'],
-          icon: 'TagOutlined'
+          params: ["rename"],
+          icon: "TagOutlined",
         },
         {
-          title: 'Resize VM',
+          title: "Resize VM",
           onclick: this.changeModal,
-          params: ['expand'],
-          icon: 'ArrowsAltOutlined',
+          params: ["expand"],
+          icon: "ArrowsAltOutlined",
           forVNC: true,
-          modules: ['ione']
+          modules: ["ione"],
         },
         {
-          title: 'SSH key',
+          title: "SSH key",
           onclick: this.changeModal,
-          params: ['SSH'],
-          icon: 'SafetyOutlined',
-          modules: ['ione', 'ovh', 'keyweb']
+          params: ["SSH"],
+          icon: "SafetyOutlined",
+          modules: ["ione", "ovh", "keyweb"],
         },
         {
-          title: 'Network control',
+          title: "Network control",
           onclick: this.changeModal,
-          params: ['networkControl'],
-          icon: 'GlobalOutlined',
+          params: ["networkControl"],
+          icon: "GlobalOutlined",
           forVNC: true,
-          modules: []
+          modules: [],
         },
         {
-          title: 'Access manager',
+          title: "Access manager",
           onclick: this.changeModal,
-          params: ['accessManager'],
-          icon: 'SafetyOutlined',
-          modules: ['ione', 'ovh vps', 'ovh dedicated', 'keyweb', 'custom']
+          params: ["accessManager"],
+          icon: "SafetyOutlined",
+          modules: ["ione", "ovh vps", "ovh dedicated", "keyweb", "custom"],
         },
         {
-          title: 'Logs',
+          title: "Logs",
           onclick: this.getLogs,
-          params: ['logs'],
-          icon: 'CodeOutlined',
-          modules: ['ovh vps', 'ovh dedicated']
+          params: ["logs"],
+          icon: "CodeOutlined",
+          modules: ["ovh vps", "ovh dedicated"],
         },
         {
-          title: 'Delete',
+          title: "Delete",
           onclick: this.sendDelete,
-          params: ['delete'],
-          icon: 'DeleteOutlined',
+          params: ["delete"],
+          icon: "DeleteOutlined",
           isDanger: true,
           forVNC: true,
-          modules: ['ione', 'ovh', 'keyweb']
-        }
-      ]
+          modules: ["ione", "ovh", "keyweb"],
+        },
+      ];
 
-      if (this.VM.server_on) type = 'custom'
+      if (this.VM.server_on) type = "custom";
       return options.filter((el) => {
-        if (!el.modules) return true
+        if (!el.modules) return true;
 
-        return el.modules.find((module) => type.includes(module))
-      })
+        return el.modules.find((module) => type.includes(module));
+      });
     },
 
-    itemService () {
-      return this.services.find((el) => this.VM.uuidService === el.uuid)
+    itemService() {
+      return this.services.find((el) => this.VM.uuidService === el.uuid);
     },
-    VM () {
-      const vms = [...this.getInstances, ...this.products]
+    VM() {
+      const vms = [...this.getInstances, ...this.products];
 
       for (const instance of vms) {
         if (instance.uuid === this.$route.params.uuid) {
-          return instance
+          return instance;
         } else if (`${instance.id}` === `${this.$route.params.uuid}`) {
-          return { ...instance, resources: this.resources }
+          return { ...instance, resources: this.resources };
         }
       }
-      return {}
+      return {};
     },
-    vmsLoading () {
-      return this.isLoading || this.isInfoLoading
+    vmsLoading() {
+      return this.isLoading || this.isInfoLoading;
     },
-    sshKey () {
+    sshKey() {
       const { config } = this.itemService.instancesGroups.find(
         ({ sp }) => sp === this.VM.sp
-      )
+      );
 
-      return this.VM.config?.ssh_public_key ?? config.ssh ?? this.$t('ip.none')
+      return this.VM.config?.ssh_public_key ?? config.ssh ?? this.$t("ip.none");
     },
-    stateVM () {
+    stateVM() {
       if (this.VM.server_on) {
-        return this.VM.vm_info?.STATE?.replaceAll('_', ' ') ?? 'UNKNOWN'
+        return this.VM.vm_info?.STATE?.replaceAll("_", " ") ?? "UNKNOWN";
       }
 
       if (!this.VM.state && !this.VM.data.is_monitored) {
-        return 'INIT'
+        return "INIT";
       }
-      if (!this.VM.state) return 'UNKNOWN'
+      if (!this.VM.state) return "UNKNOWN";
 
-      const state = this.VM.state.meta?.lcm_state_str ?? this.VM.state.state
+      const state = this.VM.state.meta?.lcm_state_str ?? this.VM.state.state;
 
-      if (this.VM.state.meta.state === 1) return 'PENDING'
-      if (this.VM.state.meta.state === 5) return 'SUSPENDED'
-      if (this.VM.data.suspended_manually) return 'SUSPENDED'
-      if (this.VM.state.meta.state === 'BUILD') return 'BUILD'
+      if (this.VM.state.meta.state === 1) return "PENDING";
+      if (this.VM.state.meta.state === 5) return "SUSPENDED";
+      if (this.VM.data.suspended_manually) return "SUSPENDED";
+      if (this.VM.state.meta.state === "BUILD") return "BUILD";
 
       switch (state) {
-        case 'LCM_INIT':
-          return 'POWEROFF'
+        case "LCM_INIT":
+          return "POWEROFF";
         default:
-          return state.replaceAll('_', ' ')
+          return state.replaceAll("_", " ");
       }
     },
-    stateColor () {
-      if (!this.VM.state && !this.VM.vm_info?.STATE) return 'var(--err)'
-      if (this.VM.data?.suspended_manually) return '#ff9140'
+    stateColor() {
+      if (!this.VM.state && !this.VM.vm_info?.STATE) return "var(--err)";
+      if (this.VM.data?.suspended_manually) return "#ff9140";
 
-      let state
-      if (this.VM?.billingPlan?.type === 'ione') {
-        state = this.VM.state.meta.lcm_state_str ?? this.VM.state.state
+      let state;
+      if (this.VM?.billingPlan?.type === "ione") {
+        state = this.VM.state.meta.lcm_state_str ?? this.VM.state.state;
       } else if (this.VM.server_on) {
-        state = this.VM.vm_info.STATE
+        state = this.VM.vm_info.STATE;
       } else {
-        state = this.VM.state.state
+        state = this.VM.state.state;
       }
 
       switch (state.toLowerCase()) {
-        case 'active':
-        case 'running':
-          return 'var(--success)'
+        case "active":
+        case "running":
+          return "var(--success)";
         // останавливающийся и запускающийся
-        case 'boot':
-        case 'build':
-        case 'boot_poweroff':
-        case 'shutdown_poweroff':
-          return 'var(--warn)'
-        case 'lcm_init':
-        case 'stopped':
-        case 'poweroff':
-          return '#ff9140'
-        case 'operation':
-        case 'suspended':
-        case 'suspend':
-        case 'pending':
-          return 'var(--gloomy_font)'
+        case "boot":
+        case "build":
+        case "boot_poweroff":
+        case "shutdown_poweroff":
+          return "var(--warn)";
+        case "lcm_init":
+        case "stopped":
+        case "poweroff":
+          return "#ff9140";
+        case "operation":
+        case "suspended":
+        case "suspend":
+        case "pending":
+          return "var(--gloomy_font)";
         default:
-          return 'var(--err)'
+          return "var(--err)";
       }
-    }
+    },
   },
   watch: {
-    'VM.uuidService': {
-      handler (value) {
-        if (!value) return
-        this.resize.VCPU = this.VM.resources.cpu
-        this.resize.RAM = this.VM.resources.ram / 1024
-        this.resize.size = Math.ceil(this.VM.resources.drive_size / 1024)
+    "VM.uuidService": {
+      handler(value) {
+        if (!value) return;
+        this.resize.VCPU = this.VM.resources.cpu;
+        this.resize.RAM = this.VM.resources.ram / 1024;
+        this.resize.size = Math.ceil(this.VM.resources.drive_size / 1024);
 
-        this.renameNewName = this.VM.title
+        this.renameNewName = this.VM.title;
         if (!this.socket) {
-          this.subscribeWebSocket(value)
+          this.subscribeWebSocket(value);
         }
 
-        if (this.type === '') {
-          this.type = this.VM.billingPlan?.type ?? 'ione'
+        if (this.type === "") {
+          this.type = (this.VM.billingPlan?.type ?? "ione").split("-")[0];
         }
       },
-      immediate: true
+      immediate: true,
     },
-    'VM.server_on': {
-      handler (value) {
-        if (!value) return
-        this.type = 'whmcs'
+    "VM.server_on": {
+      handler(value) {
+        if (!value) return;
+        this.type = "whmcs";
       },
-      immediate: true
-    }
+      immediate: true,
+    },
   },
-  created () {
-    this.renameNewName = this.VM.vm_info?.NAME ?? this.VM.title ?? ''
+  created() {
+    this.renameNewName = this.VM.vm_info?.NAME ?? this.VM.title ?? "";
 
     if (!this.socket && this.VM.uuidService) {
-      this.subscribeWebSocket(this.VM.uuidService)
+      this.subscribeWebSocket(this.VM.uuidService);
     }
 
     if (this.isLogged) {
-      this.fetchBillingData()
-        .then(({ client_id: id }) => {
-          this.fetchProducts(id)
-        })
+      this.fetchBillingData().then(({ client_id: id }) => {
+        this.fetchProducts(id);
+      });
 
-      this.fetchProviders()
-      this.fetch()
+      this.fetchProviders();
+      this.fetch();
     }
   },
-  beforeUnmount () {
-    if (!this.socket) return
-    this.socket.close(1000, 'Work is done')
+  beforeUnmount() {
+    if (!this.socket) return;
+    this.socket.close(1000, "Work is done");
   },
   methods: {
-    ...mapActions(useChatsStore, ['createChat', 'sendMessage', 'fetchDefaults']),
-    ...mapActions(useAuthStore, ['fetchBillingData']),
-    ...mapActions(useInstancesStore, [
-      'fetch', 'subscribeWebSocket',
-      'updateService', 'deleteInstance', 'invokeAction'
+    ...mapActions(useChatsStore, [
+      "createChat",
+      "sendMessage",
+      "fetchDefaults",
     ]),
-    disabledMenu (menuName) {
-      const states = ['RUNNING', 'STOPPED', 'POWEROFF', 'SUSPENDED']
+    ...mapActions(useAuthStore, ["fetchBillingData"]),
+    ...mapActions(useInstancesStore, [
+      "fetch",
+      "subscribeWebSocket",
+      "updateService",
+      "deleteInstance",
+      "invokeAction",
+    ]),
+    disabledMenu(menuName) {
+      const states = ["RUNNING", "STOPPED", "POWEROFF", "SUSPENDED"];
 
-      if (this.VM?.product && menuName === 'resize') {
-        return true
+      if (this.VM?.product && menuName === "resize") {
+        return true;
       }
       if (states.find((state) => this.stateVM.includes(state))) {
-        if (this.VM.data?.lock) return true
-        if (menuName === 'delete') return false
-        if (this.VM.billingPlan?.kind === 'DYNAMIC' && this.stateVM === 'SUSPENDED') return true
-        return false
+        if (this.VM.data?.lock) return true;
+        if (menuName === "delete") return false;
+        if (
+          this.VM.billingPlan?.kind === "DYNAMIC" &&
+          this.stateVM === "SUSPENDED"
+        )
+          return true;
+        return false;
       }
     },
-    changeModal (name) {
+    changeModal(name) {
       for (const key in this.modal) {
-        this.modal[key] = false
+        this.modal[key] = false;
       }
-      this.modal[name] = true
+      this.modal[name] = true;
     },
-    closeModal (name) {
-      this.modal[name] = false
+    closeModal(name) {
+      this.modal[name] = false;
     },
-    ResizeVM () {
+    ResizeVM() {
       // if (Object.keys(this.VM.state?.meta?.snapshots ?? {}).length > 0) {
       //   this.$message.warn(
       //     this.$t('You cannot change resources while there are snapshots')
@@ -540,29 +620,33 @@ export default {
       // }
 
       const onOk = async () => {
-        this.isResizeLoading = true
+        this.isResizeLoading = true;
         if (this.getDefaults.departments.length < 1) {
-          await this.fetchDefaults()
+          await this.fetchDefaults();
         }
 
-        const group = this.itemService.instancesGroups.find((el) => el.sp === this.VM.sp)
-        const instance = group.instances.find((el) => el.uuid === this.VM.uuid)
-        const cpuEqual = instance.resources.cpu === +this.resize.VCPU
-        const ramEqual = instance.resources.ram === this.resize.RAM * 1024
-        const diskEqual = instance.resources.drive_size === this.resize.size * 1024
+        const group = this.itemService.instancesGroups.find(
+          (el) => el.sp === this.VM.sp
+        );
+        const instance = group.instances.find((el) => el.uuid === this.VM.uuid);
+        const cpuEqual = instance.resources.cpu === +this.resize.VCPU;
+        const ramEqual = instance.resources.ram === this.resize.RAM * 1024;
+        const diskEqual =
+          instance.resources.drive_size === this.resize.size * 1024;
 
-        if (this.VM.billingPlan.kind === 'DYNAMIC') {
-          instance.resources.cpu = +this.resize.VCPU
-          instance.resources.ram = this.resize.RAM * 1024
+        if (this.VM.billingPlan.kind === "DYNAMIC") {
+          instance.resources.cpu = +this.resize.VCPU;
+          instance.resources.ram = this.resize.RAM * 1024;
         } else if (!cpuEqual || !ramEqual) {
-          const { departments } = this.getDefaults
-          const { admins } = departments.find(({ id }) => id === config.department) ?? {}
+          const { departments } = this.getDefaults;
+          const { admins } =
+            departments.find(({ id }) => id === config.department) ?? {};
           const message = `
               1. ID: ${this.VM.uuid}
               2. Resources:
                 - cpu: ${this.resize.VCPU}
                 - ram: ${this.resize.RAM * 1024}
-            `
+            `;
 
           try {
             const response = await this.createChat({
@@ -571,255 +655,273 @@ export default {
               gateways: [],
               chat: {
                 subject: `Resize VM: ${this.VM.title}`,
-                message
-              }
-            })
+                message,
+              },
+            });
 
             await this.sendMessage({
               uuid: response.uuid,
               content: message,
               account: this.userdata.uuid,
-              date: BigInt(Date.now())
-            })
+              date: BigInt(Date.now()),
+            });
 
-            this.$message.success(this.$t('Ticket created successfully'))
+            this.$message.success(this.$t("Ticket created successfully"));
           } catch (error) {
-            const message = error.response?.data?.message ?? error.message ?? error
+            const message =
+              error.response?.data?.message ?? error.message ?? error;
 
-            this.openNotification('error', { message: this.$t(message) })
-            console.error(error)
+            this.openNotification("error", { message: this.$t(message) });
+            console.error(error);
           }
         }
 
         if (cpuEqual && ramEqual && diskEqual) {
-          this.closeModal('expand')
-          this.isResizeLoading = false
-          return
+          this.closeModal("expand");
+          this.isResizeLoading = false;
+          return;
         }
 
-        if (diskEqual) return
-        instance.resources.drive_size = this.resize.size * 1024
+        if (diskEqual) return;
+        instance.resources.drive_size = this.resize.size * 1024;
         this.updateService(this.itemService)
           .then((result) => {
             if (result) {
-              this.openNotification('success', {
-                message: this.$t('VM resized successfully')
-              })
-              this.closeModal('expand')
+              this.openNotification("success", {
+                message: this.$t("VM resized successfully"),
+              });
+              this.closeModal("expand");
             } else {
-              this.openNotification('error', {
-                message: this.$t("Can't VM resize to same size")
-              })
+              this.openNotification("error", {
+                message: this.$t("Can't VM resize to same size"),
+              });
             }
           })
           .catch((err) => {
-            const message = err.response?.data?.message ?? err.message ?? err
+            const message = err.response?.data?.message ?? err.message ?? err;
 
-            this.openNotification('error', {
-              message: this.$t(`Can't VM resize to same size: [error] - ${message}`)
-            })
-            console.error(err)
+            this.openNotification("error", {
+              message: this.$t(
+                `Can't VM resize to same size: [error] - ${message}`
+              ),
+            });
+            console.error(err);
           })
           .finally(() => {
-            this.isResizeLoading = false
-          })
-      }
+            this.isResizeLoading = false;
+          });
+      };
 
       this.$confirm({
-        title: this.$t('Service will be stopped after resize. Please restart manually!'),
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
+        title: this.$t(
+          "Service will be stopped after resize. Please restart manually!"
+        ),
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
         onOk,
-        onCancel () {}
-      })
+        onCancel() {},
+      });
     },
-    sendRename () {
-      if (this.renameNewName !== '') {
-        const group = this.itemService?.instancesGroups.find((el) => el.sp === this.VM.sp)
-        const instance = group?.instances.find((el) => el.uuid === this.VM.uuid)
+    sendRename() {
+      if (this.renameNewName !== "") {
+        const group = this.itemService?.instancesGroups.find(
+          (el) => el.sp === this.VM.sp
+        );
+        const instance = group?.instances.find(
+          (el) => el.uuid === this.VM.uuid
+        );
 
-        this.isRenameLoading = true
-        instance.title = this.renameNewName
+        this.isRenameLoading = true;
+        instance.title = this.renameNewName;
 
-        const promise = (this.VM.server_on)
-          ? this.$refs['open-instance'].sendAction('rename_vm', { vm_name: this.renameNewName })
-          : this.updateService(this.itemService)
+        const promise = this.VM.server_on
+          ? this.$refs["open-instance"].sendAction("rename_vm", {
+              vm_name: this.renameNewName,
+            })
+          : this.updateService(this.itemService);
 
         promise
           .then((result) => {
             if (result) {
-              this.$message.success(this.$t('VM name changes successfully'))
-              this.isRenameLoading = false
-              this.closeModal('rename')
-              this.closeModal('menu')
+              this.$message.success(this.$t("VM name changes successfully"));
+              this.isRenameLoading = false;
+              this.closeModal("rename");
+              this.closeModal("menu");
             } else {
-              this.openNotification('error', {
-                message: this.$t("Can't VM name changes")
-              })
+              this.openNotification("error", {
+                message: this.$t("Can't VM name changes"),
+              });
             }
           })
           .catch((err) => {
-            const message = err.response?.data?.message ?? err.message ?? err
+            const message = err.response?.data?.message ?? err.message ?? err;
 
-            this.openNotification('error', {
-              message: this.$t(message)
-            })
+            this.openNotification("error", {
+              message: this.$t(message),
+            });
           })
           .finally(() => {
-            this.modal.confirmLoading = false
-          })
+            this.modal.confirmLoading = false;
+          });
       }
     },
-    sendReinstall () {
+    sendReinstall() {
       this.$confirm({
-        title: this.$t('Do you want to reinstall this virtual machine?'),
-        okType: 'danger',
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
-        content: () => h(
-          'div',
-          { style: 'color: red' },
-          this.$t('All data will be deleted!')
-        ),
+        title: this.$t("Do you want to reinstall this virtual machine?"),
+        okType: "danger",
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        content: () =>
+          h(
+            "div",
+            { style: "color: red" },
+            this.$t("All data will be deleted!")
+          ),
         onOk: async () => {
           try {
-            const { type } = this.VM.billingPlan
+            const { type } = this.VM.billingPlan;
 
             await this.invokeAction({
               uuid: this.VM.uuid,
               uuidService: this.VM.uuidService,
-              action: (type === 'ovh vps') ? 'rebuild' : 'reinstall',
-              params: (type === 'ovh vps') ? { imageId: this.reinstallOS } : {}
-            })
+              action: type === "ovh vps" ? "rebuild" : "reinstall",
+              params: type === "ovh vps" ? { imageId: this.reinstallOS } : {},
+            });
 
-            this.openNotification('success', {
-              message: `${this.$t('Done')}!`
-            })
+            this.openNotification("success", {
+              message: `${this.$t("Done")}!`,
+            });
           } catch (error) {
-            const message = error.response?.data?.message ?? error.message ?? error
+            const message =
+              error.response?.data?.message ?? error.message ?? error;
 
-            this.openNotification('error', {
-              message: this.$t(message)
-            })
+            this.openNotification("error", {
+              message: this.$t(message),
+            });
           } finally {
-            this.modal.menu = false
-            this.modal.reinstall = false
+            this.modal.menu = false;
+            this.modal.reinstall = false;
           }
         },
         onCancel: () => {
-          this.modal.reinstall = false
-        }
-      })
+          this.modal.reinstall = false;
+        },
+      });
     },
-    sendDelete () {
+    sendDelete() {
       this.$confirm({
-        title: this.$t('Do you want to delete this virtual machine?'),
-        okType: 'danger',
-        okText: this.$t('Yes'),
-        cancelText: this.$t('Cancel'),
-        content: () => h(
-          'div',
-          { style: 'color: red' },
-          this.$t('All data will be deleted!')
-        ),
+        title: this.$t("Do you want to delete this virtual machine?"),
+        okType: "danger",
+        okText: this.$t("Yes"),
+        cancelText: this.$t("Cancel"),
+        content: () =>
+          h(
+            "div",
+            { style: "color: red" },
+            this.$t("All data will be deleted!")
+          ),
         onOk: () => {
-          this.isDeleteLoading = true
+          this.isDeleteLoading = true;
           this.deleteInstance(this.VM.uuid)
             .then((result) => {
               if (result) {
-                this.openNotification('success', {
-                  message: this.$t('VM deleted successfully')
-                })
+                this.openNotification("success", {
+                  message: this.$t("VM deleted successfully"),
+                });
 
-                this.$router.push({ path: '/services' })
+                this.$router.push({ path: "/services" });
               } else {
-                this.openNotification('error', {
-                  message: this.$t('Failed to delete VM')
-                })
+                this.openNotification("error", {
+                  message: this.$t("Failed to delete VM"),
+                });
               }
             })
             .catch((err) => {
-              const message = err.response?.data?.message ?? err.message ?? err
+              const message = err.response?.data?.message ?? err.message ?? err;
 
-              this.openNotification('error', {
-                message: this.$t(message)
-              })
+              this.openNotification("error", {
+                message: this.$t(message),
+              });
             })
             .finally(() => {
-              this.isDeleteLoading = false
-            })
+              this.isDeleteLoading = false;
+            });
         },
         onCancel: () => {
-          this.modal.delete = false
-        }
-      })
+          this.modal.delete = false;
+        },
+      });
     },
-    openVpsReinstall () {
-      this.getImages()
-      this.changeModal('reinstall')
+    openVpsReinstall() {
+      this.getImages();
+      this.changeModal("reinstall");
     },
-    setOS ({ id, name }) {
-      this.reinstallOSName = name
-      this.reinstallOS = id
+    setOS({ id, name }) {
+      this.reinstallOSName = name;
+      this.reinstallOS = id;
     },
-    async getImages () {
-      this.isRenameLoading = true
+    async getImages() {
+      this.isRenameLoading = true;
       try {
         const { meta } = await this.invokeAction({
           uuid: this.VM.uuid,
           uuidService: this.VM.uuidService,
-          action: 'images'
-        })
+          action: "images",
+        });
 
-        this.images = meta.images
+        this.images = meta.images;
       } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error
+        const message = error.response?.data?.message ?? error.message ?? error;
 
-        this.openNotification('error', {
-          message: this.$t(message)
-        })
+        this.openNotification("error", {
+          message: this.$t(message),
+        });
       } finally {
-        this.isRenameLoading = false
+        this.isRenameLoading = false;
       }
     },
-    getLogs () {
-      this.isLogsLoading = true
-      this.changeModal('logs')
-      this.invokeAction({ uuid: this.$route.params.uuid, action: 'get_logs' })
+    getLogs() {
+      this.isLogsLoading = true;
+      this.changeModal("logs");
+      this.invokeAction({ uuid: this.$route.params.uuid, action: "get_logs" })
         .then((response) => {
-          response.meta?.logs?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          this.logs = response.meta?.logs ?? []
+          response.meta?.logs?.sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
+          this.logs = response.meta?.logs ?? [];
         })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
+          const message = err.response?.data?.message ?? err.message ?? err;
 
-          console.error(err)
-          this.openNotification('error', {
-            message: this.$t(message)
-          })
+          console.error(err);
+          this.openNotification("error", {
+            message: this.$t(message),
+          });
         })
-        .finally(() => { this.isLogsLoading = false })
+        .finally(() => {
+          this.isLogsLoading = false;
+        });
     },
-    addToClipboard ({ target }) {
+    addToClipboard({ target }) {
       if (navigator?.clipboard) {
         navigator.clipboard
           .writeText(target.innerText)
           .then(() => {
-            this.openNotification('success', {
-              message: this.$t('Text copied')
-            })
+            this.openNotification("success", {
+              message: this.$t("Text copied"),
+            });
           })
           .catch((res) => {
-            console.error(res)
-          })
+            console.error(res);
+          });
       } else {
-        this.openNotification('error', {
-          message: this.$t('Clipboard is not supported')
-        })
+        this.openNotification("error", {
+          message: this.$t("Clipboard is not supported"),
+        });
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 <style>
 .cloud__container {
@@ -1065,7 +1167,8 @@ export default {
   animation: glowing 1.5s ease infinite;
 }
 @keyframes glowing {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

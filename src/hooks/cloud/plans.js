@@ -56,7 +56,8 @@ function useCloudPlans(tarification, options) {
 
     if (plans.length < 1) return publicPlans;
     return publicPlans.filter(
-      ({ uuid, type }) => locationItem?.type === type && plans.includes(uuid)
+      ({ uuid, type }) =>
+        locationItem?.type === type.split("-")[0] && plans.includes(uuid)
     );
   });
 

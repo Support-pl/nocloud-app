@@ -131,6 +131,15 @@
           </a-radio-group>
         </a-modal>
       </div>
+
+      <div class="Fcloud__button" @click="onVpnButtonClick">
+        <div class="Fcloud__BTN-icon">
+          <cluster-outlined />
+        </div>
+        <div class="Fcloud__BTN-title">
+          {{ $t("VPN") }}
+        </div>
+      </div>
     </div>
 
     <div class="Fcloud__info">
@@ -542,6 +551,9 @@ const redoIcon = defineAsyncComponent(() =>
 const backwardIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/BackwardOutlined")
 );
+const clusterOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ClusterOutlined")
+);
 
 const flagIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/FlagFilled")
@@ -607,6 +619,7 @@ export default defineComponent({
     renewalModal,
     redoIcon,
     backwardIcon,
+    clusterOutlined,
     flagIcon,
     envIcon,
     infoIcon,
@@ -678,7 +691,7 @@ export default defineComponent({
   computed: {
     ...mapState(useSpStore, ["servicesProviders"]),
     ...mapState(useAuthStore, ["userdata", "baseURL"]),
-    ...mapState(useInstancesStore, ["services"]),
+    ...mapState(useInstancesStore, ["services", "getInstances"]),
     ...mapState(usePlansStore, ["plans"]),
     ...mapState(useNamespasesStore, ["namespaces"]),
     ...mapState(useChatsStore, ["getDefaults"]),
@@ -959,6 +972,25 @@ export default defineComponent({
       this.$router.push({
         name: "VNC",
         params: { uuid: this.$route.params.uuid },
+      });
+    },
+    onVpnButtonClick() {
+      for (const instance of this.getInstances) {
+        if (
+          instance.billingPlan?.type == "vpn" &&
+          instance.config?.instance === this.$route.params.uuid
+        ) {
+          this.$router.push({
+            name: "openVpn",
+            params: { uuid: instance.uuid },
+          });
+          return;
+        }
+      }
+
+      this.$router.push({
+        name: "service-vpn",
+        query: { instance: this.$route.params.uuid },
       });
     },
     handleOk(from) {

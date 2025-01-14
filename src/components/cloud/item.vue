@@ -260,6 +260,7 @@ function cloudClick(service, { target }) {
     server_on: isServer,
     id,
     config,
+    uuid,
   } = service;
 
   if (target.hasAttribute("role") || target.hasAttribute("viewBox")) return;
@@ -267,6 +268,8 @@ function cloudClick(service, { target }) {
     router.push({ name: "openVDC", params: { uuid: orderid } });
   } else if (id && isServer) {
     router.push({ name: "openCloud", params: { uuid: id } });
+  } else if (groupname === "VPN") {
+    router.push({ name: "openVpn", params: { uuid: uuid } });
   } else if (hostingid) {
     router.push({ name: "service", params: { id: hostingid } });
   } else if (groupname === "Self-Service VDS SSD HC") {
