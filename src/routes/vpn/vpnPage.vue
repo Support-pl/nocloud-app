@@ -136,7 +136,7 @@
       <div>
         <span>{{ t("vpn.labels.hard_reset_help_message") }}</span>
 
-        <div class="hard_reset_override">
+        <div v-if="isInstanceConfigData" class="hard_reset_override">
           <span style="margin-right: 10px">{{
             t("vpn.labels.change_client_info")
           }}</span>
@@ -144,6 +144,7 @@
         </div>
 
         <a-form
+          v-if="isInstanceConfigData"
           ref="hardResetForm"
           class="hard_reset_config_form"
           :model="hardResetData.config"
@@ -250,6 +251,7 @@ const { t, locale } = useI18n();
 const instancesStore = useInstancesStore();
 const { instances } = storeToRefs(useInstancesStore());
 
+const wgConfig = ref("");
 const nowDate = ref();
 const loadingAction = ref("");
 const isHardResetOpen = ref(false);
@@ -336,8 +338,6 @@ const isStopDisabled = computed(
 const isWarningMessageVisible = computed(() => {
   return ["error", "unreachable"].includes(instanceStatus.value.title);
 });
-
-const wgConfig = computed(() => instance.value.state?.meta?.wireguard_config);
 
 const wgEasyHost = computed(
   () => `http://${instanceConnectData.value.host}:51821`
@@ -434,10 +434,11 @@ const startInstance = async () => {
 
 const subscribeToUpdates = () => {
   instancesStore.subscribeWebSocket(instance.value.uuidService);
+  wgConfig.value = instance.value.state?.meta?.wireguard_config;
 };
 
 const hardResetInstance = async () => {
-  await hardResetForm.value.validate();
+  await hardResetForm.value?.validate();
 
   try {
     loadingAction.value = "hard-reset";
@@ -584,6 +585,17 @@ watch(isHardResetOpen, () => {
     ...instanceConnectData.value,
   };
 });
+
+watch(
+  () => instance.value?.state?.meta?.wireguard_config,
+  (val) => {
+    wgConfig.value = "";
+
+    setTimeout(() => {
+      wgConfig.value = val;
+    }, 1);
+  }
+);
 
 // watch(instanceStatus, async (state) => {
 //   if (state.title === "active") {
