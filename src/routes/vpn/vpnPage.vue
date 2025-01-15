@@ -68,7 +68,7 @@
 
                 <a
                   style="display: block"
-                  d
+                  target="_blank"
                   href="https://www.wireguard.com/install/"
                   >https://www.wireguard.com/install/</a
                 >

@@ -1,5 +1,12 @@
 <template>
-  <div class="service__item" @click="onClick">
+  <div
+    class="service__item"
+    :style="{
+      color: service.meta?.iconColor,
+      fill: service.meta?.iconColor,
+    }"
+    @click="onClick"
+  >
     <div class="service__icon">
       <component :is="service.icon" v-if="!isIconString" />
 
@@ -16,47 +23,45 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import AIcon from '@ant-design/icons-vue'
-import { NcIcon } from 'nocloud-ui'
-import { useAuthStore } from '@/stores/auth.js'
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import AIcon from "@ant-design/icons-vue";
+import { NcIcon } from "nocloud-ui";
+import { useAuthStore } from "@/stores/auth.js";
 
 const props = defineProps({
   service: { type: Object, required: true },
-  productsCount: { type: Function, required: true }
-})
+  productsCount: { type: Function, required: true },
+});
 
-const i18n = useI18n()
-const authStore = useAuthStore()
+const i18n = useI18n();
+const authStore = useAuthStore();
 
-const isIconString = computed(() =>
-  typeof props.service.icon === 'string'
-)
+const isIconString = computed(() => typeof props.service.icon === "string");
 
 const translatedName = computed(() => {
-  const { title } = (props.service.promo ?? {})[i18n.locale.value] ?? {}
+  const { title } = (props.service.promo ?? {})[i18n.locale.value] ?? {};
 
-  if (title) return title
+  if (title) return title;
   if (props.service.translatable) {
-    return i18n.t(props.service.title)
+    return i18n.t(props.service.title);
   }
-  return props.service.title
-})
+  return props.service.title;
+});
 
-function onClick (e) {
-  const type = props.service.onclick.paramsArr[0].query.service
-  const isCountZero = props.productsCount(type, true) === 0
+function onClick(e) {
+  const type = props.service.onclick.paramsArr[0].query.service;
+  const isCountZero = props.productsCount(type, true) === 0;
 
-  if (authStore.isLogged && !isCountZero) e.stopPropagation()
-  else return
+  if (authStore.isLogged && !isCountZero) e.stopPropagation();
+  else return;
 
-  props.service.onclick.function(...props.service.onclick.paramsArr)
+  props.service.onclick.function(...props.service.onclick.paramsArr);
 }
 </script>
 
 <script>
-export default { name: 'ServiceItem' }
+export default { name: "ServiceItem" };
 </script>
 
 <style>
@@ -68,7 +73,7 @@ export default { name: 'ServiceItem' }
   padding: 10px;
   border-radius: 10px;
   cursor: pointer;
-  transition: background-color .2s ease, color .2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* .service__item:not(:last-of-type){
@@ -106,6 +111,10 @@ export default { name: 'ServiceItem' }
   fill: inherit !important;
 }
 
+.service__item * {
+  fill: inherit !important;
+}
+
 /* .service__icon::after{
   color: var(--main);
   font-size: 2.3rem;
@@ -118,5 +127,4 @@ export default { name: 'ServiceItem' }
   height: 1rem;
   transform: translate(5px, -14px);
 } */
-
 </style>
