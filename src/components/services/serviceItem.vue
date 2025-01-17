@@ -1,13 +1,21 @@
 <template>
   <div
-    class="service__item"
+    :class="{
+      service__item: true,
+      service__icon_colored: !!service.meta?.iconColor,
+    }"
     :style="{
       color: service.meta?.iconColor,
       fill: service.meta?.iconColor,
     }"
     @click="onClick"
   >
-    <div class="service__icon">
+    <div
+      :class="{
+        service__icon: true,
+        service__icon_colored: !!service.meta?.iconColor,
+      }"
+    >
       <component :is="service.icon" v-if="!isIconString" />
 
       <a-icon v-else>
@@ -99,19 +107,19 @@ export default { name: "ServiceItem" };
   word-break: break-word;
 }
 
-.service__icon .cls-1 {
+.service__icon_colored .cls-1 {
   fill: var(--main) !important;
 }
 
-.service__icon .cls-2 {
+.service__icon_colored .cls-2 {
   fill: inherit;
 }
 
-.service__icon g path {
+.service__icon_colored g path {
   fill: inherit !important;
 }
 
-.service__item * {
+.service__item_colored * {
   fill: inherit !important;
 }
 
