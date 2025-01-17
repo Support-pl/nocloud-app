@@ -197,7 +197,6 @@ watch(
     if (!product) {
       return;
     }
-    setOptions("ram.size", product?.ram / 1024);
   }
 );
 
@@ -206,7 +205,8 @@ watch(
   async () => {
     await nextTick();
 
-    const product = findProduct(group.value);
+    const product = findProduct(group.value, "ram");
+
     if (!product) {
       return;
     }
@@ -237,14 +237,41 @@ function setProductByResources() {
   emits("update:product", title);
 }
 
-function findProduct(group, cpu = options.cpu.size, ram = options.ram.size) {
+function findProduct(
+  group,
+  priority = "cpu",
+  cpu = options.cpu.size,
+  ram = options.ram.size
+) {
+  const products = [];
   for (const product of props.products) {
     const resources = props.getProduct(product);
     const isCpuEqual = resources.cpu === cpu;
     const isRamEqual = resources.ram / 1024 === ram;
 
-    if (resources.group === group && isCpuEqual && isRamEqual) {
-      return { ...resources, title: product };
+    if (resources.group === group) {
+      products.push({ ...resources, title: product, isCpuEqual, isRamEqual });
+    }
+  }
+
+  for (const product of products) {
+    if (product.isCpuEqual && product.isRamEqual) {
+      return product;
+    }
+  }
+
+  for (const product of products) {
+    if (
+      (priority == "cpu" && product.isCpuEqual) ||
+      (priority === "ram" && product.isRamEqual)
+    ) {
+      return product;
+    }
+  }
+
+  for (const product of products) {
+    if (product.isCpuEqual || product.isRamEqual) {
+      return product;
     }
   }
 }
