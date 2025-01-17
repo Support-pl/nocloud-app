@@ -386,11 +386,11 @@ export default {
 
         switch (this.sortBy) {
           case "Date":
-            return new Date(a.date).getTime() - new Date(b.date).getTime();
+            return a.created - +b.created;
           case "Name":
             return a.productname?.toLowerCase() < b.productname?.toLowerCase();
           case "Cost":
-            return parseFloat(a.orderamount) - parseFloat(b.orderamount);
+            return parseFloat(a.estimate) - parseFloat(b.estimate);
           default:
             return 0;
         }
