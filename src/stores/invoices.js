@@ -133,6 +133,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
 
   return {
     invoices,
+    invoicesApi,
     isLoading,
     filter,
     getInvoices,
