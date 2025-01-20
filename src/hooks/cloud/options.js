@@ -138,7 +138,7 @@ function useCloudOptions(activeKey, tarification) {
         authStore.fetchBillingData(),
       ]);
 
-      if (services.pool.length === 1) {
+      if (services.pool.length >= 1) {
         cloudStore.serviceId = services.pool[0].uuid;
       }
       if (namespaces.pool.length === 1) {
