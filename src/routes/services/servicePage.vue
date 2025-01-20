@@ -16,8 +16,8 @@
             <div class="service-page__info-title">
               {{
                 /^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i.test(service.domain)
-                  ? $t("ssl_product.domain")
-                  : capitalize($t("key"))
+                  ? t("ssl_product.domain")
+                  : capitalize(t("key"))
               }}:
               <span style="font-weight: 400">{{ service.domain }}</span>
             </div>
@@ -32,9 +32,9 @@
             "
           >
             <div class="service-page__info-title">
-              {{ capitalize($t("status")) }}:
+              {{ capitalize(t("status")) }}:
               <a-tag :color="getTagColor">
-                {{ $t(service.status) }}
+                {{ t(service.status) }}
               </a-tag>
             </div>
           </div>
@@ -49,34 +49,30 @@
             "
           >
             <div class="service-page__info-title">
-              {{ $t("Actions") }}:
+              {{ t("Actions") }}:
               <div style="display: inline-flex; gap: 8px">
                 <a-button
                   v-if="service.nextduedate !== '0000-00-00'"
                   size="small"
                   @click="sendRenew"
                 >
-                  {{ capitalize($t("renew")) }}
+                  {{ capitalize(t("renew")) }}
                 </a-button>
                 <a-button danger size="small" @click="sendDelete">
-                  {{ $t("Delete") }}
+                  {{ t("Delete") }}
                 </a-button>
               </div>
             </div>
           </div>
 
-          <div v-if="service.ORDER_INFO" class="service-page__info">
+          <div v-if="lastInvoice" class="service-page__info">
             <div class="service-page__info-title">
-              {{ capitalize($t("invoice status")) }}:
+              {{ capitalize(t("invoice status")) }}:
               <a-tag :color="getInvoiceStatusColor">
-                {{ $t("invoice_" + service.ORDER_INFO.invoicestatus) }}
+                {{ t(lastInvoice.status) }}
               </a-tag>
-              <a-button
-                size="small"
-                type="primary"
-                @click="clickOnInvoice(service.ORDER_INFO.invoiceid)"
-              >
-                {{ $t("open") }}
+              <a-button size="small" type="primary" @click="clickOnInvoice">
+                {{ t("open") }}
               </a-button>
             </div>
           </div>
@@ -87,24 +83,24 @@
               v-if="true || service.SSL.sslstatus === 'Completed'"
               class="service-page__info-title"
             >
-              {{ $t("ssl_product.configuration status") }}:
+              {{ t("ssl_product.configuration status") }}:
               <a-tag :color="getTagColorSSL">
-                {{ $t("ssl_product.completed") }}
+                {{ t("ssl_product.completed") }}
               </a-tag>
 
               <router-link
                 :to="{ name: 'ssl', params: { id: $route.params.id } }"
               >
                 <a-button size="small" type="primary">
-                  {{ $t("open") }}
+                  {{ t("open") }}
                 </a-button>
               </router-link>
             </div>
 
             <div v-else class="service-page__info-title">
-              {{ $t("ssl_product.configuration status") }}:
+              {{ t("ssl_product.configuration status") }}:
               <a-tag :color="getTagColorSSL">
-                {{ $t("ssl_product.awaiting configuration") }}
+                {{ t("ssl_product.awaiting configuration") }}
               </a-tag>
               <router-link
                 :to="{
@@ -113,7 +109,7 @@
                 }"
               >
                 <a-button size="small" type="primary">
-                  {{ $t("ssl_product.configure") }}
+                  {{ t("ssl_product.configure") }}
                 </a-button>
               </router-link>
             </div>
@@ -129,7 +125,7 @@
               <caret-right-icon :rotate="isActive ? 90 : 0" />
             </template>
 
-            <a-collapse-panel :header="capitalize($t('info'))">
+            <a-collapse-panel :header="capitalize(t('info'))">
               <service-info :service="service" :info="info" />
             </a-collapse-panel>
           </a-collapse>
@@ -140,7 +136,7 @@
             style="margin-top: 10px"
           >
             <div class="service-page__info-title">
-              {{ capitalize($t("description")) }}:
+              {{ capitalize(t("description")) }}:
             </div>
             <div class="service-page__info-value">
               <div
@@ -155,7 +151,7 @@
                   :key="resource.GROUP"
                 >
                   <td>
-                    {{ capitalize($t(`virtual_product.${resource.GROUP}`)) }}
+                    {{ capitalize(t(`virtual_product.${resource.GROUP}`)) }}
                   </td>
                   <td>{{ resource.TITLE }}</td>
                 </tr>
@@ -172,23 +168,41 @@
   </div>
 </template>
 
-<script>
-import { defineAsyncComponent, h } from "vue";
-import { mapStores, mapState } from "pinia";
-import { usePeriod } from "@/hooks/utils";
+<script setup>
+import { computed, defineAsyncComponent, h, ref, watch } from "vue";
+import { useNotification, usePeriod } from "@/hooks/utils";
 import config from "@/appconfig.js";
 
 import { useAuthStore } from "@/stores/auth.js";
 import { useChatsStore } from "@/stores/chats.js";
 import { useProductsStore } from "@/stores/products.js";
-import { useNamespasesStore } from "@/stores/namespaces.js";
 import { useInstancesStore } from "@/stores/instances.js";
 
 import loading from "@/components/ui/loading.vue";
 import serviceInfo from "@/components/ui/serviceInfo.vue";
+import { useRoute } from "vue-router";
+import api from "@/api";
+import { useI18n } from "vue-i18n";
+import { Modal } from "ant-design-vue";
 import { useInvoicesStore } from "@/stores/invoices";
+import { GetInvoicesRequest } from "nocloud-proto/proto/es/billing/billing_pb";
 
-const info = [
+const caretRightIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CaretRightOutlined")
+);
+
+const authStore = useAuthStore();
+const instancesStore = useInstancesStore();
+const productsStore = useProductsStore();
+const chatsStore = useChatsStore();
+const invoicesStore = useInvoicesStore();
+
+const { getPeriod } = usePeriod();
+const route = useRoute();
+const { t } = useI18n();
+const notification = useNotification();
+
+const info = ref([
   // {
   //  title: 'first payment',
   //  key: 'firstpaymentamount',
@@ -219,344 +233,336 @@ const info = [
     key: "autorenew",
     type: "text",
   },
-];
+]);
+const service = ref(null);
+const lastInvoice = ref(null);
 
-const caretRightIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CaretRightOutlined")
-);
+const getTagColor = computed(() => {
+  const status = service.value.status.replace("cloudStateItem.", "");
 
+  switch (status.toLowerCase()) {
+    case "running":
+    case "active":
+      return "green";
+    case "operation":
+    case "pending":
+      return "blue";
+    case "stopped":
+    case "suspended":
+      return "orange";
+    case "cancelled":
+    default:
+      return "red";
+  }
+});
+const getTagColorSSL = computed(() => {
+  switch (service.SSL.value?.sslstatus) {
+    case "Completed":
+      return "green";
+    case "Awaiting Configuration":
+      return "red";
+    default:
+      return "";
+  }
+});
+const getInvoiceStatusColor = computed(() => {
+  switch (lastInvoice.value.status) {
+    case "PAID":
+      return "green";
+    case "UNPAID":
+      return "red";
+    default:
+      return "";
+  }
+});
+const getModuleButtons = computed(() => {
+  if (!service.value.groupname) return;
+  const { status, state } = service.value;
+  const serviceType = config
+    .getServiceType(service.value.groupname)
+    ?.toLowerCase();
+
+  const components = import.meta.glob("@/components/services/*/draw.vue");
+  const component = Object.keys(components).find((key) =>
+    key.includes(`/${serviceType}/draw.vue`)
+  );
+
+  if (!components[component]) return;
+  if (serviceType === undefined) return;
+  if (!(status === "Active" || state?.state === "RUNNING")) return;
+  return defineAsyncComponent(() => components[component]());
+});
+const isActionsActive = computed(() => {
+  const key = service.value.product ?? service.value.config?.product;
+  const { meta } = service.value.billingPlan?.products[key] ?? {};
+
+  return !service.value.clientid && meta?.renew !== false;
+});
+const description = computed(() => {
+  const key = service.value.product ?? service.value.config?.product;
+  const { meta } = service.value.billingPlan?.products[key] ?? {};
+  let description = service.value.desc_product?.replace(
+    "/templates",
+    `${config.whmcsSiteUrl}$&`
+  );
+
+  try {
+    description = JSON.parse(description);
+  } catch {}
+
+  return meta?.description ?? description;
+});
+
+async function onStart() {
+  authStore.fetchBillingData();
+
+  await instancesStore.fetch();
+
+  const domain = instancesStore.getInstances.find(
+    ({ uuid }) => uuid === route.params.id
+  );
+  let groupname = "Domains";
+  let date = "year";
+
+  if (!domain) return { meta: "product" };
+  switch (domain.billingPlan.type) {
+    case "cpanel": {
+      const { period } = domain.billingPlan.products[domain.product];
+
+      domain.data.expiry = {
+        expiredate: formatDate(domain.data.next_payment_date ?? 0),
+        regdate: domain.data.creation * 1000 || "0000-00-00",
+      };
+      domain.resources.period = getPeriod(period);
+      groupname = "Shared Hosting";
+      break;
+    }
+    case "openai": {
+      const products = Object.values(domain.billingPlan.resources).reduce(
+        (result, resource) => ({
+          ...result,
+          [resource.key]: resource.price,
+        }),
+        {}
+      );
+
+      domain.resources = {
+        period: t("PayG"),
+        recurringamount: 0,
+        inputKilotoken: products.input_kilotoken,
+        outputKilotoken: products.output_kilotoken,
+      };
+
+      domain.data.expiry = {
+        expiredate: formatDate(domain.data.next_payment_date ?? 0),
+        regdate: domain.data.creation * 1000 || "0000-00-00",
+      };
+      groupname = "OpenAI";
+
+      chatsStore.startStream();
+      break;
+    }
+
+    case "virtual":
+    case "empty": {
+      const { period } = domain.billingPlan.products[domain.product];
+
+      domain.data.expiry = {
+        expiredate: formatDate(domain.data.next_payment_date ?? 0),
+        regdate: domain.data.creation * 1000 || "0000-00-00",
+      };
+      domain.resources.period = getPeriod(period);
+      groupname = "Custom";
+      break;
+    }
+
+    case "goget": {
+      domain.data.expiry = {
+        expiredate: formatDate(domain.data.next_payment_date ?? 0),
+        regdate: domain.data.creation * 1000 || "0000-00-00",
+      };
+      groupname = "SSL";
+      date = "month";
+      break;
+    }
+
+    case "opensrs": {
+      domain.data.expiry = {
+        expiredate: formatDate(domain.data.next_payment_date ?? 0),
+        regdate: domain.data.creation * 1000 || "0000-00-00",
+      };
+      groupname = "Domains";
+      break;
+    }
+
+    default: {
+      const key = Object.keys(domain.config.items)[0];
+      const { period } = domain.billingPlan.products[key];
+
+      domain.resources = {
+        period: getPeriod(period),
+        recurringamount: domain.config.items.reduce(
+          (sum, key) => sum + domain.billingPlan.products[key].price,
+          0
+        ),
+      };
+      domain.data.expiry = {
+        expiredate: domain.data.expires_at.split("T")[0],
+        regdate: domain.data.creation * 1000 || "0000-00-00",
+      };
+    }
+  }
+
+  const { period, recurringamount } = domain.resources;
+  const { expiredate, regdate } = domain.data.expiry;
+
+  service.value = {
+    ...domain,
+    groupname,
+    regdate,
+    name: domain.title,
+    status: `cloudStateItem.${domain.state?.state || "UNKNOWN"}`,
+    domain: domain.resources.domain ?? domain.config.domain,
+    autorenew: domain.config.auto_renew ? "enabled" : "disabled",
+    billingcycle: typeof period === "string" ? period : t(date, period),
+    recurringamount:
+      recurringamount ??
+      domain.billingPlan.products[domain.product]?.price ??
+      "?",
+    nextduedate: expiredate,
+  };
+  info.value[0].type = "";
+
+  let response;
+  if (groupname === "Domains") {
+    response = await api.servicesProviders.action({
+      uuid: domain.sp,
+      action: "get_domain_price",
+      params: { domain: service.value.domain },
+    });
+  } else {
+    response = { meta: "done" };
+  }
+
+  const { meta } = response;
+  let id;
+
+  if (meta?.prices) {
+    const { period } = service.value.resources;
+
+    service.value.recurringamount = meta.prices[period];
+  } else if (meta !== "done") {
+    const response = await authStore.fetchBillingData();
+    id = response.client_id;
+  }
+
+  let result;
+  if (!id) return "done";
+  if (productsStore.products.length < 1) {
+    result = productsStore.fetch(id);
+  }
+
+  if (result === "done") return;
+  const product = productsStore.products.find(
+    ({ id }) => `${id}` === `${route.params.id}`
+  );
+
+  if (product) {
+    service.value = product;
+    info.value.pop();
+  }
+}
+
+onStart();
+
+async function clickOnInvoice() {
+  const paymentLink = await invoicesStore.getPaymentLink(
+    lastInvoice.value.uuid
+  );
+
+  window.location.href = paymentLink;
+}
+async function sendRenew() {
+  Modal.confirm({
+    title: t("Do you want to renew service?"),
+    okText: t("Yes"),
+    cancelText: t("Cancel"),
+    okButtonProps: { disabled: service.value.data.blocked },
+    onOk: async () => {
+      return invoicesStore
+        .createRenewInvoice(service)
+        .then(() => {
+          notification.openNotification("success", { message: "Done!" });
+          service.value.data.blocked = true;
+        })
+        .catch((err) => {
+          notification.openNotification("error", {
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          });
+        })
+        .finally(() => Modal.destroyAll());
+    },
+    onCancel() {},
+  });
+}
+function sendDelete() {
+  Modal.confirm({
+    title: t("Do you want to delete this service?"),
+    okType: "danger",
+    okText: t("Yes"),
+    cancelText: t("Cancel"),
+    content: () =>
+      h("div", { style: "color: red" }, t("All data will be deleted!")),
+    onOk: async () => {
+      return instancesStore
+        .deleteInstance(service.value.uuid)
+        .then(() => {
+          notification.openNotification("success", { message: "Done!" });
+          router.push({ path: "/services" });
+        })
+        .catch((err) => {
+          notification.openNotification("error", {
+            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+          });
+          console.error(err);
+        });
+    },
+    onCancel() {},
+  });
+}
+
+function formatDate(timestamp) {
+  if (timestamp < 1) return "0000-00-00";
+
+  const date = new Date(timestamp * 1000);
+
+  const year = date.getFullYear();
+  let month = date.getMonth() + 1;
+  let day = date.getDate();
+
+  if (`${month}`.length < 2) month = `0${month}`;
+  if (`${day}`.length < 2) day = `0${day}`;
+
+  return `${year}-${month}-${day}`;
+}
+
+watch(service, async () => {
+  const invoices = await invoicesStore.invoicesApi.getInvoices(
+    GetInvoicesRequest.fromJson({
+      page: 1,
+      limit: 3,
+      sort: "DESC",
+      field: "created",
+      filters: { instances: [service.value.uuid] },
+    })
+  );
+  lastInvoice.value = invoices.toJson().pool?.[0];
+});
+</script>
+
+<script>
 export default {
   name: "UserServiceView",
-  components: { loading, serviceInfo, caretRightIcon },
-  setup() {
-    const { getPeriod } = usePeriod();
-
-    return { getPeriod };
-  },
-  data: () => ({ service: null, info }),
-  computed: {
-    ...mapStores(
-      useChatsStore,
-      useProductsStore,
-      useInstancesStore,
-      useNamespasesStore,
-      useInvoicesStore
-    ),
-    ...mapState(useAuthStore, ["baseURL", "userdata", "fetchBillingData"]),
-    getTagColor() {
-      const status = this.service.status.replace("cloudStateItem.", "");
-
-      switch (status.toLowerCase()) {
-        case "running":
-        case "active":
-          return "green";
-        case "operation":
-        case "pending":
-          return "blue";
-        case "stopped":
-        case "suspended":
-          return "orange";
-        case "cancelled":
-        default:
-          return "red";
-      }
-    },
-    getTagColorSSL() {
-      switch (this.service.SSL?.sslstatus) {
-        case "Completed":
-          return "green";
-        case "Awaiting Configuration":
-          return "red";
-        default:
-          return "";
-      }
-    },
-    getInvoiceStatusColor() {
-      switch (this.service.ORDER_INFO.invoicestatus) {
-        case "Paid":
-          return "green";
-        case "Unpaid":
-          return "red";
-        default:
-          return "";
-      }
-    },
-    getModuleButtons() {
-      if (!this.service.groupname) return;
-      const { status, state } = this.service;
-      const serviceType = config
-        .getServiceType(this.service.groupname)
-        ?.toLowerCase();
-
-      const components = import.meta.glob("@/components/services/*/draw.vue");
-      const component = Object.keys(components).find((key) =>
-        key.includes(`/${serviceType}/draw.vue`)
-      );
-
-      if (!components[component]) return;
-      if (serviceType === undefined) return;
-      if (!(status === "Active" || state?.state === "RUNNING")) return;
-      return defineAsyncComponent(() => components[component]());
-    },
-    isActionsActive() {
-      const key = this.service.product ?? this.service.config?.product;
-      const { meta } = this.service.billingPlan?.products[key] ?? {};
-
-      return !this.service.clientid && meta?.renew !== false;
-    },
-    description() {
-      const key = this.service.product ?? this.service.config?.product;
-      const { meta } = this.service.billingPlan?.products[key] ?? {};
-      let description = this.service.desc_product?.replace(
-        "/templates",
-        `${config.whmcsSiteUrl}$&`
-      );
-
-      try {
-        description = JSON.parse(description);
-      } catch {}
-
-      return meta?.description ?? description;
-    },
-  },
-  created() {
-    this.fetchBillingData();
-    this.instancesStore
-      .fetch()
-      .then(() => {
-        const domain = this.instancesStore.getInstances.find(
-          ({ uuid }) => uuid === this.$route.params.id
-        );
-        let groupname = "Domains";
-        let date = "year";
-
-        if (!domain) return { meta: "product" };
-        switch (domain.billingPlan.type) {
-          case "cpanel": {
-            const { period } = domain.billingPlan.products[domain.product];
-
-            domain.data.expiry = {
-              expiredate: this.date(domain.data.next_payment_date ?? 0),
-              regdate: domain.data.creation * 1000 || "0000-00-00",
-            };
-            domain.resources.period = this.getPeriod(period);
-            groupname = "Shared Hosting";
-            break;
-          }
-          case "openai": {
-            const products = Object.values(domain.billingPlan.resources).reduce(
-              (result, resource) => ({
-                ...result,
-                [resource.key]: resource.price,
-              }),
-              {}
-            );
-
-            domain.resources = {
-              period: this.$t("PayG"),
-              recurringamount: 0,
-              inputKilotoken: products.input_kilotoken,
-              outputKilotoken: products.output_kilotoken,
-            };
-
-            domain.data.expiry = {
-              expiredate: this.date(domain.data.next_payment_date ?? 0),
-              regdate: domain.data.creation * 1000 || "0000-00-00",
-            };
-            groupname = "OpenAI";
-
-            this.chatsStore.startStream();
-            break;
-          }
-
-          case "virtual":
-          case "empty": {
-            const { period } = domain.billingPlan.products[domain.product];
-
-            domain.data.expiry = {
-              expiredate: this.date(domain.data.next_payment_date ?? 0),
-              regdate: domain.data.creation * 1000 || "0000-00-00",
-            };
-            domain.resources.period = this.getPeriod(period);
-            groupname = "Custom";
-            break;
-          }
-
-          case "goget": {
-            domain.data.expiry = {
-              expiredate: this.date(domain.data.next_payment_date ?? 0),
-              regdate: domain.data.creation * 1000 || "0000-00-00",
-            };
-            groupname = "SSL";
-            date = "month";
-            break;
-          }
-
-          case "opensrs": {
-            domain.data.expiry = {
-              expiredate: this.date(domain.data.next_payment_date ?? 0),
-              regdate: domain.data.creation * 1000 || "0000-00-00",
-            };
-            groupname = "Domains";
-            break;
-          }
-
-          default: {
-            const key = Object.keys(domain.config.items)[0];
-            const { period } = domain.billingPlan.products[key];
-
-            domain.resources = {
-              period: this.getPeriod(period),
-              recurringamount: domain.config.items.reduce(
-                (sum, key) => sum + domain.billingPlan.products[key].price,
-                0
-              ),
-            };
-            domain.data.expiry = {
-              expiredate: domain.data.expires_at.split("T")[0],
-              regdate: domain.data.creation * 1000 || "0000-00-00",
-            };
-          }
-        }
-
-        const { period, recurringamount } = domain.resources;
-        const { expiredate, regdate } = domain.data.expiry;
-
-        this.service = {
-          ...domain,
-          groupname,
-          regdate,
-          name: domain.title,
-          status: `cloudStateItem.${domain.state?.state || "UNKNOWN"}`,
-          domain: domain.resources.domain ?? domain.config.domain,
-          autorenew: domain.config.auto_renew ? "enabled" : "disabled",
-          billingcycle:
-            typeof period === "string" ? period : this.$tc(date, period),
-          recurringamount:
-            recurringamount ??
-            domain.billingPlan.products[domain.product]?.price ??
-            "?",
-          nextduedate: expiredate,
-        };
-        info[0].type = "";
-
-        if (groupname === "Domains") {
-          return this.$api.servicesProviders.action({
-            uuid: domain.sp,
-            action: "get_domain_price",
-            params: { domain: this.service.domain },
-          });
-        } else {
-          return { meta: "done" };
-        }
-      })
-      .then(({ meta }) => {
-        if (meta?.prices) {
-          const { period } = this.service.resources;
-
-          this.service.recurringamount = meta.prices[period];
-          return { client_id: null };
-        } else if (meta !== "done") {
-          return this.fetchBillingData();
-        } else {
-          return { client_id: null };
-        }
-      })
-      .then(({ client_id: id }) => {
-        if (!id) return "done";
-        if (this.productsStore.products.length < 1) {
-          return this.productsStore.fetch(id);
-        }
-      })
-      .then((result) => {
-        if (result === "done") return;
-        const product = this.productsStore.products.find(
-          ({ id }) => `${id}` === `${this.$route.params.id}`
-        );
-
-        if (product) {
-          this.service = product;
-          this.info.pop();
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  },
-  methods: {
-    async clickOnInvoice(uuid) {
-      const paymentLink = await this.invoicesStore.getPaymentLink(uuid);
-
-      window.location.href = paymentLink;
-    },
-    sendRenew() {
-      this.$confirm({
-        title: this.$t("Do you want to renew service?"),
-        okText: this.$t("Yes"),
-        cancelText: this.$t("Cancel"),
-        okButtonProps: { disabled: this.service.data.blocked },
-        onOk: async () => {
-          return this.invoicesStore
-            .createRenewInvoice(this.service)
-            .then(() => {
-              this.$notification.success({ message: "Done!" });
-              this.service.data.blocked = true;
-            })
-            .catch((err) => {
-              this.$notification.error({
-                message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-              });
-              console.error(err);
-            })
-            .finally(this.$destroyAll);
-        },
-        onCancel() {},
-      });
-    },
-    sendDelete() {
-      this.$confirm({
-        title: this.$t("Do you want to delete this service?"),
-        okType: "danger",
-        okText: this.$t("Yes"),
-        cancelText: this.$t("Cancel"),
-        content: () =>
-          h(
-            "div",
-            { style: "color: red" },
-            this.$t("All data will be deleted!")
-          ),
-        onOk: async () => {
-          return this.instancesStore
-            .deleteInstance(this.service.uuid)
-            .then(() => {
-              this.$notification.success({ message: "Done!" });
-              this.$router.push({ path: "/services" });
-            })
-            .catch((err) => {
-              this.$notification.error({
-                message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-              });
-              console.error(err);
-            });
-        },
-        onCancel() {},
-      });
-    },
-    date(timestamp) {
-      if (timestamp < 1) return "0000-00-00";
-
-      const date = new Date(timestamp * 1000);
-
-      const year = date.getFullYear();
-      let month = date.getMonth() + 1;
-      let day = date.getDate();
-
-      if (`${month}`.length < 2) month = `0${month}`;
-      if (`${day}`.length < 2) day = `0${day}`;
-
-      return `${year}-${month}-${day}`;
-    },
-  },
 };
 </script>
 
