@@ -1,5 +1,5 @@
 <template>
-  <div class="order_wrapper" v-if="authStore.isLogged">
+  <div class="order_wrapper">
     <div v-if="route.query.instance" class="order">
       <div class="order__field order__main">
         <div class="config">
@@ -139,25 +139,20 @@
       <promo-block class="order__promo" />
 
       <div class="next">
-        <a-button
-          type="primary"
-          block
-          shape="round"
-          @click="goToBuyVds"
-        >
+        <a-button type="primary" block shape="round" @click="goToBuyVds">
           {{ capitalize(t("next")) }}
         </a-button>
       </div>
     </div>
   </div>
-  <div class="anonim_user_message" v-else>
+  <!-- <div class="anonim_user_message" v-else>
     <span style="max-width: 400px; text-align: center">
       {{ t("vpn.labels.unlogin_message") }}
     </span>
     <a-button @click="goToLogin" style="margin-top: 10px" type="primary">
       {{ capitalize(t("login")) }}
     </a-button>
-  </div>
+  </div> -->
 </template>
 
 <script setup>
@@ -537,6 +532,12 @@ watch(instances, () => {
     selectedInstance.value = instance.title;
   }
 });
+
+watch(vdsVpnShowcase, () => {
+  if (route.query.redirect && !route.query.instance) {
+    goToBuyVds();
+  }
+});
 </script>
 
 <script>
@@ -577,7 +578,7 @@ export default {
   height: max-content;
 }
 
-.next{
+.next {
   border-radius: 20px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
   padding: 20px;
