@@ -141,7 +141,7 @@ function useCloudOptions(activeKey, tarification) {
       if (services.pool.length >= 1) {
         cloudStore.serviceId = services.pool[0].uuid;
       }
-      if (namespaces.pool.length === 1) {
+      if (namespaces.pool.length >= 1) {
         cloudStore.namespaceId = namespaces.pool[0].uuid;
       }
     }
