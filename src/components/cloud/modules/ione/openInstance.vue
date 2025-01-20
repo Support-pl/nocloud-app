@@ -760,7 +760,7 @@ export default defineComponent({
       return this.VM.billingPlan.products[key]?.price ?? 0;
     },
     addonsPrice() {
-      return this.VM.billingPlan.resources.reduce((prev, curr) => {
+      return this.VM.billingPlan.resources?.reduce((prev, curr) => {
         if (
           curr.key === `drive_${this.VM.resources.drive_type.toLowerCase()}`
         ) {
@@ -794,7 +794,7 @@ export default defineComponent({
     fullPrice() {
       return (
         this.tariffPrice +
-        Object.values(this.addonsPrice).reduce((sum, curr) => sum + curr, 0)
+        Object.values(this.addonsPrice)?.reduce((sum, curr) => sum + curr, 0)
       );
     },
     renewalProps() {
