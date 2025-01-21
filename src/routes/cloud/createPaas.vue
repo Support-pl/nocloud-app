@@ -39,7 +39,7 @@
                       v-for="item in cloudStore.showcases"
                       :key="item.uuid"
                     >
-                      {{ item.title }}
+                      {{ item?.promo?.[$i18n.locale]?.title ?? item?.title }}
                     </a-select-option>
                   </a-select>
 
