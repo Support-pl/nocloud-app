@@ -99,7 +99,7 @@
               type="primary"
               block
               shape="round"
-              :disabled="!selectedInstance"
+              :disabled="!selectedInstance || fetchLoading"
               @click="orderConfirm"
             >
               {{ capitalize(t("vpn.actions.install")) }}
