@@ -19,7 +19,7 @@ const props = defineProps({
   productSize: { type: String, required: true },
   isFlavorsLoading: { type: Boolean, default: false },
 });
-const { isFlavorsLoading } = toRefs(props);
+const { isFlavorsLoading, plans } = toRefs(props);
 
 const emits = defineEmits(["update:periods", "update:product-size"]);
 
@@ -42,20 +42,23 @@ const images = computed(() => {
   return images;
 });
 
+const plan = computed(() => {
+  return cloudStore.plan;
+});
+
 emits("update:periods", getPeriods(props.productSize, props.plans));
 watch(
   () => props.productSize,
   (value) => {
-    const product = getProduct(value);
-
     nextTick(() => {
-      if (product?.meta?.minDiskSize) {
-        setOptions("disk.size", product.meta.minDiskSize * 1024);
-        setOptions("disk.min", product.meta.minDiskSize);
-      }
-      if (product?.meta?.maxDiskSize) {
-        setOptions("disk.max", product.meta.maxDiskSize);
-      }
+      const diskType = plan.value?.meta?.preferedDiskType || "SSD";
+      const minDisk = plan.value?.meta?.minDiskSize?.[diskType] || 5;
+      const maxDisk = plan.value?.meta?.maxDiskSize?.[diskType] || 5;
+
+      setOptions("disk.min", minDisk);
+      setOptions("disk.max", maxDisk);
+      setOptions("disk.size", minDisk * 1024);
+      setOptions("disk.type", diskType);
     });
 
     emits("update:periods", getPeriods(value, props.plans));
