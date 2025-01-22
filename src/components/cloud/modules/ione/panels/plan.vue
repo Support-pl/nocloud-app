@@ -221,11 +221,14 @@ async function setProduct(value) {
 
   if (!plan) return;
   const resources = getProduct(value, plan) ?? {};
-  const minDisk = (plan.meta.minDiskSize ?? {})[options.disk.type];
+
+  const diskType = plan.meta.preferedDiskType || options.disk.type;
+  const minDisk = (plan.meta.minDiskSize ?? {})[diskType];
 
   setOptions("cpu.size", resources.cpu ?? 0);
   setOptions("ram.size", (resources.ram ?? 0) / 1024);
   setOptions("disk.size", resources.disk ?? (minDisk ?? 20) * 1024);
+  setOptions("disk.type", diskType);
 }
 
 watch(isFlavorsLoading, () => {
