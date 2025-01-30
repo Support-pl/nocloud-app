@@ -239,13 +239,17 @@ export default {
       }));
 
       if (this.isFilterByLocation) {
-        return this.spStore.servicesProviders.reduce(
-          (prev, curr) => [
-            ...prev,
-            ...curr.locations.map(({ title }) => title),
-          ],
-          []
-        );
+        return [
+          ...new Set(
+            this.spStore.servicesProviders.reduce(
+              (prev, curr) => [
+                ...prev,
+                ...curr.locations.map(({ title }) => title),
+              ],
+              []
+            )
+          ).values(),
+        ];
       }
 
       Object.keys(this.services).forEach((key) => {
