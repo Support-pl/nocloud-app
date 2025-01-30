@@ -323,125 +323,127 @@ async function onStart() {
   );
   let groupname = "Domains";
   let date = "year";
-
-  if (!domain) return { meta: "product" };
-  switch (domain.billingPlan.type) {
-    case "cpanel": {
-      const { period } = domain.billingPlan.products[domain.product];
-
-      domain.data.expiry = {
-        expiredate: formatDate(domain.data.next_payment_date ?? 0),
-        regdate: domain.data.creation * 1000 || "0000-00-00",
-      };
-      domain.resources.period = getPeriod(period);
-      groupname = "Shared Hosting";
-      break;
-    }
-    case "openai": {
-      const products = Object.values(domain.billingPlan.resources).reduce(
-        (result, resource) => ({
-          ...result,
-          [resource.key]: resource.price,
-        }),
-        {}
-      );
-
-      domain.resources = {
-        period: t("PayG"),
-        recurringamount: 0,
-        inputKilotoken: products.input_kilotoken,
-        outputKilotoken: products.output_kilotoken,
-      };
-
-      domain.data.expiry = {
-        expiredate: formatDate(domain.data.next_payment_date ?? 0),
-        regdate: domain.data.creation * 1000 || "0000-00-00",
-      };
-      groupname = "OpenAI";
-
-      chatsStore.startStream();
-      break;
-    }
-
-    case "virtual":
-    case "empty": {
-      const { period } = domain.billingPlan.products[domain.product];
-
-      domain.data.expiry = {
-        expiredate: formatDate(domain.data.next_payment_date ?? 0),
-        regdate: domain.data.creation * 1000 || "0000-00-00",
-      };
-      domain.resources.period = getPeriod(period);
-      groupname = "Custom";
-      break;
-    }
-
-    case "goget": {
-      domain.data.expiry = {
-        expiredate: formatDate(domain.data.next_payment_date ?? 0),
-        regdate: domain.data.creation * 1000 || "0000-00-00",
-      };
-      groupname = "SSL";
-      date = "month";
-      break;
-    }
-
-    case "opensrs": {
-      domain.data.expiry = {
-        expiredate: formatDate(domain.data.next_payment_date ?? 0),
-        regdate: domain.data.creation * 1000 || "0000-00-00",
-      };
-      groupname = "Domains";
-      break;
-    }
-
-    default: {
-      const key = Object.keys(domain.config.items)[0];
-      const { period } = domain.billingPlan.products[key];
-
-      domain.resources = {
-        period: getPeriod(period),
-        recurringamount: domain.config.items.reduce(
-          (sum, key) => sum + domain.billingPlan.products[key].price,
-          0
-        ),
-      };
-      domain.data.expiry = {
-        expiredate: domain.data.expires_at.split("T")[0],
-        regdate: domain.data.creation * 1000 || "0000-00-00",
-      };
-    }
-  }
-
-  const { period, recurringamount } = domain.resources;
-  const { expiredate, regdate } = domain.data.expiry;
-
-  service.value = {
-    ...domain,
-    groupname,
-    regdate,
-    name: domain.title,
-    status: `cloudStateItem.${domain.state?.state || "UNKNOWN"}`,
-    domain: domain.resources.domain ?? domain.config.domain,
-    autorenew: domain.config.auto_renew ? "enabled" : "disabled",
-    billingcycle: typeof period === "string" ? period : t(date, period),
-    recurringamount:
-      recurringamount ??
-      domain.billingPlan.products[domain.product]?.price ??
-      "?",
-    nextduedate: expiredate,
-  };
-  info.value[0].type = "";
-
   let response;
-  if (groupname === "Domains") {
-    response = await api.servicesProviders.action({
-      uuid: domain.sp,
-      action: "get_domain_price",
-      params: { domain: service.value.domain },
-    });
-  } else {
-    response = { meta: "done" };
+
+  if (!domain) response = { meta: "product" };
+  else {
+    switch (domain.billingPlan.type) {
+      case "cpanel": {
+        const { period } = domain.billingPlan.products[domain.product];
+
+        domain.data.expiry = {
+          expiredate: formatDate(domain.data.next_payment_date ?? 0),
+          regdate: domain.data.creation * 1000 || "0000-00-00",
+        };
+        domain.resources.period = getPeriod(period);
+        groupname = "Shared Hosting";
+        break;
+      }
+      case "openai": {
+        const products = Object.values(domain.billingPlan.resources).reduce(
+          (result, resource) => ({
+            ...result,
+            [resource.key]: resource.price,
+          }),
+          {}
+        );
+
+        domain.resources = {
+          period: t("PayG"),
+          recurringamount: 0,
+          inputKilotoken: products.input_kilotoken,
+          outputKilotoken: products.output_kilotoken,
+        };
+
+        domain.data.expiry = {
+          expiredate: formatDate(domain.data.next_payment_date ?? 0),
+          regdate: domain.data.creation * 1000 || "0000-00-00",
+        };
+        groupname = "OpenAI";
+
+        chatsStore.startStream();
+        break;
+      }
+
+      case "virtual":
+      case "empty": {
+        const { period } = domain.billingPlan.products[domain.product];
+
+        domain.data.expiry = {
+          expiredate: formatDate(domain.data.next_payment_date ?? 0),
+          regdate: domain.data.creation * 1000 || "0000-00-00",
+        };
+        domain.resources.period = getPeriod(period);
+        groupname = "Custom";
+        break;
+      }
+
+      case "goget": {
+        domain.data.expiry = {
+          expiredate: formatDate(domain.data.next_payment_date ?? 0),
+          regdate: domain.data.creation * 1000 || "0000-00-00",
+        };
+        groupname = "SSL";
+        date = "month";
+        break;
+      }
+
+      case "opensrs": {
+        domain.data.expiry = {
+          expiredate: formatDate(domain.data.next_payment_date ?? 0),
+          regdate: domain.data.creation * 1000 || "0000-00-00",
+        };
+        groupname = "Domains";
+        break;
+      }
+
+      default: {
+        const key = Object.keys(domain.config.items)[0];
+        const { period } = domain.billingPlan.products[key];
+
+        domain.resources = {
+          period: getPeriod(period),
+          recurringamount: domain.config.items.reduce(
+            (sum, key) => sum + domain.billingPlan.products[key].price,
+            0
+          ),
+        };
+        domain.data.expiry = {
+          expiredate: domain.data.expires_at.split("T")[0],
+          regdate: domain.data.creation * 1000 || "0000-00-00",
+        };
+      }
+    }
+
+    const { period, recurringamount } = domain.resources;
+    const { expiredate, regdate } = domain.data.expiry;
+
+    service.value = {
+      ...domain,
+      groupname,
+      regdate,
+      name: domain.title,
+      status: `cloudStateItem.${domain.state?.state || "UNKNOWN"}`,
+      domain: domain.resources.domain ?? domain.config.domain,
+      autorenew: domain.config.auto_renew ? "enabled" : "disabled",
+      billingcycle: typeof period === "string" ? period : t(date, period),
+      recurringamount:
+        recurringamount ??
+        domain.billingPlan.products[domain.product]?.price ??
+        "?",
+      nextduedate: expiredate,
+    };
+    info.value[0].type = "";
+
+    if (groupname === "Domains") {
+      response = await api.servicesProviders.action({
+        uuid: domain.sp,
+        action: "get_domain_price",
+        params: { domain: service.value.domain },
+      });
+    } else {
+      response = { meta: "done" };
+    }
   }
 
   const { meta } = response;
