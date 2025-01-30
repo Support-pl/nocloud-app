@@ -12,9 +12,24 @@
               <div class="service-page__info-title">
                 {{ capitalize(t("status")) }}:
                 <a-tag size="large" :color="instanceStatus.color">
-                  <span style="font-size: 1rem">
-                    {{ t(`vpn.status.${instanceStatus.title}`) }}
-                  </span>
+                  <div
+                    :style="{
+                      display: ' flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: isInstanceInit ? '' : '5px',
+                    }"
+                  >
+                    <span style="font-size: 1rem">
+                      {{ t(`vpn.status.${instanceStatus.title}`) }}
+                    </span>
+
+                    <a-spin
+                      :indicator="indicator"
+                      style="margin-left: 5px; margin-top: 5px; color: orange"
+                      v-if="isInstanceInit"
+                    />
+                  </div>
                 </a-tag>
               </div>
             </div>
@@ -243,6 +258,17 @@ const warningIcon = defineAsyncComponent(() =>
 const controlPanelIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ControlOutlined")
 );
+
+const loadingOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LoadingOutlined")
+);
+
+const indicator = h(loadingOutlined, {
+  style: {
+    fontSize: "24px",
+  },
+  spin: true,
+});
 
 const route = useRoute();
 const router = useRouter();
