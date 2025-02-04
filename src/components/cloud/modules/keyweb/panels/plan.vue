@@ -1,6 +1,9 @@
 <template>
   <a-row style="margin-bottom: 15px" align="middle">
-    <a-col v-if="products.length < 8 && products.length > 1 && isSlider" span="24">
+    <a-col
+      v-if="products.length < 8 && products.length > 1 && isSlider"
+      span="24"
+    >
       <a-slider
         ref="slider"
         style="margin-top: 10px"
@@ -40,107 +43,115 @@
 </template>
 
 <script setup>
-import { inject, nextTick, watch, computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { EditorContainer } from 'nocloud-ui'
+import { inject, nextTick, watch, computed, ref } from "vue";
+import { useRoute } from "vue-router";
+import { EditorContainer } from "nocloud-ui";
 
-import { useCloudStore } from '@/stores/cloud.js'
-import { getPeriods } from '@/functions.js'
-import { useSlider } from '@/hooks/utils'
+import { useCloudStore } from "@/stores/cloud.js";
+import { getPeriods } from "@/functions.js";
+import { useSlider } from "@/hooks/utils";
 
 const props = defineProps({
   mode: { type: String, required: true },
   plans: { type: Array, required: true },
   products: { type: Array, required: true },
-  productSize: { type: String, required: true }
-})
-const emits = defineEmits(['update:periods', 'update:product-size'])
+  productSize: { type: String, required: true },
+});
+const emits = defineEmits(["update:periods", "update:product-size"]);
 
-emits('update:periods', getPeriods(props.productSize, props.plans))
-watch(() => props.productSize, (value) => {
-  emits('update:periods', getPeriods(value, props.plans))
-})
+emits("update:periods", getPeriods(props.productSize, props.plans));
+watch(
+  () => props.productSize,
+  (value) => {
+    emits("update:periods", getPeriods(value, props.plans));
+  }
+);
 
-const route = useRoute()
-const cloudStore = useCloudStore()
-const [product] = inject('useProduct', () => [])()
-const [, setOptions] = inject('useOptions', () => [])()
-const [, setPrice] = inject('usePriceOVH', () => [])()
+const route = useRoute();
+const cloudStore = useCloudStore();
+const [product] = inject("useProduct", () => [])();
+const [, setOptions] = inject("useOptions", () => [])();
+const [, setPrice] = inject("usePriceOVH", () => [])();
 
 if (props.products.length > 0) {
-  const data = localStorage.getItem('data') ?? route.query.data
-  const { productSize } = JSON.parse(data ?? '{}')
+  const data = localStorage.getItem("data") ?? route.query.data;
+  const { productSize } = JSON.parse(data ?? "{}");
 
-  if (productSize) setProduct(productSize)
-  else setProduct(props.products[1] ?? props.products[0])
+  if (productSize) setProduct(productSize);
+  else setProduct(props.products[1] ?? props.products[0]);
 } else {
-  resetData()
+  resetData();
 }
 
-watch(() => props.products, (value) => {
-  if (value.length < 1) resetData()
-  else setProduct(value[1] ?? value[0])
-})
+watch(
+  () => props.products,
+  (value) => {
+    if (value.length < 1) resetData();
+    else setProduct(value[1] ?? value[0]);
+  }
+);
 
-watch(() => props.mode, () => {
-  if (props.products.length < 1) return
-  setProduct(props.productSize)
-})
+watch(
+  () => props.mode,
+  () => {
+    if (props.products.length < 1) return;
+    setProduct(props.productSize);
+  }
+);
 
-const description = computed(() =>
-  product.value.meta?.description
-)
+const description = computed(() => product.value.meta?.description);
 
-function resetData () {
-  emits('update:product-size', '-')
-  emits('update:periods', [{ value: '-', label: 'unknown' }])
+function resetData() {
+  emits("update:product-size", "-");
+  emits("update:periods", [{ value: "-", label: "unknown" }]);
 
-  setOptions('cpu.size', 0)
-  setOptions('ram.size', 0)
-  setOptions('disk.size', 0)
+  setOptions("cpu.size", 0);
+  setOptions("ram.size", 0);
+  setOptions("disk.size", 0);
 
-  setPrice('value', 0)
-  setOptions('config', {})
+  setPrice("value", 0);
+  setOptions("config", {});
 }
 
-async function setProduct (value) {
-  emits('update:product-size', value)
+async function setProduct(value) {
+  emits("update:product-size", value);
 
-  await nextTick()
-  if (!product.value.key) return
+  await new Promise((resolve) => setTimeout(resolve, 5));
 
-  const { price, meta } = cloudStore.plan.products[product.value.key]
-  let cycle = ''
+  if (!product.value.key) return;
+
+  const { price, meta } = cloudStore.plan.products[product.value.key];
+  let cycle = "";
 
   switch (props.mode) {
-    case 'Annually':
-      cycle = 'yearly'
-      break
-    case 'Biennially':
-      cycle = '2-yearly'
-      break
-    case 'Hourly':
-      cycle = 'hourly'
-      break
+    case "Annually":
+      cycle = "yearly";
+      break;
+    case "Biennially":
+      cycle = "2-yearly";
+      break;
+    case "Hourly":
+      cycle = "hourly";
+      break;
     default:
-      cycle = 'monthly'
+      cycle = "monthly";
   }
 
-  setOptions('cpu.size', 0)
-  setOptions('ram.size', 0)
-  setOptions('disk.size', 0)
+  setOptions("cpu.size", 0);
+  setOptions("ram.size", 0);
+  setOptions("disk.size", 0);
 
-  setOptions('config', { configurations: {}, id: meta.keywebId, cycle })
-  setPrice('value', price)
+  setOptions("config", { configurations: {}, id: meta.keywebId, cycle });
+  setPrice("value", price);
 }
 
-const slider = ref()
-const [activeKey] = inject('useActiveKey', () => [])()
-const { isSlider } = useSlider(slider, activeKey)
+const slider = ref();
+const [activeKey] = inject("useActiveKey", () => [])();
+const { isSlider } = useSlider(slider, activeKey);
 </script>
 
 <script>
-export default { name: 'KeywebPlanPanel' }
+export default { name: "KeywebPlanPanel" };
 </script>
 
 <style scoped>
@@ -160,11 +171,11 @@ export default { name: 'KeywebPlanPanel' }
   border-radius: 15px;
   cursor: pointer;
   box-shadow: inset 0 0 0 1px var(--border_color);
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .order__slider-item:hover {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 .order__slider-item--active {
