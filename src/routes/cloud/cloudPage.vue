@@ -343,7 +343,7 @@ export default {
       "isLoading",
       "socket",
     ]),
-    ...mapState(useAuthStore, ["isLogged", "baseURL"]),
+    ...mapState(useAuthStore, ["isLogged", "baseURL", "userdata"]),
     ...mapState(useChatsStore, ["getDefaults"]),
     ...mapState(useProductsStore, {
       products: "products",
@@ -682,7 +682,10 @@ export default {
           return;
         }
 
-        if (diskEqual) return;
+        if (diskEqual) {
+          this.closeModal("expand");
+          return;
+        }
         instance.resources.drive_size = this.resize.size * 1024;
         this.updateService(this.itemService)
           .then((result) => {
