@@ -6,7 +6,7 @@
           {{ companyName }}
         </div>
         <div v-if="config.appLogo.path" class="logo__image">
-          <img :src="config.appLogo.path" alt="logo">
+          <img :src="config.appLogo.path" alt="logo" />
         </div>
       </div>
       <svg class="clipPathSvg" width="0" height="0">
@@ -30,17 +30,20 @@
           </div>
 
           <div v-else class="login__action-info">
-            {{ $t('comp_services.Your orders') }}:
+            {{ $t("comp_services.Your orders") }}:
             <div class="order__card">
               <div class="order__icon">
-                <component :is="config.services[appStore.onLogin.info.type]?.icon" />
+                <component
+                  :is="config.services[appStore.onLogin.info.type]?.icon"
+                />
               </div>
               <div class="order__info">
                 <div class="order__title">
                   {{ appStore.onLogin.info.title }}
                 </div>
                 <div class="order__cost">
-                  {{ +appStore.onLogin.info.cost.toFixed(2) }} {{ appStore.onLogin.info.currency }}
+                  {{ +appStore.onLogin.info.cost.toFixed(2) }}
+                  {{ appStore.onLogin.info.currency }}
                 </div>
               </div>
               <div class="order__remove" @click="appStore.clearOnLogin()">
@@ -55,24 +58,24 @@
             {{ $t(loginError) }}
           </div>
           <div class="inputs__log-pas" @keyup.enter="send">
-            <input v-model="email" type="text" placeholder="Email">
+            <input v-model="email" type="text" placeholder="Email" />
             <template v-if="remember">
               <span class="login__horisontal-line" />
               <a-input-password
                 v-model:value="password"
                 placeholder="Password"
-                style="padding: 6px 15px; border: none; background: var(--bright_font)"
+                style="
+                  padding: 6px 15px;
+                  border: none;
+                  background: var(--bright_font);
+                "
               />
             </template>
           </div>
 
           <template v-if="!tryingLogin">
             <div class="login__button">
-              <button
-                v-if="remember"
-                class="login__submit"
-                @click="send"
-              >
+              <button v-if="remember" class="login__submit" @click="send">
                 {{ capitalize($t("login")) }}
               </button>
               <button v-else class="login__submit" @click="restorePass">
@@ -103,7 +106,7 @@
         </div>
 
         <p v-if="authStore.loginButtons.length > 0" style="margin: 20px 0 0">
-          {{ $t('login') }} {{ $t('with') }}:
+          {{ $t("login") }} {{ $t("with") }}:
         </p>
         <div class="login__oauth">
           <img
@@ -113,25 +116,7 @@
             :src="`/img/icons/${getImageName(text)}.png`"
             style="width: 32px; cursor: pointer"
             @click="login(text)"
-          >
-        </div>
-
-        <div class="login__forgot" style="margin-top: 30px">
-          <a-dropdown :trigger="['click']" placement="bottom">
-            <a class="ant-dropdown-link" @click.prevent>
-              {{ $t('advanced options') }}
-              <down-icon />
-            </a>
-            <template #overlay>
-              <a-menu>
-                <a-menu-item key="0">
-                  <a-checkbox v-model:checked="type">
-                    {{ $t('use standard credentials') }}
-                  </a-checkbox>
-                </a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
+          />
         </div>
         <div class="login__forgot">
           <a href="#" @click.prevent="forgotPass">{{
@@ -162,158 +147,169 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, inject, onMounted, ref } from 'vue'
-import { notification } from 'ant-design-vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import { computed, defineAsyncComponent, inject, onMounted, ref } from "vue";
+import { notification } from "ant-design-vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
-import config from '@/appconfig.js'
-import api from '@/api.js'
+import config from "@/appconfig.js";
+import api from "@/api.js";
 
-import { useAppStore } from '@/stores/app.js'
-import { useAuthStore } from '@/stores/auth.js'
-import { useInstancesStore } from '@/stores/instances.js'
+import { useAppStore } from "@/stores/app.js";
+import { useAuthStore } from "@/stores/auth.js";
+import { useInstancesStore } from "@/stores/instances.js";
 
-const router = useRouter()
-const route = useRoute()
-const i18n = useI18n()
+const router = useRouter();
+const route = useRoute();
+const i18n = useI18n();
 
-const appStore = useAppStore()
-const authStore = useAuthStore()
+const appStore = useAppStore();
+const authStore = useAuthStore();
 
-const closeIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CloseOutlined')
-)
-const shoppingCartIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/ShoppingCartOutlined')
-)
-const downIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/DownOutlined')
-)
+const closeIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CloseOutlined")
+);
+const shoppingCartIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ShoppingCartOutlined")
+);
+const downIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/DownOutlined")
+);
 
-const tryingLogin = ref(false)
-const loginError = ref('')
-const remember = ref(true)
-const password = ref('')
-const email = ref('')
-const type = ref(false)
+const tryingLogin = ref(false);
+const loginError = ref("");
+const remember = ref(true);
+const password = ref("");
+const email = ref("");
 
-const companyName = computed(() =>
-  appStore.domainInfo.name ?? config.appTitle
-)
-const selfUrl = location.href
+const companyName = computed(() => appStore.domainInfo.name ?? config.appTitle);
+const selfUrl = location.href;
 
-async function send () {
-  tryingLogin.value = true
+async function send() {
+  tryingLogin.value = true;
   try {
-    const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(1)}`
+    const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(
+      1
+    )}`;
 
-    await authStore.login({
-      login: formatedEmail.trim(),
-      password: password.value,
-      type: (type.value || !config.whmcsSiteUrl) ? 'standard' : 'whmcs'
-    })
+    try {
+      await authStore.login({
+        login: formatedEmail.trim(),
+        password: password.value,
+        type: "whmcs",
+      });
+    } catch {
+      await authStore.login({
+        login: formatedEmail.trim(),
+        password: password.value,
+        type: "standard",
+      });
+    }
 
-    if (localStorage.getItem('data')) {
+    if (localStorage.getItem("data")) {
       try {
-        const data = JSON.parse(localStorage.getItem('data'))
-        router.push({ path: data.path, query: data.query })
+        const data = JSON.parse(localStorage.getItem("data"));
+        router.push({ path: data.path, query: data.query });
       } catch {
-        localStorage.removeItem('data')
+        localStorage.removeItem("data");
       }
     } else if (appStore.onLogin.redirect) {
-      const name = appStore.onLogin.redirect
-      const service = appStore.onLogin.info.title
+      const name = appStore.onLogin.redirect;
+      const service = appStore.onLogin.info.title;
 
-      router.replace({ name, query: { service } })
+      router.replace({ name, query: { service } });
     } else {
-      authStore.fetchUserData(true)
-      authStore.fetchBillingData(true)
-      useInstancesStore().$reset()
-      router.push({ name: 'root' })
+      authStore.fetchUserData(true);
+      authStore.fetchBillingData(true);
+      useInstancesStore().$reset();
+      router.push({ name: "root" });
     }
   } catch (error) {
     if (error.response && error.response.status === 401) {
       notification.error({
-        message: i18n.t(error.response.data.message)
-      })
+        message: i18n.t(error.response.data.message),
+      });
     }
   } finally {
-    tryingLogin.value = false
+    tryingLogin.value = false;
   }
 }
 
-function forgotPass () {
-  remember.value = !remember.value
+function forgotPass() {
+  remember.value = !remember.value;
 }
 
-async function restorePass () {
-  tryingLogin.value = true
+async function restorePass() {
+  tryingLogin.value = true;
   try {
-    const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(1)}`
+    const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(
+      1
+    )}`;
 
     const { result, message } = await api.get(authStore.baseURL, {
       params: {
-        run: 'reset_password', email: encodeURIComponent(formatedEmail)
-      }
-    })
+        run: "reset_password",
+        email: encodeURIComponent(formatedEmail),
+      },
+    });
 
-    if (result === 'success') {
-      notification.success({ message: i18n.t('Done') })
-    } else if (result === 'error') {
-      loginError.value = i18n.t(message)
-      tryingLogin.value = false
+    if (result === "success") {
+      notification.success({ message: i18n.t("Done") });
+    } else if (result === "error") {
+      loginError.value = i18n.t(message);
+      tryingLogin.value = false;
     }
   } catch (error) {
     notification.error({
-      message: i18n.t('Can\'t connect to the server')
-    })
-    console.error(error)
+      message: i18n.t("Can't connect to the server"),
+    });
+    console.error(error);
   } finally {
-    tryingLogin.value = false
+    tryingLogin.value = false;
   }
 }
 
-function changeLocale (lang) {
-  i18n.locale.value = lang
-  localStorage.setItem('lang', lang)
+function changeLocale(lang) {
+  i18n.locale.value = lang;
+  localStorage.setItem("lang", lang);
 }
 
-authStore.fetchAuth()
+authStore.fetchAuth();
 
-async function login (type) {
+async function login(type) {
   const { url } = await api.get(`/oauth/${type}/sign_in`, {
     params: {
       state: Math.random().toString(16).slice(2),
-      redirect: `https://${location.host}/login`
-    }
-  })
+      redirect: `https://${location.host}/login`,
+    },
+  });
 
-  localStorage.setItem('oauth', type)
-  location.assign(url)
+  localStorage.setItem("oauth", type);
+  location.assign(url);
 }
 
-function getImageName (name) {
-  return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0]
+function getImageName(name) {
+  return name
+    .toLowerCase()
+    .replace(/[-_\d]/g, " ")
+    .split(" ")[0];
 }
 
 onMounted(() => {
   if (route.query.token) {
-    authStore.setToken(route.query.token)
-    router.replace({ name: 'root' }).then(() =>
-      location.reload()
-    )
+    authStore.setToken(route.query.token);
+    router.replace({ name: "root" }).then(() => location.reload());
   }
-})
+});
 
-const theme = inject('theme')
+const theme = inject("theme");
 const shadowColor = computed(() =>
-  (theme.value) ? 'var(--bright_font)' : 'rgba(164, 180, 244, .5)'
-)
+  theme.value ? "var(--bright_font)" : "rgba(164, 180, 244, .5)"
+);
 </script>
 
 <script>
-export default { name: 'LoginView' }
+export default { name: "LoginView" };
 </script>
 
 <style>
@@ -426,7 +422,7 @@ export default { name: 'LoginView' }
   flex-direction: column;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 3px 8px 20px v-bind('shadowColor');
+  box-shadow: 3px 8px 20px v-bind("shadowColor");
   margin-bottom: 25px;
 }
 
