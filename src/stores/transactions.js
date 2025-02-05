@@ -1,8 +1,11 @@
 import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 import api from "@/api.js";
+import { useAuthStore } from "./auth.js";
 
 export const useTransactionsStore = defineStore("transactions", () => {
+  const authStore = useAuthStore();
+
   const allTransactions = ref({});
   const transactions = ref([]);
 
@@ -68,6 +71,9 @@ export const useTransactionsStore = defineStore("transactions", () => {
         return { records };
       }
 
+      params.account = authStore.userdata.accountOwner
+        ? [authStore.userdata.uuid, authStore.userdata.accountOwner].join(",")
+        : authStore.userdata.uuid;
       try {
         isLoading.value = true;
         const response = await api.post("/billing/reports", params);
