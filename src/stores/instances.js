@@ -138,7 +138,12 @@ export const useInstancesStore = defineStore("instances", () => {
       try {
         isLoading.value = !silent;
         const response = await api.post("/services", {
-          filters: { account: authStore.userdata.uuid },
+          filters: {
+            accounts: [
+              authStore.userdata.uuid,
+              authStore.userdata.accountOwner,
+            ].filter((v) => !!v),
+          },
           ...options,
         });
 
@@ -173,7 +178,12 @@ export const useInstancesStore = defineStore("instances", () => {
     async fetchAll() {
       try {
         const response = await api.post("/services?show_deleted=true", {
-          filters: { account: authStore.userdata.uuid },
+          filters: {
+            accounts: [
+              authStore.userdata.uuid,
+              authStore.userdata.accountOwner,
+            ].filter((v) => !!v),
+          },
         });
 
         response.pool.forEach((service) => {
