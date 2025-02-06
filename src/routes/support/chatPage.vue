@@ -1,30 +1,42 @@
 <template>
   <div class="chat">
-    <support-header v-model:searchString="searchString" :chat="chat" :title="subject" @reload="reload" />
-    <support-alert v-if="chat" v-model:padding-top="chatPaddingTop" :chat="chat" :is-loading="isLoading" />
+    <support-header
+      v-model:searchString="searchString"
+      :chat="chat"
+      :title="subject"
+      @reload="reload"
+    />
+    <support-alert
+      v-if="chat"
+      v-model:padding-top="chatPaddingTop"
+      :chat="chat"
+      :is-loading="isLoading"
+    />
 
     <loading v-if="isLoading" />
     <div v-else ref="content" class="chat__content">
       <template v-for="(reply, i) in replies" :key="i">
         <span v-if="isDateVisible(replies, i)" class="chat__date">
-          {{ reply.date.split(' ')[0] }}
+          {{ reply.date.split(" ")[0] }}
         </span>
 
         <a-popover
-          :overlay-class-name="(reply.error) ? 'chat__tooltip error' : 'chat__tooltip'"
-          :trigger="(reply.error) ? 'click' : 'hover'"
-          :placement="(isAdminSent(reply)) ? 'rightBottom' : 'leftBottom'"
+          :overlay-class-name="
+            reply.error ? 'chat__tooltip error' : 'chat__tooltip'
+          "
+          :trigger="reply.error ? 'click' : 'hover'"
+          :placement="isAdminSent(reply) ? 'rightBottom' : 'leftBottom'"
         >
           <template #content>
             <div style="cursor: pointer" @click="addToClipboard(reply.message)">
-              <copy-icon /> {{ capitalize($t('copy')) }}
+              <copy-icon /> {{ capitalize($t("copy")) }}
             </div>
             <div
               v-if="isEditable(reply)"
               style="cursor: pointer; margin-top: 5px"
               @click="footer.changeEditing(reply)"
             >
-              <edit-icon /> {{ capitalize($t('edit')) }}
+              <edit-icon /> {{ capitalize($t("edit")) }}
             </div>
           </template>
 
@@ -80,7 +92,7 @@
         v-for="item of chats"
         :key="item.id"
         :ticket="item"
-        :style="(`${item.id}` === `${chatid}`) ? 'filter: contrast(0.8)' : null"
+        :style="`${item.id}` === `${chatid}` ? 'filter: contrast(0.8)' : null"
         compact
       />
     </div>
@@ -91,306 +103,333 @@
       :footer="null"
       @cancel="currentImage.visible = false"
     >
-      <img style="width: 100%" :alt="currentImage.alt" :src="currentImage.src">
+      <img
+        style="width: 100%"
+        :alt="currentImage.alt"
+        :src="currentImage.src"
+      />
     </a-modal>
 
-    <support-footer ref="footer" v-model:replies="replies" :status="status" :ticket="chat" />
+    <support-footer
+      ref="footer"
+      v-model:replies="replies"
+      :status="status"
+      :ticket="chat"
+    />
   </div>
 </template>
 
 <script setup>
-import { defineAsyncComponent, nextTick, ref, computed, watch, h } from 'vue'
-import { renderToString } from 'vue/server-renderer'
-import { onBeforeRouteUpdate, useRoute } from 'vue-router'
-import markdown from 'markdown-it'
-import { full as emoji } from 'markdown-it-emoji'
+import { defineAsyncComponent, nextTick, ref, computed, watch, h } from "vue";
+import { renderToString } from "vue/server-renderer";
+import { onBeforeRouteUpdate, useRoute } from "vue-router";
+import markdown from "markdown-it";
+import { full as emoji } from "markdown-it-emoji";
 
-import { Status } from '@/libs/cc_connect/cc_pb'
-import { useClipboard } from '@/hooks/utils'
-import api from '@/api'
+import { Status } from "@/libs/cc_connect/cc_pb";
+import { useClipboard } from "@/hooks/utils";
+import api from "@/api";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useChatsStore } from '@/stores/chats.js'
-import { useSupportStore } from '@/stores/support.js'
+import { useAuthStore } from "@/stores/auth.js";
+import { useChatsStore } from "@/stores/chats.js";
+import { useSupportStore } from "@/stores/support.js";
 
-import loading from '@/components/ui/loading.vue'
-import ticketItem from '@/components/support/ticketItem.vue'
-import supportHeader from '@/components/support/header.vue'
-import supportAlert from '@/components/support/alert.vue'
-import supportFooter from '@/components/support/footer.vue'
-import typingPlaceholder from '@/components/support/typingPlaceholder.vue'
+import loading from "@/components/ui/loading.vue";
+import ticketItem from "@/components/support/ticketItem.vue";
+import supportHeader from "@/components/support/header.vue";
+import supportAlert from "@/components/support/alert.vue";
+import supportFooter from "@/components/support/footer.vue";
+import typingPlaceholder from "@/components/support/typingPlaceholder.vue";
 
-const exclamationIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/ExclamationCircleOutlined')
-)
-const copyIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/CopyOutlined')
-)
-const editIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/EditOutlined')
-)
+const exclamationIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ExclamationCircleOutlined")
+);
+const copyIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CopyOutlined")
+);
+const editIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EditOutlined")
+);
 
-const fileIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/FileOutlined')
-)
-const loadingIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LoadingOutlined')
-)
+const fileIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FileOutlined")
+);
+const loadingIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LoadingOutlined")
+);
 
-const route = useRoute()
-const { addToClipboard } = useClipboard()
-const md = markdown({ html: true, linkify: true, typographer: true }).use(emoji)
+const route = useRoute();
+const { addToClipboard } = useClipboard();
+const md = markdown({ html: true, linkify: true, typographer: true }).use(
+  emoji
+);
 
-const authStore = useAuthStore()
-const chatsStore = useChatsStore()
-const supportStore = useSupportStore()
+const authStore = useAuthStore();
+const chatsStore = useChatsStore();
+const supportStore = useSupportStore();
 
 onBeforeRouteUpdate((to, from, next) => {
-  chatid.value = to.params.id
-  loadMessages()
-  next()
-})
+  chatid.value = to.params.id;
+  loadMessages();
+  next();
+});
 
-const status = ref(null)
-const subject = ref('SUPPORT')
-const replies = ref([])
+const status = ref(null);
+const subject = ref("SUPPORT");
+const replies = ref([]);
 
-const isLoading = ref(false)
-const chatid = ref(route.params.id)
-const searchString = ref('')
-const chatPaddingTop = ref('15px')
-const isPlaceholderVisible = ref(false)
+const isLoading = ref(false);
+const chatid = ref(route.params.id);
+const searchString = ref("");
+const chatPaddingTop = ref("15px");
+const isPlaceholderVisible = ref(false);
 
-const content = ref()
-const chatList = ref()
-const footer = ref()
+const content = ref();
+const chatList = ref();
+const footer = ref();
 
-const chat = computed(() =>
-  chatsStore.chats.get(chatid.value)
-)
+const chat = computed(() => chatsStore.chats.get(chatid.value));
 
 const chats = computed(() => {
-  const ids = []
-  const result = []
-  const { uuid } = authStore.billingUser
+  const ids = [];
+  const result = [];
+  const { uuid } = authStore.billingUser;
 
   chatsStore.chats.forEach((ticket) => {
-    const { whmcs, instance: inst } = ticket.meta.data ?? {}
-    const instance = (inst?.kind.case) ? inst?.toJSON() : null
+    const { whmcs, instance: inst } = ticket.meta.data ?? {};
+    const instance = inst?.kind.case ? inst?.toJSON() : null;
 
-    const { from } = route.query
-    if (instance !== from && from) return
+    const { from } = route.query;
+    if (instance !== from && from) return;
 
-    const string = searchString.value.toLowerCase()
-    const topic = ticket.topic?.toLowerCase() ?? ''
-    if (!topic.includes(string) && string !== '') return
+    const string = searchString.value.toLowerCase();
+    const topic = ticket.topic?.toLowerCase() ?? "";
+    if (!topic.includes(string) && string !== "") return;
 
-    const isReaded = ticket.meta.lastMessage?.readers.includes(uuid)
-    const status = Status[ticket.status]?.toLowerCase().split('_') ?? ticket.status
-    const capitalized = status.map((el) =>
-      `${el[0].toUpperCase()}${el.slice(1)}`
-    ).join(' ')
+    const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
+    const status =
+      Status[ticket.status]?.toLowerCase().split("_") ?? ticket.status;
+    const capitalized = status
+      .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
+      .join(" ");
 
     const value = {
       id: ticket.uuid,
       tid: ticket.uuid.slice(0, 8),
       title: ticket.topic,
       date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
-      message: ticket.meta.lastMessage?.content ?? '',
+      message: ticket.meta.lastMessage?.content ?? "",
       status: capitalized,
-      unread: (isReaded) ? 0 : ticket.meta.unread
-    }
-    const id = (whmcs?.kind.case) ? whmcs?.toJSON() : null
+      unread: isReaded ? 0 : ticket.meta.unread,
+    };
+    const id = whmcs?.kind.case ? whmcs?.toJSON() : null;
 
-    if (id) ids.push(id)
-    if (from || (!from && !instance)) result.push(value)
-  })
+    if (id) ids.push(id);
+    if (from || (!from && !instance)) result.push(value);
+  });
 
-  result.sort((a, b) => b.date - a.date)
-  const tickets = supportStore.getTickets.filter(({ id }) => !ids.includes(id))
+  result.sort((a, b) => b.date - a.date);
+  const tickets = supportStore.getTickets.filter(({ id }) => !ids.includes(id));
 
-  if (route.query.from) return result
-  return [...result, ...tickets]
-})
+  if (route.query.from) return result;
+  return [...result, ...tickets];
+});
 
 const files = computed(() =>
-  replies.value.reduce((result, { uuid, meta }) => {
-    if (meta?.attachments) {
-      result[uuid] = meta.attachments?.toJSON()
-    }
+  replies.value.reduce((result, { attachments, uuid }) => {
+    var files = [];
+    attachments?.forEach((uuid) => {
+      if (
+        chatsStore.attachments.has(uuid) &&
+        chatsStore.attachments.get(uuid) !== true
+      ) {
+        files.push(chatsStore.attachments.get(uuid));
+      }
+    });
 
-    return result
+    result[uuid] = files;
+
+    return result;
   }, {})
-)
+);
 
-async function onImageError (e) {
-  const element = await renderToString(h(fileIcon))
-  const parent = e.target.parentElement
-  const ext = e.target.alt.split('.').at(-1)
+async function onImageError(e) {
+  const element = await renderToString(h(fileIcon));
+  const parent = e.target.parentElement;
+  const ext = e.target.alt.split(".").at(-1);
 
   e.target.outerHTML = `
     ${element}
     <span style="font-size: 14px">${ext}</span>
-  `
-  parent.classList.add('files__preview--placeholder')
+  `;
+  parent.classList.add("files__preview--placeholder");
   parent.onclick = () => {
-    window.open(e.target.src)
-  }
+    window.open(e.target.src);
+  };
 }
 
-watch(chats, async () => {
-  await nextTick()
-  if (!chatList.value) return
-  const { scrollHeight, clientHeight, lastElementChild } = chatList.value
+watch(
+  chats,
+  async () => {
+    await nextTick();
+    if (!chatList.value) return;
+    const { scrollHeight, clientHeight, lastElementChild } = chatList.value;
 
-  if (scrollHeight > clientHeight || !lastElementChild) return
-  lastElementChild.style.borderBottom = '1px solid var(--border_color)'
-}, { deep: true })
+    if (scrollHeight > clientHeight || !lastElementChild) return;
+    lastElementChild.style.borderBottom = "1px solid var(--border_color)";
+  },
+  { deep: true }
+);
 
-watch(replies, async (value, oldValue) => {
-  await nextTick()
-  await new Promise((resolve) => setTimeout(resolve, 300))
-  setPlaceholderVisible((oldValue.length > 0) ? oldValue : value)
+watch(
+  replies,
+  async (value, oldValue) => {
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    setPlaceholderVisible(oldValue.length > 0 ? oldValue : value);
 
-  if (!content.value) return
-  content.value.scrollTo(0, content.value.scrollHeight)
-}, { deep: true })
+    if (!content.value) return;
+    content.value.scrollTo(0, content.value.scrollHeight);
+  },
+  { deep: true }
+);
 
-watch(() => chatsStore.messages[chatid.value], () => loadMessages(), { deep: true })
+watch(
+  () => chatsStore.messages[chatid.value],
+  () => loadMessages(),
+  { deep: true }
+);
 
-async function fetch () {
-  isLoading.value = true
+async function fetch() {
+  isLoading.value = true;
   try {
-    await supportStore.fetch()
+    await supportStore.fetch();
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 
-  await Promise.all([
-    chatsStore.fetchChats(),
-    chatsStore.fetchDefaults()
-  ])
+  await Promise.all([chatsStore.fetchChats(), chatsStore.fetchDefaults()]);
 
-  await loadMessages(true)
-  chatsStore.startStream()
+  await loadMessages(true);
+  chatsStore.startStream();
 }
 
-fetch()
+fetch();
 
-let timeout
-function setPlaceholderVisible (replies) {
-  if (chat.value.department !== 'openai') return
-  const isUserSent = replies.at(-1)?.from || replies.length === 1
+let timeout;
+function setPlaceholderVisible(replies) {
+  if (chat.value.department !== "openai") return;
+  const isUserSent = replies.at(-1)?.from || replies.length === 1;
 
   if (!isAdminSent(replies.at(-1) ?? {}) && isUserSent) {
     timeout = setTimeout(async () => {
-      isPlaceholderVisible.value = true
+      isPlaceholderVisible.value = true;
 
-      await nextTick()
-      content.value.scrollTo(0, content.value.scrollHeight)
-    }, 1000)
+      await nextTick();
+      content.value.scrollTo(0, content.value.scrollHeight);
+    }, 1000);
 
     setTimeout(() => {
-      clearTimeout(timeout)
-      isPlaceholderVisible.value = false
-    }, 20 * 1000)
+      clearTimeout(timeout);
+      isPlaceholderVisible.value = false;
+    }, 20 * 1000);
   } else {
-    clearTimeout(timeout)
-    isPlaceholderVisible.value = false
+    clearTimeout(timeout);
+    isPlaceholderVisible.value = false;
   }
 }
 
-function beauty (message) {
-  message = md.render(message).trim()
-  message = message.replace(/\n/g, '<br>')
-  message = message.replace(/[\s\uFEFF\xA0]{2,}/g, ' ')
-  message = message.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '')
+function beauty(message) {
+  message = md.render(message).trim();
+  message = message.replace(/\n/g, "<br>");
+  message = message.replace(/[\s\uFEFF\xA0]{2,}/g, " ");
+  message = message.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, "");
 
-  return message.replace(/^<p>/, '').replace(/<\/p>$/, '')
+  return message.replace(/^<p>/, "").replace(/<\/p>$/, "");
 }
 
-function isDateVisible (replies, i) {
-  if (i === 0) return true
-  return replies[i - 1].date.split(' ')[0] !== replies[i].date.split(' ')[0]
+function isDateVisible(replies, i) {
+  if (i === 0) return true;
+  return replies[i - 1].date.split(" ")[0] !== replies[i].date.split(" ")[0];
 }
 
-function isAdminSent (reply) {
-  return reply.requestor_type !== 'Owner'
+function isAdminSent(reply) {
+  return reply.requestor_type !== "Owner";
 }
 
-function isEditable (reply) {
-  return reply.userid === authStore.userdata.uuid
+function isEditable(reply) {
+  return reply.userid === authStore.userdata.uuid;
 }
 
-async function loadMessages (update) {
-  const result = chatsStore.messages[chatid.value]
+async function loadMessages(update) {
+  const result = chatsStore.messages[chatid.value];
 
   if (!update && result) {
-    status.value = result.status
-    replies.value = result.replies ?? []
-    subject.value = result.subject
+    status.value = result.status;
+    replies.value = result.replies ?? [];
+    subject.value = result.subject;
 
     setTimeout(() => {
-      content.value.scrollTo(0, content.value.scrollHeight)
-    }, 100)
+      content.value.scrollTo(0, content.value.scrollHeight);
+    }, 100);
 
     if (chatsStore.chats.get(chatid.value)) {
-      chatsStore.chats.get(chatid.value).meta.unread = 0
+      chatsStore.chats.get(chatid.value).meta.unread = 0;
     }
-    return
+    return;
   }
 
-  isLoading.value = true
+  isLoading.value = true;
   try {
-    const response = (chatsStore.chats.get(chatid.value))
+    const response = chatsStore.chats.get(chatid.value)
       ? await chatsStore.fetchMessages(chatid.value)
       : await api.get(authStore.baseURL, {
-        params: { run: 'get_ticket_full', ticket_id: chatid.value }
-      })
+          params: { run: "get_ticket_full", ticket_id: chatid.value },
+        });
 
-    status.value = response.status
-    replies.value = response.replies ?? []
-    subject.value = response.subject
+    status.value = response.status;
+    replies.value = response.replies ?? [];
+    subject.value = response.subject;
 
-    replies.value.sort((a, b) => Number(a.sent - b.sent))
-    chatsStore.messages[chatid.value] = response
+    replies.value.sort((a, b) => Number(a.sent - b.sent));
+    chatsStore.messages[chatid.value] = response;
   } finally {
     nextTick(() => {
-      content.value.scrollTo(0, content.value.scrollHeight)
-    })
-    isLoading.value = false
+      content.value.scrollTo(0, content.value.scrollHeight);
+    });
+    isLoading.value = false;
 
     if (chatsStore.chats.get(chatid.value)) {
-      chatsStore.chats.get(chatid.value).meta.unread = 0
+      chatsStore.chats.get(chatid.value).meta.unread = 0;
     }
   }
 }
 
-function reload () {
-  isLoading.value = true
-  loadMessages(true)
+function reload() {
+  isLoading.value = true;
+  loadMessages(true);
 }
 
-function deleteMessage (message) {
-  replies.value.splice(replies.value.indexOf(message), 1)
+function deleteMessage(message) {
+  replies.value.splice(replies.value.indexOf(message), 1);
 }
 
-function resendMessage (reply) {
-  deleteMessage(reply)
-  footer.value.message = reply.message
-  footer.value.sendMessage()
+function resendMessage(reply) {
+  deleteMessage(reply);
+  footer.value.message = reply.message;
+  footer.value.sendMessage();
 }
 
-const currentImage = ref({})
-function openModal (e) {
-  currentImage.value.src = e.target.src
-  currentImage.value.alt = e.target.alt
-  currentImage.value.visible = true
+const currentImage = ref({});
+function openModal(e) {
+  currentImage.value.src = e.target.src;
+  currentImage.value.alt = e.target.alt;
+  currentImage.value.visible = true;
 }
 </script>
 
 <script>
-export default { name: 'TicketChat' }
+export default { name: "TicketChat" };
 </script>
 
 <style scoped>
@@ -437,7 +476,7 @@ export default { name: 'TicketChat' }
   width: 100%;
   height: 100%;
   margin: 10px auto 0;
-  padding: v-bind('chatPaddingTop') 15px 6px;
+  padding: v-bind("chatPaddingTop") 15px 6px;
 
   border: 1px solid var(--border_color);
   border-radius: 6px;

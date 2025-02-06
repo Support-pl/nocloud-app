@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    :title="capitalize((instanceId) ? $t('new chat') : $t('ask a question'))"
+    :title="capitalize(instanceId ? $t('new chat') : $t('ask a question'))"
     :open="supportStore.isAddingTicket"
     :footer="null"
     @cancel="closeFields"
@@ -26,11 +26,11 @@
           <a-input v-model:value="ticketTitle" placeholder="" />
         </a-form-item>
 
-        <a-form-item :label="(instanceId) ? null : $t('question')">
+        <a-form-item :label="instanceId ? null : $t('question')">
           <a-textarea
             v-model:value="ticketMessage"
             :rows="10"
-            :placeholder="(instanceId) ? $t('input text') : null"
+            :placeholder="instanceId ? $t('input text') : null"
           />
         </a-form-item>
 
@@ -52,8 +52,9 @@
                 <img
                   class="img_prod"
                   :src="`/img/icons/${getImageName(gate.id)}.png`"
-                  :alt="gate.id" @error="onError"
-                >
+                  :alt="gate.id"
+                  @error="onError"
+                />
                 {{ gate.name }}
               </span>
             </div>
@@ -84,16 +85,22 @@
           <a-select v-model:value="genImage.quality" :options="qualityList" />
         </a-form-item>
 
-        <a-form-item :label="(upload?.fileList.length > 0) ? $t('files') : null">
+        <a-form-item :label="upload?.fileList.length > 0 ? $t('files') : null">
           <div class="addTicket__buttons">
-            <upload-files v-if="showSendFiles" ref="upload" file-list-style="order: -1; grid-column: 1 / 3">
+            <upload-files
+              v-if="showSendFiles"
+              ref="upload"
+              file-list-style="order: -1; grid-column: 1 / 3"
+            >
               <a-button type="primary">
                 <upload-icon />
               </a-button>
             </upload-files>
             <a-button
               type="primary"
-              @click="(gateway === 'telegram') ? sendTelegramMessage() : sendNewTicket()"
+              @click="
+                gateway === 'telegram' ? sendTelegramMessage() : sendNewTicket()
+              "
             >
               OK
             </a-button>
@@ -105,176 +112,193 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
-import { message } from 'ant-design-vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import {
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+} from "vue";
+import { message } from "ant-design-vue";
+import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
-import markdown from 'markdown-it'
-import { full as emoji } from 'markdown-it-emoji'
-import { useNotification } from '@/hooks/utils'
-import api from '@/api'
+import markdown from "markdown-it";
+import { full as emoji } from "markdown-it-emoji";
+import { useNotification } from "@/hooks/utils";
+import api from "@/api";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useChatsStore } from '@/stores/chats.js'
-import { useSupportStore } from '@/stores/support.js'
+import { useAuthStore } from "@/stores/auth.js";
+import { useChatsStore } from "@/stores/chats.js";
+import { useSupportStore } from "@/stores/support.js";
 
-import uploadFiles from '@/components/support/upload.vue'
+import uploadFiles from "@/components/support/upload.vue";
 
-const uploadIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/UploadOutlined')
-)
+const uploadIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/UploadOutlined")
+);
 
 const md = markdown({
   html: true,
   linkify: true,
-  typographer: true
-})
+  typographer: true,
+});
 
-md.use(emoji)
+md.use(emoji);
 
 const props = defineProps({
-  instanceId: { type: String, default: null }
-})
+  instanceId: { type: String, default: null },
+});
 
-const router = useRouter()
-const i18n = useI18n()
-const { openNotification } = useNotification()
+const router = useRouter();
+const i18n = useI18n();
+const { openNotification } = useNotification();
 
-const authStore = useAuthStore()
-const chatsStore = useChatsStore()
-const supportStore = useSupportStore()
+const authStore = useAuthStore();
+const chatsStore = useChatsStore();
+const supportStore = useSupportStore();
 
-const gateway = ref('userApp')
-const ticketDepartment = ref(-1)
-const ticketTitle = ref('')
-const ticketMessage = ref('')
-const isSending = ref(false)
-const isLoading = ref(false)
+const gateway = ref("userApp");
+const ticketDepartment = ref(-1);
+const ticketTitle = ref("");
+const ticketMessage = ref("");
+const isSending = ref(false);
+const isLoading = ref(false);
 
 const genImage = reactive({
   checked: false,
-  size: '1024x1024',
-  quality: 'standard'
-})
-const sizes = [{ value: '1024x1024' }, { value: '1024x1792' }, { value: '1792x1024' }]
+  size: "1024x1024",
+  quality: "standard",
+});
+const sizes = [
+  { value: "1024x1024" },
+  { value: "1024x1792" },
+  { value: "1792x1024" },
+];
 const qualityList = [
-  { label: 'HD', value: 'hd' },
-  { label: 'Standard', value: 'standard' }
-]
+  { label: "HD", value: "hd" },
+  { label: "Standard", value: "standard" },
+];
 
-const upload = ref()
-const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET)
+const upload = ref();
+const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
 
 const filteredDepartments = computed(() => {
-  const chatsDeparts = (props.instanceId)
+  const chatsDeparts = props.instanceId
     ? chatsStore.getDefaults.departments
-    : chatsStore.getDefaults.departments.filter(
-      ({ id }) => id !== 'openai'
-    )
+    : chatsStore.getDefaults.departments.filter(({ id }) => id !== "openai");
 
   if (authStore.billingUser.only_tickets) {
-    return chatsDeparts.filter(({ id }) => id === 'colobridge')
+    return chatsDeparts.filter(({ id }) => id === "colobridge");
   } else {
-    return chatsDeparts.filter((dep) => dep.public && dep.id !== 'colobridge') // [...supportStore.departments, ...chatsDeparts]
+    return chatsDeparts.filter((dep) => dep.public && dep.id !== "colobridge"); // [...supportStore.departments, ...chatsDeparts]
   }
-})
+});
 
-watch(filteredDepartments, setDepartment)
-onMounted(setDepartment)
+watch(filteredDepartments, setDepartment);
+onMounted(setDepartment);
 
 const gateways = computed(() => {
-  const { gateways = [] } = chatsStore.getDefaults
+  const { gateways = [] } = chatsStore.getDefaults;
   let result = gateways.map((gateway) => ({
     id: gateway,
-    name: `${gateway[0].toUpperCase()}${gateway.slice(1)}`
-  }))
+    name: `${gateway[0].toUpperCase()}${gateway.slice(1)}`,
+  }));
 
   if (props.instanceId) {
-    result = result.filter(({ id }) => id === 'telegram')
+    result = result.filter(({ id }) => id === "telegram");
   }
-  result.unshift({ id: 'userApp', name: 'User App' })
+  result.unshift({ id: "userApp", name: "User App" });
 
-  return result
-})
+  return result;
+});
 
-function setDepartment () {
-  const departments = (props.instanceId)
+function setDepartment() {
+  const departments = props.instanceId
     ? chatsStore.getDefaults.departments
-    : filteredDepartments.value
+    : filteredDepartments.value;
 
-  if (departments.length < 1) return
+  if (departments.length < 1) return;
   if (props.instanceId) {
-    const result = departments.find(({ id }) => `${id}`.includes('openai'))
+    const result = departments.find(({ id }) => `${id}`.includes("openai"));
 
-    ticketDepartment.value = result?.id ?? filteredDepartments.value[0]?.id ?? -1
-    return
+    ticketDepartment.value =
+      result?.id ?? filteredDepartments.value[0]?.id ?? -1;
+    return;
   }
-  ticketDepartment.value = filteredDepartments.value[0]?.id ?? -1
+  ticketDepartment.value = filteredDepartments.value[0]?.id ?? -1;
 }
 
-function validation () {
+function validation() {
   if (ticketTitle.value.length < 3 || ticketMessage.value.length < 3) {
-    message.warn(i18n.t('ticket subject or message is too short'))
-    return false
+    message.warn(i18n.t("ticket subject or message is too short"));
+    return false;
   }
 
   if (ticketDepartment.value === -1) {
-    message.warn(i18n.t('departments are loading'))
-    return false
+    message.warn(i18n.t("departments are loading"));
+    return false;
   }
 
-  return true
+  return true;
 }
 
-async function createTicket () {
+async function createTicket() {
   try {
     const response = await api.get(authStore.baseURL, {
       params: {
-        run: 'create_ticket',
+        run: "create_ticket",
         subject: ticketTitle.value,
         message: ticketMessage.value,
-        department: ticketDepartment.value
-      }
-    })
+        department: ticketDepartment.value,
+      },
+    });
 
-    if (response.result === 'success') {
-      ticketTitle.value = ''
-      ticketMessage.value = ''
+    if (response.result === "success") {
+      ticketTitle.value = "";
+      ticketMessage.value = "";
 
-      supportStore.fetch(true)
-      supportStore.isAddingTicket = !supportStore.isAddingTicket
+      supportStore.fetch(true);
+      supportStore.isAddingTicket = !supportStore.isAddingTicket;
     } else {
-      throw response
+      throw response;
     }
-    return { result: 'success' }
+    return { result: "success" };
   } catch (error) {
-    return { result: 'error', error }
+    return { result: "error", error };
   }
 }
 
-async function createChat () {
-  const { departments } = chatsStore.getDefaults
-  const { admins, id: key, whmcsId } = departments.find(({ id }) => id === ticketDepartment.value) ?? {}
+async function createChat() {
+  const { departments } = chatsStore.getDefaults;
+  const {
+    admins,
+    id: key,
+    whmcsId,
+  } = departments.find(({ id }) => id === ticketDepartment.value) ?? {};
 
   try {
-    const files = await upload.value.sendFiles()
-    const message = md.render(ticketMessage.value).trim()
-      .replace(/^<p>/, '').replace(/<\/p>$/, '')
+    const files = await upload.value.sendFiles();
+    const message = md
+      .render(ticketMessage.value)
+      .trim()
+      .replace(/^<p>/, "")
+      .replace(/<\/p>$/, "");
 
     const response = await chatsStore.createChat({
       admins,
       department: key,
-      gateways: (gateway.value === 'userApp') ? [] : [gateway.value],
+      gateways: gateway.value === "userApp" ? [] : [gateway.value],
       chat: {
         message,
         subject: ticketTitle.value,
         meta: [
-          { key: 'dept_id', value: whmcsId },
-          { key: 'instance', value: props.instanceId }
-        ]
-      }
-    })
+          { key: "dept_id", value: whmcsId },
+          { key: "instance", value: props.instanceId },
+        ],
+      },
+    });
 
     if (response.uuid) {
       const result = {
@@ -284,107 +308,109 @@ async function createChat () {
         date: BigInt(Date.now()),
         attachments: files.map(({ uuid }) => uuid),
         meta: [
-          { key: 'mode', value: (genImage.checked) ? 'generate' : 'default' }
-        ]
-      }
-
-      if (files.length > 0) {
-        result.meta.push({
-          key: 'attachments', value: files.map(({ name, url }) => ({ name, url }))
-        })
-      }
+          { key: "mode", value: genImage.checked ? "generate" : "default" },
+        ],
+      };
 
       if (genImage.checked) {
         result.meta.push(
-          { key: 'size', value: genImage.size },
-          { key: 'quality', value: genImage.quality }
-        )
+          { key: "size", value: genImage.size },
+          { key: "quality", value: genImage.quality }
+        );
       }
 
-      await chatsStore.sendMessage(result)
+      await chatsStore.sendMessage(result);
     }
 
-    const query = { from: props.instanceId }
+    const query = { from: props.instanceId };
 
-    router.push({ path: `/ticket/${response.uuid}`, query })
-    return { result: 'success' }
+    router.push({ path: `/ticket/${response.uuid}`, query });
+    return { result: "success" };
   } catch (error) {
-    return { result: 'error', error }
+    return { result: "error", error };
   }
 }
 
-async function sendNewTicket () {
-  if (!validation()) return
+async function sendNewTicket() {
+  if (!validation()) return;
 
-  const { departments } = chatsStore.getDefaults
-  const ids = departments.map(({ id }) => id)
+  const { departments } = chatsStore.getDefaults;
+  const ids = departments.map(({ id }) => id);
 
   try {
-    isSending.value = true
-    const response = (ids.includes(ticketDepartment.value))
+    isSending.value = true;
+    const response = ids.includes(ticketDepartment.value)
       ? await createChat()
-      : await createTicket()
+      : await createTicket();
 
-    if (response.result === 'error') throw response.error
-    else openNotification('success', { message: i18n.t('Done') })
+    if (response.result === "error") throw response.error;
+    else openNotification("success", { message: i18n.t("Done") });
   } catch (error) {
-    openNotification('error', {
-      message: error.response?.data?.message ?? error.message ?? error
-    })
-    console.error(error)
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+    console.error(error);
   } finally {
-    isSending.value = false
-    closeFields()
+    isSending.value = false;
+    closeFields();
   }
 }
 
-function closeFields () {
-  supportStore.isAddingTicket = false
+function closeFields() {
+  supportStore.isAddingTicket = false;
 }
 
-function sendTelegramMessage () {
+function sendTelegramMessage() {
   if (authStore.userdata.data?.telegram) {
-    sendNewTicket()
-    return
+    sendNewTicket();
+    return;
   }
 
-  localStorage.setItem('telegramChat', JSON.stringify({
-    message: md.render(ticketMessage.value)
-      .trim()
-      .replace(/^<p>/, '').replace(/<\/p>$/, ''),
-    gateway: gateway.value,
-    department: ticketDepartment.value,
-    title: ticketTitle.value,
-    instanceId: props.instanceId
-  }))
-  router.push({ name: 'handsfree' })
+  localStorage.setItem(
+    "telegramChat",
+    JSON.stringify({
+      message: md
+        .render(ticketMessage.value)
+        .trim()
+        .replace(/^<p>/, "")
+        .replace(/<\/p>$/, ""),
+      gateway: gateway.value,
+      department: ticketDepartment.value,
+      title: ticketTitle.value,
+      instanceId: props.instanceId,
+    })
+  );
+  router.push({ name: "handsfree" });
 }
 
-function onError ({ target }) {
-  target.src = '/img/OS/default.png'
+function onError({ target }) {
+  target.src = "/img/OS/default.png";
 }
 
-function getImageName (name) {
-  return name.toLowerCase().replace(/[-_\d]/g, ' ').split(' ')[0]
+function getImageName(name) {
+  return name
+    .toLowerCase()
+    .replace(/[-_\d]/g, " ")
+    .split(" ")[0];
 }
 
-async function fetch () {
+async function fetch() {
   try {
-    isLoading.value = true
-    await chatsStore.fetchDefaults()
-    await supportStore.fetchDepartments()
+    isLoading.value = true;
+    await chatsStore.fetchDefaults();
+    await supportStore.fetchDepartments();
   } catch {
-    message.error(i18n.t('departments not found'))
+    message.error(i18n.t("departments not found"));
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
-fetch()
+fetch();
 </script>
 
 <script>
-export default { name: 'AddTicket' }
+export default { name: "AddTicket" };
 </script>
 
 <style scoped>
@@ -504,11 +530,11 @@ export default { name: 'AddTicket' }
   cursor: pointer;
   border-radius: 15px;
   font-size: 1rem;
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .order__slider-item:hover {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 .order__slider-item--active {
@@ -535,7 +561,7 @@ export default { name: 'AddTicket' }
 }
 
 @media screen and (max-width: 576px) {
-.order__grid {
+  .order__grid {
     grid-template-columns: 1fr 1fr;
   }
 }
