@@ -419,7 +419,7 @@ export function toInvoice(transaction, type = "default") {
 }
 
 export function getInvoiceNumber(invoice) {
-  if (invoice.status === "Paid") {
+  if (invoice.status === "Paid" && !globalConfig?.invoices?.use_whmcs_number) {
     return invoice.id;
   }
 
