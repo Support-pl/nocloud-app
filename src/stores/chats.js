@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { Value } from "@bufbuild/protobuf";
@@ -26,6 +26,7 @@ import {
   StreamService,
   UsersAPI,
 } from "@/libs/cc_connect/cc_connect";
+import api from "@/api.js";
 
 export const useChatsStore = defineStore("chats", () => {
   const router = useRouter();
@@ -53,6 +54,8 @@ export const useChatsStore = defineStore("chats", () => {
 
   const messages = ref({});
   const rawMessages = ref([]);
+
+  const attachments = ref(new Map());
 
   const getChats = computed(() => {
     if (supportStore.filter[0] === "all" || supportStore.filter.length === 0) {
@@ -198,6 +201,45 @@ export const useChatsStore = defineStore("chats", () => {
     };
   }
 
+  async function fetch_attachments(uuids) {
+    if (!uuids || uuids.length === 0) {
+      return;
+    }
+
+    try {
+      var data = await api.get(`/attachments?ids=${uuids.join(",")}`);
+
+      Object.keys(data).forEach((key) => {
+        attachments.value.set(key, {
+          name: data[key].title,
+          url: `https://${data[key].url}`,
+        });
+      });
+    } catch (e) {
+      console.log(e);
+
+      uuids.forEach((uuid) => {
+        attachments.value.delete(uuid);
+      });
+    }
+  }
+
+  watch(messages.value, () => {
+    var attachmentsForFetch = [];
+    for (const uuid in messages.value) {
+      for (const message of messages.value[uuid].replies || []) {
+        for (const attachment of message.attachments) {
+          if (!attachments.value.has(attachment)) {
+            attachmentsForFetch.push(attachment);
+            attachments.value.set(attachment, true);
+          }
+        }
+      }
+    }
+
+    fetch_attachments(attachmentsForFetch);
+  });
+
   return {
     transport,
     accounts,
@@ -206,6 +248,7 @@ export const useChatsStore = defineStore("chats", () => {
     chats,
     messages,
     rawMessages,
+    attachments,
 
     getChats,
     getDefaults,
