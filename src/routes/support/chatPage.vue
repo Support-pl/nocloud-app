@@ -48,7 +48,7 @@
             ]"
           >
             <pre>
-              <span v-html="beauty(reply.message)" />
+              <message-content :uuid="reply.uuid" :message="reply.message"/>
               <div class="chat__files">
                 <div v-for="file of files[reply.uuid]" :key="file.url" class="files__preview">
                   <img
@@ -140,6 +140,7 @@ import supportHeader from "@/components/support/header.vue";
 import supportAlert from "@/components/support/alert.vue";
 import supportFooter from "@/components/support/footer.vue";
 import typingPlaceholder from "@/components/support/typingPlaceholder.vue";
+import MessageContent from "@/components/support/messageContent.vue";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -289,7 +290,7 @@ watch(
     setPlaceholderVisible(oldValue.length > 0 ? oldValue : value);
 
     if (!content.value) return;
-    content.value.scrollTo(0, content.value.scrollHeight);
+    content.value?.scrollTo(0, content.value?.scrollHeight);
   },
   { deep: true }
 );
@@ -326,7 +327,7 @@ function setPlaceholderVisible(replies) {
       isPlaceholderVisible.value = true;
 
       await nextTick();
-      content.value.scrollTo(0, content.value.scrollHeight);
+      content.value?.scrollTo(0, content.value?.scrollHeight);
     }, 1000);
 
     setTimeout(() => {
@@ -337,15 +338,6 @@ function setPlaceholderVisible(replies) {
     clearTimeout(timeout);
     isPlaceholderVisible.value = false;
   }
-}
-
-function beauty(message) {
-  message = md.render(message).trim();
-  message = message.replace(/\n/g, "<br>");
-  message = message.replace(/[\s\uFEFF\xA0]{2,}/g, " ");
-  message = message.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, "");
-
-  return message.replace(/^<p>/, "").replace(/<\/p>$/, "");
 }
 
 function isDateVisible(replies, i) {
@@ -370,7 +362,7 @@ async function loadMessages(update) {
     subject.value = result.subject;
 
     setTimeout(() => {
-      content.value.scrollTo(0, content.value.scrollHeight);
+      content.value?.scrollTo(0, content.value?.scrollHeight);
     }, 100);
 
     if (chatsStore.chats.get(chatid.value)) {
@@ -395,7 +387,7 @@ async function loadMessages(update) {
     chatsStore.messages[chatid.value] = response;
   } finally {
     nextTick(() => {
-      content.value.scrollTo(0, content.value.scrollHeight);
+      content.value?.scrollTo(0, content.value?.scrollHeight);
     });
     isLoading.value = false;
 
