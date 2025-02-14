@@ -48,16 +48,8 @@ function useCloudOptions(activeKey, tarification) {
 
   watch(
     () => options.disk.size,
-    (value) => {
-      if (value / 1024 >= 200) {
-        options.disk.step = 20;
-      } else if (value / 1024 >= 100) {
-        options.disk.step = 10;
-      } else if (value / 1024 >= 50) {
-        options.disk.step = 5;
-      } else {
-        options.disk.step = 1;
-      }
+    () => {
+      options.disk.step = 10;
     }
   );
 
