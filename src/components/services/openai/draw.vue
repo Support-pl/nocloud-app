@@ -152,6 +152,7 @@ const endpoint = `${VUE_APP_BASE_URL}nocloud/chat/completions`;
 
 const example = `
   curl \`<endpoint>\`
+  -X POST
   -H "Content-Type: application/json"
   -H "Authorization: Bearer \`<token>\`"
   -d '{
