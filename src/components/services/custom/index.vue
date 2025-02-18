@@ -61,10 +61,12 @@
           </a-radio-group>
 
           <a-collapse
-            collapsible="icon"
             v-model:activeKey="activeCollapseKey"
             v-if="sizesByPage.length > 0"
-            class="order__grid"
+            :class="{
+              order__grid: true,
+              order__grid__solo: sizesByPage.length === 1,
+            }"
             :bordered="false"
             expand-icon-position="end"
           >
@@ -135,7 +137,11 @@
           <a-card
             v-if="fetchLoading || filteredAddons.length > 0"
             style="margin-top: 15px"
-            :title="`${$t('Addons')} (${$t('choose addons you want')})`"
+            :title="
+              !fetchLoading
+                ? `${$t('Addons')} (${$t('choose addons you want')})`
+                : null
+            "
             :loading="fetchLoading"
           >
             <div v-if="fetchLoading">Loading...</div>
@@ -988,6 +994,15 @@ watch([promocode, currency], async () => {
 
   planWithApplyedPromocode.value = response.toJson().billingPlans[0];
 });
+
+watch(filteredSizes, () => {
+  if (filteredSizes.value[0]) {
+    activeCollapseKey.value = [
+      filteredSizes.value[0].keys[options.value.period],
+    ];
+    options.value.size = filteredSizes.value[0].keys[options.value.period];
+  }
+});
 </script>
 
 <script>
@@ -1102,6 +1117,13 @@ export default {
 .order__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.order__grid__solo {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 10px;
   margin-top: 10px;
 }
