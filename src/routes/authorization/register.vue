@@ -472,7 +472,7 @@ async function submitHandler() {
       throw new Error(`[Error]: ${i18n.t("failed to create user")}`);
     if (response.result === "error") throw response;
     else message.success(i18n.t("account created successfully"));
-    router.push({ name: "login" });
+    router.push({ name: "new-user" });
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
