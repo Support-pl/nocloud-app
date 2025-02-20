@@ -63,6 +63,15 @@ const routes = [
     component: () => import("@/routes/authorization/register.vue"),
   },
   {
+    path: "/new-user",
+    name: "new-user",
+    meta: {
+      mustBeLoggined: false,
+      mustBeUnloggined: true,
+    },
+    component: () => import("@/routes/authorization/newUser.vue"),
+  },
+  {
     path: "/handsfree",
     name: "handsfree",
     meta: {
