@@ -678,7 +678,8 @@
         "password": "Hasło",
         "host": "Gospodarz",
         "port": "Port",
-        "username": "Nazwa użytkownika"
+        "username": "Nazwa użytkownika",
+        "wg_port": "WG port"
       },
       "actions": {
         "start": "Początek",
@@ -688,6 +689,7 @@
         "install": "Zainstalować",
         "download_config_file": "Pobierz plik",
         "copy_config": "Skopiuj do schowka",
+        "settings": "Ustawienia",
         "go_to_admin_menu": "Panelu sterowania"
       },
       "labels": {
@@ -697,6 +699,7 @@
         "free": "Za darmo",
         "server": "Serwer",
         "buy_vds": "Kup VDS",
+        "settings": "Ustawienia",
         "unlogin_message": "Aby zainstalować VPN na swoim serwerze, musisz zalogować się na swoje konto.",
         "hard_reset_help_message": "Serwer VPN zostanie całkowicie usunięty z Twojego serwera wirtualnego lub dedykowanego i zainstalowany ponownie. ",
         "connect_to_vpn_instruction": "Instrukcje dotyczące instalacji klienta VPN na swoim urządzeniu:",
