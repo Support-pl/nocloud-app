@@ -483,7 +483,8 @@
         "password": "Mật khẩu",
         "host": "Chủ nhà",
         "port": "Cảng",
-        "username": "Tên người dùng"
+        "username": "Tên người dùng",
+        "wg_port": "WG Cảng"
       },
       "actions": {
         "start": "Phóng",
@@ -493,7 +494,8 @@
         "install": "Cài đặt",
         "download_config_file": "Tải tập tin xuống",
         "copy_config": "Sao chép vào khay nhớ tạm",
-        "go_to_admin_menu": "Bảng điều khiển"
+        "go_to_admin_menu": "Bảng điều khiển",
+        "settings": "Cài đặt"
       },
       "labels": {
         "select_server": "Chọn máy chủ",
@@ -502,6 +504,7 @@
         "free": "miễn phí",
         "server": "Máy chủ",
         "buy_vds": "Mua VDS",
+        "settings": "Cài đặt",
         "unlogin_message": "Bạn cần đăng nhập vào tài khoản của mình để cài đặt VPN trên máy chủ của mình.",
         "hard_reset_help_message": "Máy chủ VPN sẽ bị xóa hoàn toàn khỏi máy chủ ảo hoặc máy chủ chuyên dụng của bạn và được cài đặt lại. ",
         "connect_to_vpn_instruction": "Hướng dẫn cách cài đặt máy khách VPN trên thiết bị của bạn:",

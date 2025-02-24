@@ -53,6 +53,14 @@
               </a-button>
 
               <a-button
+                @click="isSettingsOpen = true"
+                :loading="loadingAction == 'settings'"
+                :disabled="isInstancePending || isInstanceInit"
+                :icon="h(settingsIcon)"
+                >{{ t("vpn.actions.settings") }}</a-button
+              >
+
+              <a-button
                 :loading="loadingAction == 'stop'"
                 :disabled="isStopDisabled"
                 @click="stopInstance"
@@ -218,6 +226,36 @@
         </a-form>
       </div>
     </a-modal>
+
+    <a-modal
+      v-model:open="isSettingsOpen"
+      :title="t('vpn.labels.settings')"
+      @ok="updateSettins"
+      :ok-text="t('Save')"
+      :cancel-text="t('Cancel')"
+    >
+      <div>
+        <a-form
+          ref="settingsForm"
+          class="settings_form"
+          :model="settingsData"
+          name="basic"
+          autocomplete="off"
+        >
+          <a-form-item
+            class="config__field"
+            name="wg_port"
+            :label="t('vpn.fields.wg_port')"
+            :rules="[requiredRule]"
+          >
+            <a-input
+              v-model:value="settingsData.wg_port"
+              :placeholder="t('vpn.fields.wg_port')"
+            />
+          </a-form-item>
+        </a-form>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -258,6 +296,9 @@ const warningIcon = defineAsyncComponent(() =>
 const controlPanelIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ControlOutlined")
 );
+const settingsIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SettingOutlined")
+);
 
 const loadingOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LoadingOutlined")
@@ -286,6 +327,11 @@ const hardResetData = ref({
   config: {},
 });
 const hardResetForm = ref(null);
+const isSettingsOpen = ref(false);
+const settingsForm = ref(null);
+const settingsData = ref({
+  wg_port: "",
+});
 
 onMounted(async () => {
   if (instance.value) {
@@ -463,6 +509,55 @@ const subscribeToUpdates = () => {
   wgConfig.value = instance.value.state?.meta?.wireguard_config;
 };
 
+watch(
+  () => instance.value?.state?.meta?.wireguard_config,
+  (value) => {
+    wgConfig.value = value;
+  }
+);
+
+const updateSettins = async () => {
+  await settingsForm.value?.validate();
+
+  try {
+    loadingAction.value = "settings";
+
+    isSettingsOpen.value = false;
+
+    const response = await instancesStore.invokeAction({
+      uuid: instance.value.uuid,
+      action: "vpn",
+      params: {
+        wg_port: settingsData.value.wg_port,
+        action: "create",
+      },
+    });
+
+    if (response?.meta?.errors) {
+      throw new Error(response.meta.errors[0].code);
+    }
+  } catch (err) {
+    let title = "",
+      message = "";
+
+    switch (err.message) {
+      case "UNREACHABLE": {
+        title = "vpn.errors.unreachable.title";
+        message = "vpn.errors.unreachable.message";
+        break;
+      }
+      default: {
+        title = "vpn.errors.unknown.title";
+        message = "vpn.errors.unknown.message";
+        break;
+      }
+    }
+    Modal.error({ title, content: h("span", t(message)) });
+  } finally {
+    loadingAction.value = "";
+  }
+};
+
 const hardResetInstance = async () => {
   await hardResetForm.value?.validate();
 
@@ -612,6 +707,12 @@ watch(isHardResetOpen, () => {
   };
 });
 
+watch(isSettingsOpen, () => {
+  settingsData.value.wg_port = /ListenPort = \w+/
+    .exec(wgConfig.value)?.[0]
+    .split(" = ")?.[1];
+});
+
 watch(
   () => instance.value?.state?.meta?.wireguard_config,
   (val) => {
@@ -641,6 +742,10 @@ watch(
 <style scoped>
 .service-page {
   padding-top: 20px;
+}
+
+.service-page .container {
+  max-width: 900px;
 }
 
 .service-page-card {
@@ -680,7 +785,7 @@ watch(
 }
 
 .service-page__actions button {
-  margin: 0px 5px;
+  margin: 5px 5px;
 }
 
 .connect_window .qr-code {
@@ -708,6 +813,11 @@ watch(
   display: flex;
   justify-content: center;
   margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.connect_window .copy-button button {
+  margin: 5px 0px;
 }
 
 @media screen and (max-width: 768px) {
