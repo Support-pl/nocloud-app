@@ -606,7 +606,8 @@
         "password": "Mot de passe",
         "host": "Hôte",
         "port": "Port",
-        "username": "Nom d'utilisateur"
+        "username": "Nom d'utilisateur",
+        "wg_port": "WG port"
       },
       "actions": {
         "start": "Lancement",
@@ -616,7 +617,8 @@
         "install": "Installer",
         "download_config_file": "Télécharger le fichier",
         "copy_config": "Copier dans le presse-papier",
-        "go_to_admin_menu": "Panneau de contrôle"
+        "go_to_admin_menu": "Panneau de contrôle",
+        "settings": "Réglages"
       },
       "labels": {
         "select_server": "Sélectionnez le serveur",
@@ -625,6 +627,7 @@
         "free": "Gratuitement",
         "server": "Serveur",
         "buy_vds": "Acheter du VDS",
+        "settings": "Réglages",
         "configuration_qr_code": "Code QR de configuration",
         "unlogin_message": "Vous devez vous connecter à votre compte pour installer le VPN sur votre serveur.",
         "hard_reset_help_message": "Le serveur VPN sera complètement supprimé de votre serveur virtuel ou dédié et réinstallé. ",

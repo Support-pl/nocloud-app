@@ -778,7 +778,8 @@
         "password": "Password",
         "host": "Host",
         "port": "Port",
-        "username": "Username"
+        "username": "Username",
+        "wg_port": "WG port"
       },
       "actions": {
         "start": "Launch",
@@ -788,7 +789,8 @@
         "install": "Install",
         "download_config_file": "Download configuration",
         "copy_config": "Copy configuration",
-        "go_to_admin_menu": "Control Panel"
+        "go_to_admin_menu": "Control Panel",
+        "settings": "Settings"
       },
       "labels": {
         "select_server": "Select server",
@@ -801,7 +803,8 @@
         "hard_reset_help_message": "The VPN server will be completely removed from your virtual or dedicated server and reinstalled. ",
         "connect_to_vpn_instruction": "Instructions on how to install a VPN client on your device:",
         "error_state_message": "Something went wrong, try a complete reinstallation or contact our support, we will try to help.",
-        "configuration_qr_code": "Configuration QR code"
+        "configuration_qr_code": "Configuration QR code",
+        "settings": "Settings"
       },
       "errors": {
         "unreachable": {
