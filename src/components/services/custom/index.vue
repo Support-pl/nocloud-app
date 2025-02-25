@@ -135,7 +135,7 @@
           </a-collapse>
 
           <a-card
-            v-if="fetchLoading || filteredAddons.length > 0"
+            v-if="fetchLoading || filteredAddons?.length > 0"
             style="margin-top: 15px"
             :title="
               !fetchLoading
@@ -889,6 +889,7 @@ const fetchPlans = async (provider) => {
       plan.value = actionInstance.billing_plan.uuid;
       options.value.size = actionInstance.product;
       options.value.addons = actionInstance.addons;
+      options.value.period = 0;
 
       await nextTick();
 
