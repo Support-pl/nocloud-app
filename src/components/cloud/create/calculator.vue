@@ -167,6 +167,7 @@
       :tarification="tarification"
       :create-order="createOrder"
       :panels="panels"
+      :price="periodicPrice"
       :skip-password-check="cloudStore.plan?.type == 'ione-vpn'"
     />
   </div>
@@ -265,7 +266,7 @@ function getAddonsTitle(key) {
   }
 }
 
-async function createOrder() {
+async function createOrder() {  
   const instance = { config: options.config, billingPlan: cloudStore.plan };
   const price = startPrice.value;
 
