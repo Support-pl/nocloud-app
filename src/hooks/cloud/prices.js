@@ -153,7 +153,11 @@ function useCloudPrices(
     const isActiveKeyNotLoc = activeKey.value !== "location";
     const isTarificationValid = tarification.value !== "-";
 
-    if (isActiveKeyNotLoc && isTarificationValid) {
+    if (
+      isActiveKeyNotLoc &&
+      isTarificationValid &&
+      plan?.products?.[currentProduct.value?.key]
+    ) {
       return plan.products[currentProduct.value.key];
     }
 

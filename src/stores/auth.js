@@ -79,6 +79,8 @@ export const useAuthStore = defineStore("auth", () => {
       sp.$reset();
 
       token.value = "";
+      billingUser.value = { data: {} };
+      userdata.value = {};
       cookies.remove(COOKIES_NAME);
       router.push("/login");
     },

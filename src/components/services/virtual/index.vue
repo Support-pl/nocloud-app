@@ -245,12 +245,6 @@ const { isSlider } = useSlider(slider, plan);
 
 onMounted(() => {
   config.email = billingUser.value.email;
-  const { action } = onLogin.value;
-
-  if (typeof action !== "function") return;
-  modal.confirmCreate = true;
-  modal.confirmLoading = true;
-  action();
 });
 
 function onCreated() {
@@ -473,6 +467,7 @@ const orderClickHandler = () => {
 
   if (!userdata.value.uuid) {
     onLogin.value.redirect = route.name;
+    onLogin.value.redirectQuery = route.query;
     onLogin.value.info = {
       type: "virtual",
       title: "Virtual Hosting",
@@ -480,7 +475,7 @@ const orderClickHandler = () => {
       currency: userCurrency.value.code,
     };
     onLogin.value.action = () => {
-      createVirtual(info, instance);
+      return { options: { ...options }, config: { ...config } };
     };
 
     router.push({ name: "login" });
@@ -590,6 +585,20 @@ watch(
   (value) => {
     changePeriods(value);
     fetchLoading.value = false;
+
+    const { action } = onLogin.value;
+
+    if (!action) {
+      return;
+    }
+
+    const data = action();
+    options.model = data.options.model;
+    options.size = data.options.size;
+    options.period = data.options.period;
+    config.domain = data.config.domain;
+
+    onLogin.value = {};
   }
 );
 
