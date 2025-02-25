@@ -186,6 +186,10 @@ const companyName = computed(() => appStore.domainInfo.name ?? config.appTitle);
 const selfUrl = location.href;
 
 async function send() {
+  if (!email.value.trim() || !password.value.trim()) {
+    return;
+  }
+
   tryingLogin.value = true;
   try {
     const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(
