@@ -186,6 +186,10 @@ const companyName = computed(() => appStore.domainInfo.name ?? config.appTitle);
 const selfUrl = location.href;
 
 async function send() {
+  if (!email.value.trim() || !password.value.trim()) {
+    return;
+  }
+
   tryingLogin.value = true;
   try {
     const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(
@@ -215,15 +219,17 @@ async function send() {
       }
     } else if (appStore.onLogin.redirect) {
       const name = appStore.onLogin.redirect;
-      const service = appStore.onLogin.info.title;
+      const service =
+        appStore.onLogin.redirectQuery?.service || appStore.onLogin.info.title;
 
       router.replace({ name, query: { service } });
     } else {
-      authStore.fetchUserData(true);
-      authStore.fetchBillingData(true);
       useInstancesStore().$reset();
       router.push({ name: "root" });
     }
+
+    authStore.fetchUserData(true);
+    authStore.fetchBillingData(true);
   } catch (error) {
     if (error.response && error.response.status === 401) {
       notification.error({

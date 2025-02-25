@@ -59,12 +59,14 @@
 <script setup>
 import { defineAsyncComponent, computed, reactive, inject } from "vue";
 import { useRouter } from "vue-router";
+import { useAppStore } from "@/stores/app.js";
 
 import { useAuthStore } from "@/stores/auth.js";
 import { useCloudStore } from "@/stores/cloud.js";
 import { useClipboard } from "@/hooks/utils";
 
 import createActions from "@/components/ui/createActions.vue";
+import { useCurrenciesStore } from "@/stores/currencies";
 
 const copyIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CopyOutlined")
@@ -76,11 +78,14 @@ const props = defineProps({
   productSize: { type: String, required: true },
   panels: { type: Array, required: true },
   skipPasswordCheck: { type: Boolean, default: false },
+  price: { type: Number, default: 0},
 });
 
 const router = useRouter();
 const authStore = useAuthStore();
+const appStore = useAppStore();
 const cloudStore = useCloudStore();
+const currenciesStore = useCurrenciesStore();
 const { addToClipboard } = useClipboard();
 
 const [options] = inject("useOptions", () => [])();
@@ -174,6 +179,14 @@ function availableLogin(mode) {
 
   if (mode === "login") {
     localStorage.setItem("data", JSON.stringify(data));
+    
+    appStore.onLogin.info = {
+      type: "vdc",
+      title: "VDC",
+      cost: props.price,
+      currency: currenciesStore.unloginedCurrency.title,
+    };
+
     router.push({ name: "login" });
   } else if (mode === "copy") {
     const link = new URL(location.href);
