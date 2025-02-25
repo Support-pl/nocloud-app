@@ -215,15 +215,17 @@ async function send() {
       }
     } else if (appStore.onLogin.redirect) {
       const name = appStore.onLogin.redirect;
-      const service = appStore.onLogin.info.title;
+      const service =
+        appStore.onLogin.redirectQuery?.service || appStore.onLogin.info.title;
 
       router.replace({ name, query: { service } });
     } else {
-      authStore.fetchUserData(true);
-      authStore.fetchBillingData(true);
       useInstancesStore().$reset();
       router.push({ name: "root" });
     }
+
+    authStore.fetchUserData(true);
+    authStore.fetchBillingData(true);
   } catch (error) {
     if (error.response && error.response.status === 401) {
       notification.error({

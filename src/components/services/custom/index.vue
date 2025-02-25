@@ -355,7 +355,7 @@ const promocodesStore = usePromocodesStore();
 const addonsStore = useAddonsStore();
 const authStore = useAuthStore();
 const { onLogin } = storeToRefs(useAppStore());
-const { isLogged, userdata } = storeToRefs(useAuthStore());
+const { isLogged, userdata } = storeToRefs(authStore);
 
 const { addons } = storeToRefs(useAddonsStore());
 
@@ -388,16 +388,6 @@ const filtersType = ref("range-with-prefixes");
 const paginationOptions = ref({ total: 0, size: 10, page: 1 });
 const cachedPlans = ref({});
 const activeCollapseKey = ref([]);
-
-onMounted(() => {
-  const { action, info } = onLogin.value;
-
-  if (typeof action !== "function") return;
-  modal.value.goToInvoice = info.goToInvoice;
-  modal.value.confirmCreate = true;
-  modal.value.confirmLoading = true;
-  action();
-});
 
 function onCreated() {
   fetchLoading.value = true;
@@ -800,6 +790,7 @@ const orderClickHandler = () => {
 
   if (!userdata.value.uuid) {
     onLogin.value.redirect = route.name;
+    onLogin.value.redirectQuery = route.query;
     onLogin.value.info = {
       type: "custom",
       title: "Custom",
@@ -808,7 +799,7 @@ const orderClickHandler = () => {
       goToInvoice: modal.value.goToInvoice,
     };
     onLogin.value.action = () => {
-      createVirtual(info, instance);
+      return { info, instance };
     };
 
     router.push({ name: "login" });
@@ -883,6 +874,28 @@ const fetchPlans = async (provider) => {
     notification.openNotification("error", { message });
   } finally {
     fetchLoading.value = false;
+
+    setTimeout(async () => {
+      const { action, info } = onLogin.value;
+      if (typeof action !== "function") return;
+
+      if (!fetchLoading.value && plans.value.length)
+        modal.value.goToInvoice = info.goToInvoice;
+      modal.value.confirmCreate = true;
+      modal.value.confirmLoading = true;
+
+      const { info: actionInfo, instance: actionInstance } = action();
+
+      plan.value = actionInstance.billing_plan.uuid;
+      options.value.size = actionInstance.product;
+      options.value.addons = actionInstance.addons;
+
+      await nextTick();
+
+      orderClickHandler(actionInfo, actionInstance);
+
+      onLogin.value = {};
+    }, 100);
   }
 };
 const selectCollapsePanel = (keys) => {
