@@ -54,7 +54,7 @@
               </a-col>
               <a-col :xs="12" :sm="6" :lg="8">
                 <div v-if="!fetchLoading" class="order__price">
-                  {{ getProducts[key.value] }} {{ currency.title }}
+                  {{ getProducts[key.value] }} {{ userCurrency?.title }}
                 </div>
                 <div v-else class="loadingLine" />
               </a-col>
@@ -104,7 +104,7 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { useCurrency, useNotification } from "@/hooks/utils";
+import { useNotification } from "@/hooks/utils";
 import api from "@/api.js";
 
 import { useAppStore } from "@/stores/app.js";
@@ -128,7 +128,6 @@ const router = useRouter();
 const route = useRoute();
 const i18n = useI18n();
 const { openNotification } = useNotification();
-const { currency } = useCurrency();
 
 const appStore = useAppStore();
 const authStore = useAuthStore();
@@ -146,6 +145,7 @@ const provider = ref(null);
 
 const cachedPlans = reactive({});
 const fetchLoading = ref(false);
+const plansLoading = ref(false);
 
 const modal = ref({ confirmCreate: false, confirmLoading: false });
 
@@ -161,25 +161,15 @@ const getProducts = computed(() => {
     }),
     {}
   );
-  const inputKilotoken = +(
-    products.input_kilotoken * currency.value.rate
-  ).toFixed(4);
-  const outputKilotoken = +(
-    products.output_kilotoken * currency.value.rate
-  ).toFixed(4);
+  const inputKilotoken = +products.input_kilotoken.toFixed(4);
+  const outputKilotoken = +products.output_kilotoken.toFixed(4);
 
-  const size1024x1024 = +(
-    products.image_size_1024x1024_quality_standard * currency.value.rate
-  ).toFixed(4);
-  const size1024x1792 = +(
-    products.image_size_1024x1792_quality_standard * currency.value.rate
-  ).toFixed(4);
-  const size1024x1024HD = +(
-    products.image_size_1024x1024_quality_hd * currency.value.rate
-  ).toFixed(4);
-  const size1024x1792HD = +(
-    products.image_size_1024x1792_quality_hd * currency.value.rate
-  ).toFixed(4);
+  const size1024x1024 =
+    +products.image_size_1024x1024_quality_standard.toFixed(4);
+  const size1024x1792 =
+    +products.image_size_1024x1792_quality_standard.toFixed(4);
+  const size1024x1024HD = +products.image_size_1024x1024_quality_hd.toFixed(4);
+  const size1024x1792HD = +products.image_size_1024x1792_quality_hd.toFixed(4);
 
   return {
     title,
@@ -213,7 +203,7 @@ const services = computed(() =>
 
 const plans = computed(
   () =>
-    cachedPlans[`${provider.value}_${userCurrency.value.code}`]?.filter(
+    cachedPlans[`${provider.value}_${userCurrency.value?.code}`]?.filter(
       ({ type, uuid }) => {
         const { items } =
           spStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
@@ -248,8 +238,9 @@ watch(sp, (value) => {
 });
 
 async function fetchPlans(sp) {
-  const cacheKey = `${sp}_${userCurrency.value.code}`;
+  const cacheKey = `${sp}_${userCurrency?.value.code}`;
 
+  plansLoading.value = true;
   if (cachedPlans[cacheKey]) return;
   try {
     const { pool } = await plansStore.fetch({
@@ -263,6 +254,8 @@ async function fetchPlans(sp) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
     openNotification("error", { message });
+  } finally {
+    plansLoading.value = false;
   }
 }
 
@@ -302,14 +295,15 @@ function orderClickHandler() {
 
   if (!authStore.userdata.uuid) {
     appStore.onLogin.redirect = route.name;
+    appStore.onLogin.redirectQuery = route.query;
     appStore.onLogin.info = {
       type: "openai",
       title: "OpenAI",
       cost: getProducts.value.price,
-      currency: currency.value.code,
+      currency: userCurrency.value.code,
     };
     appStore.onLogin.action = () => {
-      createOpenAI(info);
+      orderClickHandler();
     };
 
     router.push({ name: "login" });
@@ -375,15 +369,6 @@ async function deployService(uuid) {
     modal.value.confirmLoading = false;
   }
 }
-
-onMounted(() => {
-  const { action } = appStore.onLogin;
-
-  if (typeof action !== "function") return;
-  modal.value.confirmCreate = true;
-  modal.value.confirmLoading = true;
-  action();
-});
 
 async function fetch() {
   try {
