@@ -529,33 +529,24 @@ export default defineComponent({
 
       return locationItem?.title ?? this.$t("No Data");
     },
-    tariffTitle() {
+    fullProduct() {
       const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
-
-      return this.VM.billingPlan.products[key].title;
+      return this.VM.billingPlan.products[key];
+    },
+    tariffTitle() {
+      return this.fullProduct?.title;
     },
     tariffPrice() {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
-
-      return this.VM.billingPlan.products[key].price;
+      return this.fullProduct?.price ?? 0;
     },
     addonsPrice() {
-      return this.VM.config.addons?.reduce((res, id) => {
-        const { price } =
-          this.VM.billingPlan.resources.find(
-            ({ key }) =>
-              key ===
-              `${this.VM.config.duration} ${this.VM.config.planCode} ${id}`
-          ) ?? {};
-        let key = "";
-
-        if (!id) return res;
-        if (id.includes("ram")) key = this.$t("ram");
-        if (id.includes("raid")) key = this.$t("Drive");
-        if (id.includes("vrack")) key = this.$t("vrack");
-        if (id.includes("bandwidth")) key = this.$t("traffic");
-
-        return { ...res, [key]: +price || 0 };
+      return (this.VM.addons || []).reduce((acc, uuid) => {
+        const addon = this.cachedAddons[uuid];
+        if (addon) {
+          const price = addon.periods[this.fullProduct?.period] ?? 0;
+          acc[addon.title] = price;
+        }
+        return acc;
       }, {});
     },
     fullPrice() {

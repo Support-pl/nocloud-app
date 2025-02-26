@@ -16,10 +16,12 @@ import { useAppStore } from "./app.js";
 import { debounce, toInvoice } from "@/functions.js";
 import api from "@/api.js";
 import { useAuthStore } from "./auth.js";
+import { useRouter } from "vue-router";
 
 export const useInvoicesStore = defineStore("invoices", () => {
   const app = useAppStore();
   const auth = useAuthStore();
+  const router = useRouter();
   const invoicesApi = createPromiseClient(BillingService, app.transport);
 
   const isLoading = ref(false);
@@ -192,6 +194,8 @@ export const useInvoicesStore = defineStore("invoices", () => {
             instance: instance.uuid,
           })
         );
+
+        router.push({ name: "billing" });
 
         return response;
       } catch (error) {
