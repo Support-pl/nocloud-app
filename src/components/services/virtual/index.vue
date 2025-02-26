@@ -486,6 +486,8 @@ const orderClickHandler = () => {
 };
 const createVirtual = async (info, instance) => {
   modal.confirmLoading = true;
+  onLogin.value = {};
+
   const action = service.value ? "update" : "create";
   const orderData = service.value
     ? info
@@ -532,6 +534,10 @@ const orderConfirm = () => {
 };
 
 const fetchPlans = async (sp) => {
+  if (!userCurrency.value?.code) {
+    return;
+  }
+
   const cacheKey = `${sp}_${userCurrency.value.code}`;
 
   if (cachedPlans.value[cacheKey]) {
@@ -586,19 +592,21 @@ watch(
     changePeriods(value);
     fetchLoading.value = false;
 
-    const { action } = onLogin.value;
+    setTimeout(() => {
+      const { action } = onLogin.value;
 
-    if (!action) {
-      return;
-    }
+      if (!action) {
+        return;
+      }
 
-    const data = action();
-    options.model = data.options.model;
-    options.size = data.options.size;
-    options.period = data.options.period;
-    config.domain = data.config.domain;
+      const data = action();
+      console.log(data);
 
-    onLogin.value = {};
+      options.model = data.options.model;
+      options.size = data.options.size;
+      options.period = data.options.period;
+      config.domain = data.config.domain;
+    }, 300);
   }
 );
 
