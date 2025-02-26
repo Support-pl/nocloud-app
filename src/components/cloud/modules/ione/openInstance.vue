@@ -544,6 +544,7 @@ import { usePlansStore } from "@/stores/plans.js";
 import { useChatsStore } from "@/stores/chats.js";
 
 import renewalModal from "@/components/ui/renewalModal.vue";
+import { useAddonsStore } from "@/stores/addons";
 
 const redoIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/RedoOutlined")
@@ -695,6 +696,7 @@ export default defineComponent({
     ...mapState(usePlansStore, ["plans"]),
     ...mapState(useNamespasesStore, ["namespaces"]),
     ...mapState(useChatsStore, ["getDefaults"]),
+    ...mapState(useAddonsStore, ["cachedAddons"]),
     statusVM() {
       if (!this.VM?.state) {
         return {
@@ -760,7 +762,7 @@ export default defineComponent({
       return this.VM.billingPlan.products[key]?.price ?? 0;
     },
     addonsPrice() {
-      return this.VM.billingPlan.resources?.reduce((prev, curr) => {
+      const addons = this.VM.billingPlan.resources?.reduce((prev, curr) => {
         if (
           curr.key === `drive_${this.VM.resources.drive_type.toLowerCase()}`
         ) {
@@ -790,6 +792,21 @@ export default defineComponent({
         }
         return prev;
       }, {});
+
+      (this.VM.addons || []).reduce((acc, uuid) => {
+        const addon = this.cachedAddons[uuid];
+
+        if (addon) {
+          const price =
+            addon.periods[
+              this.VM.billingPlan.products[this.VM.product]?.period
+            ] ?? 0;
+          acc[addon.title] = price;
+        }
+        return acc;
+      }, addons);
+
+      return addons;
     },
     fullPrice() {
       return (

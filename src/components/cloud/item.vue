@@ -42,18 +42,13 @@
         </a-collapse-panel>
       </a-collapse>
 
-      <a-tooltip
+      <component
         v-if="getModuleProductBtn && `${price}`.replace('.').length > 3"
-        placement="bottom"
-        :title="`${price} ${currency.title}`"
-      >
-        <component
-          :is="getModuleProductBtn"
-          :service="instance"
-          :price="price"
-          :currency="currency"
-        />
-      </a-tooltip>
+        :is="getModuleProductBtn"
+        :service="instance"
+        :price="price"
+        :currency="currency"
+      />
 
       <component
         :is="getModuleProductBtn"

@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { defineStore } from "pinia";
 import cookies from "js-cookie";
 import { useAuthStore } from "./auth.js";
@@ -7,11 +7,13 @@ import api from "@/api.js";
 import { InstancesService } from "nocloud-proto/proto/es/instances/instances_connect";
 import { useAppStore } from "./app.js";
 import { createPromiseClient } from "@connectrpc/connect";
+import { useAddonsStore } from "./addons.js";
 
 export const useInstancesStore = defineStore("instances", () => {
   const authStore = useAuthStore();
   const app = useAppStore();
   const currenciesStore = useCurrenciesStore();
+  const addonsStore = useAddonsStore();
 
   const instancesApi = computed(() => {
     return createPromiseClient(InstancesService, app.transport);
@@ -119,6 +121,22 @@ export const useInstancesStore = defineStore("instances", () => {
     }
     inst.state = JSON.parse(JSON.stringify(data.state));
   }
+
+  watch(instances, (value) => {
+    const missedAddons = [];
+
+    value.forEach((instance) => {
+      instance.addons.forEach((uuid) => {
+        if (addonsStore.cachedAddons[uuid]) {
+          return;
+        }
+
+        missedAddons.push(uuid);
+      });
+    });
+
+    addonsStore.fetchCached(missedAddons);
+  });
 
   return {
     services,
