@@ -321,7 +321,7 @@
 
 <script setup>
 import { storeToRefs } from "pinia";
-import { computed, inject, nextTick, onMounted, watch } from "vue";
+import { computed, inject, nextTick, watch } from "vue";
 
 import useCreateInstance from "@/hooks/instances/create.js";
 import { useCurrency, useNotification, usePeriod } from "@/hooks/utils";
@@ -512,7 +512,7 @@ const filteredAddons = computed(() => {
 
   return addons.value.filter(
     ({ uuid }) =>
-      fullPlan.addons.includes(uuid) || product.addons.includes(uuid)
+      fullPlan.addons.includes(uuid) || product?.addons.includes(uuid)
   );
 });
 const addonsPrice = computed(() => {
@@ -698,7 +698,7 @@ const changeProducts = () => {
   }
 };
 const changePeriods = (key) => {
-  const { title } = products.value[key];
+  const { title } = products.value?.[key] || {};
 
   periods.value = [];
   Object.values(products.value).forEach((product) => {
@@ -799,7 +799,7 @@ const orderClickHandler = () => {
       goToInvoice: modal.value.goToInvoice,
     };
     onLogin.value.action = () => {
-      return { info, instance };
+      return { ...options.value, plan: plan.value };
     };
 
     router.push({ name: "login" });
@@ -822,6 +822,8 @@ const createVirtual = async (info, instance) => {
           instancesGroups: [info],
         },
       };
+
+  onLogin.value = {};
 
   try {
     await createInstance(
@@ -856,6 +858,9 @@ const getGroupImage = (group) => {
   return image;
 };
 const fetchPlans = async (provider) => {
+  if (!currency.value.code) {
+    return;
+  }
   const cacheKey = `${provider}_${currency.value.code}`;
 
   if (cachedPlans.value[cacheKey]) return;
@@ -876,29 +881,21 @@ const fetchPlans = async (provider) => {
     fetchLoading.value = false;
 
     setTimeout(async () => {
-      const { action, info } = onLogin.value;
+      const { action } = onLogin.value;
       if (typeof action !== "function") return;
 
-      if (!fetchLoading.value && plans.value.length)
-        modal.value.goToInvoice = info.goToInvoice;
-      modal.value.confirmCreate = true;
-      modal.value.confirmLoading = true;
+      const oldOptions = action();
 
-      const { info: actionInfo, instance: actionInstance } = action();
+      plan.value = oldOptions.plan;
 
-      plan.value = actionInstance.billing_plan.uuid;
-      options.value.size = actionInstance.product;
-      options.value.addons = actionInstance.addons;
-      options.value.period = 0;
-
-      await nextTick();
-
-      orderClickHandler(actionInfo, actionInstance);
-
-      onLogin.value = {};
-    }, 100);
+      options.value.size = oldOptions.size;
+      options.value.addons = oldOptions.addons;
+      options.value.period = oldOptions.period;
+      activeCollapseKey.value = [oldOptions.size];
+    }, 1000);
   }
 };
+
 const selectCollapsePanel = (keys) => {
   options.value.size = keys[options.value.period];
   if (activeCollapseKey.value.length > 0) {
@@ -973,10 +970,11 @@ watch(
 watch(
   () => options.value.period,
   (value) => {
-    const { title } = products.value[options.value.size];
-    const [key, product] = Object.entries(products.value).find(
-      ([, product]) => product.title === title && +product.period === value
-    );
+    const { title } = products.value[options.value.size] || {};
+    const [key, product] =
+      Object.entries(products.value || []).find(
+        ([, product]) => product.title === title && +product.period === value
+      ) || [];
     const data = JSON.parse(route.query.data ?? "{}");
 
     if (data.productSize) {

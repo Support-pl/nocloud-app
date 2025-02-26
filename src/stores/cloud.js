@@ -11,9 +11,9 @@ import { useInstancesStore } from "./instances.js";
 import useCreateInstance from "@/hooks/instances/create.js";
 import { checkPayg } from "@/functions.js";
 import { usePromocodesStore } from "./promocodes.js";
-import { ApplySaleRequest } from "nocloud-proto/proto/es/billing/billing_pb";
 import { useAddonsStore } from "./addons.js";
 import useCurrency from "@/hooks/utils/currency.js";
+import { useAppStore } from "./app.js";
 
 export const useCloudStore = defineStore("cloud", () => {
   const router = useRouter();
@@ -28,6 +28,7 @@ export const useCloudStore = defineStore("cloud", () => {
   const instancesStore = useInstancesStore();
   const promocodesStore = usePromocodesStore();
   const addonsStore = useAddonsStore();
+  const appStore = useAppStore();
 
   const authData = reactive({
     vmName: "",
@@ -102,6 +103,11 @@ export const useCloudStore = defineStore("cloud", () => {
   );
 
   async function createOrder(options, product) {
+    localStorage.removeItem("data");
+
+    appStore.onLogin.redirect = "";
+    appStore.onLogin.info = {};
+
     const [newInstance, newGroup] = setInstance(options, product);
     let instancesGroups;
 

@@ -49,10 +49,11 @@ marked.use({
 marked.use(mangle);
 const renderer = new Renderer();
 renderer.code = (code, language) => {
-  if (!language) language = "plaintext";
+  if (!language) language = code.lang || "plaintext";
+  console.log(code, language);
 
   return `<div class="code"><code>${
-    hljs.highlight(code, { language }).value
+    hljs.highlight(code.text || code, { language }).value
   }</code></div>`;
 };
 marked.setOptions({ renderer });
