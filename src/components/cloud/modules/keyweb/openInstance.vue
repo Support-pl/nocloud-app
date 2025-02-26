@@ -181,6 +181,8 @@ import { toDate } from "@/functions.js";
 
 import keywebActions from "@/components/cloud/modules/keyweb/actions.vue";
 import renewalModal from "@/components/ui/renewalModal.vue";
+import { useAddonsStore } from "@/stores/addons";
+import { storeToRefs } from "pinia";
 
 const props = defineProps({
   VM: { type: Object, required: true },
@@ -209,6 +211,8 @@ const i18n = useI18n();
 const spStore = useSpStore();
 const plansStore = usePlansStore();
 const instancesStore = useInstancesStore();
+const addonsStore = useAddonsStore();
+const { cachedAddons } = storeToRefs(addonsStore);
 
 const { currency } = useCurrency();
 const { openNotification } = useNotification();
@@ -235,21 +239,15 @@ const tariffPrice = computed(
 );
 
 const addonsPrice = computed(() => {
-  if (!plan.value) return {};
-  const configs = props.VM.config.configurations;
-
-  return Object.values(configs).reduce((prev, curr) => {
-    const productKey = `${curr}$${props.VM.product}`;
-    let key = i18n.t("os");
-
-    if (curr.toLowerCase().includes("backup")) {
-      key = i18n.t("backup");
+  return props.VM.addons.reduce((acc, uuid) => {
+    const addon = cachedAddons.value[uuid];
+    if (addon) {
+      const price =
+        addon.periods[plan.value.products[props.VM.product]?.period] ?? 0;
+      acc[addon.title] = price;
     }
-    return {
-      ...prev,
-      [key]:
-        plan.value.resources.find(({ key }) => key === productKey)?.price ?? 0,
-    };
+
+    return acc;
   }, {});
 });
 

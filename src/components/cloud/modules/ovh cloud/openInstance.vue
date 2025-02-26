@@ -674,33 +674,24 @@ export default defineComponent({
 
       return locationItem?.title ?? this.$t("No Data");
     },
+    fullProduct() {
+      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      return this.VM.billingPlan.products[key];
+    },
     tariffTitle() {
-      const key =
-        this.VM.product ??
-        `${this.VM.config.duration} ${this.VM.config.planCode}`;
-
-      return this.VM.billingPlan.products[key].title;
+      return this.fullProduct?.title;
     },
     tariffPrice() {
-      const key =
-        this.VM.product ??
-        `${this.VM.config.duration} ${this.VM.config.planCode}`;
-
-      return this.VM.billingPlan.products[key].price;
+      return this.fullProduct?.price ?? 0;
     },
     addonsPrice() {
-      return this.VM.config.addons?.reduce((res, addon) => {
-        const { price } = this.VM.billingPlan.resources.find(
-          ({ key }) => key === `${this.VM.config.duration} ${addon}`
-        );
-        let key = "";
-
-        if (addon.includes("additional")) key = this.$t("adds drive");
-        if (addon.includes("snapshot")) key = this.$t("Snapshot");
-        if (addon.includes("backup")) key = this.$t("Backup");
-        if (addon.includes("windows")) key = this.$t("Windows");
-
-        return { ...res, [key]: +price };
+      return (this.VM.addons || []).reduce((acc, uuid) => {
+        const addon = this.cachedAddons[uuid];
+        if (addon) {
+          const price = addon.periods[this.fullProduct?.period] ?? 0;
+          acc[addon.title] = price;
+        }
+        return acc;
       }, {});
     },
     fullPrice() {

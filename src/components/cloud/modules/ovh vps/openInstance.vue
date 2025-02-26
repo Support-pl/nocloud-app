@@ -539,6 +539,7 @@ import { useInstancesStore } from "@/stores/instances.js";
 import { usePlansStore } from "@/stores/plans.js";
 
 import renewalModal from "@/components/ui/renewalModal.vue";
+import { useAddonsStore } from "@/stores/addons";
 
 const redoIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/RedoOutlined")
@@ -689,6 +690,7 @@ export default defineComponent({
   computed: {
     ...mapState(usePlansStore, { plans: "plans", isPlansLoading: "isLoading" }),
     ...mapState(useSpStore, ["servicesProviders"]),
+    ...mapState(useAddonsStore, ["cachedAddons"]),
     ...mapState(useAuthStore, ["userdata", "baseURL"]),
     ...mapState(useInstancesStore, ["services"]),
     statusVM() {
@@ -735,29 +737,24 @@ export default defineComponent({
 
       return locationItem?.title ?? this.$t("No Data");
     },
-    tariffTitle() {
+    fullProduct() {
       const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
-
-      return this.VM.billingPlan.products[key]?.title;
+      return this.VM.billingPlan.products[key];
+    },
+    tariffTitle() {
+      return this.fullProduct?.title;
     },
     tariffPrice() {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
-
-      return this.VM.billingPlan.products[key]?.price ?? 0;
+      return this.fullProduct?.price ?? 0;
     },
     addonsPrice() {
-      return this.VM.config.addons.reduce((res, addon) => {
-        const { price } = this.VM.billingPlan.resources.find(
-          ({ key }) => key === `${this.VM.config.duration} ${addon}`
-        );
-        let key = "";
-
-        if (addon.includes("additional")) key = this.$t("adds drive");
-        if (addon.includes("snapshot")) key = this.$t("Snapshot");
-        if (addon.includes("backup")) key = this.$t("Backup");
-        if (addon.includes("windows")) key = this.$t("Windows");
-
-        return { ...res, [key]: +price };
+      return (this.VM.addons || []).reduce((acc, uuid) => {
+        const addon = this.cachedAddons[uuid];
+        if (addon) {
+          const price = addon.periods[this.fullProduct?.period] ?? 0;
+          acc[addon.title] = price;
+        }
+        return acc;
       }, {});
     },
     fullPrice() {
