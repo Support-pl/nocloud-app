@@ -277,9 +277,6 @@ function orderClickHandler() {
       cost: getProducts.value.price,
       currency: currency.value.code,
     };
-    appStore.onLogin.action = () => {
-      createVDC(newGroup);
-    };
 
     router.push({ name: "login" });
     return;
@@ -341,19 +338,6 @@ async function deployService(uuid) {
     modal.value.confirmLoading = false;
   }
 }
-
-onMounted(() => {
-  const { action } = appStore.onLogin;
-
-  Object.keys(getProducts.value.resources).forEach((key) => {
-    resources.value[key] = 0;
-  });
-
-  if (typeof action !== "function") return;
-  modal.value.confirmCreate = true;
-  modal.value.confirmLoading = true;
-  action();
-});
 
 async function fetch() {
   try {

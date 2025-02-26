@@ -126,7 +126,7 @@ function useCloudPlans(tarification, options) {
   );
 
   watch([provider, locationId, userCurrency], async ([value]) => {
-    if (!value?.uuid) return;
+    if (!value?.uuid || !userCurrency.value) return;
 
     const cacheKey = `${value.uuid}_${userCurrency.value.code}`;
 

@@ -166,7 +166,7 @@ const tarification = ref("");
 const priceOVH = reactive({ value: 0, addons: {} });
 
 const { mode, products } = useProducts(tarification);
-const { options, dataLocalStorage, fetch } = useCloudOptions(
+const { options, dataLocalStorage, fetch, setReadyData } = useCloudOptions(
   activeKey,
   tarification
 );
@@ -181,6 +181,8 @@ watch(isPlansLoading, () => {
   } else if (dataLocalStorage.value.locationId) {
     tarification.value = periods.value[0]?.value ?? "";
   }
+
+  setReadyData();
 
   activeKey.value = dataLocalStorage.value?.activeKey ?? "location";
 });
@@ -322,10 +324,6 @@ function setLocation(value) {
     cloudStore.locationId = value;
     return;
   }
-
-  openModal(() => {
-    cloudStore.locationId = value;
-  });
 }
 
 function openModal(onOk, onCancel) {
@@ -364,9 +362,10 @@ onUnmounted(() => {
 });
 
 cloudStore.showcaseId = route.query.service ?? "";
-router.beforeEach((_, from, next) => {
+router.beforeEach((to, from, next) => {
   if (
-    from.path === "/cloud/newVM" &&
+    from.name === "newPaaS" &&
+    to.name != "newPaaS" &&
     localStorage.getItem("data") &&
     authStore.isLogged
   ) {

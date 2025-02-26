@@ -156,27 +156,30 @@ function useCloudOptions(activeKey, tarification) {
           locationId.shift();
           return id.includes(locationId.join("-"));
         })?.id ?? "Location";
-      activeKey.value = null;
 
-      if (dataLocalStorage.value.config) {
-        options.os.id = dataLocalStorage.value.config.template_id;
-        options.os.name = dataLocalStorage.value.config.template_name;
-      }
+      setTimeout(() => {
+        if (dataLocalStorage.value.config) {
+          options.os.id = dataLocalStorage.value.config.template_id;
+          options.os.name = dataLocalStorage.value.config.template_name;
+        }
 
-      if (dataLocalStorage.value.ovhConfig) {
-        options.config = dataLocalStorage.value.ovhConfig;
-      }
+        if (dataLocalStorage.value.ovhConfig) {
+          options.config = dataLocalStorage.value.ovhConfig;
+        }
 
-      if (dataLocalStorage.value.resources) {
-        options.disk.size = dataLocalStorage.value.resources.drive_size;
-        options.disk.type = dataLocalStorage.value.resources.drive_type;
-      }
+        if (dataLocalStorage.value.resources) {
+          options.disk.size = dataLocalStorage.value.resources.drive_size;
+          options.disk.type = dataLocalStorage.value.resources.drive_type;
+        }
+
+        activeKey.value = dataLocalStorage.value?.activeKey ?? "os";
+      }, 1000);
     } catch {
       localStorage.removeItem("data");
     }
   }
 
-  return { options, dataLocalStorage, fetch };
+  return { options, dataLocalStorage, fetch, setReadyData };
 }
 
 export default useCloudOptions;
