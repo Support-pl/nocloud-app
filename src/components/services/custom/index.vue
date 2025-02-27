@@ -394,15 +394,10 @@ function onCreated() {
   const promises = [
     authStore.fetchBillingData(),
     spStore.fetch(!isLogged.value),
-    spStore.fetchShowcases(!isLogged.value),
   ];
 
   if (isLogged.value) {
     promises.push(namespacesStore.fetch(), instancesStore.fetch());
-  }
-
-  if (spStore.showcases.length < 1) {
-    spStore.fetchShowcases(!isLogged.value);
   }
 
   if (addons.value.length < 1) {
