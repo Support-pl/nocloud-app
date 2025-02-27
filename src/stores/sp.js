@@ -1,8 +1,12 @@
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { defineStore } from "pinia";
 import api from "@/api.js";
+import { useRoute } from "vue-router";
+import { isUUUID } from "@/functions.js";
 
 export const useSpStore = defineStore("sp", () => {
+  const route = useRoute();
+
   const servicesProviders = ref([]);
   const showcases = ref([]);
   const isLoading = ref(false);
@@ -24,7 +28,7 @@ export const useSpStore = defineStore("sp", () => {
           title: showcase.title,
           uuid: showcase.uuid,
           icon: showcase.icon,
-          promo: showcase.promo,
+          promo: showcase.promo || {},
           meta: showcase.meta,
         };
       });
@@ -35,6 +39,42 @@ export const useSpStore = defineStore("sp", () => {
       servicesProvider: key,
     }));
   });
+
+  async function fetchShowcase(uuid) {
+    const index = showcases.value.findIndex((s) => s.uuid === uuid);
+    if (showcases.value[index]?.full || !isUUUID(uuid)) {
+      return;
+    }
+
+    try {
+      isShowcasesLoading.value = true;
+      const response = await api.showcases.get(uuid);
+
+      response.full = true;
+
+      if (index === -1) {
+        showcases.value.push(response);
+      } else {
+        showcases.value[index] = response;
+      }
+
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      isShowcasesLoading.value = false;
+    }
+  }
+
+  watch(
+    () => route.query,
+    (val) => {
+      if (val.service) {
+        fetchShowcase(val.service);
+      }
+    }
+  );
 
   return {
     servicesProviders,
@@ -61,9 +101,25 @@ export const useSpStore = defineStore("sp", () => {
     async fetchShowcases(anonymously = false) {
       try {
         isShowcasesLoading.value = true;
-        const response = await api.showcases.list({ anonymously });
+        const response = await api.showcases.list({
+          anonymously,
+          omitPromos: true,
+        });
 
-        showcases.value = response.showcases;
+        response.showcases.forEach((showcase) => {
+          const index = showcases.value.findIndex(
+            (s) => s.uuid === showcase.uuid
+          );
+          if (index === -1) {
+            showcases.value.push(showcase);
+          } else {
+            showcases.value[index] = {
+              ...showcase,
+              promo: showcase.promo || showcases.value[index].promo,
+            };
+          }
+        });
+
         return response;
       } catch (error) {
         console.error(error);
@@ -72,6 +128,8 @@ export const useSpStore = defineStore("sp", () => {
         isShowcasesLoading.value = false;
       }
     },
+
+    fetchShowcase,
 
     $reset() {
       servicesProviders.value = [];

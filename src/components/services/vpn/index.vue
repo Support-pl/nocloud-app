@@ -222,10 +222,6 @@ async function onCreated() {
     promises.push(namespacesStore.fetch(), instancesStore.fetch());
   }
 
-  if (spStore.showcases.length < 1) {
-    promises.push(spStore.fetchShowcases(!isLogged.value));
-  }
-
   try {
     await Promise.all(promises);
 

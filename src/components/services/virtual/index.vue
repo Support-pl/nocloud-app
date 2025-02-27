@@ -251,7 +251,6 @@ function onCreated() {
   const promises = [
     authStore.fetchBillingData(),
     spStore.fetch(!isLogged.value),
-    spStore.fetchShowcases(!isLogged.value),
   ];
 
   if (isLogged.value) {

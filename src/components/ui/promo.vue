@@ -2,37 +2,41 @@
   <div
     v-if="isPromoVisible"
     class="order__field"
-    :style="(isBitrixApps) ? { padding: 0, overflow: 'hidden' } : null"
+    :style="isBitrixApps ? { padding: 0, overflow: 'hidden' } : null"
   >
     <editor-container :value="promo" />
   </div>
 </template>
 
 <script setup>
-import { computed, nextTick, watchEffect } from 'vue'
-import { useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { EditorContainer } from 'nocloud-ui'
-import { useSpStore } from '@/stores/sp.js'
+import { computed, nextTick, watchEffect } from "vue";
+import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { EditorContainer } from "nocloud-ui";
+import { useSpStore } from "@/stores/sp.js";
+import { storeToRefs } from "pinia";
 
-const route = useRoute()
-const i18n = useI18n()
-const spStore = useSpStore()
+const route = useRoute();
+const i18n = useI18n();
+const spStore = useSpStore();
+const { getShowcases } = storeToRefs(spStore);
 
-const url = 'https://support.pl/licencje/oferta-specjalna/?utm_source=cloud&utm_medium=banner&utm_campaign=special-offer'
+const url =
+  "https://support.pl/licencje/oferta-specjalna/?utm_source=cloud&utm_medium=banner&utm_campaign=special-offer";
 
 const showcase = computed(() =>
-  spStore.getShowcases.find(({ uuid }) => uuid === route.query.service)
-)
+  getShowcases.value.find(({ uuid }) => uuid === route.query.service)
+);
 
-const isBitrixApps = computed(() =>
-  route.query.service === 'Bitrix24 Apps'
-)
+const isBitrixApps = computed(() => route.query.service === "Bitrix24 Apps");
 
 const isPromoVisible = computed(() => {
-  if (isBitrixApps.value) return true
-  return showcase.value?.promo && showcase.value.promo[i18n.locale.value]?.previewEnable
-})
+  if (isBitrixApps.value) return true;
+  return (
+    showcase.value?.promo &&
+    showcase.value.promo[i18n.locale.value]?.previewEnable
+  );
+});
 
 const promo = computed(() => {
   if (isBitrixApps.value) {
@@ -45,23 +49,23 @@ const promo = computed(() => {
           alt="Bitrix Apps"
         >
       </a>
-    `
+    `;
   }
-  return showcase.value.promo[i18n.locale.value]?.preview
-})
+  return showcase.value.promo[i18n.locale.value]?.preview;
+});
 
 watchEffect(async () => {
-  await nextTick()
-  document.getElementById('promo')?.addEventListener('error', onError)
-})
+  await nextTick();
+  document.getElementById("promo")?.addEventListener("error", onError);
+});
 
-function onError ({ target }) {
-  target.src = 'img/icons/bitrix-apps-en.webp'
+function onError({ target }) {
+  target.src = "img/icons/bitrix-apps-en.webp";
 }
 </script>
 
 <script>
-export default { name: 'PromoBlock' }
+export default { name: "PromoBlock" };
 </script>
 
 <style scoped>
@@ -70,9 +74,7 @@ export default { name: 'PromoBlock' }
   padding: 10px 15px;
   overflow-x: scroll;
   border-radius: 20px;
-  box-shadow:
-    5px 8px 10px rgba(0, 0, 0, .08),
-    0px 0px 12px rgba(0, 0, 0, .05);
+  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
   background-color: var(--bright_font);
 }
 
