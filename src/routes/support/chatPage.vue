@@ -120,6 +120,7 @@
 </template>
 
 <script setup>
+import 'highlight.js/styles/base16/classic-light.css'
 import { defineAsyncComponent, nextTick, ref, computed, watch, h } from "vue";
 import { renderToString } from "vue/server-renderer";
 import { onBeforeRouteUpdate, useRoute } from "vue-router";
