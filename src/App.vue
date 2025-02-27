@@ -59,6 +59,7 @@ import { useAuthStore } from "@/stores/auth.js";
 import addFunds from "@/components/ui/addFunds.vue";
 import updateNotification from "@/components/ui/updateNotification.vue";
 import { useCurrenciesStore } from "./stores/currencies";
+import { useSpStore } from "./stores/sp";
 
 const bulbIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/BulbFilled")
@@ -69,6 +70,7 @@ const route = useRoute();
 const i18n = useI18n();
 
 const appStore = useAppStore();
+const spStore = useSpStore();
 const authStore = useAuthStore();
 const currenciesStore = useCurrenciesStore();
 
@@ -206,7 +208,11 @@ onMounted(async () => {
     appStore.isButtonsVisible = false;
   }
 
-  if (route.meta?.mustBeLoggined && !authStore.isLogged && !isInitLoading.value) {
+  if (
+    route.meta?.mustBeLoggined &&
+    !authStore.isLogged &&
+    !isInitLoading.value
+  ) {
     router.replace("login");
   } else if (localStorage.getItem("oauth") && !isIncluded) {
     router.replace("cabinet");
@@ -305,6 +311,8 @@ async function firstLoad() {
     if (authStore.isLogged) {
       await authStore.fetchUserData();
     }
+
+    await spStore.fetchShowcases(!authStore.isLogged);
   } finally {
     isInitLoading.value = false;
   }

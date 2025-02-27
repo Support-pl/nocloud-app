@@ -370,7 +370,6 @@ export default {
   created() {
     this.fetchBillingData();
     this.spStore.fetch(!this.isLogged).then(() => this.fetch());
-    this.spStore.fetchShowcases(!this.isLogged);
 
     if (this.isLogged) {
       this.namespacesStore.fetch().catch((err) => {

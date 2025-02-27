@@ -230,7 +230,6 @@ async function fetch () {
     await Promise.all([
       authStore.fetchBillingData(),
       providersStore.fetch(!authStore.isLogged),
-      providersStore.fetchShowcases(!authStore.isLogged)
     ])
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error

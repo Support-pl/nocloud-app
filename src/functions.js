@@ -313,6 +313,12 @@ export function generateUuid() {
   return result.join("-");
 }
 
+export function isUUUID(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  );
+}
+
 export function setChartsTheme(charts, isDark = true) {
   for (const chart of charts) {
     const rect = chart.querySelector("svg[aria-label] > rect");

@@ -343,9 +343,6 @@ export default {
 
     const promises = [];
 
-    if (this.spStore.getShowcases.length < 1) {
-      promises.push(this.spStore.fetchShowcases(!this.authStore.isLogged));
-    }
     if (this.spStore.servicesProviders.length < 1) {
       promises.push(this.spStore.fetch(!this.authStore.isLogged));
     }
@@ -457,7 +454,7 @@ export default {
           } else {
             name = "service-custom";
             query.headerTitle =
-              showcase.promo[this.$i18n.locale]?.title ?? showcase.title;
+              showcase.promo?.[this.$i18n.locale]?.title ?? showcase.title;
           }
           break;
         }

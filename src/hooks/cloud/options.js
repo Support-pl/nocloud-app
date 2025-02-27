@@ -120,7 +120,6 @@ function useCloudOptions(activeKey, tarification) {
   }
 
   async function fetch() {
-    await spStore.fetchShowcases(!authStore.isLogged);
     await spStore.fetch(!authStore.isLogged).then(setReadyData);
 
     if (authStore.isLogged) {

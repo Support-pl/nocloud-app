@@ -320,7 +320,6 @@ export default {
     const promises = [
       this.fetchBillingData(),
       this.spStore.fetch(!this.isLogged),
-      this.spStore.fetchShowcases(!this.isLogged),
     ];
 
     if (this.isLogged) {

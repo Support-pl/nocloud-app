@@ -376,7 +376,6 @@ async function fetch() {
     const promises = [
       authStore.fetchBillingData(),
       spStore.fetch(!authStore.isLogged),
-      spStore.fetchShowcases(!authStore.isLogged),
     ];
 
     if (authStore.isLogged) {
