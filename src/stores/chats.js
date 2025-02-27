@@ -228,7 +228,7 @@ export const useChatsStore = defineStore("chats", () => {
     var attachmentsForFetch = [];
     for (const uuid in messages.value) {
       for (const message of messages.value[uuid].replies || []) {
-        for (const attachment of message.attachments) {
+        for (const attachment of message.attachments || []) {
           if (!attachments.value.has(attachment)) {
             attachmentsForFetch.push(attachment);
             attachments.value.set(attachment, true);

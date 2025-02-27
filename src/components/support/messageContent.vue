@@ -1,14 +1,16 @@
 <template>
   <span
+    class="message_content"
     v-html="content()"
     :style="{
       wordBreak: 'break-word',
+      gridColumn: '2 / 3',
     }"
     :id="messageContentId"
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { toRefs } from "vue";
 import { computed } from "vue";
 import { onMounted } from "vue";
@@ -49,11 +51,10 @@ marked.use({
 marked.use(mangle);
 const renderer = new Renderer();
 renderer.code = (code, language) => {
-  if (!language) language = code.lang || "plaintext";
-  console.log(code, language);
+  if (!language) language = "plaintext";
 
   return `<div class="code"><code>${
-    hljs.highlight(code.text || code, { language }).value
+    hljs.highlight(code, { language }).value
   }</code></div>`;
 };
 marked.setOptions({ renderer });
@@ -62,7 +63,9 @@ onMounted(() => {
   addLinkTarget();
 });
 
-const messageContentId = computed(() => `message_content-${uuid.value}`);
+const messageContentId = computed(
+  () => `message_content-${message.value.uuid}`
+);
 
 function content() {
   const parsed = marked.parse(message.value);
@@ -82,11 +85,20 @@ function addLinkTarget() {
 </script>
 
 <style>
-span.code {
+div.code {
   padding: 8px;
-  background-color: black;
   border-radius: 6px;
+  background-color: white;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+span.message_content h3,
+h1,
+h2,
+p,
+pre,
+span {
+  all: revert;
 }
 </style>
