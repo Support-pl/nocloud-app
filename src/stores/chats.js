@@ -51,6 +51,7 @@ export const useChatsStore = defineStore("chats", () => {
   const accounts = ref(null);
   const defaults = ref({});
   const chats = ref(new Map());
+  const isLoading = ref(false);
 
   const messages = ref({});
   const rawMessages = ref([]);
@@ -191,7 +192,7 @@ export const useChatsStore = defineStore("chats", () => {
       date: toDate(Number(message.sent) / 1000, "-", true, true),
       sent: message.sent,
       email: user.data?.email ?? "none",
-      message: message.content.trim(),
+      message: message.content,
       name: user.title ?? "anonymous",
       userid: user.uuid,
       requestor_type: uuid === user.uuid ? "Owner" : "Other",
@@ -249,6 +250,7 @@ export const useChatsStore = defineStore("chats", () => {
     messages,
     rawMessages,
     attachments,
+    isLoading,
 
     getChats,
     getDefaults,
@@ -257,6 +259,7 @@ export const useChatsStore = defineStore("chats", () => {
     updateMessage,
 
     async fetchChats() {
+      isLoading.value = true;
       try {
         const chatsApi = createPromiseClient(ChatsAPI, transport);
         const usersApi = createPromiseClient(UsersAPI, transport);
@@ -275,6 +278,8 @@ export const useChatsStore = defineStore("chats", () => {
       } catch (error) {
         console.debug(error);
         throw error;
+      } finally {
+        isLoading.value = false;
       }
     },
 

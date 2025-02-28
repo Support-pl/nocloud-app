@@ -320,7 +320,7 @@ fetch();
 
 let timeout;
 function setPlaceholderVisible(replies) {
-  if (chat.value.department !== "openai") return;
+  if (chat.value?.department !== "openai") return;
   const isUserSent = replies.at(-1)?.from || replies.length === 1;
 
   if (!isAdminSent(replies.at(-1) ?? {}) && isUserSent) {

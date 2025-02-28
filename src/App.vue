@@ -311,12 +311,14 @@ async function firstLoad() {
     if (authStore.isLogged) {
       await authStore.fetchUserData();
     }
-
-    await spStore.fetchShowcases(!authStore.isLogged);
   } finally {
     isInitLoading.value = false;
   }
 }
+watch(
+  () => authStore.isLogged,
+  () => spStore.fetchShowcases(!authStore.isLogged)
+);
 
 firstLoad();
 
