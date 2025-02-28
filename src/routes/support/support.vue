@@ -1,10 +1,14 @@
 <template>
   <div class="tickets">
-    <loading v-if="supportStore.isLoading" />
+    <loading v-if="supportStore.isLoading || chatsStore.isLoading" />
     <div v-else class="container">
       <empty v-if="chats.length === 0" />
       <div class="ticket__wrapper">
-        <ticket-item v-for="(ticket, index) in chats" :key="index" :ticket="ticket" />
+        <ticket-item
+          v-for="(ticket, index) in chats"
+          :key="index"
+          :ticket="ticket"
+        />
       </div>
 
       <add-ticket-field v-if="supportStore.isAddingTicket" />
@@ -13,66 +17,64 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { Status } from '@/libs/cc_connect/cc_pb.js'
+import { computed } from "vue";
+import { Status } from "@/libs/cc_connect/cc_pb.js";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useChatsStore } from '@/stores/chats.js'
-import { useSupportStore } from '@/stores/support.js'
+import { useAuthStore } from "@/stores/auth.js";
+import { useChatsStore } from "@/stores/chats.js";
+import { useSupportStore } from "@/stores/support.js";
 
-import ticketItem from '@/components/support/ticketItem.vue'
-import addTicketField from '@/components/support/addTicket.vue'
-import loading from '@/components/ui/loading.vue'
-import empty from '@/components/ui/empty.vue'
+import ticketItem from "@/components/support/ticketItem.vue";
+import addTicketField from "@/components/support/addTicket.vue";
+import loading from "@/components/ui/loading.vue";
+import empty from "@/components/ui/empty.vue";
 
-const authStore = useAuthStore()
-const chatsStore = useChatsStore()
-const supportStore = useSupportStore()
+const authStore = useAuthStore();
+const chatsStore = useChatsStore();
+const supportStore = useSupportStore();
 
 const chats = computed(() => {
-  const ids = []
-  const result = []
-  const { uuid } = authStore.billingUser
+  const ids = [];
+  const result = [];
+  const { uuid } = authStore.billingUser;
 
   chatsStore.getChats.forEach((ticket) => {
-    const isReaded = ticket.meta.lastMessage?.readers.includes(uuid)
-    const status = Status[ticket.status].toLowerCase().split('_')
-    const capitalized = status.map((el) =>
-      `${el[0].toUpperCase()}${el.slice(1)}`
-    ).join(' ')
+    const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
+    const status = Status[ticket.status].toLowerCase().split("_");
+    const capitalized = status
+      .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
+      .join(" ");
 
     const value = {
       id: ticket.uuid,
       tid: ticket.uuid.slice(0, 8),
       title: ticket.topic,
       date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
-      message: ticket.meta.lastMessage?.content ?? '',
+      message: ticket.meta.lastMessage?.content ?? "",
       status: capitalized,
-      unread: (isReaded) ? 0 : ticket.meta.unread
-    }
-    const { whmcs, instance } = ticket.meta.data ?? {}
-    const id = (whmcs?.kind.case) ? whmcs?.toJSON() : null
-    const inst = (instance?.kind.case) ? instance?.toJSON() : null
+      unread: isReaded ? 0 : ticket.meta.unread,
+    };
+    const { whmcs, instance } = ticket.meta.data ?? {};
+    const id = whmcs?.kind.case ? whmcs?.toJSON() : null;
+    const inst = instance?.kind.case ? instance?.toJSON() : null;
 
-    if (id) ids.push(id)
-    if (!inst) result.push(value)
-  })
+    if (id) ids.push(id);
+    if (!inst) result.push(value);
+  });
 
-  result.sort((a, b) => b.date - a.date)
-  const tickets = supportStore.getTickets.filter(
-    ({ id }) => !ids.includes(id)
-  )
+  result.sort((a, b) => b.date - a.date);
+  const tickets = supportStore.getTickets.filter(({ id }) => !ids.includes(id));
 
-  return [...result, ...tickets]
-})
+  return [...result, ...tickets];
+});
 
-supportStore.fetch(supportStore.tickets.length > 0)
-chatsStore.fetchChats()
-chatsStore.startStream()
+supportStore.fetch(supportStore.tickets.length > 0);
+chatsStore.fetchChats();
+chatsStore.startStream();
 </script>
 
 <script>
-export default { name: 'SupportView' }
+export default { name: "SupportView" };
 </script>
 
 <style scoped>
@@ -91,15 +93,15 @@ export default { name: 'SupportView' }
 
 .ticket__add-enter-active.addTicket__wrapper,
 .ticket__add-leave-active.addTicket__wrapper {
-  transition: opacity .2s ease;
+  transition: opacity 0.2s ease;
 }
 .ticket__add-enter-active .addTicket,
 .ticket__add-leave-active .addTicket {
-  transition: opacity .2s ease, transform .3s ease;
+  transition: opacity 0.2s ease, transform 0.3s ease;
 }
 .ticket__add-enter-active,
 .ticket__add-leave-active {
-  transition: all .4s ease;
+  transition: all 0.4s ease;
 }
 
 .ticket__add-enter-from.addTicket__wrapper,
