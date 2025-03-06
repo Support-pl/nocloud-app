@@ -78,7 +78,7 @@ const props = defineProps({
   productSize: { type: String, required: true },
   panels: { type: Array, required: true },
   skipPasswordCheck: { type: Boolean, default: false },
-  price: { type: Number, default: 0},
+  price: { type: Number, default: 0 },
 });
 
 const router = useRouter();
@@ -128,7 +128,9 @@ const createButtonOptions = computed(() => {
       options.os.name === "";
   } else {
     result.disabled =
-      (cloudStore.authData.password.length === 0 && authStore.isLogged) ||
+      ((cloudStore.authData.password.length === 0 ||
+        !cloudStore.authData.password_valid) &&
+        authStore.isLogged) ||
       cloudStore.authData.vmName === "" ||
       (!cloudStore.namespaceId && authStore.isLogged) ||
       options.os.name === "";
@@ -179,7 +181,7 @@ function availableLogin(mode) {
 
   if (mode === "login") {
     localStorage.setItem("data", JSON.stringify(data));
-    
+
     appStore.onLogin.info = {
       type: "vdc",
       title: "VDC",

@@ -1,6 +1,11 @@
 <template>
   <div class="newCloud__option-field">
-    <images-list v-if="provider" :images="images" :os-name="options.os.name" :set-o-s="setOS" />
+    <images-list
+      v-if="provider"
+      :images="images"
+      :os-name="options.os.name"
+      :set-o-s="setOS"
+    />
 
     <a-row>
       <a-col :xs="24" :sm="10">
@@ -31,15 +36,18 @@
           >
             <password-meter
               :style="{
-                height: (authData.password.length > 0) ? '10px' : '0',
+                height: authData.password.length > 0 ? '10px' : '0',
                 marginTop: 0,
-                marginBottom: (authData.password.length > 0) ? '4px': null
+                marginBottom: authData.password.length > 0 ? '4px' : null,
               }"
               :password="authData.password"
-              @score="(value) => authData.score = value.score"
+              @score="(value) => (authData.score = value.score)"
             />
 
-            <a-input-password v-model:value="authData.password" class="password" />
+            <a-input-password
+              v-model:value="authData.password"
+              class="password"
+            />
           </a-form-item>
 
           <a-form-item
@@ -51,7 +59,11 @@
               v-model:value="authData.sshKey"
               style="width: 100%"
               :options="authStore.userdata.data?.ssh_keys"
-              :field-names="{ label: 'title', value: 'value', options: 'options' }"
+              :field-names="{
+                label: 'title',
+                value: 'value',
+                options: 'options',
+              }"
             />
           </a-form-item>
         </a-form>
@@ -61,101 +73,108 @@
 </template>
 
 <script setup>
-import { computed, inject, onBeforeMount } from 'vue'
-import { message } from 'ant-design-vue'
-import { storeToRefs } from 'pinia'
-import { useI18n } from 'vue-i18n'
-import passwordMeter from 'vue-simple-password-meter'
+import { computed, inject, onBeforeMount } from "vue";
+import { message } from "ant-design-vue";
+import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+import passwordMeter from "vue-simple-password-meter";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useCloudStore } from '@/stores/cloud.js'
+import { useAuthStore } from "@/stores/auth.js";
+import { useCloudStore } from "@/stores/cloud.js";
 
-import imagesList from '@/components/ui/images.vue'
+import imagesList from "@/components/ui/images.vue";
 
-const i18n = useI18n()
-const authStore = useAuthStore()
-const cloudStore = useCloudStore()
-const { authData, provider } = storeToRefs(cloudStore)
+const i18n = useI18n();
+const authStore = useAuthStore();
+const cloudStore = useCloudStore();
+const { authData, provider } = storeToRefs(cloudStore);
 
-const [options, setOptions] = inject('useOptions')()
+const [options, setOptions] = inject("useOptions")();
 
 const images = computed(() => {
-  const { templates } = provider.value.publicData
-  const images = {}
+  const { templates } = provider.value.publicData;
+  const images = {};
 
   Object.entries(templates ?? {}).forEach(([key, value]) => {
-    if (cloudStore.plan.meta.hidedOs?.includes(key)) return
+    if (cloudStore.plan.meta.hidedOs?.includes(key)) return;
     if (value.is_public !== false) {
-      images[key] = value
+      images[key] = value;
     }
-  })
+  });
 
-  return images
-})
+  return images;
+});
 
 const rules = {
   vmName: {
-    trigger: 'change',
-    validator: () => (
-      (authData.value.vmName.length < 2)
-        ? Promise.reject(i18n.t('ssl_product.field is required'))
-        : Promise.resolve()
-    )
+    trigger: "change",
+    validator: () =>
+      authData.value.vmName.length < 2
+        ? Promise.reject(i18n.t("ssl_product.field is required"))
+        : Promise.resolve(),
   },
   username: {
-    trigger: 'change',
+    trigger: "change",
     validator: () => {
-      if(authData.value.username.length < 2){
-        return Promise.reject(i18n.t('ssl_product.field is required'))
+      if (authData.value.username.length < 2) {
+        return Promise.reject(i18n.t("ssl_product.field is required"));
       }
 
-      if(/[^a-zA-Z0-9]/.test(authData.value.username)){
-        return Promise.reject(i18n.t(i18n.t('The username must be without special characters')))
+      if (/[^a-zA-Z0-9]/.test(authData.value.username)) {
+        return Promise.reject(
+          i18n.t(i18n.t("The username must be without special characters"))
+        );
       }
 
       return Promise.resolve();
-    }
+    },
   },
   password: {
-    trigger: 'change',
+    trigger: "change",
     validator: () => {
       try {
-        if (authData.value.password === '') {
-          throw new Error(i18n.t('ssl_product.field is required'))
+        if (authData.value.password === "") {
+          authData.value.password_valid = false;
+          throw new Error(i18n.t("ssl_product.field is required"));
         }
         if (/[^a-zA-Z0-9]$/.test(authData.value.password)) {
-          throw new Error(i18n.t('The last character must not be special'))
+          authData.value.password_valid = false;
+          throw new Error(i18n.t("The last character must not be special"));
         }
         if (/^(?=.*\d)[\w+=._!*-]{9,32}$/.test(authData.value.password)) {
-          return Promise.resolve()
+          authData.value.password_valid = true;
+          return Promise.resolve();
         } else {
+          authData.value.password_valid = false;
           throw new Error(`
-          ${i18n.t('Password must contain uppercase letters, numbers and symbols')} (+-.-_!*)
-        `)
+          ${i18n.t(
+            "Password must contain uppercase letters, numbers and symbols"
+          )} (+-.-_!*)
+        `);
         }
       } catch (error) {
-        return Promise.reject(error.message)
+        return Promise.reject(error.message);
       }
-    }
-  }
-}
+    },
+  },
+};
 
 onBeforeMount(() => {
-  const images = Object.entries(provider.value?.publicData.templates ?? {})
+  const images = Object.entries(provider.value?.publicData.templates ?? {});
 
-  if (images.length === 1) setOS(images[0][1], images[0][0])
-})
+  if (images.length === 1) setOS(images[0][1], images[0][0]);
+});
 
-function setOS (item, index) {
+function setOS(item, index) {
   if (item.warning) {
-    message.warn(item.warning)
-    return
+    message.warn(item.warning);
+    return;
   }
-  setOptions('os.id', +index)
-  setOptions('os.name', item.name)
+  setOptions("os.id", +index);
+  setOptions("os.name", item.name);
 }
 </script>
 
 <script>
-export default { name: 'IoneOsPanel' }
+export default { name: "IoneOsPanel" };
 </script>
