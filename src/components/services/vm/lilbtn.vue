@@ -40,6 +40,7 @@ import renewalModal from "@/components/ui/renewalModal.vue";
 import accessManager from "@/components/cloud/options/accessManager.vue";
 import { useAddonsStore } from "@/stores/addons";
 import { storeToRefs } from "pinia";
+import { useCurrency } from "@/hooks/utils";
 
 const settingsIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SettingFilled")
@@ -54,14 +55,17 @@ const addonsStore = useAddonsStore();
 const { cachedAddons } = storeToRefs(addonsStore);
 
 const i18n = useI18n();
+const { formatPrice } = useCurrency();
 
 const isVisible = ref(false);
 const isAccessManagerVisible = ref(false);
 
 const price = computed(() =>
-  Object.keys(addonsPrice.value).reduce(
-    (acc, curr) => acc + addonsPrice.value[curr],
-    renewalProps.value.price
+  formatPrice(
+    Object.keys(addonsPrice.value).reduce(
+      (acc, curr) => acc + addonsPrice.value[curr],
+      renewalProps.value.price
+    )
   )
 );
 
@@ -71,7 +75,7 @@ const slicedPrice = computed(() => {
       ? `${price.value.toString().slice(0, 7)}...`
       : `${price.value.toString().slice(0, 6)}...`;
   } else {
-    return price.value;
+    return `${price.value} ${props.currency.title}`;
   }
 });
 
