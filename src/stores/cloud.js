@@ -35,7 +35,7 @@ export const useCloudStore = defineStore("cloud", () => {
     username: "",
     hostname: "",
     password: "",
-    password_valid: "",
+    password_valid: true,
     sshKey: undefined,
     score: null,
   });
