@@ -128,9 +128,11 @@ const createButtonOptions = computed(() => {
       options.os.name === "";
   } else {
     result.disabled =
-      ((cloudStore.authData.password.length === 0 ||
-        !cloudStore.authData.password_valid) &&
-        authStore.isLogged) ||
+      (props.skipPasswordCheck
+        ? false
+        : (cloudStore.authData.password.length === 0 ||
+            !cloudStore.authData.password_valid) &&
+          authStore.isLogged) ||
       cloudStore.authData.vmName === "" ||
       (!cloudStore.namespaceId && authStore.isLogged) ||
       options.os.name === "";
