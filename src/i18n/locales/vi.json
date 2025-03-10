@@ -509,7 +509,13 @@
         "hard_reset_help_message": "Máy chủ VPN sẽ bị xóa hoàn toàn khỏi máy chủ ảo hoặc máy chủ chuyên dụng của bạn và được cài đặt lại. ",
         "connect_to_vpn_instruction": "Hướng dẫn cách cài đặt máy khách VPN trên thiết bị của bạn:",
         "error_state_message": "Đã xảy ra lỗi, hãy thử cài đặt lại hoàn toàn hoặc liên hệ với bộ phận hỗ trợ của chúng tôi, chúng tôi sẽ cố gắng trợ giúp.",
-        "configuration_qr_code": "Mã QR cấu hình"
+        "configuration_qr_code": "Mã QR cấu hình",
+        "links": {
+          "full_instruction": "Vui lòng sử dụng hướng dẫn làm việc với dịch vụ VPN:",
+          "official_site": "Trang web chính thức của Wireguard để cài đặt máy khách VPN",
+          "video_connect": "Video Gide: Làm thế nào để kết nối VPN với thiết bị của bạn?",
+          "video_manage": "Video Gide: Làm thế nào để quản lý dịch vụ VPN trong tài khoản cá nhân?"
+        }
       },
       "errors": {
         "unreachable": {

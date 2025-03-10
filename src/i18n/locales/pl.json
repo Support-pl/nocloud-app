@@ -704,7 +704,13 @@
         "hard_reset_help_message": "Serwer VPN zostanie całkowicie usunięty z Twojego serwera wirtualnego lub dedykowanego i zainstalowany ponownie. ",
         "connect_to_vpn_instruction": "Instrukcje dotyczące instalacji klienta VPN na swoim urządzeniu:",
         "error_state_message": "Coś poszło nie tak, spróbuj pełnej ponownej instalacji lub skontaktuj się z naszym wsparciem, postaramy się pomóc.",
-        "configuration_qr_code": "Konfiguracja kodu QR"
+        "configuration_qr_code": "Konfiguracja kodu QR",
+        "links": {
+          "full_instruction": "Skorzystaj z instrukcji do pracy z usługą VPN:",
+          "official_site": "Oficjalna strona internetowa WireGuard do instalacji klienta VPN",
+          "video_connect": "Gide wideo: Jak podłączyć VPN z urządzeniem?",
+          "video_manage": "Gide wideo: Jak zarządzać usługą VPN na koncie osobistym?"
+        }
       },
       "errors": {
         "unreachable": {

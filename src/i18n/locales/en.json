@@ -801,10 +801,16 @@
         "buy_vds": "Buy VDS",
         "unlogin_message": "You need to log into your account to install the VPN on your server.",
         "hard_reset_help_message": "The VPN server will be completely removed from your virtual or dedicated server and reinstalled. ",
-        "connect_to_vpn_instruction": "Instructions on how to install a VPN client on your device:",
+        "connect_to_vpn_instruction": "Please use instructions for working with the VPN service:",
         "error_state_message": "Something went wrong, try a complete reinstallation or contact our support, we will try to help.",
         "configuration_qr_code": "Configuration QR code",
-        "settings": "Settings"
+        "settings": "Settings",
+        "links": {
+          "full_instruction": "Full instructions for the order, connection and control of the VPN service from Support.by",
+          "official_site": "Official Wireguard website for installing a VPN client",
+          "video_connect": "Video Gide: How to connect a VPN to your device?",
+          "video_manage": "Video Gide: How to manage a VPN service in a personal account?"
+        }
       },
       "errors": {
         "unreachable": {
