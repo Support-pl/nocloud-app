@@ -92,9 +92,34 @@
                 <a
                   style="display: block"
                   target="_blank"
-                  href="https://www.wireguard.com/install/"
-                  >https://www.wireguard.com/install/</a
+                  href="https://blog.support.by/instructions/%d0%9a%d0%b0%d0%ba-%d0%b7%d0%b0%d0%ba%d0%b0%d0%b7%d0%b0%d1%82%d1%8c-vds-%d1%81-vpn/"
                 >
+                  {{ t("vpn.labels.links.full_instruction") }}
+                </a>
+
+                <a
+                  style="display: block"
+                  target="_blank"
+                  href="https://www.wireguard.com/install/"
+                >
+                  {{ t("vpn.labels.links.official_site") }}
+                </a>
+
+                <a
+                  style="display: block"
+                  target="_blank"
+                  href="https://youtu.be/eVsS_7kpd0s"
+                >
+                  {{ t("vpn.labels.links.video_connect") }}
+                </a>
+
+                <a
+                  style="display: block"
+                  target="_blank"
+                  href="https://youtu.be/Ea6xkQ-7-bk"
+                >
+                  {{ t("vpn.labels.links.video_manage") }}
+                </a>
               </div>
 
               <div class="copy-button">
@@ -806,6 +831,12 @@ watch(
 .connect_window .instruction {
   font-size: 1.3rem;
   margin: 10px 0px;
+  text-align: center;
+}
+
+.connect_window .instruction a {
+  font-size: 1rem;
+  margin: 5px 0px;
   text-align: center;
 }
 
