@@ -115,6 +115,7 @@ function useCloudPrices(
     const price = [];
     for (const resource of plan.resources ?? []) {
       const key = resource.key.toLowerCase();
+      resource.price = resource.price || 0;
 
       if (key.includes("ip")) {
         const { count } =
