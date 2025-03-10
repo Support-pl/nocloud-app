@@ -632,7 +632,13 @@
         "unlogin_message": "Vous devez vous connecter à votre compte pour installer le VPN sur votre serveur.",
         "hard_reset_help_message": "Le serveur VPN sera complètement supprimé de votre serveur virtuel ou dédié et réinstallé. ",
         "connect_to_vpn_instruction": "Instructions pour installer un client VPN sur votre appareil :",
-        "error_state_message": "Quelque chose s'est mal passé, essayez une réinstallation complète ou contactez notre support, nous essaierons de vous aider."
+        "error_state_message": "Quelque chose s'est mal passé, essayez une réinstallation complète ou contactez notre support, nous essaierons de vous aider.",
+        "links": {
+          "full_instruction": "Veuillez utiliser des instructions pour travailler avec le service VPN:",
+          "official_site": "Site Web de Wireguard officiel pour l'installation d'un client VPN",
+          "video_connect": "VIDÉO GIDE: Comment connecter un VPN à votre appareil?",
+          "video_manage": "Vidéo GIDE: Comment gérer un service VPN dans un compte personnel?"
+        }
       },
       "errors": {
         "unreachable": {
