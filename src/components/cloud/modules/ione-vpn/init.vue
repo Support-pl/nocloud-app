@@ -19,13 +19,13 @@ const props = defineProps({
   productSize: { type: String, required: true },
   isFlavorsLoading: { type: Boolean, default: false },
 });
-const { isFlavorsLoading, plans } = toRefs(props);
+const { isFlavorsLoading } = toRefs(props);
 
 const emits = defineEmits(["update:periods", "update:product-size"]);
 
 const cloudStore = useCloudStore();
 const instancesStore = useInstancesStore();
-const { provider, authData } = storeToRefs(useCloudStore());
+const { provider, authData, plan } = storeToRefs(cloudStore);
 const [options, setOptions] = inject("useOptions")();
 
 const images = computed(() => {
@@ -33,17 +33,13 @@ const images = computed(() => {
   const images = {};
 
   Object.entries(templates ?? {}).forEach(([key, value]) => {
-    if (cloudStore.plan.meta.hidedOs?.includes(key)) return;
+    if (plan.value.meta.hidedOs?.includes(key)) return;
     if (value.is_public !== false) {
       images[key] = value;
     }
   });
 
   return images;
-});
-
-const plan = computed(() => {
-  return cloudStore.plan;
 });
 
 emits("update:periods", getPeriods(props.productSize, props.plans));
@@ -65,9 +61,9 @@ watch(
   }
 );
 
-function getProduct(size, plan = cloudStore.plan) {
-  const isDynamic = cloudStore.plan.kind === "DYNAMIC";
-  const products = Object.values(plan.products);
+function getProduct(size) {
+  const isDynamic = plan.value.kind === "DYNAMIC";
+  const products = Object.values(plan.value.products);
   const product = products.find(
     ({ title, period }) =>
       title === size && (getTarification(period) === props.mode || isDynamic)
@@ -80,11 +76,10 @@ async function setProduct(value) {
   emits("update:product-size", value);
 
   await nextTick();
-  const plan = cloudStore.plan;
 
-  if (!plan) return;
-  const resources = getProduct(value, plan) ?? {};
-  const minDisk = (plan.meta.minDiskSize ?? {})[options.disk.type];
+  if (!plan.value) return;
+  const resources = getProduct(value) ?? {};
+  const minDisk = (plan.value.meta.minDiskSize ?? {})[options.disk.type];
 
   setOptions("cpu.size", resources.cpu ?? 0);
   setOptions("ram.size", (resources.ram ?? 0) / 1024);
