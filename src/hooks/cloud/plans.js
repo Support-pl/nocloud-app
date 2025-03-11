@@ -137,23 +137,25 @@ function useCloudPlans(tarification, options) {
 
       if (cachedPlans.value[cacheKey]) {
         plansStore.setPlans(cachedPlans.value[cacheKey]);
-
-        const { items } =
-          showcases.value.find(({ uuid }) => uuid === showcaseId.value) ?? {};
-        const { plan } =
-          items?.find((item) => item.locations.includes(locationId.value)) ??
-          {};
-
-        planId.value =
-          planId.value ?? plan ?? filteredPlans.value[0]?.uuid ?? "";
       } else {
         const { pool } = await plansStore.fetch({
           sp_uuid: provider.uuid,
           anonymously: !authStore.isLogged,
         });
         cachedPlans.value[cacheKey] = pool;
+      }
+
+      const { items } =
+        showcases.value.find(({ uuid }) => uuid === showcaseId.value) ?? {};
+      const { plan } =
+        items?.find((item) => item.locations.includes(locationId.value)) ?? {};
+
+      if (
+        !planId.value ||
+        !filteredPlans.value.find((p) => planId.value === p.uuid)
+      ) {
         planId.value =
-          planId.value ?? filteredPlans.value[0]?.uuid ?? pool[0]?.uuid ?? "";
+          plan ?? filteredPlans.value[0]?.uuid ?? planId.value ?? "";
       }
 
       await addonsStore.fetch({
