@@ -349,6 +349,7 @@ async function onStart() {
         );
 
         domain.resources = {
+          ...products,
           period: t("PayG"),
           recurringamount: 0,
           inputKilotoken: products.input_kilotoken,

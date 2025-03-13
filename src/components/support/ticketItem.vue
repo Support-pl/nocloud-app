@@ -15,7 +15,7 @@
       </div>
       <div class="ticket__lower">
         <div class="ticket__message">
-          {{ beauty(ticket.message) }}
+          {{ beauty(ticket) }}
         </div>
         <div class="ticket__time">
           {{ toDate(ticket.date / 1000 || ticket.date, ".", "00:00") }}
@@ -31,6 +31,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useChatsStore } from "@/stores/chats.js";
 import { toDate } from "@/functions.js";
 import config from "@/appconfig.js";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   ticket: { type: Object, required: true },
@@ -41,6 +42,7 @@ const props = defineProps({
 const router = useRouter();
 const route = useRoute();
 const chatsStore = useChatsStore();
+const { t } = useI18n();
 
 const offset = computed(() => {
   if (props.ticket.unread > 9) {
@@ -82,13 +84,16 @@ function ticketClick(id) {
   router.push({ path: `/ticket/${id}`, query });
 }
 
-function beauty(message) {
+function beauty(ticket) {
+  let message = ticket.message;
   message = decode(message);
   message = message.replace(/-{2,}.*/gi, "");
   message = message.replace(/IP Address.*/gi, "");
   message = message.replace(/<\/?[a-zA-Zа-яА-Я1-9 #-:=";_!?]+>/gi, "");
 
-  return message.trim() || "empty";
+  return message.trim() || ticket.attachments?.length > 0
+    ? t("attachedFiles")
+    : "empty";
 }
 
 function decode(text) {
