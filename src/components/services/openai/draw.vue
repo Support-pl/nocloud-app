@@ -1,19 +1,5 @@
 <template>
   <a-row class="module" style="margin-top: 10px" :gutter="[10, 10]">
-    <a-col span="12">
-      <div style="padding-bottom: 0; font-weight: 700">Input kilotoken:</div>
-      <div style="padding-top: 0; font-size: 18px">
-        {{ service.resources.inputKilotoken }} {{ currency.title }}
-      </div>
-    </a-col>
-
-    <a-col span="12">
-      <div style="padding-bottom: 0; font-weight: 700">Output kilotoken:</div>
-      <div style="padding-top: 0; font-size: 18px">
-        {{ service.resources.outputKilotoken }} {{ currency.title }}
-      </div>
-    </a-col>
-
     <a-col span="24">
       <div class="token-title">
         Token API:
@@ -36,21 +22,130 @@
     </a-col>
 
     <a-col span="24">
-      <div class="token-title">
-        API endpoint:
-        <copy-icon style="font-size: 18px" @click="addToClipboard(endpoint)" />
-      </div>
-      <div style="padding-top: 0; font-size: 18px">
-        {{ endpoint }}
-      </div>
-    </a-col>
+      <a-tabs v-model:activeKey="activeApiTab">
+        <a-tab-pane key="1" tab="API v1">
+          <a-row style="padding: 0px 5px; margin-bottom: 10px">
+            <a-col span="12">
+              <div style="padding-bottom: 0; font-weight: 700">
+                Input kilotoken:
+              </div>
+              <div style="padding-top: 0; font-size: 18px">
+                {{ service.resources.inputKilotoken }} {{ currency.title }}
+              </div>
+            </a-col>
+            <a-col span="12">
+              <div style="padding-bottom: 0; font-weight: 700">
+                Output kilotoken:
+              </div>
+              <div style="padding-top: 0; font-size: 18px">
+                {{ service.resources.outputKilotoken }} {{ currency.title }}
+              </div>
+            </a-col>
+          </a-row>
 
-    <a-col span="24">
-      <div class="token-title">
-        API example:
-        <copy-icon style="font-size: 18px" @click="addToClipboard(example)" />
-      </div>
-      <code>{{ example }}</code>
+          <a-col span="24">
+            <div class="token-title">
+              API endpoint:
+              <copy-icon
+                style="font-size: 18px"
+                @click="addToClipboard(endpointv1)"
+              />
+            </div>
+            <div style="padding-top: 0; font-size: 18px">
+              {{ endpointv1 }}
+            </div>
+          </a-col>
+
+          <a-col span="24">
+            <div class="token-title">
+              API example:
+              <copy-icon
+                style="font-size: 18px"
+                @click="addToClipboard(exampleV1)"
+              />
+            </div>
+            <code>{{ exampleV1 }}</code>
+          </a-col>
+        </a-tab-pane>
+        <a-tab-pane key="2" tab="API v2 (BETA)">
+          <a-row style="padding: 0px 5px">
+            <a-col span="12">
+              <a-select
+                style="width: 100%; margin-right: 5px"
+                v-model:value="selectedTypeV2"
+                :options="typesOptionsV2"
+              ></a-select>
+            </a-col>
+
+            <a-col span="12">
+              <a-select
+                style="margin-left: 5px; margin-right: 10px; width: 100%"
+                v-model:value="selectedModelV2"
+                :options="modelsOptionsV2"
+              ></a-select>
+            </a-col>
+
+            <a-col span="12">
+              <div style="padding-bottom: 0; font-weight: 700">
+                Input kilotoken:
+              </div>
+              <div style="padding-top: 0; font-size: 18px">
+                {{
+                  service.resources[
+                    `${selectedTypeV2}|${selectedModelV2}|input`
+                  ]
+                }}
+                {{ currency.title }}
+              </div>
+            </a-col>
+            <a-col span="12">
+              <div style="padding-bottom: 0; font-weight: 700">
+                Output kilotoken:
+              </div>
+              <div style="padding-top: 0; font-size: 18px">
+                {{
+                  service.resources[
+                    `${selectedTypeV2}|${selectedModelV2}|output`
+                  ]
+                }}
+                {{ currency.title }}
+              </div>
+            </a-col>
+          </a-row>
+
+          <a-col span="24">
+            <div class="token-title">
+              Base URL:
+              <copy-icon
+                style="font-size: 18px"
+                @click="addToClipboard(baseUrlV2)"
+              />
+            </div>
+            <div style="padding-top: 0; font-size: 18px">
+              {{ baseUrlV2 }}
+            </div>
+          </a-col>
+
+          <a-col span="24">
+            <div
+              class="token-title"
+              style="display: flex; justify-content: space-between"
+            >
+              <div>
+                <span> API example: </span>
+                <copy-icon
+                  style="font-size: 18px"
+                  @click="addToClipboard(exampleV2)"
+                />
+              </div>
+              <a-button @click="openOpenAiDocs" type="link">{{
+                $t("moreExamples")
+              }}</a-button>
+            </div>
+            <code>{{ exampleV2 }}</code>
+          </a-col>
+        </a-tab-pane>
+      </a-tabs>
     </a-col>
 
     <a-col span="24" style="margin-top: 10px">
@@ -134,6 +229,7 @@ const chats = computed(() => {
       message: chat.meta.lastMessage?.content ?? "",
       status: capitalized,
       unread: chat.meta.unread,
+      attachments: chat.meta.lastMessage?.attachments ?? [],
     });
   });
 
@@ -147,10 +243,11 @@ function moduleEnter() {
 
 const isVisible = ref(false);
 const isLoading = ref(false);
+const activeApiTab = ref("1");
 const token = ref("-");
-const endpoint = `${VUE_APP_BASE_URL}nocloud/chat/completions`;
 
-const example = `
+const endpointv1 = `${VUE_APP_BASE_URL}nocloud/chat/completions`;
+const exampleV1 = `
   curl \`<endpoint>\`
   -X POST
   -H "Content-Type: application/json"
@@ -162,6 +259,62 @@ const example = `
     ]
   }'
 `;
+
+const selectedModelV2 = ref("gpt-4o");
+const selectedTypeV2 = ref("text");
+const baseUrlV2 = `${VUE_APP_BASE_URL}nocloud/api`;
+const exampleV2 = computed(
+  () => `
+  curl <baseUrl>/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "model": "${selectedModelV2.value}",
+    "messages": [
+      {
+        "role": "developer",
+        "content": "You are a helpful assistant."
+      },
+      {
+        "role": "user",
+        "content": "Hello!"
+      }
+    ]
+  }'
+`
+);
+
+const modelsOptionsV2 = computed(() => {
+  const resources = Object.keys(props.service.resources)
+    .filter(
+      (key) =>
+        key.split("|").length > 1 ?? key.split("|")[0] === selectedTypeV2.value
+    )
+    .map((key) => key.split("|")[1]);
+
+  return [...new Set(resources).values()].map((key) => ({
+    value: key,
+    label: key,
+  }));
+});
+
+const typesOptionsV2 = computed(() => {
+  const resources = Object.keys(props.service.resources)
+    .filter((key) => key.split("|").length > 1)
+    .map((key) => key.split("|")[0]);
+
+  return [...new Set(resources).values()].map((key) => ({
+    value: key,
+    label: key,
+  }));
+});
+
+function openOpenAiDocs() {
+  window.open(
+    "https://platform.openai.com/docs/api-reference/chat/create",
+    "_blanc"
+  );
+}
 
 async function fetch() {
   try {

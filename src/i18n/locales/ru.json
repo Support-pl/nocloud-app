@@ -336,6 +336,8 @@
     "select location": "Выберите локацию",
     "select service": "Select service",
     "select OS": "Выберите ОС",
+    "moreExamples": "Больше примеров",
+    "attachedFiles": "Прикреплённые файлы",
     "select tariff": "Выберите тариф",
     "loading": "Загрузка...",
     "bot is typing": "бот печатает",
