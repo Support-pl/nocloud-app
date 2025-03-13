@@ -91,7 +91,9 @@ function beauty(ticket) {
   message = message.replace(/IP Address.*/gi, "");
   message = message.replace(/<\/?[a-zA-Zа-яА-Я1-9 #-:=";_!?]+>/gi, "");
 
-  return message.trim() || ticket.attachments?.length > 0
+  return message.trim().length
+    ? message.trim()
+    : ticket.attachments?.length > 0
     ? t("attachedFiles")
     : "empty";
 }
