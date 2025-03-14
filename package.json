@@ -27,7 +27,7 @@
     "highlight.js": "^11.8.0",
     "marked": "^5.1.2",
     "marked-mangle": "^1.1.2",
-    "nocloud-proto": "https://github.com/slntopp/nocloud-proto#0ee38a002fda26c52c92bcc4e04195324d70d70c",
+    "nocloud-proto": "https://github.com/slntopp/nocloud-proto#5b2fce2cc8e09f615988a57930cd5853b4efe298",
     "nocloud-ui": "^1.0.19",
     "nocloudjsrest": "^1.5.17",
     "pinia": "^2.2.0",
