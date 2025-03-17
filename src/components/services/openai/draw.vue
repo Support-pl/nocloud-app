@@ -23,51 +23,7 @@
 
     <a-col span="24">
       <a-tabs v-model:activeKey="activeApiTab">
-        <a-tab-pane key="1" tab="API v1">
-          <a-row style="padding: 0px 5px; margin-bottom: 10px">
-            <a-col span="12">
-              <div style="padding-bottom: 0; font-weight: 700">
-                Input kilotoken:
-              </div>
-              <div style="padding-top: 0; font-size: 18px">
-                {{ service.resources.inputKilotoken }} {{ currency.title }}
-              </div>
-            </a-col>
-            <a-col span="12">
-              <div style="padding-bottom: 0; font-weight: 700">
-                Output kilotoken:
-              </div>
-              <div style="padding-top: 0; font-size: 18px">
-                {{ service.resources.outputKilotoken }} {{ currency.title }}
-              </div>
-            </a-col>
-          </a-row>
-
-          <a-col span="24">
-            <div class="token-title">
-              API endpoint:
-              <copy-icon
-                style="font-size: 18px"
-                @click="addToClipboard(endpointv1)"
-              />
-            </div>
-            <div style="padding-top: 0; font-size: 18px">
-              {{ endpointv1 }}
-            </div>
-          </a-col>
-
-          <a-col span="24">
-            <div class="token-title">
-              API example:
-              <copy-icon
-                style="font-size: 18px"
-                @click="addToClipboard(exampleV1)"
-              />
-            </div>
-            <code>{{ exampleV1 }}</code>
-          </a-col>
-        </a-tab-pane>
-        <a-tab-pane key="2" tab="API v2 (BETA)">
+        <a-tab-pane key="2" tab="API v2">
           <a-row style="padding: 0px 5px">
             <a-col span="12">
               <a-select
@@ -143,6 +99,55 @@
               }}</a-button>
             </div>
             <code>{{ exampleV2 }}</code>
+          </a-col>
+        </a-tab-pane>
+
+        <a-tab-pane key="1" style="opacity: 0.5">
+          <template #tab>
+            <span style="opacity: 0.5"> API v1 (DEPRICATED) </span>
+          </template>
+
+          <a-row style="padding: 0px 5px; margin-bottom: 10px">
+            <a-col span="12">
+              <div style="padding-bottom: 0; font-weight: 700">
+                Input kilotoken:
+              </div>
+              <div style="padding-top: 0; font-size: 18px">
+                {{ service.resources.inputKilotoken }} {{ currency.title }}
+              </div>
+            </a-col>
+            <a-col span="12">
+              <div style="padding-bottom: 0; font-weight: 700">
+                Output kilotoken:
+              </div>
+              <div style="padding-top: 0; font-size: 18px">
+                {{ service.resources.outputKilotoken }} {{ currency.title }}
+              </div>
+            </a-col>
+          </a-row>
+
+          <a-col span="24">
+            <div class="token-title">
+              API endpoint:
+              <copy-icon
+                style="font-size: 18px"
+                @click="addToClipboard(endpointv1)"
+              />
+            </div>
+            <div style="padding-top: 0; font-size: 18px">
+              {{ endpointv1 }}
+            </div>
+          </a-col>
+
+          <a-col span="24">
+            <div class="token-title">
+              API example:
+              <copy-icon
+                style="font-size: 18px"
+                @click="addToClipboard(exampleV1)"
+              />
+            </div>
+            <code>{{ exampleV1 }}</code>
           </a-col>
         </a-tab-pane>
       </a-tabs>
@@ -243,7 +248,7 @@ function moduleEnter() {
 
 const isVisible = ref(false);
 const isLoading = ref(false);
-const activeApiTab = ref("1");
+const activeApiTab = ref("2");
 const token = ref("-");
 
 const endpointv1 = `${VUE_APP_BASE_URL}nocloud/chat/completions`;
@@ -262,7 +267,7 @@ const exampleV1 = `
 
 const selectedModelV2 = ref("gpt-4o");
 const selectedTypeV2 = ref("text");
-const baseUrlV2 = `${VUE_APP_BASE_URL}nocloud/api`;
+const baseUrlV2 = `${window.location.origin}/api/openai`;
 const exampleV2 = computed(
   () => `
   curl <baseUrl>/v1/chat/completions \
