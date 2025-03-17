@@ -349,7 +349,7 @@ function setDefaultLocation() {
     ({ uuid }) => uuid === cloudStore.showcaseId
   );
   const locationItem = cloudStore.locations.find(({ id }) =>
-    id.includes(item?.promo?.main?.default)
+    id.includes(item?.main?.default)
   );
 
   if (!locationItem) return;
