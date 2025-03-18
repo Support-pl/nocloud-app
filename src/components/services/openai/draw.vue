@@ -104,7 +104,7 @@
 
         <a-tab-pane key="1" style="opacity: 0.5">
           <template #tab>
-            <span style="opacity: 0.5"> API v1 (DEPRICATED) </span>
+            <span style="opacity: 0.5"> API v1 (DEPRECATED) </span>
           </template>
 
           <a-row style="padding: 0px 5px; margin-bottom: 10px">
