@@ -557,6 +557,10 @@ export default { name: "LoginView" };
   grid-gap: 10px;
 }
 
+.order__card .order__title{
+  margin-right: 20px;
+}
+
 .order__icon {
   font-size: 32px;
 }

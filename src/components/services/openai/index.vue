@@ -294,11 +294,17 @@ function orderClickHandler() {
   else if (service.value) info.instancesGroups.push(newGroup);
 
   if (!authStore.userdata.uuid) {
+    const showcase =
+      spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+
     appStore.onLogin.redirect = route.name;
     appStore.onLogin.redirectQuery = route.query;
     appStore.onLogin.info = {
       type: "openai",
-      title: "OpenAI",
+      title:
+        showcase.promo?.[i18n.locale.value]?.title ??
+        showcase.title ??
+        "OpenAI",
       cost: getProducts.value.price,
       currency: userCurrency.value.code,
     };
