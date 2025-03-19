@@ -214,7 +214,7 @@ const { onLogin } = storeToRefs(useAppStore());
 
 const checkBalance = inject("checkBalance", () => {});
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const notification = useNotification();
@@ -465,18 +465,26 @@ const orderClickHandler = () => {
   if (!group && service.value) info.instancesGroups.push(newGroup);
 
   if (!userdata.value.uuid) {
+    const showcase =
+      spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+
     onLogin.value.redirect = route.name;
     onLogin.value.redirectQuery = route.query;
     onLogin.value.info = {
       type: "virtual",
-      title: "Virtual Hosting",
+      title: [
+        showcase.promo?.[locale.value]?.title ??
+          showcase.title ??
+          "Virtual Hosting",
+        currentProduct.value.title,
+      ].join(" - "),
       cost: currentProductWithSale.value.price || currentProduct.value.price,
       currency: userCurrency.value.code,
     };
     onLogin.value.action = () => {
       return { options: { ...options }, config: { ...config } };
     };
-
+ 
     router.push({ name: "login" });
     return;
   }

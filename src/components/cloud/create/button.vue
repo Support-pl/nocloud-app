@@ -67,6 +67,8 @@ import { useClipboard } from "@/hooks/utils";
 
 import createActions from "@/components/ui/createActions.vue";
 import { useCurrenciesStore } from "@/stores/currencies";
+import { useI18n } from "vue-i18n";
+import { useSpStore } from "@/stores/sp";
 
 const copyIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CopyOutlined")
@@ -87,6 +89,8 @@ const appStore = useAppStore();
 const cloudStore = useCloudStore();
 const currenciesStore = useCurrenciesStore();
 const { addToClipboard } = useClipboard();
+const { locale } = useI18n();
+const spStore = useSpStore();
 
 const [options] = inject("useOptions", () => [])();
 const [activeKey, nextStep] = inject("useActiveKey", () => [])();
@@ -184,9 +188,16 @@ function availableLogin(mode) {
   if (mode === "login") {
     localStorage.setItem("data", JSON.stringify(data));
 
+    const showcase =
+      spStore.showcases.find(({ uuid }) => uuid === cloudStore.showcaseId) ??
+      {};
+
     appStore.onLogin.info = {
       type: "vdc",
-      title: "VDC",
+      title: [
+        showcase.promo?.[locale.value]?.title ?? showcase.title ?? "VDS",
+        props.productSize,
+      ].join(" - "),
       cost: props.price,
       currency: currenciesStore.unloginedCurrency.title,
     };

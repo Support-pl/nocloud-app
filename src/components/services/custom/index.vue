@@ -361,7 +361,7 @@ const { addons } = storeToRefs(useAddonsStore());
 
 const route = useRoute();
 const router = useRouter();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const notification = useNotification();
 
 const checkBalance = inject("checkBalance", () => {});
@@ -784,11 +784,17 @@ const orderClickHandler = () => {
   if (!group && service.value) info.instancesGroups.push(newGroup);
 
   if (!userdata.value.uuid) {
+    const showcase =
+      spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+
     onLogin.value.redirect = route.name;
     onLogin.value.redirectQuery = route.query;
     onLogin.value.info = {
       type: "custom",
-      title: "Custom",
+      title: [
+        showcase.promo?.[locale.value]?.title ?? showcase.title ?? "custom",
+        currentProduct.value.title,
+      ].join(" - "),
       cost: currentProduct.value.price,
       currency: currency.value.code,
       goToInvoice: modal.value.goToInvoice,
