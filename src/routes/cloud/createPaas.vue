@@ -311,6 +311,16 @@ watch(periods, (periods) => {
   tarification.value = periods[0]?.value ?? "";
 });
 
+watch(
+  activeKey,
+  (value, prevValue) => {
+    if (value === undefined) {
+      activeKey.value = prevValue ?? "location";
+    }
+  },
+  { deep: true }
+);
+
 function setLocation(value) {
   if (route.query.data) {
     const query = { ...route.query };
