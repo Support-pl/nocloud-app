@@ -48,7 +48,7 @@
       <template v-if="invoice.status === 'Unpaid'">
         <template
           v-if="
-            invoice.total <= authStore.userdata.balance &&
+            invoice.total <= userBalance &&
             ActionType[invoice.type] !== ActionType.BALANCE
           "
         >
@@ -102,6 +102,7 @@ import { useCurrency, useNotification } from "@/hooks/utils";
 import config from "@/appconfig.js";
 import { getInvoiceNumber } from "@/functions";
 import api from "@/api";
+import { storeToRefs } from "pinia";
 
 const props = defineProps({
   invoice: { type: Object, required: true },
@@ -112,6 +113,7 @@ const authStore = useAuthStore();
 const invoicesStore = useInvoicesStore();
 const { openNotification } = useNotification();
 const { formatPrice } = useCurrency();
+const { userBalance } = storeToRefs(authStore);
 
 const loadingIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LoadingOutlined")

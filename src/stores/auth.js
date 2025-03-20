@@ -1,5 +1,5 @@
 import { computed, ref } from "vue";
-import { defineStore } from "pinia";
+import { defineStore, storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import cookies from "js-cookie";
@@ -9,6 +9,7 @@ import { useInstancesStore } from "./instances.js";
 import api, { addApiInterceptors } from "@/api.js";
 import config from "@/appconfig.js";
 import { useProductsStore } from "./products.js";
+import { useCurrenciesStore } from "./currencies.js";
 
 const COOKIES_NAME = "noCloudinApp-token";
 
@@ -18,6 +19,9 @@ export const useAuthStore = defineStore("auth", () => {
   const sp = useSpStore();
   const instances = useInstancesStore();
   const products = useProductsStore();
+  const currenciesStore = useCurrenciesStore();
+
+  const { userCurrency } = storeToRefs(currenciesStore);
 
   const token = ref("");
   const userdata = ref({ data: {} });
@@ -27,6 +31,11 @@ export const useAuthStore = defineStore("auth", () => {
   const loginButtons = ref([]);
   const baseURL = `${config.whmcsSiteUrl}/modules/addons/nocloud/api/index.php`;
   const isLogged = computed(() => token.value.length > 0);
+  const userBalance = computed(() =>
+    !isLogged.value
+      ? 0
+      : +userdata.value.balance?.toFixed(userCurrency.value.precision || 0)
+  );
 
   function setToken(value) {
     const expires = new Date(Date.now() + 7776e6);
@@ -39,6 +48,7 @@ export const useAuthStore = defineStore("auth", () => {
     token,
     userdata,
     billingUser,
+    userBalance,
 
     baseURL,
     isLogged,
