@@ -893,6 +893,8 @@ const fetchPlans = async (provider) => {
       options.value.addons = oldOptions.addons;
       options.value.period = oldOptions.period;
       activeCollapseKey.value = [oldOptions.size];
+
+      onLogin.value = {};
     }, 1000);
   }
 };
