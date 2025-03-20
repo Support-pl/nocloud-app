@@ -484,7 +484,7 @@ const orderClickHandler = () => {
     onLogin.value.action = () => {
       return { options: { ...options }, config: { ...config } };
     };
- 
+
     router.push({ name: "login" });
     return;
   }
@@ -613,6 +613,8 @@ watch(
       options.size = data.options.size;
       options.period = data.options.period;
       config.domain = data.config.domain;
+
+      onLogin.value = {};
     }, 300);
   }
 );

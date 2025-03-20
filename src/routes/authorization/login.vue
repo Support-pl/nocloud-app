@@ -147,7 +147,14 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, inject, onMounted, ref } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  inject,
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue";
 import { notification } from "ant-design-vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -181,6 +188,7 @@ const loginError = ref("");
 const remember = ref(true);
 const password = ref("");
 const email = ref("");
+const redirect = ref(false);
 
 const companyName = computed(() => appStore.domainInfo.name ?? config.appTitle);
 const selfUrl = location.href;
@@ -211,6 +219,7 @@ async function send() {
     }
 
     if (localStorage.getItem("data")) {
+      redirect.value=true;
       try {
         const data = JSON.parse(localStorage.getItem("data"));
         router.push({ path: data.path, query: data.query });
@@ -218,6 +227,7 @@ async function send() {
         localStorage.removeItem("data");
       }
     } else if (appStore.onLogin.redirect) {
+      redirect.value=true;
       const name = appStore.onLogin.redirect;
       const service =
         appStore.onLogin.redirectQuery?.service || appStore.onLogin.info.title;
@@ -305,6 +315,13 @@ onMounted(() => {
   if (route.query.token) {
     authStore.setToken(route.query.token);
     router.replace({ name: "root" }).then(() => location.reload());
+  }
+});
+
+onUnmounted(() => {
+  if (!redirect.value) {
+    appStore.onLogin = {};
+    localStorage.removeItem("data");
   }
 });
 
@@ -557,7 +574,7 @@ export default { name: "LoginView" };
   grid-gap: 10px;
 }
 
-.order__card .order__title{
+.order__card .order__title {
   margin-right: 20px;
 }
 

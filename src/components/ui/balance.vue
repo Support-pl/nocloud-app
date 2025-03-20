@@ -23,12 +23,14 @@ import { LoadingOutlined } from "@ant-design/icons-vue";
 import { useAuthStore } from "@/stores/auth.js";
 import { useCurrency } from "@/hooks/utils";
 import addFunds from "@/components/ui/addFunds.vue";
+import { storeToRefs } from "pinia";
 
 const props = defineProps({
   clickable: { type: Boolean, default: true },
 });
 
 const authStore = useAuthStore();
+const { userBalance } = storeToRefs(authStore);
 const { currency, formatPrice } = useCurrency();
 
 const plusIcon = defineAsyncComponent(() =>
@@ -39,11 +41,11 @@ const isLoading = ref(false);
 const modalVisible = ref(false);
 
 const formatedBalance = computed(() => {
-  const balance = (authStore.userdata.balance || 0).toFixed(2);
+  const balance = (userBalance.value || 0).toFixed(2);
   if (Math.abs(balance) == 0) {
     return 0;
   }
-  return formatPrice(authStore.userdata.balance);
+  return formatPrice(userBalance.value);
 });
 
 // function URLparameter (obj, outer = '') {
