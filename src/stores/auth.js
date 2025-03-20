@@ -34,7 +34,7 @@ export const useAuthStore = defineStore("auth", () => {
   const userBalance = computed(() =>
     !isLogged.value
       ? 0
-      : +userdata.value.balance.toFixed(userCurrency.value.precision || 0)
+      : +userdata.value.balance?.toFixed(userCurrency.value.precision || 0)
   );
 
   function setToken(value) {
