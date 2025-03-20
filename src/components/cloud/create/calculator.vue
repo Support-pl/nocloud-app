@@ -126,7 +126,7 @@
       :style="{ 'font-size': '1.4rem', 'margin-top': '10px' }"
     >
       <a-col
-        v-if="activeKey === 'location' && tarification"
+        v-if="activeKey === 'location' && tarification && panels.length > 1"
         style="margin-right: 4px"
       >
         {{ capitalize($t("from")) }}:
@@ -266,7 +266,7 @@ function getAddonsTitle(key) {
   }
 }
 
-async function createOrder() {  
+async function createOrder() {
   const instance = { config: options.config, billingPlan: cloudStore.plan };
   const price = startPrice.value;
 
