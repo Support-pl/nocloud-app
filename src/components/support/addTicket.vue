@@ -1,10 +1,21 @@
 <template>
   <a-modal
-    :title="capitalize(instanceId ? $t('new chat') : $t('ask a question'))"
     :open="supportStore.isAddingTicket"
     :footer="null"
     @cancel="closeFields"
   >
+    <template #title>
+      <div style="display: flex; justify-content: space-between">
+        {{ capitalize(instanceId ? $t("new chat") : $t("ask a question")) }}
+        <a-select
+          v-if="instanceId && !genImage.checked"
+          style="margin-left: 5px; margin-right: 30px; width: 200px"
+          v-model:value="selectedModel"
+          :options="openaiModels"
+        ></a-select>
+      </div>
+    </template>
+
     <a-spin :tip="$t('loading')" :spinning="isLoading || isSending">
       <a-form layout="vertical">
         <a-form-item
@@ -134,6 +145,7 @@ import { useChatsStore } from "@/stores/chats.js";
 import { useSupportStore } from "@/stores/support.js";
 
 import uploadFiles from "@/components/support/upload.vue";
+import { useInstancesStore } from "@/stores/instances";
 
 const uploadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/UploadOutlined")
@@ -158,6 +170,7 @@ const { openNotification } = useNotification();
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
 const supportStore = useSupportStore();
+const instancesStore = useInstancesStore();
 
 const gateway = ref("userApp");
 const ticketDepartment = ref(-1);
@@ -181,6 +194,8 @@ const qualityList = [
   { label: "Standard", value: "standard" },
 ];
 
+const selectedModel = ref("gpt-4o");
+
 const upload = ref();
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
 
@@ -195,6 +210,23 @@ const filteredDepartments = computed(() => {
     return chatsDeparts.filter((dep) => dep.public && dep.id !== "colobridge"); // [...supportStore.departments, ...chatsDeparts]
   }
 });
+
+const openaiModels = computed(() => {
+  const resources = Object.keys(instance.value?.resources || {})
+    .filter((key) => key.split("|").length > 2)
+    .map((key) => key.split("|")[1]);
+
+  return [...new Set(resources).values()].map((key) => ({
+    value: key,
+    label: key,
+  }));
+});
+
+const instance = computed(() =>
+  props.instanceId
+    ? instancesStore.instances.find((inst) => inst.uuid === props.instanceId)
+    : null
+);
 
 watch(filteredDepartments, setDepartment);
 onMounted(setDepartment);
@@ -296,6 +328,7 @@ async function createChat() {
         meta: [
           { key: "dept_id", value: whmcsId },
           { key: "instance", value: props.instanceId },
+          { key: "model", value: selectedModel.value },
         ],
       },
     });
