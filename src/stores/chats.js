@@ -454,7 +454,10 @@ export const useChatsStore = defineStore("chats", () => {
           }, {}),
         });
 
-        console.log(mes);
+        mes.meta.model = Value.fromJson(
+          chats.value.get(message.uuid).meta.data?.model?.kind?.value ?? ""
+        );
+
         const response = await messagesApi.send(mes);
 
         console.log(response);

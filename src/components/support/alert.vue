@@ -7,17 +7,17 @@
   >
     <template #message>
       <span @click="isVisible = !isVisible">
-        {{ capitalize($t('settings')) }}
+        {{ capitalize($t("settings")) }}
 
-        <span v-if="(chat.gateways[0])">
-          ({{ $t('gateway') }}:
+        <span v-if="chat.gateways[0]">
+          ({{ $t("gateway") }}:
           <span style="text-decoration: underline">
-            {{ chat.gateways[0] }}
-          </span>{{ (chat.department === 'openai') ? ';' : ')' }}
+            {{ chat.gateways[0] }} </span
+          >{{ chat.department === "openai" ? ";" : ")" }}
         </span>
 
         <span v-if="chat.department === 'openai'">
-          {{ (chat.gateways[0]) ? '' : '(' }}{{ capitalize($t('prompts')) }}:
+          {{ chat.gateways[0] ? "" : "(" }}{{ capitalize($t("prompts")) }}:
 
           <a-tooltip color="var(--bright_font)">
             <template #title>
@@ -27,8 +27,8 @@
                 </template>
               </a-list>
             </template>
-            <listIcon style="margin-right: 2px" />
-          </a-tooltip>)
+            <listIcon style="margin-right: 2px" /> </a-tooltip
+          >)
         </span>
 
         <plus-icon v-if="isVisible" :rotate="45" style="margin-left: auto" />
@@ -37,7 +37,12 @@
     </template>
 
     <template v-if="isVisible" #description>
-      {{ $t('Choose another way of communication') }}:
+      <div v-if="model" style="margin-bottom: 10px">
+        {{ capitalize($t("model")) }}:
+        <span> {{ model }} </span>
+      </div>
+
+      {{ $t("Choose another way of communication") }}:
       <div class="order__grid">
         <div
           v-for="gate of options"
@@ -48,7 +53,12 @@
           @click="changeGateway(gate.id)"
         >
           <span class="order__slider-name" :title="gate.name">
-            <img class="img_prod" :src="`/img/icons/${getImageName(gate.id)}.png`" :alt="gate.id" @error="onError">
+            <img
+              class="img_prod"
+              :src="`/img/icons/${getImageName(gate.id)}.png`"
+              :alt="gate.id"
+              @error="onError"
+            />
             {{ gate.name }}
           </span>
         </div>
@@ -56,7 +66,9 @@
 
       <a-button
         type="primary"
-        :style="`display: block; margin: 10px 0 ${(promptsOptions.length > 0) ? '15px' : 0}`"
+        :style="`display: block; margin: 10px 0 ${
+          promptsOptions.length > 0 ? '15px' : 0
+        }`"
         :disabled="gateway === (chat.gateways[0] ?? '')"
         :loading="isEditLoading"
         @click="updateChat"
@@ -66,7 +78,7 @@
 
       <template v-if="chat.department === 'openai'">
         <template v-if="promptsOptions.length > 0">
-          {{ $t('Select prompts') }}:
+          {{ $t("Select prompts") }}:
         </template>
         <a-spin :spinning="isPromptsLoading">
           <a-checkbox-group
@@ -87,7 +99,7 @@
           </a-checkbox-group>
         </a-spin>
 
-        {{ $t('Add prompt') }}:
+        {{ $t("Add prompt") }}:
         <a-input
           v-model:value="title"
           style="margin-bottom: 10px"
@@ -109,7 +121,7 @@
           :loading="isPromptLoading"
           @click="sendPrompt"
         >
-          {{ $t('Add') }}
+          {{ $t("Add") }}
         </a-button>
       </template>
     </template>
@@ -117,221 +129,247 @@
 </template>
 
 <script setup>
-import { watch, computed, onMounted, ref, nextTick, defineAsyncComponent } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import {
+  watch,
+  computed,
+  onMounted,
+  ref,
+  nextTick,
+  defineAsyncComponent,
+} from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
-import { useAuthStore } from '@/stores/auth.js'
-import { useChatsStore } from '@/stores/chats.js'
-import { useSupportStore } from '@/stores/support.js'
+import { useAuthStore } from "@/stores/auth.js";
+import { useChatsStore } from "@/stores/chats.js";
+import { useSupportStore } from "@/stores/support.js";
 
-import { useNotification } from '@/hooks/utils'
-import { getImageName, onError, generateUuid } from '@/functions.js'
+import { useNotification } from "@/hooks/utils";
+import { getImageName, onError, generateUuid } from "@/functions.js";
 
-const downIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/DownOutlined')
-)
-const plusIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/PlusOutlined')
-)
-const listIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/UnorderedListOutlined')
-)
+const downIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/DownOutlined")
+);
+const plusIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PlusOutlined")
+);
+const listIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/UnorderedListOutlined")
+);
 
 const props = defineProps({
   chat: { type: Object, required: true },
-  isLoading: { type: Boolean, default: false }
-})
-const emits = defineEmits(['update:paddingTop'])
+  isLoading: { type: Boolean, default: false },
+});
+const emits = defineEmits(["update:paddingTop"]);
 
-const router = useRouter()
-const route = useRoute()
-const i18n = useI18n()
-const { openNotification } = useNotification()
+const router = useRouter();
+const route = useRoute();
+const i18n = useI18n();
+const { openNotification } = useNotification();
 
-const authStore = useAuthStore()
-const chatsStore = useChatsStore()
-const supportStore = useSupportStore()
+const authStore = useAuthStore();
+const chatsStore = useChatsStore();
+const supportStore = useSupportStore();
 
-watch(() => props.isLoading, (value) => {
-  if (value) return
-  nextTick(() => {
-    emits('update:paddingTop', `${notification.value?.$el.offsetHeight + 15}px`)
-  })
-})
-
-const title = ref('')
-const message = ref('')
-const gateway = ref('')
-
-const isVisible = ref(false)
-const isEditLoading = ref(false)
-const isPromptLoading = ref(false)
-const isPromptsLoading = ref(false)
-const notification = ref()
-
-watch(() => props.chat, (value) => {
-  gateway.value = value.gateways[0] ?? ''
-
-  if (value.meta.data.prompts) {
-    const result = value.meta.data.prompts.toJSON()
-
-    prompts.value = []
-    promptsOptions.value = []
-    result.forEach(({ enabled, title, description, id }) => {
-      if (enabled) prompts.value.push(id)
-
-      promptsOptions.value.push({ label: title, value: id, description })
-    })
+watch(
+  () => props.isLoading,
+  (value) => {
+    if (value) return;
+    nextTick(() => {
+      emits(
+        "update:paddingTop",
+        `${notification.value?.$el.offsetHeight + 15}px`
+      );
+    });
   }
-})
+);
+
+const title = ref("");
+const message = ref("");
+const gateway = ref("");
+
+const isVisible = ref(false);
+const isEditLoading = ref(false);
+const isPromptLoading = ref(false);
+const isPromptsLoading = ref(false);
+const notification = ref();
+
+watch(
+  () => props.chat,
+  (value) => {
+    gateway.value = value.gateways[0] ?? "";
+
+    if (value.meta.data.prompts) {
+      const result = value.meta.data.prompts.toJSON();
+
+      prompts.value = [];
+      promptsOptions.value = [];
+      result.forEach(({ enabled, title, description, id }) => {
+        if (enabled) prompts.value.push(id);
+
+        promptsOptions.value.push({ label: title, value: id, description });
+      });
+    }
+  }
+);
 
 const options = computed(() => {
-  const { gateways = [] } = chatsStore.getDefaults ?? {}
+  const { gateways = [] } = chatsStore.getDefaults ?? {};
   let result = gateways.map((gateway) => ({
     id: gateway,
-    name: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`
-  }))
+    name: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`,
+  }));
 
   if (route.query.from) {
-    result = result.filter(({ id }) => id === 'telegram')
+    result = result.filter(({ id }) => id === "telegram");
   }
 
-  return result
-})
+  return result;
+});
 
-const prompts = ref([])
-const promptsOptions = ref([])
+const prompts = ref([]);
+const promptsOptions = ref([]);
 const currentPrompts = computed(() =>
   (props.chat.meta?.data?.prompts?.toJSON() ?? [])
     .filter(({ enabled }) => enabled)
     .map(({ title }) => title)
-)
+);
 
-function newLine () {
-  message.value.replace(/$/, '\n')
+const model = computed(() => {
+  const model = props.chat?.meta?.data?.model.toJSON() ?? "";
+
+  return model ?? "";
+});
+
+function newLine() {
+  message.value.replace(/$/, "\n");
 }
 
-function changeGateway (value) {
+function changeGateway(value) {
   if (gateway.value === value) {
-    gateway.value = ''
+    gateway.value = "";
   } else {
-    gateway.value = value
+    gateway.value = value;
   }
 }
 
-async function selectPrompts () {
-  isPromptsLoading.value = true
+async function selectPrompts() {
+  isPromptsLoading.value = true;
   try {
-    const result = props.chat.meta.data.prompts.toJSON()
+    const result = props.chat.meta.data.prompts.toJSON();
 
     result.forEach(({ id }, i) => {
-      const item = prompts.value.find((promptId) => id === promptId)
+      const item = prompts.value.find((promptId) => id === promptId);
 
-      result[i].enabled = !!item
-    })
+      result[i].enabled = !!item;
+    });
 
     await chatsStore.editChat({
       ...props.chat,
       meta: {
         ...props.chat.meta,
-        data: { ...props.chat.meta.data, prompts: result }
-      }
-    })
-    openNotification('success', { message: i18n.t('Done') })
+        data: { ...props.chat.meta.data, prompts: result },
+      },
+    });
+    openNotification("success", { message: i18n.t("Done") });
   } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
+    const message = error.response?.data?.message ?? error.message ?? error;
 
-    openNotification('error', { message: i18n.t(message) })
+    openNotification("error", { message: i18n.t(message) });
   } finally {
-    isPromptsLoading.value = false
+    isPromptsLoading.value = false;
   }
 }
 
-async function sendPrompt () {
-  isPromptLoading.value = true
+async function sendPrompt() {
+  isPromptLoading.value = true;
   try {
-    const result = (props.chat.meta.data.prompts)
+    const result = props.chat.meta.data.prompts
       ? props.chat.meta.data.prompts.toJSON()
-      : []
+      : [];
 
     result.push({
       id: generateUuid(),
       title: title.value,
       description: message.value,
-      enabled: true
-    })
+      enabled: true,
+    });
 
     await chatsStore.editChat({
       ...props.chat,
       meta: {
         ...props.chat.meta,
-        data: { ...props.chat.meta.data, prompts: result }
-      }
-    })
-    openNotification('success', { message: i18n.t('Done') })
+        data: { ...props.chat.meta.data, prompts: result },
+      },
+    });
+    openNotification("success", { message: i18n.t("Done") });
   } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
+    const message = error.response?.data?.message ?? error.message ?? error;
 
-    openNotification('error', { message: i18n.t(message) })
+    openNotification("error", { message: i18n.t(message) });
   } finally {
-    isPromptLoading.value = false
+    isPromptLoading.value = false;
   }
 }
 
-async function updateChat () {
-  isEditLoading.value = true
+async function updateChat() {
+  isEditLoading.value = true;
   if (!authStore.userdata.data.telegram) {
-    router.push({ name: 'handsfree' })
+    router.push({ name: "handsfree" });
   }
 
   try {
     await chatsStore.changeGateway({
-      ...props.chat, gateways: [gateway.value]
-    })
+      ...props.chat,
+      gateways: [gateway.value],
+    });
 
-    openNotification('success', { message: i18n.t('Done') })
+    openNotification("success", { message: i18n.t("Done") });
   } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error
+    const message = error.response?.data?.message ?? error.message ?? error;
 
-    openNotification('error', { message: i18n.t(message) })
+    openNotification("error", { message: i18n.t(message) });
   } finally {
-    isEditLoading.value = false
-    supportStore.isAddingTicket = false
+    isEditLoading.value = false;
+    supportStore.isAddingTicket = false;
   }
 }
 
 onMounted(() => {
-  window.addEventListener('resize', () => {
-    emits('update:paddingTop', `${notification.value?.$el.offsetHeight + 15}px`)
-  })
-  emits('update:paddingTop', `${notification.value?.$el.offsetHeight + 15}px`)
+  window.addEventListener("resize", () => {
+    emits(
+      "update:paddingTop",
+      `${notification.value?.$el.offsetHeight + 15}px`
+    );
+  });
+  emits("update:paddingTop", `${notification.value?.$el.offsetHeight + 15}px`);
 
-  if (localStorage.getItem('gateway')) {
-    gateway.value = localStorage.getItem('gateway')
-    isVisible.value = true
+  if (localStorage.getItem("gateway")) {
+    gateway.value = localStorage.getItem("gateway");
+    isVisible.value = true;
 
-    updateChat()
-    localStorage.removeItem('gateway')
+    updateChat();
+    localStorage.removeItem("gateway");
   }
-})
+});
 
 watch(isVisible, async (value) => {
-  await nextTick()
+  await nextTick();
   emits(
-    'update:paddingTop',
-    `${notification.value?.$el.offsetHeight + ((value) ? 30 : 0)}px`
-  )
-})
+    "update:paddingTop",
+    `${notification.value?.$el.offsetHeight + (value ? 30 : 0)}px`
+  );
+});
 
 router.beforeEach((_, __, next) => {
-  emits('update:paddingTop', `${notification.value?.$el.offsetHeight + 15}px`)
-  next()
-})
+  emits("update:paddingTop", `${notification.value?.$el.offsetHeight + 15}px`);
+  next();
+});
 </script>
 
 <script>
-export default { name: 'SupportAlert' }
+export default { name: "SupportAlert" };
 </script>
 
 <style scoped>
@@ -342,7 +380,7 @@ export default { name: 'SupportAlert' }
   z-index: 10;
   width: 100%;
   max-width: min(65vw - 50px, 768px - 30px);
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .alert__notification.ant-alert-with-description {
@@ -371,11 +409,11 @@ export default { name: 'SupportAlert' }
   cursor: pointer;
   border-radius: 15px;
   font-size: 1rem;
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .order__slider-item:hover {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 .order__slider-item--active {

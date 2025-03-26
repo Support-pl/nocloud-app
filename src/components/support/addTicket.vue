@@ -1,10 +1,25 @@
 <template>
   <a-modal
-    :title="capitalize(instanceId ? $t('new chat') : $t('ask a question'))"
     :open="supportStore.isAddingTicket"
     :footer="null"
     @cancel="closeFields"
   >
+    <template #title>
+      <div style="display: flex; justify-content: space-between">
+        {{ capitalize(instanceId ? $t("new chat") : $t("ask a question")) }}
+        <a-select
+          v-if="instanceId && !genImage.checked"
+          style="margin-left: 5px; margin-right: 30px; width: 250px"
+          v-model:value="selectedModel"
+          :options="openaiModels"
+        >
+          <template #option="{ value }">
+            {{ value }}
+          </template>
+        </a-select>
+      </div>
+    </template>
+
     <a-spin :tip="$t('loading')" :spinning="isLoading || isSending">
       <a-form layout="vertical">
         <a-form-item
@@ -134,6 +149,8 @@ import { useChatsStore } from "@/stores/chats.js";
 import { useSupportStore } from "@/stores/support.js";
 
 import uploadFiles from "@/components/support/upload.vue";
+import { useInstancesStore } from "@/stores/instances";
+import { capitalize } from "vue";
 
 const uploadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/UploadOutlined")
@@ -152,12 +169,13 @@ const props = defineProps({
 });
 
 const router = useRouter();
-const i18n = useI18n();
+const { t } = useI18n();
 const { openNotification } = useNotification();
 
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
 const supportStore = useSupportStore();
+const instancesStore = useInstancesStore();
 
 const gateway = ref("userApp");
 const ticketDepartment = ref(-1);
@@ -181,6 +199,8 @@ const qualityList = [
   { label: "Standard", value: "standard" },
 ];
 
+const selectedModel = ref("gpt-4o");
+
 const upload = ref();
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
 
@@ -195,6 +215,23 @@ const filteredDepartments = computed(() => {
     return chatsDeparts.filter((dep) => dep.public && dep.id !== "colobridge"); // [...supportStore.departments, ...chatsDeparts]
   }
 });
+
+const openaiModels = computed(() => {
+  const resources = Object.keys(instance.value?.resources || {})
+    .filter((key) => key.split("|").length > 2)
+    .map((key) => key.split("|")[1]);
+
+  return [...new Set(resources).values()].map((key) => ({
+    value: key,
+    label: `${capitalize(t("model"))}: ${key}`,
+  }));
+});
+
+const instance = computed(() =>
+  props.instanceId
+    ? instancesStore.instances.find((inst) => inst.uuid === props.instanceId)
+    : null
+);
 
 watch(filteredDepartments, setDepartment);
 onMounted(setDepartment);
@@ -232,12 +269,12 @@ function setDepartment() {
 
 function validation() {
   if (ticketTitle.value.length < 3 || ticketMessage.value.length < 3) {
-    message.warn(i18n.t("ticket subject or message is too short"));
+    message.warn(t("ticket subject or message is too short"));
     return false;
   }
 
   if (ticketDepartment.value === -1) {
-    message.warn(i18n.t("departments are loading"));
+    message.warn(t("departments are loading"));
     return false;
   }
 
@@ -296,6 +333,7 @@ async function createChat() {
         meta: [
           { key: "dept_id", value: whmcsId },
           { key: "instance", value: props.instanceId },
+          { key: "model", value: selectedModel.value },
         ],
       },
     });
@@ -344,7 +382,7 @@ async function sendNewTicket() {
       : await createTicket();
 
     if (response.result === "error") throw response.error;
-    else openNotification("success", { message: i18n.t("Done") });
+    else openNotification("success", { message: t("Done") });
   } catch (error) {
     openNotification("error", {
       message: error.response?.data?.message ?? error.message ?? error,
@@ -400,7 +438,7 @@ async function fetch() {
     await chatsStore.fetchDefaults();
     await supportStore.fetchDepartments();
   } catch {
-    message.error(i18n.t("departments not found"));
+    message.error(t("departments not found"));
   } finally {
     isLoading.value = false;
   }
