@@ -8,7 +8,7 @@
       </div>
       <div class="chat__title">
         {{ titleDecoded }}
-        {{ department ? `(${department}${model ? " " + model : ""})` : "" }}
+        {{ department ? `(${department})` : "" }}
       </div>
       <div class="chat__actions">
         <div
@@ -116,12 +116,6 @@ const department = computed(() => {
   const id = chatsStore.chats.get(props.chat.uuid)?.department;
 
   return chatsStore.getDefaults.departments.find((dep) => dep.id === id)?.name;
-});
-
-const model = computed(() => {
-  const meta = chatsStore.chats.get(props.chat.uuid)?.meta;
-
-  return meta.data?.model?.kind?.value ?? "";
 });
 
 let search = () => {};
