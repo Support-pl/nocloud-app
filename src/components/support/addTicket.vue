@@ -9,10 +9,14 @@
         {{ capitalize(instanceId ? $t("new chat") : $t("ask a question")) }}
         <a-select
           v-if="instanceId && !genImage.checked"
-          style="margin-left: 5px; margin-right: 30px; width: 200px"
+          style="margin-left: 5px; margin-right: 30px; width: 250px"
           v-model:value="selectedModel"
           :options="openaiModels"
-        ></a-select>
+        >
+          <template #option="{ value }">
+            {{ value }}
+          </template>
+        </a-select>
       </div>
     </template>
 
@@ -146,6 +150,7 @@ import { useSupportStore } from "@/stores/support.js";
 
 import uploadFiles from "@/components/support/upload.vue";
 import { useInstancesStore } from "@/stores/instances";
+import { capitalize } from "vue";
 
 const uploadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/UploadOutlined")
@@ -164,7 +169,7 @@ const props = defineProps({
 });
 
 const router = useRouter();
-const i18n = useI18n();
+const { t } = useI18n();
 const { openNotification } = useNotification();
 
 const authStore = useAuthStore();
@@ -218,7 +223,7 @@ const openaiModels = computed(() => {
 
   return [...new Set(resources).values()].map((key) => ({
     value: key,
-    label: key,
+    label: `${capitalize(t("model"))}: ${key}`,
   }));
 });
 
@@ -264,12 +269,12 @@ function setDepartment() {
 
 function validation() {
   if (ticketTitle.value.length < 3 || ticketMessage.value.length < 3) {
-    message.warn(i18n.t("ticket subject or message is too short"));
+    message.warn(t("ticket subject or message is too short"));
     return false;
   }
 
   if (ticketDepartment.value === -1) {
-    message.warn(i18n.t("departments are loading"));
+    message.warn(t("departments are loading"));
     return false;
   }
 
@@ -377,7 +382,7 @@ async function sendNewTicket() {
       : await createTicket();
 
     if (response.result === "error") throw response.error;
-    else openNotification("success", { message: i18n.t("Done") });
+    else openNotification("success", { message: t("Done") });
   } catch (error) {
     openNotification("error", {
       message: error.response?.data?.message ?? error.message ?? error,
@@ -433,7 +438,7 @@ async function fetch() {
     await chatsStore.fetchDefaults();
     await supportStore.fetchDepartments();
   } catch {
-    message.error(i18n.t("departments not found"));
+    message.error(t("departments not found"));
   } finally {
     isLoading.value = false;
   }
