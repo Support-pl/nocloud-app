@@ -104,7 +104,6 @@ const providersStore = useSpStore();
 const { currency } = useCurrency();
 
 const activeKey = ref([]);
-const prices = ref({});
 
 const statusColor = computed(() => {
   switch (props.instance.domainstatus) {
@@ -150,10 +149,7 @@ const locationTitle = computed(() => {
 });
 
 const price = computed(() => {
-  const amount =
-    prices.value[props.instance.resources?.period] ??
-    props.instance.recurringamount ??
-    props.instance.orderamount;
+  const amount = props.instance.recurringamount ?? props.instance.orderamount;
 
   return amount ? +(+amount)?.toFixed(2) : 0;
 });
@@ -265,6 +261,8 @@ function cloudClick(service, { target }) {
     router.push({ name: "openCloud", params: { uuid: id } });
   } else if (groupname === "VPN") {
     router.push({ name: "openVpn", params: { uuid: uuid } });
+  } else if (groupname === "Domains") {
+    router.push({ name: "openDomain", params: { id: uuid } });
   } else if (hostingid) {
     router.push({ name: "service", params: { id: hostingid } });
   } else if (groupname === "Self-Service VDS SSD HC") {
@@ -278,23 +276,6 @@ function toInvoices() {
   localStorage.setItem("order", "Invoice");
   router.push({ name: "billing" });
 }
-
-async function fetch() {
-  if (props.instance.groupname !== "Domains") return;
-  try {
-    const { meta } = await api.servicesProviders.action({
-      uuid: props.instance.sp,
-      action: "get_domain_price",
-      params: { domain: props.instance.domain },
-    });
-
-    prices.value = meta.prices;
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-fetch();
 </script>
 
 <script>

@@ -83,7 +83,12 @@
                     v-model:checked="resources.who_is_privacy"
                     size="small"
                   />
-                  {{ capitalize($t("domain_product.who_is_privacy")) }} (3$)
+                  {{ capitalize($t("domain_product.who_is_privacy")) }} ({{
+                    [
+                      formatPrice(whoIsPrivacyResource?.price * onCart.length),
+                      currency.title,
+                    ].join(" ")
+                  }})
                 </a-col>
                 <a-col span="24">
                   <a-switch
@@ -235,7 +240,7 @@
                 <span class="description-body__domain-name">
                   {{
                     products[domain.name] &&
-                    products[domain.name][resources.period]
+                    formatPrice(products[domain.name][resources.period])
                   }}
                   {{ currency.title }}
                 </span>
@@ -244,52 +249,13 @@
                 <a-button
                   :key="index"
                   class="description-body__btn-order"
-                  @click="removeFromCart(domain, index)"
+                  @click="removeProduct(domain, index)"
                 >
                   {{ $t("Delete") }}
                 </a-button>
               </a-descriptions-item>
             </a-descriptions>
           </div>
-          <!--<div class="order__slider">
-            <template v-if="!fetchLoading">
-              <div
-                  class="order__slider-item"
-                  v-for="provider of Object.keys(products)"
-                  :key="provider"
-                  :class="{'order__slider-item&#45;&#45;active': options.provider == provider}"
-                  @click="() => options.provider = provider"
-              >
-                {{provider}}
-              </div>
-            </template>
-            <template v-else>
-              <div
-                  class="order__slider-item order__slider-item&#45;&#45;loading"
-                  v-for="(provider, index) of Array(4)"
-                  :key="index"
-              >
-              </div>
-            </template>
-          </div>
-
-          <a-row class="order__prop">
-            <a-col span="8" :xs="6">{{capitalize($t('tarif'))}}:</a-col>
-            <a-col span="16" :xs="18">
-              <a-select v-if="!fetchLoading" v-model:value="options.tarif" style="width: 100%">
-                <a-select-option v-for="kind of products[options.provider]" :value="kind.tarif" :key="kind.tarif">{{kind.tarif}}</a-select-option>
-              </a-select>
-              <div v-else class="loadingLine"></div>
-            </a-col>
-          </a-row>
-
-          <a-row class="order__prop">
-            <a-col span="8" :xs="6">777&lt;!&ndash;{{capitalize($t('domain'))}}&ndash;&gt;:</a-col>
-            <a-col span="16" :xs="18">
-              <a-input v-if="!fetchLoading" v-model:value="options.domain" placeholder="example.com"></a-input>
-              <div v-else class="loadingLine"></div>
-            </a-col>
-          </a-row>-->
         </div>
       </div>
 
@@ -325,7 +291,14 @@
 
         <a-row justify="space-around">
           <a-col v-if="!fetchLoading" style="font-size: 1.5rem">
-            {{ getProducts().pricing[resources.period] }}
+            {{
+              formatPrice(
+                getProducts.pricing[resources.period] +
+                  (!resources.who_is_privacy
+                    ? 0
+                    : whoIsPrivacyResource?.price * onCart.length)
+              )
+            }}
             {{ currency.title }}
           </a-col>
           <a-col v-else>
@@ -363,7 +336,7 @@
             >
               <p>
                 {{ $t("order_services.Do you want to order") }}:
-                {{ getProducts()["name"] }}
+                {{ getProducts["name"] }}
               </p>
             </a-modal>
           </a-col>
@@ -373,9 +346,18 @@
   </div>
 </template>
 
-<script>
-import { defineAsyncComponent, reactive, ref } from "vue";
-import { mapStores, mapState } from "pinia";
+<script setup>
+import {
+  computed,
+  defineAsyncComponent,
+  inject,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  toRefs,
+  watch,
+} from "vue";
+import { storeToRefs } from "pinia";
 import passwordMeter from "vue-simple-password-meter";
 
 import useCreateInstance from "@/hooks/instances/create.js";
@@ -387,11 +369,17 @@ import { useInstancesStore } from "@/stores/instances.js";
 
 import { useSpStore } from "@/stores/sp.js";
 import { usePlansStore } from "@/stores/plans.js";
-import { useNamespasesStore } from "@/stores/namespaces.js";
 
 import { useCurrency, useNotification } from "@/hooks/utils";
 import countries from "@/assets/countries.json";
 import selectsToCreate from "@/components/ui/selectsToCreate.vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { notification } from "ant-design-vue";
+import api from "@/api";
+import { useNamespasesStore } from "@/stores/namespaces";
+import { Kind } from "nocloud-proto/proto/es/billing/billing_pb";
+import { useCurrenciesStore } from "@/stores/currencies";
 
 const searchIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SearchOutlined")
@@ -402,446 +390,536 @@ const shoppingCartIcon = defineAsyncComponent(() =>
 const questionCircleIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/QuestionCircleOutlined")
 );
-export default {
-  name: "DomainOrder",
-  components: {
-    passwordMeter,
-    selectsToCreate,
-    searchIcon,
-    shoppingCartIcon,
-    questionCircleIcon,
-  },
-  inject: ["checkBalance"],
-  props: {
-    data: { type: Object, required: true },
-    onCart: { type: Array, required: true },
-    itemsInCart: { type: Number, required: true },
-    removeFromCart: { type: Function, required: true },
-    search: { type: Function, required: true },
-    sp: { type: Array, required: true },
-  },
-  emits: ["change"],
-  setup() {
-    const { currency } = useCurrency();
-    const { deployService } = useCreateInstance();
-    const { openNotification } = useNotification();
 
-    return {
-      deployService,
-      checkPayg,
-      openNotification,
+const props = defineProps({
+  data: { type: Object, required: true },
+  onCart: { type: Array, required: true },
+  itemsInCart: { type: Number, required: true },
+  search: { type: Function, required: true },
+  removeFromCart: { type: Function, required: true },
+});
+const { data, itemsInCart, onCart, search, removeFromCart } = toRefs(props);
 
-      countries,
-      currency,
-      products: ref({}),
-      score: ref(0),
-      plan: ref(null),
-      service: ref(null),
-      namespace: ref(null),
-      provider: ref(null),
-      fetchLoading: ref(false),
-      modal: reactive({
-        confirmCreate: false,
-        confirmLoading: false,
-      }),
+const emits = defineEmits(["change"]);
 
-      options: reactive({ provider: "", tarif: "", domain: "" }),
-      resources: reactive({
-        registrant_ip: "",
-        reg_username: "",
-        reg_password: "",
-        period: 1,
-        auto_renew: true,
-        who_is_privacy: false,
-        lock_domain: true,
-      }),
-      form: ref({}),
-      cachedPlans: ref({}),
-      periods: ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), // 'annually biennially triennial quadrennial quinquennial'
+const checkBalance = inject("checkBalance", () => {});
+
+const { currency, formatPrice } = useCurrency();
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+const { deployService } = useCreateInstance();
+const { openNotification } = useNotification();
+
+const products = ref({});
+const productsDefaultCurrency = ref({});
+const score = ref(0);
+const plan = ref(null);
+const service = ref(null);
+const provider = ref(null);
+const fetchLoading = ref(false);
+const modal = ref({
+  confirmCreate: false,
+  confirmLoading: false,
+});
+
+const resources = ref({
+  registrant_ip: "",
+  reg_username: "",
+  reg_password: "",
+  period: 1,
+  auto_renew: true,
+  who_is_privacy: false,
+  lock_domain: true,
+});
+const form = ref({});
+const cachedPlans = ref({});
+const getProducts = ref({ name: "", pricing: {} });
+const selectedProduct = ref();
+const periods = ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]); // 'annually biennially triennial quadrennial quinquennial'
+
+const spStore = useSpStore();
+const plansStore = usePlansStore();
+const instancesStore = useInstancesStore();
+const authStore = useAuthStore();
+const appStore = useAppStore();
+const namespacesStore = useNamespasesStore();
+const currenciesStore = useCurrenciesStore();
+
+const { billingUser, isLogged, userdata } = storeToRefs(authStore);
+const { namespaces } = storeToRefs(namespacesStore);
+
+const { onLogin } = storeToRefs(appStore);
+
+onMounted(() => {
+  const { action } = onLogin.value;
+
+  if (typeof action === "function") {
+    modal.value.confirmCreate = true;
+    modal.value.confirmLoading = true;
+    action();
+  }
+
+  if (!"form" in data.value) {
+    installDataToBuffer();
+  }
+
+  if (sp.value.length > 0) provider.value = sp.value[0].uuid;
+
+  if (namespaces.value.length === 0) {
+    namespacesStore.fetch();
+  }
+});
+
+function onCreated() {
+  if (isLogged.value) {
+    const promises = [];
+
+    Promise.all(promises).catch((err) => {
+      const message = err.response?.data?.message ?? err.message ?? err;
+
+      if (err.response?.data?.code === 16) return;
+      openNotification("error", {
+        message: t(message),
+      });
+      console.error(err);
+    });
+  }
+}
+
+onCreated();
+
+onBeforeUnmount(() => {
+  emits(
+    "change",
+    JSON.parse(
+      JSON.stringify({
+        resources: resources.value,
+        form: form.value,
+      })
+    )
+  );
+});
+
+const sp = computed(() =>
+  spStore.servicesProviders.filter((sp) => sp.type === "opensrs")
+);
+
+const namespace = computed(() => namespaces.value[0]?.uuid);
+
+const services = computed(() => {
+  return instancesStore.services.filter((el) => el.status !== "DEL");
+});
+const plans = computed(() => {
+  return (
+    cachedPlans.value[provider.value]?.filter(({ type, uuid }) => {
+      const { items } =
+        spStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
+        {};
+      const plans = [];
+
+      if (!items) return type === "opensrs";
+      items.forEach(({ servicesProvider, plan }) => {
+        if (servicesProvider === provider.value) {
+          plans.push(plan);
+        }
+      });
+
+      if (plans.length < 1) return type === "opensrs";
+      return type === "opensrs" && plans.includes(uuid);
+    }) ?? []
+  );
+});
+
+const whoIsPrivacyResource = computed(() => {
+  return (
+    plans.value?.find(({ uuid }) => uuid === plan.value)?.resources ?? []
+  ).find((resource) => resource.key === "who_is_privacy");
+});
+
+const rules = computed(() => {
+  const message = t("ssl_product.field is required");
+  const c = form.value.country;
+
+  return {
+    req: [{ required: true, message }],
+    state: [{ required: c === "CA" || c === "US" || c === "ES", message }],
+    postal_code: [{ required: c === "CA" || c === "US", message }],
+  };
+});
+
+watch(sp, (value) => {
+  if (value.length > 0) provider.value = value[0].uuid;
+});
+
+watch(provider, async (uuid) => {
+  fetch();
+  if (cachedPlans.value[uuid]) return;
+  try {
+    const { pool } = await plansStore.fetch({
+      anonymously: !isLogged.value,
+      sp_uuid: uuid,
+    });
+
+    cachedPlans.value[uuid] = pool;
+    plan.value = plans.value[0]?.uuid;
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error;
+
+    notification.error({ message });
+  }
+});
+
+const fetch = async () => {
+  fetchLoading.value = true;
+  const promises = onCart.value.map(({ name }) =>
+    api.servicesProviders.action({
+      uuid: provider.value,
+      action: "get_domain_price",
+      params: { domain: name },
+    })
+  );
+  try {
+    const res = await Promise.all(promises);
+    let convertPromises = [];
+    let data;
+
+    const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
+
+    res.forEach(({ meta }) => {
+      Object.keys(meta.prices).forEach((key) => {
+        meta.prices[key] =
+          +meta.prices[key] +
+          (+fullPlan.fee.default
+            ? meta.prices[key] * (fullPlan.fee.default / 100)
+            : 0);
+      });
+    });
+
+    if (currenciesStore.defaultCurrency.code !== "USD") {
+      res.forEach(({ meta }) => {
+        Object.keys(meta.prices).forEach((key) => {
+          const convert = async () => {
+            const converted = await currenciesStore.convert({
+              from: "USD",
+              to: currenciesStore.defaultCurrency.code,
+              amount: meta.prices[key],
+            });
+
+            return { from: meta.prices[key], converted: converted.amount };
+          };
+
+          convertPromises.push(convert());
+        });
+      });
+
+      data = await Promise.all(convertPromises);
+    } else {
+      data = [];
+    }
+
+    res.forEach(({ meta }, i) => {
+      const { name } = onCart.value[i];
+
+      Object.keys(meta.prices).forEach((key) => {
+        meta.prices[key] =
+          data.find((d) => d.from === meta.prices[key])?.converted ??
+          meta.prices[key];
+      });
+
+      productsDefaultCurrency.value[name] = { ...meta.prices };
+    });
+
+    convertPromises = [];
+
+    if (currenciesStore.defaultCurrency.code !== currency.value.code) {
+      res.forEach(({ meta }) => {
+        Object.keys(meta.prices).forEach((key) => {
+          const convert = async () => {
+            const converted = await currenciesStore.convert({
+              to: currency.value.code,
+              from: currenciesStore.defaultCurrency.code,
+              amount: meta.prices[key],
+            });
+
+            return {
+              from: meta.prices[key],
+              converted: converted.amount,
+            };
+          };
+
+          convertPromises.push(convert());
+        });
+      });
+
+      data = await Promise.all(convertPromises);
+    } else {
+      data = [];
+    }
+
+    res.forEach(({ meta }, i) => {
+      const { name } = onCart.value[i];
+
+      Object.keys(meta.prices).forEach((key) => {
+        meta.prices[key] =
+          data?.find((d) => d.from === meta.prices[key])?.converted ??
+          meta.prices[key];
+      });
+
+      products.value[name] = { ...meta.prices };
+    });
+  } catch (err) {
+    const message = err.response?.data?.message ?? err.message ?? err;
+
+    openNotification("error", {
+      message: t(message),
+    });
+  } finally {
+    fetchLoading.value = false;
+    selectedProduct.value = onCart.value[0]?.name;
+  }
+};
+const installDataToBuffer = () => {
+  const interestedKeys = [
+    "firstname",
+    "lastname",
+    "companyname",
+    "email",
+    "address1",
+    "address2",
+    "city",
+    "state",
+    "country",
+    "postcode",
+    "phonenumber",
+  ];
+  interestedKeys.forEach((key) => {
+    switch (key) {
+      case "firstname":
+        form.value.first_name = billingUser.value[key];
+        break;
+      case "lastname":
+        form.value.last_name = billingUser.value[key];
+        break;
+      case "companyname":
+        form.value.org_name = billingUser.value[key];
+        break;
+      case "postcode":
+        form.value.postal_code = billingUser.value[key];
+        break;
+      case "phonenumber":
+        form.value.phone = billingUser.value[key];
+        break;
+      default:
+        form.value[key] = billingUser.value[key];
+    }
+  });
+};
+const orderClickHandler = async () => {
+  const fullService = services.value.find(({ uuid }) => uuid === service.value);
+  const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
+
+  const instances = Object.keys(products.value).map((domain) => ({
+    config: { auto_start: fullPlan.meta.auto_start },
+    resources: {
+      ...resources.value,
+      user: form.value,
+      domain,
+    },
+    title: `Domain - ${domain}`,
+    billing_plan: { uuid: fullPlan.uuid },
+    product: domain,
+  }));
+
+  const newGroup = {
+    title: userdata.value.title + Date.now(),
+    type: "opensrs",
+    sp: provider.value,
+    instances,
+  };
+
+  const info = !fullService
+    ? newGroup
+    : JSON.parse(JSON.stringify(fullService));
+  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
+
+  if (group) group.instances = [...group.instances, ...instances];
+  else if (fullService) info.instancesGroups.push(newGroup);
+
+  if (!userdata.value.uuid) {
+    onLogin.value.redirect = route.name;
+    onLogin.value.info = {
+      type: "domains",
+      title: "Domains",
+      cost: getProducts.value.pricing[resources.value.period],
+      currency: currency.value.code,
     };
-  },
-  computed: {
-    ...mapStores(
-      useNamespasesStore,
-      useSpStore,
-      usePlansStore,
-      useInstancesStore
-    ),
-    ...mapState(useAppStore, ["onLogin"]),
-    ...mapState(useAuthStore, [
-      "isLogged",
-      "userdata",
-      "billingUser",
-      "baseURL",
-    ]),
-    services() {
-      return this.instancesStore.services.filter((el) => el.status !== "DEL");
-    },
-    plans() {
-      return (
-        this.cachedPlans[this.provider]?.filter(({ type, uuid }) => {
-          const { items } =
-            this.spStore.showcases.find(
-              ({ uuid }) => uuid === this.$route.query.service
-            ) ?? {};
-          const plans = [];
+    onLogin.value.action = () => {
+      createDomains(info);
+    };
 
-          if (!items) return type === "opensrs";
-          items.forEach(({ servicesProvider, plan }) => {
-            if (servicesProvider === this.provider) {
-              plans.push(plan);
-            }
-          });
+    router.push({ name: "login" });
+    return;
+  }
 
-          if (plans.length < 1) return type === "opensrs";
-          return type === "opensrs" && plans.includes(uuid);
-        }) ?? []
-      );
-    },
-    rules() {
-      const message = this.$t("ssl_product.field is required");
-      const c = this.form.country;
-
-      return {
-        req: [{ required: true, message }],
-        state: [{ required: c === "CA" || c === "US" || c === "ES", message }],
-        postal_code: [{ required: c === "CA" || c === "US", message }],
+  try {
+    await form.value.validate();
+    createDomains(info);
+  } catch {
+    openNotification("error", {
+      message: t("all fields are required"),
+    });
+  }
+};
+const createDomains = async (info) => {
+  modal.value.confirmLoading = true;
+  const action = service.value ? "update" : "create";
+  const orderData = service.value
+    ? info
+    : {
+        namespace: namespace.value,
+        service: {
+          title: userdata.value.title,
+          context: {},
+          version: "1",
+          instancesGroups: [info],
+        },
       };
-    },
-  },
-  watch: {
-    sp(value) {
-      if (value.length > 0) this.provider = value[0].uuid;
-    },
-    async provider(uuid) {
 
-      console.log('/home/oigen88/Desktop/node/nocloud-app/src/components/services/domains/order.vue provider');
-      
-      this.fetch();
-      if (this.cachedPlans[uuid]) return;
-      try {
-        const { pool } = await this.plansStore.fetch({
-          anonymously: !this.isLogged,
-          sp_uuid: uuid,
-        });
-
-        this.cachedPlans[uuid] = pool;
-        this.plan = this.plans[0]?.uuid;
-      } catch (error) {
-        const message = error.response?.data?.message ?? error.message ?? error;
-
-        this.$notification.error({ message });
-      }
-    },
-  },
-  mounted() {
-    const { action } = this.onLogin;
-
-    if (typeof action === "function") {
-      this.modal.confirmCreate = true;
-      this.modal.confirmLoading = true;
-      action();
-    }
-
-    if ("form" in this.data) {
-      Object.entries(this.data).forEach(([key, value]) => {
-        this[key] = value;
-      });
-    } else this.installDataToBuffer();
-
-    if (this.provider) this.fetch();
-    else if (this.sp.length > 0) this.provider = this.sp[0].uuid;
-  },
-  created() {
-    if (this.isLogged) {
-      const promises = [];
-
-      if (this.namespacesStore.namespaces.length < 1) {
-        promises.push(this.namespacesStore.fetch());
-      }
-
-      if (this.instancesStore.services.length < 1) {
-        promises.push(this.instancesStore.fetch());
-      }
-
-      Promise.all(promises).catch((err) => {
-        const message = err.response?.data?.message ?? err.message ?? err;
-
-        if (err.response?.data?.code === 16) return;
-        this.openNotification("error", {
-          message: this.$t(message),
-        });
-        console.error(err);
-      });
-    }
-  },
-  beforeUnmount() {
-    this.$emit(
-      "change",
-      JSON.parse(
-        JSON.stringify({
-          resources: this.resources,
-          form: this.form,
+  try {
+    await Promise.all(
+      Object.keys(products.value).map((key) =>
+        api.servicesProviders.action({
+          uuid: provider.value,
+          action: "add_product",
+          params: {
+            plan: plan.value,
+            key,
+            product: {
+              kind: Kind.PREPAID,
+              price:
+                +productsDefaultCurrency.value[key][resources.value.period],
+              title: `Domain: ${key}`,
+              period: 86400 * 365 * +resources.value.period,
+              resources: {},
+            },
+          },
         })
       )
     );
-  },
-  methods: {
-    fetch() {
-      this.fetchLoading = true;
-      const promises = this.onCart.map(({ name }) =>
-        this.$api.servicesProviders.action({
-          uuid: this.provider,
-          action: "get_domain_price",
-          params: { domain: name },
-        })
-      );
 
-      Promise.all(promises)
-        .then((res) => {
-          res.forEach(({ meta }, i) => {
-            const { name } = this.onCart[i];
+    const { uuid } = await instancesStore[`${action}Service`](orderData);
+    await deployService(uuid, t("Domain created successfully"));
 
-            this.products[name] = meta.prices;
-          });
-          // this.options.provider = Object.keys(res)[0];
-          // this.options.tarif = res[this.options.provider][0].tarif;
-        })
-        .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err;
+    router.push({ path: "/billing" });
+  } catch (error) {
+    const url =
+      error.response?.data.redirect_url ?? error.response?.data ?? error;
 
-          this.openNotification("error", {
-            message: this.$t(message),
-          });
-        })
-        .finally(() => {
-          this.fetchLoading = false;
-        });
-    },
-    installDataToBuffer() {
-      const interestedKeys = [
-        "firstname",
-        "lastname",
-        "companyname",
-        "email",
-        "address1",
-        "address2",
-        "city",
-        "state",
-        "country",
-        "postcode",
-        "phonenumber",
-      ];
-      interestedKeys.forEach((key) => {
-        switch (key) {
-          case "firstname":
-            this.form.first_name = this.billingUser[key];
-            break;
-          case "lastname":
-            this.form.last_name = this.billingUser[key];
-            break;
-          case "companyname":
-            this.form.org_name = this.billingUser[key];
-            break;
-          case "postcode":
-            this.form.postal_code = this.billingUser[key];
-            break;
-          case "phonenumber":
-            this.form.phone = this.billingUser[key];
-            break;
-          default:
-            this.form[key] = this.billingUser[key];
-        }
-      });
-    },
-    async orderClickHandler() {
-      const service = this.services.find(({ uuid }) => uuid === this.service);
-      const plan = this.plans.find(({ uuid }) => uuid === this.plan);
+    if (url.startsWith && url.startsWith("http")) {
+      localStorage.setItem("order", "Invoice");
+      router.push({ path: "/billing" });
+      return;
+    }
 
-      const instances = Object.keys(this.products).map((domain) => ({
-        config: { auto_start: plan.meta.auto_start },
-        resources: { ...this.resources, user: this.form, domain },
-        title: `Domain - ${domain}`,
-        billing_plan: { uuid: this.plan },
-      }));
-      const newGroup = {
-        title: this.userdata.title + Date.now(),
-        type: "opensrs",
-        sp: this.provider,
-        instances,
-      };
+    const matched = (
+      error.response?.data?.message ??
+      error.message ??
+      ""
+    ).split(/error:"|error: "/);
+    const message = matched.at(-1).split('" ').at(0);
 
-      const info = !this.service
-        ? newGroup
-        : JSON.parse(JSON.stringify(service));
-      const group = info.instancesGroups?.find(
-        ({ sp }) => sp === this.provider
-      );
+    if (message) {
+      notification.error({ message });
+    } else {
+      const message = error.response?.data?.message ?? error.message ?? error;
 
-      if (group) group.instances = [...group.instances, ...instances];
-      else if (this.service) info.instancesGroups.push(newGroup);
+      notification.error({ message });
+    }
+    console.error(error);
+  } finally {
+  }
+};
+const orderConfirm = () => {
+  const domains = Object.keys(products.value);
 
-      if (!this.userdata.uuid) {
-        this.onLogin.redirect = this.$route.name;
-        this.onLogin.info = {
-          type: "domains",
-          title: "Domains",
-          cost: this.getProducts().pricing[this.resources.period],
-          currency: this.currency.code,
-        };
-        this.onLogin.action = () => {
-          this.createDomains(info);
-        };
+  if (resources.value.reg_password.length < 10) {
+    openNotification("error", {
+      message: t("pass at least 10 characters"),
+    });
+    return;
+  }
+  if (!domains.every((el) => el.match(/.+\..+/))) {
+    message.error(t("domain is wrong"));
+    return;
+  }
 
-        this.$router.push({ name: "login" });
-        return;
-      }
+  const instance = {
+    config: {},
+    billingPlan: plans.value.find(({ uuid }) => uuid === plan.value),
+  };
+  const isPayg = checkPayg(instance);
+  const price = getProducts.value.pricing[resources.value.period];
 
-      try {
-        await this.$refs.form.validate();
-        this.createDomains(info);
-      } catch {
-        this.openNotification("error", {
-          message: this.$t("all fields are required"),
-        });
-      }
-    },
-    createDomains(info) {
-      this.modal.confirmLoading = true;
-      const action = this.service ? "update" : "create";
-      const orderData = this.service
-        ? info
-        : {
-            namespace: this.namespace,
-            service: {
-              title: this.userdata.title,
-              context: {},
-              version: "1",
-              instancesGroups: [info],
-            },
-          };
+  if (isPayg && !checkBalance(price)) return;
+  modal.value.confirmCreate = true;
+};
 
-      this.instancesStore[`${action}Service`](orderData)
-        .then(async ({ uuid, instancesGroups }) => {
-          await this.deployService(
-            uuid,
-            this.$t("Domain created successfully")
-          );
-          const { instances } =
-            instancesGroups.find(({ sp }) => sp === this.provider) ?? {};
-          let instance;
+const searchCountries = (input, option) => {
+  const country = option.children(option)[0].children.toLowerCase();
 
-          for (let i = instances.length - 1; i >= 0; i--) {
-            const { title } = instances[i];
+  return country.includes(input.toLowerCase());
+};
 
-            if (title === this.getProducts.title) {
-              instance = instances[i];
-            }
-          }
+const removeProduct = (domain, index) => {
+  removeFromCart.value(domain, index);
+  products.value[domain.name] = undefined;
 
-          if (this.namespacesStore.namespaces.length < 1) {
-            await this.namespacesStore.fetch();
-          }
+  products.value = Object.keys(products.value).reduce((acc, key) => {
+    if (products.value[key]) {
+      acc[key] = products.value[key];
+    }
 
-          const { access } = this.namespacesStore.namespaces.find(
-            ({ uuid }) => uuid === this.namespace
-          );
-          const account = access.namespace ?? this.namespace;
+    return acc;
+  }, {});
+};
 
-          localStorage.setItem("order", "Invoice");
-          this.$router.push({ path: "/billing" });
-        })
-        .catch((error) => {
-          const url =
-            error.response?.data.redirect_url ?? error.response?.data ?? error;
+watch(
+  [selectedProduct, periods, products, onCart],
+  () => {
+    const prices = { suffix: userdata.value.currency.title };
 
-          if (url.startsWith && url.startsWith("http")) {
-            localStorage.setItem("order", "Invoice");
-            this.$router.push({ path: "/billing" });
-            return;
-          }
-
-          const matched = (
-            error.response?.data?.message ??
-            error.message ??
-            ""
-          ).split(/error:"|error: "/);
-          const message = matched.at(-1).split('" ').at(0);
-
-          if (message) {
-            this.$notification.error({ message });
-          } else {
-            const message =
-              error.response?.data?.message ?? error.message ?? error;
-
-            this.$notification.error({ message });
-          }
-          console.error(error);
-        });
-    },
-    orderConfirm() {
-      const domains = Object.keys(this.products);
-
-      if (this.resources.reg_password.length < 10) {
-        this.openNotification("error", {
-          message: this.$t("pass at least 10 characters"),
-        });
-        return;
-      }
-      if (!domains.every((el) => el.match(/.+\..+/))) {
-        this.$message.error(this.$t("domain is wrong"));
-        return;
-      }
-
-      const instance = {
-        config: {},
-        billingPlan: this.plans.find(({ uuid }) => uuid === this.plan),
-      };
-      const isPayg = this.checkPayg(instance);
-      const price = this.getProducts().pricing[this.resources.period];
-
-      if (isPayg && !this.checkBalance(price)) return;
-      this.modal.confirmCreate = true;
-    },
-    getProducts() {
-      const prices = { suffix: this.userdata.currency.title };
-
-      if (this.onCart.length === 0) {
-        return {
-          pricing: this.periods.reduce(
-            (res, curr) => {
-              res[curr] = 0;
-              return res;
-            },
-            { ...prices }
-          ),
-        };
-      }
-      this.onCart.forEach(({ name }) => {
-        const domain = this.products[name] ?? {};
-
-        Object.entries(domain).forEach(([key, value]) => {
-          if (!prices[key]) prices[key] = 0;
-          prices[key] = +(prices[key] + +value).toFixed(2);
-        });
-      });
+    if (onCart.value.length === 0) {
       return {
-        name: `domains - ${this.onCart.length}`,
-        pricing: { ...prices },
+        pricing: periods.value.reduce(
+          (res, curr) => {
+            res[curr] = 0;
+            return res;
+          },
+          { ...prices }
+        ),
       };
-      // return this.products[this.options.provider].find(el => el.tarif == this.options.tarif);
-    },
-    searchCountries(input, option) {
-      const country = option.children(option)[0].children.toLowerCase();
+    }
+    onCart.value.forEach(({ name }) => {
+      const domain = products.value[name] ?? {};
 
-      return country.includes(input.toLowerCase());
-    },
+      Object.entries(domain).forEach(([key, value]) => {
+        if (!prices[key]) prices[key] = 0;
+        prices[key] = +(prices[key] + +value).toFixed(2);
+      });
+    });
+    getProducts.value = {
+      name: `Domain - ${selectedProduct.value}`,
+      pricing: { ...prices },
+    };
   },
-  // watch: {
-  //   'options.provider'() {
-  //     this.options.tarif = this.products[this.options.provider][0].tarif;
-  //   }
-  // }
+  { deep: true }
+);
+</script>
+
+<script>
+export default {
+  name: "DomainOrder",
 };
 </script>
 
