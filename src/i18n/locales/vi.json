@@ -222,6 +222,12 @@
     "enter": "Truy cập",
     "all fields are required": "Vui lòng điền vào tất cả các trường",
     "field must contain more characters": "Chưa nhập đủ ký tự cho trường",
+    "support_view": {
+      "delet_chat": {
+        "action": "Xóa cuộc trò chuyện",
+        "message": "Bạn có chắc chắn muốn xóa trò chuyện này không?"
+      }
+    },
     "advice": {
       "look up": "Tra cứu",
       "You have billed for the renewal of this virtual machine": "Bạn đã được lập hóa đơn cho việc gia hạn VM này",

@@ -378,6 +378,18 @@ export const useChatsStore = defineStore("chats", () => {
       }
     },
 
+    async deleteChat(chat) {
+      try {
+        const chatsApi = createPromiseClient(ChatsAPI, transport);
+        const response = await chatsApi.delete(new Chat(chat));
+
+        return response;
+      } catch (error) {
+        console.debug(error);
+        throw error;
+      }
+    },
+
     async createChat(data) {
       try {
         const chatsApi = createPromiseClient(ChatsAPI, transport);
