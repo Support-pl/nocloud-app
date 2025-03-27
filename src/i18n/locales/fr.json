@@ -295,6 +295,12 @@
     "Add SSH key successfully": "Ajouter la clé SSH avec succès",
     "error delete SSH key": "Erreur lors de la suppression de la clé SSH",
     "Error adding SSH key": "Erreur lors de l'ajout de la clé SSH",
+    "support_view": {
+      "delet_chat": {
+        "action": "Supprimer le chat",
+        "message": "Voulez-vous vraiment supprimer ce chat?"
+      }
+    },
     "advice": {
       "look up": "Chercher",
       "You have billed for the renewal of this virtual machine": "Vous avez été facturé pour le renouvellement de cette machine virtuelle.",

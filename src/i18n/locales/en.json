@@ -414,6 +414,12 @@
     "error delete SSH key": "Error delete SSH key",
     "Error adding SSH key": "Error adding SSH key",
     "Please select at least one option": "Please select at least one option",
+    "support_view": {
+      "delet_chat": {
+        "action": "Delete the chat",
+        "message": "Do you definitely want to remove this chat?"
+      }
+    },
     "advice": {
       "look up": "look up",
       "You have billed for the renewal of this virtual machine": "You have been billed for the renewal of this virtual machine.",

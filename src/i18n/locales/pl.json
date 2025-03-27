@@ -436,6 +436,12 @@
       "address1": "Adres Linia 1",
       "address2": "Adres Linia 2"
     },
+    "support_view": {
+      "delet_chat": {
+        "action": "Usuń czat",
+        "message": "Czy zdecydowanie chcesz usunąć ten czat?"
+      }
+    },
     "ssl_product": {
       "firstname": "Imię",
       "lastname": "Nazwisko",

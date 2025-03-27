@@ -775,6 +775,12 @@
       },
       "placeholder": "Промокод"
     },
+    "support_view": {
+      "delet_chat": {
+        "action": "Удалить чат",
+        "message": "Вы точно хотите удалить этот чат?"
+      }
+    },
     "vpn": {
       "fields": {
         "password": "Пароль",
