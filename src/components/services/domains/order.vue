@@ -83,7 +83,12 @@
                     v-model:checked="resources.who_is_privacy"
                     size="small"
                   />
-                  {{ capitalize($t("domain_product.who_is_privacy")) }} (3$)
+                  {{ capitalize($t("domain_product.who_is_privacy")) }} ({{
+                    [
+                      formatPrice(whoIsPrivacyResource?.price * onCart.length),
+                      currency.title,
+                    ].join(" ")
+                  }})
                 </a-col>
                 <a-col span="24">
                   <a-switch
@@ -235,7 +240,7 @@
                 <span class="description-body__domain-name">
                   {{
                     products[domain.name] &&
-                    products[domain.name][resources.period]
+                    formatPrice(products[domain.name][resources.period])
                   }}
                   {{ currency.title }}
                 </span>
@@ -286,7 +291,14 @@
 
         <a-row justify="space-around">
           <a-col v-if="!fetchLoading" style="font-size: 1.5rem">
-            {{ getProducts.pricing[resources.period] }}
+            {{
+              formatPrice(
+                getProducts.pricing[resources.period] +
+                  (!resources.who_is_privacy
+                    ? 0
+                    : whoIsPrivacyResource?.price * onCart.length)
+              )
+            }}
             {{ currency.title }}
           </a-col>
           <a-col v-else>
@@ -392,7 +404,7 @@ const emits = defineEmits(["change"]);
 
 const checkBalance = inject("checkBalance", () => {});
 
-const { currency } = useCurrency();
+const { currency, formatPrice } = useCurrency();
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -518,6 +530,13 @@ const plans = computed(() => {
     }) ?? []
   );
 });
+
+const whoIsPrivacyResource = computed(() => {
+  return (
+    plans.value?.find(({ uuid }) => uuid === plan.value)?.resources ?? []
+  ).find((resource) => resource.key === "who_is_privacy");
+});
+
 const rules = computed(() => {
   const message = t("ssl_product.field is required");
   const c = form.value.country;
@@ -569,14 +588,6 @@ const fetch = async () => {
 
     res.forEach(({ meta }) => {
       Object.keys(meta.prices).forEach((key) => {
-        console.log(
-          +meta.prices[key],
-          +meta.prices[key] +
-            (+fullPlan.fee.default
-              ? meta.prices[key] * (fullPlan.fee.default / 100)
-              : 0)
-        );
-
         meta.prices[key] =
           +meta.prices[key] +
           (+fullPlan.fee.default
