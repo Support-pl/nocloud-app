@@ -123,6 +123,22 @@
         >
           {{ $t("Add") }}
         </a-button>
+
+        <a-popconfirm
+          :title="$t('support_view.delet_chat.message')"
+          :ok-text="$t('Confirm')"
+          :cancel-text="$t('Cancel')"
+          @confirm="deleteChat"
+        >
+          <a-button
+            :loading="isDeleteLoading"
+            style="margin-left: 10px"
+            danger
+            ghost
+          >
+            {{ capitalize($t("support_view.delet_chat.action")) }}
+          </a-button>
+        </a-popconfirm>
       </template>
     </template>
   </a-alert>
@@ -136,6 +152,7 @@ import {
   ref,
   nextTick,
   defineAsyncComponent,
+  capitalize,
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -196,6 +213,7 @@ const isEditLoading = ref(false);
 const isPromptLoading = ref(false);
 const isPromptsLoading = ref(false);
 const notification = ref();
+const isDeleteLoading = ref(false);
 
 watch(
   () => props.chat,
@@ -337,6 +355,18 @@ async function updateChat() {
     supportStore.isAddingTicket = false;
   }
 }
+
+const deleteChat = async () => {
+  isDeleteLoading.value = true;
+
+  try {
+    await chatsStore.deleteChat(chat.value);
+
+    router.go(-1);
+  } finally {
+    isDeleteLoading.value = false;
+  }
+};
 
 onMounted(() => {
   window.addEventListener("resize", () => {
