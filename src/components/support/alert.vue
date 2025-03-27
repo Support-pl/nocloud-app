@@ -146,6 +146,7 @@ import { useSupportStore } from "@/stores/support.js";
 
 import { useNotification } from "@/hooks/utils";
 import { getImageName, onError, generateUuid } from "@/functions.js";
+import { toRefs } from "vue";
 
 const downIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DownOutlined")
@@ -161,6 +162,7 @@ const props = defineProps({
   chat: { type: Object, required: true },
   isLoading: { type: Boolean, default: false },
 });
+const { chat } = toRefs(props);
 const emits = defineEmits(["update:paddingTop"]);
 
 const router = useRouter();
@@ -237,7 +239,7 @@ const currentPrompts = computed(() =>
 );
 
 const model = computed(() => {
-  const model = props.chat?.meta?.data?.model.toJSON() ?? "";
+  const model = chat.value?.meta?.data?.model?.toJSON() ?? "";
 
   return model ?? "";
 });
