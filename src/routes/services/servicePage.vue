@@ -315,7 +315,6 @@ const description = computed(() => {
 
 async function onStart() {
   authStore.fetchBillingData();
-
   await instancesStore.fetch();
 
   const domain = instancesStore.getInstances.find(
@@ -435,44 +434,6 @@ async function onStart() {
       nextduedate: expiredate,
     };
     info.value[0].type = "";
-
-    if (groupname === "Domains") {
-      response = await api.servicesProviders.action({
-        uuid: domain.sp,
-        action: "get_domain_price",
-        params: { domain: service.value.domain },
-      });
-    } else {
-      response = { meta: "done" };
-    }
-  }
-
-  const { meta } = response;
-  let id;
-
-  if (meta?.prices) {
-    const { period } = service.value.resources;
-
-    service.value.recurringamount = meta.prices[period];
-  } else if (meta !== "done") {
-    const response = await authStore.fetchBillingData();
-    id = response.client_id;
-  }
-
-  let result;
-  if (!id) return "done";
-  if (productsStore.products.length < 1) {
-    result = productsStore.fetch(id);
-  }
-
-  if (result === "done") return;
-  const product = productsStore.products.find(
-    ({ id }) => `${id}` === `${route.params.id}`
-  );
-
-  if (product) {
-    service.value = product;
-    info.value.pop();
   }
 }
 

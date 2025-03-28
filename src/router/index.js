@@ -238,6 +238,18 @@ const routes = [
         },
       },
       {
+        path: "/domain/:id",
+        name: "openDomain",
+        component: () => import("@/routes/domains/openDomain.vue"),
+        meta: {
+          mustBeLoggined: true,
+          footerTitle: "services",
+          isNeedBackButton: true,
+          isNeedBalance: true,
+          headerTitle: "Domain",
+        },
+      },
+      {
         path: "cabinet",
         name: "cabinet",
         meta: {
