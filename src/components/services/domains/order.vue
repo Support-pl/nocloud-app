@@ -150,15 +150,9 @@
                     v-model:value="form.country"
                     show-search
                     style="width: 100%"
+                    :options="countriesOptions"
                     :filter-option="searchCountries"
-                  >
-                    <a-select-option
-                      v-for="country in countries"
-                      :key="country.code"
-                    >
-                      {{ $t(`country.${country.code}`) }}
-                    </a-select-option>
-                  </a-select>
+                  />
                 </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
@@ -865,12 +859,6 @@ const orderConfirm = () => {
   modal.value.confirmCreate = true;
 };
 
-const searchCountries = (input, option) => {
-  const country = option.children(option)[0].children.toLowerCase();
-
-  return country.includes(input.toLowerCase());
-};
-
 const removeProduct = (domain, index) => {
   removeFromCart.value(domain, index);
   products.value[domain.name] = undefined;
@@ -882,6 +870,17 @@ const removeProduct = (domain, index) => {
 
     return acc;
   }, {});
+};
+
+const countriesOptions = computed(() => {
+  return countries.map((country) => ({
+    value: country.code,
+    label: t(`country.${country.code}`),
+  }));
+});
+
+const searchCountries = (input, option) => {
+  return option.label.toLowerCase().includes(input.toLowerCase());
 };
 
 watch(
