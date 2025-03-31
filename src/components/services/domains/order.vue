@@ -585,7 +585,7 @@ const fetch = async () => {
   try {
     const res = await Promise.all(promises);
     let convertPromises = [];
-    let data;
+    let data = [];
 
     const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
 
@@ -600,25 +600,22 @@ const fetch = async () => {
     });
 
     if (currenciesStore.defaultCurrency.code !== "USD") {
+      const amounts = [];
+
       res.forEach(({ meta }) => {
         Object.keys(meta.prices).forEach((key) => {
-          const convert = async () => {
-            const converted = await currenciesStore.convert({
-              from: "USD",
-              to: currenciesStore.defaultCurrency.code,
-              amount: meta.prices[key],
-            });
-
-            return { from: meta.prices[key], converted: converted.amount };
-          };
-
-          convertPromises.push(convert());
+          amounts.push(meta.prices[key]);
         });
       });
+      const response = await currenciesStore.convert({
+        from: "USD",
+        to: currenciesStore.defaultCurrency.code,
+        amounts,
+      });
 
-      data = await Promise.all(convertPromises);
-    } else {
-      data = [];
+      amounts.forEach((amount, index) => {
+        data.push({ from: amount, converted: response.amounts[index] });
+      });
     }
 
     res.forEach(({ meta }, i) => {
@@ -626,7 +623,7 @@ const fetch = async () => {
 
       Object.keys(meta.prices).forEach((key) => {
         meta.prices[key] =
-          data.find((d) => d.from === meta.prices[key])?.converted ??
+          data.find((d) => d.from == meta.prices[key])?.converted ??
           meta.prices[key];
       });
 
@@ -634,30 +631,25 @@ const fetch = async () => {
     });
 
     convertPromises = [];
+    data = [];
 
     if (currenciesStore.defaultCurrency.code !== currency.value.code) {
+      const amounts = [];
+
       res.forEach(({ meta }) => {
         Object.keys(meta.prices).forEach((key) => {
-          const convert = async () => {
-            const converted = await currenciesStore.convert({
-              to: currency.value.code,
-              from: currenciesStore.defaultCurrency.code,
-              amount: meta.prices[key],
-            });
-
-            return {
-              from: meta.prices[key],
-              converted: converted.amount,
-            };
-          };
-
-          convertPromises.push(convert());
+          amounts.push(meta.prices[key]);
         });
       });
+      const response = await currenciesStore.convert({
+        from: currenciesStore.defaultCurrency.code,
+        to: currency.value.code,
+        amounts,
+      });
 
-      data = await Promise.all(convertPromises);
-    } else {
-      data = [];
+      amounts.forEach((amount, index) => {
+        data.push({ from: amount, converted: response.amounts[index] });
+      });
     }
 
     res.forEach(({ meta }, i) => {
@@ -665,7 +657,7 @@ const fetch = async () => {
 
       Object.keys(meta.prices).forEach((key) => {
         meta.prices[key] =
-          data?.find((d) => d.from === meta.prices[key])?.converted ??
+          data?.find((d) => d.from == meta.prices[key])?.converted ??
           meta.prices[key];
       });
 
