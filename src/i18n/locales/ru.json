@@ -522,6 +522,7 @@
       "BIC": "BIC"
     },
     "ssl_product": {
+      "postal_code_not_valid": "Почтовый индекс недействителен для выбранной страны",
       "firstname": "Имя",
       "lastname": "Фамилия",
       "state": "Район",

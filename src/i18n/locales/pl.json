@@ -443,6 +443,7 @@
       }
     },
     "ssl_product": {
+      "postal_code_not_valid": "Kod pocztowy jest nieprawidłowy dla wybranego kraju",
       "firstname": "Imię",
       "lastname": "Nazwisko",
       "state": "Państwo",
