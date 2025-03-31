@@ -76,14 +76,19 @@
             </a-col>
           </a-row>
 
-          <a-form ref="form" layout="vertical" :model="form">
+          <a-form
+            validate-on-rule-change
+            ref="form"
+            layout="vertical"
+            :model="form"
+          >
             <a-row :gutter="[15, 10]" style="margin-top: 15px">
               <a-col span="24"> {{ capitalize($t("user data")) }}: </a-col>
               <a-col :xs="24" :sm="12">
                 <a-form-item
                   name="first_name"
                   :label="$t('clientinfo.firstname')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.first_name" />
                 </a-form-item>
@@ -92,7 +97,7 @@
                 <a-form-item
                   name="last_name"
                   :label="$t('clientinfo.lastname')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.last_name" />
                 </a-form-item>
@@ -101,7 +106,7 @@
                 <a-form-item
                   name="email"
                   :label="$t('clientinfo.email')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.email" />
                 </a-form-item>
@@ -110,7 +115,7 @@
                 <a-form-item
                   name="phone"
                   :label="$t('clientinfo.phonenumber')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.phone" />
                 </a-form-item>
@@ -119,7 +124,7 @@
                 <a-form-item
                   name="country"
                   :label="$t('clientinfo.countryname')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-select
                     v-model:value="form.country"
@@ -134,7 +139,7 @@
                 <a-form-item
                   name="state"
                   :label="$t('clientinfo.state')"
-                  :rules="rules.state"
+                  :rules="[rules.state]"
                 >
                   <a-input v-model:value="form.state" />
                 </a-form-item>
@@ -143,7 +148,7 @@
                 <a-form-item
                   name="city"
                   :label="$t('clientinfo.city')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.city" />
                 </a-form-item>
@@ -152,7 +157,7 @@
                 <a-form-item
                   name="postal_code"
                   :label="$t('clientinfo.postcode')"
-                  :rules="rules.postal_code"
+                  :rules="[rules.postal_code]"
                 >
                   <a-input v-model:value="form.postal_code" />
                 </a-form-item>
@@ -161,7 +166,7 @@
                 <a-form-item
                   name="address1"
                   :label="$t('clientinfo.address1')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.address1" />
                 </a-form-item>
@@ -175,7 +180,7 @@
                 <a-form-item
                   name="org_name"
                   :label="$t('clientinfo.companyname')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.org_name" />
                 </a-form-item>
@@ -321,7 +326,10 @@ import {
   watch,
 } from "vue";
 import { storeToRefs } from "pinia";
-import passwordMeter from "vue-simple-password-meter";
+import {
+  postcodeValidator,
+  postcodeValidatorExistsForCountry,
+} from "postcode-validator";
 
 import useCreateInstance from "@/hooks/instances/create.js";
 import { checkPayg } from "@/functions.js";
@@ -502,12 +510,44 @@ const whoIsPrivacyResource = computed(() => {
 
 const rules = computed(() => {
   const message = t("ssl_product.field is required");
-  const c = form.value.country;
 
   return {
-    req: [{ required: true, message }],
-    state: [{ required: c === "CA" || c === "US" || c === "ES", message }],
-    postal_code: [{ required: c === "CA" || c === "US", message }],
+    req: {
+      required: true,
+      message,
+      trigger: "blur",
+      validator: (d) => {
+        const value = form.value[d.field];
+        if (!!value && value.length > 1) {
+          return Promise.resolve();
+        }
+
+        return Promise.reject();
+      },
+    },
+    state: {
+      required: ["CA", "US", "ES"].includes(form.value.country),
+      message,
+      trigger: "blur",
+    },
+    postal_code: {
+      validator: () => {
+        const country = form.value.country;
+        const value = form.value.postal_code;
+
+        if (
+          !postcodeValidatorExistsForCountry(country) ||
+          postcodeValidator(value, country)
+        ) {
+          return Promise.resolve();
+        }
+
+        return Promise.reject();
+      },
+      required: false,
+      message: t("ssl_product.postal_code_not_valid"),
+      trigger: "blur",
+    },
   };
 });
 
@@ -756,8 +796,6 @@ const createDomains = async (info) => {
       };
 
   try {
-    console.log(orderData);
-    return;
     await Promise.all(
       Object.keys(products.value).map((key) =>
         api.servicesProviders.action({
@@ -811,7 +849,7 @@ const createDomains = async (info) => {
   } finally {
   }
 };
-const orderConfirm = () => {
+const orderConfirm = async () => {
   const domains = Object.keys(products.value);
 
   if (!domains.every((el) => el.match(/.+\..+/))) {
@@ -826,7 +864,8 @@ const orderConfirm = () => {
   const isPayg = checkPayg(instance);
   const price = getProducts.value.pricing[resources.value.period];
 
-  if (isPayg && !checkBalance(price)) return;
+  if ((isPayg && !checkBalance(price)) || !(await form.value.validate()))
+    return;
   modal.value.confirmCreate = true;
 };
 
