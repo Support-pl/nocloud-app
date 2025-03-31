@@ -41,44 +41,19 @@
           </a-row>
 
           <a-row :gutter="[10, 10]" align="bottom">
-            <a-col span="12">
-              <a-row :gutter="[10, 10]">
-                <a-col>
-                  {{ $t("Data for authorization in the control panel") }}:
-                </a-col>
-                <a-col span="24">
-                  <a-input
-                    v-model:value="resources.reg_username"
-                    :placeholder="$t('clientinfo.username')"
-                  />
-                </a-col>
-                <a-col span="24">
-                  <password-meter
-                    style="height: 10px; margin-top: 0"
-                    :password="resources.reg_password"
-                    @score="(value) => (score = value.score)"
-                  />
-
-                  <a-input-password
-                    v-model:value="resources.reg_password"
-                    :placeholder="$t('clientinfo.password')"
-                  />
-                </a-col>
-              </a-row>
-            </a-col>
-            <a-col span="12">
+            <a-col span="24">
               <a-row :gutter="[10, 10]">
                 <a-col span="24">
                   {{ capitalize($t("advanced options")) }}:
                 </a-col>
-                <a-col span="24">
+                <a-col span="12">
                   <a-switch
                     v-model:checked="resources.auto_renew"
                     size="small"
                   />
                   {{ capitalize($t("domain_product.auto_renew")) }}
                 </a-col>
-                <a-col span="24">
+                <a-col span="12">
                   <a-switch
                     v-model:checked="resources.who_is_privacy"
                     size="small"
@@ -90,7 +65,7 @@
                     ].join(" ")
                   }})
                 </a-col>
-                <a-col span="24">
+                <a-col span="12">
                   <a-switch
                     v-model:checked="resources.lock_domain"
                     size="small"
@@ -309,13 +284,7 @@
               block
               type="primary"
               shape="round"
-              :disabled="
-                !onCart.length ||
-                !namespace ||
-                !plan ||
-                !resources.reg_username ||
-                score < 4
-              "
+              :disabled="!onCart.length || !namespace || !plan"
               @click="orderConfirm"
             >
               {{ capitalize($t("order")) }}
@@ -374,6 +343,7 @@ import api from "@/api";
 import { useNamespasesStore } from "@/stores/namespaces";
 import { Kind } from "nocloud-proto/proto/es/billing/billing_pb";
 import { useCurrenciesStore } from "@/stores/currencies";
+import { GeneratePassword } from "js-generate-password";
 
 const searchIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SearchOutlined")
@@ -407,7 +377,6 @@ const { openNotification } = useNotification();
 
 const products = ref({});
 const productsDefaultCurrency = ref({});
-const score = ref(0);
 const plan = ref(null);
 const service = ref(null);
 const provider = ref(null);
@@ -719,6 +688,12 @@ const orderClickHandler = async () => {
       ...resources.value,
       user: form.value,
       domain,
+      reg_username: "user" + Math.random().toString(16).slice(2),
+      reg_password: GeneratePassword({
+        length: 20,
+        numbers: true,
+        symbols: false,
+      }),
     },
     title: `Domain - ${domain}`,
     billing_plan: { uuid: fullPlan.uuid },
@@ -781,6 +756,8 @@ const createDomains = async (info) => {
       };
 
   try {
+    console.log(orderData);
+    return;
     await Promise.all(
       Object.keys(products.value).map((key) =>
         api.servicesProviders.action({
@@ -837,12 +814,6 @@ const createDomains = async (info) => {
 const orderConfirm = () => {
   const domains = Object.keys(products.value);
 
-  if (resources.value.reg_password.length < 10) {
-    openNotification("error", {
-      message: t("pass at least 10 characters"),
-    });
-    return;
-  }
   if (!domains.every((el) => el.match(/.+\..+/))) {
     message.error(t("domain is wrong"));
     return;
