@@ -53,7 +53,11 @@
                   />
                   {{ capitalize($t("domain_product.who_is_privacy")) }} ({{
                     [
-                      formatPrice(whoIsPrivacyResource?.price * onCart.length),
+                      formatPrice(
+                        (whoIsPrivacyAddon?.periods[
+                          resources.period * 86400 * 365
+                        ] || 0) * onCart.length
+                      ),
                       currency.title,
                     ].join(" ")
                   }})
@@ -262,14 +266,7 @@
 
         <a-row justify="space-around">
           <a-col v-if="!fetchLoading" style="font-size: 1.5rem">
-            {{
-              formatPrice(
-                getProducts.pricing[resources.period] +
-                  (!resources.who_is_privacy
-                    ? 0
-                    : whoIsPrivacyResource?.price * onCart.length)
-              )
-            }}
+            {{ formatPrice(fullPrice) }}
             {{ currency.title }}
           </a-col>
           <a-col v-else>
@@ -349,6 +346,7 @@ import { useNamespasesStore } from "@/stores/namespaces";
 import { Kind } from "nocloud-proto/proto/es/billing/billing_pb";
 import { useCurrenciesStore } from "@/stores/currencies";
 import { GeneratePassword } from "js-generate-password";
+import { useAddonsStore } from "@/stores/addons";
 
 const searchIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SearchOutlined")
@@ -412,10 +410,12 @@ const instancesStore = useInstancesStore();
 const authStore = useAuthStore();
 const appStore = useAppStore();
 const namespacesStore = useNamespasesStore();
+const addonsStore = useAddonsStore();
 const currenciesStore = useCurrenciesStore();
 
 const { billingUser, isLogged, userdata } = storeToRefs(authStore);
 const { namespaces } = storeToRefs(namespacesStore);
+const { addons } = storeToRefs(addonsStore);
 
 const { onLogin } = storeToRefs(appStore);
 
@@ -499,11 +499,19 @@ const plans = computed(() => {
   );
 });
 
-const whoIsPrivacyResource = computed(() => {
-  return (
-    plans.value?.find(({ uuid }) => uuid === plan.value)?.resources ?? []
-  ).find((resource) => resource.key === "who_is_privacy");
+const whoIsPrivacyAddon = computed(() => {
+  return addons.value?.find((addon) => addon.meta?.type === "who_is_privacy");
 });
+
+const fullPrice = computed(
+  () =>
+    getProducts.value.pricing[resources.value.period] +
+    (!resources.value.who_is_privacy
+      ? 0
+      : (whoIsPrivacyAddon.value?.periods[
+          resources.value.period * 86400 * 365
+        ] || 0) * onCart.value.length)
+);
 
 const rules = computed(() => {
   const message = t("ssl_product.field is required");
@@ -580,6 +588,10 @@ watch(provider, async (uuid) => {
 
     cachedPlans.value[uuid] = pool;
     plan.value = plans.value[0]?.uuid;
+
+    await addonsStore.fetch({
+      filters: { plan_uuid: [plan.value] },
+    });
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
@@ -757,6 +769,10 @@ const orderClickHandler = async () => {
         symbols: false,
       }),
     },
+    addons:
+      resources.value.who_is_privacy && whoIsPrivacyAddon.value.uuid
+        ? [whoIsPrivacyAddon.value.uuid]
+        : [],
     title: `Domain - ${domain}`,
     billing_plan: { uuid: fullPlan.uuid },
     product: domain,
@@ -787,12 +803,7 @@ const orderClickHandler = async () => {
       type: "domains",
       title:
         showcase.promo?.[locale.value]?.title ?? showcase.title ?? "domains",
-      cost: formatPrice(
-        getProducts.value.pricing[resources.value.period] +
-          (!resources.value.who_is_privacy
-            ? 0
-            : whoIsPrivacyResource.value?.price * onCart.value.length)
-      ),
+      cost: formatPrice(fullPrice.value),
       currency: currency.value.code,
     };
 
@@ -848,6 +859,10 @@ const createDomains = async (info) => {
 
     const { uuid } = await instancesStore[`${action}Service`](orderData);
     await deployService(uuid, t("Domain created successfully"));
+
+    onCart.value.forEach((domain, index) => {
+      removeFromCart.value(domain, index);
+    });
 
     router.push({ path: "/billing" });
   } catch (error) {
