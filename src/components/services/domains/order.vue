@@ -48,13 +48,6 @@
                 </a-col>
                 <a-col span="12">
                   <a-switch
-                    v-model:checked="resources.auto_renew"
-                    size="small"
-                  />
-                  {{ capitalize($t("domain_product.auto_renew")) }}
-                </a-col>
-                <a-col span="12">
-                  <a-switch
                     v-model:checked="resources.who_is_privacy"
                     size="small"
                   />
@@ -404,7 +397,6 @@ const resources = ref({
   reg_username: "",
   reg_password: "",
   period: 1,
-  auto_renew: true,
   who_is_privacy: false,
   lock_domain: true,
 });
@@ -1053,7 +1045,7 @@ td.ant-descriptions-item-content:nth-child(6) {
   margin-top: 15px;
   margin-bottom: 15px;
   width: 100%;
-  max-width: 1024px;
+  max-width: 1224px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
