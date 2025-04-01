@@ -99,7 +99,7 @@
                 <a-form-item
                   name="email"
                   :label="$t('clientinfo.email')"
-                  :rules="[rules.req]"
+                  :rules="[rules.req, rules.email]"
                 >
                   <a-input v-model:value="form.email" />
                 </a-form-item>
@@ -516,6 +516,23 @@ const rules = computed(() => {
       validator: (d) => {
         const value = form.value[d.field];
         if (!!value && value.length > 1) {
+          return Promise.resolve();
+        }
+
+        return Promise.reject();
+      },
+    },
+    email: {
+      required: true,
+      trigger: "blur",
+      message: t("email is not valid"),
+      validator: (d) => {
+        const value = form.value[d.field];
+        if (
+          !!value &&
+          value.length > 1 &&
+          /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/.test(value)
+        ) {
           return Promise.resolve();
         }
 
