@@ -211,13 +211,17 @@
                 </span>
               </a-descriptions-item>
               <a-descriptions-item :span="3">
-                <span class="description-body__domain-name">
+                <span
+                  class="description-body__domain-name"
+                  v-if="!fetchLoading"
+                >
                   {{
                     products[domain.name] &&
                     formatPrice(products[domain.name][resources.period])
                   }}
                   {{ currency.title }}
                 </span>
+                <div v-else class="loadingLine loadingLine--total" />
               </a-descriptions-item>
               <a-descriptions-item :span="2">
                 <a-button
@@ -289,7 +293,7 @@
               block
               type="primary"
               shape="round"
-              :disabled="!onCart.length || !namespace || !plan"
+              :disabled="!onCart.length || !plan"
               @click="orderConfirm"
             >
               {{ capitalize($t("order")) }}
@@ -377,12 +381,13 @@ const emits = defineEmits(["change"]);
 const checkBalance = inject("checkBalance", () => {});
 
 const { currency, formatPrice } = useCurrency();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { deployService } = useCreateInstance();
 const { openNotification } = useNotification();
 
+const ogPrices = ref([]);
 const products = ref({});
 const productsDefaultCurrency = ref({});
 const plan = ref(null);
@@ -584,8 +589,6 @@ const fetch = async () => {
   );
   try {
     const res = await Promise.all(promises);
-    let convertPromises = [];
-    let data = [];
 
     const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
 
@@ -599,7 +602,32 @@ const fetch = async () => {
       });
     });
 
-    if (currenciesStore.defaultCurrency.code !== "USD") {
+    ogPrices.value = res;
+  } catch (err) {
+    const message = err.response?.data?.message ?? err.message ?? err;
+
+    openNotification("error", {
+      message: t(message),
+    });
+  } finally {
+    fetchLoading.value = false;
+    selectedProduct.value = onCart.value[0]?.name;
+  }
+};
+
+const convertPrices = async () => {
+  if (!ogPrices.value.length) {
+    return;
+  }
+  const res = JSON.parse(JSON.stringify(ogPrices.value));
+  let data = [];
+
+  fetchLoading.value = true;
+  try {
+    if (
+      currenciesStore.defaultCurrency.code !== "USD" &&
+      !Object.keys(productsDefaultCurrency.value).length
+    ) {
       const amounts = [];
 
       res.forEach(({ meta }) => {
@@ -630,7 +658,6 @@ const fetch = async () => {
       productsDefaultCurrency.value[name] = { ...meta.prices };
     });
 
-    convertPromises = [];
     data = [];
 
     if (currenciesStore.defaultCurrency.code !== currency.value.code) {
@@ -663,17 +690,11 @@ const fetch = async () => {
 
       products.value[name] = { ...meta.prices };
     });
-  } catch (err) {
-    const message = err.response?.data?.message ?? err.message ?? err;
-
-    openNotification("error", {
-      message: t(message),
-    });
   } finally {
     fetchLoading.value = false;
-    selectedProduct.value = onCart.value[0]?.name;
   }
 };
+
 const installDataToBuffer = () => {
   const interestedKeys = [
     "firstname",
@@ -748,15 +769,22 @@ const orderClickHandler = async () => {
   else if (fullService) info.instancesGroups.push(newGroup);
 
   if (!userdata.value.uuid) {
+    const showcase =
+      spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+
     onLogin.value.redirect = route.name;
+    onLogin.value.redirectQuery = route.query;
     onLogin.value.info = {
       type: "domains",
-      title: "Domains",
-      cost: getProducts.value.pricing[resources.value.period],
+      title:
+        showcase.promo?.[locale.value]?.title ?? showcase.title ?? "domains",
+      cost: formatPrice(
+        getProducts.value.pricing[resources.value.period] +
+          (!resources.value.who_is_privacy
+            ? 0
+            : whoIsPrivacyResource.value?.price * onCart.value.length)
+      ),
       currency: currency.value.code,
-    };
-    onLogin.value.action = () => {
-      createDomains(info);
     };
 
     router.push({ name: "login" });
@@ -888,7 +916,7 @@ const searchCountries = (input, option) => {
 watch(
   [selectedProduct, periods, products, onCart],
   () => {
-    const prices = { suffix: userdata.value.currency.title };
+    const prices = { suffix: currency.value.title };
 
     if (onCart.value.length === 0) {
       return {
@@ -916,6 +944,10 @@ watch(
   },
   { deep: true }
 );
+
+watch([ogPrices, currency], () => {
+  convertPrices();
+});
 </script>
 
 <script>
