@@ -41,44 +41,12 @@
           </a-row>
 
           <a-row :gutter="[10, 10]" align="bottom">
-            <a-col span="12">
-              <a-row :gutter="[10, 10]">
-                <a-col>
-                  {{ $t("Data for authorization in the control panel") }}:
-                </a-col>
-                <a-col span="24">
-                  <a-input
-                    v-model:value="resources.reg_username"
-                    :placeholder="$t('clientinfo.username')"
-                  />
-                </a-col>
-                <a-col span="24">
-                  <password-meter
-                    style="height: 10px; margin-top: 0"
-                    :password="resources.reg_password"
-                    @score="(value) => (score = value.score)"
-                  />
-
-                  <a-input-password
-                    v-model:value="resources.reg_password"
-                    :placeholder="$t('clientinfo.password')"
-                  />
-                </a-col>
-              </a-row>
-            </a-col>
-            <a-col span="12">
+            <a-col span="24">
               <a-row :gutter="[10, 10]">
                 <a-col span="24">
                   {{ capitalize($t("advanced options")) }}:
                 </a-col>
-                <a-col span="24">
-                  <a-switch
-                    v-model:checked="resources.auto_renew"
-                    size="small"
-                  />
-                  {{ capitalize($t("domain_product.auto_renew")) }}
-                </a-col>
-                <a-col span="24">
+                <a-col span="12">
                   <a-switch
                     v-model:checked="resources.who_is_privacy"
                     size="small"
@@ -90,7 +58,7 @@
                     ].join(" ")
                   }})
                 </a-col>
-                <a-col span="24">
+                <a-col span="12">
                   <a-switch
                     v-model:checked="resources.lock_domain"
                     size="small"
@@ -101,14 +69,19 @@
             </a-col>
           </a-row>
 
-          <a-form ref="form" layout="vertical" :model="form">
+          <a-form
+            validate-on-rule-change
+            ref="form"
+            layout="vertical"
+            :model="form"
+          >
             <a-row :gutter="[15, 10]" style="margin-top: 15px">
               <a-col span="24"> {{ capitalize($t("user data")) }}: </a-col>
               <a-col :xs="24" :sm="12">
                 <a-form-item
                   name="first_name"
                   :label="$t('clientinfo.firstname')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.first_name" />
                 </a-form-item>
@@ -117,7 +90,7 @@
                 <a-form-item
                   name="last_name"
                   :label="$t('clientinfo.lastname')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.last_name" />
                 </a-form-item>
@@ -126,7 +99,7 @@
                 <a-form-item
                   name="email"
                   :label="$t('clientinfo.email')"
-                  :rules="rules.req"
+                  :rules="[rules.req, rules.email]"
                 >
                   <a-input v-model:value="form.email" />
                 </a-form-item>
@@ -135,7 +108,7 @@
                 <a-form-item
                   name="phone"
                   :label="$t('clientinfo.phonenumber')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.phone" />
                 </a-form-item>
@@ -144,28 +117,22 @@
                 <a-form-item
                   name="country"
                   :label="$t('clientinfo.countryname')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-select
                     v-model:value="form.country"
                     show-search
                     style="width: 100%"
+                    :options="countriesOptions"
                     :filter-option="searchCountries"
-                  >
-                    <a-select-option
-                      v-for="country in countries"
-                      :key="country.code"
-                    >
-                      {{ $t(`country.${country.code}`) }}
-                    </a-select-option>
-                  </a-select>
+                  />
                 </a-form-item>
               </a-col>
               <a-col :xs="24" :sm="12">
                 <a-form-item
                   name="state"
                   :label="$t('clientinfo.state')"
-                  :rules="rules.state"
+                  :rules="[rules.state]"
                 >
                   <a-input v-model:value="form.state" />
                 </a-form-item>
@@ -174,7 +141,7 @@
                 <a-form-item
                   name="city"
                   :label="$t('clientinfo.city')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.city" />
                 </a-form-item>
@@ -183,7 +150,7 @@
                 <a-form-item
                   name="postal_code"
                   :label="$t('clientinfo.postcode')"
-                  :rules="rules.postal_code"
+                  :rules="[rules.postal_code]"
                 >
                   <a-input v-model:value="form.postal_code" />
                 </a-form-item>
@@ -192,7 +159,7 @@
                 <a-form-item
                   name="address1"
                   :label="$t('clientinfo.address1')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.address1" />
                 </a-form-item>
@@ -206,7 +173,7 @@
                 <a-form-item
                   name="org_name"
                   :label="$t('clientinfo.companyname')"
-                  :rules="rules.req"
+                  :rules="[rules.req]"
                 >
                   <a-input v-model:value="form.org_name" />
                 </a-form-item>
@@ -237,13 +204,17 @@
                 </span>
               </a-descriptions-item>
               <a-descriptions-item :span="3">
-                <span class="description-body__domain-name">
+                <span
+                  class="description-body__domain-name"
+                  v-if="!fetchLoading"
+                >
                   {{
                     products[domain.name] &&
                     formatPrice(products[domain.name][resources.period])
                   }}
                   {{ currency.title }}
                 </span>
+                <div v-else class="loadingLine loadingLine--total" />
               </a-descriptions-item>
               <a-descriptions-item :span="2">
                 <a-button
@@ -315,13 +286,7 @@
               block
               type="primary"
               shape="round"
-              :disabled="
-                !onCart.length ||
-                !namespace ||
-                !plan ||
-                !resources.reg_username ||
-                score < 4
-              "
+              :disabled="!onCart.length || !plan"
               @click="orderConfirm"
             >
               {{ capitalize($t("order")) }}
@@ -358,7 +323,10 @@ import {
   watch,
 } from "vue";
 import { storeToRefs } from "pinia";
-import passwordMeter from "vue-simple-password-meter";
+import {
+  postcodeValidator,
+  postcodeValidatorExistsForCountry,
+} from "postcode-validator";
 
 import useCreateInstance from "@/hooks/instances/create.js";
 import { checkPayg } from "@/functions.js";
@@ -380,6 +348,7 @@ import api from "@/api";
 import { useNamespasesStore } from "@/stores/namespaces";
 import { Kind } from "nocloud-proto/proto/es/billing/billing_pb";
 import { useCurrenciesStore } from "@/stores/currencies";
+import { GeneratePassword } from "js-generate-password";
 
 const searchIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SearchOutlined")
@@ -405,15 +374,15 @@ const emits = defineEmits(["change"]);
 const checkBalance = inject("checkBalance", () => {});
 
 const { currency, formatPrice } = useCurrency();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { deployService } = useCreateInstance();
 const { openNotification } = useNotification();
 
+const ogPrices = ref([]);
 const products = ref({});
 const productsDefaultCurrency = ref({});
-const score = ref(0);
 const plan = ref(null);
 const service = ref(null);
 const provider = ref(null);
@@ -428,7 +397,6 @@ const resources = ref({
   reg_username: "",
   reg_password: "",
   period: 1,
-  auto_renew: true,
   who_is_privacy: false,
   lock_domain: true,
 });
@@ -539,12 +507,61 @@ const whoIsPrivacyResource = computed(() => {
 
 const rules = computed(() => {
   const message = t("ssl_product.field is required");
-  const c = form.value.country;
 
   return {
-    req: [{ required: true, message }],
-    state: [{ required: c === "CA" || c === "US" || c === "ES", message }],
-    postal_code: [{ required: c === "CA" || c === "US", message }],
+    req: {
+      required: true,
+      message,
+      trigger: "blur",
+      validator: (d) => {
+        const value = form.value[d.field];
+        if (!!value && value.length > 1) {
+          return Promise.resolve();
+        }
+
+        return Promise.reject();
+      },
+    },
+    email: {
+      required: true,
+      trigger: "blur",
+      message: t("email is not valid"),
+      validator: (d) => {
+        const value = form.value[d.field];
+        if (
+          !!value &&
+          value.length > 1 &&
+          /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/.test(value)
+        ) {
+          return Promise.resolve();
+        }
+
+        return Promise.reject();
+      },
+    },
+    state: {
+      required: ["CA", "US", "ES"].includes(form.value.country),
+      message,
+      trigger: "blur",
+    },
+    postal_code: {
+      validator: () => {
+        const country = form.value.country;
+        const value = form.value.postal_code;
+
+        if (
+          !postcodeValidatorExistsForCountry(country) ||
+          postcodeValidator(value, country)
+        ) {
+          return Promise.resolve();
+        }
+
+        return Promise.reject();
+      },
+      required: false,
+      message: t("ssl_product.postal_code_not_valid"),
+      trigger: "blur",
+    },
   };
 });
 
@@ -581,8 +598,6 @@ const fetch = async () => {
   );
   try {
     const res = await Promise.all(promises);
-    let convertPromises = [];
-    let data;
 
     const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
 
@@ -596,78 +611,7 @@ const fetch = async () => {
       });
     });
 
-    if (currenciesStore.defaultCurrency.code !== "USD") {
-      res.forEach(({ meta }) => {
-        Object.keys(meta.prices).forEach((key) => {
-          const convert = async () => {
-            const converted = await currenciesStore.convert({
-              from: "USD",
-              to: currenciesStore.defaultCurrency.code,
-              amount: meta.prices[key],
-            });
-
-            return { from: meta.prices[key], converted: converted.amount };
-          };
-
-          convertPromises.push(convert());
-        });
-      });
-
-      data = await Promise.all(convertPromises);
-    } else {
-      data = [];
-    }
-
-    res.forEach(({ meta }, i) => {
-      const { name } = onCart.value[i];
-
-      Object.keys(meta.prices).forEach((key) => {
-        meta.prices[key] =
-          data.find((d) => d.from === meta.prices[key])?.converted ??
-          meta.prices[key];
-      });
-
-      productsDefaultCurrency.value[name] = { ...meta.prices };
-    });
-
-    convertPromises = [];
-
-    if (currenciesStore.defaultCurrency.code !== currency.value.code) {
-      res.forEach(({ meta }) => {
-        Object.keys(meta.prices).forEach((key) => {
-          const convert = async () => {
-            const converted = await currenciesStore.convert({
-              to: currency.value.code,
-              from: currenciesStore.defaultCurrency.code,
-              amount: meta.prices[key],
-            });
-
-            return {
-              from: meta.prices[key],
-              converted: converted.amount,
-            };
-          };
-
-          convertPromises.push(convert());
-        });
-      });
-
-      data = await Promise.all(convertPromises);
-    } else {
-      data = [];
-    }
-
-    res.forEach(({ meta }, i) => {
-      const { name } = onCart.value[i];
-
-      Object.keys(meta.prices).forEach((key) => {
-        meta.prices[key] =
-          data?.find((d) => d.from === meta.prices[key])?.converted ??
-          meta.prices[key];
-      });
-
-      products.value[name] = { ...meta.prices };
-    });
+    ogPrices.value = res;
   } catch (err) {
     const message = err.response?.data?.message ?? err.message ?? err;
 
@@ -679,6 +623,87 @@ const fetch = async () => {
     selectedProduct.value = onCart.value[0]?.name;
   }
 };
+
+const convertPrices = async () => {
+  if (!ogPrices.value.length) {
+    return;
+  }
+  const res = JSON.parse(JSON.stringify(ogPrices.value));
+  let data = [];
+
+  fetchLoading.value = true;
+  try {
+    if (
+      currenciesStore.defaultCurrency.code !== "USD" &&
+      !Object.keys(productsDefaultCurrency.value).length
+    ) {
+      const amounts = [];
+
+      res.forEach(({ meta }) => {
+        Object.keys(meta.prices).forEach((key) => {
+          amounts.push(meta.prices[key]);
+        });
+      });
+      const response = await currenciesStore.convert({
+        from: "USD",
+        to: currenciesStore.defaultCurrency.code,
+        amounts,
+      });
+
+      amounts.forEach((amount, index) => {
+        data.push({ from: amount, converted: response.amounts[index] });
+      });
+    }
+
+    res.forEach(({ meta }, i) => {
+      const { name } = onCart.value[i];
+
+      Object.keys(meta.prices).forEach((key) => {
+        meta.prices[key] =
+          data.find((d) => d.from == meta.prices[key])?.converted ??
+          meta.prices[key];
+      });
+
+      productsDefaultCurrency.value[name] = { ...meta.prices };
+    });
+
+    data = [];
+
+    if (currenciesStore.defaultCurrency.code !== currency.value.code) {
+      const amounts = [];
+
+      res.forEach(({ meta }) => {
+        Object.keys(meta.prices).forEach((key) => {
+          amounts.push(meta.prices[key]);
+        });
+      });
+      const response = await currenciesStore.convert({
+        from: currenciesStore.defaultCurrency.code,
+        to: currency.value.code,
+        amounts,
+      });
+
+      amounts.forEach((amount, index) => {
+        data.push({ from: amount, converted: response.amounts[index] });
+      });
+    }
+
+    res.forEach(({ meta }, i) => {
+      const { name } = onCart.value[i];
+
+      Object.keys(meta.prices).forEach((key) => {
+        meta.prices[key] =
+          data?.find((d) => d.from == meta.prices[key])?.converted ??
+          meta.prices[key];
+      });
+
+      products.value[name] = { ...meta.prices };
+    });
+  } finally {
+    fetchLoading.value = false;
+  }
+};
+
 const installDataToBuffer = () => {
   const interestedKeys = [
     "firstname",
@@ -725,6 +750,12 @@ const orderClickHandler = async () => {
       ...resources.value,
       user: form.value,
       domain,
+      reg_username: "user" + Math.random().toString(16).slice(2),
+      reg_password: GeneratePassword({
+        length: 20,
+        numbers: true,
+        symbols: false,
+      }),
     },
     title: `Domain - ${domain}`,
     billing_plan: { uuid: fullPlan.uuid },
@@ -747,15 +778,22 @@ const orderClickHandler = async () => {
   else if (fullService) info.instancesGroups.push(newGroup);
 
   if (!userdata.value.uuid) {
+    const showcase =
+      spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+
     onLogin.value.redirect = route.name;
+    onLogin.value.redirectQuery = route.query;
     onLogin.value.info = {
       type: "domains",
-      title: "Domains",
-      cost: getProducts.value.pricing[resources.value.period],
+      title:
+        showcase.promo?.[locale.value]?.title ?? showcase.title ?? "domains",
+      cost: formatPrice(
+        getProducts.value.pricing[resources.value.period] +
+          (!resources.value.who_is_privacy
+            ? 0
+            : whoIsPrivacyResource.value?.price * onCart.value.length)
+      ),
       currency: currency.value.code,
-    };
-    onLogin.value.action = () => {
-      createDomains(info);
     };
 
     router.push({ name: "login" });
@@ -840,15 +878,9 @@ const createDomains = async (info) => {
   } finally {
   }
 };
-const orderConfirm = () => {
+const orderConfirm = async () => {
   const domains = Object.keys(products.value);
 
-  if (resources.value.reg_password.length < 10) {
-    openNotification("error", {
-      message: t("pass at least 10 characters"),
-    });
-    return;
-  }
   if (!domains.every((el) => el.match(/.+\..+/))) {
     message.error(t("domain is wrong"));
     return;
@@ -861,14 +893,9 @@ const orderConfirm = () => {
   const isPayg = checkPayg(instance);
   const price = getProducts.value.pricing[resources.value.period];
 
-  if (isPayg && !checkBalance(price)) return;
+  if ((isPayg && !checkBalance(price)) || !(await form.value.validate()))
+    return;
   modal.value.confirmCreate = true;
-};
-
-const searchCountries = (input, option) => {
-  const country = option.children(option)[0].children.toLowerCase();
-
-  return country.includes(input.toLowerCase());
 };
 
 const removeProduct = (domain, index) => {
@@ -884,10 +911,21 @@ const removeProduct = (domain, index) => {
   }, {});
 };
 
+const countriesOptions = computed(() => {
+  return countries.map((country) => ({
+    value: country.code,
+    label: t(`country.${country.code}`),
+  }));
+});
+
+const searchCountries = (input, option) => {
+  return option.label.toLowerCase().includes(input.toLowerCase());
+};
+
 watch(
   [selectedProduct, periods, products, onCart],
   () => {
-    const prices = { suffix: userdata.value.currency.title };
+    const prices = { suffix: currency.value.title };
 
     if (onCart.value.length === 0) {
       return {
@@ -915,6 +953,10 @@ watch(
   },
   { deep: true }
 );
+
+watch([ogPrices, currency], () => {
+  convertPrices();
+});
 </script>
 
 <script>
@@ -1020,7 +1062,7 @@ td.ant-descriptions-item-content:nth-child(6) {
   margin-top: 15px;
   margin-bottom: 15px;
   width: 100%;
-  max-width: 1024px;
+  max-width: 1224px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;

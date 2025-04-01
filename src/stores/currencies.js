@@ -8,7 +8,7 @@ import {
 import { useAppStore } from "./app.js";
 import { createPromiseClient } from "@connectrpc/connect";
 import { useAuthStore } from "./auth.js";
-import { ConversionRequest } from "nocloud-proto/proto/es/billing/billing_pb.js";
+import { MultiConversionRequest } from "nocloud-proto/proto/es/billing/billing_pb.js";
 
 export const useCurrenciesStore = defineStore("currencies", () => {
   const app = useAppStore();
@@ -64,14 +64,14 @@ export const useCurrenciesStore = defineStore("currencies", () => {
       }
     },
 
-    convert({ from, to, amount }) {
+    convert({ from, to, amounts }) {
       const currenciesApi = createPromiseClient(CurrencyService, app.transport);
 
-      return currenciesApi.convert(
-        ConversionRequest.fromJson({
+      return currenciesApi.convertMany(
+        MultiConversionRequest.fromJson({
           from: { code: from },
           to: { code: to },
-          amount,
+          amounts,
         })
       );
     },
