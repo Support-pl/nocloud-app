@@ -676,6 +676,15 @@
       "Close": "Closed"
     },
     "domains_view": {
+      "order": {
+        "domains_status": {
+          "available": "Avaliable",
+          "taken": "Taken"
+        },
+        "actions": {
+          "addToCart": "Добавить в корзину"
+        }
+      },
       "nameservers": {
         "labels": {
           "actions": "Actions",
@@ -686,7 +695,7 @@
         "actions": {
           "add": "Add",
           "delete": "Delete",
-          "sync": "Sync with defaults servers"
+          "sync": "Use Our Nameservers"
         }
       }
     },

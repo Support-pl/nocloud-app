@@ -437,6 +437,15 @@
       "year": "год"
     },
     "domains_view": {
+      "order": {
+        "domains_status": {
+          "available": "Доступен",
+          "taken": "Занят"
+        },
+        "actions": {
+          "addToCart": "Добавить в корзину"
+        }
+      },
       "nameservers": {
         "labels": {
           "actions": "Действия",
@@ -447,7 +456,7 @@
         "actions": {
           "add": "Добавить",
           "delete": "Удалить",
-          "sync": "Синхронизировать с серверами по умолчанию"
+          "sync": "Использовать наши DNS серверы"
         }
       }
     },
