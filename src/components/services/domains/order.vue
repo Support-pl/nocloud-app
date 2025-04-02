@@ -333,7 +333,6 @@ import { useAuthStore } from "@/stores/auth.js";
 import { useInstancesStore } from "@/stores/instances.js";
 
 import { useSpStore } from "@/stores/sp.js";
-import { usePlansStore } from "@/stores/plans.js";
 
 import { useCurrency, useNotification } from "@/hooks/utils";
 import countries from "@/assets/countries.json";
@@ -363,9 +362,21 @@ const props = defineProps({
   onCart: { type: Array, required: true },
   itemsInCart: { type: Number, required: true },
   search: { type: Function, required: true },
+  plans: { type: Array, required: true },
+  plan: { type: String, required: true },
+  provider: { type: String, required: true },
   removeFromCart: { type: Function, required: true },
 });
-const { data, itemsInCart, onCart, search, removeFromCart } = toRefs(props);
+const {
+  data,
+  itemsInCart,
+  onCart,
+  search,
+  removeFromCart,
+  plan,
+  plans,
+  provider,
+} = toRefs(props);
 
 const emits = defineEmits(["change"]);
 
@@ -381,9 +392,7 @@ const { openNotification } = useNotification();
 const ogPrices = ref([]);
 const products = ref({});
 const productsDefaultCurrency = ref({});
-const plan = ref(null);
 const service = ref(null);
-const provider = ref(null);
 const fetchLoading = ref(false);
 const modal = ref({
   confirmCreate: false,
@@ -399,13 +408,11 @@ const resources = ref({
   lock_domain: true,
 });
 const form = ref({});
-const cachedPlans = ref({});
 const getProducts = ref({ name: "", pricing: {} });
 const selectedProduct = ref();
 const periods = ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]); // 'annually biennially triennial quadrennial quinquennial'
 
 const spStore = useSpStore();
-const plansStore = usePlansStore();
 const instancesStore = useInstancesStore();
 const authStore = useAuthStore();
 const appStore = useAppStore();
@@ -413,7 +420,7 @@ const namespacesStore = useNamespasesStore();
 const addonsStore = useAddonsStore();
 const currenciesStore = useCurrenciesStore();
 
-const { billingUser, isLogged, userdata } = storeToRefs(authStore);
+const { billingUser, userdata, isLogged } = storeToRefs(authStore);
 const { namespaces } = storeToRefs(namespacesStore);
 const { addons } = storeToRefs(addonsStore);
 
@@ -431,8 +438,6 @@ onMounted(() => {
   if (!"form" in data.value) {
     installDataToBuffer();
   }
-
-  if (sp.value.length > 0) provider.value = sp.value[0].uuid;
 
   if (namespaces.value.length === 0) {
     namespacesStore.fetch();
@@ -477,26 +482,6 @@ const namespace = computed(() => namespaces.value[0]?.uuid);
 
 const services = computed(() => {
   return instancesStore.services.filter((el) => el.status !== "DEL");
-});
-const plans = computed(() => {
-  return (
-    cachedPlans.value[provider.value]?.filter(({ type, uuid }) => {
-      const { items } =
-        spStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
-        {};
-      const plans = [];
-
-      if (!items) return type === "opensrs";
-      items.forEach(({ servicesProvider, plan }) => {
-        if (servicesProvider === provider.value) {
-          plans.push(plan);
-        }
-      });
-
-      if (plans.length < 1) return type === "opensrs";
-      return type === "opensrs" && plans.includes(uuid);
-    }) ?? []
-  );
 });
 
 const whoIsPrivacyAddon = computed(() => {
@@ -573,33 +558,15 @@ const rules = computed(() => {
   };
 });
 
-watch(sp, (value) => {
-  if (value.length > 0) provider.value = value[0].uuid;
-});
-
-watch(provider, async (uuid) => {
+watch(provider, async () => {
   fetch();
-  if (cachedPlans.value[uuid]) return;
-  try {
-    const { pool } = await plansStore.fetch({
-      anonymously: !isLogged.value,
-      sp_uuid: uuid,
-    });
-
-    cachedPlans.value[uuid] = pool;
-    plan.value = plans.value[0]?.uuid;
-
-    await addonsStore.fetch({
-      filters: { plan_uuid: [plan.value] },
-    });
-  } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error;
-
-    notification.error({ message });
-  }
 });
 
 const fetch = async () => {
+  if (!provider.value) {
+    return;
+  }
+
   fetchLoading.value = true;
   const promises = onCart.value.map(({ name }) =>
     api.servicesProviders.action({
@@ -635,6 +602,8 @@ const fetch = async () => {
     selectedProduct.value = onCart.value[0]?.name;
   }
 };
+
+fetch();
 
 const convertPrices = async () => {
   if (!ogPrices.value.length) {
