@@ -230,8 +230,8 @@ async function onCreated() {
         ...route,
         query: {
           ...route.query,
-          service: spStore.showcases.find((showcase) =>
-            showcase.title.toLowerCase().startsWith("vpn")
+          service: spStore.showcases.find(
+            (showcase) => showcase.meta?.type === "vpn"
           )?.uuid,
         },
       });
