@@ -131,6 +131,34 @@
               >
             </div>
 
+            <div class="parentInfo" v-if="parentInstance">
+              <div class="block__column">
+                <div
+                  v-if="parentInstance.data.next_payment_date"
+                  class="block__title"
+                >
+                  {{ capitalize($t("userService.next payment date")) }}
+                </div>
+                <div>
+                  {{
+                    new Intl.DateTimeFormat().format(
+                      parentInstance.data.next_payment_date * 1000
+                    )
+                  }}
+                </div>
+              </div>
+
+              <div v-if="parentInstance.estimate" class="block__column">
+                <div class="block__title">
+                  {{ capitalize($t("userService.renewal amount")) }}
+                </div>
+                <div>
+                  {{ formatPrice(parentInstance.estimate) }}
+                  {{ currency.title }}
+                </div>
+              </div>
+            </div>
+
             <div v-if="isConnectVisible" class="connect_window">
               <div class="instruction">
                 {{ t("vpn.labels.connect_to_vpn_instruction") }}
@@ -348,6 +376,7 @@ import { useRoute, useRouter } from "vue-router";
 import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 import { removeEmptyValues } from "@/functions";
 import { storeToRefs } from "pinia";
+import { useCurrency } from "@/hooks/utils";
 
 const startIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlayCircleOutlined")
@@ -389,6 +418,7 @@ const indicator = h(loadingOutlined, {
 const route = useRoute();
 const router = useRouter();
 const { t, locale } = useI18n();
+const { currency, formatPrice } = useCurrency();
 
 const instancesStore = useInstancesStore();
 const { instances } = storeToRefs(useInstancesStore());
@@ -975,6 +1005,21 @@ watch(isNameEditActive, (value) => {
 .error_state_message .warning_icon {
   font-size: 2rem;
   color: var(--err);
+}
+
+.parentInfo {
+  display: flex;
+  justify-content: space-between;
+}
+
+.block__column {
+  width: 50%;
+  font-size: 1rem;
+}
+
+.block__column .block__title {
+  font-size: 1rem;
+  font-weight: 600;
 }
 </style>
 
