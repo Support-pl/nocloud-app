@@ -609,8 +609,24 @@
       },
       "placeholder": "Code promotionnel"
     },
+    "domains_view": {
+      "nameservers": {
+        "labels": {
+          "actions": "Actes",
+          "name": "Serveur de noms",
+          "notValidNameServer": "Not Nameserver",
+          "confirm_delete": "Voulez-vous supprimer ce serveur de noms?"
+        },
+        "actions": {
+          "add": "Ajouter",
+          "delete": "Supprimer",
+          "sync": "Synchroniser avec les serveurs par défaut"
+        }
+      }
+    },
     "vpn": {
       "fields": {
+        "title": "Nom",
         "password": "Mot de passe",
         "host": "Hôte",
         "port": "Port",
@@ -629,6 +645,7 @@
         "settings": "Réglages"
       },
       "labels": {
+        "editName": "Modifier le nom",
         "select_server": "Sélectionnez le serveur",
         "change_client_info": "Modifier les informations client ?",
         "or": "ou",

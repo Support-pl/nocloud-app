@@ -15,7 +15,7 @@
                 : `${$t("comp_services.Your orders")}:`
             }}
             <span v-if="!isNeedFilterStringInHeader" class="products__count">
-              {{ productsCount() }}
+              {{ productsCount }}
             </span>
 
             <div style="display: flex; flex-wrap: wrap; gap: 10px">
@@ -32,7 +32,7 @@
                     />
                   </template>
                   {{ checkedType.title }}:
-                  {{ productsCount(checkedType.value) }}
+                  {{ getProductsCountByType(checkedType.value) }}
                   <!-- всего -->
                 </a-badge>
               </transition-group>
@@ -216,6 +216,13 @@ export default {
       ).filter((instance) => instance.billingPlan?.type !== "ione-vpn");
 
       return this.sortProducts([...products, ...instances]);
+    },
+    productsCount() {
+      if (this.min) {
+        return this.products.length;
+      } else {
+        return this.productsPrepared.length;
+      }
     },
     productsLoading() {
       const productsLoading = this.productsStore.isLoading;
@@ -520,16 +527,11 @@ export default {
         }
       );
     },
-    productsCount(type, filter) {
-      const isProductsExist = this.productsPrepared.length > 0;
-      const isProductsRoute = this.$route.name === "products";
-      const total = this.productsStore.total;
-
-      if (this.checkedTypes.length > 0 || filter) {
+    getProductsCountByType(type) {
+      if (this.checkedTypes.length > 0) {
         return this.filterProducts(this.productsPrepared, [type]).length;
       }
 
-      if (total && !isProductsRoute && isProductsExist) return total;
       if (this.min) {
         return this.products.length;
       } else {

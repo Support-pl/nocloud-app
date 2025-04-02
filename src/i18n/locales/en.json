@@ -675,6 +675,21 @@
       "Resolve": "Resolved",
       "Close": "Closed"
     },
+    "domains_view": {
+      "nameservers": {
+        "labels": {
+          "actions": "Actions",
+          "name": "Nameserver",
+          "notValidNameServer": "Not valid nameserver",
+          "confirm_delete": "Do you want to delete this nameserver?"
+        },
+        "actions": {
+          "add": "Add",
+          "delete": "Delete",
+          "sync": "Sync with defaults servers"
+        }
+      }
+    },
     "Domains": "Domains",
     "domains": "domains",
     "domain is wrong": "Please enter a valid domain",
@@ -788,7 +803,8 @@
         "host": "Host",
         "port": "Port",
         "username": "Username",
-        "wg_port": "WG port"
+        "wg_port": "WG port",
+        "title": "Name"
       },
       "actions": {
         "start": "Launch",
@@ -802,6 +818,7 @@
         "settings": "Settings"
       },
       "labels": {
+        "editName": "Edit name",
         "select_server": "Select server",
         "change_client_info": "Change customer information?",
         "or": "or",
