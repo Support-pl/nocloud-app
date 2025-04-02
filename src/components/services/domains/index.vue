@@ -9,7 +9,7 @@
               <a-col :xs="22" :sm="16">
                 <!--TODO: add finish status if cart (watch to cart)-->
                 <a-steps>
-                  <a-step class="search" status="start" :title="$t('search')">
+                  <a-step class="search" status="start" :title="t('search')">
                     <template #icon>
                       <!-- @click="search"-->
                       <search-icon />
@@ -19,7 +19,7 @@
                   <a-step
                     class="cart"
                     status="finish"
-                    :title="$t('cart')"
+                    :title="t('cart')"
                     @click="cartVisibility = true"
                   >
                     <template #icon>
@@ -44,19 +44,19 @@
             <a-row class="order_option__card" :gutter="[10, 10]">
               <a-col style="margin-bottom: 10px" :span="24">
                 <a-card
-                  :title="$t('domain_product.how_to_choose_the_right_domain')"
+                  :title="t('domain_product.how_to_choose_the_right_domain')"
                 >
                   <div>
                     <check-icon />
                     <p>
-                      {{ $t("domain_product.keep_your_name_easy_to_remember") }}
+                      {{ t("domain_product.keep_your_name_easy_to_remember") }}
                     </p>
                   </div>
                   <div>
                     <check-icon />
                     <p>
                       {{
-                        $t("domain_product.choose_a_name_that_fit_your_brand")
+                        t("domain_product.choose_a_name_that_fit_your_brand")
                       }}
                     </p>
                   </div>
@@ -65,19 +65,19 @@
             </a-row>
             <a-input-search
               v-model:value="domain"
-              placeholder="input search text"
-              enter-button="Search"
+              placeholder=""
+              :enter-button="t('search')"
               :loading="isDomainsLoading"
               @search="searchDomain"
             />
             <div v-if="!cartVisibility && results.length" class="description">
               <a-descriptions
-                v-for="(result, i) in results"
+                v-for="(result, i) in currentPool"
                 :key="i"
                 bordered
                 class="description-body"
                 size="small"
-                :column="6"
+                :column="8"
               >
                 <a-descriptions-item
                   class="description-body__domain-name"
@@ -87,22 +87,53 @@
                 </a-descriptions-item>
 
                 <a-descriptions-item
+                  class="description-body__domain-price"
+                  :span="1"
+                >
+                  <a-skeleton-button
+                    v-if="isDomainPricesLoading || isConvertPricesLoading"
+                  />
+                  <span v-else>
+                    {{
+                      formatPrice(
+                        convertedPrices.get(domainPrices.get(result.name)) || 0
+                      )
+                    }}
+                    {{ currency.title }}
+                  </span>
+                </a-descriptions-item>
+
+                <a-descriptions-item
                   class="description-body__domain-name"
                   :span="2"
                 >
-                  {{ result.status }}
+                  <a-tag :color="getStatusColor(result.status)">{{
+                    t(`domains_view.order.domains_status.${result.status}`)
+                  }}</a-tag>
                 </a-descriptions-item>
 
-                <a-descriptions-item :span="1">
+                <a-descriptions-item :span="2">
                   <a-button
                     :key="i"
                     :class="result.btnClass"
                     @click="addToCart(result)"
+                    :disabled="result.status !== 'available'"
                   >
                     {{ result.btnText }}
                   </a-button>
                 </a-descriptions-item>
               </a-descriptions>
+
+              <div class="more__btn">
+                <a-button
+                  v-if="Math.ceil(results.length / 10) > resultsOffset"
+                  ghost
+                  type="primary"
+                  @click="resultsOffset++"
+                >
+                  {{ t("more") }}
+                </a-button>
+              </div>
             </div>
           </div>
         </div>
@@ -114,6 +145,9 @@
       :on-cart="onCart"
       :items-in-cart="itemsInCart"
       :remove-from-cart="removeFromCart"
+      :provider="provider"
+      :plans="plans"
+      :plan="plan"
       :search="
         () => {
           cartVisibility = false;
@@ -132,6 +166,7 @@ import {
   onMounted,
   onUnmounted,
   ref,
+  watch,
 } from "vue";
 import { notification } from "ant-design-vue";
 import { useRoute } from "vue-router";
@@ -145,11 +180,14 @@ import order from "@/components/services/domains/order.vue";
 import loading from "@/components/ui/loading.vue";
 import { useAppStore } from "@/stores/app";
 import { storeToRefs } from "pinia";
+import { useCurrency } from "@/hooks/utils";
+import { useCurrenciesStore } from "@/stores/currencies";
+import { usePlansStore } from "@/stores/plans.js";
+import { useAddonsStore } from "@/stores/addons";
+import { levenshtein } from "@/functions";
 
 const i18n = useI18n();
 const route = useRoute();
-const authStore = useAuthStore();
-const providersStore = useSpStore();
 
 const searchIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SearchOutlined")
@@ -163,16 +201,33 @@ const checkIcon = defineAsyncComponent(() =>
 
 const DOMAINS_CART_KEY = "domains_cart";
 
+const providersStore = useSpStore();
 const appStore = useAppStore();
 const { onLogin } = storeToRefs(appStore);
+const currenciesStore = useCurrenciesStore();
+const authStore = useAuthStore();
+const { isLogged } = storeToRefs(authStore);
+const plansStore = usePlansStore();
+const addonsStore = useAddonsStore();
 
-const itemsInCart = ref(0); // в корзине
+const { currency, formatPrice } = useCurrency();
+const { t } = useI18n();
+
+const itemsInCart = ref(0);
 const domain = ref("");
 const results = ref([]);
 const isDomainsLoading = ref(false);
+const resultsOffset = ref(1);
 const cartVisibility = ref(false);
 const onCart = ref([]);
 const dataCart = ref({});
+const domainPrices = ref(new Map());
+const isDomainPricesLoading = ref(false);
+const isConvertPricesLoading = ref(false);
+const convertedPrices = ref(new Map());
+const cachedPlans = ref({});
+const plan = ref(null);
+const provider = ref(null);
 
 onMounted(() => {
   loadCart();
@@ -184,6 +239,32 @@ onMounted(() => {
 
 onUnmounted(() => {
   saveCart();
+});
+
+const currentPool = computed(() => {
+  return results.value.slice(0, resultsOffset.value * 10);
+});
+
+const plans = computed(() => {
+  return (
+    cachedPlans.value[provider.value]?.filter(({ type, uuid }) => {
+      const { items } =
+        providersStore.showcases.find(
+          ({ uuid }) => uuid === route.query.service
+        ) ?? {};
+      const plans = [];
+
+      if (!items) return type === "opensrs";
+      items.forEach(({ servicesProvider, plan }) => {
+        if (servicesProvider === provider.value) {
+          plans.push(plan);
+        }
+      });
+
+      if (plans.length < 1) return type === "opensrs";
+      return type === "opensrs" && plans.includes(uuid);
+    }) ?? []
+  );
 });
 
 const sp = computed(() => {
@@ -222,11 +303,18 @@ async function searchDomain() {
     });
 
     results.value = [];
+    resultsOffset.value = 1;
+    meta.domains.sort(function (a, b) {
+      return (
+        levenshtein(a.domain, domain.value) -
+        levenshtein(b.domain, domain.value)
+      );
+    });
     meta.domains.forEach((el) => {
       const options = {
         name: el.domain,
         status: el.status,
-        btnText: "Add To Cart",
+        btnText: t("domains_view.order.actions.addToCart"),
         btnClass: "description-body__btn-add",
       };
 
@@ -283,6 +371,10 @@ function saveCart() {
   localStorage.setItem(DOMAINS_CART_KEY, JSON.stringify(onCart.value));
 }
 
+function getStatusColor(status) {
+  return status === "available" ? "green" : "red";
+}
+
 async function fetch() {
   try {
     await Promise.all([
@@ -298,6 +390,108 @@ async function fetch() {
 }
 
 fetch();
+
+watch(sp, (value) => {
+  if (value.length > 0) provider.value = value[0].uuid;
+});
+
+watch(sp, async (value) => {
+  const uuid = value[0].uuid;
+  if (!uuid) {
+    return;
+  }
+
+  if (cachedPlans.value[uuid]) return;
+  try {
+    const { pool } = await plansStore.fetch({
+      anonymously: !isLogged.value,
+      sp_uuid: uuid,
+    });
+
+    cachedPlans.value[uuid] = pool;
+    plan.value = plans.value[0]?.uuid;
+
+    await addonsStore.fetch({
+      filters: { plan_uuid: [plan.value] },
+    });
+  } catch (error) {
+    const message = error.response?.data?.message ?? error.message ?? error;
+
+    notification.error({ message });
+  }
+});
+
+watch(currentPool, () => {
+  currentPool.value.forEach(async ({ name }) => {
+    async function getDomainPriceForYear(name) {
+      const data = await api.servicesProviders.action({
+        uuid: sp.value[0]?.uuid,
+        action: "get_domain_price",
+        params: { domain: name },
+      });
+      const price = data.meta.price;
+      const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
+
+      return (
+        +price +
+        (fullPlan.fee.default ? price * (fullPlan.fee.default / 100) : 0)
+      );
+    }
+
+    isDomainPricesLoading.value = true;
+
+    if (domainPrices.value.get(name)) {
+      return;
+    }
+
+    try {
+      const promise = getDomainPriceForYear(name);
+
+      domainPrices.value.set(name, promise);
+
+      const price = await promise;
+
+      domainPrices.value.set(name, price);
+    } catch {
+      domainPrices.value.delete(name);
+    } finally {
+      isDomainPricesLoading.value = [...domainPrices.value.values()].some(
+        (v) => v instanceof Promise
+      );
+    }
+  });
+});
+
+watch([isDomainPricesLoading, currency], async (curr, last) => {
+  if (curr[1].code !== last[1].code) {
+    convertedPrices.value.clear();
+  }
+
+  if (!isDomainPricesLoading.value) {
+    const uniqueAmounts = new Set(
+      [...domainPrices.value.values()].filter(
+        (price) => !convertedPrices.value.has(price)
+      )
+    );
+
+    isConvertPricesLoading.value = true;
+    try {
+      const amounts = [...uniqueAmounts.values()];
+
+      const response = await currenciesStore.convert({
+        from: "USD",
+        to: currency.value.code,
+        amounts,
+      });
+
+      amounts.forEach((price, index) => {
+        convertedPrices.value.set(price, response.amounts[index]);
+      });
+    } finally {
+      isConvertPricesLoading.value = false;
+    }
+  }
+});
 </script>
 
 <script>
@@ -498,18 +692,10 @@ td.ant-descriptions-item-content:nth-child(2) {
   text-align: start;
   border: none;
 }
-td.ant-descriptions-item-content:nth-child(4) {
-  width: 150px;
-  background-color: var(--bright_font);
-}
-td.ant-descriptions-item-content:nth-child(6) {
-  background-color: var(--bright_font);
-}
 
 .description-btn-more {
   display: flex;
   width: 150px;
-  background-color: var(--main);
   color: var(--bright_font);
   padding: 7px;
   font-size: 12px;
@@ -523,6 +709,17 @@ td.ant-descriptions-item-content:nth-child(6) {
   color: var(--bright_font);
   background-color: #40a9ff !important;
   border-color: #40a9ff !important;
+}
+
+.more__btn {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ant-descriptions-item-content.description-body__domain-price {
+  width: 110px !important;
 }
 /*media*/
 /*@media screen and (max-width: 1024px) {
