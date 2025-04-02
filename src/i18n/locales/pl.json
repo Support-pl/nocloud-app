@@ -682,6 +682,21 @@
       },
       "placeholder": "Kod promocyjny"
     },
+    "domains_view": {
+      "nameservers": {
+        "labels": {
+          "actions": "Działania",
+          "name": "Serwer nazw",
+          "notValidNameServer": "Nieważny serwer nazw",
+          "confirm_delete": "Chcesz usunąć ten serwer nazw?"
+        },
+        "actions": {
+          "add": "Dodać",
+          "delete": "Usuwać",
+          "sync": "Synchronizuj z serwerami Domyślnie"
+        }
+      }
+    },
     "vpn": {
       "fields": {
         "title": "Nazwa",

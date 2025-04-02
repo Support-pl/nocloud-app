@@ -675,6 +675,21 @@
       "Resolve": "Resolved",
       "Close": "Closed"
     },
+    "domains_view": {
+      "nameservers": {
+        "labels": {
+          "actions": "Actions",
+          "name": "Nameserver",
+          "notValidNameServer": "Not valid nameserver",
+          "confirm_delete": "Do you want to delete this nameserver?"
+        },
+        "actions": {
+          "add": "Add",
+          "delete": "Delete",
+          "sync": "Sync with defaults servers"
+        }
+      }
+    },
     "Domains": "Domains",
     "domains": "domains",
     "domain is wrong": "Please enter a valid domain",
