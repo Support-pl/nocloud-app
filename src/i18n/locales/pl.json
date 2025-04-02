@@ -443,6 +443,7 @@
       }
     },
     "ssl_product": {
+      "postal_code_not_valid": "Kod pocztowy jest nieprawidłowy dla wybranego kraju",
       "firstname": "Imię",
       "lastname": "Nazwisko",
       "state": "Państwo",
@@ -681,8 +682,24 @@
       },
       "placeholder": "Kod promocyjny"
     },
+    "domains_view": {
+      "nameservers": {
+        "labels": {
+          "actions": "Działania",
+          "name": "Serwer nazw",
+          "notValidNameServer": "Nieważny serwer nazw",
+          "confirm_delete": "Chcesz usunąć ten serwer nazw?"
+        },
+        "actions": {
+          "add": "Dodać",
+          "delete": "Usuwać",
+          "sync": "Synchronizuj z serwerami Domyślnie"
+        }
+      }
+    },
     "vpn": {
       "fields": {
+        "title": "Nazwa",
         "password": "Hasło",
         "host": "Gospodarz",
         "port": "Port",
@@ -701,6 +718,7 @@
         "go_to_admin_menu": "Panelu sterowania"
       },
       "labels": {
+        "editName": "Edytuj nazwę",
         "select_server": "Wybierz serwer",
         "change_client_info": "Zmienić dane klienta?",
         "or": "Lub",

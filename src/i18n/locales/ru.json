@@ -436,6 +436,21 @@
       "month": "месяц",
       "year": "год"
     },
+    "domains_view": {
+      "nameservers": {
+        "labels": {
+          "actions": "Действия",
+          "name": "Сервер имён",
+          "notValidNameServer": "Не действительный сервер имен",
+          "confirm_delete": "Вы хотите удалить этот сервер имен?"
+        },
+        "actions": {
+          "add": "Добавить",
+          "delete": "Удалить",
+          "sync": "Синхронизировать с серверами по умолчанию"
+        }
+      }
+    },
     "userService": {
       "billing cycle": "период оплаты",
       "renewal amount": "стоимость продления",
@@ -522,6 +537,7 @@
       "BIC": "BIC"
     },
     "ssl_product": {
+      "postal_code_not_valid": "Почтовый индекс недействителен для выбранной страны",
       "firstname": "Имя",
       "lastname": "Фамилия",
       "state": "Район",
@@ -787,7 +803,8 @@
         "host": "Хост",
         "port": "Порт",
         "username": "Имя пользователя",
-        "wg_port": "WG порт"
+        "wg_port": "WG порт",
+        "title": "Имя"
       },
       "actions": {
         "start": "Запуск",
@@ -801,6 +818,7 @@
         "go_to_admin_menu": "Панель управления"
       },
       "labels": {
+        "editName": "Редактировать имя",
         "select_server": "Выберите сервер",
         "change_client_info": "Изменить информацию о клиенте?",
         "or": "или",

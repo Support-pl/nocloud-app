@@ -349,6 +349,21 @@
       "org_name": "Tên tổ chức",
       "org_division": "Bộ phận",
       "org_lei": "Mã LEI",
+      "domains_view": {
+        "nameservers": {
+          "labels": {
+            "actions": "Hành động",
+            "name": "Máy chủ tên",
+            "notValidNameServer": "Không phải máy chủ tên hợp lệ",
+            "confirm_delete": "Bạn có muốn xóa máy chủ tên này không?"
+          },
+          "actions": {
+            "add": "Thêm vào",
+            "delete": "Xóa bỏ",
+            "sync": "Đồng bộ với máy chủ mặc định"
+          }
+        }
+      },
       "org_duns": "Số DUNS",
       "org_addressline1": "Địa chỉ",
       "org_city": "Tỉnh/thành",
