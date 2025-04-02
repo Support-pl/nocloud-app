@@ -6,6 +6,52 @@
           <div class="service-page__header">
             <div class="service-page__title">
               {{ instance.title }}
+
+              <a-button
+                style="margin-left: 10px"
+                size="small"
+                shape="circle"
+                :icon="h(editOutlined)"
+                @click="isNameEditActive = true"
+              />
+
+              <a-modal
+                v-model:open="isNameEditActive"
+                :title="t('vpn.labels.editName')"
+              >
+                <div>
+                  <a-form
+                    ref="editNameForm"
+                    :model="nameEditData"
+                    name="basic"
+                    autocomplete="off"
+                  >
+                    <a-form-item
+                      name="title"
+                      :label="t('vpn.fields.title')"
+                      :rules="[requiredRule]"
+                    >
+                      <a-input
+                        v-model:value="nameEditData.title"
+                        :placeholder="t('vpn.fields.title')"
+                      />
+                    </a-form-item>
+                  </a-form>
+                </div>
+
+                <template #footer>
+                  <a-button key="back" @click="isNameEditActive = false">{{
+                    t("Cancel")
+                  }}</a-button>
+                  <a-button
+                    key="submit"
+                    type="primary"
+                    :loading="isNameEditLoading"
+                    @click="editName"
+                    >{{ t("Save") }}</a-button
+                  >
+                </template>
+              </a-modal>
             </div>
 
             <div class="service-page__info">
@@ -329,6 +375,10 @@ const loadingOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LoadingOutlined")
 );
 
+const editOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EditOutlined")
+);
+
 const indicator = h(loadingOutlined, {
   style: {
     fontSize: "24px",
@@ -357,6 +407,10 @@ const settingsForm = ref(null);
 const settingsData = ref({
   wg_port: "",
 });
+const editNameForm = ref(null);
+const isNameEditActive = ref(false);
+const isNameEditLoading = ref(false);
+const nameEditData = ref({ title: "" });
 
 onMounted(async () => {
   if (instance.value) {
@@ -679,6 +733,34 @@ const deleteInstance = async () => {
   });
 };
 
+const editName = async () => {
+  try {
+    await editNameForm.value.validate();
+    isNameEditLoading.value = true;
+
+    const updateData = removeEmptyValues({
+      ...instance.value,
+      title: nameEditData.value.title,
+    });
+
+    delete updateData.uuidService;
+    delete updateData.estimate;
+    delete updateData.sp;
+    delete updateData.type;
+
+    await instancesStore.instancesApi.update(
+      UpdateRequest.fromJson({
+        instance: updateData,
+      })
+    );
+    instance.value.title = nameEditData.value.title;
+
+    isNameEditActive.value = false;
+  } finally {
+    isNameEditLoading.value = false;
+  }
+};
+
 const copyConfigToClipboard = async () => {
   try {
     await navigator.clipboard.writeText(wgConfig.value);
@@ -749,6 +831,12 @@ watch(
   }
 );
 
+watch(isNameEditActive, (value) => {
+  if (value) {
+    nameEditData.value = { title: instance.value.title };
+  }
+});
+
 // watch(instanceStatus, async (state) => {
 //   if (state.title === "active") {
 //     wgEasyToken.value = "";
@@ -785,6 +873,8 @@ watch(
 
 .service-page__title {
   font-size: 1.6rem;
+  display: flex;
+  align-items: center;
 }
 
 .service-page__domain {
