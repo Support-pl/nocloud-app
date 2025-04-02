@@ -611,6 +611,7 @@
     },
     "vpn": {
       "fields": {
+        "title": "Nom",
         "password": "Mot de passe",
         "host": "Hôte",
         "port": "Port",
@@ -629,6 +630,7 @@
         "settings": "Réglages"
       },
       "labels": {
+        "editName": "Modifier le nom",
         "select_server": "Sélectionnez le serveur",
         "change_client_info": "Modifier les informations client ?",
         "or": "ou",

@@ -684,6 +684,7 @@
     },
     "vpn": {
       "fields": {
+        "title": "Nazwa",
         "password": "Hasło",
         "host": "Gospodarz",
         "port": "Port",
@@ -702,6 +703,7 @@
         "go_to_admin_menu": "Panelu sterowania"
       },
       "labels": {
+        "editName": "Edytuj nazwę",
         "select_server": "Wybierz serwer",
         "change_client_info": "Zmienić dane klienta?",
         "or": "Lub",

@@ -788,7 +788,8 @@
         "host": "Хост",
         "port": "Порт",
         "username": "Имя пользователя",
-        "wg_port": "WG порт"
+        "wg_port": "WG порт",
+        "title": "Имя"
       },
       "actions": {
         "start": "Запуск",
@@ -802,6 +803,7 @@
         "go_to_admin_menu": "Панель управления"
       },
       "labels": {
+        "editName": "Редактировать имя",
         "select_server": "Выберите сервер",
         "change_client_info": "Изменить информацию о клиенте?",
         "or": "или",

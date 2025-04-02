@@ -788,7 +788,8 @@
         "host": "Host",
         "port": "Port",
         "username": "Username",
-        "wg_port": "WG port"
+        "wg_port": "WG port",
+        "title": "Name"
       },
       "actions": {
         "start": "Launch",
@@ -802,6 +803,7 @@
         "settings": "Settings"
       },
       "labels": {
+        "editName": "Edit name",
         "select_server": "Select server",
         "change_client_info": "Change customer information?",
         "or": "or",
