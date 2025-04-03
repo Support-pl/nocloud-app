@@ -68,6 +68,7 @@
               placeholder=""
               :enter-button="t('search')"
               :loading="isDomainsLoading"
+              :disabled="isLoading"
               @search="searchDomain"
             />
             <div v-if="!cartVisibility && results.length" class="description">
@@ -141,6 +142,7 @@
                   ghost
                   type="primary"
                   @click="resultsOffset++"
+                  :disabled="isLoading"
                 >
                   {{ t("more") }}
                 </a-button>
@@ -251,6 +253,13 @@ onMounted(() => {
 onUnmounted(() => {
   saveCart();
 });
+
+const isLoading = computed(
+  () =>
+    isConvertPricesLoading.value ||
+    isDomainPricesLoading.value ||
+    isDomainsLoading.value
+);
 
 const currentPool = computed(() => {
   return results.value.slice(0, resultsOffset.value * 10);
