@@ -551,7 +551,7 @@ const rules = computed(() => {
 
         return Promise.reject();
       },
-      required: false,
+      required: true,
       message: t("ssl_product.postal_code_not_valid"),
       trigger: "blur",
     },
