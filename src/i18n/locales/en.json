@@ -414,6 +414,7 @@
     "error delete SSH key": "Error delete SSH key",
     "Error adding SSH key": "Error adding SSH key",
     "Please select at least one option": "Please select at least one option",
+    "more": "More",
     "support_view": {
       "delet_chat": {
         "action": "Delete the chat",
@@ -682,7 +683,8 @@
           "taken": "Taken"
         },
         "actions": {
-          "addToCart": "Добавить в корзину"
+          "addToCart": "Add to cart",
+          "orderNow": "Order now"
         }
       },
       "nameservers": {
