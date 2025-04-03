@@ -201,6 +201,7 @@ export default {
                 @click="openModal('edit', record)"
               />
               <delete-icon
+                v-if="nameServers.length > 2"
                 style="font-size: 20px"
                 @click="deleteNameServer(record)"
               />
@@ -423,12 +424,10 @@ const syncWithDefaults = async () => {
   try {
     isSyncDefaultLoading.value = true;
 
-    const newNameservers = [...nameServers.value];
+    const newNameservers = [];
 
     defaultNameServers.value.forEach((ns) => {
-      if (!newNameservers.find((n) => n.ns_name === ns)) {
-        newNameservers.push({ ns_name: ns });
-      }
+      newNameservers.push({ ns_name: ns });
     });
 
     await syncNameservers(newNameservers);
