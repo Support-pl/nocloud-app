@@ -255,7 +255,7 @@
           v-model:plan="plan"
           v-model:service="service"
           v-model:namespace="namespace"
-          v-model:provider="provider"
+          :provider="provider"
           :plans-list="plans"
           :sp-list="sp"
         />
@@ -326,7 +326,7 @@ import {
 } from "postcode-validator";
 
 import useCreateInstance from "@/hooks/instances/create.js";
-import { checkPayg } from "@/functions.js";
+import { checkPayg, debounce } from "@/functions.js";
 
 import { useAppStore } from "@/stores/app.js";
 import { useAuthStore } from "@/stores/auth.js";
@@ -559,7 +559,7 @@ const rules = computed(() => {
 });
 
 watch(provider, async () => {
-  fetch();
+  fetchDebounced();
 });
 
 const fetch = async () => {
@@ -603,7 +603,9 @@ const fetch = async () => {
   }
 };
 
-fetch();
+const fetchDebounced = debounce(fetch, 300);
+
+fetchDebounced();
 
 const convertPrices = async () => {
   if (!ogPrices.value.length) {

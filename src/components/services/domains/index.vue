@@ -396,7 +396,9 @@ async function fetch() {
 fetch();
 
 watch(sp, (value) => {
-  if (value.length > 0) provider.value = value[0].uuid;
+  if (value.length > 0) {
+    provider.value = value[0].uuid;
+  }
 });
 
 watch(sp, async (value) => {
