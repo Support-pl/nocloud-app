@@ -202,25 +202,24 @@
               class="description-body"
               :column="6"
             >
-              <a-descriptions-item :span="1">
+              <a-descriptions-item :span="4">
                 <span class="description-body__domain-name">
                   {{ domain.name }}
                 </span>
               </a-descriptions-item>
-              <a-descriptions-item :span="3">
-                <span
-                  class="description-body__domain-name"
-                  v-if="!fetchLoading"
-                >
-                  {{
-                    products[domain.name] &&
-                    formatPrice(products[domain.name][resources.period])
-                  }}
-                  {{ currency.title }}
-                </span>
+              <a-descriptions-item :span="1">
+                <div class="description-body__domain-name" v-if="!fetchLoading">
+                  <span>
+                    {{
+                      products[domain.name] &&
+                      formatPrice(products[domain.name][resources.period])
+                    }}
+                    {{ currency.title }}</span
+                  >
+                </div>
                 <div v-else class="loadingLine loadingLine--total" />
               </a-descriptions-item>
-              <a-descriptions-item :span="2">
+              <a-descriptions-item :span="1">
                 <a-button
                   :key="index"
                   class="description-body__btn-order"
