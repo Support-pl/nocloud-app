@@ -104,7 +104,7 @@
                 </a-descriptions-item>
 
                 <a-descriptions-item
-                  class="description-body__domain-name"
+                  class="description-body__domain-status"
                   :span="2"
                 >
                   <a-tag :color="getStatusColor(result.status)">{{
@@ -115,11 +115,22 @@
                 <a-descriptions-item :span="2">
                   <a-button
                     :key="i"
-                    :class="result.btnClass"
+                    :class="
+                      [
+                        onCart.find((v) => v.name === result.name)
+                          ? 'description-body__btn-order'
+                          : 'description-body__btn-add',
+                        result.status !== 'available' && 'disabled',
+                      ].join(' ')
+                    "
                     @click="addToCart(result)"
                     :disabled="result.status !== 'available'"
                   >
-                    {{ result.btnText }}
+                    {{
+                      onCart.find((v) => v.name === result.name)
+                        ? t("domains_view.order.actions.orderNow")
+                        : t("domains_view.order.actions.addToCart")
+                    }}
                   </a-button>
                 </a-descriptions-item>
               </a-descriptions>
@@ -314,8 +325,6 @@ async function searchDomain() {
       const options = {
         name: el.domain,
         status: el.status,
-        btnText: t("domains_view.order.actions.addToCart"),
-        btnClass: "description-body__btn-add",
       };
 
       if (el.domain === domain.value) {
@@ -335,14 +344,9 @@ async function searchDomain() {
 }
 
 function addToCart(result) {
-  if (result.btnClass === "description-body__btn-add") {
-    result.btnText = "Order Now";
-    result.btnClass = "description-body__btn-order";
-
-    if (!onCart.value.some((item) => item.name === result.name)) {
-      onCart.value.push(result);
-      itemsInCart.value += 1;
-    }
+  if (!onCart.value.some((item) => item.name === result.name)) {
+    onCart.value.push(result);
+    itemsInCart.value += 1;
   } else {
     cartVisibility.value = true;
   }
@@ -669,6 +673,12 @@ input.ant-input:focus {
   border-color: var(--success);
 }
 
+.ant-btn.description-body__btn-add.disabled:hover {
+  color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
 div.ant-descriptions-view {
   border-color: var(--bright_bg) !important;
   border-bottom-right-radius: 0;
@@ -720,6 +730,11 @@ td.ant-descriptions-item-content:nth-child(2) {
 
 .ant-descriptions-item-content.description-body__domain-price {
   width: 110px !important;
+}
+
+.ant-descriptions-item-content.description-body__domain-status span {
+  width: 90px !important;
+  text-align: center;
 }
 /*media*/
 /*@media screen and (max-width: 1024px) {
