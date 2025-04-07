@@ -329,12 +329,47 @@ async function searchDomain() {
 
     results.value = [];
     resultsOffset.value = 1;
-    meta.domains.sort(function (a, b) {
-      return (
-        levenshtein(a.domain, domain.value) -
-        levenshtein(b.domain, domain.value)
-      );
-    });
+
+    const tld = getTLD(domain.value);
+
+    if (!tld) {
+      meta.domains.sort(function (a, b) {
+        return (
+          levenshtein(a.domain, domain.value) - levenshtein(b.domain, domain.value)
+        );
+      });
+
+      const popularTlds = [
+        "com",
+        "site",
+        "info",
+        "org",
+        "xyz",
+        "online",
+        "pro",
+        "store",
+        "net",
+        "tech",
+        "biz",
+      ];
+
+      meta.domains.sort(function (a, b) {
+        const indexA = popularTlds.indexOf(getTLD(a.domain));
+        const indexB = popularTlds.indexOf(getTLD(b.domain));
+
+        return (
+          (indexA === -1 ? 10000 : indexA) - (indexB === -1 ? 10000 : indexB)
+        );
+      });
+    } else {
+      meta.domains.sort(function (a, b) {
+        return (
+          levenshtein(a.domain, domain.value) -
+          levenshtein(b.domain, domain.value)
+        );
+      });
+    }
+
     meta.domains.forEach((el) => {
       const options = {
         name: el.domain,
@@ -355,6 +390,13 @@ async function searchDomain() {
   } finally {
     isDomainsLoading.value = false;
   }
+}
+
+function getTLD(domain) {
+  return domain
+    .split(".")
+    .filter((_, index) => index != 0)
+    .join(".");
 }
 
 function addToCart(result) {
@@ -442,6 +484,10 @@ watch(sp, async (value) => {
 });
 
 watch(currentPool, () => {
+  if (currentPool.value.every(({ name }) => domainPrices.value.get(name))) {
+    return;
+  }
+
   currentPool.value.forEach(async ({ name }) => {
     async function getDomainPriceForYear(name) {
       const data = await api.servicesProviders.action({
