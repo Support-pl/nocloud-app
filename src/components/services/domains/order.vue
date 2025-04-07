@@ -108,15 +108,25 @@
                   <a-input v-model:value="form.email" />
                 </a-form-item>
               </a-col>
+
               <a-col :xs="24" :sm="12">
                 <a-form-item
                   name="phone"
                   :label="$t('clientinfo.phonenumber')"
-                  :rules="[rules.req]"
+                  :rules="[rules.phone]"
                 >
-                  <a-input v-model:value="form.phone" />
+                  <div style="display: flex; align-items: center">
+                    <span style="margin-right: 5px">{{
+                      phonecode ? phonecode : "+XXX"
+                    }}</span>
+                    <a-input
+                      :disabled="!phonecode"
+                      v-model:value="form.phone"
+                    />
+                  </div>
                 </a-form-item>
               </a-col>
+
               <a-col :xs="24" :sm="12">
                 <a-form-item
                   name="country"
@@ -124,6 +134,7 @@
                   :rules="[rules.req]"
                 >
                   <a-select
+                    @change="onChangeCountry"
                     v-model:value="form.country"
                     show-search
                     style="width: 100%"
@@ -410,6 +421,7 @@ const form = ref({});
 const getProducts = ref({ name: "", pricing: {} });
 const selectedProduct = ref();
 const periods = ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]); // 'annually biennially triennial quadrennial quinquennial'
+const phonecode = ref("");
 
 const spStore = useSpStore();
 const instancesStore = useInstancesStore();
@@ -496,7 +508,6 @@ const fullPrice = computed(
           resources.value.period * 86400 * 365
         ] || 0) * onCart.value.length)
 );
-
 const rules = computed(() => {
   const message = t("ssl_product.field is required");
 
@@ -524,6 +535,24 @@ const rules = computed(() => {
           !!value &&
           value.length > 1 &&
           /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/.test(value)
+        ) {
+          return Promise.resolve();
+        }
+
+        return Promise.reject();
+      },
+    },
+    phone: {
+      required: true,
+      trigger: "blur",
+      message,
+      validator: (d) => {
+        const value = form.value[d.field];
+        if (
+          !!value &&
+          value.length > 6 &&
+          value.length < 16 &&
+          /^\d+$/.test(value)
         ) {
           return Promise.resolve();
         }
@@ -894,6 +923,12 @@ const removeProduct = (domain, index) => {
 
     return acc;
   }, {});
+};
+
+const onChangeCountry = () => {
+  phonecode.value = countries.find(
+    (c) => c.code === form.value.country
+  ).dial_code;
 };
 
 const countriesOptions = computed(() => {

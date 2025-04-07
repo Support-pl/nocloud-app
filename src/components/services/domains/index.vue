@@ -33,11 +33,13 @@
                   show-zero
                   :count="itemsInCart"
                   :offset="[0, -5]"
-                  :number-style="{
-                    backgroundColor: 'var(--bright_font)',
-                    color: '#999',
-                    boxShadow: '0 0 0 1px #d9d9d9 inset',
-                  }"
+                  :number-style="
+                    itemsInCart === 0 && {
+                      backgroundColor: 'var(--bright_font)',
+                      color: '#999',
+                      boxShadow: '0 0 0 1px #d9d9d9 inset',
+                    }
+                  "
                 />
               </a-col>
             </a-row>
@@ -84,16 +86,17 @@
                   class="description-body__domain-name"
                   :span="3"
                 >
-                  {{ result.name }}
+                  <a-skeleton-button v-if="isSearchLoading" />
+                  <span v-else>
+                    {{ result.name }}
+                  </span>
                 </a-descriptions-item>
 
                 <a-descriptions-item
                   class="description-body__domain-price"
                   :span="1"
                 >
-                  <a-skeleton-button
-                    v-if="isDomainPricesLoading || isConvertPricesLoading"
-                  />
+                  <a-skeleton-button v-if="isSearchLoading" />
                   <span v-else>
                     {{
                       formatPrice(
@@ -125,7 +128,7 @@
                       ].join(' ')
                     "
                     @click="addToCart(result)"
-                    :disabled="result.status !== 'available'"
+                    :disabled="result.status !== 'available' || isSearchLoading"
                   >
                     {{
                       onCart.find((v) => v.name === result.name)
@@ -298,6 +301,10 @@ const sp = computed(() => {
   );
 });
 
+const isSearchLoading = computed(
+  () => isDomainPricesLoading.value || isConvertPricesLoading.value
+);
+
 async function searchDomain() {
   const regexWithZone = /^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i;
   const regexWithoutZone = /^[a-z0-9][a-z0-9-]*$/i;
@@ -324,12 +331,48 @@ async function searchDomain() {
 
     results.value = [];
     resultsOffset.value = 1;
-    meta.domains.sort(function (a, b) {
-      return (
-        levenshtein(a.domain, domain.value) -
-        levenshtein(b.domain, domain.value)
-      );
-    });
+
+    const tld = getTLD(domain.value);
+
+    if (!tld) {
+      meta.domains.sort(function (a, b) {
+        return (
+          levenshtein(a.domain, domain.value) -
+          levenshtein(b.domain, domain.value)
+        );
+      });
+
+      const popularTlds = [
+        "com",
+        "site",
+        "info",
+        "org",
+        "xyz",
+        "online",
+        "pro",
+        "store",
+        "net",
+        "tech",
+        "biz",
+      ];
+
+      meta.domains.sort(function (a, b) {
+        const indexA = popularTlds.indexOf(getTLD(a.domain));
+        const indexB = popularTlds.indexOf(getTLD(b.domain));
+
+        return (
+          (indexA === -1 ? 10000 : indexA) - (indexB === -1 ? 10000 : indexB)
+        );
+      });
+    } else {
+      meta.domains.sort(function (a, b) {
+        return (
+          levenshtein(a.domain, domain.value) -
+          levenshtein(b.domain, domain.value)
+        );
+      });
+    }
+
     meta.domains.forEach((el) => {
       const options = {
         name: el.domain,
@@ -350,6 +393,13 @@ async function searchDomain() {
   } finally {
     isDomainsLoading.value = false;
   }
+}
+
+function getTLD(domain) {
+  return domain
+    .split(".")
+    .filter((_, index) => index != 0)
+    .join(".");
 }
 
 function addToCart(result) {
@@ -437,6 +487,10 @@ watch(sp, async (value) => {
 });
 
 watch(currentPool, () => {
+  if (currentPool.value.every(({ name }) => domainPrices.value.get(name))) {
+    return;
+  }
+
   currentPool.value.forEach(async ({ name }) => {
     async function getDomainPriceForYear(name) {
       const data = await api.servicesProviders.action({
@@ -444,7 +498,14 @@ watch(currentPool, () => {
         action: "get_domain_price",
         params: { domain: name },
       });
-      const price = data.meta.price;
+      const requiredKeys = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+      if (requiredKeys.some((v) => !data.meta.prices[v])) {
+        results.value = results.value.filter((d) => d.name !== name);
+        throw Error("No price...");
+      }
+
+      const price = data.meta.prices[1];
       const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
 
       return (
