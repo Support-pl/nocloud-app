@@ -33,11 +33,13 @@
                   show-zero
                   :count="itemsInCart"
                   :offset="[0, -5]"
-                  :number-style="{
-                    backgroundColor: 'var(--bright_font)',
-                    color: '#999',
-                    boxShadow: '0 0 0 1px #d9d9d9 inset',
-                  }"
+                  :number-style="
+                    itemsInCart === 0 && {
+                      backgroundColor: 'var(--bright_font)',
+                      color: '#999',
+                      boxShadow: '0 0 0 1px #d9d9d9 inset',
+                    }
+                  "
                 />
               </a-col>
             </a-row>
@@ -335,7 +337,8 @@ async function searchDomain() {
     if (!tld) {
       meta.domains.sort(function (a, b) {
         return (
-          levenshtein(a.domain, domain.value) - levenshtein(b.domain, domain.value)
+          levenshtein(a.domain, domain.value) -
+          levenshtein(b.domain, domain.value)
         );
       });
 
