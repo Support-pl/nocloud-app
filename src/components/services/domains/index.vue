@@ -84,16 +84,17 @@
                   class="description-body__domain-name"
                   :span="3"
                 >
-                  {{ result.name }}
+                  <a-skeleton-button v-if="isSearchLoading" />
+                  <span v-else>
+                    {{ result.name }}
+                  </span>
                 </a-descriptions-item>
 
                 <a-descriptions-item
                   class="description-body__domain-price"
                   :span="1"
                 >
-                  <a-skeleton-button
-                    v-if="isDomainPricesLoading || isConvertPricesLoading"
-                  />
+                  <a-skeleton-button v-if="isSearchLoading" />
                   <span v-else>
                     {{
                       formatPrice(
@@ -125,7 +126,7 @@
                       ].join(' ')
                     "
                     @click="addToCart(result)"
-                    :disabled="result.status !== 'available'"
+                    :disabled="result.status !== 'available' || isSearchLoading"
                   >
                     {{
                       onCart.find((v) => v.name === result.name)
@@ -298,6 +299,10 @@ const sp = computed(() => {
   );
 });
 
+const isSearchLoading = computed(
+  () => isDomainPricesLoading.value || isConvertPricesLoading.value
+);
+
 async function searchDomain() {
   const regexWithZone = /^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i;
   const regexWithoutZone = /^[a-z0-9][a-z0-9-]*$/i;
@@ -444,7 +449,14 @@ watch(currentPool, () => {
         action: "get_domain_price",
         params: { domain: name },
       });
-      const price = data.meta.price;
+      const requiredKeys = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+      if (requiredKeys.some((v) => !data.meta.prices[v])) {
+        results.value = results.value.filter((d) => d.name !== name);
+        throw Error("No price...");
+      }
+
+      const price = data.meta.prices[1];
       const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
 
       return (
