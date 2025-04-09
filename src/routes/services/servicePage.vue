@@ -181,11 +181,11 @@ import { useInstancesStore } from "@/stores/instances.js";
 import loading from "@/components/ui/loading.vue";
 import serviceInfo from "@/components/ui/serviceInfo.vue";
 import { useRoute } from "vue-router";
-import api from "@/api";
 import { useI18n } from "vue-i18n";
 import { Modal } from "ant-design-vue";
 import { useInvoicesStore } from "@/stores/invoices";
 import { GetInvoicesRequest } from "nocloud-proto/proto/es/billing/billing_pb";
+import { storeToRefs } from "pinia";
 
 const caretRightIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CaretRightOutlined")
@@ -194,6 +194,7 @@ const caretRightIcon = defineAsyncComponent(() =>
 const authStore = useAuthStore();
 const instancesStore = useInstancesStore();
 const productsStore = useProductsStore();
+const { products } = storeToRefs(productsStore);
 const chatsStore = useChatsStore();
 const invoicesStore = useInvoicesStore();
 
@@ -314,7 +315,7 @@ const description = computed(() => {
 });
 
 async function onStart() {
-  authStore.fetchBillingData();
+  await authStore.fetchBillingData();
   await instancesStore.fetch();
 
   const domain = instancesStore.getInstances.find(
@@ -322,10 +323,22 @@ async function onStart() {
   );
   let groupname = "Domains";
   let date = "year";
-  let response;
 
-  if (!domain) response = { meta: "product" };
-  else {
+  if (!domain) {
+    if (products.value.length === 0) {
+      await productsStore.fetch(authStore.billingUser.client_id);
+    }
+
+    const product = products.value.find(
+      ({ id }) => `${id}` === `${route.params.id}`
+    );
+
+    if (product) {
+      service.value = product;
+
+      info.value.pop();
+    }
+  } else {
     switch (domain.billingPlan.type) {
       case "cpanel": {
         const { period } = domain.billingPlan.products[domain.product];
