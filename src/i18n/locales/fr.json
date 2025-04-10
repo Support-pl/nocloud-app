@@ -611,10 +611,13 @@
     },
     "phone_verification": {
       "labels": {
-        "verify": "Vérifiez le téléphone"
+        "verify": "Vérifiez le téléphone",
+        "description": "Un code de vérification à six chiffres sera envoyé au numéro de téléphone {Phone_number}. Le code sera valide dans les 10 minutes",
+        "code_again": "Il sera possible d'envoyer le code à nouveau via {secondes} secondes",
+        "code": "Code"
       },
       "actions": {
-        "get_code": "Obtenir du code",
+        "get_code": "Obtenez le code",
         "confirm_code": "Confirmer le code"
       }
     },

@@ -684,7 +684,10 @@
     },
     "phone_verification": {
       "labels": {
-        "verify": "Sprawdź telefon"
+        "verify": "Sprawdź telefon",
+        "description": "Kod weryfikacji sześcio -digit zostanie wysłany do numeru telefonu {Phone_number}. Kod będzie ważny w ciągu 10 minut",
+        "code_again": "Możliwe będzie ponownie wysłanie kodu przez {sekundy} sekundy",
+        "code": "Kod"
       },
       "actions": {
         "get_code": "Zdobądź kod",

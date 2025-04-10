@@ -189,7 +189,10 @@
     },
     "phone_verification": {
       "labels": {
-        "verify": "Xác minh điện thoại"
+        "verify": "Xác minh điện thoại",
+        "description": "Mã xác minh sáu chữ số sẽ được gửi đến số điện thoại {Phone_number}. Mã sẽ có hiệu lực trong vòng 10 phút",
+        "code_again": "Nó có thể gửi lại mã qua {giây} giây",
+        "code": "Mã số"
       },
       "actions": {
         "get_code": "Nhận mã",
