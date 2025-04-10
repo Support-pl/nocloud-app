@@ -136,57 +136,12 @@
         </div>
       </div>
     </div>
-    <a-modal
-      v-model:open="isPhonenumberVerificationOpen"
-      :title="$t('phone_verification.labels.verify')"
-    >
-      <div class="verification_form">
-        <div class="description">
-          <span>{{
-            $t("phone_verification.labels.description", {
-              phone_number: `${phonecode}${form.phonenumber}`,
-            })
-          }}</span>
-        </div>
 
-        <a-input
-          :disabled="!lastGetCodeTs || timeToBlockCode < 0"
-          :placeholder="$t('phone_verification.labels.code')"
-          v-model:value="secureCode"
-        />
-
-        <div class="time_to_new_code" v-if="timeToNewCode > 0">
-          <span>{{
-            $t("phone_verification.labels.code_again", {
-              seconds: timeToNewCode,
-            })
-          }}</span>
-        </div>
-      </div>
-
-      <template #footer>
-        <div class="verification_actions">
-          <a-button
-            :disabled="timeToNewCode > 0"
-            @click="getCode"
-            :loading="isGetCodeLoading"
-            >{{ $t("phone_verification.actions.get_code") }}
-          </a-button>
-          <a-button
-            :disabled="
-              !lastGetCodeTs ||
-              timeToBlockCode < 0 ||
-              !/^\d+$/.test(secureCode) ||
-              secureCode.length != 6 ||
-              secureCode == lastSecureCode
-            "
-            @click="confirmCode"
-            :loading="isConfirmCodeLoading"
-            >{{ $t("phone_verification.actions.confirm_code") }}</a-button
-          >
-        </div>
-      </template>
-    </a-modal>
+    <verification-modal
+      :open="isPhonenumberVerificationOpen"
+      @update:open="isPhonenumberVerificationOpen = $event"
+      @confirm="onCodeConfirm"
+    />
   </div>
 </template>
 
@@ -198,7 +153,6 @@ import {
   reactive,
   ref,
   defineAsyncComponent,
-  watch,
 } from "vue";
 import { notification } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
@@ -210,6 +164,7 @@ import empty from "@/components/ui/empty.vue";
 import loading from "@/components/ui/loading.vue";
 import { storeToRefs } from "pinia";
 import { h } from "vue";
+import VerificationModal from "@/components/settings/verificationModal.vue";
 
 const warningOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/WarningOutlined")
@@ -229,14 +184,6 @@ const isLoading = ref(false);
 const isSendingInfo = ref(false);
 const phonecode = ref();
 const isPhonenumberVerificationOpen = ref(false);
-const isGetCodeLoading = ref(false);
-const isConfirmCodeLoading = ref(false);
-const secureCode = ref("");
-const lastSecureCode = ref("");
-const lastGetCodeTs = ref();
-const timeToNewCode = ref();
-const timeToBlockCode = ref();
-let intervalTimer;
 
 const reqRule = reactive({
   required: true,
@@ -264,9 +211,6 @@ const rules = computed(() => ({
 
 onMounted(() => {
   reqRule.message = `${i18n.t("ssl_product.field is required")}`;
-
-  lastGetCodeTs.value =
-    +localStorage.getItem("phone_number_verification_ts") || "";
 });
 
 const deltaInfo = computed(() => {
@@ -356,6 +300,11 @@ function installDataToBuffer() {
   phonecode.value = countries.find(
     ({ code }) => code === billingUser.value.countrycode
   )?.dial_code;
+}
+
+function onCodeConfirm() {
+  fetchInfo(true);
+  authStore.fetchUserData(true);
 }
 
 async function fetchInfo(update) {
@@ -449,58 +398,6 @@ function searchCountries(input, option) {
   return country.includes(input.toLowerCase());
 }
 
-async function getCode() {
-  isGetCodeLoading.value = true;
-
-  try {
-    await api.post("/accounts/verify", {
-      action: "BEGIN",
-      type: "PHONE",
-      account: userdata.value.uuid,
-    });
-
-    lastGetCodeTs.value = Math.floor(Date.now() / 1000);
-    localStorage.setItem(
-      "phone_number_verification_ts",
-      lastGetCodeTs.value.toString()
-    );
-  } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error;
-
-    notification.error({ message: i18n.t(message) });
-  } finally {
-    isGetCodeLoading.value = false;
-  }
-}
-
-async function confirmCode() {
-  isConfirmCodeLoading.value = true;
-
-  try {
-    lastSecureCode.value = secureCode.value;
-
-    await api.post("/accounts/verify", {
-      action: "APPROVE",
-      type: "PHONE",
-      account: userdata.value.uuid,
-      secure_code: secureCode.value,
-    });
-
-    lastGetCodeTs.value = "";
-    localStorage.removeItem("phone_number_verification_ts");
-    isPhonenumberVerificationOpen.value = false;
-
-    await fetchInfo(true);
-    await authStore.fetchUserData(true);
-  } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error;
-
-    notification.error({ message: i18n.t(message) });
-  } finally {
-    isConfirmCodeLoading.value = false;
-  }
-}
-
 const theme = inject("theme");
 const inputColors = computed(() =>
   theme.value
@@ -510,20 +407,6 @@ const inputColors = computed(() =>
 
 if (!("firstname" in billingUser.value)) fetchInfo();
 else installDataToBuffer();
-
-watch(lastGetCodeTs, () => {
-  clearInterval(intervalTimer);
-
-  intervalTimer = setInterval(() => {
-    timeToNewCode.value = lastGetCodeTs.value
-      ? lastGetCodeTs.value + 60 * 3 - Math.floor(Date.now() / 1000)
-      : -1;
-
-    timeToBlockCode.value = lastGetCodeTs.value
-      ? lastGetCodeTs.value + 60 * 10 - Math.floor(Date.now() / 1000)
-      : -1;
-  }, 1000);
-});
 </script>
 
 <script>
