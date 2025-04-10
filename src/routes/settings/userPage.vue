@@ -51,14 +51,21 @@
                   class="user__input"
                   :disabled="!form.countryname || isDisabled"
                 />
-                <a-button
-                  style="margin-left: 5px"
-                  type="primary"
-                  @click="isPhonenumberVerificationOpen = true"
-                  v-if="!userdata.isPhoneVerified"
-                  :icon="h(warningOutlined)"
-                  >{{ $t("phone_verification.labels.verify") }}</a-button
-                >
+                <template v-if="billingUser.countrycode == 'BY'">
+                  <a-button
+                    style="margin-left: 5px"
+                    type="primary"
+                    @click="isPhonenumberVerificationOpen = true"
+                    v-if="!userdata.isPhoneVerified"
+                    :icon="h(warningOutlined)"
+                    >{{ $t("phone_verification.labels.verify") }}</a-button
+                  >
+                  <check-circle-filled
+                    style="margin-left: 5px; font-size: 1.2rem"
+                    v-else
+                    two-tone-color="#22bb33"
+                  />
+                </template>
               </div>
               <a-input
                 v-else
@@ -134,7 +141,27 @@
       :title="$t('phone_verification.labels.verify')"
     >
       <div class="verification_form">
-        <a-input placeholder="Code" v-model:value="secureCode" />
+        <div class="description">
+          <span>{{
+            $t("phone_verification.labels.description", {
+              phone_number: `${phonecode}${form.phonenumber}`,
+            })
+          }}</span>
+        </div>
+
+        <a-input
+          :disabled="!lastGetCodeTs || timeToBlockCode < 0"
+          :placeholder="$t('phone_verification.labels.code')"
+          v-model:value="secureCode"
+        />
+
+        <div class="time_to_new_code" v-if="timeToNewCode > 0">
+          <span>{{
+            $t("phone_verification.labels.code_again", {
+              seconds: timeToNewCode,
+            })
+          }}</span>
+        </div>
       </div>
 
       <template #footer>
@@ -144,8 +171,7 @@
             @click="getCode"
             :loading="isGetCodeLoading"
             >{{ $t("phone_verification.actions.get_code") }}
-            {{ timeToNewCode > 0 ? timeToNewCode : "" }}</a-button
-          >
+          </a-button>
           <a-button
             :disabled="
               !lastGetCodeTs ||
@@ -187,6 +213,10 @@ import { h } from "vue";
 
 const warningOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/WarningOutlined")
+);
+
+const checkCircleFilled = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CheckCircleTwoTone")
 );
 
 const i18n = useI18n();
@@ -420,7 +450,7 @@ function searchCountries(input, option) {
 }
 
 async function getCode() {
-  isGetCodeLoading.value = false;
+  isGetCodeLoading.value = true;
 
   try {
     await api.post("/accounts/verify", {
@@ -444,7 +474,7 @@ async function getCode() {
 }
 
 async function confirmCode() {
-  isConfirmCodeLoading.value = false;
+  isConfirmCodeLoading.value = true;
 
   try {
     lastSecureCode.value = secureCode.value;
@@ -552,5 +582,13 @@ export default { name: "UserSettingsView" };
 .verification_form .verification_actions {
   display: flex;
   justify-content: end;
+}
+
+.verification_form .description {
+  margin: 20px;
+}
+
+.verification_form .time_to_new_code {
+  margin: 20px;
 }
 </style>
