@@ -676,6 +676,15 @@
       "Resolve": "Resolved",
       "Close": "Closed"
     },
+    "phone_verification": {
+      "labels": {
+        "verify": "Verify phone"
+      },
+      "actions": {
+        "get_code": "Get code",
+        "confirm_code": "Confirm code"
+      }
+    },
     "domains_view": {
       "order": {
         "domains_status": {

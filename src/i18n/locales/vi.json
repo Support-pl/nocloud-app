@@ -187,6 +187,15 @@
     "ip": {
       "none": "none"
     },
+    "phone_verification": {
+      "labels": {
+        "verify": "Xác minh điện thoại"
+      },
+      "actions": {
+        "get_code": "Nhận mã",
+        "confirm_code": "Xác nhận mã"
+      }
+    },
     "os": "Hệ điều hành (OS)",
     "Do you want to delete this virtual machine?": "Bạn có muốn xóa VM này không?",
     "Do you want to reinstall this virtual machine?": "Bạn có muốn cài đặt lại VM này không?",

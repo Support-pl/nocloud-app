@@ -682,6 +682,15 @@
       },
       "placeholder": "Kod promocyjny"
     },
+    "phone_verification": {
+      "labels": {
+        "verify": "Sprawdź telefon"
+      },
+      "actions": {
+        "get_code": "Zdobądź kod",
+        "confirm_code": "Potwierdź kod"
+      }
+    },
     "domains_view": {
       "nameservers": {
         "labels": {
