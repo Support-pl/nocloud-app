@@ -678,11 +678,14 @@
     },
     "phone_verification": {
       "labels": {
-        "verify": "Verify phone"
+        "verify": "Verify the phone",
+        "description": "A six -digit verification code will be sent to the phone number {Phone_number}. ",
+        "code_again": "It will be possible to send the code again through {seconds} seconds",
+        "code": "Code"
       },
       "actions": {
-        "get_code": "Get code",
-        "confirm_code": "Confirm code"
+        "get_code": "Get the code",
+        "confirm_code": "Confirm the code"
       }
     },
     "domains_view": {
