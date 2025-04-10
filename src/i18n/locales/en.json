@@ -681,7 +681,8 @@
         "verify": "Verify the phone",
         "description": "A six -digit verification code will be sent to the phone number {Phone_number}. ",
         "code_again": "It will be possible to send the code again through {seconds} seconds",
-        "code": "Code"
+        "code": "Code",
+        "invoices_message": "Verify your phone to proceed to payment and service activation. The data is required for correct registration of the service and billing."
       },
       "actions": {
         "get_code": "Get the code",
