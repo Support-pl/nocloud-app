@@ -609,6 +609,15 @@
       },
       "placeholder": "Code promotionnel"
     },
+    "phone_verification": {
+      "labels": {
+        "verify": "Vérifiez le téléphone"
+      },
+      "actions": {
+        "get_code": "Obtenir du code",
+        "confirm_code": "Confirmer le code"
+      }
+    },
     "domains_view": {
       "nameservers": {
         "labels": {
