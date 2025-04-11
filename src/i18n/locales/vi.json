@@ -187,6 +187,19 @@
     "ip": {
       "none": "none"
     },
+    "phone_verification": {
+      "labels": {
+        "verify": "Xác minh điện thoại",
+        "description": "Mã xác minh sáu chữ số sẽ được gửi đến số điện thoại {Phone_number}. Mã sẽ có hiệu lực trong vòng 10 phút",
+        "code_again": "Nó có thể gửi lại mã qua {giây} giây",
+        "code": "Mã số",
+        "invoices_message": "Xác minh điện thoại của bạn để tiến hành thanh toán và kích hoạt dịch vụ. Dữ liệu này là cần thiết để đăng ký dịch vụ và lập hóa đơn chính xác."
+      },
+      "actions": {
+        "get_code": "Nhận mã",
+        "confirm_code": "Xác nhận mã"
+      }
+    },
     "os": "Hệ điều hành (OS)",
     "Do you want to delete this virtual machine?": "Bạn có muốn xóa VM này không?",
     "Do you want to reinstall this virtual machine?": "Bạn có muốn cài đặt lại VM này không?",

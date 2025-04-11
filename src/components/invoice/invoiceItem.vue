@@ -2,8 +2,12 @@
   <div
     class="invoice"
     @click="
-      isLoading = true;
-      openInvoiceDocument(invoice);
+      if (needVerification) {
+        isVerificationOpen = true;
+      } else {
+        isLoading = true;
+        openInvoiceDocument(invoice);
+      }
     "
   >
     <div class="invoice__header flex-between">
@@ -45,7 +49,7 @@
     <div class="invoice__footer flex-between">
       <div class="invoice__id">#{{ getInvoiceNumber(invoice) }}</div>
 
-      <template v-if="invoice.status === 'Unpaid'">
+      <template v-if="invoice.status === 'Unpaid' && !needVerification">
         <template
           v-if="
             invoice.total <= userBalance &&
@@ -81,6 +85,18 @@
         </div>
       </template>
 
+      <template v-else-if="invoice.status === 'Unpaid'">
+        <span class="verification">
+          {{ $t("phone_verification.labels.verify") }}
+        </span>
+
+        <verification-modal
+          :open="isVerificationOpen"
+          @update:open="isVerificationOpen = $event"
+          @confirm="onCodeConfirm"
+        />
+      </template>
+
       <component
         :is="isLoading ? loadingIcon : rightIcon"
         v-else
@@ -94,7 +110,7 @@
 import { computed, defineAsyncComponent, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ActionType } from "nocloud-proto/proto/es/billing/billing_pb";
-
+import VerificationModal from "../settings/verificationModal.vue";
 import { useAuthStore } from "@/stores/auth.js";
 import { useInvoicesStore } from "@/stores/invoices.js";
 import { useCurrency, useNotification } from "@/hooks/utils";
@@ -113,7 +129,7 @@ const authStore = useAuthStore();
 const invoicesStore = useInvoicesStore();
 const { openNotification } = useNotification();
 const { formatPrice } = useCurrency();
-const { userBalance } = storeToRefs(authStore);
+const { userBalance, userdata } = storeToRefs(authStore);
 
 const loadingIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LoadingOutlined")
@@ -124,6 +140,7 @@ const rightIcon = defineAsyncComponent(() =>
 
 const isLoading = ref(false);
 const isBalanceLoading = ref(false);
+const isVerificationOpen = ref(false);
 
 const statusColor = computed(() => {
   switch (props.invoice.status?.toLowerCase()) {
@@ -144,6 +161,12 @@ const total = computed(() => {
 
   return formatPrice(Math.abs(total));
 });
+
+const needVerification = computed(
+  () =>
+    !!props.invoice.properties.phoneVerificationRequired &&
+    !userdata.value.isPhoneVerified
+);
 
 async function paidInvoice() {
   isLoading.value = true;
@@ -203,6 +226,11 @@ async function payByBalance() {
     isLoading.value = false;
   }
 }
+
+function onCodeConfirm() {
+  authStore.fetchUserData(true);
+  authStore.fetchUserData(true);
+}
 </script>
 
 <script>
@@ -238,6 +266,19 @@ export default { name: "InvoiceView" };
   border-radius: 12px;
   color: var(--gloomy_font);
   background: var(--success);
+  white-space: nowrap;
+}
+
+.verification {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 12px;
+  color: var(--gloomy_font);
+  background: var(--main);
   white-space: nowrap;
 }
 

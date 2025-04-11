@@ -400,6 +400,7 @@ export function toInvoice(transaction, type = "default") {
       currencycode: transaction.currencycode,
       meta: transaction.meta,
       type: "NO_ACTION",
+      properties: {},
     };
   } else {
     const status = capitalize(transaction.status.toLowerCase());
@@ -420,6 +421,7 @@ export function toInvoice(transaction, type = "default") {
       currencycode: transaction.currency,
       meta: transaction.meta,
       type: transaction.type,
+      properties: transaction.properties || {},
     };
   }
 }

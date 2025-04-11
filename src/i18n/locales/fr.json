@@ -609,6 +609,19 @@
       },
       "placeholder": "Code promotionnel"
     },
+    "phone_verification": {
+      "labels": {
+        "verify": "Vérifiez le téléphone",
+        "description": "Un code de vérification à six chiffres sera envoyé au numéro de téléphone {Phone_number}. Le code sera valide dans les 10 minutes",
+        "code_again": "Il sera possible d'envoyer le code à nouveau via {secondes} secondes",
+        "code": "Code",
+        "invoices_message": "Vérifiez votre téléphone pour procéder au paiement et à l'activation du service. Les données sont nécessaires à l'enregistrement correct du service et à la facturation."
+      },
+      "actions": {
+        "get_code": "Obtenez le code",
+        "confirm_code": "Confirmer le code"
+      }
+    },
     "domains_view": {
       "nameservers": {
         "labels": {

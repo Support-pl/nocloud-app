@@ -5,9 +5,7 @@
         <div class="content__title">
           {{ $t("Personal Area") }}
           <span class="content__small">
-            #{{
-              isWhmcsUser ? authStore.billingUser.id : authStore.userdata.uuid
-            }}
+            #{{ isWhmcsUser ? billingUser.id : userdata.uuid }}
           </span>
         </div>
         <div
@@ -27,27 +25,13 @@
               :label="`${capitalize($t(`clientinfo.${key}`))}:`"
               :name="key"
             >
-              <a-input v-model:value="form[key]" :disabled="isDisabled" />
-            </a-form-item>
-
-            <a-form-item
-              :label="form.countryname === 'PL' ? 'NIP' : 'VAT ID'"
-              name="tax_id"
-            >
-              <a-input v-model:value="form.tax_id" :disabled="isDisabled" />
-            </a-form-item>
-
-            <a-form-item
-              :label="`${capitalize($t('clientinfo.countryname'))}:`"
-              name="countryname"
-            >
               <a-select
+                v-if="key === 'countryname'"
                 v-model:value="form.countryname"
                 show-search
                 :filter-option="searchCountries"
-                :disabled="
-                  authStore.billingUser.country_stop === 1 || isDisabled
-                "
+                :disabled="billingUser.country_stop === 1 || isDisabled"
+                readonly
               >
                 <a-select-option
                   v-for="country in countries"
@@ -56,19 +40,45 @@
                   {{ $t(`country.${country.code}`) }}
                 </a-select-option>
               </a-select>
+              <div
+                v-else-if="key === 'phonenumber'"
+                style="display: flex; align-items: center"
+              >
+                <span style="margin-right: 5px">{{ phonecode }}</span>
+                <a-input
+                  readonly
+                  v-model:value="form.phonenumber"
+                  class="user__input"
+                  :disabled="!form.countryname || isDisabled"
+                />
+                <template v-if="billingUser.countrycode == 'BY'">
+                  <a-button
+                    style="margin-left: 5px"
+                    type="primary"
+                    @click="isPhonenumberVerificationOpen = true"
+                    v-if="!userdata.isPhoneVerified"
+                    :icon="h(warningOutlined)"
+                    >{{ $t("phone_verification.labels.verify") }}</a-button
+                  >
+                  <check-circle-filled
+                    style="margin-left: 5px; font-size: 1.2rem"
+                    v-else
+                    two-tone-color="#22bb33"
+                  />
+                </template>
+              </div>
+              <a-input
+                v-else
+                v-model:value="form[key]"
+                :disabled="isDisabled"
+              />
             </a-form-item>
 
             <a-form-item
-              :label="`${capitalize($t('clientinfo.phonenumber'))}:`"
-              name="phonenumber"
+              :label="form.countryname === 'PL' ? 'NIP' : 'VAT ID'"
+              name="tax_id"
             >
-              <input
-                v-model="form.phonenumber"
-                v-phone="phonecode"
-                type="tel"
-                class="user__input"
-                :disabled="!form.countryname || isDisabled"
-              />
+              <a-input v-model:value="form.tax_id" :disabled="isDisabled" />
             </a-form-item>
 
             <a-form-item
@@ -108,48 +118,72 @@
 
           <a-form v-else-if="isNocloudUser" ref="formRef" layout="vertical">
             <a-form-item :label="`${capitalize($t(`clientinfo.username`))}:`">
-              <a-input readonly :value="authStore.userdata.title" />
+              <a-input readonly :value="userdata.title" />
             </a-form-item>
 
             <a-form-item :label="`${capitalize($t(`clientinfo.email`))}:`">
-              <a-input readonly :value="authStore.userdata.data.email" />
+              <a-input readonly :value="userdata.data.email" />
             </a-form-item>
 
             <a-form-item
               :label="`${capitalize($t(`clientinfo.phonenumber`))}:`"
             >
-              <a-input readonly :value="authStore.userdata.data.phone" />
+              <a-input readonly :value="userdata.data.phone" />
             </a-form-item>
           </a-form>
-
           <loading v-else-if="isLoading" />
           <empty v-else style="height: 100%" />
         </div>
       </div>
     </div>
+
+    <verification-modal
+      :open="isPhonenumberVerificationOpen"
+      @update:open="isPhonenumberVerificationOpen = $event"
+      @confirm="onCodeConfirm"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, inject, onMounted, reactive, ref } from "vue";
+import {
+  computed,
+  inject,
+  onMounted,
+  reactive,
+  ref,
+  defineAsyncComponent,
+} from "vue";
 import { notification } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 import config from "@/appconfig.js";
 import api from "@/api.js";
-
 import { useAuthStore } from "@/stores/auth.js";
 import countries from "@/assets/countries.json";
-
 import empty from "@/components/ui/empty.vue";
 import loading from "@/components/ui/loading.vue";
+import { storeToRefs } from "pinia";
+import { h } from "vue";
+import VerificationModal from "@/components/settings/verificationModal.vue";
+
+const warningOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/WarningOutlined")
+);
+
+const checkCircleFilled = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CheckCircleTwoTone")
+);
 
 const i18n = useI18n();
 const authStore = useAuthStore();
+const { billingUser, userdata } = storeToRefs(authStore);
 
 const formRef = ref(null);
 const form = ref({});
 const isLoading = ref(false);
 const isSendingInfo = ref(false);
+const phonecode = ref();
+const isPhonenumberVerificationOpen = ref(false);
 
 const reqRule = reactive({
   required: true,
@@ -183,31 +217,26 @@ const deltaInfo = computed(() => {
   const info = { ...form.value, country: form.value.countryname };
 
   for (const key in info) {
-    if (info[key] === authStore.billingUser[key]) {
+    if (info[key] === billingUser.value[key]) {
       delete info[key];
     }
   }
   return info;
 });
 
-const phonecode = computed(
-  () =>
-    countries.find(({ title }) => title === form.value.countryname)?.dial_code
-);
-
 const isDisabled = computed(() => {
-  if (!authStore.billingUser.roles) return;
-  return !!authStore.billingUser.roles.settings;
+  if (!billingUser.value.roles) return;
+  return !!billingUser.value.roles.settings;
 });
 
 const isWhmcsUser = computed(() => {
   if (!config.whmcsSiteUrl) return true;
   if (localStorage.getItem("oauth")) return true;
-  return !isLoading.value && authStore.billingUser.firstname;
+  return !isLoading.value && billingUser.value.firstname;
 });
 
 const isNocloudUser = computed(() => {
-  return !isLoading.value && authStore.userdata.title;
+  return !isLoading.value && userdata.value.title;
 });
 
 const isPasswordVisible = computed(() => localStorage.getItem("oauth"));
@@ -217,15 +246,17 @@ const mainKeys = computed(() => {
     const result = [
       "firstname",
       "lastname",
-      "companyname",
       "email",
+      "phonenumber",
+      "companyname",
       "address1",
+      "countryname",
       "city",
       "state",
       "postcode",
     ];
 
-    return result.filter((key) => key in authStore.billingUser);
+    return result.filter((key) => key in billingUser.value);
   } else {
     const result = ["title", "data.email", "data.phone"];
     return result;
@@ -240,7 +271,7 @@ const keys = computed(() => {
   };
 
   Object.keys(result).forEach((key) => {
-    if (!(key in authStore.billingUser)) {
+    if (!(key in billingUser.value)) {
       delete result[key];
     }
   });
@@ -260,25 +291,35 @@ function installDataToBuffer() {
 
   interestedKeys.forEach((key) => {
     if (config.whmcsSiteUrl) {
-      form.value[key] = authStore.billingUser[key];
+      form.value[key] = billingUser.value[key];
     } else {
-      form.value[key] = authStore.userdata.data[key];
+      form.value[key] = userdata.value.data[key];
     }
   });
+
+  phonecode.value = countries.find(
+    ({ code }) => code === billingUser.value.countrycode
+  )?.dial_code;
+}
+
+function onCodeConfirm() {
+  fetchInfo(true);
+  authStore.fetchUserData(true);
 }
 
 async function fetchInfo(update) {
   try {
     isLoading.value = true;
     const response = await authStore.fetchBillingData(update);
-
     if (localStorage.getItem("oauth")) return;
     if (response.ERROR) throw response.ERROR.toLowerCase();
     if (response.result === "error") throw response;
-
-    installDataToBuffer();
   } finally {
-    isLoading.value = false;
+    setTimeout(() => {
+      isLoading.value = false;
+
+      installDataToBuffer();
+    }, 100);
   }
 }
 
@@ -298,12 +339,12 @@ async function sendInfo() {
       ? {
           ...deltaInfo.value,
           app_language: locale,
-          uuid: authStore.userdata.uuid,
+          uuid: userdata.value.uuid,
           run: "create_user_active",
         }
       : {
           run: "update_client",
-          user: { ...authStore.billingUser, ...deltaInfo.value },
+          user: { ...billingUser.value, ...deltaInfo.value },
         };
     let response;
 
@@ -311,8 +352,8 @@ async function sendInfo() {
     if (config.whmcsSiteUrl) {
       response = await api.get(authStore.baseURL, { params });
     } else {
-      await api.accounts.update(authStore.userdata.uuid, {
-        ...authStore.userdata,
+      await api.accounts.update(userdata.value.uuid, {
+        ...userdata.value,
         title: `${deltaInfo.value.firstname} ${deltaInfo.value.lastname}`,
         data: [
           "firstname",
@@ -326,7 +367,7 @@ async function sendInfo() {
           "companyname",
         ].reduce(
           (result, key) => ({ ...result, [key]: deltaInfo.value[key] }),
-          { ...authStore.userdata.data }
+          { ...userdata.value.data }
         ),
       });
     }
@@ -364,7 +405,7 @@ const inputColors = computed(() =>
     : { background: "inherit", border: "var(--border_color)" }
 );
 
-if (!("firstname" in authStore.billingUser)) fetchInfo();
+if (!("firstname" in billingUser.value)) fetchInfo();
 else installDataToBuffer();
 </script>
 
