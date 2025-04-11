@@ -682,6 +682,7 @@
         "description": "A six-digit verification code will be sent to the phone number {phone_number}. ",
         "code_again": "It will be possible to send the code again through {seconds} seconds",
         "code": "Code",
+        "verifcation_success": "You have successfully verified your phone.",
         "invoices_message": "Verify your phone to proceed to payment and service activation. The data is required for correct registration of the service and billing."
       },
       "actions": {
