@@ -130,6 +130,10 @@ async function confirmCode() {
     lastGetCodeTs.value = "";
     localStorage.removeItem("phone_number_verification_ts");
 
+    notification.success({
+      message: i18n.t("phone_verification.labels.verifcation_success"),
+    });
+
     emit("confirm");
     emit("update:open", false);
   } catch (error) {
