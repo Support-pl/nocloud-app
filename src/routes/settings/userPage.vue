@@ -461,17 +461,4 @@ export default { name: "UserSettingsView" };
 .user__button--cancel {
   margin-left: 10px;
 }
-
-.verification_form .verification_actions {
-  display: flex;
-  justify-content: end;
-}
-
-.verification_form .description {
-  margin: 20px;
-}
-
-.verification_form .time_to_new_code {
-  margin: 20px;
-}
 </style>

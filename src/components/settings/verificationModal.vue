@@ -161,3 +161,18 @@ watch(billingUser, () => {
   )?.dial_code;
 });
 </script>
+
+<style>
+.verification_form .verification_actions {
+  display: flex;
+  justify-content: end;
+}
+
+.verification_form .description {
+  margin: 20px 0px;
+}
+
+.verification_form .time_to_new_code {
+  margin: 20px 0px;
+}
+</style>
