@@ -615,6 +615,7 @@
         "description": "Un code de vérification à six chiffres sera envoyé au numéro de téléphone {Phone_number}. Le code sera valide dans les 10 minutes",
         "code_again": "Il sera possible d'envoyer le code à nouveau via {secondes} secondes",
         "code": "Code",
+        "verifcation_success": "Vous avez vérifié votre téléphone avec succès.",
         "invoices_message": "Vérifiez votre téléphone pour procéder au paiement et à l'activation du service. Les données sont nécessaires à l'enregistrement correct du service et à la facturation."
       },
       "actions": {

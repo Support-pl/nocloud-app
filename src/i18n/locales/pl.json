@@ -688,6 +688,7 @@
         "description": "Kod weryfikacji sześcio -digit zostanie wysłany do numeru telefonu {Phone_number}. Kod będzie ważny w ciągu 10 minut",
         "code_again": "Możliwe będzie ponownie wysłanie kodu przez {sekundy} sekundy",
         "code": "Kod",
+        "verifcation_success": "Pomyślnie zweryfikowałeś swój telefon.",
         "invoices_message": "Zweryfikuj swój telefon, aby przejść do płatności i aktywacji usługi. Dane te są niezbędne do prawidłowego zarejestrowania usługi i wystawienia faktury."
       },
       "actions": {
