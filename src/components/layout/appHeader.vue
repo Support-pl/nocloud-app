@@ -42,6 +42,7 @@
                     :is="button.icon"
                     :spin="button.isSpin"
                     class="header__icon"
+                    :style="button.style"
                   />
                 </div>
 
@@ -274,6 +275,12 @@
         </div>
       </div>
     </div>
+
+    <verification-modal
+      :open="isVerificationOpen"
+      @update:open="isVerificationOpen = $event"
+      @confirm="onCodeConfirm"
+    />
   </div>
 </template>
 
@@ -306,6 +313,7 @@ import { useInvoicesStore } from "@/stores/invoices.js";
 import { useTransactionsStore } from "@/stores/transactions.js";
 
 import balance from "@/components/ui/balance.vue";
+import VerificationModal from "../settings/verificationModal.vue";
 
 const leftIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LeftOutlined")
@@ -316,10 +324,20 @@ const closeIcon = defineAsyncComponent(() =>
 const downIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DownOutlined")
 );
+const verificationIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FileSearchOutlined")
+);
 
 export default {
   name: "AppHeader",
-  components: { balance, leftIcon, closeIcon, downIcon },
+  components: {
+    balance,
+    leftIcon,
+    closeIcon,
+    downIcon,
+    verificationIcon,
+    VerificationModal,
+  },
   emits: ["update:isButtonVisible"],
   data() {
     return {
@@ -328,6 +346,7 @@ export default {
       isButtonsVisible: true,
       indeterminate: true,
       checkAll: false,
+      isVerificationOpen: false,
       checkedList: [],
       headers: {
         cloud: {
@@ -339,6 +358,13 @@ export default {
           title: "Support",
           needBalance: true,
           buttons: [
+            {
+              name: "cloud_verification",
+              icon: verificationIcon,
+              onClickFuncion: () => {
+                this.isVerificationOpen = true;
+              },
+            },
             {
               name: "support_filter",
               icon: filterIcon,
@@ -373,6 +399,13 @@ export default {
               popover: true,
             },
             {
+              name: "cloud_verification",
+              icon: verificationIcon,
+              onClickFuncion: () => {
+                this.isVerificationOpen = true;
+              },
+            },
+            {
               name: "cloud_reload",
               icon: reloadIcon,
               onClickFuncion: () => {
@@ -387,6 +420,13 @@ export default {
           title: "billing",
           needBalance: true,
           buttons: [
+            {
+              name: "cloud_verification",
+              icon: verificationIcon,
+              onClickFuncion: () => {
+                this.isVerificationOpen = true;
+              },
+            },
             {
               name: "invoice_filter",
               icon: filterIcon,
@@ -609,6 +649,14 @@ export default {
     if (this.langs.includes(lang) && !localStorage.getItem("lang")) {
       this.$i18n.locale = lang;
     }
+
+    if (this.userdata.isPhoneVerified) {
+      Object.keys(this.headers).forEach((key) => {
+        this.headers[key].buttons = this.headers[key].buttons.filter(
+          ({ name }) => name != "cloud_verification"
+        );
+      });
+    }
   },
   methods: {
     ...mapActions(useAuthStore, ["fetchUserData"]),
@@ -776,6 +824,9 @@ export default {
       if (target.value.length > 1) return;
 
       this.searchString = "";
+    },
+    onCodeConfirm() {
+      this.fetchUserData(true);
     },
   },
 };
