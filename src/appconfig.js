@@ -16,7 +16,7 @@ export default {
 
   whmcsSiteUrl: globalConfig.whmcs?.site_url ?? "",
   whmcsRegistration: globalConfig.whmcs?.registration ?? false,
-  dnsEditor: globalConfig.dnsEditor.enabled ?? false,
+  dnsEditor: globalConfig.dnsEditor?.enabled ?? false,
   whmcsActs: globalConfig.whmcs?.acts ?? false,
   sharedFolder: globalConfig.app?.shared_folder ?? "virtualHosting",
 
