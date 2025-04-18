@@ -62,6 +62,10 @@ const formIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/FormOutlined")
 );
 
+const dnsEditorIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/UnorderedListOutlined")
+);
+
 export default {
   name: "ServicesWrapper",
   components: { serviceItem },
@@ -192,6 +196,19 @@ export default {
         });
       }
 
+      if (config.dnsEditor) {
+        services.push({
+          title: "DNS Editor",
+          translatable: true,
+          icon: dnsEditorIcon,
+          type: "DNSEditor",
+          onclick: {
+            function: this.routeTo,
+            paramsArr: [{ name: "dns editor", query: {} }],
+          },
+        });
+      }
+
       services.sort((a, b) => {
         if (a.icon === "shopping" && b.icon !== "shopping") return -1;
         if (b.icon === "shopping" && a.icon !== "shopping") return 1;
@@ -279,6 +296,9 @@ export default {
       }
       if (service.type === "BelGIE") {
         name = "registration form";
+      }
+      if (service.type === "DNSEditor") {
+        name = "dns editor";
       }
 
       this.$router.push({ name, query });

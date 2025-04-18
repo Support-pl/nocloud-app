@@ -4,6 +4,9 @@
     "registration": true,
     "acts": true
   },
+  "dnsEditor": {
+    "enabled": true
+  },
   "app": {
     "shared_folder": "virtualHosting",
     "title": "support.pl",
@@ -19,7 +22,13 @@
       "bright_bg": "#f7f7f7"
     }
   },
-  "languages": ["en", "ru", "vi", "fr", "pl"],
+  "languages": [
+    "en",
+    "ru",
+    "vi",
+    "fr",
+    "pl"
+  ],
   "department": "nocloud",
   "vdc_enabled": true,
   "shared_enabled": true,
