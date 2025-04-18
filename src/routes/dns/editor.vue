@@ -27,10 +27,7 @@ const iframeLink = computed(() => {
     lang: locale.value,
   });
 
-  // return `${VUE_APP_BASE_URL}dns.ui/?a=${btoa(
-  //   unescape(encodeURIComponent(fullParams))
-  // ).toString("base64")}`;
-  return `${"http://localhost:5173/"}dns.ui/?a=${btoa(
+  return `${VUE_APP_BASE_URL}dns.ui/?a=${btoa(
     unescape(encodeURIComponent(fullParams))
   ).toString("base64")}`;
 });
