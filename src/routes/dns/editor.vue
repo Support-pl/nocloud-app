@@ -27,7 +27,7 @@ const iframeLink = computed(() => {
     title: userdata.value.title,
     token: token.value,
     api: VUE_APP_BASE_URL,
-    theme: localStorage.getItem("theme"),
+    theme: "light",
     params: {},
     lang: locale.value,
   });
