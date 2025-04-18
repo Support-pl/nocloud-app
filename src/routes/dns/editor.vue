@@ -1,11 +1,6 @@
 <template>
   <div class="dns_editor">
     <div class="container">
-      <div class="content__wrapper">
-        <div class="content__title">
-          {{ $t("DNS Editor") }}
-        </div>
-      </div>
       <iframe class="iframe" :src="iframeLink"></iframe>
     </div>
   </div>
@@ -32,7 +27,10 @@ const iframeLink = computed(() => {
     lang: locale.value,
   });
 
-  return `${VUE_APP_BASE_URL}dns.ui/?a=${btoa(
+  // return `${VUE_APP_BASE_URL}dns.ui/?a=${btoa(
+  //   unescape(encodeURIComponent(fullParams))
+  // ).toString("base64")}`;
+  return `${"http://localhost:5173/"}dns.ui/?a=${btoa(
     unescape(encodeURIComponent(fullParams))
   ).toString("base64")}`;
 });
@@ -47,7 +45,7 @@ const iframeLink = computed(() => {
   width: 80vw;
   min-width: 80vw;
   min-height: 80vh;
-  height: 80vh;
+  height: 100%;
 }
 
 .dns_editor .iframe {
