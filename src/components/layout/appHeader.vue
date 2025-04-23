@@ -30,7 +30,38 @@
                 class="header__button"
               >
                 <div
-                  v-if="button.onClickFuncion && button.type == undefined"
+                  class="icon__wrapper verification_icon"
+                  :class="[
+                    { active__btn: getState(button.name) },
+                    button.additionalClass,
+                  ]"
+                  @click="button.onClickFuncion"
+                  v-if="button.name === 'cloud_verification'"
+                >
+                  <a-popover :title="$t('phone_verification.labels.tip')">
+                    <div style="position: relative">
+                      <component
+                        :is="button.icon"
+                        :spin="button.isSpin"
+                        class="header__icon"
+                        :style="button.style"
+                      />
+                      <div style="position: absolute; top: -2px; right: -2px">
+                        <div
+                          style="
+                            background-color: red;
+                            width: 10px;
+                            height: 10px;
+                            border-radius: 1rem;
+                          "
+                        />
+                      </div>
+                    </div>
+                  </a-popover>
+                </div>
+
+                <div
+                  v-else-if="button.onClickFuncion && button.type == undefined"
                   class="icon__wrapper"
                   :class="[
                     { active__btn: getState(button.name) },
