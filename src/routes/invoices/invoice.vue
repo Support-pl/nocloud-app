@@ -3,11 +3,11 @@
     <div class="container">
       <a-card
         v-if="
-          invoicesStore.getInvoices?.some(
+          invoices?.some(
             (invoice) =>
               invoice.status === 'Unpaid' &&
-              (invoice.properties.phoneVerificationRequired &&
-                !authStore.userdata.isPhoneVerified)
+              invoice.properties.phoneVerificationRequired &&
+              !userdata.isPhoneVerified
           )
         "
         class="need_verification"
@@ -41,13 +41,10 @@
         </a-radio-group>
 
         <template v-if="currentTab === 'Invoice'">
-          <empty
-            v-if="invoicesStore.getInvoices?.length === 0"
-            style="margin: 50px 0"
-          />
+          <empty v-if="invoices?.length === 0" style="margin: 50px 0" />
           <template v-else>
             <invoice-item
-              v-for="(invoice, index) in invoicesStore.getInvoices"
+              v-for="(invoice, index) in invoices"
               :key="index"
               :invoice="invoice"
             />
@@ -99,9 +96,12 @@ import empty from "@/components/ui/empty.vue";
 import invoiceItem from "@/components/invoice/invoiceItem.vue";
 import transactionItem from "@/components/invoice/transactionItem.vue";
 import actsList from "@/components/invoice/actsList.vue";
+import { storeToRefs } from "pinia";
 
 const authStore = useAuthStore();
+const { userdata } = storeToRefs(authStore);
 const invoicesStore = useInvoicesStore();
+const { getInvoices: invoices } = storeToRefs(invoicesStore);
 const transactionsStore = useTransactionsStore();
 const instancesStore = useInstancesStore();
 const { openNotification } = useNotification();
@@ -134,10 +134,10 @@ watch(currentTab, () => {
 
   if (currentTab.value === "Invoice") return;
   if (transactions.value?.length > 0) return;
-  if (!authStore.userdata.uuid) return;
+  if (!userdata.value.uuid) return;
 
   transactionsStore.fetch({
-    account: authStore.userdata.uuid,
+    account: userdata.value.uuid,
     page: currentPage.value,
     limit: pageSize.value,
     field: "exec",
@@ -146,28 +146,25 @@ watch(currentTab, () => {
   });
 });
 
-watch(
-  () => authStore.userdata,
-  () => {
-    if (transactionsStore.isLoading) return;
-    invoicesStore.fetch(invoicesStore.getInvoices?.length);
+watch(userdata, () => {
+  if (transactionsStore.isLoading) return;
+  invoicesStore.fetch(invoices.value?.length);
 
-    transactionsStore.fetch({
-      account: authStore.userdata.uuid,
-      page: currentPage.value,
-      limit: pageSize.value,
-      field: "exec",
-      sort: "desc",
-      type: "transaction",
-    });
+  transactionsStore.fetch({
+    account: userdata.value.uuid,
+    page: currentPage.value,
+    limit: pageSize.value,
+    field: "exec",
+    sort: "desc",
+    type: "transaction",
+  });
 
-    transactionsStore.fetchCount({
-      account: authStore.userdata.uuid,
-      type: "transaction",
-    });
-    setPagination();
-  }
-);
+  transactionsStore.fetchCount({
+    account: userdata.value.uuid,
+    type: "transaction",
+  });
+  setPagination();
+});
 
 watch(
   () => transactionsStore.isLoading,
@@ -181,11 +178,11 @@ watch(
 watch(() => invoicesStore.isLoading, setCoordY);
 
 onMounted(() => {
-  if (authStore.isLogged && authStore.userdata.uuid) {
-    invoicesStore.fetch(invoicesStore.getInvoices?.length);
+  if (authStore.isLogged && userdata.value.uuid) {
+    invoicesStore.fetch(invoices.value?.length);
 
     transactionsStore.fetchCount({
-      account: authStore.userdata.uuid,
+      account: userdata.value.uuid,
       type: "transaction",
     });
     setPagination();
@@ -209,9 +206,7 @@ onUnmounted(() => {
 function setCoordY() {
   setTimeout(() => {
     const items =
-      currentTab.value === "Invoice"
-        ? invoicesStore.getInvoices
-        : transactions.value;
+      currentTab.value === "Invoice" ? invoices.value : transactions.value;
     const id = sessionStorage.getItem("invoice");
     const i = items.findIndex(({ uuid }) => uuid === id);
 
@@ -259,7 +254,7 @@ function onShowSizeChange(page, limit) {
   transactionsStore.fetch({
     page,
     limit,
-    account: authStore.userdata.uuid,
+    account: userdata.value.uuid,
     field: "exec",
     sort: "desc",
     type: "transaction",

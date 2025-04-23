@@ -271,6 +271,17 @@ const routes = [
         },
         component: () => import("@/routes/authorization/resourceReg.vue"),
       },
+      {
+        path: "dns-editor",
+        name: "dns editor",
+        meta: {
+          mustBeLoggined: true,
+          footerTitle: "services",
+          headerTitle: "DNS Editor",
+          isNeedBackButton: false,
+        },
+        component: () => import("@/routes/dns/editor.vue"),
+      },
     ],
   },
 
