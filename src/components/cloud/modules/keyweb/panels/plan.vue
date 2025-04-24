@@ -120,7 +120,11 @@ async function setProduct(value) {
 
   if (!product.value.key) return;
 
-  const { price, meta } = cloudStore.plan.products[product.value.key];
+  const {
+    price,
+    meta,
+    resources = {},
+  } = cloudStore.plan.products[product.value.key];
   let cycle = "";
 
   switch (props.mode) {
@@ -137,9 +141,9 @@ async function setProduct(value) {
       cycle = "monthly";
   }
 
-  setOptions("cpu.size", 0);
-  setOptions("ram.size", 0);
-  setOptions("disk.size", 0);
+  setOptions("cpu.size", resources.cpu || 0);
+  setOptions("ram.size", resources.ram || 0);
+  setOptions("disk.size", (resources.disk || 0) * 1024);
 
   setOptions("config", { configurations: {}, id: meta.keywebId, cycle });
   setPrice("value", price);
