@@ -27,9 +27,9 @@ const iframeLink = computed(() => {
     lang: locale.value,
   });
 
-  return `${VUE_APP_BASE_URL}dns.ui/?a=${btoa(
-    unescape(encodeURIComponent(fullParams))
-  ).toString("base64")}`;
+  return `${VUE_APP_BASE_URL}dns.ui/?a=${btoa(escape(fullParams)).toString(
+    "base64"
+  )}`;
 });
 </script>
 
