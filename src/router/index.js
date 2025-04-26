@@ -278,7 +278,7 @@ const routes = [
           mustBeLoggined: true,
           footerTitle: "services",
           headerTitle: "DNS Editor",
-          isNeedBackButton: false,
+          isNeedBackButton: true,
         },
         component: () => import("@/routes/dns/editor.vue"),
       },
