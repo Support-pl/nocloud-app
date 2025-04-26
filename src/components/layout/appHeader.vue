@@ -785,6 +785,9 @@ export default {
         case "newPaaS":
           this.$router.push("/services");
           break;
+        case "dns editor":
+          this.$router.push("/services");
+          break;
         default:
           this.$router.go(-1);
           break;
