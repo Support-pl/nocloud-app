@@ -713,7 +713,8 @@
         "actions": {
           "add": "Add",
           "delete": "Delete",
-          "sync": "Use Our Nameservers"
+          "sync": "Use Our Nameservers",
+          "edit_dns_records": "DNS Editor"
         }
       }
     },
