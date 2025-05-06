@@ -45,7 +45,7 @@
     "@types/marked": "^5.0.1",
     "@vitejs/plugin-vue": "^5.1.1",
     "@vitejs/plugin-vue-jsx": "^4.0.0",
-    "@vue/shared": "^3.4.35",
+    "@vue/shared": "^3.5.12",
     "eslint": "^9.8.0",
     "eslint-config-standard": "17.1.0",
     "eslint-plugin-vue": "^9.27.0",
