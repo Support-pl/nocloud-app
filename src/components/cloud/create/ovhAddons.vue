@@ -62,20 +62,15 @@ watch(
 
 function setAddon(code, addon, key) {
   const addonsPrices = JSON.parse(JSON.stringify(price.addons));
-  const addonsCodes = JSON.parse(JSON.stringify(options.addons));
+  const addonsCodes = JSON.parse(JSON.stringify(options.addons)).filter(
+    (uuid) => !Object.keys(props.addons[key]).includes(uuid)
+  );
 
-  if (code === "-1") {
-    delete addonsPrices[key];
-    const i = addonsCodes.findIndex((code) => code.includes(key));
-
-    addonsCodes.splice(i, 1);
-  } else {
-    const period = addon.periods.find(
-      ({ pricingMode }) => pricingMode === props.mode
-    );
-
-    addonsPrices[key] = period.price.value;
+  if (code !== "-1") {
+    addonsPrices[key] = addon.periods[0].price.value;
     addonsCodes.push(code);
+  } else {
+    delete addonsPrices[key];
   }
 
   setPrice("addons", addonsPrices);

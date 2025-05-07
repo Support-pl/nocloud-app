@@ -4,20 +4,10 @@
     <a-col span="16" :xs="18">
       <a-select
         style="width: 100%"
+        :options="[...Object.values(addon).sort((a, b) => a.price - b.price)]"
         :value="getAddon(addon)"
         @update:value="setAddon($event, addon[$event], key)"
-      >
-        <a-select-option
-          v-if="!Object.values(addon).at(0)?.required"
-          value="-1"
-        >
-          {{ $t("ip.none") }}
-        </a-select-option>
-
-        <a-select-option v-for="(item, id) in addon" :key="id">
-          {{ item.title }} ({{ item.price }} {{ currency.title }})
-        </a-select-option>
-      </a-select>
+      />
     </a-col>
   </a-row>
 </template>
@@ -64,6 +54,10 @@ const addons = computed(() => {
       if (!result[key]) result[key] = {};
 
       result[key][uuid] = {
+        value: uuid,
+        label: `${title} (${periods[product.value.period]} ${
+          currency.value.title
+        })`,
         title,
         required: system,
         type: meta.type ?? "custom",
@@ -80,32 +74,28 @@ setAddons(addons.value);
 
 async function setAddons(value) {
   await nextTick();
-  Object.entries(value).forEach(([key, value]) => {
-    const [code, addon] = Object.entries(value)[0] ?? [];
 
+  Object.entries(value).forEach(([key, value]) => {
+    const [code, addon] = Object.entries(value)
+      .filter(([code, addon]) => addon.required && code)
+      .sort(([b, addonB], [a, addonA]) => addonB.price - addonA.price)[0];
     if (!code || !addon.required) return;
+
     setAddon(code, addon, key);
   });
 }
 
 async function setAddon(code, addon, key) {
   const addonsPrices = { ...price.addons };
-  const addonsKeys = [...options.addons];
-  const keys = Object.keys(addons.value[key]);
+  const addonsKeys = [...options.addons].filter(
+    (uuid) => !Object.keys(addons.value[key]).includes(uuid)
+  );
 
-  if (code === "-1") {
-    addonsKeys.forEach((code, i) => {
-      if (keys.includes(code)) {
-        addonsKeys.splice(i, 1);
-
-        addon = addons.value[key][code];
-      }
-    });
-
-    delete addonsPrices[key];
-  } else {
+  if (code !== -1) {
     addonsPrices[key] = addon.price;
     addonsKeys.push(code);
+  } else {
+    delete addonsPrices[key];
   }
 
   setPrice("addons", addonsPrices);
