@@ -141,25 +141,19 @@ export const useInvoicesStore = defineStore("invoices", () => {
   const startStream = async () => {
     try {
       stream.value = invoicesApi.stream(new StreamRequest());
-      console.log('InvoicesStream started');
+      console.log("InvoicesStream started");
 
       for await (const event of stream.value) {
-        console.log(event);
-
-        switch (event.type) {
+        switch (event.event) {
           case BillingEvent.EVENT_INVOICE_CREATED: {
-            console.log("create", event);
-
-            const invoice = event.body.invoice;
+            const invoice = event.body.invoice.toJson();
             invoices.value.unshift(toInvoice(invoice));
 
             break;
           }
           case BillingEvent.EVENT_INVOICE_UPDATED: {
-            console.log("update", event);
-
-            const invoice = event.body.invoice;
-            invoices.value = invoice.value.map((i) =>
+            const invoice = event.body.invoice.toJson();
+            invoices.value = invoices.value.map((i) =>
               i.uuid === invoice.uuid ? toInvoice(invoice) : i
             );
 
