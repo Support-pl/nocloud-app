@@ -1,6 +1,5 @@
 import { computed, ref } from "vue";
 import { defineStore } from "pinia";
-
 import { createPromiseClient } from "@connectrpc/connect";
 import { BillingService } from "nocloud-proto/proto/es/billing/billing_connect";
 import {
@@ -10,13 +9,15 @@ import {
   PayWithBalanceRequest,
   CreateRenewalInvoiceRequest,
 } from "nocloud-proto/proto/es/billing/billing_pb";
-
 import { useAppStore } from "./app.js";
-
 import { debounce, toInvoice } from "@/functions.js";
 import api from "@/api.js";
 import { useAuthStore } from "./auth.js";
 import { useRouter } from "vue-router";
+import {
+  BillingEvent,
+  StreamRequest,
+} from "nocloud-proto/proto/es/billing/billing_pb.js";
 
 export const useInvoicesStore = defineStore("invoices", () => {
   const app = useAppStore();
@@ -27,6 +28,8 @@ export const useInvoicesStore = defineStore("invoices", () => {
   const isLoading = ref(false);
   const invoices = ref([]);
   const filter = ref(["all"]);
+
+  const stream = ref();
 
   const getInvoices = computed(() => {
     let filtered;
@@ -121,6 +124,8 @@ export const useInvoicesStore = defineStore("invoices", () => {
       );
       invoices.value = result;
 
+      startStream();
+
       if (!response[0]?.ERROR) return result;
       else return response[0].ERROR;
     } catch (error) {
@@ -132,6 +137,37 @@ export const useInvoicesStore = defineStore("invoices", () => {
   }
 
   const fetch = debounce(fetchInvoices, 1000);
+
+  const startStream = async () => {
+    try {
+      stream.value = invoicesApi.stream(new StreamRequest());
+      console.log("InvoicesStream started");
+
+      for await (const event of stream.value) {
+        switch (event.event) {
+          case BillingEvent.EVENT_INVOICE_CREATED: {
+            const invoice = event.body.invoice.toJson();
+            invoices.value.unshift(toInvoice(invoice));
+
+            break;
+          }
+          case BillingEvent.EVENT_INVOICE_UPDATED: {
+            const invoice = event.body.invoice.toJson();
+            invoices.value = invoices.value.map((i) =>
+              i.uuid === invoice.uuid ? toInvoice(invoice) : i
+            );
+
+            break;
+          }
+          default: {
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return {
     invoices,
