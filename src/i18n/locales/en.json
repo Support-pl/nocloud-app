@@ -718,6 +718,14 @@
         }
       }
     },
+    "openai": {
+      "payment_types": {
+        "input": "Input kilotoken",
+        "output": "Output kilotoken",
+        "duration_cost": "Duration per minute",
+        "1024*1024": "Image 1024 * 1024"
+      }
+    },
     "Domains": "Domains",
     "domains": "domains",
     "domain is wrong": "Please enter a valid domain",
