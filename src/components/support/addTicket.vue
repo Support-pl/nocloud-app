@@ -7,21 +7,58 @@
     <template #title>
       <div style="display: flex; justify-content: space-between">
         {{ capitalize(instanceId ? $t("new chat") : $t("ask a question")) }}
-        <a-select
-          v-if="instanceId && !genImage.checked"
-          style="margin-left: 5px; margin-right: 30px; width: 250px"
-          v-model:value="selectedModel"
-          :options="openaiModels"
-        >
-          <template #option="{ value }">
-            {{ value }}
-          </template>
-        </a-select>
       </div>
     </template>
 
     <a-spin :tip="$t('loading')" :spinning="isLoading || isSending">
       <a-form layout="vertical">
+        <a-row v-if="instanceId">
+          <a-select
+            style="margin-left: 5px; width: 110px"
+            v-model:value="selectedProvider"
+            :options="availableProviders"
+          >
+            <template #option="{ value }">
+              {{ value }}
+            </template>
+          </a-select>
+          <a-select
+            style="margin-left: 5px; width: 110px"
+            v-model:value="selectedType"
+            :options="availableTypes"
+          >
+            <template #option="{ value }">
+              {{ value }}
+            </template>
+          </a-select>
+          <a-auto-complete
+            style="margin-left: 5px; width: 220px"
+            v-model:value="selectedModel"
+            :options="sortedAvailableModels"
+            @blur="selectedModel = availableModels[0]?.value"
+          >
+            <template #option="{ value }">
+              {{ value }}
+            </template>
+          </a-auto-complete>
+        </a-row>
+
+        <a-row v-if="selectedType === 'image'">
+          <a-form-item
+            style="margin-bottom: 0; padding-bottom: 0"
+            :label="capitalize($t('resolution'))"
+          >
+            <a-select v-model:value="genImage.size" :options="sizes" />
+          </a-form-item>
+
+          <a-form-item
+            style="margin-bottom: 0; padding-bottom: 0; margin-left: 5px"
+            :label="capitalize($t('quality'))"
+          >
+            <a-select v-model:value="genImage.quality" :options="qualityList" />
+          </a-form-item>
+        </a-row>
+
         <a-form-item
           v-if="!instanceId && filteredDepartments.length > 1"
           :label="$t('department')"
@@ -76,30 +113,6 @@
           </div>
         </a-form-item>
 
-        <a-form-item
-          v-if="!authStore.billingUser.only_tickets && instanceId"
-          style="margin-bottom: 0; padding-bottom: 0"
-          :label="capitalize($t('generate image'))"
-        >
-          <a-switch v-model:checked="genImage.checked" />
-        </a-form-item>
-
-        <a-form-item
-          v-if="genImage.checked"
-          style="margin-bottom: 0; padding-bottom: 0"
-          :label="capitalize($t('resolution'))"
-        >
-          <a-select v-model:value="genImage.size" :options="sizes" />
-        </a-form-item>
-
-        <a-form-item
-          v-if="genImage.checked"
-          style="margin-bottom: 0; padding-bottom: 0"
-          :label="capitalize($t('quality'))"
-        >
-          <a-select v-model:value="genImage.quality" :options="qualityList" />
-        </a-form-item>
-
         <a-form-item :label="upload?.fileList.length > 0 ? $t('files') : null">
           <div class="addTicket__buttons">
             <upload-files
@@ -133,6 +146,7 @@ import {
   onMounted,
   reactive,
   ref,
+  toRefs,
   watch,
 } from "vue";
 import { message } from "ant-design-vue";
@@ -166,7 +180,10 @@ md.use(emoji);
 
 const props = defineProps({
   instanceId: { type: String, default: null },
+  modelsList: { type: Object, required: false },
 });
+
+const { modelsList } = toRefs(props);
 
 const router = useRouter();
 const { t } = useI18n();
@@ -200,6 +217,8 @@ const qualityList = [
 ];
 
 const selectedModel = ref("gpt-4o");
+const selectedType = ref("text");
+const selectedProvider = ref("openai");
 
 const upload = ref();
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
@@ -216,14 +235,54 @@ const filteredDepartments = computed(() => {
   }
 });
 
-const openaiModels = computed(() => {
+const modelByProviders = computed(() => {
   const resources = Object.keys(instance.value?.resources || {})
     .filter((key) => key.split("|").length > 2)
+    .filter((key) =>
+      (modelsList.value?.[selectedProvider.value] || []).includes(
+        key.split("|")[1]
+      )
+    );
+
+  return resources;
+});
+
+const availableModels = computed(() => {
+  const resources = modelByProviders.value
+    .filter((key) => key.split("|")[0] === selectedType.value)
     .map((key) => key.split("|")[1]);
 
   return [...new Set(resources).values()].map((key) => ({
     value: key,
     label: `${capitalize(t("model"))}: ${key}`,
+  }));
+});
+
+const sortedAvailableModels = computed(() => {
+  return availableModels.value.sort((a, b) => {
+    const va = (v, s) =>
+      v.toLowerCase().startsWith(s.toLowerCase())
+        ? 2
+        : v.toLowerCase().includes(s.toLowerCase())
+        ? 1
+        : 0;
+    return va(b.label, selectedModel.value) - va(a.label, selectedModel.value);
+  });
+});
+
+const availableTypes = computed(() => {
+  const resources = modelByProviders.value.map((key) => key.split("|")[0]);
+
+  return [...new Set(resources).values()].map((key) => ({
+    value: key,
+    label: key,
+  }));
+});
+
+const availableProviders = computed(() => {
+  return Object.keys(modelsList.value || {}).map((key) => ({
+    value: key,
+    label: key,
   }));
 });
 
@@ -445,6 +504,18 @@ async function fetch() {
 }
 
 fetch();
+
+watch(availableTypes, (data) => {
+  if (!data.find((v) => v.value === selectedType.value)) {
+    selectedType.value = data[0]?.value;
+  }
+});
+
+watch(availableModels, (data) => {
+  if (!data.find((v) => v.value === selectedModel.value)) {
+    selectedModel.value = data[0]?.value;
+  }
+});
 </script>
 
 <script>

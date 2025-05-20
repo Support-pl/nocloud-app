@@ -25,7 +25,15 @@
       <a-tabs v-model:activeKey="activeApiTab">
         <a-tab-pane key="2" tab="API v2">
           <a-row style="padding: 0px 5px">
-            <a-col span="12">
+            <a-col span="5" style="margin-right: 5px">
+              <a-select
+                style="width: 100%"
+                v-model:value="selectedProviderV2"
+                :options="providersOptionsV2"
+              ></a-select>
+            </a-col>
+
+            <a-col span="4" style="margin-right: 5px">
               <a-select
                 style="width: 100%; margin-right: 5px"
                 v-model:value="selectedTypeV2"
@@ -33,37 +41,21 @@
               ></a-select>
             </a-col>
 
-            <a-col span="12">
-              <a-select
-                style="margin-left: 5px; margin-right: 10px; width: 100%"
+            <a-col span="14" style="margin-right: 5px">
+              <a-auto-complete
+                style="margin-right: 10px; width: 100%"
                 v-model:value="selectedModelV2"
-                :options="modelsOptionsV2"
-              ></a-select>
+                :options="sortedModelsOptionsV2"
+                @blur="selectedModelV2 = modelsOptionsV2[0]?.value"
+              ></a-auto-complete>
             </a-col>
 
-            <a-col span="12">
+            <a-col v-for="priceItem in pricesItemsV2" span="12">
               <div style="padding-bottom: 0; font-weight: 700">
-                Input kilotoken:
+                {{ t(`openai.payment_types.${priceItem.split("|")[2]}`) }}:
               </div>
               <div style="padding-top: 0; font-size: 18px">
-                {{
-                  service.resources[
-                    `${selectedTypeV2}|${selectedModelV2}|input`
-                  ]
-                }}
-                {{ currency.title }}
-              </div>
-            </a-col>
-            <a-col span="12">
-              <div style="padding-bottom: 0; font-weight: 700">
-                Output kilotoken:
-              </div>
-              <div style="padding-top: 0; font-size: 18px">
-                {{
-                  service.resources[
-                    `${selectedTypeV2}|${selectedModelV2}|output`
-                  ]
-                }}
+                {{ service.resources[priceItem] }}
                 {{ currency.title }}
               </div>
             </a-col>
@@ -180,11 +172,11 @@
     </a-col>
   </a-row>
 
-  <add-ticket :instance-id="service.uuid" />
+  <add-ticket :instance-id="service.uuid" :models-list="modelsListV2" />
 </template>
 
 <script setup>
-import { computed, ref, defineAsyncComponent } from "vue";
+import { computed, ref, defineAsyncComponent, watch, capitalize } from "vue";
 import { EyeOutlined as visibleIcon } from "@ant-design/icons-vue";
 import { Status } from "@/libs/cc_connect/cc_pb.js";
 
@@ -196,6 +188,8 @@ import { useClipboard, useCurrency } from "@/hooks/utils";
 import addTicket from "@/components/support/addTicket.vue";
 import ticketItem from "@/components/support/ticketItem.vue";
 import loading from "@/components/ui/loading.vue";
+import api from "@/api";
+import { useI18n } from "vue-i18n";
 
 const invisibleIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EyeInvisibleOutlined")
@@ -213,6 +207,7 @@ const supportStore = useSupportStore();
 const instancesStore = useInstancesStore();
 const { currency } = useCurrency();
 const { addToClipboard } = useClipboard();
+const { t } = useI18n();
 
 const chats = computed(() => {
   const result = [];
@@ -265,7 +260,9 @@ const exampleV1 = `
   }'
 `;
 
+const modelsListV2 = ref([]);
 const selectedModelV2 = ref("gpt-4o");
+const selectedProviderV2 = ref("openai");
 const selectedTypeV2 = ref("text");
 const baseUrlV2 = `${window.location.origin}/api/openai`;
 const exampleV2 = computed(
@@ -289,13 +286,45 @@ const exampleV2 = computed(
 `
 );
 
+const modelByProvidersV2 = computed(() => {
+  const resources = Object.keys(props.service?.resources || {})
+    .filter((key) => key.split("|").length > 2)
+    .filter((key) =>
+      (modelsListV2.value?.[selectedProviderV2.value] || []).includes(
+        key.split("|")[1]
+      )
+    );
+
+  return resources;
+});
+
 const modelsOptionsV2 = computed(() => {
-  const resources = Object.keys(props.service.resources)
-    .filter(
-      (key) =>
-        key.split("|").length > 1 ?? key.split("|")[0] === selectedTypeV2.value
-    )
+  const resources = modelByProvidersV2.value
+    .filter((key) => key.split("|")[0] === selectedTypeV2.value)
     .map((key) => key.split("|")[1]);
+
+  return [...new Set(resources).values()].map((key) => ({
+    value: key,
+    label: `${capitalize(t("model"))}: ${key}`,
+  }));
+});
+
+const sortedModelsOptionsV2 = computed(() => {
+  return modelsOptionsV2.value.sort((a, b) => {
+    const va = (v, s) =>
+      v.toLowerCase().startsWith(s.toLowerCase())
+        ? 2
+        : v.toLowerCase().includes(s.toLowerCase())
+        ? 1
+        : 0;
+    return (
+      va(b.label, selectedModelV2.value) - va(a.label, selectedModelV2.value)
+    );
+  });
+});
+
+const typesOptionsV2 = computed(() => {
+  const resources = modelByProvidersV2.value.map((key) => key.split("|")[0]);
 
   return [...new Set(resources).values()].map((key) => ({
     value: key,
@@ -303,15 +332,20 @@ const modelsOptionsV2 = computed(() => {
   }));
 });
 
-const typesOptionsV2 = computed(() => {
-  const resources = Object.keys(props.service.resources)
-    .filter((key) => key.split("|").length > 1)
-    .map((key) => key.split("|")[0]);
-
-  return [...new Set(resources).values()].map((key) => ({
+const providersOptionsV2 = computed(() => {
+  return Object.keys(modelsListV2.value || {}).map((key) => ({
     value: key,
     label: key,
   }));
+});
+
+const pricesItemsV2 = computed(() => {
+  if (selectedTypeV2.value === "image") {
+  }
+
+  return Object.keys(props.service.resources).filter((r) =>
+    r.startsWith(`${selectedTypeV2.value}|${selectedModelV2.value}|`)
+  );
 });
 
 function openOpenAiDocs() {
@@ -331,6 +365,8 @@ async function fetch() {
       action: "instance_token",
     });
 
+    modelsListV2.value = await api.get("api/openai/models_list");
+
     token.value = meta.token;
   } catch (error) {
     console.error(error);
@@ -340,6 +376,18 @@ async function fetch() {
 }
 
 fetch();
+
+watch(typesOptionsV2, (data) => {
+  if (!data.find((v) => v.value === selectedTypeV2.value)) {
+    selectedTypeV2.value = data[0]?.value;
+  }
+});
+
+watch(modelsOptionsV2, (data) => {
+  if (!data.find((v) => v.value === selectedModelV2.value)) {
+    selectedModelV2.value = data[0]?.value;
+  }
+});
 </script>
 
 <script>
