@@ -60,7 +60,7 @@
           :options="instanceImageSizes"
         />
         <a-select
-          style="min-width: 80px"
+          style="min-width: 100px"
           v-if="sendAdvancedOptions.checked === 'generate'"
           v-model:value="sendAdvancedOptions.quality"
           :options="instanceImageQualitys"

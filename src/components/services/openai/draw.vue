@@ -51,6 +51,7 @@
             </a-col>
 
             <a-col
+              style="margin: 10px 0px"
               v-if="selectedTypeV2 !== 'image'"
               v-for="priceItem in pricesItemsV2"
               span="12"
@@ -86,7 +87,7 @@
             </a-col>
           </a-row>
 
-          <a-col span="24">
+          <a-col span="24" style="margin: 5px 0px">
             <div class="token-title">
               Base URL:
               <copy-icon
@@ -99,15 +100,25 @@
             </div>
           </a-col>
 
-          <a-col span="24">
+          <a-col span="24" style="margin: 5px 0px">
             <div
               class="token-title"
-              style="display: flex; justify-content: space-between"
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
             >
-              <div>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                "
+              >
                 <span> {{ t("openai.labels.api_example") }} </span>
                 <copy-icon
-                  style="font-size: 18px"
+                  style="font-size: 18px; margin-left: 5px"
                   @click="addToClipboard(exampleV2)"
                 />
               </div>
