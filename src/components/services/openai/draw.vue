@@ -66,7 +66,7 @@
                 }}:
               </div>
               <div style="padding-top: 0; font-size: 18px">
-                {{ service.resources[priceItem] }}
+                {{ fullPrices[priceItem] }}
                 {{ currency.title }}
               </div>
             </a-col>
@@ -78,7 +78,7 @@
                   pricesItemsV2.map((key) => ({
                     resolution: key.split('|')[2],
                     quality: t(`openai.images_quality.${key.split('|')[3]}`),
-                    price: `${service.resources[key]} ${currency.title}`,
+                    price: `${fullPrices[key]} ${currency.title}`,
                   }))
                 "
                 :columns="imagesColumns"
@@ -216,6 +216,7 @@ import loading from "@/components/ui/loading.vue";
 import api from "@/api";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
+import { usePlansStore } from "@/stores/plans";
 
 const invisibleIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EyeInvisibleOutlined")
@@ -231,6 +232,7 @@ const props = defineProps({
 const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 const supportStore = useSupportStore();
+const plansStore = usePlansStore();
 const instancesStore = useInstancesStore();
 const { currency } = useCurrency();
 const { addToClipboard } = useClipboard();
@@ -270,6 +272,7 @@ function moduleEnter() {
 
 const isVisible = ref(false);
 const isLoading = ref(false);
+const fullPrices = ref({});
 const activeApiTab = ref("2");
 const token = ref("-");
 
@@ -425,8 +428,7 @@ const pricesItemsV2 = computed(() => {
 
       return !(
         index > indexOfReversed &&
-        props.service.resources[data[indexOfReversed]] ===
-          props.service.resources[resource]
+        fullPrices.value[data[indexOfReversed]] === fullPrices.value[resource]
       );
     });
 
@@ -455,6 +457,13 @@ function openOpenAiDocs() {
 async function fetch() {
   try {
     isLoading.value = true;
+
+    (
+      await plansStore.fetchById(props.service.billingPlan.uuid)
+    ).resources.forEach((r) => {
+      fullPrices.value[r.key] = r.price;
+    });
+
     await chatsStore.fetchChats();
     await chatsStore.fetch_models_list();
 

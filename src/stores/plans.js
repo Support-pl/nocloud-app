@@ -1,23 +1,24 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
-import api from '@/api.js'
+import { ref } from "vue";
+import { defineStore } from "pinia";
+import api from "@/api.js";
 
-export const usePlansStore = defineStore('plans', () => {
-  const plans = ref([])
-  const isLoading = ref(false)
+export const usePlansStore = defineStore("plans", () => {
+  const plans = ref([]);
+  const isLoading = ref(false);
 
-  function setPlans (value) {
+  function setPlans(value) {
     plans.value = value.map((plan) => {
       plan.resources = plan.resources.map((resource) => ({
-        ...resource, price: +resource.price.toFixed(2)
-      }))
+        ...resource,
+        price: +resource.price.toFixed(2),
+      }));
 
       Object.entries(plan.products).forEach(([key, product]) => {
-        plan.products[key].price = +product.price.toFixed(2)
-      })
+        plan.products[key].price = +product.price.toFixed(2);
+      });
 
-      return plan
-    })
+      return plan;
+    });
   }
 
   return {
@@ -25,19 +26,38 @@ export const usePlansStore = defineStore('plans', () => {
     isLoading,
     setPlans,
 
-    async fetch (params) {
+    async fetch(params) {
       try {
-        isLoading.value = true
-        const response = await api.plans.list(params)
+        isLoading.value = true;
+        const response = await api.plans.list(params);
 
-        plans.value = response.pool
-        return response
+        plans.value = response.pool;
+        return response;
       } catch (error) {
-        console.error(error)
-        throw error
+        console.error(error);
+        throw error;
       } finally {
-        isLoading.value = false
+        isLoading.value = false;
       }
-    }
-  }
-})
+    },
+
+    async fetchById(id) {
+      try {
+        isLoading.value = true;
+        const response = await api.get(`billing/plans/${id}`, {
+          headers: {
+            "NoCloud-Primary-Currency-Precision-Override": 8,
+          },
+        });
+
+        plans.value = response.pool;
+        return response;
+      } catch (error) {
+        console.error(error);
+        throw error;
+      } finally {
+        isLoading.value = false;
+      }
+    },
+  };
+});
