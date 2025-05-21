@@ -735,7 +735,7 @@
       "images_quality": {
         "hd": "HD",
         "auto": "Auto",
-        "standard": "Default"
+        "standard": "Standard"
       },
       "providers": {
         "openai": "OpenAI",
