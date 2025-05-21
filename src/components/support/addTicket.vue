@@ -1,5 +1,6 @@
 <template>
   <a-modal
+    width="768px"
     :open="supportStore.isAddingTicket"
     :footer="null"
     @cancel="closeFields"
@@ -12,48 +13,55 @@
 
     <a-spin :tip="$t('loading')" :spinning="isLoading || isSending">
       <a-form layout="vertical">
-        <a-row v-if="instanceId">
-          <a-select
-            style="margin-left: 5px; width: 110px"
-            v-model:value="selectedProvider"
-            :options="availableProviders"
-          >
-            <template #option="{ value }">
-              {{ value }}
-            </template>
-          </a-select>
-          <a-select
-            style="margin-left: 5px; width: 110px"
-            v-model:value="selectedType"
-            :options="availableTypes"
-          >
-            <template #option="{ value }">
-              {{ value }}
-            </template>
-          </a-select>
-          <a-auto-complete
-            style="margin-left: 5px; width: 220px"
-            v-model:value="selectedModel"
-            :options="sortedAvailableModels"
-            @blur="selectedModel = availableModels[0]?.value"
-          >
-            <template #option="{ value }">
-              {{ value }}
-            </template>
-          </a-auto-complete>
+        <a-row style="margin-bottom: 10px" v-if="instanceId">
+          <a-col span="4" style="min-width: 100px; margin-right: 5px">
+            <a-select
+              style="
+                margin-left: 5px;
+                width: 100%;
+                min-width: 100px;
+                margin-top: 10px;
+              "
+              v-model:value="selectedProvider"
+              :options="availableProviders"
+            >
+            </a-select>
+          </a-col>
+
+          <a-col span="5" style="min-width: 160px; margin-right: 5px">
+            <a-select
+              style="margin-left: 5px; width: 100%; margin-top: 10px"
+              v-model:value="selectedType"
+              :options="availableTypes"
+            >
+            </a-select>
+          </a-col>
+
+          <a-col span="14" style="margin-right: 5px">
+            <a-auto-complete
+              style="margin-left: 5px; width: 100%; margin-top: 10px"
+              v-model:value="selectedModel"
+              :options="sortedAvailableModels"
+              @blur="selectedModel = availableModels[0]?.value"
+            >
+              <template #option="{ value }">
+                {{ value }}
+              </template>
+            </a-auto-complete>
+          </a-col>
         </a-row>
 
         <a-row v-if="selectedType === 'image'">
           <a-form-item
             style="margin-bottom: 0; padding-bottom: 0"
-            :label="capitalize($t('resolution'))"
+            :label="capitalize($t('openai.images_properties.resolution'))"
           >
             <a-select v-model:value="genImage.size" :options="sizes" />
           </a-form-item>
 
           <a-form-item
             style="margin-bottom: 0; padding-bottom: 0; margin-left: 5px"
-            :label="capitalize($t('quality'))"
+            :label="capitalize($t('openai.images_properties.quality'))"
           >
             <a-select v-model:value="genImage.quality" :options="qualityList" />
           </a-form-item>
@@ -275,14 +283,14 @@ const availableTypes = computed(() => {
 
   return [...new Set(resources).values()].map((key) => ({
     value: key,
-    label: key,
+    label: t(`openai.types.${key}`),
   }));
 });
 
 const availableProviders = computed(() => {
   return Object.keys(modelsList.value || {}).map((key) => ({
     value: key,
-    label: key,
+    label: t(`openai.providers.${key}`),
   }));
 });
 
@@ -523,31 +531,6 @@ export default { name: "AddTicket" };
 </script>
 
 <style scoped>
-.addTicket__wrapper {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: rgba(0, 0, 0, 0.2);
-}
-
-.addTicket {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  max-width: 768px;
-  height: 90%;
-  background: var(--bright_font);
-  border-radius: 35px 35px 0 0;
-  box-shadow: 5px 2px 15px rgba(0, 0, 0, 0.2);
-  padding: 15px 20px;
-  display: flex;
-  flex-direction: column;
-}
-
 .addTicket__header {
   text-align: center;
   font-size: 1.3rem;

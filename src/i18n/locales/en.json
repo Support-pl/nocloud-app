@@ -719,11 +719,37 @@
       }
     },
     "openai": {
+      "labels": {
+        "api_example": "API Example"
+      },
+      "images_properties": {
+        "resolution": "Resolution",
+        "quality": "Quality",
+        "price": "Price"
+      },
       "payment_types": {
-        "input": "Input kilotoken",
-        "output": "Output kilotoken",
-        "duration_cost": "Duration per minute",
-        "1024*1024": "Image 1024 * 1024"
+        "input": "1000 input tokens",
+        "output": "1000 output tokens",
+        "duration_cost": "Duration per minute"
+      },
+      "images_quality": {
+        "hd": "HD",
+        "auto": "Auto",
+        "standard": "Default"
+      },
+      "providers": {
+        "openai": "OpenAI",
+        "gemini": "Google",
+        "deepseek": "DeepSeek"
+      },
+      "types": {
+        "text": "Text generation",
+        "image": "Image Generation",
+        "audio": "Audio Generation"
+      },
+      "actions": {
+        "generate_image": "generate image",
+        "generate_audio": "generate audio"
       }
     },
     "Domains": "Domains",

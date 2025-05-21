@@ -22,23 +22,26 @@
       </a-tag>
 
       <div v-if="ticket.department === 'openai'" class="chat__generate">
-        <a-radio-group v-model:value="genImage.checked">
+        <a-radio-group v-model:value="sendAdvancedOptions.checked">
           <a-radio-button value="default">
             {{ capitalize($t("send message")) }}
           </a-radio-button>
+          <a-radio-button value="speech">
+            {{ capitalize($t("openai.actions.generate_audio")) }}
+          </a-radio-button>
           <a-radio-button value="generate">
-            {{ capitalize($t("generate image")) }}
+            {{ capitalize($t("openai.actions.generate_image")) }}
           </a-radio-button>
         </a-radio-group>
 
         <a-select
-          v-if="genImage.checked === 'generate'"
-          v-model:value="genImage.size"
+          v-if="sendAdvancedOptions.checked === 'generate'"
+          v-model:value="sendAdvancedOptions.size"
           :options="sizes"
         />
         <a-select
-          v-if="genImage.checked === 'generate'"
-          v-model:value="genImage.quality"
+          v-if="sendAdvancedOptions.checked === 'generate'"
+          v-model:value="sendAdvancedOptions.quality"
           :options="qualityList"
         />
       </div>
@@ -114,7 +117,7 @@ const message = ref("");
 const editing = ref(null);
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
 
-const genImage = reactive({
+const sendAdvancedOptions = reactive({
   checked: "default",
   size: "1024x1024",
   quality: "standard",
@@ -174,13 +177,13 @@ async function sendChatMessage(result, replies) {
       account: result.userid,
       date: BigInt(result.date),
       attachments: files.map(({ uuid }) => uuid),
-      meta: [{ key: "mode", value: genImage.checked }],
+      meta: [{ key: "mode", value: sendAdvancedOptions.checked }],
     };
 
-    if (genImage.checked === "generate") {
+    if (sendAdvancedOptions.checked === "generate") {
       message.meta.push(
-        { key: "size", value: genImage.size },
-        { key: "quality", value: genImage.quality }
+        { key: "size", value: sendAdvancedOptions.size },
+        { key: "quality", value: sendAdvancedOptions.quality }
       );
     }
 

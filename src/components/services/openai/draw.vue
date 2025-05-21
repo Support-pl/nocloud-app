@@ -25,39 +25,64 @@
       <a-tabs v-model:activeKey="activeApiTab">
         <a-tab-pane key="2" tab="API v2">
           <a-row style="padding: 0px 5px">
-            <a-col span="5" style="margin-right: 5px">
+            <a-col span="4" style="min-width: 100px; margin-right: 5px">
               <a-select
-                style="width: 100%"
+                style="width: 100%; margin-top: 10px"
                 v-model:value="selectedProviderV2"
                 :options="providersOptionsV2"
               ></a-select>
             </a-col>
 
-            <a-col span="4" style="margin-right: 5px">
+            <a-col span="6" style="min-width: 150px; margin-right: 5px">
               <a-select
-                style="width: 100%; margin-right: 5px"
+                style="width: 100%; margin-right: 5px; margin-top: 10px"
                 v-model:value="selectedTypeV2"
                 :options="typesOptionsV2"
               ></a-select>
             </a-col>
 
-            <a-col span="14" style="margin-right: 5px">
+            <a-col span="13" style="margin-right: 5px">
               <a-auto-complete
-                style="margin-right: 10px; width: 100%"
+                style="margin-right: 10px; width: 100%; margin-top: 10px"
                 v-model:value="selectedModelV2"
                 :options="sortedModelsOptionsV2"
                 @blur="selectedModelV2 = modelsOptionsV2[0]?.value"
               ></a-auto-complete>
             </a-col>
 
-            <a-col v-for="priceItem in pricesItemsV2" span="12">
+            <a-col
+              v-if="selectedTypeV2 !== 'image'"
+              v-for="priceItem in pricesItemsV2"
+              span="12"
+            >
               <div style="padding-bottom: 0; font-weight: 700">
-                {{ t(`openai.payment_types.${priceItem.split("|")[2]}`) }}:
+                {{
+                  t(
+                    `openai.payment_types.${priceItem
+                      .split("|")
+                      .slice(2)
+                      .join("_")}`
+                  )
+                }}:
               </div>
               <div style="padding-top: 0; font-size: 18px">
                 {{ service.resources[priceItem] }}
                 {{ currency.title }}
               </div>
+            </a-col>
+
+            <a-col v-else span="24">
+              <a-table
+                :pagination="false"
+                :dataSource="
+                  pricesItemsV2.map((key) => ({
+                    resolution: key.split('|')[2],
+                    quality: t(`openai.images_quality.${key.split('|')[3]}`),
+                    price: `${service.resources[key]} ${currency.title}`,
+                  }))
+                "
+                :columns="imagesColumns"
+              />
             </a-col>
           </a-row>
 
@@ -80,7 +105,7 @@
               style="display: flex; justify-content: space-between"
             >
               <div>
-                <span> API example: </span>
+                <span> {{ t("openai.labels.api_example") }} </span>
                 <copy-icon
                   style="font-size: 18px"
                   @click="addToClipboard(exampleV2)"
@@ -265,8 +290,31 @@ const selectedModelV2 = ref("gpt-4o");
 const selectedProviderV2 = ref("openai");
 const selectedTypeV2 = ref("text");
 const baseUrlV2 = `${window.location.origin}/api/openai`;
-const exampleV2 = computed(
-  () => `
+const exampleV2 = computed(() => {
+  if (selectedTypeV2.value === "image") {
+    return `
+  curl <baseUrl>/v1/images/generations \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "model": "${selectedModelV2.value}",
+    "prompt": "A cute baby sea otter",
+    "n": 1,
+    "size": "1024x1024"
+  }'`;
+  } else if (selectedTypeV2.value === "audio") {
+    return `
+  curl <baseUrl>/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "model": "${selectedModelV2.value}",
+    "input": "The quick brown fox jumped over the lazy dog.",
+    "voice": "alloy"
+  }'
+--output speech.mp3`;
+  } else {
+    return `
   curl <baseUrl>/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
@@ -283,8 +331,27 @@ const exampleV2 = computed(
       }
     ]
   }'
-`
-);
+`;
+  }
+});
+
+const imagesColumns = computed(() => [
+  {
+    title: t("openai.images_properties.resolution"),
+    dataIndex: "resolution",
+    key: "resolution",
+  },
+  {
+    title: t("openai.images_properties.quality"),
+    dataIndex: "quality",
+    key: "quality",
+  },
+  {
+    title: t("openai.images_properties.price"),
+    dataIndex: "price",
+    key: "price",
+  },
+]);
 
 const modelByProvidersV2 = computed(() => {
   const resources = Object.keys(props.service?.resources || {})
@@ -328,24 +395,44 @@ const typesOptionsV2 = computed(() => {
 
   return [...new Set(resources).values()].map((key) => ({
     value: key,
-    label: key,
+    label: t(`openai.types.${key}`),
   }));
 });
 
 const providersOptionsV2 = computed(() => {
   return Object.keys(modelsListV2.value || {}).map((key) => ({
     value: key,
-    label: key,
+    label: t(`openai.providers.${key}`),
   }));
 });
 
 const pricesItemsV2 = computed(() => {
-  if (selectedTypeV2.value === "image") {
-  }
-
-  return Object.keys(props.service.resources).filter((r) =>
+  const data = Object.keys(props.service.resources).filter((r) =>
     r.startsWith(`${selectedTypeV2.value}|${selectedModelV2.value}|`)
   );
+  if (selectedTypeV2.value === "image") {
+    const imagesData = data.filter((resource, index) => {
+      const subtype = resource.split("|")[2];
+      let reversedSubType = `${subtype.split("x")[1]}x${subtype.split("x")[0]}`;
+      reversedSubType += `|${resource.split("|")[3]}`;
+      let indexOfReversed = data.findIndex(
+        (r) => r.split("|").slice(2).join("|") === reversedSubType
+      );
+
+      indexOfReversed =
+        indexOfReversed === -1 ? Number.MAX_SAFE_INTEGER : indexOfReversed;
+
+      return !(
+        index > indexOfReversed &&
+        props.service.resources[data[indexOfReversed]] ===
+          props.service.resources[resource]
+      );
+    });
+
+    return imagesData;
+  }
+
+  return data;
 });
 
 function openOpenAiDocs() {

@@ -466,9 +466,11 @@ export const useChatsStore = defineStore("chats", () => {
           }, {}),
         });
 
-        mes.meta.model = Value.fromJson(
-          chats.value.get(message.uuid).meta.data?.model?.kind?.value ?? ""
-        );
+        if (mes.meta.mode.kind.value === "default") {
+          mes.meta.model = Value.fromJson(
+            chats.value.get(message.uuid).meta.data?.model?.kind?.value ?? ""
+          );
+        }
 
         const response = await messagesApi.send(mes);
 

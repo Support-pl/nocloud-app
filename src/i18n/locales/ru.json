@@ -696,9 +696,6 @@
     "description": "Описание",
     "files": "Файлы",
     "send message": "отправить сообщение",
-    "generate image": "сгенерировать изображение",
-    "resolution": "разрешения",
-    "quality": "качество",
     "ticketStatus": {
       "Closed": "Закрыт",
       "Close-Ticket": "Обращение закрыто",
@@ -745,6 +742,40 @@
       "SUSPENDED": "ПРИОСТАНОВЛЕН",
       "OPERATION": "ВЫПОЛНЕНИЕ ПРОЦЕССА",
       "UNKNOWN": "НЕИЗВЕСТНО"
+    },
+    "openai": {
+      "labels": {
+        "api_example": "Пример"
+      },
+      "images_properties": {
+        "resolution": "Разрешение",
+        "quality": "Качество",
+        "price": "Цена"
+      },
+      "payment_types": {
+        "input": "1000 input токенов",
+        "output": "1000 output токенов",
+        "duration_cost": "Цена за минуту"
+      },
+      "images_quality": {
+        "hd": "HD",
+        "auto": "Auto",
+        "standard": "Default"
+      },
+      "providers": {
+        "openai": "OpenAI",
+        "gemini": "Google",
+        "deepseek": "DeepSeek"
+      },
+      "types": {
+        "text": "Генерация текста",
+        "image": "Генерация изображений",
+        "audio": "Генерация аудио"
+      },
+      "actions": {
+        "generate_image": "сгенерировать изображение",
+        "generate_audio": "сгенерировать аудио"
+      }
     },
     "public": "Публичный",
     "virtualSlider": {
