@@ -49,7 +49,12 @@
           >
             <pre>
               <message-content :uuid="reply.uuid" :message="reply.message"/>
-              <div class="chat__files">
+              <audio-player
+               v-if="files[reply.uuid].length===1 && files[reply.uuid][0].name.endsWith('.mp3')"
+                :url="files[reply.uuid][0].url"
+                  :name="files[reply.uuid][0].name"
+              />
+              <div v-else class="chat__files">
                 <div v-for="file of files[reply.uuid]" :key="file.url" class="files__preview">
                   <img
                     :src="file.url"
@@ -120,13 +125,10 @@
 </template>
 
 <script setup>
-import 'highlight.js/styles/base16/classic-light.css'
+import "highlight.js/styles/base16/classic-light.css";
 import { defineAsyncComponent, nextTick, ref, computed, watch, h } from "vue";
 import { renderToString } from "vue/server-renderer";
 import { onBeforeRouteUpdate, useRoute } from "vue-router";
-import markdown from "markdown-it";
-import { full as emoji } from "markdown-it-emoji";
-
 import { Status } from "@/libs/cc_connect/cc_pb";
 import { useClipboard } from "@/hooks/utils";
 import api from "@/api";
@@ -142,6 +144,7 @@ import supportAlert from "@/components/support/alert.vue";
 import supportFooter from "@/components/support/footer.vue";
 import typingPlaceholder from "@/components/support/typingPlaceholder.vue";
 import MessageContent from "@/components/support/messageContent.vue";
+import audioPlayer from "@/components/support/audio-player.vue";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -162,9 +165,6 @@ const loadingIcon = defineAsyncComponent(() =>
 
 const route = useRoute();
 const { addToClipboard } = useClipboard();
-const md = markdown({ html: true, linkify: true, typographer: true }).use(
-  emoji
-);
 
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
@@ -429,7 +429,7 @@ export default { name: "TicketChat" };
 .chat {
   position: relative;
   display: grid;
-  grid-template-columns: min(400px, 35vw - 20px) min(768px, 65vw - 20px);
+  grid-template-columns: min(400px, 35vw - 20px) min(868px, 65vw - 20px);
   grid-template-rows: 1fr auto;
   justify-content: center;
   gap: 10px;
@@ -465,7 +465,7 @@ export default { name: "TicketChat" };
   flex-direction: column;
   justify-content: flex-start;
 
-  max-width: 768px;
+  max-width: 868px;
   width: 100%;
   height: 100%;
   margin: 10px auto 0;
