@@ -71,7 +71,7 @@
               </div>
             </a-col>
 
-            <a-col v-else span="24">
+            <a-col v-else style="margin: 10px 0px" span="24">
               <a-table
                 :pagination="false"
                 :dataSource="
@@ -411,8 +411,10 @@ const providersOptionsV2 = computed(() => {
 });
 
 const pricesItemsV2 = computed(() => {
-  const data = Object.keys(props.service.resources).filter((r) =>
-    r.startsWith(`${selectedTypeV2.value}|${selectedModelV2.value}|`)
+  const data = Object.keys(props.service.resources).filter(
+    (r) =>
+      getModelType(r) === selectedTypeV2.value &&
+      selectedModelV2.value === r.split("|")[1]
   );
   if (selectedTypeV2.value === "image") {
     const imagesData = data.filter((resource, index) => {
