@@ -33,7 +33,7 @@
               ></a-select>
             </a-col>
 
-            <a-col span="6" style="min-width: 150px; margin-right: 5px">
+            <a-col span="7" style="min-width: 150px; margin-right: 5px">
               <a-select
                 style="width: 100%; margin-right: 5px; margin-top: 10px"
                 v-model:value="selectedTypeV2"
@@ -41,7 +41,7 @@
               ></a-select>
             </a-col>
 
-            <a-col span="13" style="margin-right: 5px">
+            <a-col span="12" style="margin-right: 5px">
               <a-auto-complete
                 style="margin-right: 10px; width: 100%; margin-top: 10px"
                 v-model:value="selectedModelV2"
@@ -197,7 +197,7 @@
     </a-col>
   </a-row>
 
-  <add-ticket :instance-id="service.uuid" :models-list="modelsListV2" />
+  <add-ticket :instance-id="service.uuid" />
 </template>
 
 <script setup>
@@ -215,6 +215,7 @@ import ticketItem from "@/components/support/ticketItem.vue";
 import loading from "@/components/ui/loading.vue";
 import api from "@/api";
 import { useI18n } from "vue-i18n";
+import { storeToRefs } from "pinia";
 
 const invisibleIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EyeInvisibleOutlined")
@@ -228,6 +229,7 @@ const props = defineProps({
 });
 
 const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
 const supportStore = useSupportStore();
 const instancesStore = useInstancesStore();
 const { currency } = useCurrency();
@@ -285,7 +287,6 @@ const exampleV1 = `
   }'
 `;
 
-const modelsListV2 = ref([]);
 const selectedModelV2 = ref("gpt-4o");
 const selectedProviderV2 = ref("openai");
 const selectedTypeV2 = ref("text");
@@ -357,7 +358,7 @@ const modelByProvidersV2 = computed(() => {
   const resources = Object.keys(props.service?.resources || {})
     .filter((key) => key.split("|").length > 2)
     .filter((key) =>
-      (modelsListV2.value?.[selectedProviderV2.value] || []).includes(
+      (globalModelsList.value[selectedProviderV2.value] || []).includes(
         key.split("|")[1]
       )
     );
@@ -367,7 +368,7 @@ const modelByProvidersV2 = computed(() => {
 
 const modelsOptionsV2 = computed(() => {
   const resources = modelByProvidersV2.value
-    .filter((key) => key.split("|")[0] === selectedTypeV2.value)
+    .filter((key) => getModelType(key) === selectedTypeV2.value)
     .map((key) => key.split("|")[1]);
 
   return [...new Set(resources).values()].map((key) => ({
@@ -391,7 +392,7 @@ const sortedModelsOptionsV2 = computed(() => {
 });
 
 const typesOptionsV2 = computed(() => {
-  const resources = modelByProvidersV2.value.map((key) => key.split("|")[0]);
+  const resources = modelByProvidersV2.value.map((key) => getModelType(key));
 
   return [...new Set(resources).values()].map((key) => ({
     value: key,
@@ -400,7 +401,7 @@ const typesOptionsV2 = computed(() => {
 });
 
 const providersOptionsV2 = computed(() => {
-  return Object.keys(modelsListV2.value || {}).map((key) => ({
+  return Object.keys(globalModelsList.value || {}).map((key) => ({
     value: key,
     label: t(`openai.providers.${key}`),
   }));
@@ -435,6 +436,15 @@ const pricesItemsV2 = computed(() => {
   return data;
 });
 
+function getModelType(key) {
+  const type = key.split("|")[0];
+
+  if (["speech", "translation", "transcription"].includes(type)) {
+    return "audio";
+  }
+  return type;
+}
+
 function openOpenAiDocs() {
   window.open(
     "https://platform.openai.com/docs/api-reference/chat/create",
@@ -446,13 +456,12 @@ async function fetch() {
   try {
     isLoading.value = true;
     await chatsStore.fetchChats();
+    await chatsStore.fetch_models_list();
 
     const { meta } = await instancesStore.invokeAction({
       uuid: props.service.uuid,
       action: "instance_token",
     });
-
-    modelsListV2.value = await api.get("api/openai/models_list");
 
     token.value = meta.token;
   } catch (error) {

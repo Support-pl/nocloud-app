@@ -52,6 +52,7 @@ export const useChatsStore = defineStore("chats", () => {
   const defaults = ref({});
   const chats = ref(new Map());
   const isLoading = ref(false);
+  const globalModelsList = ref({});
 
   const messages = ref({});
   const rawMessages = ref([]);
@@ -93,6 +94,18 @@ export const useChatsStore = defineStore("chats", () => {
         ...dep,
       })) ?? [],
   }));
+
+  async function fetch_models_list() {
+    if (Object.keys(globalModelsList.value).length > 0) {
+      return;
+    }
+
+    try {
+      globalModelsList.value = await api.get("api/openai/models_list");
+    } catch (e) {
+      console.log(`models_list error ${e}`);
+    }
+  }
 
   function updateChat(event) {
     const { value: chat } = event.item;
@@ -251,6 +264,9 @@ export const useChatsStore = defineStore("chats", () => {
     rawMessages,
     attachments,
     isLoading,
+
+    globalModelsList,
+    fetch_models_list,
 
     getChats,
     getDefaults,
