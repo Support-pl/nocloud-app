@@ -120,6 +120,7 @@
       v-model:replies="replies"
       :status="status"
       :ticket="chat"
+      :instance="instance"
     />
   </div>
 </template>
@@ -145,6 +146,8 @@ import supportFooter from "@/components/support/footer.vue";
 import typingPlaceholder from "@/components/support/typingPlaceholder.vue";
 import MessageContent from "@/components/support/messageContent.vue";
 import audioPlayer from "@/components/support/audio-player.vue";
+import { useInstancesStore } from "@/stores/instances";
+import { storeToRefs } from "pinia";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -169,6 +172,8 @@ const { addToClipboard } = useClipboard();
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
 const supportStore = useSupportStore();
+const instancesStore = useInstancesStore();
+const { getInstances } = storeToRefs(instancesStore);
 
 onBeforeRouteUpdate((to, from, next) => {
   chatid.value = to.params.id;
@@ -191,6 +196,16 @@ const chatList = ref();
 const footer = ref();
 
 const chat = computed(() => chatsStore.chats.get(chatid.value));
+
+const instance = computed(() => {
+  if (!chat.value?.meta?.data?.instance?.kind.value) {
+    return null;
+  }
+
+  return getInstances.value.find(
+    (i) => i.uuid === chat.value.meta.data.instance.kind.value
+  );
+});
 
 const chats = computed(() => {
   const ids = [];
@@ -312,6 +327,10 @@ async function fetch() {
 
   await Promise.all([chatsStore.fetchChats(), chatsStore.fetchDefaults()]);
 
+  chatsStore.fetch_models_list();
+
+  instancesStore.fetch();
+
   await loadMessages(true);
   chatsStore.startStream();
 }
@@ -429,7 +448,7 @@ export default { name: "TicketChat" };
 .chat {
   position: relative;
   display: grid;
-  grid-template-columns: min(400px, 35vw - 20px) min(868px, 65vw - 20px);
+  grid-template-columns: min(400px, 35vw - 20px) min(968px, 65vw - 20px);
   grid-template-rows: 1fr auto;
   justify-content: center;
   gap: 10px;
@@ -465,7 +484,7 @@ export default { name: "TicketChat" };
   flex-direction: column;
   justify-content: flex-start;
 
-  max-width: 868px;
+  max-width: 968px;
   width: 100%;
   height: 100%;
   margin: 10px auto 0;

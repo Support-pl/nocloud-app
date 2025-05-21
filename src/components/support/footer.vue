@@ -26,23 +26,44 @@
           <a-radio-button value="default">
             {{ capitalize($t("send message")) }}
           </a-radio-button>
-          <a-radio-button value="speech">
-            {{ capitalize($t("openai.actions.generate_audio")) }}
-          </a-radio-button>
-          <a-radio-button value="generate">
-            {{ capitalize($t("openai.actions.generate_image")) }}
-          </a-radio-button>
+          <template v-if="instance">
+            <a-radio-button value="speech">
+              {{ capitalize($t("openai.actions.generate_audio")) }}
+            </a-radio-button>
+            <a-radio-button value="generate">
+              {{ capitalize($t("openai.actions.generate_image")) }}
+            </a-radio-button>
+          </template>
         </a-radio-group>
+        <a-select
+          v-if="
+            sendAdvancedOptions.checked === 'speech' &&
+            instanceAudioModels.length > 1
+          "
+          v-model:value="sendAdvancedOptions.model"
+          :options="instanceAudioModels.map((v) => ({ lavel: v, value: v }))"
+        />
 
         <a-select
+          v-if="
+            sendAdvancedOptions.checked === 'generate' &&
+            instanceImageModels.length > 1
+          "
+          v-model:value="sendAdvancedOptions.model"
+          :options="instanceImageModels.map((v) => ({ lavel: v, value: v }))"
+        />
+
+        <a-select
+          style="min-width: 120px"
           v-if="sendAdvancedOptions.checked === 'generate'"
           v-model:value="sendAdvancedOptions.size"
-          :options="sizes"
+          :options="instanceImageSizes"
         />
         <a-select
+          style="min-width: 80px"
           v-if="sendAdvancedOptions.checked === 'generate'"
           v-model:value="sendAdvancedOptions.quality"
-          :options="qualityList"
+          :options="instanceImageQualitys"
         />
       </div>
 
@@ -72,7 +93,14 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, nextTick, reactive, ref } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  reactive,
+  ref,
+  watch,
+} from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import markdown from "markdown-it";
@@ -102,6 +130,7 @@ const props = defineProps({
   ticket: { type: Object, default: () => ({}) },
   replies: { type: Array, required: true },
   status: { type: [String, Number], default: "Unknown" },
+  instance: { type: Object, default: () => null },
 });
 const emits = defineEmits(["update:replies"]);
 
@@ -121,16 +150,8 @@ const sendAdvancedOptions = reactive({
   checked: "default",
   size: "1024x1024",
   quality: "standard",
+  model: "",
 });
-const sizes = [
-  { value: "1024x1024" },
-  { value: "1024x1792" },
-  { value: "1792x1024" },
-];
-const qualityList = [
-  { label: "HD", value: "hd" },
-  { label: "Standard", value: "standard" },
-];
 
 const columnsStyle = computed(() =>
   showSendFiles.value ? "1fr auto auto" : "1fr auto"
@@ -139,6 +160,52 @@ const columnsStyle = computed(() =>
 function newLine() {
   message.value.replace(/$/, "\n");
 }
+
+const instanceModels = computed(() => {
+  return props.instance?.billingPlan?.resources.map((r) => r.key) || [];
+});
+
+const instanceAudioModels = computed(() =>
+  instanceModels.value
+    .filter((r) => ["speech"].includes(r.split("|")[0]))
+    .map((r) => r.split("|")[1])
+);
+
+const instanceImageModels = computed(() => [
+  ...new Set(
+    instanceModels.value
+      .filter((r) => ["image"].includes(r.split("|")[0]))
+      .map((r) => r.split("|")[1])
+  ),
+]);
+
+const instanceImageSizes = computed(() => {
+  if (sendAdvancedOptions.checked !== "generate") {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      instanceModels.value
+        .filter((i) => i.split("|")[1] === sendAdvancedOptions.model)
+        .map((i) => i.split("|")[2])
+    ),
+  ].map((v) => ({ value: v, label: v }));
+});
+
+const instanceImageQualitys = computed(() => {
+  if (sendAdvancedOptions.checked !== "generate") {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      instanceModels.value
+        .filter((i) => i.split("|")[1] === sendAdvancedOptions.model)
+        .map((i) => i.split("|")[3])
+    ),
+  ].map((v) => ({ value: v, label: i18n.t(`openai.images_quality.${v}`) }));
+});
 
 function updateReplies() {
   const result = {
@@ -185,6 +252,10 @@ async function sendChatMessage(result, replies) {
         { key: "size", value: sendAdvancedOptions.size },
         { key: "quality", value: sendAdvancedOptions.quality }
       );
+    }
+
+    if (sendAdvancedOptions.checked !== "default") {
+      message.meta.push({ key: "model", value: sendAdvancedOptions.model });
     }
 
     const { uuid } = await chatsStore.sendMessage(message);
@@ -271,6 +342,26 @@ function getMessage(uuid) {
 const tagGridColumn = computed(() => (showSendFiles.value ? "1 / 4" : "1 / 3"));
 
 defineExpose({ message, sendMessage, changeEditing });
+
+watch(
+  () => sendAdvancedOptions.checked,
+  (v) => {
+    if (v === "default") {
+      return;
+    }
+    sendAdvancedOptions.model =
+      v === "generate"
+        ? instanceImageModels.value[0]
+        : instanceAudioModels.value[0];
+  }
+);
+
+watch(instanceImageQualitys, (v) => {
+  sendAdvancedOptions.quality = v[0]?.value;
+});
+watch(instanceImageSizes, (v) => {
+  sendAdvancedOptions.size = v[0]?.value;
+});
 </script>
 
 <script>

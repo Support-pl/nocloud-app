@@ -28,7 +28,7 @@
             </a-select>
           </a-col>
 
-          <a-col span="5" style="min-width: 160px; margin-right: 5px">
+          <a-col span="7" style="min-width: 160px; margin-right: 5px">
             <a-select
               style="margin-left: 5px; width: 100%; margin-top: 10px"
               v-model:value="selectedType"
@@ -37,7 +37,7 @@
             </a-select>
           </a-col>
 
-          <a-col span="14" style="margin-right: 5px">
+          <a-col span="12" style="margin-right: 5px">
             <a-auto-complete
               style="margin-left: 5px; width: 100%; margin-top: 10px"
               v-model:value="selectedModel"
@@ -173,6 +173,7 @@ import { useSupportStore } from "@/stores/support.js";
 import uploadFiles from "@/components/support/upload.vue";
 import { useInstancesStore } from "@/stores/instances";
 import { capitalize } from "vue";
+import { storeToRefs } from "pinia";
 
 const uploadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/UploadOutlined")
@@ -188,10 +189,7 @@ md.use(emoji);
 
 const props = defineProps({
   instanceId: { type: String, default: null },
-  modelsList: { type: Object, required: false },
 });
-
-const { modelsList } = toRefs(props);
 
 const router = useRouter();
 const { t } = useI18n();
@@ -199,6 +197,7 @@ const { openNotification } = useNotification();
 
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
 const supportStore = useSupportStore();
 const instancesStore = useInstancesStore();
 
@@ -247,7 +246,7 @@ const modelByProviders = computed(() => {
   const resources = Object.keys(instance.value?.resources || {})
     .filter((key) => key.split("|").length > 2)
     .filter((key) =>
-      (modelsList.value?.[selectedProvider.value] || []).includes(
+      (globalModelsList.value[selectedProvider.value] || []).includes(
         key.split("|")[1]
       )
     );
@@ -257,7 +256,7 @@ const modelByProviders = computed(() => {
 
 const availableModels = computed(() => {
   const resources = modelByProviders.value
-    .filter((key) => key.split("|")[0] === selectedType.value)
+    .filter((key) => getModelType(key) === selectedType.value)
     .map((key) => key.split("|")[1]);
 
   return [...new Set(resources).values()].map((key) => ({
@@ -279,7 +278,7 @@ const sortedAvailableModels = computed(() => {
 });
 
 const availableTypes = computed(() => {
-  const resources = modelByProviders.value.map((key) => key.split("|")[0]);
+  const resources = modelByProviders.value.map((key) => getModelType(key));
 
   return [...new Set(resources).values()].map((key) => ({
     value: key,
@@ -288,11 +287,20 @@ const availableTypes = computed(() => {
 });
 
 const availableProviders = computed(() => {
-  return Object.keys(modelsList.value || {}).map((key) => ({
+  return Object.keys(globalModelsList.value || {}).map((key) => ({
     value: key,
     label: t(`openai.providers.${key}`),
   }));
 });
+
+function getModelType(key) {
+  const type = key.split("|")[0];
+
+  if (["speech", "translation", "transcription"].includes(type)) {
+    return "audio";
+  }
+  return type;
+}
 
 const instance = computed(() =>
   props.instanceId
@@ -504,6 +512,7 @@ async function fetch() {
     isLoading.value = true;
     await chatsStore.fetchDefaults();
     await supportStore.fetchDepartments();
+    await chatsStore.fetch_models_list();
   } catch {
     message.error(t("departments not found"));
   } finally {
