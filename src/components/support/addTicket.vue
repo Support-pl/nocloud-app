@@ -53,17 +53,25 @@
 
         <a-row v-if="selectedType === 'image'">
           <a-form-item
-            style="margin-bottom: 0; padding-bottom: 0"
+            style="margin-bottom: 0; padding-bottom: 0; min-width: 120px"
             :label="capitalize($t('openai.images_properties.resolution'))"
           >
-            <a-select v-model:value="genImage.size" :options="sizes" />
+            <a-select v-model:value="genImage.size" :options="imageSizes" />
           </a-form-item>
 
           <a-form-item
-            style="margin-bottom: 0; padding-bottom: 0; margin-left: 5px"
+            style="
+              margin-bottom: 0;
+              padding-bottom: 0;
+              margin-left: 5px;
+              min-width: 120px;
+            "
             :label="capitalize($t('openai.images_properties.quality'))"
           >
-            <a-select v-model:value="genImage.quality" :options="qualityList" />
+            <a-select
+              v-model:value="genImage.quality"
+              :options="imageQualitys"
+            />
           </a-form-item>
         </a-row>
 
@@ -213,15 +221,6 @@ const genImage = reactive({
   size: "1024x1024",
   quality: "standard",
 });
-const sizes = [
-  { value: "1024x1024" },
-  { value: "1024x1792" },
-  { value: "1792x1024" },
-];
-const qualityList = [
-  { label: "HD", value: "hd" },
-  { label: "Standard", value: "standard" },
-];
 
 const selectedModel = ref("gpt-4o");
 const selectedType = ref("text");
@@ -291,6 +290,34 @@ const availableProviders = computed(() => {
     value: key,
     label: t(`openai.providers.${key}`),
   }));
+});
+
+const imageSizes = computed(() => {
+  if (selectedType === "image") {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      modelByProviders.value
+        .filter((i) => i.split("|")[1] === selectedModel.value)
+        .map((i) => i.split("|")[2])
+    ),
+  ].map((v) => ({ value: v, label: v }));
+});
+
+const imageQualitys = computed(() => {
+  if (selectedType === "image") {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      modelByProviders.value
+        .filter((i) => i.split("|")[1] === selectedModel.value)
+        .map((i) => i.split("|")[3])
+    ),
+  ].map((v) => ({ value: v, label: t(`openai.images_quality.${v}`) }));
 });
 
 function getModelType(key) {
