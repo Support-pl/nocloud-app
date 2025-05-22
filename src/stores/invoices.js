@@ -1,5 +1,5 @@
-import { computed, ref } from "vue";
-import { defineStore } from "pinia";
+import { computed, ref, watch } from "vue";
+import { defineStore, storeToRefs } from "pinia";
 import { createPromiseClient } from "@connectrpc/connect";
 import { BillingService } from "nocloud-proto/proto/es/billing/billing_connect";
 import {
@@ -22,6 +22,7 @@ import {
 export const useInvoicesStore = defineStore("invoices", () => {
   const app = useAppStore();
   const auth = useAuthStore();
+  const { userBalance } = storeToRefs(auth);
   const router = useRouter();
   const invoicesApi = createPromiseClient(BillingService, app.transport);
 
@@ -172,6 +173,17 @@ export const useInvoicesStore = defineStore("invoices", () => {
       console.log(error);
     }
   };
+
+  function fetchInvoicesForUser() {
+    if (userBalance.value) {
+      fetchInvoices();
+    }
+  }
+
+  watch(userBalance, () => {
+    fetchInvoicesForUser();
+  });
+  fetchInvoicesForUser();
 
   return {
     invoices,
