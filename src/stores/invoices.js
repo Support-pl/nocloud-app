@@ -59,6 +59,10 @@ export const useInvoicesStore = defineStore("invoices", () => {
     });
   });
 
+  const isInvoicesNotificationEnabled = computed(() => {
+    return getInvoices.value.find((i) => i.status === "Unpaid");
+  });
+
   async function fetchNcInvoices(params) {
     try {
       const response = await invoicesApi.getInvoices(
@@ -175,6 +179,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
     isLoading,
     filter,
     getInvoices,
+    isInvoicesNotificationEnabled,
     fetch,
 
     async createTopUpBalanceInvoice(sum = 0) {

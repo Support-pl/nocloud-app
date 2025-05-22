@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from "vue";
+import { computed, h, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { defineStore } from "pinia";
 import {
@@ -13,6 +13,7 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { useAuthStore } from "./auth.js";
 import config from "@/appconfig.js";
 import { useCurrenciesStore } from "./currencies.js";
+import { useInvoicesStore } from "./invoices.js";
 /*
 ROUTER WORKS THERE!
 */
@@ -75,11 +76,33 @@ export const useAppStore = defineStore("app", () => {
   });
 
   const buttons = computed(() => {
+    const invoices = useInvoicesStore();
+
     if (isButtonsVisible.value) {
       const result = [
         { icon: AppstoreOutlined, title: "services" },
         { icon: MessageOutlined, title: "support" },
-        { icon: FundOutlined, title: "billing" },
+        {
+          icon: h("div", {}, [
+            h(FundOutlined),
+            invoices.isInvoicesNotificationEnabled &&
+              h(
+                "div",
+                { style: { position: "absolute", top: "4px", right: "-3px" } },
+                [
+                  h("div", {
+                    style: {
+                      "background-color": "red",
+                      width: "8px",
+                      height: "8px",
+                      "border-radius": "8px",
+                    },
+                  }),
+                ]
+              ),
+          ]),
+          title: "billing",
+        },
         { icon: SettingFilled, title: "settings" },
       ];
 
