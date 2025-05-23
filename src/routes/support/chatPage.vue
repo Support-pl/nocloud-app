@@ -49,7 +49,12 @@
           >
             <pre>
               <message-content :uuid="reply.uuid" :message="reply.message"/>
-              <div class="chat__files">
+              <audio-player
+               v-if="files[reply.uuid].length===1 && files[reply.uuid][0].name.endsWith('.mp3')"
+                :url="files[reply.uuid][0].url"
+                  :name="files[reply.uuid][0].name"
+              />
+              <div v-else class="chat__files">
                 <div v-for="file of files[reply.uuid]" :key="file.url" class="files__preview">
                   <img
                     :src="file.url"
@@ -115,18 +120,16 @@
       v-model:replies="replies"
       :status="status"
       :ticket="chat"
+      :instance="instance"
     />
   </div>
 </template>
 
 <script setup>
-import 'highlight.js/styles/base16/classic-light.css'
+import "highlight.js/styles/base16/classic-light.css";
 import { defineAsyncComponent, nextTick, ref, computed, watch, h } from "vue";
 import { renderToString } from "vue/server-renderer";
 import { onBeforeRouteUpdate, useRoute } from "vue-router";
-import markdown from "markdown-it";
-import { full as emoji } from "markdown-it-emoji";
-
 import { Status } from "@/libs/cc_connect/cc_pb";
 import { useClipboard } from "@/hooks/utils";
 import api from "@/api";
@@ -142,6 +145,9 @@ import supportAlert from "@/components/support/alert.vue";
 import supportFooter from "@/components/support/footer.vue";
 import typingPlaceholder from "@/components/support/typingPlaceholder.vue";
 import MessageContent from "@/components/support/messageContent.vue";
+import audioPlayer from "@/components/support/audio-player.vue";
+import { useInstancesStore } from "@/stores/instances";
+import { storeToRefs } from "pinia";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -162,13 +168,12 @@ const loadingIcon = defineAsyncComponent(() =>
 
 const route = useRoute();
 const { addToClipboard } = useClipboard();
-const md = markdown({ html: true, linkify: true, typographer: true }).use(
-  emoji
-);
 
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
 const supportStore = useSupportStore();
+const instancesStore = useInstancesStore();
+const { getInstances } = storeToRefs(instancesStore);
 
 onBeforeRouteUpdate((to, from, next) => {
   chatid.value = to.params.id;
@@ -191,6 +196,16 @@ const chatList = ref();
 const footer = ref();
 
 const chat = computed(() => chatsStore.chats.get(chatid.value));
+
+const instance = computed(() => {
+  if (!chat.value?.meta?.data?.instance?.kind.value) {
+    return null;
+  }
+
+  return getInstances.value.find(
+    (i) => i.uuid === chat.value.meta.data.instance.kind.value
+  );
+});
 
 const chats = computed(() => {
   const ids = [];
@@ -312,6 +327,10 @@ async function fetch() {
 
   await Promise.all([chatsStore.fetchChats(), chatsStore.fetchDefaults()]);
 
+  chatsStore.fetch_models_list();
+
+  instancesStore.fetch();
+
   await loadMessages(true);
   chatsStore.startStream();
 }
@@ -429,7 +448,7 @@ export default { name: "TicketChat" };
 .chat {
   position: relative;
   display: grid;
-  grid-template-columns: min(400px, 35vw - 20px) min(768px, 65vw - 20px);
+  grid-template-columns: min(400px, 35vw - 20px) min(968px, 65vw - 20px);
   grid-template-rows: 1fr auto;
   justify-content: center;
   gap: 10px;
@@ -465,7 +484,7 @@ export default { name: "TicketChat" };
   flex-direction: column;
   justify-content: flex-start;
 
-  max-width: 768px;
+  max-width: 968px;
   width: 100%;
   height: 100%;
   margin: 10px auto 0;

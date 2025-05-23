@@ -1,5 +1,5 @@
-import { computed, ref } from "vue";
-import { defineStore } from "pinia";
+import { computed, ref, watch } from "vue";
+import { defineStore, storeToRefs } from "pinia";
 import { createPromiseClient } from "@connectrpc/connect";
 import { BillingService } from "nocloud-proto/proto/es/billing/billing_connect";
 import {
@@ -22,6 +22,7 @@ import {
 export const useInvoicesStore = defineStore("invoices", () => {
   const app = useAppStore();
   const auth = useAuthStore();
+  const { userBalance } = storeToRefs(auth);
   const router = useRouter();
   const invoicesApi = createPromiseClient(BillingService, app.transport);
 
@@ -57,6 +58,10 @@ export const useInvoicesStore = defineStore("invoices", () => {
 
       return parseInt(b.id, 10) - parseInt(a.id, 10);
     });
+  });
+
+  const isInvoicesNotificationEnabled = computed(() => {
+    return getInvoices.value.find((i) => i.status === "Unpaid");
   });
 
   async function fetchNcInvoices(params) {
@@ -169,12 +174,24 @@ export const useInvoicesStore = defineStore("invoices", () => {
     }
   };
 
+  function fetchInvoicesForUser() {
+    if (userBalance.value) {
+      fetchInvoices();
+    }
+  }
+
+  watch(userBalance, () => {
+    fetchInvoicesForUser();
+  });
+  fetchInvoicesForUser();
+
   return {
     invoices,
     invoicesApi,
     isLoading,
     filter,
     getInvoices,
+    isInvoicesNotificationEnabled,
     fetch,
 
     async createTopUpBalanceInvoice(sum = 0) {

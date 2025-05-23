@@ -718,6 +718,40 @@
         }
       }
     },
+    "openai": {
+      "labels": {
+        "api_example": "API Example"
+      },
+      "images_properties": {
+        "resolution": "Resolution",
+        "quality": "Quality",
+        "price": "Price"
+      },
+      "payment_types": {
+        "input": "1000 input tokens",
+        "output": "1000 output tokens",
+        "duration_cost": "Duration per minute"
+      },
+      "images_quality": {
+        "hd": "HD",
+        "auto": "Auto",
+        "standard": "Standard"
+      },
+      "providers": {
+        "openai": "OpenAI",
+        "gemini": "Google",
+        "deepseek": "DeepSeek"
+      },
+      "types": {
+        "text": "Text generation",
+        "image": "Image Generation",
+        "audio": "Audio Generation"
+      },
+      "actions": {
+        "generate_image": "generate image",
+        "generate_audio": "generate audio"
+      }
+    },
     "Domains": "Domains",
     "domains": "domains",
     "domain is wrong": "Please enter a valid domain",
