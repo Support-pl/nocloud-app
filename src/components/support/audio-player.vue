@@ -1,23 +1,51 @@
 <template>
-  <div style="display: flex; align-items: center">
-    <vue-sound :file="url" :title="name" />
-    <a-button @click="download(url, name)" shape="round" type="primary">
-      <template #icon>
-        <download-icon />
-      </template>
-    </a-button>
+  <div class="audio" style="display: flex; align-items: center">
+    <div style="width: 250px; padding: 0px 10px">
+      <vue-audio-player
+        :show-prev-button="false"
+        :show-next-button="false"
+        :show-volume-button="false"
+        :isLoop="false"
+        ref="audioPlayer"
+        theme-color="#3d73da"
+        :audio-list="audioList"
+        :show-playback-rate="false"
+      >
+      </vue-audio-player>
+
+      <div class="name">
+        {{ audioList[0].title }}
+        <a-button
+          style="margin-left: 10px; margin-bottom: 4px"
+          size="small"
+          @click="download(url, name)"
+          shape="round"
+          type="primary"
+        >
+          <template #icon>
+            <download-icon />
+          </template>
+        </a-button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import "vue-sound/style.css";
-import { VueSound } from "vue-sound";
-import { defineAsyncComponent } from "vue";
+import VueAudioPlayer from "@liripeng/vue-audio-player";
+import { computed, defineAsyncComponent } from "vue";
 const props = defineProps(["url", "name"]);
 
 const downloadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DownloadOutlined")
 );
+
+const audioList = computed(() => [
+  {
+    src: props.url,
+    title: props.name,
+  },
+]);
 
 function download(url, filename) {
   fetch(url)
@@ -33,28 +61,20 @@ function download(url, filename) {
 </script>
 
 <style>
-:root {
-  --player-background: var(--bright_bg);
-  --player-font-family: "Open Sans", sans-serif;
-  --player-font-size: 0.9rem;
-  --player-font-size-small: 0.7rem;
-  --player-font-weight: 300;
-  --player-font-weight-bold: 600;
-  --player-text-color: #3d73da;
-  --player-icon-color: #3d73da;
-  --player-link-color: #3d73da;
-  --player-progress-color: #3d73da;
-  --player-buffered-color: #749ae0;
-  --player-seeker-color: #3d73da;
-  --player-input-range-color: #3d73da;
+.audio .name {
+  display: flex;
+  justify-content: center;
+  justify-items: center;
+  margin-bottom: 10px;
+  color: #3d73da;
 }
 
-.player-volume {
-  display: none;
+.vue-audio-player__btn-wrap svg {
+  width: 30px !important;
+  height: 30px !important;
 }
 
-.player-track {
-  padding: 0rem;
-  padding-left: 2rem;
+.vue-audio-player__progress-wrap {
+  margin-top: 10px !important;
 }
 </style>

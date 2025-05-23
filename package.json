@@ -15,6 +15,7 @@
     "@bufbuild/protobuf": "^1.10.0",
     "@connectrpc/connect": "^1.4.0",
     "@connectrpc/connect-web": "^1.4.0",
+    "@liripeng/vue-audio-player": "^2.0.4",
     "ant-design-vue": "^4.2.3",
     "core-js": "^3.37.1",
     "dayjs": "^1.11.12",
@@ -38,8 +39,7 @@
     "vue-gtag": "2.0.2-beta.0",
     "vue-i18n": "^9.13.1",
     "vue-router": "^4.4.1",
-    "vue-simple-password-meter": "^1.3.4",
-    "vue-sound": "^0.1.10"
+    "vue-simple-password-meter": "^1.3.4"
   },
   "devDependencies": {
     "@types/dompurify": "^3.0.2",
