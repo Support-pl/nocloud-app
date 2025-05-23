@@ -14,7 +14,7 @@
     <a-spin :tip="$t('loading')" :spinning="isLoading || isSending">
       <a-form layout="vertical">
         <a-row style="margin-bottom: 10px" v-if="instanceId">
-          <a-col span="4" style="min-width: 100px; margin-right: 5px">
+          <a-col span="6" style="min-width: 100px; margin-right: 5px">
             <a-select
               style="
                 margin-left: 5px;
@@ -28,7 +28,7 @@
             </a-select>
           </a-col>
 
-          <a-col span="7" style="min-width: 160px; margin-right: 5px">
+          <!-- <a-col span="7" style="min-width: 160px; margin-right: 5px">
             <a-select
               style="margin-left: 5px; width: 100%; margin-top: 10px"
               v-model:value="selectedType"
@@ -36,8 +36,8 @@
             >
             </a-select>
           </a-col>
-
-          <a-col span="12" style="margin-right: 5px">
+        -->
+          <a-col span="17" style="margin-right: 5px">
             <a-auto-complete
               style="margin-left: 5px; width: 100%; margin-top: 10px"
               v-model:value="selectedModel"
@@ -51,6 +51,7 @@
           </a-col>
         </a-row>
 
+        <!--
         <a-row v-if="selectedType === 'image'">
           <a-form-item
             style="margin-bottom: 0; padding-bottom: 0; min-width: 120px"
@@ -74,6 +75,7 @@
             />
           </a-form-item>
         </a-row>
+      -->
 
         <a-form-item
           v-if="!instanceId && filteredDepartments.length > 1"
@@ -276,14 +278,14 @@ const sortedAvailableModels = computed(() => {
   });
 });
 
-const availableTypes = computed(() => {
-  const resources = modelByProviders.value.map((key) => getModelType(key));
+// const availableTypes = computed(() => {
+//   const resources = modelByProviders.value.map((key) => getModelType(key));
 
-  return [...new Set(resources).values()].map((key) => ({
-    value: key,
-    label: t(`openai.types.${key}`),
-  }));
-});
+//   return [...new Set(resources).values()].map((key) => ({
+//     value: key,
+//     label: t(`openai.types.${key}`),
+//   }));
+// });
 
 const availableProviders = computed(() => {
   return Object.keys(globalModelsList.value || {}).map((key) => ({
@@ -292,33 +294,33 @@ const availableProviders = computed(() => {
   }));
 });
 
-const imageSizes = computed(() => {
-  if (selectedType === "image") {
-    return [];
-  }
+// const imageSizes = computed(() => {
+//   if (selectedType === "image") {
+//     return [];
+//   }
 
-  return [
-    ...new Set(
-      modelByProviders.value
-        .filter((i) => i.split("|")[1] === selectedModel.value)
-        .map((i) => i.split("|")[2])
-    ),
-  ].map((v) => ({ value: v, label: v }));
-});
+//   return [
+//     ...new Set(
+//       modelByProviders.value
+//         .filter((i) => i.split("|")[1] === selectedModel.value)
+//         .map((i) => i.split("|")[2])
+//     ),
+//   ].map((v) => ({ value: v, label: v }));
+// });
 
-const imageQualitys = computed(() => {
-  if (selectedType === "image") {
-    return [];
-  }
+// const imageQualitys = computed(() => {
+//   if (selectedType === "image") {
+//     return [];
+//   }
 
-  return [
-    ...new Set(
-      modelByProviders.value
-        .filter((i) => i.split("|")[1] === selectedModel.value)
-        .map((i) => i.split("|")[3])
-    ),
-  ].map((v) => ({ value: v, label: t(`openai.images_quality.${v}`) }));
-});
+//   return [
+//     ...new Set(
+//       modelByProviders.value
+//         .filter((i) => i.split("|")[1] === selectedModel.value)
+//         .map((i) => i.split("|")[3])
+//     ),
+//   ].map((v) => ({ value: v, label: t(`openai.images_quality.${v}`) }));
+// });
 
 function getModelType(key) {
   const type = key.split("|")[0];
@@ -549,11 +551,11 @@ async function fetch() {
 
 fetch();
 
-watch(availableTypes, (data) => {
-  if (!data.find((v) => v.value === selectedType.value)) {
-    selectedType.value = data[0]?.value;
-  }
-});
+// watch(availableTypes, (data) => {
+//   if (!data.find((v) => v.value === selectedType.value)) {
+//     selectedType.value = data[0]?.value;
+//   }
+// });
 
 watch(availableModels, (data) => {
   if (!data.find((v) => v.value === selectedModel.value)) {
