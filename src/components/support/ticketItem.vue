@@ -6,7 +6,9 @@
         <div class="ticket__title">#{{ ticket.tid }} - {{ titleDecoded }}</div>
         <div
           v-if="!ticket.model"
-        class="ticket__department" style="margin-left: auto">
+          class="ticket__department"
+          style="margin-left: auto"
+        >
           {{ department }}
         </div>
 
@@ -220,5 +222,9 @@ export default { name: "TicketItem" };
 
 .ticket__model span {
   margin-inline-start: 0px;
+}
+
+.ant-tag {
+  color: unset !important;
 }
 </style>
