@@ -24,16 +24,47 @@
     <a-col span="24">
       <a-tabs v-model:activeKey="activeApiTab">
         <a-tab-pane key="2" tab="API v2">
-          <a-row style="padding: 0px 5px">
-            <a-col span="4" style="min-width: 100px; margin-right: 5px">
-              <a-select
-                style="width: 100%; margin-top: 10px"
-                v-model:value="selectedProviderV2"
-                :options="providersOptionsV2"
-              ></a-select>
-            </a-col>
+          <a-row>
+            <a-col v-for="provider in providersOptionsV2" span="8">
+              <a-card
+                bodyStyle="padding:0px"
+                :style="{
+                  padding: '10px',
+                  margin: '2px',
+                  'border-color':
+                    selectedProviderV2 == provider.value
+                      ? 'var(--main)'
+                      : 'unset',
+                }"
+                @click="selectedProviderV2 = provider.value"
+              >
+                <div style="display: flex; justify-content: center">
+                  <img
+                    :src="`/img/ai-providers/${provider.value}.png`"
+                    style="width: calc(100% - 60px); height: 40px"
+                  />
+                </div>
 
-            <a-col span="7" style="min-width: 150px; margin-right: 5px">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 10px;
+                  "
+                >
+                  <a-checkbox
+                    :checked="selectedProviderV2 == provider.value"
+                    @change="selectedProviderV2 = provider.value"
+                  >
+                    {{ provider.label }}
+                  </a-checkbox>
+                </div>
+              </a-card>
+            </a-col>
+          </a-row>
+
+          <a-row style="padding: 0px 5px">
+            <a-col span="8" style="min-width: 150px; margin-right: 5px">
               <a-select
                 style="width: 100%; margin-right: 5px; margin-top: 10px"
                 v-model:value="selectedTypeV2"
@@ -41,7 +72,7 @@
               ></a-select>
             </a-col>
 
-            <a-col span="12" style="margin-right: 5px">
+            <a-col span="15" style="margin-right: 5px">
               <a-auto-complete
                 style="margin-right: 10px; width: 100%; margin-top: 10px"
                 v-model:value="selectedModelV2"
@@ -255,8 +286,7 @@ const chats = computed(() => {
   chatsStore.chats.forEach((chat) => {
     const { value } = chat.meta.data.instance?.kind ?? {};
     if (value !== props.service.uuid) return;
-    const { value:model } = chat.meta.data.model?.kind ?? {};
-
+    const { value: model } = chat.meta.data.model?.kind ?? {};
 
     const status = Status[chat.status].toLowerCase().split("_");
     const capitalized = status
