@@ -437,8 +437,8 @@ async function createChat() {
         meta: [
           { key: "dept_id", value: whmcsId },
           { key: "instance", value: props.instanceId },
-          { key: "model", value: selectedModel.value },
-        ],
+          props.instanceId && { key: "model", value: selectedModel.value },
+        ].filter((v) => !!v),
       },
     });
 
