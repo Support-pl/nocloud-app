@@ -102,6 +102,8 @@
             :rows="10"
             :placeholder="instanceId ? $t('input text') : null"
           />
+
+          <upload-files v-if="showSendFiles" ref="upload"> </upload-files>
         </a-form-item>
 
         <a-form-item
@@ -133,15 +135,6 @@
 
         <a-form-item :label="upload?.fileList.length > 0 ? $t('files') : null">
           <div class="addTicket__buttons">
-            <upload-files
-              v-if="showSendFiles"
-              ref="upload"
-              file-list-style="order: -1; grid-column: 1 / 3"
-            >
-              <a-button type="primary">
-                <upload-icon />
-              </a-button>
-            </upload-files>
             <a-button
               type="primary"
               @click="
