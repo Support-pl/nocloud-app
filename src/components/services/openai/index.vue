@@ -1,7 +1,9 @@
 <template>
   <div class="order_wrapper">
     <div class="order">
-      <div class="order__field">
+      <promo-block v-if="isPromoVisible" class="order__promo" />
+
+      <div v-else class="order__field">
         <div class="order__option">
           <transition name="specs" mode="out-in">
             <div
@@ -87,21 +89,12 @@
           </a-col>
         </a-row>
       </div>
-
-      <promo-block class="order__promo" />
     </div>
   </div>
 </template>
 
 <script setup>
-import {
-  computed,
-  onMounted,
-  ref,
-  watch,
-  reactive,
-  defineAsyncComponent,
-} from "vue";
+import { computed, ref, watch, reactive, defineAsyncComponent } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
@@ -137,6 +130,7 @@ const plansStore = usePlansStore();
 const namespacesStore = useNamespasesStore();
 const instancesStore = useInstancesStore();
 const { userCurrency } = storeToRefs(useCurrenciesStore());
+const { getShowcases } = storeToRefs(spStore);
 
 const plan = ref(null);
 const service = ref(null);
@@ -186,6 +180,17 @@ const getProducts = computed(() => {
       meta.description || i18n.t("openai description")
     }</span>`,
   };
+});
+
+const showcase = computed(() =>
+  getShowcases.value.find(({ uuid }) => uuid === route.query.service)
+);
+
+const isPromoVisible = computed(() => {
+  return (
+    showcase.value?.promo &&
+    showcase.value.promo[i18n.locale.value]?.previewEnable
+  );
 });
 
 const keys = [
