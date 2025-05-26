@@ -6,34 +6,54 @@
     class="alert__notification"
   >
     <template #message>
-      <span @click="isVisible = !isVisible">
-        {{ capitalize($t("settings")) }}
+      <div
+        style="display: flex; justify-content: space-between"
+        @click="isVisible = !isVisible"
+      >
+        <div>
+          {{ capitalize($t("settings")) }}
 
-        <span v-if="chat.gateways[0]">
-          ({{ $t("gateway") }}:
-          <span style="text-decoration: underline">
-            {{ chat.gateways[0] }} </span
-          >{{ chat.department === "openai" ? ";" : ")" }}
-        </span>
+          <span v-if="chat.gateways[0]">
+            ({{ $t("gateway") }}:
+            <span style="text-decoration: underline">
+              {{ chat.gateways[0] }} </span
+            >{{ chat.department === "openai" ? ";" : ")" }}
+          </span>
 
-        <span v-if="chat.department === 'openai'">
-          {{ chat.gateways[0] ? "" : "(" }}{{ capitalize($t("prompts")) }}:
+          <span v-if="chat.department === 'openai'">
+            {{ chat.gateways[0] ? "" : "(" }}{{ capitalize($t("prompts")) }}:
 
-          <a-tooltip color="var(--bright_font)">
-            <template #title>
-              <a-list bordered size="small" :data-source="currentPrompts">
-                <template #renderItem="{ item }">
-                  <a-list-item>{{ item }}</a-list-item>
-                </template>
-              </a-list>
-            </template>
-            <listIcon style="margin-right: 2px" /> </a-tooltip
-          >)
-        </span>
+            <a-tooltip color="var(--bright_font)">
+              <template #title>
+                <a-list bordered size="small" :data-source="currentPrompts">
+                  <template #renderItem="{ item }">
+                    <a-list-item>{{ item }}</a-list-item>
+                  </template>
+                </a-list>
+              </template>
+              <listIcon style="margin-right: 2px" /> </a-tooltip
+            >)
+          </span>
+        </div>
+        <div>
+          <span v-if="chat.meta.data.model" style="margin-right: 10px">
+            <a-tag
+              color="primary"
+              style="border-color: var(--main); margin-inline-end: 0px"
+            >
+              <template #icon>
+                <ai-icon />
+              </template>
+              <span style="margin-inline-start: 0px">
+                {{ chat.meta.data.model?.kind?.value }}
+              </span>
+            </a-tag>
+          </span>
 
-        <plus-icon v-if="isVisible" :rotate="45" style="margin-left: auto" />
-        <down-icon v-else style="margin-left: auto" />
-      </span>
+          <plus-icon v-if="isVisible" :rotate="45" style="margin-left: auto" />
+          <down-icon v-else style="margin-left: auto" />
+        </div>
+      </div>
     </template>
 
     <template v-if="isVisible" #description>
@@ -187,6 +207,9 @@ import { toRefs } from "vue";
 
 const downIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DownOutlined")
+);
+const aiIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RobotOutlined")
 );
 const upIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/UpOutlined")
@@ -533,5 +556,9 @@ export default { name: "SupportAlert" };
   .order__grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.ant-tag {
+  color: unset !important;
 }
 </style>
