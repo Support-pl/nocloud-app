@@ -255,6 +255,8 @@ const chats = computed(() => {
   chatsStore.chats.forEach((chat) => {
     const { value } = chat.meta.data.instance?.kind ?? {};
     if (value !== props.service.uuid) return;
+    const { value:model } = chat.meta.data.model?.kind ?? {};
+
 
     const status = Status[chat.status].toLowerCase().split("_");
     const capitalized = status
@@ -269,6 +271,7 @@ const chats = computed(() => {
       message: chat.meta.lastMessage?.content ?? "",
       status: capitalized,
       unread: chat.meta.unread,
+      model,
       attachments: chat.meta.lastMessage?.attachments ?? [],
     });
   });
