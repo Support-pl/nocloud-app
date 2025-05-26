@@ -773,8 +773,9 @@
         "audio": "Генерация аудио"
       },
       "actions": {
-        "generate_image": "сгенерировать изображение",
-        "generate_audio": "сгенерировать аудио"
+        "generate_text": "текст",
+        "generate_image": "изображение",
+        "generate_audio": "аудио"
       }
     },
     "public": "Публичный",

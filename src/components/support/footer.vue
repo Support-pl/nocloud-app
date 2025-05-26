@@ -22,18 +22,25 @@
       </a-tag>
 
       <div v-if="ticket.department === 'openai'" class="chat__generate">
-        <a-radio-group v-model:value="sendAdvancedOptions.checked">
+        <a-radio-group
+          v-if="!instance"
+          v-model:value="sendAdvancedOptions.checked"
+        >
           <a-radio-button value="default">
             {{ capitalize($t("send message")) }}
           </a-radio-button>
-          <template v-if="instance">
-            <a-radio-button value="speech">
-              {{ capitalize($t("openai.actions.generate_audio")) }}
-            </a-radio-button>
-            <a-radio-button value="generate">
-              {{ capitalize($t("openai.actions.generate_image")) }}
-            </a-radio-button>
-          </template>
+        </a-radio-group>
+
+        <a-radio-group v-else v-model:value="sendAdvancedOptions.checked">
+          <a-radio-button value="default">
+            {{ capitalize($t("openai.actions.generate_text")) }}
+          </a-radio-button>
+          <a-radio-button value="speech">
+            {{ capitalize($t("openai.actions.generate_audio")) }}
+          </a-radio-button>
+          <a-radio-button value="generate">
+            {{ capitalize($t("openai.actions.generate_image")) }}
+          </a-radio-button>
         </a-radio-group>
         <a-select
           v-if="
