@@ -4,9 +4,30 @@
     <div class="ticket__content">
       <div class="ticket__upper">
         <div class="ticket__title">#{{ ticket.tid }} - {{ titleDecoded }}</div>
-        <div class="ticket__department" style="margin-left: auto">
+        <div
+          v-if="!ticket.model"
+        class="ticket__department" style="margin-left: auto">
           {{ department }}
         </div>
+
+        <div
+          v-if="ticket.model"
+          style="margin-left: auto"
+          class="ticket__model"
+        >
+          <a-tag
+            color="primary"
+            style="border-color: var(--bright_font); margin-inline-end: 0px"
+          >
+            <template #icon>
+              <ai-icon />
+            </template>
+            <span style="margin-inline-start: 0px">
+              {{ ticket.model }}
+            </span>
+          </a-tag>
+        </div>
+
         <div class="ticket__status-text">
           <a-badge :count="ticket.unread" :offset="offset">
             {{ $t(`ticketStatus.${ticket.status}`) }}
@@ -26,7 +47,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, defineAsyncComponent } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useChatsStore } from "@/stores/chats.js";
 import { toDate } from "@/functions.js";
@@ -38,6 +59,10 @@ const props = defineProps({
   instanceId: { type: String, default: null },
   compact: { type: Boolean, default: false },
 });
+
+const aiIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RobotOutlined")
+);
 
 const router = useRouter();
 const route = useRoute();
@@ -191,5 +216,9 @@ export default { name: "TicketItem" };
 
 .ticket__status-text {
   white-space: nowrap;
+}
+
+.ticket__model span {
+  margin-inline-start: 0px;
 }
 </style>
