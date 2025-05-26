@@ -88,13 +88,32 @@
             :options="promptsOptions"
             @change="selectPrompts"
           >
-            <template #label="{ label, description }">
-              <a-popover trigger="click" placement="bottom">
-                {{ label }} <down-icon />
-                <template #content>
-                  {{ description }}
-                </template>
-              </a-popover>
+            <template #label="{ label, description, value }">
+              <span style="margin-right: 10px">
+                {{ label }}
+              </span>
+              <a-button
+                style="margin-right: 5px"
+                size="small"
+                type="dashed"
+                shape="circle"
+                :icon="!openedPromts[description] ? h(downIcon) : h(upIcon)"
+                @click.capture.stop.prevent="
+                  openedPromts[description] = !openedPromts[description]
+                "
+              />
+
+              <a-button
+                size="small"
+                type="dashed"
+                shape="circle"
+                :icon="h(deleteIcon)"
+                @click.capture.stop.prevent="deletePromt(value)"
+              />
+
+              <div v-if="openedPromts[description] == true">
+                {{ description }}
+              </div>
             </template>
           </a-checkbox-group>
         </a-spin>
@@ -153,6 +172,7 @@ import {
   nextTick,
   defineAsyncComponent,
   capitalize,
+  h,
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -167,6 +187,12 @@ import { toRefs } from "vue";
 
 const downIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DownOutlined")
+);
+const upIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/UpOutlined")
+);
+const deleteIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CloseOutlined")
 );
 const plusIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlusOutlined")
@@ -214,23 +240,12 @@ const isPromptLoading = ref(false);
 const isPromptsLoading = ref(false);
 const notification = ref();
 const isDeleteLoading = ref(false);
+const openedPromts = ref({});
 
 watch(
   () => props.chat,
   (value) => {
-    gateway.value = value.gateways[0] ?? "";
-
-    if (value.meta.data.prompts) {
-      const result = value.meta.data.prompts.toJSON();
-
-      prompts.value = [];
-      promptsOptions.value = [];
-      result.forEach(({ enabled, title, description, id }) => {
-        if (enabled) prompts.value.push(id);
-
-        promptsOptions.value.push({ label: title, value: id, description });
-      });
-    }
+    setOptions(value);
   }
 );
 
@@ -274,15 +289,19 @@ function changeGateway(value) {
   }
 }
 
-async function selectPrompts() {
+async function selectPrompts(reduce = []) {
   isPromptsLoading.value = true;
   try {
-    const result = props.chat.meta.data.prompts.toJSON();
+    let result = props.chat.meta.data.prompts.toJSON();
 
     result.forEach(({ id }, i) => {
       const item = prompts.value.find((promptId) => id === promptId);
 
       result[i].enabled = !!item;
+    });
+
+    reduce.forEach((uuid) => {
+      result = result.filter(({ id }) => uuid != id);
     });
 
     await chatsStore.editChat({
@@ -300,6 +319,10 @@ async function selectPrompts() {
   } finally {
     isPromptsLoading.value = false;
   }
+}
+
+function deletePromt(value) {
+  selectPrompts([value]);
 }
 
 async function sendPrompt() {
@@ -398,6 +421,25 @@ router.beforeEach((_, __, next) => {
   emits("update:paddingTop", `${notification.value?.$el.offsetHeight + 15}px`);
   next();
 });
+
+function setOptions(value) {
+  gateway.value = value.gateways[0] ?? "";
+
+  prompts.value = [];
+  promptsOptions.value = [];
+  openedPromts.value = {};
+  if (value.meta.data.prompts) {
+    const result = value.meta.data.prompts.toJSON();
+
+    result.forEach(({ enabled, title, description, id }) => {
+      if (enabled) prompts.value.push(id);
+
+      promptsOptions.value.push({ label: title, value: id, description });
+    });
+  }
+}
+
+setOptions(props.chat);
 </script>
 
 <script>
