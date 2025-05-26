@@ -50,9 +50,9 @@
             <pre>
               <message-content :uuid="reply.uuid" :message="reply.message"/>
               <audio-player
-               v-if="files[reply.uuid].length===1 && files[reply.uuid][0].name.endsWith('.mp3')"
-                :url="files[reply.uuid][0].url"
-                  :name="files[reply.uuid][0].name"
+               v-if="files[reply.uuid]?.length===1 && files[reply.uuid]?.[0]?.name.endsWith('.mp3')"
+                :url="files[reply.uuid][0]?.url"
+                  :name="files[reply.uuid][0]?.name"
               />
               <div v-else class="chat__files">
                 <div v-for="file of files[reply.uuid]" :key="file.url" class="files__preview">
@@ -97,7 +97,7 @@
         v-for="item of chats"
         :key="item.id"
         :ticket="item"
-        :style="`${item.id}` === `${chatid}` ? 'filter: contrast(0.8)' : null"
+        :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
         compact
       />
     </div>
@@ -213,8 +213,9 @@ const chats = computed(() => {
   const { uuid } = authStore.billingUser;
 
   chatsStore.chats.forEach((ticket) => {
-    const { whmcs, instance: inst } = ticket.meta.data ?? {};
+    const { whmcs, instance: inst, model: mod } = ticket.meta.data ?? {};
     const instance = inst?.kind.case ? inst?.toJSON() : null;
+    const model = mod?.kind.case ? mod?.toJSON() : null;
 
     const { from } = route.query;
     if (instance !== from && from) return;
@@ -238,6 +239,7 @@ const chats = computed(() => {
       message: ticket.meta.lastMessage?.content ?? "",
       status: capitalized,
       unread: isReaded ? 0 : ticket.meta.unread,
+      model,
     };
     const id = whmcs?.kind.case ? whmcs?.toJSON() : null;
 

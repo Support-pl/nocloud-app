@@ -22,18 +22,25 @@
       </a-tag>
 
       <div v-if="ticket.department === 'openai'" class="chat__generate">
-        <a-radio-group v-model:value="sendAdvancedOptions.checked">
+        <a-radio-group
+          v-if="!instance"
+          v-model:value="sendAdvancedOptions.checked"
+        >
           <a-radio-button value="default">
             {{ capitalize($t("send message")) }}
           </a-radio-button>
-          <template v-if="instance">
-            <a-radio-button value="speech">
-              {{ capitalize($t("openai.actions.generate_audio")) }}
-            </a-radio-button>
-            <a-radio-button value="generate">
-              {{ capitalize($t("openai.actions.generate_image")) }}
-            </a-radio-button>
-          </template>
+        </a-radio-group>
+
+        <a-radio-group v-else v-model:value="sendAdvancedOptions.checked">
+          <a-radio-button value="default">
+            {{ capitalize($t("openai.actions.generate_text")) }}
+          </a-radio-button>
+          <a-radio-button value="speech">
+            {{ capitalize($t("openai.actions.generate_audio")) }}
+          </a-radio-button>
+          <a-radio-button value="generate">
+            {{ capitalize($t("openai.actions.generate_image")) }}
+          </a-radio-button>
         </a-radio-group>
         <a-select
           v-if="
@@ -67,27 +74,29 @@
         />
       </div>
 
-      <a-textarea
-        ref="textarea"
-        v-model:value="message"
-        allow-clear
-        type="text"
-        :disabled="['Closed', 3].includes(status)"
-        :auto-size="{ minRows: 2, maxRows: 100 }"
-        :placeholder="$t('message') + '...'"
-        @keyup.shift.enter.exact="newLine"
-        @keydown.enter.exact.prevent="sendMessage"
-      />
+      <div style="position: relative; width: 100%">
+        <a-textarea
+          ref="textarea"
+          v-model:value="message"
+          allow-clear
+          type="text"
+          :disabled="['Closed', 3].includes(status)"
+          :auto-size="{ minRows: 3, maxRows: 100 }"
+          :placeholder="$t('message') + '...'"
+          @keyup.shift.enter.exact="newLine"
+          @keydown.enter.exact.prevent="sendMessage"
+        />
+
+        <upload-files
+          v-if="showSendFiles"
+          ref="upload"
+          :editing="editing"
+          :replies="replies"
+        />
+      </div>
       <div class="chat__send" @click="sendMessage">
         <arrow-up-icon />
       </div>
-
-      <upload-files
-        v-if="showSendFiles"
-        ref="upload"
-        :editing="editing"
-        :replies="replies"
-      />
     </div>
   </div>
 </template>
@@ -389,7 +398,7 @@ export default { name: "SupportFooter" };
 
 .chat__container.footer__container {
   grid-template-columns: v-bind("columnsStyle");
-  align-items: end;
+  align-items: start;
 }
 
 .chat__generate {

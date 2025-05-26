@@ -4,7 +4,6 @@
       <vue-audio-player
         :show-prev-button="false"
         :show-next-button="false"
-        :show-volume-button="false"
         :isLoop="false"
         ref="audioPlayer"
         theme-color="#3d73da"
@@ -76,5 +75,8 @@ function download(url, filename) {
 
 .vue-audio-player__progress-wrap {
   margin-top: 10px !important;
+}
+.vue-audio-player__play-volume-icon-wrap {
+  display: none !important;
 }
 </style>

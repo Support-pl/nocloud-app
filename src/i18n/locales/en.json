@@ -748,8 +748,9 @@
         "audio": "Audio Generation"
       },
       "actions": {
-        "generate_image": "generate image",
-        "generate_audio": "generate audio"
+        "generate_text": "text",
+        "generate_image": "image",
+        "generate_audio": "audio"
       }
     },
     "Domains": "Domains",
