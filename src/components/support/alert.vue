@@ -106,7 +106,7 @@
             class="alert__checkbox"
             style="margin-bottom: 15px"
             :options="promptsOptions"
-            @change="selectPrompts"
+            @change="() => selectPrompts()"
           >
             <template #label="{ label, description, value }">
               <span style="margin-right: 10px">
