@@ -1,6 +1,6 @@
 <template>
   <div class="order_wrapper">
-    <div class="order">
+    <div v-if="!fetchLoading && !plansLoading" class="order">
       <div style="position: relative">
         <promo-block v-if="isPromoVisible" class="order__promo" />
 
@@ -44,7 +44,7 @@
           >
             <p>
               {{ $t("order_services.Do you want to activate") }}:
-              {{ showcase.promo?.[i18n.locale]?.title ?? showcase.title }}
+              {{ showcase.promo?.[locale]?.title ?? showcase.title }}
             </p>
           </a-modal>
         </div>
@@ -63,6 +63,8 @@
         />
       </div>
     </div>
+
+    <loading v-else />
   </div>
 </template>
 
@@ -73,6 +75,7 @@ import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
 import api from "@/api.js";
 import openaiPrices from "./prices.vue";
+import Loading from "@/components/ui/loading.vue";
 
 import { useAppStore } from "@/stores/app.js";
 import { useAuthStore } from "@/stores/auth.js";
@@ -89,7 +92,7 @@ import { useChatsStore } from "@/stores/chats";
 
 const router = useRouter();
 const route = useRoute();
-const i18n = useI18n();
+const { locale, t } = useI18n();
 const { openNotification } = useNotification();
 
 const appStore = useAppStore();
@@ -152,7 +155,7 @@ const getProducts = computed(() => {
 
     price: inputKilotoken + outputKilotoken,
     description: `<span style="font-size: 18px; white-space: pre-line">${
-      meta.description || i18n.t("openai description")
+      meta.description || t("openai description")
     }</span>`,
   };
 });
@@ -163,8 +166,7 @@ const showcase = computed(() =>
 
 const isPromoVisible = computed(() => {
   return (
-    showcase.value?.promo &&
-    showcase.value.promo[i18n.locale.value]?.previewEnable
+    showcase.value?.promo && showcase.value.promo[locale.value]?.previewEnable
   );
 });
 
@@ -273,9 +275,7 @@ function orderClickHandler() {
     appStore.onLogin.info = {
       type: "openai",
       title:
-        showcase.promo?.[i18n.locale.value]?.title ??
-        showcase.title ??
-        "OpenAI",
+        showcase.promo?.[locale.value]?.title ?? showcase.title ?? "OpenAI",
       cost: getProducts.value.price,
       currency: userCurrency.value.code,
     };
@@ -336,12 +336,12 @@ async function deployService(uuid) {
   try {
     await api.services.up(uuid);
 
-    openNotification("success", { message: i18n.t("Done") });
+    openNotification("success", { message: t("Done") });
     router.push({ path: "/services" });
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
-    openNotification("error", { message: i18n.t(message) });
+    openNotification("error", { message: t(message) });
   } finally {
     modal.value.confirmLoading = false;
   }
@@ -365,7 +365,7 @@ async function fetch() {
     const message = error.response?.data?.message ?? error.message ?? error;
 
     if (error.response?.data?.code === 16) return;
-    openNotification("error", { message: i18n.t(message) });
+    openNotification("error", { message: t(message) });
 
     console.error(error);
   } finally {

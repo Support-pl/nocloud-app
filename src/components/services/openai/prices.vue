@@ -1,88 +1,92 @@
 <template>
-  <a-row v-if="Object.keys(fullPrices).length > 1">
-    <a-col v-for="provider in providersOptions" span="8">
-      <a-card
-        bodyStyle="padding:0px"
-        :style="{
-          padding: '10px',
-          margin: '2px',
-          'border-color':
-            selectedProvider == provider.value ? 'var(--main)' : 'unset',
-        }"
-        @click="emits('update:selectedProvider', provider.value)"
-      >
-        <div style="display: flex; justify-content: center">
-          <img
-            :src="`/img/ai-providers/${provider.value}.png`"
-            style="width: calc(100% - 60px); height: 40px;max-width: 180px;"
-          />
-        </div>
-
-        <div
-          style="display: flex; justify-content: space-between; padding: 10px"
+  <template v-if="Object.keys(fullPrices).length > 1">
+    <a-row>
+      <a-col v-for="provider in providersOptions" span="8">
+        <a-card
+          bodyStyle="padding:0px"
+          :style="{
+            padding: '10px',
+            margin: '2px',
+            'border-color':
+              selectedProvider == provider.value ? 'var(--main)' : 'unset',
+          }"
+          @click="emits('update:selectedProvider', provider.value)"
         >
-          <a-checkbox
-            :checked="selectedProvider == provider.value"
-            @change="emits('update:selectedProvider', provider.value)"
+          <div style="display: flex; justify-content: center">
+            <img
+              :src="`/img/ai-providers/${provider.value}.png`"
+              style="width: calc(100% - 60px); height: 40px; max-width: 170px"
+            />
+          </div>
+
+          <div
+            style="display: flex; justify-content: space-between; padding: 10px"
           >
-            {{ provider.label }}
-          </a-checkbox>
+            <a-checkbox
+              :checked="selectedProvider == provider.value"
+              @change="emits('update:selectedProvider', provider.value)"
+            >
+              {{ provider.label }}
+            </a-checkbox>
+          </div>
+        </a-card>
+      </a-col>
+    </a-row>
+
+    <a-row style="padding: 0px 5px">
+      <a-col span="8" style="min-width: 150px; margin-right: 5px">
+        <a-select
+          style="width: 100%; margin-right: 5px; margin-top: 10px"
+          :value="selectedType"
+          @select="emits('update:selectedType', $event)"
+          :options="typesOptions"
+        ></a-select>
+      </a-col>
+
+      <a-col span="15" style="margin-right: 5px">
+        <a-auto-complete
+          style="margin-right: 10px; width: 100%; margin-top: 10px"
+          :value="selectedModel"
+          :options="sortedModelsOptions"
+          @change="emits('update:selectedModel', $event)"
+          @blur="emits('update:selectedModel', modelsOptions[0]?.value)"
+        ></a-auto-complete>
+      </a-col>
+
+      <a-col
+        style="margin: 10px 0px"
+        v-if="selectedType !== 'image'"
+        v-for="priceItem in pricesItems"
+        span="12"
+      >
+        <div style="padding-bottom: 0; font-weight: 700">
+          {{
+            t(
+              `openai.payment_types.${priceItem.split("|").slice(2).join("_")}`
+            )
+          }}:
         </div>
-      </a-card>
-    </a-col>
-  </a-row>
+        <div style="padding-top: 0; font-size: 18px">
+          {{ fullPrices[priceItem] }}
+          {{ currency.title }}
+        </div>
+      </a-col>
 
-  <a-row style="padding: 0px 5px">
-    <a-col span="8" style="min-width: 150px; margin-right: 5px">
-      <a-select
-        style="width: 100%; margin-right: 5px; margin-top: 10px"
-        :value="selectedType"
-        @select="emits('update:selectedType', $event)"
-        :options="typesOptions"
-      ></a-select>
-    </a-col>
-
-    <a-col span="15" style="margin-right: 5px">
-      <a-auto-complete
-        style="margin-right: 10px; width: 100%; margin-top: 10px"
-        :value="selectedModel"
-        :options="sortedModelsOptions"
-        @change="emits('update:selectedModel', $event)"
-        @blur="emits('update:selectedModel', modelsOptions[0]?.value)"
-      ></a-auto-complete>
-    </a-col>
-
-    <a-col
-      style="margin: 10px 0px"
-      v-if="selectedType !== 'image'"
-      v-for="priceItem in pricesItems"
-      span="12"
-    >
-      <div style="padding-bottom: 0; font-weight: 700">
-        {{
-          t(`openai.payment_types.${priceItem.split("|").slice(2).join("_")}`)
-        }}:
-      </div>
-      <div style="padding-top: 0; font-size: 18px">
-        {{ fullPrices[priceItem] }}
-        {{ currency.title }}
-      </div>
-    </a-col>
-
-    <a-col v-else style="margin: 10px 0px" span="24">
-      <a-table
-        :pagination="false"
-        :dataSource="
-          pricesItems.map((key) => ({
-            resolution: key.split('|')[2],
-            quality: t(`openai.images_quality.${key.split('|')[3]}`),
-            price: `${fullPrices[key]} ${currency.title}`,
-          }))
-        "
-        :columns="imagesColumns"
-      />
-    </a-col>
-  </a-row>
+      <a-col v-else style="margin: 10px 0px" span="24">
+        <a-table
+          :pagination="false"
+          :dataSource="
+            pricesItems.map((key) => ({
+              resolution: key.split('|')[2],
+              quality: t(`openai.images_quality.${key.split('|')[3]}`),
+              price: `${fullPrices[key]} ${currency.title}`,
+            }))
+          "
+          :columns="imagesColumns"
+        />
+      </a-col>
+    </a-row>
+  </template>
 </template>
 
 <script setup>
