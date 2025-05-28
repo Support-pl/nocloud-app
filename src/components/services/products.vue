@@ -468,7 +468,10 @@ export default {
 
         case "openai":
           name = "service-openai";
-          query.headerTitle = "ChatGPT";
+          query.headerTitle =
+            showcase.promo?.[this.$i18n.locale]?.title ||
+            showcase.title ||
+            "ChatGPT";
           break;
         case "vdc":
           name = "newVDC";
