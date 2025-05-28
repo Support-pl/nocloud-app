@@ -155,7 +155,7 @@
     </a-col>
   </a-row>
 
-  <add-ticket :instance-id="service.uuid" />
+  <add-ticket :model="selectedModelV2" :provider="selectedProviderV2" :instance-id="service.uuid" />
 </template>
 
 <script setup>
