@@ -13,22 +13,73 @@
 
     <a-spin :tip="$t('loading')" :spinning="isLoading || isSending">
       <a-form layout="vertical">
-        <a-row style="margin-bottom: 10px" v-if="instanceId">
-          <a-col span="6" style="min-width: 100px; margin-right: 5px">
-            <a-select
-              style="
-                margin-left: 5px;
-                width: 100%;
-                min-width: 100px;
-                margin-top: 10px;
-              "
-              v-model:value="selectedProvider"
-              :options="availableProviders"
-            >
-            </a-select>
-          </a-col>
+        <template v-if="instanceId">
+          <a-row style="margin-bottom: 10px">
+            <a-col v-for="provider in availableProviders" span="8">
+              <a-card
+                bodyStyle="padding:0px"
+                :style="{
+                  padding: '10px',
+                  margin: '2px',
+                  'border-color':
+                    selectedProvider == provider.value
+                      ? 'var(--main)'
+                      : 'unset',
+                }"
+                @click="selectedProvider = provider.value"
+              >
+                <div style="display: flex; justify-content: center">
+                  <img
+                    :src="`/img/ai-providers/${provider.value}.png`"
+                    style="
+                      width: calc(100% - 60px);
+                      height: 40px;
+                      max-width: 180px;
+                    "
+                  />
+                </div>
 
-          <!-- <a-col span="7" style="min-width: 160px; margin-right: 5px">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 10px;
+                  "
+                >
+                  <a-checkbox
+                    :checked="selectedProvider == provider.value"
+                    @change="selectedProvider = provider.value"
+                  >
+                    {{ provider.label }}
+                  </a-checkbox>
+                </div>
+              </a-card>
+            </a-col>
+          </a-row>
+
+          <a-row style="margin-bottom: 10px">
+            <a-col
+              span="3"
+              style="margin-right: 5px; display: flex; align-items: center"
+            >
+              {{ capitalize(t("model")) }}
+            </a-col>
+            <a-col span="20" style="margin-right: 5px">
+              <a-auto-complete
+                style="margin-left: 5px; width: 100%"
+                v-model:value="selectedModel"
+                :options="sortedAvailableModels"
+                @blur="selectedModel = availableModels[0]?.value"
+              >
+                <template #option="{ value }">
+                  {{ value }}
+                </template>
+              </a-auto-complete>
+            </a-col>
+          </a-row>
+        </template>
+
+        <!-- <a-col span="7" style="min-width: 160px; margin-right: 5px">
             <a-select
               style="margin-left: 5px; width: 100%; margin-top: 10px"
               v-model:value="selectedType"
@@ -37,19 +88,6 @@
             </a-select>
           </a-col>
         -->
-          <a-col span="17" style="margin-right: 5px">
-            <a-auto-complete
-              style="margin-left: 5px; width: 100%; margin-top: 10px"
-              v-model:value="selectedModel"
-              :options="sortedAvailableModels"
-              @blur="selectedModel = availableModels[0]?.value"
-            >
-              <template #option="{ value }">
-                {{ value }}
-              </template>
-            </a-auto-complete>
-          </a-col>
-        </a-row>
 
         <!--
         <a-row v-if="selectedType === 'image'">
@@ -192,7 +230,11 @@ md.use(emoji);
 
 const props = defineProps({
   instanceId: { type: String, default: null },
+  provider: { type: String, default: null },
+  model: { type: String, default: null },
 });
+
+const { model, provider } = toRefs(props);
 
 const router = useRouter();
 const { t } = useI18n();
@@ -553,6 +595,18 @@ fetch();
 watch(availableModels, (data) => {
   if (!data.find((v) => v.value === selectedModel.value)) {
     selectedModel.value = data[0]?.value;
+  }
+});
+
+watch(model, (value) => {
+  if (!!value && availableModels.value.find((m) => m.value === value)) {
+    selectedModel.value = value;
+  }
+});
+
+watch(provider, (value) => {
+  if (!!value) {
+    selectedProvider.value = value;
   }
 });
 </script>
