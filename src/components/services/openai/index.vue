@@ -1,104 +1,78 @@
 <template>
   <div class="order_wrapper">
     <div class="order">
-      <promo-block v-if="isPromoVisible" class="order__promo" />
+      <div style="position: relative">
+        <promo-block v-if="isPromoVisible" class="order__promo" />
 
-      <div v-else class="order__field">
-        <div class="order__option">
-          <transition name="specs" mode="out-in">
-            <div
-              v-if="typeof getProducts.description === 'string'"
-              v-html="getProducts.description"
-            />
-            <table v-else-if="getProducts.description" class="product__specs">
-              <tr
-                v-for="resource in getProducts.description"
-                :key="resource.name"
-              >
-                <td>{{ resource.name }}</td>
-                <td>{{ resource.value }}</td>
-              </tr>
-            </table>
-          </transition>
+        <div v-else class="order__field">
+          <div class="order__option">
+            <transition name="specs" mode="out-in">
+              <div
+                v-if="typeof getProducts.description === 'string'"
+                v-html="getProducts.description"
+              />
+              <table v-else-if="getProducts.description" class="product__specs">
+                <tr
+                  v-for="resource in getProducts.description"
+                  :key="resource.name"
+                >
+                  <td>{{ resource.name }}</td>
+                  <td>{{ resource.value }}</td>
+                </tr>
+              </table>
+            </transition>
+          </div>
+        </div>
+
+        <div
+          style="position: absolute; bottom: 15px; right: 15px; width: 200px"
+        >
+          <a-button type="primary" block shape="round" @click="orderConfirm">
+            {{ capitalize($t("activate")) }}
+          </a-button>
+          <a-modal
+            :title="$t('Confirm')"
+            :open="modal.confirmCreate"
+            :confirm-loading="modal.confirmLoading"
+            :cancel-text="$t('Cancel')"
+            @ok="orderClickHandler"
+            @cancel="
+              () => {
+                modal.confirmCreate = false;
+              }
+            "
+          >
+            <p>
+              {{ $t("order_services.Do you want to activate") }}:
+              {{ showcase.promo?.[i18n.locale]?.title ?? showcase.title }}
+            </p>
+          </a-modal>
         </div>
       </div>
 
-      <div class="order__calculate order__field">
-        <selects-to-create
-          v-model:plan="plan"
-          v-model:service="service"
-          v-model:namespace="namespace"
-          v-model:provider="provider"
-          style="margin-bottom: 10px"
-          :plans-list="plans"
-          :sp-list="sp"
+      <div class="order__field">
+        <openai-prices
+          v-if="plan"
+          :plan-id="plan"
+          :selected-model="selectedModel"
+          @update:selectedModel="selectedModel = $event"
+          :selected-provider="selectedProvider"
+          @update:selectedProvider="selectedProvider = $event"
+          :selected-type="selectedType"
+          @update:selectedType="selectedType = $event"
         />
-
-        <a-badge class="order__pricing">
-          <template #count>
-            <a-tooltip placement="bottom">
-              <template #title>
-                {{ $t("openai description 2") }}
-              </template>
-              <question-icon style="font-size: 22px" two-tone-color="#ff9140" />
-            </a-tooltip>
-          </template>
-
-          <template v-for="key of keys" :key="key.value">
-            <a-row
-              v-if="getProducts[key.value] > 0"
-              type="flex"
-              justify="space-around"
-              align="middle"
-            >
-              <a-col :xs="12" :sm="18" :lg="16" style="font-size: 1rem">
-                {{ key.title }}:
-              </a-col>
-              <a-col :xs="12" :sm="6" :lg="8">
-                <div v-if="!fetchLoading" class="order__price">
-                  {{ getProducts[key.value] }} {{ userCurrency?.title }}
-                </div>
-                <div v-else class="loadingLine" />
-              </a-col>
-            </a-row>
-          </template>
-        </a-badge>
-
-        <a-row type="flex" justify="space-around" style="margin: 10px 0">
-          <a-col :span="22">
-            <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ capitalize($t("activate")) }}
-            </a-button>
-            <a-modal
-              :title="$t('Confirm')"
-              :open="modal.confirmCreate"
-              :confirm-loading="modal.confirmLoading"
-              :cancel-text="$t('Cancel')"
-              @ok="orderClickHandler"
-              @cancel="
-                () => {
-                  modal.confirmCreate = false;
-                }
-              "
-            >
-              <p>
-                {{ $t("order_services.Do you want to activate") }}:
-                {{ getProducts.title }}
-              </p>
-            </a-modal>
-          </a-col>
-        </a-row>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch, reactive, defineAsyncComponent } from "vue";
+import { computed, ref, watch, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
 import api from "@/api.js";
+import openaiPrices from "./prices.vue";
 
 import { useAppStore } from "@/stores/app.js";
 import { useAuthStore } from "@/stores/auth.js";
@@ -108,14 +82,10 @@ import { usePlansStore } from "@/stores/plans.js";
 import { useNamespasesStore } from "@/stores/namespaces.js";
 import { useInstancesStore } from "@/stores/instances.js";
 
-import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import promoBlock from "@/components/ui/promo.vue";
 import { useCurrenciesStore } from "@/stores/currencies";
 import { storeToRefs } from "pinia";
-
-const questionIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/QuestionCircleTwoTone")
-);
+import { useChatsStore } from "@/stores/chats";
 
 const router = useRouter();
 const route = useRoute();
@@ -126,6 +96,7 @@ const appStore = useAppStore();
 const authStore = useAuthStore();
 
 const spStore = useSpStore();
+const chatsStore = useChatsStore();
 const plansStore = usePlansStore();
 const namespacesStore = useNamespasesStore();
 const instancesStore = useInstancesStore();
@@ -136,6 +107,10 @@ const plan = ref(null);
 const service = ref(null);
 const namespace = ref(null);
 const provider = ref(null);
+
+const selectedModel = ref("gpt-4o");
+const selectedProvider = ref("openai");
+const selectedType = ref("text");
 
 const cachedPlans = reactive({});
 const fetchLoading = ref(false);
@@ -192,15 +167,6 @@ const isPromoVisible = computed(() => {
     showcase.value.promo[i18n.locale.value]?.previewEnable
   );
 });
-
-const keys = [
-  { title: "Input kilotoken", value: "inputKilotoken" },
-  { title: "Output kilotoken", value: "outputKilotoken" },
-  { title: "Image 1024x1024", value: "size1024x1024" },
-  { title: "HD image 1024x1024", value: "size1024x1024HD" },
-  { title: "Image 1024x1792", value: "size1024x1792" },
-  { title: "HD image 1024x1792", value: "size1024x1792HD" },
-];
 
 const services = computed(() =>
   instancesStore.services.filter((el) => el.status !== "DEL")
@@ -387,6 +353,7 @@ async function fetch() {
     const promises = [
       authStore.fetchBillingData(),
       spStore.fetch(!authStore.isLogged),
+      chatsStore.fetch_models_list(),
     ];
 
     if (authStore.isLogged) {
@@ -423,8 +390,8 @@ export default { name: "OpenaiComponent" };
 .order {
   position: absolute;
   left: 50%;
-  display: grid;
-  grid-template-columns: calc(70% - 20px) 30%;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
   width: 100%;
   max-width: 1024px;
