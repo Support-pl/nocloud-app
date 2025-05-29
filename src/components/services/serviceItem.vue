@@ -16,7 +16,11 @@
         service__icon_colored: !!service.meta?.iconColor,
       }"
     >
-      <component :is="service.icon" v-if="!isIconString" />
+      <component
+        :two-tone-color="service.meta?.iconColor"
+        :is="service.icon"
+        v-if="!isIconString"
+      />
 
       <a-icon v-else>
         <template #component="svgProps">
