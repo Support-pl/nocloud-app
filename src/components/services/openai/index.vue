@@ -102,6 +102,7 @@ const spStore = useSpStore();
 const chatsStore = useChatsStore();
 const plansStore = usePlansStore();
 const namespacesStore = useNamespasesStore();
+const { namespaces } = storeToRefs(namespacesStore);
 const instancesStore = useInstancesStore();
 const { userCurrency } = storeToRefs(useCurrenciesStore());
 const { getShowcases } = storeToRefs(spStore);
@@ -235,6 +236,11 @@ async function fetchPlans(sp) {
 watch(provider, (uuid) => fetchPlans(uuid));
 
 watch(userCurrency, () => fetchPlans(provider.value));
+
+watch(namespaces, (value) => {
+  namespace.value = value[0]?.uuid;
+  console.log(value[0]);
+});
 
 function orderClickHandler() {
   const serviceItem = services.value.find(({ uuid }) => uuid === service.value);
