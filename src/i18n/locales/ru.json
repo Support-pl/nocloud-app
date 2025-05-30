@@ -765,7 +765,8 @@
       "providers": {
         "openai": "OpenAI",
         "gemini": "Google",
-        "deepseek": "DeepSeek"
+        "deepseek": "DeepSeek",
+        "llama": "Llama"
       },
       "types": {
         "text": "Генерация текста",
