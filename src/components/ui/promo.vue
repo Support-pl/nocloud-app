@@ -17,7 +17,7 @@ import { useSpStore } from "@/stores/sp.js";
 import { storeToRefs } from "pinia";
 
 const route = useRoute();
-const { locale } = useI18n();
+const i18n = useI18n();
 const spStore = useSpStore();
 const { getShowcases } = storeToRefs(spStore);
 
@@ -33,26 +33,25 @@ const isBitrixApps = computed(() => route.query.service === "Bitrix24 Apps");
 const isPromoVisible = computed(() => {
   if (isBitrixApps.value) return true;
   return (
-    showcase.value?.promo && showcase.value.promo[locale.value]?.previewEnable
+    showcase.value?.promo &&
+    showcase.value.promo[i18n.locale.value]?.previewEnable
   );
 });
 
 const promo = computed(() => {
-  console.log(isBitrixApps.value, locale.value, showcase.value);
-
   if (isBitrixApps.value) {
     return `
       <a href="${url}" target="_blank">
         <img
           id="promo"
           style="width: 100%"
-          src="img/icons/bitrix-apps-${locale.value}.webp"
+          src="img/icons/bitrix-apps-${i18n.locale.value}.webp"
           alt="Bitrix Apps"
         >
       </a>
     `;
   }
-  return showcase.value.promo[locale.value]?.preview;
+  return showcase.value.promo[i18n.locale.value]?.preview;
 });
 
 watchEffect(async () => {
