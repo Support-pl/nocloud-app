@@ -475,7 +475,11 @@
       "Your orders": "Ваши услуги",
       "with filter": "по фильтру",
       "total": "всего",
-      "all": "все"
+      "all": "все",
+      "global_filter": {
+        "active": "Активные",
+        "all": "Все"
+      }
     },
     "order_services": {
       "Do you want to order": "Вы хотите заказать",
@@ -741,7 +745,8 @@
       "RUNNING": "ЗАПУЩЕНО",
       "SUSPENDED": "ПРИОСТАНОВЛЕН",
       "OPERATION": "ВЫПОЛНЕНИЕ ПРОЦЕССА",
-      "UNKNOWN": "НЕИЗВЕСТНО"
+      "UNKNOWN": "НЕИЗВЕСТНО",
+      "DELETED": "УДАЛЕНО"
     },
     "openai": {
       "labels": {

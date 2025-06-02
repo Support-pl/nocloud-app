@@ -265,6 +265,8 @@ function cloudClick(service, { target }) {
     router.push({ name: "openDomain", params: { id: uuid } });
   } else if (hostingid) {
     router.push({ name: "service", params: { id: hostingid } });
+  } else if (groupname === "OpenAI") {
+    router.push({ name: "openaiPage", params: { id: uuid } });
   } else if (groupname === "Self-Service VDS SSD HC") {
     router.push({ name: "openCloud", params: { uuid: orderid } });
   } else {
