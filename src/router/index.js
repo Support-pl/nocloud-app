@@ -238,6 +238,17 @@ const routes = [
         },
       },
       {
+        path: "openai/:id",
+        name: "openaiPage",
+        meta: {
+          mustBeLoggined: true,
+          footerTitle: "openai",
+          headerTitle: "openai",
+          isNeedBackButton: true,
+        },
+        component: () => import("@/routes/openai/openaiPage.vue"),
+      },
+      {
         path: "/domain/:id",
         name: "openDomain",
         component: () => import("@/routes/domains/openDomain.vue"),

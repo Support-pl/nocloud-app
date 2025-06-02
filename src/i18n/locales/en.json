@@ -454,7 +454,11 @@
       "Your orders": "Your orders",
       "with filter": "with filter",
       "total": "total",
-      "all": "all"
+      "all": "all",
+      "global_filter": {
+        "active": "Active",
+        "all": "All"
+      }
     },
     "order_services": {
       "Do you want to order": "Do you want to order",
@@ -785,7 +789,8 @@
       "RUNNING": "RUNNING",
       "SUSPENDED": "SUSPENDED",
       "OPERATION": "OPERATION",
-      "UNKNOWN": "UNKNOWN"
+      "UNKNOWN": "UNKNOWN",
+      "DELETED": "DELETED"
     },
     "public": "Public",
     "virtualSlider": {

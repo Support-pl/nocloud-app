@@ -48,6 +48,18 @@
         </router-link>
       </div>
       <div v-else-if="authStore.billingUser" class="products__control">
+        <span class="instance_status">
+          <span
+            @click="showDeleted = false"
+            :class="{ type: true, active: !showDeleted }"
+            >{{ $t("comp_services.global_filter.active") }}</span
+          >
+          <span
+            @click="showDeleted = true"
+            :class="{ type: true, active: showDeleted }"
+            >{{ $t("comp_services.global_filter.all") }}</span
+          >
+        </span>
         <a-popover placement="bottomRight" arrow-point-at-center>
           <template #content>
             <p
@@ -131,6 +143,18 @@
         + {{ $t("Order") }}
       </a-button>
     </div>
+
+    <a-pagination
+      v-if="productsPrepared.length > 0 && authStore.isLogged"
+      show-size-changer
+      style="width: fit-content; margin: 10px 0 20px auto"
+      :page-size-options="pageSizeOptions"
+      :page-size="productsStore.size"
+      :total="productsCount"
+      :current="productsStore.page"
+      @show-size-change="onShowSizeChange"
+      @change="onShowSizeChange"
+    />
   </div>
 </template>
 
@@ -164,6 +188,8 @@ const sortIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SlidersOutlined")
 );
 
+const pageSizeOptions = ["5", "10", "25", "50", "100"];
+
 export default {
   name: "ProductsBlock",
   components: {
@@ -184,6 +210,7 @@ export default {
     isFilterByLocation: false,
     sortType: "sort-ascending",
     sortBy: "Date",
+    showDeleted: false,
     anchor: null,
   }),
   computed: {
@@ -211,18 +238,14 @@ export default {
         server_on: el.server_on,
         id: el.id,
       }));
-      const instances = transformInstances(
-        this.instancesStore.getInstances
-      ).filter((instance) => instance.billingPlan?.type !== "ione-vpn");
+      const instances = transformInstances(this.instancesStore.getInstances)
+        .filter((instance) => instance.billingPlan?.type !== "ione-vpn")
+        .filter((p) => p.state?.state !== "DELETED" || this.showDeleted);
 
       return this.sortProducts([...products, ...instances]);
     },
     productsCount() {
-      if (this.min) {
-        return this.products.length;
-      } else {
-        return this.productsPrepared.length;
-      }
+      return this.products.length;
     },
     productsLoading() {
       const productsLoading = this.productsStore.isLoading;
@@ -380,9 +403,32 @@ export default {
       });
   },
   mounted() {
+    const pagination = localStorage.getItem("servicesPagination");
+
+    if (!pagination) return;
+    const { page, limit } = JSON.parse(pagination);
+
+    this.onShowSizeChange(page, limit);
+
     this.createObserver();
   },
   methods: {
+    onShowSizeChange(page, limit) {
+      page = page || 1;
+      limit = limit || 10;
+
+      if (page !== this.productsStore.page) {
+        this.productsStore.page = page;
+      }
+      if (limit !== this.productsStore.size) {
+        this.productsStore.size = limit;
+      }
+
+      localStorage.setItem(
+        "servicesPagination",
+        JSON.stringify({ page, limit })
+      );
+    },
     sortProducts(products) {
       products.sort((a, b) => {
         if (this.sortType === "sort-ascending") [b, a] = [a, b];
@@ -712,5 +758,19 @@ export default {
 .header-transition-leave-to {
   transform: translateY(0.5em);
   opacity: 0;
+}
+
+.instance_status {
+  font-size: 1.1rem;
+  margin-right: 25px;
+}
+
+.instance_status .type {
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.instance_status .type.active {
+  color: var(--main);
 }
 </style>

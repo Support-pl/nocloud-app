@@ -7,18 +7,6 @@
         :products-count="productsCount"
       />
       <user-products ref="productsComponent" class="services__block" :min="false" />
-
-      <a-pagination
-        v-if="products.length > 0 && authStore.isLogged"
-        show-size-changer
-        style="width: fit-content; margin: 0 0 20px auto"
-        :page-size-options="pageSizeOptions"
-        :page-size="productsStore.size"
-        :total="productsStore.total"
-        :current="productsStore.page"
-        @show-size-change="onShowSizeChange"
-        @change="onShowSizeChange"
-      />
     </div>
 
     <div v-if="['services', 'root'].includes(route.name) && !authStore.isLogged" class="logo">
@@ -33,7 +21,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import config from '@/appconfig.js'
 
@@ -55,7 +43,6 @@ const productsStore = useProductsStore()
 const instancesStore = useInstancesStore()
 
 const productsComponent = ref(null)
-const pageSizeOptions = ['5', '10', '25', '50', '100']
 
 const providers = computed(() =>
   providersStore.servicesProviders
@@ -89,26 +76,6 @@ watch(products, (value) => {
 function productsCount (type, filter) {
   return productsComponent.value.productsCount(type, filter)
 }
-
-function onShowSizeChange (page, limit) {
-  if (page !== productsStore.page) {
-    productsStore.page = page
-  }
-  if (limit !== productsStore.size) {
-    productsStore.size = limit
-  }
-
-  localStorage.setItem('servicesPagination', JSON.stringify({ page, limit }))
-}
-
-onMounted(() => {
-  const pagination = localStorage.getItem('servicesPagination')
-
-  if (!pagination) return
-  const { page, limit } = JSON.parse(pagination)
-
-  onShowSizeChange(page, limit)
-})
 
 </script>
 

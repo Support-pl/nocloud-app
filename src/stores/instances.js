@@ -38,10 +38,10 @@ export const useInstancesStore = defineStore("instances", () => {
           net?.public?.some((el) => el.includes(searchString.value)),
         ];
 
-        return rules.some((el) => !!el) && inst.state?.state !== "DELETED";
+        return rules.some((el) => !!el);
       });
     }
-    return instances.value.filter(({ state }) => state?.state !== "DELETED");
+    return instances.value;
   });
 
   function setInstances(service, items = instances) {
@@ -156,12 +156,15 @@ export const useInstancesStore = defineStore("instances", () => {
       try {
         isLoading.value = !silent;
         const response = await api.post("/services", {
+          showDeleted: true,
           filters: {
             accounts: [
               authStore.userdata.uuid,
               authStore.userdata.accountOwner,
             ].filter((v) => !!v),
           },
+          limit: 50,
+          page: 1,
           ...options,
         });
 
