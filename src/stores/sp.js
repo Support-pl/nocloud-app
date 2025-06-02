@@ -113,9 +113,18 @@ export const useSpStore = defineStore("sp", () => {
           if (index === -1) {
             showcases.value.push(showcase);
           } else {
+            const promo = { ...showcases.value[index].promo };
+            for (const key in Object.keys(showcase.promo)) {
+              if (!!promo[key]?.preview) {
+                continue;
+              }
+
+              promo[key] = showcase.promo[key];
+            }
+
             showcases.value[index] = {
               ...showcase,
-              promo: showcase.promo || showcases.value[index].promo,
+              promo: promo,
             };
           }
         });
