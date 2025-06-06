@@ -39,17 +39,16 @@
         :value="selectedType"
         @select="emits('update:selectedType', $event)"
         :options="typesOptions"
-      ></a-select>
+      />
     </a-col>
 
     <a-col span="15" style="margin-right: 5px">
-      <a-auto-complete
+      <a-select
         style="margin-right: 10px; width: 100%; margin-top: 10px"
         :value="selectedModel"
-        :options="sortedModelsOptions"
+        :options="modelsOptions"
         @change="emits('update:selectedModel', $event)"
-        @blur="emits('update:selectedModel', modelsOptions[0]?.value)"
-      ></a-auto-complete>
+      />
     </a-col>
 
     <a-col
@@ -217,18 +216,21 @@ const imagesColumns = computed(() => [
   },
 ]);
 
-const modelByProviders = computed(() => {
-  const models =
-    globalModelsList.value.filter(
-      (m) => m.provider == selectedProvider.value
-    ) || [];
-
-  return models.filter(
+const availableModels = computed(() =>
+  globalModelsList.value.filter(
     (m) =>
       ["api_only", "public"].includes(m.visibility) &&
       m.state.state != "broken" &&
       !m.disabled
-  );
+  )
+);
+
+const modelByProviders = computed(() => {
+  const models =
+    availableModels.value.filter((m) => m.provider == selectedProvider.value) ||
+    [];
+
+  return models;
 });
 
 const modelsOptions = computed(() => {
@@ -236,21 +238,9 @@ const modelsOptions = computed(() => {
     (item.types || []).includes(selectedType.value)
   );
   return models.map((item) => ({
-    value: item.name,
+    value: item.key,
     label: `${capitalize(t("model"))}: ${item.name}`,
   }));
-});
-
-const sortedModelsOptions = computed(() => {
-  return modelsOptions.value.sort((a, b) => {
-    const va = (v, s) =>
-      v.toLowerCase().startsWith(s.toLowerCase())
-        ? 2
-        : v.toLowerCase().includes(s.toLowerCase())
-        ? 1
-        : 0;
-    return va(b.value, selectedModel.value) - va(a.value, selectedModel.value);
-  });
 });
 
 const typesOptions = computed(() => {
@@ -270,7 +260,7 @@ const typesOptions = computed(() => {
 });
 
 const providersOptions = computed(() => {
-  return globalModelsList.value
+  return availableModels.value
     .reduce((acc, item) => {
       if (!acc.includes(item.provider) && item.provider) {
         acc.push(item.provider);
@@ -329,8 +319,12 @@ watch(selectedModel, async () => {
   const result = [];
   const uniqueAmounts = new Set();
   const fullModel = modelByProviders.value.find(
-    (v) => v.name === selectedModel.value
+    (v) => v.key === selectedModel.value
   );
+  if (!fullModel) {
+    return;
+  }
+  console.log(modelByProviders.value, selectedModel.value);
 
   fieldsForTypes[selectedType.value].fields.forEach((fields) => {
     Object.keys(fields).forEach((field) => {
