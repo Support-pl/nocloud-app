@@ -43,21 +43,23 @@
           </a-radio-button>
         </a-radio-group>
         <a-select
+          style="min-width: 200px"
           v-if="
             sendAdvancedOptions.checked === 'speech' &&
             instanceAudioModels.length > 1
           "
           v-model:value="sendAdvancedOptions.model"
-          :options="instanceAudioModels.map((v) => ({ lavel: v, value: v }))"
+          :options="instanceAudioModels"
         />
 
         <a-select
+          style="min-width: 220px"
           v-if="
             sendAdvancedOptions.checked === 'generate' &&
             instanceImageModels.length > 1
           "
           v-model:value="sendAdvancedOptions.model"
-          :options="instanceImageModels.map((v) => ({ lavel: v, value: v }))"
+          :options="instanceImageModels"
         />
 
         <a-select
@@ -103,6 +105,7 @@
 
 <script setup>
 import {
+  capitalize,
   computed,
   defineAsyncComponent,
   nextTick,
@@ -123,6 +126,7 @@ import { toDate } from "@/functions.js";
 import api from "@/api.js";
 
 import uploadFiles from "@/components/support/upload.vue";
+import { storeToRefs } from "pinia";
 
 const md = markdown({
   html: true,
@@ -147,6 +151,7 @@ const route = useRoute();
 const i18n = useI18n();
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
 const { openNotification } = useNotification();
 
 const upload = ref();
@@ -171,35 +176,49 @@ function newLine() {
 }
 
 const instanceModels = computed(() => {
-  return props.instance?.billingPlan?.resources.map((r) => r.key) || [];
+  return globalModelsList.value.filter(
+    (m) =>
+      ["public"].includes(m.visibility) &&
+      m.state.state != "broken" &&
+      !m.disabled
+  );
 });
 
 const instanceAudioModels = computed(() =>
   instanceModels.value
-    .filter((r) => ["speech"].includes(r.split("|")[0]))
-    .map((r) => r.split("|")[1])
+    .filter((model) => (model.types || []).includes("text_to_audio"))
+    .map((model) => ({
+      value: model.key,
+      label: `${capitalize(i18n.t("model"))}: ${model.name}`,
+    }))
 );
 
-const instanceImageModels = computed(() => [
-  ...new Set(
-    instanceModels.value
-      .filter((r) => ["image"].includes(r.split("|")[0]))
-      .map((r) => r.split("|")[1])
-  ),
-]);
+const instanceImageModels = computed(() =>
+  instanceModels.value
+    .filter((model) => (model.types || []).includes("image"))
+    .map((model) => ({
+      value: model.key,
+      label: `${capitalize(i18n.t("model"))}: ${model.name}`,
+    }))
+);
 
 const instanceImageSizes = computed(() => {
   if (sendAdvancedOptions.checked !== "generate") {
     return [];
   }
 
-  return [
-    ...new Set(
-      instanceModels.value
-        .filter((i) => i.split("|")[1] === sendAdvancedOptions.model)
-        .map((i) => i.split("|")[2])
-    ),
-  ].map((v) => ({ value: v, label: v }));
+  const model = instanceModels.value.find(
+    (model) => model.key === sendAdvancedOptions.model
+  );
+
+  if (!model) {
+    return [];
+  }
+
+  return Object.keys(model.billing.images.res_to_quality).map((v) => ({
+    value: v,
+    label: v,
+  }));
 });
 
 const instanceImageQualitys = computed(() => {
@@ -207,13 +226,23 @@ const instanceImageQualitys = computed(() => {
     return [];
   }
 
-  return [
-    ...new Set(
-      instanceModels.value
-        .filter((i) => i.split("|")[1] === sendAdvancedOptions.model)
-        .map((i) => i.split("|")[3])
-    ),
-  ].map((v) => ({ value: v, label: i18n.t(`openai.images_quality.${v}`) }));
+  const model = instanceModels.value.find(
+    (model) => model.key === sendAdvancedOptions.model
+  );
+
+  if (
+    !model ||
+    !model.billing.images.res_to_quality[sendAdvancedOptions.size]
+  ) {
+    return [];
+  }
+
+  return Object.keys(
+    model.billing.images.res_to_quality[sendAdvancedOptions.size]
+  ).map((v) => ({
+    value: v,
+    label: i18n.t(`openai.images_quality.${v}`),
+  }));
 });
 
 function updateReplies() {
@@ -358,10 +387,11 @@ watch(
     if (v === "default") {
       return;
     }
+
     sendAdvancedOptions.model =
       v === "generate"
-        ? instanceImageModels.value[0]
-        : instanceAudioModels.value[0];
+        ? instanceImageModels.value[0]?.value
+        : instanceAudioModels.value[0]?.value;
   }
 );
 
