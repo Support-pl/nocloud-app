@@ -66,6 +66,7 @@
             </a-col>
             <a-col span="20" style="margin-right: 5px">
               <a-select
+                show-search
                 style="margin-left: 5px; width: 100%"
                 v-model:value="selectedModel"
                 :options="modelsOptions"

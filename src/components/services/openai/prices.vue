@@ -44,6 +44,7 @@
 
     <a-col span="15" style="margin-right: 5px">
       <a-select
+        show-search
         style="margin-right: 10px; width: 100%; margin-top: 10px"
         :value="selectedModel"
         :options="modelsOptions"
@@ -345,7 +346,6 @@ watch(selectedModel, async () => {
   if (!fullModel) {
     return;
   }
-  console.log(modelByProviders.value, selectedModel.value);
 
   fieldsForTypes[selectedType.value].fields.forEach((fields) => {
     Object.keys(fields).forEach((field) => {
@@ -385,6 +385,7 @@ watch(selectedModel, async () => {
       }
     });
   });
+  result.sort((a, b) => a.subkey.localeCompare(b.subkey));
 
   result.sort((r) => (r.type === "number" ? -1 : 1));
 
