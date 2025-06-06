@@ -793,9 +793,9 @@
       },
       "types": {
         "text": "Text generation",
-        "image": "Image generation (Text2Img, Img2Img)",
-        "audio_to_text": "Audio generation (Text2Audio, Text2Speech)",
-        "text_to_audio": "Recognition/Translation (Audio2Text)"
+        "image": "Image generation",
+        "text_to_audio": "Audio generation",
+        "audio_to_text": "Recognition/Translation"
       },
       "actions": {
         "generate_text": "text",

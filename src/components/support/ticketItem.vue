@@ -25,7 +25,10 @@
               <ai-icon />
             </template>
             <span style="margin-inline-start: 0px">
-              {{ ticket.model }}
+              {{
+                globalModelsList.find((model) => model.key === ticket.model)
+                  ?.name || ticket.model
+              }}
             </span>
           </a-tag>
         </div>
@@ -55,6 +58,7 @@ import { useChatsStore } from "@/stores/chats.js";
 import { toDate } from "@/functions.js";
 import config from "@/appconfig.js";
 import { useI18n } from "vue-i18n";
+import { storeToRefs } from "pinia";
 
 const props = defineProps({
   ticket: { type: Object, required: true },
@@ -69,6 +73,7 @@ const aiIcon = defineAsyncComponent(() =>
 const router = useRouter();
 const route = useRoute();
 const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
 const { t } = useI18n();
 
 const offset = computed(() => {
