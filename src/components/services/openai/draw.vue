@@ -25,7 +25,6 @@
       <a-tabs v-model:activeKey="activeApiTab">
         <a-tab-pane key="2" tab="API v2">
           <openai-prices
-            :plan-id="service.billingPlan.uuid"
             :selected-model="selectedModelV2"
             @update:selectedModel="selectedModelV2 = $event"
             :selected-provider="selectedProviderV2"
