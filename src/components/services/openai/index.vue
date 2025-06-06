@@ -52,8 +52,6 @@
 
       <div class="order__field">
         <openai-prices
-          v-if="plan"
-          :plan-id="plan"
           :selected-model="selectedModel"
           @update:selectedModel="selectedModel = $event"
           :selected-provider="selectedProvider"
