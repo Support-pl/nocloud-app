@@ -65,55 +65,16 @@
               {{ capitalize(t("model")) }}
             </a-col>
             <a-col span="20" style="margin-right: 5px">
-              <a-auto-complete
+              <a-select
+                show-search
                 style="margin-left: 5px; width: 100%"
                 v-model:value="selectedModel"
-                :options="sortedAvailableModels"
-                @blur="selectedModel = availableModels[0]?.value"
+                :options="modelsOptions"
               >
-                <template #option="{ value }">
-                  {{ value }}
-                </template>
-              </a-auto-complete>
+              </a-select>
             </a-col>
           </a-row>
         </template>
-
-        <!-- <a-col span="7" style="min-width: 160px; margin-right: 5px">
-            <a-select
-              style="margin-left: 5px; width: 100%; margin-top: 10px"
-              v-model:value="selectedType"
-              :options="availableTypes"
-            >
-            </a-select>
-          </a-col>
-        -->
-
-        <!--
-        <a-row v-if="selectedType === 'image'">
-          <a-form-item
-            style="margin-bottom: 0; padding-bottom: 0; min-width: 120px"
-            :label="capitalize($t('openai.images_properties.resolution'))"
-          >
-            <a-select v-model:value="genImage.size" :options="imageSizes" />
-          </a-form-item>
-
-          <a-form-item
-            style="
-              margin-bottom: 0;
-              padding-bottom: 0;
-              margin-left: 5px;
-              min-width: 120px;
-            "
-            :label="capitalize($t('openai.images_properties.quality'))"
-          >
-            <a-select
-              v-model:value="genImage.quality"
-              :options="imageQualitys"
-            />
-          </a-form-item>
-        </a-row>
-      -->
 
         <a-form-item
           v-if="!instanceId && filteredDepartments.length > 1"
@@ -212,13 +173,8 @@ import { useChatsStore } from "@/stores/chats.js";
 import { useSupportStore } from "@/stores/support.js";
 
 import uploadFiles from "@/components/support/upload.vue";
-import { useInstancesStore } from "@/stores/instances";
 import { capitalize } from "vue";
 import { storeToRefs } from "pinia";
-
-const uploadIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/UploadOutlined")
-);
 
 const md = markdown({
   html: true,
@@ -244,7 +200,6 @@ const authStore = useAuthStore();
 const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 const supportStore = useSupportStore();
-const instancesStore = useInstancesStore();
 
 const gateway = ref("userApp");
 const ticketDepartment = ref(-1);
@@ -278,99 +233,47 @@ const filteredDepartments = computed(() => {
   }
 });
 
-const modelByProviders = computed(() => {
-  const resources = Object.keys(instance.value?.resources || {})
-    .filter((key) => key.split("|").length > 2)
-    .filter((key) =>
-      (globalModelsList.value[selectedProvider.value] || []).includes(
-        key.split("|")[1]
-      )
-    );
+const availableModels = computed(() =>
+  globalModelsList.value.filter(
+    (m) =>
+      ["public"].includes(m.visibility) &&
+      m.state.state != "broken" &&
+      !m.disabled &&
+      m.types.includes("text")
+  )
+);
 
-  return resources;
+const modelByProviders = computed(() => {
+  const models = availableModels.value.filter(
+    (model) => model.provider === selectedProvider.value
+  );
+
+  return models;
 });
 
-const availableModels = computed(() => {
-  const resources = modelByProviders.value
-    .filter((key) => getModelType(key) === selectedType.value)
-    .map((key) => key.split("|")[1]);
-
-  return [...new Set(resources).values()].map((key) => ({
-    value: key,
-    label: `${capitalize(t("model"))}: ${key}`,
+const modelsOptions = computed(() => {
+  const models = modelByProviders.value.filter((model) =>
+    (model.types || []).includes(selectedType.value)
+  );
+  return models.map((model) => ({
+    value: model.key,
+    label: `${capitalize(t("model"))}: ${model.name}`,
   }));
 });
-
-const sortedAvailableModels = computed(() => {
-  return availableModels.value.sort((a, b) => {
-    const va = (v, s) =>
-      v.toLowerCase().startsWith(s.toLowerCase())
-        ? 2
-        : v.toLowerCase().includes(s.toLowerCase())
-        ? 1
-        : 0;
-    return va(b.label, selectedModel.value) - va(a.label, selectedModel.value);
-  });
-});
-
-// const availableTypes = computed(() => {
-//   const resources = modelByProviders.value.map((key) => getModelType(key));
-
-//   return [...new Set(resources).values()].map((key) => ({
-//     value: key,
-//     label: t(`openai.types.${key}`),
-//   }));
-// });
 
 const availableProviders = computed(() => {
-  return Object.keys(globalModelsList.value || {}).map((key) => ({
-    value: key,
-    label: t(`openai.providers.${key}`),
-  }));
+  return availableModels.value
+    .reduce((acc, model) => {
+      if (!acc.includes(model.provider) && model.provider) {
+        acc.push(model.provider);
+      }
+      return acc;
+    }, [])
+    .map((key) => ({
+      value: key,
+      label: t(`openai.providers.${key}`),
+    }));
 });
-
-// const imageSizes = computed(() => {
-//   if (selectedType === "image") {
-//     return [];
-//   }
-
-//   return [
-//     ...new Set(
-//       modelByProviders.value
-//         .filter((i) => i.split("|")[1] === selectedModel.value)
-//         .map((i) => i.split("|")[2])
-//     ),
-//   ].map((v) => ({ value: v, label: v }));
-// });
-
-// const imageQualitys = computed(() => {
-//   if (selectedType === "image") {
-//     return [];
-//   }
-
-//   return [
-//     ...new Set(
-//       modelByProviders.value
-//         .filter((i) => i.split("|")[1] === selectedModel.value)
-//         .map((i) => i.split("|")[3])
-//     ),
-//   ].map((v) => ({ value: v, label: t(`openai.images_quality.${v}`) }));
-// });
-
-function getModelType(key) {
-  const type = key.split("|")[0];
-
-  if (["speech", "translation", "transcription"].includes(type)) {
-    return "audio";
-  }
-  return type;
-}
-
-const instance = computed(() =>
-  props.instanceId
-    ? instancesStore.instances.find((inst) => inst.uuid === props.instanceId)
-    : null
-);
 
 watch(filteredDepartments, setDepartment);
 onMounted(setDepartment);
@@ -592,14 +495,14 @@ fetch();
 //   }
 // });
 
-watch(availableModels, (data) => {
+watch(modelsOptions, (data) => {
   if (!data.find((v) => v.value === selectedModel.value)) {
     selectedModel.value = data[0]?.value;
   }
 });
 
 watch(model, (value) => {
-  if (!!value && availableModels.value.find((m) => m.value === value)) {
+  if (!!value && modelsOptions.value.find((m) => m.value === value)) {
     selectedModel.value = value;
   }
 });

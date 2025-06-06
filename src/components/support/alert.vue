@@ -45,7 +45,11 @@
                 <ai-icon />
               </template>
               <span style="margin-inline-start: 0px">
-                {{ chat.meta.data.model?.kind?.value }}
+                {{
+                  globalModelsList.find(
+                    (model) => model.key === chat.meta.data.model?.kind?.value
+                  )?.name || chat.meta.data.model?.kind?.value
+                }}
               </span>
             </a-tag>
           </span>
@@ -59,7 +63,13 @@
     <template v-if="isVisible" #description>
       <div v-if="model" style="margin-bottom: 10px">
         {{ capitalize($t("model")) }}:
-        <span> {{ model }} </span>
+        <span>
+          {{
+            globalModelsList.find(
+              (model) => model.key === chat.meta.data.model?.kind?.value
+            )?.name || chat.meta.data.model?.kind?.value
+          }}
+        </span>
       </div>
 
       {{ $t("Choose another way of communication") }}:
@@ -204,6 +214,7 @@ import { useSupportStore } from "@/stores/support.js";
 import { useNotification } from "@/hooks/utils";
 import { getImageName, onError, generateUuid } from "@/functions.js";
 import { toRefs } from "vue";
+import { storeToRefs } from "pinia";
 
 const downIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DownOutlined")
@@ -238,6 +249,7 @@ const { openNotification } = useNotification();
 
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
 const supportStore = useSupportStore();
 
 watch(

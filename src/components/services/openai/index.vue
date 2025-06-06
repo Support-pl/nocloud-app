@@ -52,8 +52,6 @@
 
       <div class="order__field">
         <openai-prices
-          v-if="plan"
-          :plan-id="plan"
           :selected-model="selectedModel"
           @update:selectedModel="selectedModel = $event"
           :selected-provider="selectedProvider"
@@ -112,7 +110,7 @@ const service = ref(null);
 const namespace = ref(null);
 const provider = ref(null);
 
-const selectedModel = ref("gpt-4o");
+const selectedModel = ref('');
 const selectedProvider = ref("openai");
 const selectedType = ref("text");
 

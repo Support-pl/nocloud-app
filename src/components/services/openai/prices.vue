@@ -1,100 +1,154 @@
 <template>
-  <template v-if="Object.keys(fullPrices).length > 1">
-    <a-row>
-      <a-col v-for="provider in providersOptions" span="8">
-        <a-card
-          bodyStyle="padding:0px"
-          :style="{
-            padding: '10px',
-            margin: '2px',
-            'border-color':
-              selectedProvider == provider.value ? 'var(--main)' : 'unset',
-          }"
-          @click="emits('update:selectedProvider', provider.value)"
-        >
-          <div style="display: flex; justify-content: center">
-            <img
-              :src="`/img/ai-providers/${provider.value}.png`"
-              style="width: calc(100% - 60px); height: 40px; max-width: 170px"
-            />
-          </div>
-
-          <div
-            style="display: flex; justify-content: space-between; padding: 10px"
-          >
-            <a-checkbox
-              :checked="selectedProvider == provider.value"
-              @change="emits('update:selectedProvider', provider.value)"
-            >
-              {{ provider.label }}
-            </a-checkbox>
-          </div>
-        </a-card>
-      </a-col>
-    </a-row>
-
-    <a-row style="padding: 0px 5px">
-      <a-col span="8" style="min-width: 150px; margin-right: 5px">
-        <a-select
-          style="width: 100%; margin-right: 5px; margin-top: 10px"
-          :value="selectedType"
-          @select="emits('update:selectedType', $event)"
-          :options="typesOptions"
-        ></a-select>
-      </a-col>
-
-      <a-col span="15" style="margin-right: 5px">
-        <a-auto-complete
-          style="margin-right: 10px; width: 100%; margin-top: 10px"
-          :value="selectedModel"
-          :options="sortedModelsOptions"
-          @change="emits('update:selectedModel', $event)"
-          @blur="emits('update:selectedModel', modelsOptions[0]?.value)"
-        ></a-auto-complete>
-      </a-col>
-
-      <a-col
-        style="margin: 10px 0px"
-        v-if="selectedType !== 'image'"
-        v-for="priceItem in pricesItems"
-        span="12"
+  <a-row>
+    <a-col v-for="provider in providersOptions" span="8">
+      <a-card
+        bodyStyle="padding:0px"
+        :style="{
+          padding: '10px',
+          margin: '2px',
+          'border-color':
+            selectedProvider == provider.value ? 'var(--main)' : 'unset',
+        }"
+        @click="emits('update:selectedProvider', provider.value)"
       >
+        <div style="display: flex; justify-content: center">
+          <img
+            :src="`/img/ai-providers/${provider.value}.png`"
+            style="width: calc(100% - 60px); height: 40px; max-width: 170px"
+          />
+        </div>
+
+        <div
+          style="display: flex; justify-content: space-between; padding: 10px"
+        >
+          <a-checkbox
+            :checked="selectedProvider == provider.value"
+            @change="emits('update:selectedProvider', provider.value)"
+          >
+            {{ provider.label }}
+          </a-checkbox>
+        </div>
+      </a-card>
+    </a-col>
+  </a-row>
+
+  <a-row style="padding: 0px 5px">
+    <a-col span="8" style="min-width: 150px; margin-right: 5px">
+      <a-select
+        style="width: 100%; margin-right: 5px; margin-top: 10px"
+        :value="selectedType"
+        @select="emits('update:selectedType', $event)"
+        :options="typesOptions"
+      />
+    </a-col>
+
+    <a-col span="15" style="margin-right: 5px">
+      <a-select
+        show-search
+        style="margin-right: 10px; width: 100%; margin-top: 10px"
+        :value="selectedModel"
+        :options="modelsOptions"
+        @change="emits('update:selectedModel', $event)"
+      />
+    </a-col>
+
+    <a-col
+      style="margin: 10px 0px"
+      v-for="{ subkey, amount, type, items } in pricesForModel"
+      :span="type !== 'images' ? 12 : 24"
+    >
+      <template v-if="type !== 'images'">
         <div style="padding-bottom: 0; font-weight: 700">
-          {{
-            t(
-              `openai.payment_types.${priceItem.split("|").slice(2).join("_")}`
-            )
-          }}:
+          {{ t(`openai.payment_types.${subkey}`) }}:
         </div>
         <div style="padding-top: 0; font-size: 18px">
-          {{ fullPrices[priceItem] }}
-          {{ currency.title }}
-        </div>
-      </a-col>
+          <template v-if="isConvertPricesLoading">
+            <a-spin class="price__spin" size="small" spinning />
+          </template>
 
-      <a-col v-else style="margin: 10px 0px" span="24">
+          <span v-else>
+            {{ convertedPrices.get(amount) }}
+            {{ currency.title }}
+
+            <a-popover
+              v-if="t(`openai.payment_types_tips.${subkey}`) != 'null'"
+            >
+              <template #content>
+                <div style="width: 40vw; font-style: italic">
+                  <span style="font-weight: bold">{{
+                    t(`openai.payment_types_tips.${subkey}.title`)
+                  }}</span>
+                  <span>{{
+                    t(`openai.payment_types_tips.${subkey}.description`)
+                  }}</span>
+                </div>
+              </template>
+              <question-circle-outlined />
+            </a-popover>
+          </span>
+        </div>
+      </template>
+      <template v-else>
+        <template v-if="isConvertPricesLoading">
+          <a-spin class="price__spin" size="small" spinning />
+        </template>
         <a-table
+          v-else
           :pagination="false"
+          :loading="isConvertPricesLoading"
           :dataSource="
-            pricesItems.map((key) => ({
-              resolution: key.split('|')[2],
-              quality: t(`openai.images_quality.${key.split('|')[3]}`),
-              price: `${fullPrices[key]} ${currency.title}`,
+            items.map((item) => ({
+              resolution: item.resolution,
+              quality: t(`openai.images_quality.${item.quality}`),
+              price: `${convertedPrices.get(item.amount)} ${currency.title}`,
             }))
           "
           :columns="imagesColumns"
-        />
-      </a-col>
-    </a-row>
-  </template>
+        >
+          <template #headerCell="{ column }">
+            <template v-if="column.key === 'price'">
+              <div style="display: flex; align-items: center">
+                <span>
+                  {{ t("openai.images_properties.price") }}
+                </span>
+
+                <a-popover>
+                  <template #content>
+                    <div style="width: 40vw; font-style: italic">
+                      <span style="font-weight: bold">{{
+                        t(`openai.payment_types_tips.images.title`)
+                      }}</span>
+                      <span>{{
+                        t(`openai.payment_types_tips.images.description`)
+                      }}</span>
+                    </div>
+                  </template>
+                  <question-circle-outlined
+                    style="font-size: 19px; margin-left: 10px"
+                  />
+                </a-popover>
+              </div>
+            </template>
+          </template>
+        </a-table>
+      </template>
+    </a-col>
+  </a-row>
 </template>
 
 <script setup>
 import { useCurrency } from "@/hooks/utils";
 import { useChatsStore } from "@/stores/chats";
-import { usePlansStore } from "@/stores/plans";
+import { useCurrenciesStore } from "@/stores/currencies";
 import { storeToRefs } from "pinia";
-import { capitalize, computed, ref, toRefs, watch } from "vue";
+import {
+  capitalize,
+  computed,
+  defineAsyncComponent,
+  ref,
+  toRefs,
+  watch,
+} from "vue";
 import { useI18n } from "vue-i18n";
 
 const props = defineProps({
@@ -105,20 +159,66 @@ const props = defineProps({
 });
 const { selectedModel, selectedProvider, selectedType } = toRefs(props);
 
+const pricesForModel = ref({});
+const convertedPrices = ref(new Map());
+const isConvertPricesLoading = ref(false);
+
 const emits = defineEmits([
   "update:selectedModel",
   "update:selectedType",
   "update:selectedProvider",
 ]);
 
-const plansStore = usePlansStore();
+const questionCircleOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/QuestionCircleOutlined")
+);
+
+const fieldsForTypes = {
+  text: {
+    type: "default",
+    fields: [{ "tokens.text_output": "number", "tokens.text_input": "number" }],
+  },
+  text_to_audio: {
+    type: "default",
+    fields: [
+      {
+        "tokens.text_output": "number",
+        "tokens.text_input": "number",
+        "media_duration.duration_price": "number",
+        "other.sampling_step_price": "number",
+        "other.characters_price": "number",
+      },
+    ],
+  },
+  audio_to_text: {
+    type: "default",
+    fields: [
+      {
+        "tokens.text_output": "number",
+        "tokens.text_input": "number",
+        "media_duration.duration_price": "number",
+      },
+    ],
+  },
+  image: {
+    type: "variant",
+    fields: [
+      { "images.res_to_quality": "map-map-number" },
+      {
+        "tokens.text_input": "number",
+        "tokens.image_input": "number",
+        "tokens.image_output": "number",
+      },
+    ],
+  },
+};
+
 const chatsStore = useChatsStore();
+const currenciesStore = useCurrenciesStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 
 const { t } = useI18n();
 const { currency } = useCurrency();
-
-const fullPrices = ref({});
 
 const imagesColumns = computed(() => [
   {
@@ -138,101 +238,92 @@ const imagesColumns = computed(() => [
   },
 ]);
 
-const modelByProviders = computed(() => {
-  const resources = Object.keys(fullPrices.value)
-    .filter((key) => key.split("|").length > 2)
-    .filter((key) =>
-      (globalModelsList.value[selectedProvider.value] || []).includes(
-        key.split("|")[1]
-      )
-    );
+const availableModels = computed(() =>
+  globalModelsList.value.filter(
+    (m) =>
+      ["api_only", "public"].includes(m.visibility) &&
+      m.state.state != "broken" &&
+      !m.disabled
+  )
+);
 
-  return resources;
+const modelByProviders = computed(() => {
+  const models =
+    availableModels.value.filter((m) => m.provider == selectedProvider.value) ||
+    [];
+
+  return models;
 });
 
 const modelsOptions = computed(() => {
-  const resources = modelByProviders.value
-    .filter((key) => getModelType(key) === selectedType.value)
-    .map((key) => key.split("|")[1]);
-
-  return [...new Set(resources).values()].map((key) => ({
-    value: key,
-    label: `${capitalize(t("model"))}: ${key}`,
+  const models = modelByProviders.value.filter((item) =>
+    (item.types || []).includes(selectedType.value)
+  );
+  return models.map((item) => ({
+    value: item.key,
+    label: `${capitalize(t("model"))}: ${item.name}`,
   }));
 });
 
-const sortedModelsOptions = computed(() => {
-  return modelsOptions.value.sort((a, b) => {
-    const va = (v, s) =>
-      v.toLowerCase().startsWith(s.toLowerCase())
-        ? 2
-        : v.toLowerCase().includes(s.toLowerCase())
-        ? 1
-        : 0;
-    return va(b.label, selectedModel.value) - va(a.label, selectedModel.value);
-  });
-});
-
 const typesOptions = computed(() => {
-  const resources = modelByProviders.value.map((key) => getModelType(key));
+  const types = modelByProviders.value.reduce((acc, item) => {
+    (item?.types || []).forEach((type) => {
+      if (!acc.includes(type)) {
+        acc.push(type);
+      }
+    });
+    return acc;
+  }, []);
 
-  return [...new Set(resources).values()].map((key) => ({
+  return types.map((key) => ({
     value: key,
     label: t(`openai.types.${key}`),
   }));
 });
 
 const providersOptions = computed(() => {
-  return Object.keys(globalModelsList.value || {}).map((key) => ({
-    value: key,
-    label: t(`openai.providers.${key}`),
-  }));
+  return availableModels.value
+    .reduce((acc, item) => {
+      if (!acc.includes(item.provider) && item.provider) {
+        acc.push(item.provider);
+      }
+      return acc;
+    }, [])
+    .map((key) => ({
+      value: key,
+      label: t(`openai.providers.${key}`),
+    }));
 });
 
-const pricesItems = computed(() => {
-  const data = Object.keys(fullPrices.value).filter(
-    (r) =>
-      getModelType(r) === selectedType.value &&
-      selectedModel.value === r.split("|")[1]
-  );
-  if (selectedType.value === "image") {
-    const imagesData = data.filter((resource, index) => {
-      const subtype = resource.split("|")[2];
-      let reversedSubType = `${subtype.split("x")[1]}x${subtype.split("x")[0]}`;
-      reversedSubType += `|${resource.split("|")[3]}`;
-      let indexOfReversed = data.findIndex(
-        (r) => r.split("|").slice(2).join("|") === reversedSubType
-      );
-
-      indexOfReversed =
-        indexOfReversed === -1 ? Number.MAX_SAFE_INTEGER : indexOfReversed;
-
-      return !(
-        index > indexOfReversed &&
-        fullPrices.value[data[indexOfReversed]] === fullPrices.value[resource]
-      );
+const convertPrices = async (uniqueAmounts) => {
+  isConvertPricesLoading.value = true;
+  try {
+    [...uniqueAmounts.values()].forEach((value) => {
+      if (
+        currency.value.code === currenciesStore.defaultCurrency.code ||
+        convertedPrices.value.get(value)
+      ) {
+        convertedPrices.value.set(value, value);
+        uniqueAmounts.delete(value);
+      }
     });
+    const amounts = [...uniqueAmounts.values()];
 
-    return imagesData;
+    if (amounts.length > 0) {
+      const response = await currenciesStore.convert({
+        from: currenciesStore.defaultCurrency.code,
+        to: currency.value.code,
+        amounts,
+      });
+
+      amounts.forEach((price, index) => {
+        convertedPrices.value.set(price, response.amounts[index]);
+      });
+    }
+  } finally {
+    isConvertPricesLoading.value = false;
   }
-
-  return data;
-});
-
-function getModelType(key) {
-  const type = key.split("|")[0];
-
-  if (["speech", "translation", "transcription"].includes(type)) {
-    return "audio";
-  }
-  return type;
-}
-
-async function fetch() {
-  (await plansStore.fetchById(props.planId)).resources.forEach((r) => {
-    fullPrices.value[r.key] = r.price;
-  });
-}
+};
 
 watch(typesOptions, (data) => {
   if (!data.find((v) => v.value === selectedType.value)) {
@@ -245,5 +336,61 @@ watch(modelsOptions, (data) => {
     emits("update:selectedModel", data[0]?.value);
   }
 });
-fetch();
+
+watch(selectedModel, async () => {
+  const result = [];
+  const uniqueAmounts = new Set();
+  const fullModel = modelByProviders.value.find(
+    (v) => v.key === selectedModel.value
+  );
+  if (!fullModel) {
+    return;
+  }
+
+  fieldsForTypes[selectedType.value].fields.forEach((fields) => {
+    Object.keys(fields).forEach((field) => {
+      const type = fields[field];
+      const [key, subkey] = field.split(".");
+
+      if (type === "number") {
+        if (fullModel.billing[key][subkey]?.price?.amount) {
+          uniqueAmounts.add(fullModel.billing[key][subkey].price.amount);
+          result.push({
+            subkey,
+            key,
+            amount: fullModel.billing[key][subkey].price.amount,
+            type: "number",
+          });
+        }
+      } else {
+        result.push({ key, subkey, items: [], type: "images" });
+
+        Object.keys(fullModel.billing[key][subkey]).forEach((resolution) => {
+          Object.keys(fullModel.billing[key][subkey][resolution]).forEach(
+            (quality) => {
+              const amount =
+                fullModel.billing[key][subkey][resolution][quality]?.amount;
+              if (amount) {
+                uniqueAmounts.add(amount);
+
+                result[result.length - 1].items.push({
+                  quality,
+                  resolution,
+                  amount,
+                });
+              }
+            }
+          );
+        });
+      }
+    });
+  });
+  result.sort((a, b) => a.subkey.localeCompare(b.subkey));
+
+  result.sort((r) => (r.type === "number" ? -1 : 1));
+
+  pricesForModel.value = result;
+
+  convertPrices(uniqueAmounts);
+});
 </script>
