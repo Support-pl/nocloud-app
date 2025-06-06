@@ -67,7 +67,7 @@
     "recurring payment": "recurring payment",
     "Information": "Information",
     "Copy link": "Copy link",
-    "Copy link to share": "Copy link to share",
+    "Copy link to — share": "Copy link to — share",
     "It’s empty...": "No information is available yet.",
     "Unknown error.": "Unknown error.",
     "Email is already in use or is empty": "Email is already in use or is empty",
@@ -120,7 +120,7 @@
     "Windows is paid": "Windows is paid",
     "Payment will be made immediately after purchase": "Payment will be made immediately after purchase",
     "Please select a suitable location": "Please select a suitable location",
-    "No linked plans. Choose another location": "Sorry, there are currently no servers available for deployment in this specific location. Kindly consider selecting an alternative location or reach out to us directly with your server request",
+    "No linked plans. Choose another location": "Sorry, there — are currently no servers available for deployment in this specific location. Kindly consider selecting an alternative location or reach out to us directly with your server request",
     "No OS. Choose another plan": "No OS. Choose another plan",
     "Pay as you Go": "Cloud Server PAYG",
     "VDC created successfully with": "VDC created successfully with",
@@ -167,7 +167,7 @@
     "You cannot change disk size while you have a snapshot": "You cannot change disk size while you have a snapshot.",
     "You cannot change networks while you have a snapshot": "You cannot change networks while you have a snapshot.",
     "Please delete snapshot and try again": "Please delete snapshot and try again.",
-    "You cannot change resources while there are snapshots": "You cannot change resources while there are snapshots",
+    "You cannot change resources while there — are snapshots": "You cannot change resources while there — are snapshots",
     "Do you want to add an backup?": "Do you want to add an backup?",
     "Do you want to add an snapshot?": "Do you want to add an snapshot?",
     "Network reserve 1": "Reserve IPv4 for your VM for",
@@ -234,7 +234,7 @@
     "Delete snapshot": "Delete snapshot",
     "Revert snapshot": "Revert snapshot",
     "Snapshot name": "Snapshot name",
-    "Personal Area": "Personal Area",
+    "Personal — Area": "Personal — Area",
     "use access data from my.support.by": "Use your login information from cloudStateapp.tothost.vn",
     "Use on your phone:": "Use on your phone:",
     "invoice_Description": "Description",
@@ -271,7 +271,7 @@
     "cloud_Reboot_invite": "Select the system reboot setting:",
     "cloud_Recover_invite": "Select the system recover setting:",
     "cloud_Recover_invite_line1": "WARNING! Virtual machine will be rebooted during the recovery!",
-    "cloud_Recover_invite_line2": "Backups are creating every day at 4:00 AM.",
+    "cloud_Recover_invite_line2": "Backups — are creating every day at 4:00 AM.",
     "cloud_Recover_invite_line3": "50GB Disk Recovery takes approximately 1 hour.",
     "You can only have 3 snapshots at a time.": "You can save 3 snapshots at a time.",
     "Each snapshot exists for 24 hours and is then deleted.": "Each snapshot exists for 24 hours and will be deleted thereafter.",
@@ -280,12 +280,12 @@
     "support_Question_subject": "Question Subject",
     "support_Question": "Question",
     "ticket subject or message is too short": "Ticket subject or message is too short",
-    "departments are loading": "Departments are loading...",
+    "departments — are loading": "Departments — are loading...",
     "departments not found": "Departments not found",
     "Do you want to download a backup?": "Do you want to download a backup?",
     "The payment can be postponed only once. The payment is postponed for 5 days.": "The payment can only be postponed once and has been postponed for 5 days.",
-    "All unsaved progress will be lost, are you sure?": "All unsaved progress will be lost, are you sure?",
-    "Are you sure you want pay invoice from balance?": "Are you sure you want pay invoice from balance?",
+    "All unsaved progress will be lost, — are you sure?": "All unsaved progress will be lost, — are you sure?",
+    "— Are you sure you want pay invoice from balance?": "— Are you sure you want pay invoice from balance?",
     "The current invoice will be deleted, the service will be paid from the balance.": "The current invoice will be deleted, the service will be paid from the balance.",
     "Payment will be made from your account balance.": "Payment will be made from your account balance.",
     "Add": "Add",
@@ -369,10 +369,10 @@
     "groups": "groups",
     "select group or product": "select group or product",
     "free account": "Free Account",
-    "share app link": "Share App Link",
+    "— share app link": "— Share App Link",
     "copy link": "Copy Link",
     "your QR code": "Your QR code",
-    "share": "Share",
+    "— share": "— Share",
     "link": "link",
     "account": "account",
     "subaccounts": "subaccounts",
@@ -385,7 +385,7 @@
     "Token expiration date": "Token expiration date",
     "Refresh token": "Refresh token",
     "moreExamples": "More examples",
-    "openai description": "You can use ChatGPT by OpenAI in the Multi-cloud service Support.by with a transparent payment system and without VPN. To start using the feature you need to register in our service, top up your balance and choose the ChatGPT service. \n\n After ordering the service, you get access to ChatGPT through this application and start using the chat. You also receive a ChatGPT API token for use in your software development.",
+    "openai description": "You can use ChatGPT by OpenAI in the Multi-cloud service Support.by with a — transparent payment system and without VPN. To start using the feature you need to register in our service, top up your balance and choose the ChatGPT service. \n\n After ordering the service, you get access to ChatGPT through this application and start using the chat. You also receive a ChatGPT API token for use in your — software development.",
     "openai description 2": "Your balance is debited according to the number of tokens required for your work or the functionality of your product, depending on the complexity and length of the conversation. Payment is made for the total number of input and output tokens, amounting to thousands. \n\n Think of a \"token\" as a word fragment used for natural language processing. For English text, 1 token is approximately 4 characters or 0.75 words. For the Russian language, one token is approximately equal to 2 characters or 0.25 words.",
     "enter": "Enter",
     "next": "next",
@@ -400,7 +400,7 @@
     "Select prompts": "Select prompts",
     "Add prompt": "Add prompt",
     "prompts": "prompts",
-    "all fields are required": "Please fill in all fields",
+    "all fields — are required": "Please fill in all fields",
     "field must contain more characters": "Field must contain more characters",
     "login is required": "Login is required",
     "email is not valid": "Email is not valid",
@@ -482,10 +482,10 @@
       "websites": "Websites",
       "mysql": "MySQL Databases",
       "email": "Email Accounts",
-      "ssd": "Shared Storage",
+      "ssd": "— Shared Storage",
       "bandwidth": "Bandwidth",
       "sites": "Websites",
-      "hdd_shared": "Shared HDD Storage",
+      "— hdd_shared": "— Shared HDD Storage",
       "traffic": "Bandwidth"
     },
     "clientinfo": {
@@ -732,9 +732,51 @@
         "price": "Price"
       },
       "payment_types": {
-        "input": "1000 input tokens",
-        "output": "1000 output tokens",
-        "duration_cost": "Duration per minute"
+        "text_input": "Price per 1M input tokens",
+        "text_output": "Price per 1M output tokens",
+        "image_input": "Price per 1M image input tokens",
+        "image_output": "Price per 1M image output tokens",
+        "audio_input": "Price per 1M audio input tokens",
+        "audio_output": "Price per 1M audio output tokens",
+        "duration_price": "Price per 60 seconds of audio content",
+        "sampling_step_price": "Price per generation step",
+        "characters_price": "Price per 1M input characters"
+      },
+      "payment_types_tips": {
+        "text_input": {
+          "title": "Input tokens",
+          "description": " — are units of text into which your request is broken down before being processed by the model. One token is, on average, 4–5 characters long, including spaces, or about ¾ of a word. The price is specified per 1 million tokens, which corresponds to approximately 750,000 words. The actual number of tokens depends on the length and complexity of your requests, and billing is proportional to the amount of text used."
+        },
+        "text_output": {
+          "title": "Output tokens",
+          "description": " — are segments of text generated by the model in response to your request. One token is approximately 4–5 characters long, or about ¾ of a word. The price is specified per 1 million tokens, which is equivalent to roughly 750,000 words. The longer the response, the more tokens — are used. You only pay for the actual amount of generated text — shorter responses cost less, while longer ones cost more."
+        },
+        "image_input": {
+          "title": "Input tokens",
+          "description": " — are units of text into which your request is broken down before being processed by the model. One token is, on average, 4–5 characters long, including spaces, or about ¾ of a word. The price is specified per 1 million tokens, which corresponds to approximately 750,000 words. The actual number of tokens depends on the length and complexity of your requests, and billing is proportional to the amount of text used."
+        },
+        "image_output": {
+          "title": "Output tokens",
+          "description": " — are segments of text generated by the model in response to your request. One token is approximately 4–5 characters long, or about ¾ of a word. The price is specified per 1 million tokens, which is equivalent to roughly 750,000 words. The longer the response, the more tokens — are used. You only pay for the actual amount of generated text — shorter responses cost less, while longer ones cost more."
+        },
+        "audio_input": {
+          "title": "Input tokens",
+          "description": " — are units of text into which your request is broken down before being processed by the model. One token is, on average, 4–5 characters long, including spaces, or about ¾ of a word. The price is specified per 1 million tokens, which corresponds to approximately 750,000 words. The actual number of tokens depends on the length and complexity of your requests, and billing is proportional to the amount of text used."
+        },
+        "audio_output": {
+          "title": "Output tokens",
+          "description": " — are segments of text generated by the model in response to your request. One token is approximately 4–5 characters long, or about ¾ of a word. The price is specified per 1 million tokens, which is equivalent to roughly 750,000 words. The longer the response, the more tokens — are used. You only pay for the actual amount of generated text — shorter responses cost less, while longer ones cost more."
+        },
+        "duration_price": "null",
+        "images": {
+          "title": "Quality and resolution",
+          "description": " affect the size, detail, sharpness, and realism of an image. You can choose the appropriate level depending on your purpose — whether it's for preview, publishing, or printing. The price corresponds to the selected quality level."
+        },
+        "sampling_step_price": {
+          "title": "The more sampling steps",
+          "description": " are used during generation, the higher the quality of the output content. However, this also increases the cost."
+        },
+        "characters_price": "null"
       },
       "images_quality": {
         "hd": "HD",
@@ -745,12 +787,15 @@
         "openai": "OpenAI",
         "gemini": "Google",
         "deepseek": "DeepSeek",
-        "llama": "Llama"
+        "llama": "Llama",
+        "runway": "Runway",
+        "stability-ai": "Stability AI"
       },
       "types": {
         "text": "Text generation",
-        "image": "Image Generation",
-        "audio": "Audio Generation"
+        "image": "Image generation (Text2Img, Img2Img)",
+        "audio_to_text": "Audio generation (Text2Audio, Text2Speech)",
+        "text_to_audio": "Recognition/Translation (Audio2Text)"
       },
       "actions": {
         "generate_text": "text",
@@ -777,7 +822,7 @@
     "no data": "No information available",
     "add funds": "Add funds",
     "attach new NIC": "Attach new NIC",
-    "there are no aliases": "There are no aliases",
+    "there — are no aliases": "There — are no aliases",
     "alias": "Alias",
     "IP": "IP",
     "Actions": "Actions",

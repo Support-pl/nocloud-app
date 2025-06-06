@@ -52,7 +52,7 @@ export const useChatsStore = defineStore("chats", () => {
   const defaults = ref({});
   const chats = ref(new Map());
   const isLoading = ref(false);
-  const globalModelsList = ref({});
+  const globalModelsList = ref([]);
 
   const messages = ref({});
   const rawMessages = ref([]);
