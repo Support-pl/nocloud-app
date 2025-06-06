@@ -53,7 +53,7 @@
 
     <a-col
       style="margin: 10px 0px"
-      v-for="{ subkey, amount, type, items, key } in pricesForModel"
+      v-for="{ subkey, amount, type, items } in pricesForModel"
       :span="type !== 'images' ? 12 : 24"
     >
       <template v-if="type !== 'images'">
@@ -69,8 +69,19 @@
             {{ convertedPrices.get(amount) }}
             {{ currency.title }}
 
-            <a-popover :title="t(`openai.payment_types_hints.${key}`)">
-              <template #content> </template>
+            <a-popover
+              v-if="t(`openai.payment_types_tips.${subkey}`) != 'null'"
+            >
+              <template #content>
+                <div style="width: 40vw; font-style: italic">
+                  <span style="font-weight: bold">{{
+                    t(`openai.payment_types_tips.${subkey}.title`)
+                  }}</span>
+                  <span>{{
+                    t(`openai.payment_types_tips.${subkey}.description`)
+                  }}</span>
+                </div>
+              </template>
               <question-circle-outlined />
             </a-popover>
           </span>
@@ -99,8 +110,18 @@
                 <span>
                   {{ t("openai.images_properties.price") }}
                 </span>
-                <a-popover :title="t(`openai.payment_types_hints.${key}`)">
-                  <template #content> </template>
+
+                <a-popover>
+                  <template #content>
+                    <div style="width: 40vw; font-style: italic">
+                      <span style="font-weight: bold">{{
+                        t(`openai.payment_types_tips.images.title`)
+                      }}</span>
+                      <span>{{
+                        t(`openai.payment_types_tips.images.description`)
+                      }}</span>
+                    </div>
+                  </template>
                   <question-circle-outlined
                     style="font-size: 19px; margin-left: 10px"
                   />
