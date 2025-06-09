@@ -6,6 +6,51 @@
           <div class="service-page__header">
             <div class="service-page__title">
               {{ service.name }}
+              <a-button
+                style="margin-left: 10px"
+                size="small"
+                shape="circle"
+                :icon="h(editOutlined)"
+                @click="isNameEditActive = true"
+              />
+
+              <a-modal
+                v-model:open="isNameEditActive"
+                :title="t('vpn.labels.editName')"
+              >
+                <div>
+                  <a-form
+                    ref="editNameForm"
+                    :model="nameEditData"
+                    name="basic"
+                    autocomplete="off"
+                  >
+                    <a-form-item
+                      name="title"
+                      :label="t('vpn.fields.title')"
+                      :rules="[requiredRule]"
+                    >
+                      <a-input
+                        v-model:value="nameEditData.title"
+                        :placeholder="t('vpn.fields.title')"
+                      />
+                    </a-form-item>
+                  </a-form>
+                </div>
+
+                <template #footer>
+                  <a-button key="back" @click="isNameEditActive = false">{{
+                    t("Cancel")
+                  }}</a-button>
+                  <a-button
+                    key="submit"
+                    type="primary"
+                    :loading="isNameEditLoading"
+                    @click="editName"
+                    >{{ t("Save") }}</a-button
+                  >
+                </template>
+              </a-modal>
             </div>
           </div>
 
@@ -75,9 +120,15 @@ import { useI18n } from "vue-i18n";
 import { Modal } from "ant-design-vue";
 import { useInvoicesStore } from "@/stores/invoices";
 import { GetInvoicesRequest } from "nocloud-proto/proto/es/billing/billing_pb";
+import { removeEmptyValues } from "@/functions";
+import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 
 const caretRightIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CaretRightOutlined")
+);
+
+const editOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EditOutlined")
 );
 
 const authStore = useAuthStore();
@@ -103,6 +154,17 @@ const info = ref([
 ]);
 const service = ref(null);
 const lastInvoice = ref(null);
+
+const editNameForm = ref(null);
+const isNameEditActive = ref(false);
+const isNameEditLoading = ref(false);
+const nameEditData = ref({ title: "" });
+
+const requiredRule = computed(() => ({
+  required: true,
+  message: t("ssl_product.field is required"),
+  trigger: "blur",
+}));
 
 const getTagColor = computed(() => {
   const status = service.value.status.replace("cloudStateItem.", "");
@@ -202,6 +264,34 @@ async function onStart() {
 
 onStart();
 
+const editName = async () => {
+  try {
+    await editNameForm.value.validate();
+    isNameEditLoading.value = true;
+
+    const updateData = removeEmptyValues({
+      ...instancesStore.getInstances.find((i) => i.uuid === service.value.uuid),
+      title: nameEditData.value.title,
+    });
+
+    delete updateData.uuidService;
+    delete updateData.estimate;
+    delete updateData.sp;
+    delete updateData.type;
+
+    await instancesStore.instancesApi.update(
+      UpdateRequest.fromJson({
+        instance: updateData,
+      })
+    );
+    service.value.name = nameEditData.value.title;
+
+    isNameEditActive.value = false;
+  } finally {
+    isNameEditLoading.value = false;
+  }
+};
+
 function sendDelete() {
   Modal.confirm({
     title: t("Do you want to delete this service?"),
@@ -255,6 +345,12 @@ watch(service, async () => {
   );
   lastInvoice.value = invoices.toJson().pool?.[0];
 });
+
+watch(isNameEditActive, (value) => {
+  if (value) {
+    nameEditData.value = { title: service.value.name };
+  }
+});
 </script>
 
 <script>
@@ -279,6 +375,9 @@ export default {
 }
 
 .service-page__title {
+  display: flex;
+  justify-content: baseline;
+  align-items: center;
   font-size: 1.6rem;
 }
 
