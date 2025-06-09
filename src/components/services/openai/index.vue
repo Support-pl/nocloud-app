@@ -24,9 +24,7 @@
           </div>
         </div>
 
-        <div
-          style="position: absolute; bottom: 15px; right: 15px; width: 200px"
-        >
+        <div class="activate_btn">
           <a-button type="primary" block shape="round" @click="orderConfirm">
             {{ capitalize($t("activate")) }}
           </a-button>
@@ -237,7 +235,6 @@ watch(userCurrency, () => fetchPlans(provider.value));
 
 watch(namespaces, (value) => {
   namespace.value = value[0]?.uuid;
-  console.log(value[0]);
 });
 
 function orderClickHandler() {
@@ -527,6 +524,13 @@ export default { name: "OpenaiComponent" };
   }
 }
 
+.activate_btn {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  width: 200px;
+}
+
 @media screen and (max-width: 1024px) {
   .order {
     grid-template-columns: 1fr;
@@ -562,6 +566,21 @@ export default { name: "OpenaiComponent" };
 
   .product__specs td:last-child::before {
     transform: translate(-10px, -50%);
+  }
+
+  .activate_btn {
+    position: absolute;
+    bottom: -15px;
+    right: 15px;
+    width: 200px;
+  }
+}
+</style>
+
+<style>
+@media screen and (max-width: 576px) {
+  .order__promo img {
+    max-width: 90vw !important;
   }
 }
 </style>
