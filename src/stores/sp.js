@@ -41,7 +41,7 @@ export const useSpStore = defineStore("sp", () => {
   });
 
   async function fetchShowcase(uuid) {
-    const index = showcases.value.findIndex((s) => s.uuid === uuid);
+    let index = showcases.value.findIndex((s) => s.uuid === uuid);
     if (showcases.value[index]?.full || !isUUUID(uuid)) {
       return;
     }
@@ -52,6 +52,7 @@ export const useSpStore = defineStore("sp", () => {
 
       response.full = true;
 
+      index = showcases.value.findIndex((s) => s.uuid === uuid);
       if (index === -1) {
         showcases.value.push(response);
       } else {
