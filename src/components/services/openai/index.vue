@@ -110,7 +110,7 @@ const service = ref(null);
 const namespace = ref(null);
 const provider = ref(null);
 
-const selectedModel = ref('');
+const selectedModel = ref("");
 const selectedProvider = ref("openai");
 const selectedType = ref("text");
 
@@ -243,6 +243,19 @@ watch(namespaces, (value) => {
 function orderClickHandler() {
   const serviceItem = services.value.find(({ uuid }) => uuid === service.value);
   const planItem = plans.value.find(({ uuid }) => uuid === plan.value);
+  let title = showcase.value.promo?.[locale]?.title ?? showcase.value.title;
+
+  const same = instancesStore.getInstances.filter((instance) =>
+    instance.title.startsWith(title)
+  );
+  same.sort((a, b) => b.title.localeCompare(a.title));
+
+  title =
+    same.length > 0
+      ? `${title} ${
+          (Number.parseInt(same[0].title.split(" ").reverse()[0]) || 1) + 1
+        }`
+      : title;
 
   const instances = [
     {
@@ -250,7 +263,7 @@ function orderClickHandler() {
         user: authStore.userdata.uuid,
         auto_start: planItem.meta.auto_start,
       },
-      title: getProducts.value.title,
+      title,
       billing_plan: { uuid: plan.value },
       product: "",
     },
