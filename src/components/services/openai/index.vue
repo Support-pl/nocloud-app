@@ -24,9 +24,7 @@
           </div>
         </div>
 
-        <div
-          style="position: absolute; bottom: 15px; right: 15px; width: 200px"
-        >
+        <div class="activate_btn">
           <a-button type="primary" block shape="round" @click="orderConfirm">
             {{ capitalize($t("activate")) }}
           </a-button>
@@ -110,7 +108,7 @@ const service = ref(null);
 const namespace = ref(null);
 const provider = ref(null);
 
-const selectedModel = ref('');
+const selectedModel = ref("");
 const selectedProvider = ref("openai");
 const selectedType = ref("text");
 
@@ -237,12 +235,24 @@ watch(userCurrency, () => fetchPlans(provider.value));
 
 watch(namespaces, (value) => {
   namespace.value = value[0]?.uuid;
-  console.log(value[0]);
 });
 
 function orderClickHandler() {
   const serviceItem = services.value.find(({ uuid }) => uuid === service.value);
   const planItem = plans.value.find(({ uuid }) => uuid === plan.value);
+  let title = showcase.value.promo?.[locale]?.title ?? showcase.value.title;
+
+  const same = instancesStore.getInstances.filter((instance) =>
+    instance.title.startsWith(title)
+  );
+  same.sort((a, b) => b.title.localeCompare(a.title));
+
+  title =
+    same.length > 0
+      ? `${title} ${
+          (Number.parseInt(same[0].title.split(" ").reverse()[0]) || 1) + 1
+        }`
+      : title;
 
   const instances = [
     {
@@ -250,7 +260,7 @@ function orderClickHandler() {
         user: authStore.userdata.uuid,
         auto_start: planItem.meta.auto_start,
       },
-      title: getProducts.value.title,
+      title,
       billing_plan: { uuid: plan.value },
       product: "",
     },
@@ -514,6 +524,13 @@ export default { name: "OpenaiComponent" };
   }
 }
 
+.activate_btn {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  width: 200px;
+}
+
 @media screen and (max-width: 1024px) {
   .order {
     grid-template-columns: 1fr;
@@ -549,6 +566,21 @@ export default { name: "OpenaiComponent" };
 
   .product__specs td:last-child::before {
     transform: translate(-10px, -50%);
+  }
+
+  .activate_btn {
+    position: absolute;
+    bottom: -15px;
+    right: 15px;
+    width: 200px;
+  }
+}
+</style>
+
+<style>
+@media screen and (max-width: 576px) {
+  .order__promo img {
+    max-width: 90vw !important;
   }
 }
 </style>

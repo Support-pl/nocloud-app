@@ -75,7 +75,7 @@ const slicedPrice = computed(() => {
       ? `${price.value.toString().slice(0, 7)}...`
       : `${price.value.toString().slice(0, 6)}...`;
   } else {
-    return `${price.value} ${props.currency.title}`;
+    return `${price.value}`;
   }
 });
 
