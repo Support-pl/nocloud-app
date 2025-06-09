@@ -26,7 +26,12 @@
         IP: {{ $t("ip.none") }}
       </div>
       <div v-else-if="networking.length < 2" class="item__status">
-        {{ instance.domain ?? instance.groupname }}
+        {{
+          providersStore.servicesProviders.find((sp) => sp.uuid === instance.sp)
+            ?.title ??
+          instance.domain ??
+          instance.groupname
+        }}
       </div>
 
       <a-collapse
@@ -89,8 +94,6 @@ import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useSpStore } from "@/stores/sp.js";
 import { useCurrency } from "@/hooks/utils";
-
-import api from "@/api.js";
 import config from "@/appconfig.js";
 
 const props = defineProps({

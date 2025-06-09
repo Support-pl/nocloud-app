@@ -1,6 +1,10 @@
 <template>
   <a-row>
-    <a-col v-for="provider in providersOptions" span="8">
+    <a-col
+      v-for="provider in providersOptions"
+      :xs="{ span: 12 }"
+      :sm="{ span: 8 }"
+    >
       <a-card
         bodyStyle="padding:0px"
         :style="{
@@ -14,7 +18,7 @@
         <div style="display: flex; justify-content: center">
           <img
             :src="`/img/ai-providers/${provider.value}.png`"
-            style="width: calc(100% - 60px); height: 40px; max-width: 170px"
+            class="openai_provider_img"
           />
         </div>
 
@@ -33,7 +37,11 @@
   </a-row>
 
   <a-row style="padding: 0px 5px">
-    <a-col span="8" style="min-width: 150px; margin-right: 5px">
+    <a-col
+      :xs="{ span: 24 }"
+      :sm="{ span: 8 }"
+      style="min-width: 200px; margin-right: 5px"
+    >
       <a-select
         style="width: 100%; margin-right: 5px; margin-top: 10px"
         :value="selectedType"
@@ -42,7 +50,7 @@
       />
     </a-col>
 
-    <a-col span="15" style="margin-right: 5px">
+    <a-col :xs="{ span: 24 }" :sm="{ span: 15 }" style="margin-right: 5px">
       <a-select
         show-search
         style="margin-right: 10px; width: 100%; margin-top: 10px"
@@ -394,3 +402,19 @@ watch(selectedModel, async () => {
   convertPrices(uniqueAmounts);
 });
 </script>
+
+<style scoped>
+.openai_provider_img {
+  width: calc(100% - 60px);
+  height: 40px;
+  max-width: 170px;
+}
+
+@media screen and (max-width: 768px) {
+  .openai_provider_img {
+    width: calc(100%);
+    height: 40px;
+    max-width: 170px;
+  }
+}
+</style>
