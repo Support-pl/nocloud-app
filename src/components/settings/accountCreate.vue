@@ -11,32 +11,13 @@
 
     <a-form-item :label="`${capitalize($t('clientinfo.phonenumber'))}:`">
       <a-row :gutter="8">
-        <a-col :span="5">
-          <a-select
-            v-model:value="phonecode"
-            show-search
-            :filter-option="searchCountries"
-            :disabled="isDisabled"
-          >
-            <a-select-option
-              v-for="country in filtredCountries"
-              :key="country.dial_code"
-            >
-              {{ country.dial_code }}
-            </a-select-option>
-          </a-select>
-        </a-col>
-
-        <a-col :span="19">
-          <a-form-item no-style name="phonenumber">
-            <input
-              v-model="form.phonenumber"
-              v-phone.hidden="phonecode"
-              type="tel"
-              class="user__input"
-              :disabled="!phonecode || isDisabled"
-            />
-          </a-form-item>
+        <a-col :span="24">
+          <phone-input
+            :number="form.phone_number"
+            @update:number="form.phone_number = $event"
+            :code="form.phone_cc"
+            @update:code="form.phone_cc = $event"
+          />
         </a-col>
       </a-row>
     </a-form-item>
@@ -80,7 +61,7 @@ import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth.js";
 import { useNamespasesStore } from "@/stores/namespaces.js";
 import { useNotification } from "@/hooks/utils";
-import countries from "@/assets/countries.json";
+import PhoneInput from "../ui/phoneInput.vue";
 
 const props = defineProps({
   account: { type: Object, default: null },
@@ -109,7 +90,8 @@ const rules = computed(() => ({
   email: [reqRule],
   lastname: [reqRule],
   firstname: [reqRule],
-  phonenumber: [reqRule],
+  phone_cc: [reqRule],
+  phone_number: [reqRule],
   password: [reqRule],
   passwordAgain: [
     {
@@ -124,19 +106,6 @@ const rules = computed(() => ({
     },
   ],
 }));
-const phonecode = ref("");
-
-const filtredCountries = computed(() => {
-  const map = new Map();
-  countries.forEach((c) => map.set(c.dial_code, c));
-
-  return [...map.values()];
-});
-
-function searchCountries(input, option) {
-  const country = option.children(option)[0].children.toLowerCase();
-  return country.includes(input.toLowerCase());
-}
 
 async function createAccount() {
   try {
@@ -165,7 +134,10 @@ async function createAccount() {
       currency: authStore.userdata.currency,
       data: {
         email: form.value.email,
-        phone: `${phonecode.value} ${form.value.phonenumber}`,
+        phone_new: {
+          phone_cc: form.value.phone_cc,
+          phone_number: form.value.phone_number,
+        },
       },
     });
 
@@ -188,7 +160,7 @@ onMounted(() => {
       email: props.account.data.email,
       lastname: props.account.title.split(" ").at(0),
       firstname: props.account.title.split(" ").at(-1),
-      phonenumber: props.account.data.phone,
+      phone_number: props.account.data.phone,
     };
   }
 });

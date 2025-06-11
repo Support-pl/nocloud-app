@@ -44,14 +44,14 @@
                 v-else-if="key === 'phonenumber'"
                 style="display: flex; align-items: center"
               >
-                <span style="margin-right: 5px">{{ phonecode }}</span>
-                <a-input
-                  readonly
-                  v-model:value="form.phonenumber"
-                  class="user__input"
-                  :disabled="!form.countryname || isDisabled"
+                <phone-input
+                  style="width: 100%"
+                  :number="form.phone_new.phone_number"
+                  @update:number="form.phone_new.phone_number = $event"
+                  :code="form.phone_new.phone_cc"
+                  @update:code="form.phone_new.phone_cc = $event"
                 />
-                <template v-if="billingUser.countrycode == 'BY'">
+                <template v-if="userdata.data.phone_new.phone_cc == '375'">
                   <a-button
                     style="margin-left: 5px"
                     type="primary"
@@ -165,6 +165,7 @@ import loading from "@/components/ui/loading.vue";
 import { storeToRefs } from "pinia";
 import { h } from "vue";
 import VerificationModal from "@/components/settings/verificationModal.vue";
+import PhoneInput from "@/components/ui/phoneInput.vue";
 
 const warningOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/WarningOutlined")
@@ -182,7 +183,6 @@ const formRef = ref(null);
 const form = ref({});
 const isLoading = ref(false);
 const isSendingInfo = ref(false);
-const phonecode = ref();
 const isPhonenumberVerificationOpen = ref(false);
 
 const reqRule = reactive({
@@ -195,7 +195,6 @@ const rules = computed(() => ({
   lastname: [reqRule],
   firstname: [reqRule],
   countryname: [reqRule],
-  phonenumber: [reqRule],
   currency: [reqRule],
 
   companyname: [{ required: false }],
@@ -247,7 +246,6 @@ const mainKeys = computed(() => {
       "firstname",
       "lastname",
       "email",
-      "phonenumber",
       "companyname",
       "address1",
       "countryname",
@@ -256,7 +254,9 @@ const mainKeys = computed(() => {
       "postcode",
     ];
 
-    return result.filter((key) => key in billingUser.value);
+    return result
+      .filter((key) => key in billingUser.value)
+      .concat(["phonenumber"]);
   } else {
     const result = ["title", "data.email", "data.phone"];
     return result;
@@ -285,21 +285,20 @@ function installDataToBuffer() {
     ...Object.keys(keys.value),
     "address2",
     "countryname",
-    "phonenumber",
+    "phone_new",
     "tax_id",
   ];
 
   interestedKeys.forEach((key) => {
+    if (key === "phone_new") {
+      return (form.value[key] = userdata.value.data[key]);
+    }
     if (config.whmcsSiteUrl) {
       form.value[key] = billingUser.value[key];
     } else {
       form.value[key] = userdata.value.data[key];
     }
   });
-
-  phonecode.value = countries.find(
-    ({ code }) => code === billingUser.value.countrycode
-  )?.dial_code;
 }
 
 function onCodeConfirm() {
@@ -363,7 +362,7 @@ async function sendInfo() {
           "city",
           "postcode",
           "country",
-          "phonenumber",
+          "phone_new",
           "companyname",
         ].reduce(
           (result, key) => ({ ...result, [key]: deltaInfo.value[key] }),
@@ -376,6 +375,15 @@ async function sendInfo() {
       throw new Error(i18n.t("Email is already in use or is empty"));
     } else if (response.error) {
       throw new Error(response.error);
+    }
+
+    if (
+      JSON.stringify(userdata.phone_new) !==
+      JSON.stringify(form.value.phone_new)
+    ) {
+      await api.post("/accounts/change_phone", {
+        newPhone: { ...form.value.phone_new },
+      });
     }
 
     localStorage.removeItem("oauth");
