@@ -105,17 +105,16 @@
               </a-select>
 
               <span v-if="fields.country" class="login__horisontal-line" />
-              <input
+
+              <phone-input
                 v-if="fields.phonenumber"
-                v-model="userinfo.phonenumber"
-                v-phone="phonecode"
-                type="tel"
-                name="phone"
-                :placeholder="`${capitalize($t('clientinfo.phone number'))} *`"
                 :disabled="!userinfo.country"
-                autocomplete="tel"
-                maxlength="18"
+                :number="userinfo.phone_new.phone_number"
+                @update:number="userinfo.phone_new.phone_number = $event"
+                :code="userinfo.phone_new.phone_cc"
+                @update:code="userinfo.phone_new.phone_cc = $event"
               />
+
               <span v-if="fields.phonenumber" class="login__horisontal-line" />
               <a-input-password
                 v-if="fields.password"
@@ -287,6 +286,7 @@ import { useAppStore } from "@/stores/app.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { useCurrenciesStore } from "@/stores/currencies.js";
 import countries from "@/assets/countries.json";
+import PhoneInput from "@/components/ui/phoneInput.vue";
 
 const router = useRouter();
 const i18n = useI18n();
@@ -313,6 +313,7 @@ const userinfo = ref({
   postcode: "",
   country: undefined,
   phonenumber: "",
+  phone_new: { phone_cc: "", phone_number: "" },
   currency: 1,
 
   companyname: "",
@@ -376,9 +377,6 @@ const companyLogo = computed(() => {
   }
   return config.appLogo.path;
 });
-const phonecode = computed(
-  () => countries.find(({ code }) => code === userinfo.value.country)?.dial_code
-);
 
 const fields = ref({});
 
@@ -408,19 +406,6 @@ async function submitHandler() {
     info = { ...info, ...info.company };
     delete info.company;
   }
-
-  for (const [key, value] of Object.entries(info)) {
-    if (value !== "require") continue;
-    if (userinfo.value[key].length === 0) {
-      message.warn(`${key} - ${i18n.t("ssl_product.field is required")}`);
-      return;
-    }
-    if (userinfo.value[key].length < 2) {
-      message.warn(`${key} - ${i18n.t("field must contain more characters")}`);
-      return;
-    }
-  }
-
   const regexEmail = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
 
   if (!userinfo.value.email.match(regexEmail)) {
@@ -432,13 +417,34 @@ async function submitHandler() {
   const { locale } = i18n.getLocaleMessage(i18n.locale.value);
 
   temp.email = `${temp.email[0].toLowerCase()}${temp.email.slice(1)}`;
-  temp.phonenumber = temp.phonenumber
-    .replace(phonecode.value, "")
-    .replace(/[\s-]/g, "");
+  temp.phonenumber = temp.phone_new.phone_number;
+
+  for (const [key, value] of Object.entries(info)) {
+    if (value !== "require") continue;
+    if (temp[key].length === 0) {
+      message.warn(`${key} - ${i18n.t("ssl_product.field is required")}`);
+      return;
+    }
+    if (temp[key].length < 2) {
+      message.warn(`${key} - ${i18n.t("field must contain more characters")}`);
+      return;
+    }
+  }
 
   const currency = currencies.value.find((c) => c.id === temp.currency);
 
   try {
+    console.log(temp, {
+      params: {
+        ...temp,
+        currency: whmcsCurrencies.value.find((c) => c.code === currency.code)
+          .id,
+        phone_new: JSON.stringify(temp.phone_new),
+        app_language: locale,
+        run: "create_user",
+      },
+    });
+
     registerLoading.value = true;
     const response = config.whmcsSiteUrl
       ? await api.get(authStore.baseURL, {
@@ -447,6 +453,7 @@ async function submitHandler() {
             currency: whmcsCurrencies.value.find(
               (c) => c.code === currency.code
             ).id,
+            phone_new: JSON.stringify(temp.phone_new),
             app_language: locale,
             run: "create_user",
           },
@@ -465,6 +472,7 @@ async function submitHandler() {
             "country",
             "phonenumber",
             "companyname",
+            "phone_new",
           ].reduce((result, key) => ({ ...result, [key]: temp[key] }), {}),
         });
 
@@ -492,6 +500,15 @@ function searchCountries(input, option) {
 const theme = inject("theme");
 const shadowColor = computed(() =>
   theme.value ? "var(--bright_font)" : "rgba(164, 180, 244, .5)"
+);
+
+watch(
+  () => userinfo.value.country,
+  (value) => {
+    userinfo.value.phone_new.phone_cc = countries.find(
+      (c) => c.code === value
+    ).dial_code;
+  }
 );
 </script>
 

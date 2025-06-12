@@ -44,14 +44,30 @@
                 v-else-if="key === 'phonenumber'"
                 style="display: flex; align-items: center"
               >
-                <span style="margin-right: 5px">{{ phonecode }}</span>
-                <a-input
-                  readonly
-                  v-model:value="form.phonenumber"
-                  class="user__input"
-                  :disabled="!form.countryname || isDisabled"
+                <phone-input
+                  :disabled="!isPhoneEdit"
+                  style="width: 100%"
+                  :number="form.phone_new.phone_number"
+                  @update:number="form.phone_new.phone_number = $event"
+                  :code="form.phone_new.phone_cc"
+                  @update:code="form.phone_new.phone_cc = $event"
                 />
-                <template v-if="billingUser.countrycode == 'BY'">
+                <a-button
+                  style="margin-left: 5px"
+                  type="primary"
+                  @click="onIsPhoneEditClick"
+                  :icon="h(warningOutlined)"
+                  >{{
+                    isPhoneEdit
+                      ? capitalize($t("cancel"))
+                      : capitalize($t("edit"))
+                  }}</a-button
+                >
+                <template
+                  v-if="
+                    userdata.data.phone_new?.phone_cc == '375' && !isPhoneEdit
+                  "
+                >
                   <a-button
                     style="margin-left: 5px"
                     type="primary"
@@ -153,6 +169,7 @@ import {
   reactive,
   ref,
   defineAsyncComponent,
+  capitalize,
 } from "vue";
 import { notification } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
@@ -165,6 +182,7 @@ import loading from "@/components/ui/loading.vue";
 import { storeToRefs } from "pinia";
 import { h } from "vue";
 import VerificationModal from "@/components/settings/verificationModal.vue";
+import PhoneInput from "@/components/ui/phoneInput.vue";
 
 const warningOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/WarningOutlined")
@@ -182,8 +200,8 @@ const formRef = ref(null);
 const form = ref({});
 const isLoading = ref(false);
 const isSendingInfo = ref(false);
-const phonecode = ref();
 const isPhonenumberVerificationOpen = ref(false);
+const isPhoneEdit = ref(false);
 
 const reqRule = reactive({
   required: true,
@@ -195,7 +213,6 @@ const rules = computed(() => ({
   lastname: [reqRule],
   firstname: [reqRule],
   countryname: [reqRule],
-  phonenumber: [reqRule],
   currency: [reqRule],
 
   companyname: [{ required: false }],
@@ -247,7 +264,6 @@ const mainKeys = computed(() => {
       "firstname",
       "lastname",
       "email",
-      "phonenumber",
       "companyname",
       "address1",
       "countryname",
@@ -256,7 +272,9 @@ const mainKeys = computed(() => {
       "postcode",
     ];
 
-    return result.filter((key) => key in billingUser.value);
+    return result
+      .filter((key) => key in billingUser.value)
+      .concat(["phonenumber"]);
   } else {
     const result = ["title", "data.email", "data.phone"];
     return result;
@@ -285,21 +303,32 @@ function installDataToBuffer() {
     ...Object.keys(keys.value),
     "address2",
     "countryname",
-    "phonenumber",
+    "phone_new",
     "tax_id",
   ];
 
   interestedKeys.forEach((key) => {
+    if (key === "phone_new") {
+      form.value.phone_new = {
+        phone_number: userdata.value.data.phone_new?.phone_number,
+        phone_cc: userdata.value.data.phone_new?.phone_cc || "",
+      };
+
+      if (
+        !!form.value.phone_new.phone_cc &&
+        !form.value.phone_new.phone_cc.startsWith("+")
+      ) {
+        form.value.phone_new.phone_cc = "+" + form.value.phone_new.phone_cc;
+      }
+
+      return;
+    }
     if (config.whmcsSiteUrl) {
       form.value[key] = billingUser.value[key];
     } else {
       form.value[key] = userdata.value.data[key];
     }
   });
-
-  phonecode.value = countries.find(
-    ({ code }) => code === billingUser.value.countrycode
-  )?.dial_code;
 }
 
 function onCodeConfirm() {
@@ -322,6 +351,21 @@ async function fetchInfo(update) {
     }, 100);
   }
 }
+
+const onIsPhoneEditClick = () => {
+  if (!isPhoneEdit.value) {
+    isPhoneEdit.value = true;
+  } else {
+    isPhoneEdit.value = false;
+    form.value.phone_new = { ...userdata.value.data.phone_new };
+    if (
+      !!form.value.phone_new.phone_cc &&
+      !form.value.phone_new.phone_cc.startsWith("+")
+    ) {
+      form.value.phone_new.phone_cc = "+" + form.value.phone_new.phone_cc;
+    }
+  }
+};
 
 async function sendInfo() {
   try {
@@ -363,7 +407,7 @@ async function sendInfo() {
           "city",
           "postcode",
           "country",
-          "phonenumber",
+          "phone_new",
           "companyname",
         ].reduce(
           (result, key) => ({ ...result, [key]: deltaInfo.value[key] }),
@@ -376,6 +420,21 @@ async function sendInfo() {
       throw new Error(i18n.t("Email is already in use or is empty"));
     } else if (response.error) {
       throw new Error(response.error);
+    }
+
+    if (
+      JSON.stringify(userdata.value.data.phone_new) !==
+        JSON.stringify(form.value.phone_new) &&
+      isPhoneEdit
+    ) {
+      await api.post("/accounts/change_phone", {
+        newPhone: {
+          countryCode: form.value.phone_new.phone_cc.replaceAll("+", ""),
+          number: form.value.phone_new.phone_number,
+        },
+      });
+
+      userdata.value.data.phone_new = { ...form.value.phone_new };
     }
 
     localStorage.removeItem("oauth");
