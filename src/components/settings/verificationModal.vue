@@ -8,7 +8,7 @@
       <div class="description">
         <span>{{
           $t("phone_verification.labels.description", {
-            phone_number: `${phonecode}${billingUser.phonenumber}`,
+            phone_number: `+${userdata.data.phone_new.phone_cc}${userdata.data.phone_new.phone_number}`,
           })
         }}</span>
       </div>
