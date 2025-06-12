@@ -310,8 +310,8 @@ function installDataToBuffer() {
   interestedKeys.forEach((key) => {
     if (key === "phone_new") {
       form.value.phone_new = {
-        phone_number: userdata.value.data.phone_new.phone_number,
-        phone_cc: userdata.value.data.phone_new.phone_cc || "",
+        phone_number: userdata.value.data.phone_new?.phone_number,
+        phone_cc: userdata.value.data.phone_new?.phone_cc || "",
       };
 
       if (
