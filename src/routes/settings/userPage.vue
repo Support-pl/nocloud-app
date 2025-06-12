@@ -291,7 +291,7 @@ function installDataToBuffer() {
 
   interestedKeys.forEach((key) => {
     if (key === "phone_new") {
-      return (form.value[key] = userdata.value.data[key]);
+      return (form.value[key] = { ...userdata.value.data[key] });
     }
     if (config.whmcsSiteUrl) {
       form.value[key] = billingUser.value[key];
@@ -378,12 +378,17 @@ async function sendInfo() {
     }
 
     if (
-      JSON.stringify(userdata.phone_new) !==
+      JSON.stringify(userdata.value.data.phone_new) !==
       JSON.stringify(form.value.phone_new)
     ) {
       await api.post("/accounts/change_phone", {
-        newPhone: { ...form.value.phone_new },
+        newPhone: {
+          countryCode: form.value.phone_new.phone_cc,
+          number: form.value.phone_new.phone_number,
+        },
       });
+
+      userdata.value.data.phone_new = { ...form.value.phone_new };
     }
 
     localStorage.removeItem("oauth");
