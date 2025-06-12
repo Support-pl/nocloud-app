@@ -14,6 +14,7 @@
       :disabled="disabled"
       :status="status"
       :value="number"
+      style="padding: 5px;"
       @update:value="emits('update:number', $event)"
       name="phone"
       :placeholder="`${capitalize($t('clientinfo.phone number'))} *`"
