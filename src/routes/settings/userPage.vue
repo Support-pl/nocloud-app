@@ -425,7 +425,7 @@ async function sendInfo() {
     if (
       JSON.stringify(userdata.value.data.phone_new) !==
         JSON.stringify(form.value.phone_new) &&
-      isPhoneEdit
+      isPhoneEdit.value
     ) {
       await api.post("/accounts/change_phone", {
         newPhone: {
@@ -435,7 +435,6 @@ async function sendInfo() {
       });
 
       userdata.value.data.phone_new = { ...form.value.phone_new };
-      isPhoneEdit.value = false;
     }
 
     localStorage.removeItem("oauth");
@@ -449,6 +448,7 @@ async function sendInfo() {
     console.error(error);
   } finally {
     isSendingInfo.value = false;
+    isPhoneEdit.value = false;
   }
 }
 
