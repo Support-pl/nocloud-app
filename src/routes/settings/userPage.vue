@@ -435,6 +435,7 @@ async function sendInfo() {
       });
 
       userdata.value.data.phone_new = { ...form.value.phone_new };
+      isPhoneEdit.value = false;
     }
 
     localStorage.removeItem("oauth");
