@@ -45,13 +45,29 @@
                 style="display: flex; align-items: center"
               >
                 <phone-input
+                  :disabled="!isPhoneEdit"
                   style="width: 100%"
                   :number="form.phone_new.phone_number"
                   @update:number="form.phone_new.phone_number = $event"
                   :code="form.phone_new.phone_cc"
                   @update:code="form.phone_new.phone_cc = $event"
                 />
-                <template v-if="userdata.data.phone_new.phone_cc == '375'">
+                <a-button
+                  style="margin-left: 5px"
+                  type="primary"
+                  @click="onIsPhoneEditClick"
+                  :icon="h(warningOutlined)"
+                  >{{
+                    isPhoneEdit
+                      ? capitalize($t("cancel"))
+                      : capitalize($t("edit"))
+                  }}</a-button
+                >
+                <template
+                  v-if="
+                    userdata.data.phone_new?.phone_cc == '375' && !isPhoneEdit
+                  "
+                >
                   <a-button
                     style="margin-left: 5px"
                     type="primary"
@@ -153,6 +169,7 @@ import {
   reactive,
   ref,
   defineAsyncComponent,
+  capitalize,
 } from "vue";
 import { notification } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
@@ -184,6 +201,7 @@ const form = ref({});
 const isLoading = ref(false);
 const isSendingInfo = ref(false);
 const isPhonenumberVerificationOpen = ref(false);
+const isPhoneEdit = ref(false);
 
 const reqRule = reactive({
   required: true,
@@ -291,7 +309,19 @@ function installDataToBuffer() {
 
   interestedKeys.forEach((key) => {
     if (key === "phone_new") {
-      return (form.value[key] = { ...userdata.value.data[key] });
+      form.value.phone_new = {
+        phone_number: userdata.value.data.phone_new.phone_number,
+        phone_cc: userdata.value.data.phone_new.phone_cc || "",
+      };
+
+      if (
+        !!form.value.phone_new.phone_cc &&
+        !form.value.phone_new.phone_cc.startsWith("+")
+      ) {
+        form.value.phone_new.phone_cc = "+" + form.value.phone_new.phone_cc;
+      }
+
+      return;
     }
     if (config.whmcsSiteUrl) {
       form.value[key] = billingUser.value[key];
@@ -321,6 +351,21 @@ async function fetchInfo(update) {
     }, 100);
   }
 }
+
+const onIsPhoneEditClick = () => {
+  if (!isPhoneEdit.value) {
+    isPhoneEdit.value = true;
+  } else {
+    isPhoneEdit.value = false;
+    form.value.phone_new = { ...userdata.value.data.phone_new };
+    if (
+      !!form.value.phone_new.phone_cc &&
+      !form.value.phone_new.phone_cc.startsWith("+")
+    ) {
+      form.value.phone_new.phone_cc = "+" + form.value.phone_new.phone_cc;
+    }
+  }
+};
 
 async function sendInfo() {
   try {
@@ -379,11 +424,12 @@ async function sendInfo() {
 
     if (
       JSON.stringify(userdata.value.data.phone_new) !==
-      JSON.stringify(form.value.phone_new)
+        JSON.stringify(form.value.phone_new) &&
+      isPhoneEdit
     ) {
       await api.post("/accounts/change_phone", {
         newPhone: {
-          countryCode: form.value.phone_new.phone_cc,
+          countryCode: form.value.phone_new.phone_cc.replaceAll("+", ""),
           number: form.value.phone_new.phone_number,
         },
       });
