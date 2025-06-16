@@ -308,6 +308,7 @@
     </div>
 
     <verification-modal
+      show-user-profile-link
       :open="isVerificationOpen"
       @update:open="isVerificationOpen = $event"
       @confirm="onCodeConfirm"
