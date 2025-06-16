@@ -47,9 +47,9 @@
                 <phone-input
                   :disabled="!isPhoneEdit"
                   style="width: 100%"
-                  :number="form.phone_new.phone_number"
+                  :number="form.phone_new?.phone_number"
                   @update:number="form.phone_new.phone_number = $event"
-                  :code="form.phone_new.phone_cc"
+                  :code="form.phone_new?.phone_cc"
                   @update:code="form.phone_new.phone_cc = $event"
                 />
                 <a-button
@@ -91,7 +91,7 @@
             </a-form-item>
 
             <a-form-item
-              :label="form.countryname === 'PL' ? 'NIP' : 'VAT ID'"
+              :label="form.country === 'PL' ? 'NIP' : 'VAT ID'"
               name="tax_id"
             >
               <a-input v-model:value="form.tax_id" :disabled="isDisabled" />
@@ -323,6 +323,15 @@ function installDataToBuffer() {
 
       return;
     }
+    if (key === "countryname") {
+      form.value.countryname =
+        countries.find((c) => c.code === billingUser.value["country"])?.title ??
+        "";
+      form.value.country = billingUser.value["country"];
+
+      return;
+    }
+
     if (config.whmcsSiteUrl) {
       form.value[key] = billingUser.value[key];
     } else {
@@ -388,7 +397,14 @@ async function sendInfo() {
         }
       : {
           run: "update_client",
-          user: { ...billingUser.value, ...deltaInfo.value },
+          user: {
+            ...billingUser.value,
+            ...deltaInfo.value,
+            country: countries.find(
+              (c) => c.title === billingUser.value.countryname
+            )?.code,
+            phonenumber: form.value.phone_new.phone_number,
+          },
         };
     let response;
 
