@@ -26,6 +26,15 @@
           })
         }}</span>
       </div>
+
+      <div
+        class="user_profile_link"
+        v-if="!(timeToNewCode > 0) && showUserProfileLink"
+      >
+        <a @click="toUserProfile">{{
+          $t("phone_verification.labels.user_profile_link")
+        }}</a>
+      </div>
     </div>
 
     <template #footer>
@@ -61,12 +70,17 @@ import { onMounted, ref, watch } from "vue";
 import countries from "@/assets/countries.json";
 import { notification } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 
-const props = defineProps({ open: { type: Boolean, default: false } });
+const props = defineProps({
+  open: { type: Boolean, default: false },
+  showUserProfileLink: { type: Boolean, default: false },
+});
 
 const emit = defineEmits(["update:open", "confirm"]);
 
 const i18n = useI18n();
+const router = useRouter();
 
 const isGetCodeLoading = ref(false);
 const isConfirmCodeLoading = ref(false);
@@ -145,6 +159,11 @@ async function confirmCode() {
   }
 }
 
+function toUserProfile() {
+  router.push({ name: "cabinet" });
+  emit("update:open", false);
+}
+
 watch(lastGetCodeTs, () => {
   clearInterval(intervalTimer);
 
@@ -178,5 +197,10 @@ watch(billingUser, () => {
 
 .verification_form .time_to_new_code {
   margin: 20px 0px;
+}
+
+.user_profile_link {
+  margin: 20px 0px;
+  color: var(--main);
 }
 </style>
