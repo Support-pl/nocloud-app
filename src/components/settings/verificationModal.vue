@@ -32,7 +32,7 @@
         v-if="!(timeToNewCode > 0) && showUserProfileLink"
       >
         <a @click="toUserProfile">{{
-          $t("Это не мой номер. Проверить данные в личном кабинете")
+          $t("phone_verification.labels.user_profile_link")
         }}</a>
       </div>
     </div>

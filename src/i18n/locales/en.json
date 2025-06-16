@@ -688,6 +688,7 @@
         "code_again": "It will be possible to send the code again through {seconds} seconds",
         "code": "Code",
         "tip": "Please, confirm your phone number",
+        "user_profile_link": "This is not my number. View data in your personal account",
         "verifcation_success": "You have successfully verified your phone.",
         "invoices_message": "Verify your phone to proceed to payment and service activation. The data is required for correct registration of the service and billing."
       },
