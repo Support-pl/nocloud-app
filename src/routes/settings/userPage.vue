@@ -121,7 +121,7 @@
               :loading="isSendingInfo"
               @click="sendInfo"
             >
-              {{ $t("Submit") }}
+              {{ $t("Save") }}
             </a-button>
             <a-button
               v-if="!isDisabled"
