@@ -400,7 +400,7 @@ async function sendInfo() {
           user: {
             ...billingUser.value,
             ...deltaInfo.value,
-            country: countries.find(
+            countryname: countries.find(
               (c) => c.title === billingUser.value.countryname
             )?.code,
             phonenumber: form.value.phone_new.phone_number,
