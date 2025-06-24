@@ -88,6 +88,11 @@ export default {
       creationRouteName: "service-openai",
       icon: icons.RobotOutlined,
     },
+    bots: {
+      groupname: ["AIBot"],
+      creationRouteName: "service-bots",
+      icon: icons.RobotOutlined,
+    },
     vdc: {
       groupname: ["VDC"],
       creationRouteName: "newVDC",
