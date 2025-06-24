@@ -500,7 +500,6 @@ export default {
           break;
         case "empty":
         case "virtual": {
-          console.log(showcase);
 
           if (showcase?.meta?.type === "vpn") {
             name = "service-vpn";
@@ -518,6 +517,14 @@ export default {
             showcase.promo?.[this.$i18n.locale]?.title ||
             showcase.title ||
             "ChatGPT";
+          break;
+
+        case "openai":
+          name = "service-aibots";
+          query.headerTitle =
+            showcase.promo?.[this.$i18n.locale]?.title ||
+            showcase.title ||
+            "AIBot";
           break;
         case "vdc":
           name = "newVDC";

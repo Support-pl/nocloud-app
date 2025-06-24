@@ -249,6 +249,28 @@ const routes = [
         component: () => import("@/routes/openai/openaiPage.vue"),
       },
       {
+        path: "ai-bots/:id",
+        name: "aiBotPage",
+        meta: {
+          mustBeLoggined: true,
+          footerTitle: "AI Bots",
+          headerTitle: "AI Bots",
+          isNeedBackButton: true,
+        },
+        component: () => import("@/routes/bots/aiBotPage.vue"),
+      },
+       {
+        path: "ai-bots/:id/chats/:chatId",
+        name: "aiBotsChats",
+        meta: {
+          mustBeLoggined: true,
+          footerTitle: "AI Bots",
+          headerTitle: "AI Bots",
+          isNeedBackButton: true,
+        },
+        component: () => import("@/routes/bots/aiBotChats.vue"),
+      },
+      {
         path: "/domain/:id",
         name: "openDomain",
         component: () => import("@/routes/domains/openDomain.vue"),

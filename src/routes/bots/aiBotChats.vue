@@ -1,0 +1,466 @@
+<template>
+  <div class="chat">
+    <loading v-if="isLoading" />
+    <div v-else ref="content" class="chat__content">
+      <chat-header :chat="chat" :bot="bot" />
+
+      <template v-for="(reply, i) in messages" :key="i">
+        <span v-if="isDateVisible(messages, i)" class="chat__date">
+          {{ reply.created_at.split("T")[0] }}
+        </span>
+
+        <a-popover
+          :overlay-class-name="
+            reply.error ? 'chat__tooltip error' : 'chat__tooltip'
+          "
+          :trigger="reply.error ? 'click' : 'hover'"
+          :placement="isAdminSent(reply) ? 'rightBottom' : 'leftBottom'"
+        >
+          <template #content>
+            <div style="cursor: pointer" @click="addToClipboard(reply.message)">
+              <copy-icon /> {{ capitalize($t("copy")) }}
+            </div>
+          </template>
+
+          <div
+            :key="`${i}_message`"
+            class="chat__message"
+            :class="[
+              isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
+            ]"
+          >
+            <pre>
+              <message-content :uuid="reply.id" :message="reply.body"/>
+            </pre>
+
+            <div class="chat__info">
+              <span>{{
+                chat?.participants?.find(
+                  (p) => p.ext_id === reply.sender_ext_id
+                )?.name
+              }}</span>
+              <span>{{ getMessageTime(reply) }}</span>
+            </div>
+
+            <loading-icon v-if="reply.sending" class="msgStatus loading" />
+            <a-popover v-else-if="reply.error" :title="$t('Send error')">
+              <template #content>
+                <a class="popover-link" @click="deleteMessage(reply)">
+                  {{ $t("chat_Delete_message") }}
+                </a>
+                <a class="popover-link" @click="resendMessage(reply)">
+                  {{ $t("chat_Resend_message") }}
+                </a>
+              </template>
+              <div class="msgStatus error">
+                <exclamation-icon />
+              </div>
+            </a-popover>
+          </div>
+        </a-popover>
+      </template>
+
+      <typing-placeholder v-if="isPlaceholderVisible" />
+    </div>
+
+    <div ref="chatList" class="chat__list">
+      <a-input
+        style="margin: 10px; padding: 5px; max-width: 90%"
+        v-model:value="searchParam"
+        placeholder="Search..."
+      >
+        <template #suffix>
+          <search-icon style="font-size: 20px" />
+        </template>
+      </a-input>
+      <chat-item
+        v-for="item of filtredChats"
+        :key="item.id"
+        :chat="item"
+        :bot-id="botId"
+        :style="item.id == chatId ? 'filter: contrast(0.8)' : null"
+        compact
+      />
+    </div>
+
+    <chat-footer ref="footer" v-model:messages="messages" :chat="chat" />
+  </div>
+</template>
+
+<script setup>
+import "highlight.js/styles/base16/classic-light.css";
+import {
+  defineAsyncComponent,
+  nextTick,
+  ref,
+  computed,
+  watch,
+  toRefs,
+} from "vue";
+import { onBeforeRouteUpdate, useRoute } from "vue-router";
+import { useClipboard } from "@/hooks/utils";
+import { useChatsStore } from "@/stores/chats.js";
+import loading from "@/components/ui/loading.vue";
+import typingPlaceholder from "@/components/support/typingPlaceholder.vue";
+import MessageContent from "@/components/support/messageContent.vue";
+import { useAiBotsStore } from "@/stores/aiBots";
+import ChatItem from "@/components/services/bots/chatItem.vue";
+import ChatHeader from "@/components/services/bots/chatHeader.vue";
+import ChatFooter from "@/components/services/bots/chatFooter.vue";
+
+const exclamationIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ExclamationCircleOutlined")
+);
+const copyIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CopyOutlined")
+);
+
+const loadingIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LoadingOutlined")
+);
+
+const searchIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SearchOutlined")
+);
+
+const route = useRoute();
+const { addToClipboard } = useClipboard();
+
+const chatsStore = useChatsStore();
+
+const aiBotsStore = useAiBotsStore();
+const { chats: allChats, bots } = toRefs(aiBotsStore);
+
+onBeforeRouteUpdate((to, from, next) => {
+  chatId.value = to.params.chatId;
+  loadMessages();
+  next();
+});
+
+const messages = ref([]);
+
+const isLoading = ref(false);
+const chatId = ref(route.params.chatId);
+const botId = ref(route.params.id);
+const chatPaddingTop = ref("15px");
+const searchParam = ref("");
+const isPlaceholderVisible = ref(false);
+
+const content = ref();
+const footer = ref();
+
+const chat = computed(() =>
+  chats.value.find((chat) => chat.id === chatId.value)
+);
+const bot = computed(() => bots.value.get(botId.value));
+const chats = computed(() => allChats.value.get(botId.value) || []);
+const filtredChats = computed(() =>
+  chats.value.filter(
+    (c) =>
+      c.name.toLowerCase().includes(searchParam.value.toLowerCase()) ||
+      c.id.toLowerCase().includes(searchParam.value.toLowerCase())
+  )
+);
+
+watch(
+  chats,
+  async () => {
+    await nextTick();
+    if (!chatList.value) return;
+    const { scrollHeight, clientHeight, lastElementChild } = chatList.value;
+
+    if (scrollHeight > clientHeight || !lastElementChild) return;
+    lastElementChild.style.borderBottom = "1px solid var(--border_color)";
+  },
+  { deep: true }
+);
+
+watch(
+  messages,
+  async (value, oldValue) => {
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    setPlaceholderVisible(oldValue.length > 0 ? oldValue : value);
+
+    if (!content.value) return;
+    content.value?.scrollTo(0, content.value?.scrollHeight);
+  },
+  { deep: true }
+);
+
+async function fetch() {
+  isLoading.value = true;
+  try {
+    await Promise.all([
+      aiBotsStore.fetchChats(botId.value),
+      aiBotsStore.getBot(botId.value),
+      chatsStore.fetch_models_list(),
+    ]);
+
+    aiBotsStore.startChatsStream();
+  } catch (error) {
+    console.error(error);
+  }
+
+  await loadMessages(true);
+}
+
+fetch();
+
+let timeout;
+function setPlaceholderVisible(messages) {
+  if (chat.value?.department !== "openai") return;
+  const isUserSent = messages.at(-1)?.from || messages.length === 1;
+
+  if (!isAdminSent(messages.at(-1) ?? {}) && isUserSent) {
+    timeout = setTimeout(async () => {
+      isPlaceholderVisible.value = true;
+
+      await nextTick();
+      content.value?.scrollTo(0, content.value?.scrollHeight);
+    }, 1000);
+
+    setTimeout(() => {
+      clearTimeout(timeout);
+      isPlaceholderVisible.value = false;
+    }, 20 * 1000);
+  } else {
+    clearTimeout(timeout);
+    isPlaceholderVisible.value = false;
+  }
+}
+
+function isAdminSent(reply) {
+  return reply.sender_role === 1;
+}
+
+function getMessageTime(reply) {
+  const date = new Date(reply.created_at);
+
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${hours}:${minutes}`;
+}
+
+function isDateVisible(replies, i) {
+  if (i === 0) return true;
+
+  return (
+    new Date(replies[i - 1].created_at).getDate() !==
+    new Date(replies[i].created_at).getDate()
+  );
+}
+
+async function loadMessages() {
+  isLoading.value = true;
+  try {
+    console.log(chatId.value);
+    const response = await aiBotsStore.fetchChatsMessages(chatId.value);
+
+    messages.value = response ?? [];
+  } finally {
+    nextTick(() => {
+      content.value?.scrollTo(0, content.value?.scrollHeight);
+    });
+    isLoading.value = false;
+
+    if (chatsStore.chats.get(chatId.value)) {
+      chatsStore.chats.get(chatId.value).meta.unread = 0;
+    }
+  }
+}
+
+function deleteMessage(message) {
+  messages.value.splice(messages.value.indexOf(message), 1);
+}
+
+function resendMessage(reply) {
+  deleteMessage(reply);
+  footer.value.message = reply.message;
+  footer.value.sendMessage();
+}
+</script>
+
+<script>
+export default { name: "AiBotChat" };
+</script>
+
+<style scoped>
+.chat {
+  position: relative;
+  display: grid;
+  grid-template-columns: min(400px, 35vw - 20px) min(968px, 65vw - 20px);
+  grid-template-rows: 1fr auto;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  background: var(--bright_bg);
+}
+
+:deep(.chat__container) {
+  padding: 0;
+  display: grid;
+  grid-template-columns: 20% 1fr 20%;
+  justify-items: center;
+  align-items: center;
+  gap: 5px;
+  max-width: calc(768px + 400px + 10px);
+  height: 100%;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.chat__list {
+  grid-row: 1 / 3;
+  margin: 10px 0;
+  overflow: scroll;
+  border: 1px solid var(--border_color);
+  border-radius: 6px;
+  background: var(--bright_font);
+}
+
+.chat__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  max-width: 968px;
+  width: 100%;
+  height: 100%;
+  margin: 10px auto 0;
+  padding: v-bind("chatPaddingTop") 15px 6px;
+
+  border: 1px solid var(--border_color);
+  border-radius: 6px;
+  overflow: auto;
+  background: var(--bright_font);
+}
+
+.chat__tooltip :deep(.ant-popover-inner) {
+  padding: 6px 8px;
+}
+
+.chat__tooltip.error :deep(.ant-popover-inner),
+.chat__tooltip.error :deep(.ant-popover-arrow) {
+  background: transparent;
+  box-shadow: none;
+}
+
+.chat__message {
+  background: #dcfdbe;
+  font-weight: 500;
+  padding: 5px 7px;
+  border-radius: 5px;
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.07);
+  position: relative;
+  width: max-content;
+  max-width: 80%;
+  word-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.chat__message pre {
+  font-size: 14px;
+  white-space: collapse;
+  word-break: break-word;
+}
+
+.chat__message pre img {
+  width: 100%;
+}
+
+.chat__date {
+  padding: 7px 15px;
+  margin: 10px auto 15px;
+  text-align: center;
+  border-radius: 7px;
+  line-height: 1;
+  color: var(--gloomy_font);
+  background: var(--main);
+}
+
+.chat__info {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.msgStatus {
+  position: absolute;
+  bottom: 5px;
+  left: -20px;
+  font-size: 14px;
+  height: auto;
+}
+
+.msgStatus.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--err);
+  color: var(--gloomy_font);
+  cursor: pointer;
+  transform: translate(-5px, 5px);
+}
+
+.chat__message::after {
+  content: "";
+  display: block;
+  position: absolute;
+  bottom: 0;
+  border: 9px solid transparent;
+  border-bottom: 10px solid #dcfdbe;
+}
+
+.chat__message--out {
+  align-self: flex-end;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.chat__message--out::after {
+  right: 0;
+  transform: translateX(50%);
+}
+
+.chat__message--in {
+  align-self: flex-start;
+  background: var(--bright_bg);
+}
+
+.chat__message--in::after {
+  left: 0;
+  transform: translateX(-50%);
+  border-bottom-color: var(--bright_bg);
+}
+
+.popover-link {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .chat {
+    grid-template-columns: 1fr;
+  }
+
+  .chat__list {
+    display: none;
+  }
+
+  .chat__content {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .chat__footer {
+    grid-column: 1;
+    padding: 0 10px 10px;
+  }
+}
+</style>

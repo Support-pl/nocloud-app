@@ -211,6 +211,9 @@ function setInstByType(inst, result) {
     case "openai":
       result.groupname = "OpenAI";
       break;
+    case "bots":
+      result.groupname = "AIBot";
+      break;
     case "empty":
     case "virtual":
       if (inst.billingPlan?.type === "vpn") {

@@ -378,6 +378,11 @@ async function onStart() {
         break;
       }
 
+      case "bots": {
+        groupname = "AIBot";
+        break;
+      }
+
       case "virtual":
       case "empty": {
         const { period } = domain.billingPlan.products[domain.product];
