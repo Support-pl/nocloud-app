@@ -59,7 +59,7 @@
                   :icon="h(warningOutlined)"
                   >{{
                     isPhoneEdit
-                      ? capitalize($t("cancel"))
+                      ? capitalize($t("Cancel"))
                       : capitalize($t("edit"))
                   }}</a-button
                 >
@@ -247,8 +247,6 @@ const isDisabled = computed(() => {
 });
 
 const isWhmcsUser = computed(() => {
-  if (!config.whmcsSiteUrl) return true;
-  if (localStorage.getItem("oauth")) return true;
   return !isLoading.value && billingUser.value.firstname;
 });
 
@@ -342,12 +340,12 @@ function installDataToBuffer() {
 
 function onCodeConfirm() {
   fetchInfo(true);
-  authStore.fetchUserData(true);
 }
 
 async function fetchInfo(update) {
   try {
     isLoading.value = true;
+    await authStore.fetchUserData(update);
     const response = await authStore.fetchBillingData(update);
     if (localStorage.getItem("oauth")) return;
     if (response.ERROR) throw response.ERROR.toLowerCase();
