@@ -115,7 +115,7 @@ import { useInstancesStore } from "@/stores/instances.js";
 
 import loading from "@/components/ui/loading.vue";
 import serviceInfo from "@/components/ui/serviceInfo.vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { Modal } from "ant-design-vue";
 import { useInvoicesStore } from "@/stores/invoices";
@@ -137,6 +137,7 @@ const chatsStore = useChatsStore();
 const invoicesStore = useInvoicesStore();
 
 const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
 const notification = useNotification();
 
