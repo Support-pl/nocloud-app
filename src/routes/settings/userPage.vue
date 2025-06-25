@@ -59,7 +59,7 @@
                   :icon="h(warningOutlined)"
                   >{{
                     isPhoneEdit
-                      ? capitalize($t("cancel"))
+                      ? capitalize($t("Cancel"))
                       : capitalize($t("edit"))
                   }}</a-button
                 >
