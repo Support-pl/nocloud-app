@@ -400,7 +400,7 @@ export function toInvoice(transaction, type = "default") {
       currencycode: transaction.currencycode,
       meta: transaction.meta,
       type: "NO_ACTION",
-      properties: {},
+      properties: transaction.properties || {},
     };
   } else {
     const status = capitalize(transaction.status.toLowerCase());

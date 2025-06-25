@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, ref } from "vue";
+import { computed, defineAsyncComponent, ref, toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 import { ActionType } from "nocloud-proto/proto/es/billing/billing_pb";
 import VerificationModal from "../settings/verificationModal.vue";
@@ -124,6 +124,7 @@ import { storeToRefs } from "pinia";
 const props = defineProps({
   invoice: { type: Object, required: true },
 });
+const { invoice } = toRefs(props);
 
 const i18n = useI18n();
 const authStore = useAuthStore();
@@ -144,7 +145,7 @@ const isBalanceLoading = ref(false);
 const isVerificationOpen = ref(false);
 
 const statusColor = computed(() => {
-  switch (props.invoice.status?.toLowerCase()) {
+  switch (invoice.value.status?.toLowerCase()) {
     case "paid":
       return config.colors.success;
     case "canceled":
@@ -158,21 +159,21 @@ const statusColor = computed(() => {
 });
 
 const total = computed(() => {
-  const total = props.invoice.subtotal ?? props.invoice.total;
+  const total = invoice.value.subtotal ?? invoice.value.total;
 
   return formatPrice(Math.abs(total));
 });
 
 const needVerification = computed(
   () =>
-    !!props.invoice.properties.phoneVerificationRequired &&
+    !!invoice.value.properties.phoneVerificationRequired &&
     !userdata.value.isPhoneVerified
 );
 
 async function paidInvoice() {
   isLoading.value = true;
   try {
-    await openInvoiceDocument(props.invoice);
+    await openInvoiceDocument(invoice.value);
 
     openNotification("success", { message: i18n.t("Done") });
   } catch (error) {
@@ -208,10 +209,10 @@ async function openInvoiceDocument(invoice) {
 async function payByBalance() {
   isLoading.value = true;
   try {
-    if (props.invoice.uuid) {
-      await invoicesStore.payWithBalance({ invoiceUuid: props.invoice.uuid });
+    if (invoice.value.uuid) {
+      await invoicesStore.payWithBalance({ invoiceUuid: invoice.value.uuid });
     } else {
-      await invoicesStore.payWithBalance({ whmcsId: props.invoice.id });
+      await invoicesStore.payWithBalance({ whmcsId: invoice.value.id });
     }
 
     invoicesStore.fetch();
