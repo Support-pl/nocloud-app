@@ -89,11 +89,9 @@ export const useInvoicesStore = defineStore("invoices", () => {
     }
   }
 
-  async function fetchInvoices(silent, page = 1, limit = 1000) {
+  async function fetchInvoices(page = 1, limit = 1000) {
     try {
       const result = [];
-
-      if (!silent) isLoading.value = true;
 
       const [response, whmcsInvoices] = await Promise.all([
         fetchNcInvoices({
@@ -141,9 +139,19 @@ export const useInvoicesStore = defineStore("invoices", () => {
     }
   }
 
-  const fetch = debounce(fetchInvoices, 1000);
+  const fetchInvoicesDebounced = debounce(fetchInvoices, 1000);
+  const fetch = (silent, page = 1, limit = 1000) => {
+    if (!silent) {
+      isLoading.value = true;
+    }
+
+    fetchInvoicesDebounced(page, limit);
+  };
 
   const startStream = async () => {
+    if (stream.value) {
+      return;
+    }
     try {
       stream.value = invoicesApi.stream(new StreamRequest());
       console.log("InvoicesStream started");
@@ -151,15 +159,17 @@ export const useInvoicesStore = defineStore("invoices", () => {
       for await (const event of stream.value) {
         switch (event.event) {
           case BillingEvent.EVENT_INVOICE_CREATED: {
-            const invoice = event.body.invoice.toJson();
-            invoices.value.unshift(toInvoice(invoice));
+            const invoice = toInvoice(event.body.invoice.toJson());
+
+            invoices.value.unshift(invoice);
 
             break;
           }
           case BillingEvent.EVENT_INVOICE_UPDATED: {
-            const invoice = event.body.invoice.toJson();
+            const invoice = toInvoice(event.body.invoice.toJson());
+
             invoices.value = invoices.value.map((i) =>
-              i.uuid === invoice.uuid ? toInvoice(invoice) : i
+              i.payment_invoice_id === invoice.payment_invoice_id ? invoice : i
             );
 
             break;
