@@ -16,15 +16,6 @@
           marked(`
 **GPT-4o Mini** — облегчённая версия модели GPT-4o, оптимизированная для быстрой и эффективной работы в режиме реального времени.
 
-## Преимущества для онлайн-ассистентов:
-
-- **Быстрая реакция:** мгновенные ответы, идеально подходят для чат-ботов и помощников.
-- **Низкое потребление ресурсов:** подходит для облака, локальных и мобильных приложений.
-- **Высокое качество ответов:** поддерживает контекст и адаптацию к стилю общения.
-- **Отличный баланс между качеством и скоростью:** идеально для повседневных задач и клиентов.
-
-## Почему мы выбрали именно GPT-4o Mini?
-
 Мы выбрали GPT-4o Mini для вашего онлайн-ассистента, потому что она сочетает в себе высокую скорость, эффективность и надежность, обеспечивая при этом качественные и живые ответы.
 
 `)
@@ -53,6 +44,7 @@
         </a-tooltip>
       </span>
       <a-textarea
+        style="margin-top: 10px"
         v-model:value="bot.settings.system_prompt"
         placeholder="more about promt"
         :auto-size="{ minRows: 4 }"
@@ -167,40 +159,77 @@
         </a-tooltip>
       </span>
       <a-row>
-        <a-col v-for="chanell in chanellsOptions" span="6">
-          <div @click="openChanell(chanell.key)" class="chanell">
+        <a-col v-for="chanell in availableChanells" span="6">
+          <div
+            @click="
+              chanell.exist
+                ? openChanellEdit(chanell)
+                : openChanellAdd(chanell.type)
+            "
+            class="chanell"
+          >
             <img
               class="img_prod"
-              :src="`/img/icons/${chanell.key}.png`"
+              :src="`/img/icons/${chanell.type}.png`"
               alt="telegram"
               @error="onError"
             />
-            <span>{{ chanell.title }}</span>
+            <span
+              style="
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                line-clamp: 2;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 95px;
+              "
+              >{{ chanell.title }}</span
+            >
             <span
               :class="{
                 'status-circle': true,
-                red: !existingChanells.has(chanell.key),
-                green: !!existingChanells.has(chanell.key),
+                red: !chanell.exist,
+                green: chanell.exist,
               }"
             ></span>
+          </div>
+        </a-col>
+
+        <a-col span="6" v-if="bot.channels.length > 0">
+          <div @click="openChanellAdd()" class="chanell">
+            <plus-circle-outlined style="font-size: 2rem" class="img_prod" />
+            <span>Add new chanell</span>
           </div>
         </a-col>
       </a-row>
     </a-col>
 
-    <a-modal v-model:open="isChanellOpen" :title="`Chanell ${selectedChanell}`">
+    <a-modal v-model:open="isChanellAddOpen" :title="`Add chanell`">
       <a-form
-        ref="selectedChanellFormRef"
+        ref="addChanellFormRef"
         layout="vertical"
         autocomplete="off"
         :model="newChanellData"
-        :rules="selectedChanellFormRules"
+        :rules="newChanellFormRules"
       >
+        <a-form-item name="type" label="Type">
+          <a-select
+            v-model:value="newChanellData.type"
+            :options="
+              chanellsOptions.map((chanell) => ({
+                value: chanell.key,
+                label: chanell.title,
+              }))
+            "
+          ></a-select>
+        </a-form-item>
+
         <a-form-item name="bot_secret" label="Secret key">
           <a-input
             type="password"
             v-model:value="newChanellData.bot_secret"
             placeholder="Secret key"
+            autocomplete="off"
           />
         </a-form-item>
       </a-form>
@@ -209,12 +238,71 @@
         <a-button
           key="back"
           :disabled="isChanellSaveLoading || isChanellDeleteLoading"
-          @click="isChanellOpen = false"
+          @click="isChanellAddOpen = false"
+          >{{ t("Cancel") }}</a-button
+        >
+
+        <a-button
+          key="submit"
+          type="primary"
+          :loading="isChanellSaveLoading"
+          :disabled="isChanellDeleteLoading"
+          @click="handleAddChanell"
+          >{{ t("Add") }}</a-button
+        >
+      </template>
+    </a-modal>
+
+    <a-modal
+      v-model:open="isChanellEditOpen"
+      :title="`Chanell ${selectedEditedChanell.title}`"
+    >
+      <a-form
+        ref="editChanellFormRef"
+        layout="vertical"
+        autocomplete="off"
+        :model="editedChanellData"
+        :rules="editChanellFormRules"
+      >
+        <a-form-item label="Link">
+          <a
+            target="_blank"
+            :href="`https://${selectedEditedChanell.data.metadata.username}`"
+          >
+            {{ selectedEditedChanell.data.metadata.username }}</a
+          >
+        </a-form-item>
+
+        <a-form-item label="Firstname">
+          <span> {{ selectedEditedChanell.data.metadata.firstname }}</span>
+        </a-form-item>
+
+        <a-form-item name="name" label="Name">
+          <a-input
+            v-model:value="editedChanellData.name"
+            placeholder="Name"
+            autocomplete="off"
+          />
+        </a-form-item>
+        <a-form-item name="bot_secret" label="Secret key" autocomplete="off">
+          <a-input
+            type="password"
+            v-model:value="editedChanellData.bot_secret"
+            placeholder="Secret key"
+            autocomplete="off"
+          />
+        </a-form-item>
+      </a-form>
+
+      <template #footer>
+        <a-button
+          key="back"
+          :disabled="isChanellSaveLoading || isChanellDeleteLoading"
+          @click="isChanellEditOpen = false"
           >{{ t("Cancel") }}</a-button
         >
 
         <a-popconfirm
-          v-if="newChanellData.id"
           title="You realy wanna delete chanell??)"
           :ok-text="t('Yes')"
           :cancel-text="t('Cancel')"
@@ -224,6 +312,7 @@
             t("Delete")
           }}</a-button>
         </a-popconfirm>
+
         <a-button
           key="submit"
           type="primary"
@@ -236,9 +325,22 @@
     </a-modal>
   </a-row>
 
-  <a-row style="margin-top: 15px">
+  <a-row style="margin-top: 15px" v-if="chats.length > 0">
     <a-col span="24">
       <chat-item :bot-id="bot.id" v-for="chat in chats" :chat="chat" />
+    </a-col>
+  </a-row>
+
+  <a-row v-else>
+    <a-col span="24">
+      <a-card style="padding: 10px; margin-top: 20px">
+        <div style="display: flex; justify-content: center">
+          <span style="text-align: center; font-size: 1rem">
+            Пока нет обращений от пользователей. Как только ваши клиенты начнут
+            общаться с ботами, вы увидите здесь переписку в реальном времени.
+          </span>
+        </div>
+      </a-card>
     </a-col>
   </a-row>
 </template>
@@ -255,6 +357,10 @@ import { marked } from "marked";
 
 const helpIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/QuestionCircleOutlined")
+);
+
+const plusCircleOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PlusCircleOutlined")
 );
 
 const props = defineProps({
@@ -290,8 +396,6 @@ const temperatureMarks = Object.fromEntries(
   })
 );
 
-console.log(temperatureMarks);
-
 const chanellsOptions = [{ title: "Telegram", key: "telegram" }];
 
 const { t } = useI18n();
@@ -312,24 +416,48 @@ const ogBot = ref();
 
 const chats = ref([]);
 
-const isChanellOpen = ref(false);
+const isChanellEditOpen = ref(false);
+const isChanellAddOpen = ref(false);
 const isChanellSaveLoading = ref(false);
 const isChanellDeleteLoading = ref(false);
-const selectedChanell = ref("");
-const selectedChanellFormRef = ref();
-const newChanellData = ref({ bot_secret: "" });
-const selectedChanellFormRules = computed(() => ({
+const selectedEditedChanell = ref("");
+const addChanellFormRef = ref();
+const editChanellFormRef = ref();
+const editedChanellData = ref({ bot_secret: "" });
+const newChanellData = ref({ bot_secret: "", type: "" });
+
+const newChanellFormRules = computed(() => ({
   bot_secret: [{ required: true, message: t("ssl_product.field is required") }],
 }));
 
-const existingChanells = computed(() => {
-  const map = new Map();
+const editChanellFormRules = computed(() => ({
+  bot_secret: [{ required: true, message: t("ssl_product.field is required") }],
+  name: [{ required: true, message: t("ssl_product.field is required") }],
+}));
 
-  bot.value.channels.forEach((chanell) => {
-    map.set(chanell.type, chanell);
-  });
+const availableChanells = computed(() => {
+  const placeholders = chanellsOptions
+    .filter(
+      (channel) => !bot.value.channels.find((item) => item.type === channel.key)
+    )
+    .map((chanell) => ({
+      type: chanell.key,
+      title: chanell.title,
+      exist: false,
+    }));
 
-  return map;
+  return placeholders.concat(
+    bot.value.channels.map((chanell) => ({
+      type: chanell.type,
+      title:
+        chanell.metadata?.custom_name ||
+        chanell.metadata?.firstname ||
+        chanellsOptions.find((c) => c.type === chanell.type)?.title ||
+        chanell.type,
+      exist: true,
+      data: chanell,
+    }))
+  );
 });
 
 const isSavePrimary = computed(
@@ -349,8 +477,13 @@ async function fetch() {
     chats.value = (await aiBotsStore.fetchChats(bot.value.id)).slice(0, 3);
 
     aiBotsStore.startChatsStream();
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
   } finally {
     isLoading.value = false;
   }
@@ -358,47 +491,97 @@ async function fetch() {
 
 fetch();
 
-const openChanell = (type) => {
-  selectedChanell.value = type;
-  isChanellOpen.value = true;
-  if (existingChanells.value.has(type)) {
-    newChanellData.value = {
-      ...existingChanells.value.get(type).data,
-      id: existingChanells.value.get(type).ID,
-    };
+const openChanellAdd = (type) => {
+  isChanellAddOpen.value = true;
+  if (type) {
+    newChanellData.value.type = type;
   } else {
-    newChanellData.value = {};
+    newChanellData.value.type = chanellsOptions[0].key;
   }
 };
 
+const openChanellEdit = (chanell) => {
+  isChanellEditOpen.value = true;
+  editedChanellData.value = {
+    bot_secret: chanell.data.data.bot_secret,
+    name: chanell.title,
+  };
+  selectedEditedChanell.value = chanell;
+};
+
 const handleSaveChanell = async () => {
-  await selectedChanellFormRef.value.validate();
+  await editChanellFormRef.value.validate();
   isChanellSaveLoading.value = true;
   try {
-    if (existingChanells.value.get(selectedChanell.value)) {
-      await api.post("/agents/api/delete_channel", {
-        bot: bot.value.id,
-        channel: newChanellData.value.id,
-      });
-    }
+    await api.post("/agents/api/test_channel", {
+      bot: bot.value.id,
+      data: { bot_secret: editedChanellData.value.bot_secret },
+      type: selectedEditedChanell.value.type,
+    });
 
-    delete newChanellData.value.id;
+    await api.post("/agents/api/delete_channel", {
+      bot: bot.value.id,
+      channel: selectedEditedChanell.value.data.id,
+    });
+
+    delete selectedEditedChanell.value.data.id;
     const data = await api.post("/agents/api/add_channel", {
       bot: bot.value.id,
-      data: newChanellData.value,
-      type: selectedChanell.value,
+      data: { bot_secret: editedChanellData.value.bot_secret },
+      custom_name: editedChanellData.value.name,
+      type: selectedEditedChanell.value.type,
     });
+
+    bot.value.channels = bot.value.channels.filter(
+      (chanell) => chanell.id != selectedEditedChanell.value.data.id
+    );
     bot.value.channels.push(data);
 
+    ogBot.value = JSON.parse(JSON.stringify(bot.value));
+
+    editedChanellData.value = {};
+    isChanellEditOpen.value = false;
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    console.log(err);
+
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isChanellSaveLoading.value = false;
+  }
+};
+
+const handleAddChanell = async () => {
+  await addChanellFormRef.value.validate();
+  isChanellSaveLoading.value = true;
+  try {
+    const data = await api.post("/agents/api/add_channel", {
+      bot: bot.value.id,
+      data: { bot_secret: newChanellData.value.bot_secret },
+      type: newChanellData.value.type,
+    });
+    bot.value.channels.push(data);
+    ogBot.value = JSON.parse(JSON.stringify(bot.value));
+
+    isChanellAddOpen.value = false;
     newChanellData.value = {};
-    isChanellOpen.value = false;
 
     openNotification("success", {
       message: `${t("Done")}!`,
     });
   } catch (err) {
     const opts = {
-      message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
     };
     openNotification("error", opts);
   } finally {
@@ -409,25 +592,27 @@ const handleSaveChanell = async () => {
 const handleDeleteChanell = async () => {
   isChanellDeleteLoading.value = true;
   try {
-    if (existingChanells.value.get(selectedChanell.value)) {
-      await api.post("/agents/api/delete_channel", {
-        bot: bot.value.id,
-        channel: newChanellData.value.id,
-      });
-    }
+    await api.post("/agents/api/delete_channel", {
+      bot: bot.value.id,
+      channel: selectedEditedChanell.value.data.id,
+    });
     bot.value.channels = bot.value.channels.filter(
-      (chanell) => chanell.ID != newChanellData.value.id
+      (chanell) => chanell.id != selectedEditedChanell.value.data.id
     );
 
-    newChanellData.value = {};
-    isChanellOpen.value = false;
+    ogBot.value = JSON.parse(JSON.stringify(bot.value));
+
+    editedChanellData.value = {};
+    isChanellEditOpen.value = false;
 
     openNotification("success", {
       message: `${t("Done")}!`,
     });
   } catch (err) {
     const opts = {
-      message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
     };
     openNotification("error", opts);
   } finally {
@@ -446,7 +631,9 @@ const handleSaveBot = async () => {
     });
   } catch (err) {
     const opts = {
-      message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
     };
     openNotification("error", opts);
   } finally {
@@ -466,6 +653,7 @@ export default { name: "AiBotDraw" };
 }
 
 .chanell {
+  height: 60px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
