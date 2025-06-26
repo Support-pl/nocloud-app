@@ -109,7 +109,8 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
     async fetchChats(botId) {
       try {
-        let data = (await api.get("/agents/api/list_chats")).chats || [];
+        let data =
+          (await api.get("/agents/api/list_chats?bot=" + botId)).chats || [];
 
         await fetchParticipants();
 
