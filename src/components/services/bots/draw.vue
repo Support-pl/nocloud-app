@@ -136,6 +136,18 @@
     </a-col>
 
     <a-col span="24">
+      <a-row justify="end">
+        <a-button
+          key="back"
+          :loading="isBotSaveLoading"
+          @click="handleSaveBot"
+          :type="isSavePrimary ? 'primary' : 'default'"
+          >{{ t("Save") }}
+        </a-button>
+      </a-row>
+    </a-col>
+
+    <a-col span="24">
       <span class="field_title"
         >Channels:
 
@@ -173,18 +185,6 @@
             ></span>
           </div>
         </a-col>
-      </a-row>
-    </a-col>
-
-    <a-col span="24">
-      <a-row justify="end">
-        <a-button
-          key="back"
-          :loading="isBotSaveLoading"
-          @click="handleSaveBot"
-          :type="isSavePrimary ? 'primary' : ''"
-          >{{ t("Save") }}</a-button
-        >
       </a-row>
     </a-col>
 
@@ -341,10 +341,10 @@ async function fetch() {
     isLoading.value = true;
 
     bot.value = await aiBotsStore.getBot(props.service.data.bot_uuid);
-    ogBot.value = JSON.parse(JSON.stringify(bot.value));
     if (!bot.value.channels) {
       bot.value.channels = [];
     }
+    ogBot.value = JSON.parse(JSON.stringify(bot.value));
 
     chats.value = (await aiBotsStore.fetchChats(bot.value.id)).slice(0, 3);
 
