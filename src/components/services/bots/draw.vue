@@ -11,11 +11,47 @@
       >
     </a-col>
     <a-col span="24">
-      <span>Долгое объяснение что это крутая модель</span>
+      <span
+        v-html="
+          marked(`
+**GPT-4o Mini** — облегчённая версия модели GPT-4o, оптимизированная для быстрой и эффективной работы в режиме реального времени.
+
+## Преимущества для онлайн-ассистентов:
+
+- **Быстрая реакция:** мгновенные ответы, идеально подходят для чат-ботов и помощников.
+- **Низкое потребление ресурсов:** подходит для облака, локальных и мобильных приложений.
+- **Высокое качество ответов:** поддерживает контекст и адаптацию к стилю общения.
+- **Отличный баланс между качеством и скоростью:** идеально для повседневных задач и клиентов.
+
+## Почему мы выбрали именно GPT-4o Mini?
+
+Мы выбрали GPT-4o Mini для вашего онлайн-ассистента, потому что она сочетает в себе высокую скорость, эффективность и надежность, обеспечивая при этом качественные и живые ответы.
+
+`)
+        "
+      >
+      </span>
     </a-col>
 
     <a-col span="24">
-      <span class="field_title">Bot promt:</span>
+      <span class="field_title"
+        >Bot promt:
+
+        <a-tooltip>
+          <template #title>
+            <span
+              v-html="
+                'Промпт — это начальный текст или команда, которые вы даёте ассистенту, чтобы направить его ответы в нужное русло.\nХорошо составленный промпт помогает получить более точные и релевантные ответы.\nМожно использовать инструкции, вопросы или примеры, чтобы задать контекст.'.replaceAll(
+                  '\n',
+                  '<br/>'
+                )
+              "
+            >
+            </span>
+          </template>
+          <help-icon style="margin-left: 5px" />
+        </a-tooltip>
+      </span>
       <a-textarea
         v-model:value="bot.settings.system_prompt"
         placeholder="more about promt"
@@ -38,8 +74,9 @@
             >
             </span>
           </template>
-          <help-icon style="margin-left: 5px" /> </a-tooltip
-      ></span>
+          <help-icon style="margin-left: 5px" />
+        </a-tooltip>
+      </span>
       <a-slider
         @change="bot.settings.temperature = $event"
         :value="bot.settings?.temperature"
@@ -99,7 +136,24 @@
     </a-col>
 
     <a-col span="24">
-      <span class="field_title">Channels:</span>
+      <span class="field_title"
+        >Channels:
+
+        <a-tooltip>
+          <template #title>
+            <span
+              v-html="
+                'Создайте канал для вашего онлайн-ассистента.\nВсе сообщения, отправленные в этот канал, будут автоматически обрабатываться ботом и получать ответы.'.replaceAll(
+                  '\n',
+                  '<br/>'
+                )
+              "
+            >
+            </span>
+          </template>
+          <help-icon style="margin-left: 5px" />
+        </a-tooltip>
+      </span>
       <a-row>
         <a-col v-for="chanell in chanellsOptions" span="6">
           <div @click="openChanell(chanell.key)" class="chanell">
@@ -197,6 +251,7 @@ import { useNotification } from "@/hooks/utils";
 import ChatItem from "./chatItem.vue";
 import { useAiBotsStore } from "@/stores/aiBots";
 import { useChatsStore } from "@/stores/chats";
+import { marked } from "marked";
 
 const helpIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/QuestionCircleOutlined")
