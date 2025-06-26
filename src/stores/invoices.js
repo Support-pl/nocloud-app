@@ -158,19 +158,22 @@ export const useInvoicesStore = defineStore("invoices", () => {
 
       for await (const event of stream.value) {
         switch (event.event) {
-          case BillingEvent.EVENT_INVOICE_CREATED: {
-            const invoice = toInvoice(event.body.invoice.toJson());
-
-            invoices.value.unshift(invoice);
-
-            break;
-          }
           case BillingEvent.EVENT_INVOICE_UPDATED: {
             const invoice = toInvoice(event.body.invoice.toJson());
 
             invoices.value = invoices.value.map((i) =>
               i.payment_invoice_id === invoice.payment_invoice_id ? invoice : i
             );
+
+            const index = invoices.value.findIndex(
+              (i) => i.payment_invoice_id === invoice.payment_invoice_id
+            );
+
+            if (index !== -1) {
+              invoices.computed[index] = invoice;
+            } else {
+              invoices.value.unshift(invoice);
+            }
 
             break;
           }

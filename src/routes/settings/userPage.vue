@@ -226,6 +226,8 @@ const rules = computed(() => ({
   bic: [{ required: false }],
 }));
 
+fetchInfo(true);
+
 onMounted(() => {
   reqRule.message = `${i18n.t("ssl_product.field is required")}`;
 });
@@ -478,9 +480,6 @@ const inputColors = computed(() =>
     ? { background: "var(--bright_bg)", border: "var(--bright_font)" }
     : { background: "inherit", border: "var(--border_color)" }
 );
-
-if (!("firstname" in billingUser.value)) fetchInfo();
-else installDataToBuffer();
 </script>
 
 <script>
