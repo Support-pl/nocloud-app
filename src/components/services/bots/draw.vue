@@ -24,7 +24,60 @@
     </a-col>
 
     <a-col span="24">
-      <span class="field_title">Delay:</span>
+      <span class="field_title"
+        >Temperature: {{ bot.settings?.temperature }}
+        <a-tooltip>
+          <template #title>
+            <span
+              v-html="
+                'Чем выше значение temperature, тем креативнее и разнообразнее ответы.\n0 — строго и предсказуемо.\n1 — естественный стиль с долей креативности.\n2 — максимально креативно и неожиданно.'.replaceAll(
+                  '\n',
+                  '<br/>'
+                )
+              "
+            >
+            </span>
+          </template>
+          <help-icon style="margin-left: 5px" /> </a-tooltip
+      ></span>
+      <a-slider
+        @change="bot.settings.temperature = $event"
+        :value="bot.settings?.temperature"
+        :marks="temperatureMarks"
+        :tip-formatter="
+          (value) => {
+            return `${value}`;
+          }
+        "
+        :step="0.1"
+        :min="0.0"
+        :max="2.0"
+      >
+        <template #mark="{ label, point }">
+          <template v-if="point === 100">
+            <strong>{{ label }}</strong>
+          </template>
+          <template v-else>{{ label }}</template>
+        </template>
+      </a-slider>
+    </a-col>
+
+    <a-col span="24">
+      <span class="field_title"
+        >Delay: {{ bot.settings?.delay }} seconds<a-tooltip>
+          <template #title>
+            <span
+              v-html="
+                'Задержка перед ответом бота.\nУказывается в секундах.\n0 — ответ сразу.\n3 — бот ждёт 3 секунды перед ответом.\nИспользуется для имитации «человеческой паузы».'.replaceAll(
+                  '\n',
+                  '<br/>'
+                )
+              "
+            >
+            </span>
+          </template>
+          <help-icon style="margin-left: 5px" /> </a-tooltip
+      ></span>
       <a-slider
         @change="bot.settings.delay = $event"
         :value="bot.settings?.delay"
@@ -138,12 +191,16 @@
 
 <script setup>
 import api from "@/api";
-import { capitalize, computed, ref } from "vue";
+import { capitalize, computed, defineAsyncComponent, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
 import ChatItem from "./chatItem.vue";
 import { useAiBotsStore } from "@/stores/aiBots";
 import { useChatsStore } from "@/stores/chats";
+
+const helpIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/QuestionCircleOutlined")
+);
 
 const props = defineProps({
   service: { type: Object, required: true },
@@ -164,6 +221,21 @@ const delayMarks = Object.fromEntries(
       ];
     })
 );
+
+const temperatureMarks = Object.fromEntries(
+  [0.5, 1, 1.5, 2.0].map((v) => {
+    const hue = 200 - (v / 2) * (200 - 15); // нормализация: 0.5–2.0 в диапазоне 200–15
+    return [
+      v,
+      {
+        style: { color: `hsl(${hue.toFixed(0)}, 50%, 70%)` },
+        label: `${v}`,
+      },
+    ];
+  })
+);
+
+console.log(temperatureMarks);
 
 const chanellsOptions = [{ title: "Telegram", key: "telegram" }];
 

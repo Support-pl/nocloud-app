@@ -81,6 +81,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           delay: bot.settings.delay,
           model: bot.settings.ai_model,
           system_prompt: bot.settings.system_prompt,
+          temperature: bot.settings.temperature,
         });
 
         bots.value.set(bot.id, data);
