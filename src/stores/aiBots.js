@@ -8,6 +8,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
   const chats = ref(new Map());
   const messages = ref({});
   const socket = ref(null);
+  const chatParticipants = ref();
 
   async function fetchChatsMessages(chatId) {
     try {
@@ -15,6 +16,20 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
       messages.value[chatId] = data.messages;
       return data.messages;
+    } catch (error) {
+      console.debug(error);
+      throw error;
+    }
+  }
+
+  async function fetchParticipants() {
+    try {
+      const { chat_participants } = await api.get(
+        `/agents/api/get_participants`
+      );
+      chatParticipants.value = chat_participants;
+
+      return chat_participants;
     } catch (error) {
       console.debug(error);
       throw error;
@@ -62,6 +77,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     messages,
     chats,
     bots,
+    chatParticipants,
 
     async getBot(botId) {
       try {
@@ -93,18 +109,14 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
     async fetchChats(botId) {
       try {
-        const data = (await api.get("/agents/api/list_chats")).chats || [];
+        let data = (await api.get("/agents/api/list_chats")).chats || [];
 
-        await Promise.all([
-          ...data.map(async (chat) => {
-            const { participants } = await api.get(
-              `/agents/api/get_chat_participants/${chat.id}`
-            );
+        await fetchParticipants();
 
-            chat.name = participants.map((p) => p.name).join(" + ");
-            chat.participants = participants;
-          }),
-        ]);
+        data = data.map((chat) => ({
+          ...chat,
+          name: chatParticipants.value[chat.id].find((p) => p.role === 1)?.name,
+        }));
 
         chats.value.set(botId, data);
         return data;
