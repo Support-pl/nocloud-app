@@ -2,7 +2,7 @@
   <a-row class="bots" style="margin-top: 10px" :gutter="[10, 10]">
     <a-col span="24">
       <span class="field_title"
-        >{{ capitalize(t("model")) }}:
+        >{{ capitalize(t("bots.fields.model")) }}:
         {{
           chatsStore.globalModelsList.find(
             (m) => m.key === bot.settings.ai_model
@@ -11,33 +11,16 @@
       >
     </a-col>
     <a-col span="24">
-      <span
-        v-html="
-          marked(`
-**GPT-4o Mini** — облегчённая версия модели GPT-4o, оптимизированная для быстрой и эффективной работы в режиме реального времени.
-
-Мы выбрали GPT-4o Mini для вашего онлайн-ассистента, потому что она сочетает в себе высокую скорость, эффективность и надежность, обеспечивая при этом качественные и живые ответы.
-
-`)
-        "
-      >
-      </span>
+      <span v-html="marked(t('bots.tips.model'))"> </span>
     </a-col>
 
     <a-col span="24">
       <span class="field_title"
-        >Bot promt:
+        >{{ t("bots.fields.promt") }}:
 
         <a-tooltip>
           <template #title>
-            <span
-              v-html="
-                'Промпт — это начальный текст или команда, которые вы даёте ассистенту, чтобы направить его ответы в нужное русло.\nХорошо составленный промпт помогает получить более точные и релевантные ответы.\nМожно использовать инструкции, вопросы или примеры, чтобы задать контекст.'.replaceAll(
-                  '\n',
-                  '<br/>'
-                )
-              "
-            >
+            <span v-html="t('bots.tips.promt').replaceAll('\n', '<br/>')">
             </span>
           </template>
           <help-icon style="margin-left: 5px" />
@@ -46,24 +29,17 @@
       <a-textarea
         style="margin-top: 10px"
         v-model:value="bot.settings.system_prompt"
-        placeholder="more about promt"
+        :placeholder="t('bots.fields.promt')"
         :auto-size="{ minRows: 4 }"
       />
     </a-col>
 
     <a-col span="24">
       <span class="field_title"
-        >Temperature: {{ bot.settings?.temperature }}
+        >{{ t("bots.fields.temperature") }}: {{ bot.settings?.temperature }}
         <a-tooltip>
           <template #title>
-            <span
-              v-html="
-                'Чем выше значение temperature, тем креативнее и разнообразнее ответы.\n0 — строго и предсказуемо.\n1 — естественный стиль с долей креативности.\n2 — максимально креативно и неожиданно.'.replaceAll(
-                  '\n',
-                  '<br/>'
-                )
-              "
-            >
+            <span v-html="t('bots.tips.temperature').replaceAll('\n', '<br/>')">
             </span>
           </template>
           <help-icon style="margin-left: 5px" />
@@ -93,16 +69,11 @@
 
     <a-col span="24">
       <span class="field_title"
-        >Delay: {{ bot.settings?.delay }} seconds<a-tooltip>
+        >{{ t("bots.fields.delay") }}: {{ bot.settings?.delay }}
+        {{ t("bots.labels.seconds")
+        }}<a-tooltip>
           <template #title>
-            <span
-              v-html="
-                'Задержка перед ответом бота.\nУказывается в секундах.\n0 — ответ сразу.\n3 — бот ждёт 3 секунды перед ответом.\nИспользуется для имитации «человеческой паузы».'.replaceAll(
-                  '\n',
-                  '<br/>'
-                )
-              "
-            >
+            <span v-html="t('bots.tips.delay').replaceAll('\n', '<br/>')">
             </span>
           </template>
           <help-icon style="margin-left: 5px" /> </a-tooltip
@@ -113,7 +84,7 @@
         :marks="delayMarks"
         :tip-formatter="
           (value) => {
-            return `${value} seconds`;
+            return `${value} ${t('bots.labels.seconds')}`;
           }
         "
         :step="5"
@@ -134,25 +105,18 @@
           :loading="isBotSaveLoading"
           @click="handleSaveBot"
           :type="isSavePrimary ? 'primary' : 'default'"
-          >{{ t("Save") }}
+          >{{ t("bots.actions.save_bot") }}
         </a-button>
       </a-row>
     </a-col>
 
     <a-col span="24">
       <span class="field_title"
-        >Channels:
+        >{{ t("bots.fields.channels") }}:
 
         <a-tooltip>
           <template #title>
-            <span
-              v-html="
-                'Создайте канал для вашего онлайн-ассистента.\nВсе сообщения, отправленные в этот канал, будут автоматически обрабатываться ботом и получать ответы.'.replaceAll(
-                  '\n',
-                  '<br/>'
-                )
-              "
-            >
+            <span v-html="t('bots.tips.channels').replaceAll('\n', '<br/>')">
             </span>
           </template>
           <help-icon style="margin-left: 5px" />
@@ -198,13 +162,16 @@
         <a-col span="6" v-if="bot.channels.length > 0">
           <div @click="openChanellAdd()" class="chanell">
             <plus-circle-outlined style="font-size: 2rem" class="img_prod" />
-            <span>Add new chanell</span>
+            <span>{{ t("bots.actions.add_new_chanell") }}</span>
           </div>
         </a-col>
       </a-row>
     </a-col>
 
-    <a-modal v-model:open="isChanellAddOpen" :title="`Add chanell`">
+    <a-modal
+      v-model:open="isChanellAddOpen"
+      :title="t('bots.labels.add_new_chanell_title')"
+    >
       <a-form
         ref="addChanellFormRef"
         layout="vertical"
@@ -212,7 +179,7 @@
         :model="newChanellData"
         :rules="newChanellFormRules"
       >
-        <a-form-item name="type" label="Type">
+        <a-form-item name="type" :label="t('bots.fields.chanell_type')">
           <a-select
             v-model:value="newChanellData.type"
             :options="
@@ -224,13 +191,29 @@
           ></a-select>
         </a-form-item>
 
-        <a-form-item name="bot_secret" label="Secret key">
-          <a-input
-            type="password"
-            v-model:value="newChanellData.bot_secret"
-            placeholder="Secret key"
-            autocomplete="off"
-          />
+        <a-form-item
+          name="bot_secret"
+          :label="t('bots.fields.chanell_secret_key')"
+        >
+          <div style="display: flex">
+            <a-input
+              type="password"
+              v-model:value="newChanellData.bot_secret"
+              :placeholder="t('bots.fields.chanell_secret_key')"
+              autocomplete="off"
+            />
+            <a-tooltip>
+              <template #title>
+                <span
+                  v-html="
+                    t('bots.tips.chanell_secret_key').replaceAll('\n', '<br/>')
+                  "
+                >
+                </span>
+              </template>
+              <help-icon style="font-size: 1.5rem; margin-left: 5px" />
+            </a-tooltip>
+          </div>
         </a-form-item>
       </a-form>
 
@@ -248,14 +231,16 @@
           :loading="isChanellSaveLoading"
           :disabled="isChanellDeleteLoading"
           @click="handleAddChanell"
-          >{{ t("Add") }}</a-button
+          >{{ t("bots.actions.add_chanell") }}</a-button
         >
       </template>
     </a-modal>
 
     <a-modal
       v-model:open="isChanellEditOpen"
-      :title="`Chanell ${selectedEditedChanell.title}`"
+      :title="`${t('bots.labels.edit_chanell_title')} ${
+        selectedEditedChanell.title
+      }`"
     >
       <a-form
         ref="editChanellFormRef"
@@ -264,7 +249,7 @@
         :model="editedChanellData"
         :rules="editChanellFormRules"
       >
-        <a-form-item label="Link">
+        <a-form-item :label="t('bots.fields.chanell_link')">
           <a
             target="_blank"
             :href="`https://${selectedEditedChanell.data.metadata.username}`"
@@ -273,24 +258,42 @@
           >
         </a-form-item>
 
-        <a-form-item label="Firstname">
+        <a-form-item :label="t('bots.fields.chanell_firstname')">
           <span> {{ selectedEditedChanell.data.metadata.firstname }}</span>
         </a-form-item>
 
-        <a-form-item name="name" label="Name">
+        <a-form-item name="name" :label="t('bots.fields.chanell_name')">
           <a-input
             v-model:value="editedChanellData.name"
-            placeholder="Name"
+            :placeholder="t('bots.fields.chanell_name')"
             autocomplete="off"
           />
         </a-form-item>
-        <a-form-item name="bot_secret" label="Secret key" autocomplete="off">
-          <a-input
-            type="password"
-            v-model:value="editedChanellData.bot_secret"
-            placeholder="Secret key"
-            autocomplete="off"
-          />
+        <a-form-item
+          name="bot_secret"
+          :label="t('bots.fields.chanell_secret_key')"
+          autocomplete="off"
+        >
+          <div style="display: flex">
+            <a-input
+              type="password"
+              v-model:value="editedChanellData.bot_secret"
+              :placeholder="t('bots.fields.chanell_secret_key')"
+              autocomplete="off"
+            />
+
+            <a-tooltip>
+              <template #title>
+                <span
+                  v-html="
+                    t('bots.tips.chanell_secret_key').replaceAll('\n', '<br/>')
+                  "
+                >
+                </span>
+              </template>
+              <help-icon style="font-size: 1.5rem; margin-left: 5px" />
+            </a-tooltip>
+          </div>
         </a-form-item>
       </a-form>
 
@@ -303,13 +306,13 @@
         >
 
         <a-popconfirm
-          title="You realy wanna delete chanell??)"
+          :title="t('bots.labels.delete_confirm_label')"
           :ok-text="t('Yes')"
           :cancel-text="t('Cancel')"
           @confirm="handleDeleteChanell"
         >
           <a-button key="back" :loading="isChanellDeleteLoading" danger>{{
-            t("Delete")
+            t("bots.actions.delete_chanell")
           }}</a-button>
         </a-popconfirm>
 
@@ -319,8 +322,9 @@
           :loading="isChanellSaveLoading"
           :disabled="isChanellDeleteLoading"
           @click="handleSaveChanell"
-          >{{ t("Save") }}</a-button
         >
+          {{ t("bots.actions.update_chanell") }}
+        </a-button>
       </template>
     </a-modal>
   </a-row>
@@ -336,8 +340,7 @@
       <a-card style="padding: 10px; margin-top: 20px">
         <div style="display: flex; justify-content: center">
           <span style="text-align: center; font-size: 1rem">
-            Пока нет обращений от пользователей. Как только ваши клиенты начнут
-            общаться с ботами, вы увидите здесь переписку в реальном времени.
+            {{ t("bots.labels.no_chats") }}
           </span>
         </div>
       </a-card>
@@ -367,20 +370,24 @@ const props = defineProps({
   service: { type: Object, required: true },
 });
 
-const delayMarks = Object.fromEntries(
-  [...Array(10).keys()]
-    .map((i) => i + 1)
-    .concat(Array.from({ length: (100 - 15) / 5 + 1 }, (_, i) => 15 + i * 5))
-    .map((v) => {
-      const hue = 200 - ((v - 1) / (100 - 1)) * (200 - 15);
-      return [
-        v,
-        {
-          style: { color: `hsl(${hue.toFixed(0)}, 50%, 70%)` },
-          ...([1, 10, 25, 50, 75, 100].includes(v) ? { label: `${v}s` } : {}),
-        },
-      ];
-    })
+const delayMarks = computed(() =>
+  Object.fromEntries(
+    [...Array(10).keys()]
+      .map((i) => i + 1)
+      .concat(Array.from({ length: (100 - 15) / 5 + 1 }, (_, i) => 15 + i * 5))
+      .map((v) => {
+        const hue = 200 - ((v - 1) / (100 - 1)) * (200 - 15);
+        return [
+          v,
+          {
+            style: { color: `hsl(${hue.toFixed(0)}, 50%, 70%)` },
+            ...([1, 10, 25, 50, 75, 100].includes(v)
+              ? { label: `${v}${t("bots.labels.s")}` }
+              : {}),
+          },
+        ];
+      })
+  )
 );
 
 const temperatureMarks = Object.fromEntries(
