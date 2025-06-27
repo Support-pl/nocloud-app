@@ -59,6 +59,10 @@
         </template>
       </a-button>
     </div>
+
+    <div v-if="chat.unread_count > 0 && !header" class="chat_unread_badge">
+      {{ chat.unread_count }}
+    </div>
   </div>
 </template>
 
@@ -155,6 +159,7 @@ export default { name: "chatItem" };
   background-color: var(--bright_font);
   transition: 0.2s;
   display: flex;
+  position: relative;
 }
 
 .chat_item.base {
@@ -199,7 +204,7 @@ export default { name: "chatItem" };
 
 .chat__content {
   margin-left: 10px;
-  max-width: calc(100% - 90px);
+  max-width: calc(100% - 95px);
   width: 100%;
 }
 
@@ -231,9 +236,9 @@ export default { name: "chatItem" };
   display: flex;
   justify-content: center;
   align-items: center;
+  position: absolute;
+  right: 15px;
   font-size: 1.5rem;
-  margin-left: 10px;
-  margin-right: 10px;
 }
 
 .chat_state.header {
@@ -258,5 +263,24 @@ export default { name: "chatItem" };
   right: 0;
   width: 15px;
   height: 15px;
+}
+
+.chat_unread_badge {
+  position: absolute;
+  top: 10px;
+  right: 13px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  background-color: rgb(219, 46, 46);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px white; 
+  transform: translate(50%, -50%);
 }
 </style>
