@@ -54,9 +54,9 @@
             return `${value}`;
           }
         "
-        :step="0.1"
+        :step="0.05"
         :min="0.0"
-        :max="2.0"
+        :max="1.0"
       >
         <template #mark="{ label, point }">
           <template v-if="point === 100">
@@ -391,13 +391,14 @@ const delayMarks = computed(() =>
 );
 
 const temperatureMarks = Object.fromEntries(
-  [0.5, 1, 1.5, 2.0].map((v) => {
-    const hue = 200 - (v / 2) * (200 - 15); // нормализация: 0.5–2.0 в диапазоне 200–15
+  [0, 0.25, 0.5, 0.75, 1.0].map((v) => {
+    const hue = 200 - v * (200 - 15); // нормализация: 0–1 в диапазоне 200–15
+    const isInteger = Number.isInteger(v);
     return [
       v,
       {
         style: { color: `hsl(${hue.toFixed(0)}, 50%, 70%)` },
-        label: `${v}`,
+        label: isInteger ? `${v}` : `${v.toFixed(2)}`,
       },
     ];
   })
