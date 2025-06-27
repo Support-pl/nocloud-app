@@ -1,70 +1,43 @@
 <template>
-  <a-alert
-    v-if="!isLoading"
-    ref="notification"
-    type="info"
-    class="alert__notification"
+  <div
+    style="display: flex; justify-content: space-between; width: 100%"
+    @click="isVisible = !isVisible"
   >
-    <template #message>
-      <div
-        style="display: flex; justify-content: space-between"
-        @click="isVisible = !isVisible"
-      >
-        <div style="display: flex; justify-content: space-between; width: 100%">
-          <span> {{ chat.name }} </span>
+    <div
+      style="
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        position: relative;
+      "
+    >
+      <chat-item header :chat="chat" />
 
-          <div>
-            <span v-if="model" style="margin-right: 10px">
-              <a-tag
-                color="primary"
-                style="border-color: var(--main); margin-inline-end: 0px"
-              >
-                <template #icon>
-                  <ai-icon />
-                </template>
-                <span style="margin-inline-start: 0px">
-                  {{
-                    globalModelsList.find((m) => m.key === model)?.name || model
-                  }}
-                </span>
-              </a-tag>
-            </span>
-
-            <plus-icon
-              v-if="isVisible"
-              :rotate="45"
-              style="margin-left: auto"
-            />
-            <down-icon v-else style="margin-left: auto" />
-          </div>
-        </div>
+      <div style="position: absolute; top: 15px; right: 15px">
+        <plus-icon v-if="isVisible" :rotate="45" style="margin-left: auto" />
+        <down-icon v-else style="margin-left: auto" />
       </div>
-    </template>
-  </a-alert>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import {
   watch,
-  computed,
   onMounted,
   ref,
   nextTick,
   defineAsyncComponent,
-  capitalize,
 } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useChatsStore } from "@/stores/chats.js";
 import { useNotification } from "@/hooks/utils";
 import { toRefs } from "vue";
-import { storeToRefs } from "pinia";
+import ChatItem from "./chatItem.vue";
 
 const downIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DownOutlined")
-);
-const aiIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/RobotOutlined")
 );
 const plusIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlusOutlined")
@@ -83,7 +56,6 @@ const i18n = useI18n();
 const { openNotification } = useNotification();
 
 const chatsStore = useChatsStore();
-const { globalModelsList } = storeToRefs(chatsStore);
 
 watch(
   () => props.isLoading,
@@ -105,14 +77,6 @@ const isDeleteLoading = ref(false);
 
 watch(chat, (value) => {
   setOptions(value);
-});
-
-const model = computed(() => {
-  console.log(bot.value);
-
-  const model = bot.value?.settings?.ai_model;
-
-  return model ?? "";
 });
 
 async function updateChat() {

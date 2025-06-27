@@ -1,67 +1,80 @@
 <template>
   <div class="chat">
-    <loading v-if="isLoading" />
-    <div v-else ref="content" class="chat__content">
-      <chat-header :chat="chat" :bot="bot" />
+    <template v-if="isLoading">
+      <div />
+      <loading />
+    </template>
 
-      <template v-for="(reply, i) in messages" :key="i">
-        <span v-if="isDateVisible(messages, i)" class="chat__date">
-          {{ reply.created_at.split("T")[0] }}
-        </span>
+    <template v-else>
+      <chat-header
+        style="margin: 10px auto 0"
+        v-if="!isLoading"
+        :chat="chat"
+        :bot="bot"
+      />
+      <div ref="content" class="chat__content">
+        <template v-for="(reply, i) in messages" :key="i">
+          <span v-if="isDateVisible(messages, i)" class="chat__date">
+            {{ reply.created_at.split("T")[0] }}
+          </span>
 
-        <a-popover
-          :overlay-class-name="
-            reply.error ? 'chat__tooltip error' : 'chat__tooltip'
-          "
-          :trigger="reply.error ? 'click' : 'hover'"
-          :placement="isAdminSent(reply) ? 'rightBottom' : 'leftBottom'"
-        >
-          <template #content>
-            <div style="cursor: pointer" @click="addToClipboard(reply.message)">
-              <copy-icon /> {{ capitalize($t("copy")) }}
-            </div>
-          </template>
-
-          <div
-            :key="`${i}_message`"
-            class="chat__message"
-            :class="[
-              isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
-            ]"
+          <a-popover
+            :overlay-class-name="
+              reply.error ? 'chat__tooltip error' : 'chat__tooltip'
+            "
+            :trigger="reply.error ? 'click' : 'hover'"
+            :placement="isAdminSent(reply) ? 'rightBottom' : 'leftBottom'"
           >
-            <pre>
+            <template #content>
+              <div
+                style="cursor: pointer"
+                @click="addToClipboard(reply.message)"
+              >
+                <copy-icon /> {{ capitalize($t("copy")) }}
+              </div>
+            </template>
+
+            <div
+              :key="`${i}_message`"
+              class="chat__message"
+              :class="[
+                isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
+              ]"
+            >
+              <pre>
               <message-content :uuid="reply.id" :message="reply.body"/>
             </pre>
 
-            <div class="chat__info">
-              <span>{{
-                chat?.participants?.find(
-                  (p) => p.ext_id === reply.sender_ext_id
-                )?.name
-              }}</span>
-              <span>{{ getMessageTime(reply) }}</span>
-            </div>
-
-            <loading-icon v-if="reply.sending" class="msgStatus loading" />
-            <a-popover v-else-if="reply.error" :title="$t('Send error')">
-              <template #content>
-                <a class="popover-link" @click="deleteMessage(reply)">
-                  {{ $t("chat_Delete_message") }}
-                </a>
-                <a class="popover-link" @click="resendMessage(reply)">
-                  {{ $t("chat_Resend_message") }}
-                </a>
-              </template>
-              <div class="msgStatus error">
-                <exclamation-icon />
+              <div class="chat__info">
+                <span>{{
+                  chatParticipants[chat.id]?.find(
+                    (p) => p.ext_id === reply.sender_ext_id
+                  )?.name
+                }}</span>
+                <span>{{ getMessageTime(reply) }}</span>
               </div>
-            </a-popover>
-          </div>
-        </a-popover>
-      </template>
 
-      <typing-placeholder v-if="isPlaceholderVisible" />
-    </div>
+              <loading-icon v-if="reply.sending" class="msgStatus loading" />
+              <a-popover v-else-if="reply.error" :title="$t('Send error')">
+                <template #content>
+                  <a class="popover-link" @click="deleteMessage(reply)">
+                    {{ $t("chat_Delete_message") }}
+                  </a>
+                  <a class="popover-link" @click="resendMessage(reply)">
+                    {{ $t("chat_Resend_message") }}
+                  </a>
+                </template>
+                <div class="msgStatus error">
+                  <exclamation-icon />
+                </div>
+              </a-popover>
+            </div>
+          </a-popover>
+        </template>
+
+        <typing-placeholder v-if="isPlaceholderVisible" />
+      </div>
+    </template>
 
     <div ref="chatList" class="chat__list">
       <a-input
@@ -82,7 +95,7 @@
         compact
       />
     </div>
-
+    <div></div>
     <chat-footer ref="footer" v-model:messages="messages" :chat="chat" />
   </div>
 </template>
@@ -129,7 +142,7 @@ const { addToClipboard } = useClipboard();
 const chatsStore = useChatsStore();
 
 const aiBotsStore = useAiBotsStore();
-const { chats: allChats, bots } = toRefs(aiBotsStore);
+const { chats: allChats, bots, chatParticipants } = toRefs(aiBotsStore);
 
 onBeforeRouteUpdate((to, from, next) => {
   chatId.value = to.params.chatId;
@@ -291,7 +304,7 @@ export default { name: "AiBotChat" };
   position: relative;
   display: grid;
   grid-template-columns: min(400px, 35vw - 20px) min(968px, 65vw - 20px);
-  grid-template-rows: 1fr auto;
+  grid-template-rows: auto 1fr auto;
   justify-content: center;
   gap: 10px;
   height: 100%;
@@ -328,7 +341,6 @@ export default { name: "AiBotChat" };
   max-width: 968px;
   width: 100%;
   height: 100%;
-  margin: 10px auto 0;
   padding: v-bind("chatPaddingTop") 15px 6px;
 
   border: 1px solid var(--border_color);

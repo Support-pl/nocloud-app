@@ -23,10 +23,8 @@
 
 <script setup>
 import { computed, defineAsyncComponent, nextTick, ref } from "vue";
-import { useRoute } from "vue-router";
 import markdown from "markdown-it";
 import { full as emoji } from "markdown-it-emoji";
-import { toDate } from "@/functions.js";
 import { useAiBotsStore } from "@/stores/aiBots";
 
 const md = markdown({
@@ -46,7 +44,6 @@ const props = defineProps({
 });
 const emits = defineEmits(["update:messages"]);
 
-const route = useRoute();
 const aiBotsStore = useAiBotsStore();
 
 const textarea = ref();
@@ -150,5 +147,9 @@ export default { name: "SupportFooter" };
 
 .chat__send:active {
   filter: brightness(0.95);
+}
+
+.chat__footer {
+  padding: 5px;
 }
 </style>

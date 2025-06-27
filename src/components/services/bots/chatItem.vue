@@ -1,5 +1,9 @@
 <template>
-  <div class="chat_item" :class="{ compact }" @click="chatClick(chat.id)">
+  <div
+    class="chat_item"
+    :class="{ compact, base: !header, header: header }"
+    @click="header ? null : chatClick(chat.id)"
+  >
     <div class="chat_avatar_wrapper">
       <a-avatar size="large" class="chat__avatar">
         {{
@@ -17,7 +21,7 @@
       />
     </div>
 
-    <div class="chat__content">
+    <div v-if="!header" class="chat__content">
       <div class="chat__upper">
         <div class="chat__title">
           {{ chat.name }}
@@ -32,6 +36,14 @@
         </div>
       </div>
     </div>
+
+    <div v-else class="chat__content header">
+      <div class="chat__upper header">
+        <div class="chat__title header">
+          {{ chat.name }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -43,6 +55,7 @@ const props = defineProps({
   chat: { type: Object, required: true },
   botId: { type: String, required: true },
   compact: { type: Boolean, default: false },
+  header: { type: Boolean, default: false },
 });
 
 const router = useRouter();
@@ -97,26 +110,34 @@ export default { name: "chatItem" };
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
   background-color: var(--bright_font);
-  cursor: pointer;
   transition: 0.2s;
   display: flex;
 }
 
-.chat_item:hover {
+.chat_item.base {
+  cursor: pointer;
+}
+
+.chat_item.header {
+  width: 100%;
+}
+
+.chat_item.base:hover {
   filter: contrast(0.7);
   transition: 0.2s;
 }
 
-.chat_item.compact {
+.chat_item.base.compact {
   box-shadow: none;
   border-radius: 0;
+  padding: 10px;
 }
 
-.chat_item:not(:last-child) {
+.chat_item.base:not(:last-child) {
   margin-bottom: 20px;
 }
 
-.chat_item.compact:not(:last-child) {
+.chat_item.base.compact:not(:last-child) {
   margin-bottom: 0;
   border-bottom: 1px solid var(--border_color);
 }
@@ -136,6 +157,19 @@ export default { name: "chatItem" };
 .chat__content {
   margin-left: 10px;
   max-width: calc(100% - 55px);
+  width: 100%;
+}
+
+.chat__title.header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  font-size: 1.2rem;
+}
+
+.chat__upper.header {
+  height: 100%;
 }
 
 .chat__message,
