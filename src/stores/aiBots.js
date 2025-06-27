@@ -50,7 +50,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     ]);
 
     socket.value.addEventListener("message", (event) => {
-      console.log("📩 Получено сообщение:", event.data);
+      console.log("AI BOTS MESSAGE", event.data);
       const data = JSON.parse(event.data);
       switch (data.event) {
         case "message_sent": {
@@ -60,9 +60,28 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           ) {
             messages.value[data.message.chat_id].push(data.message);
           }
+          break;
         }
         case "chat_created": {
-          console.log(data);
+          if (chats.value.get(data.chat.bot_id)) {
+            chats.value.get(data.chat.bot_id).push(data.chat);
+          } else {
+            chats.value.set(data.chat.bot_id, [data.chat]);
+          }
+          break;
+        }
+        case "participant_created":
+        case "participant_updated": {
+          if (chatParticipants.value[data.participant.chat_id]) {
+            chatParticipants.value[data.participant.chat_id].push(
+              data.participant
+            );
+          } else {
+            chatParticipants.value[data.participant.chat_id] = [
+              data.participant,
+            ];
+          }
+          break;
         }
       }
     });
@@ -109,15 +128,10 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
     async fetchChats(botId) {
       try {
-        let data =
+        const data =
           (await api.get("/agents/api/list_chats?bot=" + botId)).chats || [];
 
         await fetchParticipants();
-
-        data = data.map((chat) => ({
-          ...chat,
-          name: chatParticipants.value[chat.id].find((p) => p.role === 1)?.name,
-        }));
 
         chats.value.set(botId, data);
         return data;

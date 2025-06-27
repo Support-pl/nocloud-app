@@ -421,8 +421,6 @@ const bot = ref({
 });
 const ogBot = ref();
 
-const chats = ref([]);
-
 const isChanellEditOpen = ref(false);
 const isChanellAddOpen = ref(false);
 const isChanellSaveLoading = ref(false);
@@ -471,6 +469,10 @@ const isSavePrimary = computed(
   () => JSON.stringify(ogBot.value) != JSON.stringify(bot.value)
 );
 
+const chats = computed(() =>
+  (aiBotsStore.chats.get(bot.value.id) || []).slice(0, 3)
+);
+
 async function fetch() {
   try {
     isLoading.value = true;
@@ -481,7 +483,7 @@ async function fetch() {
     }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
 
-    chats.value = (await aiBotsStore.fetchChats(bot.value.id)).slice(0, 3);
+    await aiBotsStore.fetchChats(bot.value.id);
 
     aiBotsStore.startChatsStream();
   } catch (err) {
