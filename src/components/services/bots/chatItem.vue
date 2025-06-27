@@ -1,10 +1,26 @@
 <template>
   <div class="chat_item" :class="{ compact }" @click="chatClick(chat.id)">
-    <div class="chat__status" :style="{ 'background-color': statusColor }" />
+    <div class="chat_avatar_wrapper">
+      <a-avatar size="large" class="chat__avatar">
+        {{
+          chat.name
+            .split(/[\s_]+/)
+            .map((word) => word[0]?.toUpperCase())
+            .filter((char) => /[A-ZА-ЯЁ]/i.test(char))
+            .slice(0, 2)
+            .join("")
+        }}
+      </a-avatar>
+      <img
+        :src="`/img/icons/${chat.channel_id.split('_')[0]}.png`"
+        class="chat_chanell_icon"
+      />
+    </div>
+
     <div class="chat__content">
       <div class="chat__upper">
         <div class="chat__title">
-          #{{ chat.id.split("-")[0] }} - {{ chat.name }}
+          {{ chat.name }}
         </div>
       </div>
       <div class="chat__lower">
@@ -12,7 +28,7 @@
           {{ beauty(chat) }}
         </div>
         <div class="chat__time">
-          {{ toDate(chat.last_message_at) }}
+          {{ formatDate(chat.last_message_at) }}
         </div>
       </div>
     </div>
@@ -20,10 +36,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
 import { useRouter } from "vue-router";
-import { toDate } from "@/functions.js";
-import config from "@/appconfig.js";
 import { useI18n } from "vue-i18n";
 
 const props = defineProps({
@@ -35,9 +48,17 @@ const props = defineProps({
 const router = useRouter();
 const { t } = useI18n();
 
-const statusColor = computed(() => {
-  return config.colors.main;
-});
+function formatDate(date) {
+  date = new Date(date);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // месяцы 0-11
+  const year = date.getFullYear();
+
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${day}.${month}.${year} ${hours}:${minutes}`;
+}
 
 function chatClick(id) {
   router.push(`/ai-bots/${props.botId}/chats/${id}`);
@@ -78,6 +99,7 @@ export default { name: "chatItem" };
   background-color: var(--bright_font);
   cursor: pointer;
   transition: 0.2s;
+  display: flex;
 }
 
 .chat_item:hover {
@@ -111,14 +133,9 @@ export default { name: "chatItem" };
   justify-content: space-between;
 }
 
-.chat__status {
-  width: 10px;
-  height: 10px;
-  position: absolute;
-  border-radius: 50%;
-  top: 50%;
-  left: 20px;
-  transform: translateY(-50%);
+.chat__content {
+  margin-left: 10px;
+  max-width: calc(100% - 55px);
 }
 
 .chat__message,
@@ -140,7 +157,16 @@ export default { name: "chatItem" };
   flex-shrink: 0;
 }
 
-.chat__status-text {
-  white-space: nowrap;
+.chat_avatar_wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.chat_chanell_icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 15px;
+  height: 15px;
 }
 </style>
