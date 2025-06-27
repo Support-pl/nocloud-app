@@ -87,7 +87,9 @@
             return `${value} ${t('bots.labels.seconds')}`;
           }
         "
-        :step="5"
+        :step="1"
+        :min="0"
+        :max="100"
       >
         <template #mark="{ label, point }">
           <template v-if="point === 100">
@@ -372,21 +374,16 @@ const props = defineProps({
 
 const delayMarks = computed(() =>
   Object.fromEntries(
-    [...Array(10).keys()]
-      .map((i) => i + 1)
-      .concat(Array.from({ length: (100 - 15) / 5 + 1 }, (_, i) => 15 + i * 5))
-      .map((v) => {
-        const hue = 200 - ((v - 1) / (100 - 1)) * (200 - 15);
-        return [
-          v,
-          {
-            style: { color: `hsl(${hue.toFixed(0)}, 50%, 70%)` },
-            ...([1, 10, 25, 50, 75, 100].includes(v)
-              ? { label: `${v}${t("bots.labels.s")}` }
-              : {}),
-          },
-        ];
-      })
+    [1, 10, 25, 50, 75, 100].map((v) => {
+      const hue = 200 - ((v - 1) / (100 - 1)) * (200 - 15); // нормализация от 1 до 100
+      return [
+        v,
+        {
+          style: { color: `hsl(${hue.toFixed(0)}, 50%, 70%)` },
+          label: `${v}${t("bots.labels.s")}`,
+        },
+      ];
+    })
   )
 );
 
