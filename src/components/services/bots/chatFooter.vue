@@ -11,12 +11,27 @@
           :auto-size="{ minRows: 3, maxRows: 100 }"
           :placeholder="$t('message') + '...'"
           @keyup.shift.enter.exact="newLine"
-          @keydown.enter.exact.prevent="sendMessage"
+          @keydown.enter.exact.prevent="sendChatMessage"
+        />
+
+        <upload-files
+          v-if="showSendFiles"
+          ref="upload"
+          :editing="false"
+          :replies="[]"
         />
       </div>
-      <div class="chat__send" @click="sendMessage">
-        <arrow-up-icon />
-      </div>
+      <a-button
+        size="large"
+        :loading="isSendMessageLoading"
+        type="primary"
+        shape="circle"
+        @click="sendChatMessage"
+      >
+        <template #icon>
+          <arrow-up-icon />
+        </template>
+      </a-button>
     </div>
   </div>
 </template>
@@ -26,6 +41,7 @@ import { computed, defineAsyncComponent, nextTick, ref } from "vue";
 import markdown from "markdown-it";
 import { full as emoji } from "markdown-it-emoji";
 import { useAiBotsStore } from "@/stores/aiBots";
+import UploadFiles from "@/components/support/upload.vue";
 
 const md = markdown({
   html: true,
@@ -47,7 +63,9 @@ const emits = defineEmits(["update:messages"]);
 const aiBotsStore = useAiBotsStore();
 
 const textarea = ref();
+const upload = ref();
 const message = ref("");
+const isSendMessageLoading = ref(false);
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
 
 const columnsStyle = computed(() =>
@@ -58,35 +76,45 @@ function newLine() {
   message.value.replace(/$/, "\n");
 }
 
-async function sendChatMessage(result, messages) {
+async function sendChatMessage() {
   await nextTick();
+
+  const files = await upload.value.fileList;
+
+  const result = message.value.trim();
+  if (result.length < 1) {
+    return;
+  }
+
+  isSendMessageLoading.value = true;
+
   try {
-    const message = {
+    const data = {
       text: result,
+      files: files.map((f) => ({
+        data: f.preview,
+        filename: f.name,
+      })),
     };
 
-    await aiBotsStore.sendMessage(message, props.chat.id);
-    emits("update:messages", messages);
+    await aiBotsStore.sendMessage(data, props.chat.id);
+    emits("update:messages", props.messages);
   } catch (error) {
     console.log(error);
+  } finally {
+    isSendMessageLoading.value = false;
+    message.value = "";
+    upload.value.fileList = [];
   }
-}
-
-async function sendMessage() {
-  if (message.value.trim().length < 1) return;
-
-  await sendChatMessage(message.value.trim(), props.messages);
-
-  message.value = "";
 }
 
 const tagGridColumn = computed(() => (showSendFiles.value ? "1 / 4" : "1 / 3"));
 
-defineExpose({ message, sendMessage });
+defineExpose({ message, sendChatMessage });
 </script>
 
 <script>
-export default { name: "SupportFooter" };
+export default { name: "AiBotFooter" };
 </script>
 
 <style scoped>

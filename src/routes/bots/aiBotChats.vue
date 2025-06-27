@@ -43,6 +43,22 @@
             >
               <pre>
               <message-content :uuid="reply.id" :message="reply.body"/>
+
+               <audio-player
+                v-if="reply.attachments?.length===1 &&['audio/mp3','audio/mpeg'].includes(reply.attachments[0]?.mime_type) "
+                :url="reply.attachments[0]?.storage_url"
+                :name="reply.attachments[0]?.filename"
+              />
+              <div v-else class="chat__files">
+                <div v-for="file of reply.attachments" :key="file.storage_url" class="files__preview">
+                  <img
+                    :src="file.storage_url"
+                    :alt="file.filename"
+                    :onerror="onImageError"
+                    @click="openModal"
+                  >
+                </div>
+              </div>
             </pre>
 
               <div class="chat__info">
