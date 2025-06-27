@@ -120,6 +120,7 @@ import { useAiBotsStore } from "@/stores/aiBots";
 import ChatItem from "@/components/services/bots/chatItem.vue";
 import ChatHeader from "@/components/services/bots/chatHeader.vue";
 import ChatFooter from "@/components/services/bots/chatFooter.vue";
+import { debounce } from "@/functions";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -196,7 +197,7 @@ watch(
     setPlaceholderVisible(oldValue.length > 0 ? oldValue : value);
 
     if (!content.value) return;
-    content.value?.scrollTo(0, content.value?.scrollHeight);
+    scrollDown();
   },
   { deep: true }
 );
@@ -220,6 +221,17 @@ async function fetch() {
 
 fetch();
 
+function scrollDown() {
+  content.value?.scrollTo(0, content.value?.scrollHeight);
+  readLastMessageDebounced();
+}
+
+function readLastMessage() {
+  aiBotsStore.readMessage(messages.value[messages.value.length - 1]);
+}
+
+const readLastMessageDebounced = debounce(readLastMessage, 250);
+
 let timeout;
 function setPlaceholderVisible(messages) {
   if (chat.value?.department !== "openai") return;
@@ -230,7 +242,7 @@ function setPlaceholderVisible(messages) {
       isPlaceholderVisible.value = true;
 
       await nextTick();
-      content.value?.scrollTo(0, content.value?.scrollHeight);
+      scrollDown();
     }, 1000);
 
     setTimeout(() => {
@@ -268,13 +280,12 @@ function isDateVisible(replies, i) {
 async function loadMessages() {
   isLoading.value = true;
   try {
-    console.log(chatId.value);
     const response = await aiBotsStore.fetchChatsMessages(chatId.value);
 
     messages.value = response ?? [];
   } finally {
     nextTick(() => {
-      content.value?.scrollTo(0, content.value?.scrollHeight);
+      scrollDown();
     });
     isLoading.value = false;
 

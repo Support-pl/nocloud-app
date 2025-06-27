@@ -104,6 +104,12 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     });
   }
 
+  function getChatById(chatId) {
+    return [...chats.value.values()]
+      .find((chats) => chats.find((chat) => chat.id === chatId))
+      ?.find((chat) => chat.id === chatId);
+  }
+
   return {
     messages,
     chats,
@@ -176,6 +182,19 @@ export const useAiBotsStore = defineStore("aiBots", () => {
         });
 
         return data;
+      } catch (error) {
+        console.debug(error);
+        throw error;
+      }
+    },
+
+    async readMessage(message) {
+      try {
+        await api.post(`/agents/api/read_message`, { message_id: message.id });
+
+        const chat = getChatById(message.chat_id);
+
+        chat.unread_count = 0;
       } catch (error) {
         console.debug(error);
         throw error;
