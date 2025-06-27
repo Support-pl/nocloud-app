@@ -44,12 +44,36 @@
         </div>
       </div>
     </div>
+
+    <div :class="{ chat_state: true, header: header }">
+      <a-button
+        @click.stop.capture="toggleChatState"
+        type="text"
+        :loading="isTogglePauseLoading"
+        shape="circle"
+        size="large"
+      >
+        <template #icon>
+          <play-outlined style="font-size: 1.5rem" v-if="chat.pause" />
+          <pause-outlined style="font-size: 1.5rem" v-else />
+        </template>
+      </a-button>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { defineAsyncComponent, ref } from "vue";
+import { useAiBotsStore } from "@/stores/aiBots";
+
+const playOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PlayCircleOutlined")
+);
+const pauseOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PauseCircleOutlined")
+);
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -59,7 +83,10 @@ const props = defineProps({
 });
 
 const router = useRouter();
+const aiBotsStore = useAiBotsStore();
 const { t } = useI18n();
+
+const isTogglePauseLoading = ref(false);
 
 function formatDate(date) {
   date = new Date(date);
@@ -90,6 +117,22 @@ function beauty(chat) {
     ? t("attachedFiles")
     : "empty";
 }
+
+const toggleChatState = async () => {
+  isTogglePauseLoading.value = true;
+  try {
+    await aiBotsStore.toggleChatPause(props.chat);
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isTogglePauseLoading.value = false;
+  }
+};
 
 function decode(text) {
   const txt = document.createElement("textarea");
@@ -156,7 +199,7 @@ export default { name: "chatItem" };
 
 .chat__content {
   margin-left: 10px;
-  max-width: calc(100% - 55px);
+  max-width: calc(100% - 90px);
   width: 100%;
 }
 
@@ -182,6 +225,19 @@ export default { name: "chatItem" };
 
 .chat__title {
   font-weight: bold;
+}
+
+.chat_state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.chat_state.header {
+  margin-right: 20px;
 }
 
 .chat__time {

@@ -83,6 +83,18 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           }
           break;
         }
+        case "chat_pause":
+        case "chat_unpause": {
+          if (chats.value.has(data.chat.bot_id)) {
+            chats.value.set(
+              data.chat.bot_id,
+              chats.value
+                .get(data.chat.bot_id)
+                .map((chat) => (chat.id === data.chat.id ? data.chat : chat))
+            );
+          }
+          break;
+        }
       }
     });
 
@@ -120,6 +132,18 @@ export const useAiBotsStore = defineStore("aiBots", () => {
         });
 
         bots.value.set(bot.id, data);
+      } catch (error) {
+        console.debug(error);
+        throw error;
+      }
+    },
+
+    async toggleChatPause(chat) {
+      try {
+        await api.post("/agents/api/toggle_pause", {
+          chat: chat.id,
+          pause: !chat.pause,
+        });
       } catch (error) {
         console.debug(error);
         throw error;
