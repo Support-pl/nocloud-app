@@ -2,6 +2,26 @@ import api from "@/api.js";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import cookies from "js-cookie";
+import { useRoute } from "vue-router";
+
+export function sortAiBotChats(chats) {
+  chats.sort((a, b) => {
+    const aDate = a.last_message?.created_at
+      ? Date.parse(a.last_message?.created_at)
+      : null;
+    const bDate = b.last_message?.created_at
+      ? Date.parse(b.last_message?.created_at)
+      : null;
+
+    if (!aDate && !bDate) return 0;
+    if (!aDate) return -1;
+    if (!bDate) return 1;
+
+    return bDate - aDate;
+  });
+
+  return chats;
+}
 
 export const useAiBotsStore = defineStore("aiBots", () => {
   const bots = ref(new Map());
@@ -9,6 +29,8 @@ export const useAiBotsStore = defineStore("aiBots", () => {
   const messages = ref({});
   const socket = ref(null);
   const chatParticipants = ref();
+
+  const route = useRoute();
 
   async function fetchChatsMessages(chatId) {
     try {
@@ -60,6 +82,16 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           ) {
             messages.value[data.message.chat_id].push(data.message);
           }
+
+          const chat = getChatById(data.message.chat_id);
+          if (chat && route.params.chatId != data.message.chat_id) {
+            chat.unread_count = (chat.unread_count || 0) + 1;
+          }
+
+          if (chat) {
+            chat.last_message = data.message;
+          }
+
           break;
         }
         case "chat_created": {

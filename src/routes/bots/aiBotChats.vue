@@ -116,7 +116,7 @@ import { useChatsStore } from "@/stores/chats.js";
 import loading from "@/components/ui/loading.vue";
 import typingPlaceholder from "@/components/support/typingPlaceholder.vue";
 import MessageContent from "@/components/support/messageContent.vue";
-import { useAiBotsStore } from "@/stores/aiBots";
+import { sortAiBotChats, useAiBotsStore } from "@/stores/aiBots";
 import ChatItem from "@/components/services/bots/chatItem.vue";
 import ChatHeader from "@/components/services/bots/chatHeader.vue";
 import ChatFooter from "@/components/services/bots/chatFooter.vue";
@@ -167,7 +167,9 @@ const chat = computed(() =>
   chats.value.find((chat) => chat.id === chatId.value)
 );
 const bot = computed(() => bots.value.get(botId.value));
-const chats = computed(() => allChats.value.get(botId.value) || []);
+const chats = computed(() =>
+  sortAiBotChats(allChats.value.get(botId.value) || [])
+);
 const filtredChats = computed(() =>
   chats.value.filter(
     (c) =>

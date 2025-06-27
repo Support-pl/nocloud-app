@@ -356,7 +356,7 @@ import { capitalize, computed, defineAsyncComponent, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
 import ChatItem from "./chatItem.vue";
-import { useAiBotsStore } from "@/stores/aiBots";
+import { sortAiBotChats, useAiBotsStore } from "@/stores/aiBots";
 import { useChatsStore } from "@/stores/chats";
 import { marked } from "marked";
 
@@ -468,7 +468,7 @@ const isSavePrimary = computed(
 );
 
 const chats = computed(() =>
-  (aiBotsStore.chats.get(bot.value.id) || []).slice(0, 3)
+  sortAiBotChats(aiBotsStore.chats.get(bot.value.id) || []).slice(0, 3)
 );
 
 async function fetch() {
@@ -553,8 +553,6 @@ const handleSaveChanell = async () => {
       message: `${t("Done")}!`,
     });
   } catch (err) {
-    console.log(err);
-
     const opts = {
       message: `Error: ${
         err?.response?.data?.message || err?.response?.data || "Unknown"
