@@ -105,7 +105,11 @@ function formatDate(date) {
 }
 
 function chatClick(id) {
-  router.push(`/ai-bots/${props.botId}/chats/${id}`);
+  if (props.compact) {
+    router.replace(`/ai-bots/${props.botId}/chats/${id}`);
+  } else {
+    router.push(`/ai-bots/${props.botId}/chats/${id}`);
+  }
 }
 
 function beauty(chat) {
@@ -280,7 +284,7 @@ export default { name: "chatItem" };
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 2px white; 
+  box-shadow: 0 0 0 2px white;
   transform: translate(50%, -50%);
 }
 </style>
