@@ -121,7 +121,7 @@ function beauty(chat) {
 
   return message.trim().length
     ? message.trim()
-    : chat.attachments?.length > 0
+    : chat.last_message?.attachments?.length > 0
     ? t("attachedFiles")
     : "empty";
 }
