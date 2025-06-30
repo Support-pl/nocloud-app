@@ -27,8 +27,8 @@
       </div>
       <div v-else-if="networking.length < 2" class="item__status">
         {{
-          showcase.promo?.[i18n.locale]?.title ??
-          showcase.title ??
+          showcase?.promo?.[i18n.locale]?.title ??
+          showcase?.title ??
           providersStore.getShowcases.find(({ uuid }) => uuid === instance.uuid)
             ?.title ??
           providersStore.servicesProviders.find((sp) => sp.uuid === instance.sp)
