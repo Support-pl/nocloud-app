@@ -136,7 +136,7 @@ import { sortAiBotChats, useAiBotsStore } from "@/stores/aiBots";
 import ChatItem from "@/components/services/bots/chatItem.vue";
 import ChatHeader from "@/components/services/bots/chatHeader.vue";
 import ChatFooter from "@/components/services/bots/chatFooter.vue";
-import { debounce } from "@/functions";
+import { debounce, downloadFile } from "@/functions";
 import AudioPlayer from "@/components/support/audio-player.vue";
 import { renderToString } from "vue/server-renderer";
 import { h } from "vue";
@@ -227,7 +227,7 @@ watch(
   { deep: true }
 );
 
-async function fetch() {
+async function fetchData() {
   isLoading.value = true;
   try {
     await Promise.all([
@@ -244,7 +244,7 @@ async function fetch() {
   await loadMessages(true);
 }
 
-fetch();
+fetchData();
 
 function scrollDown() {
   content.value?.scrollTo(0, content.value?.scrollHeight);
@@ -312,7 +312,7 @@ async function onImageError(e) {
   `;
   parent.classList.add("files__preview--placeholder");
   parent.onclick = () => {
-    window.open(e.target.src);
+    downloadFile(e.target.src, e.target.alt);
   };
 }
 

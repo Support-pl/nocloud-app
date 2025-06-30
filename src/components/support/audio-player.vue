@@ -17,7 +17,7 @@
         <a-button
           style="margin-left: 10px; margin-bottom: 4px"
           size="small"
-          @click="download(url, name)"
+          @click="downloadFile(url, name)"
           shape="round"
           type="primary"
         >
@@ -31,6 +31,7 @@
 </template>
 
 <script setup>
+import { downloadFile } from "@/functions";
 import VueAudioPlayer from "@liripeng/vue-audio-player";
 import { computed, defineAsyncComponent } from "vue";
 const props = defineProps(["url", "name"]);
@@ -45,18 +46,6 @@ const audioList = computed(() => [
     title: props.name,
   },
 ]);
-
-function download(url, filename) {
-  fetch(url)
-    .then((response) => response.blob())
-    .then((blob) => {
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.click();
-    })
-    .catch(console.error);
-}
 </script>
 
 <style>

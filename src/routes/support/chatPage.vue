@@ -175,6 +175,7 @@ import MessageContent from "@/components/support/messageContent.vue";
 import audioPlayer from "@/components/support/audio-player.vue";
 import { useInstancesStore } from "@/stores/instances";
 import { storeToRefs } from "pinia";
+import { downloadFile } from "@/functions";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -313,7 +314,7 @@ async function onImageError(e) {
   `;
   parent.classList.add("files__preview--placeholder");
   parent.onclick = () => {
-    window.open(e.target.src);
+    downloadFile(e.target.src, e.target.alt);
   };
 }
 
