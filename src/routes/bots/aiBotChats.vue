@@ -137,12 +137,19 @@ import ChatItem from "@/components/services/bots/chatItem.vue";
 import ChatHeader from "@/components/services/bots/chatHeader.vue";
 import ChatFooter from "@/components/services/bots/chatFooter.vue";
 import { debounce } from "@/functions";
+import AudioPlayer from "@/components/support/audio-player.vue";
+import { renderToString } from "vue/server-renderer";
+import { h } from "vue";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
 );
 const copyIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CopyOutlined")
+);
+
+const fileIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FileOutlined")
 );
 
 const loadingIcon = defineAsyncComponent(() =>
@@ -295,6 +302,21 @@ function isDateVisible(replies, i) {
   );
 }
 
+async function onImageError(e) {
+  const element = await renderToString(h(fileIcon));
+  const parent = e.target.parentElement;
+  const ext = e.target.alt.split(".").at(-1);
+
+  e.target.outerHTML = `
+    ${element}
+    <span style="font-size: 14px">${ext}</span>
+  `;
+  parent.classList.add("files__preview--placeholder");
+  parent.onclick = () => {
+    window.open(e.target.src);
+  };
+}
+
 async function loadMessages() {
   isLoading.value = true;
   try {
@@ -435,6 +457,40 @@ export default { name: "AiBotChat" };
   left: -20px;
   font-size: 14px;
   height: auto;
+}
+
+:deep(.chat__files) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+:deep(.chat__files .files__preview) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 114px;
+  height: 100px;
+  padding: 5px;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+:deep(.chat__files .files__preview > img) {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: cover;
+}
+
+:deep(.chat__files .files__preview--placeholder) {
+  flex-direction: column;
+  gap: 4px;
+  width: 104px;
+  height: 90px;
+  font-size: 24px;
+  border: 1px solid var(--border_color);
 }
 
 .msgStatus.error {
