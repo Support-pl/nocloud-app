@@ -82,7 +82,7 @@ async function sendChatMessage() {
   const files = await upload.value.fileList;
 
   const result = message.value.trim();
-  if (result.length < 1) {
+  if (result.length < 1 && !files.length) {
     return;
   }
 
