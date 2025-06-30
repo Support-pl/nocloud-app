@@ -144,10 +144,13 @@
               style="
                 display: -webkit-box;
                 -webkit-box-orient: vertical;
-                line-clamp: 2;
+                -webkit-line-clamp: 2;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 max-width: 95px;
+                white-space: normal;
+                word-break: break-word;
+                overflow-wrap: break-word;
               "
               >{{ chanell.title }}</span
             >
