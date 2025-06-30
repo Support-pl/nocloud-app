@@ -142,7 +142,7 @@
       <loading />
     </a-col>
     <a-col v-else-if="chats.length > 0" span="24">
-      <ticket-item
+      <openai-ticket-item
         v-for="chat of chats"
         :key="chat.id"
         :ticket="chat"
@@ -169,7 +169,7 @@ import { useInstancesStore } from "@/stores/instances.js";
 import { useClipboard, useCurrency } from "@/hooks/utils";
 
 import addTicket from "@/components/support/addTicket.vue";
-import ticketItem from "@/components/support/ticketItem.vue";
+import OpenaiTicketItem from "@/components/support/openaiTicketItem.vue";
 import loading from "@/components/ui/loading.vue";
 import { useI18n } from "vue-i18n";
 

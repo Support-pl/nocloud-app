@@ -93,13 +93,39 @@
     </div>
 
     <div ref="chatList" class="chat__list">
-      <ticket-item
-        v-for="item of chats"
-        :key="item.id"
-        :ticket="item"
-        :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
-        compact
-      />
+      <template v-if="instance">
+        <a-row
+          justify="space-between"
+          align="center"
+          style="padding: 10px; align-items: center"
+        >
+          <a-button
+            @click="supportStore.isAddingTicket = !supportStore.isAddingTicket"
+            :icon="h(addChatIcon)"
+            >{{ $t("Add new chat") }}</a-button
+          >
+          <span>
+            {{ instance.title }}
+          </span>
+        </a-row>
+
+        <add-ticket :instance-id="instance.uuid" />
+      </template>
+
+      <template v-for="item of chats">
+        <openai-ticket-item
+          v-if="item.model"
+          :ticket="item"
+          :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
+          compact
+        />
+        <ticket-item
+          v-else
+          :ticket="item"
+          :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
+          compact
+        />
+      </template>
     </div>
 
     <a-modal
@@ -137,7 +163,8 @@ import api from "@/api";
 import { useAuthStore } from "@/stores/auth.js";
 import { useChatsStore } from "@/stores/chats.js";
 import { useSupportStore } from "@/stores/support.js";
-
+import OpenaiTicketItem from "@/components/support/openaiTicketItem.vue";
+import AddTicket from "@/components/support/addTicket.vue";
 import loading from "@/components/ui/loading.vue";
 import ticketItem from "@/components/support/ticketItem.vue";
 import supportHeader from "@/components/support/header.vue";
@@ -164,6 +191,9 @@ const fileIcon = defineAsyncComponent(() =>
 );
 const loadingIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LoadingOutlined")
+);
+const addChatIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PlusOutlined")
 );
 
 const route = useRoute();

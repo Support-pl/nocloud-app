@@ -723,6 +723,7 @@
         }
       }
     },
+    "Add new chat":"Add new chat",
     "bots": {
       "fields": {
         "promt": "Prompt",
