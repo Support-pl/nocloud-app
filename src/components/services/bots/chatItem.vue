@@ -157,7 +157,7 @@ export default { name: "chatItem" };
 <style scoped>
 .chat_item {
   position: relative;
-  padding: 15px 20px 15px 40px;
+  padding: 15px 10px 15px 10px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
   border-radius: 15px;
   background-color: var(--bright_font);
@@ -183,10 +183,6 @@ export default { name: "chatItem" };
   box-shadow: none;
   border-radius: 0;
   padding: 10px;
-}
-
-.chat_item.base:not(:last-child) {
-  margin-bottom: 20px;
 }
 
 .chat_item.base.compact:not(:last-child) {
