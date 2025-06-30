@@ -1,356 +1,367 @@
 <template>
-  <a-row class="bots" style="margin-top: 10px" :gutter="[10, 10]">
-    <a-col span="24">
-      <span class="field_title"
-        >{{ capitalize(t("bots.fields.model")) }}:
-        {{
-          chatsStore.globalModelsList.find(
-            (m) => m.key === bot.settings.ai_model
-          )?.name || bot.settings.ai_model
-        }}</span
-      >
-    </a-col>
-    <a-col span="24">
-      <span v-html="marked(t('bots.tips.model'))"> </span>
-    </a-col>
+  <template v-if="!isLoading">
+    <a-row class="bots" style="margin-top: 10px" :gutter="[10, 10]">
+      <a-col span="24">
+        <span class="field_title"
+          >{{ capitalize(t("bots.fields.model")) }}:
+          {{
+            chatsStore.globalModelsList.find(
+              (m) => m.key === bot.settings.ai_model
+            )?.name || bot.settings.ai_model
+          }}</span
+        >
+      </a-col>
+      <a-col span="24">
+        <span v-html="marked(t('bots.tips.model'))"> </span>
+      </a-col>
 
-    <a-col span="24">
-      <span class="field_title"
-        >{{ t("bots.fields.promt") }}:
+      <a-col span="24">
+        <span class="field_title"
+          >{{ t("bots.fields.promt") }}:
 
-        <a-tooltip>
-          <template #title>
-            <span v-html="t('bots.tips.promt').replaceAll('\n', '<br/>')">
-            </span>
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.tips.promt').replaceAll('\n', '<br/>')">
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-textarea
+          style="margin-top: 10px"
+          v-model:value="bot.settings.system_prompt"
+          :placeholder="t('bots.fields.promt')"
+          :auto-size="{ minRows: 4 }"
+        />
+      </a-col>
+
+      <a-col span="24">
+        <span class="field_title"
+          >{{ t("bots.fields.temperature") }}: {{ bot.settings?.temperature }}
+          <a-tooltip>
+            <template #title>
+              <span
+                v-html="t('bots.tips.temperature').replaceAll('\n', '<br/>')"
+              >
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-slider
+          @change="bot.settings.temperature = $event"
+          :value="bot.settings?.temperature"
+          :marks="temperatureMarks"
+          :tip-formatter="
+            (value) => {
+              return `${value}`;
+            }
+          "
+          :step="0.05"
+          :min="0.0"
+          :max="1.0"
+        >
+          <template #mark="{ label, point }">
+            <template v-if="point === 100">
+              <strong>{{ label }}</strong>
+            </template>
+            <template v-else>{{ label }}</template>
           </template>
-          <help-icon style="margin-left: 5px" />
-        </a-tooltip>
-      </span>
-      <a-textarea
-        style="margin-top: 10px"
-        v-model:value="bot.settings.system_prompt"
-        :placeholder="t('bots.fields.promt')"
-        :auto-size="{ minRows: 4 }"
-      />
-    </a-col>
+        </a-slider>
+      </a-col>
 
-    <a-col span="24">
-      <span class="field_title"
-        >{{ t("bots.fields.temperature") }}: {{ bot.settings?.temperature }}
-        <a-tooltip>
-          <template #title>
-            <span v-html="t('bots.tips.temperature').replaceAll('\n', '<br/>')">
-            </span>
+      <a-col span="24">
+        <span class="field_title"
+          >{{ t("bots.fields.delay") }}: {{ bot.settings?.delay }}
+          {{ t("bots.labels.seconds")
+          }}<a-tooltip>
+            <template #title>
+              <span v-html="t('bots.tips.delay').replaceAll('\n', '<br/>')">
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" /> </a-tooltip
+        ></span>
+        <a-slider
+          @change="bot.settings.delay = $event"
+          :value="bot.settings?.delay"
+          :marks="delayMarks"
+          :tip-formatter="
+            (value) => {
+              return `${value} ${t('bots.labels.seconds')}`;
+            }
+          "
+          :step="1"
+          :min="0"
+          :max="100"
+        >
+          <template #mark="{ label, point }">
+            <template v-if="point === 100">
+              <strong>{{ label }}</strong>
+            </template>
+            <template v-else>{{ label }}</template>
           </template>
-          <help-icon style="margin-left: 5px" />
-        </a-tooltip>
-      </span>
-      <a-slider
-        @change="bot.settings.temperature = $event"
-        :value="bot.settings?.temperature"
-        :marks="temperatureMarks"
-        :tip-formatter="
-          (value) => {
-            return `${value}`;
-          }
-        "
-        :step="0.05"
-        :min="0.0"
-        :max="1.0"
-      >
-        <template #mark="{ label, point }">
-          <template v-if="point === 100">
-            <strong>{{ label }}</strong>
-          </template>
-          <template v-else>{{ label }}</template>
-        </template>
-      </a-slider>
-    </a-col>
+        </a-slider>
+      </a-col>
 
-    <a-col span="24">
-      <span class="field_title"
-        >{{ t("bots.fields.delay") }}: {{ bot.settings?.delay }}
-        {{ t("bots.labels.seconds")
-        }}<a-tooltip>
-          <template #title>
-            <span v-html="t('bots.tips.delay').replaceAll('\n', '<br/>')">
-            </span>
-          </template>
-          <help-icon style="margin-left: 5px" /> </a-tooltip
-      ></span>
-      <a-slider
-        @change="bot.settings.delay = $event"
-        :value="bot.settings?.delay"
-        :marks="delayMarks"
-        :tip-formatter="
-          (value) => {
-            return `${value} ${t('bots.labels.seconds')}`;
-          }
-        "
-        :step="1"
-        :min="0"
-        :max="100"
-      >
-        <template #mark="{ label, point }">
-          <template v-if="point === 100">
-            <strong>{{ label }}</strong>
-          </template>
-          <template v-else>{{ label }}</template>
-        </template>
-      </a-slider>
-    </a-col>
+      <a-col span="24">
+        <a-row justify="end">
+          <a-button
+            key="back"
+            :loading="isBotSaveLoading"
+            @click="handleSaveBot"
+            :type="isSavePrimary ? 'primary' : 'default'"
+            >{{ t("bots.actions.save_bot") }}
+          </a-button>
+        </a-row>
+      </a-col>
 
-    <a-col span="24">
-      <a-row justify="end">
-        <a-button
-          key="back"
-          :loading="isBotSaveLoading"
-          @click="handleSaveBot"
-          :type="isSavePrimary ? 'primary' : 'default'"
-          >{{ t("bots.actions.save_bot") }}
-        </a-button>
-      </a-row>
-    </a-col>
+      <a-col span="24">
+        <span class="field_title"
+          >{{ t("bots.fields.channels") }}:
 
-    <a-col span="24">
-      <span class="field_title"
-        >{{ t("bots.fields.channels") }}:
-
-        <a-tooltip>
-          <template #title>
-            <span v-html="t('bots.tips.channels').replaceAll('\n', '<br/>')">
-            </span>
-          </template>
-          <help-icon style="margin-left: 5px" />
-        </a-tooltip>
-      </span>
-      <a-row>
-        <a-col v-for="chanell in availableChanells" span="6">
-          <div
-            @click="
-              chanell.exist
-                ? openChanellEdit(chanell)
-                : openChanellAdd(chanell.type)
-            "
-            class="chanell"
-          >
-            <img
-              class="img_prod"
-              :src="`/img/icons/${chanell.type}.png`"
-              alt="telegram"
-              @error="onError"
-            />
-            <span
-              style="
-                display: -webkit-box;
-                -webkit-box-orient: vertical;
-                -webkit-line-clamp: 2;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 95px;
-                white-space: normal;
-                word-break: break-word;
-                overflow-wrap: break-word;
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.tips.channels').replaceAll('\n', '<br/>')">
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-row>
+          <a-col v-for="chanell in availableChanells" span="6">
+            <div
+              @click="
+                chanell.exist
+                  ? openChanellEdit(chanell)
+                  : openChanellAdd(chanell.type)
               "
-              >{{ chanell.title }}</span
+              class="chanell"
             >
-            <span
-              :class="{
-                'status-circle': true,
-                red: !chanell.exist,
-                green: chanell.exist,
-              }"
-            ></span>
-          </div>
-        </a-col>
+              <img
+                class="img_prod"
+                :src="`/img/icons/${chanell.type}.png`"
+                alt="telegram"
+                @error="onError"
+              />
+              <span
+                style="
+                  display: -webkit-box;
+                  -webkit-box-orient: vertical;
+                  -webkit-line-clamp: 2;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  max-width: 95px;
+                  white-space: normal;
+                  word-break: break-word;
+                  overflow-wrap: break-word;
+                "
+                >{{ chanell.title }}</span
+              >
+              <span
+                :class="{
+                  'status-circle': true,
+                  red: !chanell.exist,
+                  green: chanell.exist,
+                }"
+              ></span>
+            </div>
+          </a-col>
 
-        <a-col span="6" v-if="bot.channels.length > 0">
-          <div @click="openChanellAdd()" class="chanell">
-            <plus-circle-outlined style="font-size: 2rem" class="img_prod" />
-            <span>{{ t("bots.actions.add_new_chanell") }}</span>
-          </div>
-        </a-col>
-      </a-row>
-    </a-col>
+          <a-col span="6" v-if="bot.channels.length > 0">
+            <div @click="openChanellAdd()" class="chanell">
+              <plus-circle-outlined style="font-size: 2rem" class="img_prod" />
+              <span>{{ t("bots.actions.add_new_chanell") }}</span>
+            </div>
+          </a-col>
+        </a-row>
+      </a-col>
 
-    <a-modal
-      v-model:open="isChanellAddOpen"
-      :title="t('bots.labels.add_new_chanell_title')"
-    >
-      <a-form
-        ref="addChanellFormRef"
-        layout="vertical"
-        autocomplete="off"
-        :model="newChanellData"
-        :rules="newChanellFormRules"
+      <a-modal
+        v-model:open="isChanellAddOpen"
+        :title="t('bots.labels.add_new_chanell_title')"
       >
-        <a-form-item name="type" :label="t('bots.fields.chanell_type')">
-          <a-select
-            v-model:value="newChanellData.type"
-            :options="
-              chanellsOptions.map((chanell) => ({
-                value: chanell.key,
-                label: chanell.title,
-              }))
-            "
-          ></a-select>
-        </a-form-item>
-
-        <a-form-item
-          name="bot_secret"
-          :label="t('bots.fields.chanell_secret_key')"
-        >
-          <div style="display: flex">
-            <a-input
-              type="password"
-              v-model:value="newChanellData.bot_secret"
-              :placeholder="t('bots.fields.chanell_secret_key')"
-              autocomplete="off"
-            />
-            <a-tooltip>
-              <template #title>
-                <span
-                  v-html="
-                    t('bots.tips.chanell_secret_key').replaceAll('\n', '<br/>')
-                  "
-                >
-                </span>
-              </template>
-              <help-icon style="font-size: 1.5rem; margin-left: 5px" />
-            </a-tooltip>
-          </div>
-        </a-form-item>
-      </a-form>
-
-      <template #footer>
-        <a-button
-          key="back"
-          :disabled="isChanellSaveLoading || isChanellDeleteLoading"
-          @click="isChanellAddOpen = false"
-          >{{ t("Cancel") }}</a-button
-        >
-
-        <a-button
-          key="submit"
-          type="primary"
-          :loading="isChanellSaveLoading"
-          :disabled="isChanellDeleteLoading"
-          @click="handleAddChanell"
-          >{{ t("bots.actions.add_chanell") }}</a-button
-        >
-      </template>
-    </a-modal>
-
-    <a-modal
-      v-model:open="isChanellEditOpen"
-      :title="`${t('bots.labels.edit_chanell_title')} ${
-        selectedEditedChanell.title
-      }`"
-    >
-      <a-form
-        ref="editChanellFormRef"
-        layout="vertical"
-        autocomplete="off"
-        :model="editedChanellData"
-        :rules="editChanellFormRules"
-      >
-        <a-form-item :label="t('bots.fields.chanell_link')">
-          <a
-            target="_blank"
-            :href="`https://${selectedEditedChanell.data.metadata.username}`"
-          >
-            {{ selectedEditedChanell.data.metadata.username }}</a
-          >
-        </a-form-item>
-
-        <a-form-item :label="t('bots.fields.chanell_firstname')">
-          <span> {{ selectedEditedChanell.data.metadata.firstname }}</span>
-        </a-form-item>
-
-        <a-form-item name="name" :label="t('bots.fields.chanell_name')">
-          <a-input
-            v-model:value="editedChanellData.name"
-            :placeholder="t('bots.fields.chanell_name')"
-            autocomplete="off"
-          />
-        </a-form-item>
-        <a-form-item
-          name="bot_secret"
-          :label="t('bots.fields.chanell_secret_key')"
+        <a-form
+          ref="addChanellFormRef"
+          layout="vertical"
           autocomplete="off"
+          :model="newChanellData"
+          :rules="newChanellFormRules"
         >
-          <div style="display: flex">
+          <a-form-item name="type" :label="t('bots.fields.chanell_type')">
+            <a-select
+              v-model:value="newChanellData.type"
+              :options="
+                chanellsOptions.map((chanell) => ({
+                  value: chanell.key,
+                  label: chanell.title,
+                }))
+              "
+            ></a-select>
+          </a-form-item>
+
+          <a-form-item
+            name="bot_secret"
+            :label="t('bots.fields.chanell_secret_key')"
+          >
+            <div style="display: flex">
+              <a-input
+                type="password"
+                v-model:value="newChanellData.bot_secret"
+                :placeholder="t('bots.fields.chanell_secret_key')"
+                autocomplete="off"
+              />
+              <a-tooltip>
+                <template #title>
+                  <span
+                    v-html="
+                      t('bots.tips.chanell_secret_key').replaceAll(
+                        '\n',
+                        '<br/>'
+                      )
+                    "
+                  >
+                  </span>
+                </template>
+                <help-icon style="font-size: 1.5rem; margin-left: 5px" />
+              </a-tooltip>
+            </div>
+          </a-form-item>
+        </a-form>
+
+        <template #footer>
+          <a-button
+            key="back"
+            :disabled="isChanellSaveLoading || isChanellDeleteLoading"
+            @click="isChanellAddOpen = false"
+            >{{ t("Cancel") }}</a-button
+          >
+
+          <a-button
+            key="submit"
+            type="primary"
+            :loading="isChanellSaveLoading"
+            :disabled="isChanellDeleteLoading"
+            @click="handleAddChanell"
+            >{{ t("bots.actions.add_chanell") }}</a-button
+          >
+        </template>
+      </a-modal>
+
+      <a-modal
+        v-model:open="isChanellEditOpen"
+        :title="`${t('bots.labels.edit_chanell_title')} ${
+          selectedEditedChanell.title
+        }`"
+      >
+        <a-form
+          ref="editChanellFormRef"
+          layout="vertical"
+          autocomplete="off"
+          :model="editedChanellData"
+          :rules="editChanellFormRules"
+        >
+          <a-form-item :label="t('bots.fields.chanell_link')">
+            <a
+              target="_blank"
+              :href="`https://${selectedEditedChanell.data.metadata.username}`"
+            >
+              {{ selectedEditedChanell.data.metadata.username }}</a
+            >
+          </a-form-item>
+
+          <a-form-item :label="t('bots.fields.chanell_firstname')">
+            <span> {{ selectedEditedChanell.data.metadata.firstname }}</span>
+          </a-form-item>
+
+          <a-form-item name="name" :label="t('bots.fields.chanell_name')">
             <a-input
-              type="password"
-              v-model:value="editedChanellData.bot_secret"
-              :placeholder="t('bots.fields.chanell_secret_key')"
+              v-model:value="editedChanellData.name"
+              :placeholder="t('bots.fields.chanell_name')"
               autocomplete="off"
             />
+          </a-form-item>
+          <a-form-item
+            name="bot_secret"
+            :label="t('bots.fields.chanell_secret_key')"
+            autocomplete="off"
+          >
+            <div style="display: flex">
+              <a-input
+                type="password"
+                v-model:value="editedChanellData.bot_secret"
+                :placeholder="t('bots.fields.chanell_secret_key')"
+                autocomplete="off"
+              />
 
-            <a-tooltip>
-              <template #title>
-                <span
-                  v-html="
-                    t('bots.tips.chanell_secret_key').replaceAll('\n', '<br/>')
-                  "
-                >
-                </span>
-              </template>
-              <help-icon style="font-size: 1.5rem; margin-left: 5px" />
-            </a-tooltip>
+              <a-tooltip>
+                <template #title>
+                  <span
+                    v-html="
+                      t('bots.tips.chanell_secret_key').replaceAll(
+                        '\n',
+                        '<br/>'
+                      )
+                    "
+                  >
+                  </span>
+                </template>
+                <help-icon style="font-size: 1.5rem; margin-left: 5px" />
+              </a-tooltip>
+            </div>
+          </a-form-item>
+        </a-form>
+
+        <template #footer>
+          <a-button
+            key="back"
+            :disabled="isChanellSaveLoading || isChanellDeleteLoading"
+            @click="isChanellEditOpen = false"
+            >{{ t("Cancel") }}</a-button
+          >
+
+          <a-popconfirm
+            :title="t('bots.labels.delete_confirm_label')"
+            :ok-text="t('Yes')"
+            :cancel-text="t('Cancel')"
+            @confirm="handleDeleteChanell"
+          >
+            <a-button key="back" :loading="isChanellDeleteLoading" danger>{{
+              t("bots.actions.delete_chanell")
+            }}</a-button>
+          </a-popconfirm>
+
+          <a-button
+            key="submit"
+            type="primary"
+            :loading="isChanellSaveLoading"
+            :disabled="isChanellDeleteLoading"
+            @click="handleSaveChanell"
+          >
+            {{ t("bots.actions.update_chanell") }}
+          </a-button>
+        </template>
+      </a-modal>
+    </a-row>
+
+    <a-row style="margin-top: 15px" v-if="chats.length > 0">
+      <a-col span="24">
+        <chat-item :bot-id="bot.id" v-for="chat in chats" :chat="chat" />
+      </a-col>
+    </a-row>
+
+    <a-row v-else>
+      <a-col span="24">
+        <a-card style="padding: 10px; margin-top: 20px">
+          <div style="display: flex; justify-content: center">
+            <span style="text-align: center; font-size: 1rem">
+              {{ t("bots.labels.no_chats") }}
+            </span>
           </div>
-        </a-form-item>
-      </a-form>
-
-      <template #footer>
-        <a-button
-          key="back"
-          :disabled="isChanellSaveLoading || isChanellDeleteLoading"
-          @click="isChanellEditOpen = false"
-          >{{ t("Cancel") }}</a-button
-        >
-
-        <a-popconfirm
-          :title="t('bots.labels.delete_confirm_label')"
-          :ok-text="t('Yes')"
-          :cancel-text="t('Cancel')"
-          @confirm="handleDeleteChanell"
-        >
-          <a-button key="back" :loading="isChanellDeleteLoading" danger>{{
-            t("bots.actions.delete_chanell")
-          }}</a-button>
-        </a-popconfirm>
-
-        <a-button
-          key="submit"
-          type="primary"
-          :loading="isChanellSaveLoading"
-          :disabled="isChanellDeleteLoading"
-          @click="handleSaveChanell"
-        >
-          {{ t("bots.actions.update_chanell") }}
-        </a-button>
-      </template>
-    </a-modal>
-  </a-row>
-
-  <a-row style="margin-top: 15px" v-if="chats.length > 0">
-    <a-col span="24">
-      <chat-item :bot-id="bot.id" v-for="chat in chats" :chat="chat" />
-    </a-col>
-  </a-row>
-
-  <a-row v-else>
-    <a-col span="24">
-      <a-card style="padding: 10px; margin-top: 20px">
-        <div style="display: flex; justify-content: center">
-          <span style="text-align: center; font-size: 1rem">
-            {{ t("bots.labels.no_chats") }}
-          </span>
-        </div>
-      </a-card>
-    </a-col>
-  </a-row>
+        </a-card>
+      </a-col>
+    </a-row>
+  </template>
+  <loading v-else />
 </template>
 
 <script setup>
@@ -362,6 +373,7 @@ import ChatItem from "./chatItem.vue";
 import { sortAiBotChats, useAiBotsStore } from "@/stores/aiBots";
 import { useChatsStore } from "@/stores/chats";
 import { marked } from "marked";
+import Loading from "@/components/ui/loading.vue";
 
 const helpIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/QuestionCircleOutlined")
