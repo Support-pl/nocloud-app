@@ -54,8 +54,8 @@
         size="large"
       >
         <template #icon>
-          <play-outlined style="font-size: 1.5rem" v-if="chat.pause" />
-          <pause-outlined style="font-size: 1.5rem" v-else />
+          <play-outlined style="font-size: 1.4rem" v-if="chat.pause" />
+          <pause-outlined style="font-size: 1.4rem" v-else />
         </template>
       </a-button>
     </div>
