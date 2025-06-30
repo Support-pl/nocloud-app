@@ -112,7 +112,7 @@ import { useAuthStore } from "@/stores/auth.js";
 import { useInstancesStore } from "@/stores/instances.js";
 import loading from "@/components/ui/loading.vue";
 import serviceInfo from "@/components/ui/serviceInfo.vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { Modal } from "ant-design-vue";
 import { removeEmptyValues } from "@/functions";
@@ -132,6 +132,7 @@ const instancesStore = useInstancesStore();
 const chatsStore = useChatsStore();
 
 const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
 const notification = useNotification();
 
