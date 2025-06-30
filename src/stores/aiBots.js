@@ -122,7 +122,11 @@ export const useAiBotsStore = defineStore("aiBots", () => {
               data.chat.bot_id,
               chats.value
                 .get(data.chat.bot_id)
-                .map((chat) => (chat.id === data.chat.id ? data.chat : chat))
+                .map((chat) =>
+                  chat.id === data.chat.id
+                    ? { ...chat, pause: data.event === "chat_pause" }
+                    : chat
+                )
             );
           }
           break;
