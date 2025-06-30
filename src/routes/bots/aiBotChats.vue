@@ -305,11 +305,10 @@ function isDateVisible(replies, i) {
 async function onImageError(e) {
   const element = await renderToString(h(fileIcon));
   const parent = e.target.parentElement;
-  const ext = e.target.alt.split(".").at(-1);
 
   e.target.outerHTML = `
     ${element}
-    <span style="font-size: 14px">${ext}</span>
+    <span style="font-size: 14px">${e.target.alt}</span>
   `;
   parent.classList.add("files__preview--placeholder");
   parent.onclick = () => {
