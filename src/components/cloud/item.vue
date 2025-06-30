@@ -27,6 +27,10 @@
       </div>
       <div v-else-if="networking.length < 2" class="item__status">
         {{
+          showcase.promo?.[i18n.locale]?.title ??
+          showcase.title ??
+          providersStore.getShowcases.find(({ uuid }) => uuid === instance.uuid)
+            ?.title ??
           providersStore.servicesProviders.find((sp) => sp.uuid === instance.sp)
             ?.title ??
           instance.domain ??
@@ -223,6 +227,12 @@ const networking = computed(() => {
 
 const title = computed(() =>
   !activeKey.value.includes("1") ? `IP: ${networking.value[0]}` : "IP's:"
+);
+
+const showcase = computed(() =>
+  providersStore.getShowcases.find(
+    ({ plans }) => !!plans.includes(props.instance.billingPlan.uuid)
+  )
 );
 
 const getModuleProductBtn = computed(() => {
