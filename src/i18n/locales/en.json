@@ -723,7 +723,7 @@
         }
       }
     },
-    "Add new chat":"Add new chat",
+    "Add new chat": "Add new chat",
     "bots": {
       "fields": {
         "promt": "Prompt",
@@ -759,6 +759,46 @@
         "add_chanell": "Add",
         "delete_chanell": "Delete",
         "update_chanell": "Save"
+      }
+    },
+    "ai_bot_page": {
+      "tabs": {
+        "info": "Info",
+        "databases": "Knowledge bases"
+      }
+    },
+    "bots_databases": {
+      "fields": {
+        "name": "Name",
+        "question": "Question",
+        "answer": "Answer",
+        "knowledge_description": "Knowledge source description",
+        "knowledge_url": "Knowledge source URL"
+      },
+      "tips": {
+        "not_valid_form":"Please check the validity of the entered data.",
+        "create_database": "Create a new knowledge base for the bot to use in answers",
+        "delete_database": "Delete this base? All content will be permanently removed",
+        "attach_database": "Enable this base to let the bot start using it",
+        "detach_database": "Disable this base to temporarily exclude it from the bot’s responses",
+        "open_database": "Open the base to view and edit its content",
+        "enabled_databases": "These bases are active and used by the bot in its responses",
+        "disabled_databases": "These bases are currently inactive and ignored by the bot",
+        "qa_knowledge_base": "Create a list of typical questions users might ask, along with clear answers. The bot will search this list to give relevant replies, even if the question is asked in a different way.",
+        "create_knowledge": "You can connect additional knowledge sources such as Google Docs, File, and more. The bot will use the content from these sources to search for and generate answers to user questions."
+      },
+      "labels": {
+        "enabled_databases": "Enabled knowledge bases",
+        "disabled_databases": "Disabled knowledge bases",
+        "empty_databases": "No data available",
+        "qa_knowledge_base": "Question - Answer",
+        "custom_knowledge_base": "Knowledge from ",
+        "link_knowledge": "Link to knowledge source",
+        "description_knowledge": "Description of the knowledge source"
+      },
+      "actions": {
+        "create_database": "Add knowledge base",
+        "create_knowledge": "Add Knowledge Source"
       }
     },
     "openai": {
