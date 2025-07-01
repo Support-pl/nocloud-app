@@ -29,6 +29,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
   const messages = ref({});
   const socket = ref(null);
   const chatParticipants = ref();
+  const databases = ref([]);
 
   const route = useRoute();
 
@@ -151,8 +152,13 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     chats,
     bots,
     chatParticipants,
+    databases,
 
     async getBot(botId) {
+      if (bots.value.get(botId)) {
+        return bots.value.get(botId);
+      }
+
       try {
         const data = await api.get("/agents/api/get_bot/" + botId);
         bots.value.set(botId, data);
@@ -231,6 +237,83 @@ export const useAiBotsStore = defineStore("aiBots", () => {
         const chat = getChatById(message.chat_id);
 
         chat.unread_count = 0;
+      } catch (error) {
+        console.debug(error);
+        throw error;
+      }
+    },
+
+    async getDatabases() {
+      if (databases.value.length > 0) {
+        return databases.value;
+      }
+
+      try {
+        const data = await api.get("/agents/api/get_databases");
+        databases.value = data.databases;
+        return data.databases;
+      } catch (error) {
+        console.debug(error);
+        throw error;
+      }
+    },
+
+    async addDatabase(data) {
+      try {
+        const response = await api.post("/agents/api/create_database", data);
+        databases.value.unshift(response);
+        return response;
+      } catch (error) {
+        console.debug(error);
+        throw error;
+      }
+    },
+
+    async deleteDatabase(database) {
+      try {
+        const response = await api.post(
+          `agents/api//delete_database/${database.id}`
+        );
+        databases.value = databases.value.filter((db) => db.id !== database.id);
+        return response;
+      } catch (error) {
+        console.debug(error);
+        throw error;
+      }
+    },
+
+    async attachDatabase(database, bot) {
+      try {
+        const response = await api.post(`agents/api/attach_database`, {
+          bot: bot.id,
+          database: database.id,
+        });
+
+        if (!bots.value.get(bot.id).databases) {
+          bots.value.get(bot.id).databases = [];
+        }
+
+        bots.value.get(bot.id).databases.push(database);
+
+        return response;
+      } catch (error) {
+        console.debug(error);
+        throw error;
+      }
+    },
+
+    async detachDatabase(database, bot) {
+      try {
+        const response = await api.post(`agents/api/detach_database`, {
+          bot: bot.id,
+          database: database.id,
+        });
+
+        bots.value.get(bot.id).databases = bots.value
+          .get(bot.id)
+          .databases.filter((db) => db.id !== database.id);
+
+        return response;
       } catch (error) {
         console.debug(error);
         throw error;

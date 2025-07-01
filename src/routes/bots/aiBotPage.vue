@@ -2,7 +2,7 @@
   <div class="service-page">
     <div class="container">
       <div class="service-page-card">
-        <template v-if="service">
+        <template v-if="!isDataLoading">
           <div class="service-page__header">
             <div class="service-page__title">
               {{ service.name }}
@@ -95,7 +95,15 @@
             </a-collapse-panel>
           </a-collapse>
 
-          <component :is="getModuleButtons" :service="service" />
+          <a-tabs v-model:activeKey="activeTab">
+            <a-tab-pane key="info" :tab="t('ai_bot_page.tabs.info')">
+              <bot-info :service="service" />
+            </a-tab-pane>
+            <a-tab-pane key="database" :tab="t('ai_bot_page.tabs.databases')">
+              <bot-database v-if="route.query.database" :service="service" />
+              <bot-databases v-else :service="service" />
+            </a-tab-pane>
+          </a-tabs>
         </template>
 
         <loading v-else />
@@ -107,17 +115,20 @@
 <script setup>
 import { computed, defineAsyncComponent, h, ref, watch } from "vue";
 import { useNotification } from "@/hooks/utils";
-import config from "@/appconfig.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { useInstancesStore } from "@/stores/instances.js";
 import loading from "@/components/ui/loading.vue";
 import serviceInfo from "@/components/ui/serviceInfo.vue";
+import BotInfo from "@/components/services/bots/draw.vue";
+import BotDatabases from "@/components/services/bots/databases.vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { Modal } from "ant-design-vue";
 import { removeEmptyValues } from "@/functions";
 import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 import { useChatsStore } from "@/stores/chats";
+import { useAiBotsStore } from "@/stores/aiBots";
+import BotDatabase from "@/components/services/bots/database.vue";
 
 const caretRightIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CaretRightOutlined")
@@ -130,6 +141,7 @@ const editOutlined = defineAsyncComponent(() =>
 const authStore = useAuthStore();
 const instancesStore = useInstancesStore();
 const chatsStore = useChatsStore();
+const aiBotsStore = useAiBotsStore();
 
 const route = useRoute();
 const router = useRouter();
@@ -149,11 +161,13 @@ const info = ref([
   },
 ]);
 const service = ref(null);
+const isDataLoading = ref(false);
 
 const editNameForm = ref(null);
 const isNameEditActive = ref(false);
 const isNameEditLoading = ref(false);
 const nameEditData = ref({ title: "" });
+const activeTab = ref();
 
 const requiredRule = computed(() => ({
   required: true,
@@ -179,21 +193,7 @@ const getTagColor = computed(() => {
       return "red";
   }
 });
-const getModuleButtons = computed(() => {
-  if (!service.value.groupname) return;
-  const serviceType = config
-    .getServiceType(service.value.groupname)
-    ?.toLowerCase();
 
-  const components = import.meta.glob("@/components/services/*/draw.vue");
-  const component = Object.keys(components).find((key) =>
-    key.includes(`/${serviceType}/draw.vue`)
-  );
-
-  if (!components[component]) return;
-  if (serviceType === undefined) return;
-  return defineAsyncComponent(() => components[component]());
-});
 const isActionsActive = computed(() => {
   const key = service.value.product ?? service.value.config?.product;
   const { meta } = service.value.billingPlan?.products[key] ?? {};
@@ -202,40 +202,57 @@ const isActionsActive = computed(() => {
 });
 
 async function onStart() {
-  await Promise.all([
-    authStore.fetchBillingData(),
-    instancesStore.fetch(),
-    chatsStore.fetch_models_list(),
-  ]);
+  isDataLoading.value = true;
 
-  const domain = instancesStore.getInstances.find(
-    ({ uuid }) => uuid === route.params.id
-  );
-  let groupname = "AIBot";
-  let date = "year";
+  try {
+    router.replace({ query: {} });
 
-  domain.resources = {
-    period: t("PayG"),
-  };
+    await Promise.all([
+      authStore.fetchBillingData(),
+      instancesStore.fetch(),
+      chatsStore.fetch_models_list(),
+    ]);
 
-  domain.data.expiry = {
-    expiredate: formatDate(domain.data.next_payment_date ?? 0),
-    regdate: domain.data.creation,
-  };
+    const domain = instancesStore.getInstances.find(
+      ({ uuid }) => uuid === route.params.id
+    );
+    let groupname = "AIBot";
+    let date = "year";
 
-  const { period } = domain.resources;
-  const { regdate } = domain.data.expiry;
+    domain.resources = {
+      period: t("PayG"),
+    };
 
-  service.value = {
-    ...domain,
-    groupname,
-    regdate,
-    name: domain.title,
-    status: `cloudStateItem.${domain.state?.state || "UNKNOWN"}`,
-    autorenew: domain.config.auto_renew ? "enabled" : "disabled",
-    billingcycle: typeof period === "string" ? period : t(date, period),
-  };
-  info.value[0].type = "";
+    domain.data.expiry = {
+      expiredate: formatDate(domain.data.next_payment_date ?? 0),
+      regdate: domain.data.creation,
+    };
+
+    const { period } = domain.resources;
+    const { regdate } = domain.data.expiry;
+
+    service.value = {
+      ...domain,
+      groupname,
+      regdate,
+      name: domain.title,
+      status: `cloudStateItem.${domain.state?.state || "UNKNOWN"}`,
+      autorenew: domain.config.auto_renew ? "enabled" : "disabled",
+      billingcycle: typeof period === "string" ? period : t(date, period),
+    };
+    info.value[0].type = "";
+
+    await aiBotsStore.getBot(service.value.data.bot_uuid);
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    notification.openNotification("error", opts);
+  } finally {
+    isDataLoading.value = false;
+  }
 }
 
 onStart();
