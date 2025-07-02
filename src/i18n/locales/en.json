@@ -776,7 +776,8 @@
         "knowledge_url": "Knowledge source URL",
         "integration_column_type": "Type",
         "integration_column_name": "Name",
-        "integration_column_url": "Link"
+        "integration_column_url": "Link",
+        "knowledge_upload_file": "User file"
       },
       "tips": {
         "not_valid_form": "Please check the validity of the entered data.",
@@ -789,7 +790,8 @@
         "disabled_databases": "These bases are currently inactive and ignored by the bot",
         "qa_knowledge_base": "Create a list of typical questions users might ask, along with clear answers. The bot will search this list to give relevant replies, even if the question is asked in a different way.",
         "create_knowledge": "You can connect additional knowledge sources such as Google Docs, File, and more. The bot will use the content from these sources to search for and generate answers to user questions.",
-        "knowledge_integrations": "You can connect additional knowledge sources such as Google Docs, File, and more. The bot will use the content from these sources to search for and generate answers to user questions."
+        "knowledge_integrations": "You can connect additional knowledge sources such as Google Docs, File, and more. The bot will use the content from these sources to search for and generate answers to user questions.",
+        "knowledge_upload_file": "You can upload a file containing information that the AI assistant will use to answer questions.\n\n**The following file formats are supported:**\n\n- `.txt` — plain text file  \n- `.csv` — comma-separated values  \n- `.docx` — Microsoft Word document  \n- `.xlsx` — Microsoft Excel spreadsheet  \n- `.pdf` — PDF document\n\n❗ Please make sure the file contains structured and readable information."
       },
       "labels": {
         "enabled_databases": "Enabled knowledge bases",
@@ -803,8 +805,9 @@
         "create_knowledge": "Add integration",
         "add_qa_record": "Add record",
         "save_qa_records": "Save",
-        "attach_database":"Connect database",
-        "detach_database":"Disconnect database"
+        "attach_database": "Connect database",
+        "detach_database": "Disconnect database",
+        "knowledge_upload_file": "Upload file"
       }
     },
     "openai": {
