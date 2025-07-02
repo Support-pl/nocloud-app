@@ -113,7 +113,7 @@ const bot = computed(() => bots.value.get(props.service.data.bot_uuid));
 const enabledDatabases = computed(() =>
   databases.value
     .filter((database) =>
-      (bot.value?.databases || []).find((db) => db.id === database.id)
+      !(bot.value?.databases || []).find((db) => db.id === database.id)
     )
     .map((d) => ({ ...d, enabled: true }))
 );
@@ -122,7 +122,7 @@ const disabledDatabases = computed(() =>
   databases.value
     .filter(
       (database) =>
-        !(bot.value?.databases || []).find((db) => db.id === database.id)
+        (bot.value?.databases || []).find((db) => db.id === database.id)
     )
     .map((d) => ({ ...d, enabled: false }))
 );

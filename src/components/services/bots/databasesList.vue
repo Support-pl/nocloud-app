@@ -45,7 +45,7 @@
               </a-button>
             </a-popconfirm>
 
-            <a-tooltip v-if="!item.enabled" placement="top">
+            <a-tooltip v-if="item.enabled" placement="top">
               <template #title>
                 <span>{{ t("bots_databases.tips.attach_database") }}</span>
               </template>
