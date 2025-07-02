@@ -16,6 +16,49 @@
       </a-form-item>
     </a-form>
 
+    <a-row justify="space-between" style="margin-top: 15px">
+      <a-button style="margin: 10px 0px" @click="router.push({ query: {} })">{{
+        t("ssl_product.back")
+      }}</a-button>
+
+      <div style="display: flex; align-items: center">
+        <a-tooltip placement="top">
+          <template #title>
+            <span>{{ t("bots_databases.tips.detach_database") }}</span>
+          </template>
+          <a-button
+            :loading="isDetachLoading"
+            :disabled="!isDatabaseAttached"
+            class="button"
+            @click="handleDetachDatabase(item)"
+            style="margin-right: 10px"
+          >
+            <detach-icon style="font-size: 20" />
+
+            {{ t("bots_databases.actions.detach_database") }}
+          </a-button>
+        </a-tooltip>
+
+        <a-tooltip placement="top">
+          <template #title>
+            <span>{{ t("bots_databases.tips.attach_database") }}</span>
+          </template>
+          <a-button
+            :loading="isAttachLoading"
+            :disabled="isDatabaseAttached"
+            class="button"
+            @click="handleAttachDatabase()"
+          >
+            <template #icon>
+              <attach-icon style="font-size: 20" />
+            </template>
+
+            {{ t("bots_databases.actions.attach_database") }}
+          </a-button>
+        </a-tooltip>
+      </div>
+    </a-row>
+
     <a-collapse v-model:activeKey="collapseKey">
       <a-collapse-panel class="knowledge_questions" key="questions">
         <template #header>
@@ -54,7 +97,7 @@
           />
           <a-button
             class="delete_btn"
-            @click="removeQaKnowledge(index)"
+            @click="handleRemoveQaKnowledge(index)"
             type="text"
             shape="circle"
           >
@@ -65,111 +108,164 @@
         </div>
 
         <div class="actions">
-          <a-button :disabled="isSaveQaKnoledgeLoading" @click="addQaKnowledge">
-            Добавить запись
+          <a-button
+            :disabled="isSaveQaKnoledgeLoading"
+            @click="handleAddQaKnowledge"
+          >
+            {{ t("bots_databases.actions.add_qa_record") }}
             <add-icon />
           </a-button>
 
           <a-button
             :loading="isSaveQaKnoledgeLoading"
             :type="isSaveQaKnowledgePrimary ? 'primary' : 'default'"
-            @click="saveQaKnowledge"
+            @click="handleSaveQaKnowledge"
           >
-            Сохранить <save-icon
+            {{ t("bots_databases.actions.save_qa_records") }}
+            <save-icon
           /></a-button>
         </div>
       </a-collapse-panel>
 
-      <a-collapse-panel
-        v-for="knowledge in database.simple_knowledge"
-        class="custom_knowledge"
-        :key="knowledge.url"
-        :header="`${t(
-          'bots_databases.labels.custom_knowledge_base'
-        )}  ${getRootDomain(knowledge.url)}`"
-      >
-        <a-row>
-          <a-col span="24">
-            <span style="margin-right: 10px"
-              >{{ t("bots_databases.labels.link_knowledge") }} ({{
-                newKnowledgeTypes.find((k) => k.value === knowledge.type).label
-              }}):</span
-            >
-            <a :href="knowledge.url">{{ getRootDomain(knowledge.url) }}</a>
-          </a-col>
+      <a-collapse-panel class="knowledge_integrations" key="integrations">
+        <template #header>
+          <div class="header">
+            <span style="margin-right: 10px">
+              {{ t("bots_databases.labels.knowledge_integrations") }}
+            </span>
+            <a-tooltip>
+              <template #title>
+                <span
+                  v-html="t(`bots_databases.tips.knowledge_integrations`)"
+                />
+              </template>
+              <help-icon style="font-size: 22px" />
+            </a-tooltip>
+          </div>
+        </template>
 
-          <a-col span="24">
-            <span style="margin-right: 10px"
-              >{{ t("bots_databases.labels.description_knowledge") }}:
-              {{ knowledge.description }}</span
-            >
-          </a-col>
-        </a-row>
+        <a-table
+          :columns="integrationColumns"
+          :data-source="database.simple_knowledge"
+          :pagination="false"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'actions'">
+              <span style="display: flex; justify-content: space-between">
+                <a-button
+                  :loading="deleteSimpleKnowledgeId === record.id"
+                  :disabled="
+                    !!deleteSimpleKnowledgeId &&
+                    !!deleteSimpleKnowledgeId !== record.id
+                  "
+                  class="delete_btn"
+                  @click="handleRemoveSimpleKnowledge(record)"
+                  type="text"
+                  shape="circle"
+                >
+                  <template #icon>
+                    <delete-icon two-tone-color="#ff4d4f" class="icon" />
+                  </template>
+                </a-button>
+              </span>
+            </template>
+
+            <template v-if="column.key === 'type'">
+              <span>
+                {{
+                  newKnowledgeTypes.find((type) => type.value === record.type)
+                    ?.label
+                }}
+              </span>
+            </template>
+
+            <template v-if="column.key === 'description'">
+              <a-tooltip v-if="record.description.length > 20" placement="top">
+                <template #title>
+                  <span>
+                    {{ record.description }}
+                  </span>
+                </template>
+                {{ record.description.slice(0, 20) + "..." }}
+              </a-tooltip>
+
+              <span v-else>
+                {{ record.description }}
+              </span>
+            </template>
+
+            <template v-if="column.key === 'url'">
+              <a
+                v-if="record.type !== 'user_file'"
+                :href="record.url"
+                target="_blank"
+              >
+                {{ getRootDomain(record.url) }}
+              </a>
+            </template>
+          </template>
+        </a-table>
+
+        <div class="actions">
+          <a-tooltip placement="top">
+            <template #title>
+              <span>{{ t("bots_databases.tips.create_knowledge") }}</span>
+            </template>
+            <a-button @click="isAddKnowledgeOpen = true">{{
+              t("bots_databases.actions.create_knowledge")
+            }}</a-button>
+          </a-tooltip>
+
+          <a-modal
+            v-model:open="isAddKnowledgeOpen"
+            :title="t('bots_databases.actions.create_knowledge')"
+          >
+            <a-row class="create_knowledge_integration_modal">
+              <a-col span="24" class="field">
+                <a-select
+                  class="types"
+                  v-model:value="newKnowledge.type"
+                  :options="newKnowledgeTypes"
+                ></a-select
+              ></a-col>
+
+              <a-col span="24" class="field">
+                <a-input
+                  v-model:value="newKnowledge.url"
+                  :placeholder="t('bots_databases.fields.knowledge_url')"
+                ></a-input>
+              </a-col>
+
+              <a-col span="24" class="field">
+                <a-textarea
+                  v-model:value="newKnowledge.description"
+                  :placeholder="
+                    t('bots_databases.fields.knowledge_description')
+                  "
+                ></a-textarea>
+              </a-col>
+            </a-row>
+
+            <template #footer>
+              <a-button
+                key="back"
+                :disabled="isAddKnowledgeLoading"
+                @click="isAddKnowledgeOpen = false"
+                >{{ t("Cancel") }}</a-button
+              >
+
+              <a-button
+                key="submit"
+                type="primary"
+                :loading="isAddKnowledgeLoading"
+                @click="handleAddNewSimpleKnowledge"
+                >{{ t("bots_databases.actions.create_knowledge") }}</a-button
+              >
+            </template>
+          </a-modal>
+        </div>
       </a-collapse-panel>
     </a-collapse>
-
-    <a-row justify="end" style="margin-top: 15px">
-      <a-button
-        style="margin-right: 10px"
-        @click="router.push({ query: {} })"
-        >{{ t("ssl_product.back") }}</a-button
-      >
-
-      <a-tooltip placement="top">
-        <template #title>
-          <span>{{ t("bots_databases.tips.create_knowledge") }}</span>
-        </template>
-        <a-button @click="isAddKnowledgeOpen = true">{{
-          t("bots_databases.actions.create_knowledge")
-        }}</a-button>
-      </a-tooltip>
-
-      <a-modal
-        v-model:open="isAddKnowledgeOpen"
-        :title="t('bots_databases.actions.create_knowledge')"
-      >
-        <a-row class="create_knowledge_modal">
-          <a-col span="24" class="field">
-            <a-select
-              class="types"
-              v-model:value="newKnowledge.type"
-              :options="newKnowledgeTypes"
-            ></a-select
-          ></a-col>
-
-          <a-col span="24" class="field">
-            <a-input
-              v-model:value="newKnowledge.url"
-              :placeholder="t('bots_databases.fields.knowledge_url')"
-            ></a-input>
-          </a-col>
-
-          <a-col span="24" class="field">
-            <a-textarea
-              v-model:value="newKnowledge.description"
-              :placeholder="t('bots_databases.fields.knowledge_description')"
-            ></a-textarea>
-          </a-col>
-        </a-row>
-
-        <template #footer>
-          <a-button
-            key="back"
-            :disabled="isAddKnowledgeLoading"
-            @click="isAddKnowledgeOpen = false"
-            >{{ t("Cancel") }}</a-button
-          >
-
-          <a-button
-            key="submit"
-            type="primary"
-            :loading="isAddKnowledgeLoading"
-            @click="addNewKnowledge"
-            >{{ t("bots_databases.actions.create_knowledge") }}</a-button
-          >
-        </template>
-      </a-modal>
-    </a-row>
   </a-col>
   <loading v-else />
 </template>
@@ -180,13 +276,9 @@ import Loading from "@/components/ui/loading.vue";
 import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
 import { storeToRefs } from "pinia";
-import { computed, defineAsyncComponent, onMounted, ref } from "vue";
+import { computed, defineAsyncComponent, onMounted, ref, toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-
-const props = defineProps({
-  service: { type: Object, required: true },
-});
 
 const deleteIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DeleteTwoTone")
@@ -204,6 +296,19 @@ const saveIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SaveOutlined")
 );
 
+const attachIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PlusOutlined")
+);
+
+const detachIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/MinusOutlined")
+);
+
+const props = defineProps({
+  service: { type: Object, required: true },
+});
+const { service } = toRefs(props);
+
 const aiBotsStore = useAiBotsStore();
 const { bots, databases } = storeToRefs(aiBotsStore);
 
@@ -212,9 +317,14 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
-const newKnowledgeTypes = [{ value: "google_docs", label: "Google Docs" }];
+const newKnowledgeTypes = [
+  { value: "google_docs", label: "Google Docs" },
+  { value: "google_sheets", label: "Google Sheets" },
+];
 
 const isDataLoading = ref(false);
+const isDetachLoading = ref(false);
+const isAttachLoading = ref(false);
 const isSaveQaKnoledgeLoading = ref(false);
 const collapseKey = ref();
 const database = ref({ name: "" });
@@ -223,6 +333,7 @@ const qaKnowledgeStatuses = ref({});
 const isAddKnowledgeOpen = ref(false);
 const isAddKnowledgeLoading = ref(false);
 const newKnowledge = ref({ type: "google_docs", description: "", url: "" });
+const deleteSimpleKnowledgeId = ref("");
 
 onMounted(async () => {
   try {
@@ -251,10 +362,42 @@ onMounted(async () => {
   }
 });
 
-const bot = computed(() => bots.value.get(props.service.data.bot_uuid));
+const bot = computed(() => bots.value.get(service.value.data.bot_uuid));
 const originalDatabase = computed(() =>
   databases.value.find((database) => database.id === route.query.database)
 );
+
+const isDatabaseAttached = computed(
+  () => !!(bot.value.databases || []).find((db) => db.id === database.value.id)
+);
+
+const integrationColumns = computed(() => [
+  {
+    title: t("bots_databases.fields.integration_column_name"),
+    dataIndex: "description",
+    key: "description",
+    scopedSlots: { customRender: "description" },
+  },
+  {
+    title: t("bots_databases.fields.integration_column_type"),
+    dataIndex: "type",
+    key: "type",
+    scopedSlots: { customRender: "type" },
+  },
+  {
+    title: t("bots_databases.fields.integration_column_url"),
+    dataIndex: "url",
+    key: "url",
+    scopedSlots: { customRender: "url" },
+  },
+  {
+    title: "",
+    dataIndex: "actions",
+    key: "actions",
+    scopedSlots: { customRender: "actions" },
+    width: 50,
+  },
+]);
 
 const isSaveQaKnowledgePrimary = computed(
   () =>
@@ -266,11 +409,11 @@ const databaseRules = computed(() => ({
   name: [{ required: true, message: t("ssl_product.field is required") }],
 }));
 
-function addQaKnowledge() {
+function handleAddQaKnowledge() {
   database.value.qa_knowledge.records.push({ question: "", answer: "" });
 }
 
-function removeQaKnowledge(index) {
+function handleRemoveQaKnowledge(index) {
   database.value.qa_knowledge.records.splice(index, 1);
 }
 
@@ -280,7 +423,7 @@ function getRootDomain(url) {
   return parts.slice(-2).join(".");
 }
 
-const saveQaKnowledge = async () => {
+const handleSaveQaKnowledge = async () => {
   let isValidationFailed = false;
   qaKnowledgeStatuses.value = database.value.qa_knowledge.records.map(
     (entry) => {
@@ -329,13 +472,9 @@ const saveQaKnowledge = async () => {
   }
 };
 
-const addNewKnowledge = async () => {
+const handleAddNewSimpleKnowledge = async () => {
   const urlRegex =
     /^(https?:\/\/)?([\w\-]+\.)+[\w\-]{2,}(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/i;
-  console.log(
-    urlRegex.test(newKnowledge.value.url),
-    newKnowledge.value.description.trim()
-  );
 
   if (
     !urlRegex.test(newKnowledge.value.url) ||
@@ -370,7 +509,6 @@ const addNewKnowledge = async () => {
       type: newKnowledge.value.type,
       url: newKnowledge.value.url,
     });
-    console.log(database.value.simple_knowledge.length);
 
     newKnowledge.value = { url: "", description: "", type: "google_docs" };
     isAddKnowledgeOpen.value = false;
@@ -387,6 +525,77 @@ const addNewKnowledge = async () => {
     openNotification("error", opts);
   } finally {
     isAddKnowledgeLoading.value = false;
+  }
+};
+
+const handleRemoveSimpleKnowledge = async (knowledge) => {
+  deleteSimpleKnowledgeId.value = knowledge.id;
+
+  try {
+    await api.post("/agents/api/delete_knowledge", {
+      data: {
+        simple_knowledge: knowledge,
+      },
+      database: database.value.id,
+      type: "simple",
+    });
+
+    database.value.simple_knowledge = database.value.simple_knowledge.filter(
+      (k) => k.id !== knowledge.id
+    );
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    deleteSimpleKnowledgeId.value = "";
+  }
+};
+
+const handleAttachDatabase = async () => {
+  isAttachLoading.value = true;
+  try {
+    await aiBotsStore.attachDatabase(database.value, bot.value);
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isAttachLoading.value = false;
+  }
+};
+
+const handleDetachDatabase = async () => {
+  isDetachLoading.value = true;
+  try {
+    await aiBotsStore.detachDatabase(database.value, bot.value);
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isDetachLoading.value = false;
   }
 };
 </script>
@@ -408,11 +617,29 @@ export default { name: "AiBotDatabase" };
   align-items: center;
 }
 
-.create_knowledge_modal .field {
+.knowledge_integrations .header {
+  display: flex;
+  align-items: center;
+}
+
+.knowledge_integrations .actions {
+  display: flex;
+  justify-content: end;
+  margin-top: 10px;
+}
+
+.knowledge_integrations .integration_item {
+  display: flex;
+  padding: 5px;
+  margin-top: 5px;
+  align-items: center;
+}
+
+.create_knowledge_integration_modal .field {
   margin-bottom: 15px;
 }
 
-.create_knowledge_modal .field .types {
+.create_knowledge_integration_modal .field .types {
   width: 100%;
 }
 
