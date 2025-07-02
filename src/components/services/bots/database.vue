@@ -195,12 +195,13 @@
             </template>
 
             <template v-if="column.key === 'url'">
-              <a
-                v-if="record.type !== 'user_file'"
-                :href="record.url"
-                target="_blank"
-              >
-                {{ getRootDomain(record.url) }}
+              <a :href="record.url" target="_blank">
+                <template v-if="record.type !== 'user_file'">
+                  {{ getRootDomain(record.url) }}
+                </template>
+                <template v-else>
+                  {{ t("bots_databases.fields.knowledge_upload_file") }}
+                </template>
               </a>
             </template>
           </template>
@@ -229,12 +230,14 @@
                 ></a-select
               ></a-col>
 
-              <a-col span="24" class="field">
-                <a-input
-                  v-model:value="newKnowledge.url"
-                  :placeholder="t('bots_databases.fields.knowledge_url')"
-                ></a-input>
-              </a-col>
+              <template v-if="newKnowledge.type !== 'user_file'">
+                <a-col span="24" class="field">
+                  <a-input
+                    v-model:value="newKnowledge.url"
+                    :placeholder="t('bots_databases.fields.knowledge_url')"
+                  ></a-input>
+                </a-col>
+              </template>
 
               <a-col span="24" class="field">
                 <a-textarea
@@ -244,6 +247,52 @@
                   "
                 ></a-textarea>
               </a-col>
+
+              <template v-if="newKnowledge.type === 'user_file'">
+                <a-col span="24" class="field">
+                  <span
+                    v-html="
+                      marked(t('bots_databases.tips.knowledge_upload_file'))
+                    "
+                  ></span>
+                </a-col>
+
+                <a-col span="24">
+                  <div class="upload">
+                    <a-upload
+                      :before-upload="handleBeforeKnowledgeFileUpload"
+                      :show-upload-list="false"
+                      accept=".txt,.csv,.docx,.xlsx,.pdf"
+                      :max-count="1"
+                    >
+                      <a-button type="primary"
+                        >{{ t("bots_databases.actions.knowledge_upload_file") }}
+                        <upload-icon />
+                      </a-button>
+                    </a-upload>
+                  </div>
+
+                  <div class="files_list">
+                    <div v-if="newKnowledge.file">
+                      <strong>{{ newKnowledge.file.name }}</strong>
+                      <span class="text-gray-500 text-sm"
+                        >({{ newKnowledge.file.type }})</span
+                      >
+
+                      <a-button
+                        class="delete_btn"
+                        @click="handleClearKnowledgeFile(index)"
+                        type="text"
+                        shape="circle"
+                      >
+                        <template #icon>
+                          <delete-icon two-tone-color="#ff4d4f" class="icon" />
+                        </template>
+                      </a-button>
+                    </div>
+                  </div>
+                </a-col>
+              </template>
             </a-row>
 
             <template #footer>
@@ -275,6 +324,7 @@ import api from "@/api";
 import Loading from "@/components/ui/loading.vue";
 import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
+import { marked } from "marked";
 import { storeToRefs } from "pinia";
 import { computed, defineAsyncComponent, onMounted, ref, toRefs } from "vue";
 import { useI18n } from "vue-i18n";
@@ -304,6 +354,10 @@ const detachIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/MinusOutlined")
 );
 
+const uploadIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/UploadOutlined")
+);
+
 const props = defineProps({
   service: { type: Object, required: true },
 });
@@ -316,11 +370,6 @@ const { openNotification } = useNotification();
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
-
-const newKnowledgeTypes = [
-  { value: "google_docs", label: "Google Docs" },
-  { value: "google_sheets", label: "Google Sheets" },
-];
 
 const isDataLoading = ref(false);
 const isDetachLoading = ref(false);
@@ -370,6 +419,15 @@ const originalDatabase = computed(() =>
 const isDatabaseAttached = computed(
   () => !!(bot.value.databases || []).find((db) => db.id === database.value.id)
 );
+
+const newKnowledgeTypes = computed(() => [
+  { value: "google_docs", label: "Google Docs" },
+  { value: "google_sheets", label: "Google Sheets" },
+  {
+    value: "user_file",
+    label: t("bots_databases.fields.knowledge_upload_file"),
+  },
+]);
 
 const integrationColumns = computed(() => [
   {
@@ -422,6 +480,38 @@ function getRootDomain(url) {
   const parts = hostname.split(".");
   return parts.slice(-2).join(".");
 }
+
+const handleBeforeKnowledgeFileUpload = async (newFile) => {
+  try {
+    const base64 = await toBase64(newFile);
+    newKnowledge.value.file = {
+      name: newFile.name,
+      type: newFile.type,
+      base64,
+    };
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  }
+
+  return false;
+};
+
+const toBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+
+const handleClearKnowledgeFile = () => {
+  newKnowledge.value.file = null;
+};
 
 const handleSaveQaKnowledge = async () => {
   let isValidationFailed = false;
@@ -476,8 +566,12 @@ const handleAddNewSimpleKnowledge = async () => {
   const urlRegex =
     /^(https?:\/\/)?([\w\-]+\.)+[\w\-]{2,}(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/i;
 
+  const isFile = newKnowledge.value.type === "user_file";
+
   if (
-    !urlRegex.test(newKnowledge.value.url) ||
+    (!isFile
+      ? !urlRegex.test(newKnowledge.value.url)
+      : !newKnowledge.value.file) ||
     !newKnowledge.value.description.trim()
   ) {
     return openNotification("error", {
@@ -487,13 +581,20 @@ const handleAddNewSimpleKnowledge = async () => {
   isAddKnowledgeLoading.value = true;
 
   try {
-    await api.post("/agents/api/add_knowledge", {
+    const data = await api.post("/agents/api/add_knowledge", {
       data: {
         simple_knowledge: {
           database: database.value.id,
           description: newKnowledge.value.description,
           type: newKnowledge.value.type,
-          url: newKnowledge.value.url,
+          url: isFile ? "" : newKnowledge.value.url,
+          file: isFile
+            ? {
+                content_type: newKnowledge.value.file.type,
+                data: newKnowledge.value.file.base64,
+                filename: newKnowledge.value.file.name,
+              }
+            : undefined,
         },
       },
       database: database.value.id,
@@ -503,12 +604,7 @@ const handleAddNewSimpleKnowledge = async () => {
     if (!database.value.simple_knowledge) {
       database.value.simple_knowledge = [];
     }
-    database.value.simple_knowledge.push({
-      database: database.value.id,
-      description: newKnowledge.value.description,
-      type: newKnowledge.value.type,
-      url: newKnowledge.value.url,
-    });
+    database.value.simple_knowledge.push(data);
 
     newKnowledge.value = { url: "", description: "", type: "google_docs" };
     isAddKnowledgeOpen.value = false;
@@ -656,5 +752,21 @@ export default { name: "AiBotDatabase" };
 
 .knowledge_questions .question_item .field {
   margin-right: 5px;
+}
+
+.upload {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.files_list {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1rem;
+  margin-top: 5px;
+  margin-bottom: 20px;
 }
 </style>
