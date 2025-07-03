@@ -38,6 +38,7 @@
 
   <a-row style="padding: 0px 5px">
     <a-col
+      v-if="typesOptions.length > 1"
       :xs="{ span: 24 }"
       :sm="{ span: 8 }"
       style="min-width: 200px; margin-right: 5px"
@@ -164,8 +165,16 @@ const props = defineProps({
   selectedType: { type: String, required: true },
   selectedModel: { type: String, required: true },
   selectedProvider: { type: String, required: true },
+  filterByTypes: { type: Array, default: () => [] },
+  onlyPublic: { type: Boolean, default: false },
 });
-const { selectedModel, selectedProvider, selectedType } = toRefs(props);
+const {
+  selectedModel,
+  selectedProvider,
+  selectedType,
+  filterByTypes,
+  onlyPublic,
+} = toRefs(props);
 
 const pricesForModel = ref({});
 const convertedPrices = ref(new Map());
@@ -249,7 +258,9 @@ const imagesColumns = computed(() => [
 const availableModels = computed(() =>
   globalModelsList.value.filter(
     (m) =>
-      ["api_only", "public"].includes(m.visibility) &&
+      (onlyPublic.value ? ["public"] : ["api_only", "public"]).includes(
+        m.visibility
+      ) &&
       m.state.state != "broken" &&
       !m.disabled
   )
@@ -274,14 +285,18 @@ const modelsOptions = computed(() => {
 });
 
 const typesOptions = computed(() => {
-  const types = modelByProviders.value.reduce((acc, item) => {
-    (item?.types || []).forEach((type) => {
-      if (!acc.includes(type)) {
-        acc.push(type);
-      }
-    });
-    return acc;
-  }, []);
+  const types = modelByProviders.value
+    .reduce((acc, item) => {
+      (item?.types || []).forEach((type) => {
+        if (!acc.includes(type)) {
+          acc.push(type);
+        }
+      });
+      return acc;
+    }, [])
+    .filter(
+      (t) => filterByTypes.value.length == 0 || filterByTypes.value.includes(t)
+    );
 
   return types.map((key) => ({
     value: key,
@@ -292,7 +307,12 @@ const typesOptions = computed(() => {
 const providersOptions = computed(() => {
   return availableModels.value
     .reduce((acc, item) => {
-      if (!acc.includes(item.provider) && item.provider) {
+      if (
+        !acc.includes(item.provider) &&
+        item.provider &&
+        (filterByTypes.value.length == 0 ||
+          filterByTypes.value.find((type) => item?.types.includes(type)))
+      ) {
         acc.push(item.provider);
       }
       return acc;
@@ -333,19 +353,7 @@ const convertPrices = async (uniqueAmounts) => {
   }
 };
 
-watch(typesOptions, (data) => {
-  if (!data.find((v) => v.value === selectedType.value)) {
-    emits("update:selectedType", data[0]?.value);
-  }
-});
-
-watch(modelsOptions, (data) => {
-  if (!data.find((v) => v.value === selectedType.value)) {
-    emits("update:selectedModel", data[0]?.value);
-  }
-});
-
-watch(selectedModel, async () => {
+async function setPrices() {
   const result = [];
   const uniqueAmounts = new Set();
   const fullModel = modelByProviders.value.find(
@@ -400,6 +408,23 @@ watch(selectedModel, async () => {
   pricesForModel.value = result;
 
   convertPrices(uniqueAmounts);
+}
+setPrices();
+
+watch(typesOptions, (data) => {
+  if (!data.find((v) => v.value === selectedType.value)) {
+    emits("update:selectedType", data[0]?.value);
+  }
+});
+
+watch(modelsOptions, (data) => {
+  if (!data.find((v) => v.value === selectedType.value)) {
+    emits("update:selectedModel", data[0]?.value);
+  }
+});
+
+watch(selectedModel, () => {
+  setPrices();
 });
 </script>
 

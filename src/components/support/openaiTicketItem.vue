@@ -90,7 +90,7 @@ function ticketClick(id) {
   const query = { ...route.query };
 
   if (props.instanceId) query.from = props.instanceId;
-  router.push({ path: `/ticket/${id}`, query });
+  router.replace({ path: `/ticket/${id}`, query });
 }
 
 function beauty(ticket) {

@@ -104,9 +104,13 @@
             :icon="h(addChatIcon)"
             >{{ $t("Add new chat") }}</a-button
           >
-          <span>
-            {{ instance.title }}
-          </span>
+          <a-button
+            @click="
+              router.push({ name: 'service', params: { id: instance.uuid } })
+            "
+          >
+            {{ $t('API / Settings') }}
+          </a-button>
         </a-row>
 
         <add-ticket :instance-id="instance.uuid" />
@@ -155,7 +159,7 @@
 import "highlight.js/styles/base16/classic-light.css";
 import { defineAsyncComponent, nextTick, ref, computed, watch, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { onBeforeRouteUpdate, useRoute } from "vue-router";
+import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { Status } from "@/libs/cc_connect/cc_pb";
 import { useClipboard } from "@/hooks/utils";
 import api from "@/api";
@@ -198,6 +202,7 @@ const addChatIcon = defineAsyncComponent(() =>
 );
 
 const route = useRoute();
+const router = useRouter();
 const { addToClipboard } = useClipboard();
 
 const authStore = useAuthStore();
@@ -229,13 +234,17 @@ const footer = ref();
 const chat = computed(() => chatsStore.chats.get(chatid.value));
 
 const instance = computed(() => {
-  if (!chat.value?.meta?.data?.instance?.kind.value) {
-    return null;
+  const instance = getInstances.value.find(
+    (i) => i.uuid === chat.value?.meta?.data?.instance?.kind?.value
+  );
+
+  if (instance) {
+    return instance;
   }
 
-  return getInstances.value.find(
-    (i) => i.uuid === chat.value.meta.data.instance.kind.value
-  );
+  const byQuery = getInstances.value.find((i) => i.uuid === route.query.from);
+
+  return byQuery || null;
 });
 
 const chats = computed(() => {
@@ -363,6 +372,11 @@ async function fetch() {
   chatsStore.fetch_models_list();
 
   instancesStore.fetch();
+
+  if (!route.params.id && chats.value[0]?.id) {
+    router.replace({ params: { id: chats.value[0].id }, query: route.query });
+    chatid.value = chats.value[0].id;
+  }
 
   await loadMessages(true);
   chatsStore.startStream();

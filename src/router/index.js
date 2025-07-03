@@ -259,7 +259,7 @@ const routes = [
         },
         component: () => import("@/routes/bots/aiBotPage.vue"),
       },
-       {
+      {
         path: "ai-bots/:id/chats/:chatId",
         name: "aiBotsChats",
         meta: {
@@ -332,7 +332,7 @@ const routes = [
     component: () => import("@/routes/cloud/vnc.vue"),
   },
   {
-    path: "/ticket/:id",
+    path: "/ticket/:id?",
     name: "ticket",
     meta: {
       mustBeLoggined: true,

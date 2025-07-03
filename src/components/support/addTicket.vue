@@ -14,66 +14,16 @@
     <a-spin :tip="$t('loading')" :spinning="isLoading || isSending">
       <a-form layout="vertical">
         <template v-if="instanceId">
-          <a-row style="margin-bottom: 10px">
-            <a-col v-for="provider in availableProviders" span="8">
-              <a-card
-                bodyStyle="padding:0px"
-                :style="{
-                  padding: '10px',
-                  margin: '2px',
-                  'border-color':
-                    selectedProvider == provider.value
-                      ? 'var(--main)'
-                      : 'unset',
-                }"
-                @click="selectedProvider = provider.value"
-              >
-                <div style="display: flex; justify-content: center">
-                  <img
-                    :src="`/img/ai-providers/${provider.value}.png`"
-                    style="
-                      width: calc(100% - 60px);
-                      height: 40px;
-                      max-width: 180px;
-                    "
-                  />
-                </div>
-
-                <div
-                  style="
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 10px;
-                  "
-                >
-                  <a-checkbox
-                    :checked="selectedProvider == provider.value"
-                    @change="selectedProvider = provider.value"
-                  >
-                    {{ provider.label }}
-                  </a-checkbox>
-                </div>
-              </a-card>
-            </a-col>
-          </a-row>
-
-          <a-row style="margin-bottom: 10px">
-            <a-col
-              span="3"
-              style="margin-right: 5px; display: flex; align-items: center"
-            >
-              {{ capitalize(t("model")) }}
-            </a-col>
-            <a-col span="20" style="margin-right: 5px">
-              <a-select
-                show-search
-                style="margin-left: 5px; width: 100%"
-                v-model:value="selectedModel"
-                :options="modelsOptions"
-              >
-              </a-select>
-            </a-col>
-          </a-row>
+          <openai-prices
+            :filter-by-types="['text']"
+            only-public
+            :selected-model="selectedModel"
+            @update:selectedModel="selectedModel = $event"
+            :selected-provider="selectedProvider"
+            @update:selectedProvider="selectedProvider = $event"
+            :selected-type="selectedType"
+            @update:selectedType="selectedType = $event"
+          />
         </template>
 
         <a-form-item
@@ -150,18 +100,11 @@
 </template>
 
 <script setup>
-import {
-  computed,
-  defineAsyncComponent,
-  onMounted,
-  reactive,
-  ref,
-  toRefs,
-  watch,
-} from "vue";
+import { computed, onMounted, reactive, ref, toRefs, watch } from "vue";
 import { message } from "ant-design-vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import OpenaiPrices from "../services/openai/prices.vue";
 
 import markdown from "markdown-it";
 import { full as emoji } from "markdown-it-emoji";
@@ -174,7 +117,6 @@ import { useSupportStore } from "@/stores/support.js";
 
 import uploadFiles from "@/components/support/upload.vue";
 import { capitalize } from "vue";
-import { storeToRefs } from "pinia";
 
 const md = markdown({
   html: true,
@@ -198,7 +140,6 @@ const { openNotification } = useNotification();
 
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
-const { globalModelsList } = storeToRefs(chatsStore);
 const supportStore = useSupportStore();
 
 const gateway = ref("userApp");
@@ -231,48 +172,6 @@ const filteredDepartments = computed(() => {
   } else {
     return chatsDeparts.filter((dep) => dep.public && dep.id !== "colobridge"); // [...supportStore.departments, ...chatsDeparts]
   }
-});
-
-const availableModels = computed(() =>
-  globalModelsList.value.filter(
-    (m) =>
-      ["public"].includes(m.visibility) &&
-      m.state.state != "broken" &&
-      !m.disabled &&
-      m.types.includes("text")
-  )
-);
-
-const modelByProviders = computed(() => {
-  const models = availableModels.value.filter(
-    (model) => model.provider === selectedProvider.value
-  );
-
-  return models;
-});
-
-const modelsOptions = computed(() => {
-  const models = modelByProviders.value.filter((model) =>
-    (model.types || []).includes(selectedType.value)
-  );
-  return models.map((model) => ({
-    value: model.key,
-    label: `${capitalize(t("model"))}: ${model.name}`,
-  }));
-});
-
-const availableProviders = computed(() => {
-  return availableModels.value
-    .reduce((acc, model) => {
-      if (!acc.includes(model.provider) && model.provider) {
-        acc.push(model.provider);
-      }
-      return acc;
-    }, [])
-    .map((key) => ({
-      value: key,
-      label: t(`openai.providers.${key}`),
-    }));
 });
 
 watch(filteredDepartments, setDepartment);
@@ -489,20 +388,8 @@ async function fetch() {
 
 fetch();
 
-// watch(availableTypes, (data) => {
-//   if (!data.find((v) => v.value === selectedType.value)) {
-//     selectedType.value = data[0]?.value;
-//   }
-// });
-
-watch(modelsOptions, (data) => {
-  if (!data.find((v) => v.value === selectedModel.value)) {
-    selectedModel.value = data[0]?.value;
-  }
-});
-
 watch(model, (value) => {
-  if (!!value && modelsOptions.value.find((m) => m.value === value)) {
+  if (!!value) {
     selectedModel.value = value;
   }
 });
