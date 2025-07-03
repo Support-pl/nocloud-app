@@ -275,9 +275,6 @@
                   <div class="files_list">
                     <div v-if="newKnowledge.file">
                       <strong>{{ newKnowledge.file.name }}</strong>
-                      <span class="text-gray-500 text-sm"
-                        >({{ newKnowledge.file.type }})</span
-                      >
 
                       <a-button
                         class="delete_btn"
