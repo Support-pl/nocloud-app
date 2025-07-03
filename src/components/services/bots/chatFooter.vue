@@ -42,6 +42,7 @@ import markdown from "markdown-it";
 import { full as emoji } from "markdown-it-emoji";
 import { useAiBotsStore } from "@/stores/aiBots";
 import UploadFiles from "@/components/support/upload.vue";
+import { useNotification } from "@/hooks/utils";
 
 const md = markdown({
   html: true,
@@ -61,6 +62,8 @@ const props = defineProps({
 const emits = defineEmits(["update:messages"]);
 
 const aiBotsStore = useAiBotsStore();
+
+const { openNotification } = useNotification();
 
 const textarea = ref();
 const upload = ref();
@@ -99,8 +102,13 @@ async function sendChatMessage() {
 
     await aiBotsStore.sendMessage(data, props.chat.id);
     emits("update:messages", props.messages);
-  } catch (error) {
-    console.log(error);
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
   } finally {
     isSendMessageLoading.value = false;
     message.value = "";
