@@ -103,6 +103,27 @@
         </a-slider>
       </a-col>
 
+      <a-col
+        span="24"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        "
+      >
+        <span class="field_title"
+          >{{ t("bots.fields.enable_spam_filter") }}:
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.tips.enable_spam_filter').replaceAll('\n', '<br/>')">
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" /> </a-tooltip
+        ></span>
+        <a-switch v-model:checked="bot.settings.enable_spam_filter" />
+      </a-col>
+
       <a-col span="24">
         <a-row justify="end">
           <a-button
@@ -429,7 +450,12 @@ const bot = ref({
   id: "",
   name: "",
   ownership: { owner: "" },
-  settings: { delay: 0, ai_model: "", system_prompt: "" },
+  settings: {
+    delay: 0,
+    ai_model: "",
+    system_prompt: "",
+    enable_spam_filter: true,
+  },
   channels: [],
 });
 const ogBot = ref();

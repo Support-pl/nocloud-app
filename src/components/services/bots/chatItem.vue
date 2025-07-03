@@ -4,24 +4,40 @@
     :class="{ compact, base: !header, header: header }"
     @click="header ? null : chatClick(chat.id)"
   >
-    <div class="chat_avatar_wrapper">
-      <a-avatar size="large" class="chat__avatar">
-        {{
-          chat.name
-            .split(/[\s_]+/)
-            .map((word) => word[0]?.toUpperCase())
-            .filter((char) => /[A-ZА-ЯЁ]/i.test(char))
-            .slice(0, 2)
-            .join("")
-        }}
-      </a-avatar>
-      <img
-        :src="`/img/icons/${chat.channel_id.split('_')[0]}.png`"
-        class="chat_chanell_icon"
-      />
+    <div class="chat_avatar_container">
+      <div class="chat_avatar_wrapper">
+        <a-avatar size="large" class="chat__avatar">
+          {{
+            chat.name
+              .split(/[\s_]+/)
+              .map((word) => word[0]?.toUpperCase())
+              .filter((char) => /[A-ZА-ЯЁ]/i.test(char))
+              .slice(0, 2)
+              .join("")
+          }}
+        </a-avatar>
+        <img
+          :src="`/img/icons/${chat.channel_id.split('_')[0]}.png`"
+          class="chat_chanell_icon"
+        />
+      </div>
     </div>
 
     <div v-if="!header" class="chat__content">
+      <div v-if="chat.need_operator" class="chat_special_status">
+        <a-tag style="line-height: 13px" color="red">
+          <bell-outlined />
+          {{ t("bots.labels.need_operator") }}
+        </a-tag>
+      </div>
+
+      <div v-else-if="chat.spam_detected" class="chat_special_status">
+        <a-tag style="line-height: 13px" color="orange">
+          <warning-outlined />
+          {{ t("bots.labels.spam_detected") }}
+        </a-tag>
+      </div>
+
       <div class="chat__upper">
         <div class="chat__title">
           {{ chat.name }}
@@ -43,9 +59,25 @@
           {{ chat.name }}
         </div>
       </div>
+      <div v-if="chat.need_operator" class="chat_special_status header">
+        <a-tag style="font-size: 1rem; padding: 3px" color="red">
+          <bell-outlined />
+          {{ t("bots.labels.need_operator") }}
+        </a-tag>
+      </div>
+
+      <div v-if="chat.spam_detected" class="chat_special_status header">
+        <a-tag style="font-size: 1rem; padding: 3px" color="orange">
+          <warning-outlined />
+          {{ t("bots.labels.spam_detected") }}
+        </a-tag>
+      </div>
     </div>
 
-    <div :class="{ chat_state: true, header: header }">
+    <div
+      :class="{ chat_state: true, header: header }"
+      :style="{ top: chat.need_operator || chat.spam_detected ? '25px' : '' }"
+    >
       <a-button
         @click.stop.capture="toggleChatState"
         type="text"
@@ -77,6 +109,14 @@ const playOutlined = defineAsyncComponent(() =>
 );
 const pauseOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PauseCircleOutlined")
+);
+
+const bellOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/BellOutlined")
+);
+
+const warningOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/WarningOutlined")
 );
 
 const props = defineProps({
@@ -202,10 +242,21 @@ export default { name: "chatItem" };
   justify-content: space-between;
 }
 
+.chat_special_status {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  font-size: 8px;
+}
+
 .chat__content {
   margin-left: 10px;
   max-width: calc(100% - 95px);
   width: 100%;
+}
+
+.chat__content.header {
+  display: flex;
 }
 
 .chat__title.header {
@@ -255,6 +306,14 @@ export default { name: "chatItem" };
 .chat_avatar_wrapper {
   position: relative;
   display: inline-block;
+  width: 40px;
+  height: 40px;
+}
+
+.chat_avatar_container {
+  flex-direction: column;
+  justify-content: end;
+  display: flex;
 }
 
 .chat_chanell_icon {

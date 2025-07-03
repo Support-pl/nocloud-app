@@ -95,6 +95,17 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
           break;
         }
+        case "chat_updated": {
+          if (chats.value.has(data.chat.bot_id)) {
+            chats.value.set(
+              data.chat.bot_id,
+              chats.value
+                .get(data.chat.bot_id)
+                .map((chat) => (chat.id === data.chat.id ? data.chat : chat))
+            );
+          }
+          break;
+        }
         case "chat_created": {
           if (chats.value.get(data.chat.bot_id)) {
             chats.value.get(data.chat.bot_id).push(data.chat);
@@ -177,6 +188,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           model: bot.settings.ai_model,
           system_prompt: bot.settings.system_prompt,
           temperature: bot.settings.temperature,
+          enable_spam_filter: bot.settings.enable_spam_filter,
         });
 
         bots.value.set(bot.id, data);
