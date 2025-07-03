@@ -96,8 +96,20 @@
           </a-collapse>
 
           <a-tabs v-model:activeKey="activeTab">
-            <a-tab-pane key="info" :tab="t('ai_bot_page.tabs.info')">
+            <a-tab-pane key="chats" :tab="t('ai_bot_page.tabs.chats')">
               <bot-info :service="service" />
+            </a-tab-pane>
+            <a-tab-pane key="settings">
+              <template #tab>
+                <span>
+                  <alert-outlined
+                    v-if="isSettingsBroken"
+                    style="color: red; margin-right: 0px"
+                  />
+                  {{ t("ai_bot_page.tabs.settings") }}
+                </span>
+              </template>
+              <bot-settings :service="service" />
             </a-tab-pane>
             <a-tab-pane key="database" :tab="t('ai_bot_page.tabs.databases')">
               <bot-database v-if="route.query.database" :service="service" />
@@ -129,6 +141,7 @@ import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 import { useChatsStore } from "@/stores/chats";
 import { useAiBotsStore } from "@/stores/aiBots";
 import BotDatabase from "@/components/services/bots/database.vue";
+import BotSettings from "@/components/services/bots/settings.vue";
 
 const caretRightIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CaretRightOutlined")
@@ -136,6 +149,10 @@ const caretRightIcon = defineAsyncComponent(() =>
 
 const editOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EditOutlined")
+);
+
+const alertOutlined = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/AlertOutlined")
 );
 
 const authStore = useAuthStore();
@@ -161,6 +178,7 @@ const info = ref([
   },
 ]);
 const service = ref(null);
+const bot = ref(null);
 const isDataLoading = ref(false);
 
 const editNameForm = ref(null);
@@ -200,6 +218,10 @@ const isActionsActive = computed(() => {
 
   return !service.value.clientid && meta?.renew !== false;
 });
+
+const isSettingsBroken = computed(
+  () => !bot.value?.channels || !bot.value?.channels?.length
+);
 
 async function onStart() {
   isDataLoading.value = true;
@@ -242,7 +264,11 @@ async function onStart() {
     };
     info.value[0].type = "";
 
-    await aiBotsStore.getBot(service.value.data.bot_uuid);
+    bot.value = await aiBotsStore.getBot(service.value.data.bot_uuid);
+
+    if (isSettingsBroken.value) {
+      activeTab.value = "settings";
+    }
   } catch (err) {
     const opts = {
       message: `Error: ${
