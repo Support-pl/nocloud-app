@@ -474,8 +474,7 @@ function handleRemoveQaKnowledge(index) {
 
 function getRootDomain(url) {
   const hostname = new URL(url).hostname;
-  const parts = hostname.split(".");
-  return parts.slice(-2).join(".");
+  return hostname;
 }
 
 const handleBeforeKnowledgeFileUpload = async (newFile) => {
