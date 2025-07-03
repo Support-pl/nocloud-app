@@ -142,7 +142,7 @@
       <loading />
     </a-col>
     <a-col v-else-if="chats.length > 0" span="24">
-      <ticket-item
+      <openai-ticket-item
         v-for="chat of chats"
         :key="chat.id"
         :ticket="chat"
@@ -154,7 +154,11 @@
     </a-col>
   </a-row>
 
-  <add-ticket :model="selectedModelV2" :provider="selectedProviderV2" :instance-id="service.uuid" />
+  <add-ticket
+    :model="selectedModelV2"
+    :provider="selectedProviderV2"
+    :instance-id="service.uuid"
+  />
 </template>
 
 <script setup>
@@ -169,7 +173,7 @@ import { useInstancesStore } from "@/stores/instances.js";
 import { useClipboard, useCurrency } from "@/hooks/utils";
 
 import addTicket from "@/components/support/addTicket.vue";
-import ticketItem from "@/components/support/ticketItem.vue";
+import OpenaiTicketItem from "@/components/support/openaiTicketItem.vue";
 import loading from "@/components/ui/loading.vue";
 import { useI18n } from "vue-i18n";
 
@@ -260,7 +264,9 @@ const exampleV2 = computed(() => {
     "n": 1,
     "size": "1024x1024"
   }'`;
-  } else if (selectedTypeV2.value === "audio") {
+  } else if (
+    ["audio_to_text", "text_to_audio"].includes(selectedTypeV2.value)
+  ) {
     return `
   curl <baseUrl>/v1/audio/speech \
   -H "Content-Type: application/json" \
@@ -271,6 +277,19 @@ const exampleV2 = computed(() => {
     "voice": "alloy"
   }'
 --output speech.mp3`;
+  } else if (selectedTypeV2.value === "video") {
+    return `
+  curl <baseUrl>/video/generate \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "model": "veo-3.0-generate-preview",
+    "prompt": "Сyberpunk car driving down the road. Engine roar sounds",
+    "aspect_ratio": "16:9",
+    "duration": 8,
+    "generate_audio": true
+  }'
+`;
   } else {
     return `
   curl <baseUrl>/v1/chat/completions \

@@ -3,15 +3,23 @@
     <div class="ticket__status" :style="{ 'background-color': statusColor }" />
     <div class="ticket__content">
       <div class="ticket__upper">
-        <div class="ticket__title">#{{ ticket.tid }} - {{ titleDecoded }}</div>
-        <div class="ticket__department" style="margin-left: auto">
-          {{ department }}
-        </div>
+        <div class="ticket__title">{{ titleDecoded }}</div>
 
-        <div class="ticket__status-text">
-          <a-badge :count="ticket.unread" :offset="offset">
-            {{ $t(`ticketStatus.${ticket.status}`) }}
-          </a-badge>
+        <div style="margin-left: auto" class="ticket__model">
+          <a-tag
+            color="primary"
+            style="border-color: var(--bright_font); margin-inline-end: 0px"
+          >
+            <template #icon>
+              <ai-icon />
+            </template>
+            <span style="margin-inline-start: 0px">
+              {{
+                globalModelsList.find((model) => model.key === ticket.model)
+                  ?.name || ticket.model
+              }}
+            </span>
+          </a-tag>
         </div>
       </div>
       <div class="ticket__lower">
@@ -27,12 +35,13 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, defineAsyncComponent } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useChatsStore } from "@/stores/chats.js";
 import { toDate } from "@/functions.js";
 import config from "@/appconfig.js";
 import { useI18n } from "vue-i18n";
+import { storeToRefs } from "pinia";
 
 const props = defineProps({
   ticket: { type: Object, required: true },
@@ -40,9 +49,14 @@ const props = defineProps({
   compact: { type: Boolean, default: false },
 });
 
+const aiIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RobotOutlined")
+);
+
 const router = useRouter();
 const route = useRoute();
 const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
 const { t } = useI18n();
 
 const offset = computed(() => {
@@ -71,12 +85,6 @@ const statusColor = computed(() => {
 });
 
 const titleDecoded = computed(() => decode(props.ticket.title));
-
-const department = computed(() => {
-  const id = chatsStore.chats.get(props.ticket.id)?.department;
-
-  return chatsStore.getDefaults.departments.find((dep) => dep.id === id)?.name;
-});
 
 function ticketClick(id) {
   const query = { ...route.query };
@@ -192,6 +200,10 @@ export default { name: "TicketItem" };
 
 .ticket__status-text {
   white-space: nowrap;
+}
+
+.ticket__model span {
+  margin-inline-start: 0px;
 }
 
 .ant-tag {

@@ -93,13 +93,43 @@
     </div>
 
     <div ref="chatList" class="chat__list">
-      <ticket-item
-        v-for="item of chats"
-        :key="item.id"
-        :ticket="item"
-        :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
-        compact
-      />
+      <template v-if="instance">
+        <a-row
+          justify="space-between"
+          align="center"
+          style="padding: 10px; align-items: center"
+        >
+          <a-button
+            @click="supportStore.isAddingTicket = !supportStore.isAddingTicket"
+            :icon="h(addChatIcon)"
+            >{{ $t("Add new chat") }}</a-button
+          >
+          <a-button
+            @click="
+              router.push({ name: 'service', params: { id: instance.uuid } })
+            "
+          >
+            {{ $t('API / Settings') }}
+          </a-button>
+        </a-row>
+
+        <add-ticket :instance-id="instance.uuid" />
+      </template>
+
+      <template v-for="item of chats">
+        <openai-ticket-item
+          v-if="item.model"
+          :ticket="item"
+          :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
+          compact
+        />
+        <ticket-item
+          v-else
+          :ticket="item"
+          :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
+          compact
+        />
+      </template>
     </div>
 
     <a-modal
@@ -129,7 +159,7 @@
 import "highlight.js/styles/base16/classic-light.css";
 import { defineAsyncComponent, nextTick, ref, computed, watch, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { onBeforeRouteUpdate, useRoute } from "vue-router";
+import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { Status } from "@/libs/cc_connect/cc_pb";
 import { useClipboard } from "@/hooks/utils";
 import api from "@/api";
@@ -137,7 +167,8 @@ import api from "@/api";
 import { useAuthStore } from "@/stores/auth.js";
 import { useChatsStore } from "@/stores/chats.js";
 import { useSupportStore } from "@/stores/support.js";
-
+import OpenaiTicketItem from "@/components/support/openaiTicketItem.vue";
+import AddTicket from "@/components/support/addTicket.vue";
 import loading from "@/components/ui/loading.vue";
 import ticketItem from "@/components/support/ticketItem.vue";
 import supportHeader from "@/components/support/header.vue";
@@ -148,6 +179,7 @@ import MessageContent from "@/components/support/messageContent.vue";
 import audioPlayer from "@/components/support/audio-player.vue";
 import { useInstancesStore } from "@/stores/instances";
 import { storeToRefs } from "pinia";
+import { downloadFile } from "@/functions";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -165,8 +197,12 @@ const fileIcon = defineAsyncComponent(() =>
 const loadingIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LoadingOutlined")
 );
+const addChatIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PlusOutlined")
+);
 
 const route = useRoute();
+const router = useRouter();
 const { addToClipboard } = useClipboard();
 
 const authStore = useAuthStore();
@@ -198,13 +234,17 @@ const footer = ref();
 const chat = computed(() => chatsStore.chats.get(chatid.value));
 
 const instance = computed(() => {
-  if (!chat.value?.meta?.data?.instance?.kind.value) {
-    return null;
+  const instance = getInstances.value.find(
+    (i) => i.uuid === chat.value?.meta?.data?.instance?.kind?.value
+  );
+
+  if (instance) {
+    return instance;
   }
 
-  return getInstances.value.find(
-    (i) => i.uuid === chat.value.meta.data.instance.kind.value
-  );
+  const byQuery = getInstances.value.find((i) => i.uuid === route.query.from);
+
+  return byQuery || null;
 });
 
 const chats = computed(() => {
@@ -283,7 +323,7 @@ async function onImageError(e) {
   `;
   parent.classList.add("files__preview--placeholder");
   parent.onclick = () => {
-    window.open(e.target.src);
+    downloadFile(e.target.src, e.target.alt);
   };
 }
 
@@ -332,6 +372,11 @@ async function fetch() {
   chatsStore.fetch_models_list();
 
   instancesStore.fetch();
+
+  if (!route.params.id && chats.value[0]?.id) {
+    router.replace({ params: { id: chats.value[0].id }, query: route.query });
+    chatid.value = chats.value[0].id;
+  }
 
   await loadMessages(true);
   chatsStore.startStream();

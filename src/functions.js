@@ -20,6 +20,18 @@ export function getDisk(key) {
   }, 0);
 }
 
+export function downloadFile(url, filename) {
+  fetch(url)
+    .then((response) => response.blob())
+    .then((blob) => {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+    })
+    .catch(console.error);
+}
+
 export function toDate(timestamp, sep = ".", timeFormat = true, reverse) {
   if (!timestamp || timestamp < 1) return "-";
 
@@ -210,6 +222,9 @@ function setInstByType(inst, result) {
       break;
     case "openai":
       result.groupname = "OpenAI";
+      break;
+    case "bots":
+      result.groupname = "AIBot";
       break;
     case "empty":
     case "virtual":

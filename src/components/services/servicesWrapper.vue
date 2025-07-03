@@ -285,6 +285,13 @@ export default {
             showcase.title ||
             "ChatGPT";
           break;
+        case "bots":
+          name = "service-bots";
+          query.headerTitle =
+            showcase.promo?.[this.$i18n.locale]?.title ||
+            showcase.title ||
+            "AIBot";
+          break;
         case "ione":
         case "ovh":
         case "keyweb":

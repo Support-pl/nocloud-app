@@ -27,6 +27,10 @@
       </div>
       <div v-else-if="networking.length < 2" class="item__status">
         {{
+          showcase?.promo?.[i18n.locale]?.title ??
+          showcase?.title ??
+          providersStore.getShowcases.find(({ uuid }) => uuid === instance.uuid)
+            ?.title ??
           providersStore.servicesProviders.find((sp) => sp.uuid === instance.sp)
             ?.title ??
           instance.domain ??
@@ -160,7 +164,7 @@ const price = computed(() => {
 const isPayg = computed(() => {
   const { groupname, config, billingPlan, type } = props.instance ?? {};
 
-  if (groupname === "OpenAI") return true;
+  if (["OpenAI", "AIBot"].includes(groupname)) return true;
   if (config?.duration === "P1H") return true;
   return type === "ione" && billingPlan.kind === "DYNAMIC";
 });
@@ -225,6 +229,12 @@ const title = computed(() =>
   !activeKey.value.includes("1") ? `IP: ${networking.value[0]}` : "IP's:"
 );
 
+const showcase = computed(() =>
+  providersStore.getShowcases.find(
+    ({ plans }) => !!plans.includes(props.instance.billingPlan.uuid)
+  )
+);
+
 const getModuleProductBtn = computed(() => {
   const { groupname: group, domainstatus: status } = props.instance;
   const serviceType = config.getServiceType(group)?.toLowerCase();
@@ -269,7 +279,9 @@ function cloudClick(service, { target }) {
   } else if (hostingid) {
     router.push({ name: "service", params: { id: hostingid } });
   } else if (groupname === "OpenAI") {
-    router.push({ name: "openaiPage", params: { id: uuid } });
+    router.push({ name: "ticket", query: { from: uuid } });
+  } else if (groupname === "AIBot") {
+    router.push({ name: "aiBotPage", params: { id: uuid } });
   } else if (groupname === "Self-Service VDS SSD HC") {
     router.push({ name: "openCloud", params: { uuid: orderid } });
   } else {

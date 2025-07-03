@@ -121,9 +121,7 @@ const department = computed(() => {
 let search = () => {};
 function goBack() {
   if (route.query.from) {
-    const params = { id: route.query.from };
-
-    router.push({ name: "service", params });
+    router.go(-1);
   } else {
     router.push({ name: "support" });
   }
