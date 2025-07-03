@@ -767,7 +767,8 @@
     },
     "ai_bot_page": {
       "tabs": {
-        "info": "Info",
+        "chats": "Chats",
+        "settings": "Settings",
         "databases": "Knowledge bases"
       }
     },
