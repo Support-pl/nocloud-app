@@ -308,7 +308,11 @@ async function onImageError(e) {
 
   e.target.outerHTML = `
     ${element}
-    <span style="font-size: 14px">${e.target.alt}</span>
+    <span style="font-size: 14px;display: -webkit-box;
+  -webkit-line-clamp: 1; 
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;">${e.target.alt}</span>
   `;
   parent.classList.add("files__preview--placeholder");
   parent.onclick = () => {
