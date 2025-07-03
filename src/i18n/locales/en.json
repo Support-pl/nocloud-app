@@ -832,7 +832,7 @@
         "image_output": "Price per 1M image output tokens",
         "audio_input": "Price per 1M audio input tokens",
         "audio_output": "Price per 1M audio output tokens",
-        "duration_price": "Price per 60 seconds of audio content",
+        "duration_price": "Price per 60 seconds of content",
         "sampling_step_price": "Price per generation step",
         "characters_price": "Price per 1M input characters"
       },
@@ -889,7 +889,8 @@
         "text": "Text generation",
         "image": "Image generation",
         "text_to_audio": "Audio generation",
-        "audio_to_text": "Recognition/Translation"
+        "audio_to_text": "Recognition/Translation",
+        "video": "Video generation"
       },
       "actions": {
         "generate_text": "text",
