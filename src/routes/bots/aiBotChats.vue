@@ -50,14 +50,13 @@
                 :name="reply.attachments[0]?.filename"
               />
               <div v-else class="chat__files">
-                <div v-for="file of reply.attachments" :key="file.storage_url" class="files__preview">
-                  <img
-                    :src="file.storage_url"
-                    :alt="file.filename"
-                    :onerror="onImageError"
-                    @click="openModal"
-                  >
-                </div>
+                <a-image
+                  v-for="file of reply.attachments" :key="file.storage_url" class="files__preview"
+                  :src="file.storage_url"
+                  :alt="file.filename"
+                  @error="onImageError"
+                  @click="openModal"
+                />
               </div>
             </pre>
 
@@ -314,6 +313,7 @@ async function onImageError(e) {
   overflow: hidden;
   text-overflow: ellipsis;">${e.target.alt}</span>
   `;
+  parent.classList.add("files__preview");
   parent.classList.add("files__preview--placeholder");
   parent.onclick = () => {
     downloadFile(e.target.src, e.target.alt);
