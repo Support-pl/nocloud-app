@@ -217,6 +217,14 @@ const fieldsForTypes = {
       },
     ],
   },
+  video: {
+    type: "default",
+    fields: [
+      {
+        "media_duration.duration_price": "number",
+      },
+    ],
+  },
   image: {
     type: "variant",
     fields: [
@@ -331,7 +339,10 @@ const convertPrices = async (uniqueAmounts) => {
         currency.value.code === currenciesStore.defaultCurrency.code ||
         convertedPrices.value.get(value)
       ) {
-        convertedPrices.value.set(value, value);
+        convertedPrices.value.set(
+          value,
+          convertedPrices.value.get(value) || value
+        );
         uniqueAmounts.delete(value);
       }
     });
