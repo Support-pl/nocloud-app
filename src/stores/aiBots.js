@@ -67,7 +67,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     const token = cookies.get("noCloudinApp-token");
     const url = VUE_APP_BASE_URL.replace("http", "ws");
 
-    socket.value = new WebSocket(`${url}agents/api/get_chats_updates`, [
+    socket.value = new WebSocket(`${url}agents/api/get_updates`, [
       "Bearer",
       token,
     ]);
