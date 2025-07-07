@@ -41,6 +41,9 @@
           <a-radio-button value="generate">
             {{ capitalize($t("openai.actions.generate_image")) }}
           </a-radio-button>
+          <a-radio-button value="video">
+            {{ capitalize($t("openai.actions.generate_video")) }}
+          </a-radio-button>
         </a-radio-group>
         <a-select
           style="min-width: 200px"
@@ -96,10 +99,99 @@
           :replies="replies"
         />
       </div>
-      <div class="chat__send" @click="sendMessage">
-        <arrow-up-icon />
-      </div>
+
+      <a-button
+        size="large"
+        :loading="isSendMessageLoading"
+        type="primary"
+        shape="circle"
+        @click="sendMessage"
+      >
+        <template #icon>
+          <arrow-up-icon />
+        </template>
+      </a-button>
     </div>
+
+    <a-modal
+      :open="sendAdvancedOptions.checked === 'video'"
+      :title="$t('openai.actions.generate_video_confirm')"
+      @cancel="sendAdvancedOptions.checked = 'default'"
+    >
+      <a-form layout="vertical" autocomplete="off">
+        <a-form-item :label="$t('openai.videos_properties.promt')">
+          <a-textarea
+            v-model:value="message"
+            type="text"
+            :auto-size="{ minRows: 3, maxRows: 5 }"
+            :placeholder="$t('openai.videos_properties.promt')"
+          />
+        </a-form-item>
+
+        <a-form-item :label="capitalize($t('model'))">
+          <a-select
+            v-if="instanceVideoModels.length > 1"
+            v-model:value="sendAdvancedOptions.model"
+            :options="instanceVideoModels"
+          />
+        </a-form-item>
+
+        <a-form-item :label="$t('openai.videos_properties.duration')">
+          <a-input-number
+            style="width: 100%"
+            :value="sendAdvancedOptions.duration"
+            @update:value="
+              sendAdvancedOptions.duration = $event || videoDurationRange.min
+            "
+            :min="videoDurationRange.min"
+            :max="videoDurationRange.max"
+          />
+        </a-form-item>
+
+        <a-form-item :label="$t('openai.videos_properties.aspect_ratio')">
+          <a-select
+            v-model:value="sendAdvancedOptions.aspect_ratio"
+            :options="videoAspectRatios"
+          />
+        </a-form-item>
+
+        <a-form-item :label="$t('openai.videos_properties.with_audio')">
+          <a-switch v-model:checked="sendAdvancedOptions.with_audio" />
+        </a-form-item>
+      </a-form>
+
+      <div style="display: flex; justify-content: center; margin-bottom: 10px">
+        <span style="text-align: center; font-size: 1rem">{{
+          $t("openai.labels.videos_price_tip", {
+            perSecond: `${
+              (convertedVideoPrices.get(sendAdvancedOptions.model) || 0) / 60
+            } ${currency.title}`,
+            total: `${
+              ((convertedVideoPrices.get(sendAdvancedOptions.model) || 0) /
+                60) *
+              sendAdvancedOptions.duration
+            } ${currency.title}`,
+          })
+        }}</span>
+      </div>
+
+      <template #footer>
+        <a-button
+          :disabled="isSendMessageLoading"
+          key="back"
+          @click="sendAdvancedOptions.checked = 'default'"
+          >{{ $t("Cancel") }}</a-button
+        >
+
+        <a-button
+          :loading="isSendMessageLoading"
+          key="submit"
+          type="primary"
+          @click="sendMessage"
+          >{{ $t("openai.actions.generate_video_confirm") }}</a-button
+        >
+      </template>
+    </a-modal>
   </div>
 </template>
 
@@ -121,12 +213,13 @@ import { full as emoji } from "markdown-it-emoji";
 import { useAuthStore } from "@/stores/auth.js";
 import { useChatsStore } from "@/stores/chats.js";
 
-import { useNotification } from "@/hooks/utils";
+import { useCurrency, useNotification } from "@/hooks/utils";
 import { toDate } from "@/functions.js";
 import api from "@/api.js";
 
 import uploadFiles from "@/components/support/upload.vue";
 import { storeToRefs } from "pinia";
+import { useCurrenciesStore } from "@/stores/currencies";
 
 const md = markdown({
   html: true,
@@ -149,15 +242,20 @@ const emits = defineEmits(["update:replies"]);
 
 const route = useRoute();
 const i18n = useI18n();
+const { currency } = useCurrency();
+
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 const { openNotification } = useNotification();
+const currenciesStore = useCurrenciesStore();
 
 const upload = ref();
 const textarea = ref();
 const message = ref("");
+const isSendMessageLoading = ref(false);
 const editing = ref(null);
+const convertedVideoPrices = ref(new Map());
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
 
 const sendAdvancedOptions = reactive({
@@ -201,6 +299,40 @@ const instanceImageModels = computed(() =>
       label: `${capitalize(i18n.t("model"))}: ${model.name}`,
     }))
 );
+
+const instanceVideoModels = computed(() =>
+  instanceModels.value
+    .filter((model) => (model.types || []).includes("video"))
+    .map((model) => ({
+      value: model.key,
+      label: `${capitalize(i18n.t("model"))}: ${model.name}`,
+    }))
+);
+
+const videoRequestParameters = computed(() => {
+  if (sendAdvancedOptions.checked === "video" && sendAdvancedOptions.model) {
+    const fullModel = instanceModels.value.find(
+      ({ key }) => key === sendAdvancedOptions.model
+    );
+    return fullModel.meta?.request_parameters || {};
+  }
+});
+
+const videoAspectRatios = computed(() => {
+  return (
+    videoRequestParameters.value?.["aspect_ratio"]?.enum.map((v) => ({
+      value: v,
+      label: v,
+    })) || []
+  );
+});
+
+const videoDurationRange = computed(() => {
+  return {
+    min: videoRequestParameters.value?.["duration"]?.range?.from || 5,
+    max: videoRequestParameters.value?.["duration"]?.to || 8,
+  };
+});
 
 const instanceImageSizes = computed(() => {
   if (sendAdvancedOptions.checked !== "generate") {
@@ -274,6 +406,9 @@ function updateReplies() {
 
 async function sendChatMessage(result, replies) {
   await nextTick();
+
+  isSendMessageLoading.value = true;
+
   try {
     const files = await upload.value.sendFiles();
     const message = {
@@ -292,17 +427,30 @@ async function sendChatMessage(result, replies) {
       );
     }
 
+    if (sendAdvancedOptions.checked === "video") {
+      message.meta.push(
+        { key: "duration", value: sendAdvancedOptions.duration },
+        { key: "with_audio", value: sendAdvancedOptions.with_audio },
+        { key: "aspect_ratio", value: sendAdvancedOptions.aspect_ratio }
+      );
+    }
+
     if (sendAdvancedOptions.checked !== "default") {
       message.meta.push({ key: "model", value: sendAdvancedOptions.model });
     }
+    sendAdvancedOptions.checked = "default";
 
-    const { uuid } = await chatsStore.sendMessage(message);
+    console.log(message);
 
-    replies[replies.length - 1].uuid = uuid;
-    emits("update:replies", replies);
+    // const { uuid } = await chatsStore.sendMessage(message);
+
+    // replies[replies.length - 1].uuid = uuid;
+    // emits("update:replies", replies);
   } catch (error) {
     replies[replies.length - 1].error = true;
     emits("update:replies", replies);
+  } finally {
+    isSendMessageLoading.value = false;
   }
 }
 
@@ -388,18 +536,64 @@ watch(
       return;
     }
 
-    sendAdvancedOptions.model =
-      v === "generate"
-        ? instanceImageModels.value[0]?.value
-        : instanceAudioModels.value[0]?.value;
+    if (v === "generate") {
+      sendAdvancedOptions.model = instanceImageModels.value[0]?.value;
+    } else if (v === "audio") {
+      sendAdvancedOptions.model = instanceAudioModels.value[0]?.value;
+    } else {
+      sendAdvancedOptions.model = instanceVideoModels.value[0]?.value;
+    }
   }
 );
+
+const convertPrices = async (uniqueAmounts) => {
+  try {
+    const amounts = [...uniqueAmounts.values()];
+
+    if (amounts.length > 0) {
+      const response = await currenciesStore.convert({
+        from: currenciesStore.defaultCurrency.code,
+        to: currency.value.code,
+        amounts,
+      });
+
+      [...uniqueAmounts.keys()].forEach((key, index) => {
+        convertedVideoPrices.value.set(key, response.amounts[index]);
+      });
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
 
 watch(instanceImageQualitys, (v) => {
   sendAdvancedOptions.quality = v[0]?.value;
 });
 watch(instanceImageSizes, (v) => {
   sendAdvancedOptions.size = v[0]?.value;
+});
+
+watch(videoRequestParameters, () => {
+  if (videoAspectRatios.value.length) {
+    sendAdvancedOptions.aspect_ratio = videoAspectRatios.value[0].value;
+  }
+  sendAdvancedOptions.duration = videoDurationRange.value.min;
+});
+
+watch(instanceVideoModels, (value) => {
+  const forConvert = new Map();
+  value.forEach((model) => {
+    const fullModel = instanceModels.value.find(
+      ({ key }) => key === model.value
+    );
+
+    forConvert.set(
+      model.value,
+      fullModel?.billing?.media_duration?.duration_price?.price?.amount
+    );
+  });
+
+  convertPrices(forConvert);
 });
 </script>
 
