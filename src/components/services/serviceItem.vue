@@ -34,7 +34,7 @@
       </div>
     </div>
     <div v-if="service.meta?.isNew" style="position: absolute; top: 5px; right: 15px">
-      <span class="badge-new">New!</span>
+      <span class="badge-new">New</span>
     </div>
   </div>
 </template>
