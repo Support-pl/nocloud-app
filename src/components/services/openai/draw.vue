@@ -1,27 +1,6 @@
 <template>
   <a-row class="module" style="margin-top: 10px" :gutter="[10, 10]">
     <a-col span="24">
-      <div class="token-title">
-        Token API:
-
-        <visible-icon
-          v-if="isVisible"
-          style="font-size: 18px"
-          @click="isVisible = false"
-        />
-        <invisible-icon
-          v-else
-          style="font-size: 18px"
-          @click="isVisible = true"
-        />
-        <copy-icon style="font-size: 18px" @click="addToClipboard(token)" />
-      </div>
-      <div style="padding-top: 0; font-size: 18px; word-break: break-word">
-        {{ isVisible ? token : `${token.slice(0, 15)}...` }}
-      </div>
-    </a-col>
-
-    <a-col span="24">
       <a-tabs v-model:activeKey="activeApiTab">
         <a-tab-pane key="2" tab="API v2">
           <openai-prices
@@ -43,6 +22,32 @@
             </div>
             <div style="padding-top: 0; font-size: 18px">
               {{ baseUrlV2 }}
+            </div>
+          </a-col>
+
+          <a-col span="24">
+            <div class="token-title">
+              Token API:
+
+              <visible-icon
+                v-if="isVisible"
+                style="font-size: 18px"
+                @click="isVisible = false"
+              />
+              <invisible-icon
+                v-else
+                style="font-size: 18px"
+                @click="isVisible = true"
+              />
+              <copy-icon
+                style="font-size: 18px"
+                @click="addToClipboard(token)"
+              />
+            </div>
+            <div
+              style="padding-top: 0; font-size: 18px; word-break: break-word"
+            >
+              {{ isVisible ? token : `${token.slice(0, 15)}...` }}
             </div>
           </a-col>
 
@@ -122,6 +127,32 @@
             </div>
             <div style="padding-top: 0; font-size: 18px">
               {{ endpointv1 }}
+            </div>
+          </a-col>
+
+          <a-col span="24">
+            <div class="token-title">
+              Token API:
+
+              <visible-icon
+                v-if="isVisible"
+                style="font-size: 18px"
+                @click="isVisible = false"
+              />
+              <invisible-icon
+                v-else
+                style="font-size: 18px"
+                @click="isVisible = true"
+              />
+              <copy-icon
+                style="font-size: 18px"
+                @click="addToClipboard(token)"
+              />
+            </div>
+            <div
+              style="padding-top: 0; font-size: 18px; word-break: break-word"
+            >
+              {{ isVisible ? token : `${token.slice(0, 15)}...` }}
             </div>
           </a-col>
 
@@ -282,7 +313,7 @@ const baseUrlV2 = `${window.location.origin}/api/openai`;
 const exampleV2 = computed(() => {
   if (selectedTypeV2.value === "image") {
     return `
-  curl <baseUrl>/v1/images/generations \
+  curl ${baseUrlV2}/v1/images/generations \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
@@ -295,7 +326,7 @@ const exampleV2 = computed(() => {
     ["audio_to_text", "text_to_audio"].includes(selectedTypeV2.value)
   ) {
     return `
-  curl <baseUrl>/v1/audio/speech \
+  curl ${baseUrlV2}/v1/audio/speech \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
@@ -306,7 +337,7 @@ const exampleV2 = computed(() => {
 --output speech.mp3`;
   } else if (selectedTypeV2.value === "video") {
     return `
-  curl <baseUrl>/video/generate \
+  curl ${baseUrlV2}video/generate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
@@ -319,7 +350,7 @@ const exampleV2 = computed(() => {
 `;
   } else {
     return `
-  curl <baseUrl>/v1/chat/completions \
+  curl ${baseUrlV2}/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
