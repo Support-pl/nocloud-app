@@ -162,7 +162,7 @@
 </template>
 
 <script setup>
-import { computed, ref, defineAsyncComponent, capitalize } from "vue";
+import { computed, ref, defineAsyncComponent, capitalize, onMounted } from "vue";
 import { EyeOutlined as visibleIcon } from "@ant-design/icons-vue";
 import { Status } from "@/libs/cc_connect/cc_pb.js";
 import openaiPrices from "./prices.vue";
@@ -176,6 +176,7 @@ import addTicket from "@/components/support/addTicket.vue";
 import OpenaiTicketItem from "@/components/support/openaiTicketItem.vue";
 import loading from "@/components/ui/loading.vue";
 import { useI18n } from "vue-i18n";
+import { useAppStore } from "@/stores/app";
 
 const invisibleIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EyeInvisibleOutlined")
@@ -189,6 +190,7 @@ const props = defineProps({
 });
 
 const chatsStore = useChatsStore();
+const appStore = useAppStore();
 const supportStore = useSupportStore();
 const instancesStore = useInstancesStore();
 const { currency } = useCurrency();
@@ -224,6 +226,10 @@ const chats = computed(() => {
   result.sort((a, b) => b.date - a.date);
   return result;
 });
+
+onMounted(()=>{
+  appStore.setTabByNameNoRoute('openai-api')
+})
 
 function moduleEnter() {
   supportStore.isAddingTicket = !supportStore.isAddingTicket;
