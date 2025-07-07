@@ -818,12 +818,19 @@
     },
     "openai": {
       "labels": {
-        "api_example": "API Example"
+        "api_example": "API Example",
+        "videos_price_tip": "The price for video generation is calculated based on the video's duration. The rate is {perSecond} per second. The total price will be {total}."
       },
       "images_properties": {
         "resolution": "Resolution",
         "quality": "Quality",
         "price": "Price"
+      },
+      "videos_properties": {
+        "aspect_ratio": "Aspect Ratio",
+        "duration": "Duration",
+        "with_audio": "With Audio",
+        "promt": "Prompt"
       },
       "payment_types": {
         "text_input": "Price per 1M input tokens",
@@ -895,7 +902,9 @@
       "actions": {
         "generate_text": "text",
         "generate_image": "image",
-        "generate_audio": "audio"
+        "generate_audio": "audio",
+        "generate_video": "video",
+        "generate_video_confirm": "Generate Video"
       }
     },
     "Domains": "Domains",

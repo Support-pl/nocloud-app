@@ -383,7 +383,7 @@
     "Servers": "Сервера",
     "Virtual": "Хостинг",
     "Add new chat": "Добавить новый чат",
-    "API / Settings":"API / Настройки",
+    "API / Settings": "API / Настройки",
     "SSL": "SSL",
     "info": "информация",
     "token": "токен",
@@ -844,12 +844,19 @@
     },
     "openai": {
       "labels": {
-        "api_example": "Пример"
+        "api_example": "Пример",
+        "videos_price_tip": "Стоимость генерации видео рассчитывается на основе его длительности. Тариф составляет {perSecond} за секунду. Общая стоимость составит {total}."
       },
       "images_properties": {
         "resolution": "Разрешение",
         "quality": "Качество",
         "price": "Цена"
+      },
+      "videos_properties": {
+        "aspect_ratio": "Соотношение сторон",
+        "duration": "Длительность",
+        "with_audio": "С аудио",
+        "promt": "Промпт"
       },
       "payment_types": {
         "text_input": "Цена за 1M входных токенов",
@@ -921,7 +928,9 @@
       "actions": {
         "generate_text": "текст",
         "generate_image": "изображение",
-        "generate_audio": "аудио"
+        "generate_audio": "аудио",
+        "generate_video": "видео",
+        "generate_video_confirm": "Сгенерировать видео"
       }
     },
     "public": "Публичный",
