@@ -68,12 +68,24 @@
                   @click="addToClipboard(exampleV2)"
                 />
               </div>
-              <a-button @click="openOpenAiDocs" type="link">{{
-                $t("moreExamples")
-              }}</a-button>
+              <a-button
+                v-if="selectedTypeV2 !== 'video'"
+                @click="openOpenAiDocs"
+                type="link"
+                >{{ $t("moreExamples") }}</a-button
+              >
             </div>
             <code>{{ exampleV2 }}</code>
           </a-col>
+
+          <a-collapse
+            v-if="selectedTypeV2 === 'video'"
+            @change="onCallapseOpen"
+          >
+            <a-collapse-panel key="video" :header="t('moreExamples')">
+              <div id="swagger-video" />
+            </a-collapse-panel>
+          </a-collapse>
         </a-tab-pane>
 
         <a-tab-pane key="1" style="opacity: 0.5">
@@ -162,7 +174,14 @@
 </template>
 
 <script setup>
-import { computed, ref, defineAsyncComponent, capitalize, onMounted } from "vue";
+import {
+  computed,
+  ref,
+  defineAsyncComponent,
+  capitalize,
+  onMounted,
+  watch,
+} from "vue";
 import { EyeOutlined as visibleIcon } from "@ant-design/icons-vue";
 import { Status } from "@/libs/cc_connect/cc_pb.js";
 import openaiPrices from "./prices.vue";
@@ -171,7 +190,8 @@ import { useChatsStore } from "@/stores/chats.js";
 import { useSupportStore } from "@/stores/support.js";
 import { useInstancesStore } from "@/stores/instances.js";
 import { useClipboard, useCurrency } from "@/hooks/utils";
-
+import SwaggerUI from "swagger-ui";
+import "swagger-ui/dist/swagger-ui.css";
 import addTicket from "@/components/support/addTicket.vue";
 import OpenaiTicketItem from "@/components/support/openaiTicketItem.vue";
 import loading from "@/components/ui/loading.vue";
@@ -195,7 +215,7 @@ const supportStore = useSupportStore();
 const instancesStore = useInstancesStore();
 const { currency } = useCurrency();
 const { addToClipboard } = useClipboard();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const chats = computed(() => {
   const result = [];
@@ -227,15 +247,16 @@ const chats = computed(() => {
   return result;
 });
 
-onMounted(()=>{
-  appStore.setTabByNameNoRoute('openai-api')
-})
+onMounted(() => {
+  appStore.setTabByNameNoRoute("openai-api");
+});
 
 function moduleEnter() {
   supportStore.isAddingTicket = !supportStore.isAddingTicket;
 }
 
 const isVisible = ref(false);
+const isSwaggerVideosInitWas = ref(false);
 const isLoading = ref(false);
 const activeApiTab = ref("2");
 const token = ref("-");
@@ -325,6 +346,23 @@ function openOpenAiDocs() {
   );
 }
 
+function onCallapseOpen() {
+  if (isSwaggerVideosInitWas.value) {
+    return;
+  }
+  isSwaggerVideosInitWas.value = true;
+  setTimeout(() => {
+    SwaggerUI({
+      dom_id: "#swagger-video",
+      url: `/schemas/swagger-video.${locale.value}.json`,
+      docExpansion: "full",
+      supportedSubmitMethods: [],
+      tryItOutEnabled: false,
+      defaultModelsExpandDepth: -1,
+    });
+  }, 200);
+}
+
 async function fetch() {
   try {
     isLoading.value = true;
@@ -346,6 +384,12 @@ async function fetch() {
 }
 
 fetch();
+
+watch(selectedTypeV2, (curr, prev) => {
+  if (prev == "video") {
+    isSwaggerVideosInitWas.value = false;
+  }
+});
 </script>
 
 <script>
@@ -374,5 +418,32 @@ export default { name: "OpenaiDraw" };
   gap: 5px;
   padding-bottom: 0;
   font-weight: 700;
+}
+</style>
+
+<style>
+.swagger-ui .opblock-summary {
+  pointer-events: none;
+  cursor: default !important;
+  user-select: none;
+}
+
+.swagger-ui .opblock-tag {
+  display: none;
+}
+
+.swagger-ui .main {
+  display: none;
+}
+
+.swagger-ui .opblock-section-header {
+  display: none;
+}
+.swagger-ui .parameters-container {
+  display: none;
+}
+
+.ant-collapse-content-box {
+  padding: 0px !important;
 }
 </style>
