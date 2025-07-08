@@ -156,7 +156,10 @@
         </a-form-item>
 
         <a-form-item :label="$t('openai.videos_properties.with_audio')">
-          <a-switch v-model:checked="sendAdvancedOptions.with_audio" />
+          <a-switch
+            :disabled="!isAudioEnabled"
+            v-model:checked="sendAdvancedOptions.with_audio"
+          />
         </a-form-item>
       </a-form>
 
@@ -332,6 +335,12 @@ const videoDurationRange = computed(() => {
     min: videoRequestParameters.value?.["duration"]?.range?.from || 5,
     max: videoRequestParameters.value?.["duration"]?.to || 8,
   };
+});
+
+const isAudioEnabled = computed(() => {
+  return (videoRequestParameters.value?.["with_audio"]?.enum || []).includes(
+    true
+  );
 });
 
 const instanceImageSizes = computed(() => {
@@ -576,6 +585,9 @@ watch(videoRequestParameters, () => {
     sendAdvancedOptions.aspect_ratio = videoAspectRatios.value[0].value;
   }
   sendAdvancedOptions.duration = videoDurationRange.value.min;
+  if (!isAudioEnabled.value) {
+    sendAdvancedOptions.with_audio = false;
+  }
 });
 
 watch(instanceVideoModels, (value) => {
