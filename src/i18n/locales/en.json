@@ -740,6 +740,12 @@
         "enable_spam_filter": "Spam Filter",
         "role": "Role"
       },
+      "chats_filter": {
+        "active": "Active",
+        "all": "All",
+        "inactive": "Inactive",
+        "archived": "Archived"
+      },
       "labels": {
         "seconds": "seconds",
         "s": "s",
@@ -748,7 +754,16 @@
         "delete_confirm_label": "Are you sure you want to delete this channel?",
         "no_chats": "No user messages yet. As soon as your clients contact the bot, you’ll see live chat history here.",
         "spam_detected": "Spam detected",
-        "need_operator": "Need operator"
+        "need_operator": "Need operator",
+        "search": "Search"
+      },
+      "chat_item_tips": {
+        "archive": "Move to archive",
+        "unarchive": "Remove from archive",
+        "activate": "Mark as active",
+        "deactivate": "Mark as inactive",
+        "pause_bot": "Pause the bot",
+        "resume_bot": "Start the bot"
       },
       "tips": {
         "model": "**GPT-4o Mini** is a lightweight version of GPT-4o, optimized for fast and efficient real-time performance.\n\nWe've selected GPT-4o Mini for your assistant because it combines speed, reliability, and responsiveness, delivering natural and high-quality answers.",
@@ -789,7 +804,15 @@
         "integration_column_type": "Type",
         "integration_column_name": "Name",
         "integration_column_url": "Link",
-        "knowledge_upload_file": "User file"
+        "knowledge_upload_file": "User file",
+        "file_search_column_type": "Type",
+        "file_search_column_name": "Name",
+        "file_search_column_url": "Link",
+        "file_search_column_status": "Status"
+      },
+      "file_search_status": {
+        "ready": "Ready to use",
+        "synchronizing": "Processing and indexing..."
       },
       "tips": {
         "not_valid_form": "Please check the validity of the entered data.",
@@ -803,14 +826,18 @@
         "qa_knowledge_base": "Create a list of typical questions users might ask, along with clear answers. The bot will search this list to give relevant replies, even if the question is asked in a different way.",
         "create_knowledge": "You can connect additional knowledge sources such as Google Docs, File, and more. The bot will use the content from these sources to search for and generate answers to user questions.",
         "knowledge_integrations": "You can connect additional knowledge sources such as Google Docs, File, and more. The bot will use the content from these sources to search for and generate answers to user questions.",
-        "knowledge_upload_file": "You can upload a file containing information that the AI assistant will use to answer questions.\n\n**The following file formats are supported:**\n\n- `.txt` — plain text file  \n- `.csv` — comma-separated values  \n- `.docx` — Microsoft Word document  \n- `.xlsx` — Microsoft Excel spreadsheet  \n- `.pdf` — PDF document\n\n❗ Please make sure the file contains structured and readable information."
+        "knowledge_upload_file": "You can upload a file containing information that the AI assistant will use to answer questions.\n\n**The following file formats are supported:**\n\n- `.txt` — plain text file  \n- `.csv` — comma-separated values  \n- `.docx` — Microsoft Word document  \n- `.xlsx` — Microsoft Excel spreadsheet  \n- `.pdf` — PDF document\n\n❗ Please make sure the file contains structured and readable information.",
+        "knowledge_file_size": "The maximum file size is 10MB, but the actual useful content should not exceed 50KB",
+        "knowledge_file_search": "Uploaded files are automatically processed and stored in a vector database — a special storage where each file is represented as a numerical vector.This database is used on every request to find the most relevant matches based on your data.",
+        "create_file_search_knowledge": "Upload a file to be processed and stored in the vector database.This data will be used on every request to improve response relevance and context."
       },
       "labels": {
         "enabled_databases": "Enabled knowledge bases",
         "disabled_databases": "Disabled knowledge bases",
         "empty_databases": "No data available",
         "qa_knowledge_base": "Question - Answer",
-        "knowledge_integrations": "Integrations"
+        "knowledge_integrations": "Integrations",
+        "knowledge_file_search": "Vector Database"
       },
       "actions": {
         "create_database": "Add knowledge base",
@@ -819,7 +846,8 @@
         "save_qa_records": "Save",
         "attach_database": "Connect database",
         "detach_database": "Disconnect database",
-        "knowledge_upload_file": "Upload file"
+        "knowledge_upload_file": "Upload file",
+        "create_file_search_knowledge": "Add Source"
       }
     },
     "openai": {
