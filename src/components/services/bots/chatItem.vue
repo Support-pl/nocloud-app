@@ -78,18 +78,73 @@
       :class="{ chat_state: true, header: header }"
       :style="{ top: chat.need_operator || chat.spam_detected ? '25px' : '' }"
     >
-      <a-button
-        @click.stop.capture="toggleChatState"
-        type="text"
-        :loading="isTogglePauseLoading"
-        shape="circle"
-        size="large"
-      >
-        <template #icon>
-          <play-outlined style="font-size: 1.4rem" v-if="chat.pause" />
-          <pause-outlined style="font-size: 1.4rem" v-else />
+      <template v-if="header">
+        <a-tooltip placement="top">
+          <template #title>
+            <span>{{
+              t(
+                `bots.chat_item_tips.${
+                  chat.inactive ? "activate" : "deactivate"
+                }`
+              )
+            }}</span>
+          </template>
+          <a-button
+            @click.stop.capture="toggleInactiveChat"
+            type="text"
+            :loading="isToggleInactiveLoading"
+            shape="circle"
+            size="large"
+          >
+            <template #icon>
+              <active-icon style="font-size: 1.4rem" v-if="chat.inactive" />
+              <inactive-icon style="font-size: 1.4rem" v-else />
+            </template>
+          </a-button>
+        </a-tooltip>
+
+        <a-tooltip placement="top">
+          <template #title>
+            <span>{{
+              t(
+                `bots.chat_item_tips.${chat.archived ? "unarchive" : "archive"}`
+              )
+            }}</span>
+          </template>
+          <a-button
+            @click.stop.capture="toggleArchivedChat"
+            type="text"
+            :loading="isToggleArchivedLoading"
+            shape="circle"
+            size="large"
+          >
+            <template #icon>
+              <unarchive-icon style="font-size: 1.4rem" v-if="chat.archived" />
+              <archive-icon style="font-size: 1.4rem" v-else />
+            </template>
+          </a-button>
+        </a-tooltip>
+      </template>
+
+      <a-tooltip placement="top">
+        <template #title>
+          <span>{{
+            t(`bots.chat_item_tips.${chat.pause ? "resume_bot" : "pause_bot"}`)
+          }}</span>
         </template>
-      </a-button>
+        <a-button
+          @click.stop.capture="toggleChatState"
+          type="text"
+          :loading="isTogglePauseLoading"
+          shape="circle"
+          size="large"
+        >
+          <template #icon>
+            <play-outlined style="font-size: 1.4rem" v-if="chat.pause" />
+            <pause-outlined style="font-size: 1.4rem" v-else />
+          </template>
+        </a-button>
+      </a-tooltip>
     </div>
 
     <div v-if="chat.unread_count > 0 && !header" class="chat_unread_badge">
@@ -119,6 +174,20 @@ const warningOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/WarningOutlined")
 );
 
+const archiveIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EyeOutlined")
+);
+const unarchiveIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EyeInvisibleOutlined")
+);
+
+const activeIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SwapOutlined")
+);
+const inactiveIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SwapOutlined")
+);
+
 const props = defineProps({
   chat: { type: Object, required: true },
   botId: { type: String, required: true },
@@ -131,6 +200,8 @@ const aiBotsStore = useAiBotsStore();
 const { t } = useI18n();
 
 const isTogglePauseLoading = ref(false);
+const isToggleArchivedLoading = ref(false);
+const isToggleInactiveLoading = ref(false);
 
 function formatDate(date) {
   date = new Date(date);
@@ -179,6 +250,43 @@ const toggleChatState = async () => {
     openNotification("error", opts);
   } finally {
     isTogglePauseLoading.value = false;
+  }
+};
+
+const toggleArchivedChat = async () => {
+  isToggleArchivedLoading.value = true;
+  try {
+    await aiBotsStore.updateChat({
+      ...props.chat,
+      archived: !props.chat.archived,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isToggleArchivedLoading.value = false;
+  }
+};
+const toggleInactiveChat = async () => {
+  isToggleInactiveLoading.value = true;
+  try {
+    await aiBotsStore.updateChat({
+      ...props.chat,
+      inactive: !props.chat.inactive,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isToggleInactiveLoading.value = false;
   }
 };
 
