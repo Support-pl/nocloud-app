@@ -855,7 +855,7 @@
       "videos_properties": {
         "aspect_ratio": "Соотношение сторон",
         "duration": "Длительность",
-        "with_audio": "С аудио",
+        "with_audio": "Со звуком?",
         "promt": "Промпт"
       },
       "payment_types": {
