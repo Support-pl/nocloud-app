@@ -440,12 +440,10 @@ async function sendChatMessage(result, replies) {
     }
     sendAdvancedOptions.checked = "default";
 
-    console.log(message);
+    const { uuid } = await chatsStore.sendMessage(message);
 
-    // const { uuid } = await chatsStore.sendMessage(message);
-
-    // replies[replies.length - 1].uuid = uuid;
-    // emits("update:replies", replies);
+    replies[replies.length - 1].uuid = uuid;
+    emits("update:replies", replies);
   } catch (error) {
     replies[replies.length - 1].error = true;
     emits("update:replies", replies);
