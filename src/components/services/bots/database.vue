@@ -247,6 +247,17 @@
             <template v-if="column.key === 'actions'">
               <span style="display: flex; justify-content: space-between">
                 <a-button
+                  class="delete_btn"
+                  @click="handleEditFileSearchKnowledge(record)"
+                  type="text"
+                  shape="circle"
+                >
+                  <template #icon>
+                    <edit-icon class="icon" />
+                  </template>
+                </a-button>
+
+                <a-button
                   :loading="deleteFileSearchKnowledgeId === record.id"
                   :disabled="
                     !!deleteFileSearchKnowledgeId &&
@@ -361,7 +372,9 @@
     <a-modal
       v-model:open="isAddKnowledgeOpen"
       :title="
-        addKnowledgeType === 'simple'
+        isAddKnowledgeEdit
+          ? t('bots_databases.actions.update_knowledge')
+          : addKnowledgeType === 'simple'
           ? t('bots_databases.actions.create_knowledge')
           : t('bots_databases.actions.create_file_search_knowledge')
       "
@@ -447,7 +460,15 @@
         >
 
         <a-button
-          v-if="addKnowledgeType === 'simple'"
+          v-if="isAddKnowledgeEdit"
+          type="primary"
+          :loading="isAddKnowledgeLoading"
+          @click="handleAddNewSimpleKnowledge"
+          >{{ t("bots_databases.actions.update_knowledge") }}</a-button
+        >
+
+        <a-button
+          v-else-if="addKnowledgeType === 'simple'"
           type="primary"
           :loading="isAddKnowledgeLoading"
           @click="handleAddNewSimpleKnowledge"
@@ -507,6 +528,10 @@ const uploadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/UploadOutlined")
 );
 
+const editIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EditTwoTone")
+);
+
 const props = defineProps({
   service: { type: Object, required: true },
 });
@@ -531,6 +556,7 @@ const qaKnowledgeStatuses = ref({});
 const isAddKnowledgeOpen = ref(false);
 const addKnowledgeType = ref("");
 const isAddKnowledgeLoading = ref(false);
+const isAddKnowledgeEdit = ref(false);
 const newKnowledge = ref({ type: "google_docs", description: "", url: "" });
 const deleteSimpleKnowledgeId = ref("");
 const deleteFileSearchKnowledgeId = ref("");
@@ -873,35 +899,59 @@ const handleAddNewFileSearchKnowledge = async () => {
   isAddKnowledgeLoading.value = true;
 
   try {
-    const data = await api.post("/agents/api/add_knowledge", {
-      data: {
-        file_search_knowledge: {
-          database: database.value.id,
-          name: newKnowledge.value.description,
-          type: newKnowledge.value.type,
-          url: isFile ? "" : newKnowledge.value.url,
-          file: isFile
-            ? {
-                content_type: newKnowledge.value.file.type,
-                data: newKnowledge.value.file.base64,
-                filename: newKnowledge.value.file.name,
-              }
-            : undefined,
-        },
-      },
+    const file_search_knowledge = {
       database: database.value.id,
-      type: "file_search",
-    });
+      name: newKnowledge.value.description,
+      type: newKnowledge.value.type,
+      url: isFile ? "" : newKnowledge.value.url,
+      file: isFile
+        ? {
+            content_type: newKnowledge.value.file.type,
+            data: newKnowledge.value.file.base64,
+            filename: newKnowledge.value.file.name,
+          }
+        : undefined,
+    };
 
-    data.status = "synchronizing";
+    if (newKnowledge.value.id) {
+      const data = await api.post("/agents/api/update_knowledge", {
+        data: {
+          file_search_knowledge: {
+            ...file_search_knowledge,
+            id: newKnowledge.value.id,
+          },
+        },
+        database: database.value.id,
+        type: "file_search",
+      });
+      data.id = newKnowledge.value.id;
 
-    if (!database.value.file_search_knowledge) {
-      database.value.file_search_knowledge = [];
+      data.status = "synchronizing";
+      const index = database.value.file_search_knowledge.findIndex(
+        (k) => k.id == data.id
+      );
+
+      database.value.file_search_knowledge[index] = data;
+    } else {
+      const data = await api.post("/agents/api/add_knowledge", {
+        data: {
+          file_search_knowledge: file_search_knowledge,
+        },
+        database: database.value.id,
+        type: "file_search",
+      });
+
+      data.status = "synchronizing";
+
+      if (!database.value.file_search_knowledge) {
+        database.value.file_search_knowledge = [];
+      }
+      database.value.file_search_knowledge.push(data);
     }
-    database.value.file_search_knowledge.push(data);
 
     newKnowledge.value = { url: "", description: "", type: "google_docs" };
     isAddKnowledgeOpen.value = false;
+    isAddKnowledgeEdit.value = false;
 
     openNotification("success", {
       message: `${t("Done")}!`,
@@ -946,6 +996,13 @@ const handleRemoveFileSearchKnowledge = async (knowledge) => {
   } finally {
     deleteFileSearchKnowledgeId.value = "";
   }
+};
+
+const handleEditFileSearchKnowledge = async (record) => {
+  addKnowledgeType.value = "search";
+  isAddKnowledgeOpen.value = true;
+  isAddKnowledgeEdit.value = true;
+  newKnowledge.value = { ...record, description: record.name };
 };
 
 const handleChangeFileSearchKnowledgeEnabled = async (knowledge) => {
