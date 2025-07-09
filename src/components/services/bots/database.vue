@@ -289,7 +289,6 @@
             </template>
 
             <template v-if="column.key === 'status'">
-              <span></span>
               <a-tag
                 :color="
                   getFileSearchItemStatus(
@@ -310,6 +309,19 @@
                   )
                 }}
               </a-tag>
+            </template>
+
+            <template v-if="column.key === 'enabled'">
+              <a-switch
+                size="small"
+                :checked="record.enabled"
+                @change="handleChangeFileSearchKnowledgeEnabled(record)"
+                :disabled="
+                  !!changeEnabledFileSearchKnowledgeId &&
+                  record.id !== changeEnabledFileSearchKnowledgeId
+                "
+                :loading="record.id === changeEnabledFileSearchKnowledgeId"
+              />
             </template>
 
             <template v-if="column.key === 'url'">
@@ -522,6 +534,7 @@ const isAddKnowledgeLoading = ref(false);
 const newKnowledge = ref({ type: "google_docs", description: "", url: "" });
 const deleteSimpleKnowledgeId = ref("");
 const deleteFileSearchKnowledgeId = ref("");
+const changeEnabledFileSearchKnowledgeId = ref("");
 
 onMounted(async () => {
   try {
@@ -620,6 +633,12 @@ const fileSearchColumns = computed(() => [
     dataIndex: "status",
     key: "status",
     scopedSlots: { customRender: "status" },
+  },
+  {
+    title: t("bots_databases.fields.file_search_column_enabled"),
+    dataIndex: "enabled",
+    key: "enabled",
+    scopedSlots: { customRender: "enabled" },
   },
   {
     title: "",
@@ -926,6 +945,39 @@ const handleRemoveFileSearchKnowledge = async (knowledge) => {
     openNotification("error", opts);
   } finally {
     deleteFileSearchKnowledgeId.value = "";
+  }
+};
+
+const handleChangeFileSearchKnowledgeEnabled = async (knowledge) => {
+  changeEnabledFileSearchKnowledgeId.value = knowledge.id;
+
+  try {
+    knowledge.enabled = !knowledge.enabled;
+    await api.post("/agents/api/update_knowledge", {
+      data: {
+        file_search_knowledge: knowledge,
+      },
+      database: database.value.id,
+      type: "file_search",
+    });
+
+    database.value.file_search_knowledge =
+      database.value.file_search_knowledge.map((k) =>
+        k.id === knowledge.id ? knowledge : k
+      );
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    changeEnabledFileSearchKnowledgeId.value = "";
   }
 };
 
