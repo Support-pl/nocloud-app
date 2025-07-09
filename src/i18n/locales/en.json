@@ -808,11 +808,12 @@
         "file_search_column_type": "Type",
         "file_search_column_name": "Name",
         "file_search_column_url": "Link",
-        "file_search_column_status": "Status"
+        "file_search_column_status": "Status",
+        "file_search_column_enabled": "Enabled"
       },
       "file_search_status": {
-        "ready": "Ready to use",
-        "synchronizing": "Processing and indexing..."
+        "ready": "Ready",
+        "synchronizing": "Processing..."
       },
       "tips": {
         "not_valid_form": "Please check the validity of the entered data.",

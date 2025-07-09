@@ -523,7 +523,8 @@
         "file_search_column_type": "Тип",
         "file_search_column_name": "Название",
         "file_search_column_url": "Ссылка",
-        "file_search_column_status": "Статус"
+        "file_search_column_status": "Статус",
+        "file_search_column_enabled": "Включён"
       },
       "tips": {
         "not_valid_form": "Пожалуйста, проверьте корректность введённых данных.",
@@ -543,8 +544,8 @@
         "create_file_search_knowledge": "Загрузите файл, который будет обработан и сохранён во векторной базе. Эта информация будет использоваться при каждом запросе для улучшения качества и контекста ответов."
       },
       "file_search_status": {
-        "ready": "Готово к использованию",
-        "synchronizing": "Обработка и индексирование..."
+        "ready": "Готов",
+        "synchronizing": "Обработка..."
       },
       "labels": {
         "enabled_databases": "Включённые базы знаний",
