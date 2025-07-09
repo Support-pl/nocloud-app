@@ -96,8 +96,8 @@
             :status="qaKnowledgeStatuses[index]?.['answer'] ? 'error' : ''"
           />
           <a-button
-            class="delete_btn"
             @click="handleRemoveQaKnowledge(index)"
+            class="delete_btn"
             type="text"
             shape="circle"
           >
@@ -152,21 +152,27 @@
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'actions'">
               <span style="display: flex; justify-content: space-between">
-                <a-button
-                  :loading="deleteSimpleKnowledgeId === record.id"
-                  :disabled="
-                    !!deleteSimpleKnowledgeId &&
-                    !!deleteSimpleKnowledgeId !== record.id
-                  "
-                  class="delete_btn"
-                  @click="handleRemoveSimpleKnowledge(record)"
-                  type="text"
-                  shape="circle"
+                <a-popconfirm
+                  :title="t('bots_databases.tips.delete_knowledge')"
+                  :ok-text="t('Yes')"
+                  :cancel-text="t('Cancel')"
+                  @confirm="handleRemoveSimpleKnowledge(record)"
                 >
-                  <template #icon>
-                    <delete-icon two-tone-color="#ff4d4f" class="icon" />
-                  </template>
-                </a-button>
+                  <a-button
+                    :loading="deleteSimpleKnowledgeId === record.id"
+                    :disabled="
+                      !!deleteSimpleKnowledgeId &&
+                      !!deleteSimpleKnowledgeId !== record.id
+                    "
+                    class="delete_btn"
+                    type="text"
+                    shape="circle"
+                  >
+                    <template #icon>
+                      <delete-icon two-tone-color="#ff4d4f" class="icon" />
+                    </template>
+                  </a-button>
+                </a-popconfirm>
               </span>
             </template>
 
@@ -243,35 +249,71 @@
           :data-source="database.file_search_knowledge"
           :pagination="false"
         >
+          <template #headerCell="{ column }">
+            <template v-if="column.key === 'enabled'">
+              <div style="display: flex; align-items: center">
+                <span> {{ column.title }} </span>
+                <a-tooltip>
+                  <template #title>
+                    <span
+                      v-html="
+                        t(`bots_databases.tips.enabled_file_search_knowledge`)
+                      "
+                    />
+                  </template>
+                  <help-icon
+                    style="margin-left: 5px; font-size: 1.2rem"
+                    class="icon"
+                  />
+                </a-tooltip>
+              </div>
+            </template>
+          </template>
+
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'actions'">
               <span style="display: flex; justify-content: space-between">
-                <a-button
-                  class="delete_btn"
-                  @click="handleEditFileSearchKnowledge(record)"
-                  type="text"
-                  shape="circle"
-                >
-                  <template #icon>
-                    <edit-icon class="icon" />
+                <a-tooltip>
+                  <template #title>
+                    <span
+                      v-html="
+                        marked(t(`bots_databases.tips.file_search_update`))
+                      "
+                    />
                   </template>
-                </a-button>
+                  <a-button
+                    class="delete_btn"
+                    @click="handleEditFileSearchKnowledge(record)"
+                    type="text"
+                    shape="circle"
+                  >
+                    <template #icon>
+                      <edit-icon class="icon" />
+                    </template>
+                  </a-button>
+                </a-tooltip>
 
-                <a-button
-                  :loading="deleteFileSearchKnowledgeId === record.id"
-                  :disabled="
-                    !!deleteFileSearchKnowledgeId &&
-                    !!deleteFileSearchKnowledgeId !== record.id
-                  "
-                  class="delete_btn"
-                  @click="handleRemoveFileSearchKnowledge(record)"
-                  type="text"
-                  shape="circle"
+                <a-popconfirm
+                  :title="t('bots_databases.tips.delete_knowledge')"
+                  :ok-text="t('Yes')"
+                  :cancel-text="t('Cancel')"
+                  @confirm="handleRemoveFileSearchKnowledge(record)"
                 >
-                  <template #icon>
-                    <delete-icon two-tone-color="#ff4d4f" class="icon" />
-                  </template>
-                </a-button>
+                  <a-button
+                    :loading="deleteFileSearchKnowledgeId === record.id"
+                    :disabled="
+                      !!deleteFileSearchKnowledgeId &&
+                      !!deleteFileSearchKnowledgeId !== record.id
+                    "
+                    class="delete_btn"
+                    type="text"
+                    shape="circle"
+                  >
+                    <template #icon>
+                      <delete-icon two-tone-color="#ff4d4f" class="icon" />
+                    </template>
+                  </a-button>
+                </a-popconfirm>
               </span>
             </template>
 
@@ -449,6 +491,17 @@
             </div>
           </a-col>
         </template>
+
+        <span
+          v-if="isAddKnowledgeEdit"
+          v-html="marked(t('bots_databases.tips.file_search_update'))"
+        >
+        </span>
+        <span
+          v-else-if="addKnowledgeType === 'search'"
+          v-html="marked(t('bots_databases.tips.file_search_price'))"
+        >
+        </span>
       </a-row>
 
       <template #footer>
