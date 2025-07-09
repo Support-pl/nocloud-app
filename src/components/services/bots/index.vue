@@ -2,7 +2,21 @@
   <div class="order_wrapper">
     <div v-if="!fetchLoading && !plansLoading" class="order">
       <div style="position: relative">
-        <promo-block v-if="isPromoVisible" class="order__promo" />
+        <div v-if="isPromoVisible" class="order__promo">
+          <div class="order__field">
+            <promo-block no-wrapper />
+            <div
+              v-html="
+                marked(
+                  $t('bots.labels.pricing_bot_description', {
+                    priceForAi: `${mainModel?.billing.tokens?.text_input?.price.amount} ${defaultCurrency.title}`,
+                    monthly: `${getProducts.price} ${userCurrency.title}`,
+                  })
+                )
+              "
+            />
+          </div>
+        </div>
 
         <div class="activate_btn">
           <a-button type="primary" block shape="round" @click="orderConfirm">
@@ -53,6 +67,7 @@ import promoBlock from "@/components/ui/promo.vue";
 import { useCurrenciesStore } from "@/stores/currencies";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
+import { marked } from "marked";
 
 const router = useRouter();
 const route = useRoute();
@@ -64,11 +79,12 @@ const authStore = useAuthStore();
 
 const spStore = useSpStore();
 const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
 const plansStore = usePlansStore();
 const namespacesStore = useNamespasesStore();
 const { namespaces } = storeToRefs(namespacesStore);
 const instancesStore = useInstancesStore();
-const { userCurrency } = storeToRefs(useCurrenciesStore());
+const { userCurrency, defaultCurrency } = storeToRefs(useCurrenciesStore());
 const { getShowcases } = storeToRefs(spStore);
 
 const plan = ref(null);
@@ -104,6 +120,10 @@ const isPromoVisible = computed(() => {
 
 const services = computed(() =>
   instancesStore.services.filter((el) => el.status !== "DEL")
+);
+
+const mainModel = computed(() =>
+  globalModelsList.value.find(({ key }) => key == "gpt-4o-mini")
 );
 
 const plans = computed(
@@ -461,7 +481,7 @@ export default { name: "AiBotsComponent" };
 
 .activate_btn {
   position: absolute;
-  bottom: 15px;
+  bottom: 10px;
   right: 15px;
   width: 200px;
 }
