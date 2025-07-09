@@ -747,6 +747,7 @@
         "archived": "Archived"
       },
       "labels": {
+        "pricing_bot_description": "### 💳 Bot Billing\n\n- **Monthly service fee:** {monthly}  \n  This fee covers infrastructure, bot management.  \n  The first month is refunded to your balance.\n\n- **Usage-based payment for tokens:**  \n  You only pay for what your bot actually uses.  \n  **1 million tokens = {priceForAi}**\n\n_Tokens are the units AI uses to read and write text. 1M tokens typically equals 700–800 average messages._",
         "seconds": "seconds",
         "s": "s",
         "add_new_chanell_title": "Add Channel",
@@ -830,26 +831,30 @@
         "knowledge_upload_file": "You can upload a file containing information that the AI assistant will use to answer questions.\n\n**The following file formats are supported:**\n\n- `.txt` — plain text file  \n- `.csv` — comma-separated values  \n- `.docx` — Microsoft Word document  \n- `.xlsx` — Microsoft Excel spreadsheet  \n- `.pdf` — PDF document\n\n❗ Please make sure the file contains structured and readable information.",
         "knowledge_file_size": "The maximum file size is 10MB, but the actual useful content should not exceed 50KB",
         "knowledge_file_search": "Uploaded files are automatically processed and stored in a vector database — a special storage where each file is represented as a numerical vector.This database is used on every request to find the most relevant matches based on your data.",
-        "create_file_search_knowledge": "Upload a file to be processed and stored in the vector database.This data will be used on every request to improve response relevance and context."
+        "create_file_search_knowledge": "Upload a file to be processed and stored in the vector database.This data will be used on every request to improve response relevance and context.",
+        "file_search_price": "**The file will be processed and stored in a vector database for smart search.**\n\n💰 *Cost: approximately $0.30 per 5 MB of text.*",
+        "file_search_update": "**The file will be reprocessed.**\nOnly the difference between the old and new version is billed.\n\n💰 *Cost: approximately $0.30 per 5 MB of changed content.*",
+        "delete_knowledge": "The file will be permanently removed. This action is irreversible.",
+        "enabled_file_search_knowledge": "Controls whether the file is included in AI queries. You can disable it without deleting."
       },
       "labels": {
         "enabled_databases": "Enabled knowledge bases",
         "disabled_databases": "Disabled knowledge bases",
         "empty_databases": "No data available",
         "qa_knowledge_base": "Question - Answer",
-        "knowledge_integrations": "Integrations",
-        "knowledge_file_search": "Vector Database"
+        "knowledge_integrations": "Connected Data",
+        "knowledge_file_search": "Smart Files (Vectorized)"
       },
       "actions": {
         "create_database": "Add knowledge base",
-        "create_knowledge": "Add integration",
+        "create_knowledge": "Add source",
         "add_qa_record": "Add record",
         "save_qa_records": "Save",
         "attach_database": "Connect database",
         "detach_database": "Disconnect database",
         "knowledge_upload_file": "Upload file",
-        "create_file_search_knowledge": "Add Source"
-        ,"update_knowledge": "Update Source"
+        "create_file_search_knowledge": "Add Source",
+        "update_knowledge": "Update Source"
       }
     },
     "openai": {
@@ -973,6 +978,7 @@
       "SNAPSHOT": "SNAPSHOT",
       "RUNNING": "RUNNING",
       "SUSPENDED": "SUSPENDED",
+      "STOPPED": "STOPPED",
       "OPERATION": "OPERATION",
       "UNKNOWN": "UNKNOWN",
       "DELETED": "DELETED"
