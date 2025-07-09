@@ -136,8 +136,9 @@ const handleAddDatabase = async () => {
   await addDatabaseFormRef.value.validate();
   isAddDatabaseLoading.value = true;
   try {
-    await aiBotsStore.addDatabase(newDatabase.value);
-
+    const database = await aiBotsStore.addDatabase(newDatabase.value);
+    
+    aiBotsStore.attachDatabase(database, bot.value);
     isAddDatabaseOpen.value = false;
     newDatabase.value = { name: "" };
 
