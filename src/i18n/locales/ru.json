@@ -519,7 +519,7 @@
         "integration_column_type": "Тип",
         "integration_column_name": "Название",
         "integration_column_url": "Ссылка",
-        "knowledge_upload_file": "Пользовательский файл",
+        "knowledge_upload_file": "Файл",
         "file_search_column_type": "Тип",
         "file_search_column_name": "Название",
         "file_search_column_url": "Ссылка",
@@ -563,7 +563,8 @@
         "attach_database": "Подключить базу знаний",
         "detach_database": "Отключить базу знаний",
         "knowledge_upload_file": "Загрузить файл",
-        "create_file_search_knowledge": "Добавить источник"
+        "create_file_search_knowledge": "Добавить источник",
+        "update_knowledge": "Обновить источник"
       }
     },
     "domains_view": {

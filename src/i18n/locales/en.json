@@ -804,7 +804,7 @@
         "integration_column_type": "Type",
         "integration_column_name": "Name",
         "integration_column_url": "Link",
-        "knowledge_upload_file": "User file",
+        "knowledge_upload_file": "File",
         "file_search_column_type": "Type",
         "file_search_column_name": "Name",
         "file_search_column_url": "Link",
@@ -849,6 +849,7 @@
         "detach_database": "Disconnect database",
         "knowledge_upload_file": "Upload file",
         "create_file_search_knowledge": "Add Source"
+        ,"update_knowledge": "Update Source"
       }
     },
     "openai": {
