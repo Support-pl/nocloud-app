@@ -32,10 +32,7 @@
           :options="
             roles.map((role) => ({
               value: role.key,
-              label: t(
-                `bots.roles.${role.display_name.toLowerCase()}`,
-                role.display_name
-              ),
+              label: `${role.display_name} - ${role.description}`,
             }))
           "
           allow-clear
