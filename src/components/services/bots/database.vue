@@ -974,6 +974,7 @@ const handleAddNewFileSearchKnowledge = async () => {
     };
 
     if (newKnowledge.value.id) {
+      file_search_knowledge.enabled = newKnowledge.value.enabled;
       const data = await api.post("/agents/api/update_knowledge", {
         data: {
           file_search_knowledge: {
