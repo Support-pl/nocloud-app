@@ -231,7 +231,7 @@ const title = computed(() =>
 
 const showcase = computed(() =>
   providersStore.getShowcases.find(
-    ({ plans }) => !!plans.includes(props.instance.billingPlan.uuid)
+    ({ plans }) => !!plans.includes(props.instance.billingPlan?.uuid)
   )
 );
 
