@@ -100,9 +100,6 @@ async function setAddon(code, addon, key) {
 
   setPrice("addons", addonsPrices);
   setOptions("addons", addonsKeys);
-
-  if (addon.type === "custom") return;
-  setOptions(`config.configurations.${addon.type}`, code.split("$")[0]);
 }
 
 function getAddon(addons) {
