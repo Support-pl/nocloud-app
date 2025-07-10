@@ -97,7 +97,7 @@
 
           <a-tabs v-model:activeKey="activeTab">
             <a-tab-pane key="chats" :tab="t('ai_bot_page.tabs.chats')">
-              <div style="position: relative">
+              <div v-if="isSuspended" style="position: relative">
                 <div style="opacity: 0.6">
                   <bot-info :service="service" />
 
@@ -112,6 +112,7 @@
                   ></div>
                 </div>
               </div>
+              <bot-info v-else :service="service" />
             </a-tab-pane>
             <a-tab-pane key="settings">
               <template #tab>
