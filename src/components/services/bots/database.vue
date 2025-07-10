@@ -549,7 +549,14 @@ import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
 import { marked } from "marked";
 import { storeToRefs } from "pinia";
-import { computed, defineAsyncComponent, onMounted, ref, toRefs } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  ref,
+  toRefs,
+  watch,
+} from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 
@@ -1130,6 +1137,13 @@ const handleDetachDatabase = async () => {
     isDetachLoading.value = false;
   }
 };
+
+watch(isAddKnowledgeOpen, (curr, prev) => {
+  if (prev && !curr) {
+    newKnowledge.value = { url: "", description: "", type: "google_docs" };
+    isAddKnowledgeEdit.value = false;
+  }
+});
 </script>
 
 <script>
