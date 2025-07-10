@@ -174,10 +174,10 @@ const warningOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/WarningOutlined")
 );
 
-const archiveIcon = defineAsyncComponent(() =>
+const unarchiveIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EyeOutlined")
 );
-const unarchiveIcon = defineAsyncComponent(() =>
+const archiveIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EyeInvisibleOutlined")
 );
 

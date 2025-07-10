@@ -451,11 +451,6 @@
             <span
               v-html="marked(t('bots_databases.tips.knowledge_upload_file'))"
             ></span>
-
-            <span
-              v-if="addKnowledgeType === 'simple'"
-              v-html="marked(t('bots_databases.tips.knowledge_file_size'))"
-            ></span>
           </a-col>
 
           <a-col span="24">
@@ -502,6 +497,11 @@
           v-html="marked(t('bots_databases.tips.file_search_price'))"
         >
         </span>
+
+        <span
+          v-else-if="addKnowledgeType === 'simple'"
+          v-html="marked(t('bots_databases.tips.knowledge_file_size'))"
+        ></span>
       </a-row>
 
       <template #footer>

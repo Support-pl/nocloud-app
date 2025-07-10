@@ -9,7 +9,7 @@
               v-html="
                 marked(
                   $t('bots.labels.pricing_bot_description', {
-                    priceForAi: `${mainModel?.billing.tokens?.text_input?.price.amount} ${defaultCurrency.title}`,
+                    priceForToken: `${priceForToken} ${userCurrency.title}`,
                     monthly: `${getProducts.price} ${userCurrency.title}`,
                   })
                 )
@@ -84,7 +84,8 @@ const plansStore = usePlansStore();
 const namespacesStore = useNamespasesStore();
 const { namespaces } = storeToRefs(namespacesStore);
 const instancesStore = useInstancesStore();
-const { userCurrency, defaultCurrency } = storeToRefs(useCurrenciesStore());
+const currenciesStore = useCurrenciesStore();
+const { userCurrency, defaultCurrency } = storeToRefs(currenciesStore);
 const { getShowcases } = storeToRefs(spStore);
 
 const plan = ref(null);
@@ -95,6 +96,7 @@ const provider = ref(null);
 const cachedPlans = reactive({});
 const fetchLoading = ref(false);
 const plansLoading = ref(false);
+const priceForToken = ref();
 
 const modal = ref({ confirmCreate: false, confirmLoading: false });
 
@@ -330,6 +332,8 @@ async function fetch() {
     }
 
     await Promise.all(promises);
+
+    fetchPriceForTokens();
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
@@ -343,6 +347,25 @@ async function fetch() {
 }
 
 fetch();
+
+async function fetchPriceForTokens() {
+  if (
+    mainModel.value &&
+    mainModel.value?.billing.tokens?.text_input?.price.amount
+  ) {
+    const price = mainModel.value?.billing.tokens?.text_input?.price.amount;
+    if (userCurrency.value === defaultCurrency.value) {
+      return (priceForToken.value = price);
+    }
+
+    const { amounts } = await currenciesStore.convert({
+      from: defaultCurrency.value.code,
+      to: userCurrency.value.code,
+      amounts: [price],
+    });
+    priceForToken.value = amounts[0] || price;
+  }
+}
 </script>
 
 <script>

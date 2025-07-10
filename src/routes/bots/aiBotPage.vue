@@ -124,6 +124,17 @@
                   {{ t("ai_bot_page.tabs.settings") }}
                 </span>
               </template>
+
+              <a-alert
+                v-if="isSettingsBroken"
+                type="warning"
+                show-icon
+              >
+                <template #description>
+                  <span v-html="marked(t('bots.labels.channel_warning'))" />
+                </template>
+              </a-alert>
+
               <bot-settings :service="service" />
             </a-tab-pane>
             <a-tab-pane
@@ -161,6 +172,7 @@ import { useChatsStore } from "@/stores/chats";
 import { useAiBotsStore } from "@/stores/aiBots";
 import BotDatabase from "@/components/services/bots/database.vue";
 import BotSettings from "@/components/services/bots/settings.vue";
+import { marked } from "marked";
 
 const caretRightIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CaretRightOutlined")

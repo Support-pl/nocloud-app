@@ -57,7 +57,7 @@
         <a-textarea
           style="margin-top: 10px"
           v-model:value="bot.settings.system_prompt"
-          :placeholder="t('bots.fields.promt')"
+          :placeholder="t('bots.placeholders.promt')"
           :auto-size="{ minRows: 4 }"
         />
       </a-col>
@@ -279,6 +279,10 @@
             </div>
           </a-form-item>
         </a-form>
+
+        <span
+          v-html="marked(t(`bots.chanells_instruction.${newChanellData.type}`))"
+        ></span>
 
         <template #footer>
           <a-button
