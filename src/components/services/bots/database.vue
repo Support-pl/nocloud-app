@@ -516,7 +516,7 @@
           v-if="isAddKnowledgeEdit"
           type="primary"
           :loading="isAddKnowledgeLoading"
-          @click="handleAddNewSimpleKnowledge"
+          @click="handleAddNewFileSearchKnowledge"
           >{{ t("bots_databases.actions.update_knowledge") }}</a-button
         >
 
