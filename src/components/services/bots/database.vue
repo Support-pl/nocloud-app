@@ -96,8 +96,8 @@
             :status="qaKnowledgeStatuses[index]?.['answer'] ? 'error' : ''"
           />
           <a-button
-            class="delete_btn"
             @click="handleRemoveQaKnowledge(index)"
+            class="delete_btn"
             type="text"
             shape="circle"
           >
@@ -152,28 +152,34 @@
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'actions'">
               <span style="display: flex; justify-content: space-between">
-                <a-button
-                  :loading="deleteSimpleKnowledgeId === record.id"
-                  :disabled="
-                    !!deleteSimpleKnowledgeId &&
-                    !!deleteSimpleKnowledgeId !== record.id
-                  "
-                  class="delete_btn"
-                  @click="handleRemoveSimpleKnowledge(record)"
-                  type="text"
-                  shape="circle"
+                <a-popconfirm
+                  :title="t('bots_databases.tips.delete_knowledge')"
+                  :ok-text="t('Yes')"
+                  :cancel-text="t('Cancel')"
+                  @confirm="handleRemoveSimpleKnowledge(record)"
                 >
-                  <template #icon>
-                    <delete-icon two-tone-color="#ff4d4f" class="icon" />
-                  </template>
-                </a-button>
+                  <a-button
+                    :loading="deleteSimpleKnowledgeId === record.id"
+                    :disabled="
+                      !!deleteSimpleKnowledgeId &&
+                      !!deleteSimpleKnowledgeId !== record.id
+                    "
+                    class="delete_btn"
+                    type="text"
+                    shape="circle"
+                  >
+                    <template #icon>
+                      <delete-icon two-tone-color="#ff4d4f" class="icon" />
+                    </template>
+                  </a-button>
+                </a-popconfirm>
               </span>
             </template>
 
             <template v-if="column.key === 'type'">
               <span>
                 {{
-                  newKnowledgeTypes.find((type) => type.value === record.type)
+                  knowledgeTypes.find((type) => type.value === record.type)
                     ?.label
                 }}
               </span>
@@ -212,106 +218,326 @@
             <template #title>
               <span>{{ t("bots_databases.tips.create_knowledge") }}</span>
             </template>
-            <a-button @click="isAddKnowledgeOpen = true">{{
-              t("bots_databases.actions.create_knowledge")
-            }}</a-button>
+            <a-button
+              @click="
+                isAddKnowledgeOpen = true;
+                addKnowledgeType = 'simple';
+              "
+              >{{ t("bots_databases.actions.create_knowledge") }}</a-button
+            >
           </a-tooltip>
+        </div>
+      </a-collapse-panel>
 
-          <a-modal
-            v-model:open="isAddKnowledgeOpen"
-            :title="t('bots_databases.actions.create_knowledge')"
-          >
-            <a-row class="create_knowledge_integration_modal">
-              <a-col span="24" class="field">
-                <a-select
-                  class="types"
-                  v-model:value="newKnowledge.type"
-                  :options="newKnowledgeTypes"
-                ></a-select
-              ></a-col>
-
-              <template v-if="newKnowledge.type !== 'user_file'">
-                <a-col span="24" class="field">
-                  <a-input
-                    v-model:value="newKnowledge.url"
-                    :placeholder="t('bots_databases.fields.knowledge_url')"
-                  ></a-input>
-                </a-col>
+      <a-collapse-panel class="knowledge_file_search" key="file_search">
+        <template #header>
+          <div class="header">
+            <span style="margin-right: 10px">
+              {{ t("bots_databases.labels.knowledge_file_search") }}
+            </span>
+            <a-tooltip>
+              <template #title>
+                <span v-html="t(`bots_databases.tips.knowledge_file_search`)" />
               </template>
+              <help-icon style="font-size: 22px" />
+            </a-tooltip>
+          </div>
+        </template>
 
-              <a-col span="24" class="field">
-                <a-textarea
-                  v-model:value="newKnowledge.description"
-                  :placeholder="
-                    t('bots_databases.fields.knowledge_description')
-                  "
-                ></a-textarea>
-              </a-col>
-
-              <template v-if="newKnowledge.type === 'user_file'">
-                <a-col span="24" class="field">
-                  <span
-                    v-html="
-                      marked(t('bots_databases.tips.knowledge_upload_file'))
-                    "
-                  ></span>
-                </a-col>
-
-                <a-col span="24">
-                  <div class="upload">
-                    <a-upload
-                      :before-upload="handleBeforeKnowledgeFileUpload"
-                      :show-upload-list="false"
-                      accept=".txt,.csv,.docx,.xlsx,.pdf"
-                      :max-count="1"
-                    >
-                      <a-button type="primary"
-                        >{{ t("bots_databases.actions.knowledge_upload_file") }}
-                        <upload-icon />
-                      </a-button>
-                    </a-upload>
-                  </div>
-
-                  <div class="files_list">
-                    <div v-if="newKnowledge.file">
-                      <strong>{{ newKnowledge.file.name }}</strong>
-
-                      <a-button
-                        class="delete_btn"
-                        @click="handleClearKnowledgeFile(index)"
-                        type="text"
-                        shape="circle"
-                      >
-                        <template #icon>
-                          <delete-icon two-tone-color="#ff4d4f" class="icon" />
-                        </template>
-                      </a-button>
-                    </div>
-                  </div>
-                </a-col>
-              </template>
-            </a-row>
-
-            <template #footer>
-              <a-button
-                key="back"
-                :disabled="isAddKnowledgeLoading"
-                @click="isAddKnowledgeOpen = false"
-                >{{ t("Cancel") }}</a-button
-              >
-
-              <a-button
-                key="submit"
-                type="primary"
-                :loading="isAddKnowledgeLoading"
-                @click="handleAddNewSimpleKnowledge"
-                >{{ t("bots_databases.actions.create_knowledge") }}</a-button
-              >
+        <a-table
+          :columns="fileSearchColumns"
+          :data-source="database.file_search_knowledge"
+          :pagination="false"
+        >
+          <template #headerCell="{ column }">
+            <template v-if="column.key === 'enabled'">
+              <div style="display: flex; align-items: center">
+                <span> {{ column.title }} </span>
+                <a-tooltip>
+                  <template #title>
+                    <span
+                      v-html="
+                        t(`bots_databases.tips.enabled_file_search_knowledge`)
+                      "
+                    />
+                  </template>
+                  <help-icon
+                    style="margin-left: 5px; font-size: 1.2rem"
+                    class="icon"
+                  />
+                </a-tooltip>
+              </div>
             </template>
-          </a-modal>
+          </template>
+
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'actions'">
+              <span style="display: flex; justify-content: space-between">
+                <a-tooltip>
+                  <template #title>
+                    <span
+                      v-html="
+                        marked(t(`bots_databases.tips.file_search_update`))
+                      "
+                    />
+                  </template>
+                  <a-button
+                    class="delete_btn"
+                    @click="handleEditFileSearchKnowledge(record)"
+                    type="text"
+                    shape="circle"
+                  >
+                    <template #icon>
+                      <edit-icon class="icon" />
+                    </template>
+                  </a-button>
+                </a-tooltip>
+
+                <a-popconfirm
+                  :title="t('bots_databases.tips.delete_knowledge')"
+                  :ok-text="t('Yes')"
+                  :cancel-text="t('Cancel')"
+                  @confirm="handleRemoveFileSearchKnowledge(record)"
+                >
+                  <a-button
+                    :loading="deleteFileSearchKnowledgeId === record.id"
+                    :disabled="
+                      !!deleteFileSearchKnowledgeId &&
+                      !!deleteFileSearchKnowledgeId !== record.id
+                    "
+                    class="delete_btn"
+                    type="text"
+                    shape="circle"
+                  >
+                    <template #icon>
+                      <delete-icon two-tone-color="#ff4d4f" class="icon" />
+                    </template>
+                  </a-button>
+                </a-popconfirm>
+              </span>
+            </template>
+
+            <template v-if="column.key === 'type'">
+              <span>
+                {{
+                  knowledgeTypes.find((type) => type.value === record.type)
+                    ?.label
+                }}
+              </span>
+            </template>
+
+            <template v-if="column.key === 'name'">
+              <a-tooltip v-if="record.name.length > 20" placement="top">
+                <template #title>
+                  <span>
+                    {{ record.name }}
+                  </span>
+                </template>
+                {{ record.name.slice(0, 20) + "..." }}
+              </a-tooltip>
+
+              <span v-else>
+                {{ record.name }}
+              </span>
+            </template>
+
+            <template v-if="column.key === 'status'">
+              <a-tag
+                :color="
+                  getFileSearchItemStatus(
+                    record,
+                    originalDatabase
+                  ).toLowerCase() === 'ready'
+                    ? 'green'
+                    : 'orange'
+                "
+              >
+                {{
+                  t(
+                    `bots_databases.file_search_status.${getFileSearchItemStatus(
+                      record,
+                      originalDatabase
+                    ).toLowerCase()}`,
+                    getFileSearchItemStatus(record, originalDatabase)
+                  )
+                }}
+              </a-tag>
+            </template>
+
+            <template v-if="column.key === 'enabled'">
+              <a-switch
+                size="small"
+                :checked="record.enabled"
+                @change="handleChangeFileSearchKnowledgeEnabled(record)"
+                :disabled="
+                  !!changeEnabledFileSearchKnowledgeId &&
+                  record.id !== changeEnabledFileSearchKnowledgeId
+                "
+                :loading="record.id === changeEnabledFileSearchKnowledgeId"
+              />
+            </template>
+
+            <template v-if="column.key === 'url'">
+              <a :href="record.url" target="_blank">
+                <template v-if="record.type !== 'user_file'">
+                  {{ getRootDomain(record.url) }}
+                </template>
+                <template v-else>
+                  {{ t("bots_databases.fields.knowledge_upload_file") }}
+                </template>
+              </a>
+            </template>
+          </template>
+        </a-table>
+
+        <div class="actions">
+          <a-tooltip placement="top">
+            <template #title>
+              <span>{{
+                t("bots_databases.tips.create_file_search_knowledge")
+              }}</span>
+            </template>
+            <a-button
+              @click="
+                isAddKnowledgeOpen = true;
+                addKnowledgeType = 'search';
+              "
+              >{{
+                t("bots_databases.actions.create_file_search_knowledge")
+              }}</a-button
+            >
+          </a-tooltip>
         </div>
       </a-collapse-panel>
     </a-collapse>
+
+    <a-modal
+      v-model:open="isAddKnowledgeOpen"
+      :title="
+        isAddKnowledgeEdit
+          ? t('bots_databases.actions.update_knowledge')
+          : addKnowledgeType === 'simple'
+          ? t('bots_databases.actions.create_knowledge')
+          : t('bots_databases.actions.create_file_search_knowledge')
+      "
+    >
+      <a-row class="create_knowledge_integration_modal">
+        <a-col span="24" class="field">
+          <a-select
+            class="types"
+            v-model:value="newKnowledge.type"
+            :options="knowledgeTypes"
+          ></a-select
+        ></a-col>
+
+        <template v-if="newKnowledge.type !== 'user_file'">
+          <a-col span="24" class="field">
+            <a-input
+              v-model:value="newKnowledge.url"
+              :placeholder="t('bots_databases.fields.knowledge_url')"
+            ></a-input>
+          </a-col>
+        </template>
+
+        <a-col span="24" class="field">
+          <a-textarea
+            v-model:value="newKnowledge.description"
+            :placeholder="t('bots_databases.fields.knowledge_description')"
+          ></a-textarea>
+        </a-col>
+
+        <template v-if="newKnowledge.type === 'user_file'">
+          <a-col span="24" class="field">
+            <span
+              v-html="marked(t('bots_databases.tips.knowledge_upload_file'))"
+            ></span>
+
+            <span
+              v-if="addKnowledgeType === 'simple'"
+              v-html="marked(t('bots_databases.tips.knowledge_file_size'))"
+            ></span>
+          </a-col>
+
+          <a-col span="24">
+            <div class="upload">
+              <a-upload
+                :before-upload="handleBeforeKnowledgeFileUpload"
+                :show-upload-list="false"
+                accept=".txt,.csv,.docx,.xlsx,.pdf"
+                :max-count="1"
+              >
+                <a-button type="primary"
+                  >{{ t("bots_databases.actions.knowledge_upload_file") }}
+                  <upload-icon />
+                </a-button>
+              </a-upload>
+            </div>
+
+            <div class="files_list">
+              <div v-if="newKnowledge.file">
+                <strong>{{ newKnowledge.file.name }}</strong>
+
+                <a-button
+                  class="delete_btn"
+                  @click="handleClearKnowledgeFile(index)"
+                  type="text"
+                  shape="circle"
+                >
+                  <template #icon>
+                    <delete-icon two-tone-color="#ff4d4f" class="icon" />
+                  </template>
+                </a-button>
+              </div>
+            </div>
+          </a-col>
+        </template>
+
+        <span
+          v-if="isAddKnowledgeEdit"
+          v-html="marked(t('bots_databases.tips.file_search_update'))"
+        >
+        </span>
+        <span
+          v-else-if="addKnowledgeType === 'search'"
+          v-html="marked(t('bots_databases.tips.file_search_price'))"
+        >
+        </span>
+      </a-row>
+
+      <template #footer>
+        <a-button
+          key="back"
+          :disabled="isAddKnowledgeLoading"
+          @click="isAddKnowledgeOpen = false"
+          >{{ t("Cancel") }}</a-button
+        >
+
+        <a-button
+          v-if="isAddKnowledgeEdit"
+          type="primary"
+          :loading="isAddKnowledgeLoading"
+          @click="handleAddNewSimpleKnowledge"
+          >{{ t("bots_databases.actions.update_knowledge") }}</a-button
+        >
+
+        <a-button
+          v-else-if="addKnowledgeType === 'simple'"
+          type="primary"
+          :loading="isAddKnowledgeLoading"
+          @click="handleAddNewSimpleKnowledge"
+          >{{ t("bots_databases.actions.create_knowledge") }}</a-button
+        >
+        <a-button
+          v-else
+          type="primary"
+          :loading="isAddKnowledgeLoading"
+          @click="handleAddNewFileSearchKnowledge"
+          >{{
+            t("bots_databases.actions.create_file_search_knowledge")
+          }}</a-button
+        >
+      </template>
+    </a-modal>
   </a-col>
   <loading v-else />
 </template>
@@ -323,7 +549,14 @@ import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
 import { marked } from "marked";
 import { storeToRefs } from "pinia";
-import { computed, defineAsyncComponent, onMounted, ref, toRefs } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  ref,
+  toRefs,
+  watch,
+} from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 
@@ -355,6 +588,10 @@ const uploadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/UploadOutlined")
 );
 
+const editIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/EditTwoTone")
+);
+
 const props = defineProps({
   service: { type: Object, required: true },
 });
@@ -377,9 +614,13 @@ const database = ref({ name: "" });
 const editDatabaseFormRef = ref();
 const qaKnowledgeStatuses = ref({});
 const isAddKnowledgeOpen = ref(false);
+const addKnowledgeType = ref("");
 const isAddKnowledgeLoading = ref(false);
+const isAddKnowledgeEdit = ref(false);
 const newKnowledge = ref({ type: "google_docs", description: "", url: "" });
 const deleteSimpleKnowledgeId = ref("");
+const deleteFileSearchKnowledgeId = ref("");
+const changeEnabledFileSearchKnowledgeId = ref("");
 
 onMounted(async () => {
   try {
@@ -417,7 +658,7 @@ const isDatabaseAttached = computed(
   () => !!(bot.value.databases || []).find((db) => db.id === database.value.id)
 );
 
-const newKnowledgeTypes = computed(() => [
+const knowledgeTypes = computed(() => [
   { value: "google_docs", label: "Google Docs" },
   { value: "google_sheets", label: "Google Sheets" },
   {
@@ -454,6 +695,46 @@ const integrationColumns = computed(() => [
   },
 ]);
 
+const fileSearchColumns = computed(() => [
+  {
+    title: t("bots_databases.fields.file_search_column_name"),
+    dataIndex: "name",
+    key: "name",
+    scopedSlots: { customRender: "description" },
+  },
+  {
+    title: t("bots_databases.fields.file_search_column_type"),
+    dataIndex: "type",
+    key: "type",
+    scopedSlots: { customRender: "type" },
+  },
+  {
+    title: t("bots_databases.fields.file_search_column_url"),
+    dataIndex: "url",
+    key: "url",
+    scopedSlots: { customRender: "url" },
+  },
+  {
+    title: t("bots_databases.fields.file_search_column_status"),
+    dataIndex: "status",
+    key: "status",
+    scopedSlots: { customRender: "status" },
+  },
+  {
+    title: t("bots_databases.fields.file_search_column_enabled"),
+    dataIndex: "enabled",
+    key: "enabled",
+    scopedSlots: { customRender: "enabled" },
+  },
+  {
+    title: "",
+    dataIndex: "actions",
+    key: "actions",
+    scopedSlots: { customRender: "actions" },
+    width: 50,
+  },
+]);
+
 const isSaveQaKnowledgePrimary = computed(
   () =>
     JSON.stringify(originalDatabase.value.qa_knowledge) !==
@@ -475,6 +756,14 @@ function handleRemoveQaKnowledge(index) {
 function getRootDomain(url) {
   const hostname = new URL(url).hostname;
   return hostname;
+}
+
+function getFileSearchItemStatus(record, originalDatabase) {
+  const og = (originalDatabase.file_search_knowledge || []).find(
+    ({ id }) => id === record.id
+  );
+
+  return og?.status || record.status;
 }
 
 const handleBeforeKnowledgeFileUpload = async (newFile) => {
@@ -651,6 +940,164 @@ const handleRemoveSimpleKnowledge = async (knowledge) => {
   }
 };
 
+const handleAddNewFileSearchKnowledge = async () => {
+  const urlRegex =
+    /^(https?:\/\/)?([\w\-]+\.)+[\w\-]{2,}(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/i;
+
+  const isFile = newKnowledge.value.type === "user_file";
+
+  if (
+    (!isFile
+      ? !urlRegex.test(newKnowledge.value.url)
+      : !newKnowledge.value.file) ||
+    !newKnowledge.value.description.trim()
+  ) {
+    return openNotification("error", {
+      message: t(`bots_databases.tips.not_valid_form`),
+    });
+  }
+  isAddKnowledgeLoading.value = true;
+
+  try {
+    const file_search_knowledge = {
+      database: database.value.id,
+      name: newKnowledge.value.description,
+      type: newKnowledge.value.type,
+      url: isFile ? "" : newKnowledge.value.url,
+      file: isFile
+        ? {
+            content_type: newKnowledge.value.file.type,
+            data: newKnowledge.value.file.base64,
+            filename: newKnowledge.value.file.name,
+          }
+        : undefined,
+    };
+
+    if (newKnowledge.value.id) {
+      const data = await api.post("/agents/api/update_knowledge", {
+        data: {
+          file_search_knowledge: {
+            ...file_search_knowledge,
+            id: newKnowledge.value.id,
+          },
+        },
+        database: database.value.id,
+        type: "file_search",
+      });
+      data.id = newKnowledge.value.id;
+
+      data.status = "synchronizing";
+      const index = database.value.file_search_knowledge.findIndex(
+        (k) => k.id == data.id
+      );
+
+      database.value.file_search_knowledge[index] = data;
+    } else {
+      const data = await api.post("/agents/api/add_knowledge", {
+        data: {
+          file_search_knowledge: file_search_knowledge,
+        },
+        database: database.value.id,
+        type: "file_search",
+      });
+
+      data.status = "synchronizing";
+
+      if (!database.value.file_search_knowledge) {
+        database.value.file_search_knowledge = [];
+      }
+      database.value.file_search_knowledge.push(data);
+    }
+
+    newKnowledge.value = { url: "", description: "", type: "google_docs" };
+    isAddKnowledgeOpen.value = false;
+    isAddKnowledgeEdit.value = false;
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isAddKnowledgeLoading.value = false;
+  }
+};
+
+const handleRemoveFileSearchKnowledge = async (knowledge) => {
+  deleteFileSearchKnowledgeId.value = knowledge.id;
+
+  try {
+    await api.post("/agents/api/delete_knowledge", {
+      data: {
+        file_search_knowledge: knowledge,
+      },
+      database: database.value.id,
+      type: "file_search",
+    });
+
+    database.value.file_search_knowledge =
+      database.value.file_search_knowledge.filter((k) => k.id !== knowledge.id);
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    deleteFileSearchKnowledgeId.value = "";
+  }
+};
+
+const handleEditFileSearchKnowledge = async (record) => {
+  addKnowledgeType.value = "search";
+  isAddKnowledgeOpen.value = true;
+  isAddKnowledgeEdit.value = true;
+  newKnowledge.value = { ...record, description: record.name };
+};
+
+const handleChangeFileSearchKnowledgeEnabled = async (knowledge) => {
+  changeEnabledFileSearchKnowledgeId.value = knowledge.id;
+
+  try {
+    knowledge.enabled = !knowledge.enabled;
+    await api.post("/agents/api/update_knowledge", {
+      data: {
+        file_search_knowledge: knowledge,
+      },
+      database: database.value.id,
+      type: "file_search",
+    });
+
+    database.value.file_search_knowledge =
+      database.value.file_search_knowledge.map((k) =>
+        k.id === knowledge.id ? knowledge : k
+      );
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    changeEnabledFileSearchKnowledgeId.value = "";
+  }
+};
+
 const handleAttachDatabase = async () => {
   isAttachLoading.value = true;
   try {
@@ -690,6 +1137,13 @@ const handleDetachDatabase = async () => {
     isDetachLoading.value = false;
   }
 };
+
+watch(isAddKnowledgeOpen, (curr, prev) => {
+  if (prev && !curr) {
+    newKnowledge.value = { url: "", description: "", type: "google_docs" };
+    isAddKnowledgeEdit.value = false;
+  }
+});
 </script>
 
 <script>
@@ -721,6 +1175,24 @@ export default { name: "AiBotDatabase" };
 }
 
 .knowledge_integrations .integration_item {
+  display: flex;
+  padding: 5px;
+  margin-top: 5px;
+  align-items: center;
+}
+
+.knowledge_file_search .header {
+  display: flex;
+  align-items: center;
+}
+
+.knowledge_file_search .actions {
+  display: flex;
+  justify-content: end;
+  margin-top: 10px;
+}
+
+.knowledge_file_search .integration_item {
   display: flex;
   padding: 5px;
   margin-top: 5px;

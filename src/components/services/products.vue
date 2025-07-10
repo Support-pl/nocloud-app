@@ -222,7 +222,13 @@ export default {
       };
       const start = state.size * (state.page - 1);
       const end = start + state.size;
-      const products = this.products.slice(start, end);
+
+      const products = this.filtredProducts.slice(start, end);
+      
+      return products;
+    },
+    filtredProducts() {
+      const products = this.products;
 
       if (this.min) return this.products.slice(0, 5);
       else if (this.$route.query.service) {
@@ -245,7 +251,7 @@ export default {
       return this.sortProducts([...products, ...instances]);
     },
     productsCount() {
-      return this.products.length;
+      return this.filtredProducts.length;
     },
     productsLoading() {
       const productsLoading = this.productsStore.isLoading;

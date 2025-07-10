@@ -30,6 +30,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
   const socket = ref(null);
   const chatParticipants = ref();
   const databases = ref([]);
+  const roles = ref([]);
 
   const route = useRoute();
 
@@ -67,13 +68,12 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     const token = cookies.get("noCloudinApp-token");
     const url = VUE_APP_BASE_URL.replace("http", "ws");
 
-    socket.value = new WebSocket(`${url}agents/api/get_chats_updates`, [
+    socket.value = new WebSocket(`${url}agents/api/get_updates`, [
       "Bearer",
       token,
     ]);
 
     socket.value.addEventListener("message", (event) => {
-      console.log("AI BOTS MESSAGE", event.data);
       const data = JSON.parse(event.data);
       switch (data.event) {
         case "message_sent": {
@@ -127,6 +127,31 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           }
           break;
         }
+        case "file_search_knowledge_status_updated": {
+          const index = databases.value.findIndex(
+            (db) => db.id === data.file_search_knowledge.database
+          );
+          if (index != -1) {
+            if (
+              databases.value[index].file_search_knowledge.find(
+                (knowledge) => knowledge.id === data.file_search_knowledge.id
+              )
+            )
+              databases.value[index].file_search_knowledge = databases.value[
+                index
+              ].file_search_knowledge.map((knowledge) =>
+                knowledge.id === data.file_search_knowledge.id
+                  ? data.file_search_knowledge
+                  : knowledge
+              );
+            else {
+              databases.value[index].file_search_knowledge.push(
+                data.file_search_knowledge
+              );
+            }
+          }
+          break;
+        }
         case "chat_pause":
         case "chat_unpause": {
           if (chats.value.has(data.chat.bot_id)) {
@@ -164,6 +189,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     bots,
     chatParticipants,
     databases,
+    roles,
 
     async getBot(botId) {
       if (bots.value.get(botId)) {
@@ -189,9 +215,26 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           system_prompt: bot.settings.system_prompt,
           temperature: bot.settings.temperature,
           enable_spam_filter: bot.settings.enable_spam_filter,
+          role: bot.settings.role,
         });
 
         bots.value.set(bot.id, data);
+      } catch (error) {
+        console.debug(error);
+        throw error;
+      }
+    },
+
+    async getRoles() {
+      if (roles.value.length) {
+        return;
+      }
+
+      try {
+        const data = await api.get(`/agents/api/get_bot_roles`);
+        roles.value = Object.values(data);
+
+        return Object.values(data);
       } catch (error) {
         console.debug(error);
         throw error;
@@ -204,6 +247,15 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           chat: chat.id,
           pause: !chat.pause,
         });
+      } catch (error) {
+        console.debug(error);
+        throw error;
+      }
+    },
+
+    async updateChat(chat) {
+      try {
+        await api.post("/agents/api/update_chat", chat);
       } catch (error) {
         console.debug(error);
         throw error;

@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="isPromoVisible"
-    class="order__field"
+    :class="{ order__field: !noWrapper }"
     :style="isBitrixApps ? { padding: 0, overflow: 'hidden' } : null"
   >
     <editor-container :value="promo" />
@@ -15,6 +15,8 @@ import { useI18n } from "vue-i18n";
 import { EditorContainer } from "nocloud-ui";
 import { useSpStore } from "@/stores/sp.js";
 import { storeToRefs } from "pinia";
+
+const props = defineProps({ noWrapper: { type: Boolean, default: false } });
 
 const route = useRoute();
 const i18n = useI18n();

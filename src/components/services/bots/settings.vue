@@ -17,6 +17,33 @@
 
       <a-col span="24">
         <span class="field_title"
+          >{{ t("bots.fields.role") }}:
+
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.tips.role').replaceAll('\n', '<br/>')">
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+
+        <a-select
+          :options="
+            roles.map((role) => ({
+              value: role.key,
+              label: `${role.display_name} - ${role.description}`,
+            }))
+          "
+          allow-clear
+          style="margin-top: 10px; width: 100%"
+          v-model:value="bot.settings.role"
+          :placeholder="t('bots.roles.none')"
+        />
+      </a-col>
+
+      <a-col span="24">
+        <span class="field_title"
           >{{ t("bots.fields.promt") }}:
 
           <a-tooltip>
@@ -376,7 +403,7 @@ import api from "@/api";
 import { capitalize, computed, defineAsyncComponent, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
-import { sortAiBotChats, useAiBotsStore } from "@/stores/aiBots";
+import { useAiBotsStore } from "@/stores/aiBots";
 import { useChatsStore } from "@/stores/chats";
 import { marked } from "marked";
 import Loading from "@/components/ui/loading.vue";
@@ -396,7 +423,7 @@ const props = defineProps({
 const delayMarks = computed(() =>
   Object.fromEntries(
     [1, 10, 25, 50, 75, 100].map((v) => {
-      const hue = 200 - ((v - 1) / (100 - 1)) * (200 - 15); // нормализация от 1 до 100
+      const hue = 200 - ((v - 1) / (100 - 1)) * (200 - 15);
       return [
         v,
         {
@@ -410,7 +437,7 @@ const delayMarks = computed(() =>
 
 const temperatureMarks = Object.fromEntries(
   [0, 0.25, 0.5, 0.75, 1.0].map((v) => {
-    const hue = 200 - v * (200 - 15); // нормализация: 0–1 в диапазоне 200–15
+    const hue = 200 - v * (200 - 15);
     const isInteger = Number.isInteger(v);
     return [
       v,
@@ -440,6 +467,7 @@ const bot = ref({
     ai_model: "",
     system_prompt: "",
     enable_spam_filter: true,
+    role: "",
   },
   channels: [],
 });
@@ -489,6 +517,8 @@ const availableChanells = computed(() => {
   );
 });
 
+const roles = computed(() => aiBotsStore.roles);
+
 const isSavePrimary = computed(
   () => JSON.stringify(ogBot.value) != JSON.stringify(bot.value)
 );
@@ -502,6 +532,8 @@ async function fetch() {
       bot.value.channels = [];
     }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
+
+    await aiBotsStore.getRoles();
   } catch (err) {
     const opts = {
       message: `Error: ${

@@ -1,26 +1,45 @@
 <template>
   <a-list
-    class="databases_list"
+    :class="{ databases_list: true, collapsed: !isCollapsed && colapseble }"
     size="large"
     bordered
-    :data-source="databases"
-    :locale="{ emptyText: t('bots_databases.labels.empty_databases') }"
+    :data-source="isCollapsed || !colapseble ? databases : []"
+    :locale="{
+      emptyText: t('bots_databases.labels.empty_databases'),
+    }"
   >
     <template #header>
       <div class="header">
-        {{ t(`bots_databases.labels.${title}`) }}
+        <div>
+          {{ t(`bots_databases.labels.${title}`) }}
 
-        <a-tooltip>
-          <template #title>
-            <span v-html="t(`bots_databases.tips.${title}`)" />
-          </template>
-          <help-icon class="icon" />
-        </a-tooltip>
+          <a-tooltip>
+            <template #title>
+              <span v-html="t(`bots_databases.tips.${title}`)" />
+            </template>
+            <help-icon class="icon" />
+          </a-tooltip>
+        </div>
+
+        <div v-if="colapseble">
+          <a-button
+            class="button"
+            size="large"
+            type="text"
+            shape="circle"
+            @click="isCollapsed = !isCollapsed"
+          >
+            <template #icon>
+              <down-icon v-if="!isCollapsed" />
+              <up-icon v-else />
+            </template>
+          </a-button>
+        </div>
       </div>
     </template>
 
     <template #renderItem="{ item }">
-      <a-list-item style="padding: 5px 15px;">
+      <a-list-item style="padding: 5px 15px">
         <div class="database_item">
           <a @click="handleOpenDatabase(item)">{{ item.name }}</a>
 
@@ -134,10 +153,19 @@ const detachIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/MinusCircleTwoTone")
 );
 
+const downIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/DownOutlined")
+);
+
+const upIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/UpOutlined")
+);
+
 const props = defineProps({
   databases: { type: Array, required: true },
   bot: { type: Object, required: true },
   title: { type: String, required: true },
+  colapseble: { type: Boolean, default: false },
 });
 
 const aiBotsStore = useAiBotsStore();
@@ -150,6 +178,7 @@ const isDeleteLoading = ref(false);
 const isDetachLoading = ref(false);
 const isAttachLoading = ref(false);
 const selectedDatabase = ref("");
+const isCollapsed = ref(false);
 
 const handleDeleteDatabase = async (database) => {
   isDeleteLoading.value = true;
@@ -238,6 +267,16 @@ const handleOpenDatabase = (database) => {
 .databases_list .header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+}
+
+.databases_list .header div {
+  display: flex;
+  align-items: center;
+}
+
+.collapsed >>> div.ant-list-empty-text {
+  display: none !important;
 }
 
 .databases_list .header .icon {

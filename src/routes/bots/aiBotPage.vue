@@ -97,7 +97,22 @@
 
           <a-tabs v-model:activeKey="activeTab">
             <a-tab-pane key="chats" :tab="t('ai_bot_page.tabs.chats')">
-              <bot-info :service="service" />
+              <div v-if="isSuspended" style="position: relative">
+                <div style="opacity: 0.6">
+                  <bot-info :service="service" />
+
+                  <div
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      background: transparent;
+                      cursor: not-allowed;
+                      z-index: 10;
+                    "
+                  ></div>
+                </div>
+              </div>
+              <bot-info v-else :service="service" />
             </a-tab-pane>
             <a-tab-pane key="settings">
               <template #tab>
@@ -111,7 +126,11 @@
               </template>
               <bot-settings :service="service" />
             </a-tab-pane>
-            <a-tab-pane key="database" :tab="t('ai_bot_page.tabs.databases')">
+            <a-tab-pane
+              :disabled="isSuspended"
+              key="database"
+              :tab="t('ai_bot_page.tabs.databases')"
+            >
               <bot-database v-if="route.query.database" :service="service" />
               <bot-databases v-else :service="service" />
             </a-tab-pane>
@@ -223,6 +242,8 @@ const isSettingsBroken = computed(
   () => !bot.value?.channels || !bot.value?.channels?.length
 );
 
+const isSuspended = computed(() => service.value?.state?.state === "SUSPENDED");
+
 async function onStart() {
   isDataLoading.value = true;
 
@@ -251,12 +272,11 @@ async function onStart() {
     };
 
     const { period } = domain.resources;
-    const { regdate } = domain.data.expiry;
 
     service.value = {
       ...domain,
       groupname,
-      regdate,
+      regdate: +domain.created * 1000,
       name: domain.title,
       status: `cloudStateItem.${domain.state?.state || "UNKNOWN"}`,
       autorenew: domain.config.auto_renew ? "enabled" : "disabled",
