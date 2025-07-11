@@ -1,5 +1,24 @@
 <template>
   <a-row>
+    <a-col span="24" v-if="filterOptions.length > 1">
+      <a-radio-group
+        :value="selectedFilter"
+        @click="handleFilterChange"
+        class="filter-radio-group"
+      >
+        <a-radio-button
+          v-for="type of filterOptions"
+          :key="type.value"
+          :value="type.value"
+          class="filter-radio-btn"
+        >
+          {{ capitalize(type.label) }}
+
+          <component v-if="type.icon" :is="type.icon" />
+        </a-radio-button>
+      </a-radio-group>
+    </a-col>
+
     <a-col
       v-for="provider in providersOptions"
       :xs="{ span: 12 }"
@@ -51,7 +70,11 @@
       />
     </a-col>
 
-    <a-col :xs="{ span: 24 }" :sm="{ span: 15 }" style="margin-right: 5px">
+    <a-col
+      :xs="{ span: 24 }"
+      :sm="{ span: typesOptions.length < 2 ? 24 : 15 }"
+      style="margin-right: 5px"
+    >
       <a-select
         show-search
         style="margin-right: 10px; width: 100%; margin-top: 10px"
@@ -160,6 +183,19 @@ import {
 } from "vue";
 import { useI18n } from "vue-i18n";
 
+const imageIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FileImageOutlined")
+);
+const videoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/VideoCameraOutlined")
+);
+const textIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FileTextOutlined")
+);
+const audioIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/AudioOutlined")
+);
+
 const props = defineProps({
   planId: { type: String, required: true },
   selectedType: { type: String, required: true },
@@ -177,6 +213,7 @@ const {
 } = toRefs(props);
 
 const pricesForModel = ref({});
+const selectedFilter = ref("all");
 const convertedPrices = ref(new Map());
 const isConvertPricesLoading = ref(false);
 
@@ -302,25 +339,101 @@ const typesOptions = computed(() => {
       });
       return acc;
     }, [])
-    .filter(
-      (t) => filterByTypes.value.length == 0 || filterByTypes.value.includes(t)
-    );
+    .filter((t) => {
+      const globalFilter =
+        filterByTypes.value.length == 0 || filterByTypes.value.includes(t);
 
-  return types.map((key) => ({
+      const typesForLocalFilter = selectedFilter.value.split("|");
+      const localFilter =
+        typesForLocalFilter.includes("all") || typesForLocalFilter.includes(t);
+
+      return globalFilter && localFilter;
+    });
+
+  const desiredOrder = [
+    "text",
+    "image",
+    "video",
+    "text_to_audio",
+    "audio_to_text",
+    "embedding",
+  ];
+
+  const sorted = types.sort(
+    (a, b) => desiredOrder.indexOf(a) - desiredOrder.indexOf(b)
+  );
+
+  return sorted.map((key) => ({
     value: key,
     label: t(`openai.types.${key}`),
   }));
 });
 
+const filterOptions = computed(() => {
+  const types = availableModels.value
+    .reduce((acc, item) => {
+      (item?.types || []).forEach((type) => {
+        if (!acc.includes(type)) {
+          acc.push(type);
+        }
+      });
+      return acc;
+    }, [])
+    .filter(
+      (t) => filterByTypes.value.length == 0 || filterByTypes.value.includes(t)
+    );
+
+  const result = [];
+
+  if (types.includes("text")) {
+    result.push({
+      label: t("openai.filters.text"),
+      value: "text",
+      icon: textIcon,
+    });
+  }
+
+  if (types.includes("image")) {
+    result.push({
+      label: t("openai.filters.image"),
+      value: "image",
+      icon: imageIcon,
+    });
+  }
+
+  if (types.includes("video")) {
+    result.push({
+      label: t("openai.filters.video"),
+      value: "video",
+      icon: videoIcon,
+    });
+  }
+
+  if (types.includes("text_to_audio") || types.includes("audio_to_text")) {
+    result.push({
+      label: t("openai.filters.audio"),
+      value: "text_to_audio|audio_to_text",
+      icon: audioIcon,
+    });
+  }
+
+  return result;
+});
+
 const providersOptions = computed(() => {
   return availableModels.value
     .reduce((acc, item) => {
-      if (
-        !acc.includes(item.provider) &&
-        item.provider &&
-        (filterByTypes.value.length == 0 ||
-          filterByTypes.value.find((type) => item?.types.includes(type)))
-      ) {
+      const isAlreadyExist = !item.provider || acc.includes(item.provider);
+      const globalFilter =
+        filterByTypes.value.length == 0 ||
+        filterByTypes.value.find((type) => item?.types.includes(type));
+
+      const typesForLocalFilter = selectedFilter.value.split("|");
+      const localFilter =
+        typesForLocalFilter.includes("all") ||
+        typesForLocalFilter.some((type) => item?.types.includes(type));
+
+      if (!isAlreadyExist && globalFilter && localFilter) {
         acc.push(item.provider);
       }
       return acc;
@@ -363,6 +476,19 @@ const convertPrices = async (uniqueAmounts) => {
     isConvertPricesLoading.value = false;
   }
 };
+
+function handleFilterChange(value) {
+  value = value.target.value;
+  if (!value) {
+    return;
+  }
+
+  if (selectedFilter.value === value) {
+    selectedFilter.value = "all";
+  } else {
+    selectedFilter.value = value;
+  }
+}
 
 async function setPrices() {
   const result = [];
@@ -422,6 +548,12 @@ async function setPrices() {
 }
 setPrices();
 
+watch(providersOptions, (data) => {
+  if (!data.find((v) => v.value === selectedProvider.value)) {
+    emits("update:selectedProvider", data[0]?.value);
+  }
+});
+
 watch(typesOptions, (data) => {
   if (!data.find((v) => v.value === selectedType.value)) {
     emits("update:selectedType", data[0]?.value);
@@ -452,5 +584,23 @@ watch(selectedModel, () => {
     height: 40px;
     max-width: 170px;
   }
+}
+
+.filter-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.filter-radio-btn {
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+  padding: 1px 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 250px;
 }
 </style>
