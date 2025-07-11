@@ -32,7 +32,9 @@
           :options="
             roles.map((role) => ({
               value: role.key,
-              label: `${role.display_name} - ${role.description}`,
+              label: `${role.display_name} ${
+                role.description ? `- ${role.description}` : ''
+              }`,
             }))
           "
           allow-clear
