@@ -1,5 +1,24 @@
 <template>
   <a-row>
+    <a-col span="24" v-if="filterOptions.length > 1">
+      <a-radio-group
+        :value="selectedFilter"
+        @click="handleFilterChange"
+        class="filter-radio-group"
+      >
+        <a-radio-button
+          v-for="type of filterOptions"
+          :key="type.value"
+          :value="type.value"
+          class="filter-radio-btn"
+        >
+          {{ capitalize(type.label) }}
+
+          <component v-if="type.icon" :is="type.icon" />
+        </a-radio-button>
+      </a-radio-group>
+    </a-col>
+
     <a-col
       v-for="provider in providersOptions"
       :xs="{ span: 12 }"
@@ -7,30 +26,39 @@
     >
       <a-card
         bodyStyle="padding:0px"
-        :style="{
-          padding: '10px',
-          margin: '2px',
-          'border-color':
-            selectedProvider == provider.value ? 'var(--main)' : 'unset',
+        :class="{
+          provider_item: true,
+          active: selectedProvider == provider.value,
         }"
         @click="emits('update:selectedProvider', provider.value)"
       >
-        <div style="display: flex; justify-content: center">
+        <div class="provider_image">
           <img
             :src="`/img/ai-providers/${provider.value}.png`"
             class="openai_provider_img"
           />
         </div>
 
-        <div
-          style="display: flex; justify-content: space-between; padding: 10px"
-        >
+        <div class="provider_description">
           <a-checkbox
+            style="max-height: 22px"
             :checked="selectedProvider == provider.value"
             @change="emits('update:selectedProvider', provider.value)"
           >
             {{ provider.label }}
           </a-checkbox>
+
+          <div class="provider_tags" v-if="!filterByTypes.length">
+            <a-tag
+              class="provider_tag"
+              v-for="(type, index) in (
+                providersTypesMap?.[provider.value] || []
+              ).slice(0, 3)"
+              :color="type.color"
+            >
+              {{ type.label }}
+            </a-tag>
+          </div>
         </div>
       </a-card>
     </a-col>
@@ -51,7 +79,11 @@
       />
     </a-col>
 
-    <a-col :xs="{ span: 24 }" :sm="{ span: 15 }" style="margin-right: 5px">
+    <a-col
+      :xs="{ span: 24 }"
+      :sm="{ span: typesOptions.length < 2 ? 24 : 15 }"
+      style="margin-right: 5px"
+    >
       <a-select
         show-search
         style="margin-right: 10px; width: 100%; margin-top: 10px"
@@ -160,6 +192,19 @@ import {
 } from "vue";
 import { useI18n } from "vue-i18n";
 
+const imageIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FileImageOutlined")
+);
+const videoIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/VideoCameraOutlined")
+);
+const textIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FileTextOutlined")
+);
+const audioIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/AudioOutlined")
+);
+
 const props = defineProps({
   planId: { type: String, required: true },
   selectedType: { type: String, required: true },
@@ -177,6 +222,7 @@ const {
 } = toRefs(props);
 
 const pricesForModel = ref({});
+const selectedFilter = ref("all");
 const convertedPrices = ref(new Map());
 const isConvertPricesLoading = ref(false);
 
@@ -214,6 +260,14 @@ const fieldsForTypes = {
         "tokens.text_output": "number",
         "tokens.text_input": "number",
         "media_duration.duration_price": "number",
+      },
+    ],
+  },
+  embedding: {
+    type: "default",
+    fields: [
+      {
+        "tokens.text_input": "number",
       },
     ],
   },
@@ -302,25 +356,101 @@ const typesOptions = computed(() => {
       });
       return acc;
     }, [])
-    .filter(
-      (t) => filterByTypes.value.length == 0 || filterByTypes.value.includes(t)
-    );
+    .filter((t) => {
+      const globalFilter =
+        filterByTypes.value.length == 0 || filterByTypes.value.includes(t);
 
-  return types.map((key) => ({
+      const typesForLocalFilter = selectedFilter.value.split("|");
+      const localFilter =
+        typesForLocalFilter.includes("all") || typesForLocalFilter.includes(t);
+
+      return globalFilter && localFilter;
+    });
+
+  const desiredOrder = [
+    "text",
+    "image",
+    "video",
+    "text_to_audio",
+    "audio_to_text",
+    "embedding",
+  ];
+
+  const sorted = types.sort(
+    (a, b) => desiredOrder.indexOf(a) - desiredOrder.indexOf(b)
+  );
+
+  return sorted.map((key) => ({
     value: key,
     label: t(`openai.types.${key}`),
   }));
 });
 
+const filterOptions = computed(() => {
+  const types = availableModels.value
+    .reduce((acc, item) => {
+      (item?.types || []).forEach((type) => {
+        if (!acc.includes(type)) {
+          acc.push(type);
+        }
+      });
+      return acc;
+    }, [])
+    .filter(
+      (t) => filterByTypes.value.length == 0 || filterByTypes.value.includes(t)
+    );
+
+  const result = [];
+
+  if (types.includes("text") || types.includes("embedding")) {
+    result.push({
+      label: t("openai.filters.text"),
+      value: "text|embedding",
+      icon: textIcon,
+    });
+  }
+
+  if (types.includes("image")) {
+    result.push({
+      label: t("openai.filters.image"),
+      value: "image",
+      icon: imageIcon,
+    });
+  }
+
+  if (types.includes("video")) {
+    result.push({
+      label: t("openai.filters.video"),
+      value: "video",
+      icon: videoIcon,
+    });
+  }
+
+  if (types.includes("text_to_audio") || types.includes("audio_to_text")) {
+    result.push({
+      label: t("openai.filters.audio"),
+      value: "text_to_audio|audio_to_text",
+      icon: audioIcon,
+    });
+  }
+
+  return result;
+});
+
 const providersOptions = computed(() => {
   return availableModels.value
     .reduce((acc, item) => {
-      if (
-        !acc.includes(item.provider) &&
-        item.provider &&
-        (filterByTypes.value.length == 0 ||
-          filterByTypes.value.find((type) => item?.types.includes(type)))
-      ) {
+      const isAlreadyExist = !item.provider || acc.includes(item.provider);
+      const globalFilter =
+        filterByTypes.value.length == 0 ||
+        filterByTypes.value.find((type) => item?.types.includes(type));
+
+      const typesForLocalFilter = selectedFilter.value.split("|");
+      const localFilter =
+        typesForLocalFilter.includes("all") ||
+        typesForLocalFilter.some((type) => item?.types.includes(type));
+
+      if (!isAlreadyExist && globalFilter && localFilter) {
         acc.push(item.provider);
       }
       return acc;
@@ -329,6 +459,63 @@ const providersOptions = computed(() => {
       value: key,
       label: t(`openai.providers.${key}`),
     }));
+});
+
+const providersTypesMap = computed(() => {
+  const result = {};
+  availableModels.value.forEach((item) => {
+    if (!result[item.provider]) {
+      result[item.provider] = [];
+    }
+    item.types.forEach((type) => {
+      let option = {};
+      if (type === "text" || type == "embedding") {
+        option = {
+          label: t("openai.filters.text"),
+          color: "blue",
+          key: "text",
+        };
+      }
+
+      if (type == "image") {
+        option = {
+          label: t("openai.filters.image"),
+          color: "green",
+          key: "image",
+        };
+      }
+
+      if (type == "video") {
+        option = {
+          label: t("openai.filters.video"),
+          color: "red",
+          key: "video",
+        };
+      }
+
+      if (type == "text_to_audio" || type == "audio_to_text") {
+        option = {
+          label: t("openai.filters.audio"),
+          color: "purple",
+          key: "audio",
+        };
+      }
+
+      if (!result[item.provider].find((t) => t.key === option.key)) {
+        result[item.provider].push(option);
+      }
+    });
+  });
+
+  const desiredOrder = ["video", "image", "audio", "text"];
+
+  Object.keys(result).forEach((key) => {
+    result[key].sort(
+      (a, b) => desiredOrder.indexOf(a.key) - desiredOrder.indexOf(b.key)
+    );
+  });
+
+  return result;
 });
 
 const convertPrices = async (uniqueAmounts) => {
@@ -363,6 +550,19 @@ const convertPrices = async (uniqueAmounts) => {
     isConvertPricesLoading.value = false;
   }
 };
+
+function handleFilterChange(value) {
+  value = value.target.value;
+  if (!value) {
+    return;
+  }
+
+  if (selectedFilter.value === value) {
+    selectedFilter.value = "all";
+  } else {
+    selectedFilter.value = value;
+  }
+}
 
 async function setPrices() {
   const result = [];
@@ -422,6 +622,12 @@ async function setPrices() {
 }
 setPrices();
 
+watch(providersOptions, (data) => {
+  if (!data.find((v) => v.value === selectedProvider.value)) {
+    emits("update:selectedProvider", data[0]?.value);
+  }
+});
+
 watch(typesOptions, (data) => {
   if (!data.find((v) => v.value === selectedType.value)) {
     emits("update:selectedType", data[0]?.value);
@@ -452,5 +658,65 @@ watch(selectedModel, () => {
     height: 40px;
     max-width: 170px;
   }
+}
+
+.filter-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.filter-radio-btn {
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+  padding: 1px 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 250px;
+}
+
+.provider_item {
+  padding: 10px;
+  margin: 2px;
+  border-color: unset;
+  height: 105px;
+}
+
+.provider_item.active {
+  border-color: var(--main);
+}
+
+.provider_image {
+  display: flex;
+  justify-content: center;
+}
+.provider_description {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  position: relative;
+}
+.provider_tags {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  flex-direction: column;
+  position: absolute;
+  right: 3px;
+  max-width: 60%;
+  top: 0px;
+}
+.provider_tag {
+  width: 100%;
+  text-align: center;
+  font-size: 10px;
+  line-height: 13px;
+  margin-inline-end: 3px;
+  padding-inline: 3px;
+  margin-bottom: 2px;
 }
 </style>

@@ -118,7 +118,7 @@
           >
           <a-button
             @click="
-              router.push({ name: 'service', params: { id: instance.uuid } })
+              router.push({ name: 'openaiPage', params: { id: instance.uuid } })
             "
           >
             {{ $t("API / Settings") }}
