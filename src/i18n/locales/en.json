@@ -950,7 +950,8 @@
         "image": "Image generation",
         "text_to_audio": "Audio generation",
         "audio_to_text": "Recognition/Translation",
-        "video": "Video generation"
+        "video": "Video generation",
+        "embedding": "Text Vectorization"
       },
       "actions": {
         "generate_text": "text",
