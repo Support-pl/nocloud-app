@@ -263,6 +263,14 @@ const fieldsForTypes = {
       },
     ],
   },
+  embedding: {
+    type: "default",
+    fields: [
+      {
+        "tokens.text_input": "number",
+      },
+    ],
+  },
   video: {
     type: "default",
     fields: [
@@ -394,10 +402,10 @@ const filterOptions = computed(() => {
 
   const result = [];
 
-  if (types.includes("text")) {
+  if (types.includes("text") || types.includes("embedding")) {
     result.push({
       label: t("openai.filters.text"),
-      value: "text",
+      value: "text|embedding",
       icon: textIcon,
     });
   }

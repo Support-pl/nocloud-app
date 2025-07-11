@@ -341,13 +341,18 @@ const exampleV2 = computed(() => {
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
-    "model": "veo-3.0-generate-preview",
+    "model": "${selectedModelV2.value}",
     "prompt": "Сyberpunk car driving down the road. Engine roar sounds",
     "aspect_ratio": "16:9",
     "duration": 8,
     "generate_audio": true
   }'
 `;
+  } else if (selectedModelV2.value === "embedding") {
+    return `curl ${baseUrlV2}api/openai/embeddings -H "Content-Type: application/json" -H "Authorization: Bearer <token>" -d '{
+    "input": "The food was delicious and the waiter...",
+    "model": "${selectedModelV2.value}"
+  }'`;
   } else {
     return `
   curl ${baseUrlV2}/v1/chat/completions \
