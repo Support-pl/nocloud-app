@@ -26,30 +26,39 @@
     >
       <a-card
         bodyStyle="padding:0px"
-        :style="{
-          padding: '10px',
-          margin: '2px',
-          'border-color':
-            selectedProvider == provider.value ? 'var(--main)' : 'unset',
+        :class="{
+          provider_item: true,
+          active: selectedProvider == provider.value,
         }"
         @click="emits('update:selectedProvider', provider.value)"
       >
-        <div style="display: flex; justify-content: center">
+        <div class="provider_image">
           <img
             :src="`/img/ai-providers/${provider.value}.png`"
             class="openai_provider_img"
           />
         </div>
 
-        <div
-          style="display: flex; justify-content: space-between; padding: 10px"
-        >
+        <div class="provider_description">
           <a-checkbox
+            style="max-height: 22px"
             :checked="selectedProvider == provider.value"
             @change="emits('update:selectedProvider', provider.value)"
           >
             {{ provider.label }}
           </a-checkbox>
+
+          <div class="provider_tags" v-if="!filterByTypes.length">
+            <a-tag
+              class="provider_tag"
+              v-for="(type, index) in (
+                providersTypesMap?.[provider.value] || []
+              ).slice(0, 3)"
+              :color="type.color"
+            >
+              {{ type.label }}
+            </a-tag>
+          </div>
         </div>
       </a-card>
     </a-col>
@@ -444,6 +453,63 @@ const providersOptions = computed(() => {
     }));
 });
 
+const providersTypesMap = computed(() => {
+  const result = {};
+  availableModels.value.forEach((item) => {
+    if (!result[item.provider]) {
+      result[item.provider] = [];
+    }
+    item.types.forEach((type) => {
+      let option = {};
+      if (type === "text" || type == "embedding") {
+        option = {
+          label: t("openai.filters.text"),
+          color: "blue",
+          key: "text",
+        };
+      }
+
+      if (type == "image") {
+        option = {
+          label: t("openai.filters.image"),
+          color: "green",
+          key: "image",
+        };
+      }
+
+      if (type == "video") {
+        option = {
+          label: t("openai.filters.video"),
+          color: "red",
+          key: "video",
+        };
+      }
+
+      if (type == "text_to_audio" || type == "audio_to_text") {
+        option = {
+          label: t("openai.filters.audio"),
+          color: "purple",
+          key: "audio",
+        };
+      }
+
+      if (!result[item.provider].find((t) => t.key === option.key)) {
+        result[item.provider].push(option);
+      }
+    });
+  });
+
+  const desiredOrder = ["video", "image", "audio", "text"];
+
+  Object.keys(result).forEach((key) => {
+    result[key].sort(
+      (a, b) => desiredOrder.indexOf(a.key) - desiredOrder.indexOf(b.key)
+    );
+  });
+
+  return result;
+});
+
 const convertPrices = async (uniqueAmounts) => {
   isConvertPricesLoading.value = true;
   try {
@@ -602,5 +668,47 @@ watch(selectedModel, () => {
   justify-content: center;
   align-items: center;
   max-width: 250px;
+}
+
+.provider_item {
+  padding: 10px;
+  margin: 2px;
+  border-color: unset;
+  height: 105px;
+}
+
+.provider_item.active {
+  border-color: var(--main);
+}
+
+.provider_image {
+  display: flex;
+  justify-content: center;
+}
+.provider_description {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  position: relative;
+}
+.provider_tags {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  flex-direction: column;
+  position: absolute;
+  right: 3px;
+  max-width: 60%;
+  top: 0px;
+}
+.provider_tag {
+  width: 100%;
+  text-align: center;
+  font-size: 10px;
+  line-height: 13px;
+  margin-inline-end: 3px;
+  padding-inline: 3px;
+  margin-bottom: 2px;
 }
 </style>
