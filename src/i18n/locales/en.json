@@ -939,6 +939,12 @@
         "runway": "Runway",
         "stability-ai": "Stability AI"
       },
+      "filters": {
+        "video": "Video",
+        "image": "Image",
+        "audio": "Audio",
+        "text": "Text"
+      },
       "types": {
         "text": "Text generation",
         "image": "Image generation",

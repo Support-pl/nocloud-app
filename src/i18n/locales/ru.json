@@ -900,6 +900,12 @@
         "quality": "Качество",
         "price": "Цена"
       },
+      "filters": {
+        "video": "Видео",
+        "image": "Изображение",
+        "audio": "Аудио",
+        "text": "Текст"
+      },
       "videos_properties": {
         "aspect_ratio": "Соотношение сторон",
         "duration": "Длительность",
