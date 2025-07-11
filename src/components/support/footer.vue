@@ -166,14 +166,14 @@
       <div style="display: flex; justify-content: center; margin-bottom: 10px">
         <span style="text-align: center; font-size: 1rem">{{
           $t("openai.labels.videos_price_tip", {
-            perSecond: `${
+            perSecond: `${formatPrice(
               (convertedVideoPrices.get(sendAdvancedOptions.model) || 0) / 60
-            } ${currency.title}`,
-            total: `${
+            )} ${currency.title}`,
+            total: `${formatPrice(
               ((convertedVideoPrices.get(sendAdvancedOptions.model) || 0) /
                 60) *
-              sendAdvancedOptions.duration
-            } ${currency.title}`,
+                sendAdvancedOptions.duration
+            )} ${currency.title}`,
           })
         }}</span>
       </div>
@@ -245,7 +245,7 @@ const emits = defineEmits(["update:replies"]);
 
 const route = useRoute();
 const i18n = useI18n();
-const { currency } = useCurrency();
+const { currency, formatPrice } = useCurrency();
 
 const authStore = useAuthStore();
 const chatsStore = useChatsStore();
