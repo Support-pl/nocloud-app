@@ -763,7 +763,7 @@
         "none": "None"
       },
       "chanells_instruction": {
-        "telegram": "📢 **To connect a Telegram bot, you only need the `bot_secret`**  \nCreate a bot via `@BotFather`, copy the `Token`, and paste it into the `bot_secret` field."
+        "telegram": "📢 **To connect a Telegram bot, you only need the `bot_secret`**  \nCreate a bot via `BotFather`, copy the `Token`, and paste it into the `bot_secret` field."
       },
       "chat_item_tips": {
         "archive": "Move to archive",
