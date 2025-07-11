@@ -1,35 +1,40 @@
 <template>
-  <div
-    :class="{
-      service__item: true,
-      service__icon_colored: !!service.meta?.iconColor,
-    }"
-    :style="{
-      color: service.meta?.iconColor,
-      fill: service.meta?.iconColor,
-    }"
-    @click="onClick"
-  >
+  <div style="position: relative">
     <div
       :class="{
-        service__icon: true,
+        service__item: true,
         service__icon_colored: !!service.meta?.iconColor,
       }"
+      :style="{
+        color: service.meta?.iconColor,
+        fill: service.meta?.iconColor,
+      }"
+      @click="onClick"
     >
-      <component
-        :two-tone-color="service.meta?.iconColor"
-        :is="service.icon"
-        v-if="!isIconString"
-      />
+      <div
+        :class="{
+          service__icon: true,
+          service__icon_colored: !!service.meta?.iconColor,
+        }"
+      >
+        <component
+          :two-tone-color="service.meta?.iconColor"
+          :is="service.icon"
+          v-if="!isIconString"
+        />
 
-      <a-icon v-else>
-        <template #component="svgProps">
-          <nc-icon :icon-name="service.icon" v-bind="svgProps" />
-        </template>
-      </a-icon>
+        <a-icon v-else>
+          <template #component="svgProps">
+            <nc-icon :icon-name="service.icon" v-bind="svgProps" />
+          </template>
+        </a-icon>
+      </div>
+      <div class="service__title">
+        {{ translatedName }}
+      </div>
     </div>
-    <div class="service__title">
-      {{ translatedName }}
+    <div v-if="service.meta?.isNew" style="position: absolute; top: 5px; right: 15px">
+      <span class="badge-new">New</span>
     </div>
   </div>
 </template>
@@ -125,6 +130,27 @@ export default { name: "ServiceItem" };
 
 .service__item_colored * {
   fill: inherit !important;
+}
+
+.badge-new {
+  display: inline-block;
+  background: linear-gradient(135deg, #FF416C, #FF4B2B);
+  color: white;
+  font-weight: 700;
+  font-size: 0.6rem;
+  padding: 0.25em 0.6em;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(255,75,43,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: background 0.3s ease;
+}
+
+.badge-new:hover {
+  background: linear-gradient(135deg, #FF4B2B, #FF416C);
+  cursor: default;
 }
 
 /* .service__icon::after{

@@ -1,0 +1,138 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "API генерации видео",
+        "version": "1.0"
+    },
+    "paths": {
+        "/videos/generate": {
+            "post": {
+                "summary": "Генерация видео по текстовому запросу",
+                "description": "Генерирует видео с использованием модели и текста запроса.",
+                "operationId": "generateVideo",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VideoOptions"
+                            },
+                            "example": {
+                                "model": "sdxl-video-v1",
+                                "prompt": "Футуристический город на закате",
+                                "aspect_ratio": "16:9",
+                                "duration": 10,
+                                "generate_audio": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Список сгенерированных видео",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VideoResponse"
+                                },
+                                "example": {
+                                    "videos": [
+                                        {
+                                            "mime_type": "video/mp4",
+                                            "b_64_bytes": "AAAAGGZ0eXBtcDQy..."
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "VideoOptions": {
+                "type": "object",
+                "required": [
+                    "model",
+                    "prompt",
+                    "aspect_ratio",
+                    "duration"
+                ],
+                "properties": {
+                    "model": {
+                        "type": "string",
+                        "description": "Идентификатор модели для использования",
+                        "example": "sdxl-video-v1"
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "description": "Положительный текстовый запрос",
+                        "example": "Красивый закат над океаном"
+                    },
+                    "negative_prompt": {
+                        "type": "string",
+                        "description": "Текст, который следует избегать",
+                        "example": "размытость, темнота"
+                    },
+                    "aspect_ratio": {
+                        "type": "string",
+                        "pattern": "^\\d+:\\d+$",
+                        "description": "Соотношение сторон (например, 16:9)",
+                        "example": "16:9"
+                    },
+                    "duration": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 60,
+                        "description": "Длительность видео в секундах",
+                        "example": 10
+                    },
+                    "generate_audio": {
+                        "type": "boolean",
+                        "description": "Генерировать ли аудиодорожку",
+                        "default": false,
+                        "example": true
+                    }
+                }
+            },
+            "Video": {
+                "type": "object",
+                "required": [
+                    "mime_type",
+                    "b_64_bytes"
+                ],
+                "properties": {
+                    "mime_type": {
+                        "type": "string",
+                        "description": "MIME-тип видео",
+                        "example": "video/mp4"
+                    },
+                    "b_64_bytes": {
+                        "type": "string",
+                        "format": "byte",
+                        "description": "Видео в формате Base64"
+                    }
+                }
+            },
+            "VideoResponse": {
+                "type": "object",
+                "required": [
+                    "videos"
+                ],
+                "properties": {
+                    "videos": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Video"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

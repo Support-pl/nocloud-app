@@ -1,0 +1,138 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Video Generation API",
+    "version": "1.0"
+  },
+  "paths": {
+    "/videos/generate": {
+      "post": {
+        "summary": "Generate video from text prompt",
+        "description": "Generate a video using a model and a prompt.",
+        "operationId": "generateVideo",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VideoOptions"
+              },
+              "example": {
+                "model": "sdxl-video-v1",
+                "prompt": "A futuristic city at sunset",
+                "aspect_ratio": "16:9",
+                "duration": 10,
+                "generate_audio": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated video list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoResponse"
+                },
+                "example": {
+                  "videos": [
+                    {
+                      "mime_type": "video/mp4",
+                      "b_64_bytes": "AAAAGGZ0eXBtcDQy..."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "VideoOptions": {
+        "type": "object",
+        "required": [
+          "model",
+          "prompt",
+          "aspect_ratio",
+          "duration"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Model ID to use",
+            "example": "sdxl-video-v1"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Positive text prompt",
+            "example": "A beautiful sunset over the ocean"
+          },
+          "negative_prompt": {
+            "type": "string",
+            "description": "Things to avoid",
+            "example": "blurry, dark"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "pattern": "^\\d+:\\d+$",
+            "description": "Aspect ratio (e.g. 16:9)",
+            "example": "16:9"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 60,
+            "description": "Video duration in seconds",
+            "example": 10
+          },
+          "generate_audio": {
+            "type": "boolean",
+            "description": "Should audio be generated?",
+            "default": false,
+            "example": true
+          }
+        }
+      },
+      "Video": {
+        "type": "object",
+        "required": [
+          "mime_type",
+          "b_64_bytes"
+        ],
+        "properties": {
+          "mime_type": {
+            "type": "string",
+            "description": "MIME type",
+            "example": "video/mp4"
+          },
+          "b_64_bytes": {
+            "type": "string",
+            "format": "byte",
+            "description": "Base64-encoded video"
+          }
+        }
+      },
+      "VideoResponse": {
+        "type": "object",
+        "required": [
+          "videos"
+        ],
+        "properties": {
+          "videos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Video"
+            }
+          }
+        }
+      }
+    }
+  }
+}

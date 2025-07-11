@@ -54,6 +54,18 @@
                 :url="files[reply.uuid][0]?.url"
                   :name="files[reply.uuid][0]?.name"
               />
+              <div 
+               v-if="files[reply.uuid]?.length===1 && files[reply.uuid]?.[0]?.name.endsWith('.mp4')"
+              >
+                <div class="relative">
+                  <video
+                    ref="videoRef"
+                    :src="files[reply.uuid][0]?.url"
+                    controls
+                    class="video"
+                  />
+                </div>
+              </div>
               <div v-else class="chat__files">
                 <div v-for="file of files[reply.uuid]" :key="file.url" class="files__preview">
                   <img
@@ -109,7 +121,7 @@
               router.push({ name: 'service', params: { id: instance.uuid } })
             "
           >
-            {{ $t('API / Settings') }}
+            {{ $t("API / Settings") }}
           </a-button>
         </a-row>
 
@@ -622,6 +634,11 @@ export default { name: "TicketChat" };
   bottom: 0;
   border: 9px solid transparent;
   border-bottom: 10px solid #dcfdbe;
+}
+
+.video {
+  max-height: 100%;
+  max-width: 100%;
 }
 
 .chat__message--out {

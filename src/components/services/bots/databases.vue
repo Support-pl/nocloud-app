@@ -18,6 +18,7 @@
     />
 
     <databases-list
+      colapseble
       :bot="bot"
       title="disabled_databases"
       :databases="enabledDatabases"
@@ -112,17 +113,17 @@ const bot = computed(() => bots.value.get(props.service.data.bot_uuid));
 
 const enabledDatabases = computed(() =>
   databases.value
-    .filter((database) =>
-      !(bot.value?.databases || []).find((db) => db.id === database.id)
+    .filter(
+      (database) =>
+        !(bot.value?.databases || []).find((db) => db.id === database.id)
     )
     .map((d) => ({ ...d, enabled: true }))
 );
 
 const disabledDatabases = computed(() =>
   databases.value
-    .filter(
-      (database) =>
-        (bot.value?.databases || []).find((db) => db.id === database.id)
+    .filter((database) =>
+      (bot.value?.databases || []).find((db) => db.id === database.id)
     )
     .map((d) => ({ ...d, enabled: false }))
 );
@@ -135,8 +136,9 @@ const handleAddDatabase = async () => {
   await addDatabaseFormRef.value.validate();
   isAddDatabaseLoading.value = true;
   try {
-    await aiBotsStore.addDatabase(newDatabase.value);
-
+    const database = await aiBotsStore.addDatabase(newDatabase.value);
+    
+    aiBotsStore.attachDatabase(database, bot.value);
     isAddDatabaseOpen.value = false;
     newDatabase.value = { name: "" };
 

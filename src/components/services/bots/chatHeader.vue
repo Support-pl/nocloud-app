@@ -12,50 +12,29 @@
       "
     >
       <chat-item header :chat="chat" />
-
-      <div style="position: absolute; top: 15px; right: 15px">
-        <plus-icon v-if="isVisible" :rotate="45" style="margin-left: auto" />
-        <down-icon v-else style="margin-left: auto" />
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import {
-  watch,
-  onMounted,
-  ref,
-  nextTick,
-  defineAsyncComponent,
-} from "vue";
+import { watch, onMounted, ref, nextTick, defineAsyncComponent } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { useChatsStore } from "@/stores/chats.js";
 import { useNotification } from "@/hooks/utils";
 import { toRefs } from "vue";
 import ChatItem from "./chatItem.vue";
-
-const downIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/DownOutlined")
-);
-const plusIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/PlusOutlined")
-);
 
 const props = defineProps({
   chat: { type: Object, required: true },
   bot: { type: Object, required: true },
   isLoading: { type: Boolean, default: false },
 });
-const { chat, bot } = toRefs(props);
+const { chat } = toRefs(props);
 const emits = defineEmits(["update:paddingTop"]);
 
 const router = useRouter();
 const i18n = useI18n();
 const { openNotification } = useNotification();
-
-const chatsStore = useChatsStore();
 
 watch(
   () => props.isLoading,
@@ -73,34 +52,10 @@ watch(
 const isVisible = ref(false);
 const isEditLoading = ref(false);
 const notification = ref();
-const isDeleteLoading = ref(false);
 
 watch(chat, (value) => {
   setOptions(value);
 });
-
-async function updateChat() {
-  isEditLoading.value = true;
-
-  try {
-    openNotification("success", { message: i18n.t("Done") });
-  } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error;
-
-    openNotification("error", { message: i18n.t(message) });
-  } finally {
-    isEditLoading.value = false;
-  }
-}
-
-const deleteChat = async () => {
-  isDeleteLoading.value = true;
-
-  try {
-  } finally {
-    isDeleteLoading.value = false;
-  }
-};
 
 onMounted(() => {
   window.addEventListener("resize", () => {

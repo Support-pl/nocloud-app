@@ -2,7 +2,21 @@
   <div class="order_wrapper">
     <div v-if="!fetchLoading && !plansLoading" class="order">
       <div style="position: relative">
-        <promo-block v-if="isPromoVisible" class="order__promo" />
+        <div v-if="isPromoVisible" class="order__promo">
+          <div class="order__field">
+            <promo-block no-wrapper />
+            <div
+              v-html="
+                marked(
+                  $t('bots.labels.pricing_bot_description', {
+                    priceForToken: `${priceForToken} ${userCurrency.title}`,
+                    monthly: `${getProducts.price} ${userCurrency.title}`,
+                  })
+                )
+              "
+            />
+          </div>
+        </div>
 
         <div class="activate_btn">
           <a-button type="primary" block shape="round" @click="orderConfirm">
@@ -53,6 +67,7 @@ import promoBlock from "@/components/ui/promo.vue";
 import { useCurrenciesStore } from "@/stores/currencies";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
+import { marked } from "marked";
 
 const router = useRouter();
 const route = useRoute();
@@ -64,11 +79,13 @@ const authStore = useAuthStore();
 
 const spStore = useSpStore();
 const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
 const plansStore = usePlansStore();
 const namespacesStore = useNamespasesStore();
 const { namespaces } = storeToRefs(namespacesStore);
 const instancesStore = useInstancesStore();
-const { userCurrency } = storeToRefs(useCurrenciesStore());
+const currenciesStore = useCurrenciesStore();
+const { userCurrency, defaultCurrency } = storeToRefs(currenciesStore);
 const { getShowcases } = storeToRefs(spStore);
 
 const plan = ref(null);
@@ -79,6 +96,7 @@ const provider = ref(null);
 const cachedPlans = reactive({});
 const fetchLoading = ref(false);
 const plansLoading = ref(false);
+const priceForToken = ref();
 
 const modal = ref({ confirmCreate: false, confirmLoading: false });
 
@@ -104,6 +122,10 @@ const isPromoVisible = computed(() => {
 
 const services = computed(() =>
   instancesStore.services.filter((el) => el.status !== "DEL")
+);
+
+const mainModel = computed(() =>
+  globalModelsList.value.find(({ key }) => key == "gpt-4o-mini")
 );
 
 const plans = computed(
@@ -310,6 +332,8 @@ async function fetch() {
     }
 
     await Promise.all(promises);
+
+    fetchPriceForTokens();
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
@@ -323,6 +347,25 @@ async function fetch() {
 }
 
 fetch();
+
+async function fetchPriceForTokens() {
+  if (
+    mainModel.value &&
+    mainModel.value?.billing.tokens?.text_input?.price.amount
+  ) {
+    const price = mainModel.value?.billing.tokens?.text_input?.price.amount;
+    if (userCurrency.value === defaultCurrency.value) {
+      return (priceForToken.value = price);
+    }
+
+    const { amounts } = await currenciesStore.convert({
+      from: defaultCurrency.value.code,
+      to: userCurrency.value.code,
+      amounts: [price],
+    });
+    priceForToken.value = amounts[0] || price;
+  }
+}
 </script>
 
 <script>
@@ -461,7 +504,7 @@ export default { name: "AiBotsComponent" };
 
 .activate_btn {
   position: absolute;
-  bottom: 15px;
+  bottom: 10px;
   right: 15px;
   width: 200px;
 }

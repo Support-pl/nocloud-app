@@ -95,12 +95,28 @@
       <a-input
         style="margin: 10px; padding: 5px; max-width: 90%"
         v-model:value="searchParam"
-        placeholder="Search..."
+        :placeholder="$t('bots.labels.search')"
       >
         <template #suffix>
           <search-icon style="font-size: 20px" />
         </template>
       </a-input>
+
+      <a-radio-group v-model:value="currentChatsFilter">
+        <a-radio-button value="active">
+          {{ capitalize($t("bots.chats_filter.active")) }}
+        </a-radio-button>
+        <a-radio-button value="inactive">
+          {{ capitalize($t("bots.chats_filter.inactive")) }}
+        </a-radio-button>
+        <a-radio-button value="archived">
+          {{ capitalize($t("bots.chats_filter.archived")) }}
+        </a-radio-button>
+        <a-radio-button value="all">
+          {{ capitalize($t("bots.chats_filter.all")) }}
+        </a-radio-button>
+      </a-radio-group>
+
       <chat-item
         v-for="item of filtredChats"
         :key="item.id"
@@ -181,6 +197,7 @@ const botId = ref(route.params.id);
 const chatPaddingTop = ref("15px");
 const searchParam = ref("");
 const isPlaceholderVisible = ref(false);
+const currentChatsFilter = ref("active");
 
 const content = ref();
 const footer = ref();
@@ -193,11 +210,31 @@ const chats = computed(() =>
   sortAiBotChats(allChats.value.get(botId.value) || [])
 );
 const filtredChats = computed(() =>
-  chats.value.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchParam.value.toLowerCase()) ||
-      c.id.toLowerCase().includes(searchParam.value.toLowerCase())
-  )
+  chats.value.filter((chat) => {
+    let filter = true;
+
+    switch (currentChatsFilter.value) {
+      case "inactive":
+        filter = chat.inactive === true;
+        break;
+      case "active":
+        filter = chat.inactive === false && chat.archived === false;
+        break;
+      case "archived":
+        filter = chat.archived === true;
+        break;
+      case "all":
+      default:
+        filter = true;
+        break;
+    }
+
+    return (
+      filter &&
+      (chat.name.toLowerCase().includes(searchParam.value.toLowerCase()) ||
+        chat.id.toLowerCase().includes(searchParam.value.toLowerCase()))
+    );
+  })
 );
 
 watch(
@@ -308,7 +345,7 @@ async function onImageError(e) {
   e.target.outerHTML = `
     ${element}
     <span style="font-size: 14px;display: -webkit-box;
-  -webkit-line-clamp: 1; 
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;">${e.target.alt}</span>
