@@ -118,8 +118,6 @@ import serviceInfo from "@/components/ui/serviceInfo.vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { Modal } from "ant-design-vue";
-import { useInvoicesStore } from "@/stores/invoices";
-import { GetInvoicesRequest } from "nocloud-proto/proto/es/billing/billing_pb";
 import { removeEmptyValues } from "@/functions";
 import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 
@@ -134,7 +132,6 @@ const editOutlined = defineAsyncComponent(() =>
 const authStore = useAuthStore();
 const instancesStore = useInstancesStore();
 const chatsStore = useChatsStore();
-const invoicesStore = useInvoicesStore();
 
 const route = useRoute();
 const router = useRouter();
@@ -154,7 +151,6 @@ const info = ref([
   },
 ]);
 const service = ref(null);
-const lastInvoice = ref(null);
 
 const editNameForm = ref(null);
 const isNameEditActive = ref(false);
@@ -333,19 +329,6 @@ function formatDate(timestamp) {
 
   return `${year}-${month}-${day}`;
 }
-
-watch(service, async () => {
-  const invoices = await invoicesStore.invoicesApi.getInvoices(
-    GetInvoicesRequest.fromJson({
-      page: 1,
-      limit: 3,
-      sort: "DESC",
-      field: "created",
-      filters: { instances: [service.value.uuid] },
-    })
-  );
-  lastInvoice.value = invoices.toJson().pool?.[0];
-});
 
 watch(isNameEditActive, (value) => {
   if (value) {
