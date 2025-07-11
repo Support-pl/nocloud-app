@@ -40,6 +40,7 @@
           allow-clear
           style="margin-top: 10px; width: 100%"
           v-model:value="bot.settings.role"
+          @change="handleRoleChange"
           :placeholder="t('bots.roles.none')"
         />
       </a-col>
@@ -406,7 +407,7 @@
 
 <script setup>
 import api from "@/api";
-import { capitalize, computed, defineAsyncComponent, ref } from "vue";
+import { capitalize, computed, defineAsyncComponent, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
@@ -537,6 +538,9 @@ async function fetch() {
     if (!bot.value.channels) {
       bot.value.channels = [];
     }
+    if (!bot.value.settings.role) {
+      bot.value.settings.role = undefined;
+    }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
 
     await aiBotsStore.getRoles();
@@ -570,6 +574,16 @@ const openChanellEdit = (chanell) => {
     name: chanell.title,
   };
   selectedEditedChanell.value = chanell;
+};
+
+const handleRoleChange = () => {
+  if (
+    bot.value.settings.role &&
+    !(bot.value.settings.system_prompt || "").trim()
+  ) {
+    const fullRole = roles.value.find((r) => r.key === bot.value.settings.role);
+    bot.value.settings.system_prompt = fullRole?.example_prompt;
+  }
 };
 
 const handleSaveChanell = async () => {
