@@ -260,7 +260,7 @@ const routes = [
         component: () => import("@/routes/bots/aiBotPage.vue"),
       },
       {
-        path: "ai-bots/:id/chats/:chatId",
+        path: "ai-bots/:id/chats/:chatId?",
         name: "aiBotsChats",
         meta: {
           mustBeLoggined: true,

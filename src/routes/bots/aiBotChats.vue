@@ -7,11 +7,13 @@
 
     <template v-else>
       <chat-header
+        v-if="!isLoading && chat"
         style="margin: 10px auto 0"
-        v-if="!isLoading"
         :chat="chat"
         :bot="bot"
       />
+      <div v-else />
+
       <div ref="content" class="chat__content">
         <template v-for="(reply, i) in messages" :key="i">
           <span v-if="isDateVisible(messages, i)" class="chat__date">
@@ -102,7 +104,7 @@
         </template>
       </a-input>
 
-      <a-radio-group v-model:value="currentChatsFilter">
+      <a-radio-group style="margin: 0px 10px;" v-model:value="currentChatsFilter">
         <a-radio-button value="active">
           {{ capitalize($t("bots.chats_filter.active")) }}
         </a-radio-button>
@@ -117,14 +119,24 @@
         </a-radio-button>
       </a-radio-group>
 
-      <chat-item
-        v-for="item of filtredChats"
-        :key="item.id"
-        :chat="item"
-        :bot-id="botId"
-        :style="item.id == chatId ? 'filter: contrast(0.8)' : null"
-        compact
-      />
+      <div
+        v-if="filtredChats.length === 0 && !isLoading"
+        class="no_chats_compact"
+      >
+        <span>
+          {{ $t("bots.labels.no_chats_compact") }}
+        </span>
+      </div>
+      <template v-else>
+        <chat-item
+          v-for="item of filtredChats"
+          :key="item.id"
+          :chat="item"
+          :bot-id="botId"
+          :style="item.id == chatId ? 'filter: contrast(0.8)' : null"
+          compact
+        />
+      </template>
     </div>
     <div></div>
     <chat-footer ref="footer" v-model:messages="messages" :chat="chat" />
@@ -278,6 +290,8 @@ async function fetchData() {
   }
 
   await loadMessages(true);
+
+  isLoading.value = false;
 }
 
 fetchData();
@@ -288,7 +302,9 @@ function scrollDown() {
 }
 
 function readLastMessage() {
-  aiBotsStore.readMessage(messages.value[messages.value.length - 1]);
+  if (messages.value[messages.value.length - 1]) {
+    aiBotsStore.readMessage(messages.value[messages.value.length - 1]);
+  }
 }
 
 const readLastMessageDebounced = debounce(readLastMessage, 250);
@@ -358,6 +374,10 @@ async function onImageError(e) {
 }
 
 async function loadMessages() {
+  if (!chatId.value) {
+    return;
+  }
+
   isLoading.value = true;
   try {
     const response = await aiBotsStore.fetchChatsMessages(chatId.value);
@@ -522,6 +542,17 @@ export default { name: "AiBotChat" };
   width: auto;
   max-width: 100%;
   object-fit: cover;
+}
+
+.no_chats_compact {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.no_chats_compact span {
+  margin-top: 10vh;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 :deep(.chat__files .files__preview--placeholder) {

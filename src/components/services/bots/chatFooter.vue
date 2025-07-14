@@ -7,7 +7,7 @@
           v-model:value="message"
           allow-clear
           type="text"
-          :disabled="['Closed', 3].includes(status)"
+          :disabled="!chat"
           :auto-size="{ minRows: 3, maxRows: 100 }"
           :placeholder="$t('message') + '...'"
           @keyup.shift.enter.exact="newLine"
@@ -19,6 +19,7 @@
           ref="upload"
           :editing="false"
           :replies="[]"
+          :disabled="!chat"
         />
       </div>
       <a-button
@@ -27,6 +28,7 @@
         type="primary"
         shape="circle"
         @click="sendChatMessage"
+        :disabled="!chat"
       >
         <template #icon>
           <arrow-up-icon />
@@ -56,7 +58,7 @@ const arrowUpIcon = defineAsyncComponent(() =>
 );
 
 const props = defineProps({
-  chat: { type: Object, default: () => ({}) },
+  chat: { type: Object },
   messages: { type: Array, required: true },
 });
 const emits = defineEmits(["update:messages"]);
