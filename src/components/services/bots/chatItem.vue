@@ -17,7 +17,7 @@
           }}
         </a-avatar>
         <img
-          :src="`/img/icons/${chat.channel_id.split('_')[0]}.png`"
+          :src="`/img/chanells/${chat.channel_id.split('_')[0]}.png`"
           class="chat_chanell_icon"
         />
       </div>

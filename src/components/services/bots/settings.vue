@@ -194,7 +194,7 @@
             >
               <img
                 class="img_prod"
-                :src="`/img/icons/${chanell.type}.png`"
+                :src="`/img/chanells/${chanell.type}.png`"
                 alt="telegram"
                 @error="onError"
               />
@@ -255,21 +255,22 @@
           </a-form-item>
 
           <a-form-item
-            name="bot_secret"
-            :label="t('bots.fields.chanell_secret_key')"
+            v-for="field in Object.keys(chanellsFields)"
+            :name="field"
+            :label="t(`bots.chanell_fields.${field}.label`)"
           >
             <div style="display: flex">
               <a-input
-                type="password"
-                v-model:value="newChanellData.bot_secret"
-                :placeholder="t('bots.fields.chanell_secret_key')"
+                :type="chanellsFields[field].hided ? 'password' : ''"
+                v-model:value="newChanellData[field]"
+                :placeholder="t(`bots.chanell_fields.${field}.label`)"
                 autocomplete="off"
               />
               <a-tooltip>
                 <template #title>
                   <span
                     v-html="
-                      t('bots.tips.chanell_secret_key').replaceAll(
+                      t(`bots.chanell_fields.${field}.tip`).replaceAll(
                         '\n',
                         '<br/>'
                       )
@@ -319,16 +320,28 @@
           :model="editedChanellData"
           :rules="editChanellFormRules"
         >
-          <a-form-item :label="t('bots.fields.chanell_link')">
+          <a-form-item
+            v-if="selectedEditedChanell.data.metadata.username"
+            :label="t('bots.fields.chanell_username')"
+          >
             <a
+              v-if="
+                selectedEditedChanell.data.metadata.username.startsWith('t.me')
+              "
               target="_blank"
               :href="`https://${selectedEditedChanell.data.metadata.username}`"
             >
               {{ selectedEditedChanell.data.metadata.username }}</a
             >
+            <span v-else>
+              {{ selectedEditedChanell.data.metadata.username }}
+            </span>
           </a-form-item>
 
-          <a-form-item :label="t('bots.fields.chanell_firstname')">
+          <a-form-item
+            v-if="selectedEditedChanell.data.metadata.firstname"
+            :label="t('bots.fields.chanell_firstname')"
+          >
             <span> {{ selectedEditedChanell.data.metadata.firstname }}</span>
           </a-form-item>
 
@@ -340,15 +353,16 @@
             />
           </a-form-item>
           <a-form-item
-            name="bot_secret"
-            :label="t('bots.fields.chanell_secret_key')"
+            v-for="field in Object.keys(chanellsFields)"
+            :name="field"
+            :label="t(`bots.chanell_fields.${field}.label`)"
             autocomplete="off"
           >
             <div style="display: flex">
               <a-input
-                type="password"
-                v-model:value="editedChanellData.bot_secret"
-                :placeholder="t('bots.fields.chanell_secret_key')"
+                :type="chanellsFields[field].hided ? 'password' : ''"
+                v-model:value="editedChanellData[field]"
+                :placeholder="t(`bots.chanell_fields.${field}.label`)"
                 autocomplete="off"
               />
 
@@ -356,7 +370,7 @@
                 <template #title>
                   <span
                     v-html="
-                      t('bots.tips.chanell_secret_key').replaceAll(
+                      t(`bots.chanell_fields.${field}.tip`).replaceAll(
                         '\n',
                         '<br/>'
                       )
@@ -456,7 +470,10 @@ const temperatureMarks = Object.fromEntries(
   })
 );
 
-const chanellsOptions = [{ title: "Telegram", key: "telegram" }];
+const chanellsOptions = [
+  { title: "Telegram", key: "telegram" },
+  { title: "Bitrix24", key: "bitrix24" },
+];
 
 const { t } = useI18n();
 const { openNotification } = useNotification();
@@ -487,17 +504,43 @@ const isChanellDeleteLoading = ref(false);
 const selectedEditedChanell = ref("");
 const addChanellFormRef = ref();
 const editChanellFormRef = ref();
-const editedChanellData = ref({ bot_secret: "" });
-const newChanellData = ref({ bot_secret: "", type: "" });
+const editedChanellData = ref({ type: "" });
+const newChanellData = ref({ type: "" });
 
-const newChanellFormRules = computed(() => ({
-  bot_secret: [{ required: true, message: t("ssl_product.field is required") }],
-}));
+const newChanellFormRules = computed(() => {
+  const fields = Object.keys(chanellsFields.value).reduce((acc, v) => {
+    acc[v] = [{ required: true, message: t("ssl_product.field is required") }];
+    return acc;
+  }, {});
 
-const editChanellFormRules = computed(() => ({
-  bot_secret: [{ required: true, message: t("ssl_product.field is required") }],
-  name: [{ required: true, message: t("ssl_product.field is required") }],
-}));
+  return {
+    ...fields,
+  };
+});
+
+const editChanellFormRules = computed(() => {
+  const fields = Object.keys(chanellsFields.value).reduce((acc, v) => {
+    acc[v] = [{ required: true, message: t("ssl_product.field is required") }];
+    return acc;
+  }, {});
+
+  return {
+    ...fields,
+    name: [{ required: true, message: t("ssl_product.field is required") }],
+  };
+});
+
+const chanellsFields = computed(() => {
+  if (
+    [newChanellData.value.type, selectedEditedChanell.value.type].includes(
+      "bitrix24"
+    )
+  ) {
+    return { unique_name: { hided: false }, api_url: { hided: true } };
+  }
+
+  return { bot_secret: { hided: true } };
+});
 
 const availableChanells = computed(() => {
   const placeholders = chanellsOptions
@@ -570,10 +613,10 @@ const openChanellAdd = (type) => {
 const openChanellEdit = (chanell) => {
   isChanellEditOpen.value = true;
   editedChanellData.value = {
-    bot_secret: chanell.data.data.bot_secret,
     name: chanell.title,
+    ...chanell.data.data,
   };
-  selectedEditedChanell.value = chanell;
+  selectedEditedChanell.value = JSON.parse(JSON.stringify(chanell));
 };
 
 const handleRoleChange = () => {
@@ -590,9 +633,12 @@ const handleSaveChanell = async () => {
   await editChanellFormRef.value.validate();
   isChanellSaveLoading.value = true;
   try {
+    const chanellData = { ...editedChanellData.value };
+    delete chanellData.name;
+
     await api.post("/agents/api/test_channel", {
       bot: bot.value.id,
-      data: { bot_secret: editedChanellData.value.bot_secret },
+      data: chanellData,
       type: selectedEditedChanell.value.type,
     });
 
@@ -601,16 +647,17 @@ const handleSaveChanell = async () => {
       channel: selectedEditedChanell.value.data.id,
     });
 
+    const chanellId = selectedEditedChanell.value.data.id;
     delete selectedEditedChanell.value.data.id;
     const data = await api.post("/agents/api/add_channel", {
       bot: bot.value.id,
-      data: { bot_secret: editedChanellData.value.bot_secret },
+      data: chanellData,
       custom_name: editedChanellData.value.name,
       type: selectedEditedChanell.value.type,
     });
 
     bot.value.channels = bot.value.channels.filter(
-      (chanell) => chanell.id != selectedEditedChanell.value.data.id
+      (chanell) => chanell.id != chanellId
     );
     bot.value.channels.push(data);
 
@@ -638,9 +685,12 @@ const handleAddChanell = async () => {
   await addChanellFormRef.value.validate();
   isChanellSaveLoading.value = true;
   try {
+    const chanellData = { ...newChanellData.value };
+    delete chanellData.type;
+
     const data = await api.post("/agents/api/add_channel", {
       bot: bot.value.id,
-      data: { bot_secret: newChanellData.value.bot_secret },
+      data: chanellData,
       type: newChanellData.value.type,
     });
     bot.value.channels.push(data);
@@ -715,6 +765,31 @@ const handleSaveBot = async () => {
     isBotSaveLoading.value = false;
   }
 };
+
+watch(
+  () => newChanellData.value.type,
+  (newType) => {
+    newChanellData.value = {
+      ...Object.keys(chanellsFields.value).reduce((acc, v) => {
+        acc[v] = "";
+        return acc;
+      }, {}),
+      type: newType,
+    };
+  }
+);
+
+watch(isChanellAddOpen, (value) => {
+  if (!value) {
+    newChanellData.value.type = "";
+  }
+});
+
+watch(isChanellEditOpen, (value) => {
+  if (!value) {
+    selectedEditedChanell.value.type = "";
+  }
+});
 </script>
 
 <script>
