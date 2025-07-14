@@ -760,6 +760,7 @@
         "edit_chanell_title": "Channel",
         "delete_confirm_label": "Are you sure you want to delete this channel?",
         "no_chats": "No user messages yet. As soon as your clients contact the bot, you’ll see live chat history here.",
+        "no_chats_compact": "Nothing here yet",
         "spam_detected": "Spam detected",
         "need_operator": "Need operator",
         "search": "Search"
@@ -795,7 +796,8 @@
         "add_new_chanell": "Add Channel",
         "add_chanell": "Add",
         "delete_chanell": "Delete",
-        "update_chanell": "Save"
+        "update_chanell": "Save",
+        "all_chats": "All chats"
       }
     },
     "ai_bot_page": {

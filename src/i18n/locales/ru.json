@@ -465,6 +465,7 @@
         "add_new_chanell_title": "Добавить канал",
         "edit_chanell_title": "Канал",
         "delete_confirm_label": "Вы действительно хотите удалить этот канал?",
+        "no_chats_compact": "Здесь пока пусто",
         "no_chats": "Пока нет обращений от пользователей. Как только ваши клиенты начнут общаться с ботом, вы увидите здесь переписку в реальном времени.",
         "spam_detected": "Обнаружен спам",
         "need_operator": "Нужен оператор",
@@ -510,7 +511,8 @@
         "add_new_chanell": "Добавить канал",
         "add_chanell": "Добавить",
         "delete_chanell": "Удалить",
-        "update_chanell": "Сохранить"
+        "update_chanell": "Сохранить",
+        "all_chats": "Все чаты"
       }
     },
     "ai_bot_page": {
