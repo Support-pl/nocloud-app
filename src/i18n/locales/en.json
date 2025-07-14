@@ -870,7 +870,7 @@
     "openai": {
       "labels": {
         "api_example": "API Example",
-        "videos_price_tip": "The price for video generation is calculated based on the video's duration. The rate is {perSecond} per second. The total price will be {total}."
+        "videos_price_tip": "The price for video generation is calculated based on the video's duration. The rate is {perSecond} per second.<br>**Generation Cost: {total}**"
       },
       "images_properties": {
         "resolution": "Resolution",
