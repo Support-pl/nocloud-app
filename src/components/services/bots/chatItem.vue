@@ -23,20 +23,26 @@
       </div>
     </div>
 
-    <div v-if="!header" class="chat__content">
-      <div v-if="chat.need_operator" class="chat_special_status">
-        <a-tag style="line-height: 13px" color="red">
-          <bell-outlined />
-          {{ t("bots.labels.need_operator") }}
-        </a-tag>
-      </div>
+    <div
+      v-if="!header"
+      class="chat__content"
+      :style="{ maxWidth: chat.archived ? '100%' : 'calc(100% - 95px)' }"
+    >
+      <template v-if="!chat.archived">
+        <div v-if="chat.need_operator" class="chat_special_status">
+          <a-tag style="line-height: 13px" color="red">
+            <bell-outlined />
+            {{ t("bots.labels.need_operator") }}
+          </a-tag>
+        </div>
 
-      <div v-else-if="chat.spam_detected" class="chat_special_status">
-        <a-tag style="line-height: 13px" color="orange">
-          <warning-outlined />
-          {{ t("bots.labels.spam_detected") }}
-        </a-tag>
-      </div>
+        <div v-else-if="chat.spam_detected" class="chat_special_status">
+          <a-tag style="line-height: 13px" color="orange">
+            <warning-outlined />
+            {{ t("bots.labels.spam_detected") }}
+          </a-tag>
+        </div>
+      </template>
 
       <div class="chat__upper">
         <div class="chat__title">
@@ -79,7 +85,7 @@
       :style="{ top: chat.need_operator || chat.spam_detected ? '25px' : '' }"
     >
       <template v-if="header">
-        <a-tooltip placement="top">
+        <a-tooltip v-if="!chat.archived" placement="top">
           <template #title>
             <span>{{
               t(
@@ -126,7 +132,7 @@
         </a-tooltip>
       </template>
 
-      <a-tooltip placement="top">
+      <a-tooltip v-if="!chat.archived" placement="top">
         <template #title>
           <span>{{
             t(`bots.chat_item_tips.${chat.pause ? "resume_bot" : "pause_bot"}`)
@@ -175,17 +181,17 @@ const warningOutlined = defineAsyncComponent(() =>
 );
 
 const unarchiveIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/EyeOutlined")
+  import("@ant-design/icons-vue/RollbackOutlined")
 );
 const archiveIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/EyeInvisibleOutlined")
+  import("@ant-design/icons-vue/DeleteOutlined")
 );
 
 const activeIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SwapOutlined")
+  import("@ant-design/icons-vue/RollbackOutlined")
 );
 const inactiveIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SwapOutlined")
+  import("@ant-design/icons-vue/InboxOutlined")
 );
 
 const props = defineProps({
@@ -359,7 +365,6 @@ export default { name: "chatItem" };
 
 .chat__content {
   margin-left: 10px;
-  max-width: calc(100% - 95px);
   width: 100%;
 }
 

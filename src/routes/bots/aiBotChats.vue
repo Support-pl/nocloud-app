@@ -94,28 +94,31 @@
     </template>
 
     <div ref="chatList" class="chat__list">
-      <a-input
-        style="margin: 10px; padding: 5px; max-width: 90%"
-        v-model:value="searchParam"
-        :placeholder="$t('bots.labels.search')"
-      >
-        <template #suffix>
-          <search-icon style="font-size: 20px" />
-        </template>
-      </a-input>
+      <div style="margin: 10px">
+        <a-input
+          v-model:value="searchParam"
+          :placeholder="$t('bots.labels.search')"
+        >
+          <template #suffix>
+            <search-icon style="font-size: 20px" />
+          </template>
+        </a-input>
+      </div>
 
-      <a-radio-group style="margin: 0px 10px;" v-model:value="currentChatsFilter">
-        <a-radio-button value="active">
-          {{ capitalize($t("bots.chats_filter.active")) }}
-        </a-radio-button>
-        <a-radio-button value="inactive">
-          {{ capitalize($t("bots.chats_filter.inactive")) }}
-        </a-radio-button>
-        <a-radio-button value="archived">
-          {{ capitalize($t("bots.chats_filter.archived")) }}
-        </a-radio-button>
-        <a-radio-button value="all">
-          {{ capitalize($t("bots.chats_filter.all")) }}
+      <a-radio-group
+        style="margin: 0px 10px"
+        v-model:value="currentChatsFilter"
+      >
+        <a-radio-button
+          v-for="{ key, icon } in chatsStatusButtons"
+          style="margin-bottom: 10px"
+          :value="key"
+        >
+          <component v-if="icon" :is="icon" />
+          {{ capitalize($t(`bots.chats_filter.${key}`)) }}
+          <span v-if="!isLoading" class="count-tag"
+            >({{ chatsStatusMap.get(key) || 0 }})</span
+          >
         </a-radio-button>
       </a-radio-group>
 
@@ -187,6 +190,18 @@ const searchIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SearchOutlined")
 );
 
+const activeIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/MessageOutlined")
+);
+
+const inactiveIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/InboxOutlined")
+);
+
+const archiveIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/DeleteOutlined")
+);
+
 const route = useRoute();
 const { addToClipboard } = useClipboard();
 
@@ -248,6 +263,31 @@ const filtredChats = computed(() =>
     );
   })
 );
+
+const chatsStatusMap = computed(() =>
+  chats.value.reduce((acc, chat) => {
+    let key = "";
+
+    if (chat.archived) {
+      key = "archived";
+    } else if (chat.inactive) {
+      key = "inactive";
+    } else {
+      key = "active";
+    }
+
+    acc.set(key, (acc.get(key) || 0) + 1);
+    acc.set("all", (acc.get("all") || 0) + 1);
+    return acc;
+  }, new Map())
+);
+
+const chatsStatusButtons = computed(() => [
+  { key: "active", icon: activeIcon },
+  { key: "inactive", icon: inactiveIcon },
+  { key: "archived", icon: archiveIcon },
+  { key: "all", icon: null },
+]);
 
 watch(
   chats,
@@ -414,7 +454,7 @@ export default { name: "AiBotChat" };
 .chat {
   position: relative;
   display: grid;
-  grid-template-columns: min(400px, 35vw - 20px) min(968px, 65vw - 20px);
+  grid-template-columns: min(450px, 35vw - 20px) min(1068px, 65vw - 20px);
   grid-template-rows: auto 1fr auto;
   justify-content: center;
   gap: 10px;
@@ -449,7 +489,6 @@ export default { name: "AiBotChat" };
   flex-direction: column;
   justify-content: flex-start;
 
-  max-width: 968px;
   width: 100%;
   height: 100%;
   padding: v-bind("chatPaddingTop") 15px 6px;
@@ -555,6 +594,10 @@ export default { name: "AiBotChat" };
   font-weight: 600;
 }
 
+.ant-radio-button-wrapper {
+  padding-inline: 8px;
+}
+
 :deep(.chat__files .files__preview--placeholder) {
   flex-direction: column;
   gap: 4px;
@@ -630,5 +673,10 @@ export default { name: "AiBotChat" };
     grid-column: 1;
     padding: 0 10px 10px;
   }
+}
+
+.count-tag {
+  font-size: 12px;
+  color: #999;
 }
 </style>
