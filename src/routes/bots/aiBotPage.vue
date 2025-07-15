@@ -96,7 +96,13 @@
           </a-collapse>
 
           <a-tabs v-model:activeKey="activeTab">
-            <a-tab-pane key="chats" :tab="t('ai_bot_page.tabs.chats')">
+            <a-tab-pane key="chats">
+              <template #tab>
+                <span class="tab">
+                  {{ t("ai_bot_page.tabs.chats") }}
+                </span>
+              </template>
+
               <div v-if="isSuspended" style="position: relative">
                 <div style="opacity: 0.6">
                   <bot-info :service="service" />
@@ -116,7 +122,7 @@
             </a-tab-pane>
             <a-tab-pane key="settings">
               <template #tab>
-                <span>
+                <span class="tab">
                   <alert-outlined
                     v-if="isSettingsBroken"
                     style="color: red; margin-right: 0px"
@@ -125,11 +131,7 @@
                 </span>
               </template>
 
-              <a-alert
-                v-if="isSettingsBroken"
-                type="warning"
-                show-icon
-              >
+              <a-alert v-if="isSettingsBroken" type="warning" show-icon>
                 <template #description>
                   <span v-html="marked(t('bots.labels.channel_warning'))" />
                 </template>
@@ -137,11 +139,13 @@
 
               <bot-settings :service="service" />
             </a-tab-pane>
-            <a-tab-pane
-              :disabled="isSuspended"
-              key="database"
-              :tab="t('ai_bot_page.tabs.databases')"
-            >
+            <a-tab-pane :disabled="isSuspended" key="database">
+              <template #tab>
+                <span class="tab">
+                  {{ t("ai_bot_page.tabs.databases") }}
+                </span>
+              </template>
+
               <bot-database v-if="route.query.database" :service="service" />
               <bot-databases v-else :service="service" />
             </a-tab-pane>
@@ -511,5 +515,10 @@ export default {
   .product__specs td:last-child::before {
     transform: translate(-10px, -50%);
   }
+}
+
+span.tab {
+  font-weight: 500;
+  font-size: 1rem;
 }
 </style>

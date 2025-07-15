@@ -14,6 +14,15 @@
               {{ t("bots.labels.no_chats") }}
             </span>
           </div>
+
+          <div
+            v-if="(aiBotsStore.chats.get(bot.id) || []).length > 0"
+            style="display: flex; justify-content: center; margin-top: 10px"
+          >
+            <a-button @click="handleOpenAllChats" type="primary">{{
+              t("bots.actions.all_chats")
+            }}</a-button>
+          </div>
         </a-card>
       </a-col>
     </a-row>
@@ -28,14 +37,17 @@ import { useNotification } from "@/hooks/utils";
 import ChatItem from "./chatItem.vue";
 import { sortAiBotChats, useAiBotsStore } from "@/stores/aiBots";
 import Loading from "@/components/ui/loading.vue";
+import { useRouter } from "vue-router";
 
 const props = defineProps({
   service: { type: Object, required: true },
 });
 
-const { t } = useI18n();
-const { openNotification } = useNotification();
 const aiBotsStore = useAiBotsStore();
+
+const { t } = useI18n();
+const router = useRouter();
+const { openNotification } = useNotification();
 
 const isLoading = ref(false);
 const bot = ref({
@@ -52,8 +64,14 @@ const bot = ref({
 });
 
 const chats = computed(() =>
-  sortAiBotChats(aiBotsStore.chats.get(bot.value.id) || []).slice(0, 8)
+  sortAiBotChats(aiBotsStore.chats.get(bot.value.id) || [])
+    .filter((chat) => !chat.inactive && !chat.archived)
+    .slice(0, 8)
 );
+
+const handleOpenAllChats = () => {
+  router.push(`/ai-bots/${bot.value.id}/chats/`);
+};
 
 async function fetch() {
   try {

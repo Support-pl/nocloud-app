@@ -41,7 +41,9 @@
     <template #renderItem="{ item }">
       <a-list-item style="padding: 5px 15px">
         <div class="database_item">
-          <a @click="handleOpenDatabase(item)">{{ item.name }}</a>
+          <a @click="handleOpenDatabase(item)" style="font-size: 1.3rem">{{
+            item.name
+          }}</a>
 
           <div>
             <a-popconfirm

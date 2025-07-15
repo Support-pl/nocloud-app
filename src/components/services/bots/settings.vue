@@ -17,52 +17,88 @@
 
       <a-col span="24">
         <span class="field_title"
-          >{{ t("bots.fields.role") }}:
+          >{{ t("bots.fields.channels") }}:
 
           <a-tooltip>
             <template #title>
-              <span v-html="t('bots.tips.role').replaceAll('\n', '<br/>')">
+              <span v-html="t('bots.tips.channels').replaceAll('\n', '<br/>')">
               </span>
             </template>
             <help-icon style="margin-left: 5px" />
           </a-tooltip>
         </span>
+        <a-row>
+          <a-col v-for="chanell in availableChanells" span="6">
+            <div
+              @click="
+                chanell.exist
+                  ? openChanellEdit(chanell)
+                  : openChanellAdd(chanell.type)
+              "
+              class="chanell"
+            >
+              <img
+                class="img_prod"
+                :src="`/img/chanells/${chanell.type}.png`"
+                alt="telegram"
+                @error="onError"
+              />
+              <span
+                style="
+                  display: -webkit-box;
+                  -webkit-box-orient: vertical;
+                  -webkit-line-clamp: 2;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  max-width: 95px;
+                  white-space: normal;
+                  word-break: break-word;
+                  overflow-wrap: break-word;
+                "
+                >{{ chanell.title }}</span
+              >
+              <span
+                :class="{
+                  'status-circle': true,
+                  red: !chanell.exist,
+                  green: chanell.exist,
+                }"
+              ></span>
+            </div>
+          </a-col>
 
-        <a-select
-          :options="
-            roles.map((role) => ({
-              value: role.key,
-              label: `${role.display_name} ${
-                role.description ? `- ${role.description}` : ''
-              }`,
-            }))
-          "
-          allow-clear
-          style="margin-top: 10px; width: 100%"
-          v-model:value="bot.settings.role"
-          @change="handleRoleChange"
-          :placeholder="t('bots.roles.none')"
-        />
+          <a-col span="6" v-if="bot.channels.length > 0">
+            <div @click="openChanellAdd()" class="chanell">
+              <plus-circle-outlined style="font-size: 2rem" class="img_prod" />
+              <span>{{ t("bots.actions.add_new_chanell") }}</span>
+            </div>
+          </a-col>
+        </a-row>
       </a-col>
 
-      <a-col span="24">
+      <a-col
+        span="24"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        "
+      >
         <span class="field_title"
-          >{{ t("bots.fields.promt") }}:
-
+          >{{ t("bots.fields.enable_spam_filter") }}:
           <a-tooltip>
             <template #title>
-              <span v-html="t('bots.tips.promt').replaceAll('\n', '<br/>')">
+              <span
+                v-html="
+                  t('bots.tips.enable_spam_filter').replaceAll('\n', '<br/>')
+                "
+              >
               </span>
             </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <a-textarea
-          style="margin-top: 10px"
-          v-model:value="bot.settings.system_prompt"
-          :placeholder="t('bots.placeholders.promt')"
-          :auto-size="{ minRows: 4 }"
-        />
+            <help-icon style="margin-left: 5px" /> </a-tooltip
+        ></span>
+        <a-switch v-model:checked="bot.settings.enable_spam_filter" />
       </a-col>
 
       <a-col span="24">
@@ -133,32 +169,48 @@
         </a-slider>
       </a-col>
 
-      <a-col
-        span="24"
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-        "
-      >
+      <a-col span="24">
         <span class="field_title"
-          >{{ t("bots.fields.enable_spam_filter") }}:
+          >{{ t("bots.fields.role") }}:
+
           <a-tooltip>
             <template #title>
-              <span
-                v-html="
-                  t('bots.tips.enable_spam_filter').replaceAll('\n', '<br/>')
-                "
-              >
+              <span v-html="t('bots.tips.role').replaceAll('\n', '<br/>')">
               </span>
             </template>
-            <help-icon style="margin-left: 5px" /> </a-tooltip
-        ></span>
-        <a-switch v-model:checked="bot.settings.enable_spam_filter" />
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+
+        <a-select
+          :options="rolesOptions"
+          style="margin-top: 10px; width: 100%"
+          v-model:value="bot.settings.role"
+          @change="handleRoleChange"
+        />
       </a-col>
 
       <a-col span="24">
+        <span class="field_title"
+          >{{ t("bots.fields.promt") }}:
+
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.tips.promt').replaceAll('\n', '<br/>')">
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-textarea
+          style="margin-top: 10px"
+          v-model:value="bot.settings.system_prompt"
+          :placeholder="t('bots.placeholders.promt')"
+          :auto-size="{ minRows: 4 }"
+        />
+      </a-col>
+
+      <a-col span="24" style="margin-bottom: 40px; margin-top: 10px">
         <a-row justify="end">
           <a-button
             key="back"
@@ -167,67 +219,6 @@
             :type="isSavePrimary ? 'primary' : 'default'"
             >{{ t("bots.actions.save_bot") }}
           </a-button>
-        </a-row>
-      </a-col>
-
-      <a-col span="24">
-        <span class="field_title"
-          >{{ t("bots.fields.channels") }}:
-
-          <a-tooltip>
-            <template #title>
-              <span v-html="t('bots.tips.channels').replaceAll('\n', '<br/>')">
-              </span>
-            </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <a-row>
-          <a-col v-for="chanell in availableChanells" span="6">
-            <div
-              @click="
-                chanell.exist
-                  ? openChanellEdit(chanell)
-                  : openChanellAdd(chanell.type)
-              "
-              class="chanell"
-            >
-              <img
-                class="img_prod"
-                :src="`/img/icons/${chanell.type}.png`"
-                alt="telegram"
-                @error="onError"
-              />
-              <span
-                style="
-                  display: -webkit-box;
-                  -webkit-box-orient: vertical;
-                  -webkit-line-clamp: 2;
-                  overflow: hidden;
-                  text-overflow: ellipsis;
-                  max-width: 95px;
-                  white-space: normal;
-                  word-break: break-word;
-                  overflow-wrap: break-word;
-                "
-                >{{ chanell.title }}</span
-              >
-              <span
-                :class="{
-                  'status-circle': true,
-                  red: !chanell.exist,
-                  green: chanell.exist,
-                }"
-              ></span>
-            </div>
-          </a-col>
-
-          <a-col span="6" v-if="bot.channels.length > 0">
-            <div @click="openChanellAdd()" class="chanell">
-              <plus-circle-outlined style="font-size: 2rem" class="img_prod" />
-              <span>{{ t("bots.actions.add_new_chanell") }}</span>
-            </div>
-          </a-col>
         </a-row>
       </a-col>
 
@@ -255,21 +246,22 @@
           </a-form-item>
 
           <a-form-item
-            name="bot_secret"
-            :label="t('bots.fields.chanell_secret_key')"
+            v-for="field in Object.keys(chanellsFields)"
+            :name="field"
+            :label="t(`bots.chanell_fields.${field}.label`)"
           >
             <div style="display: flex">
               <a-input
-                type="password"
-                v-model:value="newChanellData.bot_secret"
-                :placeholder="t('bots.fields.chanell_secret_key')"
+                :type="chanellsFields[field].hided ? 'password' : ''"
+                v-model:value="newChanellData[field]"
+                :placeholder="t(`bots.chanell_fields.${field}.label`)"
                 autocomplete="off"
               />
               <a-tooltip>
                 <template #title>
                   <span
                     v-html="
-                      t('bots.tips.chanell_secret_key').replaceAll(
+                      t(`bots.chanell_fields.${field}.tip`).replaceAll(
                         '\n',
                         '<br/>'
                       )
@@ -319,16 +311,28 @@
           :model="editedChanellData"
           :rules="editChanellFormRules"
         >
-          <a-form-item :label="t('bots.fields.chanell_link')">
+          <a-form-item
+            v-if="selectedEditedChanell.data.metadata.username"
+            :label="t('bots.fields.chanell_username')"
+          >
             <a
+              v-if="
+                selectedEditedChanell.data.metadata.username.startsWith('t.me')
+              "
               target="_blank"
               :href="`https://${selectedEditedChanell.data.metadata.username}`"
             >
               {{ selectedEditedChanell.data.metadata.username }}</a
             >
+            <span v-else>
+              {{ selectedEditedChanell.data.metadata.username }}
+            </span>
           </a-form-item>
 
-          <a-form-item :label="t('bots.fields.chanell_firstname')">
+          <a-form-item
+            v-if="selectedEditedChanell.data.metadata.firstname"
+            :label="t('bots.fields.chanell_firstname')"
+          >
             <span> {{ selectedEditedChanell.data.metadata.firstname }}</span>
           </a-form-item>
 
@@ -340,15 +344,16 @@
             />
           </a-form-item>
           <a-form-item
-            name="bot_secret"
-            :label="t('bots.fields.chanell_secret_key')"
+            v-for="field in Object.keys(chanellsFields)"
+            :name="field"
+            :label="t(`bots.chanell_fields.${field}.label`)"
             autocomplete="off"
           >
             <div style="display: flex">
               <a-input
-                type="password"
-                v-model:value="editedChanellData.bot_secret"
-                :placeholder="t('bots.fields.chanell_secret_key')"
+                :type="chanellsFields[field].hided ? 'password' : ''"
+                v-model:value="editedChanellData[field]"
+                :placeholder="t(`bots.chanell_fields.${field}.label`)"
                 autocomplete="off"
               />
 
@@ -356,7 +361,7 @@
                 <template #title>
                   <span
                     v-html="
-                      t('bots.tips.chanell_secret_key').replaceAll(
+                      t(`bots.chanell_fields.${field}.tip`).replaceAll(
                         '\n',
                         '<br/>'
                       )
@@ -456,7 +461,10 @@ const temperatureMarks = Object.fromEntries(
   })
 );
 
-const chanellsOptions = [{ title: "Telegram", key: "telegram" }];
+const chanellsOptions = [
+  { title: "Telegram", key: "telegram" },
+  { title: "Bitrix24", key: "bitrix24" },
+];
 
 const { t } = useI18n();
 const { openNotification } = useNotification();
@@ -487,17 +495,54 @@ const isChanellDeleteLoading = ref(false);
 const selectedEditedChanell = ref("");
 const addChanellFormRef = ref();
 const editChanellFormRef = ref();
-const editedChanellData = ref({ bot_secret: "" });
-const newChanellData = ref({ bot_secret: "", type: "" });
+const editedChanellData = ref({ type: "" });
+const newChanellData = ref({ type: "" });
 
-const newChanellFormRules = computed(() => ({
-  bot_secret: [{ required: true, message: t("ssl_product.field is required") }],
-}));
+const newChanellFormRules = computed(() => {
+  const fields = Object.keys(chanellsFields.value).reduce((acc, v) => {
+    acc[v] = [{ required: true, message: t("ssl_product.field is required") }];
+    return acc;
+  }, {});
 
-const editChanellFormRules = computed(() => ({
-  bot_secret: [{ required: true, message: t("ssl_product.field is required") }],
-  name: [{ required: true, message: t("ssl_product.field is required") }],
-}));
+  return {
+    ...fields,
+  };
+});
+
+const editChanellFormRules = computed(() => {
+  const fields = Object.keys(chanellsFields.value).reduce((acc, v) => {
+    acc[v] = [{ required: true, message: t("ssl_product.field is required") }];
+    return acc;
+  }, {});
+
+  return {
+    ...fields,
+    name: [{ required: true, message: t("ssl_product.field is required") }],
+  };
+});
+
+const rolesOptions = computed(() => [
+  ...roles.value.map((role) => ({
+    value: role.key,
+    label: `${role.display_name} ${
+      role.description ? `- ${role.description}` : ""
+    }`,
+  })),
+
+  { value: null, label: t("bots.roles.none") },
+]);
+
+const chanellsFields = computed(() => {
+  if (
+    [newChanellData.value.type, selectedEditedChanell.value.type].includes(
+      "bitrix24"
+    )
+  ) {
+    return { unique_name: { hided: false }, api_url: { hided: true } };
+  }
+
+  return { bot_secret: { hided: true } };
+});
 
 const availableChanells = computed(() => {
   const placeholders = chanellsOptions
@@ -539,7 +584,7 @@ async function fetch() {
       bot.value.channels = [];
     }
     if (!bot.value.settings.role) {
-      bot.value.settings.role = undefined;
+      bot.value.settings.role = null;
     }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
 
@@ -570,18 +615,21 @@ const openChanellAdd = (type) => {
 const openChanellEdit = (chanell) => {
   isChanellEditOpen.value = true;
   editedChanellData.value = {
-    bot_secret: chanell.data.data.bot_secret,
     name: chanell.title,
+    ...chanell.data.data,
   };
-  selectedEditedChanell.value = chanell;
+  selectedEditedChanell.value = JSON.parse(JSON.stringify(chanell));
 };
 
 const handleRoleChange = () => {
   if (
-    bot.value.settings.role &&
-    !(bot.value.settings.system_prompt || "").trim()
+    !(bot.value.settings.system_prompt || "").trim() ||
+    !!roles.value.find(
+      (role) => role.example_prompt === bot.value.settings.system_prompt
+    )
   ) {
     const fullRole = roles.value.find((r) => r.key === bot.value.settings.role);
+
     bot.value.settings.system_prompt = fullRole?.example_prompt;
   }
 };
@@ -590,9 +638,12 @@ const handleSaveChanell = async () => {
   await editChanellFormRef.value.validate();
   isChanellSaveLoading.value = true;
   try {
+    const chanellData = { ...editedChanellData.value };
+    delete chanellData.name;
+
     await api.post("/agents/api/test_channel", {
       bot: bot.value.id,
-      data: { bot_secret: editedChanellData.value.bot_secret },
+      data: chanellData,
       type: selectedEditedChanell.value.type,
     });
 
@@ -601,16 +652,17 @@ const handleSaveChanell = async () => {
       channel: selectedEditedChanell.value.data.id,
     });
 
+    const chanellId = selectedEditedChanell.value.data.id;
     delete selectedEditedChanell.value.data.id;
     const data = await api.post("/agents/api/add_channel", {
       bot: bot.value.id,
-      data: { bot_secret: editedChanellData.value.bot_secret },
+      data: chanellData,
       custom_name: editedChanellData.value.name,
       type: selectedEditedChanell.value.type,
     });
 
     bot.value.channels = bot.value.channels.filter(
-      (chanell) => chanell.id != selectedEditedChanell.value.data.id
+      (chanell) => chanell.id != chanellId
     );
     bot.value.channels.push(data);
 
@@ -638,9 +690,12 @@ const handleAddChanell = async () => {
   await addChanellFormRef.value.validate();
   isChanellSaveLoading.value = true;
   try {
+    const chanellData = { ...newChanellData.value };
+    delete chanellData.type;
+
     const data = await api.post("/agents/api/add_channel", {
       bot: bot.value.id,
-      data: { bot_secret: newChanellData.value.bot_secret },
+      data: chanellData,
       type: newChanellData.value.type,
     });
     bot.value.channels.push(data);
@@ -715,6 +770,31 @@ const handleSaveBot = async () => {
     isBotSaveLoading.value = false;
   }
 };
+
+watch(
+  () => newChanellData.value.type,
+  (newType) => {
+    newChanellData.value = {
+      ...Object.keys(chanellsFields.value).reduce((acc, v) => {
+        acc[v] = "";
+        return acc;
+      }, {}),
+      type: newType,
+    };
+  }
+);
+
+watch(isChanellAddOpen, (value) => {
+  if (!value) {
+    newChanellData.value.type = "";
+  }
+});
+
+watch(isChanellEditOpen, (value) => {
+  if (!value) {
+    selectedEditedChanell.value.type = "";
+  }
+});
 </script>
 
 <script>
@@ -723,7 +803,7 @@ export default { name: "AiBotDraw" };
 
 <style scoped>
 .bots .field_title {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 500;
 }
 

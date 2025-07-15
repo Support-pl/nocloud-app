@@ -164,18 +164,25 @@
       </a-form>
 
       <div style="display: flex; justify-content: center; margin-bottom: 10px">
-        <span style="text-align: center; font-size: 1rem">{{
-          $t("openai.labels.videos_price_tip", {
-            perSecond: `${formatPrice(
-              (convertedVideoPrices.get(sendAdvancedOptions.model) || 0) / 60
-            )} ${currency.title}`,
-            total: `${formatPrice(
-              ((convertedVideoPrices.get(sendAdvancedOptions.model) || 0) /
-                60) *
-                sendAdvancedOptions.duration
-            )} ${currency.title}`,
-          })
-        }}</span>
+        <span
+          style="font-size: 1rem; text-align: center"
+          v-html="
+            marked(
+              $t('openai.labels.videos_price_tip', {
+                perSecond: `${formatPrice(
+                  (convertedVideoPrices.get(sendAdvancedOptions.model) || 0) /
+                    60
+                )}
+        ${currency.title}`,
+                total: `${formatPrice(
+                  ((convertedVideoPrices.get(sendAdvancedOptions.model) || 0) /
+                    60) *
+                    sendAdvancedOptions.duration
+                )} ${currency.title}`,
+              }).replaceAll('\n', ' ')
+            )
+          "
+        />
       </div>
 
       <template #footer>
@@ -223,6 +230,7 @@ import api from "@/api.js";
 import uploadFiles from "@/components/support/upload.vue";
 import { storeToRefs } from "pinia";
 import { useCurrenciesStore } from "@/stores/currencies";
+import { marked } from "marked";
 
 const md = markdown({
   html: true,
