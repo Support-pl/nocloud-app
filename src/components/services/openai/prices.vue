@@ -290,6 +290,10 @@ const fieldsForTypes = {
       },
     ],
   },
+  vision: {
+    type: "default",
+    fields: [{ "other.pages_count_price": "number" }],
+  },
 };
 
 const chatsStore = useChatsStore();
@@ -371,6 +375,7 @@ const typesOptions = computed(() => {
     "text",
     "image",
     "video",
+    "vision",
     "text_to_audio",
     "audio_to_text",
     "embedding",
@@ -410,10 +415,10 @@ const filterOptions = computed(() => {
     });
   }
 
-  if (types.includes("image")) {
+  if (types.includes("image") || types.includes("vision")) {
     result.push({
       label: t("openai.filters.image"),
-      value: "image",
+      value: "image|vision",
       icon: imageIcon,
     });
   }
@@ -477,7 +482,7 @@ const providersTypesMap = computed(() => {
         };
       }
 
-      if (type == "image") {
+      if (type == "image" || type == "vision") {
         option = {
           label: t("openai.filters.image"),
           color: "green",

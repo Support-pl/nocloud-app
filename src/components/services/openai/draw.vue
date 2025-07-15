@@ -74,7 +74,7 @@
                 />
               </div>
               <a-button
-                v-if="selectedTypeV2 !== 'video'"
+                v-if="!['video', 'vision'].includes(selectedTypeV2)"
                 @click="openOpenAiDocs"
                 type="link"
                 >{{ $t("moreExamples") }}</a-button
@@ -348,6 +348,13 @@ const exampleV2 = computed(() => {
     "generate_audio": true
   }'
 `;
+  } else if (selectedTypeV2.value === "vision") {
+    return `
+  curl ${baseUrlV2}vision \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@/your/file/path/filename.png" \
+  -F "model=${selectedModelV2.value}"
+  `;
   } else if (selectedTypeV2.value === "embedding") {
     return `curl ${baseUrlV2}api/openai/embeddings -H "Content-Type: application/json" -H "Authorization: Bearer <token>" -d '{
     "input": "The food was delicious and the waiter...",
