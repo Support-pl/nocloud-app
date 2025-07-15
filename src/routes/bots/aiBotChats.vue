@@ -227,7 +227,7 @@ const filtredChats = computed(() =>
 
     switch (currentChatsFilter.value) {
       case "inactive":
-        filter = chat.inactive === true;
+        filter = chat.inactive === true && !chat.archived;
         break;
       case "active":
         filter = chat.inactive === false && chat.archived === false;
