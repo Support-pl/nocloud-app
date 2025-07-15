@@ -756,8 +756,8 @@
       "chats_filter": {
         "active": "Active",
         "all": "All",
-        "inactive": "Inactive",
-        "archived": "Archived"
+        "inactive": "Archived",
+        "archived": "Removed"
       },
       "labels": {
         "channel_warning": "⚠️ **The bot won't work without connected channels!**\n\nTo start receiving messages from users, you need to connect at least one communication channel.\n\nSetup takes just a couple of minutes.",
@@ -780,12 +780,12 @@
         "telegram": "📢 **To connect a Telegram bot, you only need the `bot_secret`**  \nCreate a bot via `BotFather`, copy the `Token`, and paste it into the `bot_secret` field."
       },
       "chat_item_tips": {
-        "archive": "Move to archive",
-        "unarchive": "Remove from archive",
-        "activate": "Mark as active",
-        "deactivate": "Mark as inactive",
-        "pause_bot": "Pause the bot",
-        "resume_bot": "Start the bot"
+        "archive": "Move to Deleted",
+        "unarchive": "Remove from Deleted",
+        "activate": "Move to Active",
+        "deactivate": "Move to Archived",
+        "pause_bot": "Pause Bot",
+        "resume_bot": "Resume Bot"
       },
       "placeholders": {
         "promt": "You are an expert on product X.\nYour task is to identify the user's needs, offer the right product, explain its benefits, and guide them toward making a purchase.\nUse a warm, professional tone and ask clarifying questions to better understand their situation.\nDon’t give all the information at once — engage in a natural conversation, like a seasoned salesperson would."
