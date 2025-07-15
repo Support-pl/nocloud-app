@@ -348,7 +348,7 @@ const exampleV2 = computed(() => {
     "generate_audio": true
   }'
 `;
-  } else if (selectedModelV2.value === "embedding") {
+  } else if (selectedTypeV2.value === "embedding") {
     return `curl ${baseUrlV2}api/openai/embeddings -H "Content-Type: application/json" -H "Authorization: Bearer <token>" -d '{
     "input": "The food was delicious and the waiter...",
     "model": "${selectedModelV2.value}"
