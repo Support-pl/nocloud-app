@@ -29,19 +29,10 @@
         </span>
 
         <a-select
-          :options="
-            roles.map((role) => ({
-              value: role.key,
-              label: `${role.display_name} ${
-                role.description ? `- ${role.description}` : ''
-              }`,
-            }))
-          "
-          allow-clear
+          :options="rolesOptions"
           style="margin-top: 10px; width: 100%"
           v-model:value="bot.settings.role"
           @change="handleRoleChange"
-          :placeholder="t('bots.roles.none')"
         />
       </a-col>
 
@@ -530,6 +521,17 @@ const editChanellFormRules = computed(() => {
   };
 });
 
+const rolesOptions = computed(() => [
+  ...roles.value.map((role) => ({
+    value: role.key,
+    label: `${role.display_name} ${
+      role.description ? `- ${role.description}` : ""
+    }`,
+  })),
+
+  { value: null, label: t("bots.roles.none") },
+]);
+
 const chanellsFields = computed(() => {
   if (
     [newChanellData.value.type, selectedEditedChanell.value.type].includes(
@@ -582,7 +584,7 @@ async function fetch() {
       bot.value.channels = [];
     }
     if (!bot.value.settings.role) {
-      bot.value.settings.role = undefined;
+      bot.value.settings.role = null;
     }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
 
@@ -621,10 +623,13 @@ const openChanellEdit = (chanell) => {
 
 const handleRoleChange = () => {
   if (
-    bot.value.settings.role &&
-    !(bot.value.settings.system_prompt || "").trim()
+    !(bot.value.settings.system_prompt || "").trim() ||
+    !!roles.value.find(
+      (role) => role.example_prompt === bot.value.settings.system_prompt
+    )
   ) {
     const fullRole = roles.value.find((r) => r.key === bot.value.settings.role);
+
     bot.value.settings.system_prompt = fullRole?.example_prompt;
   }
 };
