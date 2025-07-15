@@ -746,11 +746,11 @@
         },
         "api_url": {
           "label": "Webhook URL",
-          "tip": ""
+          "tip": "The URL obtained when creating an incoming webhook on your Bitrix24 portal"
         },
         "unique_name": {
           "label": "Unique Bot Name",
-          "tip": ""
+          "tip": "The unique name of the bot that your clients will see (e.g., Yevseyem Maksim)"
         }
       },
       "chats_filter": {
@@ -777,6 +777,7 @@
         "none": "No role"
       },
       "chanells_instruction": {
+        "bitrix24": "## 📘 Instructions for Creating a Webhook in Bitrix24\n\n🔗 [Instructions for creating a webhook in Bitrix24](https://helpdesk.bitrix24.ru/open/20886106)\n\n### ⚠️ Important:\nWhen creating the webhook, be sure to choose **type: `INCOMING Webhook`** and specify the following scopes:\n\n- ✅ `imbot` — **Create and manage chat bots**\n- ✅ `imopenlines` — **Open channels**\n- ✅ `im` — **Chat and notifications**\n- ✅ `disk` — **Drive**",
         "telegram": "📢 **To connect a Telegram bot, you only need the `bot_secret`**  \nCreate a bot via `BotFather`, copy the `Token`, and paste it into the `bot_secret` field."
       },
       "chat_item_tips": {
@@ -902,7 +903,8 @@
         "audio_output": "Price per 1M audio output tokens",
         "duration_price": "Price per 60 seconds of content",
         "sampling_step_price": "Price per generation step",
-        "characters_price": "Price per 1M input characters"
+        "characters_price": "Price per 1M input characters",
+        "pages_count_price": "Price for 1000 pages"
       },
       "payment_types_tips": {
         "text_input": {
@@ -938,7 +940,8 @@
           "title": "The more sampling steps",
           "description": " are used during generation, the higher the quality of the output content. However, this also increases the cost."
         },
-        "characters_price": "null"
+        "characters_price": "null",
+        "pages_count_price": "null"
       },
       "images_quality": {
         "hd": "HD",
@@ -965,7 +968,8 @@
         "text_to_audio": "Audio generation",
         "audio_to_text": "Recognition/Translation",
         "video": "Video generation",
-        "embedding": "Text Vectorization"
+        "embedding": "Text Vectorization",
+        "vision": "Computer vision"
       },
       "actions": {
         "generate_text": "text",
