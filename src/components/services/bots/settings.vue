@@ -17,43 +17,88 @@
 
       <a-col span="24">
         <span class="field_title"
-          >{{ t("bots.fields.role") }}:
+          >{{ t("bots.fields.channels") }}:
 
           <a-tooltip>
             <template #title>
-              <span v-html="t('bots.tips.role').replaceAll('\n', '<br/>')">
+              <span v-html="t('bots.tips.channels').replaceAll('\n', '<br/>')">
               </span>
             </template>
             <help-icon style="margin-left: 5px" />
           </a-tooltip>
         </span>
+        <a-row>
+          <a-col v-for="chanell in availableChanells" span="6">
+            <div
+              @click="
+                chanell.exist
+                  ? openChanellEdit(chanell)
+                  : openChanellAdd(chanell.type)
+              "
+              class="chanell"
+            >
+              <img
+                class="img_prod"
+                :src="`/img/chanells/${chanell.type}.png`"
+                alt="telegram"
+                @error="onError"
+              />
+              <span
+                style="
+                  display: -webkit-box;
+                  -webkit-box-orient: vertical;
+                  -webkit-line-clamp: 2;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  max-width: 95px;
+                  white-space: normal;
+                  word-break: break-word;
+                  overflow-wrap: break-word;
+                "
+                >{{ chanell.title }}</span
+              >
+              <span
+                :class="{
+                  'status-circle': true,
+                  red: !chanell.exist,
+                  green: chanell.exist,
+                }"
+              ></span>
+            </div>
+          </a-col>
 
-        <a-select
-          :options="rolesOptions"
-          style="margin-top: 10px; width: 100%"
-          v-model:value="bot.settings.role"
-          @change="handleRoleChange"
-        />
+          <a-col span="6" v-if="bot.channels.length > 0">
+            <div @click="openChanellAdd()" class="chanell">
+              <plus-circle-outlined style="font-size: 2rem" class="img_prod" />
+              <span>{{ t("bots.actions.add_new_chanell") }}</span>
+            </div>
+          </a-col>
+        </a-row>
       </a-col>
 
-      <a-col span="24">
+      <a-col
+        span="24"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        "
+      >
         <span class="field_title"
-          >{{ t("bots.fields.promt") }}:
-
+          >{{ t("bots.fields.enable_spam_filter") }}:
           <a-tooltip>
             <template #title>
-              <span v-html="t('bots.tips.promt').replaceAll('\n', '<br/>')">
+              <span
+                v-html="
+                  t('bots.tips.enable_spam_filter').replaceAll('\n', '<br/>')
+                "
+              >
               </span>
             </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <a-textarea
-          style="margin-top: 10px"
-          v-model:value="bot.settings.system_prompt"
-          :placeholder="t('bots.placeholders.promt')"
-          :auto-size="{ minRows: 4 }"
-        />
+            <help-icon style="margin-left: 5px" /> </a-tooltip
+        ></span>
+        <a-switch v-model:checked="bot.settings.enable_spam_filter" />
       </a-col>
 
       <a-col span="24">
@@ -124,32 +169,48 @@
         </a-slider>
       </a-col>
 
-      <a-col
-        span="24"
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-        "
-      >
+      <a-col span="24">
         <span class="field_title"
-          >{{ t("bots.fields.enable_spam_filter") }}:
+          >{{ t("bots.fields.role") }}:
+
           <a-tooltip>
             <template #title>
-              <span
-                v-html="
-                  t('bots.tips.enable_spam_filter').replaceAll('\n', '<br/>')
-                "
-              >
+              <span v-html="t('bots.tips.role').replaceAll('\n', '<br/>')">
               </span>
             </template>
-            <help-icon style="margin-left: 5px" /> </a-tooltip
-        ></span>
-        <a-switch v-model:checked="bot.settings.enable_spam_filter" />
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+
+        <a-select
+          :options="rolesOptions"
+          style="margin-top: 10px; width: 100%"
+          v-model:value="bot.settings.role"
+          @change="handleRoleChange"
+        />
       </a-col>
 
       <a-col span="24">
+        <span class="field_title"
+          >{{ t("bots.fields.promt") }}:
+
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.tips.promt').replaceAll('\n', '<br/>')">
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-textarea
+          style="margin-top: 10px"
+          v-model:value="bot.settings.system_prompt"
+          :placeholder="t('bots.placeholders.promt')"
+          :auto-size="{ minRows: 4 }"
+        />
+      </a-col>
+
+      <a-col span="24" style="margin-bottom: 40px; margin-top: 10px">
         <a-row justify="end">
           <a-button
             key="back"
@@ -158,67 +219,6 @@
             :type="isSavePrimary ? 'primary' : 'default'"
             >{{ t("bots.actions.save_bot") }}
           </a-button>
-        </a-row>
-      </a-col>
-
-      <a-col span="24">
-        <span class="field_title"
-          >{{ t("bots.fields.channels") }}:
-
-          <a-tooltip>
-            <template #title>
-              <span v-html="t('bots.tips.channels').replaceAll('\n', '<br/>')">
-              </span>
-            </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <a-row>
-          <a-col v-for="chanell in availableChanells" span="6">
-            <div
-              @click="
-                chanell.exist
-                  ? openChanellEdit(chanell)
-                  : openChanellAdd(chanell.type)
-              "
-              class="chanell"
-            >
-              <img
-                class="img_prod"
-                :src="`/img/chanells/${chanell.type}.png`"
-                alt="telegram"
-                @error="onError"
-              />
-              <span
-                style="
-                  display: -webkit-box;
-                  -webkit-box-orient: vertical;
-                  -webkit-line-clamp: 2;
-                  overflow: hidden;
-                  text-overflow: ellipsis;
-                  max-width: 95px;
-                  white-space: normal;
-                  word-break: break-word;
-                  overflow-wrap: break-word;
-                "
-                >{{ chanell.title }}</span
-              >
-              <span
-                :class="{
-                  'status-circle': true,
-                  red: !chanell.exist,
-                  green: chanell.exist,
-                }"
-              ></span>
-            </div>
-          </a-col>
-
-          <a-col span="6" v-if="bot.channels.length > 0">
-            <div @click="openChanellAdd()" class="chanell">
-              <plus-circle-outlined style="font-size: 2rem" class="img_prod" />
-              <span>{{ t("bots.actions.add_new_chanell") }}</span>
-            </div>
-          </a-col>
         </a-row>
       </a-col>
 
@@ -803,7 +803,7 @@ export default { name: "AiBotDraw" };
 
 <style scoped>
 .bots .field_title {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 500;
 }
 
