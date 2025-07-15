@@ -337,7 +337,7 @@ const exampleV2 = computed(() => {
 --output speech.mp3`;
   } else if (selectedTypeV2.value === "video") {
     return `
-  curl ${baseUrlV2}video/generate \
+  curl ${baseUrlV2}/video/generate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
@@ -350,13 +350,13 @@ const exampleV2 = computed(() => {
 `;
   } else if (selectedTypeV2.value === "vision") {
     return `
-  curl ${baseUrlV2}vision \
+  curl ${baseUrlV2}/vision \
   -H "Authorization: Bearer <token>" \
   -F "file=@/your/file/path/filename.png" \
   -F "model=${selectedModelV2.value}"
   `;
   } else if (selectedTypeV2.value === "embedding") {
-    return `curl ${baseUrlV2}api/openai/embeddings -H "Content-Type: application/json" -H "Authorization: Bearer <token>" -d '{
+    return `curl ${baseUrlV2}/embeddings -H "Content-Type: application/json" -H "Authorization: Bearer <token>" -d '{
     "input": "The food was delicious and the waiter...",
     "model": "${selectedModelV2.value}"
   }'`;
