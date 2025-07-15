@@ -197,7 +197,8 @@ watch(namespaces, (value) => {
 function orderClickHandler() {
   const serviceItem = services.value.find(({ uuid }) => uuid === service.value);
   const planItem = plans.value.find(({ uuid }) => uuid === plan.value);
-  let title = showcase.value.promo?.[locale]?.title ?? showcase.value.title;
+  let title =
+    showcase.value.promo?.[locale.value]?.title ?? showcase.value.title;
 
   const same = instancesStore.getInstances.filter((instance) =>
     instance.title.startsWith(title)
