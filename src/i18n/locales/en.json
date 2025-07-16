@@ -793,7 +793,7 @@
         "promt": "You are an expert on product X.\nYour task is to identify the user's needs, offer the right product, explain its benefits, and guide them toward making a purchase.\nUse a warm, professional tone and ask clarifying questions to better understand their situation.\nDon’t give all the information at once — engage in a natural conversation, like a seasoned salesperson would."
       },
       "tips": {
-        "model": "We’ve selected **GPT-4o Mini** for your assistant because it combines speed, reliability, and the ability to deliver dynamic, high-quality responses.\n\n**GPT-4o Mini** is a lightweight version of the GPT-4o model, optimized for fast and efficient real-time performance.\n\nIf you’d like to use a different AI model for your bot, just contact support — we’ll gladly connect it for you.",
+        "model": "**GPT-4o Mini** is a _lightweight_ version of the **GPT-4o** model, optimized for **fast** and **efficient** real-time performance.",
         "promt": "A prompt is the initial instruction or context you give to the assistant to guide its responses.\nA well-crafted prompt helps produce more relevant and accurate answers.\nYou can use examples, instructions, or questions to define the context.",
         "temperature": "The higher the temperature value, the more creative and varied the responses.\n0 — strict and predictable.\n0.5 — balanced and natural.\n1 — highly creative.",
         "delay": "The delay before the bot responds.\nSet in seconds.\n0 — instant reply.\n3 — the bot waits 3 seconds before replying.\nUsed to simulate a human-like pause.",
