@@ -777,8 +777,9 @@
         "none": "No role"
       },
       "chanells_instruction": {
-        "bitrix24": "## 📘 Instructions for Creating a Webhook in Bitrix24\n\n🔗 [Instructions for creating a webhook in Bitrix24](https://helpdesk.bitrix24.ru/open/20886106)\n\n### ⚠️ Important:\nWhen creating the webhook, be sure to choose **type: `INCOMING Webhook`** and specify the following scopes:\n\n- ✅ `imbot` — **Create and manage chat bots**\n- ✅ `imopenlines` — **Open channels**\n- ✅ `im` — **Chat and notifications**\n- ✅ `disk` — **Drive**",
-        "telegram": "📢 **To connect a Telegram bot, you only need the `bot_secret`**  \nCreate a bot via `BotFather`, copy the `Token`, and paste it into the `bot_secret` field."
+        "telegram": "📢 **Only the `bot_secret` is needed to connect a Telegram bot.**\nCreate a bot via `BotFather`, copy the `Token`, and paste it into the `bot_secret` field.\n\n📘 More info:\n\n[1. How to get your bot token](https://core.telegram.org/bots/tutorial#obtain-your-bot-token)\n\n[2. Creating a new bot](https://core.telegram.org/bots/features#creating-a-new-bot)",
+        "bitrix24": "## [📘 Guide to creating a Webhook in Bitrix24](https://helpdesk.bitrix24.ru/open/20886106)\n\n### ⚠️ Important:\nWhen creating the webhook, select **type: INCOMING Webhook** and specify the required permissions: ✅ **imbot**, ✅ **imopenlines**, ✅ **im**, ✅ **disk**.",
+        "bitrix24_sub": "## Connecting the AI Bot\n\nIn Bitrix24, open **CRM → Contact Center**, select the desired **open line** and go to its **settings**.\n\nIn the **\"Chat Bots\"** section, enable the option:\n**\"Assign the chat bot as responsible\"**, then select the created bot.\nClick **\"Save\"**. ✅ Done!"
       },
       "chat_item_tips": {
         "archive": "Move to Deleted",
@@ -792,7 +793,7 @@
         "promt": "You are an expert on product X.\nYour task is to identify the user's needs, offer the right product, explain its benefits, and guide them toward making a purchase.\nUse a warm, professional tone and ask clarifying questions to better understand their situation.\nDon’t give all the information at once — engage in a natural conversation, like a seasoned salesperson would."
       },
       "tips": {
-        "model": "We’ve selected **GPT-4o Mini** for your assistant because it combines speed, reliability, and the ability to deliver dynamic, high-quality responses.\n\n**GPT-4o Mini** is a lightweight version of the GPT-4o model, optimized for fast and efficient real-time performance.\n\nIf you’d like to use a different AI model for your bot, just contact support — we’ll gladly connect it for you.",
+        "model": "**GPT-4o Mini** is a _lightweight_ version of the **GPT-4o** model, optimized for **fast** and **efficient** real-time performance.",
         "promt": "A prompt is the initial instruction or context you give to the assistant to guide its responses.\nA well-crafted prompt helps produce more relevant and accurate answers.\nYou can use examples, instructions, or questions to define the context.",
         "temperature": "The higher the temperature value, the more creative and varied the responses.\n0 — strict and predictable.\n0.5 — balanced and natural.\n1 — highly creative.",
         "delay": "The delay before the bot responds.\nSet in seconds.\n0 — instant reply.\n3 — the bot waits 3 seconds before replying.\nUsed to simulate a human-like pause.",
