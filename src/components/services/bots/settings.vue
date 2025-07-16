@@ -279,6 +279,16 @@
           v-html="marked(t(`bots.chanells_instruction.${newChanellData.type}`))"
         ></span>
 
+        <span
+          v-if="
+            t(`bots.chanells_instruction.${newChanellData.type}_sub`, 'null') !=
+            'null'
+          "
+          v-html="
+            marked(t(`bots.chanells_instruction.${newChanellData.type}_sub`))
+          "
+        ></span>
+
         <template #footer>
           <a-button
             key="back"
@@ -375,6 +385,20 @@
           </a-form-item>
         </a-form>
 
+        <span
+          v-if="
+            t(
+              `bots.chanells_instruction.${selectedEditedChanell.type}_sub`,
+              'null'
+            ) != 'null'
+          "
+          v-html="
+            marked(
+              t(`bots.chanells_instruction.${selectedEditedChanell.type}_sub`)
+            )
+          "
+        ></span>
+
         <template #footer>
           <a-button
             key="back"
@@ -431,6 +455,15 @@ const plusCircleOutlined = defineAsyncComponent(() =>
 const props = defineProps({
   service: { type: Object, required: true },
 });
+
+// handle links for instrction
+const renderer = new marked.Renderer();
+
+renderer.link = function (href, title, text) {
+  return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+};
+
+marked.setOptions({ renderer });
 
 const delayMarks = computed(() =>
   Object.fromEntries(
