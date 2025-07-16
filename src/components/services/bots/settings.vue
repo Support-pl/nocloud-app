@@ -15,6 +15,64 @@
         <span v-html="marked(t('bots.tips.model'))"> </span>
       </a-col>
 
+      <a-col v-if="priceForTokens.input" span="12">
+        <div style="padding-bottom: 0; font-weight: 700">
+          {{ t(`openai.payment_types.text_input`) }}:
+        </div>
+
+        <div style="padding-top: 0; font-size: 18px">
+          <span>
+            {{ priceForTokens.input }}
+            {{ userCurrency.title }}
+
+            <a-popover
+              v-if="t(`openai.payment_types_tips.text_input`) != 'null'"
+            >
+              <template #content>
+                <div style="width: 40vw; font-style: italic">
+                  <span style="font-weight: bold">{{
+                    t(`openai.payment_types_tips.text_input.title`)
+                  }}</span>
+                  <span>{{
+                    t(`openai.payment_types_tips.text_input.description`)
+                  }}</span>
+                </div>
+              </template>
+              <help-icon />
+            </a-popover>
+          </span>
+        </div>
+      </a-col>
+
+      <a-col span="12" v-if="priceForTokens.output">
+        <div style="padding-bottom: 0; font-weight: 700">
+          {{ t(`openai.payment_types.text_output`) }}:
+        </div>
+
+        <div style="padding-top: 0; font-size: 18px">
+          <span>
+            {{ priceForTokens.output }}
+            {{ userCurrency.title }}
+
+            <a-popover
+              v-if="t(`openai.payment_types_tips.text_output`) != 'null'"
+            >
+              <template #content>
+                <div style="width: 40vw; font-style: italic">
+                  <span style="font-weight: bold">{{
+                    t(`openai.payment_types_tips.text_output.title`)
+                  }}</span>
+                  <span>{{
+                    t(`openai.payment_types_tips.text_output.description`)
+                  }}</span>
+                </div>
+              </template>
+              <help-icon />
+            </a-popover>
+          </span>
+        </div>
+      </a-col>
+
       <a-col span="24">
         <span class="field_title"
           >{{ t("bots.fields.channels") }}:
@@ -74,31 +132,6 @@
             </div>
           </a-col>
         </a-row>
-      </a-col>
-
-      <a-col
-        span="24"
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-        "
-      >
-        <span class="field_title"
-          >{{ t("bots.fields.enable_spam_filter") }}:
-          <a-tooltip>
-            <template #title>
-              <span
-                v-html="
-                  t('bots.tips.enable_spam_filter').replaceAll('\n', '<br/>')
-                "
-              >
-              </span>
-            </template>
-            <help-icon style="margin-left: 5px" /> </a-tooltip
-        ></span>
-        <a-switch v-model:checked="bot.settings.enable_spam_filter" />
       </a-col>
 
       <a-col span="24">
@@ -167,6 +200,31 @@
             <template v-else>{{ label }}</template>
           </template>
         </a-slider>
+      </a-col>
+
+      <a-col
+        span="24"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        "
+      >
+        <span class="field_title"
+          >{{ t("bots.fields.enable_spam_filter") }}:
+          <a-tooltip>
+            <template #title>
+              <span
+                v-html="
+                  t('bots.tips.enable_spam_filter').replaceAll('\n', '<br/>')
+                "
+              >
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" /> </a-tooltip
+        ></span>
+        <a-switch v-model:checked="bot.settings.enable_spam_filter" />
       </a-col>
 
       <a-col span="24">
@@ -443,6 +501,8 @@ import { useAiBotsStore } from "@/stores/aiBots";
 import { useChatsStore } from "@/stores/chats";
 import { marked } from "marked";
 import Loading from "@/components/ui/loading.vue";
+import { storeToRefs } from "pinia";
+import { useCurrenciesStore } from "@/stores/currencies";
 
 const helpIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/QuestionCircleOutlined")
@@ -503,6 +563,10 @@ const { t } = useI18n();
 const { openNotification } = useNotification();
 const aiBotsStore = useAiBotsStore();
 const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
+const currenciesStore = useCurrenciesStore();
+const { userCurrency, defaultCurrency } = storeToRefs(currenciesStore);
+const priceForTokens = ref({ input: "", output: "" });
 
 const isLoading = ref(false);
 const isBotSaveLoading = ref(false);
@@ -565,6 +629,10 @@ const rolesOptions = computed(() => [
   { value: null, label: t("bots.roles.none") },
 ]);
 
+const mainModel = computed(() =>
+  globalModelsList.value.find(({ key }) => key == "gpt-4o-mini")
+);
+
 const chanellsFields = computed(() => {
   if (
     [newChanellData.value.type, selectedEditedChanell.value.type].includes(
@@ -620,8 +688,7 @@ async function fetch() {
       bot.value.settings.role = null;
     }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
-
-    await aiBotsStore.getRoles();
+    await Promise.all([aiBotsStore.getRoles(), chatsStore.fetch_models_list()]);
   } catch (err) {
     const opts = {
       message: `Error: ${
@@ -632,9 +699,32 @@ async function fetch() {
   } finally {
     isLoading.value = false;
   }
+
+  fetchPriceForTokens();
 }
 
 fetch();
+
+async function fetchPriceForTokens() {
+  if (
+    mainModel.value &&
+    mainModel.value?.billing.tokens?.text_input?.price.amount
+  ) {
+    const input = mainModel.value?.billing.tokens?.text_input?.price.amount;
+    const output = mainModel.value?.billing.tokens?.text_output?.price.amount;
+    if (userCurrency.value === defaultCurrency.value) {
+      return (priceForTokens.value.input = input);
+    }
+
+    const { amounts } = await currenciesStore.convert({
+      from: defaultCurrency.value.code,
+      to: userCurrency.value.code,
+      amounts: [input, output],
+    });
+    priceForTokens.value.input = amounts[0] || price;
+    priceForTokens.value.output = amounts[1] || price;
+  }
+}
 
 const openChanellAdd = (type) => {
   isChanellAddOpen.value = true;
