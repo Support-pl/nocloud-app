@@ -54,6 +54,18 @@
             </div>
           </div>
 
+          <div v-if="lastInvoice" class="service-page__info">
+            <div class="service-page__info-title">
+              {{ capitalize(t("invoice status")) }}:
+              <a-tag :color="getInvoiceStatusColor">
+                {{ t(lastInvoice.status) }}
+              </a-tag>
+              <a-button size="small" type="primary" @click="clickOnInvoice">
+                {{ t("open") }}
+              </a-button>
+            </div>
+          </div>
+
           <div
             class="service-page__info"
             :style="{ display: 'inline-block', width: '50%' }"
@@ -96,13 +108,12 @@
           </a-collapse>
 
           <a-tabs v-model:activeKey="activeTab">
-            <a-tab-pane key="chats">
+            <a-tab-pane :disabled="isPending" key="chats">
               <template #tab>
                 <span class="tab">
                   {{ t("ai_bot_page.tabs.chats") }}
                 </span>
               </template>
-
               <div v-if="isSuspended" style="position: relative">
                 <div style="opacity: 0.6">
                   <bot-info :service="service" />
@@ -120,11 +131,11 @@
               </div>
               <bot-info v-else :service="service" />
             </a-tab-pane>
-            <a-tab-pane key="settings">
+            <a-tab-pane key="settings" :disabled="isPending">
               <template #tab>
                 <span class="tab">
                   <alert-outlined
-                    v-if="isSettingsBroken"
+                    v-if="isSettingsBroken && !isPending"
                     style="color: red; margin-right: 0px"
                   />
                   {{ t("ai_bot_page.tabs.settings") }}
@@ -139,7 +150,7 @@
 
               <bot-settings :service="service" />
             </a-tab-pane>
-            <a-tab-pane :disabled="isSuspended" key="database">
+            <a-tab-pane :disabled="isSuspended || isPending" key="database">
               <template #tab>
                 <span class="tab">
                   {{ t("ai_bot_page.tabs.databases") }}
@@ -177,6 +188,8 @@ import { useAiBotsStore } from "@/stores/aiBots";
 import BotDatabase from "@/components/services/bots/database.vue";
 import BotSettings from "@/components/services/bots/settings.vue";
 import { marked } from "marked";
+import { useInvoicesStore } from "@/stores/invoices";
+import { GetInvoicesRequest } from "nocloud-proto/proto/es/billing/billing_pb";
 
 const caretRightIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CaretRightOutlined")
@@ -194,6 +207,7 @@ const authStore = useAuthStore();
 const instancesStore = useInstancesStore();
 const chatsStore = useChatsStore();
 const aiBotsStore = useAiBotsStore();
+const invoicesStore = useInvoicesStore();
 
 const route = useRoute();
 const router = useRouter();
@@ -221,6 +235,7 @@ const isNameEditActive = ref(false);
 const isNameEditLoading = ref(false);
 const nameEditData = ref({ title: "" });
 const activeTab = ref();
+const lastInvoice = ref(null);
 
 const requiredRule = computed(() => ({
   required: true,
@@ -259,6 +274,18 @@ const isSettingsBroken = computed(
 );
 
 const isSuspended = computed(() => service.value?.state?.state === "SUSPENDED");
+const isPending = computed(() => service.value?.state?.state === "PENDING");
+
+const getInvoiceStatusColor = computed(() => {
+  switch (lastInvoice.value.status) {
+    case "PAID":
+      return "green";
+    case "UNPAID":
+      return "red";
+    default:
+      return "";
+  }
+});
 
 async function onStart() {
   isDataLoading.value = true;
@@ -300,6 +327,10 @@ async function onStart() {
     };
     info.value[0].type = "";
 
+    if (isPending.value) {
+      return;
+    }
+
     bot.value = await aiBotsStore.getBot(service.value.data.bot_uuid);
 
     if (isSettingsBroken.value) {
@@ -318,6 +349,14 @@ async function onStart() {
 }
 
 onStart();
+
+async function clickOnInvoice() {
+  const paymentLink = await invoicesStore.getPaymentLink(
+    lastInvoice.value.uuid
+  );
+
+  window.location.href = paymentLink;
+}
 
 const editName = async () => {
   try {
@@ -392,6 +431,19 @@ watch(isNameEditActive, (value) => {
   if (value) {
     nameEditData.value = { title: service.value.name };
   }
+});
+
+watch(service, async () => {
+  const invoices = await invoicesStore.invoicesApi.getInvoices(
+    GetInvoicesRequest.fromJson({
+      page: 1,
+      limit: 3,
+      sort: "DESC",
+      field: "created",
+      filters: { instances: [service.value.uuid] },
+    })
+  );
+  lastInvoice.value = invoices.toJson().pool?.[0];
 });
 </script>
 

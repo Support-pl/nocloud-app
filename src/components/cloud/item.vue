@@ -27,7 +27,7 @@
       </div>
       <div v-else-if="networking.length < 2" class="item__status">
         {{
-          showcase?.promo?.[i18n.locale]?.title ??
+          showcase?.promo?.[locale]?.title ??
           showcase?.title ??
           providersStore.getShowcases.find(({ uuid }) => uuid === instance.uuid)
             ?.title ??
@@ -104,6 +104,7 @@ const props = defineProps({
   instance: { type: Object, required: true },
 });
 
+const { locale, t } = useI18n();
 const i18n = useI18n();
 const router = useRouter();
 
@@ -182,8 +183,8 @@ const isExpired = computed(() => {
 const localDate = computed(() => {
   const productDate = new Date(props.instance.date ?? 0);
 
-  if (props.instance.data?.blocked) return i18n.t("filterHeader.In Progress");
-  if (isPayg.value) return i18n.t("PayG");
+  if (props.instance.data?.blocked) return t("filterHeader.In Progress");
+  if (isPayg.value) return t("PayG");
   if (productDate.getTime() === 0) return "none";
   if (props.instance.date === "0000-00-00") return "none";
   // if (props.instance.groupname === 'Domains') {
