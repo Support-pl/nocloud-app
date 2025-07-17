@@ -336,7 +336,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     async deleteDatabase(database) {
       try {
         const response = await api.post(
-          `agents/api//delete_database/${database.id}`
+          `agents/api/delete_database/${database.id}`
         );
         databases.value = databases.value.filter((db) => db.id !== database.id);
         return response;
