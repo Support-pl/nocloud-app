@@ -69,11 +69,17 @@ const chats = computed(() =>
     .slice(0, 8)
 );
 
+const isPending = computed(() => props.service?.state?.state === "PENDING");
+
 const handleOpenAllChats = () => {
   router.push(`/ai-bots/${bot.value.id}/chats/`);
 };
 
 async function fetch() {
+  if (isPending.value) {
+    return;
+  }
+
   try {
     isLoading.value = true;
 
