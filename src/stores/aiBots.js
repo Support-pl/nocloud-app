@@ -60,121 +60,160 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     }
   }
 
+  let reconnectAttempts = 0;
+  const MAX_RECONNECT_ATTEMPTS = 10;
+
   async function startChatsStream() {
-    if (socket.value) {
+    if (socket.value && socket.value.readyState === WebSocket.OPEN) {
       return;
     }
 
     const token = cookies.get("noCloudinApp-token");
     const url = VUE_APP_BASE_URL.replace("http", "ws");
 
-    socket.value = new WebSocket(`${url}agents/api/get_updates`, [
-      "Bearer",
-      token,
-    ]);
+    try {
+      socket.value = new WebSocket(`${url}agents/api/get_updates`, [
+        "Bearer",
+        token,
+      ]);
 
-    socket.value.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
-      switch (data.event) {
-        case "message_sent": {
-          if (
-            messages.value[data.message.chat_id] &&
-            messages.value[data.message.chat_id].length
-          ) {
-            messages.value[data.message.chat_id].push(data.message);
-          }
+      socket.value.addEventListener("open", () => {
+        reconnectAttempts = 0;
+      });
 
-          const chat = getChatById(data.message.chat_id);
-          if (chat && route.params.chatId != data.message.chat_id) {
-            chat.unread_count = (chat.unread_count || 0) + 1;
-          }
+      socket.value.addEventListener("message", (event) => {
+        const data = JSON.parse(event.data);
 
-          if (chat) {
-            chat.last_message = data.message;
-          }
+        switch (data.event) {
+          case "message_sent":
+            socket.value.close();
+            handleMessageSent(data.message);
+            break;
+          case "chat_updated":
+            handleChatUpdated(data.chat);
+            break;
+          case "chat_created":
+            handleChatCreated(data.chat);
+            break;
+          case "participant_created":
+          case "participant_updated":
+            handleParticipant(data.participant);
+            break;
+          case "file_search_knowledge_status_updated":
+            handleFileSearchKnowledgeUpdate(data.file_search_knowledge);
+            break;
+          case "chat_pause":
+          case "chat_unpause":
+            handleChatPauseToggle(data.chat, data.event);
+            break;
+        }
+      });
 
-          break;
-        }
-        case "chat_updated": {
-          if (chats.value.has(data.chat.bot_id)) {
-            chats.value.set(
-              data.chat.bot_id,
-              chats.value
-                .get(data.chat.bot_id)
-                .map((chat) => (chat.id === data.chat.id ? data.chat : chat))
-            );
-          }
-          break;
-        }
-        case "chat_created": {
-          if (chats.value.get(data.chat.bot_id)) {
-            chats.value.get(data.chat.bot_id).push(data.chat);
-          } else {
-            chats.value.set(data.chat.bot_id, [data.chat]);
-          }
-          break;
-        }
-        case "participant_created":
-        case "participant_updated": {
-          if (chatParticipants.value[data.participant.chat_id]) {
-            chatParticipants.value[data.participant.chat_id].push(
-              data.participant
-            );
-          } else {
-            chatParticipants.value[data.participant.chat_id] = [
-              data.participant,
-            ];
-          }
-          break;
-        }
-        case "file_search_knowledge_status_updated": {
-          const index = databases.value.findIndex(
-            (db) => db.id === data.file_search_knowledge.database
-          );
-          if (index != -1) {
-            if (
-              databases.value[index].file_search_knowledge.find(
-                (knowledge) => knowledge.id === data.file_search_knowledge.id
-              )
-            )
-              databases.value[index].file_search_knowledge = databases.value[
-                index
-              ].file_search_knowledge.map((knowledge) =>
-                knowledge.id === data.file_search_knowledge.id
-                  ? data.file_search_knowledge
-                  : knowledge
-              );
-            else {
-              databases.value[index].file_search_knowledge.push(
-                data.file_search_knowledge
-              );
-            }
-          }
-          break;
-        }
-        case "chat_pause":
-        case "chat_unpause": {
-          if (chats.value.has(data.chat.bot_id)) {
-            chats.value.set(
-              data.chat.bot_id,
-              chats.value
-                .get(data.chat.bot_id)
-                .map((chat) =>
-                  chat.id === data.chat.id
-                    ? { ...chat, pause: data.event === "chat_pause" }
-                    : chat
-                )
-            );
-          }
-          break;
-        }
+      socket.value.addEventListener("close", (event) => {
+        console.warn("WebSocket closed:", event);
+        attemptReconnect();
+      });
+
+      socket.value.addEventListener("error", (event) => {
+        console.error("WebSocket error:", event);
+        socket.value.close();
+      });
+    } catch (err) {
+      console.error("WebSocket failed to connect:", err);
+      attemptReconnect();
+    }
+  }
+
+  function handleMessageSent(message) {
+    if (
+      messages.value[message.chat_id] &&
+      messages.value[message.chat_id].length
+    ) {
+      messages.value[message.chat_id].push(message);
+    }
+
+    const chat = getChatById(message.chat_id);
+    if (chat && route.params.chatId != message.chat_id) {
+      chat.unread_count = (chat.unread_count || 0) + 1;
+    }
+
+    if (chat) {
+      chat.last_message = message;
+    }
+  }
+
+  function handleChatUpdated(chat) {
+    if (chats.value.has(chat.bot_id)) {
+      chats.value.set(
+        chat.bot_id,
+        chats.value.get(chat.bot_id).map((c) => (c.id === chat.id ? chat : c))
+      );
+    }
+  }
+
+  function handleChatCreated(chat) {
+    if (chats.value.get(chat.bot_id)) {
+      chats.value.get(chat.bot_id).push(chat);
+    } else {
+      chats.value.set(chat.bot_id, [chat]);
+    }
+  }
+
+  function handleParticipant(participant) {
+    const chatId = participant.chat_id;
+    if (chatParticipants.value[chatId]) {
+      chatParticipants.value[chatId].push(participant);
+    } else {
+      chatParticipants.value[chatId] = [participant];
+    }
+  }
+
+  function handleFileSearchKnowledgeUpdate(knowledge) {
+    const index = databases.value.findIndex(
+      (db) => db.id === knowledge.database
+    );
+    if (index !== -1) {
+      const existingIndex = databases.value[
+        index
+      ].file_search_knowledge.findIndex((k) => k.id === knowledge.id);
+      if (existingIndex !== -1) {
+        databases.value[index].file_search_knowledge[existingIndex] = knowledge;
+      } else {
+        databases.value[index].file_search_knowledge.push(knowledge);
       }
-    });
+    }
+  }
 
-    socket.value.addEventListener("error", (event) => {
-      console.warn(event);
+  function handleChatPauseToggle(chat, event) {
+    if (chats.value.has(chat.bot_id)) {
+      chats.value.set(
+        chat.bot_id,
+        chats.value
+          .get(chat.bot_id)
+          .map((c) =>
+            c.id === chat.id ? { ...c, pause: event === "chat_pause" } : c
+          )
+      );
+    }
+  }
+
+  function attemptReconnect() {
+    if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      console.error("❌ Max reconnect attempts reached.");
+      return;
+    }
+
+    const timeout = (1000 * reconnectAttempts + 200) / 2;
+
+    reconnectAttempts++;
+    socket.value = null;
+
+    console.log(
+      `🔄 Reconnecting in ${timeout / 1000}s... (attempt ${reconnectAttempts})`
+    );
+    setTimeout(() => {
       startChatsStream();
-    });
+    }, timeout);
   }
 
   function getChatById(chatId) {
