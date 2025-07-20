@@ -86,7 +86,6 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
         switch (data.event) {
           case "message_sent":
-            socket.value.close();
             handleMessageSent(data.message);
             break;
           case "chat_updated":
