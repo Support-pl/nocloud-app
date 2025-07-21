@@ -83,6 +83,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
       socket.value.addEventListener("message", (event) => {
         const data = JSON.parse(event.data);
+        console.log(data);
 
         switch (data.event) {
           case "message_sent":
@@ -98,12 +99,15 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           case "participant_updated":
             handleParticipant(data.participant);
             break;
-          case "file_search_knowledge_status_updated":
-            handleFileSearchKnowledgeUpdate(data.file_search_knowledge);
-            break;
           case "chat_pause":
           case "chat_unpause":
             handleChatPauseToggle(data.chat, data.event);
+            break;
+          case "file_search_knowledge_status_updated":
+            handleFileSearchKnowledgeUpdate(data.file_search_knowledge);
+            break;
+          case "saved_url_job_status_updated":
+            handleSiteSearchKnowledgeUpdate(data.saved_url);
             break;
         }
       });
@@ -179,6 +183,24 @@ export const useAiBotsStore = defineStore("aiBots", () => {
         databases.value[index].file_search_knowledge[existingIndex] = knowledge;
       } else {
         databases.value[index].file_search_knowledge.push(knowledge);
+      }
+    }
+  }
+
+  function handleSiteSearchKnowledgeUpdate(knowledge) {
+    const index = databases.value.findIndex(
+      (db) => db.id === knowledge.database_id
+    );
+
+    if (index !== -1) {
+      const existingIndex = databases.value[index].saved_urls.findIndex(
+        (k) => k.id === knowledge.id
+      );
+
+      if (existingIndex !== -1) {
+        databases.value[index].saved_urls[existingIndex] = knowledge;
+      } else {
+        databases.value[index].saved_urls.push(knowledge);
       }
     }
   }
