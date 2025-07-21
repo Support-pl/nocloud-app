@@ -64,18 +64,14 @@ export const useAiBotsStore = defineStore("aiBots", () => {
   const MAX_RECONNECT_ATTEMPTS = 10;
 
   async function startChatsStream() {
-    if (socket.value && socket.value.readyState === WebSocket.OPEN) {
-      return;
-    }
-
     const token = cookies.get("noCloudinApp-token");
-    const url = VUE_APP_BASE_URL.replace("http", "ws");
+    const url = VUE_APP_BASE_URL.replace(/^http/, "ws");
+    const wsUrl = `${url}agents/api/get_updates?token=${encodeURIComponent(
+      token
+    )}`;
 
     try {
-      socket.value = new WebSocket(`${url}agents/api/get_updates`, [
-        "Bearer",
-        token,
-      ]);
+      socket.value = new WebSocket(wsUrl);
 
       socket.value.addEventListener("open", () => {
         reconnectAttempts = 0;
@@ -83,6 +79,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
       socket.value.addEventListener("message", (event) => {
         const data = JSON.parse(event.data);
+        console.log(data);
 
         switch (data.event) {
           case "message_sent":
@@ -98,18 +95,21 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           case "participant_updated":
             handleParticipant(data.participant);
             break;
-          case "file_search_knowledge_status_updated":
-            handleFileSearchKnowledgeUpdate(data.file_search_knowledge);
-            break;
           case "chat_pause":
           case "chat_unpause":
             handleChatPauseToggle(data.chat, data.event);
+            break;
+          case "file_search_knowledge_status_updated":
+            handleFileSearchKnowledgeUpdate(data.file_search_knowledge);
+            break;
+          case "saved_url_job_status_updated":
+            handleSiteSearchKnowledgeUpdate(data.saved_url);
             break;
         }
       });
 
       socket.value.addEventListener("close", (event) => {
-        console.warn("WebSocket closed:", event);
+        console.warn("WebSocket closed:", event.code, event.reason);
         attemptReconnect();
       });
 
@@ -183,6 +183,24 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     }
   }
 
+  function handleSiteSearchKnowledgeUpdate(knowledge) {
+    const index = databases.value.findIndex(
+      (db) => db.id === knowledge.database_id
+    );
+
+    if (index !== -1) {
+      const existingIndex = databases.value[index].saved_urls.findIndex(
+        (k) => k.id === knowledge.id
+      );
+
+      if (existingIndex !== -1) {
+        databases.value[index].saved_urls[existingIndex] = knowledge;
+      } else {
+        databases.value[index].saved_urls.push(knowledge);
+      }
+    }
+  }
+
   function handleChatPauseToggle(chat, event) {
     if (chats.value.has(chat.bot_id)) {
       chats.value.set(
@@ -202,7 +220,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
       return;
     }
 
-    const timeout = (1000 * reconnectAttempts + 200) / 2;
+    const timeout = (1500 * reconnectAttempts + 200) / 2;
 
     reconnectAttempts++;
     socket.value = null;

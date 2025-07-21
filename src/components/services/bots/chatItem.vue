@@ -164,6 +164,7 @@ import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { defineAsyncComponent, ref } from "vue";
 import { useAiBotsStore } from "@/stores/aiBots";
+import { useNotification } from "@/hooks/utils";
 
 const playOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlayCircleOutlined")
@@ -204,6 +205,7 @@ const props = defineProps({
 const router = useRouter();
 const aiBotsStore = useAiBotsStore();
 const { t } = useI18n();
+const { openNotification } = useNotification();
 
 const isTogglePauseLoading = ref(false);
 const isToggleArchivedLoading = ref(false);

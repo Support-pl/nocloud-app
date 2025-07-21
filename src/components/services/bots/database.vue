@@ -83,7 +83,7 @@
           <a-input
             class="field"
             v-model:value="item.question"
-            placeholder="Вопрос"
+            :placeholder="t('bots_databases.fields.question')"
             compact
             :status="qaKnowledgeStatuses[index]?.['question'] ? 'error' : ''"
           />
@@ -91,7 +91,7 @@
           <a-input
             class="field"
             v-model:value="item.answer"
-            placeholder="Ответ"
+            :placeholder="t('bots_databases.fields.answer')"
             compact
             :status="qaKnowledgeStatuses[index]?.['answer'] ? 'error' : ''"
           />
@@ -409,6 +409,127 @@
           </a-tooltip>
         </div>
       </a-collapse-panel>
+
+      <a-collapse-panel class="knowledge_site_search" key="site_search">
+        <template #header>
+          <div class="header">
+            <span style="margin-right: 10px">
+              {{ t("bots_databases.labels.knowledge_site_search") }}
+            </span>
+            <a-tooltip>
+              <template #title>
+                <span v-html="t(`bots_databases.tips.knowledge_site_search`)" />
+              </template>
+              <help-icon style="font-size: 22px" />
+            </a-tooltip>
+
+            <span
+              v-if="countUnreadSiteKnowledge"
+              class="file_search_unread_badge"
+              >{{ countUnreadSiteKnowledge }}
+            </span>
+          </div>
+        </template>
+
+        <a-table
+          :columns="siteSearchColumns"
+          :data-source="database.saved_urls"
+          :pagination="false"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'actions'">
+              <span style="display: flex; justify-content: space-between">
+                <a-popconfirm
+                  :title="t('bots_databases.tips.delete_knowledge')"
+                  :ok-text="t('Yes')"
+                  :cancel-text="t('Cancel')"
+                  @confirm="handleRemoveSiteSearchKnowledge(record)"
+                >
+                  <a-button
+                    :loading="deleteSiteSearchKnowledgeId === record.id"
+                    :disabled="
+                      !!deleteSiteSearchKnowledgeId &&
+                      !!deleteSiteSearchKnowledgeId !== record.id
+                    "
+                    class="delete_btn"
+                    type="text"
+                    shape="circle"
+                    size="large"
+                  >
+                    <template #icon>
+                      <delete-icon two-tone-color="#ff4d4f" class="icon" />
+                    </template>
+                  </a-button>
+                </a-popconfirm>
+
+                <a-tooltip placement="top">
+                  <template #title>
+                    <span>{{
+                      t("bots_databases.tips.open_site_search_result")
+                    }}</span>
+                  </template>
+                  <a-button
+                    class="delete_btn"
+                    type="text"
+                    shape="circle"
+                    size="large"
+                    v-if="getSiteSearchItemStatus(record) == 'finished'"
+                    @click="handelOpenSiteSearchKnowledge(record)"
+                  >
+                    <template #icon>
+                      <open-icon
+                        :style="{
+                          color:
+                            savedUrlStorage[record.id] === false ? 'red' : '',
+                        }"
+                        class="icon"
+                      />
+                    </template>
+                  </a-button>
+                </a-tooltip>
+              </span>
+            </template>
+
+            <template v-if="column.key === 'url'">
+              <a :href="record.url" target="_blank">
+                {{ getRootDomain(record.url) }}
+              </a>
+            </template>
+
+            <template v-if="column.key === 'status'">
+              <a-tag
+                :color="
+                  getSiteSearchItemStatus(record) === 'finished'
+                    ? 'green'
+                    : 'orange'
+                "
+              >
+                {{
+                  t(
+                    `bots_databases.site_search_status.${getSiteSearchItemStatus(
+                      record
+                    )}`,
+                    getSiteSearchItemStatus(record)
+                  )
+                }}
+              </a-tag>
+            </template>
+          </template>
+        </a-table>
+
+        <div class="actions">
+          <a-tooltip placement="top">
+            <template #title>
+              <span>{{
+                t("bots_databases.tips.create_site_search_knowledge")
+              }}</span>
+            </template>
+            <a-button @click="isAddSiteSearchOpen = true">{{
+              t("bots_databases.actions.create_site_search_knowledge")
+            }}</a-button>
+          </a-tooltip>
+        </div>
+      </a-collapse-panel>
     </a-collapse>
 
     <a-modal
@@ -538,6 +659,99 @@
         >
       </template>
     </a-modal>
+
+    <a-modal
+      v-model:open="isAddSiteSearchOpen"
+      :title="t('bots_databases.actions.create_site_search_knowledge')"
+    >
+      <a-form
+        ref="addSiteFormRef"
+        layout="vertical"
+        autocomplete="off"
+        :model="newSiteSearch"
+        :rules="newSiteSearchRules"
+      >
+        <a-form-item
+          name="url"
+          :label="t('bots_databases.fields.site_search_column_url')"
+        >
+          <a-input
+            v-model:value="newSiteSearch.url"
+            :placeholder="t('bots_databases.fields.site_search_column_url')"
+          ></a-input>
+        </a-form-item>
+      </a-form>
+
+      <span v-html="marked(t('bots_databases.tips.site_search_add_price'))" />
+
+      <template #footer>
+        <a-button
+          key="back"
+          :disabled="isAddSiteSearchLoading"
+          @click="isAddSiteSearchOpen = false"
+          >{{ t("Cancel") }}</a-button
+        >
+
+        <a-button
+          key="submit"
+          type="primary"
+          :loading="isAddSiteSearchLoading"
+          @click="handleAddSiteSearch"
+          >{{
+            t("bots_databases.actions.create_site_search_knowledge")
+          }}</a-button
+        >
+      </template>
+    </a-modal>
+
+    <a-modal
+      v-model:open="isImportSiteSearchOpen"
+      :title="t('bots_databases.actions.create_site_search_knowledge')"
+      style="max-width: 1500px; width: 80vw"
+    >
+      <div
+        v-for="(item, index) in currentImportSiteSearch.qa"
+        :key="index"
+        class="question_item"
+      >
+        <a-input
+          style="width: 30%"
+          class="field"
+          v-model:value="item.question"
+          :placeholder="t('bots_databases.fields.question')"
+          compact
+          :status="qaKnowledgeStatuses[index]?.['question'] ? 'error' : ''"
+        />
+
+        <a-input
+          style="width: 70%"
+          class="field"
+          v-model:value="item.answer"
+          :placeholder="t('bots_databases.fields.answer')"
+          compact
+        />
+        <a-checkbox v-model:checked="item.selected"></a-checkbox>
+      </div>
+
+      <template #footer>
+        <a-button
+          key="back"
+          :disabled="isImportSiteSearchLoading"
+          @click="isImportSiteSearchOpen = false"
+          >{{ t("Cancel") }}</a-button
+        >
+
+        <a-button
+          key="submit"
+          type="primary"
+          :loading="isImportSiteSearchLoading"
+          @click="handleImportSiteSearch"
+          >{{
+            t("bots_databases.actions.import_site_search_knowledge")
+          }}</a-button
+        >
+      </template>
+    </a-modal>
   </a-col>
   <loading v-else />
 </template>
@@ -549,6 +763,7 @@ import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
 import { marked } from "marked";
 import { storeToRefs } from "pinia";
+import { onBeforeUnmount } from "vue";
 import {
   computed,
   defineAsyncComponent,
@@ -592,6 +807,10 @@ const editIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EditTwoTone")
 );
 
+const openIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RightCircleOutlined")
+);
+
 const props = defineProps({
   service: { type: Object, required: true },
 });
@@ -621,6 +840,15 @@ const newKnowledge = ref({ type: "google_docs", description: "", url: "" });
 const deleteSimpleKnowledgeId = ref("");
 const deleteFileSearchKnowledgeId = ref("");
 const changeEnabledFileSearchKnowledgeId = ref("");
+const isAddSiteSearchLoading = ref(false);
+const isAddSiteSearchOpen = ref(false);
+const isImportSiteSearchOpen = ref(false);
+const deleteSiteSearchKnowledgeId = ref("");
+const isImportSiteSearchLoading = ref(false);
+const currentImportSiteSearch = ref(false);
+const newSiteSearch = ref({ url: "" });
+const addSiteFormRef = ref();
+const savedUrlStorage = ref({});
 
 onMounted(async () => {
   try {
@@ -637,6 +865,10 @@ onMounted(async () => {
     ) {
       database.value.qa_knowledge.records = [{ question: "", answer: "" }];
     }
+
+    savedUrlStorage.value = JSON.parse(
+      localStorage.getItem("savedUrlStorage") || "{}"
+    );
   } catch (err) {
     const opts = {
       message: `Error: ${
@@ -647,6 +879,13 @@ onMounted(async () => {
   } finally {
     isDataLoading.value = false;
   }
+});
+
+onBeforeUnmount(() => {
+  localStorage.setItem(
+    "savedUrlStorage",
+    JSON.stringify(savedUrlStorage.value)
+  );
 });
 
 const bot = computed(() => bots.value.get(service.value.data.bot_uuid));
@@ -735,11 +974,75 @@ const fileSearchColumns = computed(() => [
   },
 ]);
 
+const siteSearchColumns = computed(() => [
+  {
+    title: t("bots_databases.fields.site_search_column_url"),
+    dataIndex: "url",
+    key: "url",
+    scopedSlots: { customRender: "url" },
+  },
+  {
+    title: t("bots_databases.fields.site_search_column_status"),
+    dataIndex: "status",
+    key: "status",
+    scopedSlots: { customRender: "status" },
+  },
+
+  {
+    title: "",
+    dataIndex: "actions",
+    key: "actions",
+    scopedSlots: { customRender: "actions" },
+    width: 50,
+  },
+]);
+
+const newSiteSearchRules = computed(() => ({
+  url: [
+    {
+      trigger: "blur",
+      required: true,
+      message: t("ssl_product.field is required"),
+      validator: (d) => {
+        const value = newSiteSearch.value[d.field];
+
+        if (
+          !!value &&
+          value.length > 1 &&
+          /^(https?:\/\/)?([\w\-]+\.)+[\w\-]{2,}(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/i.test(
+            value
+          )
+        ) {
+          return Promise.resolve();
+        }
+
+        return Promise.reject();
+      },
+    },
+  ],
+}));
+
 const isSaveQaKnowledgePrimary = computed(
   () =>
     JSON.stringify(originalDatabase.value.qa_knowledge) !==
     JSON.stringify(database.value.qa_knowledge)
 );
+
+const countUnreadSiteKnowledge = computed(() => {
+  return Object.keys(savedUrlStorage.value || {}).reduce((acc, key) => {
+    if (
+      database.value.saved_urls.find((url) => url.id === key) &&
+      savedUrlStorage.value[key] === false
+    ) {
+      const d = database.value.saved_urls.find((url) => url.id === key);
+      if (getSiteSearchItemStatus(d) === "finished") {
+        acc += 1;
+      }
+
+      return acc;
+    }
+  }, 0);
+});
 
 const databaseRules = computed(() => ({
   name: [{ required: true, message: t("ssl_product.field is required") }],
@@ -759,11 +1062,17 @@ function getRootDomain(url) {
 }
 
 function getFileSearchItemStatus(record, originalDatabase) {
-  const og = (originalDatabase.file_search_knowledge || []).find(
+  const og = (originalDatabase?.file_search_knowledge || []).find(
     ({ id }) => id === record.id
   );
 
   return og?.status || record.status;
+}
+
+function getSiteSearchItemStatus(record) {
+  return (
+    record.scrapes[(record.scrapes || []).length - 1].status || ""
+  ).toLowerCase();
 }
 
 const handleBeforeKnowledgeFileUpload = async (newFile) => {
@@ -988,26 +1297,26 @@ const handleAddNewFileSearchKnowledge = async () => {
       data.id = newKnowledge.value.id;
 
       data.status = "synchronizing";
-      const index = database.value.file_search_knowledge.findIndex(
+      const index = originalDatabase.value.file_search_knowledge.findIndex(
         (k) => k.id == data.id
       );
 
-      database.value.file_search_knowledge[index] = data;
+      originalDatabase.value.file_search_knowledge[index] = data;
     } else {
       const data = await api.post("/agents/api/add_knowledge", {
         data: {
           file_search_knowledge: file_search_knowledge,
         },
-        database: database.value.id,
+        database: originalDatabase.value.id,
         type: "file_search",
       });
 
       data.status = "synchronizing";
 
-      if (!database.value.file_search_knowledge) {
-        database.value.file_search_knowledge = [];
+      if (!originalDatabase.value.file_search_knowledge) {
+        originalDatabase.value.file_search_knowledge = [];
       }
-      database.value.file_search_knowledge.push(data);
+      originalDatabase.value.file_search_knowledge.push(data);
     }
 
     newKnowledge.value = { url: "", description: "", type: "google_docs" };
@@ -1041,8 +1350,10 @@ const handleRemoveFileSearchKnowledge = async (knowledge) => {
       type: "file_search",
     });
 
-    database.value.file_search_knowledge =
-      database.value.file_search_knowledge.filter((k) => k.id !== knowledge.id);
+    originalDatabase.value.file_search_knowledge =
+      originalDatabase.value.file_search_knowledge.filter(
+        (k) => k.id !== knowledge.id
+      );
 
     openNotification("success", {
       message: `${t("Done")}!`,
@@ -1079,8 +1390,8 @@ const handleChangeFileSearchKnowledgeEnabled = async (knowledge) => {
       type: "file_search",
     });
 
-    database.value.file_search_knowledge =
-      database.value.file_search_knowledge.map((k) =>
+    originalDatabase.value.file_search_knowledge =
+      originalDatabase.value.file_search_knowledge.map((k) =>
         k.id === knowledge.id ? knowledge : k
       );
 
@@ -1096,6 +1407,131 @@ const handleChangeFileSearchKnowledgeEnabled = async (knowledge) => {
     openNotification("error", opts);
   } finally {
     changeEnabledFileSearchKnowledgeId.value = "";
+  }
+};
+
+const handleAddSiteSearch = async () => {
+  await addSiteFormRef.value.validate();
+
+  isAddSiteSearchLoading.value = true;
+
+  try {
+    const dto = {
+      database_id: database.value.id,
+      url: newSiteSearch.value.url,
+    };
+
+    const data = await api.post("/agents/api/create_saved_url", dto);
+    savedUrlStorage.value[data.id] = false;
+
+    newSiteSearch.value = { url: "" };
+    isAddSiteSearchOpen.value = false;
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isAddSiteSearchLoading.value = false;
+  }
+};
+
+const handleRemoveSiteSearchKnowledge = async (record) => {
+  deleteSiteSearchKnowledgeId.value = record.id;
+
+  try {
+    await api.post("/agents/api/delete_saved_url", record);
+
+    database.value.saved_urls = database.value.saved_urls.filter(
+      (k) => k.id !== record.id
+    );
+
+    originalDatabase.value.saved_urls =
+      originalDatabase.value.saved_urls.filter((k) => k.id !== record.id);
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    deleteSiteSearchKnowledgeId.value = "";
+  }
+};
+
+const handelOpenSiteSearchKnowledge = (record) => {
+  const data = JSON.parse(JSON.stringify(record));
+  const result = { url: data, qa: [] };
+
+  data.scrapes[(data.scrapes || []).length - 1].data.qna.forEach((item) => {
+    item.selected = true;
+    result.qa.push(item);
+  });
+
+  currentImportSiteSearch.value = result;
+  isImportSiteSearchOpen.value = true;
+
+  savedUrlStorage.value = record.id;
+};
+
+const handleImportSiteSearch = async () => {
+  isImportSiteSearchLoading.value = true;
+
+  try {
+    const qa_knowledge = JSON.parse(
+      JSON.stringify(originalDatabase.value.qa_knowledge.records)
+    );
+
+    currentImportSiteSearch.value.qa
+      .filter((qa) => qa.selected)
+      .map((qa) => {
+        qa_knowledge.push({ answer: qa.answer, question: qa.question });
+      });
+
+    const data = await api.post("/agents/api/update_knowledge", {
+      database: database.value.id,
+      type: "question_answer",
+      data: {
+        qa_knowledge: {
+          id: originalDatabase.value.qa_knowledge.id,
+          records: qa_knowledge,
+        },
+      },
+    });
+
+    database.value.qa_knowledge.records = JSON.parse(
+      JSON.stringify(data.records)
+    );
+
+    originalDatabase.value.qa_knowledge.records = JSON.parse(
+      JSON.stringify(data.records)
+    );
+
+    isImportSiteSearchOpen.value = false;
+
+    openNotification("success", {
+      message: `${t("Done")}!`,
+    });
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isImportSiteSearchLoading.value = false;
   }
 };
 
@@ -1145,6 +1581,22 @@ watch(isAddKnowledgeOpen, (curr, prev) => {
     isAddKnowledgeEdit.value = false;
   }
 });
+
+watch(
+  () => originalDatabase.value.file_search_knowledge,
+  (value) => {
+    database.value.file_search_knowledge = JSON.parse(JSON.stringify(value));
+  },
+  { deep: true }
+);
+
+watch(
+  () => originalDatabase.value.saved_urls,
+  (value) => {
+    database.value.saved_urls = JSON.parse(JSON.stringify(value));
+  },
+  { deep: true }
+);
 </script>
 
 <script>
@@ -1152,7 +1604,7 @@ export default { name: "AiBotDatabase" };
 </script>
 
 <style scoped>
-.knowledge_questions .question_item {
+.question_item {
   display: flex;
   padding: 5px;
   margin-top: 5px;
@@ -1200,6 +1652,24 @@ export default { name: "AiBotDatabase" };
   align-items: center;
 }
 
+.knowledge_site_search .header {
+  display: flex;
+  align-items: center;
+}
+
+.knowledge_site_search .actions {
+  display: flex;
+  justify-content: end;
+  margin-top: 10px;
+}
+
+.knowledge_site_search .integration_item {
+  display: flex;
+  padding: 5px;
+  margin-top: 5px;
+  align-items: center;
+}
+
 .create_knowledge_integration_modal .field {
   margin-bottom: 15px;
 }
@@ -1219,7 +1689,7 @@ export default { name: "AiBotDatabase" };
   margin-top: 10px;
 }
 
-.knowledge_questions .question_item .field {
+.question_item .field {
   margin-right: 5px;
 }
 
@@ -1237,5 +1707,18 @@ export default { name: "AiBotDatabase" };
   font-size: 1rem;
   margin-top: 5px;
   margin-bottom: 20px;
+}
+
+.file_search_unread_badge {
+  height: 25px;
+  width: 25px;
+  padding: 4px 8px;
+  margin-left: 10px;
+  background-color: rgb(219, 46, 46);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 15px;
+  box-shadow: 0 0 0 2px white;
 }
 </style>
