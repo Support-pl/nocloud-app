@@ -890,7 +890,8 @@
         "knowledge_upload_file": "Upload file",
         "create_file_search_knowledge": "Add Source",
         "update_knowledge": "Update Source",
-        "create_site_search_knowledge": "Add site"
+        "create_site_search_knowledge": "Add site",
+        "import_site_search_knowledge":"Add to QA"
       }
     },
     "openai": {
