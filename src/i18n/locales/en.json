@@ -832,11 +832,19 @@
         "file_search_column_name": "Name",
         "file_search_column_url": "Link",
         "file_search_column_status": "Status",
-        "file_search_column_enabled": "Enabled"
+        "file_search_column_enabled": "Enabled",
+        "site_search_column_url": "Link",
+        "site_search_column_status": "Status"
       },
       "file_search_status": {
         "ready": "Ready",
-        "synchronizing": "Processing..."
+        "synchronizing": "Processing...",
+        "failed": "Failed"
+      },
+      "site_search_status": {
+        "ready": "Ready",
+        "processing": "Processing...",
+        "failed": "Failed"
       },
       "tips": {
         "not_valid_form": "Please check the validity of the entered data.",
@@ -857,7 +865,11 @@
         "file_search_price": "**The file will be processed and stored in a vector database for smart search.**\n\n💰 *Cost: approximately $0.30 per 5 MB of text.*",
         "file_search_update": "**The file will be reprocessed.**\nOnly the difference between the old and new version is billed.\n\n💰 *Cost: approximately $0.30 per 5 MB of changed content.*",
         "delete_knowledge": "The file will be permanently removed. This action is irreversible.",
-        "enabled_file_search_knowledge": "Controls whether the file is included in AI queries. You can disable it without deleting."
+        "enabled_file_search_knowledge": "Controls whether the file is included in AI queries. You can disable it without deleting.",
+        "knowledge_site_search": "Add a website link — the AI will perform a deep analysis of its content and generate answers based on your site.",
+        "create_site_search_knowledge": "Add a website link — the AI will perform a deep analysis of its content and generate answers based on your site.",
+        "open_site_search_result": "Open the automatically generated questions from the website and choose which ones to add to the knowledge base.",
+        "site_search_add_price": "> ⏳ **Please note:** once the link is added, the system will begin deep processing of the website. We’ll analyze multiple pages, extract key information, and convert it into questions and answers for your knowledge base.\n>\n> 🔍 Depending on the size and structure of the site, this process may take several minutes.\n>\n> 💸 Since this involves compute-intensive tasks (text analysis, question generation, data storage), the estimated cost is approximately **~N $**. The exact amount depends on the volume of content processed."
       },
       "labels": {
         "enabled_databases": "Enabled knowledge bases",
@@ -865,7 +877,8 @@
         "empty_databases": "No data available",
         "qa_knowledge_base": "Question - Answer",
         "knowledge_integrations": "Connected Data",
-        "knowledge_file_search": "Smart Files (Vectorized)"
+        "knowledge_file_search": "Smart Files (Vectorized)",
+        "knowledge_site_search": "Connected Sites"
       },
       "actions": {
         "create_database": "Add knowledge base",
@@ -876,7 +889,8 @@
         "detach_database": "Disconnect database",
         "knowledge_upload_file": "Upload file",
         "create_file_search_knowledge": "Add Source",
-        "update_knowledge": "Update Source"
+        "update_knowledge": "Update Source",
+        "create_site_search_knowledge": "Add site"
       }
     },
     "openai": {
