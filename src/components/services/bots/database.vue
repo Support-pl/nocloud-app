@@ -881,6 +881,9 @@ onMounted(async () => {
     savedUrlStorage.value = JSON.parse(
       localStorage.getItem("savedUrlStorage") || "{}"
     );
+    if (typeof savedUrlStorage.value !== "object") {
+      savedUrlStorage.value = {};
+    }
   } catch (err) {
     const opts = {
       message: `Error: ${
@@ -1501,13 +1504,13 @@ const handleImportSiteSearch = async () => {
   isImportSiteSearchLoading.value = true;
 
   try {
-    const qa_knowledge = JSON.parse(
-      JSON.stringify(originalDatabase.value.qa_knowledge.records)
-    );
+    const qa_knowledge =
+      JSON.parse(JSON.stringify(originalDatabase.value.qa_knowledge.records)) ||
+      [];
 
     currentImportSiteSearch.value.qa
       .filter((qa) => qa.selected)
-      .map((qa) => {
+      .forEach((qa) => {
         qa_knowledge.push({ answer: qa.answer, question: qa.question });
       });
 
