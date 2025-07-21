@@ -842,7 +842,7 @@
         "failed": "Failed"
       },
       "site_search_status": {
-        "ready": "Ready",
+        "finished": "Ready",
         "processing": "Processing...",
         "failed": "Failed"
       },
@@ -869,7 +869,7 @@
         "knowledge_site_search": "Add a website link — the AI will perform a deep analysis of its content and generate answers based on your site.",
         "create_site_search_knowledge": "Add a website link — the AI will perform a deep analysis of its content and generate answers based on your site.",
         "open_site_search_result": "Open the automatically generated questions from the website and choose which ones to add to the knowledge base.",
-        "site_search_add_price": "> ⏳ **Please note:** once the link is added, the system will begin deep processing of the website. We’ll analyze multiple pages, extract key information, and convert it into questions and answers for your knowledge base.\n>\n> 🔍 Depending on the size and structure of the site, this process may take several minutes.\n>\n> 💸 Since this involves compute-intensive tasks (text analysis, question generation, data storage), the estimated cost is approximately **~N $**. The exact amount depends on the volume of content processed."
+        "site_search_add_price": "> ⏳ **Please note:** once the link is added, the system will begin deep processing of the website. We’ll analyze multiple pages, extract key information, and convert it into questions and answers for your knowledge base.\n>\n> 🔍 Depending on the size and structure of the site, this process may take several minutes.\n>\n> 💸 Since this involves compute-intensive tasks (text analysis, question generation, data storage), the estimated cost is approximately **~0.5 $**. The exact amount depends on the volume of content processed."
       },
       "labels": {
         "enabled_databases": "Enabled knowledge bases",
