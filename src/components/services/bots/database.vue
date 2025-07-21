@@ -80,31 +80,37 @@
           :key="index"
           class="question_item"
         >
-          <a-input
-            class="field"
-            v-model:value="item.question"
-            :placeholder="t('bots_databases.fields.question')"
-            compact
-            :status="qaKnowledgeStatuses[index]?.['question'] ? 'error' : ''"
-          />
+          <div class="question">
+            <span style="width: 25px">{{ index + 1 }}.</span>
+            <a-input
+              class="field"
+              v-model:value="item.question"
+              :placeholder="t('bots_databases.fields.question')"
+              compact
+              :status="qaKnowledgeStatuses[index]?.['question'] ? 'error' : ''"
+            />
+            <a-button
+              @click="handleRemoveQaKnowledge(index)"
+              class="delete_btn"
+              type="text"
+              shape="circle"
+            >
+              <template #icon>
+                <delete-icon two-tone-color="#ff4d4f" class="icon" />
+              </template>
+            </a-button>
+          </div>
 
-          <a-input
-            class="field"
-            v-model:value="item.answer"
-            :placeholder="t('bots_databases.fields.answer')"
-            compact
-            :status="qaKnowledgeStatuses[index]?.['answer'] ? 'error' : ''"
-          />
-          <a-button
-            @click="handleRemoveQaKnowledge(index)"
-            class="delete_btn"
-            type="text"
-            shape="circle"
-          >
-            <template #icon>
-              <delete-icon two-tone-color="#ff4d4f" class="icon" />
-            </template>
-          </a-button>
+          <div style="margin-left: 45px; width: 100%">
+            <a-textarea
+              style="width: calc(100% - 60px)"
+              class="field"
+              v-model:value="item.answer"
+              :placeholder="t('bots_databases.fields.answer')"
+              compact
+              :status="qaKnowledgeStatuses[index]?.['answer'] ? 'error' : ''"
+            />
+          </div>
         </div>
 
         <div class="actions">
@@ -714,23 +720,29 @@
         :key="index"
         class="question_item"
       >
-        <a-input
-          style="width: 30%"
-          class="field"
-          v-model:value="item.question"
-          :placeholder="t('bots_databases.fields.question')"
-          compact
-          :status="qaKnowledgeStatuses[index]?.['question'] ? 'error' : ''"
-        />
+        <div class="question">
+          <span style="width: 25px">{{ index + 1 }}.</span>
+          <a-input
+            style="width: 100%"
+            v-model:value="item.question"
+            :placeholder="t('bots_databases.fields.question')"
+            compact
+            :status="qaKnowledgeStatuses[index]?.['question'] ? 'error' : ''"
+          />
+          <a-checkbox
+            style="margin-left: 15px"
+            v-model:checked="item.selected"
+          ></a-checkbox>
+        </div>
 
-        <a-input
-          style="width: 70%"
-          class="field"
-          v-model:value="item.answer"
-          :placeholder="t('bots_databases.fields.answer')"
-          compact
-        />
-        <a-checkbox v-model:checked="item.selected"></a-checkbox>
+        <div style="margin-left: 45px; width: 100%">
+          <a-textarea
+            style="width: calc(100% - 55px)"
+            v-model:value="item.answer"
+            :placeholder="t('bots_databases.fields.answer')"
+            compact
+          />
+        </div>
       </div>
 
       <template #footer>
@@ -869,6 +881,9 @@ onMounted(async () => {
     savedUrlStorage.value = JSON.parse(
       localStorage.getItem("savedUrlStorage") || "{}"
     );
+    if (typeof savedUrlStorage.value !== "object") {
+      savedUrlStorage.value = {};
+    }
   } catch (err) {
     const opts = {
       message: `Error: ${
@@ -1482,20 +1497,20 @@ const handelOpenSiteSearchKnowledge = (record) => {
   currentImportSiteSearch.value = result;
   isImportSiteSearchOpen.value = true;
 
-  savedUrlStorage.value = record.id;
+  savedUrlStorage.value[record.id] = true;
 };
 
 const handleImportSiteSearch = async () => {
   isImportSiteSearchLoading.value = true;
 
   try {
-    const qa_knowledge = JSON.parse(
-      JSON.stringify(originalDatabase.value.qa_knowledge.records)
-    );
+    const qa_knowledge =
+      JSON.parse(JSON.stringify(originalDatabase.value.qa_knowledge.records)) ||
+      [];
 
     currentImportSiteSearch.value.qa
       .filter((qa) => qa.selected)
-      .map((qa) => {
+      .forEach((qa) => {
         qa_knowledge.push({ answer: qa.answer, question: qa.question });
       });
 
@@ -1609,6 +1624,14 @@ export default { name: "AiBotDatabase" };
   padding: 5px;
   margin-top: 5px;
   align-items: center;
+  flex-direction: column;
+}
+
+.question_item .question {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 10px;
 }
 
 .knowledge_questions .header {
