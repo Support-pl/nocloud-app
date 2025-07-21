@@ -64,18 +64,14 @@ export const useAiBotsStore = defineStore("aiBots", () => {
   const MAX_RECONNECT_ATTEMPTS = 10;
 
   async function startChatsStream() {
-    if (socket.value && socket.value.readyState === WebSocket.OPEN) {
-      return;
-    }
-
     const token = cookies.get("noCloudinApp-token");
-    const url = VUE_APP_BASE_URL.replace("http", "ws");
+    const url = VUE_APP_BASE_URL.replace(/^http/, "ws");
+    const wsUrl = `${url}agents/api/get_updates?token=${encodeURIComponent(
+      token
+    )}`;
 
     try {
-      socket.value = new WebSocket(`${url}agents/api/get_updates`, [
-        "Bearer",
-        token,
-      ]);
+      socket.value = new WebSocket(wsUrl);
 
       socket.value.addEventListener("open", () => {
         reconnectAttempts = 0;
@@ -113,7 +109,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
       });
 
       socket.value.addEventListener("close", (event) => {
-        console.warn("WebSocket closed:", event);
+        console.warn("WebSocket closed:", event.code, event.reason);
         attemptReconnect();
       });
 
@@ -224,7 +220,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
       return;
     }
 
-    const timeout = (1000 * reconnectAttempts + 200) / 2;
+    const timeout = (1500 * reconnectAttempts + 200) / 2;
 
     reconnectAttempts++;
     socket.value = null;
