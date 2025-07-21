@@ -422,6 +422,12 @@
               </template>
               <help-icon style="font-size: 22px" />
             </a-tooltip>
+
+            <span
+              v-if="countUnreadSiteKnowledge"
+              class="file_search_unread_badge"
+              >{{ countUnreadSiteKnowledge }}
+            </span>
           </div>
         </template>
 
@@ -467,7 +473,7 @@
                     type="text"
                     shape="circle"
                     size="large"
-                    v-if="getFileSearchItemStatus(record) == 'finished'"
+                    v-if="getSiteSearchItemStatus(record) == 'finished'"
                     @click="handelOpenSiteSearchKnowledge(record)"
                   >
                     <template #icon>
@@ -757,6 +763,7 @@ import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
 import { marked } from "marked";
 import { storeToRefs } from "pinia";
+import { onBeforeUnmount } from "vue";
 import {
   computed,
   defineAsyncComponent,
@@ -872,6 +879,13 @@ onMounted(async () => {
   } finally {
     isDataLoading.value = false;
   }
+});
+
+onBeforeUnmount(() => {
+  localStorage.setItem(
+    "savedUrlStorage",
+    JSON.stringify(savedUrlStorage.value)
+  );
 });
 
 const bot = computed(() => bots.value.get(service.value.data.bot_uuid));
@@ -1013,6 +1027,22 @@ const isSaveQaKnowledgePrimary = computed(
     JSON.stringify(originalDatabase.value.qa_knowledge) !==
     JSON.stringify(database.value.qa_knowledge)
 );
+
+const countUnreadSiteKnowledge = computed(() => {
+  return Object.keys(savedUrlStorage.value || {}).reduce((acc, key) => {
+    if (
+      database.value.saved_urls.find((url) => url.id === key) &&
+      savedUrlStorage.value[key] === false
+    ) {
+      const d = database.value.saved_urls.find((url) => url.id === key);
+      if (getSiteSearchItemStatus(d) === "finished") {
+        acc += 1;
+      }
+
+      return acc;
+    }
+  }, 0);
+});
 
 const databaseRules = computed(() => ({
   name: [{ required: true, message: t("ssl_product.field is required") }],
@@ -1391,7 +1421,8 @@ const handleAddSiteSearch = async () => {
       url: newSiteSearch.value.url,
     };
 
-    await api.post("/agents/api/create_saved_url", dto);
+    const data = await api.post("/agents/api/create_saved_url", dto);
+    savedUrlStorage.value[data.id] = false;
 
     newSiteSearch.value = { url: "" };
     isAddSiteSearchOpen.value = false;
@@ -1450,6 +1481,8 @@ const handelOpenSiteSearchKnowledge = (record) => {
 
   currentImportSiteSearch.value = result;
   isImportSiteSearchOpen.value = true;
+
+  savedUrlStorage.value = record.id;
 };
 
 const handleImportSiteSearch = async () => {
@@ -1674,5 +1707,18 @@ export default { name: "AiBotDatabase" };
   font-size: 1rem;
   margin-top: 5px;
   margin-bottom: 20px;
+}
+
+.file_search_unread_badge {
+  height: 25px;
+  width: 25px;
+  padding: 4px 8px;
+  margin-left: 10px;
+  background-color: rgb(219, 46, 46);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 15px;
+  box-shadow: 0 0 0 2px white;
 }
 </style>
