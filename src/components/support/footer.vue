@@ -128,7 +128,7 @@
           />
         </a-form-item>
 
-        <a-form-item :label="capitalize($t('model'))">
+        <a-form-item :label="capitalize($t('openai.videos_properties.model'))">
           <a-select
             v-if="instanceVideoModels.length > 1"
             v-model:value="sendAdvancedOptions.model"
