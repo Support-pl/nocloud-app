@@ -558,30 +558,6 @@ export default { name: "AiBotChat" };
   height: auto;
 }
 
-:deep(.chat__files) {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-:deep(.chat__files .files__preview) {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 114px;
-  height: 100px;
-  padding: 5px;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-:deep(.chat__files .files__preview > img) {
-  height: 100%;
-  width: auto;
-  max-width: 100%;
-  object-fit: cover;
-}
 
 .no_chats_compact {
   display: flex;
@@ -598,14 +574,6 @@ export default { name: "AiBotChat" };
   padding-inline: 8px;
 }
 
-:deep(.chat__files .files__preview--placeholder) {
-  flex-direction: column;
-  gap: 4px;
-  width: 104px;
-  height: 90px;
-  font-size: 24px;
-  border: 1px solid var(--border_color);
-}
 
 .msgStatus.error {
   display: flex;

@@ -87,10 +87,7 @@ const statusColor = computed(() => {
 const titleDecoded = computed(() => decode(props.ticket.title));
 
 function ticketClick(id) {
-  const query = { ...route.query };
-
-  if (props.instanceId) query.from = props.instanceId;
-  router.replace({ path: `/ticket/${id}`, query });
+  router.replace({ path: `/openai/${props.instanceId}/${id}` });
 }
 
 function beauty(ticket) {
@@ -132,7 +129,6 @@ export default { name: "TicketItem" };
 
 .ticket:hover {
   filter: contrast(0.7);
-  transition: 0.2s;
 }
 
 .ticket.compact {
@@ -183,23 +179,11 @@ export default { name: "TicketItem" };
   font-weight: bold;
 }
 
-.ticket__department,
 .ticket__time {
   font-size: 0.8rem;
   color: var(--gray);
   font-weight: 600;
   flex-shrink: 0;
-}
-
-.ticket__department {
-  max-width: 140px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.ticket__status-text {
-  white-space: nowrap;
 }
 
 .ticket__model span {

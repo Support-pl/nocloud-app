@@ -7,27 +7,14 @@
   >
     <template #title>
       <div style="display: flex; justify-content: space-between">
-        {{ capitalize(instanceId ? $t("new chat") : $t("ask a question")) }}
+        {{ capitalize($t("ask a question")) }}
       </div>
     </template>
 
     <a-spin :tip="$t('loading')" :spinning="isLoading || isSending">
       <a-form layout="vertical">
-        <template v-if="instanceId">
-          <openai-prices
-            :filter-by-types="['text']"
-            only-public
-            :selected-model="selectedModel"
-            @update:selectedModel="selectedModel = $event"
-            :selected-provider="selectedProvider"
-            @update:selectedProvider="selectedProvider = $event"
-            :selected-type="selectedType"
-            @update:selectedType="selectedType = $event"
-          />
-        </template>
-
         <a-form-item
-          v-if="!instanceId && filteredDepartments.length > 1"
+          v-if="filteredDepartments.length > 1"
           :label="$t('department')"
         >
           <a-select v-model:value="ticketDepartment" placeholder="department">
@@ -45,14 +32,21 @@
           <a-input v-model:value="ticketTitle" placeholder="" />
         </a-form-item>
 
-        <a-form-item :label="instanceId ? null : $t('question')">
+        <a-form-item :label="$t('question')">
           <a-textarea
             v-model:value="ticketMessage"
             :rows="10"
-            :placeholder="instanceId ? $t('input text') : null"
+            :placeholder="null"
           />
 
-          <upload-files v-if="showSendFiles" ref="upload"> </upload-files>
+          <upload-files
+            v-if="showSendFiles"
+            ref="upload"
+            :editing="false"
+            :replies="[]"
+            :file-list="fileList"
+            @update:file-list="fileList = $event"
+          />
         </a-form-item>
 
         <a-form-item
@@ -82,7 +76,7 @@
           </div>
         </a-form-item>
 
-        <a-form-item :label="upload?.fileList.length > 0 ? $t('files') : null">
+        <a-form-item :label="fileList.length > 0 ? $t('files') : null">
           <div class="addTicket__buttons">
             <a-button
               type="primary"
@@ -100,23 +94,20 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, toRefs, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { message } from "ant-design-vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import OpenaiPrices from "../services/openai/prices.vue";
-
 import markdown from "markdown-it";
 import { full as emoji } from "markdown-it-emoji";
 import { useNotification } from "@/hooks/utils";
 import api from "@/api";
-
 import { useAuthStore } from "@/stores/auth.js";
 import { useChatsStore } from "@/stores/chats.js";
 import { useSupportStore } from "@/stores/support.js";
-
-import uploadFiles from "@/components/support/upload.vue";
 import { capitalize } from "vue";
+import UploadFiles from "../chats/uploadFiles.vue";
+import { beautufyMessage } from "@/functions";
 
 const md = markdown({
   html: true,
@@ -126,13 +117,7 @@ const md = markdown({
 
 md.use(emoji);
 
-const props = defineProps({
-  instanceId: { type: String, default: null },
-  provider: { type: String, default: null },
-  model: { type: String, default: null },
-});
-
-const { model, provider } = toRefs(props);
+const props = defineProps({});
 
 const router = useRouter();
 const { t } = useI18n();
@@ -148,24 +133,13 @@ const ticketTitle = ref("");
 const ticketMessage = ref("");
 const isSending = ref(false);
 const isLoading = ref(false);
-
-const genImage = reactive({
-  checked: false,
-  size: "1024x1024",
-  quality: "standard",
-});
-
-const selectedModel = ref("gpt-4o");
-const selectedType = ref("text");
-const selectedProvider = ref("openai");
+const fileList = ref([]);
 
 const upload = ref();
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
 
 const filteredDepartments = computed(() => {
-  const chatsDeparts = props.instanceId
-    ? chatsStore.getDefaults.departments
-    : chatsStore.getDefaults.departments.filter(({ id }) => id !== "openai");
+  const chatsDeparts = chatsStore.getDefaults.departments;
 
   if (authStore.billingUser.only_tickets) {
     return chatsDeparts.filter(({ id }) => id === "colobridge");
@@ -184,27 +158,15 @@ const gateways = computed(() => {
     name: `${gateway[0].toUpperCase()}${gateway.slice(1)}`,
   }));
 
-  if (props.instanceId) {
-    result = result.filter(({ id }) => id === "telegram");
-  }
   result.unshift({ id: "userApp", name: "User App" });
 
   return result;
 });
 
 function setDepartment() {
-  const departments = props.instanceId
-    ? chatsStore.getDefaults.departments
-    : filteredDepartments.value;
+  const departments = filteredDepartments.value;
 
   if (departments.length < 1) return;
-  if (props.instanceId) {
-    const result = departments.find(({ id }) => `${id}`.includes("openai"));
-
-    ticketDepartment.value =
-      result?.id ?? filteredDepartments.value[0]?.id ?? -1;
-    return;
-  }
   ticketDepartment.value = filteredDepartments.value[0]?.id ?? -1;
 }
 
@@ -248,6 +210,24 @@ async function createTicket() {
   }
 }
 
+const sendFiles = async () => {
+  for await (const file of fileList.value) {
+    if (file.uuid) continue;
+
+    const { uuid, object_id: objectId } = await api.put("/attachments", {
+      title: file.name,
+      chat: undefined,
+    });
+    await fetch(objectId, { method: "PUT", body: file });
+
+    const { url } = await api.get(`/attachments/${uuid}`);
+    file.url = `https://${url}`;
+    file.uuid = uuid;
+  }
+
+  return fileList.value;
+};
+
 async function createChat() {
   const { departments } = chatsStore.getDefaults;
   const {
@@ -257,12 +237,8 @@ async function createChat() {
   } = departments.find(({ id }) => id === ticketDepartment.value) ?? {};
 
   try {
-    const files = await upload.value.sendFiles();
-    const message = md
-      .render(ticketMessage.value)
-      .trim()
-      .replace(/^<p>/, "")
-      .replace(/<\/p>$/, "");
+    const files = await sendFiles();
+    const message = beautufyMessage(md, ticketMessage.value);
 
     const response = await chatsStore.createChat({
       admins,
@@ -271,11 +247,7 @@ async function createChat() {
       chat: {
         message,
         subject: ticketTitle.value,
-        meta: [
-          { key: "dept_id", value: whmcsId },
-          { key: "instance", value: props.instanceId },
-          props.instanceId && { key: "model", value: selectedModel.value },
-        ].filter((v) => !!v),
+        meta: [{ key: "dept_id", value: whmcsId }].filter((v) => !!v),
       },
     });
 
@@ -286,24 +258,13 @@ async function createChat() {
         account: authStore.userdata.uuid,
         date: BigInt(Date.now()),
         attachments: files.map(({ uuid }) => uuid),
-        meta: [
-          { key: "mode", value: genImage.checked ? "generate" : "default" },
-        ],
+        meta: [{ key: "mode", value: "default" }],
       };
-
-      if (genImage.checked) {
-        result.meta.push(
-          { key: "size", value: genImage.size },
-          { key: "quality", value: genImage.quality }
-        );
-      }
 
       await chatsStore.sendMessage(result);
     }
 
-    const query = { from: props.instanceId };
-
-    router.push({ path: `/ticket/${response.uuid}`, query });
+    router.push({ path: `/ticket/${response.uuid}`, query: {} });
     return { result: "success" };
   } catch (error) {
     return { result: "error", error };
@@ -348,15 +309,10 @@ function sendTelegramMessage() {
   localStorage.setItem(
     "telegramChat",
     JSON.stringify({
-      message: md
-        .render(ticketMessage.value)
-        .trim()
-        .replace(/^<p>/, "")
-        .replace(/<\/p>$/, ""),
+      message: beautufyMessage(md, ticketMessage.value),
       gateway: gateway.value,
       department: ticketDepartment.value,
       title: ticketTitle.value,
-      instanceId: props.instanceId,
     })
   );
   router.push({ name: "handsfree" });
@@ -378,7 +334,6 @@ async function fetch() {
     isLoading.value = true;
     await chatsStore.fetchDefaults();
     await supportStore.fetchDepartments();
-    await chatsStore.fetch_models_list();
   } catch {
     message.error(t("departments not found"));
   } finally {
@@ -387,18 +342,6 @@ async function fetch() {
 }
 
 fetch();
-
-watch(model, (value) => {
-  if (!!value) {
-    selectedModel.value = value;
-  }
-});
-
-watch(provider, (value) => {
-  if (!!value) {
-    selectedProvider.value = value;
-  }
-});
 </script>
 
 <script>

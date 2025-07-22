@@ -75,6 +75,8 @@ export const useAppStore = defineStore("app", () => {
     }),
   });
 
+  const onRefreshClick = ref();
+
   const buttons = computed(() => {
     const invoices = useInvoicesStore();
 
@@ -149,6 +151,11 @@ export const useAppStore = defineStore("app", () => {
     isButtonsVisible,
     domainInfo,
     transport,
+    onRefreshClick,
+
+    setOnRefreshClick(v) {
+      onRefreshClick.value = v;
+    },
 
     setTabByName(value) {
       if (["root", "openVDC"].includes(value)) value = "services";
