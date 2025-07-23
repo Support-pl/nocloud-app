@@ -139,7 +139,8 @@ const createButtonOptions = computed(() => {
           authStore.isLogged) ||
       cloudStore.authData.vmName === "" ||
       (!cloudStore.namespaceId && authStore.isLogged) ||
-      options.os.name === "";
+      options.os.name === "" ||
+      !cloudStore.authData.is_username_valid;
   }
 
   return result;
