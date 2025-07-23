@@ -1,6 +1,6 @@
 <template>
   <div class="chat">
-    <support-alert
+    <chat-alert
       v-if="chat"
       v-model:padding-top="chatPaddingTop"
       :chat="chat"
@@ -117,16 +117,16 @@
       <template v-for="item of chats">
         <ticket-item
           :ticket="item"
+          :instance-id="instanceId"
           :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
           compact
         />
       </template>
     </div>
 
-    <support-footer
+    <chats-footer
       ref="footer"
       v-model:replies="replies"
-      :status="status"
       :ticket="chat"
       :instance="instance"
     />
@@ -144,8 +144,7 @@ import { useChatsStore } from "@/stores/chats.js";
 import { useSupportStore } from "@/stores/support.js";
 import AddTicket from "@/components/support/addTicket.vue";
 import loading from "@/components/ui/loading.vue";
-import supportAlert from "@/components/support/alert.vue";
-import supportFooter from "@/components/support/footer.vue";
+import chatsFooter from "@/components/openai-chats/footer.vue";
 import { useInstancesStore } from "@/stores/instances";
 import { storeToRefs } from "pinia";
 import MessageContent from "@/components/chats/messageContent.vue";
@@ -154,6 +153,7 @@ import TypingPlaceholder from "@/components/chats/typingPlaceholder.vue";
 import MessageFiles from "@/components/chats/messageFiles.vue";
 import { useAppStore } from "@/stores/app";
 import TicketItem from "@/components/openai-chats/ticketItem.vue";
+import chatAlert from "@/components/openai-chats/alert.vue";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -186,17 +186,15 @@ const { getInstances } = storeToRefs(instancesStore);
 onBeforeRouteUpdate((to, from, next) => {
   appStore.setOnRefreshClick(reload);
 
-  chatid.value = to.params.id;
+  chatid.value = to.params.chatId;
   loadMessages();
   next();
 });
 
-const status = ref(null);
-const subject = ref("SUPPORT");
 const replies = ref([]);
 
 const isLoading = ref(false);
-const chatid = ref(route.params.id);
+const chatid = ref(route.params.chatId);
 const searchString = ref("");
 const chatPaddingTop = ref("15px");
 const isPlaceholderVisible = ref(false);
@@ -233,9 +231,6 @@ const chats = computed(() => {
     const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
     const status =
       Status[ticket.status]?.toLowerCase().split("_") ?? ticket.status;
-    const capitalized = status
-      .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
-      .join(" ");
 
     const value = {
       id: ticket.uuid,
@@ -243,7 +238,9 @@ const chats = computed(() => {
       title: ticket.topic,
       date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
       message: ticket.meta.lastMessage?.content ?? "",
-      status: capitalized,
+      status: status
+        .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
+        .join(" "),
       unread: isReaded ? 0 : ticket.meta.unread,
       model,
     };
@@ -293,8 +290,7 @@ watch(
     await new Promise((resolve) => setTimeout(resolve, 300));
     setPlaceholderVisible(oldValue.length > 0 ? oldValue : value);
 
-    if (!content.value) return;
-    content.value?.scrollTo(0, content.value?.scrollHeight);
+    scrollToBottom(0);
   },
   { deep: true }
 );
@@ -315,7 +311,6 @@ async function fetch() {
   ]);
 
   chatsStore.fetch_models_list();
-  console.log(route.params, chats.value[0]?.id);
 
   if (!route.params.chatId && chats.value[0]?.id) {
     router.replace({ params: { chatId: chats.value[0].id } });
@@ -330,7 +325,6 @@ fetch();
 
 let timeout;
 function setPlaceholderVisible(replies) {
-  if (chat.value?.department !== "openai") return;
   const isUserSent = replies.at(-1)?.from || replies.length === 1;
 
   if (!isAdminSent(replies.at(-1) ?? {}) && isUserSent) {
@@ -338,7 +332,7 @@ function setPlaceholderVisible(replies) {
       isPlaceholderVisible.value = true;
 
       await nextTick();
-      content.value?.scrollTo(0, content.value?.scrollHeight);
+      scrollToBottom(0);
     }, 1000);
 
     setTimeout(() => {
@@ -368,13 +362,9 @@ async function loadMessages(update) {
   const result = chatsStore.messages[chatid.value];
 
   if (!update && result) {
-    status.value = result.status;
     replies.value = result.replies ?? [];
-    subject.value = result.subject;
 
-    setTimeout(() => {
-      content.value?.scrollTo(0, content.value?.scrollHeight);
-    }, 100);
+    scrollToBottom(100);
 
     if (chatsStore.chats.get(chatid.value)) {
       chatsStore.chats.get(chatid.value).meta.unread = 0;
@@ -386,16 +376,12 @@ async function loadMessages(update) {
   try {
     const response = await chatsStore.fetchMessages(chatid.value);
 
-    status.value = response.status;
     replies.value = response.replies ?? [];
-    subject.value = response.subject;
 
     replies.value.sort((a, b) => Number(a.sent - b.sent));
     chatsStore.messages[chatid.value] = response;
   } finally {
-    nextTick(() => {
-      content.value?.scrollTo(0, content.value?.scrollHeight);
-    });
+    scrollToBottom(0);
     isLoading.value = false;
 
     if (chatsStore.chats.get(chatid.value)) {
@@ -404,10 +390,19 @@ async function loadMessages(update) {
   }
 }
 
+function scrollToBottom(timeout = 0) {
+  if (!content.value) return;
+
+  setTimeout(() => {
+    content.value?.scrollTo(0, content.value?.scrollHeight);
+  }, timeout);
+}
+
 function reload() {
   isLoading.value = true;
   loadMessages(true);
 }
+appStore.setOnRefreshClick(reload);
 
 function deleteMessage(message) {
   replies.value.splice(replies.value.indexOf(message), 1);
@@ -436,19 +431,6 @@ export default { name: "OpenaiChat" };
   background: var(--bright_bg);
 }
 
-:deep(.chat__container) {
-  padding: 0;
-  display: grid;
-  grid-template-columns: 20% 1fr 20%;
-  justify-items: center;
-  align-items: center;
-  gap: 5px;
-  max-width: calc(768px + 400px + 10px);
-  height: 100%;
-  width: 100%;
-  margin: 0 auto;
-}
-
 .chat__list {
   grid-row: 1 / 3;
   margin: 10px 0;
@@ -462,13 +444,11 @@ export default { name: "OpenaiChat" };
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-
   max-width: 968px;
   width: 100%;
   height: 100%;
   margin: 10px auto 0;
   padding: v-bind("chatPaddingTop") 15px 6px;
-
   border: 1px solid var(--border_color);
   border-radius: 6px;
   overflow: auto;
@@ -584,40 +564,6 @@ export default { name: "OpenaiChat" };
 
 .popover-link {
   display: block;
-}
-
-:deep(.chat__files) {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-:deep(.chat__files .files__preview) {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 114px;
-  height: 100px;
-  padding: 5px;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-:deep(.chat__files .files__preview > img) {
-  height: 100%;
-  width: auto;
-  max-width: 100%;
-  object-fit: cover;
-}
-
-:deep(.chat__files .files__preview--placeholder) {
-  flex-direction: column;
-  gap: 4px;
-  width: 104px;
-  height: 90px;
-  font-size: 24px;
-  border: 1px solid var(--border_color);
 }
 
 @media (max-width: 768px) {

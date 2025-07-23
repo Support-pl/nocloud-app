@@ -279,7 +279,7 @@ const currentPrompts = computed(() =>
 const model = computed(() => {
   return (
     globalModelsList.value.find(
-      (model) => model.key === chat.meta.data.model?.kind?.value
+      (model) => model.key === chat.meta?.data?.model?.kind?.value
     )?.name || chat.value.meta.data.model?.kind?.value
   );
 });
@@ -436,7 +436,7 @@ export default { name: "SupportAlert" };
 .alert__notification {
   position: absolute;
   right: max(25px, (100vw - 1148px) / 2);
-  top: 87px;
+  top: 20px;
   z-index: 10;
   width: 100%;
   max-width: min(65vw - 50px, 768px - 30px);
@@ -510,5 +510,9 @@ export default { name: "SupportAlert" };
   .order__grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.ant-tag {
+  color: unset !important;
 }
 </style>

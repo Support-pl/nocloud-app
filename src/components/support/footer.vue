@@ -79,31 +79,16 @@ function updateReplies() {
   return { replies, result };
 }
 
-const sendFiles = async () => {
-  for await (const file of fileList.value) {
-    if (file.uuid) continue;
-
-    const { uuid, object_id: objectId } = await api.put("/attachments", {
-      title: file.name,
-      chat: route.params.id,
-    });
-    await fetch(objectId, { method: "PUT", body: file });
-
-    const { url } = await api.get(`/attachments/${uuid}`);
-    file.url = `https://${url}`;
-    file.uuid = uuid;
-  }
-
-  return fileList.value;
-};
-
 async function sendChatMessage(result, replies) {
   await nextTick();
 
   isSendMessageLoading.value = true;
 
   try {
-    const files = await sendFiles();
+    const files = await chatsStore.sendChatFiles(
+      fileList.value,
+      route.params.id
+    );
     const message = {
       uuid: route.params.id,
       content: result.message,
@@ -191,4 +176,19 @@ defineExpose({ changeEditing });
 export default { name: "SupportFooter" };
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.chat__container) {
+  padding: 0;
+  display: grid;
+  grid-template-columns: 20% 1fr 20%;
+  justify-items: center;
+  align-items: center;
+  gap: 5px;
+  max-width: calc(768px + 400px + 10px);
+  height: 100%;
+  width: 100%;
+  margin: 0 auto;
+  padding-bottom: 10px;
+  padding-top: 5px;
+}
+</style>

@@ -141,7 +141,6 @@ export default { name: "SupportFooter" };
   justify-content: center;
   align-items: flex-end;
   grid-column: 2;
-  padding: 10px 0;
   background-color: var(--bright_bg);
 }
 

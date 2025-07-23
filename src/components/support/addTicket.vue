@@ -210,24 +210,6 @@ async function createTicket() {
   }
 }
 
-const sendFiles = async () => {
-  for await (const file of fileList.value) {
-    if (file.uuid) continue;
-
-    const { uuid, object_id: objectId } = await api.put("/attachments", {
-      title: file.name,
-      chat: undefined,
-    });
-    await fetch(objectId, { method: "PUT", body: file });
-
-    const { url } = await api.get(`/attachments/${uuid}`);
-    file.url = `https://${url}`;
-    file.uuid = uuid;
-  }
-
-  return fileList.value;
-};
-
 async function createChat() {
   const { departments } = chatsStore.getDefaults;
   const {
@@ -237,7 +219,7 @@ async function createChat() {
   } = departments.find(({ id }) => id === ticketDepartment.value) ?? {};
 
   try {
-    const files = await sendFiles();
+    const files = await chatsStore.sendChatFiles(fileList.value, undefined);
     const message = beautufyMessage(md, ticketMessage.value);
 
     const response = await chatsStore.createChat({

@@ -471,6 +471,24 @@ export const useChatsStore = defineStore("chats", () => {
       }
     },
 
+    async sendChatFiles(files, chatUuid) {
+      for await (const file of files) {
+        if (file.uuid) continue;
+
+        const { uuid, object_id: objectId } = await api.put("/attachments", {
+          title: file.name,
+          chat: chatUuid,
+        });
+        await fetch(objectId, { method: "PUT", body: file });
+
+        const { url } = await api.get(`/attachments/${uuid}`);
+        file.url = `https://${url}`;
+        file.uuid = uuid;
+      }
+
+      return files;
+    },
+
     async sendMessage(message) {
       try {
         const messagesApi = createPromiseClient(MessagesAPI, transport);

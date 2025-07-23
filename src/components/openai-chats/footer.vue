@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <div v-if="ticket.department === 'openai'" class="chat__generate">
+  <div class="chat__footer_contaner">
+    <div class="chat__generate">
       <a-radio-group
         v-if="!instance"
         v-model:value="sendAdvancedOptions.checked"
@@ -59,7 +59,6 @@
     </div>
 
     <send-input
-      :disabled="!message.trim()"
       :send-loading="isSendMessageLoading"
       :editing="editing"
       @update:editing="editing = $event"
@@ -174,7 +173,7 @@ import SendInput from "../chats/sendInput.vue";
 import { useAuthStore } from "@/stores/auth.js";
 import { useChatsStore } from "@/stores/chats.js";
 import { useCurrency, useNotification } from "@/hooks/utils";
-import { toDate } from "@/functions.js";
+import { beautufyMessage, toDate } from "@/functions.js";
 import { storeToRefs } from "pinia";
 import { useCurrenciesStore } from "@/stores/currencies";
 import { marked } from "marked";
@@ -357,9 +356,12 @@ async function sendChatMessage(result, replies) {
   isSendMessageLoading.value = true;
 
   try {
-    const files = await sendinput.value.sendFiles();
+    const files = await chatsStore.sendChatFiles(
+      fileList.value,
+      props.ticket.uuid
+    );
     const message = {
-      uuid: route.params.id,
+      uuid: props.ticket.uuid,
       content: result.message,
       account: result.userid,
       date: BigInt(result.date),
@@ -410,7 +412,7 @@ async function sendMessage() {
   await sendChatMessage(result, replies);
 
   message.value = "";
-  fileList = [];
+  fileList.value = [];
 }
 
 function editMessage(uuid) {
@@ -506,6 +508,11 @@ export default { name: "SupportFooter" };
 </script>
 
 <style scoped>
+.chat__footer_contaner{
+  padding-top: 5px;
+  padding-bottom: 10px;
+}
+
 .chat__generate {
   display: flex;
   flex-wrap: wrap;
@@ -568,5 +575,18 @@ export default { name: "SupportFooter" };
 
 .chat__send:active {
   filter: brightness(0.95);
+}
+
+:deep(.chat__container) {
+  padding: 0;
+  display: grid;
+  grid-template-columns: 20% 1fr 20%;
+  justify-items: center;
+  align-items: center;
+  gap: 5px;
+  max-width: calc(768px + 400px + 10px);
+  height: 100%;
+  width: 100%;
+  margin: 0 auto;
 }
 </style>

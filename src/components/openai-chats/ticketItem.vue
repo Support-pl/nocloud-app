@@ -36,7 +36,7 @@
 
 <script setup>
 import { computed, defineAsyncComponent } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { useChatsStore } from "@/stores/chats.js";
 import { toDate } from "@/functions.js";
 import config from "@/appconfig.js";
@@ -54,18 +54,9 @@ const aiIcon = defineAsyncComponent(() =>
 );
 
 const router = useRouter();
-const route = useRoute();
 const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 const { t } = useI18n();
-
-const offset = computed(() => {
-  if (props.ticket.unread > 9) {
-    return [4, -8];
-  } else {
-    return [10, -8];
-  }
-});
 
 const statusColor = computed(() => {
   switch (props.ticket.status.toLowerCase()) {
