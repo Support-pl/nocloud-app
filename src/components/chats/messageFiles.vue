@@ -7,7 +7,6 @@
       :src="file.url"
       :alt="file.name"
       @error="onImageError"
-      @click="openModal"
     />
   </div>
 </template>

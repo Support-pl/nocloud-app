@@ -98,8 +98,6 @@ function newLine() {
 }
 
 function changeEditing(reply = {}) {
-  console.log(332323);
-  
   emits("update:editing", reply.uuid ?? null);
   emits(
     "update:message",

@@ -1,61 +1,23 @@
 <template>
-  <div class="chat__footer">
-    <div class="chat__container footer__container">
-      <div style="position: relative; width: 100%">
-        <a-textarea
-          ref="textarea"
-          v-model:value="message"
-          allow-clear
-          type="text"
-          :disabled="!chat"
-          :auto-size="{ minRows: 3, maxRows: 100 }"
-          :placeholder="$t('message') + '...'"
-          @keyup.shift.enter.exact="newLine"
-          @keydown.enter.exact.prevent="sendChatMessage"
-        />
-
-        <upload-files
-          v-if="showSendFiles"
-          ref="upload"
-          :editing="false"
-          :replies="[]"
-          :disabled="!chat"
-        />
-      </div>
-      <a-button
-        size="large"
-        :loading="isSendMessageLoading"
-        type="primary"
-        shape="circle"
-        @click="sendChatMessage"
-        :disabled="!chat"
-      >
-        <template #icon>
-          <arrow-up-icon />
-        </template>
-      </a-button>
-    </div>
+  <div style="padding-bottom: 10px">
+    <send-input
+      :send-loading="isSendMessageLoading"
+      :message="message"
+      @update:message="message = $event"
+      :replies="messages"
+      @send-message="sendChatMessage"
+      :file-list="fileList"
+      @update:filelist="fileList = $event"
+      ref="sendinput"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, nextTick, ref } from "vue";
-import markdown from "markdown-it";
-import { full as emoji } from "markdown-it-emoji";
+import { nextTick, ref } from "vue";
 import { useAiBotsStore } from "@/stores/aiBots";
-import UploadFiles from "@/components/support/upload.vue";
 import { useNotification } from "@/hooks/utils";
-
-const md = markdown({
-  html: true,
-  linkify: true,
-  typographer: true,
-});
-md.use(emoji);
-
-const arrowUpIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ArrowUpOutlined")
-);
+import SendInput from "@/components/chats/sendInput.vue";
 
 const props = defineProps({
   chat: { type: Object },
@@ -67,24 +29,14 @@ const aiBotsStore = useAiBotsStore();
 
 const { openNotification } = useNotification();
 
-const textarea = ref();
-const upload = ref();
 const message = ref("");
 const isSendMessageLoading = ref(false);
-const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
-
-const columnsStyle = computed(() =>
-  showSendFiles.value ? "1fr auto auto" : "1fr auto"
-);
-
-function newLine() {
-  message.value.replace(/$/, "\n");
-}
+const fileList = ref([]);
 
 async function sendChatMessage() {
   await nextTick();
 
-  const files = await upload.value.fileList;
+  const files = fileList.value;
 
   const result = message.value.trim();
   if (result.length < 1 && !files.length) {
@@ -114,11 +66,9 @@ async function sendChatMessage() {
   } finally {
     isSendMessageLoading.value = false;
     message.value = "";
-    upload.value.fileList = [];
+    fileList.value = [];
   }
 }
-
-const tagGridColumn = computed(() => (showSendFiles.value ? "1 / 4" : "1 / 3"));
 
 defineExpose({ message, sendChatMessage });
 </script>
@@ -127,67 +77,4 @@ defineExpose({ message, sendChatMessage });
 export default { name: "AiBotFooter" };
 </script>
 
-<style scoped>
-.chat__tag {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-column: v-bind("tagGridColumn");
-  padding: 5px 7px;
-  margin-right: auto;
-  font-size: 18px;
-}
-
-.chat__container.footer__container {
-  grid-template-columns: v-bind("columnsStyle");
-  align-items: start;
-}
-
-.chat__input {
-  max-width: 725px;
-  border: 0;
-  outline: 0;
-  border-radius: 40px;
-  flex: 1 0;
-  padding: 7px 0;
-}
-
-.chat__input textarea {
-  max-height: calc(50vh - 34px) !important;
-}
-
-.chat__input :deep(.ant-input-textarea-clear-icon) {
-  margin: 9px 2px 0 0;
-}
-
-:deep(textarea.ant-input) {
-  border-color: var(--border_color);
-}
-
-.chat__send {
-  background-color: var(--main);
-  color: var(--gloomy_font);
-  border-radius: 50%;
-  height: 35px;
-  width: 35px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: 5px;
-  margin-bottom: 10px;
-  font-size: 1.2rem;
-  transition: filter 0.2s ease;
-  cursor: pointer;
-}
-
-.chat__send:hover {
-  filter: brightness(1.05);
-}
-
-.chat__send:active {
-  filter: brightness(0.95);
-}
-
-.chat__footer {
-  padding: 5px;
-}
-</style>
+<style scoped></style>
