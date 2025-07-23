@@ -247,12 +247,8 @@ async function onCreated() {
 onCreated();
 
 const sp = computed(() => {
-  const { items } =
-    spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
-
-  if (!items) return [];
-  return spStore.servicesProviders.filter(({ uuid }) =>
-    items.find((item) => uuid === item.servicesProvider)
+  return spStore.servicesProviders.filter(
+    ({ title, type }) => title.toLowerCase().includes("vpn") && type === "empty"
   );
 });
 
