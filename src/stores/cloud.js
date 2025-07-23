@@ -38,6 +38,7 @@ export const useCloudStore = defineStore("cloud", () => {
     password_valid: true,
     sshKey: undefined,
     score: null,
+    is_username_valid: true,
   });
   const deployMessage = i18n.t("VM created successfully");
 

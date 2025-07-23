@@ -25,7 +25,10 @@
             name="username"
             :label="`${capitalize($t('clientinfo.username'))}:`"
           >
-            <a-input v-model:value="authData.username" />
+            <a-input
+              v-model:value="authData.username"
+              @input="checkIsNameValid"
+            />
           </a-form-item>
 
           <a-form-item
@@ -157,6 +160,17 @@ const rules = {
       }
     },
   },
+};
+
+const checkIsNameValid = async () => {
+  try {
+    await rules.username.validator(authData.value.username);
+    authData.value.is_username_valid = true;
+  } catch {
+    authData.value.is_username_valid = false;
+  }
+  console.log(authData.value.is_username_valid);
+  
 };
 
 onBeforeMount(() => {
