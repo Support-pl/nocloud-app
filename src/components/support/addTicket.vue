@@ -56,7 +56,7 @@
         </a-form-item>
 
         <a-form-item
-          v-if="!authStore.billingUser.only_tickets"
+          v-if="!billingUser.only_tickets"
           style="margin-bottom: 0; padding-bottom: 0"
           :label="$t('gateway')"
         >
@@ -117,6 +117,7 @@ import { useSupportStore } from "@/stores/support.js";
 
 import uploadFiles from "@/components/support/upload.vue";
 import { capitalize } from "vue";
+import { storeToRefs } from "pinia";
 
 const md = markdown({
   html: true,
@@ -139,7 +140,9 @@ const { t } = useI18n();
 const { openNotification } = useNotification();
 
 const authStore = useAuthStore();
+const { billingUser } = storeToRefs(authStore);
 const chatsStore = useChatsStore();
+const { getDefaults } = storeToRefs(chatsStore);
 const supportStore = useSupportStore();
 
 const gateway = ref("userApp");
@@ -164,17 +167,17 @@ const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
 
 const filteredDepartments = computed(() => {
   const chatsDeparts = props.instanceId
-    ? chatsStore.getDefaults.departments
-    : chatsStore.getDefaults.departments.filter(({ id }) => id !== "openai");
+    ? getDefaults.value.departments
+    : getDefaults.value.departments.filter(({ id }) => id !== "openai");
 
-  if (authStore.billingUser.only_tickets) {
+  if (billingUser.value.only_tickets) {
     return chatsDeparts.filter(({ id }) => id === "colobridge");
   } else {
     return chatsDeparts.filter((dep) => dep.public && dep.id !== "colobridge"); // [...supportStore.departments, ...chatsDeparts]
   }
 });
 
-watch(filteredDepartments, setDepartment);
+watch(filteredDepartments, setDepartment, { deep: true });
 onMounted(setDepartment);
 
 const gateways = computed(() => {
@@ -194,7 +197,7 @@ const gateways = computed(() => {
 
 function setDepartment() {
   const departments = props.instanceId
-    ? chatsStore.getDefaults.departments
+    ? getDefaults.value.departments
     : filteredDepartments.value;
 
   if (departments.length < 1) return;
