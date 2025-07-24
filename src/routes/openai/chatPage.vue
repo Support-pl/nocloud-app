@@ -1,12 +1,6 @@
 <template>
   <div class="chat">
-    <support-header
-      v-model:searchString="searchString"
-      :chat="chat"
-      :title="subject"
-      @reload="reload"
-    />
-    <support-alert
+    <chat-alert
       v-if="chat"
       v-model:padding-top="chatPaddingTop"
       :chat="chat"
@@ -49,8 +43,25 @@
           >
             <pre>
               <message-content :uuid="reply.uuid" :message="reply.message"/>
-
-             <message-files :files="files[reply.uuid]"/>
+              <audio-player
+               v-if="files[reply.uuid]?.length===1 && files[reply.uuid]?.[0]?.name.endsWith('.mp3')"
+                :url="files[reply.uuid][0]?.url"
+                  :name="files[reply.uuid][0]?.name"
+              />
+              <div 
+               v-if="files[reply.uuid]?.length===1 && files[reply.uuid]?.[0]?.name.endsWith('.mp4')"
+              >
+                <div class="relative">
+                  <video
+                    ref="videoRef"
+                    :src="files[reply.uuid][0]?.url"
+                    controls
+                    class="video"
+                  />
+                </div>
+              </div>
+             <message-files v-else :files="files[reply.uuid]"/>
+              
             </pre>
 
             <div class="chat__info">
@@ -75,45 +86,75 @@
           </div>
         </a-popover>
       </template>
+
+      <typing-placeholder v-if="isPlaceholderVisible" />
+      <div style="margin-top: 145px"></div>
     </div>
 
     <div ref="chatList" class="chat__list">
+      <template v-if="instance">
+        <a-row
+          justify="space-between"
+          align="center"
+          style="padding: 10px; align-items: center"
+        >
+          <a-button
+            @click="supportStore.isAddingTicket = !supportStore.isAddingTicket"
+            :icon="h(addChatIcon)"
+            >{{ $t("Add new chat") }}</a-button
+          >
+          <a-button
+            @click="
+              router.push({ name: 'openaiPage', params: { id: instance.uuid } })
+            "
+          >
+            {{ $t("API / Settings") }}
+          </a-button>
+        </a-row>
+
+        <add-ticket :instance-id="instance.uuid" />
+      </template>
+
       <template v-for="item of chats">
         <ticket-item
           :ticket="item"
+          :instance-id="instanceId"
           :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
           compact
         />
       </template>
     </div>
 
-    <support-footer
+    <chats-footer
       ref="footer"
       v-model:replies="replies"
-      :status="status"
       :ticket="chat"
+      :instance="instance"
     />
   </div>
 </template>
 
 <script setup>
 import "highlight.js/styles/base16/classic-light.css";
-import { defineAsyncComponent, nextTick, ref, computed, watch } from "vue";
+import { defineAsyncComponent, nextTick, ref, computed, watch, h } from "vue";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { Status } from "@/libs/cc_connect/cc_pb";
 import { useClipboard } from "@/hooks/utils";
-import api from "@/api";
-
 import { useAuthStore } from "@/stores/auth.js";
 import { useChatsStore } from "@/stores/chats.js";
 import { useSupportStore } from "@/stores/support.js";
+import AddTicket from "@/components/support/addTicket.vue";
 import loading from "@/components/ui/loading.vue";
-import ticketItem from "@/components/support/ticketItem.vue";
-import supportHeader from "@/components/support/header.vue";
-import supportAlert from "@/components/support/alert.vue";
-import supportFooter from "@/components/support/footer.vue";
-import MessageFiles from "@/components/chats/messageFiles.vue";
+import chatsFooter from "@/components/openai-chats/footer.vue";
+import { useInstancesStore } from "@/stores/instances";
+import { storeToRefs } from "pinia";
 import MessageContent from "@/components/chats/messageContent.vue";
+import AudioPlayer from "@/components/chats/audio-player.vue";
+import TypingPlaceholder from "@/components/chats/typingPlaceholder.vue";
+import MessageFiles from "@/components/chats/messageFiles.vue";
+import { useAppStore } from "@/stores/app";
+import TicketItem from "@/components/openai-chats/ticketItem.vue";
+import chatAlert from "@/components/openai-chats/alert.vue";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -128,29 +169,36 @@ const editIcon = defineAsyncComponent(() =>
 const loadingIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LoadingOutlined")
 );
+const addChatIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PlusOutlined")
+);
 
 const route = useRoute();
 const router = useRouter();
 const { addToClipboard } = useClipboard();
 
 const authStore = useAuthStore();
+const appStore = useAppStore();
 const chatsStore = useChatsStore();
 const supportStore = useSupportStore();
+const instancesStore = useInstancesStore();
+const { getInstances } = storeToRefs(instancesStore);
 
 onBeforeRouteUpdate((to, from, next) => {
-  chatid.value = to.params.id;
+  appStore.setOnRefreshClick(reload);
+
+  chatid.value = to.params.chatId;
   loadMessages();
   next();
 });
 
-const status = ref(null);
-const subject = ref("SUPPORT");
 const replies = ref([]);
 
 const isLoading = ref(false);
-const chatid = ref(route.params.id);
+const chatid = ref(route.params.chatId);
 const searchString = ref("");
 const chatPaddingTop = ref("15px");
+const isPlaceholderVisible = ref(false);
 
 const content = ref();
 const chatList = ref();
@@ -158,14 +206,24 @@ const footer = ref();
 
 const chat = computed(() => chatsStore.chats.get(chatid.value));
 
+const instanceId = computed(() => route.params.id);
+
+const instance = computed(() => {
+  const instance = getInstances.value.find((i) => i.uuid === instanceId.value);
+
+  return instance || null;
+});
+
 const chats = computed(() => {
-  const ids = [];
   const result = [];
   const { uuid } = authStore.billingUser;
 
   chatsStore.chats.forEach((ticket) => {
-    const { whmcs, instance: inst } = ticket.meta.data ?? {};
+    const { instance: inst, model: mod } = ticket.meta.data ?? {};
     const instance = inst?.kind.case ? inst?.toJSON() : null;
+    const model = mod?.kind.case ? mod?.toJSON() : null;
+
+    if (instance !== instanceId.value) return;
 
     const string = searchString.value.toLowerCase();
     const topic = ticket.topic?.toLowerCase() ?? "";
@@ -174,9 +232,6 @@ const chats = computed(() => {
     const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
     const status =
       Status[ticket.status]?.toLowerCase().split("_") ?? ticket.status;
-    const capitalized = status
-      .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
-      .join(" ");
 
     const value = {
       id: ticket.uuid,
@@ -184,19 +239,18 @@ const chats = computed(() => {
       title: ticket.topic,
       date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
       message: ticket.meta.lastMessage?.content ?? "",
-      status: capitalized,
+      status: status
+        .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
+        .join(" "),
       unread: isReaded ? 0 : ticket.meta.unread,
+      model,
     };
-    const id = whmcs?.kind.case ? whmcs?.toJSON() : null;
-
-    if (id) ids.push(id);
-    if (!instance) result.push(value);
+    result.push(value);
   });
 
   result.sort((a, b) => b.date - a.date);
-  const tickets = supportStore.getTickets.filter(({ id }) => !ids.includes(id));
 
-  return [...result, ...tickets];
+  return result;
 });
 
 const files = computed(() =>
@@ -232,12 +286,12 @@ watch(
 
 watch(
   replies,
-  async () => {
+  async (value, oldValue) => {
     await nextTick();
     await new Promise((resolve) => setTimeout(resolve, 300));
+    setPlaceholderVisible(oldValue.length > 0 ? oldValue : value);
 
-    if (!content.value) return;
-    content.value?.scrollTo(0, content.value?.scrollHeight);
+    scrollToBottom(0);
   },
   { deep: true }
 );
@@ -250,16 +304,17 @@ watch(
 
 async function fetch() {
   isLoading.value = true;
-  try {
-    await supportStore.fetch();
-  } catch (error) {
-    console.error(error);
-  }
 
-  await Promise.all([chatsStore.fetchChats(), chatsStore.fetchDefaults()]);
+  await Promise.all([
+    chatsStore.fetchChats(),
+    chatsStore.fetchDefaults(),
+    instancesStore.fetch(),
+  ]);
 
-  if (!route.params.id && chats.value[0]?.id) {
-    router.replace({ params: { id: chats.value[0].id }, query: route.query });
+  chatsStore.fetch_models_list();
+
+  if (!route.params.chatId && chats.value[0]?.id) {
+    router.replace({ params: { chatId: chats.value[0].id } });
     chatid.value = chats.value[0].id;
   }
 
@@ -268,6 +323,28 @@ async function fetch() {
 }
 
 fetch();
+
+let timeout;
+function setPlaceholderVisible(replies) {
+  const isUserSent = replies.at(-1)?.from || replies.length === 1;
+
+  if (!isAdminSent(replies.at(-1) ?? {}) && isUserSent) {
+    timeout = setTimeout(async () => {
+      isPlaceholderVisible.value = true;
+
+      await nextTick();
+      scrollToBottom(0);
+    }, 1000);
+
+    setTimeout(() => {
+      clearTimeout(timeout);
+      isPlaceholderVisible.value = false;
+    }, 20 * 1000);
+  } else {
+    clearTimeout(timeout);
+    isPlaceholderVisible.value = false;
+  }
+}
 
 function isDateVisible(replies, i) {
   if (i === 0) return true;
@@ -286,13 +363,9 @@ async function loadMessages(update) {
   const result = chatsStore.messages[chatid.value];
 
   if (!update && result) {
-    status.value = result.status;
     replies.value = result.replies ?? [];
-    subject.value = result.subject;
 
-    setTimeout(() => {
-      content.value?.scrollTo(0, content.value?.scrollHeight);
-    }, 100);
+    scrollToBottom(100);
 
     if (chatsStore.chats.get(chatid.value)) {
       chatsStore.chats.get(chatid.value).meta.unread = 0;
@@ -302,22 +375,14 @@ async function loadMessages(update) {
 
   isLoading.value = true;
   try {
-    const response = chatsStore.chats.get(chatid.value)
-      ? await chatsStore.fetchMessages(chatid.value)
-      : await api.get(authStore.baseURL, {
-          params: { run: "get_ticket_full", ticket_id: chatid.value },
-        });
+    const response = await chatsStore.fetchMessages(chatid.value);
 
-    status.value = response.status;
     replies.value = response.replies ?? [];
-    subject.value = response.subject;
 
     replies.value.sort((a, b) => Number(a.sent - b.sent));
     chatsStore.messages[chatid.value] = response;
   } finally {
-    nextTick(() => {
-      content.value?.scrollTo(0, content.value?.scrollHeight);
-    });
+    scrollToBottom(0);
     isLoading.value = false;
 
     if (chatsStore.chats.get(chatid.value)) {
@@ -326,10 +391,19 @@ async function loadMessages(update) {
   }
 }
 
+function scrollToBottom(timeout = 0) {
+  if (!content.value) return;
+
+  setTimeout(() => {
+    content.value?.scrollTo(0, content.value?.scrollHeight);
+  }, timeout);
+}
+
 function reload() {
   isLoading.value = true;
   loadMessages(true);
 }
+appStore.setOnRefreshClick(reload);
 
 function deleteMessage(message) {
   replies.value.splice(replies.value.indexOf(message), 1);
@@ -343,19 +417,18 @@ function resendMessage(reply) {
 </script>
 
 <script>
-export default { name: "TicketChat" };
+export default { name: "OpenaiChat" };
 </script>
 
 <style scoped>
 .chat {
   position: relative;
   display: grid;
-  grid-template-columns: min(400px, 35vw - 20px) min(968px, 65vw - 20px);
+  grid-template-columns: minmax(0, min(35vw, 400px)) 1fr;
   grid-template-rows: 1fr auto;
   justify-content: center;
   gap: 10px;
   height: 100%;
-  padding-top: 64px;
   background: var(--bright_bg);
 }
 
@@ -372,13 +445,10 @@ export default { name: "TicketChat" };
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-
-  max-width: 968px;
   width: 100%;
   height: 100%;
   margin: 10px auto 0;
   padding: v-bind("chatPaddingTop") 15px 6px;
-
   border: 1px solid var(--border_color);
   border-radius: 6px;
   overflow: auto;
@@ -404,7 +474,7 @@ export default { name: "TicketChat" };
   position: relative;
   width: max-content;
   max-width: 80%;
-  word-wrap: break-word;
+  word-wrap: wrap;
   margin-bottom: 10px;
 }
 
@@ -466,6 +536,11 @@ export default { name: "TicketChat" };
   border-bottom: 10px solid #dcfdbe;
 }
 
+.video {
+  max-height: 100%;
+  max-width: 100%;
+}
+
 .chat__message--out {
   align-self: flex-end;
   color: rgba(0, 0, 0, 0.65);
@@ -491,40 +566,6 @@ export default { name: "TicketChat" };
   display: block;
 }
 
-:deep(.chat__files) {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-:deep(.chat__files .files__preview) {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 114px;
-  height: 100px;
-  padding: 5px;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-:deep(.chat__files .files__preview > img) {
-  height: 100%;
-  width: auto;
-  max-width: 100%;
-  object-fit: cover;
-}
-
-:deep(.chat__files .files__preview--placeholder) {
-  flex-direction: column;
-  gap: 4px;
-  width: 104px;
-  height: 90px;
-  font-size: 24px;
-  border: 1px solid var(--border_color);
-}
-
 @media (max-width: 768px) {
   .chat {
     grid-template-columns: 1fr;
@@ -538,6 +579,11 @@ export default { name: "TicketChat" };
     margin: 0;
     border: 0;
     border-radius: 0;
+  }
+
+  .chat__footer {
+    grid-column: 1;
+    padding: 0 10px 10px;
   }
 }
 </style>

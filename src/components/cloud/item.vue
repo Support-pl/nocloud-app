@@ -280,7 +280,7 @@ function cloudClick(service, { target }) {
   } else if (hostingid) {
     router.push({ name: "service", params: { id: hostingid } });
   } else if (groupname === "OpenAI") {
-    router.push({ name: "ticket", query: { from: uuid } });
+    router.push({ name: "openaiChats", params: { id: uuid } });
   } else if (groupname === "AIBot") {
     router.push({ name: "aiBotPage", params: { id: uuid } });
   } else if (groupname === "Self-Service VDS SSD HC") {

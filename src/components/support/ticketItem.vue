@@ -124,7 +124,6 @@ export default { name: "TicketItem" };
 
 .ticket:hover {
   filter: contrast(0.7);
-  transition: 0.2s;
 }
 
 .ticket.compact {
@@ -192,9 +191,5 @@ export default { name: "TicketItem" };
 
 .ticket__status-text {
   white-space: nowrap;
-}
-
-.ant-tag {
-  color: unset !important;
 }
 </style>

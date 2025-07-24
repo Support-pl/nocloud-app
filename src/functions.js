@@ -500,3 +500,11 @@ export function levenshtein(s, t) {
 
   return d[n][m];
 }
+
+export function beautufyMessage(md, message) {
+  return md
+    .render(message)
+    .trim()
+    .replace(/^<p>/, "")
+    .replace(/<\/p>$/, "");
+}
