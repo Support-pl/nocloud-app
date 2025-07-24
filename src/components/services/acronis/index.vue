@@ -370,7 +370,7 @@ export default {
             auto_start: plan.meta.auto_start,
           },
           title: this.getProducts.title,
-          billing_plan: { uuid: this.plan },
+          billing_plan: plan,
           product: this.options.size,
         },
       ];

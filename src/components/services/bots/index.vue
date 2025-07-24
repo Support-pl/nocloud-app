@@ -219,7 +219,7 @@ function orderClickHandler() {
         auto_start: planItem.meta.auto_start,
       },
       title,
-      billing_plan: { uuid: plan.value },
+      billing_plan: planItem,
       product: "bot",
     },
   ];

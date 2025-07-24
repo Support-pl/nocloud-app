@@ -764,7 +764,7 @@ const orderClickHandler = () => {
       return result;
     }, {}),
     title: currentProduct.value.title,
-    billing_plan: { uuid: plan.value },
+    billing_plan: fullPlan,
     product: options.value.size,
     addons: options.value.addons,
   };

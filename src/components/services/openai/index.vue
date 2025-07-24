@@ -240,7 +240,8 @@ watch(namespaces, (value) => {
 function orderClickHandler() {
   const serviceItem = services.value.find(({ uuid }) => uuid === service.value);
   const planItem = plans.value.find(({ uuid }) => uuid === plan.value);
-  let title = showcase.value.promo?.[locale.value]?.title ?? showcase.value.title;
+  let title =
+    showcase.value.promo?.[locale.value]?.title ?? showcase.value.title;
 
   const same = instancesStore.getInstances.filter((instance) =>
     instance.title.startsWith(title)
@@ -261,7 +262,7 @@ function orderClickHandler() {
         auto_start: planItem.meta.auto_start,
       },
       title,
-      billing_plan: { uuid: plan.value },
+      billing_plan: planItem,
       product: "",
     },
   ];
