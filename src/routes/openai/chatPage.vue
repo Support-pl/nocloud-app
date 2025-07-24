@@ -88,6 +88,7 @@
       </template>
 
       <typing-placeholder v-if="isPlaceholderVisible" />
+      <div style="margin-top: 145px"></div>
     </div>
 
     <div ref="chatList" class="chat__list">
@@ -423,7 +424,7 @@ export default { name: "OpenaiChat" };
 .chat {
   position: relative;
   display: grid;
-  grid-template-columns: min(400px, 35vw - 20px) min(968px, 65vw - 20px);
+  grid-template-columns: minmax(0, min(35vw, 400px)) 1fr;
   grid-template-rows: 1fr auto;
   justify-content: center;
   gap: 10px;
@@ -444,7 +445,6 @@ export default { name: "OpenaiChat" };
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  max-width: 968px;
   width: 100%;
   height: 100%;
   margin: 10px auto 0;

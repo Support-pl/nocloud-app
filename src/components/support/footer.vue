@@ -10,6 +10,7 @@
     @send-message="sendMessage"
     :file-list="fileList"
     @update:filelist="fileList = $event"
+    class="send_input"
     ref="sendinput"
   />
 </template>
@@ -177,17 +178,7 @@ export default { name: "SupportFooter" };
 </script>
 
 <style scoped>
-:deep(.chat__container) {
-  padding: 0;
-  display: grid;
-  grid-template-columns: 20% 1fr 20%;
-  justify-items: center;
-  align-items: center;
-  gap: 5px;
-  max-width: calc(768px + 400px + 10px);
-  height: 100%;
-  width: 100%;
-  margin: 0 auto;
+.send_input {
   padding-bottom: 10px;
   padding-top: 5px;
 }

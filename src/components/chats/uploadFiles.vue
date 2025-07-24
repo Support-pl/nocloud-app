@@ -6,12 +6,6 @@
     :before-upload="beforeUpload"
     :show-upload-list="false"
     @remove="removeFile"
-    :style="{
-      position: 'absolute',
-      bottom: fileList.length > 0 ? '110px' : '5px',
-      right: '5px',
-      'z-index': '100',
-    }"
   >
     <slot>
       <div class="upload__button">

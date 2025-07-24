@@ -125,6 +125,7 @@ export default { name: "TicketItem" };
 .ticket.compact {
   box-shadow: none;
   border-radius: 0;
+  padding: 5px 15px 10px 40px;
 }
 
 .ticket:not(:last-child) {

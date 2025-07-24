@@ -1,165 +1,175 @@
 <template>
-  <div class="chat__footer_contaner">
-    <div class="chat__generate">
-      <a-radio-group
-        v-if="!instance"
-        v-model:value="sendAdvancedOptions.checked"
-      >
-        <a-radio-button value="default">
-          {{ capitalize($t("send message")) }}
-        </a-radio-button>
-      </a-radio-group>
+  <div style="position: relative">
+    <div class="chat__footer_contaner">
+      <div class="chat__footer">
+        <div class="chat__generate">
+          <a-radio-group
+            v-if="!instance"
+            v-model:value="sendAdvancedOptions.checked"
+          >
+            <a-radio-button value="default">
+              {{ capitalize($t("send message")) }}
+            </a-radio-button>
+          </a-radio-group>
 
-      <a-radio-group v-else v-model:value="sendAdvancedOptions.checked">
-        <a-radio-button value="default">
-          {{ capitalize($t("openai.actions.generate_text")) }}
-        </a-radio-button>
-        <a-radio-button value="speech">
-          {{ capitalize($t("openai.actions.generate_audio")) }}
-        </a-radio-button>
-        <a-radio-button value="generate">
-          {{ capitalize($t("openai.actions.generate_image")) }}
-        </a-radio-button>
-        <a-radio-button value="video">
-          {{ capitalize($t("openai.actions.generate_video")) }}
-        </a-radio-button>
-      </a-radio-group>
-      <a-select
-        style="min-width: 200px"
-        v-if="
-          sendAdvancedOptions.checked === 'speech' &&
-          instanceAudioModels.length > 1
-        "
-        v-model:value="sendAdvancedOptions.model"
-        :options="instanceAudioModels"
-      />
-
-      <a-select
-        style="min-width: 220px"
-        v-if="
-          sendAdvancedOptions.checked === 'generate' &&
-          instanceImageModels.length > 1
-        "
-        v-model:value="sendAdvancedOptions.model"
-        :options="instanceImageModels"
-      />
-
-      <a-select
-        style="min-width: 120px"
-        v-if="sendAdvancedOptions.checked === 'generate'"
-        v-model:value="sendAdvancedOptions.size"
-        :options="instanceImageSizes"
-      />
-      <a-select
-        style="min-width: 100px"
-        v-if="sendAdvancedOptions.checked === 'generate'"
-        v-model:value="sendAdvancedOptions.quality"
-        :options="instanceImageQualitys"
-      />
-    </div>
-
-    <send-input
-      :send-loading="isSendMessageLoading"
-      :editing="editing"
-      @update:editing="editing = $event"
-      :message="message"
-      @update:message="message = $event"
-      :replies="replies"
-      @send-message="sendMessage"
-      :file-list="fileList"
-      @update:filelist="fileList = $event"
-      ref="sendinput"
-    />
-
-    <a-modal
-      :open="sendAdvancedOptions.checked === 'video'"
-      :title="$t('openai.actions.generate_video_confirm')"
-      @cancel="sendAdvancedOptions.checked = 'default'"
-    >
-      <a-form layout="vertical" autocomplete="off">
-        <a-form-item :label="$t('openai.videos_properties.promt')">
-          <a-textarea
-            v-model:value="message"
-            type="text"
-            :auto-size="{ minRows: 3, maxRows: 5 }"
-            :placeholder="$t('openai.videos_properties.promt')"
-          />
-        </a-form-item>
-
-        <a-form-item :label="capitalize($t('openai.videos_properties.model'))">
+          <a-radio-group v-else v-model:value="sendAdvancedOptions.checked">
+            <a-radio-button value="default">
+              {{ capitalize($t("openai.actions.generate_text")) }}
+            </a-radio-button>
+            <a-radio-button value="speech">
+              {{ capitalize($t("openai.actions.generate_audio")) }}
+            </a-radio-button>
+            <a-radio-button value="generate">
+              {{ capitalize($t("openai.actions.generate_image")) }}
+            </a-radio-button>
+            <a-radio-button value="video">
+              {{ capitalize($t("openai.actions.generate_video")) }}
+            </a-radio-button>
+          </a-radio-group>
           <a-select
-            v-if="instanceVideoModels.length > 1"
-            v-model:value="sendAdvancedOptions.model"
-            :options="instanceVideoModels"
-          />
-        </a-form-item>
-
-        <a-form-item :label="$t('openai.videos_properties.duration')">
-          <a-input-number
-            style="width: 100%"
-            :value="sendAdvancedOptions.duration"
-            @update:value="
-              sendAdvancedOptions.duration = $event || videoDurationRange.min
+            style="min-width: 200px"
+            v-if="
+              sendAdvancedOptions.checked === 'speech' &&
+              instanceAudioModels.length > 1
             "
-            :min="videoDurationRange.min"
-            :max="videoDurationRange.max"
+            v-model:value="sendAdvancedOptions.model"
+            :options="instanceAudioModels"
           />
-        </a-form-item>
 
-        <a-form-item :label="$t('openai.videos_properties.aspect_ratio')">
           <a-select
-            v-model:value="sendAdvancedOptions.aspect_ratio"
-            :options="videoAspectRatios"
+            style="min-width: 220px"
+            v-if="
+              sendAdvancedOptions.checked === 'generate' &&
+              instanceImageModels.length > 1
+            "
+            v-model:value="sendAdvancedOptions.model"
+            :options="instanceImageModels"
           />
-        </a-form-item>
 
-        <a-form-item :label="$t('openai.videos_properties.with_audio')">
-          <a-switch
-            :disabled="!isAudioEnabled"
-            v-model:checked="sendAdvancedOptions.with_audio"
+          <a-select
+            style="min-width: 120px"
+            v-if="sendAdvancedOptions.checked === 'generate'"
+            v-model:value="sendAdvancedOptions.size"
+            :options="instanceImageSizes"
           />
-        </a-form-item>
-      </a-form>
+          <a-select
+            style="min-width: 100px"
+            v-if="sendAdvancedOptions.checked === 'generate'"
+            v-model:value="sendAdvancedOptions.quality"
+            :options="instanceImageQualitys"
+          />
+        </div>
 
-      <div style="display: flex; justify-content: center; margin-bottom: 10px">
-        <span
-          style="font-size: 1rem; text-align: center"
-          v-html="
-            marked(
-              $t('openai.labels.videos_price_tip', {
-                perSecond: `${formatPrice(
-                  (convertedVideoPrices.get(sendAdvancedOptions.model) || 0) /
-                    60
-                )}
-        ${currency.title}`,
-                total: `${formatPrice(
-                  ((convertedVideoPrices.get(sendAdvancedOptions.model) || 0) /
-                    60) *
-                    sendAdvancedOptions.duration
-                )} ${currency.title}`,
-              }).replaceAll('\n', ' ')
-            )
-          "
+        <send-input
+          :send-loading="isSendMessageLoading"
+          :editing="editing"
+          @update:editing="editing = $event"
+          :message="message"
+          @update:message="message = $event"
+          :replies="replies"
+          @send-message="sendMessage"
+          :file-list="fileList"
+          @update:filelist="fileList = $event"
+          ref="sendinput"
         />
+
+        <a-modal
+          :open="sendAdvancedOptions.checked === 'video'"
+          :title="$t('openai.actions.generate_video_confirm')"
+          @cancel="sendAdvancedOptions.checked = 'default'"
+        >
+          <a-form layout="vertical" autocomplete="off">
+            <a-form-item :label="$t('openai.videos_properties.promt')">
+              <a-textarea
+                v-model:value="message"
+                type="text"
+                :auto-size="{ minRows: 3, maxRows: 5 }"
+                :placeholder="$t('openai.videos_properties.promt')"
+              />
+            </a-form-item>
+
+            <a-form-item
+              :label="capitalize($t('openai.videos_properties.model'))"
+            >
+              <a-select
+                v-if="instanceVideoModels.length > 1"
+                v-model:value="sendAdvancedOptions.model"
+                :options="instanceVideoModels"
+              />
+            </a-form-item>
+
+            <a-form-item :label="$t('openai.videos_properties.duration')">
+              <a-input-number
+                style="width: 100%"
+                :value="sendAdvancedOptions.duration"
+                @update:value="
+                  sendAdvancedOptions.duration =
+                    $event || videoDurationRange.min
+                "
+                :min="videoDurationRange.min"
+                :max="videoDurationRange.max"
+              />
+            </a-form-item>
+
+            <a-form-item :label="$t('openai.videos_properties.aspect_ratio')">
+              <a-select
+                v-model:value="sendAdvancedOptions.aspect_ratio"
+                :options="videoAspectRatios"
+              />
+            </a-form-item>
+
+            <a-form-item :label="$t('openai.videos_properties.with_audio')">
+              <a-switch
+                :disabled="!isAudioEnabled"
+                v-model:checked="sendAdvancedOptions.with_audio"
+              />
+            </a-form-item>
+          </a-form>
+
+          <div
+            style="display: flex; justify-content: center; margin-bottom: 10px"
+          >
+            <span
+              style="font-size: 1rem; text-align: center"
+              v-html="
+                marked(
+                  $t('openai.labels.videos_price_tip', {
+                    perSecond: `${formatPrice(
+                      (convertedVideoPrices.get(sendAdvancedOptions.model) ||
+                        0) / 60
+                    )}
+        ${currency.title}`,
+                    total: `${formatPrice(
+                      ((convertedVideoPrices.get(sendAdvancedOptions.model) ||
+                        0) /
+                        60) *
+                        sendAdvancedOptions.duration
+                    )} ${currency.title}`,
+                  }).replaceAll('\n', ' ')
+                )
+              "
+            />
+          </div>
+
+          <template #footer>
+            <a-button
+              :disabled="isSendMessageLoading"
+              key="back"
+              @click="sendAdvancedOptions.checked = 'default'"
+              >{{ $t("Cancel") }}</a-button
+            >
+
+            <a-button
+              :loading="isSendMessageLoading"
+              key="submit"
+              type="primary"
+              @click="sendMessage"
+              >{{ $t("openai.actions.generate_video_confirm") }}</a-button
+            >
+          </template>
+        </a-modal>
       </div>
-
-      <template #footer>
-        <a-button
-          :disabled="isSendMessageLoading"
-          key="back"
-          @click="sendAdvancedOptions.checked = 'default'"
-          >{{ $t("Cancel") }}</a-button
-        >
-
-        <a-button
-          :loading="isSendMessageLoading"
-          key="submit"
-          type="primary"
-          @click="sendMessage"
-          >{{ $t("openai.actions.generate_video_confirm") }}</a-button
-        >
-      </template>
-    </a-modal>
+    </div>
   </div>
 </template>
 
@@ -508,9 +518,25 @@ export default { name: "SupportFooter" };
 </script>
 
 <style scoped>
-.chat__footer_contaner{
+.chat__footer {
   padding-top: 5px;
   padding-bottom: 10px;
+  max-width: 800px;
+  width: 100%;
+  background-color: var(--bright_bg);
+  border-radius: 12px; 
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
+  transition: filter 0.3s ease, box-shadow 0.3s ease; 
+  padding: 16px; 
+  margin-bottom: 10px;
+}
+
+.chat__footer_contaner {
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
 }
 
 .chat__generate {
@@ -530,23 +556,6 @@ export default { name: "SupportFooter" };
 .chat__generate :deep(.ant-radio-button-wrapper-checked),
 .chat__generate :deep(.ant-select-selector-checked) {
   border-color: var(--main);
-}
-
-.chat__input {
-  max-width: 725px;
-  border: 0;
-  outline: 0;
-  border-radius: 40px;
-  flex: 1 0;
-  padding: 7px 0;
-}
-
-.chat__input textarea {
-  max-height: calc(50vh - 34px) !important;
-}
-
-.chat__input :deep(.ant-input-textarea-clear-icon) {
-  margin: 9px 2px 0 0;
 }
 
 :deep(textarea.ant-input) {
@@ -575,18 +584,5 @@ export default { name: "SupportFooter" };
 
 .chat__send:active {
   filter: brightness(0.95);
-}
-
-:deep(.chat__container) {
-  padding: 0;
-  display: grid;
-  grid-template-columns: 20% 1fr 20%;
-  justify-items: center;
-  align-items: center;
-  gap: 5px;
-  max-width: calc(768px + 400px + 10px);
-  height: 100%;
-  width: 100%;
-  margin: 0 auto;
 }
 </style>

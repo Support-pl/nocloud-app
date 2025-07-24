@@ -1,6 +1,6 @@
 <template>
-  <div class="chat__footer">
-    <div class="chat__container footer__container">
+  <div class="send_input_container">
+    <div class="send_input">
       <a-tag
         v-if="editing"
         closable
@@ -35,27 +35,37 @@
           @keydown.enter.exact.prevent="emits('sendMessage')"
         />
 
-        <upload-files
-          v-if="showSendFiles"
-          ref="upload"
-          :editing="editing"
-          :replies="replies"
-          :file-list="fileList"
-          @update:file-list="emits('update:filelist', $event)"
-        />
-      </div>
+        <div
+          :style="{
+            position: 'absolute',
+            bottom: fileList.length > 0 ? '110px' : '5px',
+            right: '5px',
+            'z-index': '100',
+          }"
+        >
+          <upload-files
+            v-if="showSendFiles"
+            ref="upload"
+            :editing="editing"
+            :replies="replies"
+            :file-list="fileList"
+            @update:file-list="emits('update:filelist', $event)"
+          />
 
-      <a-button
-        size="large"
-        :loading="sendLoading"
-        type="primary"
-        shape="circle"
-        @click="emits('sendMessage')"
-      >
-        <template #icon>
-          <arrow-up-icon />
-        </template>
-      </a-button>
+          <a-button
+            size="large"
+            :loading="sendLoading"
+            type="primary"
+            shape="circle"
+            @click="emits('sendMessage')"
+            style="margin-left: 10px"
+          >
+            <template #icon>
+              <arrow-up-icon />
+            </template>
+          </a-button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -89,10 +99,6 @@ const upload = ref();
 const textarea = ref();
 const showSendFiles = computed(() => globalThis.VUE_APP_S3_BUCKET);
 
-const columnsStyle = computed(() =>
-  showSendFiles.value ? "1fr auto auto" : "1fr auto"
-);
-
 function newLine() {
   emits("update:message", props.message.replace(/$/, "\n"));
 }
@@ -115,8 +121,6 @@ function getMessage(uuid) {
   return result.replace(/<div class="chat__files">[\s\S]{1,}<\/div>$/g, "");
 }
 
-const tagGridColumn = computed(() => (showSendFiles.value ? "1 / 4" : "1 / 3"));
-
 defineExpose({ changeEditing });
 </script>
 
@@ -127,23 +131,8 @@ export default { name: "SupportFooter" };
 <style scoped>
 .chat__tag {
   display: grid;
-  grid-template-columns: 1fr auto;
-  grid-column: v-bind("tagGridColumn");
   padding: 5px 7px;
   margin-right: auto;
   font-size: 18px;
-}
-
-.chat__footer {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  grid-column: 2;
-  background-color: var(--bright_bg);
-}
-
-.chat__container.footer__container {
-  grid-template-columns: v-bind("columnsStyle");
-  align-items: start;
 }
 </style>

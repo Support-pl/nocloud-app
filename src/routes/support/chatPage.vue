@@ -75,8 +75,6 @@
           </div>
         </a-popover>
       </template>
-
-      <typing-placeholder v-if="isPlaceholderVisible" />
     </div>
 
     <div ref="chatList" class="chat__list">
@@ -116,7 +114,6 @@ import supportAlert from "@/components/support/alert.vue";
 import supportFooter from "@/components/support/footer.vue";
 import MessageFiles from "@/components/chats/messageFiles.vue";
 import MessageContent from "@/components/chats/messageContent.vue";
-import TypingPlaceholder from "@/components/chats/typingPlaceholder.vue";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -154,7 +151,6 @@ const isLoading = ref(false);
 const chatid = ref(route.params.id);
 const searchString = ref("");
 const chatPaddingTop = ref("15px");
-const isPlaceholderVisible = ref(false);
 
 const content = ref();
 const chatList = ref();

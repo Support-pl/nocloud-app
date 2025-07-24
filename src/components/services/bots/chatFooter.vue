@@ -9,6 +9,8 @@
       :file-list="fileList"
       @update:filelist="fileList = $event"
       ref="sendinput"
+      style="width: 100%"
+      class="send_input"
     />
   </div>
 </template>
