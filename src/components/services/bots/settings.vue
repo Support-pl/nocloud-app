@@ -86,7 +86,11 @@
           </a-tooltip>
         </span>
         <a-row>
-          <a-col v-for="chanell in availableChanells" span="6">
+          <a-col
+            style="margin-right: 5px; min-width: 185px; margin-bottom: 10px"
+            v-for="chanell in availableChanells"
+            span="6"
+          >
             <div
               @click="
                 chanell.exist
@@ -940,21 +944,24 @@ export default { name: "AiBotDraw" };
   border-radius: 6px;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, filter 0.3s ease;
+  background-color: #f0f0f0;
+  min-width: 185px;
 }
 
 .chanell:hover {
-  background-color: #f0f0f0;
+  background-color: #e0e0e0;
+}
+
+.chanell:hover .img_prod {
+  filter: brightness(0.6);
+  transition: filter 0.3s ease;
 }
 
 .img_prod {
   width: 32px;
   height: 32px;
   transition: filter 0.3s ease;
-}
-
-.chanell:hover .img_prod {
-  filter: brightness(0.8);
 }
 
 .status-circle {
