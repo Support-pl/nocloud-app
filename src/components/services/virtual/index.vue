@@ -447,7 +447,7 @@ const orderClickHandler = () => {
       plan: options.model,
     },
     title: currentProduct.value.title,
-    billing_plan: { uuid: plan.value },
+    billing_plan: fullPlan,
     product: key,
   };
   const newGroup = {

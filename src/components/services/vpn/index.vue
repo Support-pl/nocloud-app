@@ -341,7 +341,7 @@ const orderClickHandler = () => {
   const instance = {
     config: { ...options.value.config, auto_start: fullPlan.meta.auto_start },
     title: `${options.value.product.title} (${selectedInstance.value})`,
-    billing_plan: { uuid: plan.value },
+    billing_plan: fullPlan,
     product: options.value.product.key,
   };
 
@@ -369,16 +369,16 @@ const orderClickHandler = () => {
       goToInvoice: modal.value.goToInvoice,
     };
     onLogin.value.action = () => {
-      createVirtual(info, instance);
+      createVPN(info, instance);
     };
 
     router.push({ name: "login" });
     return;
   }
 
-  createVirtual(info, instance);
+  createVPN(info, instance);
 };
-const createVirtual = async (info, instance) => {
+const createVPN = async (info, instance) => {
   modal.value.confirmLoading = true;
 
   try {

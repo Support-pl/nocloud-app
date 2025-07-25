@@ -34,7 +34,32 @@ function useCreateInstance() {
     deployMessage
   ) {
     try {
+      console.log(
+        instance.billing_plan.meta,
+        instance.billing_plan.properties,
+        instance.config
+      );
+
+      if (instance.billing_plan?.meta) {
+        if (!instance.config) {
+          instance.config = {};
+        }
+        instance.config.auto_start = !!instance.billing_plan.meta.auto_start;
+      }
+
+      if (instance.billing_plan?.properties) {
+        if (!instance.meta) {
+          instance.meta = {};
+        }
+        instance.meta.autoRenew = !!instance.billing_plan.properties.autoRenew;
+      }
+
+      instance.billing_plan = {
+        uuid: instance.billing_plan.uuid,
+      };
+
       let response;
+
       if (action === "create") {
         response = await store[`createService`](service);
       } else if (action === "update") {
