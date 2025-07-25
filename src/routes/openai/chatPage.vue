@@ -125,18 +125,45 @@
       </template>
     </div>
 
-    <chats-footer
-      ref="footer"
-      v-model:replies="replies"
-      :ticket="chat"
-      :instance="instance"
-    />
+    <div>
+      <transition name="fade">
+        <div
+          v-show="showScrollToBottom"
+          style="position: relative; display: flex; justify-content: center"
+        >
+          <a-button
+            shape="circle"
+            class="scroll-to-bottom"
+            @click="scrollToBottom(0)"
+          >
+            <template #icon>
+              <arrow-down-icon />
+            </template>
+          </a-button>
+        </div>
+      </transition>
+      <chats-footer
+        ref="footer"
+        v-model:replies="replies"
+        :ticket="chat"
+        :instance="instance"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
 import "highlight.js/styles/base16/classic-light.css";
-import { defineAsyncComponent, nextTick, ref, computed, watch, h } from "vue";
+import {
+  defineAsyncComponent,
+  nextTick,
+  ref,
+  computed,
+  watch,
+  h,
+  onBeforeUnmount,
+  onMounted,
+} from "vue";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { Status } from "@/libs/cc_connect/cc_pb";
 import { useClipboard } from "@/hooks/utils";
@@ -171,6 +198,9 @@ const loadingIcon = defineAsyncComponent(() =>
 );
 const addChatIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlusOutlined")
+);
+const arrowDownIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ArrowDownOutlined")
 );
 
 const route = useRoute();
@@ -414,6 +444,26 @@ function resendMessage(reply) {
   footer.value.message = reply.message;
   footer.value.sendMessage();
 }
+
+const showScrollToBottom = ref(false);
+
+function onScroll() {
+  const el = content.value;
+  if (!el) return;
+
+  showScrollToBottom.value =
+    el.scrollHeight - el.scrollTop - el.clientHeight > 300;
+}
+
+onBeforeUnmount(() => {
+  content.value?.removeEventListener("scroll", onScroll);
+});
+
+watch(content, (el) => {
+  if (!el) return;
+
+  el.addEventListener("scroll", onScroll);
+});
 </script>
 
 <script>
@@ -585,5 +635,21 @@ export default { name: "OpenaiChat" };
     grid-column: 1;
     padding: 0 10px 10px;
   }
+}
+
+.scroll-to-bottom {
+  position: absolute;
+  bottom: 160px;
+  z-index: 10;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

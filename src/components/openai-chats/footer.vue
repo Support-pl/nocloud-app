@@ -546,6 +546,7 @@ export default { name: "SupportFooter" };
   grid-column: 1 / 4;
   justify-self: start;
   border-color: var(--border_color);
+  margin-bottom: 2px;
 }
 
 .chat__generate :deep(.ant-radio-button-wrapper),

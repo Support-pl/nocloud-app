@@ -322,7 +322,8 @@ const routes = [
           mustBeLoggined: true,
           headerTitle: "OpenAI",
           isNeedBackButton: true,
-          isNeedRefreshButton:true
+          isNeedRefreshButton: true,
+          isFooterHided: true,
         },
         component: () => import("@/routes/openai/chatPage.vue"),
       },
