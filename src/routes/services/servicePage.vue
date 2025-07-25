@@ -472,7 +472,7 @@ async function sendRenew() {
     okButtonProps: { disabled: service.value.data.blocked },
     onOk: async () => {
       return invoicesStore
-        .createRenewInvoice(service)
+        .createRenewInvoice(service.value)
         .then(() => {
           notification.openNotification("success", { message: "Done!" });
           service.value.data.blocked = true;
