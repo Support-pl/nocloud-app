@@ -85,6 +85,7 @@ import promoBlock from "@/components/ui/promo.vue";
 import { useCurrenciesStore } from "@/stores/currencies";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
+import useCreateInstance from "@/hooks/instances/create";
 
 const router = useRouter();
 const route = useRoute();
@@ -102,6 +103,7 @@ const { namespaces } = storeToRefs(namespacesStore);
 const instancesStore = useInstancesStore();
 const { userCurrency } = storeToRefs(useCurrenciesStore());
 const { getShowcases } = storeToRefs(spStore);
+const { deployService, createInstance } = useCreateInstance(spStore);
 
 const plan = ref(null);
 const service = ref(null);
@@ -255,22 +257,20 @@ function orderClickHandler() {
         }`
       : title;
 
-  const instances = [
-    {
-      config: {
-        user: authStore.userdata.uuid,
-        auto_start: planItem.meta.auto_start,
-      },
-      title,
-      billing_plan: planItem,
-      product: "",
+  const instance = {
+    config: {
+      user: authStore.userdata.uuid,
+      auto_start: planItem.meta.auto_start,
     },
-  ];
+    title,
+    billing_plan: planItem,
+    product: "",
+  };
   const newGroup = {
     title: authStore.userdata.title + Date.now(),
     type: "openai",
     sp: provider.value,
-    instances,
+    instances: [instance],
   };
 
   const info = !service.value
@@ -278,7 +278,7 @@ function orderClickHandler() {
     : JSON.parse(JSON.stringify(serviceItem));
   const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
 
-  if (group) group.instances = [...group.instances, ...instances];
+  if (group) group.instances = [...group.instances, instance];
   else if (service.value) info.instancesGroups.push(newGroup);
 
   if (!authStore.userdata.uuid) {
@@ -302,10 +302,10 @@ function orderClickHandler() {
     return;
   }
 
-  createOpenAI(info);
+  createOpenAI(info, instance);
 }
 
-async function createOpenAI(info) {
+async function createOpenAI(info, instance) {
   modal.value.confirmLoading = true;
   const action = service.value ? "update" : "create";
   const orderData = service.value
@@ -321,45 +321,23 @@ async function createOpenAI(info) {
       };
 
   try {
-    const { uuid } = await instancesStore[`${action}Service`](orderData);
-
-    deployService(uuid);
-  } catch (error) {
-    const matched = (
-      error.response?.data?.message ??
-      error.message ??
-      ""
-    ).split(/error:"|error: "/);
-    const message = matched.at(-1).split('" ').at(0);
-
-    if (message) {
-      openNotification("error", { message });
-    } else {
-      const message = error.response?.data?.message ?? error.message ?? error;
-
-      openNotification("error", { message });
-    }
+    await createInstance(
+      action,
+      orderData,
+      instance,
+      provider.value,
+      null,
+      null,
+      t("Done")
+    );
+    router.push({ path: "/services" });
+  } catch {
     console.error(error);
   }
 }
 
 function orderConfirm() {
   modal.value.confirmCreate = true;
-}
-
-async function deployService(uuid) {
-  try {
-    await api.services.up(uuid);
-
-    openNotification("success", { message: t("Done") });
-    router.push({ path: "/services" });
-  } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error;
-
-    openNotification("error", { message: t(message) });
-  } finally {
-    modal.value.confirmLoading = false;
-  }
 }
 
 async function fetch() {

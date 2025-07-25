@@ -68,6 +68,7 @@ import { useCurrenciesStore } from "@/stores/currencies";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
 import { marked } from "marked";
+import useCreateInstance from "@/hooks/instances/create";
 
 const router = useRouter();
 const route = useRoute();
@@ -87,6 +88,7 @@ const instancesStore = useInstancesStore();
 const currenciesStore = useCurrenciesStore();
 const { userCurrency, defaultCurrency } = storeToRefs(currenciesStore);
 const { getShowcases } = storeToRefs(spStore);
+const { createInstance } = useCreateInstance();
 
 const plan = ref(null);
 const service = ref(null);
@@ -212,22 +214,20 @@ function orderClickHandler() {
         }`
       : title;
 
-  const instances = [
-    {
-      config: {
-        user: authStore.userdata.uuid,
-        auto_start: planItem.meta.auto_start,
-      },
-      title,
-      billing_plan: planItem,
-      product: "bot",
+  const instance = {
+    config: {
+      user: authStore.userdata.uuid,
+      auto_start: planItem.meta.auto_start,
     },
-  ];
+    title,
+    billing_plan: planItem,
+    product: "bot",
+  };
   const newGroup = {
     title: authStore.userdata.title + Date.now(),
     type: "bots",
     sp: provider.value,
-    instances,
+    instances: [instance],
   };
 
   const info = !service.value
@@ -235,7 +235,7 @@ function orderClickHandler() {
     : JSON.parse(JSON.stringify(serviceItem));
   const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
 
-  if (group) group.instances = [...group.instances, ...instances];
+  if (group) group.instances = [...group.instances, instance];
   else if (service.value) info.instancesGroups.push(newGroup);
 
   if (!authStore.userdata.uuid) {
@@ -259,10 +259,10 @@ function orderClickHandler() {
     return;
   }
 
-  createBot(info);
+  createBot(info, instance);
 }
 
-async function createBot(info) {
+async function createBot(info, instance) {
   modal.value.confirmLoading = true;
   const action = service.value ? "update" : "create";
   const orderData = service.value
@@ -278,45 +278,23 @@ async function createBot(info) {
       };
 
   try {
-    const { uuid } = await instancesStore[`${action}Service`](orderData);
-
-    deployService(uuid);
+    await createInstance(
+      action,
+      orderData,
+      instance,
+      provider.value,
+      null,
+      null,
+      t("Done")
+    );
+    router.push({ path: "/services" });
   } catch (error) {
-    const matched = (
-      error.response?.data?.message ??
-      error.message ??
-      ""
-    ).split(/error:"|error: "/);
-    const message = matched.at(-1).split('" ').at(0);
-
-    if (message) {
-      openNotification("error", { message });
-    } else {
-      const message = error.response?.data?.message ?? error.message ?? error;
-
-      openNotification("error", { message });
-    }
     console.error(error);
   }
 }
 
 function orderConfirm() {
   modal.value.confirmCreate = true;
-}
-
-async function deployService(uuid) {
-  try {
-    await api.services.up(uuid);
-
-    openNotification("success", { message: t("Done") });
-    router.push({ path: "/services" });
-  } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error;
-
-    openNotification("error", { message: t(message) });
-  } finally {
-    modal.value.confirmLoading = false;
-  }
 }
 
 async function fetch() {
