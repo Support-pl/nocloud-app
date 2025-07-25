@@ -278,9 +278,9 @@ const chats = computed(() => {
   return result;
 });
 
-onMounted(() => {
-  appStore.setTabByNameNoRoute("openai-api");
-});
+onMounted(()=>{
+  appStore.setTabByNameNoRoute('openai-api')
+})
 
 function moduleEnter() {
   supportStore.isAddingTicket = !supportStore.isAddingTicket;
