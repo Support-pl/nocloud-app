@@ -1,13 +1,54 @@
 <template>
   <div class="chat">
-    <chat-alert
-      v-if="chat"
-      v-model:padding-top="chatPaddingTop"
-      :chat="chat"
-      :is-loading="isLoading"
-    />
+    <div v-if="chat" class="chat__subheader_container">
+      <div class="chat__subheader">
+        <a-tag color="primary" class="chat__subheader_model">
+          <template #icon>
+            <ai-icon />
+          </template>
+          <span style="margin-inline-start: 0px">
+            {{ model }}
+          </span>
+        </a-tag>
+
+        <a-button shape="circle" size="large" @click="isSettingsVisible = true">
+          <template #icon>
+            <settings-icon />
+          </template>
+        </a-button>
+
+        <a-modal
+          v-model:open="isSettingsVisible"
+          :title="$t('settings')"
+          width="600px"
+          :footer="null"
+        >
+          <chat-settings
+            v-model:padding-top="chatPaddingTop"
+            :chat="chat"
+            :is-loading="isLoading"
+          />
+        </a-modal>
+      </div>
+    </div>
 
     <loading v-if="isLoading" />
+    <div
+      v-else-if="isCreate"
+      style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      "
+    >
+      <create-chat
+        ref="footer"
+        v-model:replies="replies"
+        :ticket="chat"
+        :instance="instance"
+      />
+    </div>
     <div v-else ref="content" class="chat__content">
       <template v-for="(reply, i) in replies" :key="i">
         <span v-if="isDateVisible(replies, i)" class="chat__date">
@@ -92,6 +133,17 @@
     </div>
 
     <div ref="chatList" class="chat__list">
+      <div style="padding: 5px 10px 0px 10px">
+        <a-input
+          v-model:value="searchString"
+          :placeholder="$t('bots.labels.search')"
+        >
+          <template #suffix>
+            <search-icon style="font-size: 18px" />
+          </template>
+        </a-input>
+      </div>
+
       <template v-if="instance">
         <a-row
           justify="space-between"
@@ -99,7 +151,13 @@
           style="padding: 10px; align-items: center"
         >
           <a-button
-            @click="supportStore.isAddingTicket = !supportStore.isAddingTicket"
+            @click="
+              router.push({
+                name: 'openaiChats',
+                params: { id: instance.id },
+                query: { create: true },
+              })
+            "
             :icon="h(addChatIcon)"
             >{{ $t("Add new chat") }}</a-button
           >
@@ -111,8 +169,6 @@
             {{ $t("API / Settings") }}
           </a-button>
         </a-row>
-
-        <add-ticket :instance-id="instance.uuid" />
       </template>
 
       <template v-for="item of chats">
@@ -125,7 +181,7 @@
       </template>
     </div>
 
-    <div>
+    <div v-if="!isCreate">
       <transition name="fade">
         <div
           v-show="showScrollToBottom"
@@ -162,15 +218,12 @@ import {
   watch,
   h,
   onBeforeUnmount,
-  onMounted,
 } from "vue";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { Status } from "@/libs/cc_connect/cc_pb";
 import { useClipboard } from "@/hooks/utils";
 import { useAuthStore } from "@/stores/auth.js";
 import { useChatsStore } from "@/stores/chats.js";
-import { useSupportStore } from "@/stores/support.js";
-import AddTicket from "@/components/support/addTicket.vue";
 import loading from "@/components/ui/loading.vue";
 import chatsFooter from "@/components/openai-chats/footer.vue";
 import { useInstancesStore } from "@/stores/instances";
@@ -181,7 +234,8 @@ import TypingPlaceholder from "@/components/chats/typingPlaceholder.vue";
 import MessageFiles from "@/components/chats/messageFiles.vue";
 import { useAppStore } from "@/stores/app";
 import TicketItem from "@/components/openai-chats/ticketItem.vue";
-import chatAlert from "@/components/openai-chats/alert.vue";
+import CreateChat from "@/components/openai-chats/createChat.vue";
+import ChatSettings from "@/components/openai-chats/chatSettings.vue";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -202,6 +256,16 @@ const addChatIcon = defineAsyncComponent(() =>
 const arrowDownIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ArrowDownOutlined")
 );
+const searchIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SearchOutlined")
+);
+const aiIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RobotOutlined")
+);
+
+const settingsIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SettingOutlined")
+);
 
 const route = useRoute();
 const router = useRouter();
@@ -210,7 +274,7 @@ const { addToClipboard } = useClipboard();
 const authStore = useAuthStore();
 const appStore = useAppStore();
 const chatsStore = useChatsStore();
-const supportStore = useSupportStore();
+const { globalModelsList } = storeToRefs(chatsStore);
 const instancesStore = useInstancesStore();
 const { getInstances } = storeToRefs(instancesStore);
 
@@ -225,9 +289,9 @@ onBeforeRouteUpdate((to, from, next) => {
 const replies = ref([]);
 
 const isLoading = ref(false);
+const isSettingsVisible = ref(false);
 const chatid = ref(route.params.chatId);
 const searchString = ref("");
-const chatPaddingTop = ref("15px");
 const isPlaceholderVisible = ref(false);
 
 const content = ref();
@@ -237,6 +301,8 @@ const footer = ref();
 const chat = computed(() => chatsStore.chats.get(chatid.value));
 
 const instanceId = computed(() => route.params.id);
+
+const isCreate = computed(() => route.query.create);
 
 const instance = computed(() => {
   const instance = getInstances.value.find((i) => i.uuid === instanceId.value);
@@ -301,6 +367,14 @@ const files = computed(() =>
   }, {})
 );
 
+const model = computed(() => {
+  return (
+    globalModelsList.value.find(
+      (model) => model.key === chat.value?.meta?.data?.model?.kind?.value
+    )?.name || chat.value?.meta?.data?.model?.kind?.value
+  );
+});
+
 watch(
   chats,
   async () => {
@@ -343,7 +417,7 @@ async function fetch() {
 
   chatsStore.fetch_models_list();
 
-  if (!route.params.chatId && chats.value[0]?.id) {
+  if (!route.params.chatId && chats.value[0]?.id && !isCreate.value) {
     router.replace({ params: { chatId: chats.value[0].id } });
     chatid.value = chats.value[0].id;
   }
@@ -475,7 +549,7 @@ export default { name: "OpenaiChat" };
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, min(35vw, 400px)) 1fr;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: auto 1fr auto;
   justify-content: center;
   gap: 10px;
   height: 100%;
@@ -483,7 +557,7 @@ export default { name: "OpenaiChat" };
 }
 
 .chat__list {
-  grid-row: 1 / 3;
+  grid-row: 1 / 4;
   margin: 10px 0;
   overflow: scroll;
   border: 1px solid var(--border_color);
@@ -497,8 +571,8 @@ export default { name: "OpenaiChat" };
   justify-content: flex-start;
   width: 100%;
   height: 100%;
-  margin: 10px auto 0;
-  padding: v-bind("chatPaddingTop") 15px 6px;
+  margin: 0px auto 0;
+  padding: 15px 15px 6px;
   border: 1px solid var(--border_color);
   border-radius: 6px;
   overflow: auto;
@@ -651,5 +725,29 @@ export default { name: "OpenaiChat" };
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.chat__subheader_container {
+  position: relative;
+}
+
+.chat__subheader {
+  position: absolute;
+  top: 25px;
+  right: 25px;
+  display: flex;
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+
+.chat__subheader_model {
+  border-color: var(--main);
+  margin-inline-end: 0px;
+  color: var(--main);
+  font-size: 1rem;
+  padding: 5px;
+  height: 30px;
+  margin-right: 10px;
 }
 </style>

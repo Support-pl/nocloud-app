@@ -1,181 +1,113 @@
 <template>
-  <a-alert
-    v-if="!isLoading"
-    ref="notification"
-    type="info"
-    class="alert__notification"
-  >
-    <template #message>
+  <div style="margin-bottom: 10px">
+    {{ capitalize($t("model")) }}:
+    <span>
+      {{ model }}
+    </span>
+  </div>
+
+  <template v-if="options.length > 1">
+    {{ $t("Choose another way of communication") }}:
+    <div class="order__grid">
       <div
-        style="display: flex; justify-content: space-between"
-        @click="isVisible = !isVisible"
+        v-for="gate of options"
+        :key="gate.id"
+        class="order__slider-item"
+        :value="gate.id"
+        :class="{ 'order__slider-item--active': gateway === gate.id }"
+        @click="changeGateway(gate.id)"
       >
-        <div>
-          {{ capitalize($t("settings")) }}
-
-          <span>
-            {{ chat.gateways[0] ? "" : "(" }}{{ capitalize($t("prompts")) }}:
-
-            <a-tooltip color="var(--bright_font)">
-              <template #title>
-                <a-list bordered size="small" :data-source="currentPrompts">
-                  <template #renderItem="{ item }">
-                    <a-list-item>{{ item }}</a-list-item>
-                  </template>
-                </a-list>
-              </template>
-              <listIcon style="margin-right: 2px" /> </a-tooltip
-            >)
-          </span>
-        </div>
-        <div>
-          <span style="margin-right: 10px">
-            <a-tag
-              color="primary"
-              style="border-color: var(--main); margin-inline-end: 0px"
-            >
-              <template #icon>
-                <ai-icon />
-              </template>
-              <span style="margin-inline-start: 0px">
-                {{ model }}
-              </span>
-            </a-tag>
-          </span>
-
-          <plus-icon v-if="isVisible" :rotate="45" style="margin-left: auto" />
-          <down-icon v-else style="margin-left: auto" />
-        </div>
-      </div>
-    </template>
-
-    <template v-if="isVisible" #description>
-      <div style="margin-bottom: 10px">
-        {{ capitalize($t("model")) }}:
-        <span>
-          {{ model }}
+        <span class="order__slider-name" :title="gate.name">
+          <img
+            class="img_prod"
+            :src="`/img/icons/${getImageName(gate.id)}.png`"
+            :alt="gate.id"
+            @error="onError"
+          />
+          {{ gate.name }}
         </span>
       </div>
+    </div>
 
-      <template v-if="options.length > 1">
-        {{ $t("Choose another way of communication") }}:
-        <div class="order__grid">
-          <div
-            v-for="gate of options"
-            :key="gate.id"
-            class="order__slider-item"
-            :value="gate.id"
-            :class="{ 'order__slider-item--active': gateway === gate.id }"
-            @click="changeGateway(gate.id)"
-          >
-            <span class="order__slider-name" :title="gate.name">
-              <img
-                class="img_prod"
-                :src="`/img/icons/${getImageName(gate.id)}.png`"
-                :alt="gate.id"
-                @error="onError"
-              />
-              {{ gate.name }}
-            </span>
+    <a-button
+      type="primary"
+      :style="`display: block; margin: 10px 0 ${
+        promptsOptions.length > 0 ? '15px' : 0
+      }`"
+      :disabled="gateway === (chat.gateways[0] ?? '')"
+      :loading="isEditLoading"
+      @click="updateChat"
+    >
+      OK
+    </a-button>
+  </template>
+
+  <template v-if="promptsOptions.length > 0">
+    {{ $t("Select prompts") }}:
+  </template>
+  <a-spin :spinning="isPromptsLoading">
+    <a-checkbox-group
+      v-model:value="prompts"
+      class="alert__checkbox"
+      style="margin-bottom: 15px"
+      :options="promptsOptions"
+      @change="() => selectPrompts()"
+    >
+      <template #label="{ label, description, value }">
+        <div class="divider"></div>
+        <div class="checkbox-item">
+          <div class="text-wrap">
+            <span class="label">{{ label }}</span>
+            <span class="description"> — {{ description }}</span>
           </div>
+
+          <a-button
+            size="small"
+            type="dashed"
+            shape="circle"
+            :icon="h(deleteIcon)"
+            @click.capture.stop.prevent="deletePromt(value)"
+          />
         </div>
-
-        <a-button
-          type="primary"
-          :style="`display: block; margin: 10px 0 ${
-            promptsOptions.length > 0 ? '15px' : 0
-          }`"
-          :disabled="gateway === (chat.gateways[0] ?? '')"
-          :loading="isEditLoading"
-          @click="updateChat"
-        >
-          OK
-        </a-button>
       </template>
+    </a-checkbox-group>
+  </a-spin>
 
-      <template v-if="promptsOptions.length > 0">
-        {{ $t("Select prompts") }}:
-      </template>
-      <a-spin :spinning="isPromptsLoading">
-        <a-checkbox-group
-          v-model:value="prompts"
-          class="alert__checkbox"
-          style="margin-bottom: 15px"
-          :options="promptsOptions"
-          @change="() => selectPrompts()"
-        >
-          <template #label="{ label, description, value }">
-            <span style="margin-right: 10px">
-              {{ label }}
-            </span>
-            <a-button
-              style="margin-right: 5px"
-              size="small"
-              type="dashed"
-              shape="circle"
-              :icon="!openedPromts[description] ? h(downIcon) : h(upIcon)"
-              @click.capture.stop.prevent="
-                openedPromts[description] = !openedPromts[description]
-              "
-            />
+  {{ $t("Add prompt") }}:
+  <a-input
+    v-model:value="title"
+    style="margin-bottom: 10px"
+    :placeholder="`${capitalize($t('title'))}...`"
+  />
+  <a-textarea
+    v-model:value="message"
+    allow-clear
+    :auto-size="{ minRows: 2, maxRows: 100 }"
+    :placeholder="`${capitalize($t('description'))}...`"
+    @keyup.shift.enter.exact="newLine"
+    @keydown.enter.exact.prevent="sendPrompt"
+  />
 
-            <a-button
-              size="small"
-              type="dashed"
-              shape="circle"
-              :icon="h(deleteIcon)"
-              @click.capture.stop.prevent="deletePromt(value)"
-            />
+  <a-button
+    type="primary"
+    style="margin-top: 10px"
+    :disabled="message.trim().length < 2"
+    :loading="isPromptLoading"
+    @click="sendPrompt"
+  >
+    {{ $t("Add") }}
+  </a-button>
 
-            <div v-if="openedPromts[description] == true">
-              {{ description }}
-            </div>
-          </template>
-        </a-checkbox-group>
-      </a-spin>
-
-      {{ $t("Add prompt") }}:
-      <a-input
-        v-model:value="title"
-        style="margin-bottom: 10px"
-        :placeholder="`${capitalize($t('title'))}...`"
-      />
-      <a-textarea
-        v-model:value="message"
-        allow-clear
-        :auto-size="{ minRows: 2, maxRows: 100 }"
-        :placeholder="`${capitalize($t('description'))}...`"
-        @keyup.shift.enter.exact="newLine"
-        @keydown.enter.exact.prevent="sendPrompt"
-      />
-
-      <a-button
-        type="primary"
-        style="margin-top: 10px"
-        :disabled="message.trim().length < 2"
-        :loading="isPromptLoading"
-        @click="sendPrompt"
-      >
-        {{ $t("Add") }}
-      </a-button>
-
-      <a-popconfirm
-        :title="$t('support_view.delet_chat.message')"
-        :ok-text="$t('Confirm')"
-        :cancel-text="$t('Cancel')"
-        @confirm="deleteChat"
-      >
-        <a-button
-          :loading="isDeleteLoading"
-          style="margin-left: 10px"
-          danger
-          ghost
-        >
-          {{ capitalize($t("support_view.delet_chat.action")) }}
-        </a-button>
-      </a-popconfirm>
-    </template>
-  </a-alert>
+  <a-popconfirm
+    :title="$t('support_view.delet_chat.message')"
+    :ok-text="$t('Confirm')"
+    :cancel-text="$t('Cancel')"
+    @confirm="deleteChat"
+  >
+    <a-button :loading="isDeleteLoading" style="margin-left: 10px" danger ghost>
+      {{ capitalize($t("support_view.delet_chat.action")) }}
+    </a-button>
+  </a-popconfirm>
 </template>
 
 <script setup>
@@ -212,12 +144,6 @@ const upIcon = defineAsyncComponent(() =>
 const deleteIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CloseOutlined")
 );
-const plusIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/PlusOutlined")
-);
-const listIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/UnorderedListOutlined")
-);
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -239,13 +165,10 @@ const title = ref("");
 const message = ref("");
 const gateway = ref("");
 
-const isVisible = ref(false);
 const isEditLoading = ref(false);
 const isPromptLoading = ref(false);
 const isPromptsLoading = ref(false);
-const notification = ref();
 const isDeleteLoading = ref(false);
-const openedPromts = ref({});
 
 watch(
   () => props.chat,
@@ -270,11 +193,6 @@ const options = computed(() => {
 
 const prompts = ref([]);
 const promptsOptions = ref([]);
-const currentPrompts = computed(() =>
-  (props.chat.meta?.data?.prompts?.toJSON() ?? [])
-    .filter(({ enabled }) => enabled)
-    .map(({ title }) => title)
-);
 
 const model = computed(() => {
   return (
@@ -353,6 +271,8 @@ async function sendPrompt() {
         data: { ...props.chat.meta.data, prompts: result },
       },
     });
+    title.value = "";
+    message.value = "";
     openNotification("success", { message: i18n.t("Done") });
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
@@ -401,7 +321,6 @@ const deleteChat = async () => {
 onMounted(() => {
   if (localStorage.getItem("gateway")) {
     gateway.value = localStorage.getItem("gateway");
-    isVisible.value = true;
 
     updateChat();
     localStorage.removeItem("gateway");
@@ -413,7 +332,6 @@ function setOptions(value) {
 
   prompts.value = [];
   promptsOptions.value = [];
-  openedPromts.value = {};
   if (value.meta.data.prompts) {
     const result = value.meta.data.prompts.toJSON();
 
@@ -433,28 +351,6 @@ export default { name: "SupportAlert" };
 </script>
 
 <style scoped>
-.alert__notification {
-  position: absolute;
-  right: max(25px, (100vw - 1148px) / 2);
-  top: 20px;
-  z-index: 10;
-  width: 100%;
-  max-width: min(65vw - 50px, 768px - 30px);
-  transition: 0.3s;
-}
-
-.alert__notification.ant-alert-with-description {
-  padding: 15px;
-}
-
-.alert__notification :deep(.ant-alert-message) > span {
-  display: flex;
-  justify-content: space-between;
-  gap: 5px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
 .order__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -464,7 +360,6 @@ export default { name: "SupportAlert" };
 
 .order__slider-item {
   box-shadow: inset 0 0 0 1px var(--border_color);
-  height: 100%;
   padding: 7px 10px;
   cursor: pointer;
   border-radius: 15px;
@@ -481,16 +376,16 @@ export default { name: "SupportAlert" };
   color: var(--gloomy_font);
 }
 
-.order__grid .order__slider-name > .img_prod {
-  display: block;
-  max-height: 20px;
-}
-
-.order__grid .order__slider-name {
+.order__slider-name {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+.img_prod {
+  display: block;
+  max-height: 20px;
 }
 
 .alert__checkbox {
@@ -499,20 +394,51 @@ export default { name: "SupportAlert" };
   margin-bottom: 5px;
 }
 
-@media (max-width: 768px) {
-  .alert__notification {
-    right: 15px;
-    max-width: calc(100% - 30px);
-  }
+.checkbox-item {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
 }
 
+.text-wrap {
+  flex: 1;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.label {
+  font-weight: 500;
+}
+
+.description {
+  color: #888;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border_color);
+  margin: 10px 0;
+}
+
+/* Ensure second span inside ant-checkbox-wrapper stretches full width */
+:deep(.ant-checkbox-wrapper > span:nth-of-type(2)) {
+  width: 100%;
+  display: inline-block;
+}
+
+/* Optional margin for the first span (checkbox itself) */
+:deep(.ant-checkbox-wrapper > span:nth-of-type(1)) {
+  margin-top: 15px;
+}
+
+/* Responsive grid fallback */
 @media (max-width: 576px) {
   .order__grid {
     grid-template-columns: 1fr 1fr;
   }
-}
-
-.ant-tag {
-  color: unset !important;
 }
 </style>
