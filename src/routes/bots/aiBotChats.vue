@@ -51,15 +51,8 @@
                 :url="reply.attachments[0]?.storage_url"
                 :name="reply.attachments[0]?.filename"
               />
-              <div v-else class="chat__files">
-                <a-image
-                  v-for="file of reply.attachments" :key="file.storage_url" class="files__preview"
-                  :src="file.storage_url"
-                  :alt="file.filename"
-                  @error="onImageError"
-                  @click="openModal"
-                />
-              </div>
+             <message-files v-else :files="(reply.attachments || []).map(r=>({url:r.storage_url,name:r.filename}))"/>
+              
             </pre>
 
               <div class="chat__info">
@@ -88,8 +81,6 @@
             </div>
           </a-popover>
         </template>
-
-        <typing-placeholder v-if="isPlaceholderVisible" />
       </div>
     </template>
 
@@ -160,16 +151,16 @@ import { onBeforeRouteUpdate, useRoute } from "vue-router";
 import { useClipboard } from "@/hooks/utils";
 import { useChatsStore } from "@/stores/chats.js";
 import loading from "@/components/ui/loading.vue";
-import typingPlaceholder from "@/components/support/typingPlaceholder.vue";
-import MessageContent from "@/components/support/messageContent.vue";
 import { sortAiBotChats, useAiBotsStore } from "@/stores/aiBots";
 import ChatItem from "@/components/services/bots/chatItem.vue";
 import ChatHeader from "@/components/services/bots/chatHeader.vue";
 import ChatFooter from "@/components/services/bots/chatFooter.vue";
 import { debounce, downloadFile } from "@/functions";
-import AudioPlayer from "@/components/support/audio-player.vue";
+import AudioPlayer from "@/components/chats/audio-player.vue";
 import { renderToString } from "vue/server-renderer";
+import MessageContent from "@/components/chats/messageContent.vue";
 import { h } from "vue";
+import MessageFiles from "@/components/chats/messageFiles.vue";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -223,7 +214,6 @@ const chatId = ref(route.params.chatId);
 const botId = ref(route.params.id);
 const chatPaddingTop = ref("15px");
 const searchParam = ref("");
-const isPlaceholderVisible = ref(false);
 const currentChatsFilter = ref("active");
 
 const content = ref();
@@ -293,7 +283,7 @@ watch(
   chats,
   async () => {
     await nextTick();
-    if (!chatList.value) return;
+    if (!chatList?.value) return;
     const { scrollHeight, clientHeight, lastElementChild } = chatList.value;
 
     if (scrollHeight > clientHeight || !lastElementChild) return;
@@ -307,7 +297,6 @@ watch(
   async (value, oldValue) => {
     await nextTick();
     await new Promise((resolve) => setTimeout(resolve, 300));
-    setPlaceholderVisible(oldValue.length > 0 ? oldValue : value);
 
     if (!content.value) return;
     scrollDown();
@@ -348,29 +337,6 @@ function readLastMessage() {
 }
 
 const readLastMessageDebounced = debounce(readLastMessage, 250);
-
-let timeout;
-function setPlaceholderVisible(messages) {
-  if (chat.value?.department !== "openai") return;
-  const isUserSent = messages.at(-1)?.from || messages.length === 1;
-
-  if (!isAdminSent(messages.at(-1) ?? {}) && isUserSent) {
-    timeout = setTimeout(async () => {
-      isPlaceholderVisible.value = true;
-
-      await nextTick();
-      scrollDown();
-    }, 1000);
-
-    setTimeout(() => {
-      clearTimeout(timeout);
-      isPlaceholderVisible.value = false;
-    }, 20 * 1000);
-  } else {
-    clearTimeout(timeout);
-    isPlaceholderVisible.value = false;
-  }
-}
 
 function isAdminSent(reply) {
   return reply.sender_role === 1;
@@ -462,19 +428,6 @@ export default { name: "AiBotChat" };
   background: var(--bright_bg);
 }
 
-:deep(.chat__container) {
-  padding: 0;
-  display: grid;
-  grid-template-columns: 20% 1fr 20%;
-  justify-items: center;
-  align-items: center;
-  gap: 5px;
-  max-width: calc(768px + 400px + 10px);
-  height: 100%;
-  width: 100%;
-  margin: 0 auto;
-}
-
 .chat__list {
   grid-row: 1 / 3;
   margin: 10px 0;
@@ -558,31 +511,6 @@ export default { name: "AiBotChat" };
   height: auto;
 }
 
-:deep(.chat__files) {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-:deep(.chat__files .files__preview) {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 114px;
-  height: 100px;
-  padding: 5px;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-:deep(.chat__files .files__preview > img) {
-  height: 100%;
-  width: auto;
-  max-width: 100%;
-  object-fit: cover;
-}
-
 .no_chats_compact {
   display: flex;
   justify-content: center;
@@ -596,15 +524,6 @@ export default { name: "AiBotChat" };
 
 .ant-radio-button-wrapper {
   padding-inline: 8px;
-}
-
-:deep(.chat__files .files__preview--placeholder) {
-  flex-direction: column;
-  gap: 4px;
-  width: 104px;
-  height: 90px;
-  font-size: 24px;
-  border: 1px solid var(--border_color);
 }
 
 .msgStatus.error {

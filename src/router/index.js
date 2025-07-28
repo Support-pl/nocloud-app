@@ -315,6 +315,18 @@ const routes = [
         },
         component: () => import("@/routes/dns/editor.vue"),
       },
+      {
+        path: "/openai/chats/:id/:chatId?",
+        name: "openaiChats",
+        meta: {
+          mustBeLoggined: true,
+          headerTitle: "OpenAI",
+          isNeedBackButton: true,
+          isNeedRefreshButton: true,
+          isFooterHided: true,
+        },
+        component: () => import("@/routes/openai/chatPage.vue"),
+      },
     ],
   },
 

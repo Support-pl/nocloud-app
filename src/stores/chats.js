@@ -424,6 +424,7 @@ export const useChatsStore = defineStore("chats", () => {
           users: [authStore.userdata.uuid],
           topic: data.chat.subject,
           role: Role.OWNER,
+          created: Date.now(),
           meta: new ChatMeta({
             lastMessage: data.chat.message,
             data: data.chat.meta?.reduce((result, { key, value }) => {
@@ -469,6 +470,24 @@ export const useChatsStore = defineStore("chats", () => {
         console.debug(error);
         throw error;
       }
+    },
+
+    async sendChatFiles(files, chatUuid) {
+      for await (const file of files) {
+        if (file.uuid) continue;
+
+        const { uuid, object_id: objectId } = await api.put("/attachments", {
+          title: file.name,
+          chat: chatUuid,
+        });
+        await fetch(objectId, { method: "PUT", body: file });
+
+        const { url } = await api.get(`/attachments/${uuid}`);
+        file.url = `https://${url}`;
+        file.uuid = uuid;
+      }
+
+      return files;
     },
 
     async sendMessage(message) {

@@ -891,13 +891,19 @@
         "create_file_search_knowledge": "Add Source",
         "update_knowledge": "Update Source",
         "create_site_search_knowledge": "Add site",
-        "import_site_search_knowledge":"Add to QA"
+        "import_site_search_knowledge": "Add to QA"
       }
     },
     "openai": {
       "labels": {
         "api_example": "API Example",
-        "videos_price_tip": "The price for video generation is calculated based on the video's duration. The rate is {perSecond} per second.<br>**Generation Cost: {total}**"
+        "create_label": "What would you like to generate?",
+        "videos_price_tip": "The price for video generation is calculated based on the video's duration. The rate is {perSecond} per second.<br>**Generation Cost: {total}**",
+        "newChat": "New Chat"
+      },
+      "default_model": {
+        "label": "Main chat model",
+        "tip": "This model is used for text messages by default. To generate images, video, or audio, select a quick action and choose a suitable model for that task."
       },
       "images_properties": {
         "resolution": "Resolution",
@@ -910,6 +916,23 @@
         "with_audio": "With Audio?",
         "model": "Модель ИИ",
         "promt": "Describe your video scenario in as much detail as possible."
+      },
+      "prompts": {
+        "default": {
+          "placeholder": "Describe as clearly as possible what kind of text you need. For example: \"Write a warm birthday message for my mom\" or \"Create a short story about friendship for kids\""
+        },
+        "generate": {
+          "placeholder": "Describe as fully as possible what should appear in the image. For example: \"A cat in sunglasses lying on the beach, next to a pineapple, sunset in background\" or \"A robot in a futuristic city, comic book style\""
+        },
+        "speech": {
+          "placeholder": "Write what should be spoken and by what kind of voice. For example: \"A calm male voice saying: Welcome\" or \"A cheerful child’s voice reading a short rhyme\""
+        },
+        "video": {
+          "placeholder": "Describe as fully as possible the scenario of your video. For example: \"A dog running through a field, wind blowing through its fur, slow motion, realistic style\" or \"A spaceship flying through fog with blue glow, sci-fi style\""
+        }
+      },
+      "errors": {
+        "create_failed": "Failed to create a new chat. Please try again later."
       },
       "payment_types": {
         "text_input": "Price per 1M input tokens",

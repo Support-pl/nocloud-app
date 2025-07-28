@@ -36,7 +36,7 @@
 
 <script setup>
 import { computed, defineAsyncComponent } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { useChatsStore } from "@/stores/chats.js";
 import { toDate } from "@/functions.js";
 import config from "@/appconfig.js";
@@ -54,18 +54,9 @@ const aiIcon = defineAsyncComponent(() =>
 );
 
 const router = useRouter();
-const route = useRoute();
 const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 const { t } = useI18n();
-
-const offset = computed(() => {
-  if (props.ticket.unread > 9) {
-    return [4, -8];
-  } else {
-    return [10, -8];
-  }
-});
 
 const statusColor = computed(() => {
   switch (props.ticket.status.toLowerCase()) {
@@ -84,13 +75,10 @@ const statusColor = computed(() => {
   }
 });
 
-const titleDecoded = computed(() => decode(props.ticket.title));
+const titleDecoded = computed(() => props.ticket.title || t("openai.labels.newChat"));
 
 function ticketClick(id) {
-  const query = { ...route.query };
-
-  if (props.instanceId) query.from = props.instanceId;
-  router.replace({ path: `/ticket/${id}`, query });
+  router.replace({ path: `/openai/chats/${props.instanceId}/${id}` });
 }
 
 function beauty(ticket) {
@@ -132,12 +120,12 @@ export default { name: "TicketItem" };
 
 .ticket:hover {
   filter: contrast(0.7);
-  transition: 0.2s;
 }
 
 .ticket.compact {
   box-shadow: none;
   border-radius: 0;
+  padding: 5px 15px 10px 40px;
 }
 
 .ticket:not(:last-child) {
@@ -183,23 +171,11 @@ export default { name: "TicketItem" };
   font-weight: bold;
 }
 
-.ticket__department,
 .ticket__time {
   font-size: 0.8rem;
   color: var(--gray);
   font-weight: 600;
   flex-shrink: 0;
-}
-
-.ticket__department {
-  max-width: 140px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.ticket__status-text {
-  white-space: nowrap;
 }
 
 .ticket__model span {
