@@ -64,6 +64,8 @@ export const useAppStore = defineStore("app", () => {
     index: activeTabNum,
   });
 
+  const customHeaderTitle = ref("");
+
   const onLogin = ref({
     redirect: null,
     action: null,
@@ -152,6 +154,7 @@ export const useAppStore = defineStore("app", () => {
     domainInfo,
     transport,
     onRefreshClick,
+    customHeaderTitle,
 
     setOnRefreshClick(v) {
       onRefreshClick.value = v;

@@ -527,7 +527,11 @@ export default {
     };
   },
   computed: {
-    ...mapState(useAppStore, ["activeTab", "onRefreshClick"]),
+    ...mapState(useAppStore, [
+      "activeTab",
+      "onRefreshClick",
+      "customHeaderTitle",
+    ]),
     ...mapState(useAuthStore, [
       "baseURL",
       "billingUser",
@@ -626,6 +630,8 @@ export default {
 
       if (this.headers[this.active]) {
         return this.capitalize(this.$t(this.headers[this.active].title));
+      } else if (this.customHeaderTitle) {
+        return this.capitalize(this.customHeaderTitle);
       } else if (this.$route.meta.headerTitle) {
         // console.log(this.$route.meta.headerTitle);
         // console.log(this.$t(this.$route.meta.headerTitle));

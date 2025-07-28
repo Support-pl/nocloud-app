@@ -298,6 +298,7 @@ const { addToClipboard } = useClipboard();
 
 const authStore = useAuthStore();
 const appStore = useAppStore();
+const { customHeaderTitle } = storeToRefs(appStore);
 const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 const instancesStore = useInstancesStore();
@@ -575,6 +576,19 @@ watch(content, (el) => {
 
   el.addEventListener("scroll", onScroll);
 });
+
+watch(
+  () => chat.value?.topic,
+  (newTopic) => {
+    if (newTopic) {
+      customHeaderTitle.value = newTopic;
+    } else {
+      customHeaderTitle.value = "";
+    }
+  }
+);
+
+onBeforeUnmount(() => (customHeaderTitle.value = ""));
 </script>
 
 <script>

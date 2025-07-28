@@ -8,7 +8,7 @@
         class="chat__tag"
         @close="changeEditing"
       >
-        <span style="margin-bottom: 7px">{{ capitalize($t("editing")) }}:</span>
+        <span style="margin-bottom: 7px">{{ capitalize(t("editing")) }}:</span>
         <span
           style="
             font-size: 14px;
@@ -29,8 +29,8 @@
           allow-clear
           type="text"
           :disabled="disabled"
-          :auto-size="{ minRows: 3, maxRows: 100 }"
-          :placeholder="$t('message') + '...'"
+          :auto-size="{ minRows: minRows, maxRows: 100 }"
+          :placeholder="placeholder ? placeholder : t('message') + '...'"
           @keyup.shift.enter.exact="newLine"
           @keydown.enter.exact.prevent="emits('sendMessage')"
         />
@@ -73,6 +73,7 @@
 <script setup>
 import { capitalize, computed, defineAsyncComponent, ref } from "vue";
 import UploadFiles from "./uploadFiles.vue";
+import { useI18n } from "vue-i18n";
 
 const arrowUpIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ArrowUpOutlined")
@@ -85,6 +86,8 @@ const props = defineProps({
   message: { type: String, default: false },
   editing: { type: Boolean, default: false },
   fileList: { type: Array, required: true },
+  placeholder: { type: String, required: false },
+  minRows: { type: Number, default: 3 },
 });
 
 const emits = defineEmits([
@@ -94,6 +97,8 @@ const emits = defineEmits([
   "update:editing",
   "update:filelist",
 ]);
+
+const { t } = useI18n();
 
 const upload = ref();
 const textarea = ref();
@@ -125,7 +130,7 @@ defineExpose({ changeEditing });
 </script>
 
 <script>
-export default { name: "SupportFooter" };
+export default { name: "SendInput" };
 </script>
 
 <style scoped>

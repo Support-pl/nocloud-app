@@ -1,13 +1,13 @@
 <template>
   <div style="margin-bottom: 10px">
-    {{ capitalize($t("model")) }}:
+    {{ capitalize(t("model")) }}:
     <span>
       {{ model }}
     </span>
   </div>
 
   <template v-if="options.length > 1">
-    {{ $t("Choose another way of communication") }}:
+    {{ t("Choose another way of communication") }}:
     <div class="order__grid">
       <div
         v-for="gate of options"
@@ -43,7 +43,7 @@
   </template>
 
   <template v-if="promptsOptions.length > 0">
-    {{ $t("Select prompts") }}:
+    {{ t("Select prompts") }}:
   </template>
   <a-spin :spinning="isPromptsLoading">
     <a-checkbox-group
@@ -73,17 +73,17 @@
     </a-checkbox-group>
   </a-spin>
 
-  {{ $t("Add prompt") }}:
+  {{ t("Add prompt") }}:
   <a-input
     v-model:value="title"
     style="margin-bottom: 10px"
-    :placeholder="`${capitalize($t('title'))}...`"
+    :placeholder="`${capitalize(t('title'))}...`"
   />
   <a-textarea
     v-model:value="message"
     allow-clear
     :auto-size="{ minRows: 2, maxRows: 100 }"
-    :placeholder="`${capitalize($t('description'))}...`"
+    :placeholder="`${capitalize(t('description'))}...`"
     @keyup.shift.enter.exact="newLine"
     @keydown.enter.exact.prevent="sendPrompt"
   />
@@ -95,17 +95,17 @@
     :loading="isPromptLoading"
     @click="sendPrompt"
   >
-    {{ $t("Add") }}
+    {{ t("Add") }}
   </a-button>
 
   <a-popconfirm
-    :title="$t('support_view.delet_chat.message')"
-    :ok-text="$t('Confirm')"
-    :cancel-text="$t('Cancel')"
+    :title="t('support_view.delet_chat.message')"
+    :ok-text="t('Confirm')"
+    :cancel-text="t('Cancel')"
     @confirm="deleteChat"
   >
     <a-button :loading="isDeleteLoading" style="margin-left: 10px" danger ghost>
-      {{ capitalize($t("support_view.delet_chat.action")) }}
+      {{ capitalize(t("support_view.delet_chat.action")) }}
     </a-button>
   </a-popconfirm>
 </template>
@@ -132,19 +132,6 @@ import { getImageName, onError, generateUuid } from "@/functions.js";
 import { toRefs } from "vue";
 import { storeToRefs } from "pinia";
 
-const downIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/DownOutlined")
-);
-const aiIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/RobotOutlined")
-);
-const upIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/UpOutlined")
-);
-const deleteIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CloseOutlined")
-);
-
 const props = defineProps({
   chat: { type: Object, required: true },
   isLoading: { type: Boolean, default: false },
@@ -153,7 +140,7 @@ const { chat } = toRefs(props);
 
 const router = useRouter();
 const route = useRoute();
-const i18n = useI18n();
+const { t } = useI18n();
 const { openNotification } = useNotification();
 
 const authStore = useAuthStore();
@@ -236,11 +223,11 @@ async function selectPrompts(reduce = []) {
         data: { ...props.chat.meta.data, prompts: result },
       },
     });
-    openNotification("success", { message: i18n.t("Done") });
+    openNotification("success", { message: t("Done") });
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
-    openNotification("error", { message: i18n.t(message) });
+    openNotification("error", { message: t(message) });
   } finally {
     isPromptsLoading.value = false;
   }
@@ -273,11 +260,11 @@ async function sendPrompt() {
     });
     title.value = "";
     message.value = "";
-    openNotification("success", { message: i18n.t("Done") });
+    openNotification("success", { message: t("Done") });
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
-    openNotification("error", { message: i18n.t(message) });
+    openNotification("error", { message: t(message) });
   } finally {
     isPromptLoading.value = false;
   }
@@ -295,11 +282,11 @@ async function updateChat() {
       gateways: [gateway.value],
     });
 
-    openNotification("success", { message: i18n.t("Done") });
+    openNotification("success", { message: t("Done") });
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
-    openNotification("error", { message: i18n.t(message) });
+    openNotification("error", { message: t(message) });
   } finally {
     isEditLoading.value = false;
     supportStore.isAddingTicket = false;

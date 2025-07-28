@@ -75,10 +75,10 @@ const statusColor = computed(() => {
   }
 });
 
-const titleDecoded = computed(() => decode(props.ticket.title));
+const titleDecoded = computed(() => props.ticket.title || t("openai.labels.newChat"));
 
 function ticketClick(id) {
-  router.replace({ path: `/openai/${props.instanceId}/${id}` });
+  router.replace({ path: `/openai/chats/${props.instanceId}/${id}` });
 }
 
 function beauty(ticket) {

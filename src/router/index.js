@@ -316,7 +316,7 @@ const routes = [
         component: () => import("@/routes/dns/editor.vue"),
       },
       {
-        path: "/openai/:id/:chatId?",
+        path: "/openai/chats/:id/:chatId?",
         name: "openaiChats",
         meta: {
           mustBeLoggined: true,
