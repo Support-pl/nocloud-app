@@ -358,7 +358,7 @@ const chats = computed(() => {
       id: ticket.uuid,
       tid: ticket.uuid.slice(0, 8),
       title: ticket.topic,
-      date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
+      date: Number(ticket.meta.lastMessage?.sent) || Number(ticket.created),
       message: ticket.meta.lastMessage?.content ?? "",
       status: status
         .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)

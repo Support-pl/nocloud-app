@@ -424,6 +424,7 @@ export const useChatsStore = defineStore("chats", () => {
           users: [authStore.userdata.uuid],
           topic: data.chat.subject,
           role: Role.OWNER,
+          created: Date.now(),
           meta: new ChatMeta({
             lastMessage: data.chat.message,
             data: data.chat.meta?.reduce((result, { key, value }) => {
