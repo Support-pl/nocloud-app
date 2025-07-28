@@ -1,7 +1,7 @@
 <template>
-  <div class="chat">
-    <div v-if="chat" class="chat__subheader_container">
-      <div class="chat__subheader">
+  <div :class="{ chat: true, fullscreen: isFullScreanChat }">
+    <div class="chat__subheader_container">
+      <div v-if="chat" class="chat__subheader">
         <a-tag color="primary" class="chat__subheader_model">
           <template #icon>
             <ai-icon />
@@ -14,6 +14,22 @@
         <a-button shape="circle" size="large" @click="isSettingsVisible = true">
           <template #icon>
             <settings-icon />
+          </template>
+        </a-button>
+
+        <a-button
+          style="margin-left: 5px"
+          shape="circle"
+          size="large"
+          @click="
+            !isFullScreanChat
+              ? openChatInFullscreen()
+              : closeChatFromFullscreen()
+          "
+        >
+          <template #icon>
+            <open-fullscrean-icon v-if="!isFullScreanChat" />
+            <close-fullscrean-icon v-else />
           </template>
         </a-button>
 
@@ -132,7 +148,7 @@
       <div style="margin-top: 145px"></div>
     </div>
 
-    <div ref="chatList" class="chat__list">
+    <div v-if="!isFullScreanChat" ref="chatList" class="chat__list">
       <div style="padding: 5px 10px 0px 10px">
         <a-input
           v-model:value="searchString"
@@ -236,6 +252,7 @@ import { useAppStore } from "@/stores/app";
 import TicketItem from "@/components/openai-chats/ticketItem.vue";
 import CreateChat from "@/components/openai-chats/createChat.vue";
 import ChatSettings from "@/components/openai-chats/chatSettings.vue";
+import { full } from "markdown-it-emoji";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -265,6 +282,14 @@ const aiIcon = defineAsyncComponent(() =>
 
 const settingsIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SettingOutlined")
+);
+
+const openFullscreanIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FullscreenOutlined")
+);
+
+const closeFullscreanIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/FullscreenExitOutlined")
 );
 
 const route = useRoute();
@@ -374,6 +399,8 @@ const model = computed(() => {
     )?.name || chat.value?.meta?.data?.model?.kind?.value
   );
 });
+
+const isFullScreanChat = computed(() => route.query.fullscreen === "true");
 
 watch(
   chats,
@@ -529,6 +556,16 @@ function onScroll() {
     el.scrollHeight - el.scrollTop - el.clientHeight > 300;
 }
 
+const openChatInFullscreen = () => {
+  const url = new URL(window.location.href);
+  url.searchParams.set("fullscreen", "true");
+  window.open(url.toString(), "_blank");
+};
+
+const closeChatFromFullscreen = () => {
+  router.replace({ query: { fullscreen: "false" } });
+};
+
 onBeforeUnmount(() => {
   content.value?.removeEventListener("scroll", onScroll);
 });
@@ -554,6 +591,12 @@ export default { name: "OpenaiChat" };
   gap: 10px;
   height: 100%;
   background: var(--bright_bg);
+}
+
+.chat.fullscreen {
+  display: flex;
+  flex-direction: column;
+  padding: 0px 25px;
 }
 
 .chat__list {

@@ -2,6 +2,7 @@
   <div class="application">
     <a-layout>
       <a-layout-header
+        v-if="route.query.fullscreen !== 'true'"
         :style="{
           padding: 0,
           color: 'var(--gloomy_font)',
