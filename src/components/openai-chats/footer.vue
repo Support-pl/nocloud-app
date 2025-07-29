@@ -194,7 +194,7 @@ export default { name: "ChatsFooter" };
 .chat__footer {
   padding-top: 5px;
   padding-bottom: 10px;
-  max-width: 800px;
+  max-width: 900px;
   width: 100%;
   background-color: var(--bright_bg);
   border-radius: 12px;

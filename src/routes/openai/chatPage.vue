@@ -524,9 +524,9 @@ async function loadMessages(update) {
 }
 
 function scrollToBottom(timeout = 0) {
-  if (!content.value) return;
-
   setTimeout(() => {
+    if (!content.value) return;
+
     content.value?.scrollTo(0, content.value?.scrollHeight);
   }, timeout);
 }

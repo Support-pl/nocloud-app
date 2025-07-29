@@ -899,7 +899,7 @@
         "api_example": "API Example",
         "create_label": "What would you like to generate?",
         "videos_price_tip": "The price for video generation is calculated based on the video's duration. The rate is {perSecond} per second.<br>**Generation Cost: {total}**",
-        "newChat": "New Chat"
+        "newChat": "New chat"
       },
       "default_model": {
         "label": "Main chat model",
