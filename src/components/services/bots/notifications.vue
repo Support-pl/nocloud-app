@@ -91,14 +91,18 @@
 
       <a-col span="24" v-if="currentChannel.channel_key === 'telegram'">
         <span
+          v-if="
+            currentChannelMeta.telegram_bot_username &&
+            currentChannelMeta.verification_code
+          "
           v-html="
             marked(
               t('bots_notifications.labels.instruction_tg')
                 .replaceAll(
-                  '{bot_username}',
+                  'bot_username',
                   currentChannelMeta.telegram_bot_username
                 )
-                .replaceAll('{user_code}', currentChannelMeta.verification_code)
+                .replaceAll('user_code', currentChannelMeta.verification_code)
             )
           "
         ></span>
@@ -167,10 +171,15 @@ onMounted(async () => {
 
     await aiBotsStore.getBot(props.service.data.bot_uuid);
 
-    notificationsData.value = await api.post("/agents/api/get_subscriptions", {
+    const data = await api.post("/agents/api/get_subscriptions", {
       bot: bot.value.id,
     });
-    console.log(notificationsData.value, channels.value);
+
+    data.subscriptions = data.subscriptions || [];
+    data.receivers = data.receivers || [];
+    data.event_types = data.event_types || [];
+    data.channels = data.channels || [];
+    notificationsData.value = data;
   } catch (err) {
     const opts = {
       message: `Error: ${
