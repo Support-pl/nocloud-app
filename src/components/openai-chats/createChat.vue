@@ -168,6 +168,7 @@ async function sendChatMessage(result, chatId) {
 async function createChat(message) {
   const response = await chatsStore.createChat({
     gateways: [],
+    department: "openai",
     chat: {
       message,
       subject: null,
