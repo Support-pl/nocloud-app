@@ -814,7 +814,22 @@
       "tabs": {
         "chats": "Chats",
         "settings": "Settings",
-        "databases": "Knowledge bases"
+        "databases": "Knowledge bases",
+        "notifications": "Notifications"
+      }
+    },
+    "bots_notifications": {
+      "labels": {
+        "instruction_tg": "### 🔔 Enable Telegram Notifications\n\nTo receive notifications directly in Telegram, you need to connect the bot.\n\n**Here's how:**\n\n1. Send this code to the bot [`@{bot_username}`](https://t.me/{bot_username}):\n`/connect {user_code}`\n\n**or**\n\n2. Simply click the button below — Telegram will open automatically:\n\n[🔗 Connect Telegram Notifications](https://t.me/{bot_username}?start=connect_{user_code})"
+      },
+      "actions": {
+        "open_chanell": "Configure",
+        "delete_chanell": "Delete",
+        "delete_chanell_confirm": "Are you sure you want to delete the channel?",
+        "edit_chanell": "Edit Channel"
+      },
+      "fields": {
+        "recipient": "Your Email"
       }
     },
     "bots_databases": {
