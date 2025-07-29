@@ -70,6 +70,10 @@ export const useAiBotsStore = defineStore("aiBots", () => {
       token
     )}`;
 
+    if (socket.value) {
+      return;
+    }
+
     try {
       socket.value = new WebSocket(wsUrl);
 

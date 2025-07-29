@@ -18,27 +18,36 @@
           </div>
         </div>
 
-        <div class="activate_btn">
-          <a-button type="primary" block shape="round" @click="orderConfirm">
-            {{ capitalize($t("activate")) }}
-          </a-button>
-          <a-modal
-            :title="$t('Confirm')"
-            :open="modal.confirmCreate"
-            :confirm-loading="modal.confirmLoading"
-            :cancel-text="$t('Cancel')"
-            @ok="orderClickHandler"
-            @cancel="
-              () => {
-                modal.confirmCreate = false;
-              }
-            "
-          >
-            <p>
-              {{ $t("order_services.Do you want to activate") }}:
-              {{ showcase.promo?.[locale]?.title ?? showcase.title }}
-            </p>
-          </a-modal>
+        <div class="calculator">
+          <promocode-menu
+            :plan-id="plan"
+            :applyed-promocode="planWithApplyedPromocode"
+            :is-flavors-loading="fetchLoading"
+            @update:promocode="promocode = $event"
+          />
+
+          <div class="activate_btn">
+            <a-button type="primary" block shape="round" @click="orderConfirm">
+              {{ capitalize($t("activate")) }}
+            </a-button>
+            <a-modal
+              :title="$t('Confirm')"
+              :open="modal.confirmCreate"
+              :confirm-loading="modal.confirmLoading"
+              :cancel-text="$t('Cancel')"
+              @ok="orderClickHandler"
+              @cancel="
+                () => {
+                  modal.confirmCreate = false;
+                }
+              "
+            >
+              <p>
+                {{ $t("order_services.Do you want to activate") }}:
+                {{ showcase.promo?.[locale]?.title ?? showcase.title }}
+              </p>
+            </a-modal>
+          </div>
         </div>
       </div>
     </div>
@@ -52,8 +61,8 @@ import { computed, ref, watch, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
-import api from "@/api.js";
 import Loading from "@/components/ui/loading.vue";
+import PromocodeMenu from "@/components/ui/promocode-menu.vue";
 
 import { useAppStore } from "@/stores/app.js";
 import { useAuthStore } from "@/stores/auth.js";
@@ -69,6 +78,7 @@ import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
 import { marked } from "marked";
 import useCreateInstance from "@/hooks/instances/create";
+import { usePromocodesStore } from "@/stores/promocodes";
 
 const router = useRouter();
 const route = useRoute();
@@ -89,6 +99,7 @@ const currenciesStore = useCurrenciesStore();
 const { userCurrency, defaultCurrency } = storeToRefs(currenciesStore);
 const { getShowcases } = storeToRefs(spStore);
 const { createInstance } = useCreateInstance();
+const promocodesStore = usePromocodesStore();
 
 const plan = ref(null);
 const service = ref(null);
@@ -100,14 +111,18 @@ const fetchLoading = ref(false);
 const plansLoading = ref(false);
 const priceForToken = ref();
 
+const promocode = ref(null);
+const planWithApplyedPromocode = ref(null);
+
 const modal = ref({ confirmCreate: false, confirmLoading: false });
 
 const getProducts = computed(() => {
   const { title, products } =
-    plans.value.find(({ uuid }) => uuid === plan.value) ?? {};
+    planWithApplyedPromocode.value ||
+    (plans.value.find(({ uuid }) => uuid === plan.value) ?? {});
 
   return {
-    price: products["bot"].price,
+    price: products["bot"].price || 0,
     title,
   };
 });
@@ -283,7 +298,7 @@ async function createBot(info, instance) {
       orderData,
       instance,
       provider.value,
-      null,
+      promocode.value?.uuid,
       null,
       t("Done")
     );
@@ -345,6 +360,21 @@ async function fetchPriceForTokens() {
     priceForToken.value = amounts[0] || price;
   }
 }
+
+watch([promocode, userCurrency], async () => {
+  if (!promocode.value || !userCurrency.value || !plan.value) {
+    planWithApplyedPromocode.value = null;
+    return;
+  }
+
+  const response = await promocodesStore.applyToPlan({
+    promocodes: [promocode.value.uuid],
+    billingPlan: plan.value,
+    addons: [],
+  });
+
+  planWithApplyedPromocode.value = response.toJson().billingPlans[0];
+});
 </script>
 
 <script>
@@ -481,11 +511,19 @@ export default { name: "AiBotsComponent" };
   }
 }
 
-.activate_btn {
+.calculator {
   position: absolute;
   bottom: 10px;
   right: 15px;
-  width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.activate_btn {
+  width: 150px;
+  margin-top: 10px;
 }
 
 @media screen and (max-width: 1024px) {
