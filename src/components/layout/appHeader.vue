@@ -239,6 +239,17 @@
               </div>
             </div>
           </transition>
+
+          <transition name="header__item-anim">
+            <div
+              v-if="isNeedBalance && $route.meta.isNeedRefreshButton"
+              @click="refresh"
+              class="icon__wrapper"
+            >
+              <reload-icon />
+            </div>
+          </transition>
+
           <transition name="header__item-anim">
             <div v-if="isNeedBalance && isLogged" class="header__balance">
               <balance />
@@ -369,6 +380,7 @@ export default {
     downIcon,
     verificationIcon,
     VerificationModal,
+    reloadIcon,
   },
   emits: ["update:isButtonVisible"],
   data() {
@@ -515,7 +527,11 @@ export default {
     };
   },
   computed: {
-    ...mapState(useAppStore, ["activeTab"]),
+    ...mapState(useAppStore, [
+      "activeTab",
+      "onRefreshClick",
+      "customHeaderTitle",
+    ]),
     ...mapState(useAuthStore, [
       "baseURL",
       "billingUser",
@@ -614,6 +630,8 @@ export default {
 
       if (this.headers[this.active]) {
         return this.capitalize(this.$t(this.headers[this.active].title));
+      } else if (this.customHeaderTitle) {
+        return this.capitalize(this.customHeaderTitle);
       } else if (this.$route.meta.headerTitle) {
         // console.log(this.$route.meta.headerTitle);
         // console.log(this.$t(this.$route.meta.headerTitle));
@@ -862,6 +880,11 @@ export default {
     },
     onCodeConfirm() {
       this.fetchUserData(true);
+    },
+    refresh() {
+      if (this.onRefreshClick) {
+        this.onRefreshClick();
+      }
     },
   },
 };

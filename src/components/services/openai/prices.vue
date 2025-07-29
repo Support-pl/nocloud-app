@@ -640,7 +640,7 @@ watch(typesOptions, (data) => {
 });
 
 watch(modelsOptions, (data) => {
-  if (!data.find((v) => v.value === selectedType.value)) {
+  if (!data.find((v) => v.value === selectedModel.value)) {
     emits("update:selectedModel", data[0]?.value);
   }
 });

@@ -64,6 +64,8 @@ export const useAppStore = defineStore("app", () => {
     index: activeTabNum,
   });
 
+  const customHeaderTitle = ref("");
+
   const onLogin = ref({
     redirect: null,
     action: null,
@@ -74,6 +76,8 @@ export const useAppStore = defineStore("app", () => {
       avaliable: Object.keys(config.services).map((el) => el.toLowerCase()),
     }),
   });
+
+  const onRefreshClick = ref();
 
   const buttons = computed(() => {
     const invoices = useInvoicesStore();
@@ -149,6 +153,12 @@ export const useAppStore = defineStore("app", () => {
     isButtonsVisible,
     domainInfo,
     transport,
+    onRefreshClick,
+    customHeaderTitle,
+
+    setOnRefreshClick(v) {
+      onRefreshClick.value = v;
+    },
 
     setTabByName(value) {
       if (["root", "openVDC"].includes(value)) value = "services";

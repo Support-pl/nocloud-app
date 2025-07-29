@@ -175,7 +175,13 @@
         size="small"
         type="primary"
         :disabled="!service.status.includes('RUNNING')"
-        @click="moduleEnter"
+        @click="
+          router.replace({
+            name: 'openaiChats',
+            params: { id: service.uuid },
+            query: { create: true },
+          })
+        "
       >
         {{ capitalize($t("new chat")) }}
       </a-button>
@@ -185,7 +191,7 @@
       <loading />
     </a-col>
     <a-col v-else-if="chats.length > 0" span="24">
-      <openai-ticket-item
+      <ticket-item
         v-for="chat of chats"
         :key="chat.id"
         :ticket="chat"
@@ -196,12 +202,6 @@
       <a-empty />
     </a-col>
   </a-row>
-
-  <add-ticket
-    :model="selectedModelV2"
-    :provider="selectedProviderV2"
-    :instance-id="service.uuid"
-  />
 </template>
 
 <script setup>
@@ -216,18 +216,17 @@ import {
 import { EyeOutlined as visibleIcon } from "@ant-design/icons-vue";
 import { Status } from "@/libs/cc_connect/cc_pb.js";
 import openaiPrices from "./prices.vue";
-
 import { useChatsStore } from "@/stores/chats.js";
 import { useSupportStore } from "@/stores/support.js";
 import { useInstancesStore } from "@/stores/instances.js";
 import { useClipboard, useCurrency } from "@/hooks/utils";
 import SwaggerUI from "swagger-ui";
 import "swagger-ui/dist/swagger-ui.css";
-import addTicket from "@/components/support/addTicket.vue";
-import OpenaiTicketItem from "@/components/support/openaiTicketItem.vue";
 import loading from "@/components/ui/loading.vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "@/stores/app";
+import TicketItem from "@/components/openai-chats/ticketItem.vue";
+import router from "@/router";
 
 const invisibleIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EyeInvisibleOutlined")
@@ -282,10 +281,6 @@ onMounted(() => {
   appStore.setTabByNameNoRoute("openai-api");
 });
 
-function moduleEnter() {
-  supportStore.isAddingTicket = !supportStore.isAddingTicket;
-}
-
 const isVisible = ref(false);
 const isSwaggerVideosInitWas = ref(false);
 const isLoading = ref(false);
@@ -306,7 +301,7 @@ const exampleV1 = `
   }'
 `;
 
-const selectedModelV2 = ref("gpt-4o");
+const selectedModelV2 = ref("gpt-4o-mini");
 const selectedProviderV2 = ref("openai");
 const selectedTypeV2 = ref("text");
 const baseUrlV2 = `${window.location.origin}/api/openai`;

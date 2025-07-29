@@ -446,7 +446,7 @@ export default {
             approver_email: this.verification.email,
           },
           title: this.options.tarif,
-          billing_plan: { uuid: this.plan },
+          billing_plan: plan,
           product: this.options.provider,
         },
       ];

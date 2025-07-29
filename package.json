@@ -28,7 +28,7 @@
     "markdown-it-emoji": "^3.0.0",
     "marked": "^5.1.2",
     "marked-mangle": "^1.1.11",
-    "nocloud-proto": "github:slntopp/nocloud-proto#4c71aecacd7e07096bfff5a6a420f9d11a80edb7",
+    "nocloud-proto": "github:slntopp/nocloud-proto#d76ade2457f5243531be86a34d6750a589b6d322",
     "nocloud-ui": "^1.0.19",
     "nocloudjsrest": "^1.5.17",
     "pinia": "^2.3.1",

@@ -6,12 +6,6 @@
     :before-upload="beforeUpload"
     :show-upload-list="false"
     @remove="removeFile"
-    :style="{
-      position: 'absolute',
-      bottom: fileList.length > 0 ? '110px' : '5px',
-      right: '5px',
-      'z-index': '100',
-    }"
   >
     <slot>
       <div class="upload__button">
@@ -42,7 +36,6 @@
 <script setup>
 import { defineAsyncComponent, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import api from "@/api.js";
 import { h } from "vue";
 
 const uploadIcon = defineAsyncComponent(() =>
@@ -56,10 +49,10 @@ const props = defineProps({
   editing: { type: String, default: null },
   replies: { type: Array, default: () => [] },
   fileListStyle: { type: [String, Array, Object], default: null },
+  fileList: { type: Array, required: true },
 });
-const route = useRoute();
+const emits = defineEmits(["update:file-list"]);
 
-const fileList = ref([]);
 const hovered = ref("");
 
 watch(
@@ -77,25 +70,27 @@ watch(
         const [preview, name] = url.split('" alt="');
         const uuid = attachments.find((id) => preview.includes(id));
 
-        fileList.value.push({ preview, name, uuid });
+        emits("update:file-list", [...props.fileList, { preview, name, uuid }]);
       });
     } else {
-      fileList.value = [];
+      emits("update:file-list", []);
     }
   }
 );
 
 async function beforeUpload(file) {
   await setPreview(file);
-  fileList.value.push(file);
+  emits("update:file-list", [...props.fileList, file]);
+
   return false;
 }
 
 function removeFile(file) {
   if (file.uuid) return;
-  const i = fileList.value.indexOf(file);
-
-  fileList.value.splice(i, 1);
+  const i = props.fileList.indexOf(file);
+  const data = [...props.fileList];
+  data.splice(i, 1);
+  emits("update:file-list", data);
 }
 
 async function setPreview(file) {
@@ -112,25 +107,7 @@ function getBase64(file) {
   });
 }
 
-async function sendFiles() {
-  for await (const file of fileList.value) {
-    if (file.uuid) continue;
-
-    const { uuid, object_id: objectId } = await api.put("/attachments", {
-      title: file.name,
-      chat: route.params.id,
-    });
-    await fetch(objectId, { method: "PUT", body: file });
-
-    const { url } = await api.get(`/attachments/${uuid}`);
-    file.url = `https://${url}`;
-    file.uuid = uuid;
-  }
-
-  return fileList.value;
-}
-
-defineExpose({ fileList, sendFiles });
+defineExpose();
 </script>
 
 <script>
