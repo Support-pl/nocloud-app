@@ -88,7 +88,10 @@ let typingInterval = null;
 let isTyping = ref(false);
 
 watch(message, (newVal) => {
-  if (newVal.length < fullMessage.value.length) {
+  if (
+    newVal.length < fullMessage.value.length &&
+    newVal.startsWith(visibleMessage.value)
+  ) {
     return;
   }
   if (newVal === fullMessage.value) return;
