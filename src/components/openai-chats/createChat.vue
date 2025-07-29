@@ -7,7 +7,7 @@
     </div>
 
     <a-collapse
-      style="max-width: 800px; margin: auto; background: var(--bright_font)"
+      style="max-width: 900px; margin: auto; background: var(--bright_font)"
     >
       <a-collapse-panel key="1">
         <template #header>
@@ -240,7 +240,7 @@ export default { name: "SupportFooter" };
 .chat__footer {
   padding-top: 5px;
   padding-bottom: 10px;
-  max-width: 800px;
+  max-width: 900px;
   width: 100%;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
