@@ -168,9 +168,7 @@
         >
           <a-button
             @click="
-              router.push({
-                name: 'openaiChats',
-                params: { id: instance.id },
+              router.replace({
                 query: { create: true },
               })
             "

@@ -160,6 +160,19 @@
               <bot-database v-if="route.query.database" :service="service" />
               <bot-databases v-else :service="service" />
             </a-tab-pane>
+
+            <a-tab-pane
+              :disabled="isSuspended || isPending"
+              key="notifications"
+            >
+              <template #tab>
+                <span class="tab">
+                  {{ t("ai_bot_page.tabs.notifications") }}
+                </span>
+              </template>
+
+              <bot-notifications :service="service" />
+            </a-tab-pane>
           </a-tabs>
         </template>
 
@@ -187,6 +200,7 @@ import { useChatsStore } from "@/stores/chats";
 import { useAiBotsStore } from "@/stores/aiBots";
 import BotDatabase from "@/components/services/bots/database.vue";
 import BotSettings from "@/components/services/bots/settings.vue";
+import BotNotifications from "@/components/services/bots/notifications.vue";
 import { marked } from "marked";
 import { useInvoicesStore } from "@/stores/invoices";
 import { GetInvoicesRequest } from "nocloud-proto/proto/es/billing/billing_pb";
