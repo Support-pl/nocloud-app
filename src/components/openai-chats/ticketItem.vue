@@ -36,7 +36,7 @@
 
 <script setup>
 import { computed, defineAsyncComponent } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useChatsStore } from "@/stores/chats.js";
 import { toDate } from "@/functions.js";
 import config from "@/appconfig.js";
@@ -54,6 +54,7 @@ const aiIcon = defineAsyncComponent(() =>
 );
 
 const router = useRouter();
+const route = useRoute();
 const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 const { t } = useI18n();
@@ -75,10 +76,16 @@ const statusColor = computed(() => {
   }
 });
 
-const titleDecoded = computed(() => props.ticket.title || t("openai.labels.newChat"));
+const titleDecoded = computed(
+  () => props.ticket.title || t("openai.labels.newChat")
+);
 
 function ticketClick(id) {
-  router.replace({ path: `/openai/chats/${props.instanceId}/${id}` });
+  if (route.path.startsWith(`/openai/chats/${props.instanceId}/`)) {
+    router.replace({ params: { id: props.instanceId, chatId: id } });
+  } else {
+    router.push({ path: `/openai/chats/${props.instanceId}/${id}` });
+  }
 }
 
 function beauty(ticket) {

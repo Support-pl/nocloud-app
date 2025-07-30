@@ -166,8 +166,12 @@ async function sendChatMessage(result, chatId) {
 }
 
 async function createChat(message) {
+  const { admins } =
+    chatsStore.defaults.departments.find(({ key }) => key === "openai") ?? {};
+
   const response = await chatsStore.createChat({
     gateways: [],
+    admins: admins,
     department: "openai",
     chat: {
       message,

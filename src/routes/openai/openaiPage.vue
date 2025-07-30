@@ -95,7 +95,7 @@
             </a-collapse-panel>
           </a-collapse>
 
-          <component :is="getModuleButtons" :service="service" />
+          <openai-draw :service="service" />
         </template>
 
         <loading v-else />
@@ -107,7 +107,7 @@
 <script setup>
 import { computed, defineAsyncComponent, h, ref, watch } from "vue";
 import { useNotification } from "@/hooks/utils";
-import config from "@/appconfig.js";
+import OpenaiDraw from "@/components/services/openai/draw.vue";
 
 import { useAuthStore } from "@/stores/auth.js";
 import { useChatsStore } from "@/stores/chats.js";
@@ -180,23 +180,6 @@ const getTagColor = computed(() => {
     default:
       return "red";
   }
-});
-const getModuleButtons = computed(() => {
-  if (!service.value.groupname) return;
-  const { status, state } = service.value;
-  const serviceType = config
-    .getServiceType(service.value.groupname)
-    ?.toLowerCase();
-
-  const components = import.meta.glob("@/components/services/*/draw.vue");
-  const component = Object.keys(components).find((key) =>
-    key.includes(`/${serviceType}/draw.vue`)
-  );
-
-  if (!components[component]) return;
-  if (serviceType === undefined) return;
-  if (!(status === "Active" || state?.state === "RUNNING")) return;
-  return defineAsyncComponent(() => components[component]());
 });
 const isActionsActive = computed(() => {
   const key = service.value.product ?? service.value.config?.product;
