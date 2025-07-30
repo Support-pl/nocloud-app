@@ -35,6 +35,7 @@
         v-for="event in eventTypes"
         span="12"
         class="chanell_notification_rule"
+        :style="chanell.configured ? '' : 'opacity: 0.6'"
       >
         <a-switch
           :disabled="!chanell.configured"
@@ -91,6 +92,7 @@
 
       <a-col span="24" v-if="currentChannel.channel_key === 'telegram'">
         <span
+          id="tg_instruction"
           v-if="
             currentChannelMeta.telegram_bot_username &&
             currentChannelMeta.verification_code
@@ -139,6 +141,31 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import api from "@/api";
 import { marked } from "marked";
+
+const renderer = new marked.Renderer();
+
+renderer.link = function (href, title, text) {
+  return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+};
+
+renderer.code = function (code, language) {
+  const escapedCode = code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const uid = `copy-code-${Math.random().toString(36).substring(2, 8)}`;
+
+  return `
+    <div class="code-block" style="position:relative;">
+      <pre><code id="${uid}" class="language-${language}">${escapedCode}</code></pre>
+      <button
+        class="copy-button"
+        style="position:absolute; top:5px; right:5px;"
+        onclick="navigator.clipboard.writeText(document.getElementById('${uid}').innerText)">
+        Copy
+      </button>
+    </div>
+  `;
+};
+
+marked.setOptions({ renderer });
 
 const props = defineProps({
   service: { type: Object, required: true },
@@ -226,7 +253,9 @@ const handleOpenChanellSettings = (chanell) => {
   }
 
   if (currentChannel.value.channel_key === "telegram") {
-    handleUpdateChannel();
+    setTimeout(() => {
+      handleUpdateChannel();
+    }, 50);
   }
 
   isCurrentChannelOpen.value = true;
@@ -342,6 +371,25 @@ watch(isCurrentChannelOpen, (value) => {
   if (!value) {
     currentChannelMeta.value = {};
   }
+});
+
+watch(currentChannelMeta, () => {
+  setTimeout(() => {
+    const tgInstruction = document.getElementById("tg_instruction");
+    if (!tgInstruction) {
+      return;
+    }
+
+    const code = tgInstruction.querySelector("code");
+    code.style.cursor = "pointer";
+    code.addEventListener("click", async () => {
+      navigator.clipboard.writeText(code.innerText);
+
+      openNotification("success", {
+        message: `${t("Done")}!`,
+      });
+    });
+  }, 50);
 });
 </script>
 
