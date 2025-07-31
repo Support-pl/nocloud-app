@@ -103,7 +103,7 @@ const { namespaces } = storeToRefs(namespacesStore);
 const instancesStore = useInstancesStore();
 const { userCurrency } = storeToRefs(useCurrenciesStore());
 const { getShowcases } = storeToRefs(spStore);
-const { deployService, createInstance } = useCreateInstance(spStore);
+const { createInstance } = useCreateInstance(spStore);
 
 const plan = ref(null);
 const service = ref(null);
@@ -270,7 +270,7 @@ function orderClickHandler() {
     title: authStore.userdata.title + Date.now(),
     type: "openai",
     sp: provider.value,
-    instances: [instance],
+    instances: [],
   };
 
   const info = !service.value
@@ -278,8 +278,7 @@ function orderClickHandler() {
     : JSON.parse(JSON.stringify(serviceItem));
   const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
 
-  if (group) group.instances = [...group.instances, instance];
-  else if (service.value) info.instancesGroups.push(newGroup);
+  if (!group && service.value) info.instancesGroups.push(newGroup);
 
   if (!authStore.userdata.uuid) {
     const showcase =
