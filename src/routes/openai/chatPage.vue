@@ -1,7 +1,10 @@
 <template>
-  <div :class="{ chat: true, fullscreen: isFullScreanChat }">
+  <div :class="{ chat: true }">
     <div class="chat__subheader_container">
-      <div v-if="chat" class="chat__subheader">
+      <div
+        v-if="chat"
+        :class="{ chat__subheader: true, chats_opened: !isChatMenuClosed }"
+      >
         <a-tag color="primary" class="chat__subheader_model">
           <template #icon>
             <ai-icon />
@@ -65,40 +68,48 @@
         :instance="instance"
       />
     </div>
-    <div v-else ref="content" class="chat__content">
-      <template v-for="(reply, i) in replies" :key="i">
-        <span v-if="isDateVisible(replies, i)" class="chat__date">
-          {{ reply.date.split(" ")[0] }}
-        </span>
 
-        <a-popover
-          :overlay-class-name="
-            reply.error ? 'chat__tooltip error' : 'chat__tooltip'
-          "
-          :trigger="reply.error ? 'click' : 'hover'"
-          :placement="isAdminSent(reply) ? 'rightBottom' : 'leftBottom'"
-        >
-          <template #content>
-            <div style="cursor: pointer" @click="addToClipboard(reply.message)">
-              <copy-icon /> {{ capitalize($t("copy")) }}
-            </div>
-            <div
-              v-if="isEditable(reply)"
-              style="cursor: pointer; margin-top: 5px"
-              @click="footer.changeEditing(reply)"
-            >
-              <edit-icon /> {{ capitalize($t("edit")) }}
-            </div>
-          </template>
+    <div v-else class="chat__container">
+      <div
+        ref="content"
+        :class="{ chat__content: true, chats_opened: !isChatMenuClosed }"
+      >
+        <template v-for="(reply, i) in replies" :key="i">
+          <span v-if="isDateVisible(replies, i)" class="chat__date">
+            {{ reply.date.split(" ")[0] }}
+          </span>
 
-          <div
-            :key="`${i}_message`"
-            class="chat__message"
-            :class="[
-              isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
-            ]"
+          <a-popover
+            :overlay-class-name="
+              reply.error ? 'chat__tooltip error' : 'chat__tooltip'
+            "
+            :trigger="reply.error ? 'click' : 'hover'"
+            :placement="isAdminSent(reply) ? 'rightBottom' : 'leftBottom'"
           >
-            <pre>
+            <template #content>
+              <div
+                style="cursor: pointer"
+                @click="addToClipboard(reply.message)"
+              >
+                <copy-icon /> {{ capitalize($t("copy")) }}
+              </div>
+              <div
+                v-if="isEditable(reply)"
+                style="cursor: pointer; margin-top: 5px"
+                @click="footer.changeEditing(reply)"
+              >
+                <edit-icon /> {{ capitalize($t("edit")) }}
+              </div>
+            </template>
+
+            <div
+              :key="`${i}_message`"
+              class="chat__message"
+              :class="[
+                isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
+              ]"
+            >
+              <pre>
               <message-content :uuid="reply.uuid" :message="reply.message"/>
               <audio-player
                v-if="files[reply.uuid]?.length===1 && files[reply.uuid]?.[0]?.name.endsWith('.mp3')"
@@ -121,78 +132,116 @@
               
             </pre>
 
-            <div class="chat__info">
-              <span>{{ reply.name }}</span>
-              <span>{{ reply.date.slice(-8, -3) }}</span>
-            </div>
-
-            <loading-icon v-if="reply.sending" class="msgStatus loading" />
-            <a-popover v-else-if="reply.error" :title="$t('Send error')">
-              <template #content>
-                <a class="popover-link" @click="deleteMessage(reply)">
-                  {{ $t("chat_Delete_message") }}
-                </a>
-                <a class="popover-link" @click="resendMessage(reply)">
-                  {{ $t("chat_Resend_message") }}
-                </a>
-              </template>
-              <div class="msgStatus error">
-                <exclamation-icon />
+              <div class="chat__info">
+                <span>{{ reply.name }}</span>
+                <span>{{ reply.date.slice(-8, -3) }}</span>
               </div>
-            </a-popover>
-          </div>
-        </a-popover>
-      </template>
 
-      <typing-placeholder v-if="isPlaceholderVisible" />
-      <div style="margin-top: 145px"></div>
+              <loading-icon v-if="reply.sending" class="msgStatus loading" />
+              <a-popover v-else-if="reply.error" :title="$t('Send error')">
+                <template #content>
+                  <a class="popover-link" @click="deleteMessage(reply)">
+                    {{ $t("chat_Delete_message") }}
+                  </a>
+                  <a class="popover-link" @click="resendMessage(reply)">
+                    {{ $t("chat_Resend_message") }}
+                  </a>
+                </template>
+                <div class="msgStatus error">
+                  <exclamation-icon />
+                </div>
+              </a-popover>
+            </div>
+          </a-popover>
+        </template>
+
+        <typing-placeholder v-if="isPlaceholderVisible" />
+        <div style="height: 250px"></div>
+      </div>
     </div>
 
-    <div v-if="!isFullScreanChat" ref="chatList" class="chat__list">
-      <div style="padding: 5px 10px 0px 10px">
-        <a-input
-          v-model:value="searchString"
-          :placeholder="$t('bots.labels.search')"
-        >
-          <template #suffix>
-            <search-icon style="font-size: 18px" />
-          </template>
-        </a-input>
+    <div :class="['chats_sidebar', { collapsed: isChatMenuClosed }]">
+      <div ref="chatList" class="chat__list">
+        <div class="chats_search">
+          <a-input
+            v-show="!isChatMenuClosed"
+            style="margin-right: 15px"
+            v-model:value="searchString"
+            :placeholder="$t('bots.labels.search')"
+          >
+            <template #suffix>
+              <search-icon style="font-size: 18px" />
+            </template>
+          </a-input>
+          <a-button
+            v-if="isChatMenuClosed"
+            shape="circle"
+            @click="isChatMenuClosed = false"
+            :icon="h(closeMenu)"
+          />
+          <a-button
+            v-else
+            shape="circle"
+            @click="isChatMenuClosed = true"
+            :icon="h(openMenu)"
+          />
+        </div>
+
+        <template v-if="instance && !isChatMenuClosed">
+          <div class="chats_actions">
+            <a-button type="text" @click="openCreateChatPage">
+              <div class="chats_action_btn">
+                <add-chat-icon class="icon" />
+                <span style="margin-left: 10px">
+                  {{ $t("Add new chat") }}
+                </span>
+              </div>
+            </a-button>
+            <a-button type="text" @click="openInstancePage">
+              <div class="chats_action_btn">
+                <api-icon class="icon" />
+                <span style="margin-left: 10px">
+                  {{ $t("API / Settings") }}
+                </span>
+              </div>
+            </a-button>
+          </div>
+        </template>
+        <template v-else="instance">
+          <div class="chats_actions">
+            <a-tooltip placement="right">
+              <template #title>
+                {{ $t("Add new chat") }}
+              </template>
+              <a-button shape="circle" @click="openCreateChatPage">
+                <template #icon>
+                  <add-chat-icon />
+                </template>
+              </a-button>
+            </a-tooltip>
+
+            <a-tooltip placement="right">
+              <template #title>
+                {{ $t("API / Settings") }}
+              </template>
+              <a-button shape="circle" @click="openInstancePage">
+                <template #icon>
+                  <api-icon />
+                </template>
+              </a-button>
+            </a-tooltip>
+          </div>
+        </template>
+
+        <template v-if="!isChatMenuClosed" v-for="item of chats">
+          <ticket-item
+            :ticket="item"
+            :instance-id="instanceId"
+            :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
+            compact
+          />
+        </template>
       </div>
-
-      <template v-if="instance">
-        <a-row
-          justify="space-between"
-          align="center"
-          style="padding: 10px; align-items: center"
-        >
-          <a-button
-            @click="
-              router.replace({
-                query: { create: true },
-              })
-            "
-            :icon="h(addChatIcon)"
-            >{{ $t("Add new chat") }}</a-button
-          >
-          <a-button
-            @click="
-              router.push({ name: 'openaiPage', params: { id: instance.uuid } })
-            "
-          >
-            {{ $t("API / Settings") }}
-          </a-button>
-        </a-row>
-      </template>
-
-      <template v-for="item of chats">
-        <ticket-item
-          :ticket="item"
-          :instance-id="instanceId"
-          :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
-          compact
-        />
-      </template>
     </div>
 
     <div v-if="!isCreate">
@@ -232,6 +281,7 @@ import {
   watch,
   h,
   onBeforeUnmount,
+  onMounted,
 } from "vue";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { Status } from "@/libs/cc_connect/cc_pb";
@@ -250,7 +300,6 @@ import { useAppStore } from "@/stores/app";
 import TicketItem from "@/components/openai-chats/ticketItem.vue";
 import CreateChat from "@/components/openai-chats/createChat.vue";
 import ChatSettings from "@/components/openai-chats/chatSettings.vue";
-import { full } from "markdown-it-emoji";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -266,7 +315,7 @@ const loadingIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LoadingOutlined")
 );
 const addChatIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/PlusOutlined")
+  import("@ant-design/icons-vue/PlusCircleOutlined")
 );
 const arrowDownIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ArrowDownOutlined")
@@ -276,6 +325,17 @@ const searchIcon = defineAsyncComponent(() =>
 );
 const aiIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/RobotOutlined")
+);
+
+const apiIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ProfileOutlined")
+);
+
+const closeMenu = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/RightCircleOutlined")
+);
+const openMenu = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LeftCircleOutlined")
 );
 
 const settingsIcon = defineAsyncComponent(() =>
@@ -318,9 +378,17 @@ const chatid = ref(route.params.chatId);
 const searchString = ref("");
 const isPlaceholderVisible = ref(false);
 
+const isChatMenuClosed = ref(false);
+
 const content = ref();
 const chatList = ref();
 const footer = ref();
+
+onMounted(() => {
+  if (window.innerWidth < 768) {
+    isChatMenuClosed.value = true;
+  }
+});
 
 const chat = computed(() => chatsStore.chats.get(chatid.value));
 
@@ -556,13 +624,24 @@ function onScroll() {
 }
 
 const openChatInFullscreen = () => {
-  const url = new URL(window.location.href);
-  url.searchParams.set("fullscreen", "true");
-  window.open(url.toString(), "_blank");
+  router.replace({ query: { fullscreen: "true" } });
 };
 
 const closeChatFromFullscreen = () => {
   router.replace({ query: { fullscreen: "false" } });
+};
+
+const openInstancePage = () => {
+  router.push({
+    name: "openaiPage",
+    params: { id: instance.value.uuid },
+  });
+};
+
+const openCreateChatPage = () => {
+  router.replace({
+    query: { create: true },
+  });
 };
 
 onBeforeUnmount(() => {
@@ -597,7 +676,7 @@ export default { name: "OpenaiChat" };
 .chat {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, min(35vw, 400px)) 1fr;
+  grid-template-columns: auto 1fr;
   grid-template-rows: auto 1fr auto;
   justify-content: center;
   gap: 10px;
@@ -605,14 +684,8 @@ export default { name: "OpenaiChat" };
   background: var(--bright_bg);
 }
 
-.chat.fullscreen {
-  display: flex;
-  flex-direction: column;
-  padding: 0px 25px;
-}
-
 .chat__list {
-  grid-row: 1 / 4;
+  height: 100%;
   margin: 10px 0;
   overflow: scroll;
   border: 1px solid var(--border_color);
@@ -624,9 +697,12 @@ export default { name: "OpenaiChat" };
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  max-width: 1000px;
+}
+
+.chat__container {
   width: 100%;
   height: 100%;
-  margin: 0px auto 0;
   padding: 15px 15px 6px;
   border: 1px solid var(--border_color);
   border-radius: 6px;
@@ -652,7 +728,7 @@ export default { name: "OpenaiChat" };
   box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.07);
   position: relative;
   width: max-content;
-  max-width: 80%;
+  max-width: calc(100% - 50px);
   word-wrap: wrap;
   margin-bottom: 10px;
 }
@@ -745,15 +821,43 @@ export default { name: "OpenaiChat" };
   display: block;
 }
 
+.chats_sidebar {
+  max-width: max(min(35vw, 400px));
+  grid-row: 1 / 4;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.2s ease;
+  overflow: hidden;
+}
+.chats_sidebar.collapsed {
+  width: 50px;
+}
+
+.chats_search {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px 0px 10px;
+  margin-bottom: 10px;
+}
+
+.chats_actions {
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
+  margin-bottom: 10px;
+  padding: 5px 10px 0px 10px;
+}
+.chats_action_btn {
+  display: flex;
+  align-items: center;
+}
+
+.chats_action_btn .icon {
+  font-size: 20px;
+}
+
 @media (max-width: 768px) {
-  .chat {
-    grid-template-columns: 1fr;
-  }
-
-  .chat__list {
-    display: none;
-  }
-
   .chat__content {
     margin: 0;
     border: 0;
@@ -763,6 +867,18 @@ export default { name: "OpenaiChat" };
   .chat__footer {
     grid-column: 1;
     padding: 0 10px 10px;
+  }
+
+  .chats_sidebar {
+    max-width: 100vw;
+  }
+
+  .chat__subheader.chats_opened {
+    display: none;
+  }
+
+  .chat__content.chats_opened {
+    display: none;
   }
 }
 
