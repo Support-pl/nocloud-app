@@ -252,6 +252,8 @@
     "select location": "Sélectionnez l'emplacement",
     "select OS": "Sélectionnez le système d'exploitation",
     "select tariff": "Sélectionnez le tarif",
+    "select": "Sélectionnez",
+    "sort_by": "Trier par",
     "loading": "Chargement...",
     "inbound": "Entrant",
     "outgoing": "Sortant",

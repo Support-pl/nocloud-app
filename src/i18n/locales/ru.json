@@ -337,6 +337,8 @@
     "select location": "Выберите локацию",
     "select service": "Select service",
     "select OS": "Выберите ОС",
+    "select": "Выберите",
+    "sort_by": "Сортировать по",
     "moreExamples": "Больше примеров",
     "attachedFiles": "Прикреплённые файлы",
     "select tariff": "Выберите тариф",
