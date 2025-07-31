@@ -1,8 +1,30 @@
 <template>
   <div class="order_wrapper">
     <div class="order">
-      <div class="order__field">
+      <div v-if="sizes.length > 1" class="order__field">
         <h3>{{ capitalize($t("filters")) }}</h3>
+
+        <a-input
+          style="margin-bottom: 5px"
+          v-model:value="searchParam"
+          :placeholder="capitalize($t('search'))"
+        >
+          <template #suffix>
+            <search-icon style="font-size: 20px" />
+          </template>
+        </a-input>
+
+        <template v-if="typesOptions.length > 1">
+          {{ capitalize($t("group")) }}:
+          <a-select
+            v-model:value="checkedGroups"
+            allow-clear
+            style="width: 100%"
+            :placeholder="capitalize($t('select'))"
+            :options="typesOptions.map((value) => ({ value, label: value }))"
+          />
+        </template>
+
         <filters-view
           v-if="Object.keys(filters).length > 0"
           :type="filtersType"
@@ -10,20 +32,6 @@
           :resources="resources"
           @update:filter="(key, value) => (filters[key] = value)"
         />
-        <template v-else>
-          {{ capitalize($t("select group or product")) }}
-        </template>
-
-        <template v-if="isResourcesExist && Object.keys(filters).length > 0">
-          {{ capitalize($t("group")) }}:
-          <a-select
-            v-model:value="checkedType"
-            allow-clear
-            style="width: 100%"
-            placeholder="Select"
-            :options="typesOptions.map((value) => ({ value, label: value }))"
-          />
-        </template>
 
         <a-button type="primary" style="margin-top: 10px" @click="resetFilters">
           {{ $t("Reset") }}
@@ -31,46 +39,34 @@
         <a-divider v-if="viewport < 1024" style="margin: 20px 0 0" />
       </div>
 
+      <div v-else />
+
       <div class="order__field order__main">
         <div class="order__option">
-          <a-radio-group
-            v-if="typesOptions.length > 1 && !isResourcesExist"
-            class="order__radio-group"
-            :style="radioGroupStyle"
-            :value="checkedType"
-          >
-            <a-radio-button
-              v-for="group of typesOptions"
-              :key="group"
-              :value="group"
-              @click="
-                checkedType === group
-                  ? (checkedType = '')
-                  : (checkedType = group)
-              "
-            >
-              <img
-                v-if="getGroupImage(group)"
-                :src="getGroupImage(group)"
-                :alt="group"
-              />
-              <h1 style="margin-bottom: 4px">
-                {{ group }}
-              </h1>
-            </a-radio-button>
-          </a-radio-group>
+          <div class="sortings">
+            <a-space v-if="!fetchLoading">
+              <span>{{ t("sort_by") }}:</span>
+              <a-button
+                v-for="key in sortKeys"
+                :key="key.value"
+                :type="sortField === key.value ? 'default' : 'text'"
+                @click="toggleSort(key.value)"
+              >
+                {{ key.label }}
 
-          <a-collapse
-            v-model:activeKey="activeCollapseKey"
+                <component :is="getSortIcon(key.value)" />
+              </a-button>
+            </a-space>
+          </div>
+
+          <div
             v-if="sizesByPage.length > 0"
             :class="{
               order__grid: true,
               order__grid__solo: sizesByPage.length === 1,
             }"
-            :bordered="false"
-            expand-icon-position="end"
           >
-            <a-collapse-panel
+            <div
               v-for="size of sizesByPage"
               :key="size.keys[options.period]"
               class="order__grid-item"
@@ -79,60 +75,43 @@
                 'order__grid-item--active':
                   options.size === size.keys[options.period],
               }"
-              :style="size.image ? 'padding: 10px' : null"
-              :showArrow="!!currentProduct.meta?.description"
+              :style="{
+                padding: size.image ? '10px' : '',
+                position: 'relative',
+              }"
               @click="selectCollapsePanel(size.keys)"
             >
-              <template #header>
-                <div :style="{ display: size.image ? 'flex' : '' }">
-                  <img
-                    v-if="size.image"
-                    style="margin-right: 5px"
-                    :src="size.image"
-                    :alt="size.label"
-                  />
+              <div class="product_price">
+                <span>
+                  {{ formatPrice(size.price[options.period], currency) }}
+                  {{ currency.title }}
+                </span>
+              </div>
 
-                  <h1 :style="getResources(size) ? null : 'margin-bottom: 0'">
-                    {{ size.label }}
-                  </h1>
-                  <a-divider
-                    v-if="getResources(size)"
-                    style="margin: -2px 0 7px"
-                  />
-
-                  <p v-for="resource of getResources(size)" :key="resource.id">
-                    {{ resource.key }}: {{ resource.title }}
-                  </p>
-                </div>
-              </template>
-
-              <template #expandIcon="{ isActive }">
-                <caret-right-outlined
-                  style="font-size: 204px"
-                  :rotate="isActive ? 90 : 0"
-                />
-              </template>
-
-              <div
-                class="collapse_description"
-                v-if="typeof currentProduct.meta?.description === 'string'"
-                style="margin-top: 15px"
-                v-html="currentProduct.meta?.description"
+              <img
+                v-if="size.image"
+                style="margin-right: 5px"
+                :src="size.image"
+                :alt="size.label"
               />
-              <table
-                v-else-if="currentProduct.meta?.description"
-                class="product__specs"
-              >
-                <tr
-                  v-for="resource in currentProduct.meta?.description"
-                  :key="resource.name"
+
+              <h4 class="product_name">
+                {{ size.label }}
+              </h4>
+
+              <div v-if="getResources(size)?.length" class="product_resources">
+                <a-tag
+                  color="blue"
+                  v-for="resource of getResources(size)"
+                  :key="resource.id"
                 >
-                  <td>{{ resource.name }}</td>
-                  <td>{{ resource.value }}</td>
-                </tr>
-              </table>
-            </a-collapse-panel>
-          </a-collapse>
+                  {{ resource.key }}: {{ resource.title }}
+                </a-tag>
+              </div>
+
+              <div v-else v-html="size.description" />
+            </div>
+          </div>
 
           <a-card
             v-if="fetchLoading || filteredAddons?.length > 0"
@@ -154,7 +133,7 @@
               >
                 <div
                   class="order__slider-name"
-                  style="grid-template-columns: 1fr auto auto; gap: 10px"
+                  style="grid-template-columns: 1fr auto auto; gap: 5px"
                 >
                   <span style="font-weight: 700; font-size: 16px">
                     {{ addon.title }}
@@ -175,9 +154,8 @@
           </a-card>
 
           <custom-pagination
-            v-if="isResourcesExist"
-            style="margin-top: 20px"
-            :visible="filteredSizes.length > 15"
+            style="margin-top: 10px"
+            :visible="filteredSizes.length > 10"
             :options="paginationOptions"
             @update:options="(key, value) => (paginationOptions[key] = value)"
           />
@@ -203,30 +181,6 @@
             <div v-else class="loadingLine" />
           </a-col>
         </a-row>
-
-        <transition
-          v-if="sizesByPage.length > 0 && isResourcesExist"
-          name="specs"
-          mode="out-in"
-        >
-          <div
-            v-if="typeof currentProduct.meta?.description === 'string'"
-            style="margin-top: 15px"
-            v-html="currentProduct.meta?.description"
-          />
-          <table
-            v-else-if="currentProduct.meta?.description"
-            class="product__specs"
-          >
-            <tr
-              v-for="resource in currentProduct.meta?.description"
-              :key="resource.name"
-            >
-              <td>{{ resource.name }}</td>
-              <td>{{ resource.value }}</td>
-            </tr>
-          </table>
-        </transition>
 
         <a-row
           v-for="addon of options.addons"
@@ -257,6 +211,19 @@
           :sp-list="sp"
           :is-plans-visible="false"
         />
+
+        <a-row>
+          <h2>{{ currentProduct.title }}</h2>
+        </a-row>
+
+        <div class="resources">
+          <p
+            v-for="resource of currentProduct?.meta?.resources"
+            :key="resource.id"
+          >
+            {{ resource.key }}: {{ resource.title }}
+          </p>
+        </div>
 
         <a-divider orientation="left" :style="{ 'margin-bottom': '0' }">
           {{ $t("Total") }}:
@@ -321,31 +288,39 @@
 
 <script setup>
 import { storeToRefs } from "pinia";
-import { computed, inject, nextTick, watch } from "vue";
-
+import {
+  capitalize,
+  computed,
+  defineAsyncComponent,
+  inject,
+  nextTick,
+  watch,
+} from "vue";
 import useCreateInstance from "@/hooks/instances/create.js";
 import { useCurrency, useNotification, usePeriod } from "@/hooks/utils";
 import { checkPayg } from "@/functions.js";
-
 import { useAppStore } from "@/stores/app.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { useAddonsStore } from "@/stores/addons.js";
-
 import { useSpStore } from "@/stores/sp.js";
 import { usePlansStore } from "@/stores/plans.js";
 import { useNamespasesStore } from "@/stores/namespaces.js";
 import { useInstancesStore } from "@/stores/instances.js";
-
 import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import customPagination from "@/components/ui/pagination.vue";
 import filtersView from "@/components/ui/filters.vue";
 import promoBlock from "@/components/ui/promo.vue";
-import { CaretRightOutlined } from "@ant-design/icons-vue";
+import { CaretDownOutlined, CaretUpOutlined } from "@ant-design/icons-vue";
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import promocodeMenu from "@/components/ui/promocode-menu.vue";
 import { usePromocodesStore } from "@/stores/promocodes";
+import { h } from "vue";
+
+const searchIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SearchOutlined")
+);
 
 const namespacesStore = useNamespasesStore();
 const spStore = useSpStore();
@@ -374,6 +349,8 @@ const plan = ref(null);
 const planWithApplyedPromocode = ref(null);
 const service = ref(null);
 const namespace = ref(null);
+const searchParam = ref("");
+const checkedGroups = ref();
 const provider = ref(null);
 const promocode = ref(null);
 const fetchLoading = ref(false);
@@ -383,11 +360,13 @@ const products = ref({});
 const periods = ref([]);
 const sizes = ref([]);
 const filters = ref({});
-const checkedType = ref("");
 const filtersType = ref("range-with-prefixes");
 const paginationOptions = ref({ total: 0, size: 10, page: 1 });
 const cachedPlans = ref({});
 const activeCollapseKey = ref([]);
+
+const sortField = ref("price");
+const sortOrder = ref("asc");
 
 function onCreated() {
   fetchLoading.value = true;
@@ -416,9 +395,6 @@ onCreated();
 
 function getProduct(products, options) {
   if (Object.keys(products).length === 0) return "NAN";
-  if ((options.size || true) === true) return "NAN";
-  if ((options.period ?? true) === true) return "NAN";
-
   const { title } = products[options.size];
 
   const product = Object.values(products).find(
@@ -435,12 +411,7 @@ function getProduct(products, options) {
       if (!addon) return sum;
       return sum + addon.price * (period >= 1 ? period : 1 / period);
     }, 0);
-  const description = isResourcesExist.value
-    ? product.meta.description?.replace(
-        /[\wА-ЯЁа-яё \-_+]{1,};/,
-        '<span style="font-weight: 700">$&</span>'
-      )
-    : product.meta.description;
+  const description = product.meta.description;
 
   return {
     ...product,
@@ -494,6 +465,8 @@ const resources = computed(() => {
   });
 
   Object.keys(result).forEach((key) => {
+    result[key] = result[key]?.filter((r) => r !== "default");
+
     if (result[key].length < 2) {
       delete result[key];
     }
@@ -524,49 +497,71 @@ const typesOptions = computed(() => {
     types.push(group ?? label);
   });
 
-  return types;
+  return types.filter((t) => t != "default");
 });
 const filteredSizes = computed(() => {
-  return sizes.value.filter(({ group, keys }) => {
+  const filtred = sizes.value.filter(({ group, keys, label }) => {
     const { meta, price } = products.value[keys[options.value.period]] ?? {};
-    let isIncluded =
-      typesOptions.value.length > 1 ? checkedType.value === group : true;
+    let isIncluded = true;
 
     if (!keys[options.value.period]) return false;
-    if (!checkedType.value && isResourcesExist.value) {
-      isIncluded = true;
+
+    const isPricesEqual = checkPricesEqual(price, filters.value.$price || []);
+
+    if (
+      searchParam.value &&
+      !label?.toLowerCase().startsWith(searchParam.value.toLowerCase())
+    ) {
+      isIncluded = false;
     }
-    if (!meta?.resources) return isIncluded;
 
-    const groups = [];
-    meta?.resources?.forEach(({ group }) => {
-      if (!group || groups.includes(group)) return;
-
-      groups.push(group);
-    });
-
-    const isPricesEqual = checkPricesEqual(price, filters.value.$price);
+    if (checkedGroups.value && checkedGroups.value !== group) {
+      isIncluded = false;
+    }
 
     return (
       isIncluded &&
       isPricesEqual &&
-      meta?.resources?.every(({ key, value, group }) => {
-        const a = filters.value[key]?.at(0) <= (group || value);
-        const b = filters.value[key]?.at(-1) >= (group || value);
-        const isNotNumber = filters.value[key]?.some((value) => isNaN(value));
+      (!meta?.resources ||
+        meta?.resources?.every(({ key, value, group }) => {
+          const a = filters.value[key]?.at(0) <= (group || value);
+          const b = filters.value[key]?.at(-1) >= (group || value);
+          const isNotNumber = filters.value[key]?.some((value) => isNaN(value));
 
-        if (filters.value[key]?.length < 1) return true;
-        if (isNotNumber) {
-          return filters.value[key].includes(group || value);
-        }
-        return filters.value[key] ? a && b : true;
-      })
+          if (filters.value[key]?.length < 1) return true;
+          if (isNotNumber) {
+            return filters.value[key].includes(group || value);
+          }
+          return filters.value[key] ? a && b : true;
+        }))
     );
   });
-});
-const sizesByPage = computed(() => {
-  if (!isResourcesExist.value) return filteredSizes.value;
 
+  filtred.sort((a, b) => {
+    if (sortOrder.value === "desc") {
+      const temp = a;
+      a = b;
+      b = temp;
+    }
+
+    if (sortField.value === "price") {
+      return a.price[options.value.period] - b.price[options.value.period];
+    } else {
+      const aRes = (
+        getResources(a).find((r) => r.key === sortField.value).value || ""
+      ).toString();
+      const bRes = (
+        getResources(b).find((r) => r.key === sortField.value).value || ""
+      ).toString();
+
+      return parseForSort(aRes) - parseForSort(bRes);
+    }
+  });
+
+  return filtred;
+});
+
+const sizesByPage = computed(() => {
   const start =
     paginationOptions.value.size * (paginationOptions.value.page - 1);
   const end = start + paginationOptions.value.size;
@@ -609,12 +604,6 @@ const sp = computed(() => {
   );
 });
 
-const isResourcesExist = computed(() => {
-  return Object.values(products.value).every(
-    ({ meta }) => meta.resources?.length > 0
-  );
-});
-
 const viewport = computed(() => {
   return document.documentElement.offsetWidth;
 });
@@ -627,10 +616,23 @@ const groupWrapStyle = computed(() => {
   if (typesOptions.value.length > 3) return "wrap";
   return null;
 });
-const radioGroupStyle = computed(() => {
-  if (viewport.value < 1024) return "margin-bottom: 15px";
 
-  return filteredSizes.value.length > 0 ? "margin-bottom: 30px" : null;
+const sortKeys = computed(() => {
+  const result = [];
+
+  result.push({ label: t("Cost"), value: "price" });
+
+  Object.keys(resources.value).forEach((resource) => {
+    if (
+      resources.value[resource].length > 2 &&
+      !resource.includes("$") &&
+      parseForSort((resources.value[resource][1] || "").toString()) !== 0
+    ) {
+      result.push({ value: resource, label: resource });
+    }
+  });
+
+  return result;
 });
 
 const changeProducts = () => {
@@ -644,17 +646,21 @@ const changeProducts = () => {
         if (!product.public) continue;
         result.products.push([key, product, plan.uuid]);
 
+        const description = product.meta.description;
+
         if (i === -1) {
           result.sizes.push({
             keys: { [product.period]: key },
             label: product.title,
             group: product.group ?? product.title,
-            price: product.price,
+            price: { [product.period]: product.price },
             sorter: product.sorter,
             image: product.meta.image,
+            description,
           });
         } else {
           result.sizes[i].keys[product.period] = key;
+          result.sizes[i].price[product.period] = product.price;
         }
       }
 
@@ -674,9 +680,6 @@ const changeProducts = () => {
     };
   });
 
-  productsAndSizes.sizes
-    .sort((a, b) => a.price - b.price)
-    .sort((a, b) => a.sorter - b.sorter);
   sizes.value = productsAndSizes.sizes;
 
   const data = JSON.parse(route.query.data ?? "{}");
@@ -684,7 +687,6 @@ const changeProducts = () => {
   if (data.productSize) {
     const { group } = products.value[data.productSize] ?? {};
 
-    checkedType.value = group;
     options.value.size = data.productSize;
   } else if (typesOptions.value.length < 2) {
     nextTick(() => {
@@ -693,11 +695,8 @@ const changeProducts = () => {
   }
 };
 const changePeriods = (key) => {
-  const { title } = products.value?.[key] || {};
-
   periods.value = [];
   Object.values(products.value).forEach((product) => {
-    if (product.title !== title) return;
     if (periods.value.includes(+product.period)) return;
     periods.value.push(+product.period);
   });
@@ -747,9 +746,7 @@ const resetFilters = () => {
     filters.value[key] = [];
   });
 
-  if (isResourcesExist.value) {
-    checkedType.value = "";
-  }
+  searchParam.value = "";
 };
 
 const orderClickHandler = () => {
@@ -853,11 +850,6 @@ const orderConfirm = () => {
   modal.value.confirmCreate = true;
 };
 
-const getGroupImage = (group) => {
-  const { image } = sizes.value.find((size) => size.group === group) ?? {};
-
-  return image;
-};
 const fetchPlans = async (provider) => {
   if (!currency.value.code) {
     return;
@@ -892,7 +884,7 @@ const fetchPlans = async (provider) => {
       options.value.size = oldOptions.size;
       options.value.addons = oldOptions.addons;
       options.value.period = oldOptions.period;
-      activeCollapseKey.value = [oldOptions.size];
+      activeCollapseKey.value = [];
 
       onLogin.value = {};
     }, 1000);
@@ -901,10 +893,43 @@ const fetchPlans = async (provider) => {
 
 const selectCollapsePanel = (keys) => {
   options.value.size = keys[options.value.period];
-  if (activeCollapseKey.value.length > 0) {
-    activeCollapseKey.value = [keys[options.value.period]];
+};
+
+const toggleSort = (field) => {
+  if (sortField.value === field) {
+    sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
+  } else {
+    sortField.value = field;
+    sortOrder.value = "asc";
   }
 };
+
+const getSortIcon = (field) => {
+  if (sortField.value !== field) return null;
+  return sortOrder.value === "asc" ? h(CaretUpOutlined) : h(CaretDownOutlined);
+};
+
+function parseForSort(raw) {
+  const value = raw.trim().toLowerCase();
+
+  const freq = value.match(/([\d.]+)(?:\/([\d.]+))?\s*ghz/);
+  if (freq) {
+    const base = parseFloat(freq[1]);
+    const boost = freq[2] ? parseFloat(freq[2]) : base;
+    return boost;
+  }
+
+  const ram = value.match(/([\d.]+)\s*gb/);
+  if (ram) {
+    return parseFloat(ram[1]);
+  }
+
+  if (/^\d+$/.test(value)) {
+    return parseInt(value);
+  }
+
+  return 0;
+}
 
 watch(sp, (value) => {
   if (value.length > 0) provider.value = value[0].uuid;
@@ -926,9 +951,6 @@ watch(sizes, (value) => {
   const data = JSON.parse(route.query.data ?? "{}");
 
   if (data.productSize) {
-    const { group } = products.value[data.productSize] ?? {};
-
-    checkedType.value = group;
     options.value.size = data.productSize;
     return;
   }
@@ -941,15 +963,6 @@ watch(sizes, (value) => {
 });
 watch(filteredSizes, (value) => {
   paginationOptions.value.total = value.length;
-});
-watch(checkedType, (value) => {
-  const { keys } = sizes.value.find(({ group }) => group === value) ?? {};
-
-  if (keys && options.value.period) {
-    options.value.size = keys[options.value.period];
-  } else if (keys) {
-    options.value.size = Object.values(keys)[0];
-  }
 });
 watch(
   () => options.value.size,
@@ -981,9 +994,6 @@ watch(
     const data = JSON.parse(route.query.data ?? "{}");
 
     if (data.productSize) {
-      const { group } = products.value[data.productSize] ?? {};
-
-      checkedType.value = group;
       options.value.size = data.productSize;
     } else {
       options.value.size = key;
@@ -1012,9 +1022,6 @@ watch([promocode, currency], async () => {
 
 watch(filteredSizes, () => {
   if (filteredSizes.value[0]) {
-    activeCollapseKey.value = [
-      filteredSizes.value[0].keys[options.value.period],
-    ];
     options.value.size = filteredSizes.value[0].keys[options.value.period];
   }
 });
@@ -1031,7 +1038,7 @@ export default {
   position: relative;
   width: 100%;
   min-height: 100%;
-  padding: 15px;
+  padding: 10px;
 }
 
 .order {
@@ -1046,7 +1053,7 @@ export default {
 .order__field {
   border-radius: 20px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
-  padding: 20px;
+  padding: 5px 10px;
   background-color: var(--bright_font);
   height: max-content;
 }
@@ -1133,7 +1140,7 @@ export default {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 .order__grid__solo {
@@ -1146,8 +1153,10 @@ export default {
 .order__grid-item {
   border-radius: 15px;
   cursor: pointer;
+  padding: 10px;
   box-shadow: inset 0 0 0 1px var(--border_color);
   transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  min-height: 15vh;
 }
 
 .order__grid-item:hover {
@@ -1168,7 +1177,7 @@ export default {
 
 .order__radio-group img,
 .order__grid-item img {
-  max-width: 50px;
+  max-width: 25%;
   padding: 2px;
   border: 1px solid var(--border_color);
   border-radius: 10px;
@@ -1199,8 +1208,7 @@ export default {
 }
 
 .order__grid-item--active {
-  background-color: var(--main);
-  color: var(--gloomy_font);
+  border: 1px solid var(--main);
 }
 
 .order__grid-item--grid {
@@ -1302,7 +1310,6 @@ export default {
 }
 
 .order__slider-item--active {
-  background-color: var(--main);
   color: var(--bright_font);
 }
 
@@ -1472,20 +1479,39 @@ export default {
   opacity: 0;
 }
 
-.collapse_description * {
-  background-color: var(--main) !important;
-  color: var(--bright_font) !important;
+.resources p {
+  margin: 0px;
+}
+
+.product_name {
+  font-size: 1.3rem;
+}
+
+.product_resources {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 5px;
+}
+
+.product_resources span {
+  margin-inline-start: 2px;
+  margin-inline-end: 2px;
+  font-size: 0.9rem;
+}
+
+.product_price {
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+}
+
+.product_price span {
+  font-size: 1rem;
+  font-weight: 600;
 }
 </style>
 
 <style>
-.anticon.anticon-right.ant-collapse-arrow {
-  font-size: 25px !important;
-}
-.ant-collapse-item.order__grid-item {
-  border-radius: 15px !important;
-}
-
 .price__sale {
   display: flex;
   flex-wrap: wrap;
@@ -1495,5 +1521,9 @@ export default {
 .price__sale .without_sale {
   text-decoration: line-through;
   margin-right: 10px;
+}
+
+.product_description p {
+  margin: 0px !important;
 }
 </style>

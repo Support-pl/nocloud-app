@@ -111,15 +111,7 @@
 </template>
 
 <script setup>
-import {
-  watch,
-  computed,
-  onMounted,
-  ref,
-  defineAsyncComponent,
-  capitalize,
-  h,
-} from "vue";
+import { watch, computed, onMounted, ref, capitalize, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
@@ -131,6 +123,7 @@ import { useNotification } from "@/hooks/utils";
 import { getImageName, onError, generateUuid } from "@/functions.js";
 import { toRefs } from "vue";
 import { storeToRefs } from "pinia";
+import { query } from "vue-gtag";
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -299,7 +292,7 @@ const deleteChat = async () => {
   try {
     await chatsStore.deleteChat(chat.value);
 
-    router.go(-1);
+    router.replace({ query: { create: true } });
   } finally {
     isDeleteLoading.value = false;
   }

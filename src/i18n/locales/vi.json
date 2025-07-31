@@ -209,6 +209,8 @@
     "remove or commit old ones to create new": "loại bỏ những cái cũ để tạo cái mới",
     "select OS": "Chọn hệ điều hành (OS)",
     "select tariff": "Chọn biểu giá",
+    "select": "Chọn",
+    "sort_by": "Sắp xếp theo",
     "inbound": "Inbound",
     "outgoing": "Outgoing",
     "graphs": "Đồ thị",

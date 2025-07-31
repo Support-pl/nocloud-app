@@ -35,7 +35,7 @@
           v-if="resource.some((value) => isNaN(value))"
           mode="multiple"
           style="width: 100%"
-          placeholder="Select"
+          :placeholder="$t('select')"
           :options="getOptions(resource)"
           :value="filters[key]"
           @update:value="emits('update:filter', key, $event)"

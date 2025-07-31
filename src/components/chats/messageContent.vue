@@ -126,7 +126,7 @@ function startTyping() {
     if (nextChar) {
       visibleMessage.value += nextChar;
     }
-  }, 18);
+  }, 10);
 }
 </script>
 

@@ -338,6 +338,8 @@
     "select service": "Select service",
     "select OS": "Select OS",
     "select tariff": "Select tariff",
+    "select": "Select",
+    "sort_by": "Sort by",
     "loading": "Loading...",
     "bot is typing": "bot is typing",
     "inbound": "Inbound",

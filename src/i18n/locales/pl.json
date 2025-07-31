@@ -300,6 +300,8 @@
     "select service": "Wybierz usługę",
     "select OS": "Wybierz OS",
     "select tariff": "Wybierz taryfa",
+    "select": "Wybierz",
+    "sort_by": "Sortuj według",
     "loading": "Ładowanie...",
     "inbound": "inbound",
     "outgoing": "outgoing",
