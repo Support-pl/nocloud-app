@@ -1,6 +1,5 @@
 <template>
   <div class="ticket" :class="{ compact }" @click="ticketClick(ticket.id)">
-    <div class="ticket__status" :style="{ 'background-color': statusColor }" />
     <div class="ticket__content">
       <div class="ticket__upper">
         <div class="ticket__title">{{ titleDecoded }}</div>
@@ -39,7 +38,6 @@ import { computed, defineAsyncComponent } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useChatsStore } from "@/stores/chats.js";
 import { toDate } from "@/functions.js";
-import config from "@/appconfig.js";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 
@@ -58,23 +56,6 @@ const route = useRoute();
 const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 const { t } = useI18n();
-
-const statusColor = computed(() => {
-  switch (props.ticket.status.toLowerCase()) {
-    case "new":
-      return config.colors.main;
-    case "open":
-      return config.colors.success;
-    case "in progress":
-    case "customer-reply":
-      return config.colors.warn;
-    case "close":
-    case "closed":
-      return config.colors.err;
-    default:
-      return config.colors.gray;
-  }
-});
 
 const titleDecoded = computed(
   () => props.ticket.title || t("openai.labels.newChat")
@@ -132,7 +113,7 @@ export default { name: "TicketItem" };
 .ticket.compact {
   box-shadow: none;
   border-radius: 0;
-  padding: 5px 15px 10px 40px;
+  padding: 5px 15px 10px 10px;
 }
 
 .ticket:not(:last-child) {
@@ -154,16 +135,6 @@ export default { name: "TicketItem" };
 .ticket__lower {
   display: flex;
   justify-content: space-between;
-}
-
-.ticket__status {
-  width: 10px;
-  height: 10px;
-  position: absolute;
-  border-radius: 50%;
-  top: 50%;
-  left: 20px;
-  transform: translateY(-50%);
 }
 
 .ticket__message,
