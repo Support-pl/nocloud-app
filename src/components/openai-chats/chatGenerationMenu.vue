@@ -10,9 +10,11 @@
       </a-radio-button>
       <a-radio-button @click="isAdvancedModalOpen = true" value="speech">
         {{ capitalize(t("openai.actions.generate_audio")) }}
+        <checed-icon v-if="options.checked === 'speech'" />
       </a-radio-button>
       <a-radio-button @click="isAdvancedModalOpen = true" value="generate">
         {{ capitalize(t("openai.actions.generate_image")) }}
+        <checed-icon v-if="options.checked === 'generate'" />
       </a-radio-button>
       <a-radio-button @click="isAdvancedModalOpen = true" value="video">
         {{ capitalize(t("openai.actions.generate_video")) }}
@@ -168,8 +170,13 @@ import { useChatsStore } from "@/stores/chats";
 import { useCurrenciesStore } from "@/stores/currencies";
 import { marked } from "marked";
 import { storeToRefs } from "pinia";
+import { defineAsyncComponent } from "vue";
 import { capitalize, computed, ref, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
+
+const checedIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CheckCircleOutlined")
+);
 
 const props = defineProps({
   options: { type: Object, default: () => {} },
@@ -437,5 +444,13 @@ watch(
 .chat__generate :deep(.ant-radio-button-wrapper-checked),
 .chat__generate :deep(.ant-select-selector-checked) {
   border-color: var(--main);
+}
+
+@media (max-width: 768px) {
+  .chat__generate .ant-radio-button-wrapper {
+    margin: 0;
+    padding-inline: 2px;
+    padding-block: 0;
+  }
 }
 </style>
