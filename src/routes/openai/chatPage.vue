@@ -87,10 +87,7 @@
             :placement="isAdminSent(reply) ? 'rightBottom' : 'leftBottom'"
           >
             <template #content>
-              <div
-                style="cursor: pointer"
-                @click="addToClipboard(reply.message)"
-              >
+              <div style="cursor: pointer" @click="copyMessage(reply)">
                 <copy-icon /> {{ capitalize($t("copy")) }}
               </div>
               <div
@@ -300,6 +297,7 @@ import { useAppStore } from "@/stores/app";
 import TicketItem from "@/components/openai-chats/ticketItem.vue";
 import CreateChat from "@/components/openai-chats/createChat.vue";
 import ChatSettings from "@/components/openai-chats/chatSettings.vue";
+import { marked } from "marked";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -644,6 +642,16 @@ const openCreateChatPage = () => {
   });
 };
 
+const copyMessage = (reply) => {
+  function markdownToPlainText(markdown) {
+    const html = marked.parse(markdown);
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.body.textContent || "";
+  }
+
+  addToClipboard(markdownToPlainText(reply.message));
+};
+
 onBeforeUnmount(() => {
   content.value?.removeEventListener("scroll", onScroll);
 });
@@ -722,7 +730,7 @@ export default { name: "OpenaiChat" };
 }
 
 .chat__message {
-  background: #dcfdbe;
+  background: var(--bright_bg);
   font-weight: 500;
   padding: 5px 7px;
   border-radius: 5px;
@@ -752,6 +760,8 @@ export default { name: "OpenaiChat" };
   line-height: 1;
   color: var(--gloomy_font);
   background: var(--main);
+  z-index: 0;
+  position: relative;
 }
 
 .chat__info {
@@ -789,7 +799,7 @@ export default { name: "OpenaiChat" };
   position: absolute;
   bottom: 0;
   border: 9px solid transparent;
-  border-bottom: 10px solid #dcfdbe;
+  border-bottom: 10px solid var(--bright_bg);
 }
 
 .video {
@@ -808,14 +818,14 @@ export default { name: "OpenaiChat" };
 }
 
 .chat__message--in {
+  background: unset;
   align-self: flex-start;
-  background: var(--bright_bg);
+  box-shadow: none;
 }
 
 .chat__message--in::after {
   left: 0;
   transform: translateX(-50%);
-  border-bottom-color: var(--bright_bg);
 }
 
 .popover-link {
@@ -921,5 +931,6 @@ export default { name: "OpenaiChat" };
   padding: 5px;
   height: 30px;
   margin-right: 10px;
+  background-color: var(--bright_font);
 }
 </style>

@@ -2,14 +2,6 @@
   <div style="position: relative">
     <div class="chat__footer_contaner">
       <div class="chat__footer">
-        <chat-generation-menu
-          :options="sendAdvancedOptions"
-          @update:options="sendAdvancedOptions[$event.key] = $event.value"
-          v-model:promt="message"
-          @click:send="sendMessage"
-          :is-send-message-loading="isSendMessageLoading"
-        />
-
         <send-input
           :send-loading="isSendMessageLoading"
           :editing="editing"
@@ -21,8 +13,19 @@
           :file-list="fileList"
           @update:filelist="fileList = $event"
           ref="sendinput"
-          :placeholder="$t(`openai.prompts.${sendAdvancedOptions.checked}.placeholder`)"
-        />
+          :placeholder="
+            $t(`openai.prompts.${sendAdvancedOptions.checked}.placeholder`)
+          "
+        >
+          <template #right-menu>
+            <chat-generation-menu
+              :disabled="message.trim().length < 1"
+              :options="sendAdvancedOptions"
+              @update:options="sendAdvancedOptions[$event.key] = $event.value"
+              :is-send-message-loading="isSendMessageLoading"
+            />
+          </template>
+        </send-input>
       </div>
     </div>
   </div>
@@ -48,7 +51,6 @@ const md = markdown({
 });
 
 md.use(emoji);
-
 
 const props = defineProps({
   ticket: { type: Object, default: () => ({}) },
@@ -156,34 +158,20 @@ async function sendChatMessage(result, replies) {
 
 async function sendMessage() {
   if (message.value.trim().length < 1) return;
-  if (editing.value) {
-    editMessage(editing.value);
-    return;
-  }
 
   const { replies, result } = updateReplies();
   await sendChatMessage(result, replies);
 
   message.value = "";
   fileList.value = [];
-}
-
-function editMessage(uuid) {
-  chatsStore
-    .editMessage({
-      content: message.value,
-      uuid,
-    })
-    .catch((err) => {
-      const message = err.response?.data?.message ?? err.message;
-
-      openNotification("error", { message: i18n.t(message) });
-      console.error(err);
-    });
-
   editing.value = null;
-  message.value = "";
 }
+
+function changeEditing(d) {
+  sendinput.value.changeEditing(d);
+}
+
+defineExpose({ changeEditing });
 </script>
 
 <script>

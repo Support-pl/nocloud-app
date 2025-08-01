@@ -943,7 +943,10 @@
         "api_example": "Пример",
         "create_label": "Что вы хотите сгенерировать?",
         "newChat": "Новый чат",
-        "videos_price_tip": "Стоимость генерации видео рассчитывается на основе его длительности. Тариф составляет {perSecond} за секунду.<br>**Стоимость генерации: {total}**"
+        "videos_price_tip": "Стоимость генерации видео рассчитывается на основе его длительности. Тариф составляет {perSecond} за секунду.<br>**Стоимость генерации: {total}**",
+        "generate_video": "Сгенерировать видео",
+        "generate_image": "Сгенерировать изображение",
+        "generate_audio": "Сгенерировать аудио"
       },
       "images_properties": {
         "resolution": "Разрешение",
@@ -956,11 +959,14 @@
         "audio": "Аудио",
         "text": "Текст"
       },
-      "videos_properties": {
+      "chat_action_properties": {
         "aspect_ratio": "Соотношение сторон",
         "duration": "Длительность (секунд)",
         "with_audio": "Со звуком?",
-        "promt": "Опишите максимально подробно сценарий вашего видео (промпт)"
+        "model": "Модель ИИ",
+        "promt": "Опишите максимально подробно сценарий вашего видео (промпт)",
+        "size": "Размер изображения",
+        "quality": "Качество изображения"
       },
       "default_model": {
         "label": "Основная модель чата",
@@ -1030,7 +1036,7 @@
         "characters_price": "null"
       },
       "images_quality": {
-        "hd": "HD",
+        "hd": "High quality (HD)",
         "auto": "Auto",
         "standard": "Standard"
       },
@@ -1055,8 +1061,7 @@
         "generate_text": "текст",
         "generate_image": "изображение",
         "generate_audio": "аудио",
-        "generate_video": "видео",
-        "generate_video_confirm": "Сгенерировать видео"
+        "generate_video": "видео"
       },
       "errors": {
         "create_failed": "Не удалось создать новый чат. Пожалуйста, попробуйте позже."

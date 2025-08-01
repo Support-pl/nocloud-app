@@ -45,14 +45,6 @@
 
     <div class="chat__footer_contaner">
       <div class="chat__footer">
-        <chat-generation-menu
-          :options="sendAdvancedOptions"
-          @update:options="sendAdvancedOptions[$event.key] = $event.value"
-          v-model:promt="message"
-          :is-send-message-loading="isSendMessageLoading"
-          video-confirm
-        />
-
         <send-input
           :send-loading="isSendMessageLoading"
           :editing="editing"
@@ -68,7 +60,16 @@
           :placeholder="
             t(`openai.prompts.${sendAdvancedOptions.checked}.placeholder`)
           "
-        />
+        >
+          <template #right-menu>
+            <chat-generation-menu
+              :disabled="message.trim().length < 1"
+              :options="sendAdvancedOptions"
+              @update:options="sendAdvancedOptions[$event.key] = $event.value"
+              :is-send-message-loading="isSendMessageLoading"
+            />
+          </template>
+        </send-input>
       </div>
     </div>
   </div>

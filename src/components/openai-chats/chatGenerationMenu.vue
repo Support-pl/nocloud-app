@@ -1,22 +1,25 @@
 <template>
   <div class="chat__generate">
     <a-radio-group
-      :value="options.checked"
+      :disabled="disabled"
+      :value="disabled ? null : options.checked"
       @update:value="updateOptions('checked', $event)"
     >
       <a-radio-button value="default">
         {{ capitalize(t("openai.actions.generate_text")) }}
       </a-radio-button>
-      <a-radio-button value="speech">
+      <a-radio-button @click="isAdvancedModalOpen = true" value="speech">
         {{ capitalize(t("openai.actions.generate_audio")) }}
+        <checed-icon v-if="options.checked === 'speech'" />
       </a-radio-button>
-      <a-radio-button value="generate">
+      <a-radio-button @click="isAdvancedModalOpen = true" value="generate">
         {{ capitalize(t("openai.actions.generate_image")) }}
+        <checed-icon v-if="options.checked === 'generate'" />
       </a-radio-button>
-      <a-radio-button @click="isVideoModalOpen = true" value="video">
+      <a-radio-button @click="isAdvancedModalOpen = true" value="video">
         {{ capitalize(t("openai.actions.generate_video")) }}
         {{
-          options.checked === "video"
+          options.checked === "video" && !isAdvancedModalOpen
             ? `(${formatPrice(
                 ((convertedVideoPrices.get(options.model) || 0) / 60) *
                   options.duration
@@ -25,96 +28,104 @@
         }}
       </a-radio-button>
     </a-radio-group>
-    <a-select
-      style="min-width: 200px"
-      v-if="options.checked === 'speech' && instanceAudioModels.length > 1"
-      :value="options.model"
-      @update:value="updateOptions('model', $event)"
-      :options="instanceAudioModels"
-    />
-
-    <a-select
-      style="min-width: 220px"
-      v-if="options.checked === 'generate' && instanceImageModels.length > 1"
-      :value="options.model"
-      @update:value="updateOptions('model', $event)"
-      :options="instanceImageModels"
-    />
-
-    <a-select
-      style="min-width: 120px"
-      v-if="options.checked === 'generate'"
-      :value="options.size"
-      @update:value="updateOptions('size', $event)"
-      :options="instanceImageSizes"
-    />
-    <a-select
-      style="min-width: 100px"
-      v-if="options.checked === 'generate'"
-      :value="options.quality"
-      @update:value="updateOptions('quality', $event)"
-      :options="instanceImageQualitys"
-    />
   </div>
 
   <a-modal
-    :open="isVideoModalOpen"
-    :title="t('openai.actions.generate_video_confirm')"
+    :open="isAdvancedModalOpen"
+    :title="advancedModalTitle"
+    :closable="false"
+    :mask-closable="false"
     @cancel="updateOptions('checked', 'default')"
   >
     <a-form layout="vertical" autocomplete="off">
-      <a-form-item
-        v-if="!videoConfirm"
-        :label="t('openai.videos_properties.promt')"
-      >
-        <a-textarea
-          :value="promt"
-          @update:value="emit('update:promt', $event)"
-          type="text"
-          :auto-size="{ minRows: 3, maxRows: 5 }"
-          :placeholder="t('openai.prompts.video.placeholder')"
-        />
-      </a-form-item>
+      <template v-if="options.checked === 'video'">
+        <a-form-item
+          :label="capitalize(t('openai.chat_action_properties.model'))"
+        >
+          <a-select
+            :value="options.model"
+            @update:value="updateOptions('model', $event)"
+            :options="instanceVideoModels"
+          />
+        </a-form-item>
 
-      <a-form-item :label="capitalize(t('openai.videos_properties.model'))">
-        <a-select
-          v-if="instanceVideoModels.length > 1"
-          :value="options.model"
-          @update:value="updateOptions('model', $event)"
-          :options="instanceVideoModels"
-        />
-      </a-form-item>
+        <a-form-item :label="t('openai.chat_action_properties.duration')">
+          <a-input-number
+            style="width: 100%"
+            :value="options.duration"
+            @update:value="
+              updateOptions('duration', $event || videoDurationRange.min)
+            "
+            :min="videoDurationRange.min"
+            :max="videoDurationRange.max"
+          />
+        </a-form-item>
 
-      <a-form-item :label="t('openai.videos_properties.duration')">
-        <a-input-number
-          style="width: 100%"
-          :value="options.duration"
-          @update:value="
-            updateOptions('duration', $event || videoDurationRange.min)
-          "
-          :min="videoDurationRange.min"
-          :max="videoDurationRange.max"
-        />
-      </a-form-item>
+        <a-form-item :label="t('openai.chat_action_properties.aspect_ratio')">
+          <a-select
+            :value="options.aspect_ratio"
+            @update:value="updateOptions('aspect_ratio', $event)"
+            :options="videoAspectRatios"
+          />
+        </a-form-item>
 
-      <a-form-item :label="t('openai.videos_properties.aspect_ratio')">
-        <a-select
-          :value="options.aspect_ratio"
-          @update:value="updateOptions('aspect_ratio', $event)"
-          :options="videoAspectRatios"
-        />
-      </a-form-item>
+        <a-form-item :label="t('openai.chat_action_properties.with_audio')">
+          <a-switch
+            :disabled="!isAudioEnabled"
+            :checked="options.with_audio"
+            @update:checked="updateOptions('with_audio', $event)"
+          />
+        </a-form-item>
+      </template>
 
-      <a-form-item :label="t('openai.videos_properties.with_audio')">
-        <a-switch
-          :disabled="!isAudioEnabled"
-          :checked="options.with_audio"
-          @update:checked="updateOptions('with_audio', $event)"
-        />
-      </a-form-item>
+      <template v-if="options.checked === 'generate'">
+        <a-form-item
+          :label="capitalize(t('openai.chat_action_properties.model'))"
+        >
+          <a-select
+            :value="options.model"
+            @update:value="updateOptions('model', $event)"
+            :options="instanceImageModels"
+          />
+        </a-form-item>
+
+        <a-form-item
+          :label="capitalize(t('openai.chat_action_properties.size'))"
+        >
+          <a-select
+            :value="options.size"
+            @update:value="updateOptions('size', $event)"
+            :options="instanceImageSizes"
+          />
+        </a-form-item>
+        <a-form-item
+          :label="capitalize(t('openai.chat_action_properties.quality'))"
+        >
+          <a-select
+            :value="options.quality"
+            @update:value="updateOptions('quality', $event)"
+            :options="instanceImageQualitys"
+          />
+        </a-form-item>
+      </template>
+
+      <template v-if="options.checked === 'speech'">
+        <a-form-item
+          :label="capitalize(t('openai.chat_action_properties.model'))"
+        >
+          <a-select
+            :value="options.model"
+            @update:value="updateOptions('model', $event)"
+            :options="instanceAudioModels"
+          />
+        </a-form-item>
+      </template>
     </a-form>
 
-    <div style="display: flex; justify-content: center; margin-bottom: 10px">
+    <div
+      v-if="options.checked === 'video'"
+      style="display: flex; justify-content: center; margin-bottom: 10px"
+    >
       <span
         style="font-size: 1rem; text-align: center"
         v-html="
@@ -138,7 +149,7 @@
       <a-button
         :disabled="isSendMessageLoading"
         key="back"
-        @click="isVideoModalOpen = false"
+        @click="handleCancelOptions"
         >{{ t("Cancel") }}</a-button
       >
 
@@ -146,12 +157,8 @@
         :loading="isSendMessageLoading"
         key="submit"
         type="primary"
-        @click="videoConfirm ? emit('click:send') : (isVideoModalOpen = false)"
-        >{{
-          videoConfirm
-            ? t("Confirm")
-            : t("openai.actions.generate_video_confirm")
-        }}</a-button
+        @click="isAdvancedModalOpen = false"
+        >{{ t("Save") }}</a-button
       >
     </template>
   </a-modal>
@@ -163,18 +170,22 @@ import { useChatsStore } from "@/stores/chats";
 import { useCurrenciesStore } from "@/stores/currencies";
 import { marked } from "marked";
 import { storeToRefs } from "pinia";
+import { defineAsyncComponent } from "vue";
 import { capitalize, computed, ref, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
+
+const checedIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CheckCircleOutlined")
+);
 
 const props = defineProps({
   options: { type: Object, default: () => {} },
   isSendMessageLoading: { type: Boolean, default: false },
-  promt: { type: String, default: "" },
-  videoConfirm: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
 });
 const { options } = toRefs(props);
 
-const emit = defineEmits(["update:options", "update:promt", "click:send"]);
+const emit = defineEmits(["update:options"]);
 
 const currenciesStore = useCurrenciesStore();
 const chatsStore = useChatsStore();
@@ -184,7 +195,20 @@ const { currency, formatPrice } = useCurrency();
 const { t } = useI18n();
 
 const convertedVideoPrices = ref(new Map());
-const isVideoModalOpen = ref(false);
+const isAdvancedModalOpen = ref(false);
+const lastOptionsValue = ref(options.value);
+
+const advancedModalTitle = computed(() => {
+  if (options.value.checked === "generate") {
+    return t("openai.labels.generate_image");
+  }
+
+  if (options.value.checked === "speech") {
+    return t("openai.labels.generate_audio");
+  }
+
+  return t("openai.labels.generate_video");
+});
 
 const instanceModels = computed(() => {
   return globalModelsList.value.filter(
@@ -243,7 +267,7 @@ const videoAspectRatios = computed(() => {
 const videoDurationRange = computed(() => {
   return {
     min: videoRequestParameters.value?.["duration"]?.range?.from || 5,
-    max: videoRequestParameters.value?.["duration"]?.to || 8,
+    max: videoRequestParameters.value?.["duration"]?.range?.to || 8,
   };
 });
 
@@ -317,21 +341,50 @@ const updateOptions = (key, value) => {
   emit("update:options", { key, value });
 };
 
+const handleCancelOptions = () => {
+  isAdvancedModalOpen.value = false;
+  if (lastOptionsValue.value) {
+    Object.keys(lastOptionsValue.value).forEach((key) => {
+      updateOptions(key, lastOptionsValue.value[key]);
+    });
+  } else {
+    updateOptions("checked", "default");
+  }
+};
+
 watch(instanceImageQualitys, (v) => {
-  updateOptions("quality", v[0]?.value);
+  updateOptions(
+    "quality",
+    v.find((v) => v.value === options.value.quality)?.value || v[0]?.value
+  );
 });
 watch(instanceImageSizes, (v) => {
-  updateOptions("size", v[0]?.value);
+  updateOptions(
+    "size",
+    v.find((v) => v.value === options.value.size)?.value || v[0]?.value
+  );
 });
 
 watch(videoRequestParameters, () => {
   if (videoAspectRatios.value.length) {
-    updateOptions("aspect_ratio", videoAspectRatios.value[0].value);
+    updateOptions(
+      "aspect_ratio",
+      videoAspectRatios.value.find(
+        (v) => v.value === options.value.aspect_ratio
+      )?.value || videoAspectRatios.value[0].value
+    );
   }
-  updateOptions("duration", videoDurationRange.value.min);
+  updateOptions(
+    "duration",
+    options.value.duration || videoDurationRange.value.min
+  );
   if (!isAudioEnabled.value) {
     updateOptions("with_audio", false);
   }
+});
+
+watch(isAdvancedModalOpen, () => {
+  lastOptionsValue.value = JSON.parse(JSON.stringify(options.value));
 });
 
 watch(instanceVideoModels, (value) => {
@@ -352,31 +405,24 @@ watch(instanceVideoModels, (value) => {
 
 watch(
   () => options.value.checked,
-  (current, previous) => {
-    if (current !== previous && previous === "video") {
-      isVideoModalOpen.value = false;
-    }
-
+  (current) => {
     if (current === "default") {
       return;
     }
 
+    const getLastModel = (models) =>
+      models.find((m) => m.value === options.value.model)?.value ||
+      models[0]?.value;
+
     if (current === "generate") {
-      updateOptions("model", instanceImageModels.value[0]?.value);
+      updateOptions("model", getLastModel(instanceImageModels.value));
     } else if (current === "speech") {
-      updateOptions("model", instanceAudioModels.value[0]?.value);
+      updateOptions("model", getLastModel(instanceAudioModels.value));
     } else {
-      isVideoModalOpen.value = true;
-      updateOptions("model", instanceVideoModels.value[0]?.value);
+      updateOptions("model", getLastModel(instanceVideoModels.value));
     }
   }
 );
-
-watch(isVideoModalOpen, (value) => {
-  if (!value && !props.videoConfirm) {
-    updateOptions("checked", "default");
-  }
-});
 </script>
 
 <style scoped>
@@ -398,5 +444,13 @@ watch(isVideoModalOpen, (value) => {
 .chat__generate :deep(.ant-radio-button-wrapper-checked),
 .chat__generate :deep(.ant-select-selector-checked) {
   border-color: var(--main);
+}
+
+@media (max-width: 768px) {
+  .chat__generate .ant-radio-button-wrapper {
+    margin: 0;
+    padding-inline: 2px;
+    padding-block: 0;
+  }
 }
 </style>

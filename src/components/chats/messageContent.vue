@@ -134,7 +134,7 @@ function startTyping() {
 div.code {
   padding: 8px;
   border-radius: 6px;
-  background-color: white;
+  background-color: var(--bright_bg);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
