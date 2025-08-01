@@ -158,34 +158,20 @@ async function sendChatMessage(result, replies) {
 
 async function sendMessage() {
   if (message.value.trim().length < 1) return;
-  if (editing.value) {
-    editMessage(editing.value);
-    return;
-  }
 
   const { replies, result } = updateReplies();
   await sendChatMessage(result, replies);
 
   message.value = "";
   fileList.value = [];
-}
-
-function editMessage(uuid) {
-  chatsStore
-    .editMessage({
-      content: message.value,
-      uuid,
-    })
-    .catch((err) => {
-      const message = err.response?.data?.message ?? err.message;
-
-      openNotification("error", { message: i18n.t(message) });
-      console.error(err);
-    });
-
   editing.value = null;
-  message.value = "";
 }
+
+function changeEditing(d) {
+  sendinput.value.changeEditing(d);
+}
+
+defineExpose({ changeEditing });
 </script>
 
 <script>
