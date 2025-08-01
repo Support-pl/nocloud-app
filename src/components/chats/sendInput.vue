@@ -24,6 +24,7 @@
       <div style="position: relative; width: 100%">
         <a-textarea
           ref="textarea"
+          class="chat__input_textarea"
           :value="message"
           @update:value="emits('update:message', $event)"
           allow-clear
@@ -41,29 +42,39 @@
             bottom: fileList.length > 0 ? '110px' : '5px',
             right: '5px',
             'z-index': '100',
+            display: 'flex',
+            width: '100%',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }"
         >
-          <upload-files
-            v-if="showSendFiles"
-            ref="upload"
-            :editing="editing"
-            :replies="replies"
-            :file-list="fileList"
-            @update:file-list="emits('update:filelist', $event)"
-          />
+          <div style="margin-left: 10px">
+            <slot name="right-menu" />
+          </div>
 
-          <a-button
-            size="large"
-            :loading="sendLoading"
-            type="primary"
-            shape="circle"
-            @click="emits('sendMessage')"
-            style="margin-left: 10px"
-          >
-            <template #icon>
-              <arrow-up-icon />
-            </template>
-          </a-button>
+          <div>
+            <upload-files
+              v-if="showSendFiles"
+              ref="upload"
+              :editing="editing"
+              :replies="replies"
+              :file-list="fileList"
+              @update:file-list="emits('update:filelist', $event)"
+            />
+
+            <a-button
+              size="large"
+              :loading="sendLoading"
+              type="primary"
+              shape="circle"
+              @click="emits('sendMessage')"
+              style="margin-left: 10px"
+            >
+              <template #icon>
+                <arrow-up-icon />
+              </template>
+            </a-button>
+          </div>
         </div>
       </div>
     </div>
@@ -139,5 +150,9 @@ export default { name: "SendInput" };
   padding: 5px 7px;
   margin-right: auto;
   font-size: 18px;
+}
+
+:deep(.chat__input_textarea) {
+  padding-bottom: 45px;
 }
 </style>
