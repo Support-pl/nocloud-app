@@ -52,7 +52,7 @@
             <slot name="right-menu" />
           </div>
 
-          <div>
+          <div style="min-width: 85px">
             <upload-files
               v-if="showSendFiles"
               ref="upload"

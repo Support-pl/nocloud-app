@@ -752,6 +752,8 @@ export default { name: "OpenaiChat" };
   line-height: 1;
   color: var(--gloomy_font);
   background: var(--main);
+  z-index: 0;
+  position: relative;
 }
 
 .chat__info {
@@ -921,5 +923,6 @@ export default { name: "OpenaiChat" };
   padding: 5px;
   height: 30px;
   margin-right: 10px;
+  background-color: var(--bright_font);
 }
 </style>
