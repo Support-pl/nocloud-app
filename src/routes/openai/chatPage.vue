@@ -722,7 +722,7 @@ export default { name: "OpenaiChat" };
 }
 
 .chat__message {
-  background: #dcfdbe;
+  background: var(--bright_bg);
   font-weight: 500;
   padding: 5px 7px;
   border-radius: 5px;
@@ -791,7 +791,7 @@ export default { name: "OpenaiChat" };
   position: absolute;
   bottom: 0;
   border: 9px solid transparent;
-  border-bottom: 10px solid #dcfdbe;
+  border-bottom: 10px solid var(--bright_bg);
 }
 
 .video {
@@ -810,14 +810,14 @@ export default { name: "OpenaiChat" };
 }
 
 .chat__message--in {
+  background: unset;
   align-self: flex-start;
-  background: var(--bright_bg);
+  box-shadow: none;
 }
 
 .chat__message--in::after {
   left: 0;
   transform: translateX(-50%);
-  border-bottom-color: var(--bright_bg);
 }
 
 .popover-link {
