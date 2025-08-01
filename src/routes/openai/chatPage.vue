@@ -698,6 +698,7 @@ export default { name: "OpenaiChat" };
   flex-direction: column;
   justify-content: flex-start;
   max-width: 1000px;
+  margin: auto;
 }
 
 .chat__container {
