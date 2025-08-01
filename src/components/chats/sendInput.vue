@@ -30,7 +30,7 @@
           allow-clear
           type="text"
           :disabled="disabled"
-          :auto-size="{ minRows: minRows, maxRows: 100 }"
+          :auto-size="{ minRows: minRows, maxRows: 10 }"
           :placeholder="placeholder ? placeholder : t('message') + '...'"
           @keyup.shift.enter.exact="newLine"
           @keydown.enter.exact.prevent="emits('sendMessage')"
