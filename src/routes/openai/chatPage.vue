@@ -87,10 +87,7 @@
             :placement="isAdminSent(reply) ? 'rightBottom' : 'leftBottom'"
           >
             <template #content>
-              <div
-                style="cursor: pointer"
-                @click="addToClipboard(reply.message)"
-              >
+              <div style="cursor: pointer" @click="copyMessage(reply)">
                 <copy-icon /> {{ capitalize($t("copy")) }}
               </div>
               <div
@@ -300,6 +297,7 @@ import { useAppStore } from "@/stores/app";
 import TicketItem from "@/components/openai-chats/ticketItem.vue";
 import CreateChat from "@/components/openai-chats/createChat.vue";
 import ChatSettings from "@/components/openai-chats/chatSettings.vue";
+import { marked } from "marked";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -642,6 +640,16 @@ const openCreateChatPage = () => {
   router.replace({
     query: { create: true },
   });
+};
+
+const copyMessage = (reply) => {
+  function markdownToPlainText(markdown) {
+    const html = marked.parse(markdown);
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.body.textContent || "";
+  }
+
+  addToClipboard(markdownToPlainText(reply.message));
 };
 
 onBeforeUnmount(() => {
