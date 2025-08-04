@@ -143,6 +143,8 @@ import { setValue } from "@/functions.js";
 
 import promoBlock from "@/components/ui/promo.vue";
 import calculatorBlock from "@/components/cloud/create/calculator.vue";
+import { useAddonsStore } from "@/stores/addons";
+import { storeToRefs } from "pinia";
 
 const router = useRouter();
 const route = useRoute();
@@ -151,6 +153,8 @@ const i18n = useI18n();
 const authStore = useAuthStore();
 const plansStore = usePlansStore();
 const cloudStore = useCloudStore();
+const addonsStore = useAddonsStore();
+const { addons } = storeToRefs(addonsStore);
 
 const loading = computed(() =>
   h(Spin, {
@@ -218,14 +222,15 @@ const panelsKeys = computed(() =>
     .map(([key]) => key)
 );
 
-const isAddonsExists = computed(
-  () =>
+const isAddonsExists = computed(() => {
+  return (
     isPlansLoading.value ||
-    !!(
-      (product.value?.addons || []).length ||
-      (cloudStore.plan?.addons || []).length
-    )
-);
+    !!(product.value?.addons || [])
+      .concat(cloudStore.plan?.addons || [])
+      .map((uuid) => addons.value.find((addon) => addon.uuid === uuid))
+      .filter((a) => !!a).length
+  );
+});
 
 watch(
   () => cloudStore.plan.type,
