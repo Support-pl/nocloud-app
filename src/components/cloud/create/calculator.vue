@@ -22,7 +22,7 @@
           style="font-size: 1.1rem"
         >
           <a-col>
-            {{ capitalize(getAddonsTitle(key)) }}{{ getAddonsValue(key) }}:
+            {{ getAddonsTitle(key) }}{{ getAddonsValue(key) }}:
           </a-col>
           <a-col>
             <template v-if="isFlavorsLoading">
