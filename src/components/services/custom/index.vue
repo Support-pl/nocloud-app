@@ -684,9 +684,11 @@ const changeProducts = () => {
 
   const data = JSON.parse(route.query.data ?? "{}");
 
-  if (data.productSize) {
-    const { group } = products.value[data.productSize] ?? {};
-
+  if (route.query.product) {
+    setTimeout(() => {
+      options.value.size = route.query.product;
+    }, 100);
+  } else if (data.productSize) {
     options.value.size = data.productSize;
   } else if (typesOptions.value.length < 2) {
     nextTick(() => {
@@ -747,6 +749,7 @@ const resetFilters = () => {
   });
 
   searchParam.value = "";
+  checkedGroups.value = null;
 };
 
 const orderClickHandler = () => {
@@ -1025,6 +1028,25 @@ watch(filteredSizes, () => {
     options.value.size = filteredSizes.value[0].keys[options.value.period];
   }
 });
+
+watch(
+  [filters, searchParam, checkedGroups],
+  () => {
+    if (!filteredSizes.value.length || fetchLoading.value) {
+      return;
+    }
+
+    if (
+      paginationOptions.value.size * paginationOptions.value.page >
+      paginationOptions.value.total
+    ) {
+      console.log(343);
+
+      paginationOptions.value.page = 1;
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <script>
