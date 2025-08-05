@@ -684,9 +684,11 @@ const changeProducts = () => {
 
   const data = JSON.parse(route.query.data ?? "{}");
 
-  if (data.productSize) {
-    const { group } = products.value[data.productSize] ?? {};
-
+  if (route.query.product) {
+    setTimeout(() => {
+      options.value.size = route.query.product;
+    }, 100);
+  } else if (data.productSize) {
     options.value.size = data.productSize;
   } else if (typesOptions.value.length < 2) {
     nextTick(() => {
