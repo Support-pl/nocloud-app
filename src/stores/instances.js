@@ -8,6 +8,7 @@ import { InstancesService } from "nocloud-proto/proto/es/instances/instances_con
 import { useAppStore } from "./app.js";
 import { createPromiseClient } from "@connectrpc/connect";
 import { useAddonsStore } from "./addons.js";
+import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 
 export const useInstancesStore = defineStore("instances", () => {
   const authStore = useAuthStore();
@@ -310,6 +311,13 @@ export const useInstancesStore = defineStore("instances", () => {
         throw error;
       }
     },
+
+    updateInstance(instance) {
+      return instancesApi.value.update(
+        UpdateRequest.fromJson({ instance }, { ignoreUnknownFields: true })
+      );
+    },
+
     $reset() {
       services.value = [];
       instances.value = [];
