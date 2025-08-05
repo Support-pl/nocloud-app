@@ -749,6 +749,7 @@ const resetFilters = () => {
   });
 
   searchParam.value = "";
+  checkedGroups.value = null;
 };
 
 const orderClickHandler = () => {
@@ -1027,6 +1028,25 @@ watch(filteredSizes, () => {
     options.value.size = filteredSizes.value[0].keys[options.value.period];
   }
 });
+
+watch(
+  [filters, searchParam, checkedGroups],
+  () => {
+    if (!filteredSizes.value.length || fetchLoading.value) {
+      return;
+    }
+
+    if (
+      paginationOptions.value.size * paginationOptions.value.page >
+      paginationOptions.value.total
+    ) {
+      console.log(343);
+
+      paginationOptions.value.page = 1;
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <script>
