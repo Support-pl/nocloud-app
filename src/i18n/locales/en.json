@@ -1016,7 +1016,8 @@
         "deepseek": "DeepSeek",
         "llama": "Llama",
         "runway": "Runway",
-        "stability-ai": "Stability AI"
+        "stability-ai": "Stability AI",
+        "alibaba": "Alibaba"
       },
       "filters": {
         "video": "Video",
