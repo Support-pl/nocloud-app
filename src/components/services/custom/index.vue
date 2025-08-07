@@ -1,45 +1,49 @@
 <template>
   <div class="order_wrapper">
     <div class="order">
-      <div v-if="sizes.length > 1" class="order__field">
-        <h3>{{ capitalize($t("filters")) }}</h3>
+      <div>
+        <div v-if="sizes.length > 1" class="order__field order_filters">
+          <h3>{{ capitalize($t("filters")) }}</h3>
 
-        <a-input
-          style="margin-bottom: 5px"
-          v-model:value="searchParam"
-          :placeholder="capitalize($t('search'))"
-        >
-          <template #suffix>
-            <search-icon style="font-size: 20px" />
+          <a-input
+            style="margin-bottom: 5px"
+            v-model:value="searchParam"
+            :placeholder="capitalize($t('search'))"
+          >
+            <template #suffix>
+              <search-icon style="font-size: 20px" />
+            </template>
+          </a-input>
+
+          <template v-if="typesOptions.length > 1">
+            {{ capitalize($t("group")) }}:
+            <a-select
+              v-model:value="checkedGroups"
+              allow-clear
+              style="width: 100%"
+              :placeholder="capitalize($t('select'))"
+              :options="typesOptions.map((value) => ({ value, label: value }))"
+            />
           </template>
-        </a-input>
 
-        <template v-if="typesOptions.length > 1">
-          {{ capitalize($t("group")) }}:
-          <a-select
-            v-model:value="checkedGroups"
-            allow-clear
-            style="width: 100%"
-            :placeholder="capitalize($t('select'))"
-            :options="typesOptions.map((value) => ({ value, label: value }))"
+          <filters-view
+            v-if="Object.keys(filters).length > 0"
+            :type="filtersType"
+            :filters="filters"
+            :resources="resources"
+            @update:filter="(key, value) => (filters[key] = value)"
           />
-        </template>
 
-        <filters-view
-          v-if="Object.keys(filters).length > 0"
-          :type="filtersType"
-          :filters="filters"
-          :resources="resources"
-          @update:filter="(key, value) => (filters[key] = value)"
-        />
-
-        <a-button type="primary" style="margin-top: 10px" @click="resetFilters">
-          {{ $t("Reset") }}
-        </a-button>
-        <a-divider v-if="viewport < 1024" style="margin: 20px 0 0" />
+          <a-button
+            type="primary"
+            style="margin-top: 10px"
+            @click="resetFilters"
+          >
+            {{ $t("Reset") }}
+          </a-button>
+          <a-divider v-if="viewport < 1024" style="margin: 20px 0 0" />
+        </div>
       </div>
-
-      <div v-else />
 
       <div class="order__field order__main">
         <div class="order__option">
@@ -162,123 +166,130 @@
         </div>
       </div>
 
-      <div class="order__calculate order__field">
-        <a-row justify="space-around" style="margin-top: 5px">
-          <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
-            {{ $t("Pay period") }}:
-          </a-col>
+      <div>
+        <div class="order__calculate order__field">
+          <a-row justify="space-around" style="margin-top: 5px">
+            <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
+              {{ $t("Pay period") }}:
+            </a-col>
 
-          <a-col :xs="12" :sm="18" :lg="12">
-            <a-select
-              v-if="!fetchLoading"
-              v-model:value="options.period"
-              style="width: 100%"
+            <a-col :xs="12" :sm="18" :lg="12">
+              <a-select
+                v-if="!fetchLoading"
+                v-model:value="options.period"
+                style="width: 100%"
+              >
+                <a-select-option v-for="period in periods" :key="period">
+                  {{ getPeriod(period) }}
+                </a-select-option>
+              </a-select>
+              <div v-else class="loadingLine" />
+            </a-col>
+          </a-row>
+
+          <a-row
+            v-for="addon of options.addons"
+            :key="addon"
+            justify="space-around"
+            style="margin-top: 20px"
+          >
+            <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
+              {{ capitalize(getAddon(addon).title) }}:
+            </a-col>
+
+            <a-col
+              :xs="12"
+              :sm="18"
+              :lg="12"
+              style="font-size: 1.1rem; text-align: right"
             >
-              <a-select-option v-for="period in periods" :key="period">
-                {{ getPeriod(period) }}
-              </a-select-option>
-            </a-select>
-            <div v-else class="loadingLine" />
-          </a-col>
-        </a-row>
+              {{ getAddon(addon).price }} {{ currency.title }}
+            </a-col>
+          </a-row>
 
-        <a-row
-          v-for="addon of options.addons"
-          :key="addon"
-          justify="space-around"
-          style="margin-top: 20px"
-        >
-          <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
-            {{ capitalize(getAddon(addon).title) }}:
-          </a-col>
+          <selects-to-create
+            v-model:plan="plan"
+            v-model:service="service"
+            v-model:namespace="namespace"
+            v-model:provider="provider"
+            :plans-list="plans"
+            :sp-list="sp"
+            :is-plans-visible="false"
+          />
 
-          <a-col
-            :xs="12"
-            :sm="18"
-            :lg="12"
-            style="font-size: 1.1rem; text-align: right"
-          >
-            {{ getAddon(addon).price }} {{ currency.title }}
-          </a-col>
-        </a-row>
+          <a-row>
+            <h2>{{ currentProduct.title }}</h2>
+          </a-row>
 
-        <selects-to-create
-          v-model:plan="plan"
-          v-model:service="service"
-          v-model:namespace="namespace"
-          v-model:provider="provider"
-          :plans-list="plans"
-          :sp-list="sp"
-          :is-plans-visible="false"
-        />
+          <div v-if="currentProduct?.meta?.resources?.length" class="resources">
+            <p
+              v-for="resource of currentProduct?.meta?.resources"
+              :key="resource.id"
+            >
+              {{ resource.key }}: {{ resource.title }}
+            </p>
+          </div>
 
-        <a-row>
-          <h2>{{ currentProduct.title }}</h2>
-        </a-row>
+          <a-divider orientation="left" :style="{ 'margin-bottom': '0' }">
+            {{ $t("Total") }}:
+          </a-divider>
 
-        <div v-if="currentProduct?.meta?.resources?.length" class="resources">
-          <p
-            v-for="resource of currentProduct?.meta?.resources"
-            :key="resource.id"
-          >
-            {{ resource.key }}: {{ resource.title }}
-          </p>
-        </div>
+          <a-row justify="space-around">
+            <a-col style="font-size: 1.5rem">
+              <template v-if="!fetchLoading">
+                <div class="price__sale" v-if="isSaleApply">
+                  <span class="without_sale">
+                    {{ formatPrice(currentProduct.price, currency) }}
+                    {{ currency.title }}
+                  </span>
 
-        <a-divider orientation="left" :style="{ 'margin-bottom': '0' }">
-          {{ $t("Total") }}:
-        </a-divider>
-
-        <a-row justify="space-around">
-          <a-col style="font-size: 1.5rem">
-            <template v-if="!fetchLoading">
-              <div class="price__sale" v-if="isSaleApply">
-                <span class="without_sale">
-                  {{ formatPrice(currentProduct.price, currency) }}
+                  <span>
+                    {{ formatPrice(currentProductWithSale.price, currency) }}
+                    {{ currency.title }}
+                  </span>
+                </div>
+                <template v-else>
+                  {{ (currentProduct.price ?? 0) + addonsPrice }}
                   {{ currency.title }}
-                </span>
-
-                <span>
-                  {{ formatPrice(currentProductWithSale.price, currency) }}
-                  {{ currency.title }}
-                </span>
-              </div>
-              <template v-else>
-                {{ (currentProduct.price ?? 0) + addonsPrice }}
-                {{ currency.title }}
+                </template>
               </template>
-            </template>
-            <div v-else class="loadingLine loadingLine--total" />
-          </a-col>
-        </a-row>
+              <div v-else class="loadingLine loadingLine--total" />
+            </a-col>
+          </a-row>
 
-        <promocode-menu
-          :plan-id="plan"
-          :applyed-promocode="planWithApplyedPromocode"
-          :is-flavors-loading="fetchLoading"
-          @update:promocode="promocode = $event"
-        />
+          <promocode-menu
+            :plan-id="plan"
+            :applyed-promocode="planWithApplyedPromocode"
+            :is-flavors-loading="fetchLoading"
+            @update:promocode="promocode = $event"
+          />
 
-        <a-row justify="space-around" style="margin: 10px 0">
-          <a-col :span="22">
-            <a-button type="primary" block shape="round" @click="orderConfirm">
-              {{ capitalize($t("order")) }}
-            </a-button>
-            <a-modal
-              :title="$t('Confirm')"
-              :open="modal.confirmCreate"
-              :confirm-loading="modal.confirmLoading"
-              :cancel-text="$t('Cancel')"
-              @ok="orderClickHandler"
-              @cancel="modal.confirmCreate = false"
-            >
-              <p>
-                {{ $t("order_services.Do you want to order") }}:
-                {{ currentProduct.title }}
-              </p>
-            </a-modal>
-          </a-col>
-        </a-row>
+          <a-row justify="space-around" style="margin: 10px 0">
+            <a-col :span="22">
+              <a-button
+                type="primary"
+                block
+                shape="round"
+                @click="orderConfirm"
+              >
+                {{ capitalize($t("order")) }}
+              </a-button>
+              <a-modal
+                :title="$t('Confirm')"
+                :open="modal.confirmCreate"
+                :confirm-loading="modal.confirmLoading"
+                :cancel-text="$t('Cancel')"
+                @ok="orderClickHandler"
+                @cancel="modal.confirmCreate = false"
+              >
+                <p>
+                  {{ $t("order_services.Do you want to order") }}:
+                  {{ currentProduct.title }}
+                </p>
+              </a-modal>
+            </a-col>
+          </a-row>
+        </div>
       </div>
 
       <promo-block class="order__promo" />
@@ -1100,6 +1111,12 @@ export default {
 .order__calculate {
   padding: 10px 15px 10px;
   font-size: 1.1rem;
+  position: fixed;
+}
+
+.order_filters {
+  position: fixed;
+  width: 12%;
 }
 
 .order__promo {
@@ -1401,6 +1418,13 @@ export default {
 @media screen and (max-width: 1024px) {
   .order_wrapper {
     padding: 0;
+  }
+  .order_filters {
+    position: unset;
+    width: 100%;
+  }
+  .order__calculate {
+    position: unset;
   }
   .order {
     grid-template-columns: 1fr;
