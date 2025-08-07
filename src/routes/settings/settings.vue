@@ -131,7 +131,7 @@
               @cancel="closeModal('login')"
             >
               <div
-                v-for="text in authStore.loginButtons"
+                v-for="text in (authStore.loginButtons || [])"
                 :key="text"
                 :class="{ disabled: checkAuth(text) }"
                 class="singleLang"
@@ -341,7 +341,7 @@ export default {
     ...mapStores(useAuthStore, useNamespasesStore),
     isVisible () {
       if (this.isAuthLoading) return true
-      return !localStorage.getItem('oauth') && this.authStore.loginButtons.length > 0
+      return !localStorage.getItem('oauth') && this.authStore.loginButtons?.length > 0
     },
     isAddFundsVisible () {
       if (!localStorage.getItem('oauth')) return true
@@ -376,7 +376,7 @@ export default {
 
     try {
       this.isAuthLoading = true
-      if (this.authStore.loginButtons.length < 1) {
+      if (this.authStore.loginButtons?.length < 1) {
         await this.authStore.fetchAuth()
       }
     } finally {

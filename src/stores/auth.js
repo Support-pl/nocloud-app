@@ -164,7 +164,7 @@ export const useAuthStore = defineStore("auth", () => {
       try {
         const response = await api.get("/oauth");
 
-        loginButtons.value = response;
+        loginButtons.value = response || [];
         return response;
       } catch (error) {
         console.error(error);
