@@ -109,7 +109,7 @@
                 </a-tag>
               </div>
 
-              <div v-else v-html="size.description" />
+              <div v-else v-html="size.description"></div>
             </div>
           </div>
 
@@ -216,7 +216,7 @@
           <h2>{{ currentProduct.title }}</h2>
         </a-row>
 
-        <div class="resources">
+        <div v-if="currentProduct?.meta?.resources?.length" class="resources">
           <p
             v-for="resource of currentProduct?.meta?.resources"
             :key="resource.id"
@@ -317,6 +317,7 @@ import { useI18n } from "vue-i18n";
 import promocodeMenu from "@/components/ui/promocode-menu.vue";
 import { usePromocodesStore } from "@/stores/promocodes";
 import { h } from "vue";
+import { useDescriptionsStore } from "@/stores/descriptions";
 
 const searchIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SearchOutlined")
@@ -329,6 +330,7 @@ const instancesStore = useInstancesStore();
 const promocodesStore = usePromocodesStore();
 const addonsStore = useAddonsStore();
 const authStore = useAuthStore();
+const descriptionsStore = useDescriptionsStore();
 const { onLogin } = storeToRefs(useAppStore());
 const { isLogged, userdata } = storeToRefs(authStore);
 
@@ -411,12 +413,15 @@ function getProduct(products, options) {
       if (!addon) return sum;
       return sum + addon.price * (period >= 1 ? period : 1 / period);
     }, 0);
-  const description = product.meta.description;
+  const description =
+    descriptionsStore.cachedADescriptions[product.descriptionId]?.text ||
+    product.meta.description;
 
   return {
     ...product,
     price: formatPrice(price),
-    meta: { ...product.meta, description },
+    meta: { ...product.meta },
+    description,
   };
 }
 
@@ -646,7 +651,9 @@ const changeProducts = () => {
         if (!product.public) continue;
         result.products.push([key, product, plan.uuid]);
 
-        const description = product.meta.description;
+        const description =
+          descriptionsStore.cachedADescriptions[product.descriptionId]?.text ||
+          product.meta.description;
 
         if (i === -1) {
           result.sizes.push({
@@ -865,6 +872,16 @@ const fetchPlans = async (provider) => {
       anonymously: !isLogged.value,
       sp_uuid: provider,
     });
+
+    const descriptions = [];
+    pool.forEach((p) =>
+      Object.keys(p.products || {}).forEach((key) =>
+        descriptions.push(p.products[key]?.descriptionId)
+      )
+    );
+    await Promise.allSettled(
+      descriptions.filter((d) => !!d).map((d) => descriptionsStore.fetchById(d))
+    );
 
     cachedPlans.value[cacheKey] = pool;
     plan.value = plans.value[0]?.uuid;
