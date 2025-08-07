@@ -643,7 +643,7 @@ export default { name: "RegisterView" };
   font-weight: 600;
   border-radius: 10px;
   padding: 7px 20px;
-  background: linear-gradient(90deg, #427cf7, #8baef2);
+  background: var(--main);
   background-size: 150% 200%;
   background-position: 0 0;
   /* animation: AnimationName 1s ease infinite; */
