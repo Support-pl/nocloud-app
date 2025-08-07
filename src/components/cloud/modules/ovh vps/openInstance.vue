@@ -172,7 +172,18 @@
               {{ capitalize($t("userService.auto renew")) }}
             </div>
             <div class="block__value">
-              {{ VM.config.auto_renew ? $t("enabled") : $t("disabled") }}
+              <a-switch
+                :loading="isUpdateAutoRenewLoading"
+                :checked="VM.meta?.autoRenew"
+                @update:checked="updateInstanceAutoRenew"
+              >
+                <template #checkedChildren>
+                  {{ $t("enabled") }}
+                </template>
+                <template #unCheckedChildren>
+                  {{ $t("disabled") }}
+                </template>
+              </a-switch>
             </div>
           </div>
         </div>
@@ -639,6 +650,7 @@ export default defineComponent({
     return { currency, openNotification };
   },
   data: () => ({
+    isUpdateAutoRenewLoading: true,
     chart1Data: [["Time", ""]],
     chart2Data: [["Time", ""]],
     chart3Data: [["Time", ""]],
@@ -1315,6 +1327,26 @@ export default defineComponent({
           this.openNotification("error", { message: this.$t(message) });
           console.error(err);
         });
+    },
+    async updateInstanceAutoRenew(value) {
+      this.isUpdateAutoRenewLoading = true;
+      try {
+        if (!this.VM.meta) {
+          this.VM.meta = {};
+        }
+
+        this.VM.meta.autoRenew = value;
+
+        const instance = {
+          uuid: this.VM.uuid,
+          meta: this.VM.meta,
+          billingPlan: this.VM.billingPlan,
+        };
+
+        await this.updateInstance(instance);
+      } finally {
+        this.isUpdateAutoRenewLoading = false;
+      }
     },
   },
 });
