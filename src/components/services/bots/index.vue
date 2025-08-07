@@ -2,7 +2,7 @@
   <div class="order_wrapper">
     <div v-if="!fetchLoading && !plansLoading" class="order">
       <div style="position: relative">
-        <div v-if="isPromoVisible" class="order__promo">
+        <div class="order__promo">
           <div class="order__field">
             <promo-block no-wrapper />
             <div
@@ -130,12 +130,6 @@ const getProducts = computed(() => {
 const showcase = computed(() =>
   getShowcases.value.find(({ uuid }) => uuid === route.query.service)
 );
-
-const isPromoVisible = computed(() => {
-  return (
-    showcase.value?.promo && showcase.value.promo[locale.value]?.previewEnable
-  );
-});
 
 const services = computed(() =>
   instancesStore.services.filter((el) => el.status !== "DEL")
