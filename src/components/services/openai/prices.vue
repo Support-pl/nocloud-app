@@ -724,4 +724,12 @@ watch(selectedModel, () => {
   padding-inline: 3px;
   margin-bottom: 2px;
 }
+
+:deep(.ant-select .ant-select-selector) {
+  border-color: black;
+}
+
+:deep(.ant-select .ant-select-selection-item) {
+  font-size: 1.3rem;
+}
 </style>

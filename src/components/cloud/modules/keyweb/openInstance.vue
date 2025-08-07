@@ -94,7 +94,18 @@
               {{ capitalize($t("userService.auto renew")) }}
             </div>
             <div class="block__value">
-              {{ VM.config.auto_renew ? $t("enabled") : $t("disabled") }}
+              <a-switch
+                :loading="isUpdateAutoRenewLoading"
+                :checked="VM.meta?.autoRenew"
+                @update:checked="updateInstanceAutoRenew"
+              >
+                <template #checkedChildren>
+                  {{ $t("enabled") }}
+                </template>
+                <template #unCheckedChildren>
+                  {{ $t("disabled") }}
+                </template>
+              </a-switch>
             </div>
           </div>
         </div>
@@ -170,7 +181,6 @@
 <script setup lang="jsx">
 import { computed, defineAsyncComponent, ref } from "vue";
 import { useRoute } from "vue-router";
-import { useI18n } from "vue-i18n";
 
 import { useSpStore } from "@/stores/sp.js";
 import { usePlansStore } from "@/stores/plans.js";
@@ -206,7 +216,6 @@ const cardIcon = defineAsyncComponent(() =>
 );
 
 const route = useRoute();
-const i18n = useI18n();
 
 const spStore = useSpStore();
 const plansStore = usePlansStore();
@@ -219,6 +228,7 @@ const { openNotification } = useNotification();
 
 const isVNCLoading = ref(false);
 const isVisible = ref(false);
+const isUpdateAutoRenewLoading = ref(false);
 
 const provider = computed(() =>
   spStore.servicesProviders.find(({ uuid }) => uuid === props.VM.sp)
@@ -311,6 +321,27 @@ async function openVNC() {
     isVNCLoading.value = false;
   }
   // router.push({ name: 'VNC', params: { uuid: route.params.uuid } })
+}
+
+async function updateInstanceAutoRenew(value) {
+  isUpdateAutoRenewLoading.value = true;
+  try {
+    if (!props.VM.meta) {
+      props.VM.meta = {};
+    }
+
+    props.VM.meta.autoRenew = value;
+
+    const instance = {
+      uuid: props.VM.uuid,
+      meta: props.VM.meta,
+      billingPlan: props.VM.billingPlan,
+    };
+
+    await instancesStore.updateInstance(instance);
+  } finally {
+    isUpdateAutoRenewLoading.value = false;
+  }
 }
 
 plansStore.fetch({ anonymously: false, sp_uuid: props.VM.sp });

@@ -236,7 +236,18 @@
               {{ capitalize($t("userService.auto renew")) }}
             </div>
             <div class="block__value">
-              {{ VM.config.auto_renew ? $t("enabled") : $t("disabled") }}
+              <a-switch
+                :loading="isUpdateAutoRenewLoading"
+                :checked="VM.meta?.autoRenew"
+                @update:checked="updateInstanceAutoRenew"
+              >
+                <template #checkedChildren>
+                  {{ $t("enabled") }}
+                </template>
+                <template #unCheckedChildren>
+                  {{ $t("disabled") }}
+                </template>
+              </a-switch>
             </div>
           </div>
         </div>
@@ -660,6 +671,7 @@ export default defineComponent({
         viewWindow: { min: 0 },
       },
     },
+    isUpdateAutoRenewLoading: false,
     modal: {
       reboot: false,
       shutdown: false,
@@ -954,7 +966,11 @@ export default defineComponent({
   },
   methods: {
     ...mapActions(usePlansStore, { fetchPlans: "fetch" }),
-    ...mapActions(useInstancesStore, ["invokeAction", "updateService"]),
+    ...mapActions(useInstancesStore, [
+      "invokeAction",
+      "updateService",
+      "updateInstance",
+    ]),
     ...mapActions(useChatsStore, [
       "createChat",
       "sendMessage",
@@ -1355,6 +1371,26 @@ export default defineComponent({
       if (`${day}`.length < 2) day = `0${day}`;
 
       return `${day}.${month}.${year} ${time}`;
+    },
+    async updateInstanceAutoRenew(value) {
+      this.isUpdateAutoRenewLoading = true;
+      try {
+        if (!this.VM.meta) {
+          this.VM.meta = {};
+        }
+
+        this.VM.meta.autoRenew = value;
+
+        const instance = {
+          uuid: this.VM.uuid,
+          meta: this.VM.meta,
+          billingPlan: this.VM.billingPlan,
+        };
+
+        await this.updateInstance(instance);
+      } finally {
+        this.isUpdateAutoRenewLoading = false;
+      }
     },
   },
 });
