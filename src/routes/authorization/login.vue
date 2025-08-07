@@ -105,12 +105,12 @@
           </div>
         </div>
 
-        <p v-if="authStore.loginButtons.length > 0" style="margin: 20px 0 0">
+        <p v-if="authStore.loginButtons?.length > 0" style="margin: 20px 0 0">
           {{ $t("login") }} {{ $t("with") }}:
         </p>
         <div class="login__oauth">
           <img
-            v-for="text of authStore.loginButtons"
+            v-for="text of authStore.loginButtons || []"
             :key="text"
             :alt="text"
             :src="`/img/icons/${getImageName(text)}.png`"
