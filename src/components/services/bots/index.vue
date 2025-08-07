@@ -518,6 +518,7 @@ export default { name: "AiBotsComponent" };
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  height: 120px;
 }
 
 .activate_btn {
@@ -564,9 +565,13 @@ export default { name: "AiBotsComponent" };
 
   .activate_btn {
     position: absolute;
-    bottom: -15px;
-    right: 15px;
+    bottom: 0px;
+    right: 0px;
     width: 200px;
+  }
+
+  .order__field {
+    padding-bottom: 50px;
   }
 }
 </style>
