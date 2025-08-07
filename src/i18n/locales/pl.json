@@ -13,6 +13,7 @@
     "Order an app development": "Zamów opracowanie aplikacji",
     "Need more functionality on these app? Write us!": "Potrzebujesz więcej funkcji w tej aplikacji? Napisz do nas!",
     "Developed by": "Opracowano przez",
+    "Login": "Login",
     "login": "Zaloguj sie",
     "user not found": "Użytkownik nie znaleziony",
     "Enter value": "Wprowadź wartość",
@@ -26,12 +27,21 @@
     "Invoices": "Invoices",
     "Detail": "Szczegóły",
     "Transactions": "Transactions",
+    "Act": "Akt",
+    "Acts": "Akty",
+    "No issued acts": "Brak wydanych aktów",
+    "acts count": "liczba aktów",
     "cloudState": "Chmura",
     "cloud": "Chmura",
     "support": "Wsparcie",
     "invoice": "Rozliczenia",
     "billing": "Billing",
     "settings": "Ustawienia",
+    "registration": "rejestracja",
+    "registration in BelGIE": "Rejestracja w BelGIE",
+    "DNS Editor": "Edytor DNS",
+    "Questionnaire for registering an Internet resource": "Kwestionariusz do rejestracji zasobu internetowego",
+    "An error has occurred. Please try again later": "Wystąpił błąd. Proszę spróbować ponownie później",
     "Balance": "Saldo",
     "Exit": "Wyjście",
     "I have a password": "Mam hasło",
@@ -40,6 +50,8 @@
     "singleInvoice": "Zamówienia",
     "status": "Status",
     "invoice status": "Status Zamówienia",
+    "disabled": "wyłączony",
+    "enabled": "włączony",
     "payed": "Zapłacony",
     "unpaid": "Nie zapłacony",
     "service": "Usługa",
@@ -47,20 +59,23 @@
     "invoiceDate": "Data zamówienia",
     "transactionDate": "Data utworzenia",
     "transactionPaymentDate": "Data wykonania",
-    "deadlineDate": "Termin",
     "dueDate": "Termin płatności",
+    "deadlineDate": "Termin",
     "onetime": "jednorazowa",
     "Choice payment": "Wybierz płatność",
     "one time payment": "one time payment",
     "recurring payment": "recurring payment",
     "Information": "Informacja",
     "Copy link": "Copy link",
-    "Copy link to share": "Copy link to share",
+    "Copy link to — share": "Copy link to — share",
     "It’s empty...": "Brak dostępnych informacji.",
     "Unknown error.": "Nieznany błąd.",
     "Password is too short": "Hasło jest za krótkie",
     "pass at least 10 characters": "Hasło musi mieć co najmniej 10 znaków",
     "Password must contain uppercase letters, numbers and symbols": "Hasło musi zawierać wielkie litery, cyfry i symbole",
+    "The last character must not be special": "Ostatni znak nie może być znakiem specjalnym",
+    "The username must be without special characters": "Nazwa użytkownika nie może zawierać znaków specjalnych",
+    "Email is already in use or is empty": "Email jest już używany lub jest pusty",
     "Create VM": "Utwórz VM",
     "Create": "Utwórz",
     "Confirm": "Potwierdź",
@@ -78,6 +93,7 @@
     "Drive type": "Typ dysku",
     "ips public": "IP's public",
     "ips private": "IP's private",
+    "free IP": "wolny adres IP",
     "Public network": "Sieć publiczna",
     "Private network": "Sieć prywatna",
     "Local network": "Sieć lokalna",
@@ -90,6 +106,11 @@
     "month": "miesiąc | {n} miesiąc | {n} miesięcy",
     "year": "rok | {n} rok | {n} lata",
     "years": "lata",
+    "usage": "użytkowanie",
+    "quantity": "ilość",
+    "topology": "topologia",
+    "order IP address": "zamów adres IP",
+    "Networking": "Sieć",
     "Network": "Sieć",
     "Base": "Base",
     "Advanced": "Advanced",
@@ -110,7 +131,12 @@
     "you will pay:": "Do zapłaty:",
     "Actual price may vary": "Rzeczywista cena może się różnić",
     "choose addons you want": "choose addons you want",
-    "prices": "prices",
+    "groupname": "nazwa grupy",
+    "prices": "ceny",
+    "$price": "Cena",
+    "Do you want to switch tariff?": "Czy chcesz zmienić taryfę?",
+    "Select new OS": "Wybierz nowy system operacyjny",
+    "Switch tariff": "Zmień taryfę",
     "Tariff price": "Tariff price",
     "Addons prices": "Addons prices",
     "Select new tariff": "Select new tariff",
@@ -119,6 +145,8 @@
     "OS type": "OS typ",
     "Location": "Lokalizacja",
     "location": "lokalizacja",
+    "net total": "netto łącznie",
+    "Resource": "Zasób",
     "Plan": "Plan",
     "Product": "Produkt",
     "Addons": "Dodatki",
@@ -139,6 +167,7 @@
     "You cannot change disk size while you have a snapshot": "Nie możesz zmienić rozmiaru dysku, gdy masz snapshot.",
     "You cannot change networks while you have a snapshot": "Nie możesz zmieniać sieci, gdy masz snapshot.",
     "Please delete snapshot and try again": "Usuń snapshot i spróbuj ponownie.",
+    "You cannot change resources while there — are snapshots": "Nie możesz zmieniać zasobów, gdy istnieją migawki",
     "Do you want to add an backup?": "Czy chcesz dodać kopię zapasową?",
     "Do you want to add an snapshot?": "Czy chcesz dodać snapshot?",
     "Network reserve 1": "Zarezerwuj adres IPv4 dla swojej VM na",
@@ -167,6 +196,9 @@
     "processor": "processor",
     "Order": "Zamówienie",
     "order": "zamówienie",
+    "activate": "aktywuj",
+    "new chat": "nowy czat",
+    "input text": "Wprowadź tekst",
     "open": "Otwarty",
     "or": "lub",
     "sign up": "sign up",
@@ -202,7 +234,7 @@
     "Delete snapshot": "Delete snapshot",
     "Revert snapshot": "Revert snapshot",
     "Snapshot name": "Snapshot name",
-    "Personal Area": "Strefa prywatna",
+    "Personal — Area": "Personal — Area",
     "use access data from my.support.by": "Użyj danych logowania z my.support.pl",
     "Use on your phone:": "Użyj na swoim telefonie:",
     "invoice_Description": "Opis",
@@ -210,12 +242,10 @@
     "invoice_Paid": "Opłacony",
     "invoice_Unpaid": "Oczekiwanie na zapłatę",
     "invoice_Canceled": "Odwołany",
-    "invoice_Terminated": "Zakończony",
     "invoice_Returned": "Zwrócone",
+    "invoice_Terminated": "Zakończony",
     "invoice_Draft": "Projekt",
     "Active": "Aktywny",
-    "moreExamples": "Więcej przykładów",
-    "attachedFiles": "Załączone pliki",
     "Suspended": "Zawieszony",
     "Canceled": "Odwołany",
     "Pay": "Zaplać",
@@ -223,7 +253,9 @@
     "Payment method": "Metoda płatności",
     "Do you want to defer payment?": "Chcesz odroczyć płatność?",
     "Show full list": "Pokaż pełną listę",
+    "pay from balance": "pay from balance",
     "cloudState_StartTime": "Czas rozpoczęcia",
+    "cloud_StartTime": "Start time",
     "cloud_Capacity": "Pojemność",
     "cloud_system": "System",
     "cloud_Storage": "Dysk",
@@ -248,15 +280,19 @@
     "support_Question_subject": "Temat pytania",
     "support_Question": "Pytanie",
     "ticket subject or message is too short": "Temat zgłoszenia lub wiadomość jest za krótka",
-    "departments are loading": "Trwa ładowanie działów...",
+    "departments — are loading": "Departments — are loading...",
     "departments not found": "Nie znaleziono działów",
     "Do you want to download a backup?": "Czy chcesz pobrać kopię zapasową?",
     "The payment can be postponed only once. The payment is postponed for 5 days.": "Płatność można odroczyć tylko raz i została przesunięta o 5 dni.",
-    "All unsaved progress will be lost, are you sure?": "Wszystkie niezapisane postępy zostaną utracone, na pewno?",
+    "All unsaved progress will be lost, — are you sure?": "Wszystkie niezapisane postępy zostaną utracone — czy na pewno?",
+    "— Are you sure you want pay invoice from balance?": "— Czy na pewno chcesz opłacić fakturę z salda?",
+    "The current invoice will be deleted, the service will be paid from the balance.": "Aktualna faktura zostanie usunięta, usługa zostanie opłacona z salda.",
+    "Payment will be made from your account balance.": "Płatność zostanie pobrana z salda Twojego konta.",
     "Add": "Dodać",
     "Save": "Zapisz",
     "Cancel": "Anuluj",
     "Submit": "Akceptuj",
+    "Reset": "Resetuj",
     "Yes": "Tak",
     "Send": "Wyszli",
     "Discard": "Odrzycz",
@@ -274,6 +310,8 @@
       "none": "nic"
     },
     "os": "OS",
+    "installation": "instalacja",
+    "Failed to load data": "Nie udało się załadować danych",
     "Order created successfully": "Zamówienie utworzone.",
     "Order update successfully": "Zamówienie zaktualizowanę.",
     "Ticket created successfully": "Zgłoszenie utworzone.",
@@ -293,7 +331,7 @@
     "All data will be deleted!": "Wszystkie dane zostaną usunięte!",
     "Data will be lost": "Dane zostaną utracone",
     "All unsaved data will be lost": "Wszystkie niezapisane dane zostaną utracone.",
-    "We can't do it automatically. Press OK to create a ticket": "Nie możemy tego zrobić automatycznie. Naciśnij OK, aby utworzyć zgłoszenie.",
+    "We can't do it automaticly. Presss OK to create a ticket": "Nie możemy tego zrobić automatycznie. Naciśnij OK, aby utworzyć zgłoszenie.",
     "You can't have more than 3 snaps at the same time": "Przepraszamy, nie można przekrocyć 3 jednocześnie.",
     "remove or commit old ones to create new": "Usuń starsze, aby utworzyć nowe.",
     "select location": "Wybierz lokalizację",
@@ -303,6 +341,7 @@
     "select": "Wybierz",
     "sort_by": "Sortuj według",
     "loading": "Ładowanie...",
+    "bot is typing": "bot pisze",
     "inbound": "inbound",
     "outgoing": "outgoing",
     "graphs": "Wykres",
@@ -317,6 +356,7 @@
     "count": "count",
     "cost": "koszt",
     "date": "data",
+    "filters": "filtry",
     "filter": "Filtr",
     "search": "Szukanie",
     "cart": "Wózek",
@@ -327,11 +367,18 @@
     "annually": "Rocznie",
     "biennially": "2-roczne",
     "triennially": "3-Yearly",
+    "group": "grupa",
+    "groups": "grupy",
+    "select group or product": "select group or product",
     "free account": "Darmowe konto",
-    "share app link": "Udostępnij link do aplikacji",
+    "— share app link": "— Share App Link",
     "copy link": "Skopiuj Link",
     "your QR code": "Twój kod QR",
-    "share": "Udostępnić",
+    "— share": "— Share",
+    "link": "link",
+    "account": "konto",
+    "subaccounts": "subkonta",
+    "with": "z",
     "Servers": "Serwery Wirtualne",
     "Virtual": "Web Hosting",
     "SSL": "SSL",
@@ -339,16 +386,28 @@
     "token": "token",
     "Token expiration date": "Token expiration date",
     "Refresh token": "Refresh token",
+    "moreExamples": "Więcej przykładów",
+    "openai description": "Możesz korzystać z ChatGPT firmy OpenAI w usłudze Multi-cloud Support.by z — przejrzystym systemem płatności i bez VPN. Aby zacząć korzystać z funkcji, musisz zarejestrować się w naszej usłudze, doładować saldo i wybrać usługę ChatGPT.\n\n Po zamówieniu usługi otrzymujesz dostęp do ChatGPT przez tę aplikację i możesz rozpocząć korzystanie z czatu. Otrzymujesz również token API ChatGPT do wykorzystania w — tworzeniu oprogramowania.",
+    "openai description 2": "Twoje saldo jest obciążane zgodnie z liczbą tokenów potrzebnych do Twojej pracy lub funkcjonalności produktu, w zależności od złożoności i długości rozmowy. Płatność jest naliczana za łączną liczbę tokenów wejściowych i wyjściowych, sięgającą tysięcy.\n\n Pomyśl o „tokenu” jako fragmencie słowa używanym do przetwarzania języka naturalnego. Dla tekstu angielskiego 1 token to około 4 znaki lub 0,75 słowa. Dla języka rosyjskiego jeden token to około 2 znaki lub 0,25 słowa.",
     "enter": "Enter",
     "next": "Dalej",
     "Done": "Zrobione",
     "renew": "Odnowić",
     "config": "config",
-    "all fields are required": "Proszę wypełnić wszystkie pola",
+    "copy": "kopiuj",
+    "edit": "edytuj",
+    "editing": "edycja",
+    "You can also choose another way of communication": "Możesz także wybrać inny sposób komunikacji",
+    "Choose another way of communication": "Wybierz inny sposób komunikacji",
+    "Select prompts": "Wybierz podpowiedzi",
+    "Add prompt": "Dodaj podpowiedź",
+    "prompts": "podpowiedzi",
+    "all fields — are required": "Please fill in all fields",
     "field must contain more characters": "Pole musi zawierać więcej znaków",
     "login is required": "Login is required",
     "email is not valid": "Email jest nieprawidłowy",
     "account created successfully": "Konto utworzone pomyślnie.",
+    "failed to create user": "Failed to create user. Try later.",
     "SSH key": "SSH klucz",
     "SSH keys": "SSH klucze",
     "Add a new SSH key": "Dodaj nowy klucz SSH",
@@ -358,6 +417,13 @@
     "error delete SSH key": "Błąd podczas usuwania klucza SSH",
     "Error adding SSH key": "Błąd podczas dodawania klucza SSH",
     "Please select at least one option": "Please select at least one option",
+    "more": "More",
+    "support_view": {
+      "delet_chat": {
+        "action": "Usuń czat",
+        "message": "Czy zdecydowanie chcesz usunąć ten czat?"
+      }
+    },
     "advice": {
       "look up": "sprawdzać",
       "You have billed for the renewal of this virtual machine": "Opłata za odnowienie tej maszyny wirtualnej została naliczona.",
@@ -383,16 +449,22 @@
       "billing cycle": "cykl rozliczeniowy",
       "renewal amount": "kwota odnowienia",
       "registration date": "data rejestracji",
-      "next payment date": "kolejny termin płatności"
+      "next payment date": "kolejny termin płatności",
+      "auto renew": "auto renew"
     },
     "comp_services": {
       "Your orders": "Twoje zamówienia",
       "with filter": "z filtrem",
       "total": "Razem",
-      "all": "Wszystko"
+      "all": "Wszystko",
+      "global_filter": {
+        "active": "Aktywne",
+        "all": "Wszystkie"
+      }
     },
     "order_services": {
-      "Do you want to order": "Czy chcesz zamówić?"
+      "Do you want to order": "Czy chcesz zamówić?",
+      "Do you want to activate": "Czy chcesz aktywować"
     },
     "IaaS": {
       "order_info": "PAYG Serwera Chmura",
@@ -409,14 +481,14 @@
       "bw": "Używany Traffic",
       "unlimited": "Nieograniczony",
       "power": "Power",
-      "sites": "Websites",
+      "websites": "Websites",
       "mysql": "Bazy danych MySQL",
       "email": "Konta email",
-      "hdd_shared": "Współdzielona HDD",
-      "traffic": "Przepustowość łącza",
-      "websites": "Websites",
       "ssd": "Objętość dysku",
-      "bandwidth": "Przepustowość łącza"
+      "bandwidth": "Przepustowość łącza",
+      "sites": "Websites",
+      "— hdd_shared": "— Shared HDD Storage",
+      "traffic": "Przepustowość łącza"
     },
     "clientinfo": {
       "username": "Nazwa użytkownika",
@@ -424,6 +496,7 @@
       "password again": "Powtórz hasło",
       "firstname": "Imię",
       "lastname": "Nazwisko",
+      "fullname": "Full Name",
       "state": "Państwo",
       "city": "Miasto",
       "postcode": "Kod pocztowy",
@@ -438,14 +511,30 @@
       "address1": "Adres Linia 1",
       "address2": "Adres Linia 2"
     },
-    "support_view": {
-      "delet_chat": {
-        "action": "Usuń czat",
-        "message": "Czy zdecydowanie chcesz usunąć ten czat?"
-      }
+    "documents": {
+      "private person": "Osoba prywatna",
+      "juridical person": "Osoba prawna",
+      "individual entrepreneur": "Przedsiębiorca indywidualny",
+      "resource info": "Informacje o zasobie",
+      "document data": "Dane dokumentu",
+      "registration info": "Informacje o rejestracji państwowej",
+      "passport": "Paszport",
+      "type": "Rodzaj dokumentu",
+      "series": "Seria",
+      "number": "Numer",
+      "id number": "Numer identyfikacyjny",
+      "issued by": "Wydany przez",
+      "date of issue": "Data wydania",
+      "registration certificate": "Świadectwo rejestracji państwowej",
+      "carried out reg": "Kto przeprowadził rejestrację",
+      "date of reg": "Data rejestracji",
+      "number decisions": "Numer decyzji",
+      "payer account number": "Numer rachunku płatnika",
+      "checking account": "Rachunek rozliczeniowy",
+      "bankname": "Nazwa banku",
+      "BIC": "BIC"
     },
     "ssl_product": {
-      "postal_code_not_valid": "Kod pocztowy jest nieprawidłowy dla wybranego kraju",
       "firstname": "Imię",
       "lastname": "Nazwisko",
       "state": "Państwo",
@@ -478,11 +567,13 @@
       "send": "Wysłać",
       "field is required": "To pole jest wymagane",
       "fields is required": "Proszę wypełnić wszystkie pola",
+      "postal_code_not_valid": "Kod pocztowy jest nieprawidłowy dla wybranego kraju",
       "awaiting configuration": "Oczekiwanie na konfigurację",
       "configuration status": "Stan konfiguracji:",
       "completed": "Zakończony",
+      "Completed": "Completed",
       "configure": "Skonfigurować",
-      "ssl certificate": "SSL Certyfikat",
+      "SSL certificate": "SSL Certificate",
       "csr_warning": "Upewnij się, że CSR zawiera linie nagłówka i stopki \"BEGIN\" i \"END\". Użyj generatora CSR, jeśli NIE masz kodu CSR.",
       "generator_warning_info": "Aby pomyślnie wygenerować klucz CSR, wymagane są następujące informacje (wypełnij łaciną, bez użycia znaków specjalnych).",
       "generator_warning_save_private_key": "Podczas generowania CSR generowany jest również klucz RSA. Wymagane jest zainstalowanie certyfikatu SSL na serwerze. W przypadku utraty tego klucza niemożliwe będzie jego przywrócenie i zainstalowanie samego certyfikatu SSL. Pamiętaj, aby przechowywać ten klucz w bezpiecznym miejscu.",
@@ -563,20 +654,27 @@
     "VNDExcludeVAT": "Ceny podane w PLN, nie zawierają podatek VAT 23%.",
     "Company Details": "Użyj dane firmowe (dla faktur)",
     "reload": "odswież",
-    "new content is available": "Nowy kontent",
+    "new content is avaliable": "New content is avaliable",
     "accept terms": "Aby kontynuować, zaakceptuj warunki.",
     "ask a question": "Zadaj pytanie",
     "department": "Dział",
     "subject": "Temat",
     "question": "Pytanie",
+    "gateways": "Gateways",
     "gateway": "Kanał komunikacyjny",
     "message": "Wiadomość",
     "description": "Description",
+    "files": "Files",
+    "send message": "send message",
+    "generate image": "generate image",
+    "resolution": "resolution",
+    "quality": "quality",
     "ticketStatus": {
       "Closed": "Zamknięte",
       "Close-Ticket": "Zamknij zgłoszenie",
       "Customer-Reply": "Odpowiedź klienta",
       "Customer Reply": "Odpowiedź klienta",
+      "Waiting for reply": "Waiting for reply",
       "In Progress": "W trakcie",
       "On Hold": "W oczekiwaniu",
       "Open": "Otwarty",
@@ -584,6 +682,364 @@
       "New": "New",
       "Resolve": "Resolved",
       "Close": "Closed"
+    },
+    "phone_verification": {
+      "labels": {
+        "verify": "Sprawdź telefon",
+        "description": "Kod weryfikacji sześcio -digit zostanie wysłany do numeru telefonu {Phone_number}. Kod będzie ważny w ciągu 10 minut",
+        "code_again": "Możliwe będzie ponownie wysłanie kodu przez {sekundy} sekundy",
+        "code": "Kod",
+        "tip": "Please, confirm your phone number",
+        "user_profile_link": "This is not your phone? Edit data in your personal account",
+        "verifcation_success": "Pomyślnie zweryfikowałeś swój telefon.",
+        "invoices_message": "Zweryfikuj swój telefon, aby przejść do płatności i aktywacji usługi. Dane te są niezbędne do prawidłowego zarejestrowania usługi i wystawienia faktury."
+      },
+      "actions": {
+        "get_code": "Zdobądź kod",
+        "confirm_code": "Potwierdź kod"
+      }
+    },
+    "domains_view": {
+      "order": {
+        "domains_status": {
+          "available": "Dostępny",
+          "taken": "Zajęty"
+        },
+        "actions": {
+          "addToCart": "Dodaj do koszyka",
+          "orderNow": "Zamów teraz"
+        }
+      },
+      "nameservers": {
+        "labels": {
+          "actions": "Działania",
+          "name": "Serwer nazw",
+          "notValidNameServer": "Nieważny serwer nazw",
+          "confirm_delete": "Czy na pewno chcesz usunąć ten serwer nazw?"
+        },
+        "actions": {
+          "add": "Dodaj",
+          "delete": "Usuń",
+          "sync": "Synchronizuj z serwerami domyślnymi",
+          "edit_dns_records": "Edytor DNS"
+        }
+      }
+    },
+    "Add new chat": "Dodaj nowy czat",
+    "API / Settings": "API / Ustawienia",
+    "bots": {
+      "fields": {
+        "promt": "Prompt",
+        "model": "Model",
+        "temperature": "Temperatura",
+        "delay": "Opóźnienie",
+        "channels": "Kanały",
+        "chanell_type": "Typ",
+        "chanell_username": "Nazwa użytkownika kanału systemowego",
+        "chanell_firstname": "Wyświetlana nazwa kanału",
+        "chanell_name": "Nazwa wewnętrzna",
+        "enable_spam_filter": "Filtr antyspamowy",
+        "role": "Rola"
+      },
+      "chanell_fields": {
+        "bot_secret": {
+          "label": "Klucz tajny",
+          "tip": "Wprowadź klucz API wygenerowany przez wybraną platformę.\nTen klucz jest wymagany do bezpiecznego połączenia twojego bota i odbierania wiadomości od użytkowników."
+        },
+        "api_url": {
+          "label": "Adres URL webhooka",
+          "tip": "Adres URL uzyskany podczas tworzenia webhooka przychodzącego na twoim portalu Bitrix24"
+        },
+        "unique_name": {
+          "label": "Unikalna nazwa bota",
+          "tip": "Unikalna nazwa bota, którą zobaczą twoi klienci (np. Yevseyem Maksim)"
+        }
+      },
+      "chats_filter": {
+        "active": "Aktywne",
+        "all": "Wszystkie",
+        "inactive": "Archiwalne",
+        "archived": "Usunięte"
+      },
+      "labels": {
+        "channel_warning": "⚠️ **Bot nie będzie działał bez podłączonych kanałów!**\n\nAby zacząć odbierać wiadomości od użytkowników, musisz podłączyć co najmniej jeden kanał komunikacji.\n\nKonfiguracja zajmuje tylko kilka minut.",
+        "pricing_bot_description": "### 💬 Koszty korzystania z AI Agenta\n\n#### 1. Miesięczna subskrypcja — **{monthly} za miesiąc**\n\nZawiera:\n\n- Hosting i wsparcie agenta  \n- Dostęp do spersonalizowanej logiki i pamięci  \n- Przechowywanie i przetwarzanie danych  \n- Aktualizacje i ulepszenia scenariuszy\n\n#### 2. Rozliczenie za użycie (tokeny) — od {priceForToken} za 1M tokenów**\n\nAI mierzy tekst w tokenach — małych kawałkach słów, które tworzą mowę.\n\nPrzybliżone użycie:\n\n- 1 000 tokenów ≈ 750 słów  \n- Jedno średnie zapytanie + odpowiedź ≈ 100–300 tokenów  \n\n💡 Płacisz tylko za faktyczne rozmowy — tak jak w telefonii komórkowej: płacisz tylko za to, co wykorzystujesz.",
+        "seconds": "sekundy",
+        "s": "s",
+        "add_new_chanell_title": "Dodaj kanał",
+        "edit_chanell_title": "Kanał",
+        "delete_confirm_label": "Czy na pewno chcesz usunąć ten kanał?",
+        "no_chats": "Brak wiadomości od użytkowników. Gdy tylko twoi klienci skontaktują się z botem, zobaczysz tutaj historię czatu na żywo.",
+        "no_chats_compact": "Jeszcze nic tu nie ma",
+        "spam_detected": "Wykryto spam",
+        "need_operator": "Potrzebny operator",
+        "search": "Szukaj"
+      },
+      "roles": {
+        "none": "Brak roli"
+      },
+      "chanells_instruction": {
+        "telegram": "📢 **Do połączenia bota Telegram potrzebny jest tylko `bot_secret`.**\nUtwórz bota przez `BotFather`, skopiuj `Token` i wklej go w polu `bot_secret`.\n\n📘 Więcej informacji:\n\n[1. Jak uzyskać token bota](https://core.telegram.org/bots/tutorial#obtain-your-bot-token)\n\n[2. Tworzenie nowego bota](https://core.telegram.org/bots/features#creating-a-new-bot)",
+        "bitrix24": "## [📘 Przewodnik po tworzeniu webhooka w Bitrix24](https://helpdesk.bitrix24.ru/open/20886106)\n\n### ⚠️ Ważne:\nPodczas tworzenia webhooka wybierz **typ: INCOMING Webhook** i określ wymagane uprawnienia: ✅ **imbot**, ✅ **imopenlines**, ✅ **im**, ✅ **disk**.",
+        "bitrix24_sub": "## Podłączanie bota AI\n\nW Bitrix24 otwórz **CRM → Contact Center**, wybierz odpowiednią **otwartą linię** i przejdź do jej **ustawień**.\n\nW sekcji **\"Chat Bots\"** włącz opcję:\n**\"Przypisz bota czatu jako odpowiedzialnego\"**, następnie wybierz utworzonego bota.\nKliknij **\"Zapisz\"**. ✅ Gotowe!"
+      },
+      "chat_item_tips": {
+        "archive": "Przenieś do usuniętych",
+        "unarchive": "Przywróć z usuniętych",
+        "activate": "Przenieś do aktywnych",
+        "deactivate": "Przenieś do archiwalnych",
+        "pause_bot": "Wstrzymaj bota",
+        "resume_bot": "Wznów bota"
+      },
+      "placeholders": {
+        "promt": "Jesteś ekspertem od produktu X.\nTwoim zadaniem jest zidentyfikowanie potrzeb użytkownika, zaoferowanie odpowiedniego produktu, wyjaśnienie jego zalet i poprowadzenie do zakupu.\nUżywaj ciepłego, profesjonalnego tonu i zadawaj pytania doprecyzowujące, aby lepiej zrozumieć sytuację.\nNie podawaj wszystkich informacji na raz — angażuj się w naturalną rozmowę, jak doświadczony sprzedawca."
+      },
+      "tips": {
+        "model": "**GPT-4o Mini** to _odchudzona_ wersja modelu **GPT-4o**, zoptymalizowana pod kątem **szybkiego** i **wydajnego** działania w czasie rzeczywistym.",
+        "promt": "Prompt to początkowa instrukcja lub kontekst, który podajesz asystentowi, aby nakierować jego odpowiedzi.\nDobrze przygotowany prompt pomaga uzyskać bardziej trafne i dokładne odpowiedzi.\nMożesz używać przykładów, instrukcji lub pytań, aby zdefiniować kontekst.",
+        "temperature": "Im wyższa wartość temperatury, tym bardziej kreatywne i różnorodne odpowiedzi.\n0 — ścisłe i przewidywalne.\n0.5 — zrównoważone i naturalne.\n1 — bardzo kreatywne.",
+        "delay": "Opóźnienie przed odpowiedzią bota.\nUstawione w sekundach.\n0 — natychmiastowa odpowiedź.\n3 — bot czeka 3 sekundy przed odpowiedzią.\nSłuży do symulacji ludzkiej pauzy.",
+        "channels": "Utwórz kanał dla swojego asystenta.\nWszystkie przychodzące wiadomości na tym kanale będą automatycznie przetwarzane i odpowiadane przez bota.",
+        "enable_spam_filter": "Po włączeniu, czat jest automatycznie oznaczany jako potencjalny spam, jeśli wykryta zostanie podejrzana aktywność.\nW takim przypadku bot AI jest wyłączany.",
+        "role": "Określa, jak AI zachowuje się w rozmowie.\nNa przykład, może działać jako asystent, konsultant, sprzedawca lub mentor."
+      },
+      "actions": {
+        "save_bot": "Zapisz",
+        "add_new_chanell": "Dodaj kanał",
+        "add_chanell": "Dodaj",
+        "delete_chanell": "Usuń",
+        "update_chanell": "Zapisz",
+        "all_chats": "Wszystkie czaty"
+      }
+    },
+    "ai_bot_page": {
+      "tabs": {
+        "chats": "Czaty",
+        "settings": "Ustawienia",
+        "databases": "Bazy wiedzy",
+        "notifications": "Powiadomienia"
+      }
+    },
+    "bots_notifications": {
+      "labels": {
+        "instruction_tg": "### 🔔 Włącz powiadomienia Telegram\n\nAby otrzymywać powiadomienia bezpośrednio w Telegramie, musisz połączyć bota.\n\n**Oto jak:**\n\n1. Wyślij ten kod do bota [bot_username](https://t.me/bot_username):\n```/connect user_code```\n\n**lub**\n\n2. Po prostu kliknij przycisk poniżej — Telegram otworzy się automatycznie:\n\n[🔗 Połącz powiadomienia Telegram](https://t.me/bot_username?start=connect_user_code)"
+      },
+      "actions": {
+        "open_chanell": "Konfiguruj",
+        "delete_chanell": "Usuń",
+        "delete_chanell_confirm": "Czy na pewno chcesz usunąć kanał?",
+        "edit_chanell": "Edytuj kanał"
+      },
+      "fields": {
+        "recipient": "Twój e-mail"
+      }
+    },
+    "bots_databases": {
+      "fields": {
+        "name": "Nazwa",
+        "question": "Pytanie",
+        "answer": "Odpowiedź",
+        "knowledge_description": "Opis źródła wiedzy",
+        "knowledge_url": "URL źródła wiedzy",
+        "integration_column_type": "Typ",
+        "integration_column_name": "Nazwa",
+        "integration_column_url": "Link",
+        "knowledge_upload_file": "Plik",
+        "file_search_column_type": "Typ",
+        "file_search_column_name": "Nazwa",
+        "file_search_column_url": "Link",
+        "file_search_column_status": "Status",
+        "file_search_column_enabled": "Włączone",
+        "site_search_column_url": "Link",
+        "site_search_column_status": "Status"
+      },
+      "file_search_status": {
+        "ready": "Gotowe",
+        "synchronizing": "Przetwarzanie...",
+        "failed": "Niepowodzenie"
+      },
+      "site_search_status": {
+        "finished": "Gotowe",
+        "processing": "Przetwarzanie...",
+        "failed": "Niepowodzenie"
+      },
+      "tips": {
+        "not_valid_form": "Proszę sprawdzić poprawność wprowadzonych danych.",
+        "create_database": "Utwórz nową bazę wiedzy, której bot będzie używał do odpowiedzi",
+        "delete_database": "Usunąć tę bazę? Cała zawartość zostanie trwale usunięta",
+        "attach_database": "Włącz tę bazę, aby bot mógł z niej korzystać",
+        "detach_database": "Wyłącz tę bazę, aby tymczasowo wykluczyć ją z odpowiedzi bota",
+        "open_database": "Otwórz bazę, aby zobaczyć i edytować jej zawartość",
+        "enabled_databases": "Te bazy są aktywne i używane przez bota w odpowiedziach",
+        "disabled_databases": "Te bazy są obecnie nieaktywne i ignorowane przez bota",
+        "qa_knowledge_base": "Utwórz listę typowych pytań, które mogą zadać użytkownicy, wraz z jasnymi odpowiedziami. Bot będzie wyszukiwał w tej liście, aby udzielać trafnych odpowiedzi, nawet jeśli pytanie zostanie zadane inaczej.",
+        "create_knowledge": "Możesz podłączyć dodatkowe źródła wiedzy, takie jak Google Docs, pliki i inne. Bot wykorzysta zawartość tych źródeł do wyszukiwania i generowania odpowiedzi na pytania użytkowników.",
+        "knowledge_integrations": "Możesz podłączyć dodatkowe źródła wiedzy, takie jak Google Docs, pliki i inne. Bot wykorzysta zawartość tych źródeł do wyszukiwania i generowania odpowiedzi na pytania użytkowników.",
+        "knowledge_upload_file": "Możesz przesłać plik zawierający informacje, których asystent AI użyje do odpowiedzi na pytania.\n\n**Obsługiwane formaty plików:**\n\n- `.txt` — plik tekstowy  \n- `.csv` — wartości rozdzielone przecinkami  \n- `.docx` — dokument Microsoft Word  \n- `.xlsx` — arkusz Microsoft Excel  \n- `.pdf` — dokument PDF\n\n❗ Upewnij się, że plik zawiera uporządkowane i czytelne informacje.",
+        "knowledge_file_size": "Maksymalny rozmiar pliku to 10MB, ale faktyczna użyteczna zawartość nie powinna przekraczać 50KB",
+        "knowledge_file_search": "Przesłane pliki są automatycznie przetwarzane i przechowywane w bazie wektorowej — specjalnym magazynie, gdzie każdy plik jest reprezentowany jako wektor liczbowy. Ta baza jest używana przy każdym zapytaniu, aby znaleźć najbardziej trafne dopasowania na podstawie twoich danych.",
+        "create_file_search_knowledge": "Prześlij plik do przetworzenia i zapisania w bazie wektorowej. Dane te będą używane przy każdym zapytaniu, aby poprawić trafność i kontekst odpowiedzi.",
+        "file_search_price": "**Plik zostanie przetworzony i zapisany w bazie wektorowej dla inteligentnego wyszukiwania.**\n\n💰 *Koszt: około 0,30 $ za 5 MB tekstu.*",
+        "file_search_update": "**Plik zostanie ponownie przetworzony.**\nNaliczana jest opłata tylko za różnicę między starą a nową wersją.\n\n💰 *Koszt: około 0,30 $ za 5 MB zmienionej zawartości.*",
+        "delete_knowledge": "Plik zostanie trwale usunięty. Ta operacja jest nieodwracalna.",
+        "enabled_file_search_knowledge": "Kontroluje, czy plik jest uwzględniany w zapytaniach AI. Możesz go wyłączyć bez usuwania.",
+        "knowledge_site_search": "Dodaj link do strony internetowej — AI przeprowadzi dogłębną analizę jej zawartości i wygeneruje odpowiedzi na podstawie twojej witryny.",
+        "create_site_search_knowledge": "Dodaj link do strony internetowej — AI przeprowadzi dogłębną analizę jej zawartości i wygeneruje odpowiedzi na podstawie twojej witryny.",
+        "open_site_search_result": "Otwórz automatycznie wygenerowane pytania ze strony i wybierz, które dodać do bazy wiedzy.",
+        "site_search_add_price": "> ⏳ **Proszę zauważyć:** po dodaniu linku system rozpocznie dogłębną analizę strony. Przeanalizujemy wiele stron, wyodrębnimy kluczowe informacje i przekształcimy je w pytania i odpowiedzi dla twojej bazy wiedzy.\n>\n> 🔍 W zależności od wielkości i struktury strony proces ten może potrwać kilka minut.\n>\n> 💸 Ponieważ jest to zadanie wymagające dużej mocy obliczeniowej (analiza tekstu, generowanie pytań, przechowywanie danych), szacowany koszt to około **~0,5 $**. Dokładna kwota zależy od ilości przetwarzanej zawartości."
+      },
+      "labels": {
+        "enabled_databases": "Włączone bazy wiedzy",
+        "disabled_databases": "Wyłączone bazy wiedzy",
+        "empty_databases": "Brak dostępnych danych",
+        "qa_knowledge_base": "Pytanie - Odpowiedź",
+        "knowledge_integrations": "Podłączone dane",
+        "knowledge_file_search": "Inteligentne pliki (wektoryzowane)",
+        "knowledge_site_search": "Podłączone strony"
+      },
+      "actions": {
+        "create_database": "Dodaj bazę wiedzy",
+        "create_knowledge": "Dodaj źródło",
+        "add_qa_record": "Dodaj rekord",
+        "save_qa_records": "Zapisz",
+        "attach_database": "Połącz bazę danych",
+        "detach_database": "Odłącz bazę danych",
+        "knowledge_upload_file": "Prześlij plik",
+        "create_file_search_knowledge": "Dodaj źródło",
+        "update_knowledge": "Aktualizuj źródło",
+        "create_site_search_knowledge": "Dodaj stronę",
+        "import_site_search_knowledge": "Dodaj do QA"
+      }
+    },
+    "openai": {
+      "labels": {
+        "api_example": "Przykład API",
+        "create_label": "Co chciałbyś wygenerować?",
+        "videos_price_tip": "Cena za generowanie wideo jest obliczana na podstawie czasu trwania filmu. Stawka wynosi {perSecond} za sekundę.<br>**Koszt generowania: {total}**",
+        "newChat": "Nowa rozmowa",
+        "generate_video": "Generuj wideo",
+        "generate_image": "Generuj obraz",
+        "generate_audio": "Generuj audio"
+      },
+      "default_model": {
+        "label": "Główny model rozmowy",
+        "tip": "Ten model jest domyślnie używany do wiadomości tekstowych. Aby generować obrazy, wideo lub audio, wybierz szybką akcję i odpowiedni model do tego zadania."
+      },
+      "images_properties": {
+        "resolution": "Rozdzielczość",
+        "quality": "Jakość",
+        "price": "Cena"
+      },
+      "chat_action_properties": {
+        "aspect_ratio": "Proporcje obrazu",
+        "duration": "Czas trwania (sekundy)",
+        "with_audio": "Z dźwiękiem?",
+        "model": "Model AI",
+        "promt": "Opisz swój scenariusz wideo możliwie szczegółowo.",
+        "quality": "Jakość obrazu",
+        "size": "Rozmiar obrazu"
+      },
+      "prompts": {
+        "default": {
+          "placeholder": "Opisz jak najdokładniej, jaki tekst potrzebujesz. Na przykład: \"Napisz ciepłą wiadomość urodzinową dla mojej mamy\" lub \"Stwórz krótką opowieść o przyjaźni dla dzieci\""
+        },
+        "generate": {
+          "placeholder": "Opisz jak najpełniej, co powinno pojawić się na obrazie. Na przykład: \"Kot w okularach przeciwsłonecznych leżący na plaży, obok ananasa, zachód słońca w tle\" lub \"Robot w futurystycznym mieście, styl komiksowy\""
+        },
+        "speech": {
+          "placeholder": "Napisz, co powinno być powiedziane i jakim głosem. Na przykład: \"Spokojny męski głos mówiący: Witaj\" lub \"Radosny głos dziecka czytający krótki wierszyk\""
+        },
+        "video": {
+          "placeholder": "Opisz możliwie szczegółowo scenariusz swojego wideo. Na przykład: \"Pies biegnący przez pole, wiatr rozwiewa sierść, zwolnione tempo, realistyczny styl\" lub \"Statek kosmiczny lecący przez mgłę z niebieskim blaskiem, styl sci-fi\""
+        }
+      },
+      "errors": {
+        "create_failed": "Nie udało się utworzyć nowej rozmowy. Spróbuj ponownie później."
+      },
+      "payment_types": {
+        "text_input": "Cena za 1 mln tokenów wejściowych",
+        "text_output": "Cena za 1 mln tokenów wyjściowych",
+        "image_input": "Cena za 1 mln tokenów wejściowych obrazu",
+        "image_output": "Cena za 1 mln tokenów wyjściowych obrazu",
+        "audio_input": "Cena za 1 mln tokenów wejściowych audio",
+        "audio_output": "Cena za 1 mln tokenów wyjściowych audio",
+        "duration_price": "Cena za 60 sekund treści",
+        "sampling_step_price": "Cena za krok generowania",
+        "characters_price": "Cena za 1 mln znaków wejściowych",
+        "pages_count_price": "Cena za 1000 stron"
+      },
+      "payment_types_tips": {
+        "text_input": {
+          "title": "Tokeny wejściowe",
+          "description": " — to jednostki tekstu, na które dzieli się twoje zapytanie przed przetworzeniem przez model. Jeden token to średnio 4–5 znaków, wliczając spacje, czyli około ¾ słowa. Cena podana jest za 1 milion tokenów, co odpowiada około 750 000 słów. Faktyczna liczba tokenów zależy od długości i złożoności twoich zapytań, a rozliczenie jest proporcjonalne do wykorzystanej ilości tekstu."
+        },
+        "text_output": {
+          "title": "Tokeny wyjściowe",
+          "description": " — to segmenty tekstu generowane przez model w odpowiedzi na twoje zapytanie. Jeden token to około 4–5 znaków, czyli około ¾ słowa. Cena podana jest za 1 milion tokenów, co odpowiada około 750 000 słów. Im dłuższa odpowiedź, tym więcej tokenów jest zużywanych. Płacisz tylko za faktyczną ilość wygenerowanego tekstu — krótsze odpowiedzi kosztują mniej, dłuższe więcej."
+        },
+        "image_input": {
+          "title": "Tokeny wejściowe",
+          "description": " — to jednostki tekstu, na które dzieli się twoje zapytanie przed przetworzeniem przez model. Jeden token to średnio 4–5 znaków, wliczając spacje, czyli około ¾ słowa. Cena podana jest za 1 milion tokenów, co odpowiada około 750 000 słów. Faktyczna liczba tokenów zależy od długości i złożoności twoich zapytań, a rozliczenie jest proporcjonalne do wykorzystanej ilości tekstu."
+        },
+        "image_output": {
+          "title": "Tokeny wyjściowe",
+          "description": " — to segmenty tekstu generowane przez model w odpowiedzi na twoje zapytanie. Jeden token to około 4–5 znaków, czyli około ¾ słowa. Cena podana jest za 1 milion tokenów, co odpowiada około 750 000 słów. Im dłuższa odpowiedź, tym więcej tokenów jest zużywanych. Płacisz tylko za faktyczną ilość wygenerowanego tekstu — krótsze odpowiedzi kosztują mniej, dłuższe więcej."
+        },
+        "audio_input": {
+          "title": "Tokeny wejściowe",
+          "description": " — to jednostki tekstu, na które dzieli się twoje zapytanie przed przetworzeniem przez model. Jeden token to średnio 4–5 znaków, wliczając spacje, czyli około ¾ słowa. Cena podana jest za 1 milion tokenów, co odpowiada około 750 000 słów. Faktyczna liczba tokenów zależy od długości i złożoności twoich zapytań, a rozliczenie jest proporcjonalne do wykorzystanej ilości tekstu."
+        },
+        "audio_output": {
+          "title": "Tokeny wyjściowe",
+          "description": " — to segmenty tekstu generowane przez model w odpowiedzi na twoje zapytanie. Jeden token to około 4–5 znaków, czyli około ¾ słowa. Cena podana jest za 1 milion tokenów, co odpowiada około 750 000 słów. Im dłuższa odpowiedź, tym więcej tokenów jest zużywanych. Płacisz tylko za faktyczną ilość wygenerowanego tekstu — krótsze odpowiedzi kosztują mniej, dłuższe więcej."
+        },
+        "duration_price": "null",
+        "images": {
+          "title": "Jakość i rozdzielczość",
+          "description": " wpływają na rozmiar, szczegóły, ostrość i realizm obrazu. Możesz wybrać odpowiedni poziom w zależności od celu — czy to podgląd, publikacja, czy druk. Cena odpowiada wybranemu poziomowi jakości."
+        },
+        "sampling_step_price": {
+          "title": "Im więcej kroków próbkowania",
+          "description": " jest używanych podczas generowania, tym wyższa jakość końcowej treści. Jednak zwiększa to również koszt."
+        },
+        "characters_price": "null",
+        "pages_count_price": "null"
+      },
+      "images_quality": {
+        "hd": "Wysoka jakość (HD)",
+        "auto": "Automatyczna",
+        "standard": "Standardowa"
+      },
+      "providers": {
+        "openai": "OpenAI",
+        "gemini": "Google",
+        "deepseek": "DeepSeek",
+        "llama": "Llama",
+        "runway": "Runway",
+        "stability-ai": "Stability AI",
+        "alibaba": "Alibaba"
+      },
+      "filters": {
+        "video": "Wideo",
+        "image": "Obraz",
+        "audio": "Audio",
+        "text": "Tekst"
+      },
+      "types": {
+        "text": "Generowanie tekstu",
+        "image": "Generowanie obrazów",
+        "text_to_audio": "Generowanie audio",
+        "audio_to_text": "Rozpoznawanie/Tłumaczenie",
+        "video": "Generowanie wideo",
+        "embedding": "Wektoryzacja tekstu",
+        "vision": "Wizja komputerowa"
+      },
+      "actions": {
+        "generate_text": "tekst",
+        "generate_image": "obraz",
+        "generate_audio": "audio",
+        "generate_video": "wideo"
+      }
     },
     "Domains": "Domeny",
     "domains": "domeny",
@@ -604,7 +1060,7 @@
     "no data": "Brak informacji",
     "add funds": "Dodać środki",
     "attach new NIC": "Podłącz nową NIC",
-    "there are no aliases": "Nie ma aliasów",
+    "there — are no aliases": "Nie ma aliasów",
     "alias": "Alias",
     "IP": "IP",
     "Actions": "Akcje",
@@ -615,7 +1071,10 @@
       "SNAPSHOT": "SNAPSHOT",
       "RUNNING": "RUNNING",
       "SUSPENDED": "SUSPENDED",
-      "UNKNOWN": "UNKNOWN"
+      "STOPPED": "STOPPED",
+      "OPERATION": "OPERATION",
+      "UNKNOWN": "UNKNOWN",
+      "DELETED": "DELETED"
     },
     "public": "Public",
     "virtualSlider": {
@@ -629,6 +1088,15 @@
     "PAYG": "PAYG",
     "PrePaid": "PrePaid",
     "filterHeader": {
+      "0": "Nowy",
+      "1": "Otwarty",
+      "2": "Rozwiązany",
+      "3": "Zamknięty",
+      "4": "W trakcie",
+      "5": "Odpowiedź klienta",
+      "6": "Oczekiwanie na odpowiedź",
+      "7": "Wstrzymany",
+      "8": "W trakcie",
       "Unpaid": "Nie zapłacony",
       "Paid": "Zapłacony",
       "Open": "Otwarty",
@@ -636,16 +1104,12 @@
       "Closed": "Zamknięte",
       "Close-Ticket": "Zamknij zgłoszenie",
       "Customer-Reply": "Odpowiedź klienta",
+      "Waiting for reply": "Waiting for reply",
       "In Progress": "W trakcie",
       "On Hold": "W oczekiwaniu",
       "Answered": "Odpowiedziano",
       "Cancelled": "Odwołany",
-      "Draft": "Projekt",
-      "0": "New",
-      "1": "Open",
-      "2": "Resolved",
-      "3": "Closed",
-      "4": "In progress"
+      "Draft": "Projekt"
     },
     "virtual": "wirtualny",
     "ssl": "SSL",
@@ -662,6 +1126,7 @@
     "disk detach": "Odłącz dysk",
     "assign to VM": "Przypisz do VM",
     "NIC attach": "Podłącz NIC",
+    "attachedFiles": "Załączone pliki",
     "private": "Prywatny",
     "available intervals": "Dostępne interwały:",
     "enter new private IP": "Wprowadź nowy prywatny adres IP:",
@@ -669,6 +1134,7 @@
     "volatile disk": "Dysk nietrwały",
     "No Data": "No Data",
     "Add funds": "Dodać środki",
+    "provider": "Dostawca",
     "cpu": "CPU",
     "ram": "RAM",
     "gpu": "GPU",
@@ -684,43 +1150,14 @@
       },
       "placeholder": "Kod promocyjny"
     },
-    "phone_verification": {
-      "labels": {
-        "verify": "Sprawdź telefon",
-        "description": "Kod weryfikacji sześcio -digit zostanie wysłany do numeru telefonu {Phone_number}. Kod będzie ważny w ciągu 10 minut",
-        "code_again": "Możliwe będzie ponownie wysłanie kodu przez {sekundy} sekundy",
-        "code": "Kod",
-        "verifcation_success": "Pomyślnie zweryfikowałeś swój telefon.",
-        "invoices_message": "Zweryfikuj swój telefon, aby przejść do płatności i aktywacji usługi. Dane te są niezbędne do prawidłowego zarejestrowania usługi i wystawienia faktury."
-      },
-      "actions": {
-        "get_code": "Zdobądź kod",
-        "confirm_code": "Potwierdź kod"
-      }
-    },
-    "domains_view": {
-      "nameservers": {
-        "labels": {
-          "actions": "Działania",
-          "name": "Serwer nazw",
-          "notValidNameServer": "Nieważny serwer nazw",
-          "confirm_delete": "Chcesz usunąć ten serwer nazw?"
-        },
-        "actions": {
-          "add": "Dodać",
-          "delete": "Usuwać",
-          "sync": "Synchronizuj z serwerami Domyślnie"
-        }
-      }
-    },
     "vpn": {
       "fields": {
-        "title": "Nazwa",
         "password": "Hasło",
         "host": "Gospodarz",
         "port": "Port",
         "username": "Nazwa użytkownika",
-        "wg_port": "WG port"
+        "wg_port": "WG port",
+        "title": "Nazwa"
       },
       "actions": {
         "start": "Początek",
@@ -730,8 +1167,8 @@
         "install": "Zainstalować",
         "download_config_file": "Pobierz plik",
         "copy_config": "Skopiuj do schowka",
-        "settings": "Ustawienia",
-        "go_to_admin_menu": "Panelu sterowania"
+        "go_to_admin_menu": "Panelu sterowania",
+        "settings": "Ustawienia"
       },
       "labels": {
         "editName": "Edytuj nazwę",
@@ -741,12 +1178,12 @@
         "free": "Za darmo",
         "server": "Serwer",
         "buy_vds": "Kup VDS",
-        "settings": "Ustawienia",
         "unlogin_message": "Aby zainstalować VPN na swoim serwerze, musisz zalogować się na swoje konto.",
         "hard_reset_help_message": "Serwer VPN zostanie całkowicie usunięty z Twojego serwera wirtualnego lub dedykowanego i zainstalowany ponownie. ",
         "connect_to_vpn_instruction": "Instrukcje dotyczące instalacji klienta VPN na swoim urządzeniu:",
         "error_state_message": "Coś poszło nie tak, spróbuj pełnej ponownej instalacji lub skontaktuj się z naszym wsparciem, postaramy się pomóc.",
         "configuration_qr_code": "Konfiguracja kodu QR",
+        "settings": "Ustawienia",
         "links": {
           "full_instruction": "Skorzystaj z instrukcji do pracy z usługą VPN:",
           "official_site": "Oficjalna strona internetowa WireGuard do instalacji klienta VPN",
@@ -789,6 +1226,7 @@
       "AI": "Anguilla",
       "AL": "Albania",
       "AM": "Armenia",
+      "AN": "Netherlands Antilles",
       "AO": "Angola",
       "AQ": "Antarctic",
       "AR": "Argentina",
@@ -893,6 +1331,7 @@
       "IR": "Iran",
       "IS": "Iceland",
       "IT": "Italy",
+      "JP": "Japan",
       "JE": "Jersey",
       "JM": "Jamaica",
       "JO": "Jordan",
@@ -1033,7 +1472,6 @@
     "Passwords do not match": "Hasła nie pasują do siebie",
     "Successfully changed": "Pomyślnie zmieniono",
     "Please enter a valid domain": "Wpisz poprawną domenę",
-    "provider": "Dostawca",
     "newPaaSTrafficItem": {
       "Безлимит, от  10Мбит/сек": "Nieograniczony, od 10 Mb/s",
       "Безлимит, от  100Мбит/сек": "Nieograniczony, od 100 Mb/s",

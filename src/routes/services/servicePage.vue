@@ -66,7 +66,10 @@
           </div>
 
           <div v-if="lastInvoice" class="service-page__info">
-            <div class="service-page__info-title">
+            <div
+              class="service-page__info-title"
+              :style="{ display: 'inline-block', width: '50%' }"
+            >
               {{ capitalize(t("invoice status")) }}:
               <a-tag :color="getInvoiceStatusColor">
                 {{ t(lastInvoice.status) }}
@@ -74,6 +77,19 @@
               <a-button size="small" type="primary" @click="clickOnInvoice">
                 {{ t("open") }}
               </a-button>
+            </div>
+
+            <div
+              class="service-page__info-title"
+              :style="{ display: 'inline-block', width: '50%' }"
+            >
+              {{ capitalize(t("userService.auto renew")) }}:
+
+              <a-switch
+                :loading="isUpdateAutoRenewLoading"
+                :checked="service.meta?.autoRenew"
+                @update:checked="updateInstanceAutoRenew"
+              ></a-switch>
             </div>
           </div>
 
@@ -237,6 +253,8 @@ const info = ref([
 ]);
 const service = ref(null);
 const lastInvoice = ref(null);
+
+const isUpdateAutoRenewLoading = ref(false);
 
 const getTagColor = computed(() => {
   const status = service.value.status.replace("cloudStateItem.", "");
@@ -527,6 +545,27 @@ function formatDate(timestamp) {
 
   return `${year}-${month}-${day}`;
 }
+
+const updateInstanceAutoRenew = async (value) => {
+  isUpdateAutoRenewLoading.value = true;
+  try {
+    if (!service.value.meta) {
+      service.value.meta = {};
+    }
+
+    service.value.meta.autoRenew = value;
+
+    const instance = {
+      uuid: service.value.uuid,
+      meta: service.value.meta,
+      billingPlan: service.value.billingPlan,
+    };
+
+    await instancesStore.updateInstance(instance);
+  } finally {
+    isUpdateAutoRenewLoading.value = false;
+  }
+};
 
 watch(service, async () => {
   const invoices = await invoicesStore.invoicesApi.getInvoices(

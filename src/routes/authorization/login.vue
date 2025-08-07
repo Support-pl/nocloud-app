@@ -219,7 +219,7 @@ async function send() {
     }
 
     if (localStorage.getItem("data")) {
-      redirect.value=true;
+      redirect.value = true;
       try {
         const data = JSON.parse(localStorage.getItem("data"));
         router.push({ path: data.path, query: data.query });
@@ -227,7 +227,7 @@ async function send() {
         localStorage.removeItem("data");
       }
     } else if (appStore.onLogin.redirect) {
-      redirect.value=true;
+      redirect.value = true;
       const name = appStore.onLogin.redirect;
       const service =
         appStore.onLogin.redirectQuery?.service || appStore.onLogin.info.title;
@@ -463,7 +463,7 @@ export default { name: "LoginView" };
   font-weight: 600;
   border-radius: 10px;
   padding: 7px 20px;
-  background: linear-gradient(90deg, #427cf7, #8baef2);
+  background: var(--main);
   background-size: 150% 200%;
   background-position: 0 0;
   /* animation: AnimationName 1s ease infinite; */

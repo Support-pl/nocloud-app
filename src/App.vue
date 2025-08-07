@@ -293,8 +293,13 @@ const token = computed(() => {
       colorBorder: "#272727",
     };
   }
+  const colors = config.colors;
+
   return {
-    ...theme.defaultAlgorithm(theme.defaultSeed),
+    colorPrimary: colors.main,
+    colorSuccess: colors.success,
+    colorWarning: colors.warn,
+    colorError: colors.err,
   };
 });
 
