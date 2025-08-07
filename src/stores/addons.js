@@ -7,16 +7,16 @@ import { ListAddonsRequest } from "nocloud-proto/proto/es/billing/addons/addons_
 import { useAppStore } from "./app.js";
 import { Addon } from "nocloud-proto/proto/es/billing/addons/addons_pb.js";
 import { DescriptionsService } from "nocloud-proto/proto/es/billing/billing_connect";
+import { useDescriptionsStore } from "./descriptions.js";
 
 export const useAddonsStore = defineStore("addons", () => {
   const app = useAppStore();
+  const descriptionsStore = useDescriptionsStore();
 
   const addonsApi = computed(() =>
     createPromiseClient(AddonsService, app.transport)
   );
-  const descriptionsApi = computed(() =>
-    createPromiseClient(DescriptionsService, app.transport)
-  );
+
   const addons = ref([]);
   const cachedAddons = ref({});
   const isLoading = ref(false);
@@ -35,9 +35,9 @@ export const useAddonsStore = defineStore("addons", () => {
           .map((a) => ({ uuid: a.uuid, description: a.descriptionId }))
           .filter((v) => !!v.description)
           .map(async (a) => {
-            const description = await descriptionsApi.value.get({
-              uuid: a.description,
-            });
+            const description = await descriptionsStore.fetchById(
+              a.description
+            );
 
             const dataIndex = data.findIndex((d) => d.uuid === a.uuid);
             data[dataIndex].description = description.text;
