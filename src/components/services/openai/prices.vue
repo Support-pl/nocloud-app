@@ -620,7 +620,7 @@ async function setPrices() {
   });
   result.sort((a, b) => a.subkey.localeCompare(b.subkey));
 
-  result.sort((r) => (r.type === "number" ? -1 : 1));
+  result.sort((a, b) => (a.type === "number" && b.type === "number" ? 0 : -1));
 
   pricesForModel.value = result;
 

@@ -69,11 +69,8 @@
       />
     </div>
 
-    <div v-else class="chat__container">
-      <div
-        ref="content"
-        :class="{ chat__content: true, chats_opened: !isChatMenuClosed }"
-      >
+    <div v-else class="chat__container" ref="content">
+      <div :class="{ chat__content: true, chats_opened: !isChatMenuClosed }">
         <template v-for="(reply, i) in replies" :key="i">
           <span v-if="isDateVisible(replies, i)" class="chat__date">
             {{ reply.date.split(" ")[0] }}
@@ -652,14 +649,28 @@ const copyMessage = (reply) => {
   addToClipboard(markdownToPlainText(reply.message));
 };
 
-onBeforeUnmount(() => {
+const addScrollEventListner = () => {
+  if (!content.value) return;
+
+  removeScrollEventListner();
+
+  content.value.addEventListener("scroll", onScroll);
+};
+
+const removeScrollEventListner = () => {
   content.value?.removeEventListener("scroll", onScroll);
+};
+
+onMounted(() => {
+  addScrollEventListner();
 });
 
-watch(content, (el) => {
-  if (!el) return;
+onBeforeUnmount(() => {
+  removeScrollEventListner();
+});
 
-  el.addEventListener("scroll", onScroll);
+watch(content, () => {
+  addScrollEventListner();
 });
 
 watch(

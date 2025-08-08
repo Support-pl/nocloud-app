@@ -92,6 +92,13 @@
                 </span>
               </div>
 
+              <div
+                v-if="options.size === size.keys[options.period]"
+                class="product_selected"
+              >
+                <check-circle style="font-size: 1.5rem" />
+              </div>
+
               <img
                 v-if="size.image"
                 style="margin-right: 5px"
@@ -332,6 +339,10 @@ import { useDescriptionsStore } from "@/stores/descriptions";
 
 const searchIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SearchOutlined")
+);
+
+const checkCircle = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/CheckCircleTwoTone")
 );
 
 const namespacesStore = useNamespasesStore();
@@ -1264,7 +1275,7 @@ export default {
 }
 
 .order__grid-item--active {
-  border: 1px solid var(--main);
+  border: 2px solid var(--main);
 }
 
 .order__grid-item--grid {
@@ -1565,6 +1576,12 @@ export default {
 .product_price {
   position: absolute;
   bottom: 5px;
+  right: 10px;
+}
+
+.product_selected {
+  position: absolute;
+  top: 5px;
   right: 10px;
 }
 
