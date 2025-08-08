@@ -41,6 +41,7 @@
 
         <div class="provider_description">
           <a-checkbox
+            class="provider_checkbox"
             style="max-height: 22px"
             :checked="selectedProvider == provider.value"
             @change="emits('update:selectedProvider', provider.value)"
@@ -662,6 +663,22 @@ watch(selectedModel, () => {
     width: calc(100%);
     height: 40px;
     max-width: 170px;
+  }
+
+  .provider_checkbox {
+    display: none;
+  }
+
+  .provider_tags {
+    margin-top: 15px;
+    max-width: 100% !important;
+    width: 100% !important;
+    flex-direction: row !important;
+    justify-content: start !important;
+  }
+
+  .provider_tag {
+    width: unset !important;
   }
 }
 
