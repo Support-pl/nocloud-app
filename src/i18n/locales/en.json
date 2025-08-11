@@ -1017,7 +1017,8 @@
         "llama": "Llama",
         "runway": "Runway",
         "stability-ai": "Stability AI",
-        "alibaba": "Alibaba"
+        "alibaba": "Alibaba",
+        "google-cloud": "Cloud Document AI API"
       },
       "filters": {
         "video": "Video",
