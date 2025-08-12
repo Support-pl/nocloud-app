@@ -224,7 +224,7 @@ export default {
       const end = start + state.size;
 
       const products = this.filtredProducts.slice(start, end);
-      
+
       return products;
     },
     filtredProducts() {
@@ -324,6 +324,11 @@ export default {
     },
   },
   watch: {
+    productsLoading(value) {
+      if (value === false) {
+        this.onShowSizeChange(this.productsStore.page, this.productsStore.size);
+      }
+    },
     queryTypes() {
       setTimeout(this.createObserver);
     },
@@ -424,7 +429,11 @@ export default {
       limit = limit || 10;
 
       if (page !== this.productsStore.page) {
-        this.productsStore.page = page;
+        this.productsStore.page =
+          this.productsCount > 0 &&
+          Math.ceil(this.productsCount / limit) >= page
+            ? page
+            : 1;
       }
       if (limit !== this.productsStore.size) {
         this.productsStore.size = limit;
