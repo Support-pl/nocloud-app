@@ -413,6 +413,7 @@ const chats = computed(() => {
     if (!topic.includes(string) && string !== "") return;
 
     const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
+
     const status =
       Status[ticket.status]?.toLowerCase().split("_") ?? ticket.status;
 
@@ -421,7 +422,12 @@ const chats = computed(() => {
       tid: ticket.uuid.slice(0, 8),
       title: ticket.topic,
       date: Number(ticket.meta.lastMessage?.sent) || Number(ticket.created),
-      message: ticket.meta.lastMessage?.content ?? "",
+      message:
+        chatsStore.messages[ticket.uuid]?.replies?.[
+          chatsStore.messages[ticket.uuid]?.replies?.length - 1
+        ]?.message ||
+        ticket.meta.lastMessage?.content ||
+        "",
       status: status
         .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
         .join(" "),

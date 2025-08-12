@@ -45,9 +45,8 @@
             >
               <pre>
               <message-content :uuid="reply.id" :message="reply.body"/>
-
                <audio-player
-                v-if="reply.attachments?.length===1 &&['audio/mp3','audio/mpeg'].includes(reply.attachments[0]?.mime_type) "
+                v-if="reply.attachments?.length===1 &&['audio/mp3','audio/mpeg','audio/wav'].includes(reply.attachments[0]?.mime_type) "
                 :url="reply.attachments[0]?.storage_url"
                 :name="reply.attachments[0]?.filename"
               />
