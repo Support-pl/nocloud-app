@@ -486,7 +486,9 @@
                       <open-icon
                         :style="{
                           color:
-                            savedUrlStorage[record.id] === false ? 'red' : '',
+                            unInmportedSitesMap[record.id] === false
+                              ? 'red'
+                              : '',
                         }"
                         class="icon"
                       />
@@ -860,7 +862,7 @@ const isImportSiteSearchLoading = ref(false);
 const currentImportSiteSearch = ref(false);
 const newSiteSearch = ref({ url: "" });
 const addSiteFormRef = ref();
-const savedUrlStorage = ref({});
+const unInmportedSitesMap = ref({});
 
 onMounted(async () => {
   try {
@@ -878,12 +880,18 @@ onMounted(async () => {
       database.value.qa_knowledge.records = [{ question: "", answer: "" }];
     }
 
-    savedUrlStorage.value = JSON.parse(
-      localStorage.getItem("savedUrlStorage") || "{}"
+    unInmportedSitesMap.value = JSON.parse(
+      localStorage.getItem("unInmportedSitesMap") || "{}"
     );
-    if (typeof savedUrlStorage.value !== "object") {
-      savedUrlStorage.value = {};
+    if (typeof unInmportedSitesMap.value !== "object") {
+      unInmportedSitesMap.value = {};
     }
+
+    Object.keys(unInmportedSitesMap.value).forEach((key) => {
+      if (database.value.saved_urls.findIndex((url) => url.id === key) === -1) {
+        delete unInmportedSitesMap.value[key];
+      }
+    });
   } catch (err) {
     const opts = {
       message: `Error: ${
@@ -898,8 +906,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   localStorage.setItem(
-    "savedUrlStorage",
-    JSON.stringify(savedUrlStorage.value)
+    "unInmportedSitesMap",
+    JSON.stringify(unInmportedSitesMap.value)
   );
 });
 
@@ -1044,18 +1052,17 @@ const isSaveQaKnowledgePrimary = computed(
 );
 
 const countUnreadSiteKnowledge = computed(() => {
-  return Object.keys(savedUrlStorage.value || {}).reduce((acc, key) => {
+  return Object.keys(unInmportedSitesMap.value || {}).reduce((acc, key) => {
     if (
       database.value.saved_urls.find((url) => url.id === key) &&
-      savedUrlStorage.value[key] === false
+      unInmportedSitesMap.value[key] === false
     ) {
       const d = database.value.saved_urls.find((url) => url.id === key);
       if (getSiteSearchItemStatus(d) === "finished") {
         acc += 1;
       }
-
-      return acc;
     }
+    return acc;
   }, 0);
 });
 
@@ -1437,7 +1444,7 @@ const handleAddSiteSearch = async () => {
     };
 
     const data = await api.post("/agents/api/create_saved_url", dto);
-    savedUrlStorage.value[data.id] = false;
+    unInmportedSitesMap.value[data.id] = false;
 
     newSiteSearch.value = { url: "" };
     isAddSiteSearchOpen.value = false;
@@ -1496,8 +1503,6 @@ const handelOpenSiteSearchKnowledge = (record) => {
 
   currentImportSiteSearch.value = result;
   isImportSiteSearchOpen.value = true;
-
-  savedUrlStorage.value[record.id] = true;
 };
 
 const handleImportSiteSearch = async () => {
@@ -1524,6 +1529,8 @@ const handleImportSiteSearch = async () => {
         },
       },
     });
+
+    unInmportedSitesMap.value[currentImportSiteSearch.value.url.id] = true;
 
     database.value.qa_knowledge.records = JSON.parse(
       JSON.stringify(data.records)

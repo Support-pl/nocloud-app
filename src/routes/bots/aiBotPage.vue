@@ -169,6 +169,10 @@
             <a-tab-pane :disabled="isSuspended || isPending" key="database">
               <template #tab>
                 <span class="tab">
+                  <alert-outlined
+                    v-if="isUnInmportedSites"
+                    style="color: red; margin-right: 0px"
+                  />
                   {{ t("ai_bot_page.tabs.databases") }}
                 </span>
               </template>
@@ -299,6 +303,12 @@ const isActionsActive = computed(() => {
   const { meta } = service.value.billingPlan?.products[key] ?? {};
 
   return !service.value.clientid && meta?.renew !== false;
+});
+
+const isUnInmportedSites = computed(() => {
+  return Object.values(
+    JSON.parse(localStorage.getItem("unInmportedSitesMap") || "{}")
+  ).some((value) => !value);
 });
 
 const isSettingsBroken = computed(
