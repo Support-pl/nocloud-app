@@ -27,7 +27,7 @@
               link.href = href;
               document.head.appendChild(link);
             }
-            fetch(customFavicon, { method: 'HEAD' })
+            fetch(customFavicon, { method: 'GET', cache: 'no-store' })
               .then(function(res) {
                 if (res.ok) {
                   setFavicon(customFavicon);
