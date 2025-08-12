@@ -14,6 +14,32 @@
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> 
 
     <link rel="icon" href="/favicon.png" />
+      <script>
+          (function() {
+            var customFavicon = '/custom_favicon.png';
+            var defaultFavicon = '/favicon.png';
+            function setFavicon(href) {
+              var old = document.querySelector('link[rel="icon"]');
+              if (old) old.parentNode.removeChild(old);
+              var link = document.createElement('link');
+              link.rel = 'icon';
+              link.type = 'image/png';
+              link.href = href;
+              document.head.appendChild(link);
+            }
+            fetch(customFavicon, { method: 'HEAD' })
+              .then(function(res) {
+                if (res.ok) {
+                  setFavicon(customFavicon);
+                } else {
+                  setFavicon(defaultFavicon);
+                }
+              })
+              .catch(function() {
+                setFavicon(defaultFavicon);
+              });
+          })();
+      </script>
     <link rel="manifest" href="/manifest.json" />
 
     <title>CloudApp</title>
