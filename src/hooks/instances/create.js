@@ -5,10 +5,17 @@ import { useInstancesStore } from "@/stores/instances.js";
 import api from "@/api.js";
 import { CreateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 import { removeEmptyValues } from "@/functions.js";
+import { storeToRefs } from "pinia";
+import { useAuthStore } from "@/stores/auth.js";
+import { useNamespasesStore } from "@/stores/namespaces.js";
 
 function useCreateInstance() {
   const i18n = useI18n();
-  const store = useInstancesStore();
+  const instancesStore = useInstancesStore();
+  const { services } = storeToRefs(instancesStore);
+  const authStore = useAuthStore();
+  const namespasesStore = useNamespasesStore();
+
   const { openNotification } = useNotification();
 
   async function deployService(uuid, message) {
@@ -25,85 +32,117 @@ function useCreateInstance() {
   }
 
   async function createInstance(
-    action,
-    service,
     instance,
-    sp,
-    promocode,
-    message,
-    deployMessage
+    { provider, instancesGroupType, promocode }
   ) {
-    try {
-      console.log(
-        instance.billing_plan.meta,
-        instance.billing_plan.properties,
-        instance.config
-      );
 
-      if (instance.billing_plan?.meta) {
-        if (!instance.config) {
-          instance.config = {};
+    //original values
+    const service = services.value.filter((s) => s.status !== "DEL")[0];
+    const namespace = namespasesStore.namespaces[0];
+
+    //Instance title make unique
+    const same = instancesStore.getInstances.filter((inst) =>
+      inst.title.startsWith(instance.title)
+    );
+
+    if (same.length > 0) {
+      instance.title = `${instance.title} ${same.length + 1}`;
+    }
+
+    //Add some base data as AutoRenew & AutoStart
+    if (instance.billing_plan?.meta) {
+      if (!instance.config) {
+        instance.config = {};
+      }
+      instance.config.auto_start = !!instance.billing_plan.meta.auto_start;
+    }
+
+    if (instance.billing_plan?.properties) {
+      if (!instance.meta) {
+        instance.meta = {};
+      }
+      instance.meta.autoRenew = !!instance.billing_plan.properties.autoRenew;
+    }
+
+    //update or create Service & Instance Group block
+    const newService = !service
+      ? {
+          title: authStore.userdata.title,
+          context: {},
+          version: "1",
+          instancesGroups: [],
         }
-        instance.config.auto_start = !!instance.billing_plan.meta.auto_start;
-      }
+      : JSON.parse(JSON.stringify(service));
 
-      if (instance.billing_plan?.properties) {
-        if (!instance.meta) {
-          instance.meta = {};
+    let currentGroup = newService.instancesGroups.find(
+      ({ sp }) => sp === provider
+    );
+
+    if (!currentGroup) {
+      newService.instancesGroups.push({
+        title: authStore.userdata.title + Date.now(),
+        type: instancesGroupType || instance.billing_plan?.type,
+        sp: provider,
+        instances: [],
+      });
+      currentGroup = newService.instancesGroups.at(-1);
+    }
+
+    //ione fix ips
+    if (instance.billing_plan?.type === "ione") {
+      if (!currentGroup.resources) {
+        currentGroup.resources = {};
+      }
+      const res = currentGroup.instances.reduce(
+        (prev, curr) => ({
+          private: prev.private + (curr.resources.ips_private ?? 0),
+          public: prev.public + (curr.resources.ips_public ?? 0),
+        }),
+        {
+          private: instance.resources.ips_private ?? 0,
+          public: instance.resources.ips_public ?? 0,
         }
-        instance.meta.autoRenew = !!instance.billing_plan.properties.autoRenew;
-      }
-
-      instance.billing_plan = {
-        uuid: instance.billing_plan.uuid,
-      };
-
-      let response;
-
-      if (action === "create") {
-        response = await store[`createService`](service);
-      } else if (action === "update") {
-        response = await store[`updateService`](service);
-      }
-
-      const ig = response.instancesGroups.find(
-        (el) => el.sp === sp && !el.data?.imported
       );
 
-      const data = { ig: ig.uuid, instance };
-      if (promocode) {
-        data.promocode = promocode;
-      }
+      currentGroup.resources.ips_private = res.private;
+      currentGroup.resources.ips_public = res.public;
+    }
 
-      await store.instancesApi.create(
-        CreateRequest.fromJson(removeEmptyValues(data))
-      );
+    //real service with uuid & all staff
+    let resultService;
+    if (!service) {
+      resultService = await instancesStore[`createService`]({
+        service: newService,
+        namespace: namespace.uuid,
+      });
+    } else {
+      resultService = await instancesStore[`updateService`](newService);
+    }
 
-      if (response.uuid) {
-        if (message) openMessage.success(message);
-        await deployService(response.uuid, deployMessage);
+    const ig = resultService.instancesGroups.find(
+      (el) => el.sp === provider && !el.data?.imported
+    );
 
-        return response;
-      } else {
-        throw new Error("[Error]: Service uuid not found");
-      }
-    } catch (error) {
-      const matched = (
-        error.response?.data?.message ??
-        error.message ??
-        ""
-      ).split(/error:"|error: "/);
-      const message = matched.at(-1).split('" ').at(0);
+    //trim instance billing_plan
+    instance.billing_plan = {
+      uuid: instance.billing_plan.uuid,
+    };
 
-      if (message) {
-        openNotification("error", { message });
-      } else {
-        const message = error.response?.data?.message ?? error.message ?? error;
+    const data = { ig: ig.uuid, instance };
+    if (promocode) {
+      data.promocode = promocode;
+    }
 
-        openNotification("error", { message });
-      }
+    await instancesStore.instancesApi.create(
+      CreateRequest.fromJson(removeEmptyValues(data))
+    );
 
-      throw new Error();
+    if (resultService.uuid) {
+      await deployService(resultService.uuid);
+
+      return resultService;
+    } else {
+      throw new Error("[Error]: Service uuid not found");
     }
   }
 

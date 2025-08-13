@@ -319,10 +319,6 @@ const currentProductWithSale = computed(() => {
   return product;
 });
 
-const services = computed(() => {
-  return instancesStore.services.filter((el) => el.status !== "DEL");
-});
-
 const plans = computed(() => {
   return (
     cachedPlans.value?.[`${provider.value}_${userCurrency.value.code}`]?.filter(
@@ -432,7 +428,6 @@ const changePeriods = (title) => {
   }
 };
 const orderClickHandler = () => {
-  const fullService = services.value.find(({ uuid }) => uuid === service.value);
   const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
   const { key } = products.value.find(
     ({ title, period }) => title === options.size && +period === options.period
@@ -450,19 +445,6 @@ const orderClickHandler = () => {
     billing_plan: fullPlan,
     product: key,
   };
-  const newGroup = {
-    title: userdata.value.title + Date.now(),
-    type: "cpanel",
-    sp: provider.value,
-    instances: [],
-  };
-
-  const info = !service.value
-    ? newGroup
-    : JSON.parse(JSON.stringify(fullService));
-  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
-
-  if (!group && service.value) info.instancesGroups.push(newGroup);
 
   if (!userdata.value.uuid) {
     const showcase =
@@ -489,35 +471,17 @@ const orderClickHandler = () => {
     return;
   }
 
-  createVirtual(info, instance);
+  createVirtual(instance);
 };
-const createVirtual = async (info, instance) => {
+const createVirtual = async (instance) => {
   modal.confirmLoading = true;
   onLogin.value = {};
 
-  const action = service.value ? "update" : "create";
-  const orderData = service.value
-    ? info
-    : {
-        namespace: namespace.value,
-        service: {
-          title: userdata.value.title,
-          context: {},
-          version: "1",
-          instancesGroups: [info],
-        },
-      };
-
   try {
-    await createInstance(
-      action,
-      orderData,
-      instance,
-      provider.value,
-      promocode.value?.uuid,
-      null,
-      t("Done")
-    );
+    await createInstance(instance, {
+      provider: provider.value,
+      promocode: promocode.value?.uuid,
+    });
     router.push({ path: "/billing" });
   } catch {
     console.error(error);

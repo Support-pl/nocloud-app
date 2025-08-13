@@ -224,72 +224,17 @@ export const useCloudStore = defineStore("cloud", () => {
   }
 
   function createService(newInstance) {
-    const orderData = {
-      namespace: namespaceId.value,
-      service: {
-        title: authStore.userdata.title,
-        context: {},
-        version: "1",
-        instancesGroups: [
-          {
-            title: authStore.userdata.title + Date.now(),
-            resources: {
-              ips_private: newInstance.resources.ips_private,
-              ips_public: newInstance.resources.ips_public,
-            },
-            type: provider.value.type,
-            instances: [],
-            sp: provider.value.uuid,
-          },
-        ],
-      },
-    };
-
-    return createInstance(
-      "create",
-      orderData,
-      newInstance,
-      provider.value.uuid,
-      promocode.value?.uuid,
-      null,
-      deployMessage
-    );
+    return createInstance(newInstance, {
+      provider: provider.value.uuid,
+      promocode: promocode.value?.uuid,
+    });
   }
 
   function updateService(newGroup, newInstance) {
-    const orderData = Object.assign({}, service.value);
-    let group = orderData.instancesGroups.find(
-      (el) => el.sp === provider.value.uuid && !el.data?.imported
-    );
-
-    if (!group) {
-      orderData.instancesGroups.push(newGroup);
-      group = orderData.instancesGroups.at(-1);
-    }
-
-    const res = group.instances.reduce(
-      (prev, curr) => ({
-        private: prev.private + (curr.resources.ips_private ?? 0),
-        public: prev.public + (curr.resources.ips_public ?? 0),
-      }),
-      {
-        private: newInstance.resources.ips_private ?? 0,
-        public: newInstance.resources.ips_public ?? 0,
-      }
-    );
-
-    group.resources.ips_private = res.private;
-    group.resources.ips_public = res.public;
-
-    return createInstance(
-      "update",
-      orderData,
-      newInstance,
-      provider.value.uuid,
-      promocode.value?.uuid,
-      null,
-      deployMessage
-    );
+    return createInstance(newInstance, {
+      provider: provider.value.uuid,
+      promocode: promocode.value?.uuid,
+    });
   }
 
   watch([promocode, currency, planId], async () => {

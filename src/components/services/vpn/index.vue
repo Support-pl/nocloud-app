@@ -257,7 +257,7 @@ const instances = computed(() =>
     .filter(
       (instance) =>
         ["ione"].includes(instance.type) &&
-        instance.state.state === "RUNNING" &&
+        instance.state?.state === "RUNNING" &&
         !instancesStore.instances.find(
           (i) => i.type === "empty" && i.config?.instance == instance.uuid
         )
@@ -335,7 +335,6 @@ const fetchPlans = async (provider) => {
 };
 
 const orderClickHandler = () => {
-  const fullService = services.value.find(({ uuid }) => uuid === service.value);
   const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
 
   const instance = {
@@ -344,20 +343,6 @@ const orderClickHandler = () => {
     billing_plan: fullPlan,
     product: options.value.product.key,
   };
-
-  const newGroup = {
-    title: userdata.value.title + Date.now(),
-    type: "empty",
-    sp: provider.value,
-    instances: [],
-  };
-
-  const info = !service.value
-    ? newGroup
-    : JSON.parse(JSON.stringify(fullService));
-  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
-
-  if (!group && service.value) info.instancesGroups.push(newGroup);
 
   if (!userdata.value.uuid) {
     onLogin.value.redirect = route.name;
@@ -376,9 +361,9 @@ const orderClickHandler = () => {
     return;
   }
 
-  createVPN(info, instance);
+  createVPN(instance);
 };
-const createVPN = async (info, instance) => {
+const createVPN = async (instance) => {
   modal.value.confirmLoading = true;
 
   try {
@@ -396,28 +381,11 @@ const createVPN = async (info, instance) => {
     }
 
     modal.value.confirmLoading = true;
-    const action = service.value ? "update" : "create";
-    const orderData = service.value
-      ? info
-      : {
-          namespace: namespace.value,
-          service: {
-            title: userdata.value.title,
-            context: {},
-            version: "1",
-            instancesGroups: [info],
-          },
-        };
 
-    await createInstance(
-      action,
-      orderData,
-      instance,
-      provider.value,
-      null,
-      null,
-      t("Done")
-    );
+    await createInstance(instance, {
+      provider: provider.value,
+      instancesGroupType: "empty",
+    });
     router.push({ path: "/billing" });
   } catch (err) {
     errModal.value.open = true;
