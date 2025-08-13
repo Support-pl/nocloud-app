@@ -389,7 +389,7 @@ const paginationOptions = ref({ total: 0, size: 10, page: 1 });
 const cachedPlans = ref({});
 const activeCollapseKey = ref([]);
 
-const sortField = ref("price");
+const sortField = ref("default");
 const sortOrder = ref("asc");
 
 function onCreated() {
@@ -565,7 +565,7 @@ const filteredSizes = computed(() => {
   });
 
   filtred.sort((a, b) => {
-    if (sortOrder.value === "desc") {
+    if (sortOrder.value === "desc" && sortField.value !== "default") {
       const temp = a;
       a = b;
       b = temp;
@@ -573,6 +573,11 @@ const filteredSizes = computed(() => {
 
     if (sortField.value === "price") {
       return a.price[options.value.period] - b.price[options.value.period];
+    } else if (sortField.value === "default") {
+      return (
+        (a.sorter || Number.MAX_SAFE_INTEGER) -
+        (b.sorter || Number.MAX_SAFE_INTEGER)
+      );
     } else {
       const aRes = (
         getResources(a).find((r) => r.key === sortField.value).value || ""
@@ -647,6 +652,7 @@ const groupWrapStyle = computed(() => {
 const sortKeys = computed(() => {
   const result = [];
 
+  result.push({ label: t("Default"), value: "default" });
   result.push({ label: t("Cost"), value: "price" });
 
   Object.keys(resources.value).forEach((resource) => {
