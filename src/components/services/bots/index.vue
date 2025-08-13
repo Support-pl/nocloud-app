@@ -93,7 +93,6 @@ const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 const plansStore = usePlansStore();
 const namespacesStore = useNamespasesStore();
-const { namespaces } = storeToRefs(namespacesStore);
 const instancesStore = useInstancesStore();
 const currenciesStore = useCurrenciesStore();
 const { userCurrency, defaultCurrency } = storeToRefs(currenciesStore);
@@ -102,8 +101,6 @@ const { createInstance } = useCreateInstance();
 const promocodesStore = usePromocodesStore();
 
 const plan = ref(null);
-const service = ref(null);
-const namespace = ref(null);
 const provider = ref(null);
 
 const cachedPlans = reactive({});
@@ -129,10 +126,6 @@ const getProducts = computed(() => {
 
 const showcase = computed(() =>
   getShowcases.value.find(({ uuid }) => uuid === route.query.service)
-);
-
-const services = computed(() =>
-  instancesStore.services.filter((el) => el.status !== "DEL")
 );
 
 const mainModel = computed(() =>
@@ -201,50 +194,18 @@ watch(provider, (uuid) => fetchPlans(uuid));
 
 watch(userCurrency, () => fetchPlans(provider.value));
 
-watch(namespaces, (value) => {
-  namespace.value = value[0]?.uuid;
-});
-
 function orderClickHandler() {
-  const serviceItem = services.value.find(({ uuid }) => uuid === service.value);
   const planItem = plans.value.find(({ uuid }) => uuid === plan.value);
-  let title =
-    showcase.value.promo?.[locale.value]?.title ?? showcase.value.title;
-
-  const same = instancesStore.getInstances.filter((instance) =>
-    instance.title.startsWith(title)
-  );
-  same.sort((a, b) => b.title.localeCompare(a.title));
-
-  title =
-    same.length > 0
-      ? `${title} ${
-          (Number.parseInt(same[0].title.split(" ").reverse()[0]) || 1) + 1
-        }`
-      : title;
 
   const instance = {
     config: {
       user: authStore.userdata.uuid,
       auto_start: planItem.meta.auto_start,
     },
-    title,
+    title: showcase.value.promo?.[locale.value]?.title ?? showcase.value.title,
     billing_plan: planItem,
     product: "bot",
   };
-  const newGroup = {
-    title: authStore.userdata.title + Date.now(),
-    type: "bots",
-    sp: provider.value,
-    instances: [],
-  };
-
-  const info = !service.value
-    ? newGroup
-    : JSON.parse(JSON.stringify(serviceItem));
-  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
-
-  if (!group && service.value) info.instancesGroups.push(newGroup);
 
   if (!authStore.userdata.uuid) {
     const showcase =
@@ -267,34 +228,18 @@ function orderClickHandler() {
     return;
   }
 
-  createBot(info, instance);
+  createBot(instance);
 }
 
-async function createBot(info, instance) {
+async function createBot(instance) {
   modal.value.confirmLoading = true;
-  const action = service.value ? "update" : "create";
-  const orderData = service.value
-    ? info
-    : {
-        namespace: namespace.value,
-        service: {
-          title: authStore.userdata.title,
-          context: {},
-          version: "1",
-          instancesGroups: [info],
-        },
-      };
 
   try {
-    await createInstance(
-      action,
-      orderData,
-      instance,
-      provider.value,
-      promocode.value?.uuid,
-      null,
-      t("Done")
-    );
+    await createInstance(instance, {
+      provider: provider.value,
+      instancesGroupType: "bots",
+      promocode: promocode.value?.uuid,
+    });
     router.push({ path: "/services" });
   } catch (error) {
     console.error(error);

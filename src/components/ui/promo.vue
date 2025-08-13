@@ -34,15 +34,11 @@ const isBitrixApps = computed(() => route.query.service === "Bitrix24 Apps");
 
 const isPromoVisible = computed(() => {
   if (isBitrixApps.value) return true;
-  console.log(
-    showcase.value.promo[i18n.locale.value]?.previewEnable ||
-      showcase.value.promo["en"]?.previewEnable
-  );
 
   return (
     showcase.value?.promo &&
-    (showcase.value.promo[i18n.locale.value]?.previewEnable ||
-      showcase.value.promo["en"]?.previewEnable)
+    (showcase.value?.promo[i18n.locale.value]?.previewEnable ||
+      showcase.value?.promo["en"]?.previewEnable)
   );
 });
 

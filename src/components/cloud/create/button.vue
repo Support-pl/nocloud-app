@@ -129,7 +129,8 @@ const createButtonOptions = computed(() => {
     result.disabled =
       cloudStore.authData.vmName === "" ||
       (!cloudStore.namespaceId && authStore.isLogged) ||
-      options.os.name === "";
+      options.os.name === "" ||
+      (cloudStore.plan?.type === "ovh cloud" && !options.config.ssh);
   } else {
     result.disabled =
       (props.skipPasswordCheck

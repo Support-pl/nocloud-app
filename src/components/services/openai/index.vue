@@ -69,7 +69,6 @@ import { computed, ref, watch, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
-import api from "@/api.js";
 import openaiPrices from "./prices.vue";
 import Loading from "@/components/ui/loading.vue";
 
@@ -99,15 +98,12 @@ const spStore = useSpStore();
 const chatsStore = useChatsStore();
 const plansStore = usePlansStore();
 const namespacesStore = useNamespasesStore();
-const { namespaces } = storeToRefs(namespacesStore);
 const instancesStore = useInstancesStore();
 const { userCurrency } = storeToRefs(useCurrenciesStore());
 const { getShowcases } = storeToRefs(spStore);
 const { createInstance } = useCreateInstance(spStore);
 
 const plan = ref(null);
-const service = ref(null);
-const namespace = ref(null);
 const provider = ref(null);
 
 const selectedModel = ref("");
@@ -235,50 +231,18 @@ watch(provider, (uuid) => fetchPlans(uuid));
 
 watch(userCurrency, () => fetchPlans(provider.value));
 
-watch(namespaces, (value) => {
-  namespace.value = value[0]?.uuid;
-});
-
 function orderClickHandler() {
-  const serviceItem = services.value.find(({ uuid }) => uuid === service.value);
   const planItem = plans.value.find(({ uuid }) => uuid === plan.value);
-  let title =
-    showcase.value.promo?.[locale.value]?.title ?? showcase.value.title;
-
-  const same = instancesStore.getInstances.filter((instance) =>
-    instance.title.startsWith(title)
-  );
-  same.sort((a, b) => b.title.localeCompare(a.title));
-
-  title =
-    same.length > 0
-      ? `${title} ${
-          (Number.parseInt(same[0].title.split(" ").reverse()[0]) || 1) + 1
-        }`
-      : title;
 
   const instance = {
     config: {
       user: authStore.userdata.uuid,
       auto_start: planItem.meta.auto_start,
     },
-    title,
+    title: showcase.value.promo?.[locale.value]?.title ?? showcase.value.title,
     billing_plan: planItem,
     product: "",
   };
-  const newGroup = {
-    title: authStore.userdata.title + Date.now(),
-    type: "openai",
-    sp: provider.value,
-    instances: [],
-  };
-
-  const info = !service.value
-    ? newGroup
-    : JSON.parse(JSON.stringify(serviceItem));
-  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
-
-  if (!group && service.value) info.instancesGroups.push(newGroup);
 
   if (!authStore.userdata.uuid) {
     const showcase =
@@ -301,34 +265,14 @@ function orderClickHandler() {
     return;
   }
 
-  createOpenAI(info, instance);
+  createOpenAI(instance);
 }
 
-async function createOpenAI(info, instance) {
+async function createOpenAI(instance) {
   modal.value.confirmLoading = true;
-  const action = service.value ? "update" : "create";
-  const orderData = service.value
-    ? info
-    : {
-        namespace: namespace.value,
-        service: {
-          title: authStore.userdata.title,
-          context: {},
-          version: "1",
-          instancesGroups: [info],
-        },
-      };
 
   try {
-    await createInstance(
-      action,
-      orderData,
-      instance,
-      provider.value,
-      null,
-      null,
-      t("Done")
-    );
+    await createInstance(instance, { provider: provider.value });
     router.push({ path: "/services" });
   } catch {
     console.error(error);
