@@ -12,7 +12,8 @@
         :value="promocode"
         @change="onPromocodeChange"
         :placeholder="t('promocode.placeholder')"
-        :maxlength="6"
+        :maxlength="12"
+        :minlength="4"
         style="width: 100px"
       />
     </a-col>
@@ -55,7 +56,9 @@ const isPromocodeError = ref(false);
 const lastApplyPromocode = ref("");
 
 const isPromocodeApplyDisabled = computed(
-  () => promocode.value.length !== 6 || isFailedPromocode.value
+  () =>
+   !(promocode.value.length >= 4 && promocode.value.length <= 12) ||
+    isFailedPromocode.value
 );
 
 const isFailedPromocode = computed(
