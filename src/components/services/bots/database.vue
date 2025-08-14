@@ -685,7 +685,7 @@
         >
           <a-input
             v-model:value="newSiteSearch.url"
-            :placeholder="t('bots_databases.fields.site_search_column_url')"
+            :placeholder="`${t('bots_databases.fields.site_search_column_url')} (https://)`"
           ></a-input>
         </a-form-item>
       </a-form>
