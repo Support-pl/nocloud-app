@@ -685,7 +685,9 @@
         >
           <a-input
             v-model:value="newSiteSearch.url"
-            :placeholder="t('bots_databases.fields.site_search_column_url')"
+            :placeholder="`${t(
+              'bots_databases.fields.site_search_column_url'
+            )} (https://)`"
           ></a-input>
         </a-form-item>
       </a-form>
@@ -892,6 +894,8 @@ onMounted(async () => {
         delete unInmportedSitesMap.value[key];
       }
     });
+
+    window.addEventListener("beforeunload", saveUnImportedSites);
   } catch (err) {
     const opts = {
       message: `Error: ${
@@ -905,10 +909,8 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  localStorage.setItem(
-    "unInmportedSitesMap",
-    JSON.stringify(unInmportedSitesMap.value)
-  );
+  saveUnImportedSites();
+  window.removeEventListener("beforeunload", saveUnImportedSites);
 });
 
 const bot = computed(() => bots.value.get(service.value.data.bot_uuid));
@@ -1090,6 +1092,15 @@ function getFileSearchItemStatus(record, originalDatabase) {
 
   return og?.status || record.status;
 }
+
+const saveUnImportedSites = () => {
+  try {
+    localStorage.setItem(
+      "unInmportedSitesMap",
+      JSON.stringify(unInmportedSitesMap.value)
+    );
+  } catch (e) {}
+};
 
 function getSiteSearchItemStatus(record) {
   return (
