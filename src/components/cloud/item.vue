@@ -16,8 +16,11 @@
         {{ localDate }}
       </div>
 
+      <div v-if="instance.type == 'cpanel' && instance?.config?.domain" class="item__status">
+        {{ instance.config.domain }}
+      </div>
       <div
-        v-if="
+        v-else-if="
           networking.length < 1 &&
           instance.groupname === 'Self-Service VDS SSD HC'
         "
