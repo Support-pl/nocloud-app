@@ -17,13 +17,22 @@
       </div>
 
       <div
-        v-if="
-          networking.length < 1 &&
-          instance.groupname === 'Self-Service VDS SSD HC'
+        v-if="instance.type == 'cpanel' && instance?.config?.domain"
+        class="item__status"
+      >
+        {{ instance.config.domain }}
+      </div>
+      <div
+        v-else-if="
+          ['ione', 'keyweb', 'ovh'].includes(instance.type) &&
+          networking.reduce((acc, item) => [...acc, item], []).length > 0
         "
         class="item__status"
       >
-        IP: {{ $t("ip.none") }}
+        <span
+          >IP:
+          {{ networking.reduce((acc, item) => [...acc, item], [])[0] }}</span
+        >
       </div>
       <div v-else-if="networking.length < 2" class="item__status">
         {{

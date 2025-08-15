@@ -150,11 +150,12 @@
             <a-tab-pane key="settings" :disabled="isPending">
               <template #tab>
                 <span class="tab">
-                  <alert-outlined
-                    v-if="isSettingsBroken && !isPending"
-                    style="color: red; margin-right: 0px"
-                  />
                   {{ t("ai_bot_page.tabs.settings") }}
+
+                  <span
+                    v-if="isSettingsBroken && !isPending"
+                    class="pulsating-circle"
+                  ></span>
                 </span>
               </template>
 
@@ -169,11 +170,12 @@
             <a-tab-pane :disabled="isSuspended || isPending" key="database">
               <template #tab>
                 <span class="tab">
-                  <alert-outlined
-                    v-if="isUnInmportedSites"
-                    style="color: red; margin-right: 0px"
-                  />
                   {{ t("ai_bot_page.tabs.databases") }}
+
+                  <span
+                    v-if="isUnInmportedSites"
+                    class="pulsating-circle"
+                  ></span>
                 </span>
               </template>
 
@@ -231,10 +233,6 @@ const caretRightIcon = defineAsyncComponent(() =>
 
 const editOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EditOutlined")
-);
-
-const alertOutlined = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/AlertOutlined")
 );
 
 const authStore = useAuthStore();
@@ -374,6 +372,7 @@ async function onStart() {
     }
 
     bot.value = await aiBotsStore.getBot(service.value.data.bot_uuid);
+    aiBotsStore.startChatsStream();
 
     if (isSettingsBroken.value) {
       activeTab.value = "settings";
@@ -635,5 +634,27 @@ export default {
 span.tab {
   font-weight: 500;
   font-size: 1rem;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.pulsating-circle {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background-color: red;
+  border-radius: 50%;
+  animation: pulse 2.5s infinite ease-in-out;
+  margin-right: 5px;
 }
 </style>

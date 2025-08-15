@@ -882,6 +882,10 @@ onMounted(async () => {
       database.value.qa_knowledge.records = [{ question: "", answer: "" }];
     }
 
+    if (!database.value.saved_urls || !database.value.saved_urls.length) {
+      database.value.saved_urls = [];
+    }
+
     unInmportedSitesMap.value = JSON.parse(
       localStorage.getItem("unInmportedSitesMap") || "{}"
     );
