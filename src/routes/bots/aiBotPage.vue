@@ -372,6 +372,7 @@ async function onStart() {
     }
 
     bot.value = await aiBotsStore.getBot(service.value.data.bot_uuid);
+    aiBotsStore.startChatsStream();
 
     if (isSettingsBroken.value) {
       activeTab.value = "settings";

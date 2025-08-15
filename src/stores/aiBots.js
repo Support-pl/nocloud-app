@@ -192,6 +192,10 @@ export const useAiBotsStore = defineStore("aiBots", () => {
       (db) => db.id === knowledge.database_id
     );
 
+    if (!databases.value[index].saved_urls) {
+      databases.value[index].saved_urls = [];
+    }
+
     if (index !== -1) {
       const existingIndex = databases.value[index].saved_urls.findIndex(
         (k) => k.id === knowledge.id

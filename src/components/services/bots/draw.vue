@@ -88,8 +88,6 @@ async function fetch() {
       bot.value.channels = [];
     }
     await aiBotsStore.fetchChats(bot.value.id);
-
-    aiBotsStore.startChatsStream();
   } catch (err) {
     const opts = {
       message: `Error: ${
