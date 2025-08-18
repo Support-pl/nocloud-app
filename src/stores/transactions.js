@@ -82,6 +82,7 @@ export const useTransactionsStore = defineStore("transactions", () => {
         response.size = params.limit;
 
         transactions.value = response.records;
+
         setAll(response);
 
         return response;
@@ -98,6 +99,7 @@ export const useTransactionsStore = defineStore("transactions", () => {
         const response = await api.post("/billing/count/reports", params);
 
         total.value = +response.total;
+        page.value = 1;
       } catch (error) {
         console.error(error);
         throw error;
