@@ -574,10 +574,18 @@ const filteredSizes = computed(() => {
     if (sortField.value === "price") {
       return a.price[options.value.period] - b.price[options.value.period];
     } else if (sortField.value === "default") {
-      return (
-        (a.sorter || Number.MAX_SAFE_INTEGER) -
-        (b.sorter || Number.MAX_SAFE_INTEGER)
-      );
+      const sorterA = a.sorter ?? Number.MAX_SAFE_INTEGER;
+      const sorterB = b.sorter ?? Number.MAX_SAFE_INTEGER;
+
+      if (sorterA !== sorterB) {
+        return sorterA - sorterB;
+      }
+      const nameA = (a.label || "").toString();
+      const nameB = (b.label || "").toString();
+      return nameA.localeCompare(nameB, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      });
     } else {
       const aRes = (
         getResources(a).find((r) => r.key === sortField.value).value || ""
