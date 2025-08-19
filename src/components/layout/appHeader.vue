@@ -550,6 +550,7 @@ export default {
       currentPage: "page",
       pageSize: "size",
       fetchTransactions: "fetch",
+      fetchTransactionsCount: "fetchCount",
     }),
     ...mapState(useInvoicesStore, {
       invoices: "invoices",
@@ -742,26 +743,31 @@ export default {
     },
     onChangeRange(range) {
       this.checkedList = range;
+
       if (!range || range?.length < 1) {
         this.updateFilter(range ?? []);
         this.isVisible = false;
         this.checkedList = [];
-      } else {
-        this.fetchTransactions(
-          {
-            account: this.userdata.uuid,
-            page: this.currentPage,
-            limit: this.pageSize,
-            field: "exec",
-            sort: "desc",
-            filters: {
-              start: { from: Math.round(range[0].toDate().getTime() / 1000) },
-              end: { from: Math.round(range[1].toDate().getTime() / 1000) },
-            },
-          },
-          true
-        );
       }
+
+      const params = {
+        account: this.userdata.uuid,
+        page: this.currentPage,
+        limit: this.pageSize,
+        field: "exec",
+        sort: "desc",
+        filters: range
+          ? {
+              exec: {
+                from: Math.round(range[0]?.toDate().getTime() / 1000),
+                to: Math.round(range[1]?.toDate().getTime() / 1000),
+              },
+            }
+          : undefined,
+      };
+
+      this.fetchTransactionsCount(params, true);
+      this.fetchTransactions(params, true);
     },
     openRange(value) {
       this.isOpen = value;

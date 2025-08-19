@@ -1,17 +1,20 @@
 <template>
   <template v-if="!isLoading">
     <a-row class="bots" style="margin-top: 10px" :gutter="[10, 10]">
-      <a-col span="24">
+      <a-col span="24" style="display: flex; align-items: center">
         <span class="field_title"
           >{{ capitalize(t("bots.fields.model")) }}:
-          {{
-            chatsStore.globalModelsList.find(
-              (m) => m.key === bot.settings.ai_model
-            )?.name || bot.settings.ai_model
-          }}</span
-        >
+        </span>
+
+        <a-select
+          :options="modelsOptions"
+          style="width: 100%; margin-left: 10px"
+          allow-clear
+          :value="bot.settings.ai_model"
+          @update:value="bot.settings.ai_model = $event || defaultModel"
+        />
       </a-col>
-      <a-col span="24">
+      <a-col v-if="defaultModel === ogBot?.settings?.ai_model" span="24">
         <span v-html="marked(t('bots.tips.model'))"> </span>
       </a-col>
 
@@ -272,16 +275,8 @@
         />
       </a-col>
 
-      <a-col span="24" style="margin-bottom: 40px; margin-top: 10px">
-        <a-row justify="end">
-          <a-button
-            key="back"
-            :loading="isBotSaveLoading"
-            @click="handleSaveBot"
-            :type="isSavePrimary ? 'primary' : 'default'"
-            >{{ t("bots.actions.save_bot") }}
-          </a-button>
-        </a-row>
+      <a-col span="24" style="padding-bottom: 40px; margin-top: 10px">
+        <a-row justify="end"> </a-row>
       </a-col>
 
       <a-modal
@@ -518,7 +513,11 @@ const plusCircleOutlined = defineAsyncComponent(() =>
 
 const props = defineProps({
   service: { type: Object, required: true },
+  savePrimary: { type: Boolean, required: true },
+  saveLoading: { type: Boolean, required: true },
 });
+
+const emits = defineEmits(["update:save-primary", "update:save-loading"]);
 
 // handle links for instrction
 const renderer = new marked.Renderer();
@@ -599,6 +598,20 @@ const editChanellFormRef = ref();
 const editedChanellData = ref({ type: "" });
 const newChanellData = ref({ type: "" });
 
+const allowedModels = ["gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini"];
+const defaultModel = "gpt-4o-mini";
+
+const modelsOptions = computed(() =>
+  globalModelsList.value
+    .filter(
+      (model) =>
+        allowedModels.includes(model.key) &&
+        ["api_only", "public"].includes(model.visibility) &&
+        model.state.state != "broken"
+    )
+    .map((model) => ({ label: model.name, value: model.key }))
+);
+
 const newChanellFormRules = computed(() => {
   const fields = Object.keys(chanellsFields.value).reduce((acc, v) => {
     acc[v] = [{ required: true, message: t("ssl_product.field is required") }];
@@ -633,8 +646,8 @@ const rolesOptions = computed(() => [
   { value: null, label: t("bots.roles.none") },
 ]);
 
-const mainModel = computed(() =>
-  globalModelsList.value.find(({ key }) => key == "gpt-4o-mini")
+const currentModel = computed(() =>
+  globalModelsList.value.find(({ key }) => key == bot.value.settings.ai_model)
 );
 
 const chanellsFields = computed(() => {
@@ -703,19 +716,18 @@ async function fetch() {
   } finally {
     isLoading.value = false;
   }
-
-  fetchPriceForTokens();
 }
 
 fetch();
 
 async function fetchPriceForTokens() {
   if (
-    mainModel.value &&
-    mainModel.value?.billing.tokens?.text_input?.price.amount
+    currentModel.value &&
+    currentModel.value?.billing.tokens?.text_input?.price.amount
   ) {
-    const input = mainModel.value?.billing.tokens?.text_input?.price.amount;
-    const output = mainModel.value?.billing.tokens?.text_output?.price.amount;
+    const input = currentModel.value?.billing.tokens?.text_input?.price.amount;
+    const output =
+      currentModel.value?.billing.tokens?.text_output?.price.amount;
     if (userCurrency.value === defaultCurrency.value) {
       return (priceForTokens.value.input = input);
     }
@@ -922,6 +934,23 @@ watch(isChanellEditOpen, (value) => {
     selectedEditedChanell.value.type = "";
   }
 });
+
+watch(
+  () => bot.value.settings.ai_model,
+  async () => {
+    fetchPriceForTokens();
+  }
+);
+
+watch(isSavePrimary, (value) => {
+  emits("update:save-primary", value);
+});
+
+watch(isBotSaveLoading, (value) => {
+  emits("update:save-loading", value);
+});
+
+defineExpose({ handleSaveBot });
 </script>
 
 <script>
