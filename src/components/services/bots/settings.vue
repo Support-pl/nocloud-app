@@ -275,16 +275,8 @@
         />
       </a-col>
 
-      <a-col span="24" style="margin-bottom: 40px; margin-top: 10px">
-        <a-row justify="end">
-          <a-button
-            key="back"
-            :loading="isBotSaveLoading"
-            @click="handleSaveBot"
-            :type="isSavePrimary ? 'primary' : 'default'"
-            >{{ t("bots.actions.save_bot") }}
-          </a-button>
-        </a-row>
+      <a-col span="24" style="padding-bottom: 40px; margin-top: 10px">
+        <a-row justify="end"> </a-row>
       </a-col>
 
       <a-modal
@@ -521,7 +513,11 @@ const plusCircleOutlined = defineAsyncComponent(() =>
 
 const props = defineProps({
   service: { type: Object, required: true },
+  savePrimary: { type: Boolean, required: true },
+  saveLoading: { type: Boolean, required: true },
 });
+
+const emits = defineEmits(["update:save-primary", "update:save-loading"]);
 
 // handle links for instrction
 const renderer = new marked.Renderer();
@@ -945,6 +941,16 @@ watch(
     fetchPriceForTokens();
   }
 );
+
+watch(isSavePrimary, (value) => {
+  emits("update:save-primary", value);
+});
+
+watch(isBotSaveLoading, (value) => {
+  emits("update:save-loading", value);
+});
+
+defineExpose({ handleSaveBot });
 </script>
 
 <script>

@@ -165,7 +165,14 @@
                 </template>
               </a-alert>
 
-              <bot-settings :service="service" />
+              <bot-settings
+                ref="botSettings"
+                :save-primary="isSavePrimary"
+                @update:save-primary="isSavePrimary = $event"
+                :save-loading="isBotSaveLoading"
+                @update:save-loading="isBotSaveLoading = $event"
+                :service="service"
+              />
             </a-tab-pane>
             <a-tab-pane :disabled="isSuspended || isPending" key="database">
               <template #tab>
@@ -201,6 +208,33 @@
         <loading v-else />
       </div>
     </div>
+
+    <div
+      v-if="activeTab === 'settings' && isSavePrimary"
+      class="container"
+      style="
+        position: sticky;
+        bottom: 25px;
+        display: flex;
+        justify-content: flex-end;
+        z-index: 60;
+        pointer-events: auto;
+        min-height: 0px;
+      "
+    >
+      <a-button
+        style="margin-right: 10px"
+        key="back"
+        :loading="isBotSaveLoading"
+        @click="handleSaveBot"
+        :type="isSavePrimary ? 'primary' : 'default'"
+        >{{ t("bots.actions.save_bot") }}
+
+        <template #icon>
+          <save-icon></save-icon>
+        </template>
+      </a-button>
+    </div>
   </div>
 </template>
 
@@ -233,6 +267,10 @@ const caretRightIcon = defineAsyncComponent(() =>
 
 const editOutlined = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EditOutlined")
+);
+
+const saveIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SaveOutlined")
 );
 
 const authStore = useAuthStore();
@@ -269,7 +307,12 @@ const nameEditData = ref({ title: "" });
 const activeTab = ref();
 const lastInvoice = ref(null);
 
+const isSavePrimary = ref(false);
+const isBotSaveLoading = ref(false);
+
 const isUpdateAutoRenewLoading = ref(false);
+
+const botSettings = ref();
 
 const requiredRule = computed(() => ({
   required: true,
@@ -486,6 +529,12 @@ const updateInstanceAutoRenew = async (value) => {
     await instancesStore.updateInstance(instance);
   } finally {
     isUpdateAutoRenewLoading.value = false;
+  }
+};
+
+const handleSaveBot = () => {
+  if (botSettings.value) {
+    botSettings.value.handleSaveBot();
   }
 };
 
