@@ -1071,8 +1071,6 @@ watch(
       paginationOptions.value.size * paginationOptions.value.page >
       paginationOptions.value.total
     ) {
-      console.log(343);
-
       paginationOptions.value.page = 1;
     }
   },
@@ -1080,8 +1078,6 @@ watch(
 );
 
 watch(typesOptions, () => {
-  console.log(typesOptions.value, typesOptions.value.includes("распродажа"));
-
   const saleOption = typesOptions.value.find((v) =>
     (v || "").toLowerCase().trim().includes("распродажа")
   );
