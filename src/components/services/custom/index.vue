@@ -524,7 +524,6 @@ const typesOptions = computed(() => {
     types.push(group ?? label);
   });
 
-  console.log(types);
   types.sort((a, b) => {
     const nameA = (a || "").toString().trim();
     const nameB = (b || "").toString().trim();
@@ -1079,6 +1078,17 @@ watch(
   },
   { deep: true }
 );
+
+watch(typesOptions, () => {
+  console.log(typesOptions.value, typesOptions.value.includes("распродажа"));
+
+  const saleOption = typesOptions.value.find((v) =>
+    (v || "").toLowerCase().trim().includes("распродажа")
+  );
+  if (saleOption) {
+    checkedGroups.value = saleOption;
+  }
+});
 </script>
 
 <script>
