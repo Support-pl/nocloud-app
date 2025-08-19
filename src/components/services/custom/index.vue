@@ -524,6 +524,20 @@ const typesOptions = computed(() => {
     types.push(group ?? label);
   });
 
+  console.log(types);
+  types.sort((a, b) => {
+    const nameA = (a || "").toString().trim();
+    const nameB = (b || "").toString().trim();
+
+    if (a.toLowerCase() === "распродажа") return -1;
+    if (b.toLowerCase() === "распродажа") return 1;
+
+    return nameA.localeCompare(nameB, undefined, {
+      numeric: true,
+      sensitivity: "base",
+    });
+  });
+
   return types.filter((t) => t != "default");
 });
 const filteredSizes = computed(() => {
