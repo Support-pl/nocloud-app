@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { defineStore, storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -10,6 +10,7 @@ import api, { addApiInterceptors } from "@/api.js";
 import config from "@/appconfig.js";
 import { useProductsStore } from "./products.js";
 import { useCurrenciesStore } from "./currencies.js";
+import { debounce } from "@/functions.js";
 
 const COOKIES_NAME = "noCloudinApp-token";
 
@@ -44,6 +45,17 @@ export const useAuthStore = defineStore("auth", () => {
     cookies.set(COOKIES_NAME, value, { expires });
   }
 
+  const changeLangaugeCodeDebounced = debounce((newLocale) => {
+    if (newLocale === userdata.value.languageCode) return;
+    api.post("/accounts/change_language", { languageCode: newLocale });
+  }, 1000);
+
+  watch(i18n.locale, (newLocale) => {
+    if (isLogged.value) {
+      changeLangaugeCodeDebounced(newLocale);
+    }
+  });
+
   return {
     token,
     userdata,
@@ -64,6 +76,7 @@ export const useAuthStore = defineStore("auth", () => {
         });
 
         api.applyToken(response.token);
+
         addApiInterceptors();
 
         setToken(response.token);
