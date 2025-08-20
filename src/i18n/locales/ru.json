@@ -2,6 +2,8 @@
   "ru": {
     "localePrefix": "ru",
     "localeLang": "Русский",
+    "enable_addon": "Включить",
+    "sort_default": "Стандартная",
     "locale": "russian",
     "coming soon": "скоро будет",
     "Settings": "Настройки",
@@ -1088,6 +1090,7 @@
       "Closed": "Закрыт",
       "Close-Ticket": "Обращение закрыто",
       "Customer-Reply": "Ответ клиента",
+      "Customer Reply": "Ответ клиента",
       "Waiting for reply": "Ожидание ответа",
       "In Progress": "В процессе",
       "On Hold": "Заморожен",

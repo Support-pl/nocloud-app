@@ -58,7 +58,10 @@
               >
                 {{ key.label }}
 
-                <component :is="getSortIcon(key.value)" />
+                <component
+                  v-if="key.value !== 'default'"
+                  :is="getSortIcon(key.value)"
+                />
               </a-button>
             </a-space>
           </div>
@@ -671,7 +674,7 @@ const groupWrapStyle = computed(() => {
 const sortKeys = computed(() => {
   const result = [];
 
-  result.push({ label: t("Default"), value: "default" });
+  result.push({ label: t("sort_default"), value: "default" });
   result.push({ label: t("Cost"), value: "price" });
 
   Object.keys(resources.value).forEach((resource) => {
@@ -1071,8 +1074,6 @@ watch(
       paginationOptions.value.size * paginationOptions.value.page >
       paginationOptions.value.total
     ) {
-      console.log(343);
-
       paginationOptions.value.page = 1;
     }
   },
@@ -1080,8 +1081,6 @@ watch(
 );
 
 watch(typesOptions, () => {
-  console.log(typesOptions.value, typesOptions.value.includes("распродажа"));
-
   const saleOption = typesOptions.value.find((v) =>
     (v || "").toLowerCase().trim().includes("распродажа")
   );

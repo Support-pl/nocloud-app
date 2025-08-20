@@ -3,6 +3,8 @@
     "localePrefix": "en",
     "localeLang": "English",
     "locale": "english",
+    "enable_addon": "Enable",
+    "sort_default": "Standard",
     "coming soon": "Coming soon",
     "Settings": "Settings",
     "Buy a license": "Buy a license",

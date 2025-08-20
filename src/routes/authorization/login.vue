@@ -238,8 +238,18 @@ async function send() {
       router.push({ name: "root" });
     }
 
-    authStore.fetchUserData(true);
-    authStore.fetchBillingData(true);
+    await Promise.all([
+      authStore.fetchUserData(true),
+      authStore.fetchBillingData(true),
+    ]);
+
+    if (
+      authStore.userdata.languageCode &&
+      i18n.locale.value !== authStore.userdata.languageCode
+    ) {
+      i18n.locale.value = authStore.userdata.languageCode;
+      localStorage.setItem("lang", authStore.userdata.languageCode);
+    }
   } catch (error) {
     if (error.response && error.response.status === 401) {
       notification.error({

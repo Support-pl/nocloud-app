@@ -2,6 +2,8 @@
   "fr": {
     "localePrefix": "fr",
     "localeLang": "Français",
+    "enable_addon": "Activer le module",
+    "sort_default": "Standard",
     "locale": "french",
     "coming soon": "Prochainement",
     "Settings": "Paramètres",
