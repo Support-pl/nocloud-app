@@ -21,14 +21,18 @@
       >
         <div
           class="order__slider-name"
-          style="grid-template-columns: 1fr auto auto; gap: 10px"
+          style="
+            grid-template-columns: 1fr auto auto;
+            gap: 10px;
+            align-items: center;
+          "
         >
           <span style="font-weight: 700; font-size: 16px">
             {{ addon.title }}
           </span>
 
           <span style="font-weight: 700">
-            {{ getPeriod(product.period) }}
+            {{ $t("enable_addon") }}
           </span>
 
           <a-checkbox :checked="options.addons.includes(addon.uuid)" />
@@ -43,12 +47,9 @@
 import { computed, inject, ref } from "vue";
 import { useAddonsStore } from "@/stores/addons.js";
 import { useCloudStore } from "@/stores/cloud.js";
-import { usePeriod } from "@/hooks/utils";
 
 const addonsStore = useAddonsStore();
 const cloudStore = useCloudStore();
-
-const { getPeriod } = usePeriod();
 
 const [product] = inject("useProduct")();
 const [options, setOptions] = inject("useOptions")();
