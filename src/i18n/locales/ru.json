@@ -194,6 +194,7 @@
     "input password": "введите пароль",
     "order server": "создать сервер",
     "basic": "обычный",
+    "sort_default":"Стандартная",
     "high": "улучшенный",
     "processor": "процессор",
     "Order": "Заказать",

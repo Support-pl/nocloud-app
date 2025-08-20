@@ -361,6 +361,7 @@
     "search": "Search",
     "cart": "Cart",
     "daily": "Daily",
+    "sort_default":"Standard",
     "monthly": "1-Monthly",
     "quarterly": "3-Monthly",
     "semiannually": "6-Monthly",
