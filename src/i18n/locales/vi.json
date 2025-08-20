@@ -2,6 +2,8 @@
   "vi": {
     "localePrefix": "vi",
     "localeLang": "Tiếng Việt",
+    "enable_addon": "Bật addon",
+    "sort_default": "Tiêu chuẩn",
     "coming soon": "Sắp ra mắt",
     "Settings": "Cài đặt",
     "Buy a license": "Mua bản quyền",
