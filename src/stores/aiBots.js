@@ -31,6 +31,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
   const chatParticipants = ref();
   const databases = ref([]);
   const roles = ref([]);
+  const customEventHandlers = ref(new Map());
 
   const route = useRoute();
 
@@ -63,7 +64,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
   let reconnectAttempts = 0;
   const MAX_RECONNECT_ATTEMPTS = 10;
 
-  async function startChatsStream() {
+  async function startChatsStream(customHandlers = {}) {
     const token = cookies.get("noCloudinApp-token");
     const url = VUE_APP_BASE_URL.replace(/^http/, "ws");
     const wsUrl = `${url}agents/api/get_updates?token=${encodeURIComponent(
@@ -71,6 +72,12 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     )}`;
 
     if (socket.value) {
+      Object.entries(customHandlers).forEach(([event, handler]) => {
+        if (!customEventHandlers.value.has(event)) {
+          customEventHandlers.value.set(event, new Set());
+        }
+        customEventHandlers.value.get(event).add(handler);
+      });
       return;
     }
 
@@ -84,6 +91,12 @@ export const useAiBotsStore = defineStore("aiBots", () => {
       socket.value.addEventListener("message", (event) => {
         const data = JSON.parse(event.data);
         console.log(data);
+
+        if (customEventHandlers.value.has(data.event)) {
+          customEventHandlers.value.get(data.event).forEach(handler => {
+            handler(data);
+          });
+        }
 
         switch (data.event) {
           case "message_sent":
@@ -247,6 +260,15 @@ export const useAiBotsStore = defineStore("aiBots", () => {
       ?.find((chat) => chat.id === chatId);
   }
 
+  function removeCustomHandler(event, handler) {
+    if (customEventHandlers.value.has(event)) {
+      customEventHandlers.value.get(event).delete(handler);
+      if (customEventHandlers.value.get(event).size === 0) {
+        customEventHandlers.value.delete(event);
+      }
+    }
+  }
+
   return {
     messages,
     chats,
@@ -254,6 +276,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
     chatParticipants,
     databases,
     roles,
+    customEventHandlers,
 
     async getBot(botId) {
       if (bots.value.get(botId)) {
@@ -343,6 +366,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
     fetchChatsMessages,
     startChatsStream,
+    removeCustomHandler,
 
     async sendMessage(message, chat) {
       try {

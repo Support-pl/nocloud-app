@@ -140,7 +140,7 @@ import Loading from "@/components/ui/loading.vue";
 import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
 import { storeToRefs } from "pinia";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import api from "@/api";
 import { marked } from "marked";
@@ -197,30 +197,17 @@ const isCurrentChannelOpen = ref(false);
 const currentChannelMeta = ref({});
 
 onMounted(async () => {
-  try {
-    isDataLoading.value = true;
+  await fetchData();
+  await aiBotsStore.startChatsStream({
+    notifications_receiver_created: createNewChanellHandler,
+  });
+});
 
-    await aiBotsStore.getBot(props.service.data.bot_uuid);
-
-    const data = await api.post("/agents/api/get_subscriptions", {
-      bot: bot.value.id,
-    });
-
-    data.subscriptions = data.subscriptions || [];
-    data.receivers = data.receivers || [];
-    data.event_types = data.event_types || [];
-    data.channels = data.channels || [];
-    notificationsData.value = data;
-  } catch (err) {
-    const opts = {
-      message: `Error: ${
-        err?.response?.data?.message || err?.response?.data || "Unknown"
-      }.`,
-    };
-    openNotification("error", opts);
-  } finally {
-    isDataLoading.value = false;
-  }
+onUnmounted(() => {
+  aiBotsStore.removeCustomHandler(
+    "notifications_receiver_created",
+    createNewChanellHandler
+  );
 });
 
 const bot = computed(() => bots.value.get(props.service.data.bot_uuid));
@@ -249,6 +236,33 @@ const currentChannelRules = computed(() => {
 
   return {};
 });
+
+const fetchData = async () => {
+  try {
+    isDataLoading.value = true;
+
+    await aiBotsStore.getBot(props.service.data.bot_uuid);
+
+    const data = await api.post("/agents/api/get_subscriptions", {
+      bot: bot.value.id,
+    });
+
+    data.subscriptions = data.subscriptions || [];
+    data.receivers = data.receivers || [];
+    data.event_types = data.event_types || [];
+    data.channels = data.channels || [];
+    notificationsData.value = data;
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isDataLoading.value = false;
+  }
+};
 
 const handleOpenChanellSettings = (chanell) => {
   currentChannel.value = { channel_key: chanell.code };
@@ -375,6 +389,11 @@ const handleDeleteChanell = async (chanell) => {
     };
     openNotification("error", opts);
   }
+};
+
+const createNewChanellHandler = () => {
+  isCurrentChannelOpen.value = false;
+  fetchData();
 };
 
 watch(isCurrentChannelOpen, (value) => {
