@@ -14,8 +14,14 @@
           @update:value="bot.settings.ai_model = $event || defaultModel"
         />
       </a-col>
-      <a-col v-if="defaultModel === ogBot?.settings?.ai_model" span="24">
-        <span v-html="marked(t('bots.tips.model'))"> </span>
+      <a-col span="24">
+        <span
+          v-html="
+            marked(
+              t(`bots.tips.model_${bot.settings.ai_model.replaceAll('.', '/')}`)
+            )
+          "
+        ></span>
       </a-col>
 
       <a-col v-if="priceForTokens.input" span="12">

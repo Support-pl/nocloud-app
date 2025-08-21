@@ -43,16 +43,19 @@
           :checked="
             !!notificationsData.subscriptions.find(
               (s) =>
-                s.event_type_id === event.id && s.receiver_id === chanell.id
+                s.event_type_id === event.id &&
+                s.receiver_id === chanell.receiver_id
             )
           "
+          :loading="isToggleLoading"
           @change="
             handleToggleSubscription(
               chanell,
               event,
               !notificationsData.subscriptions.find(
                 (s) =>
-                  s.event_type_id === event.id && s.receiver_id === chanell.id
+                  s.event_type_id === event.id &&
+                  s.receiver_id === chanell.receiver_id
               )
             )
           "
@@ -137,7 +140,7 @@ import Loading from "@/components/ui/loading.vue";
 import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
 import { storeToRefs } from "pinia";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import api from "@/api";
 import { marked } from "marked";
@@ -178,6 +181,7 @@ const { openNotification } = useNotification();
 const { t, locale } = useI18n();
 
 const isDataLoading = ref(false);
+const isToggleLoading = ref(false);
 
 const notificationsData = ref({
   channels: [],
@@ -193,30 +197,17 @@ const isCurrentChannelOpen = ref(false);
 const currentChannelMeta = ref({});
 
 onMounted(async () => {
-  try {
-    isDataLoading.value = true;
+  await fetchData();
+  await aiBotsStore.startChatsStream({
+    notifications_receiver_created: createNewChanellHandler,
+  });
+});
 
-    await aiBotsStore.getBot(props.service.data.bot_uuid);
-
-    const data = await api.post("/agents/api/get_subscriptions", {
-      bot: bot.value.id,
-    });
-
-    data.subscriptions = data.subscriptions || [];
-    data.receivers = data.receivers || [];
-    data.event_types = data.event_types || [];
-    data.channels = data.channels || [];
-    notificationsData.value = data;
-  } catch (err) {
-    const opts = {
-      message: `Error: ${
-        err?.response?.data?.message || err?.response?.data || "Unknown"
-      }.`,
-    };
-    openNotification("error", opts);
-  } finally {
-    isDataLoading.value = false;
-  }
+onUnmounted(() => {
+  aiBotsStore.removeCustomHandler(
+    "notifications_receiver_created",
+    createNewChanellHandler
+  );
 });
 
 const bot = computed(() => bots.value.get(props.service.data.bot_uuid));
@@ -245,6 +236,33 @@ const currentChannelRules = computed(() => {
 
   return {};
 });
+
+const fetchData = async () => {
+  try {
+    isDataLoading.value = true;
+
+    await aiBotsStore.getBot(props.service.data.bot_uuid);
+
+    const data = await api.post("/agents/api/get_subscriptions", {
+      bot: bot.value.id,
+    });
+
+    data.subscriptions = data.subscriptions || [];
+    data.receivers = data.receivers || [];
+    data.event_types = data.event_types || [];
+    data.channels = data.channels || [];
+    notificationsData.value = data;
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isDataLoading.value = false;
+  }
+};
 
 const handleOpenChanellSettings = (chanell) => {
   currentChannel.value = { channel_key: chanell.code };
@@ -306,6 +324,8 @@ const handleUpdateChannel = async () => {
 
 const handleToggleSubscription = async (channel, event, value) => {
   try {
+    isToggleLoading.value = true;
+
     await api.post("/agents/api/toggle_subscription", {
       bot: bot.value.id,
       channel_key: channel.code,
@@ -315,13 +335,15 @@ const handleToggleSubscription = async (channel, event, value) => {
 
     if (value) {
       notificationsData.value.subscriptions.push({
-        receiver_id: channel.id,
+        receiver_id: channel.receiver_id,
         event_type_id: event.id,
       });
     } else {
       notificationsData.value.subscriptions =
         notificationsData.value.subscriptions.filter(
-          (s) => s.receiver_id !== channel.id || s.event_type_id !== event.id
+          (s) =>
+            s.receiver_id !== channel.receiver_id ||
+            s.event_type_id !== event.id
         );
     }
 
@@ -335,6 +357,8 @@ const handleToggleSubscription = async (channel, event, value) => {
       }.`,
     };
     openNotification("error", opts);
+  } finally {
+    isToggleLoading.value = false;
   }
 };
 
@@ -365,6 +389,11 @@ const handleDeleteChanell = async (chanell) => {
     };
     openNotification("error", opts);
   }
+};
+
+const createNewChanellHandler = () => {
+  isCurrentChannelOpen.value = false;
+  fetchData();
 };
 
 watch(isCurrentChannelOpen, (value) => {

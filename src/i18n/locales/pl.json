@@ -797,7 +797,10 @@
         "promt": "Jesteś ekspertem od produktu X.\nTwoim zadaniem jest zidentyfikowanie potrzeb użytkownika, zaoferowanie odpowiedniego produktu, wyjaśnienie jego zalet i poprowadzenie do zakupu.\nUżywaj ciepłego, profesjonalnego tonu i zadawaj pytania doprecyzowujące, aby lepiej zrozumieć sytuację.\nNie podawaj wszystkich informacji na raz — angażuj się w naturalną rozmowę, jak doświadczony sprzedawca."
       },
       "tips": {
-        "model": "**GPT-4o Mini** to _odchudzona_ wersja modelu **GPT-4o**, zoptymalizowana pod kątem **szybkiego** i **wydajnego** działania w czasie rzeczywistym.",
+        "model_gpt-4o": "**GPT-4o** — uniwersalny model multimodalny (tekst, obraz, dźwięk, wideo), dobrze zrównoważony pod względem prędkości i jakości.",
+        "model_gpt-4o-mini": "**GPT-4o mini** — kompaktowa wersja GPT-4o, zoptymalizowana pod kątem szybkich i ekonomicznych zapytań.",
+        "model_gpt-4/1": "**GPT-4.1** — bardziej zaawansowany model z rodziny GPT-4 z ulepszonymi rozumowaniem, kodem i multimodalnością.",
+        "model_gpt-4/1-mini": "**GPT-4.1 mini** — uproszczona i szybsza wersja GPT-4.1, skoncentrowana na codziennych scenariuszach.",
         "promt": "Prompt to początkowa instrukcja lub kontekst, który podajesz asystentowi, aby nakierować jego odpowiedzi.\nDobrze przygotowany prompt pomaga uzyskać bardziej trafne i dokładne odpowiedzi.\nMożesz używać przykładów, instrukcji lub pytań, aby zdefiniować kontekst.",
         "temperature": "Im wyższa wartość temperatury, tym bardziej kreatywne i różnorodne odpowiedzi.\n0 — ścisłe i przewidywalne.\n0.5 — zrównoważone i naturalne.\n1 — bardzo kreatywne.",
         "delay": "Opóźnienie przed odpowiedzią bota.\nUstawione w sekundach.\n0 — natychmiastowa odpowiedź.\n3 — bot czeka 3 sekundy przed odpowiedzią.\nSłuży do symulacji ludzkiej pauzy.",
