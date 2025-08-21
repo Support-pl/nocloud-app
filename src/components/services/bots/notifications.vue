@@ -43,16 +43,19 @@
           :checked="
             !!notificationsData.subscriptions.find(
               (s) =>
-                s.event_type_id === event.id && s.receiver_id === chanell.id
+                s.event_type_id === event.id &&
+                s.receiver_id === chanell.receiver_id
             )
           "
+          :loading="isToggleLoading"
           @change="
             handleToggleSubscription(
               chanell,
               event,
               !notificationsData.subscriptions.find(
                 (s) =>
-                  s.event_type_id === event.id && s.receiver_id === chanell.id
+                  s.event_type_id === event.id &&
+                  s.receiver_id === chanell.receiver_id
               )
             )
           "
@@ -178,6 +181,7 @@ const { openNotification } = useNotification();
 const { t, locale } = useI18n();
 
 const isDataLoading = ref(false);
+const isToggleLoading = ref(false);
 
 const notificationsData = ref({
   channels: [],
@@ -306,6 +310,8 @@ const handleUpdateChannel = async () => {
 
 const handleToggleSubscription = async (channel, event, value) => {
   try {
+    isToggleLoading.value = true;
+
     await api.post("/agents/api/toggle_subscription", {
       bot: bot.value.id,
       channel_key: channel.code,
@@ -315,13 +321,15 @@ const handleToggleSubscription = async (channel, event, value) => {
 
     if (value) {
       notificationsData.value.subscriptions.push({
-        receiver_id: channel.id,
+        receiver_id: channel.receiver_id,
         event_type_id: event.id,
       });
     } else {
       notificationsData.value.subscriptions =
         notificationsData.value.subscriptions.filter(
-          (s) => s.receiver_id !== channel.id || s.event_type_id !== event.id
+          (s) =>
+            s.receiver_id !== channel.receiver_id ||
+            s.event_type_id !== event.id
         );
     }
 
@@ -335,6 +343,8 @@ const handleToggleSubscription = async (channel, event, value) => {
       }.`,
     };
     openNotification("error", opts);
+  } finally {
+    isToggleLoading.value = false;
   }
 };
 
