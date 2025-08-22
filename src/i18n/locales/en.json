@@ -154,6 +154,7 @@
     "Addons": "Addons",
     "tariff": "tariff",
     "model": "model",
+    "agent": "agent",
     "today": "today",
     "yesterday": "yesterday",
     "Send error": "Send error",
@@ -1024,6 +1025,10 @@
         "stability-ai": "Stability AI",
         "alibaba": "Alibaba",
         "google-cloud": "Cloud Document AI API"
+      },
+      "agents": {
+        "chats": "Chats",
+        "nocloud_bots": "Bots"
       },
       "filters": {
         "video": "Video",
