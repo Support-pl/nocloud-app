@@ -25,18 +25,31 @@
         </div>
       </div>
     </div>
-    <div class="horisontal-line" />
     <div class="invoice__footer flex-between">
       <div class="invoice__id">
-        Instance: {{ getInstance(invoice.instance) }}
-        <template v-if="invoice.product || invoice.resource"> - </template>
+        <a-tag>
+          {{ capitalize($t("service")) }}: {{ getInstance(invoice.instance) }}
+        </a-tag>
 
-        <template v-if="invoice.product">
+        <a-tag v-if="invoice.product">
           {{ $t("Product") }}: {{ invoice.product }}
+        </a-tag>
+
+        <template v-if="model">
+          <a-tag v-if="model.provider">
+            {{ capitalize($t("provider")) }}:
+            {{ $t("openai.providers." + model.provider) }}
+          </a-tag>
+          <a-tag v-if="invoice.meta.agent">
+            {{ capitalize($t("agent")) }}:
+            {{ $t("openai.agents." + invoice.meta.agent) }}
+          </a-tag>
+          <a-tag> {{ capitalize($t("model")) }}: {{ model.name }} </a-tag>
         </template>
-        <template v-if="invoice.resource">
+
+        <a-tag v-else-if="invoice.resource">
           {{ $t("Resource") }}: {{ invoice.resource }}
-        </template>
+        </a-tag>
       </div>
       <div v-if="isClickable" class="invoice__btn">
         <right-icon />
@@ -46,13 +59,15 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent } from "vue";
+import { capitalize, computed, defineAsyncComponent } from "vue";
 import { useRouter } from "vue-router";
 
 import { useAppStore } from "@/stores/app.js";
 import { useInstancesStore } from "@/stores/instances.js";
 import { useCurrency } from "@/hooks/utils";
 import config from "@/appconfig.js";
+import { useChatsStore } from "@/stores/chats";
+import { storeToRefs } from "pinia";
 
 const rightIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/RightOutlined")
@@ -66,6 +81,8 @@ const router = useRouter();
 const { currency: baseCurrency, formatPrice } = useCurrency();
 const { toDate } = useAppStore();
 const instancesStore = useInstancesStore();
+const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
 
 const currency = computed(() =>
   props.invoice.currency
@@ -87,6 +104,16 @@ const costColor = computed(() => {
   }
 });
 
+const model = computed(() => {
+  if (!props.invoice?.meta?.model) return null;
+
+  return (
+    globalModelsList.value.find(
+      (model) => model.key === props.invoice.meta.model
+    ) || { name: props.invoice.meta.model }
+  );
+});
+
 const isClickable = computed(() => {
   const isRecordsExist = props.invoice.records?.length > 0;
   const isMessageExist = props.invoice.meta.description;
@@ -104,6 +131,7 @@ function clickOnInvoice(uuid) {
 
 function getInstance(uuid) {
   if (!uuid) return "none";
+
   return (
     instancesStore.allInstances.find((inst) => inst.uuid === uuid)?.title ??
     uuid
@@ -125,11 +153,6 @@ export default { name: "SingleInvoice" };
   cursor: pointer;
 }
 
-.invoice__id {
-  font-size: 12px;
-  color: var(--gray);
-}
-
 .invoice:not(:last-child) {
   margin-bottom: 20px;
 }
@@ -141,12 +164,6 @@ export default { name: "SingleInvoice" };
 .invoice__cost {
   font-size: 28px;
   color: var(--main);
-}
-
-.horisontal-line {
-  width: 100%;
-  height: 1px;
-  background-color: rgba(0, 0, 0, 0.2);
 }
 
 .flex-between {
@@ -164,6 +181,11 @@ export default { name: "SingleInvoice" };
 }
 .invoice__dueDate {
   flex: 1 1 0;
+}
+
+.invoice__footer {
+  margin-top: 5px;
+  display: flex;
 }
 
 .invoice__middle,

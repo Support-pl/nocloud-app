@@ -97,6 +97,7 @@ import invoiceItem from "@/components/invoice/invoiceItem.vue";
 import transactionItem from "@/components/invoice/transactionItem.vue";
 import actsList from "@/components/invoice/actsList.vue";
 import { storeToRefs } from "pinia";
+import { useChatsStore } from "@/stores/chats";
 
 const authStore = useAuthStore();
 const { userdata } = storeToRefs(authStore);
@@ -104,6 +105,7 @@ const invoicesStore = useInvoicesStore();
 const { getInvoices: invoices } = storeToRefs(invoicesStore);
 const transactionsStore = useTransactionsStore();
 const instancesStore = useInstancesStore();
+const chatsStore = useChatsStore();
 const { openNotification } = useNotification();
 
 const currentTab = ref("Invoice");
@@ -180,6 +182,8 @@ watch(() => invoicesStore.isLoading, setCoordY);
 onMounted(() => {
   if (authStore.isLogged && userdata.value.uuid) {
     invoicesStore.fetch(invoices.value?.length);
+
+    chatsStore.fetch_models_list();
 
     transactionsStore.fetchCount({
       account: userdata.value.uuid,

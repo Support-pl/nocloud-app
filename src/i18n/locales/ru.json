@@ -154,6 +154,7 @@
     "Addons": "Доп. опции",
     "tariff": "тариф",
     "model": "модель",
+    "agent": "агент",
     "today": "сегодня",
     "yesterday": "вчера",
     "Send error": "Ошибка отправления",
@@ -1054,6 +1055,10 @@
         "stability-ai": "Stability AI",
         "alibaba": "Alibaba",
         "google-cloud": "Cloud Document AI API"
+      },
+      "agents": {
+        "chats": "Чаты",
+        "nocloud_bots": "Боты"
       },
       "types": {
         "text": "Генерация текста",
