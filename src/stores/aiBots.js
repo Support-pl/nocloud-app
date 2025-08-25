@@ -93,7 +93,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
         console.log(data);
 
         if (customEventHandlers.value.has(data.event)) {
-          customEventHandlers.value.get(data.event).forEach(handler => {
+          customEventHandlers.value.get(data.event).forEach((handler) => {
             handler(data);
           });
         }
@@ -303,6 +303,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           temperature: bot.settings.temperature,
           enable_spam_filter: bot.settings.enable_spam_filter,
           role: bot.settings.role,
+          disabled: bot.settings.disabled,
         });
 
         bots.value.set(bot.id, data);

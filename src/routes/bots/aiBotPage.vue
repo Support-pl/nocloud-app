@@ -106,6 +106,19 @@
             <div class="service-page__info-title">
               {{ t("Actions") }}:
               <div style="display: inline-flex; gap: 8px">
+                <a-button
+                  :loading="isDisabledLoading"
+                  @click="changeBotDisabled"
+                  size="small"
+                  :type="bot.settings.disabled ? 'primary' : undefined"
+                  :danger="!bot.settings.disabled"
+                  >{{
+                    !bot.settings.disabled
+                      ? t("ai_bot_page.actions.stop")
+                      : t("ai_bot_page.actions.start")
+                  }}</a-button
+                >
+
                 <a-button danger size="small" @click="sendDelete">
                   {{ t("Delete") }}
                 </a-button>
@@ -311,6 +324,7 @@ const isSavePrimary = ref(false);
 const isBotSaveLoading = ref(false);
 
 const isUpdateAutoRenewLoading = ref(false);
+const isDisabledLoading = ref(false);
 
 const botSettings = ref();
 
@@ -500,6 +514,24 @@ function sendDelete() {
     onCancel() {},
   });
 }
+
+const changeBotDisabled = async () => {
+  isDisabledLoading.value = true;
+
+  try {
+    await aiBotsStore.updateBot({
+      ...bot.value,
+      settings: {
+        ...bot.value.settings,
+        disabled: !bot.value.settings.disabled,
+      },
+    });
+
+    bot.value.settings.disabled = !bot.value.settings.disabled;
+  } finally {
+    isDisabledLoading.value = false;
+  }
+};
 
 function formatDate(timestamp) {
   if (timestamp < 1) return "0000-00-00";
