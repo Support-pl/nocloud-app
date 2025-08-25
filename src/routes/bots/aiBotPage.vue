@@ -385,6 +385,11 @@ async function onStart() {
     const domain = instancesStore.getInstances.find(
       ({ uuid }) => uuid === route.params.id
     );
+
+    if (!domain) {
+      return;
+    }
+
     let groupname = "AIBot";
     let date = "year";
 
