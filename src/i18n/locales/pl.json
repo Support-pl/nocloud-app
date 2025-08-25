@@ -823,6 +823,10 @@
         "settings": "Ustawienia",
         "databases": "Bazy wiedzy",
         "notifications": "Powiadomienia"
+      },
+      "actions": {
+        "start": "Uruchom",
+        "stop": "Zatrzymaj"
       }
     },
     "bots_notifications": {
