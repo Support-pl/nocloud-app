@@ -824,6 +824,10 @@
         "settings": "Settings",
         "databases": "Knowledge bases",
         "notifications": "Notifications"
+      },
+      "actions":{
+        "start": "Start",
+        "stop": "Stop"
       }
     },
     "bots_notifications": {
