@@ -773,7 +773,7 @@ const orderClickHandler = async () => {
         ? [whoIsPrivacyAddon.value.uuid]
         : [],
     title: `Domain - ${domain}`,
-    billing_plan: fullPlan,
+    billing_plan:  { uuid: fullPlan.uuid },
     product: domain,
   }));
 
