@@ -824,9 +824,12 @@
         "databases": "Bazy wiedzy",
         "notifications": "Powiadomienia"
       },
+      "labels": {
+        "unimported_site_warning": "Zakończ konfigurację"
+      },
       "actions": {
-        "start": "Uruchom",
-        "stop": "Zatrzymaj"
+        "start": "Uruchom bota",
+        "stop": "Zatrzymaj bota"
       }
     },
     "bots_notifications": {
@@ -917,7 +920,9 @@
         "create_file_search_knowledge": "Dodaj źródło",
         "update_knowledge": "Aktualizuj źródło",
         "create_site_search_knowledge": "Dodaj stronę",
-        "import_site_search_knowledge": "Dodaj do QA"
+        "import_site_search_knowledge": "Dodaj do QA",
+        "delete_import": "Usuń",
+        "open_import": "Wyświetl dane"
       }
     },
     "openai": {
@@ -928,7 +933,8 @@
         "newChat": "Nowa rozmowa",
         "generate_video": "Generuj wideo",
         "generate_image": "Generuj obraz",
-        "generate_audio": "Generuj audio"
+        "generate_audio": "Generuj audio",
+        "api_compatible_with_openai": "_Nasze API jest kompatybilne z OpenAI ([Dowiedz się więcej](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "default_model": {
         "label": "Główny model rozmowy",

@@ -4,6 +4,7 @@
       <a-tabs v-model:activeKey="activeApiTab">
         <a-tab-pane key="2" tab="API v2">
           <openai-prices
+            compact
             :selected-model="selectedModelV2"
             @update:selectedModel="selectedModelV2 = $event"
             :selected-provider="selectedProviderV2"
@@ -70,17 +71,26 @@
                 <span> {{ t("openai.labels.api_example") }} </span>
                 <copy-icon
                   style="font-size: 18px; margin-left: 5px"
-                  @click="addToClipboard(exampleV2)"
+                  @click="addToClipboard(exampleV2.replace('<token>', token))"
                 />
               </div>
-              <a-button
+              <template
                 v-if="!['video', 'vision'].includes(selectedTypeV2)"
-                @click="openOpenAiDocs"
-                type="link"
-                >{{ $t("moreExamples") }}</a-button
+                style="display: flex; align-items: center"
               >
+                <div
+                  style="height: 25px; font-weight: normal"
+                  v-html="
+                    marked(
+                      t('openai.labels.api_compatible_with_openai')
+                    )
+                  "
+                />
+              </template>
             </div>
-            <code>{{ exampleV2 }}</code>
+            <pre
+              class="code-block"
+            ><code class="language-curl" v-html="highlightedExampleV2"></code></pre>
           </a-col>
 
           <a-collapse
@@ -164,7 +174,9 @@
                 @click="addToClipboard(exampleV1)"
               />
             </div>
-            <code>{{ exampleV1 }}</code>
+            <pre
+              class="code-block"
+            ><code class="language-curl" v-html="highlightedExampleV1"></code></pre>
           </a-col>
         </a-tab-pane>
       </a-tabs>
@@ -217,7 +229,6 @@ import { EyeOutlined as visibleIcon } from "@ant-design/icons-vue";
 import { Status } from "@/libs/cc_connect/cc_pb.js";
 import openaiPrices from "./prices.vue";
 import { useChatsStore } from "@/stores/chats.js";
-import { useSupportStore } from "@/stores/support.js";
 import { useInstancesStore } from "@/stores/instances.js";
 import { useClipboard, useCurrency } from "@/hooks/utils";
 import SwaggerUI from "swagger-ui";
@@ -227,6 +238,7 @@ import { useI18n } from "vue-i18n";
 import { useAppStore } from "@/stores/app";
 import TicketItem from "@/components/openai-chats/ticketItem.vue";
 import router from "@/router";
+import { marked } from "marked";
 
 const invisibleIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EyeInvisibleOutlined")
@@ -241,11 +253,19 @@ const props = defineProps({
 
 const chatsStore = useChatsStore();
 const appStore = useAppStore();
-const supportStore = useSupportStore();
 const instancesStore = useInstancesStore();
 const { currency } = useCurrency();
 const { addToClipboard } = useClipboard();
 const { t, locale } = useI18n();
+
+// handle links for instrction
+const renderer = new marked.Renderer();
+
+renderer.link = function (href, title, text) {
+  return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+};
+
+marked.setOptions({ renderer });
 
 const chats = computed(() => {
   const result = [];
@@ -288,18 +308,22 @@ const activeApiTab = ref("2");
 const token = ref("-");
 
 const endpointv1 = `${VUE_APP_BASE_URL}nocloud/chat/completions`;
-const exampleV1 = `
-  curl \`<endpoint>\`
-  -X POST
-  -H "Content-Type: application/json"
-  -H "Authorization: Bearer \`<token>\`"
+const exampleV1 = `curl <endpoint> \\
+  -X POST \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
   -d '{
     "messages": [
-      { "role": "system", "content": "You are a helpful assistant." },
-      { "role": "user", "content": "Hello!" }
+      {
+        "role": "system", 
+        "content": "You are a helpful assistant."
+      },
+      {
+        "role": "user", 
+        "content": "Hello!"
+      }
     ]
-  }'
-`;
+  }'`;
 
 const selectedModelV2 = ref("gpt-4o-mini");
 const selectedProviderV2 = ref("openai");
@@ -307,10 +331,9 @@ const selectedTypeV2 = ref("text");
 const baseUrlV2 = `${window.location.origin}/api/openai`;
 const exampleV2 = computed(() => {
   if (selectedTypeV2.value === "image") {
-    return `
-  curl ${baseUrlV2}/v1/images/generations \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
+    return `curl ${baseUrlV2}/v1/images/generations \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
   -d '{
     "model": "${selectedModelV2.value}",
     "prompt": "A cute baby sea otter",
@@ -320,46 +343,43 @@ const exampleV2 = computed(() => {
   } else if (
     ["audio_to_text", "text_to_audio"].includes(selectedTypeV2.value)
   ) {
-    return `
-  curl ${baseUrlV2}/v1/audio/speech \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
+    return `curl ${baseUrlV2}/v1/audio/speech \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
   -d '{
     "model": "${selectedModelV2.value}",
     "input": "The quick brown fox jumped over the lazy dog.",
     "voice": "alloy"
-  }'
---output speech.mp3`;
+  }' \\
+  --output speech.mp3`;
   } else if (selectedTypeV2.value === "video") {
-    return `
-  curl ${baseUrlV2}/video/generate \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
+    return `curl ${baseUrlV2}/video/generate \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
   -d '{
     "model": "${selectedModelV2.value}",
-    "prompt": "Сyberpunk car driving down the road. Engine roar sounds",
+    "prompt": "Cyberpunk car driving down the road",
     "aspect_ratio": "16:9",
     "duration": 8,
     "generate_audio": true
-  }'
-`;
+  }'`;
   } else if (selectedTypeV2.value === "vision") {
-    return `
-  curl ${baseUrlV2}/vision \
-  -H "Authorization: Bearer <token>" \
-  -F "file=@/your/file/path/filename.png" \
-  -F "model=${selectedModelV2.value}"
-  `;
+    return `curl ${baseUrlV2}/vision \\
+  -H "Authorization: Bearer <token>" \\
+  -F "file=@/path/to/image.png" \\
+  -F "model=${selectedModelV2.value}"`;
   } else if (selectedTypeV2.value === "embedding") {
-    return `curl ${baseUrlV2}/embeddings -H "Content-Type: application/json" -H "Authorization: Bearer <token>" -d '{
+    return `curl ${baseUrlV2}/embeddings \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
+  -d '{
     "input": "The food was delicious and the waiter...",
     "model": "${selectedModelV2.value}"
   }'`;
   } else {
-    return `
-  curl ${baseUrlV2}/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
+    return `curl ${baseUrlV2}/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
   -d '{
     "model": "${selectedModelV2.value}",
     "messages": [
@@ -372,8 +392,7 @@ const exampleV2 = computed(() => {
         "content": "Hello!"
       }
     ]
-  }'
-`;
+  }'`;
   }
 });
 
@@ -423,11 +442,50 @@ async function fetch() {
 
 fetch();
 
-watch(selectedTypeV2, (curr, prev) => {
+watch(selectedTypeV2, (_, prev) => {
   if (prev == "video") {
     isSwaggerVideosInitWas.value = false;
   }
 });
+
+function highlightCurl(code) {
+  return code
+    .replace("<token>", token.value.slice(0, 15) + "...")
+    .replace(/^curl/gm, '<span class="hljs-built_in">curl</span>')
+    .replace(/\s(-[A-Za-z]+)/g, ' <span class="hljs-params">$1</span>')
+    .replace(
+      /(POST|GET|PUT|DELETE|PATCH)/g,
+      '<span class="hljs-string">$1</span>'
+    )
+    .replace(/(https?:\/\/[^\s]+)/g, '<span class="hljs-link">$1</span>')
+    .replace(/"([^"]*)"(?=\s|$|,)/g, '<span class="hljs-string">"$1"</span>')
+    .replace(/"([^"]*)"(\s*:)/g, '<span class="hljs-attr">"$1"</span>$2')
+    .replace(/:\s*"([^"]*)"/g, ': <span class="hljs-string">"$1"</span>')
+    .replace(/:\s*(\d+)/g, ': <span class="hljs-number">$1</span>')
+    .replace(/:\s*(true|false|null)/g, ': <span class="hljs-literal">$1</span>')
+    .replace(/\\$/gm, '<span class="hljs-meta">\\</span>')
+    .replace(/([{}[\]])/g, '<span class="hljs-punctuation">$1</span>');
+}
+
+const highlightedExampleV1 = computed(() => {
+  const highlighted = highlightCurl(exampleV1);
+  return addLineNumbers(highlighted);
+});
+
+const highlightedExampleV2 = computed(() => {
+  const highlighted = highlightCurl(exampleV2.value);
+  return addLineNumbers(highlighted);
+});
+
+function addLineNumbers(code) {
+  const lines = code.split("\n");
+  return lines
+    .map(
+      (line, index) =>
+        `<span class="line-number" data-line="${index + 1}">${line}</span>`
+    )
+    .join("\n");
+}
 </script>
 
 <script>
@@ -456,6 +514,98 @@ export default { name: "OpenaiDraw" };
   gap: 5px;
   padding-bottom: 0;
   font-weight: 700;
+  font-size: 1rem;
+}
+
+.code-block {
+  background-color: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo",
+    monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #e6edf3;
+  position: relative;
+  padding-left: 0;
+}
+
+.code-block code {
+  background: none;
+  padding: 16px 16px 16px 60px;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  display: block;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.code-block::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 25px;
+  background-color: #161b22;
+  border-right: 1px solid #30363d;
+}
+
+.code-block code :deep(.line-number) {
+  position: relative;
+}
+
+.code-block code :deep(.line-number::before) {
+  content: attr(data-line);
+  position: absolute;
+  left: -60px;
+  padding-right: 12px;
+  text-align: right;
+  color: #7d8590;
+  font-size: 12px;
+  user-select: none;
+  pointer-events: none;
+  margin-left: 5px;
+}
+
+.code-block code :deep(.hljs-built_in) {
+  color: #ffa657;
+}
+
+.code-block code :deep(.hljs-params) {
+  color: #ff7b72;
+}
+
+.code-block code :deep(.hljs-string) {
+  color: #a5d6ff;
+}
+
+.code-block code :deep(.hljs-attr) {
+  color: #7ee787;
+}
+
+.code-block code :deep(.hljs-number) {
+  color: #79c0ff;
+}
+
+.code-block code :deep(.hljs-literal) {
+  color: #79c0ff;
+}
+
+.code-block code :deep(.hljs-link) {
+  color: #58a6ff;
+}
+
+.code-block code :deep(.hljs-meta) {
+  color: #8b949e;
+}
+
+.code-block code :deep(.hljs-punctuation) {
+  color: #e6edf3;
 }
 </style>
 

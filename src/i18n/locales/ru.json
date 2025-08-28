@@ -540,9 +540,12 @@
         "databases": "Базы знаний",
         "notifications": "Уведомления"
       },
+      "labels": {
+        "unimported_site_warning": "Завершите настройку"
+      },
       "actions": {
-        "start": "Запустить",
-        "stop": "Остановить"
+        "start": "Запустить бота",
+        "stop": "Остановить бота"
       }
     },
     "bots_notifications": {
@@ -633,7 +636,9 @@
         "create_file_search_knowledge": "Добавить документ",
         "update_knowledge": "Обновить документ",
         "create_site_search_knowledge": "Добавить сайт",
-        "import_site_search_knowledge": "Добавить в Вопрос/Ответ"
+        "import_site_search_knowledge": "Добавить в Вопрос/Ответ",
+        "delete_import": "Удалить",
+        "open_import": "Просмотреть данные"
       }
     },
     "domains_view": {
@@ -956,7 +961,8 @@
         "videos_price_tip": "Стоимость генерации видео рассчитывается на основе его длительности. Тариф составляет {perSecond} за секунду.<br>**Стоимость генерации: {total}**",
         "generate_video": "Сгенерировать видео",
         "generate_image": "Сгенерировать изображение",
-        "generate_audio": "Сгенерировать аудио"
+        "generate_audio": "Сгенерировать аудио",
+        "api_compatible_with_openai": "_Наше API совместимо с OpenAI ([Подробнее](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "images_properties": {
         "resolution": "Разрешение",

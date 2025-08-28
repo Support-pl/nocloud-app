@@ -825,9 +825,12 @@
         "databases": "Knowledge bases",
         "notifications": "Notifications"
       },
-      "actions":{
-        "start": "Start",
-        "stop": "Stop"
+      "labels": {
+        "unimported_site_warning": "Finish setup"
+      },
+      "actions": {
+        "start": "Start bot",
+        "stop": "Stop bot"
       }
     },
     "bots_notifications": {
@@ -918,7 +921,9 @@
         "create_file_search_knowledge": "Add Source",
         "update_knowledge": "Update Source",
         "create_site_search_knowledge": "Add site",
-        "import_site_search_knowledge": "Add to QA"
+        "import_site_search_knowledge": "Add to QA",
+        "delete_import": "Delete",
+        "open_import": "View Data"
       }
     },
     "openai": {
@@ -929,7 +934,8 @@
         "newChat": "New chat",
         "generate_video": "Generate Video",
         "generate_image": "Generate Image",
-        "generate_audio": "Generate Audio"
+        "generate_audio": "Generate Audio",
+        "api_compatible_with_openai": "_Our API is compatible with OpenAI ([Learn more](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "default_model": {
         "label": "Main chat model",

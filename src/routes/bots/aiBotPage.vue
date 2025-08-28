@@ -106,19 +106,6 @@
             <div class="service-page__info-title">
               {{ t("Actions") }}:
               <div style="display: inline-flex; gap: 8px">
-                <a-button
-                  :loading="isDisabledLoading"
-                  @click="changeBotDisabled"
-                  size="small"
-                  :type="bot.settings.disabled ? 'primary' : undefined"
-                  :danger="!bot.settings.disabled"
-                  >{{
-                    !bot.settings.disabled
-                      ? t("ai_bot_page.actions.stop")
-                      : t("ai_bot_page.actions.start")
-                  }}</a-button
-                >
-
                 <a-button danger size="small" @click="sendDelete">
                   {{ t("Delete") }}
                 </a-button>
@@ -190,12 +177,15 @@
             <a-tab-pane :disabled="isSuspended || isPending" key="database">
               <template #tab>
                 <span class="tab">
-                  {{ t("ai_bot_page.tabs.databases") }}
+                  <div style="display: flex; align-items: center">
+                    <span>
+                      {{ t("ai_bot_page.tabs.databases") }}
+                    </span>
 
-                  <span
-                    v-if="isUnInmportedSites"
-                    class="pulsating-circle"
-                  ></span>
+                    <a-tag v-if="isUnInmportedSites" class="pulsating-tag">{{
+                      t("ai_bot_page.labels.unimported_site_warning")
+                    }}</a-tag>
+                  </div>
                 </span>
               </template>
 
@@ -324,7 +314,6 @@ const isSavePrimary = ref(false);
 const isBotSaveLoading = ref(false);
 
 const isUpdateAutoRenewLoading = ref(false);
-const isDisabledLoading = ref(false);
 
 const botSettings = ref();
 
@@ -514,24 +503,6 @@ function sendDelete() {
     onCancel() {},
   });
 }
-
-const changeBotDisabled = async () => {
-  isDisabledLoading.value = true;
-
-  try {
-    await aiBotsStore.updateBot({
-      ...bot.value,
-      settings: {
-        ...bot.value.settings,
-        disabled: !bot.value.settings.disabled,
-      },
-    });
-
-    bot.value.settings.disabled = !bot.value.settings.disabled;
-  } finally {
-    isDisabledLoading.value = false;
-  }
-};
 
 function formatDate(timestamp) {
   if (timestamp < 1) return "0000-00-00";
@@ -726,9 +697,11 @@ span.tab {
   0% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.6;
   }
+
   100% {
     opacity: 1;
   }
@@ -742,5 +715,14 @@ span.tab {
   border-radius: 50%;
   animation: pulse 2.5s infinite ease-in-out;
   margin-right: 5px;
+}
+
+.pulsating-tag {
+  animation: pulse 2.5s infinite ease-in-out;
+  background-color: red;
+  color: white;
+  margin-left: 5px;
+  font-size: 14px;
+  line-height: 23px;
 }
 </style>
