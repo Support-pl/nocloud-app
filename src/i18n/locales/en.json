@@ -825,7 +825,10 @@
         "databases": "Knowledge bases",
         "notifications": "Notifications"
       },
-      "actions":{
+      "labels": {
+        "unimported_site_warning": "Finish setup"
+      },
+      "actions": {
         "start": "Start bot",
         "stop": "Stop bot"
       }
@@ -918,7 +921,9 @@
         "create_file_search_knowledge": "Add Source",
         "update_knowledge": "Update Source",
         "create_site_search_knowledge": "Add site",
-        "import_site_search_knowledge": "Add to QA"
+        "import_site_search_knowledge": "Add to QA",
+        "delete_import": "Delete",
+        "open_import": "View Data"
       }
     },
     "openai": {

@@ -540,6 +540,9 @@
         "databases": "Базы знаний",
         "notifications": "Уведомления"
       },
+      "labels": {
+        "unimported_site_warning": "Завершите настройку"
+      },
       "actions": {
         "start": "Запустить бота",
         "stop": "Остановить бота"
@@ -633,7 +636,9 @@
         "create_file_search_knowledge": "Добавить документ",
         "update_knowledge": "Обновить документ",
         "create_site_search_knowledge": "Добавить сайт",
-        "import_site_search_knowledge": "Добавить в Вопрос/Ответ"
+        "import_site_search_knowledge": "Добавить в Вопрос/Ответ",
+        "delete_import": "Удалить",
+        "open_import": "Просмотреть данные"
       }
     },
     "domains_view": {

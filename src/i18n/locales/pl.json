@@ -824,6 +824,9 @@
         "databases": "Bazy wiedzy",
         "notifications": "Powiadomienia"
       },
+      "labels": {
+        "unimported_site_warning": "Zakończ konfigurację"
+      },
       "actions": {
         "start": "Uruchom bota",
         "stop": "Zatrzymaj bota"
@@ -917,7 +920,9 @@
         "create_file_search_knowledge": "Dodaj źródło",
         "update_knowledge": "Aktualizuj źródło",
         "create_site_search_knowledge": "Dodaj stronę",
-        "import_site_search_knowledge": "Dodaj do QA"
+        "import_site_search_knowledge": "Dodaj do QA",
+        "delete_import": "Usuń",
+        "open_import": "Wyświetl dane"
       }
     },
     "openai": {
