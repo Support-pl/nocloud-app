@@ -825,8 +825,8 @@
         "notifications": "Powiadomienia"
       },
       "actions": {
-        "start": "Uruchom",
-        "stop": "Zatrzymaj"
+        "start": "Uruchom bota",
+        "stop": "Zatrzymaj bota"
       }
     },
     "bots_notifications": {

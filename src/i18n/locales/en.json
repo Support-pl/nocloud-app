@@ -826,8 +826,8 @@
         "notifications": "Notifications"
       },
       "actions":{
-        "start": "Start",
-        "stop": "Stop"
+        "start": "Start bot",
+        "stop": "Stop bot"
       }
     },
     "bots_notifications": {

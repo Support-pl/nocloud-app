@@ -541,8 +541,8 @@
         "notifications": "Уведомления"
       },
       "actions": {
-        "start": "Запустить",
-        "stop": "Остановить"
+        "start": "Запустить бота",
+        "stop": "Остановить бота"
       }
     },
     "bots_notifications": {
