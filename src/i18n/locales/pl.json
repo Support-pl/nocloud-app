@@ -933,7 +933,8 @@
         "newChat": "Nowa rozmowa",
         "generate_video": "Generuj wideo",
         "generate_image": "Generuj obraz",
-        "generate_audio": "Generuj audio"
+        "generate_audio": "Generuj audio",
+        "api_compatible_with_openai": "_Nasze API jest kompatybilne z OpenAI ([Dowiedz się więcej](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "default_model": {
         "label": "Główny model rozmowy",
