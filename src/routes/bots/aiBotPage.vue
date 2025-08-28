@@ -177,12 +177,15 @@
             <a-tab-pane :disabled="isSuspended || isPending" key="database">
               <template #tab>
                 <span class="tab">
-                  {{ t("ai_bot_page.tabs.databases") }}
+                  <div style="display: flex; align-items: center">
+                    <span>
+                      {{ t("ai_bot_page.tabs.databases") }}
+                    </span>
 
-                  <span
-                    v-if="isUnInmportedSites"
-                    class="pulsating-circle"
-                  ></span>
+                    <a-tag v-if="isUnInmportedSites" class="pulsating-tag">{{
+                      t("ai_bot_page.labels.unimported_site_warning")
+                    }}</a-tag>
+                  </div>
                 </span>
               </template>
 
@@ -712,5 +715,14 @@ span.tab {
   border-radius: 50%;
   animation: pulse 2.5s infinite ease-in-out;
   margin-right: 5px;
+}
+
+.pulsating-tag {
+  animation: pulse 2.5s infinite ease-in-out;
+  background-color: red;
+  color: white;
+  margin-left: 5px;
+  font-size: 14px;
+  line-height: 23px;
 }
 </style>

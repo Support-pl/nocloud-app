@@ -457,14 +457,14 @@
                       !!deleteSiteSearchKnowledgeId &&
                       !!deleteSiteSearchKnowledgeId !== record.id
                     "
+                    :danger="unInmportedSitesMap[record.id] === false"
                     class="delete_btn"
-                    type="text"
-                    shape="circle"
-                    size="large"
                   >
                     <template #icon>
                       <delete-icon two-tone-color="#ff4d4f" class="icon" />
                     </template>
+
+                    {{ t("bots_databases.actions.delete_import") }}
                   </a-button>
                 </a-popconfirm>
 
@@ -476,12 +476,13 @@
                   </template>
                   <a-button
                     class="delete_btn"
-                    type="text"
-                    shape="circle"
-                    size="large"
+                    style="margin-left: 5px"
+                    :danger="unInmportedSitesMap[record.id] === false"
                     v-if="getSiteSearchItemStatus(record) == 'finished'"
                     @click="handelOpenSiteSearchKnowledge(record)"
                   >
+                    {{ t("bots_databases.actions.open_import") }}
+
                     <template #icon>
                       <open-icon
                         :style="{

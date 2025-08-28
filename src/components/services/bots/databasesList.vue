@@ -117,7 +117,12 @@
                 shape="circle"
               >
                 <template #icon>
-                  <open-icon class="icon" />
+                  <open-icon
+                    :two-tone-color="
+                      getUnreadCount(item) > 0 ? '#ff4d4f' : undefined
+                    "
+                    class="icon"
+                  />
                 </template>
               </a-button>
             </a-tooltip>
@@ -131,7 +136,7 @@
 <script setup>
 import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
-import { defineAsyncComponent, ref } from "vue";
+import { defineAsyncComponent, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 
@@ -180,6 +185,21 @@ const isDeleteLoading = ref(false);
 const isDetachLoading = ref(false);
 const isAttachLoading = ref(false);
 const selectedDatabase = ref("");
+
+const unInmportedSitesMap = ref({});
+
+onMounted(() => {
+  console.log(props.databases);
+
+  unInmportedSitesMap.value = JSON.parse(
+    localStorage.getItem("unInmportedSitesMap") || "{}"
+  );
+  if (typeof unInmportedSitesMap.value !== "object") {
+    unInmportedSitesMap.value = {};
+  }
+
+  console.log(unInmportedSitesMap.value);
+});
 const isCollapsed = ref(false);
 
 const handleDeleteDatabase = async (database) => {
@@ -247,6 +267,27 @@ const handleDetachDatabase = async (database) => {
     selectedDatabase.value = "";
   }
 };
+
+const getUnreadCount = (database) => {
+  return Object.keys(unInmportedSitesMap.value || {}).reduce((acc, key) => {
+    if (
+      database.saved_urls.find((url) => url.id === key) &&
+      unInmportedSitesMap.value[key] === false
+    ) {
+      const d = database.saved_urls.find((url) => url.id === key);
+      if (getSiteSearchItemStatus(d) === "finished") {
+        acc += 1;
+      }
+    }
+    return acc;
+  }, 0);
+};
+
+function getSiteSearchItemStatus(record) {
+  return (
+    record.scrapes[(record.scrapes || []).length - 1].status || ""
+  ).toLowerCase();
+}
 
 const handleOpenDatabase = (database) => {
   router.replace({ query: { database: database.id } });
