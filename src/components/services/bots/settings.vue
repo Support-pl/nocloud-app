@@ -13,6 +13,19 @@
           :value="bot.settings.ai_model"
           @update:value="bot.settings.ai_model = $event || defaultModel"
         />
+
+        <a-button
+          :loading="isDisabledLoading"
+          @click="changeBotDisabled"
+          :type="bot.settings.disabled ? 'primary' : undefined"
+          :danger="!bot.settings.disabled"
+          style="margin-left: 10px;"
+          >{{
+            !bot.settings.disabled
+              ? t("ai_bot_page.actions.stop")
+              : t("ai_bot_page.actions.start")
+          }}</a-button
+        >
       </a-col>
       <a-col span="24">
         <span
@@ -594,6 +607,7 @@ const bot = ref({
 });
 const ogBot = ref();
 
+const isDisabledLoading = ref(false);
 const isChanellEditOpen = ref(false);
 const isChanellAddOpen = ref(false);
 const isChanellSaveLoading = ref(false);
@@ -913,6 +927,25 @@ const handleSaveBot = async () => {
     openNotification("error", opts);
   } finally {
     isBotSaveLoading.value = false;
+  }
+};
+
+const changeBotDisabled = async () => {
+  isDisabledLoading.value = true;
+
+  try {
+    await aiBotsStore.updateBot({
+      ...bot.value,
+      settings: {
+        ...bot.value.settings,
+        disabled: !bot.value.settings.disabled,
+      },
+    });
+
+    bot.value.settings.disabled = !bot.value.settings.disabled;
+    ogBot.value.settings.disabled = !ogBot.value.settings.disabled;
+  } finally {
+    isDisabledLoading.value = false;
   }
 };
 
