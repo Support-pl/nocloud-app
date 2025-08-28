@@ -332,6 +332,7 @@ const baseUrlV2 = `${window.location.origin}/api/openai`;
 const exampleV2 = computed(() => {
   if (selectedTypeV2.value === "image") {
     return `curl ${baseUrlV2}/v1/images/generations \\
+  -X POST \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer <token>" \\
   -d '{
@@ -344,6 +345,7 @@ const exampleV2 = computed(() => {
     ["audio_to_text", "text_to_audio"].includes(selectedTypeV2.value)
   ) {
     return `curl ${baseUrlV2}/v1/audio/speech \\
+  -X POST \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer <token>" \\
   -d '{
@@ -354,6 +356,7 @@ const exampleV2 = computed(() => {
   --output speech.mp3`;
   } else if (selectedTypeV2.value === "video") {
     return `curl ${baseUrlV2}/video/generate \\
+  -X POST \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer <token>" \\
   -d '{
@@ -365,11 +368,13 @@ const exampleV2 = computed(() => {
   }'`;
   } else if (selectedTypeV2.value === "vision") {
     return `curl ${baseUrlV2}/vision \\
+  -X POST \\
   -H "Authorization: Bearer <token>" \\
   -F "file=@/path/to/image.png" \\
   -F "model=${selectedModelV2.value}"`;
   } else if (selectedTypeV2.value === "embedding") {
     return `curl ${baseUrlV2}/embeddings \\
+  -X POST \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer <token>" \\
   -d '{
@@ -378,6 +383,7 @@ const exampleV2 = computed(() => {
   }'`;
   } else {
     return `curl ${baseUrlV2}/v1/chat/completions \\
+  -X POST \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer <token>" \\
   -d '{
