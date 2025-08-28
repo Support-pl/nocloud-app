@@ -28,6 +28,7 @@
         bodyStyle="padding:0px"
         :class="{
           provider_item: true,
+          compact: compact,
           active: selectedProvider == provider.value,
         }"
         @click="emits('update:selectedProvider', provider.value)"
@@ -41,6 +42,7 @@
 
         <div class="provider_description">
           <a-checkbox
+            v-if="!compact"
             class="provider_checkbox"
             style="max-height: 22px"
             :checked="selectedProvider == provider.value"
@@ -49,7 +51,10 @@
             {{ provider.label }}
           </a-checkbox>
 
-          <div class="provider_tags" v-if="!filterByTypes.length">
+          <div
+            :class="{ provider_tags: true, compact: compact }"
+            v-if="!filterByTypes.length"
+          >
             <a-tag
               class="provider_tag"
               v-for="(type, index) in (
@@ -100,7 +105,7 @@
       :span="type !== 'images' ? 12 : 24"
     >
       <template v-if="type !== 'images'">
-        <div style="padding-bottom: 0; font-weight: 700">
+        <div style="padding-bottom: 0; font-weight: 700; font-size: 1rem">
           {{ t(`openai.payment_types.${subkey}`) }}:
         </div>
         <div style="padding-top: 0; font-size: 18px">
@@ -213,6 +218,7 @@ const props = defineProps({
   selectedProvider: { type: String, required: true },
   filterByTypes: { type: Array, default: () => [] },
   onlyPublic: { type: Boolean, default: false },
+  compact: { type: Boolean, default: false },
 });
 const {
   selectedModel,
@@ -707,8 +713,13 @@ watch(selectedModel, () => {
   height: 105px;
 }
 
+.provider_item.compact {
+  height: 80px;
+}
+
 .provider_item.active {
   border-color: var(--main);
+  border-width: 2px;
 }
 
 .provider_image {
@@ -732,6 +743,10 @@ watch(selectedModel, () => {
   max-width: 60%;
   top: 0px;
 }
+.provider_tags.compact {
+  flex-direction: row;
+}
+
 .provider_tag {
   width: 100%;
   text-align: center;
