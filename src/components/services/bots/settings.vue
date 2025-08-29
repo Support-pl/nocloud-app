@@ -378,6 +378,12 @@
         }`"
       >
         <a-form
+          v-if="
+            !(
+              selectedEditedChanell.type === 'whatsapp' &&
+              !editedChanellData.linked
+            )
+          "
           ref="editChanellFormRef"
           layout="vertical"
           autocomplete="off"
@@ -385,28 +391,28 @@
           :rules="editChanellFormRules"
         >
           <a-form-item
-            v-if="selectedEditedChanell.data.metadata.username"
+            v-if="selectedEditedChanell.data.metadata?.username"
             :label="t('bots.fields.chanell_username')"
           >
             <a
               v-if="
-                selectedEditedChanell.data.metadata.username.startsWith('t.me')
+                selectedEditedChanell.data.metadata?.username.startsWith('t.me')
               "
               target="_blank"
-              :href="`https://${selectedEditedChanell.data.metadata.username}`"
+              :href="`https://${selectedEditedChanell.data.metadata?.username}`"
             >
-              {{ selectedEditedChanell.data.metadata.username }}</a
+              {{ selectedEditedChanell.data.metadata?.username }}</a
             >
             <span v-else>
-              {{ selectedEditedChanell.data.metadata.username }}
+              {{ selectedEditedChanell.data.metadata?.username }}
             </span>
           </a-form-item>
 
           <a-form-item
-            v-if="selectedEditedChanell.data.metadata.firstname"
+            v-if="selectedEditedChanell.data.metadata?.firstname"
             :label="t('bots.fields.chanell_firstname')"
           >
-            <span> {{ selectedEditedChanell.data.metadata.firstname }}</span>
+            <span> {{ selectedEditedChanell.data.metadata?.firstname }}</span>
           </a-form-item>
 
           <a-form-item name="name" :label="t('bots.fields.chanell_name')">
@@ -448,12 +454,28 @@
           </a-form-item>
         </a-form>
 
+        <div
+          style="display: flex; justify-content: center; align-items: center"
+          v-else
+        >
+          <a-qrcode
+            size="250"
+            :value="selectedEditedChanell.data.link_qr_code"
+            error-level="M"
+            type="svg"
+          />
+        </div>
+
         <span
           v-if="
             t(
               `bots.chanells_instruction.${selectedEditedChanell.type}_sub`,
               'null'
-            ) != 'null'
+            ) != 'null' &&
+            !(
+              editedChanellData.linked &&
+              selectedEditedChanell.type === 'whatsapp'
+            )
           "
           v-html="
             marked(
@@ -499,7 +521,15 @@
 
 <script setup>
 import api from "@/api";
-import { capitalize, computed, defineAsyncComponent, ref, watch } from "vue";
+import {
+  capitalize,
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue";
 import { useI18n } from "vue-i18n";
 import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
@@ -534,6 +564,20 @@ renderer.link = function (href, title, text) {
 
 marked.setOptions({ renderer });
 
+onMounted(async () => {
+  await aiBotsStore.startChatsStream({
+    channel_updated: channelsUpdatedHandler,
+    channel_created: channelsCreatedHandler,
+    channel_deleted: channelsDeletedHandler,
+  });
+});
+
+onUnmounted(() => {
+  aiBotsStore.removeCustomHandler("channel_updated", channelsUpdatedHandler);
+  aiBotsStore.removeCustomHandler("channel_created", channelsCreatedHandler);
+  aiBotsStore.removeCustomHandler("channel_deleted", channelsDeletedHandler);
+});
+
 const delayMarks = computed(() =>
   Object.fromEntries(
     [1, 10, 25, 50, 75, 100].map((v) => {
@@ -566,6 +610,7 @@ const temperatureMarks = Object.fromEntries(
 const chanellsOptions = [
   { title: "Telegram", key: "telegram" },
   { title: "Bitrix24", key: "bitrix24" },
+  { title: "WhatsApp", key: "whatsapp" },
 ];
 
 const { t } = useI18n();
@@ -663,6 +708,12 @@ const chanellsFields = computed(() => {
     )
   ) {
     return { unique_name: { hided: false }, api_url: { hided: true } };
+  } else if (
+    [newChanellData.value.type, selectedEditedChanell.value.type].includes(
+      "whatsapp"
+    )
+  ) {
+    return {};
   }
 
   return { bot_secret: { hided: true } };
@@ -914,6 +965,54 @@ const handleSaveBot = async () => {
   } finally {
     isBotSaveLoading.value = false;
   }
+};
+
+const channelsUpdatedHandler = (data) => {
+  if (data.channel.type === "whatsapp") {
+    if (!data.channel.data.linked) {
+      const newChanells = ogBot.value.channels.map((chanell) =>
+        chanell.type === data.channel.type && !chanell.data?.linked
+          ? data.channel
+          : chanell
+      );
+
+      ogBot.value.channels = newChanells;
+      bot.value.channels = newChanells;
+
+      isChanellEditOpen.value = false;
+      setTimeout(() => {
+        isChanellEditOpen.value = true;
+
+        editedChanellData.value = {
+          name: data.channel.title,
+          ...data.channel.data,
+        };
+        selectedEditedChanell.value = JSON.parse(JSON.stringify(data.channel));
+        selectedEditedChanell.value.title = "WhatsApp";
+      }, 0);
+    }
+  }
+};
+
+const channelsDeletedHandler = (data) => {
+  const newChanells = ogBot.value.channels.filter(
+    (chanell) => chanell.id !== data.channel.id
+  );
+  ogBot.value.channels = newChanells;
+  bot.value.channels = newChanells;
+  
+  isChanellEditOpen.value = false;
+};
+
+const channelsCreatedHandler = (data) => {
+  if (ogBot.value.channels.find((chanell) => chanell.id === data.channel.id))
+    return;
+
+  const newChanells = [...bot.value.channels, data.channel];
+  ogBot.value.channels = newChanells;
+  bot.value.channels = newChanells;
+
+  isChanellEditOpen.value = false;
 };
 
 watch(
