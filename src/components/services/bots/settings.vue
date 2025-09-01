@@ -508,7 +508,10 @@
           </a-popconfirm>
 
           <a-button
-            v-if="selectedEditedChanell.type !== 'whatsapp' || editedChanellData.linked"
+            v-if="
+              selectedEditedChanell.type !== 'whatsapp' ||
+              editedChanellData.linked
+            "
             key="submit"
             type="primary"
             :loading="isChanellSaveLoading"
@@ -818,10 +821,9 @@ const openChanellEdit = (chanell) => {
   editedChanellData.value = {
     name: chanell.title,
     ...chanell.data.data,
-    title: t(
+    title:
       chanellsOptions.find((c) => c.key === chanell.title)?.title ||
-        chanell.title
-    ),
+      chanell.title,
   };
 
   selectedEditedChanell.value = JSON.parse(JSON.stringify(chanell));
@@ -996,7 +998,9 @@ const channelsUpdatedHandler = (data) => {
           ...data.channel.data,
         };
         selectedEditedChanell.value = JSON.parse(JSON.stringify(data.channel));
-        selectedEditedChanell.value.title = "whatsapp";
+        selectedEditedChanell.value.title =
+          chanellsOptions.find((c) => c.key === "whatsapp")?.title ||
+          "whatsapp";
       }, 0);
     } else {
     }
