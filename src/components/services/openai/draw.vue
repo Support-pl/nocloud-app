@@ -79,12 +79,8 @@
                 style="display: flex; align-items: center"
               >
                 <div
-                  style="height: 25px; font-weight: normal"
-                  v-html="
-                    marked(
-                      t('openai.labels.api_compatible_with_openai')
-                    )
-                  "
+                  class="api_compatibility_label"
+                  v-html="marked(t('openai.labels.api_compatible_with_openai'))"
                 />
               </template>
             </div>
@@ -639,5 +635,14 @@ export default { name: "OpenaiDraw" };
 
 .ant-collapse-content-box {
   padding: 0px !important;
+}
+
+.api_compatibility_label {
+  height: 25px;
+  font-weight: normal;
+}
+
+.api_compatibility_label p {
+  margin: 0px;
 }
 </style>
