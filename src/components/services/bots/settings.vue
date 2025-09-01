@@ -415,7 +415,11 @@
             <span> {{ selectedEditedChanell.data.metadata?.firstname }}</span>
           </a-form-item>
 
-          <a-form-item name="name" :label="t('bots.fields.chanell_name')">
+          <a-form-item
+            v-if="selectedEditedChanell.type !== 'whatsapp'"
+            name="name"
+            :label="t('bots.fields.chanell_name')"
+          >
             <a-input
               v-model:value="editedChanellData.name"
               :placeholder="t('bots.fields.chanell_name')"
@@ -460,7 +464,7 @@
         >
           <a-qrcode
             size="250"
-            :value="selectedEditedChanell.data.link_qr_code"
+            :value="editedChanellData.link_qr_code"
             error-level="M"
             type="svg"
           />
@@ -504,6 +508,7 @@
           </a-popconfirm>
 
           <a-button
+            v-if="selectedEditedChanell.type !== 'whatsapp' || editedChanellData.linked"
             key="submit"
             type="primary"
             :loading="isChanellSaveLoading"
@@ -736,7 +741,7 @@ const availableChanells = computed(() => {
       title:
         chanell.metadata?.custom_name ||
         chanell.metadata?.firstname ||
-        chanellsOptions.find((c) => c.type === chanell.type)?.title ||
+        chanellsOptions.find((c) => c.key === chanell.type)?.title ||
         chanell.type,
       exist: true,
       data: chanell,
@@ -813,7 +818,12 @@ const openChanellEdit = (chanell) => {
   editedChanellData.value = {
     name: chanell.title,
     ...chanell.data.data,
+    title: t(
+      chanellsOptions.find((c) => c.key === chanell.title)?.title ||
+        chanell.title
+    ),
   };
+
   selectedEditedChanell.value = JSON.parse(JSON.stringify(chanell));
 };
 
@@ -970,16 +980,14 @@ const handleSaveBot = async () => {
 const channelsUpdatedHandler = (data) => {
   if (data.channel.type === "whatsapp") {
     if (!data.channel.data.linked) {
-      const newChanells = ogBot.value.channels.map((chanell) =>
-        chanell.type === data.channel.type && !chanell.data?.linked
-          ? data.channel
-          : chanell
+      const newChanells = ogBot.value.channels.filter(
+        (chanell) => chanell.type !== data.channel.type || chanell.data?.linked
       );
+      newChanells.push(data.channel);
 
       ogBot.value.channels = newChanells;
       bot.value.channels = newChanells;
 
-      isChanellEditOpen.value = false;
       setTimeout(() => {
         isChanellEditOpen.value = true;
 
@@ -988,8 +996,9 @@ const channelsUpdatedHandler = (data) => {
           ...data.channel.data,
         };
         selectedEditedChanell.value = JSON.parse(JSON.stringify(data.channel));
-        selectedEditedChanell.value.title = "WhatsApp";
+        selectedEditedChanell.value.title = "whatsapp";
       }, 0);
+    } else {
     }
   }
 };
@@ -1000,7 +1009,7 @@ const channelsDeletedHandler = (data) => {
   );
   ogBot.value.channels = newChanells;
   bot.value.channels = newChanells;
-  
+
   isChanellEditOpen.value = false;
 };
 
