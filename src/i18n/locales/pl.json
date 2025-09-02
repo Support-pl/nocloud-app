@@ -825,7 +825,10 @@
         "notifications": "Powiadomienia"
       },
       "labels": {
-        "unimported_site_warning": "Zakończ konfigurację"
+        "unimported_site_warning": "Zakończ konfigurację",
+        "databases_delete_alert": "Uwaga — wszystkie bazy wiedzy zostaną bezpowrotnie usunięte!!!",
+        "delete_alert": "Wszystkie dane zostaną usunięte!",
+        "delete_question": "Czy chcesz usunąć tę usługę?"
       },
       "actions": {
         "start": "Uruchom bota",
