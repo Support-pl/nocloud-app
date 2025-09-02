@@ -377,6 +377,12 @@ const isSettingsBroken = computed(
 
 const isSuspended = computed(() => service.value?.state?.state === "SUSPENDED");
 const isPending = computed(() => service.value?.state?.state === "PENDING");
+const isLastInstance = computed(
+  () =>
+    instancesStore.getInstances.filter(
+      (instance) => instance.type === "bots" && instance.status !== "DEL"
+    ).length === 1
+);
 
 const getInvoiceStatusColor = computed(() => {
   switch (lastInvoice.value.status) {
@@ -496,25 +502,43 @@ const editName = async () => {
 
 function sendDelete() {
   Modal.confirm({
-    title: t("Do you want to delete this service?"),
+    title: t("ai_bot_page.labels.delete_question"),
     okType: "danger",
     okText: t("Yes"),
     cancelText: t("Cancel"),
-    content: () =>
-      h("div", { style: "color: red" }, t("All data will be deleted!")),
+    content: () => [
+      h("div", { style: "color: red" }, t("ai_bot_page.labels.delete_alert")),
+      h(
+        "div",
+        {
+          style: {
+            color: "red",
+            display: isLastInstance.value ? "block" : "none",
+          },
+        },
+        t("ai_bot_page.labels.databases_delete_alert")
+      ),
+    ],
     onOk: async () => {
-      return instancesStore
-        .deleteInstance(service.value.uuid)
-        .then(() => {
-          notification.openNotification("success", { message: "Done!" });
-          router.push({ path: "/services" });
-        })
-        .catch((err) => {
-          notification.openNotification("error", {
-            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-          });
-          console.error(err);
+      try {
+        if (isLastInstance.value) {
+          const databases = await aiBotsStore.getDatabases();
+          console.log(databases);
+
+          await Promise.all(
+            databases.map((db) => aiBotsStore.deleteDatabase(db))
+          );
+        }
+
+        await instancesStore.deleteInstance(service.value.uuid);
+
+        notification.openNotification("success", { message: "Done!" });
+        router.push({ path: "/services" });
+      } catch (err) {
+        notification.openNotification("error", {
+          message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
         });
+      }
     },
     onCancel() {},
   });
