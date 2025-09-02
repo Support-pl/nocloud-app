@@ -541,7 +541,10 @@
         "notifications": "Уведомления"
       },
       "labels": {
-        "unimported_site_warning": "Завершите настройку"
+        "unimported_site_warning": "Завершите настройку",
+        "databases_delete_alert": "Внимание все базы знаний будут безвозвратно удалены!!!",
+        "delete_alert": "Все данные будут удалены!",
+        "delete_question": "Вы хотите удалить этот сервис?"
       },
       "actions": {
         "start": "Запустить бота",
