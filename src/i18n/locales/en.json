@@ -826,7 +826,10 @@
         "notifications": "Notifications"
       },
       "labels": {
-        "unimported_site_warning": "Finish setup"
+        "unimported_site_warning": "Finish setup",
+        "databases_delete_alert": "Warning — all knowledge bases will be permanently deleted!",
+        "delete_alert": "All data will be deleted!",
+        "delete_question": "Do you want to delete this service?"
       },
       "actions": {
         "start": "Start bot",
