@@ -76,6 +76,11 @@
             </a-button>
           </div>
         </div>
+
+        <files-preview
+          :file-list="fileList"
+          @update:file-list="emits('update:filelist', $event)"
+        />
       </div>
     </div>
   </div>
@@ -84,6 +89,7 @@
 <script setup>
 import { capitalize, computed, defineAsyncComponent, ref } from "vue";
 import UploadFiles from "./uploadFiles.vue";
+import FilesPreview from "./filesPreview.vue";
 import { useI18n } from "vue-i18n";
 
 const arrowUpIcon = defineAsyncComponent(() =>
