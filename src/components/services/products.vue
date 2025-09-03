@@ -455,11 +455,24 @@ export default {
 
         switch (this.sortBy) {
           case "Date":
-            return a.created - +b.created;
+            return (+a.created || 0) - (+b.created || 0);
           case "Name":
-            return a.productname?.toLowerCase() < b.productname?.toLowerCase();
+            const A = (a?.productname ?? "").trim().normalize("NFC");
+            const B = (b?.productname ?? "").trim().normalize("NFC");
+
+            if (!A && !B) return 0;
+            if (!A) return 1;
+            if (!B) return -1;
+
+            return A.localeCompare(B, this.$i18n.locale, {
+              numeric: true,
+              sensitivity: "base",
+              ignorePunctuation: true,
+            });
           case "Cost":
-            return parseFloat(a.estimate) - parseFloat(b.estimate);
+            return (
+              (parseFloat(a.estimate) || 0) - (parseFloat(b.estimate) || 0)
+            );
           default:
             return 0;
         }

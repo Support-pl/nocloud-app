@@ -88,7 +88,11 @@
               :placeholder="t('bots_databases.fields.question')"
               compact
               :status="qaKnowledgeStatuses[index]?.['question'] ? 'error' : ''"
-            />
+            >
+              <template #suffix>
+                <required-icon />
+              </template>
+            </a-input>
             <a-button
               @click="handleRemoveQaKnowledge(index)"
               class="delete_btn"
@@ -101,7 +105,15 @@
             </a-button>
           </div>
 
-          <div style="margin-left: 45px; width: 100%">
+          <div
+            style="
+              margin-left: 45px;
+              width: 100%;
+              position: relative;
+              display: inline-block;
+              width: 100%;
+            "
+          >
             <a-textarea
               style="width: calc(100% - 60px)"
               class="field"
@@ -110,6 +122,10 @@
               compact
               :status="qaKnowledgeStatuses[index]?.['answer'] ? 'error' : ''"
             />
+
+            <span style="position: absolute; right: 71px; top: 8px"
+              ><required-icon
+            /></span>
           </div>
         </div>
 
@@ -565,15 +581,27 @@
             <a-input
               v-model:value="newKnowledge.url"
               :placeholder="t('bots_databases.fields.knowledge_url')"
-            ></a-input>
+            >
+              <template #suffix>
+                <required-icon />
+              </template>
+            </a-input>
           </a-col>
         </template>
 
-        <a-col span="24" class="field">
+        <a-col
+          span="24"
+          class="field"
+          style="position: relative; display: inline-block; width: 100%"
+        >
           <a-textarea
             v-model:value="newKnowledge.description"
             :placeholder="t('bots_databases.fields.knowledge_description')"
           ></a-textarea>
+
+          <span style="position: absolute; right: 12px; top: 8px">
+            <required-icon />
+          </span>
         </a-col>
 
         <template v-if="newKnowledge.type === 'user_file'">
@@ -689,7 +717,9 @@
             :placeholder="`${t(
               'bots_databases.fields.site_search_column_url'
             )} (https://)`"
-          ></a-input>
+          >
+            <template #suffix> <required-icon /> </template>
+          </a-input>
         </a-form-item>
       </a-form>
 
@@ -818,6 +848,10 @@ const detachIcon = defineAsyncComponent(() =>
 
 const uploadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/UploadOutlined")
+);
+
+const requiredIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ExclamationCircleOutlined")
 );
 
 const editIcon = defineAsyncComponent(() =>
