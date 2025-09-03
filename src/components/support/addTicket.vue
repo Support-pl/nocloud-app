@@ -40,10 +40,21 @@
           />
 
           <upload-files
+            :style="{
+              position: 'absolute',
+              bottom: fileList.length > 0 ? '110px' : '5px',
+              right: '5px',
+              'z-index': '100',
+            }"
             v-if="showSendFiles"
             ref="upload"
             :editing="false"
             :replies="[]"
+            :file-list="fileList"
+            @update:file-list="fileList = $event"
+          />
+
+          <files-preview
             :file-list="fileList"
             @update:file-list="fileList = $event"
           />
@@ -109,6 +120,7 @@ import { capitalize } from "vue";
 import UploadFiles from "../chats/uploadFiles.vue";
 import { beautufyMessage } from "@/functions";
 import { storeToRefs } from "pinia";
+import FilesPreview from "../chats/filesPreview.vue";
 
 const md = markdown({
   html: true,
