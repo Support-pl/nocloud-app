@@ -345,7 +345,7 @@
         <span
           v-if="
             t(`bots.chanells_instruction.${newChanellData.type}_sub`, 'null') !=
-            'null'
+              'null' && newChanellData.type !== 'whatsapp'
           "
           v-html="
             marked(t(`bots.chanells_instruction.${newChanellData.type}_sub`))
@@ -934,6 +934,7 @@ const handleDeleteChanell = async () => {
       bot: bot.value.id,
       channel: selectedEditedChanell.value.data.id,
     });
+
     bot.value.channels = bot.value.channels.filter(
       (chanell) => chanell.id != selectedEditedChanell.value.data.id
     );
@@ -997,10 +998,14 @@ const channelsUpdatedHandler = (data) => {
           name: data.channel.title,
           ...data.channel.data,
         };
+
         selectedEditedChanell.value = JSON.parse(JSON.stringify(data.channel));
         selectedEditedChanell.value.title =
           chanellsOptions.find((c) => c.key === "whatsapp")?.title ||
           "whatsapp";
+
+        selectedEditedChanell.value.data.id =
+          data.channel.id || data.channel.data.id || "";
       }, 0);
     } else {
     }
