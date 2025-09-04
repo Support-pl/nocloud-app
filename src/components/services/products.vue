@@ -399,18 +399,16 @@ export default {
     });
 
     if (!this.authStore.isLogged) return;
-    this.productsStore.isLoading = true;
     this.authStore
       .fetchBillingData()
       .then(async (user) => {
-        await this.instancesStore.fetch();
-        await this.productsStore.fetch(user.client_id);
+        await Promise.all([
+          this.instancesStore.fetch(),
+          this.productsStore.fetch(user.client_id),
+        ]);
       })
       .catch((error) => {
         console.error(error);
-      })
-      .finally(() => {
-        this.productsStore.isLoading = false;
       });
   },
   mounted() {

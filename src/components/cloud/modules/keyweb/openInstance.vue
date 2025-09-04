@@ -111,6 +111,33 @@
         </div>
       </div>
 
+      <div class="Fcloud__info-block block resources">
+        <div class="Fcloud__block-header">
+          <setting-icon /> {{ capitalize($t("cloud_system")) }}
+        </div>
+
+        <div class="Fcloud__block-content">
+          <div class="block__column">
+            <div class="block__title">CPU</div>
+            <div class="block__value">
+              {{ resources && resources.cpu }}
+            </div>
+          </div>
+          <div class="block__column">
+            <div class="block__title">
+              {{ $t("cloud_Memory") }}
+            </div>
+            <div class="block__value">{{ resources && resources.ram }} GB</div>
+          </div>
+
+          <div class="block__column">
+            <div class="block__title">
+              {{ $t("cloud_Storage") }}
+            </div>
+            <div class="block__value">{{ resources && resources.disk }} GB</div>
+          </div>
+        </div>
+      </div>
       <div class="Fcloud__info-block block">
         <div class="Fcloud__block-header">
           <card-icon /> {{ capitalize($t("prices")) }}
@@ -246,6 +273,10 @@ const plan = computed(() => {
 
 const tariffPrice = computed(
   () => plan.value.products[props.VM.product]?.price ?? 0
+);
+
+const resources = computed(
+  () => plan.value.products[props.VM.product]?.resources ?? {}
 );
 
 const addonsPrice = computed(() => {
