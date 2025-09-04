@@ -139,8 +139,12 @@ const addonsPrice = computed(() => {
 
 const renewalProps = computed(() => {
   const key = !props.service.product
-    ? `${props.service.config.duration} ${props.service.config.planCode}`
+    ? `${props.service.config?.duration} ${props.service.config?.planCode}`
     : props.service.product;
+  if (!props.service.config) {
+    return {};
+  }
+
   const { period, price } = props.service.billingPlan.products[key];
 
   const currentPeriod = props.service.data.expiration
