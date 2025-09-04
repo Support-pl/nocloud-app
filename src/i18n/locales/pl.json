@@ -316,6 +316,7 @@
     "Failed to load data": "Nie udało się załadować danych",
     "Order created successfully": "Zamówienie utworzone.",
     "Order update successfully": "Zamówienie zaktualizowanę.",
+    "backup_start": "Rozpoczęto przywracanie systemu z kopii zapasowej",
     "Ticket created successfully": "Zgłoszenie utworzone.",
     "VM created succefully": "VM utworzona",
     "VM resized successfully": "VM pomyślnie zmieniona",
