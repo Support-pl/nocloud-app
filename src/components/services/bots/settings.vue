@@ -345,7 +345,7 @@
         <span
           v-if="
             t(`bots.chanells_instruction.${newChanellData.type}_sub`, 'null') !=
-            'null'
+              'null' && newChanellData.type !== 'whatsapp'
           "
           v-html="
             marked(t(`bots.chanells_instruction.${newChanellData.type}_sub`))
