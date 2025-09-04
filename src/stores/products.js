@@ -43,8 +43,23 @@ export const useProductsStore = defineStore("products", () => {
 
     async fetch(userid, silent) {
       if (!config.whmcsSiteUrl) return {};
+
+      const keyCache = `products_user_${userid}`;
+
       try {
-        if (!silent) isLoading.value = true;
+        if (localStorage.getItem(keyCache)) {
+          const cachedData = JSON.parse(localStorage.getItem(keyCache));
+          if (
+            cachedData &&
+            Array.isArray(cachedData) &&
+            cachedData.length > 0
+          ) {
+            products.value = cachedData;
+          }
+        } else if (!silent) {
+          isLoading.value = true;
+        }
+
         const response = await api.get(store.baseURL, {
           params: { userid, run: "get_active_products" },
         });
@@ -52,6 +67,7 @@ export const useProductsStore = defineStore("products", () => {
         const result = Object.values(response?.ERROR ? {} : response ?? {});
 
         products.value = result;
+        localStorage.setItem(keyCache, JSON.stringify(result));
         return result;
       } catch (error) {
         console.error(error);
