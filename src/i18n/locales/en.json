@@ -784,7 +784,9 @@
       "chanells_instruction": {
         "telegram": "📢 **Only the `bot_secret` is needed to connect a Telegram bot.**\nCreate a bot via `BotFather`, copy the `Token`, and paste it into the `bot_secret` field.\n\n📘 More info:\n\n[1. How to get your bot token](https://core.telegram.org/bots/tutorial#obtain-your-bot-token)\n\n[2. Creating a new bot](https://core.telegram.org/bots/features#creating-a-new-bot)",
         "bitrix24": "## [📘 Guide to creating a Webhook in Bitrix24](https://helpdesk.bitrix24.ru/open/20886106)\n\n### ⚠️ Important:\nWhen creating the webhook, select **type: INCOMING Webhook** and specify the required permissions: ✅ **imbot**, ✅ **imopenlines**, ✅ **im**, ✅ **disk**.",
-        "bitrix24_sub": "## Connecting the AI Bot\n\nIn Bitrix24, open **CRM → Contact Center**, select the desired **open line** and go to its **settings**.\n\nIn the **\"Chat Bots\"** section, enable the option:\n**\"Assign the chat bot as responsible\"**, then select the created bot.\nClick **\"Save\"**. ✅ Done!"
+        "bitrix24_sub": "## Connecting the AI Bot\n\nIn Bitrix24, open **CRM → Contact Center**, select the desired **open line** and go to its **settings**.\n\nIn the **\"Chat Bots\"** section, enable the option:\n**\"Assign the chat bot as responsible\"**, then select the created bot.\nClick **\"Save\"**. ✅ Done!",
+        "whatsapp": "> ⚠️ **Attention!**\n>\n> To connect a **WhatsApp** channel you will need to scan a QR code using the WhatsApp app on your phone.\n>\n> 1. Open the WhatsApp app.\n> 2. Go to **\"Linked devices\"**.\n> 3. In **\"Linked devices\"** choose **\"Link a device\"** and use the camera to scan the displayed QR code.\n>\n> After a successful scan the channel will be connected.",
+        "whatsapp_sub": "> 📱 **Scan the QR code**\n>\n> Open the **WhatsApp** app on your phone and go to **\"Linked devices\"**.\n>\n> Tap **\"Link a device\"** and use the camera to scan the QR code shown on the screen.\n>\n> After a successful scan the channel will be connected."
       },
       "chat_item_tips": {
         "archive": "Move to Deleted",
