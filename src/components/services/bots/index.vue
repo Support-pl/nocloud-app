@@ -79,6 +79,7 @@ import { useChatsStore } from "@/stores/chats";
 import { marked } from "marked";
 import useCreateInstance from "@/hooks/instances/create";
 import { usePromocodesStore } from "@/stores/promocodes";
+import useServiceId from "@/hooks/services/serviceId";
 
 const router = useRouter();
 const route = useRoute();
@@ -99,6 +100,8 @@ const { userCurrency, defaultCurrency } = storeToRefs(currenciesStore);
 const { getShowcases } = storeToRefs(spStore);
 const { createInstance } = useCreateInstance();
 const promocodesStore = usePromocodesStore();
+
+const { serviceId } = useServiceId();
 
 const plan = ref(null);
 const provider = ref(null);
@@ -125,7 +128,7 @@ const getProducts = computed(() => {
 });
 
 const showcase = computed(() =>
-  getShowcases.value.find(({ uuid }) => uuid === route.query.service)
+  getShowcases.value.find(({ uuid }) => uuid === serviceId.value)
 );
 
 const mainModel = computed(() =>
@@ -137,8 +140,7 @@ const plans = computed(
     cachedPlans[`${provider.value}_${userCurrency.value?.code}`]?.filter(
       ({ type, uuid }) => {
         const { items } =
-          spStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
-          {};
+          spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
         const plans = [];
 
         if (!items) return type === "bots";
@@ -156,7 +158,7 @@ const plans = computed(
 
 const sp = computed(() => {
   const { items } =
-    spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+    spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
 
   if (!items) return [];
   return spStore.servicesProviders.filter(({ uuid }) =>
@@ -209,7 +211,7 @@ function orderClickHandler() {
 
   if (!authStore.userdata.uuid) {
     const showcase =
-      spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+      spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
 
     appStore.onLogin.redirect = route.name;
     appStore.onLogin.redirectQuery = route.query;

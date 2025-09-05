@@ -367,6 +367,11 @@ const routes = [
     },
     component: () => import("@/routes/invoices/transactionPage.vue"),
   },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    redirect: "/services",
+  },
 ];
 
 export default createRouter({

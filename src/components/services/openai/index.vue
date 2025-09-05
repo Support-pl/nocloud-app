@@ -85,6 +85,7 @@ import { useCurrenciesStore } from "@/stores/currencies";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
 import useCreateInstance from "@/hooks/instances/create";
+import useServiceId from "@/hooks/services/serviceId";
 
 const router = useRouter();
 const route = useRoute();
@@ -102,6 +103,8 @@ const instancesStore = useInstancesStore();
 const { userCurrency } = storeToRefs(useCurrenciesStore());
 const { getShowcases } = storeToRefs(spStore);
 const { createInstance } = useCreateInstance(spStore);
+
+const { serviceId } = useServiceId("openai");
 
 const plan = ref(null);
 const provider = ref(null);
@@ -156,7 +159,7 @@ const getProducts = computed(() => {
 });
 
 const showcase = computed(() =>
-  getShowcases.value.find(({ uuid }) => uuid === route.query.service)
+  getShowcases.value.find(({ uuid }) => uuid === serviceId.value)
 );
 
 const isPromoVisible = computed(() => {
@@ -174,8 +177,7 @@ const plans = computed(
     cachedPlans[`${provider.value}_${userCurrency.value?.code}`]?.filter(
       ({ type, uuid }) => {
         const { items } =
-          spStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
-          {};
+          spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
         const plans = [];
 
         if (!items) return type === "openai";
@@ -193,7 +195,7 @@ const plans = computed(
 
 const sp = computed(() => {
   const { items } =
-    spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+    spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
 
   if (!items) return [];
   return spStore.servicesProviders.filter(({ uuid }) =>
@@ -246,7 +248,7 @@ function orderClickHandler() {
 
   if (!authStore.userdata.uuid) {
     const showcase =
-      spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+      spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
 
     appStore.onLogin.redirect = route.name;
     appStore.onLogin.redirectQuery = route.query;
