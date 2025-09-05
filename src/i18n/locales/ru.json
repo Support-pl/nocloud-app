@@ -318,6 +318,7 @@
     "Order created successfully": "Заказ успешно создан.",
     "Order update successfully": "Заказ успешно обновлён.",
     "Ticket created successfully": "Обращение успешно создано.",
+    "backup_start": "Восстановление системы из бэкапа началось",
     "VM created succefully": "VM успешно создана",
     "VM resized successfully": "VM успешно изменёна",
     "VM deleted successfully": "VM успешно удалена",

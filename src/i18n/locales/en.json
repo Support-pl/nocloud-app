@@ -313,6 +313,7 @@
       "none": "none"
     },
     "os": "OS",
+    "backup_start": "System restoration from backup has started",
     "installation": "installation",
     "Failed to load data": "Failed to load data",
     "Order created successfully": "Order created successfully.",

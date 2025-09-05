@@ -1066,55 +1066,16 @@ export default defineComponent({
       }
     },
     async sendRecover() {
-      if (this.getDefaults.departments.length < 1) {
-        await this.fetchDefaults();
-      }
-      if (this.namespaces.length < 1) {
-        await this.fetchNamespaces();
-      }
       await nextTick();
 
-      const { departments } = this.getDefaults;
-      const { admins } =
-        departments.find(({ id }) => id === config.department) ?? {};
-
-      const period = this.modal.recover
-        ? toDate(Date.now() / 1000 - 86400, ".", false)
-        : toDate(Date.now() / 1000, ".", false);
-
-      const text = [
-        `ID: ${this.VM.uuid}`,
-        `Public IP's: ${
-          this.VM.state?.meta.networking.public.join(", ") || "-"
-        }`,
-        `Private IP's: ${
-          this.VM.state?.meta.networking.private.join(", ") || "-"
-        }`,
-        `Date: ${period}`,
-      ];
-      const message = `<ol style="margin-bottom: 0px">${text
-        .map((el) => `<li>${el}</li>`)
-        .join("")}</ol>`;
-
       try {
-        const response = await this.createChat({
-          admins,
-          department: config.department,
-          gateways: [],
-          chat: {
-            subject: `Restore VM: ${this.VM.title}`,
-            message,
+        this.sendAction("exec", {
+          params: {
+            snapshot_date: +this.option.recover == 0 ? "previous" : "snapshot",
           },
         });
 
-        await this.sendMessage({
-          uuid: response.uuid,
-          content: message,
-          account: this.currentUser,
-          date: BigInt(Date.now()),
-        });
-
-        this.$message.success(this.$t("Ticket created successfully"));
+        this.$message.success(this.$t("backup_start"));
       } catch (error) {
         const message = error.response?.data?.message ?? error.message ?? error;
 
@@ -1276,43 +1237,19 @@ export default defineComponent({
       newOpt.title = `${capitalized} (${range})`;
       return newOpt;
     },
-    async sendAction(action) {
+    async sendAction(action, data) {
       const hard = this.option.reboot || action.includes("Hard");
-      const data = {
-        uuid: this.VM.uuid,
-        uuidService: this.VM.uuidService,
-        action: action.replace("Hard", ""),
-        params: hard ? { hard: true } : {},
-      };
 
-      if (action === "recoverYesterday" || action === "recoverToday") {
-        action = action.replace("recover", "");
-        this.$api
-          .get(this.baseURL, {
-            params: {
-              run: "create_ticket",
-              subject: `Recover VM - ${this.VM.title}`,
-              message: `1. ID: ${this.VM.uuid}\n2. Date: ${action}`,
-              department: 1,
-            },
-          })
-          .then((resp) => {
-            if (resp.result === "success") {
-              this.$message.success(this.$t("Ticket created successfully"));
-            } else {
-              throw resp;
-            }
-          })
-          .catch((err) => {
-            const message = err.response?.data?.message ?? err.message ?? err;
-
-            this.openNotification("error", {
-              message: this.$t(message),
-            });
-            console.error(err);
-          });
-        return;
+      if (!data) {
+        data = {
+          params: hard ? { hard: true } : {},
+        };
       }
+
+      data.uuid = this.VM.uuid;
+      data.uuidService = this.VM.uuidService;
+      data.action = action.replace("Hard", "");
+
       return this.invokeAction(data)
         .then(() => {
           const opts = {
