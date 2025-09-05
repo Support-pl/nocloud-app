@@ -339,6 +339,7 @@ import promocodeMenu from "@/components/ui/promocode-menu.vue";
 import { usePromocodesStore } from "@/stores/promocodes";
 import { h } from "vue";
 import { useDescriptionsStore } from "@/stores/descriptions";
+import useServiceId from "@/hooks/services/serviceId";
 
 const searchIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SearchOutlined")
@@ -371,6 +372,8 @@ const checkBalance = inject("checkBalance", () => {});
 const { getPeriod } = usePeriod();
 const { currency, formatPrice } = useCurrency();
 const { createInstance } = useCreateInstance();
+
+const { serviceId } = useServiceId("empty");
 
 const plan = ref(null);
 const planWithApplyedPromocode = ref(null);
@@ -630,8 +633,7 @@ const plans = computed(() => {
     cachedPlans.value[`${provider.value}_${currency.value.code}`]?.filter(
       ({ type, uuid }) => {
         const { items } =
-          spStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
-          {};
+          spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
         const plans = [];
 
         if (!items) return type === "empty";
@@ -650,7 +652,7 @@ const plans = computed(() => {
 
 const sp = computed(() => {
   const { items } =
-    spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+    spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
 
   if (!items) return [];
   return spStore.servicesProviders.filter(({ uuid }) =>
@@ -827,7 +829,7 @@ const orderClickHandler = () => {
 
   if (!userdata.value.uuid) {
     const showcase =
-      spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+      spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
 
     onLogin.value.redirect = route.name;
     onLogin.value.redirectQuery = route.query;

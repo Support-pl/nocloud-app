@@ -89,9 +89,6 @@
               compact
               :status="qaKnowledgeStatuses[index]?.['question'] ? 'error' : ''"
             >
-              <template #suffix>
-                <required-icon />
-              </template>
             </a-input>
             <a-button
               @click="handleRemoveQaKnowledge(index)"
@@ -105,28 +102,14 @@
             </a-button>
           </div>
 
-          <div
-            style="
-              margin-left: 45px;
-              width: 100%;
-              position: relative;
-              display: inline-block;
-              width: 100%;
-            "
-          >
-            <a-textarea
-              style="width: calc(100% - 60px)"
-              class="field"
-              v-model:value="item.answer"
-              :placeholder="t('bots_databases.fields.answer')"
-              compact
-              :status="qaKnowledgeStatuses[index]?.['answer'] ? 'error' : ''"
-            />
-
-            <span style="position: absolute; right: 71px; top: 8px"
-              ><required-icon
-            /></span>
-          </div>
+          <a-textarea
+            style="width: calc(100% - 60px)"
+            class="field"
+            v-model:value="item.answer"
+            :placeholder="t('bots_databases.fields.answer')"
+            compact
+            :status="qaKnowledgeStatuses[index]?.['answer'] ? 'error' : ''"
+          />
         </div>
 
         <div class="actions">
@@ -568,41 +551,53 @@
       "
     >
       <a-row class="create_knowledge_integration_modal">
-        <a-col span="24" class="field">
-          <a-select
-            class="types"
-            v-model:value="newKnowledge.type"
-            :options="knowledgeTypes"
-          ></a-select
-        ></a-col>
-
-        <template v-if="newKnowledge.type !== 'user_file'">
-          <a-col span="24" class="field">
-            <a-input
-              v-model:value="newKnowledge.url"
-              :placeholder="t('bots_databases.fields.knowledge_url')"
-            >
-              <template #suffix>
-                <required-icon />
-              </template>
-            </a-input>
-          </a-col>
-        </template>
-
-        <a-col
-          span="24"
-          class="field"
-          style="position: relative; display: inline-block; width: 100%"
+        <a-form
+          style="width: 100%"
+          ref="createKnowledgeFormRef"
+          layout="vertical"
+          autocomplete="off"
+          :model="newKnowledge"
+          :rules="newKnowledgeRules"
         >
-          <a-textarea
-            v-model:value="newKnowledge.description"
-            :placeholder="t('bots_databases.fields.knowledge_description')"
-          ></a-textarea>
+          <a-form-item
+            name="type"
+            :label="t('bots_databases.fields.file_search_column_type')"
+          >
+            <a-col span="24" class="field">
+              <a-select
+                class="types"
+                v-model:value="newKnowledge.type"
+                :options="knowledgeTypes"
+              ></a-select>
+            </a-col>
+          </a-form-item>
 
-          <span style="position: absolute; right: 12px; top: 8px">
-            <required-icon />
-          </span>
-        </a-col>
+          <a-form-item
+            name="url"
+            :label="t('bots_databases.fields.site_search_column_url')"
+            v-if="newKnowledge.type !== 'user_file'"
+          >
+            <a-col span="24" class="field">
+              <a-input
+                v-model:value="newKnowledge.url"
+                :placeholder="t('bots_databases.fields.knowledge_url')"
+              >
+              </a-input>
+            </a-col>
+          </a-form-item>
+
+          <a-form-item
+            name="description"
+            :label="t('bots_databases.fields.knowledge_description')"
+          >
+            <a-col span="24" class="field">
+              <a-textarea
+                v-model:value="newKnowledge.description"
+                :placeholder="t('bots_databases.fields.knowledge_description')"
+              ></a-textarea>
+            </a-col>
+          </a-form-item>
+        </a-form>
 
         <template v-if="newKnowledge.type === 'user_file'">
           <a-col span="24" class="field">
@@ -718,7 +713,6 @@
               'bots_databases.fields.site_search_column_url'
             )} (https://)`"
           >
-            <template #suffix> <required-icon /> </template>
           </a-input>
         </a-form-item>
       </a-form>
@@ -850,10 +844,6 @@ const uploadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/UploadOutlined")
 );
 
-const requiredIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ExclamationCircleOutlined")
-);
-
 const editIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/EditTwoTone")
 );
@@ -900,6 +890,7 @@ const currentImportSiteSearch = ref(false);
 const newSiteSearch = ref({ url: "" });
 const addSiteFormRef = ref();
 const unInmportedSitesMap = ref({});
+const createKnowledgeFormRef = ref();
 
 onMounted(async () => {
   try {
@@ -1086,6 +1077,58 @@ const newSiteSearchRules = computed(() => ({
   ],
 }));
 
+const newKnowledgeRules = computed(() => ({
+  url:
+    newKnowledge.value.type !== "user_file"
+      ? [
+          {
+            trigger: "blur",
+            required: true,
+            message: t("ssl_product.field is required"),
+            validator: (d) => {
+              const value = newKnowledge.value[d.field];
+
+              if (
+                !!value &&
+                value.length > 1 &&
+                /^(https?:\/\/)?([\w\-]+\.)+[\w\-]{2,}(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/i.test(
+                  value
+                )
+              ) {
+                return Promise.resolve();
+              }
+
+              return Promise.reject();
+            },
+          },
+        ]
+      : [],
+
+  type: [
+    {
+      trigger: "blur",
+      required: true,
+    },
+  ],
+
+  description: [
+    {
+      trigger: "blur",
+      required: true,
+      message: t("ssl_product.field is required"),
+      validator: (d) => {
+        const value = newKnowledge.value[d.field];
+
+        if (!!value && value.length > 1) {
+          return Promise.resolve();
+        }
+
+        return Promise.reject();
+      },
+    },
+  ],
+}));
+
 const isSaveQaKnowledgePrimary = computed(
   () =>
     JSON.stringify(originalDatabase.value.qa_knowledge) !==
@@ -1229,17 +1272,11 @@ const handleSaveQaKnowledge = async () => {
 };
 
 const handleAddNewSimpleKnowledge = async () => {
-  const urlRegex =
-    /^(https?:\/\/)?([\w\-]+\.)+[\w\-]{2,}(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/i;
-
   const isFile = newKnowledge.value.type === "user_file";
 
-  if (
-    (!isFile
-      ? !urlRegex.test(newKnowledge.value.url)
-      : !newKnowledge.value.file) ||
-    !newKnowledge.value.description.trim()
-  ) {
+  await createKnowledgeFormRef.value.validate();
+
+  if (isFile && !newKnowledge.value.file) {
     return openNotification("error", {
       message: t(`bots_databases.tips.not_valid_form`),
     });
@@ -1322,17 +1359,11 @@ const handleRemoveSimpleKnowledge = async (knowledge) => {
 };
 
 const handleAddNewFileSearchKnowledge = async () => {
-  const urlRegex =
-    /^(https?:\/\/)?([\w\-]+\.)+[\w\-]{2,}(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/i;
-
   const isFile = newKnowledge.value.type === "user_file";
 
-  if (
-    (!isFile
-      ? !urlRegex.test(newKnowledge.value.url)
-      : !newKnowledge.value.file) ||
-    !newKnowledge.value.description.trim()
-  ) {
+  await createKnowledgeFormRef.value.validate();
+
+  if (isFile && !newKnowledge.value.file) {
     return openNotification("error", {
       message: t(`bots_databases.tips.not_valid_form`),
     });

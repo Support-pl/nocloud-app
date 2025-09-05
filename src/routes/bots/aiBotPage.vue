@@ -514,6 +514,7 @@ function sendDelete() {
           style: {
             color: "red",
             display: isLastInstance.value ? "block" : "none",
+            textDecoration: "underline",
           },
         },
         t("ai_bot_page.labels.databases_delete_alert")

@@ -189,57 +189,62 @@ const isActionsActive = computed(() => {
 });
 
 async function onStart() {
-  await authStore.fetchBillingData();
-  await instancesStore.fetch();
+  try {
+    await authStore.fetchBillingData();
+    await instancesStore.fetch();
 
-  const domain = instancesStore.getInstances.find(
-    ({ uuid }) => uuid === route.params.id
-  );
-  let groupname = "OpenAI";
-  let date = "year";
+    const domain = instancesStore.getInstances.find(
+      ({ uuid }) => uuid === route.params.id
+    );
+    let groupname = "OpenAI";
+    let date = "year";
 
-  const products = Object.values(domain.billingPlan.resources).reduce(
-    (result, resource) => ({
-      ...result,
-      [resource.key]: resource.price,
-    }),
-    {}
-  );
+    const products = Object.values(domain.billingPlan.resources).reduce(
+      (result, resource) => ({
+        ...result,
+        [resource.key]: resource.price,
+      }),
+      {}
+    );
 
-  domain.resources = {
-    ...products,
-    period: t("PayG"),
-    recurringamount: 0,
-    inputKilotoken: products.input_kilotoken,
-    outputKilotoken: products.output_kilotoken,
-  };
+    domain.resources = {
+      ...products,
+      period: t("PayG"),
+      recurringamount: 0,
+      inputKilotoken: products.input_kilotoken,
+      outputKilotoken: products.output_kilotoken,
+    };
 
-  domain.data.expiry = {
-    expiredate: formatDate(domain.data.next_payment_date ?? 0),
-    regdate: domain.data.creation,
-  };
+    domain.data.expiry = {
+      expiredate: formatDate(domain.data.next_payment_date ?? 0),
+      regdate: domain.data.creation,
+    };
 
-  chatsStore.startStream();
+    chatsStore.startStream();
 
-  const { period, recurringamount } = domain.resources;
-  const { expiredate, regdate } = domain.data.expiry;
+    const { period, recurringamount } = domain.resources;
+    const { expiredate, regdate } = domain.data.expiry;
 
-  service.value = {
-    ...domain,
-    groupname,
-    regdate,
-    name: domain.title,
-    status: `cloudStateItem.${domain.state?.state || "UNKNOWN"}`,
-    domain: domain.resources.domain ?? domain.config.domain,
-    autorenew: domain.config.auto_renew ? "enabled" : "disabled",
-    billingcycle: typeof period === "string" ? period : t(date, period),
-    recurringamount:
-      recurringamount ??
-      domain.billingPlan.products[domain.product]?.price ??
-      "?",
-    nextduedate: expiredate,
-  };
-  info.value[0].type = "";
+    service.value = {
+      ...domain,
+      groupname,
+      regdate,
+      name: domain.title,
+      status: `cloudStateItem.${domain.state?.state || "UNKNOWN"}`,
+      domain: domain.resources.domain ?? domain.config.domain,
+      autorenew: domain.config.auto_renew ? "enabled" : "disabled",
+      billingcycle: typeof period === "string" ? period : t(date, period),
+      recurringamount:
+        recurringamount ??
+        domain.billingPlan.products[domain.product]?.price ??
+        "?",
+      nextduedate: expiredate,
+    };
+    info.value[0].type = "";
+  } catch (e) {
+    console.error(e);
+    router.push({ path: "/services" });
+  }
 }
 
 onStart();

@@ -201,6 +201,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { usePlansStore } from "@/stores/plans";
 import { usePromocodesStore } from "@/stores/promocodes";
+import useServiceId from "@/hooks/services/serviceId";
 
 const instancesStore = useInstancesStore();
 const namespacesStore = useNamespasesStore();
@@ -218,6 +219,8 @@ const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const notification = useNotification();
+
+const { serviceId } = useServiceId("cpanel");
 
 const { getPeriod } = usePeriod();
 const { createInstance } = useCreateInstance();
@@ -324,8 +327,7 @@ const plans = computed(() => {
     cachedPlans.value?.[`${provider.value}_${userCurrency.value.code}`]?.filter(
       ({ type, uuid }) => {
         const { items } =
-          spStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
-          {};
+          spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
         const plans = [];
 
         if (!items) return type === "cpanel";
@@ -344,7 +346,7 @@ const plans = computed(() => {
 
 const sp = computed(() => {
   const { items } =
-    spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+    spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
 
   if (!items) return [];
   return spStore.servicesProviders.filter(({ uuid }) =>
@@ -448,7 +450,7 @@ const orderClickHandler = () => {
 
   if (!userdata.value.uuid) {
     const showcase =
-      spStore.showcases.find(({ uuid }) => uuid === route.query.service) ?? {};
+      spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
 
     onLogin.value.redirect = route.name;
     onLogin.value.redirectQuery = route.query;
