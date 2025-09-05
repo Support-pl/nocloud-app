@@ -125,7 +125,7 @@
       <template v-else-if="productsPrepared.length > 0">
         <cloud-item
           v-for="product in productsPrepared"
-          :key="product.orderid"
+          :key="`${product.orderid}/${product.id}`"
           :instance="product"
         />
       </template>
