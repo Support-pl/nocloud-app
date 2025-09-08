@@ -174,7 +174,7 @@ router.beforeEach((to, _, next) => {
     appStore.isButtonsVisible = true;
   }
 
-  if (mustBeLoggined && !authStore.isLogged && !isInitLoading.value) {
+  if (mustBeLoggined && !authStore.isLogged) {
     next({ name: "login" });
   } else if (!isRouteExist(to.name)) {
     if (!authStore.billingUser.roles?.services) {
