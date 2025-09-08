@@ -11,21 +11,14 @@ function useServiceId(type = "bots") {
   const router = useRouter();
 
   const serviceId = computed(() => {
-    console.log(3232);
-    console.log(
-            servicesProviders.value.find((sp) => sp.type === type)
+    const filtredSp = servicesProviders.value.filter((sp) => sp.type === type);
 
-    );
-    
-    
     return getShowcases.value.find(
       (showcase) => showcase.uuid === route.query.service
     )
       ? route.query.service
       : getShowcases.value.find((showcase) =>
-          showcase.servicesProvider.includes(
-            servicesProviders.value.find((sp) => sp.type === type)?.uuid
-          )
+          filtredSp.find((sp) => showcase.servicesProvider.includes(sp.uuid))
         )?.uuid;
   });
 
