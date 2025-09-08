@@ -692,6 +692,7 @@
     },
     "order_services": {
       "Do you want to order": "Вы хотите заказать",
+      "Do you want to install": "Вы хотите установить",
       "Do you want to activate": "Вы хотите активировать"
     },
     "IaaS": {

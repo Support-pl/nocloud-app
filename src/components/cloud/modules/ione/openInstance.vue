@@ -1071,7 +1071,7 @@ export default defineComponent({
       try {
         this.sendAction("exec", {
           params: {
-            snapshot_date: +this.option.recover == 0 ? "previous" : "snapshot",
+            snapshot_date: +this.option.recover == 0 ? "backuprevious" : "backupsnapshot",
           },
         });
 

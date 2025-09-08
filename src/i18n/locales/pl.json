@@ -467,6 +467,7 @@
     },
     "order_services": {
       "Do you want to order": "Czy chcesz zamówić?",
+      "Do you want to install": "Czy chcesz zainstalować?",
       "Do you want to activate": "Czy chcesz aktywować"
     },
     "IaaS": {

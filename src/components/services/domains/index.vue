@@ -185,7 +185,6 @@ import {
   watch,
 } from "vue";
 import { notification } from "ant-design-vue";
-import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import api from "@/api";
@@ -201,9 +200,11 @@ import { useCurrenciesStore } from "@/stores/currencies";
 import { usePlansStore } from "@/stores/plans.js";
 import { useAddonsStore } from "@/stores/addons";
 import { levenshtein } from "@/functions";
+import useServiceId from "@/hooks/services/serviceId";
 
 const i18n = useI18n();
-const route = useRoute();
+
+const { serviceId } = useServiceId("opensrs");
 
 const searchIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SearchOutlined")
@@ -272,9 +273,8 @@ const plans = computed(() => {
   return (
     cachedPlans.value[provider.value]?.filter(({ type, uuid }) => {
       const { items } =
-        providersStore.showcases.find(
-          ({ uuid }) => uuid === route.query.service
-        ) ?? {};
+        providersStore.showcases.find(({ uuid }) => uuid === serviceId.value) ??
+        {};
       const plans = [];
 
       if (!items) return type === "opensrs";
@@ -292,8 +292,7 @@ const plans = computed(() => {
 
 const sp = computed(() => {
   const { items } =
-    providersStore.showcases.find(({ uuid }) => uuid === route.query.service) ??
-    {};
+    providersStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
 
   if (!items) return [];
   return providersStore.servicesProviders.filter(({ uuid }) =>

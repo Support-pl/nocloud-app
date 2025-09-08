@@ -113,7 +113,7 @@
               @cancel="modal.confirmCreate = false"
             >
               <p>
-                {{ t("order_services.Do you want to order") }}:
+                {{ t("order_services.Do you want to install") }}:
                 {{ `${options.product.title} (${selectedInstance})` }}
               </p>
             </a-modal>
