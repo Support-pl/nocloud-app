@@ -35,7 +35,7 @@
       >
         <div class="provider_image">
           <img
-            :src="`/img/ai-providers/${provider.value}.png`"
+            :src="`/img/ai-providers/${provider.value}.svg`"
             class="openai_provider_img"
           />
         </div>
@@ -660,8 +660,8 @@ watch(selectedModel, () => {
 <style scoped>
 .openai_provider_img {
   width: calc(100% - 60px);
-  height: 40px;
-  max-width: 170px;
+  height: 45px;
+  max-width: 190px;
 }
 
 @media screen and (max-width: 768px) {
