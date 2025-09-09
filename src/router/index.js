@@ -43,6 +43,17 @@ for (const service in servicesArray) {
   services.push(temp);
 }
 
+if (config.vdcEnabled) {
+  services.push({
+    path: "cloud",
+    name: "cloud",
+    meta: {
+      mustBeLoggined: true,
+    },
+    component: () => import("@/routes/cloud/vdcCloud.vue"),
+  });
+}
+
 const routes = [
   {
     path: "/login",
@@ -90,14 +101,6 @@ const routes = [
           // mustBeLoggined: true
         },
         component: () => import("@/routes/services/services.vue"),
-      },
-      {
-        path: "cloud",
-        name: "cloud",
-        meta: {
-          mustBeLoggined: true,
-        },
-        component: () => import("@/routes/cloud/vdcCloud.vue"),
       },
       {
         path: "services",
