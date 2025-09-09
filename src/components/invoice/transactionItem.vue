@@ -27,7 +27,7 @@
     </div>
     <div class="invoice__footer flex-between">
       <div class="invoice__id">
-        <a-tag>
+        <a-tag v-if="getInstance(invoice.instance)">
           {{ capitalize($t("service")) }}: {{ getInstance(invoice.instance) }}
         </a-tag>
 
@@ -130,7 +130,7 @@ function clickOnInvoice(uuid) {
 }
 
 function getInstance(uuid) {
-  if (!uuid) return "none";
+  if (!uuid) return null;
 
   return (
     instancesStore.allInstances.find((inst) => inst.uuid === uuid)?.title ??
