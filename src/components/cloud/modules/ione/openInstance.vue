@@ -112,11 +112,10 @@
           v-model:open="modal.recover"
           :title="$t('cloud_Recover_modal')"
           @ok="handleOk('recover')"
+          :ok-text="$t('Ok')"
+          :cancel-text="$t('Cancel')"
         >
-          <p>{{ $t("cloud_Recover_invite_line1") }}</p>
-          <p>{{ $t("cloud_Recover_invite_line2") }}</p>
-          <p>{{ $t("cloud_Recover_invite_line3") }}</p>
-          <p>{{ $t("cloud_Recover_invite") }}</p>
+          <div v-html="marked($t('recover_from_backup'))" />
           <a-radio-group
             v-model:value="option.recover"
             name="recover"
@@ -545,7 +544,6 @@ import { mapState, mapActions } from "pinia";
 import { GChart } from "vue-google-charts";
 import { useCurrency, useNotification } from "@/hooks/utils";
 import { setChartsTheme, toDate } from "@/functions.js";
-import config from "@/appconfig.js";
 
 import { useSpStore } from "@/stores/sp.js";
 import { useAuthStore } from "@/stores/auth.js";
@@ -556,6 +554,7 @@ import { useChatsStore } from "@/stores/chats.js";
 
 import renewalModal from "@/components/ui/renewalModal.vue";
 import { useAddonsStore } from "@/stores/addons";
+import { marked } from "marked";
 
 const redoIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/RedoOutlined")
@@ -978,6 +977,8 @@ export default defineComponent({
     ]),
     ...mapActions(useNamespasesStore, { fetchNamespaces: "fetch" }),
     toDate,
+    marked,
+
     deployService() {
       this.actionLoading = true;
       this.$api.services
@@ -1071,7 +1072,8 @@ export default defineComponent({
       try {
         this.sendAction("exec", {
           params: {
-            snapshot_date: +this.option.recover == 0 ? "backuprevious" : "backupsnapshot",
+            snapshot_date:
+              +this.option.recover == 0 ? "backuprevious" : "backupsnapshot",
           },
         });
 
@@ -1115,10 +1117,7 @@ export default defineComponent({
           this.snapshots.addSnap.modal = false;
         })
         .catch((err) => {
-          const opts = {
-            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-          };
-          this.openNotification("error", opts);
+          this.handleInvokeError(err);
         })
         .finally(() => {
           this.snapshots.addSnap.loading = false;
@@ -1140,10 +1139,7 @@ export default defineComponent({
           });
         })
         .catch((err) => {
-          const opts = {
-            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-          };
-          this.openNotification("error", opts);
+          this.handleInvokeError(err);
         })
         .finally(() => {
           this.snapshots.loading = false;
@@ -1164,10 +1160,7 @@ export default defineComponent({
           });
         })
         .catch((err) => {
-          const opts = {
-            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-          };
-          this.openNotification("error", opts);
+          this.handleInvokeError(err);
         })
         .finally(() => {
           this.snapshots.addSnap.loading = false;
@@ -1258,10 +1251,7 @@ export default defineComponent({
           this.openNotification("success", opts);
         })
         .catch((err) => {
-          const opts = {
-            message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
-          };
-          this.openNotification("error", opts);
+          this.handleInvokeError(err);
         });
     },
     fetchMonitoring() {
@@ -1288,10 +1278,7 @@ export default defineComponent({
           }
         })
         .catch((err) => {
-          console.error(err);
-          this.openNotification("error", {
-            message: `Error: ${err.response?.data?.message ?? "Unknown"}.`,
-          });
+          this.handleInvokeError(err);
         });
     },
     date(timestamp) {
@@ -1328,6 +1315,17 @@ export default defineComponent({
       } finally {
         this.isUpdateAutoRenewLoading = false;
       }
+    },
+    handleInvokeError(error) {
+      console.log(error.response?.data);
+      let message = `Error: ${error.response?.data?.message ?? "Unknown"}.`;
+      if (error.response?.data.code === 14) {
+        message = this.$t("recover_from_backup_error");
+      }
+
+      this.openNotification("error", {
+        message,
+      });
     },
   },
 });

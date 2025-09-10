@@ -30,7 +30,7 @@
             <template #content>
               <div
                 style="cursor: pointer"
-                @click="addToClipboard(reply.message)"
+                @click="addToClipboard(reply.body)"
               >
                 <copy-icon /> {{ capitalize($t("copy")) }}
               </div>
