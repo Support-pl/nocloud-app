@@ -542,7 +542,7 @@ export default defineComponent({
       return locationItem?.title ?? this.$t("No Data");
     },
     fullProduct() {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const key = this.VM.product;
       return this.VM.billingPlan.products[key];
     },
     tariffTitle() {
@@ -568,7 +568,8 @@ export default defineComponent({
       );
     },
     renewalProps() {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const key = this.VM.product;
+
       const { period } = this.VM.billingPlan.products[key];
       const currentPeriod = this.VM.data.expiration;
       const newPeriod = this.date(this.VM.data.expiration, +period);
@@ -588,7 +589,7 @@ export default defineComponent({
       if (!this.VM?.billingPlan) return {};
       const tariffs = {};
       const { products } = this.VM.billingPlan;
-      const productKey = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const productKey = this.VM.product;
       const a = Object.values(products[productKey].resources).reduce(
         (acc, curr) => +acc + +curr,
         0
@@ -841,7 +842,7 @@ export default defineComponent({
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
         onOk: () => {
-          const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+          const key = this.VM.product;;
           const planCode = this.VM.billingPlan.products[key].meta.addons.find(
             (addon) => addon.includes(action)
           );

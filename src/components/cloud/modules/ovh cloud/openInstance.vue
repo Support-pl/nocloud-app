@@ -665,9 +665,7 @@ export default defineComponent({
       return this.servicesProviders.find((el) => el.uuid === this.VM.sp);
     },
     osName() {
-      const key =
-        this.VM.product ??
-        `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const key = this.VM.product;
       const type = this.VM.billingPlan.type.split(" ")[1];
       const imageId = this.VM.config.configuration[`${type}_os`];
 
@@ -687,7 +685,7 @@ export default defineComponent({
       return locationItem?.title ?? this.$t("No Data");
     },
     fullProduct() {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const key = this.VM.product;
       return this.VM.billingPlan.products[key];
     },
     tariffTitle() {
@@ -716,9 +714,7 @@ export default defineComponent({
       );
     },
     renewalProps() {
-      const key =
-        this.VM.product ??
-        `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const key = this.VM.product;
       const { period } = this.VM.billingPlan.products[key];
       const currentPeriod = this.VM.data.expiration;
       const newPeriod = this.date(this.VM.data.expiration, +period);
@@ -739,9 +735,7 @@ export default defineComponent({
       const tariffs = {};
       const { products } =
         this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {};
-      const productKey =
-        this.VM.product ??
-        `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const productKey = this.VM.product;
       const keys = Object.keys(products ?? {}).sort(
         (a, b) => products[a].price - products[b].price
       );
@@ -982,9 +976,7 @@ export default defineComponent({
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
         onOk: () => {
-          const key =
-            this.VM.product ??
-            `${this.VM.config.duration} ${this.VM.config.planCode}`;
+          const key = this.VM.product;
           const planCode = this.VM.billingPlan.products[key].meta.addons.find(
             (addon) => addon.includes(action)
           );

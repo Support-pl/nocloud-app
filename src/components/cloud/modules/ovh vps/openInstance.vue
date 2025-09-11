@@ -750,7 +750,7 @@ export default defineComponent({
       return locationItem?.title ?? this.$t("No Data");
     },
     fullProduct() {
-      const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const key = this.VM.product;
       return this.VM.billingPlan.products[key];
     },
     tariffTitle() {
@@ -778,9 +778,7 @@ export default defineComponent({
     renewalProps() {
       const { products = {} } =
         this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {};
-      const key =
-        this.VM.product ??
-        `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const key = this.VM.product;
       const { period } = products[key] ?? {};
 
       const currentPeriod = this.toDate(this.VM.data.expiration);
@@ -802,9 +800,7 @@ export default defineComponent({
       const tariffs = {};
       const { products = {} } =
         this.plans.find(({ uuid }) => uuid === this.VM.billingPlan.uuid) ?? {};
-      const productKey =
-        this.VM.product ??
-        `${this.VM.config.duration} ${this.VM.config.planCode}`;
+      const productKey = this.VM.product;
 
       Object.keys(products).forEach((key) => {
         const [a, b] = [products[productKey], products[key]];
@@ -1221,7 +1217,7 @@ export default defineComponent({
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
         onOk: () => {
-          const key = `${this.VM.config.duration} ${this.VM.config.planCode}`;
+          const key = this.VM.product;
           const planCode = this.VM.billingPlan.products[key].meta.addons.find(
             (addon) => addon.includes(action)
           );
