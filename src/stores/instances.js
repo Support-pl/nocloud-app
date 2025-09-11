@@ -24,7 +24,7 @@ export const useInstancesStore = defineStore("instances", () => {
   const instances = ref([]);
   const allInstances = ref([]);
   const searchString = ref("");
-  const isLoading = ref(false);
+  const isLoading = ref(true);
   const isActionLoading = ref(false);
   const socket = ref(null);
 

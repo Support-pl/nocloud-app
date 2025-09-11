@@ -14,7 +14,7 @@ export const useProductsStore = defineStore("products", () => {
   const size = ref(10);
   const page = ref(1);
 
-  const isLoading = ref(false);
+  const isLoading = ref(true);
   const baseURL = `${config.whmcsSiteUrl}${config.sharedFolder}`;
 
   function setProducts(data) {
