@@ -568,11 +568,9 @@ export default defineComponent({
       );
     },
     renewalProps() {
-      const key = this.VM.product;
-
-      const { period } = this.VM.billingPlan.products[key];
-      const currentPeriod = this.VM.data.expiration;
-      const newPeriod = this.date(this.VM.data.expiration, +period);
+      const { period } = this.VM.billingPlan.products[this.VM.product];
+      const currentPeriod = this.toDate(this.VM.data.next_payment_date);
+      const newPeriod = this.toDate(this.VM.data.next_payment_date + +period);
 
       return {
         service: this.VM,
@@ -842,7 +840,7 @@ export default defineComponent({
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
         onOk: () => {
-          const key = this.VM.product;;
+          const key = this.VM.product;
           const planCode = this.VM.billingPlan.products[key].meta.addons.find(
             (addon) => addon.includes(action)
           );
@@ -915,21 +913,6 @@ export default defineComponent({
           location.href = meta.url;
         })
         .catch((err) => console.error(err));
-    },
-    date(string, timestamp) {
-      if (timestamp < 1) return "-";
-
-      const stringDate = new Date(string).getTime();
-      const date = new Date(timestamp * 1000 + stringDate);
-
-      const year = date.getFullYear();
-      let month = date.getMonth() + 1;
-      let day = date.getDate();
-
-      if (`${month}`.length < 2) month = `0${month}`;
-      if (`${day}`.length < 2) day = `0${day}`;
-
-      return `${year}-${month}-${day}`;
     },
     async updateInstanceAutoRenew(value) {
       this.isUpdateAutoRenewLoading = true;

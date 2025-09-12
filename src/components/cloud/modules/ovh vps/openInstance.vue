@@ -781,8 +781,8 @@ export default defineComponent({
       const key = this.VM.product;
       const { period } = products[key] ?? {};
 
-      const currentPeriod = this.toDate(this.VM.data.expiration);
-      const newPeriod = this.toDate(this.VM.data.expiration + +period);
+      const currentPeriod = this.toDate(this.VM.data.next_payment_date);
+      const newPeriod = this.toDate(this.VM.data.next_payment_date + +period);
 
       return {
         service: this.VM,
