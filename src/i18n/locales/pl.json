@@ -260,7 +260,7 @@
     "cloud_StartTime": "Start time",
     "cloud_Capacity": "Pojemność",
     "recover_from_backup_error": "Akcja niedostępna: Kopia zapasowa nie została ukończona. Serwer uruchomi się automatycznie po zakończeniu.",
-    "recover_from_backup": "⚠️ **Uwaga!**  \n> Maszyna wirtualna zostanie wyłączona na czas przywracania!\n\n- Kopie zapasowe są tworzone codziennie o 04:00 rano.  \n- Przywracanie dysku o pojemności 50 GB trwa do 1 godziny.  \n- Po zakończeniu przywracania serwer uruchomi się automatycznie!\n\n---\n\nWybierz datę kopii zapasowej:",
+    "recover_from_backup": "# Przywracanie\n> ⚠️ **Uwaga!**  \n> Maszyna wirtualna zostanie **wyłączona** na czas przywracania!\n\n- Kopie zapasowe tworzone są codziennie o **04:00**.  \n- Przywrócenie dysku o pojemności **50 GB** zajmuje do **1 godziny**.  \n- Po zakończeniu przywracania serwer **uruchomi się automatycznie**!\n\n---\n\n**Wybierz datę kopii zapasowej:**",
     "cloud_system": "System",
     "cloud_Storage": "Dysk",
     "cloud_Memory": "Pamięć",

@@ -269,7 +269,7 @@
     "cloud_Regular": "Regular",
     "cloud_Shutdown_modal": "Shutdown",
     "recover_from_backup_error": "Action not available: Backup not completed. Server will turn on automatically after completion.",
-    "recover_from_backup": "⚠️ **Attention!**  \n> The virtual machine will be powered off during the recovery process!\n\n- Backups are created every day at 04:00 AM.  \n- Restoring a 50 GB disk takes up to 1 hour.  \n- After recovery is complete, the server will start automatically!\n\n---\n\nSelect a backup date:",
+    "recover_from_backup": "# Recovery\n> ⚠️ **Attention!**  \n> The virtual machine will be **powered off** during the recovery!\n\n- Backups are created every day at **04:00 AM**.  \n- Restoring a **50 GB** disk takes up to **1 hour**.  \n- After recovery completes the server will **start automatically**!\n\n---\n\n**Select a backup date:**",
     "cloud_Reboot_modal": "Reboot",
     "cloud_Recover_modal": "Recover",
     "cloud_Shutdown_invite": "Select the system shutdown setting:",
