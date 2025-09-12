@@ -121,7 +121,7 @@
       class="products__inner"
       :class="{ 'products__wrapper--loading': productsLoading }"
     >
-      <loading v-if="productsLoading" />
+      <loading v-if="productsLoading && authStore.isLogged" />
       <template v-else-if="productsPrepared.length > 0">
         <cloud-item
           v-for="product in productsPrepared"
