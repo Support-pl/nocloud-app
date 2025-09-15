@@ -1,19 +1,6 @@
 <template>
   <div class="invoices">
     <div class="container">
-      <a-card
-        v-if="
-          invoices?.some(
-            (invoice) =>
-              invoice.status === 'Unpaid' &&
-              invoice.properties.phoneVerificationRequired &&
-              !userdata.isPhoneVerified
-          )
-        "
-        class="need_verification"
-      >
-        {{ $t("phone_verification.labels.invoices_message") }}
-      </a-card>
       <a-progress
         v-if="transactionsStore.isLoading || invoicesStore.isLoading"
         ref="loading"
@@ -35,12 +22,26 @@
           <a-radio-button value="Detail">
             {{ $t("Transactions") }}
           </a-radio-button>
-          <a-radio-button v-if="config.whmcsActs" value="Acts">
-            {{ $t("Acts") }}
+          <a-radio-button value="Reports">
+            {{ $t("invoices.reports.title") }}
           </a-radio-button>
         </a-radio-group>
 
         <template v-if="currentTab === 'Invoice'">
+          <a-card
+            v-if="
+              invoices?.some(
+                (invoice) =>
+                  invoice.status === 'Unpaid' &&
+                  invoice.properties.phoneVerificationRequired &&
+                  !userdata.isPhoneVerified
+              )
+            "
+            class="need_verification"
+          >
+            {{ $t("phone_verification.labels.invoices_message") }}
+          </a-card>
+
           <empty v-if="invoices?.length === 0" style="margin: 50px 0" />
           <template v-else>
             <invoice-item
@@ -62,8 +63,8 @@
           </template>
         </template>
 
-        <template v-if="currentTab === 'Acts'">
-          <acts-list />
+        <template v-if="currentTab === 'Reports'">
+          <reports />
         </template>
 
         <a-pagination
@@ -91,11 +92,10 @@ import { useAuthStore } from "@/stores/auth.js";
 import { useInvoicesStore } from "@/stores/invoices.js";
 import { useTransactionsStore } from "@/stores/transactions.js";
 import { useInstancesStore } from "@/stores/instances.js";
-
+import Reports from "@/components/invoice/reports.vue";
 import empty from "@/components/ui/empty.vue";
 import invoiceItem from "@/components/invoice/invoiceItem.vue";
 import transactionItem from "@/components/invoice/transactionItem.vue";
-import actsList from "@/components/invoice/actsList.vue";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
 

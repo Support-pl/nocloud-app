@@ -28,6 +28,18 @@
     "Invoice": "Rozliczenia",
     "Invoices": "Invoices",
     "Detail": "Szczegóły",
+    "invoices": {
+      "reports": {
+        "title":"Raporty",
+        "last_month": "Poprzedni miesiąc",
+        "current_month": "Bieżący miesiąc",
+        "current_year": "Bieżący rok",
+        "service": "Usługa",
+        "amount": "Kwota",
+        "download_full_report": "Pobierz pełny raport",
+        "instruction": "📊 **Raporty dotyczące opłat za usługi**\n\nTutaj możesz przeglądać raporty dotyczące opłat za usługi. Dane są aktualizowane codziennie i są aktualne **do wczoraj**. Opłaty za bieżący dzień nie są uwzględnione."
+      }
+    },
     "Transactions": "Transactions",
     "Act": "Akt",
     "Acts": "Akty",
