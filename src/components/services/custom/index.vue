@@ -231,6 +231,22 @@
             <h2>{{ currentProduct.title }}</h2>
           </a-row>
 
+          <a-row style="width: 100%" v-if="showcase.meta?.type === 'ssl'">
+            <a-col :span="24">
+              <a-form-item
+                :help="domainError ? $t('domain is wrong') : ''"
+                :label="$t('ssl_product.domain')"
+                :validate-status="domainError ? 'error' : ''"
+              >
+                <a-input
+                  v-model:value="domain"
+                  :placeholder="$t('ssl_product.domain')"
+                  @blur="validateDomain"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+
           <div v-if="currentProduct?.meta?.resources?.length" class="resources">
             <p
               v-for="resource of currentProduct?.meta?.resources"
@@ -398,6 +414,9 @@ const activeCollapseKey = ref([]);
 const sortField = ref("default");
 const sortOrder = ref("asc");
 
+const domain = ref("");
+const domainError = ref(false);
+
 function onCreated() {
   fetchLoading.value = true;
   const promises = [
@@ -456,6 +475,10 @@ function getProduct(products, options) {
 const currentProduct = computed(() => {
   return getProduct(products.value, options.value);
 });
+
+const showcase = computed(
+  () => spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {}
+);
 
 const isSaleApply = computed(() => !!planWithApplyedPromocode.value);
 const currentProductWithSale = computed(() => {
@@ -632,8 +655,7 @@ const plans = computed(() => {
   return (
     cachedPlans.value[`${provider.value}_${currency.value.code}`]?.filter(
       ({ type, uuid }) => {
-        const { items } =
-          spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
+        const { items } = showcase.value;
         const plans = [];
 
         if (!items) return type === "empty";
@@ -651,8 +673,7 @@ const plans = computed(() => {
 });
 
 const sp = computed(() => {
-  const { items } =
-    spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
+  const { items } = showcase.value;
 
   if (!items) return [];
   return spStore.servicesProviders.filter(({ uuid }) =>
@@ -817,10 +838,13 @@ const orderClickHandler = () => {
 
   const instance = {
     config: { auto_start: fullPlan.meta.auto_start },
-    resources: resources.reduce((result, { key, title }) => {
-      result[key] = title;
-      return result;
-    }, {}),
+    resources: resources.reduce(
+      (result, { key, title }) => {
+        result[key] = title;
+        return result;
+      },
+      { domain: domain.value ? domain.value.trim() : "" }
+    ),
     title: currentProduct.value.title,
     billing_plan: fullPlan,
     product: options.value.size,
@@ -828,15 +852,14 @@ const orderClickHandler = () => {
   };
 
   if (!userdata.value.uuid) {
-    const showcase =
-      spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
-
     onLogin.value.redirect = route.name;
     onLogin.value.redirectQuery = route.query;
     onLogin.value.info = {
       type: "custom",
       title: [
-        showcase.promo?.[locale.value]?.title ?? showcase.title ?? "custom",
+        showcase.value.promo?.[locale.value]?.title ??
+          showcase.value.title ??
+          "custom",
         currentProduct.value.title,
       ].join(" - "),
       cost: currentProduct.value.price,
@@ -868,6 +891,10 @@ const createVirtual = async (instance) => {
   }
 };
 const orderConfirm = () => {
+  validateDomain();
+
+  if (domainError.value) return;
+
   const instance = {
     config: {},
     billingPlan: plans.value.find(({ uuid }) => uuid === plan.value),
@@ -968,6 +995,16 @@ function parseForSort(raw) {
   }
 
   return 0;
+}
+
+function validateDomain() {
+  if (showcase.value.meta?.type !== "ssl") {
+    domainError.value = false;
+    return;
+  }
+
+  const domainPattern = /^.+\..+$/;
+  domainError.value = !domainPattern.test(domain.value?.trim());
 }
 
 watch(sp, (value) => {
