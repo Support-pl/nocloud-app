@@ -83,6 +83,11 @@ export default {
       creationRouteName: "service-vpn",
       icon: icons.AppstoreOutlined,
     },
+    'b24-apps': {
+      groupname: ["B24-Apps", "B24 Apps"],
+      creationRouteName: "service-b24-apps",
+      icon: icons.AppstoreOutlined,
+    },
     openai: {
       groupname: ["OpenAI"],
       creationRouteName: "service-openai",

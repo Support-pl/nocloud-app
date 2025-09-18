@@ -272,7 +272,9 @@ export default {
         case "virtual":
           if (showcase.title.toLowerCase().includes("vpn")) {
             name = "service-vpn";
-          } else {
+          } else if(showcase.meta?.type==='b24-apps'){
+            name = "service-b24-apps";
+          }else {
             name = "service-custom";
           }
           query.headerTitle =
