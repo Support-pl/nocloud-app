@@ -1,19 +1,6 @@
 <template>
   <div class="invoices">
     <div class="container">
-      <a-card
-        v-if="
-          invoices?.some(
-            (invoice) =>
-              invoice.status === 'Unpaid' &&
-              invoice.properties.phoneVerificationRequired &&
-              !userdata.isPhoneVerified
-          )
-        "
-        class="need_verification"
-      >
-        {{ $t("phone_verification.labels.invoices_message") }}
-      </a-card>
       <a-progress
         v-if="transactionsStore.isLoading || invoicesStore.isLoading"
         ref="loading"
@@ -43,6 +30,20 @@
         <template v-if="currentTab === 'Invoice'">
           <empty v-if="invoices?.length === 0" style="margin: 50px 0" />
           <template v-else>
+            <a-card
+              v-if="
+                invoices?.some(
+                  (invoice) =>
+                    invoice.status === 'Unpaid' &&
+                    invoice.properties.phoneVerificationRequired &&
+                    !userdata.isPhoneVerified
+                )
+              "
+              class="need_verification"
+            >
+              {{ $t("phone_verification.labels.invoices_message") }}
+            </a-card>
+            
             <invoice-item
               v-for="(invoice, index) in invoices"
               :key="index"
