@@ -203,7 +203,7 @@ async function openInvoiceDocument(invoice) {
     paymentLink = await invoicesStore.getPaymentLink(invoice.uuid);
   }
 
-  window.location.href = paymentLink;
+  window.open(paymentLink, "_blank");
 }
 
 async function payByBalance() {

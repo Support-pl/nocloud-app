@@ -28,7 +28,8 @@
                 <svg viewBox="0 0 120 25">
                   <text
                     class="openInvoice__cost-text"
-                    x="50%" y="75%"
+                    x="50%"
+                    y="75%"
                     dominant-baseline="middle"
                     text-anchor="middle"
                   >
@@ -60,18 +61,29 @@
                   </div>
                 </div>
 
-                <div v-if="records.length > 0" class="info__main" style="overflow-x: auto">
-                  <a-table row-key="uuid" :data-source="records" :columns="columns">
+                <div
+                  v-if="records.length > 0"
+                  class="info__main"
+                  style="overflow-x: auto"
+                >
+                  <a-table
+                    row-key="uuid"
+                    :data-source="records"
+                    :columns="columns"
+                  >
                     <template #date="{ record }">
                       {{ date(record.exec) }}
                     </template>
                     <template #amount="{ record }">
-                      {{ +(record.total * currency.rate).toFixed(2) }} {{ currency.code }}
+                      {{ +(record.total * currency.rate).toFixed(2) }}
+                      {{ currency.code }}
                     </template>
                     <template #product="{ record }">
-                      {{ (record.product)
-                        ? record.product.replaceAll('_', ' ').toUpperCase()
-                        : record.resource.toUpperCase() }}
+                      {{
+                        record.product
+                          ? record.product.replaceAll("_", " ").toUpperCase()
+                          : record.resource.toUpperCase()
+                      }}
                     </template>
                   </a-table>
                 </div>
@@ -82,13 +94,16 @@
                   </a-card>
 
                   <a-card
-                    v-if="invoice.meta.instances && invoice.meta.instances.length > 0"
+                    v-if="
+                      invoice.meta.instances &&
+                      invoice.meta.instances.length > 0
+                    "
                     style="margin-top: 15px"
                     :title="capitalize($t('services'))"
                   >
                     <template #extra>
                       <router-link :to="{ name: 'services' }">
-                        {{ $t('comp_services.all') }}
+                        {{ $t("comp_services.all") }}
                       </router-link>
                     </template>
                     <router-link
@@ -102,7 +117,11 @@
                 </div>
 
                 <div v-if="invoice.exec == 0" class="info__footer">
-                  <a-button class="info__button" :loading="isPayLoading" @click="payRequest">
+                  <a-button
+                    class="info__button"
+                    :loading="isPayLoading"
+                    @click="payRequest"
+                  >
                     {{ $t("Pay") }}
                   </a-button>
                 </div>
@@ -117,17 +136,17 @@
 </template>
 
 <script>
-import { defineAsyncComponent } from 'vue'
-import config from '@/appconfig.js'
-import loading from '@/components/ui/loading.vue'
-import { useInvoicesStore } from '@/stores/invoices';
+import { defineAsyncComponent } from "vue";
+import config from "@/appconfig.js";
+import loading from "@/components/ui/loading.vue";
+import { useInvoicesStore } from "@/stores/invoices";
 
-const leftIcon = defineAsyncComponent(
-  () => import('@ant-design/icons-vue/LeftOutlined')
-)
+const leftIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/LeftOutlined")
+);
 
 export default {
-  name: 'OpenTransaction',
+  name: "OpenTransaction",
   components: { loading, leftIcon },
   data: () => ({
     isLoading: true,
@@ -136,174 +155,181 @@ export default {
     records: [],
     columns: [
       {
-        title: 'Instance',
-        dataIndex: 'instance'
+        title: "Instance",
+        dataIndex: "instance",
       },
       {
-        title: 'Product',
-        dataIndex: 'product',
-        scopedSlots: { customRender: 'product' }
+        title: "Product",
+        dataIndex: "product",
+        scopedSlots: { customRender: "product" },
       },
       {
-        title: 'Date',
-        dataIndex: 'exec',
-        scopedSlots: { customRender: 'date' }
+        title: "Date",
+        dataIndex: "exec",
+        scopedSlots: { customRender: "date" },
       },
       {
-        title: 'Amount',
-        dataIndex: 'total',
-        scopedSlots: { customRender: 'amount' }
-      }
-    ]
+        title: "Amount",
+        dataIndex: "total",
+        scopedSlots: { customRender: "amount" },
+      },
+    ],
   }),
   computed: {
-    user () {
-      return this.$store.getters['nocloud/auth/billingData']
+    user() {
+      return this.$store.getters["nocloud/auth/billingData"];
     },
-    userdata () {
-      return this.$store.getters['nocloud/auth/userdata']
+    userdata() {
+      return this.$store.getters["nocloud/auth/userdata"];
     },
-    baseURL () {
-      return this.$store.getters['invoices/getURL']
+    baseURL() {
+      return this.$store.getters["invoices/getURL"];
     },
-    currencies () {
-      return this.$store.getters['nocloud/auth/currencies']
+    currencies() {
+      return this.$store.getters["nocloud/auth/currencies"];
     },
-    currency () {
-      const code = this.user.currency_code ?? 'USD'
-      const { rate } = this.currencies.find((el) =>
-        el.from === code && el.to === this.invoice.currency
-      ) ?? {}
+    currency() {
+      const code = this.user.currency_code ?? "USD";
+      const { rate } =
+        this.currencies.find(
+          (el) => el.from === code && el.to === this.invoice.currency
+        ) ?? {};
 
-      const { rate: reverseRate } = this.currencies.find((el) =>
-        el.to === code && el.from === this.invoice.currency
-      ) ?? { rate: 1 }
+      const { rate: reverseRate } = this.currencies.find(
+        (el) => el.to === code && el.from === this.invoice.currency
+      ) ?? { rate: 1 };
 
-      return { code, rate: (rate) || 1 / reverseRate }
+      return { code, rate: rate || 1 / reverseRate };
     },
-    statusColor () {
+    statusColor() {
       return this.records[0]?.processed
         ? config.colors.success
-        : config.colors.err
+        : config.colors.err;
     },
-    services () {
-      return this.$store.getters['nocloud/vms/getServicesFull']
+    services() {
+      return this.$store.getters["nocloud/vms/getServicesFull"];
     },
-    invoice () {
-      return this.$store.getters['nocloud/transactions/all']
-        .find((el) => el.uuid === this.$route.params.uuid)
+    invoice() {
+      return this.$store.getters["nocloud/transactions/all"].find(
+        (el) => el.uuid === this.$route.params.uuid
+      );
     },
-    total () {
-      const sum = this.records?.reduce((prev, el) => +prev + +el.total, 0) ||
-        this.invoice?.total || 0
+    total() {
+      const sum =
+        this.records?.reduce((prev, el) => +prev + +el.total, 0) ||
+        this.invoice?.total ||
+        0;
 
-      return +(sum * this.currency.rate)?.toFixed(2)
-    }
+      return +(sum * this.currency.rate)?.toFixed(2);
+    },
   },
   watch: {
-    userdata () {
-      this.$store.dispatch('nocloud/transactions/fetch', {
+    userdata() {
+      this.$store.dispatch("nocloud/transactions/fetch", {
         account: this.userdata.uuid,
-        page: this.$store.getters['nocloud/transactions/page'],
-        limit: this.$store.getters['nocloud/transactions/size'],
-        field: 'proc',
-        sort: 'desc'
-      })
-    }
+        page: this.$store.getters["nocloud/transactions/page"],
+        limit: this.$store.getters["nocloud/transactions/size"],
+        field: "proc",
+        sort: "desc",
+      });
+    },
   },
-  created () {
-    if (this.currency.code === '') {
-      this.$store.dispatch('nocloud/auth/fetchCurrencies')
+  created() {
+    if (this.currency.code === "") {
+      this.$store.dispatch("nocloud/auth/fetchCurrencies");
     }
 
     setTimeout(() => {
-      const { uuid } = this.$route.params
+      const { uuid } = this.$route.params;
 
-      sessionStorage.setItem('invoice', uuid)
-    })
+      sessionStorage.setItem("invoice", uuid);
+    });
 
-    this.$api.get('/services', { params: { show_deleted: true } })
+    this.$api
+      .get("/services", { params: { show_deleted: true } })
       .then(({ pool }) => {
         pool.forEach((service) => {
           service.instancesGroups.forEach((group) => {
             group.instances.forEach((inst) => {
-              this.instances[inst.uuid] = inst.title
-            })
-          })
-        })
+              this.instances[inst.uuid] = inst.title;
+            });
+          });
+        });
 
-        return this.$api.transactions.records(this.$route.params.uuid)
+        return this.$api.transactions.records(this.$route.params.uuid);
       })
       .then(({ pool }) => {
         this.records = pool.map((el) => ({
-          ...el, instance: this.instances[el.instance] ?? 'unknown'
-        }))
+          ...el,
+          instance: this.instances[el.instance] ?? "unknown",
+        }));
 
-        this.columns[1].title = (pool[0].product) ? 'Product' : 'Resource'
+        this.columns[1].title = pool[0].product ? "Product" : "Resource";
       })
       .catch((err) => {
-        console.error(err)
+        console.error(err);
       })
       .finally(() => {
-        this.isLoading = false
-      })
+        this.isLoading = false;
+      });
   },
-  unmounted () {
-    if (!this.$route.name.includes('billing')) {
-      sessionStorage.removeItem('invoice')
+  unmounted() {
+    if (!this.$route.name.includes("billing")) {
+      sessionStorage.removeItem("invoice");
     }
   },
   methods: {
-    goBack () {
-      this.$router.push('/billing')
+    goBack() {
+      this.$router.push("/billing");
     },
-    date (timestamp) {
-      if (timestamp < 1) return '-'
+    date(timestamp) {
+      if (timestamp < 1) return "-";
 
-      const date = new Date(timestamp * 1000)
-      const time = date.toTimeString().split(' ')[0]
+      const date = new Date(timestamp * 1000);
+      const time = date.toTimeString().split(" ")[0];
 
-      const year = date.getFullYear()
-      let month = date.getMonth() + 1
-      let day = date.getDate()
+      const year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
 
-      if (`${month}`.length < 2) month = `0${month}`
-      if (`${day}`.length < 2) day = `0${day}`
+      if (`${month}`.length < 2) month = `0${month}`;
+      if (`${day}`.length < 2) day = `0${day}`;
 
-      return `${day}.${month}.${year} ${time}`
+      return `${day}.${month}.${year} ${time}`;
     },
-    payRequest () {
-      this.isPayLoading = true
-      this.$api.get(this.baseURL, {
-        params: {
-          run: 'create_inv',
-          invoice_id: this.invoice.uuid,
-          product: this.invoice.meta.description ?? this.invoice.service,
-          sum: this.invoice.total
-        }
-      })
+    payRequest() {
+      this.isPayLoading = true;
+      this.$api
+        .get(this.baseURL, {
+          params: {
+            run: "create_inv",
+            invoice_id: this.invoice.uuid,
+            product: this.invoice.meta.description ?? this.invoice.service,
+            sum: this.invoice.total,
+          },
+        })
         .then(({ invoiceid }) => {
-          this.$notification.success({ message: this.$t('Done') })
-          this.getPaytoken(invoiceid)
+          this.$notification.success({ message: this.$t("Done") });
+          this.getPaytoken(invoiceid);
         })
         .catch((err) => {
-          const message = err.response?.data?.message ?? err.message ?? err
+          const message = err.response?.data?.message ?? err.message ?? err;
 
-          this.$notification.error({ message: this.$t(message) })
-          console.error(err)
+          this.$notification.error({ message: this.$t(message) });
+          console.error(err);
         })
         .finally(() => {
-          this.isPayLoading = false
-        })
+          this.isPayLoading = false;
+        });
     },
-    async getPaytoken (invoiceId) {
+    async getPaytoken(invoiceId) {
       const invoicesStore = useInvoicesStore();
       const paymentLink = await invoicesStore.getPaymentLink(invoiceId);
 
-      window.location.href = paymentLink;
-    }
-  }
-}
+      window.open(paymentLink, "_blank");
+    },
+  },
+};
 </script>
 
 <style>
