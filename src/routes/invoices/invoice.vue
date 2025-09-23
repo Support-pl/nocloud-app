@@ -43,7 +43,7 @@
             </a-card>
 
             <invoice-item
-              v-for="(invoice, index) in invoices"
+              v-for="(invoice, index) in currentInvoices"
               :key="index"
               :invoice="invoice"
             />
@@ -70,11 +70,23 @@
           show-size-changer
           style="width: fit-content; margin-left: auto"
           :page-size-options="pageSizeOptions"
-          :page-size="pageSize"
-          :total="totalSize"
-          :current="currentPage"
-          @show-size-change="onShowSizeChange"
-          @change="onShowSizeChange"
+          :page-size="transactionsPageSize"
+          :total="transactionsTotalSize"
+          :current="transactionsCurrentPage"
+          @show-size-change="transactionsOnShowSizeChange"
+          @change="transactionsOnShowSizeChange"
+        />
+
+        <a-pagination
+          v-if="currentTab === 'Invoice'"
+          show-size-changer
+          style="width: fit-content; margin-left: auto"
+          :page-size-options="pageSizeOptions"
+          :page-size="invoicesPageSize"
+          :total="invoicesTotalSize"
+          :current="invoicesCurrentPage"
+          @show-size-change="invoicesOnShowSizeChange"
+          @change="invoicesOnShowSizeChange"
         />
       </div>
     </div>
@@ -109,10 +121,10 @@ const chatsStore = useChatsStore();
 const { openNotification } = useNotification();
 const router = useRouter();
 const route = useRoute();
+const pageSizeOptions = ref(["5", "10", "25", "50", "100"]);
 
 const currentTab = ref("Invoice");
 const percent = ref(0);
-const pageSizeOptions = ref(["5", "10", "25", "50", "100"]);
 
 const wrapper = ref(null);
 const loading = ref(null);
@@ -124,9 +136,13 @@ const transactions = computed(() => {
   return result;
 });
 
-const currentPage = computed(() => transactionsStore.page);
-const pageSize = computed(() => transactionsStore.size);
-const totalSize = computed(() => transactionsStore.total);
+const transactionsCurrentPage = computed(() => transactionsStore.page);
+const transactionsPageSize = computed(() => transactionsStore.size);
+const transactionsTotalSize = computed(() => transactionsStore.total);
+
+const invoicesTotalSize = computed(() => invoices.value?.length || 0);
+const invoicesCurrentPage = ref(1);
+const invoicesPageSize = ref(10);
 
 const radioGroupWidth = computed(() =>
   config.whmcsActs ? "calc(100% / 3)" : "calc(100% / 2)"
@@ -143,6 +159,14 @@ const tabs = computed(() => {
   return baseTabs;
 });
 
+const currentInvoices = computed(() => {
+  if (!invoices.value) return [];
+  const start = (invoicesCurrentPage.value - 1) * invoicesPageSize.value;
+  const end = start + invoicesPageSize.value;
+
+  return invoices.value.slice(start, end);
+});
+
 watch(currentTab, () => {
   transactionsStore.tab = currentTab.value;
 
@@ -154,8 +178,8 @@ watch(currentTab, () => {
 
   transactionsStore.fetch({
     account: userdata.value.uuid,
-    page: currentPage.value,
-    limit: pageSize.value,
+    page: transactionsCurrentPage.value,
+    limit: transactionsPageSize.value,
     field: "exec",
     sort: "desc",
     type: "transaction",
@@ -168,8 +192,8 @@ watch(userdata, () => {
 
   transactionsStore.fetch({
     account: userdata.value.uuid,
-    page: currentPage.value,
-    limit: pageSize.value,
+    page: transactionsCurrentPage.value,
+    limit: transactionsPageSize.value,
     field: "exec",
     sort: "desc",
     type: "transaction",
@@ -249,19 +273,25 @@ function setLoading() {
 }
 
 function setPagination() {
-  const pagination = localStorage.getItem("transactionsPagination");
+  const keys = {
+    transactionsPagination: transactionsOnShowSizeChange,
+    invoicesPagination: invoicesOnShowSizeChange,
+  };
+  Object.keys(keys).forEach((key) => {
+    const pagination = localStorage.getItem(key);
 
-  if (!pagination) return;
-  const { page, limit } = JSON.parse(pagination);
+    if (!pagination) return;
+    const { page, limit } = JSON.parse(pagination);
 
-  onShowSizeChange(page, limit);
+    keys[key](page, limit);
+  });
 }
 
-function onShowSizeChange(page, limit) {
-  if (page !== currentPage.value) {
+function transactionsOnShowSizeChange(page, limit) {
+  if (page !== transactionsCurrentPage.value) {
     transactionsStore.page = page;
   }
-  if (limit !== pageSize.value) {
+  if (limit !== transactionsPageSize.value) {
     transactionsStore.size = limit;
   }
 
@@ -278,6 +308,13 @@ function onShowSizeChange(page, limit) {
     "transactionsPagination",
     JSON.stringify({ page, limit })
   );
+}
+
+function invoicesOnShowSizeChange(page, limit) {
+  invoicesCurrentPage.value = page;
+  invoicesPageSize.value = limit;
+
+  localStorage.setItem("invoicesPagination", JSON.stringify({ page, limit }));
 }
 
 async function fetchInstances() {
