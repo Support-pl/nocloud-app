@@ -10,13 +10,15 @@
       }
     "
   >
-    <div class="invoice__header flex-between">
+    <div class="invoice__header">
       <div class="invoice__status" :style="{ color: statusColor }">
         {{ $t(`invoice_${invoice.status}`) }}
       </div>
     </div>
     <div class="invoice__middle">
-      <div class="invoice__prefix">{{ capitalize($t("net total")) }}:</div>
+      <div class="invoice__prefix">
+        <span> {{ capitalize($t("net total")) }}: </span>
+      </div>
       <div class="invoice__cost" :style="{ color: statusColor }">
         {{ total }} {{ invoice.currencycode.title || invoice.currencycode }}
       </div>
@@ -45,64 +47,69 @@
         </div>
       </div>
     </div>
-    <div class="horisontal-line" />
-    <div class="invoice__footer flex-between">
+    <div class="invoice__divider" />
+    <div class="invoice__footer">
       <div class="invoice__id">#{{ getInvoiceNumber(invoice) }}</div>
 
-      <template v-if="invoice.status === 'Unpaid' && !needVerification">
-        <template
-          v-if="
-            invoice.total <= userBalance &&
-            ActionType[invoice.type] !== ActionType.BALANCE
-          "
-        >
+      <div class="invoice__btns">
+        <template v-if="invoice.status === 'Unpaid' && !needVerification">
           <a-popconfirm
+            v-if="
+              invoice.total <= userBalance &&
+              ActionType[invoice.type] !== ActionType.BALANCE
+            "
             :title="$t('Payment will be made from your account balance.')"
             :ok-text="$t('Yes')"
             :cancel-text="$t('Cancel')"
             @confirm="payByBalance"
           >
-            <div class="invoice__btn" style="margin-left: auto" @click.stop>
-              <span class="invoice__pay invoice__balance-pay">
-                {{ $t("pay from balance") }}
-                <component
-                  :is="isBalanceLoading ? loadingIcon : rightIcon"
-                  color="success"
-                />
-              </span>
-            </div>
+            <a-button
+              :loading="isBalanceLoading"
+              type="primary"
+              shape="round"
+              size="small"
+              @click.stop
+            >
+              {{ $t("pay from balance") }}
+            </a-button>
           </a-popconfirm>
+
+          <a-button
+            style="background-color: var(--success)"
+            :loading="isLoading"
+            @click.stop="paidInvoice"
+            type="primary"
+            shape="round"
+            size="small"
+          >
+            {{ $t("Pay") }}
+          </a-button>
         </template>
 
-        <div class="invoice__btn" @click.stop="paidInvoice">
-          <span class="invoice__pay">
-            {{ $t("Pay").toLowerCase() }}
-            <component
-              :is="isLoading ? loadingIcon : rightIcon"
-              color="success"
-            />
-          </span>
-        </div>
-      </template>
+        <template v-else-if="invoice.status === 'Unpaid'">
+          <a-button
+            :loading="isLoading"
+            type="primary"
+            shape="round"
+            size="small"
+          >
+            {{ $t("phone_verification.labels.verify") }}
+          </a-button>
 
-      <template v-else-if="invoice.status === 'Unpaid'">
-        <span class="verification">
-          {{ $t("phone_verification.labels.verify") }}
-        </span>
+          <verification-modal
+            show-user-profile-link
+            :open="isVerificationOpen"
+            @update:open="isVerificationOpen = $event"
+            @confirm="onCodeConfirm"
+          />
+        </template>
 
-        <verification-modal
-          show-user-profile-link
-          :open="isVerificationOpen"
-          @update:open="isVerificationOpen = $event"
-          @confirm="onCodeConfirm"
+        <component
+          :is="isLoading ? loadingIcon : rightIcon"
+          v-else
+          class="invoice__icon"
         />
-      </template>
-
-      <component
-        :is="isLoading ? loadingIcon : rightIcon"
-        v-else
-        style="margin-top: 5px"
-      />
+      </div>
     </div>
   </div>
 </template>
@@ -203,11 +210,13 @@ async function openInvoiceDocument(invoice) {
     paymentLink = await invoicesStore.getPaymentLink(invoice.uuid);
   }
 
-  window.location.href = paymentLink;
+  isLoading.value = false;
+
+  window.open(paymentLink, "_blank");
 }
 
 async function payByBalance() {
-  isLoading.value = true;
+  isBalanceLoading.value = true;
   try {
     if (invoice.value.uuid) {
       await invoicesStore.payWithBalance({ invoiceUuid: invoice.value.uuid });
@@ -225,7 +234,7 @@ async function payByBalance() {
     });
     console.error(error);
   } finally {
-    isLoading.value = false;
+    isBalanceLoading.value = false;
   }
 }
 
@@ -239,122 +248,119 @@ function onCodeConfirm() {
 export default { name: "InvoiceView" };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+$border-radius: 15px;
+$small-border-radius: 12px;
+$spacing-xs: 2px;
+$spacing-sm: 5px;
+$spacing-md: 8px;
+
 .invoice {
   position: relative;
-  padding: 8px 15px;
+  padding: $spacing-md 16px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
-  border-radius: 15px;
+  border-radius: $border-radius;
   background-color: var(--bright_font);
   cursor: pointer;
+
+  &:not(:last-child) {
+    margin-bottom: 8px;
+  }
 }
 
-.invoice__id,
-.invoice__service {
-  font-size: 12px;
-  color: var(--gray);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.invoice__pay {
+.invoice__header {
   display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 5px;
-  padding: 4px 8px;
-  line-height: 1;
-  border-radius: 12px;
-  color: var(--gloomy_font);
-  background: var(--success);
-  white-space: nowrap;
-}
-
-.verification {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 5px;
-  padding: 4px 8px;
-  line-height: 1;
-  border-radius: 12px;
-  color: var(--gloomy_font);
-  background: var(--main);
-  white-space: nowrap;
-}
-
-.invoice__balance-pay {
-  background: var(--main);
+  justify-content: space-between;
+  margin-bottom: $spacing-xs;
 }
 
 .invoice__status {
   font-weight: 600;
 }
 
-.invoice:not(:last-child) {
-  margin-bottom: 20px;
+.invoice__middle {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-xs;
+
+  @media (max-width: 576px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
-.invoice__dueDate {
-  text-align: right;
+.invoice__prefix {
+  margin-right: $spacing-sm;
+  margin-top: $spacing-sm;
+  color: var(--gray);
 }
 
 .invoice__cost {
   font-size: 28px;
   color: var(--main);
-}
-
-.horisontal-line {
-  width: 100%;
-  height: 1px;
-  background-color: var(--border_color);
-}
-
-.flex-between {
-  display: flex;
-  justify-content: space-between;
-}
-.invoice__middle {
-  display: flex;
-  align-items: center;
-}
-.invoice__prefix {
-  margin-right: 5px;
-  color: var(--gray);
-}
-.invoice__cost {
   flex: 2 1 0;
+
+  @media (max-width: 576px) {
+    text-align: right;
+  }
 }
-.invoice__invDate {
-  flex: 1 1 0;
-}
-.invoice__dueDate {
-  flex: 1 1 0;
-}
-.invoice__deadlineDate {
+
+.invoice__date-item {
   flex: 1 1 0;
 }
 
-.invoice__header,
-.invoice__middle,
-.horisontal-line {
+.invoice__date-item.invoice__dueDate {
+  text-align: right;
+}
+
+.invoice__date-title {
+  font-size: 14px;
+  color: var(--gray);
   margin-bottom: 2px;
 }
 
-.invoice__footer {
-  align-items: center;
-  gap: 5px;
+.invoice__date {
+  font-size: 14px;
 }
 
-@media (max-width: 576px) {
-  .invoice__middle {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
+.invoice__divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border_color);
+  margin-bottom: $spacing-xs;
+}
 
-  .invoice__cost {
-    text-align: right;
+.invoice__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-top: 5px;
+}
+
+.invoice__btns {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.invoice__id {
+  font-size: 14px;
+  color: var(--gray);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.invoice__btn {
+  margin-left: auto;
+
+  &:first-of-type {
+    margin-left: 0;
   }
+}
+
+.invoice__icon {
+  margin-top: $spacing-sm;
 }
 </style>

@@ -537,7 +537,7 @@ export default {
       const invoicesStore = useInvoicesStore();
       const paymentLink = await invoicesStore.getPaymentLink(invoiceId);
 
-      window.location.href = paymentLink;
+      window.open(paymentLink, "_blank");
     },
   },
 };

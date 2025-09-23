@@ -16,36 +16,34 @@
           size="large"
           default-value="Invoice"
         >
-          <a-radio-button value="Invoice">
-            {{ $t("Invoices") }}
-          </a-radio-button>
-          <a-radio-button value="Detail">
-            {{ $t("Transactions") }}
-          </a-radio-button>
-          <a-radio-button value="Reports">
-            {{ $t("invoices.reports.title") }}
+          <a-radio-button
+            v-for="tab in tabs"
+            :key="tab.value"
+            :value="tab.value"
+          >
+            {{ $t(tab.label) }}
           </a-radio-button>
         </a-radio-group>
 
         <template v-if="currentTab === 'Invoice'">
-          <a-card
-            v-if="
-              invoices?.some(
-                (invoice) =>
-                  invoice.status === 'Unpaid' &&
-                  invoice.properties.phoneVerificationRequired &&
-                  !userdata.isPhoneVerified
-              )
-            "
-            class="need_verification"
-          >
-            {{ $t("phone_verification.labels.invoices_message") }}
-          </a-card>
-
           <empty v-if="invoices?.length === 0" style="margin: 50px 0" />
           <template v-else>
+            <a-card
+              v-if="
+                invoices?.some(
+                  (invoice) =>
+                    invoice.status === 'Unpaid' &&
+                    invoice.properties.phoneVerificationRequired &&
+                    !userdata.isPhoneVerified
+                )
+              "
+              class="need_verification"
+            >
+              {{ $t("phone_verification.labels.invoices_message") }}
+            </a-card>
+
             <invoice-item
-              v-for="(invoice, index) in invoices"
+              v-for="(invoice, index) in currentInvoices"
               :key="index"
               :invoice="invoice"
             />
@@ -72,11 +70,23 @@
           show-size-changer
           style="width: fit-content; margin-left: auto"
           :page-size-options="pageSizeOptions"
-          :page-size="pageSize"
-          :total="totalSize"
-          :current="currentPage"
-          @show-size-change="onShowSizeChange"
-          @change="onShowSizeChange"
+          :page-size="transactionsPageSize"
+          :total="transactionsTotalSize"
+          :current="transactionsCurrentPage"
+          @show-size-change="transactionsOnShowSizeChange"
+          @change="transactionsOnShowSizeChange"
+        />
+
+        <a-pagination
+          v-if="currentTab === 'Invoice'"
+          show-size-changer
+          style="width: fit-content; margin-left: auto"
+          :page-size-options="pageSizeOptions"
+          :page-size="invoicesPageSize"
+          :total="invoicesTotalSize"
+          :current="invoicesCurrentPage"
+          @show-size-change="invoicesOnShowSizeChange"
+          @change="invoicesOnShowSizeChange"
         />
       </div>
     </div>
@@ -98,6 +108,7 @@ import invoiceItem from "@/components/invoice/invoiceItem.vue";
 import transactionItem from "@/components/invoice/transactionItem.vue";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
+import { useRoute, useRouter } from "vue-router";
 
 const authStore = useAuthStore();
 const { userdata } = storeToRefs(authStore);
@@ -107,10 +118,12 @@ const transactionsStore = useTransactionsStore();
 const instancesStore = useInstancesStore();
 const chatsStore = useChatsStore();
 const { openNotification } = useNotification();
+const router = useRouter();
+const route = useRoute();
+const pageSizeOptions = ref(["5", "10", "25", "50", "100"]);
 
 const currentTab = ref("Invoice");
 const percent = ref(0);
-const pageSizeOptions = ref(["5", "10", "25", "50", "100"]);
 
 const wrapper = ref(null);
 const loading = ref(null);
@@ -122,17 +135,42 @@ const transactions = computed(() => {
   return result;
 });
 
-const currentPage = computed(() => transactionsStore.page);
-const pageSize = computed(() => transactionsStore.size);
-const totalSize = computed(() => transactionsStore.total);
+const transactionsCurrentPage = computed(() => transactionsStore.page);
+const transactionsPageSize = computed(() => transactionsStore.size);
+const transactionsTotalSize = computed(() => transactionsStore.total);
+
+const invoicesTotalSize = computed(() => invoices.value?.length || 0);
+const invoicesCurrentPage = ref(1);
+const invoicesPageSize = ref(10);
 
 const radioGroupWidth = computed(() =>
   config.whmcsActs ? "calc(100% / 3)" : "calc(100% / 2)"
 );
 
+const tabs = computed(() => {
+  const baseTabs = [
+    { label: "Invoices", value: "Invoice" },
+    { label: "Transactions", value: "Detail" },
+    { label: "invoices.reports.title", value: "Reports" },
+  ];
+  // if (config.whmcsActs) {
+  //   baseTabs.push({ label: "Acts", value: "Acts" });
+  // }
+  return baseTabs;
+});
+
+const currentInvoices = computed(() => {
+  if (!invoices.value) return [];
+  const start = (invoicesCurrentPage.value - 1) * invoicesPageSize.value;
+  const end = start + invoicesPageSize.value;
+
+  return invoices.value.slice(start, end);
+});
+
 watch(currentTab, () => {
-  localStorage.setItem("order", currentTab.value);
   transactionsStore.tab = currentTab.value;
+
+  router.push({ query: { tab: currentTab.value } });
 
   if (currentTab.value === "Invoice") return;
   if (transactions.value?.length > 0) return;
@@ -140,8 +178,8 @@ watch(currentTab, () => {
 
   transactionsStore.fetch({
     account: userdata.value.uuid,
-    page: currentPage.value,
-    limit: pageSize.value,
+    page: transactionsCurrentPage.value,
+    limit: transactionsPageSize.value,
     field: "exec",
     sort: "desc",
     type: "transaction",
@@ -154,8 +192,8 @@ watch(userdata, () => {
 
   transactionsStore.fetch({
     account: userdata.value.uuid,
-    page: currentPage.value,
-    limit: pageSize.value,
+    page: transactionsCurrentPage.value,
+    limit: transactionsPageSize.value,
     field: "exec",
     sort: "desc",
     type: "transaction",
@@ -192,13 +230,9 @@ onMounted(() => {
     setPagination();
   }
 
-  if (localStorage.getItem("order")) {
-    currentTab.value = authStore.billingUser.paid_stop
-      ? "Invoice"
-      : localStorage.getItem("order");
-  } else {
-    localStorage.setItem("order", currentTab.value);
-  }
+  currentTab.value =
+    tabs.value.find((tab) => tab.value == route.query.tab)?.value || "Invoice";
+  router.replace({ query: { tab: currentTab.value } });
 
   setCoordY();
 });
@@ -239,19 +273,25 @@ function setLoading() {
 }
 
 function setPagination() {
-  const pagination = localStorage.getItem("transactionsPagination");
+  const keys = {
+    transactionsPagination: transactionsOnShowSizeChange,
+    invoicesPagination: invoicesOnShowSizeChange,
+  };
+  Object.keys(keys).forEach((key) => {
+    const pagination = localStorage.getItem(key);
 
-  if (!pagination) return;
-  const { page, limit } = JSON.parse(pagination);
+    if (!pagination) return;
+    const { page, limit } = JSON.parse(pagination);
 
-  onShowSizeChange(page, limit);
+    keys[key](page, limit);
+  });
 }
 
-function onShowSizeChange(page, limit) {
-  if (page !== currentPage.value) {
+function transactionsOnShowSizeChange(page, limit) {
+  if (page !== transactionsCurrentPage.value) {
     transactionsStore.page = page;
   }
-  if (limit !== pageSize.value) {
+  if (limit !== transactionsPageSize.value) {
     transactionsStore.size = limit;
   }
 
@@ -268,6 +308,13 @@ function onShowSizeChange(page, limit) {
     "transactionsPagination",
     JSON.stringify({ page, limit })
   );
+}
+
+function invoicesOnShowSizeChange(page, limit) {
+  invoicesCurrentPage.value = page;
+  invoicesPageSize.value = limit;
+
+  localStorage.setItem("invoicesPagination", JSON.stringify({ page, limit }));
 }
 
 async function fetchInstances() {

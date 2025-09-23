@@ -25,8 +25,9 @@
         </div>
       </div>
     </div>
-    <div class="invoice__footer flex-between">
-      <div class="invoice__id">
+    
+    <div class="invoice__footer">
+      <div class="invoice__tags">
         <a-tag v-if="getInstance(invoice.instance)">
           {{ capitalize($t("service")) }}: {{ getInstance(invoice.instance) }}
         </a-tag>
@@ -51,6 +52,7 @@
           {{ $t("Resource") }}: {{ invoice.resource }}
         </a-tag>
       </div>
+      
       <div v-if="isClickable" class="invoice__btn">
         <right-icon />
       </div>
@@ -143,59 +145,76 @@ function getInstance(uuid) {
 export default { name: "SingleInvoice" };
 </script>
 
-<style>
+<style lang="scss" scoped>
+$border-radius: 15px;
+$spacing-xs: 2px;
+$spacing-sm: 5px;
+$spacing-md: 8px;
+$spacing-lg: 16px;
+
 .invoice {
+  min-height: 86px;
   position: relative;
-  padding: 8px 15px;
+  padding: $spacing-md $spacing-lg;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
-  border-radius: 15px;
+  border-radius: $border-radius;
   background-color: var(--bright_font);
-  cursor: pointer;
+
+  &:not(:last-child) {
+    margin-bottom: $spacing-md;
+  }
 }
 
-.invoice:not(:last-child) {
-  margin-bottom: 20px;
-}
-
-.invoice__dueDate {
-  text-align: right;
+.invoice__middle {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: $spacing-xs;
 }
 
 .invoice__cost {
   font-size: 28px;
   color: var(--main);
-}
-
-.flex-between {
-  display: flex;
-  justify-content: space-between;
-}
-.invoice__middle {
-  display: flex;
-}
-.invoice__cost {
   flex: 2 1 0;
+
+  @media (max-width: 400px) {
+    flex: 1.5 1 0;
+  }
 }
-.invoice__invDate {
-  flex: 1 1 0;
-}
-.invoice__dueDate {
+
+.invoice__date-item {
   flex: 1 1 0;
 }
 
-.invoice__footer {
-  margin-top: 5px;
-  display: flex;
+.invoice__date-item.invoice__dueDate {
+  text-align: right;
 }
 
-.invoice__middle,
-.horisontal-line {
+.invoice__date-title {
+  font-size: 14px;
+  color: var(--gray);
   margin-bottom: 2px;
 }
 
-@media (max-width: 400px) {
-  .invoice__cost {
-    flex: 1.5 1 0;
-  }
+.invoice__date {
+  font-size: 14px;
+}
+
+.invoice__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: $spacing-sm;
+  gap: $spacing-sm;
+}
+
+.invoice__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+
+.invoice__btn {
+  flex-shrink: 0;
 }
 </style>
