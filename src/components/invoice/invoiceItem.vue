@@ -49,7 +49,11 @@
     </div>
     <div class="invoice__divider" />
     <div class="invoice__footer">
-      <div class="invoice__id">#{{ getInvoiceNumber(invoice) }}</div>
+      <div class="invoice__tags">
+        <div class="invoice__id">#{{ getInvoiceNumber(invoice) }}</div>
+
+        <instance-tags :instances="invoice.instances" />
+      </div>
 
       <div class="invoice__btns">
         <template v-if="invoice.status === 'Unpaid' && !needVerification">
@@ -127,6 +131,7 @@ import config from "@/appconfig.js";
 import { getInvoiceNumber } from "@/functions";
 import api from "@/api";
 import { storeToRefs } from "pinia";
+import InstanceTags from "./instanceTags.vue";
 
 const props = defineProps({
   invoice: { type: Object, required: true },
@@ -362,5 +367,12 @@ $spacing-md: 8px;
 
 .invoice__icon {
   margin-top: $spacing-sm;
+}
+
+.invoice__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
 }
 </style>

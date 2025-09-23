@@ -25,13 +25,10 @@
         </div>
       </div>
     </div>
-    
+
     <div class="invoice__footer">
       <div class="invoice__tags">
-        <a-tag v-if="getInstance(invoice.instance)">
-          {{ capitalize($t("service")) }}: {{ getInstance(invoice.instance) }}
-        </a-tag>
-
+        <instance-tags :instances="[invoice.instance]" v-if="invoice.instance" />
         <a-tag v-if="invoice.product">
           {{ $t("Product") }}: {{ invoice.product }}
         </a-tag>
@@ -52,7 +49,7 @@
           {{ $t("Resource") }}: {{ invoice.resource }}
         </a-tag>
       </div>
-      
+
       <div v-if="isClickable" class="invoice__btn">
         <right-icon />
       </div>
@@ -65,11 +62,12 @@ import { capitalize, computed, defineAsyncComponent } from "vue";
 import { useRouter } from "vue-router";
 
 import { useAppStore } from "@/stores/app.js";
-import { useInstancesStore } from "@/stores/instances.js";
 import { useCurrency } from "@/hooks/utils";
 import config from "@/appconfig.js";
 import { useChatsStore } from "@/stores/chats";
 import { storeToRefs } from "pinia";
+import InstanceTags from "./instanceTags.vue";
+
 
 const rightIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/RightOutlined")
@@ -82,7 +80,6 @@ const props = defineProps({
 const router = useRouter();
 const { currency: baseCurrency, formatPrice } = useCurrency();
 const { toDate } = useAppStore();
-const instancesStore = useInstancesStore();
 const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 
@@ -129,15 +126,6 @@ function clickOnInvoice(uuid) {
   if (!isClickable.value) return;
 
   router.push({ name: "transaction", params: { uuid } });
-}
-
-function getInstance(uuid) {
-  if (!uuid) return null;
-
-  return (
-    instancesStore.allInstances.find((inst) => inst.uuid === uuid)?.title ??
-    uuid
-  );
 }
 </script>
 
