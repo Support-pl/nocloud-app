@@ -27,12 +27,17 @@
       </a-button>
 
       <a-range-picker
+        style="min-width: 230px; max-width: 230px"
         v-model:value="dateRange"
         @change="applyDateRange"
         format="YYYY-MM-DD"
         :disabled-date="disableFutureDates"
         class="date-picker"
       />
+
+      <a-checkbox v-model:checked="showAll">
+        {{ t("invoices.reports.show_all") }}
+      </a-checkbox>
     </a-space>
 
     <!-- Instances Filter -->
@@ -75,6 +80,7 @@ const props = defineProps({
       dateRange: [null, null],
       selectedInstances: [],
       activeFilter: null,
+      showAll: false,
     }),
   },
   showInstancesFilter: {
@@ -83,11 +89,11 @@ const props = defineProps({
   },
   defaultFilter: {
     type: String,
-    default: 'currentMonth',
+    default: "currentMonth",
   },
 });
 
-const emit = defineEmits(['update:modelValue', 'filter-change']);
+const emit = defineEmits(["update:modelValue", "filter-change"]);
 
 const instancesStore = useInstancesStore();
 const { allInstances } = storeToRefs(instancesStore);
@@ -96,13 +102,15 @@ const { t } = useI18n();
 const dateRange = ref(props.modelValue.dateRange || [null, null]);
 const activeFilter = ref(props.modelValue.activeFilter || null);
 const selectedInstances = ref(props.modelValue.selectedInstances || []);
+const showAll = ref(props.modelValue.showAll || false);
 
 const filterData = computed(() => ({
   dateRange: dateRange.value,
   selectedInstances: selectedInstances.value,
   activeFilter: activeFilter.value,
+  showAll: showAll.value,
   selectedInstancesData: selectedInstances.value
-    .map((selected, index) => selected ? allInstances.value[index] : null)
+    .map((selected, index) => (selected ? allInstances.value[index] : null))
     .filter(Boolean),
 }));
 
@@ -130,11 +138,9 @@ function setQuickFilter(filter) {
 }
 
 function applyDateRange(dates) {
-  if (dates && dates.length === 2) {
-    dateRange.value = dates;
-    activeFilter.value = null;
-    emitChange();
-  }
+  dateRange.value = dates || [null, null];
+  activeFilter.value = null;
+  emitChange();
 }
 
 function toggleInstance(index) {
@@ -150,8 +156,8 @@ function disableFutureDates(current) {
 
 function emitChange() {
   const data = filterData.value;
-  emit('update:modelValue', data);
-  emit('filter-change', data);
+  emit("update:modelValue", data);
+  emit("filter-change", data);
 }
 
 function initializeInstances() {
@@ -168,20 +174,36 @@ onMounted(() => {
   initializeInstances();
 });
 
-watch(allInstances, (newInstances) => {
-  if (newInstances.length > 0) {
-    selectedInstances.value = new Array(newInstances.length).fill(true);
-    emitChange();
-  }
-}, { immediate: true });
+watch(
+  allInstances,
+  (newInstances) => {
+    if (newInstances.length > 0) {
+      selectedInstances.value = new Array(newInstances.length).fill(true);
+      emitChange();
+    }
+  },
+  { immediate: true }
+);
 
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    dateRange.value = newValue.dateRange || [null, null];
-    activeFilter.value = newValue.activeFilter || null;
-    selectedInstances.value = newValue.selectedInstances || [];
-  }
-}, { deep: true });
+watch(showAll, () => {
+  emitChange();
+});
+
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      dateRange.value = newValue.dateRange || [null, null];
+      activeFilter.value = newValue.activeFilter || null;
+      selectedInstances.value = newValue.selectedInstances || [];
+    }
+  },
+  { deep: true }
+);
+
+watch([dateRange, selectedInstances], () => {
+  showAll.value = false;
+});
 </script>
 
 <script>
@@ -195,7 +217,7 @@ export default { name: "BillingFilters" };
 
 .date-filter {
   width: 100%;
-  
+
   .date-picker {
     flex: 1;
     min-width: 250px;

@@ -42,6 +42,13 @@
               {{ $t("phone_verification.labels.invoices_message") }}
             </a-card>
 
+            <div style="margin-bottom: 20px">
+              <billing-filters
+                :show-instances-filter="false"
+                v-model="invoicesFilterData"
+              />
+            </div>
+
             <invoice-item
               v-for="(invoice, index) in currentInvoices"
               :key="index"
@@ -110,6 +117,8 @@ import actsList from "@/components/invoice/actsList.vue";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
 import { useRoute, useRouter } from "vue-router";
+import BillingFilters from "@/components/invoice/billingFilters.vue";
+import dayjs from "dayjs";
 
 const authStore = useAuthStore();
 const { userdata } = storeToRefs(authStore);
@@ -117,6 +126,7 @@ const invoicesStore = useInvoicesStore();
 const { getInvoices: invoices } = storeToRefs(invoicesStore);
 const transactionsStore = useTransactionsStore();
 const instancesStore = useInstancesStore();
+const { getInstances: instances } = storeToRefs(instancesStore);
 const chatsStore = useChatsStore();
 const { openNotification } = useNotification();
 const router = useRouter();
@@ -140,9 +150,15 @@ const transactionsCurrentPage = computed(() => transactionsStore.page);
 const transactionsPageSize = computed(() => transactionsStore.size);
 const transactionsTotalSize = computed(() => transactionsStore.total);
 
-const invoicesTotalSize = computed(() => invoices.value?.length || 0);
+const invoicesTotalSize = computed(() => filtredInvoices.value?.length || 0);
 const invoicesCurrentPage = ref(1);
 const invoicesPageSize = ref(10);
+const invoicesFilterData = ref({
+  dateRange: [null, null],
+  selectedInstances: [],
+  activeFilter: null,
+  showAll: false,
+});
 
 const radioGroupWidth = computed(() =>
   config.whmcsActs ? "calc(100% / 3)" : "calc(100% / 2)"
@@ -159,12 +175,34 @@ const tabs = computed(() => {
   return baseTabs;
 });
 
+const filtredInvoices = computed(() => {
+  if (invoicesFilterData.value.showAll) {
+    return invoices.value;
+  }
+
+  return invoices.value.filter((invoice) => {
+    const { dateRange } = invoicesFilterData.value;
+    let pass = true;
+
+    if (dateRange?.[0] && dateRange?.[1]) {
+      const invoiceDate = dayjs(invoice.created);
+
+      pass =
+        pass &&
+        invoiceDate.isAfter(dayjs(dateRange[0]).subtract(1, "day")) &&
+        invoiceDate.isBefore(dayjs(dateRange[1]).add(1, "day"));
+    }
+
+    return pass;
+  });
+});
+
 const currentInvoices = computed(() => {
-  if (!invoices.value) return [];
+  if (!filtredInvoices.value) return [];
   const start = (invoicesCurrentPage.value - 1) * invoicesPageSize.value;
   const end = start + invoicesPageSize.value;
 
-  return invoices.value.slice(start, end);
+  return filtredInvoices.value.slice(start, end);
 });
 
 watch(currentTab, () => {
@@ -295,15 +333,6 @@ function transactionsOnShowSizeChange(page, limit) {
     transactionsStore.size = limit;
   }
 
-  transactionsStore.fetch({
-    page,
-    limit,
-    account: userdata.value.uuid,
-    field: "exec",
-    sort: "desc",
-    type: "transaction",
-  });
-
   localStorage.setItem(
     "transactionsPagination",
     JSON.stringify({ page, limit })
@@ -325,9 +354,23 @@ async function fetchInstances() {
     const message = error.response?.data?.message ?? error.message ?? error;
 
     openNotification("error", { message });
-    console.error(error);
   }
 }
+
+watch(
+  [transactionsCurrentPage, transactionsPageSize],
+  () => {
+    transactionsStore.fetch({
+      page: transactionsCurrentPage.value,
+      limit: transactionsPageSize.value,
+      account: userdata.value.uuid,
+      field: "exec",
+      sort: "desc",
+      type: "transaction",
+    });
+  },
+  { deep: true }
+);
 
 fetchInstances();
 </script>
