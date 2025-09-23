@@ -317,6 +317,7 @@
     "invoices": {
       "reports": {
         "title":"Reports",
+        "show_all": "Show all",
         "last_month": "Last Month",
         "current_month": "Current Month",
         "current_year": "Current Year",
