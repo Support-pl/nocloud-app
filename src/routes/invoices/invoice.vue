@@ -16,14 +16,12 @@
           size="large"
           default-value="Invoice"
         >
-          <a-radio-button value="Invoice">
-            {{ $t("Invoices") }}
-          </a-radio-button>
-          <a-radio-button value="Detail">
-            {{ $t("Transactions") }}
-          </a-radio-button>
-          <a-radio-button v-if="config.whmcsActs" value="Acts">
-            {{ $t("Acts") }}
+          <a-radio-button
+            v-for="tab in tabs"
+            :key="tab.value"
+            :value="tab.value"
+          >
+            {{ $t(tab.label) }}
           </a-radio-button>
         </a-radio-group>
 
@@ -43,7 +41,7 @@
             >
               {{ $t("phone_verification.labels.invoices_message") }}
             </a-card>
-            
+
             <invoice-item
               v-for="(invoice, index) in invoices"
               :key="index"
@@ -99,6 +97,7 @@ import transactionItem from "@/components/invoice/transactionItem.vue";
 import actsList from "@/components/invoice/actsList.vue";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
+import { useRoute, useRouter } from "vue-router";
 
 const authStore = useAuthStore();
 const { userdata } = storeToRefs(authStore);
@@ -108,6 +107,8 @@ const transactionsStore = useTransactionsStore();
 const instancesStore = useInstancesStore();
 const chatsStore = useChatsStore();
 const { openNotification } = useNotification();
+const router = useRouter();
+const route = useRoute();
 
 const currentTab = ref("Invoice");
 const percent = ref(0);
@@ -131,9 +132,21 @@ const radioGroupWidth = computed(() =>
   config.whmcsActs ? "calc(100% / 3)" : "calc(100% / 2)"
 );
 
+const tabs = computed(() => {
+  const baseTabs = [
+    { label: "Invoices", value: "Invoice" },
+    { label: "Transactions", value: "Detail" },
+  ];
+  if (config.whmcsActs) {
+    baseTabs.push({ label: "Acts", value: "Acts" });
+  }
+  return baseTabs;
+});
+
 watch(currentTab, () => {
-  localStorage.setItem("order", currentTab.value);
   transactionsStore.tab = currentTab.value;
+
+  router.push({ query: { tab: currentTab.value } });
 
   if (currentTab.value === "Invoice") return;
   if (transactions.value?.length > 0) return;
@@ -193,13 +206,9 @@ onMounted(() => {
     setPagination();
   }
 
-  if (localStorage.getItem("order")) {
-    currentTab.value = authStore.billingUser.paid_stop
-      ? "Invoice"
-      : localStorage.getItem("order");
-  } else {
-    localStorage.setItem("order", currentTab.value);
-  }
+  currentTab.value =
+    tabs.value.find((tab) => tab.value == route.query.tab)?.value || "Invoice";
+  router.replace({ query: { tab: currentTab.value } });
 
   setCoordY();
 });
