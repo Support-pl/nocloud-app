@@ -40,38 +40,26 @@
       </a-checkbox>
     </a-space>
 
-    <!-- Instances Filter -->
     <a-space v-if="showInstancesFilter" class="instances-filter" wrap>
-      <a-button
-        v-for="(instance, index) in allInstances"
-        :key="instance.uuid"
-        class="instance-tag"
-        :type="selectedInstances[index] ? 'primary' : 'default'"
-        @click="toggleInstance(index)"
-      >
-        <div class="instance-content">
-          {{ instance.title }}
-          <plus-icon v-if="!selectedInstances[index]" class="icon" />
-          <minus-icon v-else class="icon" />
-        </div>
-      </a-button>
+      <instance-tags
+        v-model="selectedInstances"
+        :filter-mode="true"
+        :max-visible="sortedInstances.length"
+        @selection-change="emitChange"
+        :max-length="25"
+        size="normal"
+      />
     </a-space>
   </a-space>
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import dayjs from "dayjs";
 import { useInstancesStore } from "@/stores/instances";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
-
-const plusIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/PlusCircleOutlined")
-);
-const minusIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CloseCircleOutlined")
-);
+import InstanceTags from "./instanceTags.vue";
 
 const props = defineProps({
   modelValue: {
@@ -91,6 +79,10 @@ const props = defineProps({
     type: String,
     default: "currentMonth",
   },
+  topInstancesCount: {
+    type: Number,
+    default: 15,
+  },
 });
 
 const emit = defineEmits(["update:modelValue", "filter-change"]);
@@ -104,14 +96,24 @@ const activeFilter = ref(props.modelValue.activeFilter || null);
 const selectedInstances = ref(props.modelValue.selectedInstances || []);
 const showAll = ref(props.modelValue.showAll || false);
 
+const sortedInstances = computed(() => {
+  return [...allInstances.value]
+    .filter((instance) => instance?.state?.state === "RUNNING")
+    .sort((a, b) => {
+      const dateA = new Date(a.created || a.created_at || 0);
+      const dateB = new Date(b.created || b.created_at || 0);
+      return dateB - dateA;
+    });
+});
+
 const filterData = computed(() => ({
   dateRange: dateRange.value,
   selectedInstances: selectedInstances.value,
   activeFilter: activeFilter.value,
   showAll: showAll.value,
-  selectedInstancesData: selectedInstances.value
-    .map((selected, index) => (selected ? allInstances.value[index] : null))
-    .filter(Boolean),
+  selectedInstancesData: allInstances.value.filter((instance) =>
+    selectedInstances.value.includes(instance.uuid)
+  ),
 }));
 
 function setQuickFilter(filter) {
@@ -143,8 +145,15 @@ function applyDateRange(dates) {
   emitChange();
 }
 
-function toggleInstance(index) {
-  selectedInstances.value[index] = !selectedInstances.value[index];
+function toggleInstance(uuid) {
+  const index = selectedInstances.value.indexOf(uuid);
+
+  if (index > -1) {
+    selectedInstances.value.splice(index, 1);
+  } else {
+    selectedInstances.value.push(uuid);
+  }
+
   emitChange();
 }
 
@@ -160,30 +169,11 @@ function emitChange() {
   emit("filter-change", data);
 }
 
-function initializeInstances() {
-  if (allInstances.value.length > 0 && selectedInstances.value.length === 0) {
-    selectedInstances.value = new Array(allInstances.value.length).fill(true);
-    emitChange();
-  }
-}
-
 onMounted(() => {
   if (props.defaultFilter && !activeFilter.value) {
     setQuickFilter(props.defaultFilter);
   }
-  initializeInstances();
 });
-
-watch(
-  allInstances,
-  (newInstances) => {
-    if (newInstances.length > 0) {
-      selectedInstances.value = new Array(newInstances.length).fill(true);
-      emitChange();
-    }
-  },
-  { immediate: true }
-);
 
 watch(showAll, () => {
   emitChange();
@@ -217,6 +207,7 @@ export default { name: "BillingFilters" };
 
 .date-filter {
   width: 100%;
+  align-items: center;
 
   .date-picker {
     flex: 1;
@@ -241,5 +232,21 @@ export default { name: "BillingFilters" };
 
 .icon {
   font-size: 18px;
+}
+
+.toggle-instances-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 6px;
+  background: var(--component-background, #ffffff);
+
+  &:hover {
+    border-color: var(--primary-color, #1890ff);
+  }
+}
+
+.toggle-icon {
+  font-size: 14px;
+  color: var(--text-color, #000000d9);
 }
 </style>
