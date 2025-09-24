@@ -1,14 +1,6 @@
 <template>
   <div class="invoices">
     <div class="container">
-      <a-progress
-        v-if="transactionsStore.isLoading || invoicesStore.isLoading"
-        ref="loading"
-        status="active"
-        :percent="percent"
-        :show-info="false"
-      />
-
       <div ref="wrapper" class="invoices__wrapper">
         <a-radio-group
           v-if="!authStore.billingUser.paid_stop"
@@ -32,7 +24,13 @@
               v-model="invoicesFilterData"
             />
           </div>
-          <empty v-if="filtredInvoices?.length === 0" style="margin: 50px 0" />
+          <div v-if="isLoading" class="loading_container">
+            <loading />
+          </div>
+          <empty
+            v-else-if="filtredInvoices?.length === 0"
+            style="margin: 50px 0"
+          />
 
           <template v-else>
             <a-card
@@ -61,7 +59,13 @@
           <div style="margin-bottom: 20px">
             <billing-filters v-model="transactionsFilterData" />
           </div>
-          <empty v-if="transactions?.length === 0" style="margin: 50px 0" />
+          <div v-if="isLoading" class="loading_container">
+            <loading />
+          </div>
+          <empty
+            v-else-if="transactions?.length === 0"
+            style="margin: 50px 0"
+          />
           <template v-else>
             <transaction-item
               v-for="(invoice, index) in transactions"
@@ -123,6 +127,7 @@ import { useRoute, useRouter } from "vue-router";
 import BillingFilters from "@/components/invoice/billingFilters.vue";
 import dayjs from "dayjs";
 import { debounce } from "@/functions";
+import Loading from "@/components/ui/loading.vue";
 
 const authStore = useAuthStore();
 const { userdata } = storeToRefs(authStore);
@@ -216,6 +221,10 @@ const currentInvoices = computed(() => {
 
   return filtredInvoices.value.slice(start, end);
 });
+
+const isLoading = computed(
+  () => transactionsStore.isLoading || invoicesStore.isLoading
+);
 
 watch(currentTab, () => {
   transactionsStore.tab = currentTab.value;
@@ -466,6 +475,14 @@ export default { name: "InvoicesView" };
 
 .invoices__wrapper :deep(.ant-radio-button-wrapper:not(:first-child)::before) {
   background-color: var(--border_color);
+}
+
+.loading_container {
+  min-height: 50vh;
+  display: flex;
+  align-content: center;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled){
