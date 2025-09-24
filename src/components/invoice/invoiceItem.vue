@@ -290,7 +290,7 @@ $spacing-md: 8px;
 
   @media (max-width: 576px) {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr; 
   }
 }
 
@@ -298,6 +298,10 @@ $spacing-md: 8px;
   margin-right: $spacing-sm;
   margin-top: $spacing-sm;
   color: var(--gray);
+  
+  @media (max-width: 576px) {
+    grid-column: span 2;
+  }
 }
 
 .invoice__cost {
@@ -307,11 +311,16 @@ $spacing-md: 8px;
 
   @media (max-width: 576px) {
     text-align: right;
+    grid-column: span 2; 
   }
 }
 
 .invoice__date-item {
   flex: 1 1 0;
+  
+  @media (max-width: 576px) {
+    grid-column: span 1; 
+  }
 }
 
 .invoice__date-item.invoice__dueDate {

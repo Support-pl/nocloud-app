@@ -57,7 +57,10 @@
 
         <template v-if="currentTab === 'Detail'">
           <div style="margin-bottom: 20px">
-            <billing-filters v-model="transactionsFilterData" />
+            <billing-filters 
+              :show-instances-filter="!isMobileScreen"
+              v-model="transactionsFilterData" 
+            />
           </div>
           <div v-if="isLoading" class="loading_container">
             <loading />
@@ -294,11 +297,25 @@ onMounted(() => {
   router.replace({ query: { tab: currentTab.value } });
 
   setCoordY();
+
+  window.addEventListener('resize', handleResize);
 });
 
 onUnmounted(() => {
   sessionStorage.removeItem("invoice");
+
+  window.removeEventListener('resize', handleResize);
 });
+
+const windowWidth = ref(window.innerWidth);
+
+const isMobileScreen = computed(() => {
+  return windowWidth.value <= 768;
+});
+
+const handleResize = () => {
+  windowWidth.value = window.innerWidth;
+};
 
 function setCoordY() {
   setTimeout(() => {
