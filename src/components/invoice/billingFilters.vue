@@ -145,18 +145,6 @@ function applyDateRange(dates) {
   emitChange();
 }
 
-function toggleInstance(uuid) {
-  const index = selectedInstances.value.indexOf(uuid);
-
-  if (index > -1) {
-    selectedInstances.value.splice(index, 1);
-  } else {
-    selectedInstances.value.push(uuid);
-  }
-
-  emitChange();
-}
-
 function disableFutureDates(current) {
   const now = dayjs();
   const yesterday = now.subtract(1, "day");

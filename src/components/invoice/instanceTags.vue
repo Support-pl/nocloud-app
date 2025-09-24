@@ -197,7 +197,6 @@ watch(
   () => props.filterMode,
   (newValue) => {
     if (newValue && selectedInstances.value.length === 0) {
-      selectedInstances.value = [...allInstanceUuids.value];
       emit("update:modelValue", selectedInstances.value);
       emit("selection-change", selectedInstances.value);
     }
