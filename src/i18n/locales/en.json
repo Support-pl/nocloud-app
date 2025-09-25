@@ -256,7 +256,7 @@
     "Payment method": "Payment method",
     "Do you want to defer payment?": "Do you want to defer payment?",
     "Show full list": "Show full list",
-    "pay from balance": "pay from balance",
+    "pay from balance": "Pay from balance",
     "cloudState_StartTime": "Start time",
     "cloud_StartTime": "Start time",
     "cloud_Capacity": "Capacity",
@@ -313,6 +313,19 @@
     "have no": "have no",
     "ip": {
       "none": "none"
+    },
+    "invoices": {
+      "reports": {
+        "title":"Reports",
+        "show_all": "Show all",
+        "last_month": "Last Month",
+        "current_month": "Current Month",
+        "current_year": "Current Year",
+        "service": "Service",
+        "amount": "Amount",
+        "download_full_report": "Download Full Report",
+        "instruction": "📊 **Service Charge Reports**\n\nHere you can view reports on service charges. The data is updated daily and is accurate **up to yesterday**. Charges for the current day are not included."
+      }
     },
     "os": "OS",
     "backup_start": "System restoration from backup has started",
