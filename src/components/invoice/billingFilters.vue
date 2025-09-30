@@ -98,7 +98,7 @@ const showAll = ref(props.modelValue.showAll || false);
 
 const sortedInstances = computed(() => {
   return [...allInstances.value]
-    .filter((instance) => instance?.state?.state === "RUNNING")
+    .filter((instance) => instance?.state?.state !== "DELETED")
     .sort((a, b) => {
       const dateA = new Date(a.created || a.created_at || 0);
       const dateB = new Date(b.created || b.created_at || 0);

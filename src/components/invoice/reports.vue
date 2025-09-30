@@ -23,40 +23,51 @@
       bordered
       :pagination="false"
       style="margin-top: 16px"
+      :loading="isStatisticsDataLoading"
     >
       <template #bodyCell="{ column, text }">
         <template v-if="column.dataIndex === 'amount'">
-          {{ text }} {{ currency.title }}
+          {{ formatPrice(text) }} {{ currency.title }}
         </template>
-      </template>
-
-      <template #footer>
-        <div style="display: flex; justify-content: end">
-          <a-button>{{ t("invoices.reports.download_full_report") }}</a-button>
-        </div>
       </template>
     </a-table>
   </a-space>
 </template>
 
+<!-- <template #footer>
+        <div style="display: flex; justify-content: end">
+          <a-button>{{ t("invoices.reports.download_full_report") }}</a-button>
+        </div>
+      </template> -->
+
 <script setup>
 import { computed, ref } from "vue";
-import { useInstancesStore } from "@/stores/instances";
-import { storeToRefs } from "pinia";
 import { useCurrency } from "@/hooks/utils";
 import { marked } from "marked";
 import { useI18n } from "vue-i18n";
 import BillingFilters from "./billingFilters.vue";
+import api from "@/api";
+import dayjs from "dayjs";
+import { useAuthStore } from "@/stores/auth";
+import { useInstancesStore } from "@/stores/instances";
+import { storeToRefs } from "pinia";
+import { debounce } from "@/functions";
 
+const authStore = useAuthStore();
 const instancesStore = useInstancesStore();
 const { allInstances } = storeToRefs(instancesStore);
-const { currency } = useCurrency();
+const { currency, formatPrice } = useCurrency();
 const { t } = useI18n();
+const statisticsData = ref(null);
+const isStatisticsDataLoading = ref(false);
+
+const lastParams = ref("");
 
 const filterData = ref({
   dateRange: [null, null],
   selectedInstances: [],
   activeFilter: null,
+  showAll: false,
 });
 
 const columns = computed(() => [
@@ -73,23 +84,78 @@ const columns = computed(() => [
   },
 ]);
 
+const aliveInstances = computed(() => allInstances.value);
+
 const reports = computed(() => {
-  return allInstances.value
-    .map((instance) => ({
-      uuid: instance.uuid,
-      title: instance.title,
-      amount: (Math.random() * 1000).toFixed(2),
+  if (
+    statisticsData.value === null ||
+    statisticsData.value.summary === undefined ||
+    statisticsData.value.summary.revenue_by_service === undefined
+  ) {
+    return [];
+  }
+
+  return Object.keys(statisticsData.value.summary.revenue_by_service)
+    .map((key) => ({
+      title: aliveInstances.value.find((instance) => instance.uuid === key)
+        ?.title,
+      amount: statisticsData.value.summary.revenue_by_service[key],
+      uuid: key,
     }))
-    .filter((item) => {
-      const instanceIndex = allInstances.value.findIndex(
-        (inst) => inst.uuid === item.uuid
-      );
-      return filterData.value.selectedInstances[instanceIndex];
-    });
+    .filter((report) => report.title);
 });
 
-function onFilterChange(data) {
-  console.log('Filter changed:', data);
+const fetchStatistics = async () => {
+  try {
+    isStatisticsDataLoading.value = true;
+
+    if (!filterData.value.dateRange[0] || !filterData.value.dateRange[1]) {
+      return;
+    }
+
+    const to = dayjs(filterData.value.dateRange[1]).format("YYYY-MM-DD");
+    const from = dayjs(filterData.value.dateRange[0]).format("YYYY-MM-DD");
+
+    const params = {
+      start_date: from,
+      end_date: to,
+      accounts: [authStore.userdata.uuid]
+        .map((account) => "accounts=" + account)
+        .join("&"),
+      with_details: true,
+      services: (filterData.value.showAll ||
+      filterData.value.selectedInstances.length == 0
+        ? []
+        : filterData.value.selectedInstances
+      )
+        .map((instance) => "services=" + instance)
+        .join("&"),
+    };
+
+    if (lastParams.value === JSON.stringify(params)) {
+      return;
+    }
+
+    const response = await api.get(
+      `statistic/reports?start_date=${params.start_date}&end_date=${
+        params.end_date
+      }&${params.accounts}${
+        params.services.length ? "&" + params.services : ""
+      }`
+    );
+
+    statisticsData.value = response;
+    lastParams.value = JSON.stringify(params);
+  } finally {
+    isStatisticsDataLoading.value = false;
+  }
+};
+
+const fetchStatisticsDebounced = debounce(fetchStatistics, 500);
+
+function onFilterChange() {
+  isStatisticsDataLoading.value = true;
+  fetchStatisticsDebounced();
 }
 </script>
 
