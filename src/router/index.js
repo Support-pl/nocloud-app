@@ -274,6 +274,13 @@ const routes = [
         component: () => import("@/routes/bots/aiBotChats.vue"),
       },
       {
+        path: "ai-bots/:id/webchat",
+        name: "aiBotsWebChat",
+        meta: {
+        },
+        component: () => import("@/routes/bots/aiWebChat.vue"),
+      },
+      {
         path: "/domain/:id",
         name: "openDomain",
         component: () => import("@/routes/domains/openDomain.vue"),

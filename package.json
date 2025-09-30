@@ -34,6 +34,7 @@
     "pinia": "^2.3.1",
     "postcode-validator": "^3.10.5",
     "swagger-ui": "^5.26.2",
+    "uuid": "^13.0.0",
     "vnc-ui-vue": "^1.0.0",
     "vue": "^3.5.17",
     "vue-google-charts": "^1.1.0",
