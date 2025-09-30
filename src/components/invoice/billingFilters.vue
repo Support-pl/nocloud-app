@@ -27,46 +27,39 @@
       </a-button>
 
       <a-range-picker
+        style="min-width: 230px; max-width: 230px"
         v-model:value="dateRange"
         @change="applyDateRange"
         format="YYYY-MM-DD"
         :disabled-date="disableFutureDates"
         class="date-picker"
       />
+
+      <a-checkbox v-model:checked="showAll">
+        {{ t("invoices.reports.show_all") }}
+      </a-checkbox>
     </a-space>
 
-    <!-- Instances Filter -->
     <a-space v-if="showInstancesFilter" class="instances-filter" wrap>
-      <a-button
-        v-for="(instance, index) in allInstances"
-        :key="instance.uuid"
-        class="instance-tag"
-        :type="selectedInstances[index] ? 'primary' : 'default'"
-        @click="toggleInstance(index)"
-      >
-        <div class="instance-content">
-          {{ instance.title }}
-          <plus-icon v-if="!selectedInstances[index]" class="icon" />
-          <minus-icon v-else class="icon" />
-        </div>
-      </a-button>
+      <instance-tags
+        v-model="selectedInstances"
+        :filter-mode="true"
+        :max-visible="sortedInstances.length"
+        @selection-change="emitChange"
+        :max-length="25"
+        size="normal"
+      />
     </a-space>
   </a-space>
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import dayjs from "dayjs";
 import { useInstancesStore } from "@/stores/instances";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
-
-const plusIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/PlusCircleOutlined")
-);
-const minusIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CloseCircleOutlined")
-);
+import InstanceTags from "./instanceTags.vue";
 
 const props = defineProps({
   modelValue: {
@@ -75,6 +68,7 @@ const props = defineProps({
       dateRange: [null, null],
       selectedInstances: [],
       activeFilter: null,
+      showAll: false,
     }),
   },
   showInstancesFilter: {
@@ -83,11 +77,15 @@ const props = defineProps({
   },
   defaultFilter: {
     type: String,
-    default: 'currentMonth',
+    default: "currentMonth",
+  },
+  topInstancesCount: {
+    type: Number,
+    default: 15,
   },
 });
 
-const emit = defineEmits(['update:modelValue', 'filter-change']);
+const emit = defineEmits(["update:modelValue", "filter-change"]);
 
 const instancesStore = useInstancesStore();
 const { allInstances } = storeToRefs(instancesStore);
@@ -96,14 +94,26 @@ const { t } = useI18n();
 const dateRange = ref(props.modelValue.dateRange || [null, null]);
 const activeFilter = ref(props.modelValue.activeFilter || null);
 const selectedInstances = ref(props.modelValue.selectedInstances || []);
+const showAll = ref(props.modelValue.showAll || false);
+
+const sortedInstances = computed(() => {
+  return [...allInstances.value]
+    .filter((instance) => instance?.state?.state === "RUNNING")
+    .sort((a, b) => {
+      const dateA = new Date(a.created || a.created_at || 0);
+      const dateB = new Date(b.created || b.created_at || 0);
+      return dateB - dateA;
+    });
+});
 
 const filterData = computed(() => ({
   dateRange: dateRange.value,
   selectedInstances: selectedInstances.value,
   activeFilter: activeFilter.value,
-  selectedInstancesData: selectedInstances.value
-    .map((selected, index) => selected ? allInstances.value[index] : null)
-    .filter(Boolean),
+  showAll: showAll.value,
+  selectedInstancesData: allInstances.value.filter((instance) =>
+    selectedInstances.value.includes(instance.uuid)
+  ),
 }));
 
 function setQuickFilter(filter) {
@@ -130,15 +140,8 @@ function setQuickFilter(filter) {
 }
 
 function applyDateRange(dates) {
-  if (dates && dates.length === 2) {
-    dateRange.value = dates;
-    activeFilter.value = null;
-    emitChange();
-  }
-}
-
-function toggleInstance(index) {
-  selectedInstances.value[index] = !selectedInstances.value[index];
+  dateRange.value = dates || [null, null];
+  activeFilter.value = null;
   emitChange();
 }
 
@@ -150,38 +153,35 @@ function disableFutureDates(current) {
 
 function emitChange() {
   const data = filterData.value;
-  emit('update:modelValue', data);
-  emit('filter-change', data);
-}
-
-function initializeInstances() {
-  if (allInstances.value.length > 0 && selectedInstances.value.length === 0) {
-    selectedInstances.value = new Array(allInstances.value.length).fill(true);
-    emitChange();
-  }
+  emit("update:modelValue", data);
+  emit("filter-change", data);
 }
 
 onMounted(() => {
   if (props.defaultFilter && !activeFilter.value) {
     setQuickFilter(props.defaultFilter);
   }
-  initializeInstances();
 });
 
-watch(allInstances, (newInstances) => {
-  if (newInstances.length > 0) {
-    selectedInstances.value = new Array(newInstances.length).fill(true);
-    emitChange();
-  }
-}, { immediate: true });
+watch(showAll, () => {
+  emitChange();
+});
 
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    dateRange.value = newValue.dateRange || [null, null];
-    activeFilter.value = newValue.activeFilter || null;
-    selectedInstances.value = newValue.selectedInstances || [];
-  }
-}, { deep: true });
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      dateRange.value = newValue.dateRange || [null, null];
+      activeFilter.value = newValue.activeFilter || null;
+      selectedInstances.value = newValue.selectedInstances || [];
+    }
+  },
+  { deep: true }
+);
+
+watch([dateRange, selectedInstances], () => {
+  showAll.value = false;
+});
 </script>
 
 <script>
@@ -195,7 +195,8 @@ export default { name: "BillingFilters" };
 
 .date-filter {
   width: 100%;
-  
+  align-items: center;
+
   .date-picker {
     flex: 1;
     min-width: 250px;
@@ -219,5 +220,21 @@ export default { name: "BillingFilters" };
 
 .icon {
   font-size: 18px;
+}
+
+.toggle-instances-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 6px;
+  background: var(--component-background, #ffffff);
+
+  &:hover {
+    border-color: var(--primary-color, #1890ff);
+  }
+}
+
+.toggle-icon {
+  font-size: 14px;
+  color: var(--text-color, #000000d9);
 }
 </style>

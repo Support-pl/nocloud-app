@@ -200,10 +200,9 @@ export const useInstancesStore = defineStore("instances", () => {
       try {
         const response = await api.post("/services?show_deleted=true", {
           filters: {
-            accounts: [
-              authStore.userdata.uuid,
-              authStore.userdata.accountOwner,
-            ].filter((v) => !!v),
+            accounts: authStore.userdata.accountOwner
+              ? [authStore.userdata.accountOwner, authStore.userdata.uuid]
+              : undefined,
           },
         });
 

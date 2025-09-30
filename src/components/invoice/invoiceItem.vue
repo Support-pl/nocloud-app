@@ -49,7 +49,11 @@
     </div>
     <div class="invoice__divider" />
     <div class="invoice__footer">
-      <div class="invoice__id">#{{ getInvoiceNumber(invoice) }}</div>
+      <div class="invoice__tags">
+        <div class="invoice__id">#{{ getInvoiceNumber(invoice) }}</div>
+
+        <instance-tags :instances="invoice.instances" />
+      </div>
 
       <div class="invoice__btns">
         <template v-if="invoice.status === 'Unpaid' && !needVerification">
@@ -127,6 +131,7 @@ import config from "@/appconfig.js";
 import { getInvoiceNumber } from "@/functions";
 import api from "@/api";
 import { storeToRefs } from "pinia";
+import InstanceTags from "./instanceTags.vue";
 
 const props = defineProps({
   invoice: { type: Object, required: true },
@@ -285,7 +290,7 @@ $spacing-md: 8px;
 
   @media (max-width: 576px) {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr; 
   }
 }
 
@@ -293,6 +298,10 @@ $spacing-md: 8px;
   margin-right: $spacing-sm;
   margin-top: $spacing-sm;
   color: var(--gray);
+  
+  @media (max-width: 576px) {
+    grid-column: span 2;
+  }
 }
 
 .invoice__cost {
@@ -302,11 +311,16 @@ $spacing-md: 8px;
 
   @media (max-width: 576px) {
     text-align: right;
+    grid-column: span 2; 
   }
 }
 
 .invoice__date-item {
   flex: 1 1 0;
+  
+  @media (max-width: 576px) {
+    grid-column: span 1; 
+  }
 }
 
 .invoice__date-item.invoice__dueDate {
@@ -362,5 +376,12 @@ $spacing-md: 8px;
 
 .invoice__icon {
   margin-top: $spacing-sm;
+}
+
+.invoice__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
 }
 </style>

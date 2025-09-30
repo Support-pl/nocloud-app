@@ -1,14 +1,6 @@
 <template>
   <div class="invoices">
     <div class="container">
-      <a-progress
-        v-if="transactionsStore.isLoading || invoicesStore.isLoading"
-        ref="loading"
-        status="active"
-        :percent="percent"
-        :show-info="false"
-      />
-
       <div ref="wrapper" class="invoices__wrapper">
         <a-radio-group
           v-if="!authStore.billingUser.paid_stop"
@@ -26,7 +18,20 @@
         </a-radio-group>
 
         <template v-if="currentTab === 'Invoice'">
-          <empty v-if="invoices?.length === 0" style="margin: 50px 0" />
+          <div style="margin-bottom: 20px">
+            <billing-filters
+              :show-instances-filter="false"
+              v-model="invoicesFilterData"
+            />
+          </div>
+          <div v-if="isLoading" class="loading_container">
+            <loading />
+          </div>
+          <empty
+            v-else-if="filtredInvoices?.length === 0"
+            style="margin: 50px 0"
+          />
+
           <template v-else>
             <a-card
               v-if="
@@ -51,7 +56,19 @@
         </template>
 
         <template v-if="currentTab === 'Detail'">
-          <empty v-if="transactions?.length === 0" style="margin: 50px 0" />
+          <div style="margin-bottom: 20px">
+            <billing-filters 
+              :show-instances-filter="!isMobileScreen"
+              v-model="transactionsFilterData" 
+            />
+          </div>
+          <div v-if="isLoading" class="loading_container">
+            <loading />
+          </div>
+          <empty
+            v-else-if="transactions?.length === 0"
+            style="margin: 50px 0"
+          />
           <template v-else>
             <transaction-item
               v-for="(invoice, index) in transactions"
@@ -109,6 +126,10 @@ import transactionItem from "@/components/invoice/transactionItem.vue";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
 import { useRoute, useRouter } from "vue-router";
+import BillingFilters from "@/components/invoice/billingFilters.vue";
+import dayjs from "dayjs";
+import { debounce } from "@/functions";
+import Loading from "@/components/ui/loading.vue";
 
 const authStore = useAuthStore();
 const { userdata } = storeToRefs(authStore);
@@ -116,6 +137,7 @@ const invoicesStore = useInvoicesStore();
 const { getInvoices: invoices } = storeToRefs(invoicesStore);
 const transactionsStore = useTransactionsStore();
 const instancesStore = useInstancesStore();
+const { getInstances: instances } = storeToRefs(instancesStore);
 const chatsStore = useChatsStore();
 const { openNotification } = useNotification();
 const router = useRouter();
@@ -128,6 +150,8 @@ const percent = ref(0);
 const wrapper = ref(null);
 const loading = ref(null);
 
+const lastTransactionsFilter = ref({});
+
 const transactions = computed(() => {
   const result = transactionsStore.filteredTransactions;
 
@@ -138,10 +162,22 @@ const transactions = computed(() => {
 const transactionsCurrentPage = computed(() => transactionsStore.page);
 const transactionsPageSize = computed(() => transactionsStore.size);
 const transactionsTotalSize = computed(() => transactionsStore.total);
+const transactionsFilterData = ref({
+  dateRange: [null, null],
+  selectedInstances: [],
+  activeFilter: null,
+  showAll: false,
+});
 
-const invoicesTotalSize = computed(() => invoices.value?.length || 0);
+const invoicesTotalSize = computed(() => filtredInvoices.value?.length || 0);
 const invoicesCurrentPage = ref(1);
 const invoicesPageSize = ref(10);
+const invoicesFilterData = ref({
+  dateRange: [null, null],
+  selectedInstances: [],
+  activeFilter: null,
+  showAll: false,
+});
 
 const radioGroupWidth = computed(() =>
   config.whmcsActs ? "calc(100% / 3)" : "calc(100% / 2)"
@@ -159,13 +195,39 @@ const tabs = computed(() => {
   return baseTabs;
 });
 
+const filtredInvoices = computed(() => {
+  if (invoicesFilterData.value.showAll) {
+    return invoices.value;
+  }
+
+  return invoices.value.filter((invoice) => {
+    const { dateRange } = invoicesFilterData.value;
+    let pass = true;
+
+    if (dateRange?.[0] && dateRange?.[1]) {
+      const invoiceDate = dayjs(invoice.created);
+
+      pass =
+        pass &&
+        invoiceDate.isAfter(dayjs(dateRange[0]).subtract(1, "day")) &&
+        invoiceDate.isBefore(dayjs(dateRange[1]).add(1, "day"));
+    }
+
+    return pass;
+  });
+});
+
 const currentInvoices = computed(() => {
-  if (!invoices.value) return [];
+  if (!filtredInvoices.value) return [];
   const start = (invoicesCurrentPage.value - 1) * invoicesPageSize.value;
   const end = start + invoicesPageSize.value;
 
-  return invoices.value.slice(start, end);
+  return filtredInvoices.value.slice(start, end);
 });
+
+const isLoading = computed(
+  () => transactionsStore.isLoading || invoicesStore.isLoading
+);
 
 watch(currentTab, () => {
   transactionsStore.tab = currentTab.value;
@@ -235,11 +297,25 @@ onMounted(() => {
   router.replace({ query: { tab: currentTab.value } });
 
   setCoordY();
+
+  window.addEventListener('resize', handleResize);
 });
 
 onUnmounted(() => {
   sessionStorage.removeItem("invoice");
+
+  window.removeEventListener('resize', handleResize);
 });
+
+const windowWidth = ref(window.innerWidth);
+
+const isMobileScreen = computed(() => {
+  return windowWidth.value <= 768;
+});
+
+const handleResize = () => {
+  windowWidth.value = window.innerWidth;
+};
 
 function setCoordY() {
   setTimeout(() => {
@@ -295,15 +371,6 @@ function transactionsOnShowSizeChange(page, limit) {
     transactionsStore.size = limit;
   }
 
-  transactionsStore.fetch({
-    page,
-    limit,
-    account: userdata.value.uuid,
-    field: "exec",
-    sort: "desc",
-    type: "transaction",
-  });
-
   localStorage.setItem(
     "transactionsPagination",
     JSON.stringify({ page, limit })
@@ -325,9 +392,64 @@ async function fetchInstances() {
     const message = error.response?.data?.message ?? error.message ?? error;
 
     openNotification("error", { message });
-    console.error(error);
   }
 }
+
+const fetchTransactions = () => {
+  const executed = {};
+
+  if (
+    transactionsFilterData.value.dateRange?.[0] &&
+    transactionsFilterData.value.dateRange?.[1] &&
+    !transactionsFilterData.value.showAll
+  ) {
+    const to = dayjs(transactionsFilterData.value.dateRange[1]).unix();
+    const from = dayjs(transactionsFilterData.value.dateRange[0]).unix();
+
+    executed.to = to;
+    executed.from = from;
+  }
+
+  const filters = {
+    exec: Object.keys(executed).length ? executed : undefined,
+    instance:
+      transactionsFilterData.value.selectedInstances.length > 0 &&
+      !transactionsFilterData.value.showAll
+        ? transactionsFilterData.value.selectedInstances
+        : undefined,
+  };
+
+  if (JSON.stringify(filters) !== lastTransactionsFilter.value) {
+    transactionsCurrentPage.value = 1;
+    transactionsStore.fetchCount({
+      account: userdata.value.uuid,
+      type: "transaction",
+      filters,
+    });
+  }
+
+  transactionsStore.fetch({
+    page: transactionsCurrentPage.value,
+    limit: transactionsPageSize.value,
+    account: userdata.value.uuid,
+    filters,
+    field: "exec",
+    sort: "desc",
+    type: "transaction",
+  });
+
+  lastTransactionsFilter.value = JSON.stringify(filters);
+};
+
+const fetchTransactionsDebounced = debounce(fetchTransactions, 300);
+
+watch(
+  [transactionsCurrentPage, transactionsPageSize, transactionsFilterData],
+  () => {
+    fetchTransactionsDebounced();
+  },
+  { deep: true }
+);
 
 fetchInstances();
 </script>
@@ -370,6 +492,14 @@ export default { name: "InvoicesView" };
 
 .invoices__wrapper :deep(.ant-radio-button-wrapper:not(:first-child)::before) {
   background-color: var(--border_color);
+}
+
+.loading_container {
+  min-height: 50vh;
+  display: flex;
+  align-content: center;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled){

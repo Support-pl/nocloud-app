@@ -57,20 +57,6 @@ export const useTransactionsStore = defineStore("transactions", () => {
     setAll,
 
     async fetch(params, force) {
-      const records = [];
-
-      if (force) allTransactions.value = {};
-      for (let i = (params.limit / 5) * params.page; i >= params.page; i--) {
-        if (!allTransactions.value[i]) break;
-
-        records.push(...allTransactions.value[i]);
-      }
-
-      if (records.length > 0) {
-        transactions.value = records;
-        return { records };
-      }
-
       params.account = authStore.userdata.accountOwner
         ? [authStore.userdata.uuid, authStore.userdata.accountOwner].join(",")
         : authStore.userdata.uuid;
