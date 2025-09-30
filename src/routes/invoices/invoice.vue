@@ -78,8 +78,8 @@
           </template>
         </template>
 
-        <template v-if="currentTab === 'Acts'">
-          <acts-list />
+        <template v-if="currentTab === 'Reports'">
+          <reports />
         </template>
 
         <a-pagination
@@ -119,11 +119,10 @@ import { useAuthStore } from "@/stores/auth.js";
 import { useInvoicesStore } from "@/stores/invoices.js";
 import { useTransactionsStore } from "@/stores/transactions.js";
 import { useInstancesStore } from "@/stores/instances.js";
-
+import Reports from "@/components/invoice/reports.vue";
 import empty from "@/components/ui/empty.vue";
 import invoiceItem from "@/components/invoice/invoiceItem.vue";
 import transactionItem from "@/components/invoice/transactionItem.vue";
-import actsList from "@/components/invoice/actsList.vue";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
 import { useRoute, useRouter } from "vue-router";
@@ -188,10 +187,11 @@ const tabs = computed(() => {
   const baseTabs = [
     { label: "Invoices", value: "Invoice" },
     { label: "Transactions", value: "Detail" },
+    { label: "invoices.reports.title", value: "Reports" },
   ];
-  if (config.whmcsActs) {
-    baseTabs.push({ label: "Acts", value: "Acts" });
-  }
+  // if (config.whmcsActs) {
+  //   baseTabs.push({ label: "Acts", value: "Acts" });
+  // }
   return baseTabs;
 });
 
