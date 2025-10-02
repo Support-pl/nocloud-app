@@ -17,6 +17,7 @@
     />
 
     <a-table
+      size="small"
       :columns="columns"
       :data-source="reports"
       row-key="uuid"
@@ -94,8 +95,7 @@ const reports = computed(() => {
   ) {
     return [];
   }
-
-  return Object.keys(statisticsData.value.summary.revenue_by_service)
+  const reports = Object.keys(statisticsData.value.summary.revenue_by_service)
     .map((key) => ({
       title: aliveInstances.value.find((instance) => instance.uuid === key)
         ?.title,
@@ -103,6 +103,14 @@ const reports = computed(() => {
       uuid: key,
     }))
     .filter((report) => report.title);
+
+  reports.push({
+    title: t("invoices.reports.total"),
+    amount: reports.reduce((acc, report) => acc + report.amount, 0),
+    uuid: "total",
+  });
+
+  return reports;
 });
 
 const fetchStatistics = async () => {
