@@ -6,15 +6,21 @@
     </template>
 
     <template v-else>
-      <chat-header
-        v-if="!isLoading && chat"
-        style="margin: 10px auto 0"
-        :chat="chat"
-        :bot="bot"
-      />
-      <div v-else />
+      <div />
 
       <div ref="content" class="chat__content">
+        <!-- Welcome message when no messages -->
+        <div v-if="messages.length === 0" class="welcome-message">
+          <div class="welcome-message__content">
+            <h2 class="welcome-message__title">{{ $t('Support') }}</h2>
+            <p class="welcome-message__text">
+              {{ $t('Write your question below and we will try to help you as quickly as possible.') }}
+            </p>
+            <div class="welcome-message__icon">💬</div>
+          </div>
+        </div>
+
+        <!-- Chat messages -->
         <template v-for="(reply, i) in messages" :key="i">
           <span v-if="isDateVisible(messages, i)" class="chat__date">
             {{ reply.created_at.split("T")[0] }}
@@ -26,22 +32,33 @@
               isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
             ]"
           >
-            <pre>
-              <message-content :uuid="reply.id" :message="reply.body"/>
-               <audio-player
-                v-if="reply.attachments?.length===1 &&['audio/mp3','audio/mpeg','audio/wav'].includes(reply.attachments[0]?.mime_type) "
+            <div class="chat__message-content">
+              <message-content :uuid="reply.id" :message="reply.body" />
+              <audio-player
+                v-if="
+                  reply.attachments?.length === 1 &&
+                  ['audio/mp3', 'audio/mpeg', 'audio/wav'].includes(
+                    reply.attachments[0]?.mime_type
+                  )
+                "
                 :url="reply.attachments[0]?.storage_url"
                 :name="reply.attachments[0]?.filename"
               />
-             <message-files v-else :files="(reply.attachments || []).map(r=>({url:r.storage_url,name:r.filename}))"/>
-              
-            </pre>
+              <message-files
+                v-else
+                :files="
+                  (reply.attachments || []).map((r) => ({
+                    url: r.storage_url,
+                    name: r.filename,
+                  }))
+                "
+              />
+            </div>
 
             <div class="chat__info">
               <span>{{
-                chatParticipants[chat.id]?.find(
-                  (p) => p.ext_id === reply.sender_ext_id
-                )?.name
+                chatParticipants?.find((p) => p.ext_id === reply.sender_ext_id)
+                  ?.name
               }}</span>
               <span>{{ getMessageTime(reply) }}</span>
             </div>
@@ -65,31 +82,35 @@
       </div>
     </template>
 
-    <chat-footer ref="footer" v-model:messages="messages" :chat="chat" />
+    <div ref="footer" style="padding-bottom: 10px">
+      <send-input
+        :send-loading="isSendMessageLoading"
+        :message="message"
+        @update:message="message = $event"
+        :replies="messages"
+        @send-message="sendChatMessage"
+        :file-list="fileList"
+        @update:filelist="fileList = $event"
+        ref="sendinput"
+        style="width: 100%"
+        class="send_input"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
 import "highlight.js/styles/base16/classic-light.css";
 import { v4 as uuidv4 } from "uuid";
-import {
-  defineAsyncComponent,
-  nextTick,
-  ref,
-  computed,
-  watch,
-  toRefs,
-} from "vue";
+import { defineAsyncComponent, nextTick, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useChatsStore } from "@/stores/chats.js";
 import loading from "@/components/ui/loading.vue";
-import { useAiBotsStore } from "@/stores/aiBots";
-import ChatHeader from "@/components/services/bots/chatHeader.vue";
-import ChatFooter from "@/components/services/bots/chatFooter.vue";
-import { debounce, getCookie, setCookie } from "@/functions";
+import { getCookie, setCookie } from "@/functions";
 import AudioPlayer from "@/components/chats/audio-player.vue";
 import MessageContent from "@/components/chats/messageContent.vue";
 import MessageFiles from "@/components/chats/messageFiles.vue";
+import useNotification from "ant-design-vue/es/notification/useNotification";
+import SendInput from "@/components/chats/sendInput.vue";
 
 const exclamationIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ExclamationCircleOutlined")
@@ -103,25 +124,23 @@ const USER_UUID_COOKIE_NAME = "web_chat_user_uuid";
 
 const route = useRoute();
 const router = useRouter();
+const { openNotification } = useNotification();
+
 router.replace({ query: { ...route.query, fullscreen: true } });
 
-const chatsStore = useChatsStore();
-
-const aiBotsStore = useAiBotsStore();
-const { bots, chatParticipants } = toRefs(aiBotsStore);
+const chatParticipants = ref([{ ext_id: 0, name: "Admin" }]);
 
 const messages = ref([]);
 
 const isLoading = ref(false);
-const chatId = ref(route.params.chatId);
-const botId = ref(route.params.id);
-const chatPaddingTop = ref("15px");
+const chat = ref();
 
 const content = ref();
 const footer = ref();
 
-const chat = computed(() => undefined);
-const bot = computed(() => bots.value.get(botId.value));
+const message = ref("");
+const isSendMessageLoading = ref(false);
+const fileList = ref([]);
 
 watch(
   messages,
@@ -143,34 +162,29 @@ async function fetchData() {
     return fetchData();
   }
 
-  console.log(uuid);
-
   isLoading.value = true;
   try {
-    console.log("fetching bot details");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const data = { user_uuid: uuid, bot_id: route.params.id };
+    console.log("fetching bot details", data);
+
+    chat.value = data;
+    chatParticipants.value.push({ ext_id: uuid, name: "You" });
+
+    await loadMessages(true);
   } catch (error) {
     console.error(error);
+  } finally {
+    isLoading.value = false;
   }
-
-  await loadMessages(true);
-
-  isLoading.value = false;
 }
 
 fetchData();
 
 function scrollDown() {
   content.value?.scrollTo(0, content.value?.scrollHeight);
-  readLastMessageDebounced();
 }
-
-function readLastMessage() {
-  if (messages.value[messages.value.length - 1]) {
-    aiBotsStore.readMessage(messages.value[messages.value.length - 1]);
-  }
-}
-
-const readLastMessageDebounced = debounce(readLastMessage, 250);
 
 function isAdminSent(reply) {
   return reply.sender_role === 1;
@@ -195,24 +209,63 @@ function isDateVisible(replies, i) {
 }
 
 async function loadMessages() {
-  if (!chatId.value) {
+  messages.value = [];
+  nextTick(() => {
+    scrollDown();
+  });
+}
+
+async function sendChatMessage() {
+  await nextTick();
+
+  const files = fileList.value;
+
+  const result = message.value.trim();
+  if (result.length < 1 && !files.length) {
     return;
   }
 
-  isLoading.value = true;
+  isSendMessageLoading.value = true;
+
   try {
-    const response = await aiBotsStore.fetchChatsMessages(chatId.value);
+    const data = {
+      text: result,
+      files: files.map((f) => ({
+        data: f.preview,
+        filename: f.name,
+      })),
+    };
 
-    messages.value = response ?? [];
-  } finally {
-    nextTick(() => {
-      scrollDown();
+    data.created_at = new Date().toISOString();
+    console.log(data);
+    messages.value.push({
+      id: uuidv4(),
+      body: result,
+      sender_role: 2,
+      sender_ext_id: chat.value.user_uuid,
+      created_at: data.created_at,
     });
-    isLoading.value = false;
 
-    if (chatsStore.chats.get(chatId.value)) {
-      chatsStore.chats.get(chatId.value).meta.unread = 0;
-    }
+    setTimeout(() => {
+      messages.value.push({
+        id: uuidv4(),
+        body: "This is a simulated response from the admin.",
+        sender_role: 1,
+        sender_ext_id: 0,
+        created_at: new Date().toISOString(),
+      });
+    }, 1000);
+  } catch (err) {
+    const opts = {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    };
+    openNotification("error", opts);
+  } finally {
+    isSendMessageLoading.value = false;
+    message.value = "";
+    fileList.value = [];
   }
 }
 
@@ -238,23 +291,26 @@ export default { name: "AiBotChat" };
   grid-template-columns: 1fr;
   grid-template-rows: auto 1fr auto;
   justify-content: center;
-  gap: 10px;
+  gap: clamp(5px, 2vw, 10px);
   height: 100%;
+  min-height: 300px;
+  padding: clamp(8px, 2vw, 16px);
   background: var(--bright_bg);
+  overflow: hidden;
 }
 
 .chat__content {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-
   width: 100%;
   height: 100%;
-  padding: v-bind("chatPaddingTop") 15px 6px;
-
+  min-height: 200px;
+  padding: clamp(10px, 3vw, 18px) clamp(10px, 3vw, 18px) 8px;
   border: 1px solid var(--border_color);
-  border-radius: 6px;
-  overflow: auto;
+  border-radius: clamp(4px, 1vw, 6px);
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--bright_font);
 }
 
@@ -271,49 +327,61 @@ export default { name: "AiBotChat" };
 .chat__message {
   background: #dcfdbe;
   font-weight: 500;
-  padding: 5px 7px;
-  border-radius: 5px;
+  padding: clamp(2px, 0.5vw, 4px) clamp(4px, 1vw, 6px);
+  border-radius: clamp(4px, 1vw, 5px);
   box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.07);
   position: relative;
   width: max-content;
-  max-width: 80%;
-  word-wrap: wrap;
-  margin-bottom: 10px;
+  max-width: min(80%, 400px);
+  min-width: min(120px, 30%);
+  word-wrap: break-word;
+  margin-bottom: clamp(10px, 0.8vw, 5px);
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
-.chat__message pre {
-  font-size: 14px;
-  white-space: collapse;
+.chat__message-content {
+  font-size: clamp(12px, 3vw, 14px);
+  white-space: pre-wrap;
   word-break: break-word;
+  margin: 0;
+  font-family: inherit;
+  line-height: 1.3;
+  width: max-content;
+  max-width: 100%;
 }
 
-.chat__message pre img {
-  width: 100%;
+.chat__message-content img {
+  max-width: 100%;
+  height: auto;
 }
 
 .chat__date {
-  padding: 7px 15px;
-  margin: 10px auto 15px;
+  padding: clamp(6px, 2vw, 8px) clamp(12px, 4vw, 16px);
+  margin: clamp(8px, 2vw, 12px) auto clamp(10px, 3vw, 16px);
   text-align: center;
-  border-radius: 7px;
+  border-radius: clamp(4px, 1.5vw, 7px);
   line-height: 1;
   color: var(--gloomy_font);
   background: var(--main);
+  font-size: clamp(11px, 2.5vw, 13px);
 }
 
 .chat__info {
   display: flex;
   justify-content: space-between;
-  gap: 6px;
-  font-size: 12px;
+  gap: clamp(4px, 1.5vw, 6px);
+  font-size: clamp(10px, 2.5vw, 12px);
   color: var(--gray);
+  margin-top: 4px;
+  padding-top: 2px;
 }
 
 .msgStatus {
   position: absolute;
   bottom: 5px;
-  left: -20px;
-  font-size: 14px;
+  left: clamp(-15px, -4vw, -20px);
+  font-size: clamp(12px, 3vw, 14px);
   height: auto;
 }
 
@@ -321,23 +389,26 @@ export default { name: "AiBotChat" };
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: clamp(12px, 5vw, 24px);
 }
+
 .no_chats_compact span {
   margin-top: 10vh;
-  font-size: 1rem;
+  font-size: clamp(14px, 4vw, 16px);
   font-weight: 600;
+  text-align: center;
 }
 
 .ant-radio-button-wrapper {
-  padding-inline: 8px;
+  padding-inline: clamp(8px, 2vw, 12px);
 }
 
 .msgStatus.error {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 20px;
-  height: 20px;
+  width: clamp(16px, 4vw, 20px);
+  height: clamp(16px, 4vw, 20px);
   border-radius: 50%;
   background: var(--err);
   color: var(--gloomy_font);
@@ -350,8 +421,8 @@ export default { name: "AiBotChat" };
   display: block;
   position: absolute;
   bottom: 0;
-  border: 9px solid transparent;
-  border-bottom: 10px solid #dcfdbe;
+  border: clamp(6px, 2vw, 9px) solid transparent;
+  border-bottom: clamp(8px, 2.5vw, 10px) solid #dcfdbe;
 }
 
 .chat__message--out {
@@ -377,27 +448,217 @@ export default { name: "AiBotChat" };
 
 .popover-link {
   display: block;
+  font-size: clamp(12px, 3vw, 14px);
+  padding: 2px 0;
 }
 
+/* Welcome message styles */
+.welcome-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: clamp(20px, 5vw, 40px);
+}
+
+.welcome-message__content {
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+}
+
+.welcome-message__title {
+  font-size: clamp(18px, 4vw, 24px);
+  font-weight: 600;
+  color: var(--main);
+  margin: 0 0 clamp(12px, 3vw, 20px) 0;
+  line-height: 1.3;
+}
+
+.welcome-message__text {
+  font-size: clamp(14px, 3.5vw, 16px);
+  color: var(--gray);
+  line-height: 1.5;
+  margin: 0 0 clamp(16px, 4vw, 24px) 0;
+}
+
+.welcome-message__icon {
+  font-size: clamp(32px, 8vw, 48px);
+  opacity: 0.7;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Media queries for welcome message */
+@media (max-width: 768px) {
+  .welcome-message {
+    padding: clamp(15px, 4vw, 25px);
+  }
+  
+  .welcome-message__content {
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 320px) {
+  .welcome-message {
+    padding: 10px;
+  }
+  
+  .welcome-message__title {
+    font-size: 16px;
+  }
+  
+  .welcome-message__text {
+    font-size: 13px;
+  }
+  
+  .welcome-message__icon {
+    font-size: 28px;
+  }
+}
+
+/* Container queries for very small containers */
+@container (max-width: 400px) {
+  .chat {
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .chat__content {
+    padding: 8px;
+    border-radius: 4px;
+  }
+
+  .chat__message {
+    max-width: 90%;
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  .chat__date {
+    padding: 5px 8px;
+    margin: 5px auto 8px;
+  }
+}
+
+/* Container queries for extremely small containers */
+@container (max-width: 300px) {
+  .chat {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .chat__content {
+    padding: 6px;
+    border-radius: 2px;
+  }
+
+  .chat__message {
+    max-width: 95%;
+    padding: 4px 6px;
+    margin-bottom: 6px;
+    min-width: 80px;
+  }
+
+  .chat__info {
+    font-size: 9px;
+    gap: 3px;
+    margin-top: 2px;
+  }
+}
+
+/* Media queries for extremely small screens */
+@media (max-width: 320px) {
+  .chat {
+    gap: 3px;
+    padding: 4px;
+  }
+
+  .chat__content {
+    padding: 6px;
+    border: none;
+    border-radius: 0;
+  }
+
+  .chat__message {
+    padding: 4px 6px;
+    margin-bottom: 6px;
+    max-width: 95%;
+    min-width: 80px;
+  }
+
+  .chat__message pre {
+    font-size: 11px;
+  }
+
+  .chat__info {
+    font-size: 9px;
+    gap: 3px;
+  }
+
+  .msgStatus {
+    left: -12px;
+    font-size: 10px;
+  }
+}
+
+/* For large screens - limit maximum width */
+@media (min-width: 1200px) {
+  .chat {
+    max-width: 100%;
+    padding: 16px 20px;
+  }
+
+  .chat__message {
+    max-width: 70%;
+  }
+}
+
+/* Fullscreen mode */
+@media (min-width: 768px) {
+  .chat__content {
+    margin: 0;
+  }
+}
+
+/* Mobile devices */
 @media (max-width: 768px) {
   .chat {
     grid-template-columns: 1fr;
+    height: 100%;
+    padding: 8px;
   }
 
   .chat__content {
     margin: 0;
     border: 0;
     border-radius: 0;
+    padding: 10px 8px 6px;
   }
 
-  .chat__footer {
-    grid-column: 1;
-    padding: 0 10px 10px;
+  .chat__message {
+    max-width: 85%;
   }
 }
 
 .count-tag {
-  font-size: 12px;
+  font-size: clamp(10px, 2.5vw, 12px);
   color: #999;
+}
+
+/* Add container queries for modern browsers */
+@supports (container-type: inline-size) {
+  .chat {
+    container-type: inline-size;
+  }
 }
 </style>
