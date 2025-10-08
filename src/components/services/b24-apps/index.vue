@@ -6,6 +6,7 @@
           style="display: flex; justify-content: center; align-items: center"
         >
           <a-carousel
+            ref="carousel"
             style="max-width: 60vw; max-height: 40vh"
             arrows
             dots-class="slick-dots slick-thumb"
@@ -104,7 +105,7 @@
           <h2>{{ currentProduct.title }}</h2>
         </a-row>
 
-        <a-row style="width: 100%" v-if="showcase.meta?.type === 'ssl'">
+        <a-row style="width: 100%">
           <a-col :span="24">
             <a-form-item
               :help="domainError ? $t('domain is wrong') : ''"
@@ -112,7 +113,7 @@
               :validate-status="domainError ? 'error' : ''"
             >
               <a-input
-                v-model:value="domain"
+                v-model:value="options.domain"
                 :placeholder="$t('ssl_product.domain')"
                 @blur="validateDomain"
               />
@@ -239,18 +240,21 @@ const { getPeriod } = usePeriod();
 
 const { serviceId } = useServiceId("empty");
 
+const carousel = ref(null);
+
 const plan = ref(null);
 const planWithApplyedPromocode = ref(null);
 const provider = ref(null);
 const promocode = ref(null);
 const fetchLoading = ref(false);
-const options = ref({ size: "", period: "", addons: [] });
+const options = ref({ size: "", period: "", addons: [], domain: "" });
 const modal = ref({ confirmCreate: false, confirmLoading: false });
 const products = ref({});
 const sizes = ref([]);
 const cachedPlans = ref({});
 const currentSelectedIndex = ref(0);
 const periods = ref([]);
+const domainError = ref(false);
 
 function onCreated() {
   fetchLoading.value = true;
@@ -273,6 +277,15 @@ function onCreated() {
     notification.openNotification("error", { message: t(message) });
     console.error(err);
   });
+
+  if (route.query.domain) {
+    options.value.domain = route.query.domain;
+    validateDomain();
+  }
+
+  if (route.query.product) {
+    options.value.size = route.query.product;
+  }
 }
 
 onCreated();
@@ -295,6 +308,25 @@ const changePeriods = (key) => {
   }
 };
 
+function validateDomain() {
+  const domain = options.value.domain?.trim();
+
+  if (!domain) {
+    domainError.value = true;
+    return;
+  }
+
+  const cleanDomain = domain.replace(/^https?:\/\//, "");
+
+  const domainOnly = cleanDomain.split("/")[0];
+
+  const domainPattern =
+    /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.(?:[a-zA-Z0-9-]{1,63}(?<!-)\.)*[a-zA-Z]{2,}$/;
+
+  domainError.value = !domainPattern.test(domainOnly);
+  options.value.domain = domainOnly;
+}
+
 function getProduct(products, options) {
   if (Object.keys(products).length === 0) return "NAN";
   const { title } = products[options.size];
@@ -313,15 +345,6 @@ function getProduct(products, options) {
       if (!addon) return sum;
       return sum + addon.price * (period >= 1 ? period : 1 / period);
     }, 0);
-  console.log(
-    product,
-    products,
-    title,
-    options.period,
-    product.price,
-    price,
-    formatPrice(price)
-  );
 
   const description =
     descriptionsStore.cachedADescriptions[product.descriptionId]?.text ||
@@ -442,10 +465,13 @@ const orderClickHandler = () => {
 
   const instance = {
     config: { auto_start: fullPlan.meta.auto_start },
-    resources: resources.reduce((result, { key, title }) => {
-      result[key] = title;
-      return result;
-    }),
+    resources: resources.reduce(
+      (result, { key, title }) => {
+        result[key] = title;
+        return result;
+      },
+      { domain: options.value.domain }
+    ),
     title: currentProduct.value.title,
     billing_plan: fullPlan,
     product: options.value.size,
@@ -492,6 +518,9 @@ const createVirtual = async (instance) => {
   }
 };
 const orderConfirm = () => {
+  validateDomain();
+  if (domainError.value) return;
+
   const instance = {
     config: {},
     billingPlan: plans.value.find(({ uuid }) => uuid === plan.value),
@@ -540,14 +569,20 @@ const fetchPlans = async (provider) => {
       const { action } = onLogin.value;
       if (typeof action !== "function") return;
 
-      const oldOptions = action();
+      const oldOptions = action()
 
       plan.value = oldOptions.plan;
 
       options.value.size = oldOptions.size;
       options.value.addons = oldOptions.addons;
       options.value.period = oldOptions.period;
-
+      options.value.domain = oldOptions.domain;
+      const indexOfProduct = sizes.value.findIndex(
+        (size) => size.keys[options.value.period] === options.value.size
+      );
+      if (indexOfProduct !== -1) {
+        carousel.value.goTo(indexOfProduct, false);
+      }
       onLogin.value = {};
     }, 1000);
   }
@@ -560,7 +595,20 @@ watch([provider, currency], () => {
   fetchPlans(provider.value);
 });
 
-watch([sizes, currentSelectedIndex], () => {
+watch([sizes, currentSelectedIndex], (newVal, prevVal) => {
+  if (prevVal[0].length === 0 && options.value.size) {
+    changePeriods();
+    const indexOfProduct = sizes.value.findIndex(
+      (size) => size.keys[options.value.period] === options.value.size
+    );
+    if (indexOfProduct !== -1) {
+      setTimeout(() => {
+        carousel.value.goTo(indexOfProduct, false);
+      }, 100);
+
+      return;
+    }
+  }
   const { keys } = sizes.value?.at(currentSelectedIndex.value) ?? {};
 
   if (keys && options.value.period) {
@@ -568,8 +616,6 @@ watch([sizes, currentSelectedIndex], () => {
   } else if (keys) {
     options.value.size = Object.values(keys)[0];
   }
-
-  console.log(options.value.size, sizes.value.at(currentSelectedIndex.value));
 });
 
 watch(
@@ -751,7 +797,7 @@ export default {
   position: absolute;
   right: 200px;
 
-  min-width: 250px;
+  min-width: 350px;
 }
 
 @media (max-width: 576px) {
