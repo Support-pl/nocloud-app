@@ -83,6 +83,10 @@ const props = defineProps({
     type: Number,
     default: 15,
   },
+  todayMaximum: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["update:modelValue", "filter-change"]);
@@ -118,11 +122,19 @@ const filterData = computed(() => ({
 
 function setQuickFilter(filter) {
   const now = dayjs();
+
   const yesterday = now.subtract(1, "day");
+  const endOfMonth = now.add(1, "month").startOf("month");
+
+  let endDate = endOfMonth;
+
+  if (props.todayMaximum) {
+    endDate = yesterday;
+  }
 
   switch (filter) {
     case "currentMonth":
-      dateRange.value = [now.startOf("month"), yesterday];
+      dateRange.value = [now.startOf("month"), endDate];
       break;
     case "lastMonth":
       dateRange.value = [
@@ -131,7 +143,7 @@ function setQuickFilter(filter) {
       ];
       break;
     case "currentYear":
-      dateRange.value = [now.startOf("year"), yesterday];
+      dateRange.value = [now.startOf("year"), endDate];
       break;
   }
 
@@ -147,8 +159,14 @@ function applyDateRange(dates) {
 
 function disableFutureDates(current) {
   const now = dayjs();
-  const yesterday = now.subtract(1, "day");
-  return current && current > yesterday;
+  if (props.todayMaximum) {
+    const yesterday = now.subtract(1, "day");
+
+    return current && current > yesterday;
+  }
+  const endOfMonth = now.add(1, "month").startOf("month");
+
+  return current && current > endOfMonth;
 }
 
 function emitChange() {
