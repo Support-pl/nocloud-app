@@ -10,6 +10,7 @@
     </a-card>
 
     <billing-filters
+      today-maximum
       v-model="filterData"
       :show-instances-filter="true"
       default-filter="currentMonth"
