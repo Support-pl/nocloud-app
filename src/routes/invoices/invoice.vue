@@ -189,7 +189,7 @@ const invoicesFilterData = ref({
 });
 
 const radioGroupWidth = computed(() =>
-  config.whmcsActs ? "calc(100% / 3)" : "calc(100% / 2)"
+  config.whmcsActs ? "calc(100% / 4)" : "calc(100% / 3)"
 );
 
 const tabs = computed(() => {
