@@ -15,6 +15,10 @@
           >
             {{ $t(tab.label) }}
           </a-radio-button>
+
+          <a-radio-button v-if="config.whmcsActs" value="Acts">
+            {{ $t("Acts") }}
+          </a-radio-button>
         </a-radio-group>
 
         <template v-if="currentTab === 'Invoice'">
@@ -57,9 +61,9 @@
 
         <template v-if="currentTab === 'Detail'">
           <div style="margin-bottom: 20px">
-            <billing-filters 
+            <billing-filters
               :show-instances-filter="!isMobileScreen"
-              v-model="transactionsFilterData" 
+              v-model="transactionsFilterData"
             />
           </div>
           <div v-if="isLoading" class="loading_container">
@@ -80,6 +84,10 @@
 
         <template v-if="currentTab === 'Reports'">
           <reports />
+        </template>
+
+        <template v-if="currentTab === 'Acts'">
+          <acts-list />
         </template>
 
         <a-pagination
@@ -130,6 +138,7 @@ import BillingFilters from "@/components/invoice/billingFilters.vue";
 import dayjs from "dayjs";
 import { debounce } from "@/functions";
 import Loading from "@/components/ui/loading.vue";
+import actsList from "@/components/invoice/actsList.vue";
 
 const authStore = useAuthStore();
 const { userdata } = storeToRefs(authStore);
@@ -298,13 +307,13 @@ onMounted(() => {
 
   setCoordY();
 
-  window.addEventListener('resize', handleResize);
+  window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
   sessionStorage.removeItem("invoice");
 
-  window.removeEventListener('resize', handleResize);
+  window.removeEventListener("resize", handleResize);
 });
 
 const windowWidth = ref(window.innerWidth);
