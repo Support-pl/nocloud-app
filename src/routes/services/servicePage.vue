@@ -614,7 +614,7 @@ const updateInstanceDomain = async () => {
     const instance = {
       uuid: service.value.uuid,
       billingPlan: service.value.billingPlan,
-      resources: { ...service.value.resources, domain: service.value.domain },
+      resources: { ...service.value.resources, bitrix_domain: service.value.bitrix_domain },
     };
 
     await instancesStore.updateInstance(instance);

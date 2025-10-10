@@ -470,7 +470,7 @@ const orderClickHandler = () => {
         result[key] = title;
         return result;
       },
-      { domain: options.value.domain }
+      { bitrix_domain: options.value.domain }
     ),
     title: currentProduct.value.title,
     billing_plan: fullPlan,
