@@ -12,7 +12,10 @@
             </div> -->
           </div>
 
-          <div v-if="service.domain" class="service-page__info">
+          <div
+            v-if="service.domain && service.groupname !== 'b24-apps'"
+            class="service-page__info"
+          >
             <div class="service-page__info-title">
               {{
                 /^[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i.test(service.domain)
@@ -20,6 +23,37 @@
                   : capitalize(t("key"))
               }}:
               <span style="font-weight: 400">{{ service.domain }}</span>
+            </div>
+          </div>
+
+          <div
+            class="service-page__info"
+            v-if="service.groupname === 'b24-apps'"
+          >
+            <div style="display: flex">
+              <a-row style="width: 60%">
+                <a-col :span="24">
+                  <a-form-item
+                    :help="domainError ? $t('domain is wrong') : ''"
+                    :label="$t('ssl_product.domain')"
+                    :validate-status="domainError ? 'error' : ''"
+                  >
+                    <a-input
+                      v-model:value="service.domain"
+                      :placeholder="$t('ssl_product.domain')"
+                      @blur="validateDomain"
+                    />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-button
+                :loading="isUpdateDomainLoading"
+                @click="updateInstanceDomain"
+                style="margin-left: 10px"
+                type="primary"
+              >
+                {{ t("Save") }}
+              </a-button>
             </div>
           </div>
 
@@ -245,16 +279,13 @@ const info = ref([
     key: "nextduedate",
     type: "date",
   },
-  {
-    title: "auto renew",
-    key: "autorenew",
-    type: "text",
-  },
 ]);
 const service = ref(null);
 const lastInvoice = ref(null);
+const domainError = ref(false);
 
 const isUpdateAutoRenewLoading = ref(false);
+const isUpdateDomainLoading = ref(false);
 
 const getTagColor = computed(() => {
   const status = service.value.status.replace("cloudStateItem.", "");
@@ -370,7 +401,9 @@ async function onStart() {
         break;
       }
       case "openai": {
-        const products = Object.values(domain.billingPlan.resources).reduce(
+        const products = Object.values(
+          domain.billingPlan.resources || {}
+        ).reduce(
           (result, resource) => ({
             ...result,
             [resource.key]: resource.price,
@@ -401,6 +434,7 @@ async function onStart() {
         break;
       }
 
+      case "bitrix24":
       case "virtual":
       case "empty": {
         const { period } = domain.billingPlan.products[domain.product];
@@ -411,6 +445,10 @@ async function onStart() {
         };
         domain.resources.period = getPeriod(period);
         groupname = "Custom";
+
+        if (domain.billingPlan.type === "bitrix24") {
+          groupname = "b24-apps";
+        }
         break;
       }
 
@@ -452,7 +490,7 @@ async function onStart() {
     }
 
     const { period, recurringamount } = domain.resources;
-    const { expiredate, regdate } = domain.data.expiry;
+    const { expiredate, regdate } = domain.data.expiry || {};
 
     service.value = {
       ...domain,
@@ -566,6 +604,43 @@ const updateInstanceAutoRenew = async (value) => {
     isUpdateAutoRenewLoading.value = false;
   }
 };
+
+const updateInstanceDomain = async () => {
+  validateDomain();
+  if (domainError.value) return;
+
+  isUpdateDomainLoading.value = true;
+  try {
+    const instance = {
+      uuid: service.value.uuid,
+      billingPlan: service.value.billingPlan,
+      resources: { ...service.value.resources, domain: service.value.domain },
+    };
+
+    await instancesStore.updateInstance(instance);
+  } finally {
+    isUpdateDomainLoading.value = false;
+  }
+};
+
+function validateDomain() {
+  const domain = service.value.domain?.trim();
+
+  if (!domain) {
+    domainError.value = true;
+    return;
+  }
+
+  const cleanDomain = domain.replace(/^https?:\/\//, "");
+
+  const domainOnly = cleanDomain.split("/")[0];
+
+  const domainPattern =
+    /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.(?:[a-zA-Z0-9-]{1,63}(?<!-)\.)*[a-zA-Z]{2,}$/;
+
+  domainError.value = !domainPattern.test(domainOnly);
+  service.value.domain = domainOnly;
+}
 
 watch(service, async () => {
   const invoices = await invoicesStore.invoicesApi.getInvoices(

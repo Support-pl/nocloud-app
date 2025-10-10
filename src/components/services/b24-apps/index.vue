@@ -238,7 +238,7 @@ const { currency, formatPrice } = useCurrency();
 const { createInstance } = useCreateInstance();
 const { getPeriod } = usePeriod();
 
-const { serviceId } = useServiceId("empty");
+const { serviceId } = useServiceId("bitrix24");
 
 const carousel = ref(null);
 
@@ -373,15 +373,15 @@ const plans = computed(() => {
         const { items } = showcase.value;
         const plans = [];
 
-        if (!items) return type === "empty";
+        if (!items) return type === "bitrix24";
         items.forEach(({ servicesProvider, plan }) => {
           if (servicesProvider === provider.value) {
             plans.push(plan);
           }
         });
 
-        if (plans.length < 1) return type === "empty";
-        return type === "empty" && plans.includes(uuid);
+        if (plans.length < 1) return type === "bitrix24";
+        return type === "bitrix24" && plans.includes(uuid);
       }
     ) ?? []
   );
