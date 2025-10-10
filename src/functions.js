@@ -226,6 +226,9 @@ function setInstByType(inst, result) {
     case "bots":
       result.groupname = "AIBot";
       break;
+    case 'bitrix24':
+      result.groupname = "b24-apps";
+      break;
     case "empty":
     case "virtual":
       if (inst.billingPlan?.type === "vpn") {

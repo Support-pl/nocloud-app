@@ -278,6 +278,7 @@ function cloudClick(service, { target }) {
   } = service;
 
   if (target.hasAttribute("role") || target.hasAttribute("viewBox")) return;
+  
   if (config?.is_vdc) {
     router.push({ name: "openVDC", params: { uuid: orderid } });
   } else if (id && isServer) {
@@ -292,6 +293,8 @@ function cloudClick(service, { target }) {
     router.push({ name: "openaiChats", params: { id: uuid } });
   } else if (groupname === "AIBot") {
     router.push({ name: "aiBotPage", params: { id: uuid } });
+  } else if (groupname === "b24-apps") {
+    router.push({ name: "b24AppPage", params: { id: uuid } });
   } else if (groupname === "Self-Service VDS SSD HC") {
     router.push({ name: "openCloud", params: { uuid: orderid } });
   } else {
