@@ -469,7 +469,7 @@ async function clickOnInvoice() {
     lastInvoice.value.uuid
   );
 
-  window.location.href = paymentLink;
+  window.open(paymentLink, "_blank");
 }
 
 const editName = async () => {

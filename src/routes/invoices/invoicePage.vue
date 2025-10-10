@@ -232,7 +232,7 @@ async function showPayModal() {
     confirmLoading.value = true;
     const paymentLink = await invoicesStore.getPaymentLink(invoice.value.uuid);
 
-    window.location.href = paymentLink;
+    window.open(paymentLink, "_blank");
   } finally {
     confirmLoading.value = false;
   }

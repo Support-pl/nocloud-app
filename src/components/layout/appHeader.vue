@@ -170,18 +170,7 @@
                     "
                   >
                     <template #content>
-                      <a-range-picker
-                        v-if="
-                          active === 'billing' && activeInvoiceTab === 'Detail'
-                        "
-                        show-time
-                        :value="checkedList"
-                        @ok="updateFilter"
-                        @change="onChangeRange"
-                        @open-change="openRange"
-                      />
                       <a-checkbox-group
-                        v-else
                         v-model:value="checkedList"
                         :options="plainOptions"
                         @change="onChange"
@@ -472,12 +461,6 @@ export default {
               },
             },
             {
-              name: "invoice_filter",
-              icon: filterIcon,
-              popover: true,
-              // доделать фильтр тут
-            },
-            {
               name: "invoice_reload",
               icon: reloadIcon,
               onClickFuncion: () => {
@@ -564,9 +547,6 @@ export default {
     }),
     ...mapWritableState(useTransactionsStore, {
       transactionsFilter: "filter",
-    }),
-    ...mapWritableState(useInvoicesStore, {
-      invoicesFilter: "filter",
     }),
     ...mapState(useCurrenciesStore, {
       currencies: "list",
@@ -844,38 +824,6 @@ export default {
         }
 
         this.supportFilter = info.map((el) => filtered[el]);
-      }
-
-      if (this.active === "billing" && this.activeInvoiceTab === "Detail") {
-        const dates = JSON.parse(
-          localStorage.getItem("detailFilters") ?? "[]"
-        ).map((date) => dayjs(date));
-
-        if (!info) {
-          info = dates;
-          this.checkedList = info;
-        } else {
-          localStorage.setItem("detailFilters", JSON.stringify(info));
-        }
-
-        this.transactionsFilter = info;
-      } else if (this.active === "billing") {
-        const filtered = {};
-
-        this.invoices.forEach((el) => {
-          const key = this.$t(`filterHeader.${el.status}`);
-
-          filtered[key] = el.status;
-        });
-
-        if (!info) {
-          info = JSON.parse(localStorage.getItem("invoiceFilters") ?? "[]");
-          this.checkedList = info;
-        } else {
-          localStorage.setItem("invoiceFilters", JSON.stringify(info));
-        }
-
-        this.invoicesFilter = info.map((el) => filtered[el]);
       }
     },
     updateSearch({ key, target }) {
