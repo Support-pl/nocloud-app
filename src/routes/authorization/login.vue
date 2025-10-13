@@ -329,7 +329,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (!redirect.value) {
+  if (!redirect.value && authStore.token) {
     appStore.onLogin = {};
     localStorage.removeItem("data");
   }
