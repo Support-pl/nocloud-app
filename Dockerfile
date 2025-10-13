@@ -6,7 +6,7 @@ COPY . .
 RUN npm install -g pnpm
 RUN pnpm install && pnpm build
 
-FROM golang:1.21-alpine as server-builder
+FROM golang:1.24-alpine as server-builder
 
 RUN apk add upx
 COPY go.mod go.sum main.go /go/src/github.com/support-pl/nocloud-app/
