@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
@@ -123,7 +122,13 @@ func main() {
 
 	SetS3Client()
 	mux := http.NewServeMux()
-	mux.Handle("/", StaticHandler(dist))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		StaticHandler(dist).ServeHTTP(w, r)
+	})
 	mux.HandleFunc("/presignedUrl", GetPresignedUrl)
 
 	log.Printf("Listening on port %s, serving: %s, api: %s", port, dist, api)
