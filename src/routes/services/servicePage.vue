@@ -39,7 +39,7 @@
                     :validate-status="domainError ? 'error' : ''"
                   >
                     <a-input
-                      v-model:value="service.domain"
+                      v-model:value="service.resources.bitrix_domain"
                       :placeholder="$t('ssl_product.domain')"
                       @blur="validateDomain"
                     />
@@ -614,7 +614,10 @@ const updateInstanceDomain = async () => {
     const instance = {
       uuid: service.value.uuid,
       billingPlan: service.value.billingPlan,
-      resources: { ...service.value.resources, bitrix_domain: service.value.bitrix_domain },
+      resources: {
+        ...service.value.resources,
+        bitrix_domain: service.value.resources.bitrix_domain,
+      },
     };
 
     await instancesStore.updateInstance(instance);
@@ -624,7 +627,7 @@ const updateInstanceDomain = async () => {
 };
 
 function validateDomain() {
-  const domain = service.value.domain?.trim();
+  const domain = service.value.resources.bitrix_domain?.trim();
 
   if (!domain) {
     domainError.value = true;
