@@ -268,6 +268,9 @@ export default {
         case "acronis":
           name = "service-acronis";
           break;
+        case "bitrix24":
+          name = "service-b24-apps";
+          break;
         case "empty":
         case "virtual":
           if (showcase.title.toLowerCase().includes("vpn")) {

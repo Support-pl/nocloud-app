@@ -262,6 +262,18 @@ const routes = [
         },
         component: () => import("@/routes/bots/aiBotPage.vue"),
       },
+       {
+        path: "b24-apps/:id",
+        name: "b24AppPage",
+        meta: {
+          mustBeLoggined: true,
+          footerTitle: "B24 Apps",
+          headerTitle: "B24 Apps",
+          isNeedBackButton: true,
+        },
+        component: () => import("@/routes/b24-apps/b24AppPage.vue"),
+      },
+
       {
         path: "ai-bots/:id/chats/:chatId?",
         name: "aiBotsChats",
