@@ -292,9 +292,11 @@ onCreated();
 
 const changePeriods = (key) => {
   periods.value = [];
-  Object.values(products.value).forEach((product) => {
-    if (periods.value.includes(+product.period)) return;
-    periods.value.push(+product.period);
+  Object.values(sizes.value).forEach((product) => {
+    Object.keys(product.keys).forEach((period) => {
+      if (periods.value.includes(+period)) return;
+      periods.value.push(+period);
+    });
   });
 
   periods.value.sort((a, b) => a - b);
@@ -329,15 +331,14 @@ function validateDomain() {
 
 function getProduct(products, options) {
   if (Object.keys(products).length === 0) return "NAN";
-  const { title } = products[options.size];
 
-  const product = Object.values(products).find(
-    (product) =>
-      product.title == title && +(product.period || 0) == (options.period || 0)
-  ) || { meta: {} };
+  const product =
+    sizes.value.find(
+      (size) => size.keys[options.period.toString()] === options.size
+    ) || {};
 
   const price =
-    product.price +
+    product.price?.[options.period] +
     options.addons.reduce((sum, id) => {
       const addon = product.addons?.find(({ key }) => key === id);
       const period = addon?.period / product.period;
@@ -346,15 +347,19 @@ function getProduct(products, options) {
       return sum + addon.price * (period >= 1 ? period : 1 / period);
     }, 0);
 
-  const description =
-    descriptionsStore.cachedADescriptions[product.descriptionId]?.text ||
-    product.meta.description;
+  const description = product.description;
+
+  const planId = plans.value.find(
+    (p) => p.products[options.size]?.period == options.period
+  )?.uuid;
 
   return {
     ...product,
+    title: product.label,
     price: formatPrice(price),
     meta: { ...product.meta },
     description,
+    planId,
   };
 }
 
@@ -431,6 +436,7 @@ const changeProducts = () => {
     },
     { products: [], sizes: [] }
   );
+
   const plan = plans.value.at(0);
 
   productsAndSizes.products.forEach(([productKey, value, planId]) => {
@@ -569,7 +575,7 @@ const fetchPlans = async (provider) => {
       const { action } = onLogin.value;
       if (typeof action !== "function") return;
 
-      const oldOptions = action()
+      const oldOptions = action();
 
       plan.value = oldOptions.plan;
 
@@ -618,20 +624,11 @@ watch([sizes, currentSelectedIndex], (newVal, prevVal) => {
   }
 });
 
-watch(
-  () => options.value.size,
-  (value, prev) => {
-    const size = sizes.value.find(({ keys }) =>
-      Object.values(keys).includes(prev)
-    );
-    const keys = Object.values(size?.keys ?? {});
+watch(currentProduct, () => {
+  changePeriods()
 
-    if (!keys.includes(value)) changePeriods(value);
-    options.value.addons = [];
-
-    plan.value = currentProduct.value.planId;
-  }
-);
+  plan.value = currentProduct.value.planId || plan.value;
+});
 
 watch([promocode, currency], async () => {
   if (!promocode.value || !currency.value || !plan.value) {
