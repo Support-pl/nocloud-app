@@ -72,6 +72,7 @@ const BREAKPOINT = 1050;
 const props = defineProps({
   service: { type: Object, required: true },
   productsCount: { type: Function, required: true },
+  oldLayout: { type: Boolean, default: false },
 });
 
 const { t, locale } = useI18n();
@@ -91,7 +92,9 @@ onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
 });
 
-const useHorizontalLayout = computed(() => windowWidth.value > BREAKPOINT);
+const useHorizontalLayout = computed(
+  () => windowWidth.value > BREAKPOINT && !props.oldLayout
+);
 const isIconString = computed(() => typeof props.service.icon === "string");
 
 const serviceItemClasses = computed(() => ({

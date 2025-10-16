@@ -14,9 +14,9 @@
             </template>
             <span class="menu-text">All Services</span>
           </a-menu-item>
-          <a-menu-item 
-            v-for="category in categories" 
-            :key="category.name"
+          <a-menu-item
+            v-for="category in categories"
+            :key="category.uuid"
             class="menu-item"
           >
             <template #icon>
@@ -24,31 +24,33 @@
             </template>
             <span class="menu-text">
               {{
-                category.i18n?.[$i18n.locale] ||
-                category.i18n?.en ||
-                category.name
+                category.promo?.[$i18n.locale] ||
+                category.promo?.en ||
+                category.title
               }}
             </span>
           </a-menu-item>
         </a-menu>
 
-        <div class="categories__grid">
+        <div v-if="selectedCategories.includes('all')" class="categories__grid">
           <div
-            v-for="(column, columnIndex) in getCategoryColumns(filteredCategories)"
+            v-for="(column, columnIndex) in getCategoryColumns(
+              filteredCategories
+            )"
             :key="columnIndex"
             class="category-column"
           >
             <div
               v-for="category in column"
-              :key="category.name"
+              :key="category.uuid"
               class="category__container"
             >
               <div v-if="isAllSelected" class="category__header">
                 <h3 class="category__title">
                   {{
-                    category.i18n?.[$i18n.locale] ||
-                    category.i18n?.en ||
-                    category.name
+                    category.promo?.[$i18n.locale] ||
+                    category.promo?.en ||
+                    category.title
                   }}
                 </h3>
               </div>
@@ -75,6 +77,32 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <div
+          v-else
+          class="services__grid--old"
+          :style="{ gridTemplateColumns: `repeat(${4}, 1fr)` }"
+        >
+          <a-badge
+            v-for="service in filteredCategories[0].services"
+            :key="service.title"
+            count="+"
+            :number-style="oldLayoutBadgeStyle(service.title)"
+            @click="newProductHandler(service)"
+            @mouseover="hovered = service.title"
+            @mouseleave="hovered = null"
+            class="service-badge--old"
+          >
+            <service-item
+              old-layout
+              v-if="!service.needLogin || isLogged"
+              :service="service"
+              :products-count="productsCount"
+              @mouseover="hovered = service.title"
+              @mouseleave="hovered = null"
+            />
+          </a-badge>
         </div>
       </template>
     </div>
@@ -185,9 +213,11 @@ const filteredCategories = computed(() => {
   if (isAllSelected.value) {
     return categories.value;
   }
-  
-  const selectedCategoryName = selectedCategories.value[0];
-  return categories.value.filter(category => category.name === selectedCategoryName);
+
+  const selectedCategoryUuid = selectedCategories.value[0];
+  return categories.value.filter(
+    (category) => category.uuid === selectedCategoryUuid
+  );
 });
 
 const avaliableServices = computed(() => {
@@ -283,9 +313,9 @@ const categories = computed(() => {
   if (!useNewLayout.value) return [];
 
   const categoriesMap = createCategoriesMap();
-  return Array.from(categoriesMap.values()).filter(
-    (category) => category.services.length > 0
-  );
+  return Array.from(categoriesMap.values())
+    .filter((category) => category.services.length > 0)
+    .sort((a, b) => (a.sorter || 0) - (b.sorter || 0));
 });
 
 // Methods
@@ -309,81 +339,102 @@ const sortServices = (servicesList) => {
 const createCategoriesMap = () => {
   const categoriesMap = new Map();
 
-  [
-    ...avaliableServices.value.filter(
-      (service) => !!service.meta?.category?.name
-    ),
-    ...avaliableServices.value.filter(
-      (service) => !service.meta?.category?.name
-    ),
-  ].forEach((service) => {
-    const categoryName = service.meta?.category?.name;
-    let category;
+  // Get all showcase categories
+  const showcaseCategories = [];
+  showcases.value.forEach((showcase) => {
+    if (showcase.categories && Array.isArray(showcase.categories)) {
+      showcase.categories.forEach((category) => {
+        const existingCategory = showcaseCategories.find(
+          (c) => c.uuid === category.uuid
+        );
+        if (!existingCategory) {
+          showcaseCategories.push({
+            ...category,
+            services: [],
+          });
+        }
+      });
+    }
+  });
 
-    if (categoryName) {
-      if (!categoriesMap.has(categoryName)) {
-        categoriesMap.set(categoryName, {
-          name: categoryName,
-          type: service.meta?.category?.type || "",
-          sorter: service.meta?.category?.sorter || 0,
-          i18n: service.meta?.category?.i18n || {},
-          services: [],
+  // Initialize categories map with showcase categories
+  showcaseCategories.forEach((category) => {
+    categoriesMap.set(category.uuid, {
+      uuid: category.uuid,
+      title: category.title,
+      promo: category.promo || {},
+      sorter: category.sorter || 0,
+      type: Array.isArray(category.type)
+        ? category.type
+        : [category.type || ""],
+      services: [],
+    });
+  });
+  const services = [...avaliableServices.value];
+  services.sort((a, b) => (!a.uuid ? 1 : -1));
+
+  // Distribute services to categories
+  services.forEach((service) => {
+    let assignedToCategory = false;
+
+    // Check if service belongs to any showcase category
+    if (service.uuid) {
+      const showcase = showcases.value.find((s) => s.uuid === service.uuid);
+      if (
+        showcase &&
+        showcase.categories &&
+        Array.isArray(showcase.categories)
+      ) {
+        showcase.categories.forEach((category) => {
+          if (categoriesMap.has(category.uuid)) {
+            categoriesMap.get(category.uuid).services.push(service);
+            assignedToCategory = true;
+          }
         });
       }
-      category = categoriesMap.get(categoryName);
-    } else {
-      category =
-        findMatchingCategory(service, categoriesMap) ||
-        getOrCreateOthersCategory(categoriesMap);
     }
 
-    category.services.push(service);
-    updateCategoryMetadata(category, service);
+    if (!assignedToCategory) {
+      const othersCategory = getOrCreateOthersCategory(categoriesMap, service);
+      othersCategory.services.push(service);
+    }
   });
 
   return categoriesMap;
 };
 
-const findMatchingCategory = (service, categoriesMap) => {
-  const typeMap = {
-    DNSEditor: ["domains", "hosting"],
-    BelGIE: ["others"],
-    VDC: ["vds"],
-    virtual: ["hosting", "domains"],
-  };
+const getOrCreateOthersCategory = (categoriesMap, service) => {
+  let categoryType = "others";
+  const othersUuid = "others";
 
-  const serviceTypes = typeMap[service.type] || [];
-  return [...categoriesMap.values()].find(
-    (category) =>
-      serviceTypes.length &&
-      category.type &&
-      serviceTypes.includes(category.type)
-  );
-};
-
-const getOrCreateOthersCategory = (categoriesMap) => {
-  const categoryName = "Others";
-
-  if (!categoriesMap.has(categoryName)) {
-    categoriesMap.set(categoryName, {
-      name: categoryName,
-      type: "",
-      sorter: 0,
-      i18n: {},
-      services: [],
-    });
+  if (service.type === "VDC") {
+    categoryType = "vds";
+  } else if (service.type === "virtual") {
+    categoryType = "hosting";
+  } else if (service.type === "DNSEditor") {
+    categoryType = "domains";
   }
 
-  return categoriesMap.get(categoryName);
-};
+  const othersCategory = categoriesMap
+    .values()
+    .find((cat) => cat.type.includes(categoryType));
 
-const updateCategoryMetadata = (category, service) => {
-  const serviceSorter = service.meta?.category?.sorter || 0;
-  category.sorter =
-    category.sorter === 0
-      ? serviceSorter
-      : Math.min(category.sorter, serviceSorter);
-  category.type = service.meta?.category?.type || category.type;
+  if (!othersCategory) {
+    categoriesMap.set(othersUuid, {
+      uuid: othersUuid,
+      title: "Others",
+      promo: {
+        en: "Others",
+        ru: "Прочее",
+      },
+      sorter: 999,
+      type: ["others"],
+      services: [],
+    });
+    return getOrCreateOthersCategory(categoriesMap, service);
+  }
+
+  return othersCategory;
 };
 
 const getCategoryColumns = (categoriesList) => {
@@ -534,7 +585,7 @@ onUnmounted(() => {
 .category-menu {
   border-right: 1px solid var(--border-color, #e8e8e8);
   background: transparent;
-  
+
   :deep(.ant-menu-item) {
     padding: 8px 16px;
     margin: 2px 0;
@@ -542,18 +593,17 @@ onUnmounted(() => {
     line-height: 1.4;
     border-radius: 6px;
     transition: all 0.2s ease;
-    
+
     &:hover {
       background-color: var(--primary-1, #f0f5ff);
     }
-    
+
     &.ant-menu-item-selected {
       color: var(--primary-color, #1890ff);
       background-color: transparent;
-     
     }
   }
-  
+
   :deep(.ant-menu-item-icon) {
     font-size: 16px;
     min-width: 16px;

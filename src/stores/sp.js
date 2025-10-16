@@ -102,15 +102,22 @@ export const useSpStore = defineStore("sp", () => {
     async fetchShowcases(anonymously = false) {
       try {
         isShowcasesLoading.value = true;
-        const response = await api.showcases.list({
+        const { showcases: newShowcases } = await api.showcases.list({
           anonymously,
           omitPromos: true,
         });
 
-        response.showcases.forEach((showcase) => {
+        const { categories } = await api.get("/showcase_categories");
+
+        newShowcases.forEach((showcase) => {
           const index = showcases.value.findIndex(
             (s) => s.uuid === showcase.uuid
           );
+
+          showcase.categories = (categories || []).filter((category) =>
+            category.showcases.includes(showcase.uuid)
+          );
+
           if (index === -1) {
             showcases.value.push(showcase);
           } else {
@@ -130,7 +137,7 @@ export const useSpStore = defineStore("sp", () => {
           }
         });
 
-        return response;
+        return showcases;
       } catch (error) {
         console.error(error);
         throw error;
