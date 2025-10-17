@@ -107,7 +107,9 @@ export const useSpStore = defineStore("sp", () => {
           omitPromos: true,
         });
 
-        const { categories } = await api.get("/showcase_categories");
+        const { categories } = await api.get("/showcase_categories", {
+          params: { anonymously: true },
+        });
 
         newShowcases.forEach((showcase) => {
           const index = showcases.value.findIndex(
