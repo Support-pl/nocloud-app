@@ -12,7 +12,7 @@
             <template #icon>
               <AppstoreOutlined />
             </template>
-            <span class="menu-text">All Services</span>
+            <span class="menu-text">{{ $t('All Services') }}</span>
           </a-menu-item>
           <a-menu-item
             v-for="category in categories"
