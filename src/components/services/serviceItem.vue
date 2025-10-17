@@ -20,7 +20,10 @@
           </a-icon>
         </div>
 
-        <div class="service__title service__title--horizontal">
+        <div
+          class="service__title service__title--horizontal"
+          style="margin-right: 0px; max-width: calc(100% - 100px)"
+        >
           {{ translatedName }}
         </div>
       </div>
