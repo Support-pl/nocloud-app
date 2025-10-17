@@ -31,6 +31,7 @@
     "Transactions": "Транзакции",
     "Act": "Акт",
     "Acts": "Акты",
+    "All Services": "Все услуги",
     "No issued acts": "Нет выставленных актов",
     "acts count": "количество актов",
     "cloudState": "Облако",
@@ -182,7 +183,7 @@
     "Menu": "Меню",
     "invoices": {
       "reports": {
-        "title":" Отчёты",
+        "title": " Отчёты",
         "last_month": "Прошлый месяц",
         "current_month": "Текущий месяц",
         "current_year": "Текущий год",

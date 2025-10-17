@@ -28,9 +28,10 @@
     "Invoice": "Rozliczenia",
     "Invoices": "Invoices",
     "Detail": "Szczegóły",
+    "All Services": "Wszystkie usługi",
     "invoices": {
       "reports": {
-        "title":"Raporty",
+        "title": "Raporty",
         "last_month": "Poprzedni miesiąc",
         "current_month": "Bieżący miesiąc",
         "show_all": "Pokaż wszystko",
