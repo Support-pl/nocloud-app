@@ -6,12 +6,19 @@
         class="services__block"
         :products-count="productsCount"
       />
-      <user-products ref="productsComponent" class="services__block" :min="false" />
+      <user-products
+        ref="productsComponent"
+        class="services__block"
+        :min="false"
+      />
     </div>
 
-    <div v-if="['services', 'root'].includes(route.name) && !authStore.isLogged" class="logo">
+    <div
+      v-if="['services', 'root'].includes(route.name) && !authStore.isLogged"
+      class="logo"
+    >
       <div v-if="config.appLogo.path" class="logo__wrapper">
-        <img :src="config.appLogo.path" alt="logo">
+        <img :src="config.appLogo.path" alt="logo" />
       </div>
       <div v-if="companyName" class="logo__title">
         {{ companyName }}
@@ -21,66 +28,61 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import config from '@/appconfig.js'
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import config from "@/appconfig.js";
 
-import { useAppStore } from '@/stores/app.js'
-import { useAuthStore } from '@/stores/auth.js'
-import { useSpStore } from '@/stores/sp.js'
-import { useProductsStore } from '@/stores/products.js'
-import { useInstancesStore } from '@/stores/instances.js'
+import { useAppStore } from "@/stores/app.js";
+import { useAuthStore } from "@/stores/auth.js";
+import { useSpStore } from "@/stores/sp.js";
+import { useProductsStore } from "@/stores/products.js";
+import { useInstancesStore } from "@/stores/instances.js";
 
-import servicesWrapper from '@/components/services/servicesWrapper.vue'
-import userProducts from '@/components/services/products.vue'
+import servicesWrapper from "@/components/services/servicesWrapper.vue";
+import userProducts from "@/components/services/products.vue";
 
-const route = useRoute()
-const appStore = useAppStore()
-const authStore = useAuthStore()
+const route = useRoute();
+const appStore = useAppStore();
+const authStore = useAuthStore();
 
-const providersStore = useSpStore()
-const productsStore = useProductsStore()
-const instancesStore = useInstancesStore()
+const providersStore = useSpStore();
+const productsStore = useProductsStore();
+const instancesStore = useInstancesStore();
 
-const productsComponent = ref(null)
+const productsComponent = ref(null);
 
-const providers = computed(() =>
-  providersStore.servicesProviders
-)
+const providers = computed(() => providersStore.servicesProviders);
 
-const companyName = computed(() =>
-  appStore.domainInfo.name ?? config.appTitle
-)
+const companyName = computed(() => appStore.domainInfo.name ?? config.appTitle);
 
-const checkedTypes = computed(() =>
-  route.query?.service?.split(',').filter((el) => el.length > 0) ?? []
-)
+const checkedTypes = computed(
+  () => route.query?.service?.split(",").filter((el) => el.length > 0) ?? []
+);
 
 const products = computed(() => {
-  const instances = instancesStore.getInstances ?? []
+  const instances = instancesStore.getInstances ?? [];
 
   if (route.query.service) {
     return [...productsStore.products, ...instances].filter(({ sp }) => {
-      const { title } = providers.value.find(({ uuid }) => uuid === sp) ?? {}
+      const { title } = providers.value.find(({ uuid }) => uuid === sp) ?? {};
 
-      return checkedTypes.value.some((service) => service === title)
-    })
+      return checkedTypes.value.some((service) => service === title);
+    });
   }
-  return [...productsStore.products, ...instances]
-})
+  return [...productsStore.products, ...instances];
+});
 
 watch(products, (value) => {
-  productsStore.total = value.length
-})
+  productsStore.total = value.length;
+});
 
-function productsCount (type, filter) {
-  return productsComponent.value.productsCount(type, filter)
+function productsCount(type, filter) {
+  return productsComponent.value.productsCount(type, filter);
 }
-
 </script>
 
 <script>
-export default { name: 'PageServices' }
+export default { name: "PageServices" };
 </script>
 
 <style scoped>
@@ -94,6 +96,14 @@ export default { name: 'PageServices' }
 .services > .container {
   min-height: auto;
   width: 100%;
+  max-width: 1068px;
+}
+
+@media (max-width: 1050x) {
+  .services > .container {
+    min-height: auto;
+    width: 100%;
+  }
 }
 
 .services__block {
