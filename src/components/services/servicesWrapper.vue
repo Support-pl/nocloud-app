@@ -510,6 +510,7 @@ const generateRouteConfig = (service) => {
     ione: "newPaaS",
     ovh: "newPaaS",
     keyweb: "newPaaS",
+    bitrix24: "service-b24-apps",
   };
 
   if (routeMap[type]) {

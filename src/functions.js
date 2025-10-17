@@ -226,6 +226,9 @@ function setInstByType(inst, result) {
     case "bots":
       result.groupname = "AIBot";
       break;
+    case 'bitrix24':
+      result.groupname = "b24-apps";
+      break;
     case "empty":
     case "virtual":
       if (inst.billingPlan?.type === "vpn") {
@@ -415,6 +418,7 @@ export function toInvoice(transaction, type = "default") {
       currencycode: transaction.currencycode,
       meta: transaction.meta,
       type: "NO_ACTION",
+      instances: [],
       properties: transaction.properties || {},
     };
   } else {
@@ -436,6 +440,7 @@ export function toInvoice(transaction, type = "default") {
       currencycode: transaction.currency,
       meta: transaction.meta,
       type: transaction.type,
+      instances: transaction.instances || [],
       properties: transaction.properties || {},
     };
   }

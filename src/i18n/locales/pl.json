@@ -28,6 +28,20 @@
     "Invoice": "Rozliczenia",
     "Invoices": "Invoices",
     "Detail": "Szczegóły",
+    "invoices": {
+      "reports": {
+        "title":"Raporty",
+        "last_month": "Poprzedni miesiąc",
+        "current_month": "Bieżący miesiąc",
+        "show_all": "Pokaż wszystko",
+        "total": "Razem",
+        "current_year": "Bieżący rok",
+        "service": "Usługa",
+        "amount": "Kwota",
+        "download_full_report": "Pobierz pełny raport",
+        "instruction": "📊 **Raporty dotyczące opłat za usługi**\n\nTutaj możesz przeglądać raporty dotyczące opłat za usługi. Dane są aktualizowane codziennie i są aktualne **do wczoraj**. Opłaty za bieżący dzień nie są uwzględnione."
+      }
+    },
     "Transactions": "Transactions",
     "Act": "Akt",
     "Acts": "Akty",
@@ -255,7 +269,7 @@
     "Payment method": "Metoda płatności",
     "Do you want to defer payment?": "Chcesz odroczyć płatność?",
     "Show full list": "Pokaż pełną listę",
-    "pay from balance": "pay from balance",
+    "pay from balance": "Pay from balance",
     "cloudState_StartTime": "Czas rozpoczęcia",
     "cloud_StartTime": "Start time",
     "cloud_Capacity": "Pojemność",
