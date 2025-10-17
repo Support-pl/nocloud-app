@@ -400,6 +400,10 @@ const createCategoriesMap = () => {
     }
   });
 
+  categoriesMap.forEach((category) => {
+    category.services.sort((a, b) => (a.sorter || 0) - (b.sorter || 0));
+  });
+
   return categoriesMap;
 };
 
