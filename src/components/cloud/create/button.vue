@@ -24,9 +24,7 @@
     <template #modalContent>
       <span
         v-if="
-          cloudStore.authData.score < 4 &&
-          cloudStore.provider.type !== 'ovh' &&
-          !skipPasswordCheck
+          authData.score < 4 && provider.type !== 'ovh' && !skipPasswordCheck
         "
         style="color: var(--err)"
       >
@@ -46,7 +44,7 @@
 
     <template #after>
       <a-col
-        v-if="cloudStore.provider?.type !== 'ovh' && tarification === 'Hourly'"
+        v-if="provider?.type !== 'ovh' && tarification === 'Hourly'"
         style="font-size: 14px; margin: 16px 16px 0"
       >
         <span style="position: absolute; left: -8px">*</span>
@@ -57,7 +55,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, computed, reactive, inject } from "vue";
+import { defineAsyncComponent, computed, reactive, inject, toRefs } from "vue";
 import { useRouter } from "vue-router";
 import { useAppStore } from "@/stores/app.js";
 
@@ -85,8 +83,11 @@ const props = defineProps({
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { isLogged } = toRefs(authStore);
 const appStore = useAppStore();
 const cloudStore = useCloudStore();
+const { authData, provider, namespaceId, plan, locationId, showcaseId } =
+  toRefs(cloudStore);
 const currenciesStore = useCurrenciesStore();
 const { addToClipboard } = useClipboard();
 const { locale } = useI18n();
@@ -97,8 +98,7 @@ const [activeKey, nextStep] = inject("useActiveKey", () => [])();
 const modal = reactive({ confirmCreate: false, confirmLoading: false });
 
 const modalOptions = computed(() => {
-  const isWeakPass =
-    cloudStore.authData.score < 4 && cloudStore.provider?.type !== "ovh";
+  const isWeakPass = authData.value.score < 4 && provider.value?.type !== "ovh";
 
   return {
     title: isWeakPass && !props.skipPasswordCheck ? "Weak pass" : "Confirm",
@@ -120,28 +120,28 @@ const createButtonOptions = computed(() => {
   const result = {
     disabled: true,
     onClick: () => {
-      if (authStore.isLogged) modal.confirmCreate = true;
+      if (isLogged.value) modal.confirmCreate = true;
       else availableLogin("login");
     },
   };
 
-  if (cloudStore.provider?.type === "ovh") {
+  if (provider.value?.type === "ovh") {
     result.disabled =
-      cloudStore.authData.vmName === "" ||
-      (!cloudStore.namespaceId && authStore.isLogged) ||
+      authData.value.vmName === "" ||
+      (!namespaceId.value && isLogged.value) ||
       options.os.name === "" ||
-      (cloudStore.plan?.type === "ovh cloud" && !options.config.ssh);
+      (plan.value?.type === "ovh cloud" && !options.config.ssh);
   } else {
     result.disabled =
       (props.skipPasswordCheck
         ? false
-        : (cloudStore.authData.password.length === 0 ||
-            !cloudStore.authData.password_valid) &&
-          authStore.isLogged) ||
-      cloudStore.authData.vmName === "" ||
-      (!cloudStore.namespaceId && authStore.isLogged) ||
+        : (authData.value.password.length === 0 ||
+            !authData.value.password_valid) &&
+          isLogged.value) ||
+      authData.value.vmName === "" ||
+      (!namespaceId.value && isLogged.value) ||
       options.os.name === "" ||
-      !cloudStore.authData.is_username_valid;
+      !authData.value.is_username_valid;
   }
 
   return result;
@@ -155,9 +155,9 @@ const nextButtonOptions = computed(() => ({
 const isUnlogginedLinkVisible = computed(() => {
   const { score, password, vmName } = cloudStore.authData;
   const isStrongPass = score > 3 && password.length > 0;
-  const isNotOvh = cloudStore.provider?.type !== "ovh";
+  const isNotOvh = provider.value?.type !== "ovh";
 
-  if (authStore.isLogged) return false;
+  if (isLogged.value) return false;
   return (isNotOvh && isStrongPass) || (options.os.name && vmName);
 });
 
@@ -165,11 +165,11 @@ function availableLogin(mode) {
   const data = {
     path: router.currentRoute.value.path,
     query: router.currentRoute.value.query,
-    titleSP: cloudStore.provider.title,
+    titleSP: provider.value.title,
     tarification: props.tarification,
     productSize: props.productSize,
-    titleVM: cloudStore.authData.vmName,
-    locationId: cloudStore.locationId,
+    titleVM: authData.value.vmName,
+    locationId: locationId.value,
     activeKey: activeKey.value,
     resources: {
       cpu: options.cpu.size,
@@ -183,7 +183,7 @@ function availableLogin(mode) {
       template_id: options.os.id,
       template_name: options.os.name,
     },
-    billing_plan: { uuid: cloudStore.plan.uuid },
+    billing_plan: { uuid: plan.value.uuid },
     ovhConfig: options.config,
   };
 
@@ -191,8 +191,7 @@ function availableLogin(mode) {
     localStorage.setItem("data", JSON.stringify(data));
 
     const showcase =
-      spStore.showcases.find(({ uuid }) => uuid === cloudStore.showcaseId) ??
-      {};
+      spStore.showcases.find(({ uuid }) => uuid === showcaseId.value) ?? {};
 
     appStore.onLogin.info = {
       type: "vdc",
