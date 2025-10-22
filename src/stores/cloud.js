@@ -50,6 +50,10 @@ export const useCloudStore = defineStore("cloud", () => {
   const serviceId = ref();
   const namespaceId = ref();
 
+  watch(locationId, () => {
+    authData.password_valid = true;
+  });
+
   const showcases = computed(() => {
     const result = [{ title: "all", uuid: "" }];
 
