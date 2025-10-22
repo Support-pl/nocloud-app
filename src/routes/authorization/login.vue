@@ -280,7 +280,7 @@ async function restorePass() {
     });
 
     if (result === "success") {
-      notification.success({ message: i18n.t("Done") });
+      notification.success({ message: i18n.t("reset_password_success") });
     } else if (result === "error") {
       loginError.value = i18n.t(message);
       tryingLogin.value = false;
