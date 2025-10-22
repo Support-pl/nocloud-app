@@ -9,10 +9,10 @@
       <pre style="display: none">{{ createButtonOptions }}</pre>
       <pre style="display: none">{{
         [
-          props.skipPasswordCheck
-            ? false
-            : (authData.password.length === 0 || !authData.password_valid) &&
-              isLogged,
+          props.skipPasswordCheck,
+          authData.password,
+          !authData.password_valid,
+          isLogged,
           authData.vmName === "",
           !namespaceId && isLogged,
           options.os.name === "",
