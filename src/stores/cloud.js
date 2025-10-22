@@ -52,6 +52,7 @@ export const useCloudStore = defineStore("cloud", () => {
 
   watch(locationId, () => {
     authData.password_valid = true;
+    authData.is_username_valid = true;
   });
 
   const showcases = computed(() => {
