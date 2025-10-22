@@ -5,6 +5,20 @@
     :next-button-options="nextButtonOptions"
   >
     <template #before>
+      <pre style="display: none">{{ nextButtonOptions }}</pre>
+      <pre style="display: none">{{ createButtonOptions }}</pre>
+      <pre style="display: none">{{
+        [
+          props.skipPasswordCheck
+            ? false
+            : (authData.password.length === 0 || !authData.password_valid) &&
+              isLogged,
+          authData.vmName === "",
+          !namespaceId && isLogged,
+          options.os.name === "",
+          !authData.is_username_valid,
+        ]
+      }}</pre>
       <a-col
         v-if="isUnlogginedLinkVisible"
         class="products__unregistred"
