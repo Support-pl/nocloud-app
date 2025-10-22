@@ -2,11 +2,7 @@
   <a-row
     type="flex"
     justify="space-around"
-    style="
-      margin-top: 15px;
-      margin-bottom: 10px;
-      border-top: 1px solid #e8e8e8;
-    "
+    style="margin-top: 15px; margin-bottom: 10px; border-top: 1px solid #e8e8e8"
   >
     <slot name="before" />
 
@@ -18,7 +14,7 @@
         shape="round"
         @click="nextButtonOptions.onClick"
       >
-        {{ capitalize($t('next')) }}
+        {{ capitalize($t("next")) }}
       </a-button>
 
       <a-button
@@ -29,14 +25,14 @@
         :disabled="createButtonOptions.disabled"
         @click="createButtonOptions.onClick"
       >
-        {{ $t('Create') }}
+        {{ $t("Create") }}
       </a-button>
 
       <a-modal
         :title="$t(modalOptions.title)"
         :open="modalOptions.visible"
         :ok-button-props="{
-          props: modalOptions.okProps
+          props: modalOptions.okProps,
         }"
         :confirm-loading="modalOptions.loading"
         :cancel-text="modalOptions.cancelText ?? $t('Cancel')"
@@ -52,13 +48,17 @@
 </template>
 
 <script setup>
-defineProps({
+import { toRefs } from "vue";
+
+const props = defineProps({
   modalOptions: { type: Object, required: true },
   createButtonOptions: { type: Object, required: true },
-  nextButtonOptions: { type: Object, required: true }
-})
+  nextButtonOptions: { type: Object, required: true },
+});
+
+const { modalOptions, createButtonOptions, nextButtonOptions } = toRefs(props);
 </script>
 
 <script>
-export default { name: 'CreateActions' }
+export default { name: "CreateActions" };
 </script>
