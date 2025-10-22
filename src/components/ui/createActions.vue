@@ -6,6 +6,9 @@
   >
     <slot name="before" />
 
+
+    <pre style="display: none;">{{ nextButtonOptions }}</pre>
+    <pre style="display: none;">{{ createButtonOptions }}</pre>
     <a-col :span="22" style="margin-top: 15px">
       <a-button
         v-if="nextButtonOptions.visible"
