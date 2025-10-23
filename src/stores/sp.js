@@ -9,6 +9,7 @@ export const useSpStore = defineStore("sp", () => {
 
   const servicesProviders = ref([]);
   const showcases = ref([]);
+  const categories = ref([]);
   const isLoading = ref(false);
   const isShowcasesLoading = ref(false);
 
@@ -40,6 +41,26 @@ export const useSpStore = defineStore("sp", () => {
     }));
   });
 
+  async function fetchCategories() {
+    try {
+      if (categories.value.length) {
+        return categories.value;
+      }
+
+      const { categories: newCategories } = await api.get(
+        "/showcase_categories",
+        {
+          params: { anonymously: true },
+        }
+      );
+
+      categories.value = newCategories;
+      return categories.value;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   async function fetchShowcase(uuid) {
     let index = showcases.value.findIndex((s) => s.uuid === uuid);
     if (showcases.value[index]?.full || !isUUUID(uuid)) {
@@ -48,11 +69,19 @@ export const useSpStore = defineStore("sp", () => {
 
     try {
       isShowcasesLoading.value = true;
-      const response = await api.showcases.get(uuid);
+      const [response] = await Promise.all([
+        api.showcases.get(uuid),
+        fetchCategories(),
+      ]);
 
       response.full = true;
 
       index = showcases.value.findIndex((s) => s.uuid === uuid);
+
+      response.categories = (categories.value || []).filter((category) =>
+        category.showcases.includes(response.uuid)
+      );
+
       if (index === -1) {
         showcases.value.push(response);
       } else {
@@ -102,21 +131,20 @@ export const useSpStore = defineStore("sp", () => {
     async fetchShowcases(anonymously = false) {
       try {
         isShowcasesLoading.value = true;
-        const { showcases: newShowcases } = await api.showcases.list({
-          anonymously,
-          omitPromos: true,
-        });
-
-        const { categories } = await api.get("/showcase_categories", {
-          params: { anonymously: true },
-        });
+        const [{ showcases: newShowcases }] = await Promise.all([
+          api.showcases.list({
+            anonymously,
+            omitPromos: true,
+          }),
+          fetchCategories(),
+        ]);
 
         newShowcases.forEach((showcase) => {
           const index = showcases.value.findIndex(
             (s) => s.uuid === showcase.uuid
           );
 
-          showcase.categories = (categories || []).filter((category) =>
+          showcase.categories = (categories.value || []).filter((category) =>
             category.showcases.includes(showcase.uuid)
           );
 
