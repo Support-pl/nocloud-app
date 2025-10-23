@@ -7,7 +7,7 @@
         >
           <a-carousel
             ref="carousel"
-            style="max-width: 60vw; max-height: 40vh"
+            style="max-height: 40vh"
             arrows
             dots-class="slick-dots slick-thumb"
             :before-change="onCarouselChange"
@@ -314,7 +314,7 @@ function validateDomain() {
   const domain = options.value.domain?.trim();
 
   if (!domain) {
-    domainError.value = true;
+    domainError.value = false;
     return;
   }
 
@@ -525,7 +525,10 @@ const createVirtual = async (instance) => {
 };
 const orderConfirm = () => {
   validateDomain();
-  if (domainError.value) return;
+
+  if (domainError.value) {
+    return;
+  }
 
   const instance = {
     config: {},
@@ -625,7 +628,7 @@ watch([sizes, currentSelectedIndex], (newVal, prevVal) => {
 });
 
 watch(currentProduct, () => {
-  changePeriods()
+  changePeriods();
 
   plan.value = currentProduct.value.planId || plan.value;
 });
@@ -657,6 +660,10 @@ export default {
   position: relative;
   height: auto;
   margin-top: 10px;
+}
+
+:deep(.ant-form-item-explain-error) {
+  max-width: 190px;
 }
 
 :deep(.slick-slide img) {
@@ -793,8 +800,6 @@ export default {
   font-size: 1.1rem;
   position: absolute;
   right: 200px;
-
-  min-width: 350px;
 }
 
 @media (max-width: 576px) {
