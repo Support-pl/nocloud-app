@@ -139,7 +139,7 @@ function useCloudPlans(tarification, options) {
         plansStore.setPlans(cachedPlans.value[cacheKey]);
       } else {
         const { pool } = await plansStore.fetch({
-          sp_uuid: provider.uuid,
+          sp_uuid: value.uuid,
           anonymously: !authStore.isLogged,
         });
         cachedPlans.value[cacheKey] = pool;
