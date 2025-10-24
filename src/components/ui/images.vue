@@ -39,15 +39,33 @@
 <script setup>
 import { getImageName, onError } from "@/functions.js";
 import { useCurrency } from "@/hooks/utils";
+import { onMounted, toRefs, watch } from "vue";
 
-defineProps({
+const props = defineProps({
   images: { type: [Array, Object], required: true },
   osName: { type: String, required: true },
   setOS: { type: Function, required: true },
   osPrice: { type: Function, default: (prices) => prices[0] ?? 0 },
 });
+const { images } = toRefs(props);
 
 const { currency } = useCurrency();
+
+const setDefaultOs = () => {
+  const index = Object.keys(images.value)[0];
+  const defaultOs = images.value[index];
+  if (defaultOs && !props.osName) {
+    props.setOS(defaultOs, index);
+  }
+};
+
+onMounted(() => {
+  setDefaultOs();
+});
+
+watch(images, () => {
+  setDefaultOs();
+});
 </script>
 
 <script>

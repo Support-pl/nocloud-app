@@ -40,6 +40,9 @@ export const useCloudStore = defineStore("cloud", () => {
     score: null,
     is_username_valid: true,
   });
+
+  const validationPanels = reactive({});
+
   const deployMessage = i18n.t("VM created successfully");
 
   const locationId = ref("Location");
@@ -53,6 +56,9 @@ export const useCloudStore = defineStore("cloud", () => {
   watch(locationId, () => {
     authData.password_valid = true;
     authData.is_username_valid = true;
+    Object.keys(validationPanels).forEach((key) => {
+      validationPanels[key] = false;
+    });
   });
 
   const showcases = computed(() => {
@@ -277,6 +283,8 @@ export const useCloudStore = defineStore("cloud", () => {
 
     showcases,
     locations,
+
+    validationPanels,
 
     createOrder,
     $reset: () => {

@@ -86,8 +86,15 @@ const authStore = useAuthStore();
 const { isLogged } = toRefs(authStore);
 const appStore = useAppStore();
 const cloudStore = useCloudStore();
-const { authData, provider, namespaceId, plan, locationId, showcaseId } =
-  toRefs(cloudStore);
+const {
+  authData,
+  provider,
+  namespaceId,
+  plan,
+  locationId,
+  showcaseId,
+  validationPanels,
+} = toRefs(cloudStore);
 const currenciesStore = useCurrenciesStore();
 const { addToClipboard } = useClipboard();
 const { locale } = useI18n();
@@ -148,7 +155,11 @@ const createButtonOptions = computed(() => {
 });
 
 const nextButtonOptions = computed(() => ({
-  visible: activeKey.value !== props.panels.at(-1),
+  visible:
+    activeKey.value !== props.panels.at(-1) ||
+    Object.keys(validationPanels.value).some(
+      (key) => validationPanels.value[key]
+    ),
   onClick: nextStep,
 }));
 

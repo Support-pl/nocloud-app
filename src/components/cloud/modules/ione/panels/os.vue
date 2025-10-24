@@ -9,7 +9,14 @@
 
     <a-row>
       <a-col :xs="24" :sm="10">
-        <a-form no-style autocomplete="off" layout="vertical" :rules="rules">
+        <a-form
+          ref="ioneForm"
+          no-style
+          autocomplete="off"
+          layout="vertical"
+          :rules="rules"
+          :model="authData"
+        >
           <a-form-item
             style="margin-top: 15px"
             class="newCloud__form-item"
@@ -76,7 +83,7 @@
 </template>
 
 <script setup>
-import { computed, inject, onBeforeMount } from "vue";
+import { computed, inject, onBeforeMount, ref, watch } from "vue";
 import { message } from "ant-design-vue";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
@@ -90,9 +97,13 @@ import imagesList from "@/components/ui/images.vue";
 const i18n = useI18n();
 const authStore = useAuthStore();
 const cloudStore = useCloudStore();
-const { authData, provider } = storeToRefs(cloudStore);
+const { authData, provider, validationPanels } = storeToRefs(cloudStore);
 
 const [options, setOptions] = inject("useOptions")();
+
+const ioneForm = ref(null);
+
+const [activeKey] = inject("useActiveKey", () => [])();
 
 const images = computed(() => {
   const { templates } = provider.value.publicData;
@@ -111,6 +122,7 @@ const images = computed(() => {
 const rules = {
   vmName: {
     trigger: "change",
+    required: true,
     validator: () =>
       authData.value.vmName.length < 2
         ? Promise.reject(i18n.t("ssl_product.field is required"))
@@ -118,6 +130,7 @@ const rules = {
   },
   username: {
     trigger: "change",
+    required: true,
     validator: () => {
       if (authData.value.username.length < 2) {
         return Promise.reject(i18n.t("ssl_product.field is required"));
@@ -134,6 +147,7 @@ const rules = {
   },
   password: {
     trigger: "change",
+    required: true,
     validator: () => {
       try {
         if (authData.value.password === "") {
@@ -169,14 +183,21 @@ const checkIsNameValid = async () => {
   } catch {
     authData.value.is_username_valid = false;
   }
-  console.log(authData.value.is_username_valid);
-  
 };
 
 onBeforeMount(() => {
   const images = Object.entries(provider.value?.publicData.templates ?? {});
 
   if (images.length === 1) setOS(images[0][1], images[0][0]);
+});
+
+watch(activeKey, async () => {
+  try {
+    await ioneForm.value.validateFields();
+    validationPanels.value["os"] = false;
+  } catch (e) {
+    validationPanels.value["os"] = true;
+  }
 });
 
 function setOS(item, index) {

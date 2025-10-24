@@ -2,25 +2,26 @@
   <div v-if="images.length > 0 || !isLoading" class="newCloud__option-field">
     <a-row>
       <a-col :xs="24" :sm="10">
-        <a-form no-style autocomplete="off" layout="vertical">
-          <a-form-item :label="`${capitalize($t('server name'))}:`">
-            <a-input
-              v-model:value="authData.vmName"
-              :style="{
-                boxShadow: `0 0 2px 2px var(${
-                  authData.vmName.length > 1 ? '--main' : '--err'
-                })`,
-              }"
-            />
-            <div
-              v-if="authData.vmName.length < 2"
-              style="line-height: 1.5; color: var(--err)"
-            >
-              {{ $t("ssl_product.field is required") }}
-            </div>
+        <a-form
+          ref="ovhVpsForm"
+          :model="authData"
+          no-style
+          autocomplete="off"
+          layout="vertical"
+          :rules="rules"
+        >
+          <a-form-item
+            name="vmName"
+            :label="`${capitalize($t('server name'))}:`"
+          >
+            <a-input v-model:value="authData.vmName" />
           </a-form-item>
 
-          <a-form-item v-if="false" :label="`${$t('clientinfo.password')}:`">
+          <a-form-item
+            name="password"
+            v-if="false"
+            :label="`${$t('clientinfo.password')}:`"
+          >
             <password-meter
               :style="{
                 height: authData.password.length > 0 ? '10px' : '0',
@@ -65,6 +66,7 @@ import { useCloudStore } from "@/stores/cloud.js";
 import imagesList from "@/components/ui/images.vue";
 import { useAddonsStore } from "@/stores/addons";
 import { useCurrency } from "@/hooks/utils";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   mode: { type: String, required: true },
@@ -72,19 +74,43 @@ const props = defineProps({
   isFlavorsLoading: { type: Boolean, default: false },
 });
 
+const i18n = useI18n();
+
 const cloudStore = useCloudStore();
+const { validationPanels, authData } = storeToRefs(cloudStore);
 const { currency, formatPrice } = useCurrency();
 const { addons, loading } = storeToRefs(useAddonsStore());
 
+const ovhVpsForm = ref(null);
 const images = ref([]);
 const isLoading = ref(false);
 
-const { authData } = storeToRefs(useCloudStore());
+const rules = {
+  vmName: {
+    trigger: "change",
+    required: true,
+    validator: () =>
+      authData.value.vmName.length < 2
+        ? Promise.reject(i18n.t("ssl_product.field is required"))
+        : Promise.resolve(),
+  },
+};
+
 const [options, setOptions] = inject("useOptions", () => [])();
 const [price, setPrice] = inject("usePriceOVH", () => [])();
+const [activeKey] = inject("useActiveKey", () => [])();
 
 watch([() => props.productSize, loading, currency], setImages);
 if (props.productSize) setImages();
+
+watch(activeKey, async () => {
+  try {
+    await ovhVpsForm.value.validateFields();
+    validationPanels.value["os"] = false;
+  } catch (e) {
+    validationPanels.value["os"] = true;
+  }
+});
 
 async function setImages() {
   const planProducts = Object.entries(cloudStore.plan.products ?? {}).filter(
