@@ -5,85 +5,57 @@
       autocomplete="off"
       layout="vertical"
       style="margin-bottom: 10px"
+      :rules="rules"
+      ref="keywebForm"
+      :model="authData"
     >
       <a-row :gutter="15">
         <a-col :xs="24" :sm="12">
-          <a-form-item :label="`${capitalize($t('server name'))}:`">
-            <a-input
-              v-model:value="authData.vmName"
-              :style="{
-                boxShadow: `0 0 2px 2px var(${
-                  authData.vmName.length > 1 ? '--main' : '--err'
-                })`,
-              }"
-            />
-            <div
-              v-if="authData.vmName.length < 2"
-              style="line-height: 1.5; color: var(--err)"
-            >
-              {{ $t("ssl_product.field is required") }}
-            </div>
+          <a-form-item
+            name="vmName"
+            :label="`${capitalize($t('server name'))}:`"
+          >
+            <a-input v-model:value="authData.vmName" />
           </a-form-item>
         </a-col>
 
         <a-col :xs="24" :sm="12">
           <a-form-item
+            name="username"
             class="newCloud__form-item"
             :label="`${capitalize($t('clientinfo.username'))}:`"
           >
             <a-input
               :value="authData.username"
-              :style="{
-                boxShadow:
-                  authData.username.length < 2
-                    ? '0 0 2px 2px var(--err)'
-                    : null,
-              }"
               @update:value="
                 authData.username = $event;
                 setOptions('config.username', $event);
               "
             />
-
-            <div
-              v-if="authData.username.length < 2"
-              style="line-height: 1.5; color: var(--err)"
-            >
-              {{ $t("ssl_product.field is required") }}
-            </div>
           </a-form-item>
         </a-col>
 
         <a-col :xs="24" :sm="12">
           <a-form-item
+            name="hostname"
             class="newCloud__form-item"
             :label="`${capitalize($t('hostname'))}:`"
           >
             <a-input
               :value="authData.hostname"
-              :style="{
-                boxShadow:
-                  authData.hostname.length < 2
-                    ? '0 0 2px 2px var(--err)'
-                    : null,
-              }"
               @update:value="
                 authData.hostname = $event;
                 setOptions('config.hostname', $event);
               "
             />
-
-            <div
-              v-if="authData.hostname.length < 2"
-              style="line-height: 1.5; color: var(--err)"
-            >
-              {{ $t("ssl_product.field is required") }}
-            </div>
           </a-form-item>
         </a-col>
 
         <a-col :xs="24" :sm="12">
-          <a-form-item :label="`${capitalize($t('clientinfo.password'))}:`">
+          <a-form-item
+            name="password"
+            :label="`${capitalize($t('clientinfo.password'))}:`"
+          >
             <password-meter
               :style="{
                 height: authData.password.length > 0 ? '10px' : '0',
@@ -127,11 +99,10 @@
 import { inject, ref, watch, nextTick } from "vue";
 import { storeToRefs } from "pinia";
 import passwordMeter from "vue-simple-password-meter";
-
 import { useCloudStore } from "@/stores/cloud.js";
 import { useAddonsStore } from "@/stores/addons.js";
-
 import imagesList from "@/components/ui/images.vue";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   mode: { type: String, default: "" },
@@ -141,14 +112,71 @@ const props = defineProps({
   isFlavorsLoading: { type: Boolean, default: false },
 });
 
+const i18n = useI18n();
+
 const cloudStore = useCloudStore();
+const { authData, validationPanels } = storeToRefs(cloudStore);
 const addonsStore = useAddonsStore();
 const images = ref([]);
 
-const { authData } = storeToRefs(useCloudStore());
+const keywebForm = ref(null);
+const rules = {
+  vmName: {
+    trigger: "change",
+    required: true,
+    validator: () =>
+      authData.value.vmName.length < 2
+        ? Promise.reject(i18n.t("ssl_product.field is required"))
+        : Promise.resolve(),
+  },
+  hostname: {
+    trigger: "change",
+    required: true,
+    validator: () =>
+      authData.value.hostname.length < 2
+        ? Promise.reject(i18n.t("ssl_product.field is required"))
+        : Promise.resolve(),
+  },
+  password: {
+    trigger: "change",
+    required: true,
+    validator: () =>
+      authData.value.password.length < 6
+        ? Promise.reject(i18n.t("ssl_product.field is required"))
+        : Promise.resolve(),
+  },
+  username: {
+    trigger: "change",
+    required: true,
+    validator: () => {
+      if (authData.value.username.length < 2) {
+        return Promise.reject(i18n.t("ssl_product.field is required"));
+      }
+
+      if (/[^a-zA-Z0-9]/.test(authData.value.username)) {
+        return Promise.reject(
+          i18n.t(i18n.t("The username must be without special characters"))
+        );
+      }
+
+      return Promise.resolve();
+    },
+  },
+};
+
 const [product] = inject("useProduct", () => [])();
 const [options, setOptions] = inject("useOptions", () => [])();
 const [price, setPrice] = inject("usePriceOVH", () => [])();
+const [activeKey] = inject("useActiveKey", () => [])();
+
+watch(activeKey, async () => {
+  try {
+    await keywebForm.value.validateFields();
+    validationPanels.value["os"] = false;
+  } catch (e) {
+    validationPanels.value["os"] = true;
+  }
+});
 
 watch(() => addonsStore.addons, setImages);
 watch(() => props.productSize, setImages);

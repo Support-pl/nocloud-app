@@ -290,6 +290,7 @@ function setPrice(path, value) {
 function nextStep() {
   if (activeKey.value === "location") {
     activeKey.value = "plan";
+    return;
   } else if (activeKey.value === "plan") {
     if (!isProductExist.value) {
       activeKey.value = "os";
@@ -298,6 +299,17 @@ function nextStep() {
     router.push({ query: { ...route.query, product: productSize.value } });
   } else if (activeKey.value === "os" && isAddonsExists.value) {
     activeKey.value = "addons";
+    return;
+  }
+
+  if (
+    Object.keys(cloudStore.validationPanels).some(
+      (key) => cloudStore.validationPanels[key]
+    )
+  ) {
+    activeKey.value = panelsKeys.value.find(
+      (key) => cloudStore.validationPanels[key]
+    );
   }
 }
 
