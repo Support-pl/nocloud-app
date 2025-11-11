@@ -52,12 +52,11 @@
       </div>
 
       <div class="order__calculate order__field">
+        <a-row>
+          <a-col style="font-size: 1rem"> {{ $t("Pay period") }}: </a-col>
+        </a-row>
         <a-row justify="space-around" style="margin-top: 5px">
-          <a-col :xs="10" :sm="6" :lg="12" style="font-size: 1rem">
-            {{ $t("Pay period") }}:
-          </a-col>
-
-          <a-col :xs="12" :sm="18" :lg="12">
+          <a-col span="24">
             <a-select
               v-if="!fetchLoading"
               v-model:value="options.period"
@@ -107,17 +106,19 @@
 
         <a-row style="width: 100%">
           <a-col :span="24">
-            <a-form-item
-              :help="domainError ? $t('domain is wrong') : ''"
-              :label="$t('ssl_product.domain')"
-              :validate-status="domainError ? 'error' : ''"
-            >
-              <a-input
-                v-model:value="options.domain"
-                :placeholder="$t('ssl_product.domain')"
-                @blur="validateDomain"
-              />
-            </a-form-item>
+            <a-form layout="vertical">
+              <a-form-item
+                :help="domainError ? $t('domain is wrong') : ''"
+                :label="$t('bitrix_domain')"
+                :validate-status="domainError ? 'error' : ''"
+              >
+                <a-input
+                  v-model:value="options.domain"
+                  :placeholder="$t('bitrix_domain')"
+                  @blur="validateDomain"
+                />
+              </a-form-item>
+            </a-form>
           </a-col>
         </a-row>
 
