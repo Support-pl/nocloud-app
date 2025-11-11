@@ -35,12 +35,12 @@
                 <a-col :span="24">
                   <a-form-item
                     :help="domainError ? $t('domain is wrong') : ''"
-                    :label="$t('ssl_product.domain')"
+                    :label="$t('bitrix_domain')"
                     :validate-status="domainError ? 'error' : ''"
                   >
                     <a-input
                       v-model:value="service.resources.bitrix_domain"
-                      :placeholder="$t('ssl_product.domain')"
+                      :placeholder="$t('bitrix_domain')"
                       @blur="validateDomain"
                     />
                   </a-form-item>

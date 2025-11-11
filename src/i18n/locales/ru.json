@@ -2,6 +2,7 @@
   "ru": {
     "localePrefix": "ru",
     "localeLang": "Русский",
+    "bitrix_domain": "Ссылка на ваш Bitrix24:",
     "enable_addon": "Включить",
     "sort_default": "Умолчанию",
     "locale": "russian",
