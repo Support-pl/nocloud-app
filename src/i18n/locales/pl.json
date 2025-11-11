@@ -2,6 +2,7 @@
   "pl": {
     "localePrefix": "pl",
     "localeLang": "Polski",
+    "bitrix_domain": "Link do Twojego Bitrix24:",
     "enable_addon": "Włącz dodatek",
     "sort_default": "Standard",
     "locale": "polish",

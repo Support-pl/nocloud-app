@@ -2,6 +2,7 @@
   "vi": {
     "localePrefix": "vi",
     "localeLang": "Tiếng Việt",
+    "bitrix_domain": "Liên kết đến Bitrix24 của bạn:",
     "enable_addon": "Bật addon",
     "sort_default": "Tiêu chuẩn",
     "coming soon": "Sắp ra mắt",

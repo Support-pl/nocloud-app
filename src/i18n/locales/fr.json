@@ -2,6 +2,7 @@
   "fr": {
     "localePrefix": "fr",
     "localeLang": "Français",
+    "bitrix_domain": "Lien vers votre Bitrix24:",
     "enable_addon": "Activer le module",
     "sort_default": "Standard",
     "locale": "french",
