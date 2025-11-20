@@ -35,7 +35,6 @@ function useCreateInstance() {
     instance,
     { provider, instancesGroupType, promocode }
   ) {
-
     //original values
     const service = services.value.filter((s) => s.status !== "DEL")[0];
     const namespace = namespasesStore.namespaces[0];
@@ -81,7 +80,7 @@ function useCreateInstance() {
     if (!currentGroup) {
       newService.instancesGroups.push({
         title: authStore.userdata.title + Date.now(),
-        type: instancesGroupType || instance.billing_plan?.type,
+        type: instancesGroupType || instance.billing_plan?.type.split(" ")[0],
         sp: provider,
         instances: [],
       });

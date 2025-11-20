@@ -67,6 +67,11 @@ const groups = computed(() =>
   Object.groupBy(addons.value, ({ group }) => group)
 );
 
+function getSelectedAddonTag(uuid) {
+  const addon = addonsStore.addons.find((a) => a.uuid === uuid);
+  return addon?.meta?.tag || '';
+}
+
 function changeAddons({ uuid, periods }) {
   if (options.addons.includes(uuid)) {
     const value = { ...price.addons };
@@ -78,11 +83,24 @@ function changeAddons({ uuid, periods }) {
     );
     setPrice("addons", value);
   } else {
-    setOptions("addons", [...options.addons, uuid]);
-    setPrice("addons", {
-      ...price.addons,
-      [uuid]: periods[product.value.period],
-    });
+    const newAddonTag = getSelectedAddonTag(uuid);
+
+    let newAddons = [...options.addons, uuid];
+    const newPriceAddons = { ...price.addons, [uuid]: periods[product.value.period] };
+
+    if (newAddonTag) {
+      newAddons = newAddons.filter((selectedUuid) => {
+        const selectedTag = getSelectedAddonTag(selectedUuid);
+        if (selectedTag === newAddonTag && selectedUuid !== uuid) {
+          delete newPriceAddons[selectedUuid];
+          return false;
+        }
+        return true;
+      });
+    }
+
+    setOptions("addons", newAddons);
+    setPrice("addons", newPriceAddons);
   }
 }
 

@@ -128,6 +128,7 @@ async function setImages() {
       desc: os.title,
       uuid: os.uuid,
     }));
+  images.value.sort((a, b) => a.name.localeCompare(b.name));
 
   setOptions("addons", []);
   if (images.value[0]) {
