@@ -103,24 +103,30 @@ export const useInvoicesStore = defineStore("invoices", () => {
         fetchWhmcsInvoices(),
       ]);
 
-      (response.toJson().pool || [])
-        .filter(
-          (invoice) =>
-            !(
-              invoice?.meta?.whmcs_sync_required &&
-              !invoice?.meta?.whmcs_invoice_id
-            )
-        )
-        .forEach((el) => {
+      if (auth.userdata?.paymentsGateway === "nocloud") {
+        (response.toJson().pool || []).forEach((el) => {
           result.push(toInvoice(el));
         });
+      } else {
+        (response.toJson().pool || [])
+          .filter(
+            (invoice) =>
+              !(
+                invoice?.meta?.whmcs_sync_required &&
+                !invoice?.meta?.whmcs_invoice_id
+              )
+          )
+          .forEach((el) => {
+            result.push(toInvoice(el));
+          });
 
-      whmcsInvoices.forEach((el) => {
-        if (result.find((invoice) => invoice?.payment_invoice_id == el.id))
-          return;
+        whmcsInvoices.forEach((el) => {
+          if (result.find((invoice) => invoice?.payment_invoice_id == el.id))
+            return;
 
-        result.push(toInvoice(el, "whmcs"));
-      });
+          result.push(toInvoice(el, "whmcs"));
+        });
+      }
 
       result.sort(
         (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
