@@ -12,8 +12,8 @@
           <a-select-option value="-1">
             {{ $t("ip.none") }}
           </a-select-option>
-          <a-select-option v-for="(item, id) in addon" :key="id">
-            {{ item.title }} ({{ addonPrice(item) }})
+          <a-select-option v-for="item in getGroupAddons(addon)" :key="item.id">
+            {{ item.title }} ({{ item.priceFormatted }})
           </a-select-option>
         </a-select>
       </a-col>
@@ -90,13 +90,26 @@ function addonName(addons) {
   return options.addons.find((el) => keys.includes(el)) ?? "-1";
 }
 
-function addonPrice({ periods }) {
-  const period = periods.find(
-    ({ pricingMode }) => pricingMode === props.mode
-  ) ?? { price: { value: 0 } };
-  const price = formatPrice(period.price.value);
+function getGroupAddons(groupAddons) {
+  const keys = Object.keys(groupAddons);
 
-  return `${price} ${currency.value.title}`;
+  const addons = keys.map((key) => {
+    const period = groupAddons[key].periods.find(
+      ({ pricingMode }) => pricingMode === props.mode
+    ) ?? { price: { value: 0 } };
+    const price = formatPrice(period.price.value);
+
+    return {
+      ...groupAddons[key],
+      price: price,
+      id: key,
+      priceFormatted: formatPrice(price) + " " + currency.value.title,
+    };
+  });
+
+  addons.sort((a, b) => a.price - b.price);
+
+  return addons;
 }
 </script>
 
