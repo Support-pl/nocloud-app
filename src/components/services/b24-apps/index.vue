@@ -314,11 +314,6 @@ const changePeriods = (key) => {
 function validateDomain() {
   const domain = options.value.domain?.trim();
 
-  if (!domain) {
-    domainError.value = false;
-    return;
-  }
-
   const cleanDomain = domain.replace(/^https?:\/\//, "");
 
   const domainOnly = cleanDomain.split("/")[0];
