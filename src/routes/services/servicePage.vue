@@ -621,6 +621,8 @@ const updateInstanceDomain = async () => {
     };
 
     await instancesStore.updateInstance(instance);
+
+    notification.openNotification("success", { message: t("Done") });
   } finally {
     isUpdateDomainLoading.value = false;
   }
