@@ -534,7 +534,7 @@ export default { name: "LoginView" };
   display: block;
   width: 25px;
   height: 25px;
-  background: #437dfb;
+  background: var(--main);
   border-radius: 50%;
 }
 

@@ -54,7 +54,7 @@ const audioList = computed(() => [
   justify-content: center;
   justify-items: center;
   margin-bottom: 10px;
-  color: #3d73da;
+  color: var(--main);
 }
 
 .vue-audio-player__btn-wrap svg {
