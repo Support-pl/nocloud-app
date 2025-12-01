@@ -7,6 +7,8 @@
     "sort_default": "Standard",
     "locale": "french",
     "No snapshots available": "Aucun snapshot disponible",
+    "backup_addon_not_available": "La fonctionnalité de sauvegarde n'est pas disponible avec votre plan actuel",
+    "snapshot_addon_not_available": "La fonctionnalité de snapshot n'est pas disponible avec votre plan actuel",
     "coming soon": "Prochainement",
     "Settings": "Paramètres",
     "Buy a license": "Acheter une licence",
