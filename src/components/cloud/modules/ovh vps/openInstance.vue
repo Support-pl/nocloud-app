@@ -422,20 +422,28 @@
             :footer="null"
           >
             <div
-              v-for="(item, index) in VM.state.meta.snapshots"
-              :key="item.name"
+              v-if="actionLoading"
+              style="
+                display: flex;
+                align-items: center;
+                margin-bottom: 10px;
+                justify-content: center;
+              "
+            >
+              <a-spin></a-spin>
+            </div>
+            <div
+              v-else-if="snap"
               style="display: flex; align-items: center; margin-bottom: 10px"
             >
               <a-col style="width: 100%">
                 <div style="display: flex; font-size: 16px">
-                  <div style="margin-right: 30px; width: 30%">
-                    {{ item.name }}
-                  </div>
-                  <div style="width: 70%">
-                    {{ dateFormat(item.ts * 1000) }}
+                  <div style="width: 100%">
+                    {{ dateFormat(new Date(snap.creationDate).getTime()) }}
                   </div>
                 </div>
               </a-col>
+
               <a-col style="margin-left: auto; display: flex">
                 <a-button
                   type="primary"
@@ -453,6 +461,9 @@
                   <close-icon />
                 </a-button>
               </a-col>
+            </div>
+            <div v-else>
+              {{ $t("No snapshots available") }}
             </div>
 
             <div class="modal__buttons">
@@ -489,12 +500,6 @@
                   $t("Each snapshot exists for 24 hours and is then deleted.")
                 }}
               </p>
-              <p>{{ $t("Choose a name for the new snapshot:") }}</p>
-              <a-input
-                ref="snapNameInput"
-                v-model:value="snapshots.addSnap.snapname"
-                :placeholder="$t('Snapshot name')"
-              />
 
               <div class="modal__buttons">
                 <a-button
@@ -698,6 +703,7 @@ export default defineComponent({
     actionLoading: false,
     isSwitchLoading: false,
     isVisible: false,
+    snap: null,
   }),
   computed: {
     ...mapState(usePlansStore, { plans: "plans", isPlansLoading: "isLoading" }),
@@ -1026,18 +1032,18 @@ export default defineComponent({
 
       const data = {
         uuid: this.VM.uuid,
-        params: { snap_name: this.snapshots.addSnap.snapname },
         action: "snap_create",
       };
 
       this.snapshots.addSnap.loading = true;
       this.invokeAction(data)
         .then((res) => {
-          this.VM.state.meta.snapshots = res?.meta.snapshots;
           this.openNotification("success", {
             message: this.$t("Create snapshot"),
           });
           this.snapshots.addSnap.modal = false;
+
+          this.fetchSnap();
         })
         .catch((err) => {
           const opts = {
@@ -1049,20 +1055,20 @@ export default defineComponent({
           this.snapshots.addSnap.loading = false;
         });
     },
-    deleteSnapshot(index) {
+    deleteSnapshot() {
       const data = {
         uuid: this.VM.uuid,
-        params: { snap_id: +index },
         action: "snap_delete",
       };
 
       this.snapshots.loading = true;
       this.invokeAction(data)
         .then(() => {
-          delete this.VM.state.meta.snapshots[index];
           this.openNotification("success", {
             message: this.$t("Delete snapshot"),
           });
+
+          this.fetchSnap();
         })
         .catch((err) => {
           const opts = {
@@ -1074,10 +1080,9 @@ export default defineComponent({
           this.snapshots.loading = false;
         });
     },
-    revSnapshot(index) {
+    revSnapshot() {
       const data = {
         uuid: this.VM.uuid,
-        params: { snap_id: +index },
         action: "snap_revert",
       };
 
@@ -1087,6 +1092,8 @@ export default defineComponent({
           this.openNotification("success", {
             message: this.$t("Revert snapshot"),
           });
+
+          this.fetchSnap();
         })
         .catch((err) => {
           const opts = {
@@ -1129,6 +1136,7 @@ export default defineComponent({
           break;
         case "snapshot":
           this.snapshots.modal = true;
+          this.fetchSnap();
           break;
         case "createSnapshot":
           this.snapshots.addSnap.modal = true;
@@ -1148,6 +1156,20 @@ export default defineComponent({
         },
         onCancel() {},
       });
+    },
+    async fetchSnap() {
+      this.actionLoading = true;
+      this.snap = null;
+      try {
+        const { meta } = await this.invokeAction({
+          uuid: this.VM.uuid,
+          uuidService: this.VM.uuidService,
+          action: "snap_get",
+        });
+        this.snap = meta.snapshot;
+      } finally {
+        this.actionLoading = false;
+      }
     },
     sendNewTariff() {
       const service = this.services.find(
