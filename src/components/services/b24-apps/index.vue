@@ -486,8 +486,9 @@ const orderClickHandler = () => {
     onLogin.value.info = {
       type: "custom",
       title: [
-        showcase.value.promo?.[locale.value]?.title ??
-          showcase.value.title ??
+        showcase.value.promo?.[locale.value]?.title?.trim() ||
+          showcase.value.promo?.["en"]?.title?.trim() ||
+          showcase.value.title ||
           "custom",
         currentProduct.value.title,
       ].join(" - "),
