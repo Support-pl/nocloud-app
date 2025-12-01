@@ -73,16 +73,9 @@
             </a-spin>
           </template>
 
-          <a-button
-            v-else
-            type="primary"
-            shape="round"
-            size="large"
-            :loading="actionLoading"
-            @click="sendAddingAddon('backup')"
-          >
-            {{ $t("Add recover") }}
-          </a-button>
+          <span v-else>
+            {{ $t('backup_addon_not_available') }}
+          </span>
         </a-modal>
       </div>
     </div>
@@ -479,16 +472,7 @@
               >
                 + {{ $t("Take snapshot") }}
               </a-button>
-              <a-button
-                v-else
-                type="primary"
-                shape="round"
-                size="large"
-                :loading="actionLoading"
-                @click="sendAddingAddon('snapshot')"
-              >
-                {{ $t("Add snapshot") }}
-              </a-button>
+              <span v-else>{{ $t('snapshot_addon_not_available') }}</span>
             </div>
             <a-modal
               v-model:open="snapshots.addSnap.modal"
@@ -1232,45 +1216,6 @@ export default defineComponent({
       } finally {
         this.isSwitchLoading = false;
       }
-    },
-    sendAddingAddon(action) {
-      this.$confirm({
-        title: this.$t(`Do you want to add an ${action}?`),
-        okText: this.$t("Yes"),
-        cancelText: this.$t("Cancel"),
-        onOk: () => {
-          const key = this.VM.product;
-          const planCode = this.VM.billingPlan.products[key].meta.addons.find(
-            (addon) => addon.includes(action)
-          );
-
-          this.actionLoading = true;
-          this.invokeAction({
-            uuid: this.VM.uuid,
-            uuidService: this.VM.uuidService,
-            action: "add_addon",
-            params: { planCode },
-          })
-            .then(() => {
-              this.openNotification("success", { message: "Done!" });
-            })
-            .catch((err) => {
-              const opts = {
-                message: `Error: ${err.response?.data?.message ?? "Unknown"}.`,
-              };
-
-              if (err.response?.status >= 500) {
-                opts.message = `Error: ${this.$t("Failed to load data")}`;
-              }
-              this.openNotification("error", opts);
-              console.error(err);
-            })
-            .finally(() => {
-              this.actionLoading = false;
-            });
-        },
-        onCancel() {},
-      });
     },
     async sendAction(action) {
       const data = {
