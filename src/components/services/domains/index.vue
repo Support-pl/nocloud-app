@@ -70,7 +70,6 @@
               placeholder=""
               :enter-button="t('search')"
               :loading="isDomainsLoading"
-              :disabled="isLoading"
               @search="searchDomain"
             />
             <div v-if="!cartVisibility && results.length" class="description">
@@ -201,6 +200,7 @@ import { usePlansStore } from "@/stores/plans.js";
 import { useAddonsStore } from "@/stores/addons";
 import { levenshtein } from "@/functions";
 import useServiceId from "@/hooks/services/serviceId";
+import { useRoute } from "vue-router";
 
 const i18n = useI18n();
 
@@ -229,6 +229,7 @@ const addonsStore = useAddonsStore();
 
 const { currency, formatPrice } = useCurrency();
 const { t } = useI18n();
+const route = useRoute();
 
 const itemsInCart = ref(0);
 const domain = ref("");
@@ -456,6 +457,11 @@ fetch();
 watch(sp, (value) => {
   if (value.length > 0) {
     provider.value = value[0].uuid;
+  }
+
+  if (route.query.domain) {
+    domain.value = route.query.domain;
+    searchDomain();
   }
 });
 

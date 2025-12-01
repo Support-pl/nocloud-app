@@ -73,16 +73,9 @@
             </a-spin>
           </template>
 
-          <a-button
-            v-else
-            type="primary"
-            shape="round"
-            size="large"
-            :loading="actionLoading"
-            @click="sendAddingAddon('backup')"
-          >
-            {{ $t("Add recover") }}
-          </a-button>
+          <span v-else>
+            {{ $t('backup_addon_not_available') }}
+          </span>
         </a-modal>
       </div>
     </div>
@@ -422,20 +415,28 @@
             :footer="null"
           >
             <div
-              v-for="(item, index) in VM.state.meta.snapshots"
-              :key="item.name"
+              v-if="actionLoading"
+              style="
+                display: flex;
+                align-items: center;
+                margin-bottom: 10px;
+                justify-content: center;
+              "
+            >
+              <a-spin></a-spin>
+            </div>
+            <div
+              v-else-if="snap"
               style="display: flex; align-items: center; margin-bottom: 10px"
             >
               <a-col style="width: 100%">
                 <div style="display: flex; font-size: 16px">
-                  <div style="margin-right: 30px; width: 30%">
-                    {{ item.name }}
-                  </div>
-                  <div style="width: 70%">
-                    {{ dateFormat(item.ts * 1000) }}
+                  <div style="width: 100%">
+                    {{ dateFormat(new Date(snap.creationDate).getTime()) }}
                   </div>
                 </div>
               </a-col>
+
               <a-col style="margin-left: auto; display: flex">
                 <a-button
                   type="primary"
@@ -454,6 +455,9 @@
                 </a-button>
               </a-col>
             </div>
+            <div v-else>
+              {{ $t("No snapshots available") }}
+            </div>
 
             <div class="modal__buttons">
               <a-button
@@ -468,16 +472,7 @@
               >
                 + {{ $t("Take snapshot") }}
               </a-button>
-              <a-button
-                v-else
-                type="primary"
-                shape="round"
-                size="large"
-                :loading="actionLoading"
-                @click="sendAddingAddon('snapshot')"
-              >
-                {{ $t("Add snapshot") }}
-              </a-button>
+              <span v-else>{{ $t('snapshot_addon_not_available') }}</span>
             </div>
             <a-modal
               v-model:open="snapshots.addSnap.modal"
@@ -489,12 +484,6 @@
                   $t("Each snapshot exists for 24 hours and is then deleted.")
                 }}
               </p>
-              <p>{{ $t("Choose a name for the new snapshot:") }}</p>
-              <a-input
-                ref="snapNameInput"
-                v-model:value="snapshots.addSnap.snapname"
-                :placeholder="$t('Snapshot name')"
-              />
 
               <div class="modal__buttons">
                 <a-button
@@ -698,6 +687,7 @@ export default defineComponent({
     actionLoading: false,
     isSwitchLoading: false,
     isVisible: false,
+    snap: null,
   }),
   computed: {
     ...mapState(usePlansStore, { plans: "plans", isPlansLoading: "isLoading" }),
@@ -1026,18 +1016,18 @@ export default defineComponent({
 
       const data = {
         uuid: this.VM.uuid,
-        params: { snap_name: this.snapshots.addSnap.snapname },
         action: "snap_create",
       };
 
       this.snapshots.addSnap.loading = true;
       this.invokeAction(data)
         .then((res) => {
-          this.VM.state.meta.snapshots = res?.meta.snapshots;
           this.openNotification("success", {
             message: this.$t("Create snapshot"),
           });
           this.snapshots.addSnap.modal = false;
+
+          this.fetchSnap();
         })
         .catch((err) => {
           const opts = {
@@ -1049,20 +1039,20 @@ export default defineComponent({
           this.snapshots.addSnap.loading = false;
         });
     },
-    deleteSnapshot(index) {
+    deleteSnapshot() {
       const data = {
         uuid: this.VM.uuid,
-        params: { snap_id: +index },
         action: "snap_delete",
       };
 
       this.snapshots.loading = true;
       this.invokeAction(data)
         .then(() => {
-          delete this.VM.state.meta.snapshots[index];
           this.openNotification("success", {
             message: this.$t("Delete snapshot"),
           });
+
+          this.fetchSnap();
         })
         .catch((err) => {
           const opts = {
@@ -1074,10 +1064,9 @@ export default defineComponent({
           this.snapshots.loading = false;
         });
     },
-    revSnapshot(index) {
+    revSnapshot() {
       const data = {
         uuid: this.VM.uuid,
-        params: { snap_id: +index },
         action: "snap_revert",
       };
 
@@ -1087,6 +1076,8 @@ export default defineComponent({
           this.openNotification("success", {
             message: this.$t("Revert snapshot"),
           });
+
+          this.fetchSnap();
         })
         .catch((err) => {
           const opts = {
@@ -1129,6 +1120,7 @@ export default defineComponent({
           break;
         case "snapshot":
           this.snapshots.modal = true;
+          this.fetchSnap();
           break;
         case "createSnapshot":
           this.snapshots.addSnap.modal = true;
@@ -1148,6 +1140,20 @@ export default defineComponent({
         },
         onCancel() {},
       });
+    },
+    async fetchSnap() {
+      this.actionLoading = true;
+      this.snap = null;
+      try {
+        const { meta } = await this.invokeAction({
+          uuid: this.VM.uuid,
+          uuidService: this.VM.uuidService,
+          action: "snap_get",
+        });
+        this.snap = meta.snapshot;
+      } finally {
+        this.actionLoading = false;
+      }
     },
     sendNewTariff() {
       const service = this.services.find(
@@ -1210,45 +1216,6 @@ export default defineComponent({
       } finally {
         this.isSwitchLoading = false;
       }
-    },
-    sendAddingAddon(action) {
-      this.$confirm({
-        title: this.$t(`Do you want to add an ${action}?`),
-        okText: this.$t("Yes"),
-        cancelText: this.$t("Cancel"),
-        onOk: () => {
-          const key = this.VM.product;
-          const planCode = this.VM.billingPlan.products[key].meta.addons.find(
-            (addon) => addon.includes(action)
-          );
-
-          this.actionLoading = true;
-          this.invokeAction({
-            uuid: this.VM.uuid,
-            uuidService: this.VM.uuidService,
-            action: "add_addon",
-            params: { planCode },
-          })
-            .then(() => {
-              this.openNotification("success", { message: "Done!" });
-            })
-            .catch((err) => {
-              const opts = {
-                message: `Error: ${err.response?.data?.message ?? "Unknown"}.`,
-              };
-
-              if (err.response?.status >= 500) {
-                opts.message = `Error: ${this.$t("Failed to load data")}`;
-              }
-              this.openNotification("error", opts);
-              console.error(err);
-            })
-            .finally(() => {
-              this.actionLoading = false;
-            });
-        },
-        onCancel() {},
-      });
     },
     async sendAction(action) {
       const data = {
