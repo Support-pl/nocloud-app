@@ -198,13 +198,17 @@ watch(userCurrency, () => fetchPlans(provider.value));
 
 function orderClickHandler() {
   const planItem = plans.value.find(({ uuid }) => uuid === plan.value);
+  const title =
+    showcase.value.promo?.[locale.value]?.title?.trim() ||
+    showcase.value.promo?.["en"]?.title?.trim() ||
+    showcase.value.title;
 
   const instance = {
     config: {
       user: authStore.userdata.uuid,
       auto_start: planItem.meta.auto_start,
     },
-    title: showcase.value.promo?.[locale.value]?.title ?? showcase.value.title,
+    title,
     billing_plan: planItem,
     product: "bot",
   };
@@ -217,8 +221,7 @@ function orderClickHandler() {
     appStore.onLogin.redirectQuery = route.query;
     appStore.onLogin.info = {
       type: "bots",
-      title:
-        showcase.promo?.[locale.value]?.title || showcase.title || "AIBots",
+      title,
       cost: getProducts.value.price,
       currency: userCurrency.value.code,
     };

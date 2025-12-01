@@ -241,7 +241,10 @@ function orderClickHandler() {
       user: authStore.userdata.uuid,
       auto_start: planItem.meta.auto_start,
     },
-    title: showcase.value.promo?.[locale.value]?.title ?? showcase.value.title,
+    title:
+      showcase.value.promo?.[locale.value]?.title?.trim() ||
+      showcase.value.promo?.["en"]?.title?.trim() ||
+      showcase.value.title,
     billing_plan: planItem,
     product: "",
   };
