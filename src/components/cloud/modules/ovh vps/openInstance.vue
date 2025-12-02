@@ -57,7 +57,10 @@
           @ok="sendRecover"
         >
           <template
-            v-if="VM.config.addons?.find((el) => el.includes('backup'))"
+            v-if="
+              instanceAddons &&
+              instanceAddons.find((el) => el.meta?.key?.includes('backup'))
+            "
           >
             <p>{{ $t("cloud_Recover_invite_line1") }}</p>
             <p>{{ $t("cloud_Recover_invite_line2") }}</p>
@@ -66,15 +69,15 @@
 
             <a-spin :tip="$t('loading')" :spinning="actionLoading">
               <a-radio-group v-model:value="option.recover" name="recover">
-                <a-radio v-for="item of dates" :key="item">
-                  {{ item }}
+                <a-radio :value="item" v-for="item of dates" :key="item">
+                  {{ dateFormat(new Date(item).getTime(), true) }}
                 </a-radio>
               </a-radio-group>
             </a-spin>
           </template>
 
           <span v-else>
-            {{ $t('backup_addon_not_available') }}
+            {{ $t("backup_addon_not_available") }}
           </span>
         </a-modal>
       </div>
@@ -432,7 +435,9 @@
               <a-col style="width: 100%">
                 <div style="display: flex; font-size: 16px">
                   <div style="width: 100%">
-                    {{ dateFormat(new Date(snap.creationDate).getTime()) }}
+                    {{
+                      dateFormat(new Date(snap.creationDate).getTime(), true)
+                    }}
                   </div>
                 </div>
               </a-col>
@@ -462,8 +467,11 @@
             <div class="modal__buttons">
               <a-button
                 v-if="
-                  VM.config.addons &&
-                  VM.config.addons.find((el) => el.includes('snapshot'))
+                  instanceAddons &&
+                  instanceAddons.find((el) =>
+                    el.meta?.key?.includes('snapshot')
+                  ) &&
+                  !snap
                 "
                 type="primary"
                 shape="round"
@@ -472,7 +480,15 @@
               >
                 + {{ $t("Take snapshot") }}
               </a-button>
-              <span v-else>{{ $t('snapshot_addon_not_available') }}</span>
+              <span
+                v-else-if="
+                  !instanceAddons ||
+                  !instanceAddons.find((el) =>
+                    el.meta?.key?.includes('snapshot')
+                  )
+                "
+                >{{ $t("snapshot_addon_not_available") }}</span
+              >
             </div>
             <a-modal
               v-model:open="snapshots.addSnap.modal"
@@ -639,7 +655,7 @@ export default defineComponent({
     return { currency, openNotification };
   },
   data: () => ({
-    isUpdateAutoRenewLoading: true,
+    isUpdateAutoRenewLoading: false,
     chart1Data: [["Time", ""]],
     chart2Data: [["Time", ""]],
     chart3Data: [["Time", ""]],
@@ -758,6 +774,11 @@ export default defineComponent({
         }
         return acc;
       }, {});
+    },
+    instanceAddons() {
+      return (this.VM.addons || [])
+        .map((uuid) => this.cachedAddons[uuid], {})
+        .filter((a) => a !== undefined);
     },
     fullPrice() {
       return (
@@ -925,7 +946,11 @@ export default defineComponent({
     this.fetchPlans({ sp_uuid: this.VM.sp, anonymously: false });
   },
   methods: {
-    ...mapActions(useInstancesStore, ["invokeAction", "updateService"]),
+    ...mapActions(useInstancesStore, [
+      "invokeAction",
+      "updateService",
+      "updateInstance",
+    ]),
     ...mapActions(usePlansStore, { fetchPlans: "fetch" }),
     toDate,
     searchTafiff(string, option) {

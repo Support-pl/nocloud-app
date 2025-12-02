@@ -35,11 +35,14 @@ app.config.globalProperties.capitalize = (value, isLower) => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-app.config.globalProperties.dateFormat = (value) => {
+app.config.globalProperties.dateFormat = (value,withTime=false) => {
   if (!value) return ''
   // return   new Intl.DateTimeFormat("en-GB", {
   //   dateStyle: "short",
   // }).format(new Date(value))
+  if (withTime) {
+    return new Date(value).toLocaleString();
+  }
   return new Intl.DateTimeFormat().format(new Date(value))
 }
 
