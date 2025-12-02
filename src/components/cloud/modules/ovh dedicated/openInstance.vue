@@ -620,7 +620,11 @@ export default defineComponent({
     },
   },
   methods: {
-    ...mapActions(useInstancesStore, ["invokeAction", "updateService"]),
+    ...mapActions(useInstancesStore, [
+      "invokeAction",
+      "updateService",
+      "updateInstance",
+    ]),
     toDate,
     async openActions() {
       this.actionLoading = true;

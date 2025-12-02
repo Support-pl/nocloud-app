@@ -787,6 +787,7 @@ export default defineComponent({
       "invokeAction",
       "updateService",
       "fetch",
+      "updateInstance",
     ]),
     ...mapActions(usePlansStore, { fetchPlans: "fetch" }),
     toDate,
