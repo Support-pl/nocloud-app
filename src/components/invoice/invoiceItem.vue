@@ -17,7 +17,7 @@
     </div>
     <div class="invoice__middle">
       <div class="invoice__prefix">
-        <span> {{ capitalize($t("net total")) }}: </span>
+        <span> {{ capitalize($t("Brutto")) }}: </span>
       </div>
       <div class="invoice__cost" :style="{ color: statusColor }">
         {{ total }} {{ invoice.currencycode.title || invoice.currencycode }}
