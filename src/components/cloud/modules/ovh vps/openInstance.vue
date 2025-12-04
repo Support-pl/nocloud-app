@@ -62,10 +62,23 @@
               instanceAddons.find((el) => el.meta?.key?.includes('backup'))
             "
           >
-            <p>{{ $t("cloud_Recover_invite_line1") }}</p>
-            <p>{{ $t("cloud_Recover_invite_line2") }}</p>
-            <p>{{ $t("cloud_Recover_invite_line3") }}</p>
-            <p>{{ $t("cloud_Recover_invite") }}</p>
+            <div v-html="marked($t('ovh_vps_backup_description'))"></div>
+
+            <div style="margin-bottom: 20px">
+              <span style="margin-right: 10px">{{
+                $t("backup_creation_time_ovh_vps")
+              }}</span>
+              <a-time-picker v-model:value="schedule" value-format="hh:mm:ss" />
+              <a-button
+                v-if="ogSchedule !== schedule"
+                type="primary"
+                style="margin-left: 10px"
+                @click="saveNewSchedule"
+                :loading="actionLoading"
+              >
+                <save-icon />
+              </a-button>
+            </div>
 
             <a-spin :tip="$t('loading')" :spinning="actionLoading">
               <a-radio-group v-model:value="option.recover" name="recover">
@@ -410,13 +423,24 @@
             :disabled="VM.data.lock"
             @click="openModal('snapshot')"
           >
-            {{ $t("Snapshots") }}
+            {{ $t("snapshots.labels.snapshots") }}
           </a-button>
           <a-modal
             v-model:open="snapshots.modal"
-            :title="$t('Snapshots')"
+            :title="$t('snapshots.labels.snapshots')"
             :footer="null"
           >
+            <div
+              v-if="
+                instanceAddons &&
+                instanceAddons.find((el) =>
+                  el.meta?.key?.includes('snapshot')
+                ) &&
+                !actionLoading
+              "
+              v-html="marked($t('snapshots.labels.description_full'))"
+            />
+
             <div
               v-if="actionLoading"
               style="
@@ -435,6 +459,8 @@
               <a-col style="width: 100%">
                 <div style="display: flex; font-size: 16px">
                   <div style="width: 100%">
+                    {{ snap.description }}
+
                     {{
                       dateFormat(new Date(snap.creationDate).getTime(), true)
                     }}
@@ -443,25 +469,39 @@
               </a-col>
 
               <a-col style="margin-left: auto; display: flex">
-                <a-button
-                  type="primary"
-                  style="margin-right: 10px"
-                  :loading="snapshots.addSnap.loading"
-                  @click="revSnapshot(index)"
-                >
-                  <caret-right-icon />
-                </a-button>
-                <a-button
-                  danger
-                  :loading="snapshots.loading"
-                  @click="deleteSnapshot(index)"
-                >
-                  <close-icon />
-                </a-button>
+                <a-popover :title="$t('snapshots.actions.revert')">
+                  <a-popconfirm
+                    :title="$t('snapshots.messages.revert_confirm')"
+                    :ok-text="$t('Yes')"
+                    :cancel-text="$t('Cancel')"
+                    @confirm="revSnapshot(index)"
+                  >
+                    <a-button
+                      type="primary"
+                      style="margin-right: 10px"
+                      :loading="snapshots.addSnap.loading"
+                    >
+                      <caret-right-icon />
+                    </a-button>
+                  </a-popconfirm>
+                </a-popover>
+
+                <a-popover :title="$t('snapshots.actions.delete')">
+                  <a-popconfirm
+                    :title="$t('snapshots.messages.delete_confirm')"
+                    :ok-text="$t('Yes')"
+                    :cancel-text="$t('Cancel')"
+                    @confirm="deleteSnapshot(index)"
+                  >
+                    <a-button danger :loading="snapshots.loading">
+                      <close-icon />
+                    </a-button>
+                  </a-popconfirm>
+                </a-popover>
               </a-col>
             </div>
             <div v-else>
-              {{ $t("No snapshots available") }}
+              {{ $t("snapshots.labels.no_snapshots") }}
             </div>
 
             <div class="modal__buttons">
@@ -471,14 +511,15 @@
                   instanceAddons.find((el) =>
                     el.meta?.key?.includes('snapshot')
                   ) &&
-                  !snap
+                  !actionLoading
                 "
                 type="primary"
                 shape="round"
                 size="large"
+                :disabled="snap"
                 @click="openModal('createSnapshot')"
               >
-                + {{ $t("Take snapshot") }}
+                + {{ $t("snapshots.actions.create") }}
               </a-button>
               <span
                 v-else-if="
@@ -487,19 +528,27 @@
                     el.meta?.key?.includes('snapshot')
                   )
                 "
-                >{{ $t("snapshot_addon_not_available") }}</span
+                >{{ $t("snapshots.labels.not_available") }}</span
               >
             </div>
             <a-modal
               v-model:open="snapshots.addSnap.modal"
               :footer="null"
-              :title="$t('Create snapshot')"
+              :title="$t('snapshots.actions.create')"
             >
               <p>
-                {{
-                  $t("Each snapshot exists for 24 hours and is then deleted.")
-                }}
+                {{ $t("snapshots.labels.description") }}
               </p>
+
+              <a-form layout="vertical">
+                <a-form-item :label="$t('snapshots.fields.snapname')">
+                  <a-input
+                    v-model:value="snapshots.addSnap.snapname"
+                    :placeholder="$t('snapshots.fields.snapname')"
+                  >
+                  </a-input>
+                </a-form-item>
+              </a-form>
 
               <div class="modal__buttons">
                 <a-button
@@ -516,7 +565,7 @@
                   :loading="snapshots.addSnap.loading"
                   @click="createSnapshot"
                 >
-                  + {{ $t("Take snapshot") }}
+                  + {{ $t("snapshots.actions.create") }}
                 </a-button>
               </div>
             </a-modal>
@@ -556,6 +605,7 @@ import { usePlansStore } from "@/stores/plans.js";
 
 import renewalModal from "@/components/ui/renewalModal.vue";
 import { useAddonsStore } from "@/stores/addons";
+import { marked } from "marked";
 
 const redoIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/RedoOutlined")
@@ -603,6 +653,9 @@ const caretRightIcon = defineAsyncComponent(() =>
 const closeIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CloseOutlined")
 );
+const saveIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SaveOutlined")
+);
 
 const columns = [
   {
@@ -643,6 +696,7 @@ export default defineComponent({
     lineChartIcon,
     caretRightIcon,
     closeIcon,
+    saveIcon,
   },
   inject: ["theme"],
   props: {
@@ -699,6 +753,8 @@ export default defineComponent({
     },
 
     dates: [],
+    schedule: null,
+    ogSchedule: null,
     planCode: "",
     actionLoading: false,
     isSwitchLoading: false,
@@ -953,6 +1009,7 @@ export default defineComponent({
     ]),
     ...mapActions(usePlansStore, { fetchPlans: "fetch" }),
     toDate,
+    marked,
     searchTafiff(string, option) {
       const title = this.tariffs[option.key].title.toLowerCase();
 
@@ -1042,13 +1099,16 @@ export default defineComponent({
       const data = {
         uuid: this.VM.uuid,
         action: "snap_create",
+        params: {
+          snap_name: this.snapshots.addSnap.snapname,
+        },
       };
 
       this.snapshots.addSnap.loading = true;
       this.invokeAction(data)
         .then((res) => {
           this.openNotification("success", {
-            message: this.$t("Create snapshot"),
+            message: this.$t("snapshots.messages.create_success"),
           });
           this.snapshots.addSnap.modal = false;
 
@@ -1074,7 +1134,7 @@ export default defineComponent({
       this.invokeAction(data)
         .then(() => {
           this.openNotification("success", {
-            message: this.$t("Delete snapshot"),
+            message: this.$t("snapshots.messages.delete_success"),
           });
 
           this.fetchSnap();
@@ -1099,7 +1159,7 @@ export default defineComponent({
       this.invokeAction(data)
         .then(() => {
           this.openNotification("success", {
-            message: this.$t("Revert snapshot"),
+            message: this.$t("snapshots.messages.revert_success"),
           });
 
           this.fetchSnap();
@@ -1114,7 +1174,7 @@ export default defineComponent({
           this.snapshots.addSnap.loading = false;
         });
     },
-    openModal(name) {
+    async openModal(name) {
       switch (name) {
         case "start":
           if (this.statusVM.start) return;
@@ -1131,17 +1191,28 @@ export default defineComponent({
         case "recover":
           if (this.statusVM.recover) return;
           this.actionLoading = true;
-          this.invokeAction({
-            uuid: this.VM.uuid,
-            uuidService: this.VM.uuidService,
-            action: "backup_restore_points",
-          })
-            .then(({ meta }) => {
-              this.dates = meta.restorePoints;
-            })
-            .finally(() => {
-              this.actionLoading = false;
-            });
+          try {
+            const [{ meta }, data] = await Promise.all([
+              this.invokeAction({
+                uuid: this.VM.uuid,
+                uuidService: this.VM.uuidService,
+                action: "backup_restore_points",
+              }),
+
+              this.invokeAction({
+                uuid: this.VM.uuid,
+                uuidService: this.VM.uuidService,
+                action: "backup_get",
+              }),
+            ]);
+
+            this.dates = meta.restorePoints;
+            this.schedule = data.meta.automatedBackup.schedule;
+            this.ogSchedule = data.meta.automatedBackup.schedule;
+          } finally {
+            this.actionLoading = false;
+          }
+
           break;
         case "snapshot":
           this.snapshots.modal = true;
@@ -1176,6 +1247,20 @@ export default defineComponent({
           action: "snap_get",
         });
         this.snap = meta.snapshot;
+      } finally {
+        this.actionLoading = false;
+      }
+    },
+    async saveNewSchedule() {
+      this.actionLoading = true;
+      try {
+        await this.invokeAction({
+          uuid: this.VM.uuid,
+          uuidService: this.VM.uuidService,
+          action: "backup_reschedule",
+          params: { schedule: this.schedule },
+        });
+        this.openNotification("success", { message: this.$t("Done") });
       } finally {
         this.actionLoading = false;
       }
@@ -1267,6 +1352,7 @@ export default defineComponent({
           const opts = {
             message: `Error: ${err?.response?.data?.message ?? "Unknown"}.`,
           };
+          marked;
 
           if (err.response?.status >= 500) {
             opts.message = `Error: ${this.$t("Failed to load data")}`;
@@ -1285,6 +1371,7 @@ export default defineComponent({
         .catch((err) => console.error(err));
     },
     fetchMonitoring() {
+      marked;
       if (!this.VM?.uuidService || this.VM.state.state === "PENDING") return;
       const data = {
         uuid: this.VM.uuid,
