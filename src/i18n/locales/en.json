@@ -6,7 +6,6 @@
     "bitrix_domain": "Link to your Bitrix24:",
     "No snapshots available": "No snapshots available",
     "backup_addon_not_available": "This backup feature is not available with your current plan",
-    "snapshot_addon_not_available": "This snapshot feature is not available with your current plan",
     "enable_addon": "Enable",
     "sort_default": "Standard",
     "coming soon": "Coming soon",
@@ -332,6 +331,32 @@
         "total": "Total",
         "download_full_report": "Download Full Report",
         "instruction": "📊 **Service Charge Reports**\n\nHere you can view reports on service charges. The data is updated daily and is accurate **up to yesterday**. Charges for the current day are not included."
+      }
+    },
+    "ovh_vps_backup_description": "### What Standard Backup Provides\n\n* Your VPS gets an **automatic backup every day**.\n* Such a backup is stored for **24 hours**.\n\n**Limitations:** Standard backup doesn't provide restore history over several days — if a problem is discovered later than 24 hours, the previous version will likely no longer be available for restoration.\n\n### What Premium Backup Provides\n\n* Backups are also created daily, but stored for **7 days**.\n* You can **set the time** for backup creation.\n* Due to the longer storage period, you get **greater flexibility**: you can roll back your VPS to a state it was in several days ago.",
+    "backup_creation_time_ovh_vps": "Backup creation time:",
+    "snapshots": {
+      "labels": {
+        "snapshots": "Snapshots",
+        "no_snapshots": "No snapshots available",
+        "not_available": "This snapshot feature is not available with your current plan",
+        "description": "Each snapshot exists for 24 hours and is then deleted.",
+        "description_full": "**Snapshot** — is an instant copy of your entire VPS disk at a chosen moment in time.\nIt allows you to quickly restore your server to the state it was in when the snapshot was created.\nIt's important to remember that a snapshot is **not a full backup**, but rather a convenient safeguard before important server work, such as software updates."
+      },
+      "messages": {
+        "delete_success": "Snapshot successfully deleted.",
+        "create_success": "Snapshot successfully created.",
+        "revert_success": "Snapshot successfully restored.",
+        "delete_confirm": "Do you really want to delete this snapshot?",
+        "revert_confirm": "Do you really want to restore this snapshot?"
+      },
+      "actions": {
+        "create": "Take snapshot",
+        "delete": "Delete the snapshot",
+        "revert": "Restore the snapshot"
+      },
+      "fields": {
+        "snapname": "Snapshot name"
       }
     },
     "os": "OS",
