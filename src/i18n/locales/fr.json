@@ -3,6 +3,32 @@
     "localePrefix": "fr",
     "localeLang": "Français",
     "bitrix_domain": "Lien vers votre Bitrix24:",
+    "ovh_vps_backup_description": "### Ce que fournit la sauvegarde standard\n\n* Votre VPS obtient une **sauvegarde automatique chaque jour**.\n* Une telle sauvegarde est stockée pendant **24 heures**.\n\n**Limitations:** la sauvegarde standard ne fournit pas d'historique de restauration sur plusieurs jours — si un problème est découvert plus tard que 24 heures, la version précédente ne sera probablement plus disponible pour la restauration.\n\n### Ce que fournit la sauvegarde Premium\n\n* Les sauvegardes sont également créées quotidiennement, mais stockées pendant **7 jours**.\n* Vous pouvez **définir l'heure** de création de la sauvegarde.\n* Grâce à la période de stockage plus longue, vous bénéficiez d'une **plus grande flexibilité**: vous pouvez revenir votre VPS à l'état où il était il y a plusieurs jours.",
+    "backup_creation_time_ovh_vps": "Heure de création de la sauvegarde:",
+    "snapshots": {
+      "labels": {
+        "snapshots": "Instantanés",
+        "no_snapshots": "Aucun snapshot disponible",
+        "not_available": "La fonctionnalité de snapshot n'est pas disponible avec votre plan actuel",
+        "description": "Chaque instantané existe pendant 24 heures et sera ensuite supprimé.",
+        "description_full": "**Instantané** — est une copie instantanée de l'intégralité de votre disque VPS à un moment choisi.\nIl vous permet de restaurer rapidement votre serveur à l'état où il se trouvait au moment de la création du snapshot.\nIl est important de se rappeler qu'un snapshot n'est **pas une sauvegarde complète**, mais plutôt une sauvegarde pratique avant des travaux importants sur le serveur, comme les mises à jour logicielles.",
+        "fields": {
+          "snapname": "Nom de l'instantané"
+        }
+      },
+      "messages": {
+        "delete_success": "Instantané supprimé avec succès.",
+        "create_success": "Instantané créé avec succès.",
+        "revert_success": "Instantané restauré avec succès.",
+        "delete_confirm": "Voulez-vous vraiment supprimer cet instantané ?",
+        "revert_confirm": "Voulez-vous vraiment restaurer cet instantané ?"
+      },
+      "actions": {
+        "create": "Créer un snapshot",
+        "delete": "Supprimer le snapshot",
+        "revert": "Restaurer le snapshot"
+      }
+    },
     "enable_addon": "Activer le module",
     "sort_default": "Standard",
     "locale": "french",

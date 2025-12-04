@@ -3,6 +3,32 @@
     "localePrefix": "pl",
     "localeLang": "Polski",
     "bitrix_domain": "Link do Twojego Bitrix24:",
+    "ovh_vps_backup_description": "### Co zapewnia standardowa kopia zapasowa\n\n* Twój VPS otrzymuje **automatyczną kopię zapasową każdego dnia**.\n* Taka kopia jest przechowywana przez **24 godziny**.\n\n**Ograniczenia:** standardowa kopia zapasowa nie zapewnia historii przywracania przez kilka dni — jeśli problem zostanie odkryty po 24 godzinach, poprzednia wersja prawdopodobnie nie będzie już dostępna do przywrócenia.\n\n### Co zapewnia Premium Backup\n\n* Kopie zapasowe są również tworzone codziennie, ale przechowywane przez **7 dni**.\n* Możesz **ustawić czas** tworzenia kopii zapasowej.\n* Dzięki dłuższemu okresowi przechowywania uzyskujesz **większą elastyczność**: możesz przywrócić VPS do stanu, w jakim był kilka dni temu.",
+    "backup_creation_time_ovh_vps": "Czas tworzenia kopii zapasowej:",
+    "snapshots": {
+      "labels": {
+        "snapshots": "Snapshoty",
+        "no_snapshots": "Brak dostępnych migawek",
+        "not_available": "Funkcja migawek nie jest dostępna w Twoim obecnym planie",
+        "description": "Każda migawka istnieje przez 24 godziny i następnie jest usuwana.",
+        "description_full": "**Migawka** — to błyskawiczna kopia całego dysku VPS w wybranym momencie.\nPozwala szybko przywrócić serwer do stanu, w jakim był w momencie utworzenia migawki.\nWażne jest zapamiętuanie, że migawka **nie jest pełną kopią zapasową**, ale raczej wygodną ochroną przed ważnymi pracami na serwerze, takimi jak aktualizacje oprogramowania.",
+        "fields": {
+          "snapname": "Nazwa migawki"
+        }
+      },
+      "messages": {
+        "delete_success": "Migawka usunięta pomyślnie.",
+        "create_success": "Migawka utworzona pomyślnie.",
+        "revert_success": "Migawka przywrócona pomyślnie.",
+        "delete_confirm": "Czy na pewno chcesz usunąć tę migawkę?",
+        "revert_confirm": "Czy na pewno chcesz przywrócić tę migawkę?"
+      },
+      "actions": {
+        "create": "Utwórz migawkę",
+        "delete": "Usuń migawkę",
+        "revert": "Przywróć migawkę"
+      }
+    },
     "enable_addon": "Włącz dodatek",
     "sort_default": "Standard",
     "locale": "polish",

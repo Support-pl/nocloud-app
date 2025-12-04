@@ -3,6 +3,32 @@
     "localePrefix": "vi",
     "localeLang": "Tiếng Việt",
     "bitrix_domain": "Liên kết đến Bitrix24 của bạn:",
+    "ovh_vps_backup_description": "### Những gì Sao lưu tiêu chuẩn cung cấp\n\n* VPS của bạn nhận được **sao lưu tự động mỗi ngày**.\n* Một bản sao lưu như vậy được lưu trữ trong **24 giờ**.\n\n**Hạn chế:** sao lưu tiêu chuẩn không cung cấp lịch sử khôi phục trong nhiều ngày — nếu phát hiện ra vấn đề sau 24 giờ, phiên bản trước đó có thể không còn khả dụng để khôi phục.\n\n### Những gì Sao lưu Premium cung cấp\n\n* Các bản sao lưu cũng được tạo hàng ngày, nhưng được lưu trữ trong **7 ngày**.\n* Bạn có thể **đặt thời gian** tạo sao lưu.\n* Do thời gian lưu trữ dài hơn, bạn nhận được **tính linh hoạt cao hơn**: bạn có thể khôi phục VPS về trạng thái nó cách đây vài ngày.",
+    "backup_creation_time_ovh_vps": "Thời gian tạo sao lưu:",
+    "snapshots": {
+      "labels": {
+        "snapshots": "Snapshots",
+        "no_snapshots": "Không có snapshot nào có sẵn",
+        "not_available": "Tính năng snapshot không khả dụng với gói hiện tại của bạn",
+        "description": "Mỗi snapshot tồn tại trong 24 giờ và sau đó sẽ bị xóa.",
+        "description_full": "**Snapshot** — là một bản sao tức thì của toàn bộ đĩa VPS của bạn tại một thời điểm được chọn.\nNó cho phép bạn nhanh chóng khôi phục máy chủ của mình về trạng thái nó ở thời điểm snapshot được tạo.\nĐiều quan trọng cần nhớ là snapshot **không phải là bản sao lưu đầy đủ**, mà là một biện pháp bảo vệ thuận tiện trước các công việc máy chủ quan trọng, chẳng hạn như cập nhật phần mềm.",
+        "fields": {
+          "snapname": "Tên snapshot"
+        }
+      },
+      "messages": {
+        "delete_success": "Snapshot đã bị xóa thành công.",
+        "create_success": "Snapshot đã được tạo thành công.",
+        "revert_success": "Snapshot đã được khôi phục thành công.",
+        "delete_confirm": "Bạn có thực sự muốn xóa snapshot này không?",
+        "revert_confirm": "Bạn có thực sự muốn khôi phục snapshot này không?"
+      },
+      "actions": {
+        "create": "Tạo snapshot",
+        "delete": "Xóa snapshot",
+        "revert": "Khôi phục snapshot"
+      }
+    },
     "No snapshots available": "Không có snapshot nào có sẵn",
     "backup_addon_not_available": "Tính năng sao lưu không khả dụng với gói hiện tại của bạn",
     "snapshot_addon_not_available": "Tính năng snapshot không khả dụng với gói hiện tại của bạn",
