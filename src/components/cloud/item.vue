@@ -108,6 +108,7 @@ import { useI18n } from "vue-i18n";
 import { useSpStore } from "@/stores/sp.js";
 import { useCurrency } from "@/hooks/utils";
 import config from "@/appconfig.js";
+import { getInstStatusColor } from "@/functions";
 
 const props = defineProps({
   instance: { type: Object, required: true },
@@ -122,29 +123,9 @@ const { currency } = useCurrency();
 
 const activeKey = ref([]);
 
-const statusColor = computed(() => {
-  switch (props.instance.domainstatus) {
-    case "RUNNING":
-    case "Active":
-      return "var(--success)";
-    // останавливающийся и запускающийся
-    case "BOOT":
-    case "BUILD":
-    case "BOOT_POWEROFF":
-    case "SHUTDOWN_POWEROFF":
-      return "var(--warn)";
-    case "LCM_INIT":
-    case "STOPPED":
-    case "SUSPENDED":
-      return "#ff9140";
-    case "OPERATION":
-    case "PENDING":
-    case "Pending":
-      return "var(--main)";
-    default:
-      return "var(--err)";
-  }
-});
+const statusColor = computed(() =>
+  getInstStatusColor(props.instance.domainstatus)
+);
 
 const locationTitle = computed(() => {
   const sp = providersStore.servicesProviders.find(

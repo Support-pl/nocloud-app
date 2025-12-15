@@ -145,24 +145,26 @@ export function getPeriods(productSize, plans) {
 }
 
 export function getInstStatusColor(status) {
+  status = (status || "").toLowerCase();
   switch (status) {
-    case "RUNNING":
-    case "Active":
+    case "active":
+    case "running":
       return "var(--success)";
-    // останавливающийся и запускающийся
-    case "BOOT":
-    case "BUILD":
-    case "BOOT_POWEROFF":
-    case "SHUTDOWN_POWEROFF":
+    case "boot":
+    case "build":
+    case "boot_poweroff":
+    case "shutdown_poweroff":
       return "var(--warn)";
-    case "LCM_INIT":
-    case "STOPPED":
-    case "SUSPENDED":
+    case "lcm_init":
+    case "stopped":
+    case "suspended":
+    case "poweroff":
       return "#ff9140";
-    case "OPERATION":
-    case "PENDING":
-    case "Pending":
-      return "var(--main)";
+    case "operation":
+    case "suspend":
+    case "pending":
+      return "#427cf7";
+    case "cancelled":
     default:
       return "var(--err)";
   }
@@ -226,7 +228,7 @@ function setInstByType(inst, result) {
     case "bots":
       result.groupname = "AIBot";
       break;
-    case 'bitrix24':
+    case "bitrix24":
       result.groupname = "b24-apps";
       break;
     case "empty":

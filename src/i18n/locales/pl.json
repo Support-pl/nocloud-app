@@ -498,7 +498,7 @@
     },
     "userService": {
       "billing cycle": "cykl rozliczeniowy",
-      "renewal amount": "kwota odnowienia",
+      "renewal amount": "kwota odnowienia (netto)",
       "registration date": "data rejestracji",
       "next payment date": "kolejny termin płatności",
       "auto renew": "auto renew"

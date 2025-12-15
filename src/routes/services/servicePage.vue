@@ -230,12 +230,13 @@ import { useInstancesStore } from "@/stores/instances.js";
 
 import loading from "@/components/ui/loading.vue";
 import serviceInfo from "@/components/ui/serviceInfo.vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { Modal } from "ant-design-vue";
 import { useInvoicesStore } from "@/stores/invoices";
 import { GetInvoicesRequest } from "nocloud-proto/proto/es/billing/billing_pb";
 import { storeToRefs } from "pinia";
+import { getInstStatusColor } from "@/functions";
 
 const caretRightIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CaretRightOutlined")
@@ -250,6 +251,7 @@ const invoicesStore = useInvoicesStore();
 
 const { getPeriod } = usePeriod();
 const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
 const notification = useNotification();
 
@@ -290,20 +292,7 @@ const isUpdateDomainLoading = ref(false);
 const getTagColor = computed(() => {
   const status = service.value.status.replace("cloudStateItem.", "");
 
-  switch (status.toLowerCase()) {
-    case "running":
-    case "active":
-      return "green";
-    case "operation":
-    case "pending":
-      return "blue";
-    case "stopped":
-    case "suspended":
-      return "orange";
-    case "cancelled":
-    default:
-      return "red";
-  }
+  return getInstStatusColor(status);
 });
 const getTagColorSSL = computed(() => {
   switch (service.SSL.value?.sslstatus) {

@@ -18,10 +18,12 @@
                 {{ $t("ssl_product.product_service") }}
               </div>
 
-              <span>{{ $t("ssl_product.SSL certificate") }} - {{ data.name }}
+              <span
+                >{{ $t("ssl_product.SSL certificate") }} - {{ data.name }}
                 <a-tag :color="getTagColor">
                   {{ $t(data.status) }}
-                </a-tag></span>
+                </a-tag></span
+              >
               <a :href="data.domain">{{ data.domain }}</a>
             </div>
             <a-row>
@@ -284,7 +286,7 @@
                 <a-button
                   v-if="
                     data.SSL.configdata.status === 'processing' &&
-                      data.SSL.configdata.dcv_method === 'email'
+                    data.SSL.configdata.dcv_method === 'email'
                   "
                   :loading="resendLoading"
                   @click="resendValidationEmail"
@@ -295,7 +297,7 @@
                 <a-button
                   v-if="
                     data.SSL.configdata.status === 'processing' &&
-                      methodRevalidate.includes(data.SSL.configdata.dcv_method)
+                    methodRevalidate.includes(data.SSL.configdata.dcv_method)
                   "
                   :loading="revalidateLoading"
                   @click="revalidate"
@@ -373,184 +375,178 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import { message } from 'ant-design-vue'
-import { useRoute } from 'vue-router'
-import api from '@/api.js'
+import { computed, ref } from "vue";
+import { message } from "ant-design-vue";
+import { useRoute } from "vue-router";
+import api from "@/api.js";
 
-import { useInstancesStore } from '@/stores/instances.js'
-import loading from '@/components/ui/loading.vue'
+import { useInstancesStore } from "@/stores/instances.js";
+import loading from "@/components/ui/loading.vue";
+import { getInstStatusColor } from "@/functions";
 
-const route = useRoute()
-const instancesStore = useInstancesStore()
+const route = useRoute();
+const instancesStore = useInstancesStore();
 
-const method = ['http', 'https']
-const methodRevalidate = ['http', 'https', 'dns']
-const dcvList = ['EMAIL', 'HTTP', 'HTTPS', 'DNS']
+const method = ["http", "https"];
+const methodRevalidate = ["http", "https", "dns"];
+const dcvList = ["EMAIL", "HTTP", "HTTPS", "DNS"];
 const emailList = [
-  'admin@',
-  'administrator@',
-  'hostmaster@',
-  'webmaster@',
-  'postmaster@'
-]
+  "admin@",
+  "administrator@",
+  "hostmaster@",
+  "webmaster@",
+  "postmaster@",
+];
 
-const data = ref({})
-const actionData = ref({ dcv: 'EMAIL' })
+const data = ref({});
+const actionData = ref({ dcv: "EMAIL" });
 const fileinfo = ref({
-  csr: 'csr_code',
-  crt: 'crt_code',
-  ca: 'ca_code'
-})
+  csr: "csr_code",
+  crt: "crt_code",
+  ca: "ca_code",
+});
 
-const resendLoading = ref(false)
-const revalidateLoading = ref(false)
+const resendLoading = ref(false);
+const revalidateLoading = ref(false);
 const modal = ref({
   confirmCreate: false,
-  confirmLoading: false
-})
+  confirmLoading: false,
+});
 
 const getTagColor = computed(() => {
-  switch (data.value.status) {
-    case 'Active':
-      return 'green'
-    case 'Pending':
-      return 'orange'
-    case 'Cancelled':
-      return 'red'
-    default:
-      return ''
-  }
-})
+  return getInstStatusColor(data.value.status);
+});
 
-async function fetch () {
+async function fetch() {
   try {
     const domain = instancesStore.getInstances.find(
       ({ uuid }) => uuid === route.params.id
-    )
+    );
 
     const { meta } = await instancesStore.invokeAction({
       uuid: domain.uuid,
       uuidService: domain.uuidService,
-      action: 'monitoring'
-    })
+      action: "monitoring",
+    });
 
-    data.value = { SSL: { configdata: meta.data } }
-    actionData.value.email = `admin@${meta.data.domain}`
+    data.value = { SSL: { configdata: meta.data } };
+    actionData.value.email = `admin@${meta.data.domain}`;
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 }
 
-function download (ext, text, filename = null) {
-  const domain = data.value.SSL.configdata.domain
+function download(ext, text, filename = null) {
+  const domain = data.value.SSL.configdata.domain;
 
   if (!filename) {
-    filename = `${domain.replace('.', '_')}.${ext}`
+    filename = `${domain.replace(".", "_")}.${ext}`;
   }
 
-  const element = document.createElement('a')
+  const element = document.createElement("a");
 
   element.setAttribute(
-    'href', `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`
-  )
-  element.setAttribute('download', filename)
-  element.style.display = 'none'
+    "href",
+    `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`
+  );
+  element.setAttribute("download", filename);
+  element.style.display = "none";
 
-  document.body.appendChild(element)
-  element.click()
-  document.body.removeChild(element)
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
 }
 
-async function revalidate () {
+async function revalidate() {
   const params = {
     remoteid: data.value.SSL.remoteid,
-    domain: data.value.SSL.configdata.domain
-  }
+    domain: data.value.SSL.configdata.domain,
+  };
 
   try {
-    revalidateLoading.value = true
+    revalidateLoading.value = true;
     const response = await api.sendAsUser(
-      'moduleTouch',
-      { ...params, path: 'ssl/revalidate' },
-      'moduleTouch.phpssl'
-    )
+      "moduleTouch",
+      { ...params, path: "ssl/revalidate" },
+      "moduleTouch.phpssl"
+    );
 
-    if (response.error) throw response
+    if (response.error) throw response;
     if (response.success) {
-      message.success(response.message)
+      message.success(response.message);
     }
   } catch (error) {
-    console.error(error)
-    message.error(error.description)
+    console.error(error);
+    message.error(error.description);
   } finally {
-    revalidateLoading.value = false
+    revalidateLoading.value = false;
   }
 }
 
-async function resendValidationEmail () {
-  const params = {
-    remoteid: data.value.SSL.remoteid
-  }
-
-  try {
-    resendLoading.value = true
-    const response = await api.sendAsUser(
-      'moduleTouch',
-      { ...params, path: 'ssl/resendValidationEmail' },
-      'moduleTouch.phpssl'
-    )
-
-    if (response.error) throw response
-    if (response.success) {
-      message.success(response.message)
-    }
-  } catch (error) {
-    console.error(error)
-    message.error(error.description)
-  } finally {
-    resendLoading.value = false
-  }
-}
-
-async function handleOk () {
+async function resendValidationEmail() {
   const params = {
     remoteid: data.value.SSL.remoteid,
-    dcv: (actionData.value.dcv === 'EMAIL')
-      ? actionData.value.email
-      : actionData.value.dcv,
-    domain: data.value.SSL.configdata.domain
-  }
+  };
 
   try {
-    modal.value.confirmLoading = true
+    resendLoading.value = true;
     const response = await api.sendAsUser(
-      'moduleTouch',
-      { ...params, path: 'ssl/changeValidationMethod' },
-      'moduleTouch.phpssl'
-    )
+      "moduleTouch",
+      { ...params, path: "ssl/resendValidationEmail" },
+      "moduleTouch.phpssl"
+    );
 
-    if (response.error) throw response
-    if (response.success) location.reload()
+    if (response.error) throw response;
+    if (response.success) {
+      message.success(response.message);
+    }
   } catch (error) {
-    console.error(error)
-    this.$message.error(error.description)
+    console.error(error);
+    message.error(error.description);
   } finally {
-    modal.value.confirmLoading = false
+    resendLoading.value = false;
   }
 }
 
-function handleCancel () {
-  modal.value.confirmCreate = false
+async function handleOk() {
+  const params = {
+    remoteid: data.value.SSL.remoteid,
+    dcv:
+      actionData.value.dcv === "EMAIL"
+        ? actionData.value.email
+        : actionData.value.dcv,
+    domain: data.value.SSL.configdata.domain,
+  };
+
+  try {
+    modal.value.confirmLoading = true;
+    const response = await api.sendAsUser(
+      "moduleTouch",
+      { ...params, path: "ssl/changeValidationMethod" },
+      "moduleTouch.phpssl"
+    );
+
+    if (response.error) throw response;
+    if (response.success) location.reload();
+  } catch (error) {
+    console.error(error);
+    this.$message.error(error.description);
+  } finally {
+    modal.value.confirmLoading = false;
+  }
+}
+
+function handleCancel() {
+  modal.value.confirmCreate = false;
 }
 
 if (instancesStore.getInstances.length < 1) {
-  instancesStore.fetch().then(fetch)
-} else fetch()
+  instancesStore.fetch().then(fetch);
+} else fetch();
 </script>
 
 <script>
-export default { name: 'SslCertificate' }
+export default { name: "SslCertificate" };
 </script>
 
 <style scoped>

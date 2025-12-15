@@ -280,6 +280,7 @@ import networkControl from "@/components/cloud/options/networkControl.vue";
 import accessManager from "@/components/cloud/options/accessManager.vue";
 import loading from "@/components/ui/loading.vue";
 import imagesList from "@/components/ui/images.vue";
+import { getInstStatusColor } from "@/functions";
 
 const leftIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LeftOutlined")
@@ -500,28 +501,7 @@ export default {
         state = this.VM.state.state;
       }
 
-      switch (state.toLowerCase()) {
-        case "active":
-        case "running":
-          return "var(--success)";
-        // останавливающийся и запускающийся
-        case "boot":
-        case "build":
-        case "boot_poweroff":
-        case "shutdown_poweroff":
-          return "var(--warn)";
-        case "lcm_init":
-        case "stopped":
-        case "poweroff":
-          return "#ff9140";
-        case "operation":
-        case "suspended":
-        case "suspend":
-        case "pending":
-          return "var(--gloomy_font)";
-        default:
-          return "var(--err)";
-      }
+      return getInstStatusColor(state);
     },
   },
   watch: {
