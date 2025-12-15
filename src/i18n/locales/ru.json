@@ -723,7 +723,7 @@
     },
     "userService": {
       "billing cycle": "период оплаты",
-      "renewal amount": "стоимость продления",
+      "renewal amount": "стоимость продления (нетто)",
       "registration date": "дата регистрации",
       "next payment date": "дата продления",
       "auto renew": "авто продление"

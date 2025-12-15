@@ -359,7 +359,7 @@
     },
     "userService": {
       "billing cycle": "cycle de facturation",
-      "renewal amount": "montant du renouvellement",
+      "renewal amount": "montant du renouvellement (netto)",
       "registration date": "Date d'inscription",
       "next payment date": "prochaine date de paiement"
     },

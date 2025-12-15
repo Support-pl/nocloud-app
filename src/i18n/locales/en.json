@@ -498,7 +498,7 @@
     },
     "userService": {
       "billing cycle": "billing cycle",
-      "renewal amount": "renewal amount",
+      "renewal amount": "renewal amount (netto)",
       "registration date": "registration date",
       "next payment date": "next payment date",
       "auto renew": "auto renew"
@@ -644,7 +644,7 @@
       "registration_date": "Registration Date:",
       "product_service": "Product / Service:",
       "first_payment": "First Payment:",
-      "renewal_amount": "Renewal Amount:",
+      "renewal_amount": "Renewal Amount (netto):",
       "payment_cycle": "Payment Cycle:",
       "Monthly": "Monthly",
       "Hourly": "Hourly",
