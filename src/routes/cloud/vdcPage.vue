@@ -138,6 +138,7 @@ import { useNotification, useClipboard, useCurrency } from "@/hooks/utils";
 
 import loading from "@/components/ui/loading.vue";
 import { useInvoicesStore } from "@/stores/invoices";
+import { getInstStatusColor } from "@/functions";
 
 const copyIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CopyOutlined")
@@ -196,20 +197,7 @@ const info = computed(() => {
 const getTagColor = computed(() => {
   const status = service.value.status.replace("cloudStateItem.", "");
 
-  switch (status?.toLowerCase()) {
-    case "running":
-    case "active":
-      return "green";
-    case "operation":
-    case "pending":
-      return "blue";
-    case "stopped":
-    case "suspended":
-      return "orange";
-    case "cancelled":
-    default:
-      return "red";
-  }
+  return getInstStatusColor(status);
 });
 
 const provider = computed(
