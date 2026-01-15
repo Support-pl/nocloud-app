@@ -10,6 +10,14 @@
             <!-- <div v-if="service.domain" class="service-page__domain">
               <a :href="service.domain">{{ service.domain }}</a>
             </div> -->
+
+            <div v-if="service.groupname === 'b24-apps'">
+              <a
+                style="font-size: 1rem; margin-right: 10px"
+                href="https://crmkonsultant.pl/blog/instrukcje/instrukcje-dotyczace-instalacji-i-konfiguracji-telefonii-play-w-bitrix24/"
+                >FAQ</a
+              >
+            </div>
           </div>
 
           <div
@@ -669,6 +677,8 @@ export default {
 
 .service-page__header {
   margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
 }
 
 .service-page__title {
