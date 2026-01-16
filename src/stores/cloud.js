@@ -128,19 +128,16 @@ export const useCloudStore = defineStore("cloud", () => {
       newInstance.config = {
         ...options.config,
         type: plan.value.type.split(" ")[1],
-        auto_renew: false,
       };
 
       if (newInstance.config.type === "cloud") {
         const { resources } = plan.value.products[newInstance.product];
 
-        newInstance.config.auto_renew = true;
         newInstance.resources = { ...resources, ips_private: 0, ips_public: 1 };
       }
     } else if (newGroup.type === "keyweb") {
       newInstance.config = {
         ...options.config,
-        auto_renew: checkPayg(newInstance),
       };
       newInstance.resources = {};
     }
@@ -197,7 +194,6 @@ export const useCloudStore = defineStore("cloud", () => {
         template_id: options.os.id,
         username: authData.username,
         password: authData.password,
-        auto_renew: false,
         auto_start: plan.value.meta.auto_start,
       },
       resources: {
@@ -212,7 +208,6 @@ export const useCloudStore = defineStore("cloud", () => {
       addons: options.addons,
     };
 
-    instance.config.auto_renew = checkPayg(instance);
 
     if (plan.value.kind === "STATIC" || plan.value.type !== "ione") {
       instance.product = product.value.key;
