@@ -12,7 +12,7 @@
             <template #icon>
               <AppstoreOutlined />
             </template>
-            <span class="menu-text">{{ $t('All Services') }}</span>
+            <span class="menu-text">{{ $t("All Services") }}</span>
           </a-menu-item>
           <a-menu-item
             v-for="category in categories"
@@ -407,15 +407,15 @@ const createCategoriesMap = () => {
   return categoriesMap;
 };
 
-const getOrCreateOthersCategory = (categoriesMap, service) => {
+const getOrCreateOthersCategory = (categoriesMap, service, ignore = false) => {
   let categoryType = "others";
   const othersUuid = "others";
 
-  if (service.type === "VDC") {
+  if (service.type === "VDC" && !ignore) {
     categoryType = "vds";
-  } else if (service.type === "virtual") {
+  } else if (service.type === "virtual" && !ignore) {
     categoryType = "hosting";
-  } else if (service.type === "DNSEditor") {
+  } else if (service.type === "DNSEditor" && !ignore) {
     categoryType = "domains";
   }
 
@@ -435,7 +435,7 @@ const getOrCreateOthersCategory = (categoriesMap, service) => {
       type: ["others"],
       services: [],
     });
-    return getOrCreateOthersCategory(categoriesMap, service);
+    return getOrCreateOthersCategory(categoriesMap, service, true);
   }
 
   return othersCategory;
