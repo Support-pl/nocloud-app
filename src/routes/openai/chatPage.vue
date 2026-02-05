@@ -296,53 +296,53 @@ import CreateChat from "@/components/openai-chats/createChat.vue";
 import ChatSettings from "@/components/openai-chats/chatSettings.vue";
 import { marked } from "marked";
 
-const exclamationIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ExclamationCircleOutlined")
+const exclamationIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ExclamationCircleOutlined"),
 );
-const copyIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CopyOutlined")
+const copyIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CopyOutlined"),
 );
-const editIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/EditOutlined")
-);
-
-const loadingIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/LoadingOutlined")
-);
-const addChatIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/PlusCircleOutlined")
-);
-const arrowDownIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ArrowDownOutlined")
-);
-const searchIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SearchOutlined")
-);
-const aiIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/RobotOutlined")
+const editIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/EditOutlined"),
 );
 
-const apiIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ProfileOutlined")
+const loadingIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/LoadingOutlined"),
+);
+const addChatIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/PlusCircleOutlined"),
+);
+const arrowDownIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ArrowDownOutlined"),
+);
+const searchIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/SearchOutlined"),
+);
+const aiIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/RobotOutlined"),
 );
 
-const closeMenu = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/RightCircleOutlined")
-);
-const openMenu = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/LeftCircleOutlined")
+const apiIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ProfileOutlined"),
 );
 
-const settingsIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SettingOutlined")
+const closeMenu = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/RightCircleOutlined"),
+);
+const openMenu = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/LeftCircleOutlined"),
 );
 
-const openFullscreanIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/FullscreenOutlined")
+const settingsIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/SettingOutlined"),
 );
 
-const closeFullscreanIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/FullscreenExitOutlined")
+const openFullscreanIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/FullscreenOutlined"),
+);
+
+const closeFullscreanIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/FullscreenExitOutlined"),
 );
 
 const route = useRoute();
@@ -457,13 +457,13 @@ const files = computed(() =>
     result[uuid] = files;
 
     return result;
-  }, {})
+  }, {}),
 );
 
 const model = computed(() => {
   return (
     globalModelsList.value.find(
-      (model) => model.key === chat.value?.meta?.data?.model?.kind?.value
+      (model) => model.key === chat.value?.meta?.data?.model?.kind?.value,
     )?.name || chat.value?.meta?.data?.model?.kind?.value
   );
 });
@@ -480,7 +480,7 @@ watch(
     if (scrollHeight > clientHeight || !lastElementChild) return;
     lastElementChild.style.borderBottom = "1px solid var(--border_color)";
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(
@@ -492,13 +492,13 @@ watch(
 
     scrollToBottom(0);
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(
   () => chatsStore.messages[chatid.value],
   () => loadMessages(),
-  { deep: true }
+  { deep: true },
 );
 
 async function fetch() {
@@ -679,16 +679,13 @@ watch(content, () => {
   addScrollEventListner();
 });
 
-watch(
-  () => chat.value?.topic,
-  (newTopic) => {
-    if (newTopic) {
-      customHeaderTitle.value = newTopic;
-    } else {
-      customHeaderTitle.value = "";
-    }
+watch([() => chat.value?.topic, instance], () => {
+  if (chat.value?.topic) {
+    customHeaderTitle.value = chat.value.topic;
+  } else {
+    customHeaderTitle.value = instance.value?.title || "";
   }
-);
+});
 
 onBeforeUnmount(() => (customHeaderTitle.value = ""));
 </script>

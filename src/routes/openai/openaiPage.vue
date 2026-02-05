@@ -121,15 +121,19 @@ import { Modal } from "ant-design-vue";
 import { removeEmptyValues } from "@/functions";
 import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
 import { getInstStatusColor } from "@/functions";
+import { useAppStore } from "@/stores/app";
+import { storeToRefs } from "pinia";
 
-const caretRightIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CaretRightOutlined")
+const caretRightIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CaretRightOutlined"),
 );
 
-const editOutlined = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/EditOutlined")
+const editOutlined = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/EditOutlined"),
 );
 
+const appStore = useAppStore();
+const { customHeaderTitle } = storeToRefs(appStore);
 const authStore = useAuthStore();
 const instancesStore = useInstancesStore();
 const chatsStore = useChatsStore();
@@ -182,7 +186,7 @@ async function onStart() {
     await instancesStore.fetch();
 
     const domain = instancesStore.getInstances.find(
-      ({ uuid }) => uuid === route.params.id
+      ({ uuid }) => uuid === route.params.id,
     );
     let groupname = "OpenAI";
     let date = "year";
@@ -192,7 +196,7 @@ async function onStart() {
         ...result,
         [resource.key]: resource.price,
       }),
-      {}
+      {},
     );
 
     domain.resources = {
@@ -255,7 +259,7 @@ const editName = async () => {
     await instancesStore.instancesApi.update(
       UpdateRequest.fromJson({
         instance: updateData,
-      })
+      }),
     );
     service.value.name = nameEditData.value.title;
 
@@ -310,6 +314,10 @@ watch(isNameEditActive, (value) => {
   if (value) {
     nameEditData.value = { title: service.value.name };
   }
+});
+
+watch(service, () => {
+  customHeaderTitle.value = service.value?.title || "";
 });
 </script>
 
