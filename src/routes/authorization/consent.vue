@@ -214,7 +214,6 @@ async function handleConsent(approve) {
       { approve },
       {
         withCredentials: true,
-        validateStatus: (status) => status < 400 || status === 403,
       },
     );
 
