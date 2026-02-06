@@ -78,8 +78,6 @@ export const useAuthStore = defineStore("auth", () => {
           },
           { withCredentials: true },
         );
-        console.log(response);
-        
 
         api.applyToken(response.data.token);
 
@@ -94,8 +92,16 @@ export const useAuthStore = defineStore("auth", () => {
       }
     },
 
-    logout() {
+    async logout() {
       if (!isLogged.value) return;
+
+      await api.axios.post(
+        "/logout",
+        {},
+        {
+          withCredentials: true,
+        },
+      );
 
       const config = localStorage.getItem("globalConfig");
       const lang = localStorage.getItem("lang") ?? i18n.locale.value;
