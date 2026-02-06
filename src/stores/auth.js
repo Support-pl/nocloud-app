@@ -35,7 +35,7 @@ export const useAuthStore = defineStore("auth", () => {
   const userBalance = computed(() =>
     !isLogged.value
       ? 0
-      : +userdata.value.balance?.toFixed(userCurrency.value.precision || 0)
+      : +userdata.value.balance?.toFixed(userCurrency.value.precision || 0),
   );
 
   function setToken(value) {
@@ -69,17 +69,23 @@ export const useAuthStore = defineStore("auth", () => {
 
     async login({ login, password, type, uuid }) {
       try {
-        const response = await api.authorizeCustom({
-          auth: { type, data: [login, password] },
-          exp: Math.round((Date.now() + 7776e6) / 1000),
-          uuid,
-        });
+        const response = await api.axios.post(
+          "/token",
+          {
+            auth: { type, data: [login, password] },
+            exp: Math.round((Date.now() + 7776e6) / 1000),
+            uuid,
+          },
+          { withCredentials: true },
+        );
+        console.log(response);
+        
 
-        api.applyToken(response.token);
+        api.applyToken(response.data.token);
 
         addApiInterceptors();
 
-        setToken(response.token);
+        setToken(response.data.token);
 
         return response;
       } catch (error) {
