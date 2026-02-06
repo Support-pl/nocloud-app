@@ -55,17 +55,16 @@
             <h2 class="consent__app-name">
               {{ interactionInfo?.client?.name || $t("consent.application") }}
             </h2>
-            <p
-              v-if="interactionInfo?.client?.description"
-              class="consent__app-description"
-            >
-              {{ interactionInfo.client.description }}
-            </p>
           </div>
 
           <p class="consent__description">
             {{ $t("consent.app_wants_access") }}
           </p>
+
+          <div v-if="accountTitle" class="consent__account">
+            <span class="consent__account-label">{{ $t("consent.as_account") }}:</span>
+            <span class="consent__account-name">{{ accountTitle }}</span>
+          </div>
 
           <div v-if="requestedScopes?.length" class="consent__scopes">
             <div class="consent__scopes-title">
@@ -137,10 +136,12 @@ import {
 import config from "@/appconfig.js";
 import api from "@/api.js";
 import { useAppStore } from "@/stores/app.js";
+import { useAuthStore } from "@/stores/auth.js";
 
 const route = useRoute();
 const { t } = useI18n();
 const appStore = useAppStore();
+const authStore = useAuthStore();
 
 const isLoading = ref(true);
 const isSubmitting = ref(false);
@@ -151,6 +152,7 @@ let countdownInterval = null;
 
 const interactionId = computed(() => route.query.interaction_id);
 const companyName = computed(() => appStore.domainInfo.name ?? config.appTitle);
+const accountTitle = computed(() => authStore.userdata?.title || authStore.userdata?.email || "");
 
 const requestedScopes = computed(
   () => interactionInfo.value?.requested_scopes || [],
@@ -378,6 +380,29 @@ export default { name: "ConsentView" };
   color: var(--gray_text);
   margin: 0 0 15px;
   text-align: center;
+}
+
+.consent__account {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  background: var(--bright_font);
+  border-radius: 8px;
+  box-shadow: 3px 8px 20px v-bind("shadowColor");
+}
+
+.consent__account-label {
+  font-size: 14px;
+  color: var(--gray_text);
+}
+
+.consent__account-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main);
 }
 
 .consent__scopes {

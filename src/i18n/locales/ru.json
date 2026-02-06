@@ -1556,6 +1556,7 @@
       "authorization_request": "Запрос авторизации",
       "application": "Приложение",
       "app_wants_access": "Это приложение запрашивает доступ к вашему аккаунту",
+      "as_account": "Аккаунт",
       "requested_permissions": "Запрашиваемые разрешения",
       "allow": "Разрешить",
       "deny": "Отклонить",
