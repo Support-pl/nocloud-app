@@ -213,7 +213,6 @@ async function handleConsent(approve) {
       `/oauth/interaction/${interactionId.value}/confirm`,
       { approve },
       {
-        maxRedirects: 0,
         withCredentials: true,
         validateStatus: (status) => status < 400 || status === 403,
       },
