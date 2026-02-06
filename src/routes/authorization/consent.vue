@@ -223,26 +223,14 @@ async function handleConsent(approve) {
     }
 
     // Handle redirect
-    const redirectUrl =
-      response.data?.redirect_uri || response.headers?.location;
+    const redirectUrl = response.data?.redirect_to;
     if (redirectUrl) {
       window.location.href = redirectUrl;
-    } else if (
-      response.request?.responseURL &&
-      response.request.responseURL !== window.location.href
-    ) {
-      window.location.href = response.request.responseURL;
     }
   } catch (err) {
     console.error("Failed to submit consent:", err);
 
     if (err.response?.status === 403) {
-      const redirectUrl =
-        err.response.data?.redirect_uri || err.response.headers?.location;
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
-        return;
-      }
       startCloseCountdown(t("consent.access_denied"));
       return;
     }
