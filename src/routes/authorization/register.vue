@@ -181,7 +181,7 @@
                 v-if="fields.company.account_number"
                 v-model="userinfo.account_number"
                 :placeholder="`${capitalize(
-                  $t('documents.payer account number')
+                  $t('documents.payer account number'),
                 )} *`"
               />
               <span
@@ -192,7 +192,7 @@
                 v-if="fields.company.checking_account"
                 v-model="userinfo.checking_account"
                 :placeholder="`${capitalize(
-                  $t('documents.checking account')
+                  $t('documents.checking account'),
                 )} *`"
               />
               <span
@@ -257,7 +257,7 @@
           </form>
         </div>
         <div class="register__already-has" style="margin-top: 20px">
-          <router-link :to="{ name: 'login' }">
+          <router-link :to="{ name: 'login', query: route.query }">
             {{ capitalize($t("clientinfo.already have account?")) }}
           </router-link>
         </div>
@@ -276,7 +276,7 @@ import {
   watch,
 } from "vue";
 import { notification, message } from "ant-design-vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import api from "@/api.js";
@@ -289,14 +289,15 @@ import countries from "@/assets/countries.json";
 import PhoneInput from "@/components/ui/phoneInput.vue";
 
 const router = useRouter();
+const route = useRoute();
 const i18n = useI18n();
 
 const appStore = useAppStore();
 const authStore = useAuthStore();
 const currenciesStore = useCurrenciesStore();
 
-const closeIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CloseOutlined")
+const closeIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CloseOutlined"),
 );
 
 const registerLoading = ref(false);
@@ -330,7 +331,7 @@ watch(
   () => currenciesStore.list,
   () => {
     setDefaultCurrency();
-  }
+  },
 );
 
 const setDefaultCurrency = () => {
@@ -350,7 +351,7 @@ const fetchWhmcsCurrencies = async () => {
       whmcsCurrencies.value = response.currency;
     } else {
       whmcsCurrencies.value = Object.keys(response.currency).map(
-        (key) => response.currency[key]
+        (key) => response.currency[key],
       );
     }
 
@@ -451,7 +452,7 @@ async function submitHandler() {
           params: {
             ...temp,
             currency: whmcsCurrencies.value.find(
-              (c) => c.code === currency.code
+              (c) => c.code === currency.code,
             ).id,
             phone_new: JSON.stringify(temp.phone_new),
             app_language: locale,
@@ -480,7 +481,7 @@ async function submitHandler() {
       throw new Error(`[Error]: ${i18n.t("failed to create user")}`);
     if (response.result === "error") throw response;
     else message.success(i18n.t("account created successfully"));
-    router.push({ name: "new-user" });
+    router.push({ name: "new-user", query: router.query });
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
@@ -499,16 +500,16 @@ function searchCountries(input, option) {
 
 const theme = inject("theme");
 const shadowColor = computed(() =>
-  theme.value ? "var(--bright_font)" : "rgba(164, 180, 244, .5)"
+  theme.value ? "var(--bright_font)" : "rgba(164, 180, 244, .5)",
 );
 
 watch(
   () => userinfo.value.country,
   (value) => {
     userinfo.value.phone_new.phone_cc = countries.find(
-      (c) => c.code === value
+      (c) => c.code === value,
     ).dial_code;
-  }
+  },
 );
 </script>
 
@@ -753,6 +754,90 @@ export default { name: "RegisterView" };
   left: 50%;
   transform: translateX(-50%);
   width: 90%;
+}
+
+@media screen and (max-width: 500px) and (max-height: 700px) {
+  .login {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    overflow-y: auto;
+  }
+
+  .login__title {
+    padding: 8px;
+    font-size: 18px;
+  }
+
+  .logo {
+    gap: 8px;
+  }
+
+  .logo__image {
+    max-width: 40%;
+  }
+
+  .login__UI {
+    justify-content: flex-start;
+    padding: 10px 0;
+    min-height: auto;
+  }
+
+  .login__inputs {
+    width: 90%;
+    max-width: 450px;
+  }
+
+  .inputs__log-pas {
+    margin-bottom: 12px;
+  }
+
+  .login__submit {
+    font-size: 13px;
+    padding: 6px 15px;
+    width: 100%;
+  }
+
+  .login__action-info {
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+
+  .order__card {
+    min-width: 100%;
+    padding: 8px 12px;
+    margin-top: 5px;
+  }
+
+  .order__icon {
+    font-size: 24px;
+  }
+
+  .order__title {
+    margin-right: 10px;
+    font-size: 12px;
+  }
+
+  .order__cost {
+    font-size: 12px;
+  }
+
+  .register__already-has {
+    margin-top: 10px !important;
+    font-size: 12px;
+  }
+
+  .login__loading {
+    height: 30px;
+  }
+
+  .load__item {
+    width: 20px;
+    height: 20px;
+  }
+
+  .load__item:not(:first-child) {
+    margin-left: 8px;
+  }
 }
 
 @media screen and (min-width: 1024px) {

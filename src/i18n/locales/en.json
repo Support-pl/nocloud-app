@@ -1553,6 +1553,29 @@
       "Безлимит, от  100Мбит/сек": "Unlimited, from 100Mbps",
       "Безлимит, от  200Мбит/сек": "Unlimited, from 200Mbps",
       "Безлимит, от  1 Гбит/сек": "Unlimited, from 1 Gbps"
+    },
+    "consent": {
+      "authorization_request": "Authorization Request",
+      "application": "Application",
+      "app_wants_access": "This application is requesting access to your account",
+      "requested_permissions": "Requested permissions",
+      "allow": "Allow",
+      "deny": "Deny",
+      "note": "By clicking Allow, you authorize this application to access your data according to its terms of service and privacy policy.",
+      "missing_interaction_id": "Missing interaction ID",
+      "failed_to_load": "Failed to load authorization request",
+      "failed_to_submit": "Failed to submit consent",
+      "access_denied": "Access denied",
+      "visit_website": "Visit website",
+      "window_closing_in": "Window closing in {seconds} seconds...",
+      "scopes": {
+        "openid": "Verify your identity",
+        "profile": "Access your profile information",
+        "email": "Access your email address",
+        "offline_access": "Access your data when you're not using the app",
+        "read": "Read access to your data",
+        "write": "Read and modify your account data"
+      }
     }
   }
 }

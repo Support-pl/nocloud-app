@@ -22,14 +22,17 @@
     <div class="login__main login__layout">
       <div class="login__UI">
         <div class="login__onlogin-action">
-          <div v-if="!appStore.onLogin.info" class="login__see-services">
+          <div
+            v-if="!appStore.onLogin.info && !isOauthLogin"
+            class="login__see-services"
+          >
             <router-link :to="{ name: 'services' }">
               <shopping-cart-icon />
               {{ capitalize($t("unregistered.see services")) }}
             </router-link>
           </div>
 
-          <div v-else class="login__action-info">
+          <div v-else-if="!isOauthLogin" class="login__action-info">
             {{ $t("comp_services.Your orders") }}:
             <div class="order__card">
               <div class="order__icon">
@@ -124,7 +127,7 @@
           }}</a>
         </div>
         <div class="login__forgot" style="margin-bottom: 30px">
-          <router-link :to="{ name: 'register' }">
+          <router-link :to="{ name: 'register', query: route.query }">
             {{ capitalize($t("sign up")) }}
           </router-link>
         </div>
@@ -173,14 +176,11 @@ const i18n = useI18n();
 const appStore = useAppStore();
 const authStore = useAuthStore();
 
-const closeIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CloseOutlined")
+const closeIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CloseOutlined"),
 );
-const shoppingCartIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ShoppingCartOutlined")
-);
-const downIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/DownOutlined")
+const shoppingCartIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ShoppingCartOutlined"),
 );
 
 const tryingLogin = ref(false);
@@ -193,6 +193,14 @@ const redirect = ref(false);
 const companyName = computed(() => appStore.domainInfo.name ?? config.appTitle);
 const selfUrl = location.href;
 
+const isOauthLogin = computed(() => !!route.query.next?.includes("authorize"));
+
+onMounted(() => {
+  if (isOauthLogin.value) {
+    authStore.logout();
+  }
+});
+
 async function send() {
   if (!email.value.trim() || !password.value.trim()) {
     return;
@@ -201,7 +209,7 @@ async function send() {
   tryingLogin.value = true;
   try {
     const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(
-      1
+      1,
     )}`;
 
     try {
@@ -216,6 +224,11 @@ async function send() {
         password: password.value,
         type: "standard",
       });
+    }
+
+    if (route.query.next) {
+      window.location.href = decodeURIComponent(route.query.next);
+      return;
     }
 
     if (localStorage.getItem("data")) {
@@ -269,7 +282,7 @@ async function restorePass() {
   tryingLogin.value = true;
   try {
     const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(
-      1
+      1,
     )}`;
 
     const { result, message } = await api.get(authStore.baseURL, {
@@ -337,7 +350,7 @@ onUnmounted(() => {
 
 const theme = inject("theme");
 const shadowColor = computed(() =>
-  theme.value ? "var(--bright_font)" : "rgba(164, 180, 244, .5)"
+  theme.value ? "var(--bright_font)" : "rgba(164, 180, 244, .5)",
 );
 </script>
 
@@ -618,6 +631,76 @@ export default { name: "LoginView" };
   left: 50%;
   transform: translateX(-50%);
   width: 90%;
+}
+
+@media screen and (max-width: 500px) and (max-height: 700px) {
+  .login {
+    flex-direction: column;
+  }
+
+  .login__title {
+    padding: 10px;
+    font-size: 20px;
+  }
+
+  .logo {
+    grid-gap: 8px;
+  }
+
+  .logo__image {
+    max-width: 50%;
+  }
+
+  .login__UI {
+    justify-content: flex-start;
+    padding: 10px;
+  }
+
+  .login__inputs {
+    width: 90%;
+    max-width: 450px;
+  }
+
+  .inputs__log-pas {
+    margin-bottom: 15px;
+  }
+
+  .login__button {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .login__submit {
+    font-size: 14px;
+    padding: 6px 15px;
+  }
+
+  .login__onlogin-action {
+    margin: 10px 0 15px;
+    font-size: 14px;
+  }
+
+  .order__card {
+    min-width: 100%;
+    padding: 8px 12px;
+  }
+
+  #qrcode {
+    display: none !important;
+  }
+
+  .login__forgot {
+    font-size: 13px;
+    margin-top: 3px;
+  }
+
+  .login__oauth {
+    gap: 10px;
+  }
+
+  .login__oauth img {
+    width: 28px !important;
+  }
 }
 
 @media screen and (min-width: 1024px) {

@@ -83,6 +83,14 @@ const routes = [
     component: () => import("@/routes/authorization/newUser.vue"),
   },
   {
+    path: "/consent",
+    name: "consent",
+    meta: {
+      mustBeLoggined: false,
+    },
+    component: () => import("@/routes/authorization/consent.vue"),
+  },
+  {
     path: "/handsfree",
     name: "handsfree",
     meta: {
