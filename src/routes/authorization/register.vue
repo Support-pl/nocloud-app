@@ -435,17 +435,6 @@ async function submitHandler() {
   const currency = currencies.value.find((c) => c.id === temp.currency);
 
   try {
-    console.log(temp, {
-      params: {
-        ...temp,
-        currency: whmcsCurrencies.value.find((c) => c.code === currency.code)
-          .id,
-        phone_new: JSON.stringify(temp.phone_new),
-        app_language: locale,
-        run: "create_user",
-      },
-    });
-
     registerLoading.value = true;
     const response = config.whmcsSiteUrl
       ? await api.get(authStore.baseURL, {
@@ -481,7 +470,7 @@ async function submitHandler() {
       throw new Error(`[Error]: ${i18n.t("failed to create user")}`);
     if (response.result === "error") throw response;
     else message.success(i18n.t("account created successfully"));
-    router.push({ name: "new-user", query: router.query });
+    router.push({ name: "new-user", query: route.query });
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
