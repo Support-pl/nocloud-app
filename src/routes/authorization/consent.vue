@@ -29,9 +29,7 @@
 
         <template v-else-if="error">
           <div class="consent__error-container">
-            <div class="consent__error-icon">
-              <close-circle-outlined />
-            </div>
+          
             <div class="consent__error">
               {{ error }}
             </div>
