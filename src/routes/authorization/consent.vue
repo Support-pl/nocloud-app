@@ -552,6 +552,11 @@ export default { name: "ConsentView" };
   padding: 20px;
 }
 
+.consent__error {
+  text-align: center;
+  padding: 20px;
+}
+
 @media screen and (max-width: 500px) and (max-height: 700px) {
   .consent__title {
     padding: 10px;
