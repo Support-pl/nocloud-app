@@ -552,7 +552,7 @@ export default { name: "ConsentView" };
   padding: 20px;
 }
 
-.consent__error {
+.consent__countdown {
   text-align: center;
   padding: 20px;
 }
