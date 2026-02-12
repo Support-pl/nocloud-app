@@ -1018,6 +1018,7 @@
         "generate_video": "Сгенерировать видео",
         "generate_image": "Сгенерировать изображение",
         "generate_audio": "Сгенерировать аудио",
+        "price": "Цена",
         "api_compatible_with_openai": "_Наше API совместимо с OpenAI ([Подробнее](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "images_properties": {

@@ -990,6 +990,7 @@
         "generate_video": "Generate Video",
         "generate_image": "Generate Image",
         "generate_audio": "Generate Audio",
+        "price": "Price",
         "api_compatible_with_openai": "_Our API is compatible with OpenAI ([Learn more](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "default_model": {
