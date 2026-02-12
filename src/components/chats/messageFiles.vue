@@ -3,7 +3,10 @@
     <a-image
       v-for="file of files"
       :key="file.url"
-      class="files__preview"
+      :class="[
+        'files__preview',
+        files.length === 1 ? 'files__preview--single' : '',
+      ]"
       :src="file.url"
       :alt="file.name"
       @error="onImageError"
@@ -16,8 +19,8 @@ import { downloadFile } from "@/functions";
 import { defineAsyncComponent, h } from "vue";
 import { renderToString } from "vue/server-renderer";
 
-const fileIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/FileOutlined")
+const fileIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/FileOutlined"),
 );
 
 const props = defineProps({ files: { type: Array, required: true } });
@@ -60,6 +63,11 @@ async function onImageError(e) {
   overflow: hidden;
   cursor: pointer;
   object-fit: cover;
+}
+
+.files__preview--single {
+  width: 100% !important;
+  height: 400px !important;
 }
 
 .files__preview > img {
