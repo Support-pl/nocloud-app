@@ -127,7 +127,7 @@
             </pre>
 
               <div class="chat__info">
-                <span>{{ reply.name }}</span>
+                <span></span>
                 <span>{{ reply.date.slice(-8, -3) }}</span>
               </div>
 
