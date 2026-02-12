@@ -146,6 +146,18 @@ function redirectByType({ uuid, type }) {
   }
 }
 
+function handleOpenQuery(param) {
+  if (param === "top_up") {
+    setTimeout(() => {
+      if (authStore.isLogged) {
+        appStore.openAddFundsModal();
+      }
+    }, 1500);
+  }
+
+  router.replace({ query: { ...route.query, open: undefined } });
+}
+
 window.addEventListener("message", async ({ data, origin }) => {
   if (!origin.includes("https://api.")) return;
   api.applyToken(data.token);
@@ -175,7 +187,7 @@ router.beforeEach((to, _, next) => {
   }
 
   if (mustBeLoggined && !authStore.isLogged) {
-    next({ name: "login" });
+    next({ name: "login", query: to.query });
   } else if (!isRouteExist(to.name)) {
     if (!authStore.billingUser.roles?.services) {
       next({ name: "settings" });
@@ -217,12 +229,16 @@ onMounted(async () => {
     appStore.isButtonsVisible = false;
   }
 
+  if (route.query.open) {
+    handleOpenQuery(route.query.open);
+  }
+
   if (
     route.meta?.mustBeLoggined &&
     !authStore.isLogged &&
     !isInitLoading.value
   ) {
-    router.replace("login");
+    router.replace("login", { query: route.query });
   } else if (localStorage.getItem("oauth") && !isIncluded) {
     router.replace("cabinet");
   } else if (mustUnloggined) {
