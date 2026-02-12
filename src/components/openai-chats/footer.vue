@@ -19,7 +19,6 @@
         >
           <template #right-menu>
             <chat-generation-menu
-              :disabled="message.trim().length < 1"
               :options="sendAdvancedOptions"
               @update:options="sendAdvancedOptions[$event.key] = $event.value"
               :is-send-message-loading="isSendMessageLoading"
