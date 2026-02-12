@@ -14,6 +14,13 @@
       </a-radio-button>
       <a-radio-button @click="isAdvancedModalOpen = true" value="generate">
         {{ capitalize(t("openai.actions.generate_image")) }}
+        {{
+          options.checked === "generate" && !isAdvancedModalOpen
+            ? `(${formatPrice(convertedImagePrices.get(currentImagePrice))} ${
+                currency.title
+              })`
+            : ""
+        }}
         <checed-icon v-if="options.checked === 'generate'" />
       </a-radio-button>
       <a-radio-button @click="isAdvancedModalOpen = true" value="video">
@@ -107,6 +114,14 @@
             :options="instanceImageQualitys"
           />
         </a-form-item>
+
+        <div
+          style="display: flex; justify-content: center; margin-bottom: 10px"
+        >
+          <span style="font-size: 1rem; text-align: center">
+            {{ t("openai.labels.price") }}: {{ formatPrice(convertedImagePrices.get(currentImagePrice)) }} {{ currency.title }}
+          </span>
+        </div>
       </template>
 
       <template v-if="options.checked === 'speech'">
@@ -195,6 +210,7 @@ const { currency, formatPrice } = useCurrency();
 const { t } = useI18n();
 
 const convertedVideoPrices = ref(new Map());
+const convertedImagePrices = ref(new Map());
 const isAdvancedModalOpen = ref(false);
 const lastOptionsValue = ref(options.value);
 
@@ -317,6 +333,24 @@ const instanceImageQualitys = computed(() => {
   }));
 });
 
+const currentImagePrice = computed(() => {
+  if (options.value.checked !== "generate") {
+    return 0;
+  }
+
+  const model = instanceModels.value.find(
+    (model) => model.key === options.value.model
+  );
+
+  if (!model || !options.value.size || !options.value.quality) {
+    return 0;
+  }
+
+  return (
+    model.billing?.images?.res_to_quality?.[options.value.size]?.[options.value.quality]?.amount || 0
+  );
+});
+
 const convertPrices = async (uniqueAmounts) => {
   try {
     const amounts = [...uniqueAmounts.values()];
@@ -330,6 +364,26 @@ const convertPrices = async (uniqueAmounts) => {
 
       [...uniqueAmounts.keys()].forEach((key, index) => {
         convertedVideoPrices.value.set(key, response.amounts[index]);
+      });
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+const convertImagePrices = async (uniqueAmounts) => {
+  try {
+    const amounts = [...uniqueAmounts.values()];
+
+    if (amounts.length > 0) {
+      const response = await currenciesStore.convert({
+        from: currenciesStore.defaultCurrency.code,
+        to: currency.value.code,
+        amounts,
+      });
+
+      amounts.forEach((price, index) => {
+        convertedImagePrices.value.set(price, response.amounts[index]);
       });
     }
   } catch (e) {
@@ -402,6 +456,35 @@ watch(instanceVideoModels, (value) => {
 
   convertPrices(forConvert);
 });
+
+watch(
+  [instanceImageModels, () => options.value.size, () => options.value.quality],
+  () => {
+    const uniqueAmounts = new Set();
+    instanceImageModels.value.forEach((model) => {
+      const fullModel = instanceModels.value.find(
+        ({ key }) => key === model.value
+      );
+
+      if (fullModel?.billing?.images?.res_to_quality) {
+        Object.keys(fullModel.billing.images.res_to_quality).forEach((size) => {
+          Object.keys(fullModel.billing.images.res_to_quality[size]).forEach(
+            (quality) => {
+              const amount =
+                fullModel.billing.images.res_to_quality[size][quality]?.amount;
+              if (amount) {
+                uniqueAmounts.add(amount);
+              }
+            }
+          );
+        });
+      }
+    });
+
+    convertImagePrices(uniqueAmounts);
+  },
+  { immediate: true }
+);
 
 watch(
   () => options.value.checked,
