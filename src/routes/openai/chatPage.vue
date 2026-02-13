@@ -436,6 +436,7 @@ const chats = computed(() => {
         .join(" "),
       unread: isReaded ? 0 : ticket.meta.unread,
       model,
+      attachments: ticket.meta.lastMessage?.attachments ?? [],
     };
     result.push(value);
   });
