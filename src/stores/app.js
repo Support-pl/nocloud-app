@@ -55,6 +55,7 @@ export const useAppStore = defineStore("app", () => {
 
   const isButtonsVisible = ref(true);
   const isMaintananceMode = ref(false);
+  const addFundsModalVisible = ref(false);
   const update = ref({
     worker: null,
     status: false,
@@ -155,9 +156,18 @@ export const useAppStore = defineStore("app", () => {
     transport,
     onRefreshClick,
     customHeaderTitle,
+    addFundsModalVisible,
 
     setOnRefreshClick(v) {
       onRefreshClick.value = v;
+    },
+
+    openAddFundsModal() {
+      addFundsModalVisible.value = true;
+    },
+
+    closeAddFundsModal() {
+      addFundsModalVisible.value = false;
     },
 
     setTabByName(value) {

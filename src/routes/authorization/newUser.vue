@@ -4,11 +4,12 @@
 
 <script setup>
 import { onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 const router = useRouter();
+const route = useRoute();
 
 onMounted(() => {
-  router.push({ name: "login" });
+  router.push({ name: "login", query: route.query });
 });
 </script>

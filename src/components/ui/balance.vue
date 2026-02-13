@@ -13,7 +13,7 @@
         <plus-icon />
       </span>
     </div>
-    <add-funds :modal-visible="modalVisible" :hide-modal="hideModal" />
+    <add-funds :modal-visible="addFundsModalVisible" :hide-modal="hideModal" />
   </div>
 </template>
 
@@ -21,6 +21,7 @@
 import { computed, defineAsyncComponent, ref } from "vue";
 import { LoadingOutlined } from "@ant-design/icons-vue";
 import { useAuthStore } from "@/stores/auth.js";
+import { useAppStore } from "@/stores/app.js";
 import { useCurrency } from "@/hooks/utils";
 import addFunds from "@/components/ui/addFunds.vue";
 import { storeToRefs } from "pinia";
@@ -30,7 +31,9 @@ const props = defineProps({
 });
 
 const authStore = useAuthStore();
+const appStore = useAppStore();
 const { userBalance } = storeToRefs(authStore);
+const { addFundsModalVisible } = storeToRefs(appStore);
 const { currency, formatPrice } = useCurrency();
 
 const plusIcon = defineAsyncComponent(() =>
@@ -38,7 +41,6 @@ const plusIcon = defineAsyncComponent(() =>
 );
 
 const isLoading = ref(false);
-const modalVisible = ref(false);
 
 const formatedBalance = computed(() => {
   const balance = (userBalance.value || 0).toFixed(2);
@@ -65,11 +67,11 @@ const formatedBalance = computed(() => {
 // }
 
 function showModal() {
-  if (props.clickable) modalVisible.value = true;
+  if (props.clickable) appStore.openAddFundsModal();
 }
 
 function hideModal() {
-  modalVisible.value = false;
+  appStore.closeAddFundsModal();
 }
 
 async function fetch() {

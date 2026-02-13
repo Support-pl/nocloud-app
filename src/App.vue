@@ -61,8 +61,8 @@ import updateNotification from "@/components/ui/updateNotification.vue";
 import { useCurrenciesStore } from "./stores/currencies";
 import { useSpStore } from "./stores/sp";
 
-const bulbIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/BulbFilled")
+const bulbIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/BulbFilled"),
 );
 
 const router = useRouter();
@@ -82,7 +82,7 @@ watch(
     if (isServicesExist && ["root", "services"].includes(route.name)) {
       router.replace("settings");
     }
-  }
+  },
 );
 
 const isInitLoading = ref(true);
@@ -101,7 +101,7 @@ function checkBalance(price = 0) {
     Modal.confirm({
       title: i18n.t("You do not have enough funds on your balance"),
       content: i18n.t(
-        "Click OK to replenish the account with the missing amount"
+        "Click OK to replenish the account with the missing amount",
       ),
       onOk: () => {
         modal.value.amount = +(parseFloat(price) - balance).toFixed(2);
@@ -146,6 +146,18 @@ function redirectByType({ uuid, type }) {
   }
 }
 
+function handleOpenQuery(param) {
+  if (param === "top_up") {
+    setTimeout(() => {
+      if (authStore.isLogged) {
+        appStore.openAddFundsModal();
+      }
+    }, 1500);
+  }
+
+  router.replace({ query: { ...route.query, open: undefined } });
+}
+
 window.addEventListener("message", async ({ data, origin }) => {
   if (!origin.includes("https://api.")) return;
   api.applyToken(data.token);
@@ -175,14 +187,18 @@ router.beforeEach((to, _, next) => {
   }
 
   if (mustBeLoggined && !authStore.isLogged) {
-    next({ name: "login" });
+    next({ name: "login", query: to.query });
   } else if (!isRouteExist(to.name)) {
     if (!authStore.billingUser.roles?.services) {
       next({ name: "settings" });
     } else {
       next({ name: "root" });
     }
-  } else if (to.name === "login" && authStore.isLogged) {
+  } else if (
+    to.name === "login" &&
+    authStore.isLogged &&
+    !to.query.next?.includes("authorize")
+  ) {
     next({ name: "root" });
   } else next();
 });
@@ -199,7 +215,10 @@ onMounted(async () => {
   }
   await router.isReady();
 
-  const mustUnloggined = route.meta.mustBeUnloggined && authStore.isLogged;
+  const mustUnloggined =
+    route.meta.mustBeUnloggined &&
+    authStore.isLogged &&
+    !route.query.next?.includes("authorize");
   const isIncluded = ["cabinet", "settings"].includes(route.name);
   const { firstname, id } = await authStore.fetchBillingData();
 
@@ -210,12 +229,16 @@ onMounted(async () => {
     appStore.isButtonsVisible = false;
   }
 
+  if (route.query.open) {
+    handleOpenQuery(route.query.open);
+  }
+
   if (
     route.meta?.mustBeLoggined &&
     !authStore.isLogged &&
     !isInitLoading.value
   ) {
-    router.replace("login");
+    router.replace("login", { query: route.query });
   } else if (localStorage.getItem("oauth") && !isIncluded) {
     router.replace("cabinet");
   } else if (mustUnloggined) {
@@ -230,7 +253,7 @@ watch(
     setTimeout(() => {
       const app = document.getElementById("app");
       const elements = document.querySelectorAll(
-        ".ant-notification-notice-close"
+        ".ant-notification-notice-close",
       );
       const close = Array.from(elements);
       const open = () => {
@@ -243,19 +266,19 @@ watch(
       });
       app.classList.add("block-page");
     }, 100);
-  }
+  },
 );
 
 watch(
   () => authStore.isLogged,
   () => {
     currenciesStore.fetchCurrencies();
-  }
+  },
 );
 
 const isThemeButtonVisible = import.meta.env.DEV;
 const isDarkTheme = ref(
-  matchMedia("(prefers-color-scheme: dark)") && isThemeButtonVisible
+  matchMedia("(prefers-color-scheme: dark)") && isThemeButtonVisible,
 );
 
 const cssVars = computed(() => {
@@ -327,7 +350,7 @@ async function firstLoad() {
 }
 watch(
   () => authStore.isLogged,
-  () => spStore.fetchShowcases(!authStore.isLogged)
+  () => spStore.fetchShowcases(!authStore.isLogged),
 );
 
 firstLoad();
@@ -347,7 +370,7 @@ function setTheme() {
 
   document.body.setAttribute(
     "style",
-    cssVars.value.map(([k, v]) => `${k}:${v}`).join(";")
+    cssVars.value.map(([k, v]) => `${k}:${v}`).join(";"),
   );
 }
 </script>

@@ -81,7 +81,7 @@
               reply.error ? 'chat__tooltip error' : 'chat__tooltip'
             "
             :trigger="reply.error ? 'click' : 'hover'"
-            :placement="isAdminSent(reply) ? 'rightBottom' : 'leftBottom'"
+            :placement="isBotSent(reply) ? 'rightBottom' : 'leftBottom'"
           >
             <template #content>
               <div style="cursor: pointer" @click="copyMessage(reply)">
@@ -100,7 +100,7 @@
               :key="`${i}_message`"
               class="chat__message"
               :class="[
-                isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
+                isBotSent(reply) ? 'chat__message--in' : 'chat__message--out',
               ]"
             >
               <pre>
@@ -127,7 +127,7 @@
             </pre>
 
               <div class="chat__info">
-                <span>{{ reply.name }}</span>
+                <span>{{ getModel(replies[i - 1]) }}</span>
                 <span>{{ reply.date.slice(-8, -3) }}</span>
               </div>
 
@@ -149,7 +149,10 @@
           </a-popover>
         </template>
 
-        <typing-placeholder v-if="isPlaceholderVisible" />
+        <typing-placeholder
+          v-if="isPlaceholderVisible"
+          :type="getPlaceholderType(replies.at(-1))"
+        />
         <div style="height: 250px"></div>
       </div>
     </div>
@@ -296,53 +299,53 @@ import CreateChat from "@/components/openai-chats/createChat.vue";
 import ChatSettings from "@/components/openai-chats/chatSettings.vue";
 import { marked } from "marked";
 
-const exclamationIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ExclamationCircleOutlined")
+const exclamationIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ExclamationCircleOutlined"),
 );
-const copyIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CopyOutlined")
+const copyIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CopyOutlined"),
 );
-const editIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/EditOutlined")
-);
-
-const loadingIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/LoadingOutlined")
-);
-const addChatIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/PlusCircleOutlined")
-);
-const arrowDownIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ArrowDownOutlined")
-);
-const searchIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SearchOutlined")
-);
-const aiIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/RobotOutlined")
+const editIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/EditOutlined"),
 );
 
-const apiIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ProfileOutlined")
+const loadingIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/LoadingOutlined"),
+);
+const addChatIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/PlusCircleOutlined"),
+);
+const arrowDownIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ArrowDownOutlined"),
+);
+const searchIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/SearchOutlined"),
+);
+const aiIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/RobotOutlined"),
 );
 
-const closeMenu = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/RightCircleOutlined")
-);
-const openMenu = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/LeftCircleOutlined")
+const apiIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ProfileOutlined"),
 );
 
-const settingsIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SettingOutlined")
+const closeMenu = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/RightCircleOutlined"),
+);
+const openMenu = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/LeftCircleOutlined"),
 );
 
-const openFullscreanIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/FullscreenOutlined")
+const settingsIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/SettingOutlined"),
 );
 
-const closeFullscreanIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/FullscreenExitOutlined")
+const openFullscreanIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/FullscreenOutlined"),
+);
+
+const closeFullscreanIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/FullscreenExitOutlined"),
 );
 
 const route = useRoute();
@@ -433,6 +436,7 @@ const chats = computed(() => {
         .join(" "),
       unread: isReaded ? 0 : ticket.meta.unread,
       model,
+      attachments: ticket.meta.lastMessage?.attachments ?? [],
     };
     result.push(value);
   });
@@ -457,13 +461,13 @@ const files = computed(() =>
     result[uuid] = files;
 
     return result;
-  }, {})
+  }, {}),
 );
 
 const model = computed(() => {
   return (
     globalModelsList.value.find(
-      (model) => model.key === chat.value?.meta?.data?.model?.kind?.value
+      (model) => model.key === chat.value?.meta?.data?.model?.kind?.value,
     )?.name || chat.value?.meta?.data?.model?.kind?.value
   );
 });
@@ -480,25 +484,26 @@ watch(
     if (scrollHeight > clientHeight || !lastElementChild) return;
     lastElementChild.style.borderBottom = "1px solid var(--border_color)";
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(
   replies,
-  async (value, oldValue) => {
+  async (value) => {
     await nextTick();
     await new Promise((resolve) => setTimeout(resolve, 300));
-    setPlaceholderVisible(oldValue.length > 0 ? oldValue : value);
+
+    setPlaceholderVisible(value);
 
     scrollToBottom(0);
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(
   () => chatsStore.messages[chatid.value],
   () => loadMessages(),
-  { deep: true }
+  { deep: true },
 );
 
 async function fetch() {
@@ -523,25 +528,29 @@ async function fetch() {
 
 fetch();
 
-let timeout;
-function setPlaceholderVisible(replies) {
-  const isUserSent = replies.at(-1)?.from || replies.length === 1;
+let showTimeout;
+let hideTimeout;
 
-  if (!isAdminSent(replies.at(-1) ?? {}) && isUserSent) {
-    timeout = setTimeout(async () => {
+function setPlaceholderVisible(replies) {
+  clearTimeout(showTimeout);
+  clearTimeout(hideTimeout);
+  isPlaceholderVisible.value = false;
+
+  if (!replies || replies.length === 0) return;
+
+  const lastMessage = replies.at(-1);
+
+  if (lastMessage && !isBotSent(lastMessage)) {
+    showTimeout = setTimeout(async () => {
       isPlaceholderVisible.value = true;
 
       await nextTick();
       scrollToBottom(0);
     }, 1000);
 
-    setTimeout(() => {
-      clearTimeout(timeout);
+    hideTimeout = setTimeout(() => {
       isPlaceholderVisible.value = false;
     }, 20 * 1000);
-  } else {
-    clearTimeout(timeout);
-    isPlaceholderVisible.value = false;
   }
 }
 
@@ -550,7 +559,7 @@ function isDateVisible(replies, i) {
   return replies[i - 1].date.split(" ")[0] !== replies[i].date.split(" ")[0];
 }
 
-function isAdminSent(reply) {
+function isBotSent(reply) {
   return reply.requestor_type !== "Owner";
 }
 
@@ -614,6 +623,33 @@ function resendMessage(reply) {
   footer.value.sendMessage();
 }
 
+function getModel(reply) {
+  if (reply?.meta?.model?.kind?.value) {
+    return (
+      globalModelsList.value.find(
+        (model) => model.key === reply.meta.model.kind.value,
+      )?.name || reply.meta.model.kind.value
+    );
+  }
+
+  return "";
+}
+
+function getPlaceholderType(reply) {
+  var type = reply?.meta?.mode?.kind?.value || "default";
+  if (type === "default") {
+    return "text";
+  } else if (type === "generate") {
+    return "image";
+  } else if (type === "video") {
+    return "video";
+  } else if (type === "speech") {
+    return "audio";
+  }
+
+  return "text";
+}
+
 const showScrollToBottom = ref(false);
 
 function onScroll() {
@@ -673,22 +709,21 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   removeScrollEventListner();
+  clearTimeout(showTimeout);
+  clearTimeout(hideTimeout);
 });
 
 watch(content, () => {
   addScrollEventListner();
 });
 
-watch(
-  () => chat.value?.topic,
-  (newTopic) => {
-    if (newTopic) {
-      customHeaderTitle.value = newTopic;
-    } else {
-      customHeaderTitle.value = "";
-    }
+watch([() => chat.value?.topic, instance], () => {
+  if (chat.value?.topic) {
+    customHeaderTitle.value = chat.value.topic;
+  } else {
+    customHeaderTitle.value = instance.value?.title || "";
   }
-);
+});
 
 onBeforeUnmount(() => (customHeaderTitle.value = ""));
 </script>
@@ -760,7 +795,7 @@ export default { name: "OpenaiChat" };
 }
 
 .chat__message pre {
-  font-size: 14px;
+  font-size: 15px;
   white-space: collapse;
   word-break: break-word;
 }
@@ -793,7 +828,7 @@ export default { name: "OpenaiChat" };
   position: absolute;
   bottom: 5px;
   left: -20px;
-  font-size: 14px;
+  font-size: 15px;
   height: auto;
 }
 

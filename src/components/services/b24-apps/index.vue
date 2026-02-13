@@ -7,17 +7,17 @@
         >
           <a-carousel
             ref="carousel"
-            style="max-height: 40vh"
+            style="max-height: 40vh; max-width: 1200px; z-index: 0"
             arrows
             dots-class="slick-dots slick-thumb"
             :before-change="onCarouselChange"
           >
             <template #customPaging="props">
               <a>
-                <img :src="sizes[props.i].image" />
+                <img :src="carouselSizes[props.i].image" />
               </a>
             </template>
-            <div v-for="size in sizes" :key="size.key">
+            <div v-for="(size, idx) in carouselSizes" :key="`carousel-${idx}`">
               <img :src="size.image" />
             </div>
           </a-carousel>
@@ -25,16 +25,27 @@
 
         <div class="order__grid-item">
           <h4 class="product_name">
-            {{ sizes[currentSelectedIndex]?.label }}
+            {{
+              [
+                currentProduct.variants.length > 1
+                  ? currentProduct.planTitle
+                  : "",
+                carouselSizes[currentSelectedIndex]?.label,
+              ]
+                .filter((v) => !!v)
+                .join(" ")
+            }}
           </h4>
 
           <div
-            v-if="getResources(sizes[currentSelectedIndex])?.length"
+            v-if="getResources(carouselSizes[currentSelectedIndex])?.length"
             class="product_resources"
           >
             <a-tag
               color="blue"
-              v-for="resource of getResources(sizes[currentSelectedIndex])"
+              v-for="resource of getResources(
+                carouselSizes[currentSelectedIndex],
+              )"
               :key="resource.id"
             >
               {{ resource.key }}: {{ resource.title }}
@@ -44,7 +55,7 @@
           <div
             class="product_description"
             v-else
-            v-html="sizes[currentSelectedIndex]?.description"
+            v-html="carouselSizes[currentSelectedIndex]?.description"
           ></div>
         </div>
 
@@ -100,9 +111,42 @@
           :is-plans-visible="false"
         />
 
-        <a-row>
+        <a-row v-if="currentProduct.variants.length == 1">
           <h2>{{ currentProduct.title }}</h2>
         </a-row>
+        <template v-else>
+          <a-row>
+            <a-col style="font-size: 1rem">
+              {{ capitalize($t("tariff")) }}:
+            </a-col>
+          </a-row>
+
+          <a-row style="margin: 10px 0px">
+            <a-select
+              @change="setNewSubProduct"
+              :value="currentProduct.title"
+              style="width: 100%"
+            >
+              <a-select-option
+                v-for="size in currentProduct.variants"
+                :key="size.key"
+              >
+                {{ size.label }}
+              </a-select-option>
+            </a-select>
+          </a-row>
+        </template>
+
+        <div v-if="currentProduct?.resources?.length" class="resources">
+          <p
+            v-for="resource of currentProduct?.resources"
+            :key="resource.id"
+            style="margin-bottom: 0.5em"
+          >
+            {{ capitalize($t(resource.key)) }}:
+            {{ resource.value }}
+          </p>
+        </div>
 
         <a-row style="width: 100%">
           <a-col :span="24">
@@ -121,15 +165,6 @@
             </a-form>
           </a-col>
         </a-row>
-
-        <div v-if="currentProduct?.meta?.resources?.length" class="resources">
-          <p
-            v-for="resource of currentProduct?.meta?.resources"
-            :key="resource.id"
-          >
-            {{ resource.key }}: {{ resource.title }}
-          </p>
-        </div>
 
         <a-divider orientation="left" :style="{ 'margin-bottom': '0' }">
           {{ $t("Total") }}:
@@ -194,7 +229,7 @@
 
 <script setup>
 import { storeToRefs } from "pinia";
-import { computed, inject, watch } from "vue";
+import { capitalize, computed, inject, watch } from "vue";
 import useCreateInstance from "@/hooks/instances/create.js";
 import { useCurrency, useNotification, usePeriod } from "@/hooks/utils";
 import { checkPayg } from "@/functions.js";
@@ -257,6 +292,12 @@ const currentSelectedIndex = ref(0);
 const periods = ref([]);
 const domainError = ref(false);
 
+const allSizes = computed(() => sizes.value.flat());
+
+const carouselSizes = computed(() =>
+  sizes.value.map((group) => ({ ...group[0], group })),
+);
+
 function onCreated() {
   fetchLoading.value = true;
   const promises = [
@@ -291,24 +332,36 @@ function onCreated() {
 
 onCreated();
 
-const changePeriods = (key) => {
-  periods.value = [];
-  Object.values(sizes.value).forEach((product) => {
+const findGroupIndexByProduct = (productKey) => {
+  const productIndex = allSizes.value.findIndex(
+    (size) => size.keys[options.value.period] === productKey,
+  );
+
+  if (productIndex === -1) return -1;
+
+  return sizes.value.findIndex((group) =>
+    group.some((product) => product.key === allSizes.value[productIndex].key),
+  );
+};
+
+const changePeriods = () => {
+  const uniquePeriods = new Set();
+
+  allSizes.value.forEach((product) => {
     Object.keys(product.keys).forEach((period) => {
-      if (periods.value.includes(+period)) return;
-      periods.value.push(+period);
+      uniquePeriods.add(+period);
     });
   });
 
-  periods.value.sort((a, b) => a - b);
-  if (periods.value.includes(options.value.period)) return;
-  const data = JSON.parse(route.query.data ?? "{}");
+  periods.value = Array.from(uniquePeriods).sort((a, b) => a - b);
 
-  if (data.period && periods.value.includes(+data.period)) {
-    options.value.period = +data.period;
-  } else {
-    options.value.period = periods.value[0];
-  }
+  if (periods.value.includes(options.value.period)) return;
+
+  const data = JSON.parse(route.query.data ?? "{}");
+  options.value.period =
+    data.period && periods.value.includes(+data.period)
+      ? +data.period
+      : periods.value[0];
 };
 
 function validateDomain() {
@@ -329,63 +382,64 @@ function getProduct(products, options) {
   if (Object.keys(products).length === 0) return "NAN";
 
   const product =
-    sizes.value.find(
-      (size) => size.keys[options.period.toString()] === options.size
+    allSizes.value.find(
+      (size) => size.keys[options.period.toString()] === options.size,
     ) || {};
 
-  const price =
-    product.price?.[options.period] +
-    options.addons.reduce((sum, id) => {
-      const addon = product.addons?.find(({ key }) => key === id);
-      const period = addon?.period / product.period;
+  const addonsPrice = options.addons.reduce((sum, id) => {
+    const addon = product.addons?.find(({ key }) => key === id);
+    if (!addon) return sum;
 
-      if (!addon) return sum;
-      return sum + addon.price * (period >= 1 ? period : 1 / period);
-    }, 0);
+    const period = addon?.period / product.period;
+    return sum + addon.price * (period >= 1 ? period : 1 / period);
+  }, 0);
 
-  const description = product.description;
+  const plan = plans.value.find(
+    (p) => p.products[options.size]?.period == options.period,
+  );
 
-  const planId = plans.value.find(
-    (p) => p.products[options.size]?.period == options.period
-  )?.uuid;
+  const variants = allSizes.value.filter((size) => size.plan === plan?.uuid);
 
   return {
     ...product,
     title: product.label,
-    price: formatPrice(price),
+    price: formatPrice((product.price?.[options.period] || 0) + addonsPrice),
     meta: { ...product.meta },
-    description,
-    planId,
+    description: product.description,
+    planId: plan?.uuid,
+    variants,
+    planTitle: plan?.title,
   };
 }
 
-const currentProduct = computed(() => {
-  return getProduct(products.value, options.value);
-});
+const currentProduct = computed(() =>
+  getProduct(products.value, options.value),
+);
 
 const showcase = computed(
-  () => spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {}
+  () => spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {},
 );
 
 const plans = computed(() => {
-  return (
-    cachedPlans.value[`${provider.value}_${currency.value.code}`]?.filter(
-      ({ type, uuid }) => {
-        const { items } = showcase.value;
-        const plans = [];
+  const key = `${provider.value}_${currency.value.code}`;
+  const cachedPool = cachedPlans.value[key];
 
-        if (!items) return type === "bitrix24";
-        items.forEach(({ servicesProvider, plan }) => {
-          if (servicesProvider === provider.value) {
-            plans.push(plan);
-          }
-        });
+  if (!cachedPool) return [];
 
-        if (plans.length < 1) return type === "bitrix24";
-        return type === "bitrix24" && plans.includes(uuid);
-      }
-    ) ?? []
-  );
+  return cachedPool.filter(({ type, uuid }) => {
+    const { items } = showcase.value;
+
+    if (!items) return type === "bitrix24";
+
+    const allowedPlans = items
+      .filter((item) => item.servicesProvider === provider.value)
+      .map((item) => item.plan);
+
+    return (
+      type === "bitrix24" &&
+      (allowedPlans.length === 0 || allowedPlans.includes(uuid))
+    );
+  });
 });
 
 const sp = computed(() => {
@@ -393,7 +447,7 @@ const sp = computed(() => {
 
   if (!items) return [];
   return spStore.servicesProviders.filter(({ uuid }) =>
-    items.find((item) => uuid === item.servicesProvider)
+    items.find((item) => uuid === item.servicesProvider),
   );
 });
 
@@ -401,47 +455,71 @@ const changeProducts = () => {
   const productsAndSizes = plans.value.reduce(
     (result, plan) => {
       for (const [key, product] of Object.entries(plan.products)) {
-        const i = result.sizes.findIndex(
-          ({ label }) => label === product.title
+        if (!product.public) continue;
+
+        let groupIndex = result.sizes.findIndex(
+          (sizes) => sizes[0]?.plan === plan.uuid,
         );
 
-        if (!product.public) continue;
+        if (groupIndex === -1) {
+          result.sizes.push([]);
+          groupIndex = result.sizes.length - 1;
+        }
+
+        const existingIndex = result.sizes[groupIndex].findIndex(
+          ({ label }) => label === product.title,
+        );
+
         result.products.push([key, product, plan.uuid]);
 
         const description =
           descriptionsStore.cachedADescriptions[product.descriptionId]?.text ||
           product.meta.description;
 
-        if (i === -1) {
-          result.sizes.push({
-            keys: { [product.period]: key },
-            label: product.title,
-            group: product.group ?? product.title,
-            price: { [product.period]: product.price },
-            sorter: product.sorter,
-            image: product.meta.image,
-            description,
-          });
+        const newKey = `${key}|${product.period}`;
+        const allowedResources = ["pages"];
+        const resources = Object.entries(product.resources || {})
+          .filter(([resKey]) => allowedResources.includes(resKey))
+          .map(([resKey, resValue]) => ({ key: resKey, value: resValue }));
+
+        const productData = {
+          plan: plan.uuid,
+          key: newKey,
+          keys: { [product.period]: key },
+          label: product.title,
+          group: product.group ?? product.title,
+          price: { [product.period]: product.price },
+          sorter: product.sorter,
+          image: product.meta.image,
+          description,
+          resources,
+        };
+
+        if (existingIndex === -1) {
+          result.sizes[groupIndex].push(productData);
         } else {
-          result.sizes[i].keys[product.period] = key;
-          result.sizes[i].price[product.period] = product.price;
+          const existing = result.sizes[groupIndex][existingIndex];
+          existing.key += `|${newKey}`;
+          existing.keys[product.period] = key;
+          existing.price[product.period] = product.price;
         }
       }
 
       return result;
     },
-    { products: [], sizes: [] }
+    { products: [], sizes: [] },
   );
 
-  const plan = plans.value.at(0);
+  const firstPlan = plans.value[0];
 
   productsAndSizes.products.forEach(([productKey, value, planId]) => {
     products.value[productKey] = {
       ...value,
       planId,
-      addons: plan.resources.filter(({ key }) =>
-        value.meta.addons?.includes(key)
-      ),
+      addons:
+        firstPlan?.resources.filter(({ key }) =>
+          value.meta.addons?.includes(key),
+        ) || [],
     };
   });
 
@@ -453,26 +531,24 @@ function onCarouselChange(prev, currentIndex) {
 }
 
 const getResources = (size) => {
-  if (!size) {
-    return [];
-  }
-  const key = size.keys[options.value.period];
+  if (!size?.keys) return [];
 
-  return products.value[key]?.meta?.resources;
+  const key = size.keys[options.value.period];
+  return products.value[key]?.resources || [];
 };
 
 const orderClickHandler = () => {
   const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
-  const { resources = [] } = currentProduct.value.meta;
+  const { resources = [] } = currentProduct.value;
 
   const instance = {
     config: { auto_start: fullPlan.meta.auto_start },
     resources: resources.reduce(
-      (result, { key, title }) => {
-        result[key] = title;
+      (result, { key, value }) => {
+        result[key] = value;
         return result;
       },
-      { bitrix_domain: options.value.domain }
+      { bitrix_domain: options.value.domain },
     ),
     title: currentProduct.value.title,
     billing_plan: fullPlan,
@@ -506,6 +582,13 @@ const orderClickHandler = () => {
 
   createVirtual(instance);
 };
+
+const setNewSubProduct = (key) => {
+  const [size, period] = key.split("|");
+  options.value.size = size;
+  options.value.period = +period;
+};
+
 const createVirtual = async (instance) => {
   modal.value.confirmLoading = true;
   onLogin.value = {};
@@ -516,49 +599,49 @@ const createVirtual = async (instance) => {
       provider: provider.value,
     });
     router.push({ path: "/billing" });
-  } catch {
+  } catch (error) {
     console.error(error);
   }
 };
+
 const orderConfirm = () => {
   validateDomain();
 
-  if (domainError.value) {
-    return;
-  }
+  if (domainError.value) return;
 
   const instance = {
     config: {},
     billingPlan: plans.value.find(({ uuid }) => uuid === plan.value),
   };
+
   const isPayg = checkPayg(instance);
-  const { price } = currentProduct;
+  const { price } = currentProduct.value;
 
   if (isPayg && !checkBalance(price)) return;
+
   modal.value.confirmCreate = true;
 };
 
 const fetchPlans = async (provider) => {
-  if (!currency.value.code) {
-    return;
-  }
-  const cacheKey = `${provider}_${currency.value.code}`;
+  if (!currency.value.code) return;
 
+  const cacheKey = `${provider}_${currency.value.code}`;
   if (cachedPlans.value[cacheKey]) return;
+
   try {
     const { pool } = await plansStore.fetch({
       anonymously: !isLogged.value,
       sp_uuid: provider,
     });
 
-    const descriptions = [];
-    pool.forEach((p) =>
-      Object.keys(p.products || {}).forEach((key) =>
-        descriptions.push(p.products[key]?.descriptionId)
-      )
+    const descriptions = pool.flatMap((p) =>
+      Object.values(p.products || {})
+        .map((product) => product.descriptionId)
+        .filter(Boolean),
     );
+
     await Promise.allSettled(
-      descriptions.filter((d) => !!d).map((d) => descriptionsStore.fetchById(d))
+      descriptions.map((d) => descriptionsStore.fetchById(d)),
     );
 
     cachedPlans.value[cacheKey] = pool;
@@ -566,29 +649,23 @@ const fetchPlans = async (provider) => {
     changeProducts();
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
-
     notification.openNotification("error", { message });
   } finally {
     fetchLoading.value = false;
 
-    setTimeout(async () => {
+    setTimeout(() => {
       const { action } = onLogin.value;
       if (typeof action !== "function") return;
 
       const oldOptions = action();
-
       plan.value = oldOptions.plan;
+      Object.assign(options.value, oldOptions);
 
-      options.value.size = oldOptions.size;
-      options.value.addons = oldOptions.addons;
-      options.value.period = oldOptions.period;
-      options.value.domain = oldOptions.domain;
-      const indexOfProduct = sizes.value.findIndex(
-        (size) => size.keys[options.value.period] === options.value.size
-      );
-      if (indexOfProduct !== -1) {
-        carousel.value.goTo(indexOfProduct, false);
+      const groupIndex = findGroupIndexByProduct(options.value.size);
+      if (groupIndex !== -1) {
+        carousel.value.goTo(groupIndex, false);
       }
+
       onLogin.value = {};
     }, 1000);
   }
@@ -597,31 +674,24 @@ const fetchPlans = async (provider) => {
 watch(sp, (value) => {
   if (value.length > 0) provider.value = value[0].uuid;
 });
-watch([provider, currency], () => {
-  fetchPlans(provider.value);
-});
 
-watch([sizes, currentSelectedIndex], (newVal, prevVal) => {
-  if (prevVal[0].length === 0 && options.value.size) {
+watch([provider, currency], () => fetchPlans(provider.value));
+
+watch([carouselSizes, currentSelectedIndex], (newVal, prevVal) => {
+  if (prevVal[0]?.length === 0 && options.value.size) {
     changePeriods();
-    const indexOfProduct = sizes.value.findIndex(
-      (size) => size.keys[options.value.period] === options.value.size
-    );
-    if (indexOfProduct !== -1) {
-      setTimeout(() => {
-        carousel.value.goTo(indexOfProduct, false);
-      }, 100);
 
+    const groupIndex = findGroupIndexByProduct(options.value.size);
+    if (groupIndex !== -1) {
+      setTimeout(() => carousel.value.goTo(groupIndex, false), 100);
       return;
     }
   }
-  const { keys } = sizes.value?.at(currentSelectedIndex.value) ?? {};
 
-  if (keys && options.value.period) {
-    options.value.size = keys[options.value.period];
-  } else if (keys) {
-    options.value.size = Object.values(keys)[0];
-  }
+  const { keys } = carouselSizes.value?.[currentSelectedIndex.value] ?? {};
+  if (!keys) return;
+
+  options.value.size = keys[options.value.period] || Object.values(keys)[0];
 });
 
 watch(currentProduct, () => {
@@ -673,7 +743,9 @@ export default {
   object-fit: cover;
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 :deep(.slick-slide img:hover) {
@@ -701,7 +773,9 @@ export default {
     display: block;
     border: 2px solid transparent;
     border-radius: 5px;
-    transition: border-color 0.3s, transform 0.3s;
+    transition:
+      border-color 0.3s,
+      transform 0.3s;
     object-fit: cover;
 
     &:hover {
@@ -786,7 +860,9 @@ export default {
 
 .order__field {
   border-radius: 20px;
-  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    5px 8px 10px rgba(0, 0, 0, 0.08),
+    0px 0px 12px rgba(0, 0, 0, 0.05);
   padding: 5px 10px;
   background-color: var(--bright_font);
   height: max-content;

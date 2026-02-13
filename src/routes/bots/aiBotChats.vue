@@ -475,7 +475,7 @@ export default { name: "AiBotChat" };
 }
 
 .chat__message pre {
-  font-size: 14px;
+  font-size: 15px;
   white-space: collapse;
   word-break: break-word;
 }
@@ -506,7 +506,7 @@ export default { name: "AiBotChat" };
   position: absolute;
   bottom: 5px;
   left: -20px;
-  font-size: 14px;
+  font-size: 15px;
   height: auto;
 }
 
