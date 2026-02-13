@@ -127,7 +127,7 @@
             </pre>
 
               <div class="chat__info">
-                <span></span>
+                <span>{{ getModel(replies[i-1]) }}</span>
                 <span>{{ reply.date.slice(-8, -3) }}</span>
               </div>
 
@@ -612,6 +612,18 @@ function resendMessage(reply) {
   deleteMessage(reply);
   footer.value.message = reply.message;
   footer.value.sendMessage();
+}
+
+function getModel(reply) {
+  if (reply?.meta?.model?.kind?.value) {
+    return (
+      globalModelsList.value.find(
+        (model) => model.key === reply.meta.model.kind.value,
+      )?.name || reply.meta.model.kind.value
+    );
+  }
+
+  return "";
 }
 
 const showScrollToBottom = ref(false);
