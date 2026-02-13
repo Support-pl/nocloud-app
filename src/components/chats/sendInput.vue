@@ -104,7 +104,7 @@ const props = defineProps({
   editing: { type: Boolean, default: false },
   fileList: { type: Array, required: true },
   placeholder: { type: String, required: false },
-  minRows: { type: Number, default: 3 },
+  minRows: { type: Number, default: 2 },
 });
 
 const emits = defineEmits([
