@@ -81,7 +81,7 @@
               reply.error ? 'chat__tooltip error' : 'chat__tooltip'
             "
             :trigger="reply.error ? 'click' : 'hover'"
-            :placement="isAdminSent(reply) ? 'rightBottom' : 'leftBottom'"
+            :placement="isBotSent(reply) ? 'rightBottom' : 'leftBottom'"
           >
             <template #content>
               <div style="cursor: pointer" @click="copyMessage(reply)">
@@ -100,7 +100,7 @@
               :key="`${i}_message`"
               class="chat__message"
               :class="[
-                isAdminSent(reply) ? 'chat__message--in' : 'chat__message--out',
+                isBotSent(reply) ? 'chat__message--in' : 'chat__message--out',
               ]"
             >
               <pre>
@@ -127,7 +127,7 @@
             </pre>
 
               <div class="chat__info">
-                <span>{{ getModel(replies[i-1]) }}</span>
+                <span>{{ getModel(replies[i - 1]) }}</span>
                 <span>{{ reply.date.slice(-8, -3) }}</span>
               </div>
 
@@ -149,7 +149,10 @@
           </a-popover>
         </template>
 
-        <typing-placeholder v-if="isPlaceholderVisible" />
+        <typing-placeholder
+          v-if="isPlaceholderVisible"
+          :type="getPlaceholderType(replies.at(-1))"
+        />
         <div style="height: 250px"></div>
       </div>
     </div>
@@ -485,10 +488,11 @@ watch(
 
 watch(
   replies,
-  async (value, oldValue) => {
+  async (value) => {
     await nextTick();
     await new Promise((resolve) => setTimeout(resolve, 300));
-    setPlaceholderVisible(oldValue.length > 0 ? oldValue : value);
+
+    setPlaceholderVisible(value);
 
     scrollToBottom(0);
   },
@@ -523,25 +527,29 @@ async function fetch() {
 
 fetch();
 
-let timeout;
-function setPlaceholderVisible(replies) {
-  const isUserSent = replies.at(-1)?.from || replies.length === 1;
+let showTimeout;
+let hideTimeout;
 
-  if (!isAdminSent(replies.at(-1) ?? {}) && isUserSent) {
-    timeout = setTimeout(async () => {
+function setPlaceholderVisible(replies) {
+  clearTimeout(showTimeout);
+  clearTimeout(hideTimeout);
+  isPlaceholderVisible.value = false;
+
+  if (!replies || replies.length === 0) return;
+
+  const lastMessage = replies.at(-1);
+
+  if (lastMessage && !isBotSent(lastMessage)) {
+    showTimeout = setTimeout(async () => {
       isPlaceholderVisible.value = true;
 
       await nextTick();
       scrollToBottom(0);
     }, 1000);
 
-    setTimeout(() => {
-      clearTimeout(timeout);
+    hideTimeout = setTimeout(() => {
       isPlaceholderVisible.value = false;
     }, 20 * 1000);
-  } else {
-    clearTimeout(timeout);
-    isPlaceholderVisible.value = false;
   }
 }
 
@@ -550,7 +558,7 @@ function isDateVisible(replies, i) {
   return replies[i - 1].date.split(" ")[0] !== replies[i].date.split(" ")[0];
 }
 
-function isAdminSent(reply) {
+function isBotSent(reply) {
   return reply.requestor_type !== "Owner";
 }
 
@@ -626,6 +634,21 @@ function getModel(reply) {
   return "";
 }
 
+function getPlaceholderType(reply) {
+  var type = reply?.meta?.mode?.kind?.value || "default";
+  if (type === "default") {
+    return "text";
+  } else if (type === "generate") {
+    return "image";
+  } else if (type === "video") {
+    return "video";
+  } else if (type === "speech") {
+    return "audio";
+  }
+
+  return "text";
+}
+
 const showScrollToBottom = ref(false);
 
 function onScroll() {
@@ -685,6 +708,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   removeScrollEventListner();
+  clearTimeout(showTimeout);
+  clearTimeout(hideTimeout);
 });
 
 watch(content, () => {
