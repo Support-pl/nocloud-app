@@ -8,6 +8,7 @@ const { globalConfig } = globalThis;
 export default {
   colors: globalConfig.app?.colors,
   department: globalConfig.department,
+  defaultCountry: globalConfig.registration?.default_country ?? "",
 
   languages: globalConfig.languages ?? ["en"],
   vdcEnabled: globalConfig.vdc_enabled ?? false,
@@ -83,7 +84,7 @@ export default {
       creationRouteName: "service-vpn",
       icon: icons.AppstoreOutlined,
     },
-    'b24-apps': {
+    "b24-apps": {
       groupname: ["B24-Apps", "B24 Apps"],
       creationRouteName: "service-b24-apps",
       icon: icons.AppstoreOutlined,
