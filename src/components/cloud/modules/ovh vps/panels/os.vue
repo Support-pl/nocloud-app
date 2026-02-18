@@ -103,18 +103,22 @@ const [activeKey] = inject("useActiveKey", () => [])();
 watch([() => props.productSize, loading, currency], setImages);
 if (props.productSize) setImages();
 
-watch(activeKey, async () => {
-  try {
-    await ovhVpsForm.value.validateFields();
-    validationPanels.value["os"] = false;
-  } catch (e) {
-    validationPanels.value["os"] = true;
-  }
-});
+watch(
+  [activeKey, authData],
+  async () => {
+    try {
+      await ovhVpsForm.value.validateFields();
+      validationPanels.value["os"] = false;
+    } catch (e) {
+      validationPanels.value["os"] = true;
+    }
+  },
+  { deep: true },
+);
 
 async function setImages() {
   const planProducts = Object.entries(cloudStore.plan.products ?? {}).filter(
-    ([, { title }]) => title === props.productSize
+    ([, { title }]) => title === props.productSize,
   );
 
   if (!planProducts[0]) return;
@@ -151,7 +155,7 @@ function setOS(item, index) {
   setOptions("addons", [
     ...options.addons.filter(
       (uuid) =>
-        addons.value.find((addon) => addon.uuid == uuid)?.meta?.type !== "os"
+        addons.value.find((addon) => addon.uuid == uuid)?.meta?.type !== "os",
     ),
     item.uuid,
   ]);

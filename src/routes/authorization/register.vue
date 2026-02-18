@@ -287,6 +287,7 @@ import { useAuthStore } from "@/stores/auth.js";
 import { useCurrenciesStore } from "@/stores/currencies.js";
 import countries from "@/assets/countries.json";
 import PhoneInput from "@/components/ui/phoneInput.vue";
+import appconfig from "@/appconfig.js";
 
 const router = useRouter();
 const route = useRoute();
@@ -364,6 +365,12 @@ const fetchWhmcsCurrencies = async () => {
 onMounted(() => {
   fetchWhmcsCurrencies();
   setDefaultCurrency();
+
+  if (appconfig.defaultCountry) {
+    userinfo.value.country = countries.find(
+      (c) => c.code === appconfig.defaultCountry,
+    )?.code;
+  }
 });
 
 userinfo.value.currency = currenciesStore.defaultCurrency;

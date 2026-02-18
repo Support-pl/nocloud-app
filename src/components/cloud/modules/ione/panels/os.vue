@@ -138,7 +138,7 @@ const rules = {
 
       if (/[^a-zA-Z0-9]/.test(authData.value.username)) {
         return Promise.reject(
-          i18n.t(i18n.t("The username must be without special characters"))
+          i18n.t(i18n.t("The username must be without special characters")),
         );
       }
 
@@ -165,7 +165,7 @@ const rules = {
           authData.value.password_valid = false;
           throw new Error(`
           ${i18n.t(
-            "Password must contain uppercase letters, numbers and symbols"
+            "Password must contain uppercase letters, numbers and symbols",
           )} (+-.-_!*)
         `);
         }
@@ -191,14 +191,18 @@ onBeforeMount(() => {
   if (images.length === 1) setOS(images[0][1], images[0][0]);
 });
 
-watch(activeKey, async () => {
-  try {
-    await ioneForm.value.validateFields();
-    validationPanels.value["os"] = false;
-  } catch (e) {
-    validationPanels.value["os"] = true;
-  }
-});
+watch(
+  [activeKey, authData],
+  async () => {
+    try {
+      await ioneForm.value.validateFields();
+      validationPanels.value["os"] = false;
+    } catch (e) {
+      validationPanels.value["os"] = true;
+    }
+  },
+  { deep: true },
+);
 
 function setOS(item, index) {
   if (item.warning) {
