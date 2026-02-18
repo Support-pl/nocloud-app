@@ -155,7 +155,7 @@ const rules = {
 
       if (/[^a-zA-Z0-9]/.test(authData.value.username)) {
         return Promise.reject(
-          i18n.t(i18n.t("The username must be without special characters"))
+          i18n.t(i18n.t("The username must be without special characters")),
         );
       }
 
@@ -169,14 +169,18 @@ const [options, setOptions] = inject("useOptions", () => [])();
 const [price, setPrice] = inject("usePriceOVH", () => [])();
 const [activeKey] = inject("useActiveKey", () => [])();
 
-watch(activeKey, async () => {
-  try {
-    await keywebForm.value.validateFields();
-    validationPanels.value["os"] = false;
-  } catch (e) {
-    validationPanels.value["os"] = true;
-  }
-});
+watch(
+  [activeKey, authData],
+  async () => {
+    try {
+      await keywebForm.value.validateFields();
+      validationPanels.value["os"] = false;
+    } catch (e) {
+      validationPanels.value["os"] = true;
+    }
+  },
+  { deep: true },
+);
 
 watch(() => addonsStore.addons, setImages);
 watch(() => props.productSize, setImages);
@@ -189,7 +193,7 @@ async function setImages() {
   const filtered = addonsStore.addons.filter(
     ({ uuid }) =>
       cloudStore.plan.addons.includes(uuid) ||
-      product.value.addons?.includes(uuid)
+      product.value.addons?.includes(uuid),
   );
   const list = [];
 
@@ -226,7 +230,7 @@ function setOS(item, index) {
   }
 
   const addonsKeys = [...options.addons].filter(
-    (uuid) => !images.value.find((image) => image.key === uuid)
+    (uuid) => !images.value.find((image) => image.key === uuid),
   );
 
   addonsKeys.push(item.key);
