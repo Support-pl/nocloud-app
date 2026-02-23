@@ -27,7 +27,7 @@
           <h4 class="product_name">
             {{
               [
-                currentProduct.variants.length > 1
+                currentProduct?.variants?.length > 1
                   ? currentProduct.planTitle
                   : "",
                 carouselSizes[currentSelectedIndex]?.label,
@@ -111,7 +111,7 @@
           :is-plans-visible="false"
         />
 
-        <a-row v-if="currentProduct.variants.length == 1">
+        <a-row v-if="currentProduct?.variants?.length == 1">
           <h2>{{ currentProduct.title }}</h2>
         </a-row>
         <template v-else>
@@ -128,7 +128,7 @@
               style="width: 100%"
             >
               <a-select-option
-                v-for="size in currentProduct.variants"
+                v-for="size in currentProduct?.variants || []"
                 :key="size.key"
               >
                 {{ size.label }}
@@ -398,7 +398,17 @@ function getProduct(products, options) {
     (p) => p.products[options.size]?.period == options.period,
   );
 
-  const variants = allSizes.value.filter((size) => size.plan === plan?.uuid);
+  let variants = allSizes.value.filter((size) => size.plan === plan?.uuid);
+
+  if (
+    allSizes.value.length === variants.length &&
+    !variants.every(
+      (v) => Object.keys(v.keys)[0] === Object.keys(product?.keys)[0],
+    )
+  ) {
+    variants = [];
+    variants.push(product);
+  }
 
   return {
     ...product,
@@ -693,6 +703,23 @@ watch([carouselSizes, currentSelectedIndex], (newVal, prevVal) => {
 
   options.value.size = keys[options.value.period] || Object.values(keys)[0];
 });
+
+watch(
+  () => options.value.period,
+  () => {
+    setTimeout(() => {
+      if (!currentProduct.value || !currentProduct.value.planId) {
+        options.value.size =
+          allSizes.value.find((size) => !!size.keys[options.value.period])
+            ?.keys?.[options.value.period] || options.value.size;
+      }
+    }, 0);
+
+    const { keys } = carouselSizes.value?.[currentSelectedIndex.value] ?? {};
+
+    options.value.size = keys[options.value.period] || Object.values(keys)[0];
+  },
+);
 
 watch(currentProduct, () => {
   changePeriods();
