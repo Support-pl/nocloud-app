@@ -67,10 +67,15 @@
 
             <a-input-password
               :value="authData.password"
-              class="password"
               @update:value="
                 authData.password = $event;
                 setOptions('config.password', $event);
+              "
+              class="password"
+              autocomplete="new-password"
+              @input="
+                (authData.password = $event.target.value);
+                setOptions('config.password', $event.target.value);
               "
             />
           </a-form-item>

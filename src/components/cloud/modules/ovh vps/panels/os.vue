@@ -32,8 +32,11 @@
             />
 
             <a-input-password
-              v-model:value="authData.password"
+              :value="authData.password"
               class="password"
+              autocomplete="new-password"
+              @update:value="authData.password = $event"
+              @input="(e) => authData.password = e.target.value"
             />
           </a-form-item>
         </a-form>
