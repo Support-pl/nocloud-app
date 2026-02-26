@@ -53,14 +53,6 @@ export const useCloudStore = defineStore("cloud", () => {
   const serviceId = ref();
   const namespaceId = ref();
 
-  watch(locationId, () => {
-    authData.password_valid = true;
-    authData.is_username_valid = true;
-    Object.keys(validationPanels).forEach((key) => {
-      validationPanels[key] = false;
-    });
-  });
-
   const showcases = computed(() => {
     const result = [{ title: "all", uuid: "" }];
 
@@ -82,8 +74,8 @@ export const useCloudStore = defineStore("cloud", () => {
           ({ uuid, locations }) =>
             locations.find(
               ({ id, type }) =>
-                location.id.includes(id) && location.type === type
-            ) && showcase.items.find((item) => item.servicesProvider === uuid)
+                location.id.includes(id) && location.type === type,
+            ) && showcase.items.find((item) => item.servicesProvider === uuid),
         );
 
         if (showcaseId.value === "" || showcaseId.value === showcase.uuid) {
@@ -107,12 +99,23 @@ export const useCloudStore = defineStore("cloud", () => {
   });
 
   const plan = computed(
-    () => plansStore.plans.find(({ uuid }) => uuid === planId.value) ?? {}
+    () => plansStore.plans.find(({ uuid }) => uuid === planId.value) ?? {},
   );
+
+  watch(plan, () => {
+    setTimeout(() => {
+      authData.password_valid = true;
+      authData.is_username_valid = true;
+      Object.keys(validationPanels).forEach((key) => {
+        validationPanels[key] = false;
+      });
+    }, 100);
+  });
 
   const service = computed(
     () =>
-      instancesStore.services.find(({ uuid }) => uuid === serviceId.value) ?? {}
+      instancesStore.services.find(({ uuid }) => uuid === serviceId.value) ??
+      {},
   );
 
   async function createOrder(options, product) {
@@ -173,7 +176,7 @@ export const useCloudStore = defineStore("cloud", () => {
         }
       }
       const { access } = namespacesStore.namespaces.find(
-        ({ uuid }) => uuid === namespaceId.value
+        ({ uuid }) => uuid === namespaceId.value,
       );
       const account = access.namespace ?? namespaceId.value;
 
@@ -185,7 +188,7 @@ export const useCloudStore = defineStore("cloud", () => {
 
   function setInstance(options, product) {
     const locationItem = locations.value.find(
-      ({ id }) => id === locationId.value
+      ({ id }) => id === locationId.value,
     );
     const instance = {
       title: authData.vmName,
@@ -207,7 +210,6 @@ export const useCloudStore = defineStore("cloud", () => {
       billing_plan: plan.value,
       addons: options.addons,
     };
-
 
     if (plan.value.kind === "STATIC" || plan.value.type !== "ione") {
       instance.product = product.value.key;
