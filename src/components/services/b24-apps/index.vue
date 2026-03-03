@@ -764,7 +764,8 @@ export default {
   border: 5px solid #fff;
   display: block;
   margin: auto;
-  height: 30vh;
+  max-height: 30vh;
+  height: 100%;
   width: 60vw;
   max-width: 750px;
   object-fit: cover;
