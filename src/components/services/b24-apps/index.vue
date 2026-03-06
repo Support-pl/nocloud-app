@@ -25,16 +25,7 @@
 
         <div class="order__grid-item">
           <h4 class="product_name">
-            {{
-              [
-                currentProduct?.variants?.length > 1
-                  ? currentProduct.planTitle
-                  : "",
-                carouselSizes[currentSelectedIndex]?.label,
-              ]
-                .filter((v) => !!v)
-                .join(" ")
-            }}
+            {{ [currentProduct?.label].filter((v) => !!v).join(" ") }}
           </h4>
 
           <div
@@ -55,7 +46,7 @@
           <div
             class="product_description"
             v-else
-            v-html="carouselSizes[currentSelectedIndex]?.description"
+            v-html="currentProduct?.description"
           ></div>
         </div>
 
@@ -403,12 +394,13 @@ function getProduct(products, options) {
   if (
     allSizes.value.length === variants.length &&
     !variants.every(
-      (v) => Object.keys(v.keys)[0] === Object.keys(product?.keys)[0],
+      (v) => Object.keys(v.keys)[0] === Object.keys(product?.keys || {})[0],
     )
   ) {
     variants = [];
     variants.push(product);
   }
+  console.log(variants);
 
   return {
     ...product,
@@ -594,9 +586,17 @@ const orderClickHandler = () => {
 };
 
 const setNewSubProduct = (key) => {
-  const [size, period] = key.split("|");
-  options.value.size = size;
-  options.value.period = +period;
+  console.log(key);
+
+  const arr = key.split("|");
+  for (let index = 0; index < arr.length; index += 2) {
+    var size = arr[index];
+    var period = arr[index + 1];
+    if (period == options.value.period || arr.length < index) {
+      options.value.size = size;
+      options.value.period = +period;
+    }
+  }
 };
 
 const createVirtual = async (instance) => {
