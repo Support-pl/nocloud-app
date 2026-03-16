@@ -152,7 +152,7 @@
           </div>
         </a-spin>
 
-        <div v-if="authStore.userdata.subaccounts && !authStore.userdata.accountOwner" class="settings__item" @click="showModal('accounts')">
+        <div v-if="authStore.userdata.subaccounts && !authStore.userdata.accountOwner && subaccounts.length>0" class="settings__item" @click="showModal('accounts')">
           <div class="settings__logo">
             <accounts-icon />
           </div>

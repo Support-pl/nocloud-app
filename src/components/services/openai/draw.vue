@@ -386,7 +386,7 @@ const exampleV2 = computed(() => {
     "model": "${selectedModelV2.value}",
     "messages": [
       {
-        "role": "developer",
+        "role": "system",
         "content": "You are a helpful assistant."
       },
       {
