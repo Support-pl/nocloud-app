@@ -99,7 +99,7 @@
                   <span v-else>
                     {{
                       formatPrice(
-                        convertedPrices.get(domainPrices.get(result.name)) || 0
+                        convertedPrices.get(domainPrices.get(result.name)) || 0,
                       )
                     }}
                     {{ currency.title }}
@@ -206,14 +206,14 @@ const i18n = useI18n();
 
 const { serviceId } = useServiceId("opensrs");
 
-const searchIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SearchOutlined")
+const searchIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/SearchOutlined"),
 );
-const shoppingCartIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ShoppingCartOutlined")
+const shoppingCartIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ShoppingCartOutlined"),
 );
-const checkIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CheckOutlined")
+const checkIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CheckOutlined"),
 );
 
 const DOMAINS_CART_KEY = "domains_cart";
@@ -263,7 +263,7 @@ const isLoading = computed(
   () =>
     isConvertPricesLoading.value ||
     isDomainPricesLoading.value ||
-    isDomainsLoading.value
+    isDomainsLoading.value,
 );
 
 const currentPool = computed(() => {
@@ -297,12 +297,12 @@ const sp = computed(() => {
 
   if (!items) return [];
   return providersStore.servicesProviders.filter(({ uuid }) =>
-    items.find((item) => uuid === item.servicesProvider)
+    items.find((item) => uuid === item.servicesProvider),
   );
 });
 
 const isSearchLoading = computed(
-  () => isDomainPricesLoading.value || isConvertPricesLoading.value
+  () => isDomainPricesLoading.value || isConvertPricesLoading.value,
 );
 
 async function searchDomain() {
@@ -415,7 +415,7 @@ function removeFromCart(domain, index) {
   onCart.value.splice(index, 1);
   results.value.splice(
     results.value.findIndex((result) => result.name === domain.name),
-    1
+    1,
   );
   itemsInCart.value -= 1;
 }
@@ -516,7 +516,7 @@ watch(currentPool, () => {
       return (
         +price +
         (fullPlan.fee.default ? price * (fullPlan.fee.default / 100) : 0)
-      );
+      ).toFixed(fullPlan.fee.precision || 0);
     }
 
     isDomainPricesLoading.value = true;
@@ -537,7 +537,7 @@ watch(currentPool, () => {
       domainPrices.value.delete(name);
     } finally {
       isDomainPricesLoading.value = [...domainPrices.value.values()].some(
-        (v) => v instanceof Promise
+        (v) => v instanceof Promise,
       );
     }
   });
@@ -551,8 +551,8 @@ watch([isDomainPricesLoading, currency], async (curr, last) => {
   if (!isDomainPricesLoading.value) {
     const uniqueAmounts = new Set(
       [...domainPrices.value.values()].filter(
-        (price) => !convertedPrices.value.has(price)
-      )
+        (price) => !convertedPrices.value.has(price),
+      ),
     );
 
     isConvertPricesLoading.value = true;
@@ -565,8 +565,13 @@ watch([isDomainPricesLoading, currency], async (curr, last) => {
         amounts,
       });
 
+      const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
+
       amounts.forEach((price, index) => {
-        convertedPrices.value.set(price, response.amounts[index]);
+        convertedPrices.value.set(
+          price,
+          Number(response.amounts[index]).toFixed(fullPlan.fee.precision || 0),
+        );
       });
     } finally {
       isConvertPricesLoading.value = false;
