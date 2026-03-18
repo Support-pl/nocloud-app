@@ -123,6 +123,7 @@
     "Password must contain uppercase letters, numbers and symbols": "Hasło musi zawierać wielkie litery, cyfry i symbole",
     "The last character must not be special": "Ostatni znak nie może być znakiem specjalnym",
     "The username must be without special characters": "Nazwa użytkownika nie może zawierać znaków specjalnych",
+    "The hostname must be without special characters": "Nazwa hosta nie może zawierać znaków specjalnych",
     "Email is already in use or is empty": "Email jest już używany lub jest pusty",
     "Create VM": "Utwórz VM",
     "Create": "Utwórz",

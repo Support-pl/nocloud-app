@@ -415,7 +415,7 @@ const resources = ref({
   reg_password: "",
   period: 1,
   who_is_privacy: false,
-  lock_domain: true,
+  lock_domain: false,
 });
 const form = ref({});
 const getProducts = ref({ name: "", pricing: {} });
@@ -666,13 +666,17 @@ const convertPrices = async () => {
       });
     }
 
+    const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
+
     res.forEach(({ meta }, i) => {
       const { name } = onCart.value[i];
 
       Object.keys(meta.prices).forEach((key) => {
-        meta.prices[key] =
+        const convertedPrice =
           data.find((d) => d.from == meta.prices[key])?.converted ??
           meta.prices[key];
+        
+        meta.prices[key] = Number(convertedPrice).toFixed(fullPlan.fee.precision || 0);
       });
 
       productsDefaultCurrency.value[name] = { ...meta.prices };
@@ -699,13 +703,16 @@ const convertPrices = async () => {
       });
     }
 
+
     res.forEach(({ meta }, i) => {
       const { name } = onCart.value[i];
 
       Object.keys(meta.prices).forEach((key) => {
-        meta.prices[key] =
+        const convertedPrice =
           data?.find((d) => d.from == meta.prices[key])?.converted ??
           meta.prices[key];
+        
+        meta.prices[key] = Number(convertedPrice).toFixed(fullPlan.fee.precision || 0);
       });
 
       products.value[name] = { ...meta.prices };
