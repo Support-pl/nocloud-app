@@ -516,7 +516,7 @@ watch(currentPool, () => {
       return (
         +price +
         (fullPlan.fee.default ? price * (fullPlan.fee.default / 100) : 0)
-      ).toFixed(fullPlan.fee.precision || 0);
+      );
     }
 
     isDomainPricesLoading.value = true;
