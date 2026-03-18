@@ -137,18 +137,44 @@ const rules = {
   hostname: {
     trigger: "change",
     required: true,
-    validator: () =>
-      authData.value.hostname.length < 2
-        ? Promise.reject(i18n.t("ssl_product.field is required"))
-        : Promise.resolve(),
+    validator: () => {
+      if (authData.value.hostname.length < 2) {
+        return Promise.reject(i18n.t("ssl_product.field is required"));
+      }
+
+      if (/[^a-zA-Z0-9]/.test(authData.value.hostname)) {
+        return Promise.reject(
+          i18n.t("The hostname must be without special characters"),
+        );
+      }
+
+      return Promise.resolve();
+    },
   },
   password: {
     trigger: "change",
     required: true,
-    validator: () =>
-      authData.value.password.length < 6
-        ? Promise.reject(i18n.t("ssl_product.field is required"))
-        : Promise.resolve(),
+    validator: () => {
+      try {
+        if (authData.value.password === "") {
+          throw new Error(i18n.t("ssl_product.field is required"));
+        }
+        if (/[^a-zA-Z0-9]$/.test(authData.value.password)) {
+          throw new Error(i18n.t("The last character must not be special"));
+        }
+        if (/^(?=.*\d)[\w+=._!*-]{9,32}$/.test(authData.value.password)) {
+          return Promise.resolve();
+        } else {
+          throw new Error(`
+          ${i18n.t(
+            "Password must contain uppercase letters, numbers and symbols",
+          )} (+-.-_!*)
+        `);
+        }
+      } catch (error) {
+        return Promise.reject(error.message);
+      }
+    },
   },
   username: {
     trigger: "change",
