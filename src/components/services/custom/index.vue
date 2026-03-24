@@ -357,12 +357,12 @@ import { h } from "vue";
 import { useDescriptionsStore } from "@/stores/descriptions";
 import useServiceId from "@/hooks/services/serviceId";
 
-const searchIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SearchOutlined")
+const searchIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/SearchOutlined"),
 );
 
-const checkCircle = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CheckCircleTwoTone")
+const checkCircle = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CheckCircleTwoTone"),
 );
 
 const namespacesStore = useNamespasesStore();
@@ -448,7 +448,7 @@ function getProduct(products, options) {
 
   const product = Object.values(products).find(
     (product) =>
-      product.title == title && +(product.period || 0) == (options.period || 0)
+      product.title == title && +(product.period || 0) == (options.period || 0),
   );
 
   const price =
@@ -477,7 +477,7 @@ const currentProduct = computed(() => {
 });
 
 const showcase = computed(
-  () => spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {}
+  () => spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {},
 );
 
 const isSaleApply = computed(() => !!planWithApplyedPromocode.value);
@@ -536,13 +536,13 @@ const filteredAddons = computed(() => {
 
   return addons.value.filter(
     ({ uuid }) =>
-      fullPlan.addons.includes(uuid) || product?.addons.includes(uuid)
+      fullPlan.addons.includes(uuid) || product?.addons.includes(uuid),
   );
 });
 const addonsPrice = computed(() => {
   return options.value.addons.reduce(
     (result, uuid) => result + (getAddon(uuid)?.price ?? 0),
-    0
+    0,
   );
 });
 const typesOptions = computed(() => {
@@ -667,7 +667,7 @@ const plans = computed(() => {
 
         if (plans.length < 1) return type === "empty";
         return type === "empty" && plans.includes(uuid);
-      }
+      },
     ) ?? []
   );
 });
@@ -677,7 +677,7 @@ const sp = computed(() => {
 
   if (!items) return [];
   return spStore.servicesProviders.filter(({ uuid }) =>
-    items.find((item) => uuid === item.servicesProvider)
+    items.find((item) => uuid === item.servicesProvider),
   );
 });
 
@@ -718,7 +718,7 @@ const changeProducts = () => {
     (result, plan) => {
       for (const [key, product] of Object.entries(plan.products)) {
         const i = result.sizes.findIndex(
-          ({ label }) => label === product.title
+          ({ label }) => label === product.title,
         );
 
         if (!product.public) continue;
@@ -746,7 +746,7 @@ const changeProducts = () => {
 
       return result;
     },
-    { products: [], sizes: [] }
+    { products: [], sizes: [] },
   );
   const plan = plans.value.at(0);
 
@@ -755,7 +755,7 @@ const changeProducts = () => {
       ...value,
       planId,
       addons: plan.resources.filter(({ key }) =>
-        value.meta.addons?.includes(key)
+        value.meta.addons?.includes(key),
       ),
     };
   });
@@ -796,7 +796,7 @@ const changePeriods = (key) => {
 const changeAddons = (uuid) => {
   if (options.value.addons.includes(uuid)) {
     options.value.addons = options.value.addons.filter(
-      (addon) => addon !== uuid
+      (addon) => addon !== uuid,
     );
   } else {
     options.value.addons.push(uuid);
@@ -843,7 +843,7 @@ const orderClickHandler = () => {
         result[key] = title;
         return result;
       },
-      { domain: domain.value ? domain.value.trim() : "" }
+      { domain: domain.value ? domain.value.trim() : "" },
     ),
     title: currentProduct.value.title,
     billing_plan: fullPlan,
@@ -923,16 +923,17 @@ const fetchPlans = async (provider) => {
     const descriptions = [];
     pool.forEach((p) =>
       Object.keys(p.products || {}).forEach((key) =>
-        descriptions.push(p.products[key]?.descriptionId)
-      )
+        descriptions.push(p.products[key]?.descriptionId),
+      ),
     );
     await Promise.allSettled(
-      descriptions.filter((d) => !!d).map((d) => descriptionsStore.fetchById(d))
+      descriptions
+        .filter((d) => !!d)
+        .map((d) => descriptionsStore.fetchById(d)),
     );
 
     cachedPlans.value[cacheKey] = pool;
     plan.value = plans.value[0]?.uuid;
-    changeProducts();
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
 
@@ -1011,6 +1012,9 @@ function validateDomain() {
 watch(sp, (value) => {
   if (value.length > 0) provider.value = value[0].uuid;
 });
+watch(plans, () => {
+  changeProducts();
+});
 watch([provider, currency], () => {
   fetchPlans(provider.value);
 });
@@ -1045,7 +1049,7 @@ watch(
   () => options.value.size,
   (value, prev) => {
     const size = sizes.value.find(({ keys }) =>
-      Object.values(keys).includes(prev)
+      Object.values(keys).includes(prev),
     );
     const keys = Object.values(size?.keys ?? {});
 
@@ -1057,7 +1061,7 @@ watch(
     });
 
     plan.value = currentProduct.value.planId;
-  }
+  },
 );
 
 watch(
@@ -1066,7 +1070,7 @@ watch(
     const { title } = products.value[options.value.size] || {};
     const [key, product] =
       Object.entries(products.value || []).find(
-        ([, product]) => product.title === title && +product.period === value
+        ([, product]) => product.title === title && +product.period === value,
       ) || [];
     const data = JSON.parse(route.query.data ?? "{}");
 
@@ -1079,7 +1083,7 @@ watch(
     plan.value = cachedPlans.value[
       `${provider.value}_${currency.value.code}`
     ].find(({ uuid }) => uuid === product.planId)?.uuid;
-  }
+  },
 );
 
 watch([promocode, currency], async () => {
@@ -1117,12 +1121,12 @@ watch(
       paginationOptions.value.page = 1;
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(typesOptions, () => {
   const saleOption = typesOptions.value.find((v) =>
-    (v || "").toLowerCase().trim().includes("распродажа")
+    (v || "").toLowerCase().trim().includes("распродажа"),
   );
   if (saleOption) {
     checkedGroups.value = saleOption;
@@ -1155,7 +1159,9 @@ export default {
 
 .order__field {
   border-radius: 20px;
-  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    5px 8px 10px rgba(0, 0, 0, 0.08),
+    0px 0px 12px rgba(0, 0, 0, 0.05);
   padding: 5px 10px;
   background-color: var(--bright_font);
   height: max-content;
@@ -1264,7 +1270,10 @@ export default {
   cursor: pointer;
   padding: 10px;
   box-shadow: inset 0 0 0 1px var(--border_color);
-  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
   min-height: 15vh;
 }
 
@@ -1411,7 +1420,10 @@ export default {
   cursor: pointer;
   border-radius: 15px;
   font-size: 1.1rem;
-  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .order__slider-item:hover {
