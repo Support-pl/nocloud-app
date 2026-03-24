@@ -6,6 +6,7 @@
           style="display: flex; justify-content: center; align-items: center"
         >
           <a-carousel
+            v-if="currentProduct.price"
             ref="carousel"
             style="max-height: 40vh; max-width: 1200px; z-index: 0"
             arrows
@@ -374,7 +375,7 @@ function getProduct(products, options) {
 
   const product =
     allSizes.value.find(
-      (size) => size.keys[options.period.toString()] === options.size,
+      (size) => (size.keys[options.period] || "").toString() === options.size,
     ) || {};
 
   const addonsPrice = options.addons.reduce((sum, id) => {
@@ -400,7 +401,6 @@ function getProduct(products, options) {
     variants = [];
     variants.push(product);
   }
-  console.log(variants);
 
   return {
     ...product,
@@ -414,9 +414,9 @@ function getProduct(products, options) {
   };
 }
 
-const currentProduct = computed(() =>
-  getProduct(products.value, options.value),
-);
+const currentProduct = computed(() => {
+  return getProduct(products.value, options.value);
+});
 
 const showcase = computed(
   () => spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {},
@@ -586,8 +586,6 @@ const orderClickHandler = () => {
 };
 
 const setNewSubProduct = (key) => {
-  console.log(key);
-
   const arr = key.split("|");
   for (let index = 0; index < arr.length; index += 2) {
     var size = arr[index];
@@ -656,7 +654,6 @@ const fetchPlans = async (provider) => {
 
     cachedPlans.value[cacheKey] = pool;
     plan.value = plans.value[0]?.uuid;
-    changeProducts();
   } catch (error) {
     const message = error.response?.data?.message ?? error.message ?? error;
     notification.openNotification("error", { message });
@@ -683,6 +680,10 @@ const fetchPlans = async (provider) => {
 
 watch(sp, (value) => {
   if (value.length > 0) provider.value = value[0].uuid;
+});
+
+watch(plans, () => {
+  changeProducts();
 });
 
 watch([provider, currency], () => fetchPlans(provider.value));
@@ -717,7 +718,8 @@ watch(
 
     const { keys } = carouselSizes.value?.[currentSelectedIndex.value] ?? {};
 
-    options.value.size = keys[options.value.period] || Object.values(keys)[0];
+    options.value.size =
+      (keys || {})[options.value.period] || Object.values(keys || {})[0];
   },
 );
 
