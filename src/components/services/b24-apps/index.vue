@@ -318,7 +318,7 @@ function onCreated() {
   }
 
   if (route.query.product) {
-    options.value.size = route.query.product;
+    options.value.size = route.query.product.replaceAll(" ", "_");
   }
 }
 
@@ -716,10 +716,27 @@ watch(
       }
     }, 0);
 
+    let isProductFound = false;
+
+    sizes.value.forEach((group) =>
+      group.forEach((product) => {
+        if (
+          product.keys[options.value.period] &&
+          product.keys[options.value.period] === options.value.size
+        ) {
+          isProductFound = true;
+        }
+      }),
+    );
+
+    if (isProductFound) return;
+
     const { keys } = carouselSizes.value?.[currentSelectedIndex.value] ?? {};
 
     options.value.size =
-      (keys || {})[options.value.period] || Object.values(keys || {})[0];
+      (keys || {})[options.value.period] ||
+      Object.values(keys || {})[0] ||
+      options.value.size;
   },
 );
 
