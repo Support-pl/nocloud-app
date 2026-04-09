@@ -56,7 +56,7 @@
                       formatPrice(
                         (whoIsPrivacyAddon?.periods[
                           resources.period * 86400 * 365
-                        ] || 0) * onCart.length
+                        ] || 0) * onCart.length,
                       ),
                       currency.title,
                     ].join(" ")
@@ -357,14 +357,14 @@ import { useCurrenciesStore } from "@/stores/currencies";
 import { GeneratePassword } from "js-generate-password";
 import { useAddonsStore } from "@/stores/addons";
 
-const searchIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SearchOutlined")
+const searchIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/SearchOutlined"),
 );
-const shoppingCartIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ShoppingCartOutlined")
+const shoppingCartIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ShoppingCartOutlined"),
 );
-const questionCircleIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/QuestionCircleOutlined")
+const questionCircleIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/QuestionCircleOutlined"),
 );
 
 const props = defineProps({
@@ -396,7 +396,7 @@ const { currency, formatPrice } = useCurrency();
 const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const { deployService } = useCreateInstance();
+const { createInstance } = useCreateInstance();
 const { openNotification } = useNotification();
 
 const ogPrices = ref([]);
@@ -446,7 +446,7 @@ onMounted(() => {
     action();
   }
 
-  if (!"form" in data.value) {
+  if ((!"form") in data.value) {
     installDataToBuffer();
   }
 
@@ -480,13 +480,13 @@ onBeforeUnmount(() => {
       JSON.stringify({
         resources: resources.value,
         form: form.value,
-      })
-    )
+      }),
+    ),
   );
 });
 
 const sp = computed(() =>
-  spStore.servicesProviders.filter((sp) => sp.type === "opensrs")
+  spStore.servicesProviders.filter((sp) => sp.type === "opensrs"),
 );
 
 const namespace = computed(() => namespaces.value[0]?.uuid);
@@ -506,7 +506,7 @@ const fullPrice = computed(
       ? 0
       : (whoIsPrivacyAddon.value?.periods[
           resources.value.period * 86400 * 365
-        ] || 0) * onCart.value.length)
+        ] || 0) * onCart.value.length),
 );
 const rules = computed(() => {
   const message = t("ssl_product.field is required");
@@ -601,7 +601,7 @@ const fetch = async () => {
       uuid: provider.value,
       action: "get_domain_price",
       params: { domain: name },
-    })
+    }),
   );
   try {
     const res = await Promise.all(promises);
@@ -675,8 +675,10 @@ const convertPrices = async () => {
         const convertedPrice =
           data.find((d) => d.from == meta.prices[key])?.converted ??
           meta.prices[key];
-        
-        meta.prices[key] = Number(convertedPrice).toFixed(fullPlan.fee.precision || 0);
+
+        meta.prices[key] = Number(convertedPrice).toFixed(
+          fullPlan.fee.precision || 0,
+        );
       });
 
       productsDefaultCurrency.value[name] = { ...meta.prices };
@@ -703,7 +705,6 @@ const convertPrices = async () => {
       });
     }
 
-
     res.forEach(({ meta }, i) => {
       const { name } = onCart.value[i];
 
@@ -711,8 +712,10 @@ const convertPrices = async () => {
         const convertedPrice =
           data?.find((d) => d.from == meta.prices[key])?.converted ??
           meta.prices[key];
-        
-        meta.prices[key] = Number(convertedPrice).toFixed(fullPlan.fee.precision || 0);
+
+        meta.prices[key] = Number(convertedPrice).toFixed(
+          fullPlan.fee.precision || 0,
+        );
       });
 
       products.value[name] = { ...meta.prices };
@@ -759,14 +762,13 @@ const installDataToBuffer = () => {
   });
 };
 const orderClickHandler = async () => {
-  const fullService = services.value.find(({ uuid }) => uuid === service.value);
   const fullPlan = plans.value.find(({ uuid }) => uuid === plan.value);
 
   const instances = Object.keys(products.value).map((domain) => ({
     config: { auto_start: fullPlan.meta.auto_start },
     resources: {
       ...resources.value,
-      user: form.value,
+      user: JSON.parse(JSON.stringify(form.value)),
       domain,
       reg_username: "user" + Math.random().toString(16).slice(2),
       reg_password: GeneratePassword({
@@ -780,24 +782,9 @@ const orderClickHandler = async () => {
         ? [whoIsPrivacyAddon.value.uuid]
         : [],
     title: `Domain - ${domain}`,
-    billing_plan:  { uuid: fullPlan.uuid },
+    billing_plan: fullPlan,
     product: domain,
   }));
-
-  const newGroup = {
-    title: userdata.value.title + Date.now(),
-    type: "opensrs",
-    sp: provider.value,
-    instances,
-  };
-
-  const info = !fullService
-    ? newGroup
-    : JSON.parse(JSON.stringify(fullService));
-  const group = info.instancesGroups?.find(({ sp }) => sp === provider.value);
-
-  if (group) group.instances = [...group.instances, ...instances];
-  else if (fullService) info.instancesGroups.push(newGroup);
 
   if (!userdata.value.uuid) {
     const showcase =
@@ -819,27 +806,15 @@ const orderClickHandler = async () => {
 
   try {
     await form.value.validate();
-    createDomains(info);
+    createDomains(instances);
   } catch {
     openNotification("error", {
       message: t("all fields are required"),
     });
   }
 };
-const createDomains = async (info) => {
+const createDomains = async (instances) => {
   modal.value.confirmLoading = true;
-  const action = service.value ? "update" : "create";
-  const orderData = service.value
-    ? info
-    : {
-        namespace: namespace.value,
-        service: {
-          title: userdata.value.title,
-          context: {},
-          version: "1",
-          instancesGroups: [info],
-        },
-      };
 
   try {
     await Promise.all(
@@ -859,12 +834,15 @@ const createDomains = async (info) => {
               resources: {},
             },
           },
-        })
-      )
+        }),
+      ),
     );
 
-    const { uuid } = await instancesStore[`${action}Service`](orderData);
-    await deployService(uuid, t("Domain created successfully"));
+    for (const instance of instances) {
+      await createInstance(instance, {
+        provider: provider.value,
+      });
+    }
 
     onCart.value.forEach((domain, index) => {
       removeFromCart.value(domain, index);
@@ -934,7 +912,7 @@ const removeProduct = (domain, index) => {
 
 const onChangeCountry = () => {
   phonecode.value = countries.find(
-    (c) => c.code === form.value.country
+    (c) => c.code === form.value.country,
   ).dial_code;
 };
 
@@ -961,7 +939,7 @@ watch(
             res[curr] = 0;
             return res;
           },
-          { ...prices }
+          { ...prices },
         ),
       };
     }
@@ -978,7 +956,7 @@ watch(
       pricing: { ...prices },
     };
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch([ogPrices, currency], () => {
@@ -1106,7 +1084,9 @@ td.ant-descriptions-item-content:nth-child(6) {
 
 .order__field-cart {
   border-radius: 20px;
-  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    5px 8px 10px rgba(0, 0, 0, 0.08),
+    0px 0px 12px rgba(0, 0, 0, 0.05);
   padding: 20px;
   background-color: var(--bright_font);
   height: max-content;
