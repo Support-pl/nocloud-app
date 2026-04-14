@@ -1091,7 +1091,8 @@
         "runway": "Runway",
         "stability-ai": "Stability AI",
         "alibaba": "Alibaba",
-        "google-cloud": "Cloud Document AI API"
+        "google-cloud": "Cloud Document AI API",
+        "nocloud-ocr": "NoCloud OCR"
       },
       "agents": {
         "chats": "Chats",

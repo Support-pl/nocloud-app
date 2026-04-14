@@ -1089,7 +1089,8 @@
         "llama": "Llama",
         "runway": "Runway",
         "stability-ai": "Stability AI",
-        "alibaba": "Alibaba"
+        "alibaba": "Alibaba",
+        "nocloud-ocr": "NoCloud OCR"
       },
       "filters": {
         "video": "Wideo",
