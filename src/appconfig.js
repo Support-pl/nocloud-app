@@ -21,6 +21,8 @@ export default {
   whmcsActs: globalConfig.whmcs?.acts ?? false,
   sharedFolder: globalConfig.app?.shared_folder ?? "virtualHosting",
 
+  legal: globalConfig.legal ?? null,
+
   appTitle: globalConfig.app?.title ?? "",
   appLogo: {
     path: globalConfig.app?.logo ?? "",
