@@ -40,7 +40,7 @@ export const useAppStore = defineStore("app", () => {
         if (store.userCurrency?.code) {
           req.header.set(
             "nocloud-primary-currency-code",
-            store.userCurrency.code
+            store.userCurrency.code,
           );
         }
 
@@ -103,7 +103,7 @@ export const useAppStore = defineStore("app", () => {
                       "border-radius": "8px",
                     },
                   }),
-                ]
+                ],
               ),
           ]),
           title: "billing",
@@ -175,7 +175,7 @@ export const useAppStore = defineStore("app", () => {
 
       activeTabName.value = value;
       activeTabNum.value = buttons.value.findIndex(
-        ({ title }) => title === value
+        ({ title }) => title === value,
       );
 
       if (
@@ -201,7 +201,7 @@ export const useAppStore = defineStore("app", () => {
 
       activeTabName.value = value;
       activeTabNum.value = buttons.value.findIndex(
-        ({ title }) => title === value
+        ({ title }) => title === value,
       );
     },
 
@@ -211,6 +211,14 @@ export const useAppStore = defineStore("app", () => {
         info: null,
         redirect: null,
       };
+    },
+
+    isLegalRulesExist() {
+      return !!config.legal?.checkboxes;
+    },
+
+    isLegalInfoExists() {
+      return !!config.legal?.company;
     },
   };
 });
