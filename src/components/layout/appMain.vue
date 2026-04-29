@@ -26,6 +26,10 @@
         </router-view>
       </a-layout-content>
 
+      <a-layout-footer   v-if="!authStore.isLogged && !route.meta.isFooterHided" style="padding: 0">
+        <company-footer />
+      </a-layout-footer>
+
       <a-layout-footer
         v-if="authStore.isLogged && !route.meta.isFooterHided"
         style="padding: 0"
@@ -43,6 +47,7 @@ import { useAppStore } from "@/stores/app.js";
 import { useAuthStore } from "@/stores/auth.js";
 import appFooter from "@/components/layout/appFooter.vue";
 import appHeader from "@/components/layout/appHeader.vue";
+import companyFooter from "@/components/ui/companyFooter.vue";
 
 const router = useRouter();
 const route = useRoute();

@@ -241,9 +241,14 @@
               </a-select>
             </div>
 
+            <div v-if="appStore.isLegalRulesExist()" class="inputs__log-pas" style="padding: 8px 16px">
+              <legal-checkboxes @update:valid="legalAccepted = $event" />
+            </div>
+
             <button
               v-if="!registerLoading"
               class="login__submit"
+              :disabled="!legalAccepted"
               @click.prevent="submitHandler"
             >
               {{ capitalize($t("clientinfo.register")) }}
@@ -263,6 +268,9 @@
         </div>
       </div>
     </div>
+
+    <company-footer v-if="appStore.isLegalInfoExists()" class="footer" />
+    <div v-if="appStore.isLegalInfoExists()" class="prefooter login__main login__layout"></div>
   </div>
 </template>
 
@@ -281,6 +289,8 @@ import { useI18n } from "vue-i18n";
 
 import api from "@/api.js";
 import config from "@/appconfig.js";
+import LegalCheckboxes from "@/components/ui/legalCheckboxes.vue";
+import CompanyFooter from "@/components/ui/companyFooter.vue";
 
 import { useAppStore } from "@/stores/app.js";
 import { useAuthStore } from "@/stores/auth.js";
@@ -301,6 +311,7 @@ const closeIcon = defineAsyncComponent(
   () => import("@ant-design/icons-vue/CloseOutlined"),
 );
 
+const legalAccepted = ref(false);
 const registerLoading = ref(false);
 const invoiceChecked = ref(false);
 const userinfo = ref({
@@ -653,6 +664,12 @@ export default { name: "RegisterView" };
 
 .login__submit:hover {
   animation: gradient 2s ease infinite;
+}
+
+.login__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  animation: none;
 }
 
 @keyframes gradient {
