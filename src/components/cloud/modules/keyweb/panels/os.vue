@@ -138,7 +138,7 @@ const rules = {
     trigger: "change",
     required: true,
     validator: () => {
-      if (authData.value.hostname.length < 2) {
+      if (authData.value.hostname.length < 4) {
         return Promise.reject(i18n.t("ssl_product.field is required"));
       }
 
