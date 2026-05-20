@@ -52,8 +52,8 @@
             </a-card>
 
             <invoice-item
-              v-for="(invoice, index) in currentInvoices"
-              :key="index"
+              v-for="(invoice) in currentInvoices"
+              :key="invoice.uuid || invoice.payment_invoice_id || invoice.id"
               :invoice="invoice"
             />
           </template>
@@ -75,8 +75,8 @@
           />
           <template v-else>
             <transaction-item
-              v-for="(invoice, index) in transactions"
-              :key="index"
+              v-for="(invoice) in transactions"
+              :key="invoice.uuid || invoice.payment_invoice_id || invoice.id"
               :invoice="invoice"
             />
           </template>

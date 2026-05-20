@@ -39,7 +39,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
       filtered = invoices.value;
     } else {
       filtered = invoices.value.filter((ticket) =>
-        filter.value.includes(ticket.status)
+        filter.value.includes(ticket.status),
       );
     }
 
@@ -67,7 +67,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
   async function fetchNcInvoices(params) {
     try {
       const response = await invoicesApi.getInvoices(
-        new GetInvoicesRequest(params)
+        new GetInvoicesRequest(params),
       );
 
       return response;
@@ -114,7 +114,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
               !(
                 invoice?.meta?.whmcs_sync_required &&
                 !invoice?.meta?.whmcs_invoice_id
-              )
+              ),
           )
           .forEach((el) => {
             result.push(toInvoice(el));
@@ -129,7 +129,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
       }
 
       result.sort(
-        (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+        (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime(),
       );
       invoices.value = result;
 
@@ -168,15 +168,15 @@ export const useInvoicesStore = defineStore("invoices", () => {
             const invoice = toInvoice(event.body.invoice.toJson());
 
             invoices.value = invoices.value.map((i) =>
-              i.payment_invoice_id === invoice.payment_invoice_id ? invoice : i
+              i.payment_invoice_id === invoice.payment_invoice_id ? invoice : i,
             );
 
             const index = invoices.value.findIndex(
-              (i) => i.payment_invoice_id === invoice.payment_invoice_id
+              (i) => i.payment_invoice_id === invoice.payment_invoice_id,
             );
 
             if (index !== -1) {
-              invoices.computed[index] = invoice;
+              invoices.value[index] = invoice;
             } else {
               invoices.value.unshift(invoice);
             }
@@ -218,7 +218,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
         const response = await invoicesApi.createTopUpBalanceInvoice(
           new CreateTopUpBalanceInvoiceRequest({
             sum,
-          })
+          }),
         );
 
         return response.toJson();
@@ -233,7 +233,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
         const response = await invoicesApi.pay(
           new PayRequest({
             invoiceId,
-          })
+          }),
         );
 
         return response.paymentLink;
@@ -249,7 +249,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
           new PayWithBalanceRequest({
             invoiceUuid,
             whmcsId,
-          })
+          }),
         );
 
         return response;
@@ -264,7 +264,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
         const response = await invoicesApi.createRenewalInvoice(
           new CreateRenewalInvoiceRequest({
             instance: instance.uuid,
-          })
+          }),
         );
 
         router.push({ name: "billing" });
