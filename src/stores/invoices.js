@@ -26,6 +26,75 @@ export const useInvoicesStore = defineStore("invoices", () => {
   const router = useRouter();
   const invoicesApi = createPromiseClient(BillingService, app.transport);
 
+  const getInvoiceKey = (invoice) =>
+    String(invoice?.payment_invoice_id ?? invoice?.id ?? "");
+
+  const matchesInvoice = (a, b) => {
+    const aPayment = a?.payment_invoice_id;
+    const bPayment = b?.payment_invoice_id;
+    const aId = String(a?.id ?? "");
+    const bId = String(b?.id ?? "");
+
+    if (aPayment != null && bPayment != null) {
+      if (String(aPayment) === String(bPayment)) return true;
+    }
+
+    if (aId && bId && aId === bId) return true;
+
+    return false;
+  };
+
+  const dedupeInvoices = (items) => {
+    const deduped = [];
+
+    items.forEach((invoice) => {
+      const existingIndex = deduped.findIndex((d) =>
+        matchesInvoice(d, invoice),
+      );
+
+      if (existingIndex === -1) {
+        deduped.push(invoice);
+        return;
+      }
+
+      const existing = deduped[existingIndex];
+      const shouldReplaceWithCurrent =
+        existing?.payment_invoice_id == null &&
+        invoice?.payment_invoice_id != null;
+
+      if (shouldReplaceWithCurrent) {
+        deduped[existingIndex] = invoice;
+      }
+    });
+
+    return deduped;
+  };
+
+  const shouldHideInvoiceInMixedMode = (rawInvoice) => {
+    const isNoCloudOnlyMode = auth.userdata?.paymentsGateway === "nocloud";
+
+    if (isNoCloudOnlyMode) return false;
+
+    return Boolean(
+      rawInvoice?.meta?.whmcs_sync_required &&
+      !rawInvoice?.meta?.whmcs_invoice_id,
+    );
+  };
+
+  const upsertInvoiceFromStream = ({ invoice, sessionId, eventTypeLabel }) => {
+    const invoiceKey = getInvoiceKey(invoice);
+
+    const index = invoices.value.findIndex((i) => matchesInvoice(i, invoice));
+
+    if (index !== -1) {
+      invoices.value[index] = invoice;
+    } else {
+      invoices.value.unshift(invoice);
+    }
+
+    invoices.value = dedupeInvoices(invoices.value);
+  };
+
   const isLoading = ref(false);
   const invoices = ref([]);
   const filter = ref(["all"]);
@@ -72,7 +141,6 @@ export const useInvoicesStore = defineStore("invoices", () => {
 
       return response;
     } catch (error) {
-      console.error(error);
       throw error;
     }
   }
@@ -108,21 +176,19 @@ export const useInvoicesStore = defineStore("invoices", () => {
           result.push(toInvoice(el));
         });
       } else {
-        (response.toJson().pool || [])
-          .filter(
-            (invoice) =>
-              !(
-                invoice?.meta?.whmcs_sync_required &&
-                !invoice?.meta?.whmcs_invoice_id
-              ),
-          )
-          .forEach((el) => {
-            result.push(toInvoice(el));
-          });
+        const ncPool = response.toJson().pool || [];
+        const filteredNcPool = ncPool.filter(
+          (invoice) => !shouldHideInvoiceInMixedMode(invoice),
+        );
+
+        filteredNcPool.forEach((el) => {
+          result.push(toInvoice(el));
+        });
 
         whmcsInvoices.forEach((el) => {
-          if (result.find((invoice) => invoice?.payment_invoice_id == el.id))
+          if (result.find((invoice) => invoice?.payment_invoice_id == el.id)) {
             return;
+          }
 
           result.push(toInvoice(el, "whmcs"));
         });
@@ -131,14 +197,15 @@ export const useInvoicesStore = defineStore("invoices", () => {
       result.sort(
         (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime(),
       );
+
       invoices.value = result;
+      invoices.value = dedupeInvoices(invoices.value);
 
       startStream();
 
       if (!response[0]?.ERROR) return result;
       else return response[0].ERROR;
     } catch (error) {
-      console.error(error);
       throw error;
     } finally {
       isLoading.value = false;
@@ -158,38 +225,43 @@ export const useInvoicesStore = defineStore("invoices", () => {
     if (stream.value) {
       return;
     }
+
+    const sessionId = Date.now();
+
     try {
       stream.value = invoicesApi.stream(new StreamRequest());
-      console.log("InvoicesStream started");
 
       for await (const event of stream.value) {
         switch (event.event) {
+          case BillingEvent.EVENT_INVOICE_CREATED:
           case BillingEvent.EVENT_INVOICE_UPDATED: {
-            const invoice = toInvoice(event.body.invoice.toJson());
-
-            invoices.value = invoices.value.map((i) =>
-              i.payment_invoice_id === invoice.payment_invoice_id ? invoice : i,
-            );
-
-            const index = invoices.value.findIndex(
-              (i) => i.payment_invoice_id === invoice.payment_invoice_id,
-            );
-
-            if (index !== -1) {
-              invoices.value[index] = invoice;
-            } else {
-              invoices.value.unshift(invoice);
+            const rawInvoice = event.body.invoice.toJson();
+            if (shouldHideInvoiceInMixedMode(rawInvoice)) {
+              break;
             }
 
+            const invoice = toInvoice(rawInvoice);
+            const eventTypeLabel =
+              event.event === BillingEvent.EVENT_INVOICE_CREATED
+                ? "EVENT_INVOICE_CREATED"
+                : "EVENT_INVOICE_UPDATED";
+
+            upsertInvoiceFromStream({
+              invoice,
+              sessionId,
+              eventTypeLabel,
+            });
+
             break;
           }
-          default: {
+          default:
             break;
-          }
         }
       }
     } catch (error) {
-      console.log(error);
+      // Stream errors are expected on reconnect/disconnect boundaries.
+    } finally {
+      stream.value = null;
     }
   };
 
@@ -202,6 +274,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
   watch(userBalance, () => {
     fetchInvoicesForUser();
   });
+
   fetchInvoicesForUser();
 
   return {
@@ -223,7 +296,6 @@ export const useInvoicesStore = defineStore("invoices", () => {
 
         return response.toJson();
       } catch (error) {
-        console.error(error);
         throw error;
       }
     },
@@ -238,7 +310,6 @@ export const useInvoicesStore = defineStore("invoices", () => {
 
         return response.paymentLink;
       } catch (error) {
-        console.error(error);
         throw error;
       }
     },
@@ -254,7 +325,6 @@ export const useInvoicesStore = defineStore("invoices", () => {
 
         return response;
       } catch (error) {
-        console.error(error);
         throw error;
       }
     },
@@ -271,7 +341,6 @@ export const useInvoicesStore = defineStore("invoices", () => {
 
         return response;
       } catch (error) {
-        console.error(error);
         throw error;
       }
     },
