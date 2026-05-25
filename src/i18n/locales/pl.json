@@ -745,6 +745,7 @@
         "code": "Kod",
         "tip": "Please, confirm your phone number",
         "user_profile_link": "This is not your phone? Edit data in your personal account",
+        "user_profile_support_link": "Jesli SMS nie dotarl, skontaktuj sie z nami przez wsparcie techniczne",
         "verifcation_success": "Pomyślnie zweryfikowałeś swój telefon.",
         "invoices_message": "Zweryfikuj swój telefon, aby przejść do płatności i aktywacji usługi. Dane te są niezbędne do prawidłowego zarejestrowania usługi i wystawienia faktury."
       },

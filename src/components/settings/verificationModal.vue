@@ -34,6 +34,9 @@
         <a @click="toUserProfile">{{
           $t("phone_verification.labels.user_profile_link")
         }}</a>
+        <a @click="toSupport">{{
+          $t("phone_verification.labels.user_profile_support_link")
+        }}</a>
       </div>
     </div>
 
@@ -164,6 +167,11 @@ function toUserProfile() {
   emit("update:open", false);
 }
 
+function toSupport() {
+  router.push({ name: "support" });
+  emit("update:open", false);
+}
+
 watch(lastGetCodeTs, () => {
   clearInterval(intervalTimer);
 
@@ -200,6 +208,9 @@ watch(billingUser, () => {
 }
 
 .user_profile_link {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
   margin: 20px 0px;
   color: var(--main);
 }
