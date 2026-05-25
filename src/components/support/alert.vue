@@ -6,20 +6,8 @@
     class="alert__notification"
   >
     <template #message>
-      <div
-        style="display: flex; justify-content: space-between"
-        @click="isVisible = !isVisible"
-      >
-        <div>
-          {{ capitalize($t("settings")) }}
-
-          <span v-if="chat.gateways[0]">
-            ({{ $t("gateway") }}:
-            <span style="text-decoration: underline">
-              {{ chat.gateways[0] }} </span
-            >{{ chat.department === "openai" ? ";" : ")" }}
-          </span>
-        </div>
+      <div class="alert__header" @click="isVisible = !isVisible">
+        <div class="alert__title">{{ ticketTitle }} - #{{ ticketNumber }}</div>
         <div>
           <plus-icon v-if="isVisible" :rotate="45" style="margin-left: auto" />
           <down-icon v-else style="margin-left: auto" />
@@ -28,39 +16,28 @@
     </template>
 
     <template v-if="isVisible" #description>
-      <template v-if="options.length > 1">
-        {{ $t("Choose another way of communication") }}:
-        <div class="order__grid">
-          <div
-            v-for="gate of options"
-            :key="gate.id"
-            class="order__slider-item"
-            :value="gate.id"
-            :class="{ 'order__slider-item--active': gateway === gate.id }"
-            @click="changeGateway(gate.id)"
+      <div class="ticket_info">
+        <div class="ticket_info__row">
+          <span class="ticket_info__label"
+            >{{ capitalize($t("subject")) }}:</span
           >
-            <span class="order__slider-name" :title="gate.name">
-              <img
-                class="img_prod"
-                :src="`/img/icons/${getImageName(gate.id)}.png`"
-                :alt="gate.id"
-                @error="onError"
-              />
-              {{ gate.name }}
-            </span>
-          </div>
+          <span class="ticket_info__value">{{ ticketTitle }}</span>
         </div>
-
-        <a-button
-          type="primary"
-          style="display: block; margin: 10px 0 0"
-          :disabled="gateway === (chat.gateways[0] ?? '')"
-          :loading="isEditLoading"
-          @click="updateChat"
-        >
-          OK
-        </a-button>
-      </template>
+        <div class="ticket_info__row">
+          <span class="ticket_info__label">ID:</span>
+          <span class="ticket_info__value">#{{ ticketNumber }}</span>
+        </div>
+        <div class="ticket_info__row">
+          <span class="ticket_info__label"
+            >{{ capitalize($t("status")) }}:</span
+          >
+          <span class="ticket_info__value">{{ localizedStatus }}</span>
+        </div>
+        <div class="ticket_info__row">
+          <span class="ticket_info__label">{{ capitalize($t("date")) }}:</span>
+          <span class="ticket_info__value">{{ createdDate }}</span>
+        </div>
+      </div>
     </template>
   </a-alert>
 </template>
@@ -69,25 +46,23 @@
 import {
   watch,
   computed,
-  onMounted,
   ref,
   nextTick,
   defineAsyncComponent,
   capitalize,
 } from "vue";
-import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { Status } from "@/libs/cc_connect/cc_pb";
 
-import { useAuthStore } from "@/stores/auth.js";
 import { useChatsStore } from "@/stores/chats.js";
-import { useSupportStore } from "@/stores/support.js";
-
-import { useNotification } from "@/hooks/utils";
-import { getImageName, onError } from "@/functions.js";
+import { toDate } from "@/functions.js";
 import { toRefs } from "vue";
 
-const downIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/DownOutlined")
+const downIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/DownOutlined"),
+);
+const plusIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PlusCircleOutlined")
 );
 
 const props = defineProps({
@@ -97,14 +72,8 @@ const props = defineProps({
 const { chat } = toRefs(props);
 const emits = defineEmits(["update:paddingTop"]);
 
-const router = useRouter();
-const route = useRoute();
 const i18n = useI18n();
-const { openNotification } = useNotification();
-
-const authStore = useAuthStore();
 const chatsStore = useChatsStore();
-const supportStore = useSupportStore();
 
 watch(
   () => props.isLoading,
@@ -113,84 +82,74 @@ watch(
     nextTick(() => {
       emits(
         "update:paddingTop",
-        `${notification.value?.$el.offsetHeight + 15}px`
+        `${notification.value?.$el.offsetHeight + 15}px`,
       );
     });
-  }
+  },
 );
-const gateway = ref("");
 
 const isVisible = ref(false);
-const isEditLoading = ref(false);
 const notification = ref();
 
-watch(
-  () => props.chat,
-  (value) => {
-    setOptions(value);
+const ticketId = computed(() => props.chat?.uuid || props.chat?.id || "-");
+
+const ticketNumber = computed(() => {
+  if (ticketId.value === "-") return "-";
+  return String(ticketId.value).slice(0, 8);
+});
+
+const ticketTitle = computed(() => props.chat?.topic || "-");
+
+const ticketDepartment = computed(() => {
+  const departmentId = props.chat?.meta?.data?.department;
+  if (!departmentId) return "-";
+
+  return (
+    chatsStore.getDefaults.departments.find(({ id }) => id === departmentId)
+      ?.name || departmentId
+  );
+});
+
+const localizedStatus = computed(() => {
+  const value = props.chat?.status;
+  let label = "";
+
+  if (typeof value === "number" && Status[value]) {
+    label = Status[value]
+      .toLowerCase()
+      .split("_")
+      .map((item) => `${item[0].toUpperCase()}${item.slice(1)}`)
+      .join(" ");
+  } else if (typeof value === "string") {
+    label = value
+      .toLowerCase()
+      .replace(/[-_]+/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((item) => `${item[0].toUpperCase()}${item.slice(1)}`)
+      .join(" ");
   }
+
+  if (!label) return "-";
+
+  const translated = i18n.t(`ticketStatus.${label}`);
+  return translated === `ticketStatus.${label}` ? label : translated;
+});
+
+function normalizeTimestamp(value) {
+  const numeric = Number(value);
+  if (!numeric) return 0;
+
+  return numeric > 100000000000 ? Math.floor(numeric / 1000) : numeric;
+}
+
+const createdDate = computed(() =>
+  toDate(normalizeTimestamp(props.chat?.created)),
 );
 
-const options = computed(() => {
-  const { gateways = [] } = chatsStore.getDefaults ?? {};
-  let result = gateways.map((gateway) => ({
-    id: gateway,
-    name: `${gateway[0].toUpperCase()}${gateway.toLowerCase().slice(1)}`,
-  }));
-
-  if (route.query.from) {
-    result = result.filter(({ id }) => id === "telegram");
-  }
-
-  return result;
-});
-
-function changeGateway(value) {
-  if (gateway.value === value) {
-    gateway.value = "";
-  } else {
-    gateway.value = value;
-  }
-}
-
-async function updateChat() {
-  isEditLoading.value = true;
-  if (!authStore.userdata.data.telegram) {
-    router.push({ name: "handsfree" });
-  }
-
-  try {
-    await chatsStore.changeGateway({
-      ...props.chat,
-      gateways: [gateway.value],
-    });
-
-    openNotification("success", { message: i18n.t("Done") });
-  } catch (error) {
-    const message = error.response?.data?.message ?? error.message ?? error;
-
-    openNotification("error", { message: i18n.t(message) });
-  } finally {
-    isEditLoading.value = false;
-    supportStore.isAddingTicket = false;
-  }
-}
-
-onMounted(() => {
-  if (localStorage.getItem("gateway")) {
-    gateway.value = localStorage.getItem("gateway");
-    isVisible.value = true;
-
-    updateChat();
-    localStorage.removeItem("gateway");
-  }
-});
-
-function setOptions(value) {
-  gateway.value = value.gateways[0] ?? "";
-}
-
-setOptions(props.chat);
+const lastMessageDate = computed(() =>
+  toDate(normalizeTimestamp(props.chat?.meta?.lastMessage?.sent)),
+);
 </script>
 
 <script>
@@ -220,42 +179,40 @@ export default { name: "SupportAlert" };
   cursor: pointer;
 }
 
-.order__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.order__slider-item {
-  box-shadow: inset 0 0 0 1px var(--border_color);
-  height: 100%;
-  padding: 7px 10px;
-  cursor: pointer;
-  border-radius: 15px;
-  font-size: 1rem;
-  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.order__slider-item:hover {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
-}
-
-.order__slider-item--active {
-  background-color: var(--main);
-  color: var(--gloomy_font);
-}
-
-.order__grid .order__slider-name > .img_prod {
-  display: block;
-  max-height: 20px;
-}
-
-.order__grid .order__slider-name {
+.alert__header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+}
+
+.alert__title {
+  max-width: calc(100% - 32px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.ticket_info {
+  display: grid;
+  gap: 8px;
+}
+
+.ticket_info__row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
   gap: 10px;
+  line-height: 1.35;
+}
+
+.ticket_info__label {
+  color: var(--gray);
+  font-weight: 600;
+}
+
+.ticket_info__value {
+  word-break: break-word;
 }
 
 @media (max-width: 768px) {
@@ -266,8 +223,9 @@ export default { name: "SupportAlert" };
 }
 
 @media (max-width: 576px) {
-  .order__grid {
-    grid-template-columns: 1fr 1fr;
+  .ticket_info__row {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }
 </style>

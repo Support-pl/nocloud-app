@@ -78,7 +78,7 @@
     </div>
 
     <div ref="chatList" class="chat__list">
-      <template v-for="item of chats">
+      <template v-for="item of chats" :key="item.id">
         <ticket-item
           :ticket="item"
           :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
@@ -115,18 +115,18 @@ import supportFooter from "@/components/support/footer.vue";
 import MessageFiles from "@/components/chats/messageFiles.vue";
 import MessageContent from "@/components/chats/messageContent.vue";
 
-const exclamationIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ExclamationCircleOutlined")
+const exclamationIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ExclamationCircleOutlined"),
 );
-const copyIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CopyOutlined")
+const copyIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CopyOutlined"),
 );
-const editIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/EditOutlined")
+const editIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/EditOutlined"),
 );
 
-const loadingIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/LoadingOutlined")
+const loadingIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/LoadingOutlined"),
 );
 
 const route = useRoute();
@@ -158,6 +158,28 @@ const footer = ref();
 
 const chat = computed(() => chatsStore.chats.get(chatid.value));
 
+function formatStatusLabel(status) {
+  if (typeof status === "number" && Status[status]) {
+    return Status[status]
+      .toLowerCase()
+      .split("_")
+      .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
+      .join(" ");
+  }
+
+  if (typeof status === "string") {
+    return status
+      .toLowerCase()
+      .replace(/[-_]+/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
+      .join(" ");
+  }
+
+  return "Open";
+}
+
 const chats = computed(() => {
   const ids = [];
   const result = [];
@@ -171,21 +193,17 @@ const chats = computed(() => {
     const topic = ticket.topic?.toLowerCase() ?? "";
     if (!topic.includes(string) && string !== "") return;
 
-    const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
-    const status =
-      Status[ticket.status]?.toLowerCase().split("_") ?? ticket.status;
-    const capitalized = status
-      .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
-      .join(" ");
+    const isReaded = ticket.meta?.lastMessage?.readers?.includes(uuid);
+    const capitalized = formatStatusLabel(ticket.status);
 
     const value = {
       id: ticket.uuid,
       tid: ticket.uuid.slice(0, 8),
       title: ticket.topic,
-      date: Number(ticket.meta.lastMessage?.sent ?? ticket.created),
-      message: ticket.meta.lastMessage?.content ?? "",
+      date: Number(ticket.meta?.lastMessage?.sent ?? ticket.created),
+      message: ticket.meta?.lastMessage?.content ?? "",
       status: capitalized,
-      unread: isReaded ? 0 : ticket.meta.unread,
+      unread: isReaded ? 0 : Number(ticket.meta?.unread ?? 0),
     };
     const id = whmcs?.kind.case ? whmcs?.toJSON() : null;
 
@@ -193,10 +211,17 @@ const chats = computed(() => {
     if (!instance) result.push(value);
   });
 
-  result.sort((a, b) => b.date - a.date);
   const tickets = supportStore.getTickets.filter(({ id }) => !ids.includes(id));
+  const merged = [...result];
 
-  return [...result, ...tickets];
+  tickets.forEach((ticket) => {
+    if (!merged.find((item) => item.id === ticket.id)) {
+      merged.push(ticket);
+    }
+  });
+
+  merged.sort((a, b) => Number(b.date || 0) - Number(a.date || 0));
+  return merged;
 });
 
 const files = computed(() =>
@@ -214,7 +239,7 @@ const files = computed(() =>
     result[uuid] = files;
 
     return result;
-  }, {})
+  }, {}),
 );
 
 watch(
@@ -227,7 +252,7 @@ watch(
     if (scrollHeight > clientHeight || !lastElementChild) return;
     lastElementChild.style.borderBottom = "1px solid var(--border_color)";
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(
@@ -239,13 +264,13 @@ watch(
     if (!content.value) return;
     content.value?.scrollTo(0, content.value?.scrollHeight);
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(
   () => chatsStore.messages[chatid.value],
   () => loadMessages(),
-  { deep: true }
+  { deep: true },
 );
 
 async function fetch() {

@@ -3,7 +3,7 @@
     <div class="ticket__status" :style="{ 'background-color': statusColor }" />
     <div class="ticket__content">
       <div class="ticket__upper">
-        <div class="ticket__title">#{{ ticket.tid }} - {{ titleDecoded }}</div>
+        <div class="ticket__title">{{ titleDecoded }} - #{{ ticket.tid }}</div>
         <div class="ticket__department" style="margin-left: auto">
           {{ department }}
         </div>
@@ -53,21 +53,32 @@ const offset = computed(() => {
   }
 });
 
+const STATUS_COLORS = {
+  NEW: "#5084ff",
+  ON_HOLD: "#00dbff",
+  OPEN: "#1ea01e",
+  IN_PROGRESS: "#00ffaa",
+  CUSTOMER_REPLY: "#ffcc55",
+  RESOLVE: "#ff8300",
+  ANSWERED: "#ff8300",
+  CLOSE: "#e23535",
+};
+
+function normalizeStatus(status) {
+  return String(status || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[-\s]+/g, "_");
+}
+
 const statusColor = computed(() => {
-  switch (props.ticket.status.toLowerCase()) {
-    case "new":
-      return config.colors.main;
-    case "open":
-      return config.colors.success;
-    case "in progress":
-    case "customer-reply":
-      return config.colors.warn;
-    case "close":
-    case "closed":
-      return config.colors.err;
-    default:
-      return config.colors.gray;
+  const status = normalizeStatus(props.ticket.status);
+
+  if (status === "CLOSED") {
+    return STATUS_COLORS.CLOSE;
   }
+
+  return STATUS_COLORS[status] || config.colors.gray;
 });
 
 const titleDecoded = computed(() => decode(props.ticket.title));
@@ -95,8 +106,8 @@ function beauty(ticket) {
   return message.trim().length
     ? message.trim()
     : ticket.attachments?.length > 0
-    ? t("attachedFiles")
-    : "empty";
+      ? t("attachedFiles")
+      : "empty";
 }
 
 function decode(text) {

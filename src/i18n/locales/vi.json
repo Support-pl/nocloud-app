@@ -227,6 +227,8 @@
         "code_again": "Nó có thể gửi lại mã qua {giây} giây",
         "verifcation_success": "Bạn đã xác minh điện thoại thành công.",
         "code": "Mã số",
+        "user_profile_link": "Đây không phải số điện thoại của bạn? Chỉnh sửa dữ liệu trong tài khoản cá nhân",
+        "user_profile_support_link": "Neu SMS chua den, hay lien he chung toi qua ho tro ky thuat",
         "invoices_message": "Xác minh điện thoại của bạn để tiến hành thanh toán và kích hoạt dịch vụ. Dữ liệu này là cần thiết để đăng ký dịch vụ và lập hóa đơn chính xác."
       },
       "actions": {
