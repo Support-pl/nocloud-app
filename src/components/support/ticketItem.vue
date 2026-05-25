@@ -3,7 +3,7 @@
     <div class="ticket__status" :style="{ 'background-color': statusColor }" />
     <div class="ticket__content">
       <div class="ticket__upper">
-        <div class="ticket__title">#{{ ticket.tid }} - {{ titleDecoded }}</div>
+        <div class="ticket__title">{{ titleDecoded }} - #{{ ticket.tid }}</div>
         <div class="ticket__department" style="margin-left: auto">
           {{ department }}
         </div>
@@ -81,8 +81,6 @@ const statusColor = computed(() => {
   return STATUS_COLORS[status] || config.colors.gray;
 });
 
-
-
 const titleDecoded = computed(() => decode(props.ticket.title));
 
 const department = computed(() => {
@@ -108,8 +106,8 @@ function beauty(ticket) {
   return message.trim().length
     ? message.trim()
     : ticket.attachments?.length > 0
-    ? t("attachedFiles")
-    : "empty";
+      ? t("attachedFiles")
+      : "empty";
 }
 
 function decode(text) {
