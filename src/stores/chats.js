@@ -56,6 +56,8 @@ export const useChatsStore = defineStore("chats", () => {
 
   const messages = ref({});
   const rawMessages = ref([]);
+  let reconnectTimer = null;
+  let reconnectAttempts = 0;
 
   const attachments = ref(new Map());
 
@@ -109,18 +111,79 @@ export const useChatsStore = defineStore("chats", () => {
         ...models[key],
         key,
       }));
-    } catch (e) {
-      console.log(`models_list error ${e}`);
+    } catch {
+      // Ignore model list fetch errors.
     }
+  }
+
+  function hasMessagePayload(message) {
+    if (!message) return false;
+
+    const sent = Number(message.sent || 0);
+    const content = String(message.content || "").trim();
+
+    return sent > 0 || content.length > 0;
+  }
+
+  function resolveStatusByEvent(eventType, oldStatus, newStatus) {
+    if (newStatus === undefined || newStatus === null) {
+      return oldStatus;
+    }
+
+    const oldValue = Number(oldStatus);
+    const newValue = Number(newStatus);
+
+    // Chat updates may come with stale NEW status right after MESSAGE_SENT/STATUS_CHANGED.
+    if (
+      eventType === EventType.CHAT_UPDATED &&
+      oldValue > 0 &&
+      newValue === 0
+    ) {
+      return oldStatus;
+    }
+
+    return newStatus;
+  }
+
+  function mergeChatMeta(oldChat, newChat) {
+    const oldMeta = oldChat?.meta || {};
+    const newMeta = newChat?.meta || {};
+    const oldLastMessage = oldMeta.lastMessage;
+    const newLastMessage = newMeta.lastMessage;
+    const lastMessage = hasMessagePayload(newLastMessage)
+      ? newLastMessage
+      : oldLastMessage;
+
+    return new ChatMeta({
+      ...oldMeta,
+      ...newMeta,
+      data: newMeta.data || oldMeta.data || {},
+      unread: newMeta.unread ?? oldMeta.unread ?? 0,
+      lastMessage,
+    });
   }
 
   function updateChat(event) {
     const { value: chat } = event.item;
+    const oldChat = chats.value.get(chat.uuid);
+    const nextStatus = resolveStatusByEvent(
+      event.type,
+      oldChat?.status,
+      chat.status,
+    );
 
     switch (event.type) {
       case EventType.CHAT_READ:
       case EventType.CHAT_CREATED:
-        chats.value.set(chat.uuid, chat);
+        chats.value.set(
+          chat.uuid,
+          {
+            ...(oldChat || {}),
+            ...chat,
+            status: nextStatus,
+            meta: mergeChatMeta(oldChat, chat),
+          },
+        );
 
         if (!messages.value[chat.uuid]) {
           messages.value[chat.uuid] = {
@@ -134,18 +197,23 @@ export const useChatsStore = defineStore("chats", () => {
       case EventType.CHAT_DEPARTMENT_CHANGED:
       case EventType.CHAT_STATUS_CHANGED:
       case EventType.CHAT_UPDATED: {
-        const oldChat = chats.value.get(chat.uuid);
-
         chats.value.set(chat.uuid, {
+          ...(oldChat || {}),
           ...chat,
-          meta: new ChatMeta({
-            ...(chat.meta || {}),
-            data: oldChat.meta.data,
-          }),
+          status: nextStatus,
+          meta: mergeChatMeta(oldChat, chat),
         });
 
-        messages.value[chat.uuid].subject = chat.topic;
-        messages.value[chat.uuid].status = chat.status;
+        if (!messages.value[chat.uuid]) {
+          messages.value[chat.uuid] = {
+            replies: [],
+            status: chat.status,
+            subject: chat.topic,
+          };
+        } else {
+          messages.value[chat.uuid].subject = chat.topic;
+          messages.value[chat.uuid].status = chat.status;
+        }
         break;
       }
 
@@ -165,6 +233,14 @@ export const useChatsStore = defineStore("chats", () => {
         subject: chat.topic ?? "",
         status: chat.status ?? Status.OPEN,
       };
+    } else if (Array.isArray(messages.value[message.chat])) {
+      const chat = chats.value.get(message.chat);
+
+      messages.value[message.chat] = {
+        replies: messages.value[message.chat],
+        subject: chat?.topic ?? "",
+        status: chat?.status ?? Status.OPEN,
+      };
     }
 
     const { replies } = messages.value[message.chat];
@@ -179,23 +255,38 @@ export const useChatsStore = defineStore("chats", () => {
     switch (event.type) {
       case EventType.MESSAGE_SENT: {
         const chat = chats.value.get(message.chat);
+        if (!chat) break;
 
         if (i === -1) replies.push(newMessage);
         else replies.splice(i, 1, newMessage);
 
-        console.log("Sent:", replies, newMessage);
-        chat.meta = new ChatMeta({
-          ...(chat.meta || {}),
-          unread: chat.uuid === route.params.id ? 0 : chat.meta.unread + 1,
-          lastMessage: message,
+        chats.value.set(message.chat, {
+          ...chat,
+          meta: new ChatMeta({
+            ...(chat.meta || {}),
+            unread:
+              chat.uuid === route.params.id
+                ? 0
+                : Number(chat.meta?.unread || 0) + 1,
+            lastMessage: message,
+          }),
         });
         break;
       }
       case EventType.MESSAGE_UPDATED: {
         const chat = chats.value.get(message.chat);
+        if (!chat) break;
 
         replies.splice(i, 1, newMessage);
-        if (chat.uuid !== route.params.id) chat.meta.unread++;
+        if (chat.uuid !== route.params.id) {
+          chats.value.set(message.chat, {
+            ...chat,
+            meta: new ChatMeta({
+              ...(chat.meta || {}),
+              unread: Number(chat.meta?.unread || 0) + 1,
+            }),
+          });
+        }
         break;
       }
 
@@ -236,8 +327,7 @@ export const useChatsStore = defineStore("chats", () => {
           url: `https://${data[key].url}`,
         });
       });
-    } catch (e) {
-      console.log(e);
+    } catch {
 
       uuids.forEach((uuid) => {
         attachments.value.delete(uuid);
@@ -299,7 +389,6 @@ export const useChatsStore = defineStore("chats", () => {
         chats.value = new Map(chatsArray);
         return chatsArray;
       } catch (error) {
-        console.debug(error);
         throw error;
       } finally {
         isLoading.value = false;
@@ -321,53 +410,93 @@ export const useChatsStore = defineStore("chats", () => {
         const replies = response.messages.map((message) => {
           const user =
             accounts.value.users.find(
-              (account) => account.uuid === message.sender
+              (account) => account.uuid === message.sender,
             ) ?? {};
 
           return changeMessage(message, user, authStore.userdata.uuid);
         });
 
-        messages.value[id] = replies;
+        messages.value[id] = {
+          status: chat.status,
+          subject: chat.topic,
+          replies,
+        };
         rawMessages.value = response.messages;
 
         return { status: chat.status, subject: chat.topic, replies };
       } catch (error) {
-        console.debug(error);
         throw error;
       }
     },
 
     async startStream() {
-      if (stream.value) return;
+      if (stream.value) {
+        return;
+      }
+
+      if (!authStore.token) {
+        return;
+      }
 
       const streaming = createPromiseClient(StreamService, transport);
+      let shouldReconnect = false;
 
       try {
-        stream.value = streaming.stream(new Empty());
+        if (reconnectTimer) {
+          clearTimeout(reconnectTimer);
+          reconnectTimer = null;
+        }
 
-        for await (const event of stream.value) {
-          console.log(event);
-          if (event.type === +EventType.PING) continue;
-          if (
-            event.type === +EventType.CHAT_DEPARTMENT_CHANGED ||
-            event.type === +EventType.CHAT_STATUS_CHANGED
-          ) {
-            updateChat(event);
-          } else if (event.type === +EventType.CHATS_MERGED) {
-            if (route.name !== "ticket") continue;
-            const { uuid: id } = event.item.value;
+        const activeStream = streaming.stream(new Empty());
+        stream.value = activeStream;
+        reconnectAttempts = 0;
 
-            await this.fetchChats();
-            await this.fetchMessages(id);
-            router.replace({ name: "ticket", params: { id } });
-          } else if (event.type >= EventType.MESSAGE_SENT) {
-            updateMessage({ ...event, uuid: authStore.userdata.uuid });
-          } else {
-            updateChat(event);
+        for await (const event of activeStream) {
+          if (event.type === +EventType.PING) {
+            continue;
+          }
+
+          try {
+            if (
+              event.type === +EventType.CHAT_DEPARTMENT_CHANGED ||
+              event.type === +EventType.CHAT_STATUS_CHANGED
+            ) {
+              updateChat(event);
+            } else if (event.type === +EventType.CHATS_MERGED) {
+              if (route.name !== "ticket") {
+                continue;
+              }
+
+              const { uuid: id } = event.item.value;
+
+              await this.fetchChats();
+              await this.fetchMessages(id);
+              router.replace({ name: "ticket", params: { id } });
+            } else if (event.type >= EventType.MESSAGE_SENT) {
+              updateMessage({ ...event, uuid: authStore.userdata.uuid });
+            } else {
+              updateChat(event);
+            }
+          } catch {
+            // Skip malformed stream events and continue processing.
           }
         }
-      } catch (error) {
-        console.debug(error);
+      } catch {
+        shouldReconnect = true;
+      } finally {
+        if (stream.value) {
+          stream.value = null;
+        }
+
+        if (shouldReconnect && authStore.token) {
+          reconnectAttempts += 1;
+          const delaySec = Math.min(15, reconnectAttempts * 2);
+
+          reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            this.startStream();
+          }, delaySec * 1000);
+        }
       }
     },
 
@@ -386,7 +515,6 @@ export const useChatsStore = defineStore("chats", () => {
         return response;
       } catch (error) {
         defaults.value = { error };
-        console.debug(error);
       }
     },
     async changeGateway(chat) {
@@ -396,7 +524,6 @@ export const useChatsStore = defineStore("chats", () => {
 
         return response;
       } catch (error) {
-        console.debug(error);
         throw error;
       }
     },
@@ -408,7 +535,6 @@ export const useChatsStore = defineStore("chats", () => {
 
         return response;
       } catch (error) {
-        console.debug(error);
         throw error;
       }
     },
@@ -434,12 +560,12 @@ export const useChatsStore = defineStore("chats", () => {
             }, {}),
           }),
         });
+
         const createdChat = await chatsApi.create(newChat);
 
         chats.value.set(createdChat.uuid, createdChat);
         return createdChat;
       } catch (error) {
-        console.debug(error);
         throw error;
       }
     },
@@ -456,7 +582,7 @@ export const useChatsStore = defineStore("chats", () => {
 
                 return result;
               },
-              {}
+              {},
             ),
           }),
         });
@@ -467,7 +593,6 @@ export const useChatsStore = defineStore("chats", () => {
         chats.value.set(createdChat.uuid, createdChat);
         return createdChat;
       } catch (error) {
-        console.debug(error);
         throw error;
       }
     },
@@ -510,19 +635,16 @@ export const useChatsStore = defineStore("chats", () => {
 
         if (mes.meta.mode.kind.value === "default") {
           mes.meta.model = Value.fromJson(
-            chats.value.get(message.uuid).meta.data?.model?.kind?.value ?? ""
+            chats.value.get(message.uuid).meta.data?.model?.kind?.value ?? "",
           );
         }
 
         const response = await messagesApi.send(mes);
-
-        console.log(response);
         if (response.uuid === "") {
           response.uuid = "last message";
         }
         return response;
       } catch (error) {
-        console.debug(error);
         throw error;
       }
     },
@@ -538,7 +660,6 @@ export const useChatsStore = defineStore("chats", () => {
         messagesApi.update(newMessage);
         return newMessage;
       } catch (error) {
-        console.debug(error);
         throw error;
       }
     },
