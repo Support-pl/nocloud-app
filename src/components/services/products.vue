@@ -127,6 +127,7 @@
           v-for="product in productsPrepared"
           :key="`${product.orderid}/${product.id}`"
           :instance="product"
+          :unpaid-invoice="getUnpaidInvoiceForProduct(product)"
         />
       </template>
       <a-empty v-else-if="authStore.isLogged" />
@@ -158,16 +159,23 @@
   </div>
 </template>
 
-<script>
-import { defineAsyncComponent } from "vue";
-import { mapStores } from "pinia";
+<script setup>
+import { defineAsyncComponent, computed, ref, watch, onMounted, capitalize } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { notification } from "ant-design-vue";
 import config from "@/appconfig.js";
 
 import { useSpStore } from "@/stores/sp.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { useProductsStore } from "@/stores/products.js";
 import { useInstancesStore } from "@/stores/instances.js";
+import { useInvoicesStore } from "@/stores/invoices.js";
 import { transformInstances } from "@/functions";
+import {
+  GetInvoicesRequest,
+  BillingStatus,
+} from "nocloud-proto/proto/es/billing/billing_pb";
 
 import loading from "@/components/ui/loading.vue";
 import cloudItem from "@/components/cloud/item.vue";
@@ -189,480 +197,482 @@ const sortIcon = defineAsyncComponent(() =>
 );
 
 const pageSizeOptions = ["5", "10", "25", "50", "100"];
+const props = defineProps({
+  min: { type: Boolean, default: true },
+  count: { type: Number, default: 5 },
+});
 
-export default {
-  name: "ProductsBlock",
-  components: {
-    cloudItem,
-    loading,
+const route = useRoute();
+const router = useRouter();
+const { t, locale } = useI18n();
 
-    closeCircleIcon,
-    filterIcon,
-    sortIcon,
-    sortAscendingIcon,
-    sortDescendingIcon,
-  },
-  props: {
-    min: { type: Boolean, default: true },
-    count: { type: Number, default: 5 },
-  },
-  data: () => ({
-    isFilterByLocation: false,
-    sortType: "sort-ascending",
-    sortBy: "Date",
-    showDeleted: false,
-    anchor: null,
-  }),
-  computed: {
-    ...mapStores(useProductsStore, useSpStore, useAuthStore, useInstancesStore),
-    productsPrepared() {
-      const state = {
-        size: this.productsStore.size,
-        page: this.productsStore.page,
-      };
-      const start = state.size * (state.page - 1);
-      const end = start + state.size;
+const spStore = useSpStore();
+const authStore = useAuthStore();
+const productsStore = useProductsStore();
+const instancesStore = useInstancesStore();
+const invoicesStore = useInvoicesStore();
 
-      const products = this.filtredProducts.slice(start, end);
+const isFilterByLocation = ref(false);
+const sortType = ref("sort-ascending");
+const sortBy = ref("Date");
+const showDeleted = ref(false);
+const anchor = ref(null);
+const unpaidInvoices = ref([]);
 
-      return products;
-    },
-    filtredProducts() {
-      const products = this.products;
+const services = computed(() => productsStore.services);
 
-      if (this.min) return this.products.slice(0, 5);
-      else if (this.$route.query.service) {
-        return this.filterProducts(this.products, this.checkedTypes);
+const showcase = computed(() =>
+  spStore.getShowcases.find(({ uuid }) => uuid === route.query.service)
+);
+
+const checkedTypes = computed(
+  () => route.query?.service?.split(",").filter((el) => el.length > 0) ?? []
+);
+
+const queryTypes = computed(() => {
+  if (route.query.service) {
+    return route.query.service.split(",").filter((el) => el.length > 0);
+  }
+
+  return [];
+});
+
+const types = computed(() => {
+  const result = spStore.showcases.map(({ title, uuid: value }) => ({
+    title,
+    value,
+  }));
+
+  if (isFilterByLocation.value) {
+    return [
+      ...new Set(
+        spStore.servicesProviders.reduce(
+          (prev, curr) => [
+            ...prev,
+            ...curr.locations.map(({ title }) => title),
+          ],
+          []
+        )
+      ).values(),
+    ];
+  }
+
+  Object.keys(services.value).forEach((key) => {
+    result.push(key);
+  });
+
+  if (config.sharedEnabled) result.push("Virtual");
+  return result;
+});
+
+const checkedTypesString = computed(() =>
+  checkedTypes.value.map((type) => {
+    const foundType = types.value.find(({ value }) => value === type);
+
+    if (foundType) return foundType;
+    return { title: type, value: type };
+  })
+);
+
+const isNeedFilterStringInHeader = computed(
+  () =>
+    ["services", "root", "products"].includes(route.name) &&
+    route.query.service
+);
+
+function isExpired(instance) {
+  const productDate = new Date(instance.date);
+  const timestamp = productDate.getTime() - Date.now();
+  const days = 7 * 24 * 3600 * 1000;
+
+  if (instance.groupname === "SSL") return;
+  if (instance.date === 0) return;
+  return timestamp < days;
+}
+
+function sortProducts(products) {
+  products.sort((a, b) => {
+    if (sortType.value === "sort-ascending") [b, a] = [a, b];
+    if (props.min) {
+      if (isExpired(a) && !isExpired(b)) return 1;
+      else if (!isExpired(a) && isExpired(b)) return -1;
+      else return 0;
+    }
+
+    switch (sortBy.value) {
+      case "Date":
+        return (+a.created || 0) - (+b.created || 0);
+      case "Name": {
+        const A = (a?.productname ?? "").trim().normalize("NFC");
+        const B = (b?.productname ?? "").trim().normalize("NFC");
+
+        if (!A && !B) return 0;
+        if (!A) return 1;
+        if (!B) return -1;
+
+        return A.localeCompare(B, locale.value, {
+          numeric: true,
+          sensitivity: "base",
+          ignorePunctuation: true,
+        });
       }
-      return products;
-    },
-    products() {
-      const products = this.productsStore.products.map((el) => ({
-        ...el.ORDER_INFO,
-        groupname: el.groupname,
-        productname: el.vm_info?.NAME ?? el.name,
-        server_on: el.server_on,
-        id: el.id,
-      }));
-      const instances = transformInstances(this.instancesStore.getInstances)
-        .filter((instance) => instance.billingPlan?.type !== "ione-vpn")
-        .filter((p) => p.state?.state !== "DELETED" || this.showDeleted);
+      case "Cost":
+        return (parseFloat(a.estimate) || 0) - (parseFloat(b.estimate) || 0);
+      default:
+        return 0;
+    }
+  });
 
-      return this.sortProducts([...products, ...instances]);
-    },
-    productsCount() {
-      return this.filtredProducts.length;
-    },
-    productsLoading() {
-      const productsLoading = this.productsStore.isLoading;
-      const instancesLoading = this.instancesStore.isLoading;
+  return products;
+}
 
-      return productsLoading || instancesLoading;
-    },
+function filterProducts(products, selectedTypes) {
+  return products.filter(({ sp, hostingid, config, billingPlan, productname }) => {
+    let { title, locations = [] } =
+      spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? {};
 
-    services() {
-      return this.productsStore.services;
-    },
-    showcase() {
-      return this.spStore.getShowcases.find(
-        ({ uuid }) => uuid === this.$route.query.service
+    if (hostingid) title = "Virtual";
+    if (isFilterByLocation.value) {
+      const key = Object.keys(config?.configuration ?? {}).find((key) =>
+        key.includes("datacenter")
       );
-    },
-    types() {
-      const result = this.spStore.showcases.map(({ title, uuid: value }) => ({
-        title,
-        value,
-      }));
-
-      if (this.isFilterByLocation) {
-        return [
-          ...new Set(
-            this.spStore.servicesProviders.reduce(
-              (prev, curr) => [
-                ...prev,
-                ...curr.locations.map(({ title }) => title),
-              ],
-              []
-            )
-          ).values(),
-        ];
-      }
-
-      Object.keys(this.services).forEach((key) => {
-        result.push(key);
-      });
-
-      if (config.sharedEnabled) result.push("Virtual");
-      return result;
-    },
-    checkedTypes() {
-      return (
-        this.$route.query?.service?.split(",").filter((el) => el.length > 0) ??
-        []
+      const region = locations?.find(
+        ({ extra }) => extra.region === (config?.configuration ?? {})[key]
       );
-    },
-    checkedTypesString() {
-      return this.checkedTypes.map((type) => {
-        const foundType = this.types.find(({ value }) => value === type);
 
-        if (foundType) return foundType;
-        else return { title: type, value: type };
-      });
-    },
-    isNeedFilterStringInHeader() {
-      return (
-        ["services", "root", "products"].includes(this.$route.name) &&
-        this.$route.query.service
-      );
-    },
-    queryTypes() {
-      if (this.$route.query.service) {
-        return this.$route.query.service
-          .split(",")
-          .filter((el) => el.length > 0);
-      } else return [];
-    },
-  },
-  watch: {
-    productsLoading(value) {
-      if (value === false) {
-        this.onShowSizeChange(this.productsStore.page, this.productsStore.size);
+      title = region?.title ?? locations[0];
+    }
+
+    return selectedTypes.some((value) => {
+      if (services.value[value]) {
+        return services.value[value].find(({ name }) => name === productname);
       }
-    },
-    queryTypes() {
-      setTimeout(this.createObserver);
-    },
-    checkedTypes() {
-      if (this.isNeedFilterStringInHeader) {
-        localStorage.setItem("types", this.$route.query.service);
-      } else {
-        localStorage.removeItem("types");
-      }
-    },
-    sortBy(value) {
-      const sorting = { sortBy: value, sortType: this.sortType };
 
-      localStorage.setItem("serviceSorting", JSON.stringify(sorting));
-    },
-    sortType(value) {
-      const sorting = { sortBy: this.sortBy, sortType: value };
+      const service = spStore.getShowcases.find(({ uuid }) => uuid === value);
 
-      localStorage.setItem("serviceSorting", JSON.stringify(sorting));
-    },
-    isFilterByLocation(value) {
-      if (this.$route.name === "products") {
-        localStorage.setItem("isFilterByLocation", false);
-      } else {
-        localStorage.setItem("isFilterByLocation", value);
+      if (!service) return value === title;
 
-        if (this.$route.query.service) {
-          this.$router.replace({ query: {} });
-        }
-      }
-    },
-  },
-  created() {
-    const service = localStorage.getItem("types");
-    const sorting = JSON.parse(
-      localStorage.getItem("serviceSorting") ?? "false"
-    );
-    const isProductsRoute = service && this.$route.name !== "products";
-    const isServicesSame = service === this.$route.query.service;
+      const isPlanIncluded = service.plans.includes(billingPlan?.uuid);
+      const isSpIncluded = service.servicesProvider.includes(sp);
 
-    if (isProductsRoute && !isServicesSame) {
-      this.$router.replace({ query: { service } });
-    }
-    if (localStorage.getItem("isFilterByLocation")) {
-      this.isFilterByLocation = JSON.parse(
-        localStorage.getItem("isFilterByLocation")
-      );
-    }
-    if (sorting) {
-      this.sortBy = sorting.sortBy;
-      this.sortType = sorting.sortType;
-    }
-
-    const promises = [];
-
-    if (this.spStore.servicesProviders.length < 1) {
-      promises.push(this.spStore.fetch(!this.authStore.isLogged));
-    }
-    if (Object.keys(this.services).length < 1) {
-      promises.push(this.productsStore.fetchServices());
-    }
-
-    Promise.all(promises).catch((err) => {
-      if (err.response?.data?.code === 12) return;
-      const message = err.response?.data?.message ?? err.message ?? err;
-
-      this.$notification.error({ message: this.$t(message) });
+      return isPlanIncluded && isSpIncluded;
     });
+  });
+}
 
-    if (!this.authStore.isLogged) return;
-    this.authStore
+const products = computed(() => {
+  const mappedProducts = productsStore.products.map((el) => ({
+    ...el.ORDER_INFO,
+    groupname: el.groupname,
+    productname: el.vm_info?.NAME ?? el.name,
+    server_on: el.server_on,
+    id: el.id,
+  }));
+
+  const instances = transformInstances(instancesStore.getInstances)
+    .filter((instance) => instance.billingPlan?.type !== "ione-vpn")
+    .filter((p) => p.state?.state !== "DELETED" || showDeleted.value);
+
+  return sortProducts([...mappedProducts, ...instances]);
+});
+
+const filtredProducts = computed(() => {
+  if (props.min) return products.value.slice(0, 5);
+  if (route.query.service) return filterProducts(products.value, checkedTypes.value);
+  return products.value;
+});
+
+const productsCount = computed(() => filtredProducts.value.length);
+
+const productsLoading = computed(
+  () => productsStore.isLoading || instancesStore.isLoading
+);
+
+const productsPrepared = computed(() => {
+  const size = productsStore.size;
+  const page = productsStore.page;
+  const start = size * (page - 1);
+  const end = start + size;
+
+  return filtredProducts.value.slice(start, end);
+});
+
+function getUnpaidInvoiceForProduct(product) {
+  const productUuid = String(product?.uuid || "");
+
+  return unpaidInvoices.value.find((invoice) => {
+    const status = String(invoice?.status || "").toUpperCase();
+    if (status !== "UNPAID") return false;
+
+    const instances = invoice?.instances || [];
+    return productUuid ? instances.includes(productUuid) : false;
+  });
+}
+
+async function fetchUnpaidInvoices() {
+  try {
+    
+    const res = await invoicesStore.invoicesApi.getInvoices(
+      GetInvoicesRequest.fromJson({
+        filters:{
+          status: [BillingStatus.UNPAID],
+        },
+        page: 1,
+        limit: 1000,
+        sort: "DESC",
+        field: "created",
+      })
+    );
+
+    unpaidInvoices.value = res.toJson().pool || [];
+  } catch(e) {
+    console.log(e);
+    unpaidInvoices.value = [];
+  }
+}
+
+function onShowSizeChange(page, limit) {
+  page = page || 1;
+  limit = limit || 10;
+
+  if (page !== productsStore.page) {
+    productsStore.page =
+      productsCount.value > 0 && Math.ceil(productsCount.value / limit) >= page
+        ? page
+        : 1;
+  }
+
+  if (limit !== productsStore.size) {
+    productsStore.size = limit;
+  }
+
+  localStorage.setItem("servicesPagination", JSON.stringify({ page, limit }));
+}
+
+function productClickHandler({ groupname, orderid, hostingid, config }) {
+  if (config.is_vdc) {
+    router.push({ name: "openVDC", params: { uuid: orderid } });
+  } else if (["Domains", "SSL"].includes(groupname)) {
+    router.push({ name: "service", params: { id: orderid } });
+  } else if (groupname === "Self-Service VDS SSD HC") {
+    router.push({ name: "openCloud", params: { uuid: orderid } });
+  } else {
+    router.push({ name: "service", params: { id: hostingid } });
+  }
+}
+
+function filterElementClickHandler(key) {
+  const selected = new Set(checkedTypes.value);
+
+  if (selected.has(key)) selected.delete(key);
+  else selected.add(key);
+
+  const newTypes = Array.from(selected).join(",");
+  router.replace({ query: { service: newTypes } });
+}
+
+function newProductHandle() {
+  let foundShowcase = null;
+  const { type } =
+    spStore.servicesProviders.find(({ uuid }) => {
+      foundShowcase =
+        spStore.getShowcases.find(({ uuid }) => uuid === queryTypes.value[0]) ?? {};
+
+      return foundShowcase?.servicesProvider?.includes(uuid);
+    }) ?? {};
+
+  let name = "service-virtual";
+  const query = { service: queryTypes.value[0] };
+
+  switch (type) {
+    case "opensrs":
+      name = "service-domains";
+      break;
+    case "goget":
+      name = "service-ssl";
+      break;
+    case "acronis":
+      name = "service-acronis";
+      break;
+    case "empty":
+    case "virtual": {
+      if (foundShowcase?.meta?.type === "vpn") {
+        name = "service-vpn";
+      } else {
+        name = "service-custom";
+        query.headerTitle =
+          foundShowcase.promo?.[locale.value]?.title ?? foundShowcase.title;
+      }
+      break;
+    }
+    case "openai":
+      name = "service-openai";
+      query.headerTitle =
+        foundShowcase.promo?.[locale.value]?.title ||
+        foundShowcase.title ||
+        "ChatGPT";
+      break;
+    case "vdc":
+      name = "newVDC";
+      break;
+    case "keyweb":
+    case "ione":
+    case "ovh":
+      name = "newPaaS";
+      break;
+  }
+
+  if (!type && productsStore.services[queryTypes.value[0]]) {
+    name = "service-iaas";
+  }
+
+  router.push({ name, query });
+}
+
+function getProductsCountByType(type) {
+  if (checkedTypes.value.length > 0) {
+    return filterProducts(productsPrepared.value, [type]).length;
+  }
+
+  if (props.min) return products.value.length;
+  return productsPrepared.value.length;
+}
+
+function createObserver() {
+  // const button = this.$refs['order-button']?.$el
+  // if (!button && !this.anchor) return
+  // else if (this.anchor) {
+  //   this.anchor.remove()
+  //   return
+  // }
+  // const anchor = button.cloneNode(true)
+  // const observer = new IntersectionObserver((entries) => {
+  //   if (entries[0].intersectionRatio < 0.2) {
+  //     button.style.visibility = 'hidden'
+  //     anchor.style.cssText = `
+  //       position: fixed;
+  //       right: 5vw;
+  //       bottom: 7vh;
+  //       display: block;
+  //       width: 50px;
+  //       height: 50px;
+  //       font-size: 25px;
+  //       overflow: hidden;
+  //     `
+  //     anchor.firstElementChild.style.margin = '7px 20px 0 -7px'
+  //   } else if (entries[0].intersectionRatio === 1) {
+  //     button.style.visibility = ''
+  //     anchor.style.cssText = 'display: none'
+  //     anchor.firstElementChild.style.margin = ''
+  //   }
+  // }, { root: null, threshold: [0.2, 1] })
+  // observer.observe(button)
+  // anchor.onclick = this.newProductHandle
+  // document.querySelector('#app').append(anchor)
+  // this.anchor = anchor
+  void anchor.value;
+}
+
+watch(productsLoading, (value) => {
+  if (value === false) {
+    onShowSizeChange(productsStore.page, productsStore.size);
+  }
+});
+
+watch(queryTypes, () => {
+  setTimeout(createObserver);
+});
+
+watch(checkedTypes, () => {
+  if (isNeedFilterStringInHeader.value) {
+    localStorage.setItem("types", route.query.service);
+  } else {
+    localStorage.removeItem("types");
+  }
+});
+
+watch(sortBy, (value) => {
+  localStorage.setItem(
+    "serviceSorting",
+    JSON.stringify({ sortBy: value, sortType: sortType.value })
+  );
+});
+
+watch(sortType, (value) => {
+  localStorage.setItem(
+    "serviceSorting",
+    JSON.stringify({ sortBy: sortBy.value, sortType: value })
+  );
+});
+
+watch(isFilterByLocation, (value) => {
+  if (route.name === "products") {
+    localStorage.setItem("isFilterByLocation", false);
+  } else {
+    localStorage.setItem("isFilterByLocation", value);
+
+    if (route.query.service) {
+      router.replace({ query: {} });
+    }
+  }
+});
+
+onMounted(async () => {
+  const service = localStorage.getItem("types");
+  const sorting = JSON.parse(localStorage.getItem("serviceSorting") ?? "false");
+  const isProductsRoute = service && route.name !== "products";
+  const isServicesSame = service === route.query.service;
+
+  if (isProductsRoute && !isServicesSame) {
+    router.replace({ query: { service } });
+  }
+
+  if (localStorage.getItem("isFilterByLocation")) {
+    isFilterByLocation.value = JSON.parse(
+      localStorage.getItem("isFilterByLocation")
+    );
+  }
+
+  if (sorting) {
+    sortBy.value = sorting.sortBy;
+    sortType.value = sorting.sortType;
+  }
+
+  const promises = [];
+  if (spStore.servicesProviders.length < 1) {
+    promises.push(spStore.fetch(!authStore.isLogged));
+  }
+  if (Object.keys(services.value).length < 1) {
+    promises.push(productsStore.fetchServices());
+  }
+
+  Promise.all(promises).catch((err) => {
+    if (err.response?.data?.code === 12) return;
+    const message = err.response?.data?.message ?? err.message ?? err;
+
+    notification.error({ message: t(message) });
+  });
+
+  if (authStore.isLogged) {
+    authStore
       .fetchBillingData()
       .then(async (user) => {
-        await Promise.all([
-          this.instancesStore.fetch(),
-          this.productsStore.fetch(user.client_id),
+        await Promise.allSettled([
+          instancesStore.fetch(),
+          productsStore.fetch(user.client_id),
+          fetchUnpaidInvoices(),
         ]);
       })
-      .catch((error) => {
-        console.error(error);
-      });
-  },
-  mounted() {
-    const pagination = localStorage.getItem("servicesPagination");
+      .catch(() => {});
+  }
 
-    if (!pagination) return;
+  const pagination = localStorage.getItem("servicesPagination");
+  if (pagination) {
     const { page, limit } = JSON.parse(pagination);
-
-    this.onShowSizeChange(page, limit);
-
-    this.createObserver();
-  },
-  methods: {
-    onShowSizeChange(page, limit) {
-      page = page || 1;
-      limit = limit || 10;
-
-      if (page !== this.productsStore.page) {
-        this.productsStore.page =
-          this.productsCount > 0 &&
-          Math.ceil(this.productsCount / limit) >= page
-            ? page
-            : 1;
-      }
-      if (limit !== this.productsStore.size) {
-        this.productsStore.size = limit;
-      }
-
-      localStorage.setItem(
-        "servicesPagination",
-        JSON.stringify({ page, limit })
-      );
-    },
-    sortProducts(products) {
-      products.sort((a, b) => {
-        if (this.sortType === "sort-ascending") [b, a] = [a, b];
-        if (this.min) {
-          if (this.isExpired(a) && !this.isExpired(b)) return 1;
-          else if (!this.isExpired(a) && this.isExpired(b)) return -1;
-          else return 0;
-        }
-
-        switch (this.sortBy) {
-          case "Date":
-            return (+a.created || 0) - (+b.created || 0);
-          case "Name":
-            const A = (a?.productname ?? "").trim().normalize("NFC");
-            const B = (b?.productname ?? "").trim().normalize("NFC");
-
-            if (!A && !B) return 0;
-            if (!A) return 1;
-            if (!B) return -1;
-
-            return A.localeCompare(B, this.$i18n.locale, {
-              numeric: true,
-              sensitivity: "base",
-              ignorePunctuation: true,
-            });
-          case "Cost":
-            return (
-              (parseFloat(a.estimate) || 0) - (parseFloat(b.estimate) || 0)
-            );
-          default:
-            return 0;
-        }
-      });
-
-      return products;
-    },
-    productClickHandler({ groupname, orderid, hostingid, config }) {
-      if (config.is_vdc) {
-        this.$router.push({ name: "openVDC", params: { uuid: orderid } });
-      } else if (["Domains", "SSL"].includes(groupname)) {
-        this.$router.push({ name: "service", params: { id: orderid } });
-      } else if (groupname === "Self-Service VDS SSD HC") {
-        this.$router.push({ name: "openCloud", params: { uuid: orderid } });
-      } else {
-        this.$router.push({ name: "service", params: { id: hostingid } });
-      }
-    },
-    filterElementClickHandler(key) {
-      const types = new Set(this.checkedTypes);
-      if (types.has(key)) {
-        types.delete(key);
-      } else {
-        types.add(key);
-      }
-      const newTypes = Array.from(types).join(",");
-      this.$router.replace({ query: { service: newTypes } });
-    },
-    newProductHandle() {
-      let showcase = null;
-      const { type } =
-        this.spStore.servicesProviders.find(({ uuid }) => {
-          showcase =
-            this.spStore.getShowcases.find(
-              ({ uuid }) => uuid === this.queryTypes[0]
-            ) ?? {};
-
-          return showcase?.servicesProvider?.includes(uuid);
-        }) ?? {};
-
-      let name = "service-virtual";
-      const query = { service: this.queryTypes[0] };
-
-      switch (type) {
-        case "opensrs":
-          name = "service-domains";
-          break;
-        case "goget":
-          name = "service-ssl";
-          break;
-        case "acronis":
-          name = "service-acronis";
-          break;
-        case "empty":
-        case "virtual": {
-          if (showcase?.meta?.type === "vpn") {
-            name = "service-vpn";
-          } else {
-            name = "service-custom";
-            query.headerTitle =
-              showcase.promo?.[this.$i18n.locale]?.title ?? showcase.title;
-          }
-          break;
-        }
-
-        case "openai":
-          name = "service-openai";
-          query.headerTitle =
-            showcase.promo?.[this.$i18n.locale]?.title ||
-            showcase.title ||
-            "ChatGPT";
-          break;
-
-        case "openai":
-          name = "service-bots";
-          query.headerTitle =
-            showcase.promo?.[this.$i18n.locale]?.title ||
-            showcase.title ||
-            "AIBot";
-          break;
-        case "vdc":
-          name = "newVDC";
-          break;
-        case "keyweb":
-        case "ione":
-        case "ovh":
-          name = "newPaaS";
-      }
-
-      if (!type && this.productsStore.services[this.queryTypes[0]]) {
-        name = "service-iaas";
-      }
-
-      this.$router.push({ name, query });
-    },
-    filterProducts(products, types) {
-      return products.filter(
-        ({ sp, hostingid, config, billingPlan, productname }) => {
-          // фильтруем по значениям из гет запроса
-          let { title, locations = [] } =
-            this.spStore.servicesProviders.find(({ uuid }) => uuid === sp) ??
-            {};
-
-          if (hostingid) title = "Virtual";
-          if (this.isFilterByLocation) {
-            const key = Object.keys(config?.configuration ?? {}).find((key) =>
-              key.includes("datacenter")
-            );
-            const region = locations?.find(
-              ({ extra }) => extra.region === (config?.configuration ?? {})[key]
-            );
-
-            title = region?.title ?? locations[0];
-          }
-
-          return types.some((value) => {
-            if (this.services[value]) {
-              return this.services[value].find(
-                ({ name }) => name === productname
-              );
-            }
-
-            const service = this.spStore.getShowcases.find(
-              ({ uuid }) => uuid === value
-            );
-
-            if (!service) return value === title;
-            else {
-              const isPlanIncluded = service.plans.includes(billingPlan?.uuid);
-              const isSpIncluded = service.servicesProvider.includes(sp);
-
-              return isPlanIncluded && isSpIncluded;
-            }
-          });
-        }
-      );
-    },
-    getProductsCountByType(type) {
-      if (this.checkedTypes.length > 0) {
-        return this.filterProducts(this.productsPrepared, [type]).length;
-      }
-
-      if (this.min) {
-        return this.products.length;
-      } else {
-        return this.productsPrepared.length;
-      }
-    },
-    isExpired(instance) {
-      const productDate = new Date(instance.date);
-      const timestamp = productDate.getTime() - Date.now();
-      const days = 7 * 24 * 3600 * 1000;
-
-      if (instance.groupname === "SSL") return;
-      if (instance.date === 0) return;
-      return timestamp < days;
-    },
-    createObserver() {
-      // const button = this.$refs['order-button']?.$el
-      // if (!button && !this.anchor) return
-      // else if (this.anchor) {
-      //   this.anchor.remove()
-      //   return
-      // }
-      // const anchor = button.cloneNode(true)
-      // const observer = new IntersectionObserver((entries) => {
-      //   if (entries[0].intersectionRatio < 0.2) {
-      //     button.style.visibility = 'hidden'
-      //     anchor.style.cssText = `
-      //       position: fixed;
-      //       right: 5vw;
-      //       bottom: 7vh;
-      //       display: block;
-      //       width: 50px;
-      //       height: 50px;
-      //       font-size: 25px;
-      //       overflow: hidden;
-      //     `
-      //     anchor.firstElementChild.style.margin = '7px 20px 0 -7px'
-      //   } else if (entries[0].intersectionRatio === 1) {
-      //     button.style.visibility = ''
-      //     anchor.style.cssText = 'display: none'
-      //     anchor.firstElementChild.style.margin = ''
-      //   }
-      // }, { root: null, threshold: [0.2, 1] })
-      // observer.observe(button)
-      // anchor.onclick = this.newProductHandle
-      // document.querySelector('#app').append(anchor)
-      // this.anchor = anchor
-    },
-  },
-};
+    onShowSizeChange(page, limit);
+    createObserver();
+  }
+});
 </script>
 
 <style scoped>

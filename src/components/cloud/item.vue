@@ -60,8 +60,24 @@
         </a-collapse-panel>
       </a-collapse>
 
+      <a-button
+        v-if="hasUnpaidInvoice"
+        block
+        size="small"
+        style="grid-column: 2 / 4; justify-self: end; width: fit-content"
+        :type="canPayFromBalance ? 'primary' : undefined"
+        :style="
+          !canPayFromBalance
+            ? { color: 'white', 'background-color': 'var(--success)' }
+            : {}
+        "
+        @click.stop="toInvoices(unpaidInvoice)"
+      >
+        {{ payButtonText }}
+      </a-button>
+
       <component
-        v-if="getModuleProductBtn && `${price}`.replace('.').length > 3"
+        v-else-if="getModuleProductBtn && `${price}`.replace('.').length > 3"
         :is="getModuleProductBtn"
         :service="instance"
         :price="price"
@@ -75,15 +91,6 @@
         :price="price"
         :currency="currency"
       />
-      <a-button
-        v-else-if="instance.domainstatus.toLowerCase() === 'pending' && !isPayg"
-        block
-        size="small"
-        style="grid-column: 2 / 4; justify-self: end; width: fit-content"
-        @click.stop="toInvoices"
-      >
-        {{ $t("pay from balance") }}: {{ price }} {{ currency.title }}
-      </a-button>
 
       <div v-else-if="currency.code && price" class="item__cost">
         {{
@@ -106,17 +113,21 @@ import { computed, defineAsyncComponent, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useSpStore } from "@/stores/sp.js";
+import { useAuthStore } from "@/stores/auth.js";
 import { useCurrency } from "@/hooks/utils";
 import config from "@/appconfig.js";
 import { getInstStatusColor } from "@/functions";
+import api from "@/api";
 
 const props = defineProps({
   instance: { type: Object, required: true },
+  unpaidInvoice: { type: Object, default: null },
 });
 
 const { locale, t } = useI18n();
 const i18n = useI18n();
 const router = useRouter();
+const authStore = useAuthStore();
 
 const providersStore = useSpStore();
 const { currency } = useCurrency();
@@ -124,12 +135,12 @@ const { currency } = useCurrency();
 const activeKey = ref([]);
 
 const statusColor = computed(() =>
-  getInstStatusColor(props.instance.domainstatus)
+  getInstStatusColor(props.instance.domainstatus),
 );
 
 const locationTitle = computed(() => {
   const sp = providersStore.servicesProviders.find(
-    ({ uuid }) => uuid === props.instance.sp
+    ({ uuid }) => uuid === props.instance.sp,
   );
   if (sp?.type !== "ovh") return sp?.locations[0]?.title;
 
@@ -142,7 +153,7 @@ const locationTitle = computed(() => {
 
   return sp.locations?.find(
     ({ extra }) =>
-      `${extra.region}`.toLowerCase() === configuration[key].toLowerCase()
+      `${extra.region}`.toLowerCase() === configuration[key].toLowerCase(),
   )?.title;
 });
 
@@ -150,6 +161,29 @@ const price = computed(() => {
   const amount = props.instance.recurringamount ?? props.instance.orderamount;
 
   return amount ? +(+amount)?.toFixed(2) : 0;
+});
+
+const hasUnpaidInvoice = computed(() => {
+  const status = String(props.unpaidInvoice?.status || "").toUpperCase();
+  return status === "UNPAID";
+});
+
+const canPayFromBalance = computed(() => {
+  const invoiceTotal = Number(props.unpaidInvoice?.total || 0);
+  const balance = Number(authStore.userBalance || 0);
+
+  return hasUnpaidInvoice.value && invoiceTotal > 0 && balance >= invoiceTotal;
+});
+
+const payButtonText = computed(() => {
+  const invoiceTotal = Number(props.unpaidInvoice?.total || 0);
+  const amount =
+    currency.value.code === "USD"
+      ? `$${invoiceTotal.toFixed(2)}`
+      : `${invoiceTotal.toFixed(2)} ${currency.value.title}`;
+
+  const baseText = canPayFromBalance.value ? t("pay from balance") : t("Pay");
+  return `${baseText}: ${amount}`;
 });
 
 const isPayg = computed(() => {
@@ -217,13 +251,13 @@ const networking = computed(() => {
 });
 
 const title = computed(() =>
-  !activeKey.value.includes("1") ? `IP: ${networking.value[0]}` : "IP's:"
+  !activeKey.value.includes("1") ? `IP: ${networking.value[0]}` : "IP's:",
 );
 
 const showcase = computed(() =>
   providersStore.getShowcases.find(
-    ({ plans }) => !!plans.includes(props.instance.billingPlan?.uuid)
-  )
+    ({ plans }) => !!plans.includes(props.instance.billingPlan?.uuid),
+  ),
 );
 
 const getModuleProductBtn = computed(() => {
@@ -236,7 +270,7 @@ const getModuleProductBtn = computed(() => {
 
   const components = import.meta.glob("@/components/services/*/lilbtn.vue");
   const component = Object.keys(components).find((key) =>
-    key.includes(`/${serviceType}/lilbtn.vue`)
+    key.includes(`/${serviceType}/lilbtn.vue`),
   );
 
   if (["keyweb", "ovh cloud"].includes(type)) return;
@@ -259,7 +293,7 @@ function cloudClick(service, { target }) {
   } = service;
 
   if (target.hasAttribute("role") || target.hasAttribute("viewBox")) return;
-  
+
   if (config?.is_vdc) {
     router.push({ name: "openVDC", params: { uuid: orderid } });
   } else if (id && isServer) {
@@ -283,9 +317,13 @@ function cloudClick(service, { target }) {
   }
 }
 
-function toInvoices() {
+function toInvoices(invoice = null) {
+  if (invoice?.uuid) {
+    sessionStorage.setItem("invoice", invoice.uuid);
+  }
+
   localStorage.setItem("order", "Invoice");
-  router.push({ name: "billing" });
+  router.push({ name: "billing", query: { tab: "Invoice" } });
 }
 </script>
 
