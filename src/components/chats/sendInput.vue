@@ -34,6 +34,7 @@
           :placeholder="placeholder ? placeholder : t('message') + '...'"
           @keyup.shift.enter.exact="newLine"
           @keydown.enter.exact.prevent="emits('sendMessage')"
+          @paste="handlePaste"
         />
 
         <div
@@ -141,6 +142,37 @@ function getMessage(uuid) {
   const result = props.replies?.find((reply) => reply.uuid === uuid)?.message;
 
   return result.replace(/<div class="chat__files">[\s\S]{1,}<\/div>$/g, "");
+}
+
+async function handlePaste(event) {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+
+  const newFiles = [];
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].kind === "file" && items[i].type.includes("image")) {
+      const file = items[i].getAsFile();
+      await setPreview(file);
+      newFiles.push(file);
+    }
+  }
+
+  if (newFiles.length > 0) {
+    emits("update:filelist", [...props.fileList, ...newFiles]);
+    event.preventDefault();
+  }
+}
+
+async function setPreview(file) {
+  file.preview = await getBase64(file);
+}
+
+function getBase64(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+  });
 }
 
 defineExpose({ changeEditing });
