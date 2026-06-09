@@ -1,122 +1,87 @@
 <template>
   <div class="products__wrapper">
     <div v-if="authStore.isLogged" class="products__header">
-      <div class="products__title">
-        <!-- Ваши услуги -->
-        <transition name="header-transition" mode="out-in">
-          <span
-            v-if="!productsLoading || isNeedFilterStringInHeader"
-            :key="$route.query.service || 'emptyQuery'"
-            class="header__animated"
-          >
-            {{
-              isNeedFilterStringInHeader
-                ? ""
-                : `${$t("comp_services.Your orders")}:`
-            }}
-            <span v-if="!isNeedFilterStringInHeader" class="products__count">
-              {{ productsCount }}
+      <div class="products__header-row">
+        <div class="products__title">
+          <transition name="header-transition" mode="out-in">
+            <span v-if="!productsLoading" class="header__animated">
+              {{ `${$t("comp_services.Your orders")}:` }}
+              <span class="products__count">{{ productsCount }}</span>
             </span>
+          </transition>
+        </div>
 
-            <div style="display: flex; flex-wrap: wrap; gap: 10px">
-              <transition-group name="fade-in">
-                <a-badge
-                  v-for="checkedType of checkedTypesString"
-                  :key="checkedType.value"
-                  class="products__filters"
-                >
-                  <template #count>
-                    <close-circle-icon
-                      style="color: var(--err)"
-                      @click="filterElementClickHandler(checkedType.value)"
-                    />
-                  </template>
-                  {{ checkedType.title }}:
-                  {{ getProductsCountByType(checkedType.value) }}
-                  <!-- всего -->
-                </a-badge>
-              </transition-group>
-            </div>
-          </span>
-        </transition>
-      </div>
+        <a-input
+          v-if="!min && authStore.billingUser && !productsLoading"
+          v-model:value="searchQuery"
+          :placeholder="$t('search') || 'Search'"
+          allow-clear
+          class="products__search"
+          style="margin: 10px 25px;"
+        >
+          <template #prefix>
+            <search-icon style="color: var(--main)" />
+          </template>
+        </a-input>
 
-      <div v-if="min && authStore.billingUser" class="products__all">
-        <router-link :to="{ name: 'products' }">
-          {{ $t("comp_services.all") }}
-          <!-- все -->
-        </router-link>
-      </div>
-      <div v-else-if="authStore.billingUser" class="products__control">
-        <span class="instance_status">
-          <span
-            @click="showDeleted = false"
-            :class="{ type: true, active: !showDeleted }"
-            >{{ $t("comp_services.global_filter.active") }}</span
-          >
-          <span
-            @click="showDeleted = true"
-            :class="{ type: true, active: showDeleted }"
-            >{{ $t("comp_services.global_filter.all") }}</span
-          >
-        </span>
-        <a-popover placement="bottomRight" arrow-point-at-center>
-          <template #content>
-            <p
-              v-for="productType of types"
-              :key="productType.value ?? productType"
+        <div v-if="min && authStore.billingUser" class="products__all">
+          <router-link :to="{ name: 'products' }">
+            {{ $t("comp_services.all") }}
+          </router-link>
+        </div>
+        <div v-else-if="authStore.billingUser" class="products__control">
+          <span class="instance_status">
+            <span
+              @click="showDeleted = false"
+              :class="{ type: true, active: !showDeleted }"
+              >{{ $t("comp_services.global_filter.active") }}</span
             >
-              <a-checkbox
-                :checked="
-                  !!~checkedTypes.indexOf(productType.value ?? productType)
-                "
-                @click="
-                  filterElementClickHandler(productType.value ?? productType)
-                "
-              >
-                {{ productType.title ?? productType }}
-              </a-checkbox>
-            </p>
-          </template>
-          <template #title>
-            <span> {{ capitalize($t("filter")) }} {{ $t("by") }} </span>
-            <span class="products__count" style="margin: 0 5px">
-              {{ isFilterByLocation ? $t("location") : $t("provider") }}
-            </span>
-            <a-switch v-model:checked="isFilterByLocation" size="small" />
-          </template>
-          <filter-icon
-            class="products__control-item"
-            :style="{ color: checkedTypes.length > 0 ? 'var(--main)' : null }"
-          />
-        </a-popover>
+            <span
+              @click="showDeleted = true"
+              :class="{ type: true, active: showDeleted }"
+              >{{ $t("comp_services.global_filter.all") }}</span
+            >
+          </span>
 
-        <a-popover placement="bottomRight" arrow-point-at-center>
-          <template #content>
-            <a-radio-group v-model:value="sortBy">
-              <a-radio value="Name">
-                {{ capitalize($t("name")) }}
-              </a-radio>
-              <a-radio value="Cost">
-                {{ capitalize($t("cost")) }}
-              </a-radio>
-              <a-radio value="Date">
-                {{ capitalize($t("date")) }}
-              </a-radio>
-            </a-radio-group>
-          </template>
-          <template #title>
-            <span style="margin-right: 5px">{{ capitalize($t("sort")) }}</span>
-            <sort-ascending-icon
-              v-if="sortType === 'sort-ascending'"
-              @click="sortType = 'sort-descending'"
-            />
-            <sort-descending-icon v-else @click="sortType = 'sort-ascending'" />
-          </template>
-          <sort-icon class="products__control-item" />
-        </a-popover>
+          <a-popover placement="bottomRight" arrow-point-at-center>
+            <template #content>
+              <a-radio-group v-model:value="sortBy">
+                <a-radio value="Name">
+                  {{ capitalize($t("name")) }}
+                </a-radio>
+                <a-radio value="Cost">
+                  {{ capitalize($t("cost")) }}
+                </a-radio>
+                <a-radio value="Date">
+                  {{ capitalize($t("date")) }}
+                </a-radio>
+              </a-radio-group>
+            </template>
+            <template #title>
+              <span style="margin-right: 5px">{{ capitalize($t("sort")) }}</span>
+              <sort-ascending-icon
+                v-if="sortType === 'sort-ascending'"
+                @click="sortType = 'sort-descending'"
+              />
+              <sort-descending-icon v-else @click="sortType = 'sort-ascending'" />
+            </template>
+            <sort-icon class="products__control-item" />
+          </a-popover>
+        </div>
+      </div>
+
+      <div v-if="!min && authStore.billingUser && !productsLoading && categoriesWithProducts.length > 0" class="products__type-tags">
+        <a-checkable-tag
+          v-for="cat of categoriesWithProducts"
+          :key="cat.uuid"
+          :checked="isTypeChecked(cat.uuid)"
+          @change="filterElementClickHandler(cat.uuid)"
+        >
+          {{ cat.promo?.[$i18n.locale] || cat.promo?.en || cat.title }}
+        </a-checkable-tag>
       </div>
     </div>
+
     <div
       class="products__inner"
       :class="{ 'products__wrapper--loading': productsLoading }"
@@ -132,7 +97,7 @@
       </template>
       <a-empty v-else-if="authStore.isLogged" />
       <a-button
-        v-if="queryTypes.length === 1 && !isFilterByLocation"
+        v-if="queryTypes.length === 1 && !isQueryTypeCategory"
         ref="order-button"
         class="products__new"
         size="large"
@@ -164,8 +129,6 @@ import { defineAsyncComponent, computed, ref, watch, onMounted, capitalize } fro
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { notification } from "ant-design-vue";
-import config from "@/appconfig.js";
-
 import { useSpStore } from "@/stores/sp.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { useProductsStore } from "@/stores/products.js";
@@ -180,11 +143,8 @@ import {
 import loading from "@/components/ui/loading.vue";
 import cloudItem from "@/components/cloud/item.vue";
 
-const closeCircleIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CloseCircleFilled")
-);
-const filterIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/FilterOutlined")
+const searchIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/SearchOutlined")
 );
 const sortAscendingIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SortAscendingOutlined")
@@ -212,18 +172,14 @@ const productsStore = useProductsStore();
 const instancesStore = useInstancesStore();
 const invoicesStore = useInvoicesStore();
 
-const isFilterByLocation = ref(false);
 const sortType = ref("sort-ascending");
 const sortBy = ref("Date");
 const showDeleted = ref(false);
 const anchor = ref(null);
 const unpaidInvoices = ref([]);
+const searchQuery = ref("");
 
 const services = computed(() => productsStore.services);
-
-const showcase = computed(() =>
-  spStore.getShowcases.find(({ uuid }) => uuid === route.query.service)
-);
 
 const checkedTypes = computed(
   () => route.query?.service?.split(",").filter((el) => el.length > 0) ?? []
@@ -233,51 +189,28 @@ const queryTypes = computed(() => {
   if (route.query.service) {
     return route.query.service.split(",").filter((el) => el.length > 0);
   }
-
   return [];
 });
 
-const types = computed(() => {
-  const result = spStore.showcases.map(({ title, uuid: value }) => ({
-    title,
-    value,
-  }));
-
-  if (isFilterByLocation.value) {
-    return [
-      ...new Set(
-        spStore.servicesProviders.reduce(
-          (prev, curr) => [
-            ...prev,
-            ...curr.locations.map(({ title }) => title),
-          ],
-          []
-        )
-      ).values(),
-    ];
-  }
-
-  Object.keys(services.value).forEach((key) => {
-    result.push(key);
+const categories = computed(() => {
+  const map = new Map();
+  spStore.showcases.forEach((showcase) => {
+    (showcase.categories || []).forEach((cat) => {
+      if (!map.has(cat.uuid)) map.set(cat.uuid, cat);
+    });
   });
-
-  if (config.sharedEnabled) result.push("Virtual");
-  return result;
+  return Array.from(map.values()).sort((a, b) => (a.sorter || 0) - (b.sorter || 0));
 });
 
-const checkedTypesString = computed(() =>
-  checkedTypes.value.map((type) => {
-    const foundType = types.value.find(({ value }) => value === type);
-
-    if (foundType) return foundType;
-    return { title: type, value: type };
-  })
+const categoriesWithProducts = computed(() =>
+  categories.value.filter(
+    (cat) => filterProducts(products.value, [cat.uuid]).length > 0
+  )
 );
 
-const isNeedFilterStringInHeader = computed(
-  () =>
-    ["services", "root", "products"].includes(route.name) &&
-    route.query.service
+const isQueryTypeCategory = computed(() =>
+  queryTypes.value.length > 0 &&
+  categories.value.some((c) => c.uuid === queryTypes.value[0])
 );
 
 function isExpired(instance) {
@@ -326,38 +259,51 @@ function sortProducts(products) {
   return products;
 }
 
-function filterProducts(products, selectedTypes) {
-  return products.filter(({ sp, hostingid, config, billingPlan, productname }) => {
-    let { title, locations = [] } =
-      spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? {};
-
+function filterProducts(products, selectedValues) {
+  return products.filter(({ sp, hostingid, billingPlan, productname }) => {
+    let { title } = spStore.servicesProviders.find(({ uuid }) => uuid === sp) ?? {};
     if (hostingid) title = "Virtual";
-    if (isFilterByLocation.value) {
-      const key = Object.keys(config?.configuration ?? {}).find((key) =>
-        key.includes("datacenter")
-      );
-      const region = locations?.find(
-        ({ extra }) => extra.region === (config?.configuration ?? {})[key]
-      );
 
-      title = region?.title ?? locations[0];
-    }
+    return selectedValues.some((value) => {
+      const category = categories.value.find((c) => c.uuid === value);
+      if (category) {
+        const categoryShowcaseUuids = new Set(category.showcases || []);
+        return spStore.getShowcases.some(
+          (entry) =>
+            categoryShowcaseUuids.has(entry.uuid) &&
+            entry.plans.includes(billingPlan?.uuid) &&
+            entry.servicesProvider.includes(sp)
+        );
+      }
 
-    return selectedTypes.some((value) => {
       if (services.value[value]) {
         return services.value[value].find(({ name }) => name === productname);
       }
 
-      const service = spStore.getShowcases.find(({ uuid }) => uuid === value);
-
-      if (!service) return value === title;
-
-      const isPlanIncluded = service.plans.includes(billingPlan?.uuid);
-      const isSpIncluded = service.servicesProvider.includes(sp);
-
-      return isPlanIncluded && isSpIncluded;
+      const showcase = spStore.getShowcases.find(({ uuid }) => uuid === value);
+      if (!showcase) return value === title;
+      return showcase.plans.includes(billingPlan?.uuid) && showcase.servicesProvider.includes(sp);
     });
   });
+}
+
+function matchesSearch(product, query) {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  const candidates = [
+    product.productname,
+    product.title,
+    product.domain,
+    product.id,
+    product.uuid,
+    product.orderid,
+  ].filter(Boolean);
+
+  return candidates.some((v) => String(v).toLowerCase().includes(q));
+}
+
+function isTypeChecked(value) {
+  return checkedTypes.value.includes(value);
 }
 
 const products = computed(() => {
@@ -378,8 +324,18 @@ const products = computed(() => {
 
 const filtredProducts = computed(() => {
   if (props.min) return products.value.slice(0, 5);
-  if (route.query.service) return filterProducts(products.value, checkedTypes.value);
-  return products.value;
+
+  let result = products.value;
+
+  if (route.query.service) {
+    result = filterProducts(result, checkedTypes.value);
+  }
+
+  if (searchQuery.value) {
+    result = result.filter((p) => matchesSearch(p, searchQuery.value));
+  }
+
+  return result;
 });
 
 const productsCount = computed(() => filtredProducts.value.length);
@@ -411,10 +367,9 @@ function getUnpaidInvoiceForProduct(product) {
 
 async function fetchUnpaidInvoices() {
   try {
-    
     const res = await invoicesStore.invoicesApi.getInvoices(
       GetInvoicesRequest.fromJson({
-        filters:{
+        filters: {
           status: [BillingStatus.UNPAID],
         },
         page: 1,
@@ -425,7 +380,7 @@ async function fetchUnpaidInvoices() {
     );
 
     unpaidInvoices.value = res.toJson().pool || [];
-  } catch(e) {
+  } catch (e) {
     console.log(e);
     unpaidInvoices.value = [];
   }
@@ -447,18 +402,6 @@ function onShowSizeChange(page, limit) {
   }
 
   localStorage.setItem("servicesPagination", JSON.stringify({ page, limit }));
-}
-
-function productClickHandler({ groupname, orderid, hostingid, config }) {
-  if (config.is_vdc) {
-    router.push({ name: "openVDC", params: { uuid: orderid } });
-  } else if (["Domains", "SSL"].includes(groupname)) {
-    router.push({ name: "service", params: { id: orderid } });
-  } else if (groupname === "Self-Service VDS SSD HC") {
-    router.push({ name: "openCloud", params: { uuid: orderid } });
-  } else {
-    router.push({ name: "service", params: { id: hostingid } });
-  }
 }
 
 function filterElementClickHandler(key) {
@@ -529,47 +472,7 @@ function newProductHandle() {
   router.push({ name, query });
 }
 
-function getProductsCountByType(type) {
-  if (checkedTypes.value.length > 0) {
-    return filterProducts(productsPrepared.value, [type]).length;
-  }
-
-  if (props.min) return products.value.length;
-  return productsPrepared.value.length;
-}
-
 function createObserver() {
-  // const button = this.$refs['order-button']?.$el
-  // if (!button && !this.anchor) return
-  // else if (this.anchor) {
-  //   this.anchor.remove()
-  //   return
-  // }
-  // const anchor = button.cloneNode(true)
-  // const observer = new IntersectionObserver((entries) => {
-  //   if (entries[0].intersectionRatio < 0.2) {
-  //     button.style.visibility = 'hidden'
-  //     anchor.style.cssText = `
-  //       position: fixed;
-  //       right: 5vw;
-  //       bottom: 7vh;
-  //       display: block;
-  //       width: 50px;
-  //       height: 50px;
-  //       font-size: 25px;
-  //       overflow: hidden;
-  //     `
-  //     anchor.firstElementChild.style.margin = '7px 20px 0 -7px'
-  //   } else if (entries[0].intersectionRatio === 1) {
-  //     button.style.visibility = ''
-  //     anchor.style.cssText = 'display: none'
-  //     anchor.firstElementChild.style.margin = ''
-  //   }
-  // }, { root: null, threshold: [0.2, 1] })
-  // observer.observe(button)
-  // anchor.onclick = this.newProductHandle
-  // document.querySelector('#app').append(anchor)
-  // this.anchor = anchor
   void anchor.value;
 }
 
@@ -584,7 +487,9 @@ watch(queryTypes, () => {
 });
 
 watch(checkedTypes, () => {
-  if (isNeedFilterStringInHeader.value) {
+  const isNeedFilter =
+    ["services", "root", "products"].includes(route.name) && route.query.service;
+  if (isNeedFilter) {
     localStorage.setItem("types", route.query.service);
   } else {
     localStorage.removeItem("types");
@@ -605,18 +510,6 @@ watch(sortType, (value) => {
   );
 });
 
-watch(isFilterByLocation, (value) => {
-  if (route.name === "products") {
-    localStorage.setItem("isFilterByLocation", false);
-  } else {
-    localStorage.setItem("isFilterByLocation", value);
-
-    if (route.query.service) {
-      router.replace({ query: {} });
-    }
-  }
-});
-
 onMounted(async () => {
   const service = localStorage.getItem("types");
   const sorting = JSON.parse(localStorage.getItem("serviceSorting") ?? "false");
@@ -625,12 +518,6 @@ onMounted(async () => {
 
   if (isProductsRoute && !isServicesSame) {
     router.replace({ query: { service } });
-  }
-
-  if (localStorage.getItem("isFilterByLocation")) {
-    isFilterByLocation.value = JSON.parse(
-      localStorage.getItem("isFilterByLocation")
-    );
   }
 
   if (sorting) {
@@ -683,12 +570,29 @@ onMounted(async () => {
 
 .products__header {
   display: flex;
-  justify-content: space-between;
-  padding: 7px 15px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 15px;
   margin-bottom: 15px;
   background: var(--bright_font);
   border-radius: 10px;
   box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.05);
+}
+
+.products__header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.products__search {
+  width: 100%;
+}
+
+.products__type-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .products__inner {
@@ -731,15 +635,6 @@ onMounted(async () => {
   font-size: 18px;
 }
 
-.products__filters {
-  padding: 5px 7px;
-  border-radius: 7px;
-  background: var(--main);
-  color: var(--gloomy_font);
-  font-weight: 700;
-  font-size: 18px;
-}
-
 .products__control {
   flex-shrink: 0;
 }
@@ -764,15 +659,6 @@ onMounted(async () => {
 }
 
 /* animations */
-
-.fade-in-enter-active,
-.fade-in-leave-active {
-  transition: opacity 0.5s ease;
-}
-.fade-in-enter-from,
-.fade-in-leave-to {
-  opacity: 0;
-}
 
 .products__control-item {
   font-size: 1.4rem;
