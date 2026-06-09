@@ -1171,6 +1171,7 @@ export default {
   padding: 10px 15px 10px;
   font-size: 1.1rem;
   position: fixed;
+  max-width: 25%;
 }
 
 .order_filters {
@@ -1513,6 +1514,12 @@ export default {
   .order__promo {
     grid-column: 1;
     margin-top: 20px;
+  }
+}
+
+@media screen and (max-width: 2560px) {
+  .order {
+    max-width: 85%;
   }
 }
 
