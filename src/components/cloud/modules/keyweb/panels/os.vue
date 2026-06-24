@@ -37,22 +37,6 @@
 
         <a-col :xs="24" :sm="12">
           <a-form-item
-            name="hostname"
-            class="newCloud__form-item"
-            :label="`${capitalize($t('hostname'))}:`"
-          >
-            <a-input
-              :value="authData.hostname"
-              @update:value="
-                authData.hostname = $event;
-                setOptions('config.hostname', $event);
-              "
-            />
-          </a-form-item>
-        </a-col>
-
-        <a-col :xs="24" :sm="12">
-          <a-form-item
             name="password"
             :label="`${capitalize($t('clientinfo.password'))}:`"
           >
@@ -66,6 +50,7 @@
             />
 
             <a-input-password
+              v-model:visible="passwordVisible"
               :value="authData.password"
               @update:value="
                 authData.password = $event;
@@ -74,13 +59,94 @@
               class="password"
               autocomplete="new-password"
               @input="
-                (authData.password = $event.target.value);
+                authData.password = $event.target.value;
                 setOptions('config.password', $event.target.value);
               "
-            />
+            >
+              <template #iconRender="visible">
+                <span style="display: inline-flex; align-items: center; gap: 2px">
+                  <EyeTwoTone v-if="visible" />
+                  <EyeInvisibleOutlined v-else />
+
+                  <a-tooltip
+                    :title="`${$t('ssl_product.generate')} ${$t('clientinfo.password')}`"
+                  >
+                    <a-button
+                      type="text"
+                      shape="circle"
+                      style="
+                        width: 28px;
+                        height: 28px;
+                        min-width: 28px;
+                        margin-left: 4px;
+                        padding: 0;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                      @click.stop="generatePassword"
+                    >
+                      <template #icon>
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="18"
+                          height="18"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          style="width: 18px; height: 18px; display: block"
+                        >
+                          <rect
+                            x="4"
+                            y="4"
+                            width="16"
+                            height="16"
+                            rx="3"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          />
+                          <circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" />
+                          <circle cx="15.5" cy="8.5" r="1.2" fill="currentColor" />
+                          <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+                          <circle cx="8.5" cy="15.5" r="1.2" fill="currentColor" />
+                          <circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" />
+                        </svg>
+                      </template>
+                    </a-button>
+                  </a-tooltip>
+
+                  <a-tooltip
+                    :title="`${capitalize($t('copy'))} ${$t('clientinfo.password')}`"
+                  >
+                    <a-button
+                      type="text"
+                      shape="circle"
+                      :disabled="!authData.password"
+                      style="
+                        width: 28px;
+                        height: 28px;
+                        min-width: 28px;
+                        padding: 0;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                      @click.stop="copyPassword"
+                    >
+                      <template #icon>
+                        <CopyOutlined style="font-size: 18px" />
+                      </template>
+                    </a-button>
+                  </a-tooltip>
+                </span>
+              </template>
+            </a-input-password>
           </a-form-item>
         </a-col>
       </a-row>
+
+      <a-form-item name="hostname" style="display: none">
+        <a-input v-model:value="authData.hostname" />
+      </a-form-item>
     </a-form>
 
     <images-list
@@ -103,6 +169,11 @@
 <script setup>
 import { inject, ref, watch, nextTick } from "vue";
 import { storeToRefs } from "pinia";
+import {
+  CopyOutlined,
+  EyeTwoTone,
+  EyeInvisibleOutlined,
+} from "@ant-design/icons-vue";
 import passwordMeter from "vue-simple-password-meter";
 import { useCloudStore } from "@/stores/cloud.js";
 import { useAddonsStore } from "@/stores/addons.js";
@@ -125,6 +196,7 @@ const addonsStore = useAddonsStore();
 const images = ref([]);
 
 const keywebForm = ref(null);
+const passwordVisible = ref(false);
 const rules = {
   vmName: {
     trigger: "change",
@@ -159,9 +231,11 @@ const rules = {
         if (authData.value.password === "") {
           throw new Error(i18n.t("ssl_product.field is required"));
         }
+
         if (/[^a-zA-Z0-9]$/.test(authData.value.password)) {
           throw new Error(i18n.t("The last character must not be special"));
         }
+
         if (/^(?=.*\d)[\w+=._!*-]{9,32}$/.test(authData.value.password)) {
           return Promise.resolve();
         } else {
@@ -199,6 +273,31 @@ const [product] = inject("useProduct", () => [])();
 const [options, setOptions] = inject("useOptions", () => [])();
 const [price, setPrice] = inject("usePriceOVH", () => [])();
 const [activeKey] = inject("useActiveKey", () => [])();
+
+const HOSTNAME_FILLER = "srv";
+const PASSWORD_SPECIALS = "+=._!*-";
+
+watch(
+  () => authData.value.vmName,
+  (vmName) => {
+    const hostname = generateHostname(vmName);
+    authData.value.hostname = hostname;
+    setOptions("config.hostname", hostname);
+  },
+  { immediate: true },
+);
+
+watch(
+  () => options.os?.name,
+  (osName) => {
+    if (!osName) return;
+
+    const username = getUsernameByOs(osName);
+    authData.value.username = username;
+    setOptions("config.username", username);
+  },
+  { immediate: true },
+);
 
 watch(
   [activeKey, authData],
@@ -267,6 +366,93 @@ function setOS(item, index) {
   addonsKeys.push(item.key);
 
   setOptions("addons", addonsKeys);
+}
+
+function generateHostname(serverName = "") {
+  const normalized = String(serverName).replace(/[^a-zA-Z0-9]/g, "");
+
+  if (normalized.length >= 3) {
+    return normalized;
+  }
+
+  const requiredChars = 3 - normalized.length;
+  return `${normalized}${HOSTNAME_FILLER.slice(0, requiredChars)}`;
+}
+
+function getUsernameByOs(osName = "") {
+  return /windows/i.test(String(osName)) ? "Administrator" : "root";
+}
+
+function randomChar(chars) {
+  return chars[Math.floor(Math.random() * chars.length)];
+}
+
+function shuffle(chars) {
+  const list = [...chars];
+
+  for (let i = list.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+
+  return list;
+}
+
+function isPasswordValid(password) {
+  return (
+    /^(?=.*\d)[\w+=._!*-]{9,32}$/.test(password) &&
+    !/[^a-zA-Z0-9]$/.test(password)
+  );
+}
+
+function generatePassword() {
+  const lowercase = "abcdefghijklmnopqrstuvwxyz";
+  const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const digits = "0123456789";
+  const allowed = `${lowercase}${uppercase}${digits}${PASSWORD_SPECIALS}`;
+  const length = 14;
+
+  let password = "";
+
+  while (!password || !isPasswordValid(password)) {
+    const required = [
+      randomChar(lowercase),
+      randomChar(uppercase),
+      randomChar(digits),
+      randomChar(PASSWORD_SPECIALS),
+    ];
+
+    while (required.length < length - 1) {
+      required.push(randomChar(allowed));
+    }
+
+    const body = shuffle(required).join("");
+    const lastChar = randomChar(`${lowercase}${uppercase}${digits}`);
+    password = `${body}${lastChar}`;
+  }
+
+  authData.value.password = password;
+  setOptions("config.password", password);
+}
+
+async function copyPassword() {
+  if (!authData.value.password) return;
+
+  try {
+    await navigator.clipboard.writeText(authData.value.password);
+  } catch (e) {
+    const field = document.createElement("textarea");
+    field.value = authData.value.password;
+    field.setAttribute("readonly", "");
+    field.style.position = "fixed";
+    field.style.opacity = "0";
+
+    document.body.appendChild(field);
+    field.focus();
+    field.select();
+    document.execCommand("copy");
+    document.body.removeChild(field);
+  }
 }
 
 function osPrice(item) {
