@@ -19,7 +19,7 @@
           </a-form-item>
         </a-col>
 
-        <a-col :xs="24" :sm="12">
+        <a-col :xs="24" :sm="12" style="display: none;">
           <a-form-item
             name="username"
             class="newCloud__form-item"
