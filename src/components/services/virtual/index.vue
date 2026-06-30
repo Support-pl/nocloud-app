@@ -65,7 +65,7 @@
             </a-form-item>
 
             <a-form-item
-              v-if="!billingUser.email && isLogged"
+              v-if="!billingUser.email && isLogged && !fetchLoading"
               name="email"
               :label="capitalize($t('ssl_product.email'))"
             >
@@ -365,7 +365,7 @@ const rules = computed(() => {
       req,
       {
         message: t("domain is wrong"),
-        pattern: /.+\..+/,
+        pattern: /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/,
       },
     ],
     email: [
@@ -490,7 +490,7 @@ const createVirtual = async (instance) => {
   }
 };
 const orderConfirm = () => {
-  if (!config.domain.match(/.+\..+/)) {
+  if (!config.domain.match(/^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/)) {
     notification.openNotification("error", { message: t("domain is wrong") });
     return;
   }
