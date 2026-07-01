@@ -1383,6 +1383,11 @@ export default {
 }
 
 @media (max-width: 576px) {
+  .order__calculate {
+    max-width: 100%;
+    margin-top: 10px;
+  }
+
   .order__grid {
     grid-template-columns: 1fr;
   }
@@ -1482,6 +1487,10 @@ export default {
 }
 
 @media screen and (max-width: 1024px) {
+  .order__calculate {
+    margin-top: 10px;
+    max-width: 100%;
+  }
   .order_wrapper {
     padding: 0;
   }
