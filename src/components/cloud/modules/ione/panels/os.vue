@@ -37,6 +37,7 @@
                 :label="`${capitalize($t('clientinfo.username'))}:`"
               >
                 <a-input
+                  disabled
                   v-model:value="authData.username"
                   @input="checkIsNameValid"
                 />
@@ -65,11 +66,15 @@
                   class="password"
                   autocomplete="new-password"
                   @update:value="authData.password = $event"
-                  @input="(e) => authData.password = e.target.value"
+                  @input="(e) => (authData.password = e.target.value)"
                 >
                   <template #iconRender="visible">
                     <span
-                      style="display: inline-flex; align-items: center; gap: 2px"
+                      style="
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 2px;
+                      "
                     >
                       <EyeTwoTone v-if="visible" />
                       <EyeInvisibleOutlined v-else />
