@@ -19,13 +19,14 @@
           </a-form-item>
         </a-col>
 
-        <a-col :xs="24" :sm="12" style="display: none;">
+        <a-col :xs="24" :sm="12">
           <a-form-item
             name="username"
             class="newCloud__form-item"
             :label="`${capitalize($t('clientinfo.username'))}:`"
           >
             <a-input
+              disabled
               :value="authData.username"
               @update:value="
                 authData.username = $event;
@@ -64,7 +65,9 @@
               "
             >
               <template #iconRender="visible">
-                <span style="display: inline-flex; align-items: center; gap: 2px">
+                <span
+                  style="display: inline-flex; align-items: center; gap: 2px"
+                >
                   <EyeTwoTone v-if="visible" />
                   <EyeInvisibleOutlined v-else />
 
@@ -104,11 +107,31 @@
                             stroke="currentColor"
                             stroke-width="1.8"
                           />
-                          <circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" />
-                          <circle cx="15.5" cy="8.5" r="1.2" fill="currentColor" />
+                          <circle
+                            cx="8.5"
+                            cy="8.5"
+                            r="1.2"
+                            fill="currentColor"
+                          />
+                          <circle
+                            cx="15.5"
+                            cy="8.5"
+                            r="1.2"
+                            fill="currentColor"
+                          />
                           <circle cx="12" cy="12" r="1.2" fill="currentColor" />
-                          <circle cx="8.5" cy="15.5" r="1.2" fill="currentColor" />
-                          <circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" />
+                          <circle
+                            cx="8.5"
+                            cy="15.5"
+                            r="1.2"
+                            fill="currentColor"
+                          />
+                          <circle
+                            cx="15.5"
+                            cy="15.5"
+                            r="1.2"
+                            fill="currentColor"
+                          />
                         </svg>
                       </template>
                     </a-button>
