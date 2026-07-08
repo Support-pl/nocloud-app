@@ -70,7 +70,7 @@ watch(
 const route = useRoute();
 const cloudStore = useCloudStore();
 const [product] = inject("useProduct", () => [])();
-const [, setOptions] = inject("useOptions", () => [])();
+const [options, setOptions] = inject("useOptions", () => [])();
 const [, setPrice] = inject("usePriceOVH", () => [])();
 
 if (props.products.length > 0) {
@@ -145,7 +145,11 @@ async function setProduct(value) {
   setOptions("ram.size", resources.ram || 0);
   setOptions("disk.size", (resources.disk || 0) * 1024);
 
-  setOptions("config", { configurations: {}, id: meta.keywebId, cycle });
+  setOptions("config", {
+    configurations: options.value?.config?.configurations ?? {},
+    id: meta.keywebId,
+    cycle,
+  });
   setPrice("value", price);
 }
 
