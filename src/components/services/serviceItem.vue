@@ -8,8 +8,13 @@
         @click="handleClick"
       >
         <div :class="serviceIconClassesHorizontal">
+          <img
+            v-if="isIconUrl"
+            :src="service.icon"
+            class="service__icon-img service__icon-img--horizontal"
+          />
           <component
-            v-if="!isIconString"
+            v-else-if="!isIconString"
             :is="service.icon"
             :two-tone-color="service.meta?.iconColor"
           />
@@ -41,8 +46,13 @@
         @click="handleClick"
       >
         <div :class="serviceIconClasses">
+          <img
+            v-if="isIconUrl"
+            :src="service.icon"
+            class="service__icon-img service__icon-img--vertical"
+          />
           <component
-            v-if="!isIconString"
+            v-else-if="!isIconString"
             :is="service.icon"
             :two-tone-color="service.meta?.iconColor"
           />
@@ -99,6 +109,7 @@ const useHorizontalLayout = computed(
   () => windowWidth.value > BREAKPOINT && !props.oldLayout
 );
 const isIconString = computed(() => typeof props.service.icon === "string");
+const isIconUrl = computed(() => !!props.service.meta?.iconIsUrl);
 
 const serviceItemClasses = computed(() => ({
   service__item: true,
@@ -217,6 +228,20 @@ export default { name: "ServiceItem" };
     :deep(g path) {
       fill: inherit !important;
     }
+  }
+}
+
+.service__icon-img {
+  object-fit: contain;
+
+  &--vertical {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  &--horizontal {
+    width: 25px;
+    height: 25px;
   }
 }
 

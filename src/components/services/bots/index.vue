@@ -19,6 +19,24 @@
         </div>
 
         <div class="calculator">
+          <a-row
+            v-if="periodsOptions.length > 1"
+            type="flex"
+            align="middle"
+            style="margin-bottom: 8px; width: 100%"
+          >
+            <a-col flex="auto" style="font-size: 1rem">
+              {{ $t("Pay period") }}:
+            </a-col>
+            <a-col>
+              <a-select v-model:value="selectedProductKey" style="min-width: 130px">
+                <a-select-option v-for="opt in periodsOptions" :key="opt.key" :value="opt.key">
+                  {{ opt.label }}
+                </a-select-option>
+              </a-select>
+            </a-col>
+          </a-row>
+
           <promocode-menu
             :plan-id="plan"
             :applyed-promocode="planWithApplyedPromocode"
@@ -60,7 +78,7 @@
 import { computed, ref, watch, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { useNotification } from "@/hooks/utils";
+import { useNotification, usePeriod } from "@/hooks/utils";
 import Loading from "@/components/ui/loading.vue";
 import PromocodeMenu from "@/components/ui/promocode-menu.vue";
 
@@ -85,6 +103,7 @@ const router = useRouter();
 const route = useRoute();
 const { locale, t } = useI18n();
 const { openNotification } = useNotification();
+const { getPeriod } = usePeriod();
 
 const appStore = useAppStore();
 const authStore = useAuthStore();
@@ -105,6 +124,7 @@ const { serviceId } = useServiceId();
 
 const plan = ref(null);
 const provider = ref(null);
+const selectedProductKey = ref("bot");
 
 const cachedPlans = reactive({});
 const fetchLoading = ref(false);
@@ -122,7 +142,7 @@ const getProducts = computed(() => {
     (plans.value.find(({ uuid }) => uuid === plan.value) ?? {});
 
   return {
-    price: products["bot"].price || 0,
+    price: products?.[selectedProductKey.value]?.price || 0,
     title,
   };
 });
@@ -156,6 +176,14 @@ const plans = computed(
     ) ?? []
 );
 
+const periodsOptions = computed(() => {
+  const products = plans.value[0]?.products ?? {};
+  return Object.entries(products)
+    .filter(([key]) => key === "bot" || key.startsWith("bot_"))
+    .map(([key, product]) => ({ key, label: getPeriod(product.period) }))
+    .sort((a, b) => a.key.localeCompare(b.key));
+});
+
 const sp = computed(() => {
   const { items } =
     spStore.showcases.find(({ uuid }) => uuid === serviceId.value) ?? {};
@@ -168,6 +196,13 @@ const sp = computed(() => {
 
 watch(sp, (value) => {
   if (value.length > 0) provider.value = value[0].uuid;
+});
+
+watch(periodsOptions, (value) => {
+  if (!value.length) return;
+  if (!value.find((o) => o.key === selectedProductKey.value)) {
+    selectedProductKey.value = value[0].key;
+  }
 });
 
 async function fetchPlans(sp) {
@@ -210,7 +245,7 @@ function orderClickHandler() {
     },
     title,
     billing_plan: planItem,
-    product: "bot",
+    product: selectedProductKey.value,
   };
 
   if (!authStore.userdata.uuid) {
@@ -232,6 +267,11 @@ function orderClickHandler() {
     router.push({ name: "login" });
     return;
   }
+
+  console.log(instance);
+  
+
+  return;
 
   createBot(instance);
 }
