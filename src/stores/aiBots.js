@@ -300,6 +300,8 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           delay: bot.settings.delay,
           model: bot.settings.ai_model,
           system_prompt: bot.settings.system_prompt,
+          processing_prompt: bot.settings.processing_prompt,
+          processing_model: bot.settings.processing_model,
           temperature: bot.settings.temperature,
           enable_spam_filter: bot.settings.enable_spam_filter,
           role: bot.settings.role,

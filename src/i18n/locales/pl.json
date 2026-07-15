@@ -786,6 +786,8 @@
     "bots": {
       "fields": {
         "promt": "Prompt",
+        "processing_prompt": "Prompt przetwarzania czatu",
+        "processing_model": "Model przetwarzania czatu",
         "model": "Model",
         "temperature": "Temperatura",
         "delay": "Opóźnienie",
@@ -850,7 +852,9 @@
         "resume_bot": "Wznów bota"
       },
       "placeholders": {
-        "promt": "Jesteś ekspertem od produktu X.\nTwoim zadaniem jest zidentyfikowanie potrzeb użytkownika, zaoferowanie odpowiedniego produktu, wyjaśnienie jego zalet i poprowadzenie do zakupu.\nUżywaj ciepłego, profesjonalnego tonu i zadawaj pytania doprecyzowujące, aby lepiej zrozumieć sytuację.\nNie podawaj wszystkich informacji na raz — angażuj się w naturalną rozmowę, jak doświadczony sprzedawca."
+        "promt": "Jesteś ekspertem od produktu X.\nTwoim zadaniem jest zidentyfikowanie potrzeb użytkownika, zaoferowanie odpowiedniego produktu, wyjaśnienie jego zalet i poprowadzenie do zakupu.\nUżywaj ciepłego, profesjonalnego tonu i zadawaj pytania doprecyzowujące, aby lepiej zrozumieć sytuację.\nNie podawaj wszystkich informacji na raz — angażuj się w naturalną rozmowę, jak doświadczony sprzedawca.",
+        "processing_prompt": "Pozostaw puste, aby użyć domyślnego. Instrukcja przekształcania rozwiązanego czatu wsparcia w wpisy pytanie/odpowiedź do bazy wiedzy.",
+        "processing_model": "Pozostaw puste, aby użyć modelu domyślnego"
       },
       "tips": {
         "model_gpt-4o": "**GPT-4o** — uniwersalny model multimodalny (tekst, obraz, dźwięk, wideo), dobrze zrównoważony pod względem prędkości i jakości.",
@@ -858,6 +862,8 @@
         "model_gpt-4/1": "**GPT-4.1** — bardziej zaawansowany model z rodziny GPT-4 z ulepszonymi rozumowaniem, kodem i multimodalnością.",
         "model_gpt-4/1-mini": "**GPT-4.1 mini** — uproszczona i szybsza wersja GPT-4.1, skoncentrowana na codziennych scenariuszach.",
         "promt": "Prompt to początkowa instrukcja lub kontekst, który podajesz asystentowi, aby nakierować jego odpowiedzi.\nDobrze przygotowany prompt pomaga uzyskać bardziej trafne i dokładne odpowiedzi.\nMożesz używać przykładów, instrukcji lub pytań, aby zdefiniować kontekst.",
+        "processing_prompt": "Używany, gdy operator naciśnie „Przetwórz czat”, aby wyodrębnić pary pytanie/odpowiedź z rozwiązanej rozmowy.\nPozostaw puste, aby użyć wbudowanej instrukcji domyślnej.\nDotyczy tylko botów podłączonych do kanału czatu wsparcia.",
+        "processing_model": "Model używany do wyodrębniania par pytanie/odpowiedź podczas przetwarzania czatu.\nPozostaw puste, aby użyć domyślnego.\nDotyczy tylko botów podłączonych do kanału czatu wsparcia.",
         "temperature": "Im wyższa wartość temperatury, tym bardziej kreatywne i różnorodne odpowiedzi.\n0 — ścisłe i przewidywalne.\n0.5 — zrównoważone i naturalne.\n1 — bardzo kreatywne.",
         "delay": "Opóźnienie przed odpowiedzią bota.\nUstawione w sekundach.\n0 — natychmiastowa odpowiedź.\n3 — bot czeka 3 sekundy przed odpowiedzią.\nSłuży do symulacji ludzkiej pauzy.",
         "channels": "Utwórz kanał dla swojego asystenta.\nWszystkie przychodzące wiadomości na tym kanale będą automatycznie przetwarzane i odpowiadane przez bota.",
