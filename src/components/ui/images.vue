@@ -1,45 +1,51 @@
 <template>
   <div class="newCloud__template">
     <div
-      v-for="(item, index) in images"
-      :key="index"
+      v-for="group in groups"
+      :key="group.title"
       class="newCloud__template-item"
-      :class="{ active: osName === item.name }"
-      @click="setOS(item, index)"
+      :class="{ active: activeVersion(group).item.name === osName }"
+      @click="selectGroup(group)"
     >
-      <template v-if="item.warning">
-        <div class="newCloud__template-image">
-          <img src="/img/OS/default.png" :alt="item.desc" />
-        </div>
-        <div class="newCloud__template-name">
-          {{ item.name }}
-        </div>
-      </template>
+      <div class="newCloud__template-head">
+        <span class="newCloud__template-radio" />
+        <span class="newCloud__template-name">{{ group.title }}</span>
+      </div>
 
-      <template v-else-if="!item.name.includes('none')">
-        <div class="newCloud__template-image">
-          <img
-            :src="`/img/OS/${getImageName(item.name)}.png`"
-            :alt="item.desc"
-            @error="onError"
-          />
-        </div>
+      <select
+        v-if="group.versions.length > 1"
+        class="newCloud__template-version"
+        :value="activeVersion(group).index"
+        @click.stop
+        @change="onVersionChange(group, $event.target.value)"
+      >
+        <option v-for="v in group.versions" :key="v.index" :value="v.index">
+          {{ $t("Version") }} {{ v.version }}
+        </option>
+      </select>
+      <div
+        v-else-if="activeVersion(group).version"
+        class="newCloud__template-version is-static"
+      >
+        {{ $t("Version") }} {{ activeVersion(group).version }}
+      </div>
 
-        <div class="newCloud__template-name">
-          {{ item.name }} <br />
-          <template v-if="item.prices || item.price">
-            ({{ osPrice(item.prices ?? item) }} {{ currency.title }})
-          </template>
-        </div>
-      </template>
+      <div
+        v-if="!activeVersion(group).item.warning"
+        class="newCloud__template-price"
+      >
+        <template v-if="activeVersion(group).item.prices || activeVersion(group).item.price">
+          {{ osPrice(activeVersion(group).item.prices ?? activeVersion(group).item) }} {{ currency.title }}
+        </template>
+        <template v-else>{{ $t("vpn.labels.free") }}</template>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { getImageName, onError } from "@/functions.js";
 import { useCurrency } from "@/hooks/utils";
-import { onMounted, toRefs, watch } from "vue";
+import { computed, onMounted, toRefs, watch } from "vue";
 
 const props = defineProps({
   images: { type: [Array, Object], required: true },
@@ -50,6 +56,56 @@ const props = defineProps({
 const { images } = toRefs(props);
 
 const { currency } = useCurrency();
+
+// "Windows_Server_2016_Standard" -> { title: "Windows Server", version: "2016 Standard" }
+function splitName(rawName) {
+  const name = rawName.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  const match = name.match(/^(.*?)[\s-]*(\d[\d.]*.*)$/);
+
+  if (!match) return { title: name, version: "" };
+
+  const [, title, version] = match;
+  return { title: title.replace(/[-\s]+$/, "").trim() || name, version };
+}
+
+const groups = computed(() => {
+  const map = new Map();
+
+  Object.entries(images.value).forEach(([index, item]) => {
+    if (item.warning || item.name.includes("none")) {
+      map.set(`single-${index}`, {
+        title: item.name.replace(/_/g, " ").replace(/\s+/g, " ").trim(),
+        versions: [{ index, item, version: "" }],
+      });
+      return;
+    }
+
+    const { title, version } = splitName(item.name);
+    const key = title.toLowerCase();
+
+    if (!map.has(key)) map.set(key, { title, versions: [] });
+    map.get(key).versions.push({ index, item, version });
+  });
+
+  return [...map.values()];
+});
+
+function activeVersion(group) {
+  return (
+    group.versions.find((v) => v.item.name === props.osName) ??
+    group.versions[0]
+  );
+}
+
+function selectGroup(group) {
+  const { item, index } = activeVersion(group);
+  props.setOS(item, index);
+}
+
+function onVersionChange(group, index) {
+  const v = group.versions.find((v) => String(v.index) === String(index));
+  if (v) props.setOS(v.item, v.index);
+}
 
 const setDefaultOs = () => {
   const index = Object.keys(images.value)[0];
@@ -82,14 +138,15 @@ export default { name: "ImagesList" };
 .newCloud__template-item {
   background-color: var(--bright_font);
   box-shadow: 3px 2px 6px rgba(0, 0, 0, 0.08), 0px 0px 8px rgba(0, 0, 0, 0.05);
-  border-radius: 15px;
-  transition: all 0.2s ease, transform 0.2s ease;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
   cursor: pointer;
   overflow: hidden;
-  display: grid;
-  grid-template-columns: 30px 1fr;
-  align-items: center;
-  max-width: calc(50% - 9px);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 200px;
+  max-width: calc(25% - 13px);
 }
 
 .newCloud__template-item:hover {
@@ -97,75 +154,71 @@ export default { name: "ImagesList" };
 }
 
 .newCloud__template-item.active {
-  box-shadow: 5px 8px 12px rgba(0, 0, 0, 0.08), 0px 0px 13px rgba(0, 0, 0, 0.05);
-  transform: scale(1.02);
-  background-color: var(--main);
-  color: var(--gloomy_font);
+  border-color: var(--main);
+  background-color: color-mix(in srgb, var(--main) 10%, var(--bright_font));
 }
 
-.newCloud__template-image {
-  padding: 5px 0 5px 10px;
-  overflow: hidden;
+.newCloud__template-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 8px;
+  font-weight: 600;
 }
 
-.newCloud__template-image img {
-  object-fit: cover;
-  max-width: 100%;
-  max-height: 80px;
-}
-
-.newCloud__template-image img::before {
+.newCloud__template-radio {
   width: 16px;
-  display: inline-block;
-  overflow: hidden;
-  height: 15px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--border, #b7c0d8);
+  position: relative;
 }
 
-.newCloud__template-image img::after {
-  content: url("/img/OS/default.png");
-  display: block;
+.newCloud__template-item.active .newCloud__template-radio {
+  border-color: var(--main);
+}
+
+.newCloud__template-item.active .newCloud__template-radio::after {
+  content: "";
   position: absolute;
-  transform: translate(-36px, -59px) scale(0.21);
-  background: var(--gloomy_font);
+  inset: 2px;
   border-radius: 50%;
-  transition: 0.2s;
+  background: var(--main);
 }
 
-.newCloud__template-name {
-  padding: 10px;
-  word-break: break-word;
+.newCloud__template-version {
+  margin: 0 12px 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #c9d2e6);
+  background: var(--bright_font);
+  color: var(--main);
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.newCloud__template-item.active .newCloud__template-image img {
-  padding: 2px;
-  background: var(--gloomy_font);
-  border-radius: 50%;
-  transition: 0.2s;
+.newCloud__template-version.is-static {
+  cursor: default;
 }
 
-.newCloud__template-item.active .newCloud__template-image img::after {
-  transform: translate(-37px, -61px) scale(0.18);
-  padding: 2px;
+.newCloud__template-price {
+  margin-top: auto;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--accent, #9c1e6b);
+  font-weight: 700;
+}
+
+@media (max-width: 991px) {
+  .newCloud__template-item {
+    max-width: calc(50% - 9px);
+  }
 }
 
 @media (max-width: 575px) {
   .newCloud__template-item {
-    grid-template-columns: 40px 1fr;
-  }
-
-  .newCloud__template-image {
-    padding: 7px 0 7px 10px;
-  }
-
-  .newCloud__template-name ul {
-    display: flex;
-    justify-content: space-around;
-    list-style: none;
-    flex: 1;
-  }
-
-  .newCloud__template-name ul li {
-    margin-left: 20px;
+    max-width: 100%;
   }
 }
 </style>
