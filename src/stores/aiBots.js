@@ -293,6 +293,15 @@ export const useAiBotsStore = defineStore("aiBots", () => {
       }
     },
 
+    async rebuildQa({ bot, database, prompt }) {
+      const data = await api.post("/agents/api/rebuild_qa", {
+        bot,
+        database,
+        prompt,
+      });
+      return data.pairs || [];
+    },
+
     async updateBot(bot) {
       try {
         const data = await api.post("/agents/api/update_bot", {
@@ -300,6 +309,8 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           delay: bot.settings.delay,
           model: bot.settings.ai_model,
           system_prompt: bot.settings.system_prompt,
+          processing_prompt: bot.settings.processing_prompt,
+          processing_model: bot.settings.processing_model,
           temperature: bot.settings.temperature,
           enable_spam_filter: bot.settings.enable_spam_filter,
           role: bot.settings.role,

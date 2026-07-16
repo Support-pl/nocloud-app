@@ -9,6 +9,12 @@
     >
       <div class="newCloud__template-head">
         <span class="newCloud__template-radio" />
+        <img
+          class="newCloud__template-icon"
+          :src="`/img/OS/${getImageName(group.title)}.png`"
+          alt=""
+          @error="onError"
+        />
         <span class="newCloud__template-name">{{ group.title }}</span>
       </div>
 
@@ -44,6 +50,7 @@
 </template>
 
 <script setup>
+import { getImageName, onError } from "@/functions.js";
 import { useCurrency } from "@/hooks/utils";
 import { computed, onMounted, toRefs, watch } from "vue";
 
@@ -146,7 +153,7 @@ export default { name: "ImagesList" };
   display: flex;
   flex-direction: column;
   flex: 1 1 200px;
-  max-width: calc(25% - 13px);
+  max-width: calc(33.333% - 12px);
 }
 
 .newCloud__template-item:hover {
@@ -173,6 +180,13 @@ export default { name: "ImagesList" };
   border-radius: 50%;
   border: 2px solid var(--border, #b7c0d8);
   position: relative;
+}
+
+.newCloud__template-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .newCloud__template-item.active .newCloud__template-radio {
@@ -203,9 +217,8 @@ export default { name: "ImagesList" };
 }
 
 .newCloud__template-price {
-  margin-top: auto;
-  padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.04);
+  padding: 2px 12px 10px;
+  font-size: 0.85em;
   color: var(--accent, #9c1e6b);
   font-weight: 700;
 }

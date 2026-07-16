@@ -281,6 +281,56 @@
         />
       </a-col>
 
+      <a-col span="24" v-if="hasChatChannel">
+        <span class="field_title"
+          >{{ t("bots.fields.processing_model") }}:
+
+          <a-tooltip>
+            <template #title>
+              <span
+                v-html="
+                  t('bots.tips.processing_model').replaceAll('\n', '<br/>')
+                "
+              >
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-select
+          :options="modelsOptions"
+          style="width: 100%; margin-top: 10px"
+          allow-clear
+          :placeholder="t('bots.placeholders.processing_model')"
+          :value="bot.settings.processing_model || undefined"
+          @update:value="bot.settings.processing_model = $event || ''"
+        />
+      </a-col>
+
+      <a-col span="24" v-if="hasChatChannel">
+        <span class="field_title"
+          >{{ t("bots.fields.processing_prompt") }}:
+
+          <a-tooltip>
+            <template #title>
+              <span
+                v-html="
+                  t('bots.tips.processing_prompt').replaceAll('\n', '<br/>')
+                "
+              >
+              </span>
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-textarea
+          style="margin-top: 10px"
+          v-model:value="bot.settings.processing_prompt"
+          :placeholder="t('bots.placeholders.processing_prompt')"
+          :auto-size="{ minRows: 4 }"
+        />
+      </a-col>
+
       <a-col span="24" style="padding-bottom: 40px; margin-top: 10px">
         <a-row justify="end"> </a-row>
       </a-col>
@@ -640,6 +690,8 @@ const bot = ref({
     delay: 0,
     ai_model: "",
     system_prompt: "",
+    processing_prompt: "",
+    processing_model: "",
     enable_spam_filter: true,
     role: "",
   },
@@ -754,6 +806,12 @@ const availableChanells = computed(() => {
 
 const roles = computed(() => aiBotsStore.roles);
 
+// core_chatting is an internal channel linked elsewhere (not in chanellsOptions);
+// the processing prompt only matters for bots wired to the support chat.
+const hasChatChannel = computed(() =>
+  (bot.value.channels || []).some((c) => c.type === "core_chatting")
+);
+
 const isSavePrimary = computed(
   () => JSON.stringify(ogBot.value) != JSON.stringify(bot.value)
 );
@@ -768,6 +826,12 @@ async function fetch() {
     }
     if (!bot.value.settings.role) {
       bot.value.settings.role = null;
+    }
+    if (bot.value.settings.processing_prompt == null) {
+      bot.value.settings.processing_prompt = "";
+    }
+    if (bot.value.settings.processing_model == null) {
+      bot.value.settings.processing_model = "";
     }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
     await Promise.all([aiBotsStore.getRoles(), chatsStore.fetch_models_list()]);

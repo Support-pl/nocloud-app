@@ -1,5 +1,6 @@
 <template>
   <a-col class="databases" v-if="!isDataLoading" span="24">
+    <template v-if="!isRebuildView">
     <a-form
       ref="editDatabaseFormRef"
       autocomplete="off"
@@ -120,6 +121,19 @@
             {{ t("bots_databases.actions.add_qa_record") }}
             <add-icon />
           </a-button>
+
+          <a-tooltip>
+            <template #title>
+              {{ t("bots_databases.tips.rebuild_qa") }}
+            </template>
+            <a-button
+              :disabled="isSaveQaKnoledgeLoading || !hasSavedQaRecords"
+              @click="openRebuild"
+            >
+              {{ t("bots_databases.actions.rebuild_qa") }}
+              <rebuild-icon />
+            </a-button>
+          </a-tooltip>
 
           <a-button
             :loading="isSaveQaKnoledgeLoading"
@@ -793,6 +807,140 @@
         >
       </template>
     </a-modal>
+
+    </template>
+
+    <template v-else>
+      <div class="rebuild-page">
+      <a-row justify="space-between" align="middle" style="margin: 10px 0 15px">
+        <a-button @click="cancelRebuild">{{ t("ssl_product.back") }}</a-button>
+        <span class="rebuild__page-title">
+          {{ t("bots_databases.actions.rebuild_qa") }} · {{ database.name }}
+        </span>
+        <a-button
+          v-if="rebuildAnalyzed"
+          :loading="isRebuildLoading"
+          @click="runRebuild"
+        >
+          {{ t("bots_databases.actions.rebuild_qa_reanalyse") }}
+        </a-button>
+        <span v-else style="width: 88px" />
+      </a-row>
+
+      <div v-if="!rebuildAnalyzed" class="rebuild__setup">
+        <label class="rebuild__label">
+          {{ t("bots_databases.fields.rebuild_prompt") }}
+        </label>
+        <a-textarea
+          v-model:value="rebuildPrompt"
+          :auto-size="{ minRows: 3, maxRows: 12 }"
+          :disabled="isRebuildLoading"
+        />
+        <div class="rebuild__run">
+          <a-button
+            type="primary"
+            :loading="isRebuildLoading"
+            @click="runRebuild"
+          >
+            {{ t("bots_databases.actions.rebuild_qa_run") }}
+          </a-button>
+        </div>
+      </div>
+
+      <template v-if="rebuildAnalyzed">
+        <div class="rebuild__summary">
+          <a-tag color="green">+{{ rebuildSummary.added }}</a-tag>
+          <a-tag color="orange">~{{ rebuildSummary.modified }}</a-tag>
+          <a-tag color="red">-{{ rebuildSummary.removed }}</a-tag>
+          <a-tag>={{ rebuildSummary.unchanged }}</a-tag>
+          <span class="rebuild__count">
+            {{ rebuildSummary.before }} → {{ rebuildSummary.after }}
+          </span>
+        </div>
+
+        <div class="rebuild__rows">
+          <div
+            v-for="(item, index) in rebuildDraft"
+            :key="index"
+            class="rebuild__row"
+            :class="`rebuild__row--${draftStatus(item).status}`"
+          >
+            <div class="rebuild__row-head">
+              <a-tag :color="diffTagColor(draftStatus(item).status)">
+                {{ t(`bots_databases.diff.${draftStatus(item).status}`) }}
+              </a-tag>
+              <span class="rebuild__idx">{{ index + 1 }}.</span>
+              <a-input
+                class="field"
+                v-model:value="item.question"
+                :placeholder="t('bots_databases.fields.question')"
+              />
+              <a-button
+                class="delete_btn"
+                type="text"
+                shape="circle"
+                @click="deleteDraft(index)"
+              >
+                <template #icon>
+                  <delete-icon two-tone-color="#ff4d4f" class="icon" />
+                </template>
+              </a-button>
+            </div>
+
+            <a-textarea
+              class="field rebuild__answer"
+              v-model:value="item.answer"
+              :placeholder="t('bots_databases.fields.answer')"
+              :auto-size="{ minRows: 2, maxRows: 10 }"
+            />
+
+            <div
+              v-if="draftStatus(item).status === 'modified'"
+              class="rebuild__original"
+            >
+              <span class="rebuild__original-label">
+                {{ t("bots_databases.diff.original_answer") }}:
+              </span>
+              <del>{{ draftStatus(item).original.answer }}</del>
+            </div>
+          </div>
+        </div>
+
+        <a-button class="rebuild__add" @click="addDraft">
+          {{ t("bots_databases.actions.add_qa_record") }}
+          <add-icon />
+        </a-button>
+
+        <template v-if="removedRecords.length">
+          <div class="rebuild__section">
+            {{ t("bots_databases.diff.removed_section") }}
+          </div>
+          <div class="rebuild__rows">
+            <div
+              v-for="(rec, index) in removedRecords"
+              :key="`removed-${index}`"
+              class="rebuild__row rebuild__row--removed"
+            >
+              <div class="rebuild__row-body">
+                <div class="rebuild__q"><del>{{ rec.question }}</del></div>
+                <div class="rebuild__a"><del>{{ rec.answer }}</del></div>
+              </div>
+              <a-button size="small" @click="restoreRemoved(rec)">
+                {{ t("bots_databases.actions.restore") }}
+              </a-button>
+            </div>
+          </div>
+        </template>
+
+        <div class="rebuild__footer">
+          <a-button @click="cancelRebuild">{{ t("Cancel") }}</a-button>
+          <a-button type="primary" @click="applyRebuild">
+            {{ t("bots_databases.actions.rebuild_qa_apply") }}
+          </a-button>
+        </div>
+      </template>
+      </div>
+    </template>
   </a-col>
   <loading v-else />
 </template>
@@ -832,6 +980,10 @@ const saveIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SaveOutlined")
 );
 
+const rebuildIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ThunderboltOutlined")
+);
+
 const attachIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlusOutlined")
 );
@@ -869,6 +1021,10 @@ const isDataLoading = ref(false);
 const isDetachLoading = ref(false);
 const isAttachLoading = ref(false);
 const isSaveQaKnoledgeLoading = ref(false);
+const isRebuildLoading = ref(false);
+const rebuildPrompt = ref("");
+const rebuildAnalyzed = ref(false); // true once the model has returned a proposal
+const rebuildDraft = ref([]); // editable working copy of the proposal
 const collapseKey = ref();
 const database = ref({ name: "" });
 const editDatabaseFormRef = ref();
@@ -1160,6 +1316,153 @@ function handleAddQaKnowledge() {
 
 function handleRemoveQaKnowledge(index) {
   database.value.qa_knowledge.records.splice(index, 1);
+}
+
+// Default rebuild instruction shown (and editable) in the modal. Sent verbatim;
+// the backend only falls back to its own default when the field is left empty.
+const DEFAULT_REBUILD_PROMPT = `You are cleaning up an existing customer-support FAQ knowledge base.
+You receive the current Q&A entries. Return an improved, reorganised set:
+- Remove exact and near-duplicate entries, keeping the clearest single version.
+- Merge entries that answer the same question into one complete answer.
+- Split an entry that bundles several unrelated questions into separate entries.
+- Drop empty, broken or meaningless entries.
+- Keep the original meaning and facts — never invent answers that are not implied by the input.
+- Keep each question general and reusable and each answer self-contained (no names, no chat-specific IDs).
+- Preserve the language of the entries.`;
+
+// The base as the backend sees it (saved records), so the diff matches what the
+// model was actually given — not unsaved in-progress edits.
+const savedQaRecords = computed(() =>
+  (originalDatabase.value?.qa_knowledge?.records || []).filter(
+    (r) => (r.question || "").trim() || (r.answer || "").trim()
+  )
+);
+
+const hasSavedQaRecords = computed(() => savedQaRecords.value.length > 0);
+
+const qaNorm = (s) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+// The rebuild results are a full page inside this tab, driven by ?rebuild in the
+// URL so the browser back button and state survive (the component stays mounted).
+const isRebuildView = computed(() => !!route.query.rebuild);
+
+// Saved records indexed by normalised question — the "before" side of the diff.
+const savedByQuestion = computed(() => {
+  const map = new Map();
+  for (const rec of savedQaRecords.value) {
+    const key = qaNorm(rec.question);
+    if (!map.has(key)) map.set(key, rec);
+  }
+  return map;
+});
+
+// Diff is computed live against the editable draft, so edits, deletions and
+// restores reflect immediately.
+function draftStatus(item) {
+  const original = savedByQuestion.value.get(qaNorm(item.question));
+  if (!original) return { status: "added" };
+  if (qaNorm(original.answer) === qaNorm(item.answer)) {
+    return { status: "unchanged", original };
+  }
+  return { status: "modified", original };
+}
+
+const draftQuestions = computed(
+  () => new Set(rebuildDraft.value.map((d) => qaNorm(d.question)))
+);
+
+// Saved entries the draft no longer contains — shown separately, restorable.
+const removedRecords = computed(() =>
+  savedQaRecords.value.filter((s) => !draftQuestions.value.has(qaNorm(s.question)))
+);
+
+const rebuildSummary = computed(() => {
+  let added = 0,
+    modified = 0,
+    unchanged = 0;
+  for (const item of rebuildDraft.value) {
+    const status = draftStatus(item).status;
+    if (status === "added") added++;
+    else if (status === "modified") modified++;
+    else unchanged++;
+  }
+  return {
+    added,
+    modified,
+    unchanged,
+    removed: removedRecords.value.length,
+    before: savedQaRecords.value.length,
+    after: rebuildDraft.value.length,
+  };
+});
+
+function diffTagColor(status) {
+  return { added: "green", removed: "red", modified: "orange" }[status] || "";
+}
+
+function openRebuild() {
+  rebuildAnalyzed.value = false;
+  rebuildDraft.value = [];
+  // Come back to the last instruction this bot used; default on first run.
+  rebuildPrompt.value =
+    bot.value?.settings?.rebuild_prompt || DEFAULT_REBUILD_PROMPT;
+  router.push({ query: { ...route.query, rebuild: "1" } });
+}
+
+function cancelRebuild() {
+  router.push({ query: { database: database.value.id } });
+}
+
+async function runRebuild() {
+  try {
+    isRebuildLoading.value = true;
+    const pairs = await aiBotsStore.rebuildQa({
+      bot: props.service.data.bot_uuid,
+      database: database.value.id,
+      prompt: rebuildPrompt.value,
+    });
+    rebuildDraft.value = pairs.map((p) => ({
+      question: p.question,
+      answer: p.answer,
+    }));
+    rebuildAnalyzed.value = true;
+    // Mirror the backend persist into the cached bot so a re-open prefills it.
+    if (rebuildPrompt.value?.trim() && bot.value?.settings) {
+      bot.value.settings.rebuild_prompt = rebuildPrompt.value;
+    }
+  } catch (err) {
+    openNotification("error", {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    });
+  } finally {
+    isRebuildLoading.value = false;
+  }
+}
+
+function addDraft() {
+  rebuildDraft.value.push({ question: "", answer: "" });
+}
+
+function deleteDraft(index) {
+  rebuildDraft.value.splice(index, 1);
+}
+
+function restoreRemoved(record) {
+  rebuildDraft.value.push({ question: record.question, answer: record.answer });
+}
+
+// Apply the reviewed draft into the editable QA list only; persisting stays the
+// operator's explicit "Save" click (which replaces the whole set server-side).
+function applyRebuild() {
+  const next = rebuildDraft.value
+    .map((p) => ({ question: p.question, answer: p.answer }))
+    .filter((p) => (p.question || "").trim() || (p.answer || "").trim());
+  database.value.qa_knowledge.records = next.length
+    ? next
+    : [{ question: "", answer: "" }];
+  cancelRebuild();
 }
 
 function getRootDomain(url) {
@@ -1831,5 +2134,149 @@ export default { name: "AiBotDatabase" };
   font-weight: bold;
   border-radius: 15px;
   box-shadow: 0 0 0 2px white;
+}
+
+.rebuild {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rebuild__label {
+  font-weight: 600;
+}
+.rebuild__run {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rebuild__hint {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+}
+.rebuild__summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 12px;
+}
+.rebuild__count {
+  margin-left: auto;
+  color: rgba(0, 0, 0, 0.45);
+}
+.rebuild__empty {
+  color: rgba(0, 0, 0, 0.45);
+  padding: 12px 0;
+}
+.rebuild__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rebuild__row {
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #f0f0f0;
+  border-left-width: 3px;
+  border-radius: 4px;
+}
+.rebuild__row--added {
+  border-left-color: #52c41a;
+  background: #f6ffed;
+}
+.rebuild__row--removed {
+  border-left-color: #ff4d4f;
+  background: #fff1f0;
+}
+.rebuild__row--modified {
+  border-left-color: #faad14;
+  background: #fffbe6;
+}
+.rebuild__row--unchanged {
+  border-left-color: #d9d9d9;
+}
+.rebuild__row-tag {
+  flex-shrink: 0;
+  height: fit-content;
+}
+.rebuild__row-body {
+  min-width: 0;
+}
+.rebuild__q {
+  font-weight: 600;
+  word-break: break-word;
+}
+.rebuild__a {
+  margin-top: 2px;
+  color: rgba(0, 0, 0, 0.65);
+  word-break: break-word;
+}
+.rebuild__a del {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.rebuild-page {
+  width: 100%;
+}
+.rebuild__page-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.rebuild__setup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.rebuild__row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rebuild__row-head .field {
+  flex: 1;
+}
+.rebuild__idx {
+  color: rgba(0, 0, 0, 0.45);
+  min-width: 22px;
+}
+.rebuild__answer {
+  margin-top: 8px;
+}
+.rebuild__original {
+  margin-top: 6px;
+  font-size: 13px;
+}
+.rebuild__original-label {
+  color: rgba(0, 0, 0, 0.45);
+  margin-right: 6px;
+}
+.rebuild__row {
+  flex-direction: column;
+}
+.rebuild__row--removed {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.rebuild__section {
+  margin: 20px 0 8px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.65);
+}
+.rebuild__add {
+  margin-top: 10px;
+}
+.rebuild__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
 }
 </style>
