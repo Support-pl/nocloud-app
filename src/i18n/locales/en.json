@@ -982,7 +982,9 @@
         "added": "New",
         "removed": "Removed",
         "modified": "Changed",
-        "unchanged": "Unchanged"
+        "unchanged": "Unchanged",
+        "original_answer": "Was",
+        "removed_section": "Removed"
       },
       "actions": {
         "create_database": "Add knowledge base",
@@ -990,7 +992,9 @@
         "add_qa_record": "Add record",
         "rebuild_qa": "Reorganise",
         "rebuild_qa_run": "Analyse",
+        "rebuild_qa_reanalyse": "Re-analyse",
         "rebuild_qa_apply": "Apply changes",
+        "restore": "Restore",
         "save_qa_records": "Save",
         "attach_database": "Connect database",
         "detach_database": "Disconnect database",

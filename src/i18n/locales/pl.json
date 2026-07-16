@@ -982,7 +982,9 @@
         "added": "Nowe",
         "removed": "Usunięte",
         "modified": "Zmienione",
-        "unchanged": "Bez zmian"
+        "unchanged": "Bez zmian",
+        "original_answer": "Było",
+        "removed_section": "Usunięte"
       },
       "actions": {
         "create_database": "Dodaj bazę wiedzy",
@@ -990,7 +992,9 @@
         "add_qa_record": "Dodaj rekord",
         "rebuild_qa": "Reorganizuj",
         "rebuild_qa_run": "Analizuj",
+        "rebuild_qa_reanalyse": "Analizuj ponownie",
         "rebuild_qa_apply": "Zastosuj zmiany",
+        "restore": "Przywróć",
         "save_qa_records": "Zapisz",
         "attach_database": "Połącz bazę danych",
         "detach_database": "Odłącz bazę danych",

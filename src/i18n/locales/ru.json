@@ -696,7 +696,9 @@
         "added": "Новое",
         "removed": "Удалено",
         "modified": "Изменено",
-        "unchanged": "Без изменений"
+        "unchanged": "Без изменений",
+        "original_answer": "Было",
+        "removed_section": "Удалённые"
       },
       "actions": {
         "create_database": "Добавить базу знаний",
@@ -704,7 +706,9 @@
         "add_qa_record": "Добавить запись",
         "rebuild_qa": "Пересобрать",
         "rebuild_qa_run": "Анализ",
+        "rebuild_qa_reanalyse": "Повторить анализ",
         "rebuild_qa_apply": "Применить",
+        "restore": "Вернуть",
         "save_qa_records": "Сохранить",
         "attach_database": "Подключить базу знаний",
         "detach_database": "Отключить базу знаний",
