@@ -293,6 +293,15 @@ export const useAiBotsStore = defineStore("aiBots", () => {
       }
     },
 
+    async rebuildQa({ bot, database, prompt }) {
+      const data = await api.post("/agents/api/rebuild_qa", {
+        bot,
+        database,
+        prompt,
+      });
+      return data.pairs || [];
+    },
+
     async updateBot(bot) {
       try {
         const data = await api.post("/agents/api/update_bot", {

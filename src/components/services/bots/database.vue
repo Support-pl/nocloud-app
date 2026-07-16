@@ -121,6 +121,19 @@
             <add-icon />
           </a-button>
 
+          <a-tooltip>
+            <template #title>
+              {{ t("bots_databases.tips.rebuild_qa") }}
+            </template>
+            <a-button
+              :disabled="isSaveQaKnoledgeLoading || !hasSavedQaRecords"
+              @click="openRebuild"
+            >
+              {{ t("bots_databases.actions.rebuild_qa") }}
+              <rebuild-icon />
+            </a-button>
+          </a-tooltip>
+
           <a-button
             :loading="isSaveQaKnoledgeLoading"
             :type="isSaveQaKnowledgePrimary ? 'primary' : 'default'"
@@ -793,6 +806,100 @@
         >
       </template>
     </a-modal>
+
+    <a-modal
+      :open="isRebuildOpen"
+      :title="t('bots_databases.actions.rebuild_qa')"
+      :width="820"
+      :mask-closable="false"
+      @cancel="closeRebuild"
+    >
+      <div class="rebuild">
+        <label class="rebuild__label">
+          {{ t("bots_databases.fields.rebuild_prompt") }}
+        </label>
+        <a-textarea
+          v-model:value="rebuildPrompt"
+          :auto-size="{ minRows: 3, maxRows: 8 }"
+          :disabled="isRebuildLoading"
+        />
+
+        <div class="rebuild__run">
+          <a-button
+            type="primary"
+            :loading="isRebuildLoading"
+            @click="runRebuild"
+          >
+            {{ t("bots_databases.actions.rebuild_qa_run") }}
+          </a-button>
+          <span class="rebuild__hint">
+            {{ t("bots_databases.tips.rebuild_qa_run") }}
+          </span>
+        </div>
+
+        <template v-if="rebuildDiff">
+          <div class="rebuild__summary">
+            <a-tag color="green">+{{ rebuildDiff.added }}</a-tag>
+            <a-tag color="red">-{{ rebuildDiff.removed }}</a-tag>
+            <a-tag color="orange">~{{ rebuildDiff.modified }}</a-tag>
+            <a-tag>={{ rebuildDiff.unchanged }}</a-tag>
+            <span class="rebuild__count">
+              {{ rebuildDiff.before }} → {{ rebuildDiff.after }}
+            </span>
+          </div>
+
+          <div v-if="!rebuildDiff.rows.length" class="rebuild__empty">
+            {{ t("bots_databases.tips.rebuild_qa_empty") }}
+          </div>
+
+          <div class="rebuild__rows">
+            <div
+              v-for="(row, i) in rebuildDiff.rows"
+              :key="i"
+              class="rebuild__row"
+              :class="`rebuild__row--${row.status}`"
+            >
+              <a-tag
+                :color="diffTagColor(row.status)"
+                class="rebuild__row-tag"
+              >
+                {{ t(`bots_databases.diff.${row.status}`) }}
+              </a-tag>
+
+              <div class="rebuild__row-body">
+                <div class="rebuild__q">
+                  {{ (row.after || row.before).question }}
+                </div>
+
+                <div class="rebuild__a">
+                  <template v-if="row.status === 'removed'">
+                    <del>{{ row.before.answer }}</del>
+                  </template>
+                  <template v-else-if="row.status === 'modified'">
+                    <del>{{ row.before.answer }}</del>
+                    <div>{{ row.after.answer }}</div>
+                  </template>
+                  <template v-else>
+                    {{ (row.after || row.before).answer }}
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <template #footer>
+        <a-button @click="closeRebuild">{{ t("Cancel") }}</a-button>
+        <a-button
+          type="primary"
+          :disabled="!rebuildDiff"
+          @click="applyRebuild"
+        >
+          {{ t("bots_databases.actions.rebuild_qa_apply") }}
+        </a-button>
+      </template>
+    </a-modal>
   </a-col>
   <loading v-else />
 </template>
@@ -832,6 +939,10 @@ const saveIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/SaveOutlined")
 );
 
+const rebuildIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/ThunderboltOutlined")
+);
+
 const attachIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlusOutlined")
 );
@@ -869,6 +980,10 @@ const isDataLoading = ref(false);
 const isDetachLoading = ref(false);
 const isAttachLoading = ref(false);
 const isSaveQaKnoledgeLoading = ref(false);
+const isRebuildOpen = ref(false);
+const isRebuildLoading = ref(false);
+const rebuildPrompt = ref("");
+const rebuildProposed = ref(null); // null = not run yet; array = model proposal
 const collapseKey = ref();
 const database = ref({ name: "" });
 const editDatabaseFormRef = ref();
@@ -1160,6 +1275,137 @@ function handleAddQaKnowledge() {
 
 function handleRemoveQaKnowledge(index) {
   database.value.qa_knowledge.records.splice(index, 1);
+}
+
+// Default rebuild instruction shown (and editable) in the modal. Sent verbatim;
+// the backend only falls back to its own default when the field is left empty.
+const DEFAULT_REBUILD_PROMPT = `You are cleaning up an existing customer-support FAQ knowledge base.
+You receive the current Q&A entries. Return an improved, reorganised set:
+- Remove exact and near-duplicate entries, keeping the clearest single version.
+- Merge entries that answer the same question into one complete answer.
+- Split an entry that bundles several unrelated questions into separate entries.
+- Drop empty, broken or meaningless entries.
+- Keep the original meaning and facts — never invent answers that are not implied by the input.
+- Keep each question general and reusable and each answer self-contained (no names, no chat-specific IDs).
+- Preserve the language of the entries.`;
+
+// The base as the backend sees it (saved records), so the diff matches what the
+// model was actually given — not unsaved in-progress edits.
+const savedQaRecords = computed(() =>
+  (originalDatabase.value?.qa_knowledge?.records || []).filter(
+    (r) => (r.question || "").trim() || (r.answer || "").trim()
+  )
+);
+
+const hasSavedQaRecords = computed(() => savedQaRecords.value.length > 0);
+
+const qaNorm = (s) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+const rebuildDiff = computed(() => {
+  if (!rebuildProposed.value) return null;
+  const before = savedQaRecords.value;
+  const after = rebuildProposed.value;
+  const usedAfter = new Set();
+  const rows = [];
+  let added = 0,
+    removed = 0,
+    modified = 0,
+    unchanged = 0;
+
+  for (const b of before) {
+    let matchIdx = -1;
+    for (let i = 0; i < after.length; i++) {
+      if (usedAfter.has(i)) continue;
+      if (qaNorm(after[i].question) === qaNorm(b.question)) {
+        matchIdx = i;
+        break;
+      }
+    }
+    if (matchIdx === -1) {
+      rows.push({ status: "removed", before: b });
+      removed++;
+      continue;
+    }
+    usedAfter.add(matchIdx);
+    const a = after[matchIdx];
+    if (qaNorm(a.answer) === qaNorm(b.answer)) {
+      rows.push({ status: "unchanged", before: b, after: a });
+      unchanged++;
+    } else {
+      rows.push({ status: "modified", before: b, after: a });
+      modified++;
+    }
+  }
+  for (let i = 0; i < after.length; i++) {
+    if (usedAfter.has(i)) continue;
+    rows.push({ status: "added", after: after[i] });
+    added++;
+  }
+
+  const rank = { added: 0, modified: 1, removed: 2, unchanged: 3 };
+  rows.sort((x, y) => rank[x.status] - rank[y.status]);
+
+  return {
+    rows,
+    added,
+    removed,
+    modified,
+    unchanged,
+    before: before.length,
+    after: after.length,
+  };
+});
+
+function diffTagColor(status) {
+  return { added: "green", removed: "red", modified: "orange" }[status] || "";
+}
+
+function openRebuild() {
+  rebuildProposed.value = null;
+  // Come back to the last instruction this bot used; default on first run.
+  rebuildPrompt.value =
+    bot.value?.settings?.rebuild_prompt || DEFAULT_REBUILD_PROMPT;
+  isRebuildOpen.value = true;
+}
+
+function closeRebuild() {
+  isRebuildOpen.value = false;
+}
+
+async function runRebuild() {
+  try {
+    isRebuildLoading.value = true;
+    rebuildProposed.value = await aiBotsStore.rebuildQa({
+      bot: props.service.data.bot_uuid,
+      database: database.value.id,
+      prompt: rebuildPrompt.value,
+    });
+    // Mirror the backend persist into the cached bot so a re-open prefills it.
+    if (rebuildPrompt.value?.trim() && bot.value?.settings) {
+      bot.value.settings.rebuild_prompt = rebuildPrompt.value;
+    }
+  } catch (err) {
+    openNotification("error", {
+      message: `Error: ${
+        err?.response?.data?.message || err?.response?.data || "Unknown"
+      }.`,
+    });
+  } finally {
+    isRebuildLoading.value = false;
+  }
+}
+
+// Apply the proposal into the editable list only; persisting stays the operator's
+// explicit "Save Q&A records" click (which replaces the whole set server-side).
+function applyRebuild() {
+  const next = (rebuildProposed.value || []).map((p) => ({
+    question: p.question,
+    answer: p.answer,
+  }));
+  database.value.qa_knowledge.records = next.length
+    ? next
+    : [{ question: "", answer: "" }];
+  isRebuildOpen.value = false;
 }
 
 function getRootDomain(url) {
@@ -1831,5 +2077,87 @@ export default { name: "AiBotDatabase" };
   font-weight: bold;
   border-radius: 15px;
   box-shadow: 0 0 0 2px white;
+}
+
+.rebuild {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rebuild__label {
+  font-weight: 600;
+}
+.rebuild__run {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rebuild__hint {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+}
+.rebuild__summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 12px;
+}
+.rebuild__count {
+  margin-left: auto;
+  color: rgba(0, 0, 0, 0.45);
+}
+.rebuild__empty {
+  color: rgba(0, 0, 0, 0.45);
+  padding: 12px 0;
+}
+.rebuild__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.rebuild__row {
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #f0f0f0;
+  border-left-width: 3px;
+  border-radius: 4px;
+}
+.rebuild__row--added {
+  border-left-color: #52c41a;
+  background: #f6ffed;
+}
+.rebuild__row--removed {
+  border-left-color: #ff4d4f;
+  background: #fff1f0;
+}
+.rebuild__row--modified {
+  border-left-color: #faad14;
+  background: #fffbe6;
+}
+.rebuild__row--unchanged {
+  border-left-color: #d9d9d9;
+}
+.rebuild__row-tag {
+  flex-shrink: 0;
+  height: fit-content;
+}
+.rebuild__row-body {
+  min-width: 0;
+}
+.rebuild__q {
+  font-weight: 600;
+  word-break: break-word;
+}
+.rebuild__a {
+  margin-top: 2px;
+  color: rgba(0, 0, 0, 0.65);
+  word-break: break-word;
+}
+.rebuild__a del {
+  color: rgba(0, 0, 0, 0.35);
 }
 </style>

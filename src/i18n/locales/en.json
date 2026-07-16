@@ -916,6 +916,7 @@
         "name": "Name",
         "question": "Question",
         "answer": "Answer",
+        "rebuild_prompt": "Reorganisation instruction",
         "knowledge_description": "Knowledge source description",
         "knowledge_url": "Knowledge source URL",
         "integration_column_type": "Type",
@@ -942,6 +943,9 @@
       },
       "tips": {
         "not_valid_form": "Please check the validity of the entered data.",
+        "rebuild_qa": "Let the AI clean up this base: remove duplicates, merge and split entries. You review the diff before anything is saved.",
+        "rebuild_qa_run": "Nothing is saved until you apply the result and click Save.",
+        "rebuild_qa_empty": "No changes proposed — the base is already clean.",
         "create_database": "Create a new knowledge base for the bot to use in answers",
         "delete_database": "Delete this base? All content will be permanently removed",
         "attach_database": "Enable this base to let the bot start using it",
@@ -974,10 +978,19 @@
         "knowledge_file_search": "Smart Files (Vectorized)",
         "knowledge_site_search": "Connected Sites"
       },
+      "diff": {
+        "added": "New",
+        "removed": "Removed",
+        "modified": "Changed",
+        "unchanged": "Unchanged"
+      },
       "actions": {
         "create_database": "Add knowledge base",
         "create_knowledge": "Add source",
         "add_qa_record": "Add record",
+        "rebuild_qa": "Reorganise",
+        "rebuild_qa_run": "Analyse",
+        "rebuild_qa_apply": "Apply changes",
         "save_qa_records": "Save",
         "attach_database": "Connect database",
         "detach_database": "Disconnect database",
