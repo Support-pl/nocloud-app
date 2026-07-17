@@ -788,6 +788,7 @@
         "promt": "Prompt",
         "processing_prompt": "Prompt przetwarzania czatu",
         "processing_model": "Model przetwarzania czatu",
+        "schedule": "Harmonogram pracy",
         "model": "Model",
         "temperature": "Temperatura",
         "delay": "Opóźnienie",
@@ -864,6 +865,7 @@
         "promt": "Prompt to początkowa instrukcja lub kontekst, który podajesz asystentowi, aby nakierować jego odpowiedzi.\nDobrze przygotowany prompt pomaga uzyskać bardziej trafne i dokładne odpowiedzi.\nMożesz używać przykładów, instrukcji lub pytań, aby zdefiniować kontekst.",
         "processing_prompt": "Używany, gdy operator naciśnie „Przetwórz czat”, aby wyodrębnić pary pytanie/odpowiedź z rozwiązanej rozmowy.\nPozostaw puste, aby użyć wbudowanej instrukcji domyślnej.\nDotyczy tylko botów podłączonych do kanału czatu wsparcia.",
         "processing_model": "Model używany do wyodrębniania par pytanie/odpowiedź podczas przetwarzania czatu.\nPozostaw puste, aby użyć domyślnego.\nDotyczy tylko botów podłączonych do kanału czatu wsparcia.",
+        "schedule": "Tygodniowy harmonogram pracy bota.\nPomaluj każdą godzinę: bot wyłączony, odpowiedzi przez zatwierdzenie operatora lub prosto do klienta.\nPrzełączniki konkretnego czatu zawsze mają pierwszeństwo nad harmonogramem.\nDotyczy tylko botów podłączonych do kanału czatu wsparcia.",
         "temperature": "Im wyższa wartość temperatury, tym bardziej kreatywne i różnorodne odpowiedzi.\n0 — ścisłe i przewidywalne.\n0.5 — zrównoważone i naturalne.\n1 — bardzo kreatywne.",
         "delay": "Opóźnienie przed odpowiedzią bota.\nUstawione w sekundach.\n0 — natychmiastowa odpowiedź.\n3 — bot czeka 3 sekundy przed odpowiedzią.\nSłuży do symulacji ludzkiej pauzy.",
         "channels": "Utwórz kanał dla swojego asystenta.\nWszystkie przychodzące wiadomości na tym kanale będą automatycznie przetwarzane i odpowiadane przez bota.",
@@ -877,6 +879,30 @@
         "delete_chanell": "Usuń",
         "update_chanell": "Zapisz",
         "all_chats": "Wszystkie czaty"
+      },
+      "schedule": {
+        "enable": "Włącz harmonogram",
+        "timezone": "Strefa czasowa",
+        "brush": "Pędzel",
+        "mode": {
+          "off": "Wył.",
+          "review": "Recenzja",
+          "auto": "Auto"
+        },
+        "mode_hint": {
+          "off": "bot milczy",
+          "review": "odpowiedzi przez zatwierdzenie operatora",
+          "auto": "odpowiedzi prosto do klienta"
+        },
+        "days": {
+          "mon": "Pon",
+          "tue": "Wt",
+          "wed": "Śr",
+          "thu": "Czw",
+          "fri": "Pt",
+          "sat": "Sob",
+          "sun": "Nd"
+        }
       }
     },
     "ai_bot_page": {

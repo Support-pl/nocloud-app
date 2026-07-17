@@ -788,6 +788,7 @@
         "promt": "Prompt",
         "processing_prompt": "Chat processing prompt",
         "processing_model": "Chat processing model",
+        "schedule": "Work schedule",
         "model": "Model",
         "temperature": "Temperature",
         "delay": "Delay",
@@ -864,6 +865,7 @@
         "promt": "A prompt is the initial instruction or context you give to the assistant to guide its responses.\nA well-crafted prompt helps produce more relevant and accurate answers.\nYou can use examples, instructions, or questions to define the context.",
         "processing_prompt": "Used when an operator presses \"Process chat\" to extract Q&A pairs from a resolved conversation.\nLeave empty to use the built-in default instruction.\nOnly relevant for bots connected to the support chat channel.",
         "processing_model": "The model used to extract Q&A pairs when processing a chat.\nLeave empty to use the built-in default.\nOnly relevant for bots connected to the support chat channel.",
+        "schedule": "Weekly work schedule for the bot.\nPaint each hour: bot off, replies through operator approval, or replies straight to the customer.\nA chat's own switches always override the schedule.\nOnly relevant for bots connected to the support chat channel.",
         "temperature": "The higher the temperature value, the more creative and varied the responses.\n0 — strict and predictable.\n0.5 — balanced and natural.\n1 — highly creative.",
         "delay": "The delay before the bot responds.\nSet in seconds.\n0 — instant reply.\n3 — the bot waits 3 seconds before replying.\nUsed to simulate a human-like pause.",
         "channels": "Create a channel for your assistant.\nAll incoming messages to this channel will be automatically processed and responded to by the bot.",
@@ -877,6 +879,30 @@
         "delete_chanell": "Delete",
         "update_chanell": "Save",
         "all_chats": "All chats"
+      },
+      "schedule": {
+        "enable": "Enable schedule",
+        "timezone": "Timezone",
+        "brush": "Paint",
+        "mode": {
+          "off": "Off",
+          "review": "Review",
+          "auto": "Auto"
+        },
+        "mode_hint": {
+          "off": "bot stays silent",
+          "review": "replies go to operator approval",
+          "auto": "replies go straight to the customer"
+        },
+        "days": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        }
       }
     },
     "ai_bot_page": {

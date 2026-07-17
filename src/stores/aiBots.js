@@ -315,6 +315,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           enable_spam_filter: bot.settings.enable_spam_filter,
           role: bot.settings.role,
           disabled: bot.settings.disabled,
+          schedule: bot.settings.schedule,
         });
 
         bots.value.set(bot.id, data);

@@ -331,6 +331,23 @@
         />
       </a-col>
 
+      <a-col span="24" v-if="hasChatChannel" style="margin-top: 10px">
+        <span class="field_title"
+          >{{ t("bots.fields.schedule") }}:
+
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.tips.schedule').replaceAll('\n', '<br/>')" />
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <bot-schedule
+          style="margin-top: 10px"
+          v-model="bot.settings.schedule"
+        />
+      </a-col>
+
       <a-col span="24" style="padding-bottom: 40px; margin-top: 10px">
         <a-row justify="end"> </a-row>
       </a-col>
@@ -594,6 +611,7 @@ import { useAiBotsStore } from "@/stores/aiBots";
 import { useChatsStore } from "@/stores/chats";
 import { marked } from "marked";
 import Loading from "@/components/ui/loading.vue";
+import BotSchedule from "@/components/services/bots/bot_schedule.vue";
 import { storeToRefs } from "pinia";
 import { useCurrenciesStore } from "@/stores/currencies";
 
@@ -832,6 +850,9 @@ async function fetch() {
     }
     if (bot.value.settings.processing_model == null) {
       bot.value.settings.processing_model = "";
+    }
+    if (bot.value.settings.schedule == null) {
+      bot.value.settings.schedule = { enabled: false, tz: "", default: "review", rules: [] };
     }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
     await Promise.all([aiBotsStore.getRoles(), chatsStore.fetch_models_list()]);
