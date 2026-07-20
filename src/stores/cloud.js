@@ -139,8 +139,11 @@ export const useCloudStore = defineStore("cloud", () => {
         newInstance.resources = { ...resources, ips_private: 0, ips_public: 1 };
       }
     } else if (newGroup.type === "keyweb") {
+      // ponytail: authData (username/password/template_id) is the reliable
+      // source; options.config gets wiped by the provider/location reset watch.
       newInstance.config = {
         ...options.config,
+        ...newInstance.config,
       };
       newInstance.resources = {};
     }
