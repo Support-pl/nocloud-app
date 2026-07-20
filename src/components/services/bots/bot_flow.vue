@@ -1,234 +1,250 @@
 <template>
-  <div class="flow">
-    <div class="flow__topbar">
-      <a-radio-group v-model:value="view" button-style="solid" size="small">
-        <a-radio-button value="editor">{{ t("bots.flow.view_editor") }}</a-radio-button>
-        <a-radio-button value="graph">{{ t("bots.flow.view_graph") }}</a-radio-button>
-      </a-radio-group>
+  <div class="canvas">
+    <div class="canvas__bar">
+      <a-button type="primary" size="small" @click="addAgent">
+        + {{ t("bots.flow.add_agent") }}
+      </a-button>
+      <a-popconfirm
+        v-if="nodes.length"
+        :title="t('bots.flow.load_example_confirm')"
+        :ok-text="t('Yes')"
+        :cancel-text="t('Cancel')"
+        @confirm="loadPreset"
+      >
+        <a-button size="small">{{ t("bots.flow.load_example") }}</a-button>
+      </a-popconfirm>
+      <a-button v-else size="small" @click="loadPreset">
+        {{ t("bots.flow.load_example") }}
+      </a-button>
+      <span class="canvas__hint">{{ t("bots.flow.canvas_hint") }}</span>
     </div>
 
-    <!-- ============================ EDITOR ============================ -->
-    <template v-if="view === 'editor'">
-      <a-alert
-        type="info"
-        show-icon
-        style="margin-bottom: 12px"
-        :message="t('bots.flow.intro')"
-      />
-
-      <draggable
-        v-model="steps"
-        item-key="_id"
-        handle=".flow__grip"
-        :animation="180"
-        ghost-class="flow__ghost"
-        drag-class="flow__dragging"
-        @change="emitChange"
+    <div class="canvas__stage">
+      <VueFlow
+        v-model:nodes="nodes"
+        v-model:edges="edges"
+        :fit-view-on-init="true"
+        :min-zoom="0.3"
+        :max-zoom="1.6"
+        :connection-line-style="{ stroke: '#1677ff', strokeWidth: 2 }"
+        @connect="onConnect"
+        @node-click="onNodeClick"
+        @edge-double-click="onEdgeDblClick"
       >
-        <template #item="{ element: step, index: i }">
-          <div class="flow__step">
-            <div class="flow__head">
-              <span
-                class="flow__grip"
-                :title="t('bots.flow.drag_hint')"
-                >⠿</span
-              >
-              <span class="flow__badge">{{ i + 1 }}</span>
-          <a-input
-            v-model:value="step.name"
-            class="flow__name"
-            :placeholder="t('bots.flow.step_name_ph')"
-            @change="emitChange"
-          />
-          <a-tooltip :title="t('bots.flow.reply_tip')">
-            <a-checkbox v-model:checked="step.reply" @change="emitChange">
-              {{ t("bots.flow.reply") }}
-            </a-checkbox>
+        <Background :gap="18" pattern-color="#e2e2e2" />
+
+        <Panel position="top-right" class="ctrl">
+          <a-tooltip :title="t('bots.flow.undo')">
+            <button class="ctrl__btn" :disabled="!canUndo" @click="undo">
+              <undo-outlined />
+            </button>
           </a-tooltip>
-          <a-button class="flow__del" size="small" danger @click="removeStep(i)"
-            >✕</a-button
+          <a-tooltip :title="t('bots.flow.redo')">
+            <button class="ctrl__btn" :disabled="!canRedo" @click="redo">
+              <redo-outlined />
+            </button>
+          </a-tooltip>
+          <span class="ctrl__sep" />
+          <a-popconfirm
+            :title="t('bots.flow.reset') + '?'"
+            :ok-text="t('Yes')"
+            :cancel-text="t('Cancel')"
+            @confirm="resetFlow"
           >
-        </div>
+            <a-tooltip :title="t('bots.flow.reset')">
+              <button class="ctrl__btn"><reload-outlined /></button>
+            </a-tooltip>
+          </a-popconfirm>
+        </Panel>
 
-        <div class="flow__row">
-          <div class="flow__col">
-            <label class="flow__lbl">{{ t("bots.flow.model") }}</label>
-            <a-select
-              :options="modelsOptions"
-              style="width: 100%"
-              allow-clear
-              :placeholder="t('bots.flow.model_default')"
-              :value="step.model || undefined"
-              @update:value="((step.model = $event || ''), emitChange())"
-            />
+        <template #node-agent="{ id, data }">
+          <div
+            class="fnode"
+            :class="{
+              'fnode--reply': data.reply,
+              'fnode--branch': outcomesOf(data).length > 1,
+              'fnode--sel': id === selectedId,
+            }"
+          >
+            <Handle type="target" :position="Position.Left" class="fnode__in" />
+            <div class="fnode__title">
+              {{ data.name || t("bots.flow.unnamed") }}
+            </div>
+            <div class="fnode__meta">
+              <span v-if="data.reply" class="fnode__tag fnode__tag--reply"
+                >✉ {{ t("bots.flow.reply") }}</span
+              >
+              <span v-if="data.model" class="fnode__tag">{{ data.model }}</span>
+              <span v-if="(data.database_ids || []).length" class="fnode__tag"
+                >RAG</span
+              >
+            </div>
+            <div class="fnode__outs">
+              <div
+                v-for="(o, oi) in outcomesOf(data)"
+                :key="o.id"
+                class="fnode__out"
+              >
+                <span
+                  v-if="o.id !== 'next'"
+                  class="fnode__out-dot"
+                  :style="{ background: colorFor(oi) }"
+                />
+                <span class="fnode__out-lbl">{{
+                  o.id === "next" ? t("bots.flow.next") : o.label || "…"
+                }}</span>
+                <Handle
+                  :id="o.id"
+                  type="source"
+                  :position="Position.Right"
+                  class="fnode__port"
+                  :style="{
+                    top: outTop(oi, outcomesOf(data).length),
+                    background: o.id === 'next' ? '#8c8c8c' : colorFor(oi),
+                  }"
+                />
+              </div>
+            </div>
           </div>
-          <div class="flow__col">
-            <label class="flow__lbl">{{ t("bots.flow.databases") }}</label>
-            <a-select
-              mode="multiple"
-              style="width: 100%"
-              allow-clear
-              :options="databaseOptions"
-              :placeholder="t('bots.flow.databases_ph')"
-              v-model:value="step.database_ids"
-              @change="emitChange"
-            />
-          </div>
-          <div class="flow__col flow__col--switch">
-            <label class="flow__lbl">{{ t("bots.flow.use_history") }}</label>
-            <a-switch v-model:checked="step.use_history" @change="emitChange" />
-          </div>
-        </div>
+        </template>
+      </VueFlow>
+    </div>
 
-        <label class="flow__lbl">{{ t("bots.flow.prompt") }}</label>
+    <!-- editor panel -->
+    <a-drawer
+      :open="!!selectedId"
+      :title="t('bots.flow.edit_agent')"
+      placement="right"
+      :width="400"
+      :mask="false"
+      @close="selectedId = null"
+    >
+      <template v-if="selectedNode">
+        <label class="fld__lbl">{{ t("bots.flow.step_name_ph") }}</label>
+        <a-input
+          v-model:value="selectedNode.data.name"
+          :placeholder="t('bots.flow.step_name_ph')"
+          @change="emitChange"
+        />
+
+        <label class="fld__lbl">{{ t("bots.flow.prompt") }}</label>
         <a-textarea
-          v-model:value="step.prompt"
-          :auto-size="{ minRows: 3 }"
+          v-model:value="selectedNode.data.prompt"
+          :auto-size="{ minRows: 4 }"
           :placeholder="t('bots.flow.prompt_ph')"
           @change="emitChange"
         />
-        <div class="flow__vars">
-          <span class="flow__vars-lbl">{{ t("bots.flow.available_vars") }}:</span>
-          <a-tag
-            v-for="v in varsBefore(i)"
-            :key="v"
-            class="flow__var"
-            @click="insertVar(step, v)"
-            >{{ wrap(v) }}</a-tag
-          >
+
+        <label class="fld__lbl">{{ t("bots.flow.model") }}</label>
+        <a-select
+          :options="modelsOptions"
+          style="width: 100%"
+          allow-clear
+          :placeholder="t('bots.flow.model_default')"
+          :value="selectedNode.data.model || undefined"
+          @update:value="((selectedNode.data.model = $event || ''), emitChange())"
+        />
+
+        <label class="fld__lbl">{{ t("bots.flow.databases") }}</label>
+        <a-select
+          mode="multiple"
+          style="width: 100%"
+          allow-clear
+          :options="databaseOptions"
+          :placeholder="t('bots.flow.databases_ph')"
+          v-model:value="selectedNode.data.database_ids"
+          @change="emitChange"
+        />
+
+        <div class="fld__switch">
+          <span>{{ t("bots.flow.use_history") }}</span>
+          <a-switch
+            v-model:checked="selectedNode.data.use_history"
+            @change="emitChange"
+          />
+        </div>
+        <div class="fld__switch">
+          <span>{{ t("bots.flow.reply") }}</span>
+          <a-switch
+            v-model:checked="selectedNode.data.reply"
+            @change="emitChange"
+          />
         </div>
 
-        <!-- Output fields -> compiled to a JSON schema on save -->
-        <div class="flow__block">
-          <label class="flow__lbl"
-            >{{ t("bots.flow.output") }}
-            <a-tooltip :title="t('bots.flow.output_tip')"
-              ><span class="flow__hint">?</span></a-tooltip
-            ></label
-          >
-          <div v-for="(f, fi) in step._fields" :key="fi" class="flow__field">
-            <a-input
-              v-model:value="f.key"
-              style="width: 150px"
-              :placeholder="t('bots.flow.field_key_ph')"
-              @change="emitChange"
-            />
-            <a-select
-              v-model:value="f.type"
-              style="width: 110px"
-              :options="typeOptions"
-              @change="emitChange"
-            />
-            <a-select
-              v-if="enumAllowed(f.type)"
-              mode="tags"
-              style="flex: 1; min-width: 150px"
-              :placeholder="t('bots.flow.field_enum_ph')"
-              v-model:value="f.enum"
-              @change="emitChange"
-            />
-            <span v-else class="flow__field-note">{{ t("bots.flow.no_enum") }}</span>
-            <a-button size="small" danger @click="removeField(step, fi)"
-              >✕</a-button
-            >
-          </div>
-          <a-button size="small" type="dashed" @click="addField(step)">
-            + {{ t("bots.flow.add_field") }}
-          </a-button>
-        </div>
+        <a-divider />
 
-        <!-- Routes -->
-        <div class="flow__block">
-          <label class="flow__lbl"
-            >{{ t("bots.flow.routes") }}
-            <a-tooltip :title="t('bots.flow.routes_tip')"
-              ><span class="flow__hint">?</span></a-tooltip
-            ></label
-          >
-          <div v-for="(r, ri) in step.routes" :key="ri" class="flow__route">
-            <span class="flow__route-if">{{ t("bots.flow.when") }}</span>
-            <a-select
-              v-model:value="r.when_var"
-              style="width: 150px"
-              allow-clear
-              :options="varOptions(i)"
-              :placeholder="t('bots.flow.route_default')"
-              @change="emitChange"
-            />
-            <span class="flow__route-eq">=</span>
-            <a-input
-              v-model:value="r.equals"
-              style="width: 120px"
-              :placeholder="t('bots.flow.value_ph')"
-              @change="emitChange"
-            />
-            <span class="flow__route-then">→</span>
-            <a-select
-              v-model:value="r.goto"
-              style="width: 150px"
-              :options="gotoOptions"
-              @change="emitChange"
-            />
-            <a-button size="small" danger @click="removeRoute(step, ri)"
-              >✕</a-button
-            >
-          </div>
-          <a-button size="small" type="dashed" @click="addRoute(step)">
-            + {{ t("bots.flow.add_route") }}
-          </a-button>
-        </div>
-          </div>
+        <!-- linear flow: single next target -->
+        <template v-if="!selectedNode.data.outcomes.length">
+          <label class="fld__lbl">{{ t("bots.flow.next") }} →</label>
+          <a-select
+            style="width: 100%"
+            :value="edgeTargetOf(selectedId, 'next')"
+            :options="nodeTargetOptions"
+            @change="(v) => setTarget(selectedId, 'next', v)"
+          />
         </template>
-      </draggable>
 
-      <a-button type="primary" ghost block @click="addStep">
-        + {{ t("bots.flow.add_step") }}
-      </a-button>
-    </template>
-
-    <!-- ============================ GRAPH ============================ -->
-    <div v-else class="graph">
-      <div
-        v-for="(node, i) in graphNodes"
-        :key="node.id"
-        class="graph__row"
-      >
+        <label class="fld__lbl">{{ t("bots.flow.branches") }}</label>
+        <p class="fld__hint">{{ t("bots.flow.branches_hint") }}</p>
         <div
-          class="graph__node"
-          :class="{
-            'graph__node--reply': node.reply,
-            'graph__node--branch': node.edges.length > 1,
-            'graph__node--dead': !node.reachable,
-          }"
+          v-for="(b, bi) in selectedNode.data.outcomes"
+          :key="b.id"
+          class="branch"
         >
-          <span class="graph__num">{{ i + 1 }}</span>
-          <span class="graph__name">{{ node.name || t("bots.flow.unnamed") }}</span>
-          <span v-if="node.reply" class="graph__tag graph__tag--reply">✉ {{ t("bots.flow.reply") }}</span>
-          <span v-if="node.model" class="graph__tag">{{ node.model }}</span>
-          <span v-if="node.dbs" class="graph__tag">RAG·{{ node.dbs }}</span>
-          <span v-if="node.fields" class="graph__tag">{ } {{ node.fields }}</span>
-          <span v-if="!node.reachable" class="graph__tag graph__tag--dead">{{ t("bots.flow.unreachable") }}</span>
-        </div>
-        <div class="graph__edges">
-          <div v-for="(e, ei) in node.edges" :key="ei" class="graph__edge">
-            <span class="graph__arrow">↳</span>
-            <span v-if="e.cond" class="graph__cond">{{ e.cond }}</span>
-            <span v-else class="graph__cond graph__cond--default">{{ e.defaultLabel }}</span>
-            <span class="graph__to">→ {{ e.toLabel }}</span>
+          <div class="branch__head">
+            <span class="brow__dot" :style="{ background: colorFor(bi) }" />
+            <a-input
+              v-model:value="b.label"
+              :placeholder="t('bots.flow.branch_name_ph')"
+              @change="onBranchesChange"
+            />
+            <a-button size="small" type="text" danger @click="removeBranch(bi)"
+              >✕</a-button
+            >
+          </div>
+          <div class="branch__to">
+            <span class="branch__arrow">→</span>
+            <a-select
+              style="flex: 1"
+              :value="edgeTargetOf(selectedId, b.id)"
+              :options="nodeTargetOptions"
+              @change="(v) => setTarget(selectedId, b.id, v)"
+            />
           </div>
         </div>
-      </div>
-      <a-empty v-if="!graphNodes.length" :description="t('bots.flow.add_step')" />
-    </div>
+        <a-button size="small" type="dashed" block @click="addBranch">
+          + {{ t("bots.flow.add_branch") }}
+        </a-button>
+
+        <a-divider />
+        <a-popconfirm
+          :title="t('bots.flow.delete_node') + '?'"
+          :ok-text="t('Yes')"
+          :cancel-text="t('Cancel')"
+          @confirm="deleteNode(selectedId)"
+        >
+          <a-button danger block>{{ t("bots.flow.delete_node") }}</a-button>
+        </a-popconfirm>
+      </template>
+    </a-drawer>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
-import draggable from "vuedraggable";
+import { VueFlow, Handle, Position, MarkerType, Panel, useVueFlow } from "@vue-flow/core";
+import { Background } from "@vue-flow/background";
+import {
+  UndoOutlined,
+  RedoOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons-vue";
+import "@vue-flow/core/dist/style.css";
+import "@vue-flow/core/dist/theme-default.css";
 
 const { t } = useI18n();
+const { updateNodeInternals, fitView } = useVueFlow();
 
 const props = defineProps({
   modelValue: { type: Object, default: () => ({ steps: [] }) },
@@ -237,463 +253,705 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:modelValue"]);
 
-// Seed vars the backend injects before the flow runs (see runFlow in ai-bot-manager).
-const SEED_VARS = ["account_id", "channel", "input"];
+const PALETTE = ["#1677ff", "#fa8c16", "#52c41a", "#722ed1", "#eb2f96", "#13c2c2", "#faad14"];
+const colorFor = (i) => PALETTE[i % PALETTE.length];
 
-const typeOptions = [
-  { value: "string", label: "string" },
-  { value: "integer", label: "integer" },
-  { value: "number", label: "number" },
-  { value: "boolean", label: "boolean" },
-  { value: "array", label: "array" },
-];
-// enum only makes sense (and routes only compare) on scalar values.
-const enumAllowed = (type) => ["string", "integer", "number"].includes(type);
-
-const view = ref("editor");
-const steps = ref([]);
+const nodes = ref([]);
+const edges = ref([]);
+const selectedId = ref(null);
 let idSeq = 0;
+let branchSeq = 0;
+
+// ------- undo / redo / reset history -------
+const history = ref([]);
+const histIdx = ref(-1);
+let restoring = false;
+let initialSnapshot = null;
+const canUndo = computed(() => histIdx.value > 0);
+const canRedo = computed(() => histIdx.value < history.value.length - 1);
+
+function snapshot() {
+  return {
+    nodes: JSON.parse(JSON.stringify(nodes.value)),
+    edges: JSON.parse(JSON.stringify(edges.value)),
+  };
+}
+function pushHistory() {
+  if (restoring) return;
+  history.value = history.value.slice(0, histIdx.value + 1);
+  history.value.push(snapshot());
+  if (history.value.length > 60) history.value.shift();
+  histIdx.value = history.value.length - 1;
+}
+function restoreSnap(s) {
+  restoring = true;
+  nodes.value = JSON.parse(JSON.stringify(s.nodes));
+  edges.value = JSON.parse(JSON.stringify(s.edges));
+  restoring = false;
+  refreshHandles();
+  emit("update:modelValue", toFlow());
+}
+function undo() {
+  if (canUndo.value) {
+    histIdx.value--;
+    restoreSnap(history.value[histIdx.value]);
+  }
+}
+function redo() {
+  if (canRedo.value) {
+    histIdx.value++;
+    restoreSnap(history.value[histIdx.value]);
+  }
+}
+function resetFlow() {
+  if (initialSnapshot) {
+    restoreSnap(initialSnapshot);
+    pushHistory();
+  }
+  selectedId.value = null;
+}
 
 const databaseOptions = computed(() =>
   (props.databases || []).map((d) => ({ value: d.id, label: d.name || d.id }))
 );
 
-const gotoOptions = computed(() => [
-  ...steps.value
-    .filter((s) => s.name)
-    .map((s) => ({ value: s.name, label: s.name })),
+const selectedNode = computed(() =>
+  nodes.value.find((n) => n.id === selectedId.value)
+);
+
+// Targets you can send an output to (every other node + "end"). Lets you wire
+// the flow from the panel with a dropdown instead of dragging tiny ports.
+const nodeTargetOptions = computed(() => [
   { value: "", label: t("bots.flow.end") },
+  ...nodes.value
+    .filter((n) => n.id !== selectedId.value)
+    .map((n) => ({ value: n.id, label: n.data.name || n.id })),
 ]);
 
-// wrap renders a var name as a {{placeholder}} chip without tripping the Vue
-// template parser on nested mustaches.
-const wrap = (v) => "{{" + v + "}}";
-
-// Vars available to step i: seeds + output fields declared by earlier steps.
-function varsBefore(i) {
-  const out = [...SEED_VARS];
-  for (let j = 0; j < i; j++) {
-    const s = steps.value[j];
-    for (const f of s._fields || []) {
-      if (!f.key) continue;
-      out.push(f.key);
-      if (s.name) out.push(`${s.name}.${f.key}`);
-    }
-  }
-  return out;
+function edgeTargetOf(source, handle) {
+  const e = edges.value.find(
+    (x) => x.source === source && (x.sourceHandle || "next") === handle
+  );
+  return e ? e.target : "";
 }
-function varOptions(i) {
-  return varsBefore(i).map((v) => ({ value: v, label: v }));
+function setTarget(source, handle, target) {
+  edges.value = edges.value.filter(
+    (e) => !(e.source === source && (e.sourceHandle || "next") === handle)
+  );
+  if (target) edges.value.push(makeEdge(source, handle, target));
+  emitChange();
+  refreshHandles();
 }
 
-function insertVar(step, v) {
-  step.prompt = `${step.prompt || ""}${wrap(v)}`;
-  emitChange();
+// An agent's outputs. No named branches -> a single "→" that flows to the next
+// node. Named branches -> the agent itself chooses one (by its prompt), and you
+// connect each. Branch ids are stable so renaming a branch keeps its arrow.
+function outcomesOf(data) {
+  const named = (data.outcomes || []).filter((o) => o && o.id);
+  if (named.length) return named.map((o) => ({ id: o.id, label: o.label || "" }));
+  return [{ id: "next", label: "→" }];
+}
+function outTop(i, n) {
+  return `${((i + 1) * 100) / (n + 1)}%`;
+}
+function branchIndex(data, handleId) {
+  return (data.outcomes || []).findIndex((o) => o.id === handleId);
+}
+function branchLabel(data, handleId) {
+  const b = (data.outcomes || []).find((o) => o.id === handleId);
+  return b ? b.label : "";
+}
+function handleColor(data, handleId) {
+  if (handleId === "next") return "#8c8c8c";
+  const i = branchIndex(data, handleId);
+  return i >= 0 ? colorFor(i) : "#8c8c8c";
 }
 
-// Drag & drop is handled by vuedraggable (v-model="steps"); we only re-emit
-// once a reorder actually changes the list.
-
-// ------------------------------ step mutations ------------------------------
-function addStep() {
-  steps.value.push(blankStep());
-  emitChange();
-}
-function removeStep(i) {
-  steps.value.splice(i, 1);
-  emitChange();
-}
-function addField(step) {
-  step._fields.push({ key: "", type: "string", enum: [] });
-  emitChange();
-}
-function removeField(step, fi) {
-  step._fields.splice(fi, 1);
-  emitChange();
-}
-function addRoute(step) {
-  step.routes.push({ when_var: "", equals: "", goto: "" });
-  emitChange();
-}
-function removeRoute(step, ri) {
-  step.routes.splice(ri, 1);
-  emitChange();
-}
-
-function blankStep() {
+// Edge look: color + condition label match the branch, so you can read which
+// arrow means what.
+function edgePresentation(sourceData, handle) {
+  const color = handleColor(sourceData, handle);
+  const label = handle === "next" ? "" : branchLabel(sourceData, handle) || "…";
   return {
-    _id: ++idSeq,
-    name: "",
-    prompt: "",
-    model: "",
-    database_ids: [],
-    use_history: true,
-    reply: false,
-    routes: [],
-    _fields: [],
+    type: "smoothstep",
+    label,
+    labelBgPadding: [6, 2],
+    labelBgBorderRadius: 4,
+    labelBgStyle: { fill: "#ffffff", fillOpacity: 0.92 },
+    labelStyle: { fill: color, fontWeight: 600, fontSize: 11 },
+    style: { stroke: color, strokeWidth: 2 },
+    markerEnd: { type: MarkerType.ArrowClosed, color },
   };
 }
-
-// ------------------------------ graph preview ------------------------------
-// Nodes with computed outgoing edges + reachability from step 0. Mirrors the
-// backend nextStepIndex rules: routes decide when present (WhenVar "" = default,
-// empty Goto = end); otherwise fall through to the next step, end after last.
-const graphNodes = computed(() => {
-  const list = steps.value;
-  const byName = {};
-  list.forEach((s, i) => {
-    if (s.name) byName[s.name] = i;
+function makeEdge(source, handle, target) {
+  const sn = nodes.value.find((n) => n.id === source);
+  return {
+    id: `${source}:${handle}->${target}`,
+    source,
+    sourceHandle: handle,
+    target,
+    ...edgePresentation(sn ? sn.data : {}, handle),
+  };
+}
+// Re-apply colors/labels to every edge (call after branch rename/reorder).
+function restyleEdges() {
+  edges.value = edges.value.map((e) => {
+    const sn = nodes.value.find((n) => n.id === e.source);
+    if (!sn) return e;
+    return { ...e, ...edgePresentation(sn.data, e.sourceHandle || "next") };
   });
-
-  const edgesOf = (s, i) => {
-    if (s.routes && s.routes.length) {
-      return s.routes.map((r) => {
-        const isDefault = !r.when_var;
-        const toEnd = !r.goto;
-        return {
-          cond: isDefault ? "" : `${r.when_var} = ${r.equals || "∅"}`,
-          defaultLabel: t("bots.flow.edge_default"),
-          toIdx: toEnd ? -1 : byName[r.goto] ?? -1,
-          toLabel: toEnd ? t("bots.flow.end") : r.goto,
-        };
-      });
-    }
-    const nextIdx = i + 1 < list.length ? i + 1 : -1;
-    return [
-      {
-        cond: "",
-        defaultLabel: t("bots.flow.edge_next"),
-        toIdx: nextIdx,
-        toLabel: nextIdx >= 0 ? list[nextIdx].name || t("bots.flow.unnamed") : t("bots.flow.end"),
-      },
-    ];
-  };
-
-  const edges = list.map((s, i) => edgesOf(s, i));
-
-  // reachability from node 0 following every edge target.
-  const reachable = new Set();
-  const walk = (i) => {
-    if (i < 0 || i >= list.length || reachable.has(i)) return;
-    reachable.add(i);
-    for (const e of edges[i]) walk(e.toIdx);
-  };
-  if (list.length) walk(0);
-
-  return list.map((s, i) => ({
-    id: s._id,
-    name: s.name,
-    reply: !!s.reply,
-    model: s.model || "",
-    dbs: (s.database_ids || []).length,
-    fields: (s._fields || []).filter((f) => f.key).length,
-    reachable: reachable.has(i),
-    edges: edges[i],
-  }));
-});
-
-// --- (de)serialization between the editor shape and the backend flow shape ---
-function fieldsFromSchema(schema) {
-  if (!schema || !schema.properties) return [];
-  return Object.entries(schema.properties).map(([key, def]) => ({
-    key,
-    type: def.type === "array" ? "array" : def.type || "string",
-    enum: Array.isArray(def.enum) ? def.enum.map(String) : [],
-  }));
 }
 
-function schemaFromFields(fields) {
-  const props_ = {};
-  const required = [];
-  for (const f of fields || []) {
-    if (!f.key) continue;
-    let def;
-    if (f.type === "array") {
-      def = { type: "array", items: { type: "string" } };
-    } else {
-      def = { type: f.type || "string" };
-      if (enumAllowed(f.type) && f.enum && f.enum.length) def.enum = f.enum;
-    }
-    props_[f.key] = def;
-    required.push(f.key);
+function refreshHandles() {
+  nextTick(() => updateNodeInternals());
+}
+
+// ------------------------------ interactions ------------------------------
+function addAgent() {
+  const id = "n" + ++idSeq;
+  // drop it just right of the currently selected node, so connecting is easy
+  const anchor = selectedNode.value || nodes.value[nodes.value.length - 1];
+  const pos = anchor
+    ? { x: anchor.position.x + 240, y: anchor.position.y }
+    : { x: 80, y: 80 };
+  nodes.value.push({
+    id,
+    type: "agent",
+    position: pos,
+    data: {
+      name: "",
+      prompt: "",
+      model: "",
+      database_ids: [],
+      use_history: true,
+      reply: false,
+      outcomes: [],
+    },
+  });
+  selectedId.value = id;
+  emitChange();
+}
+
+function onNodeClick({ node }) {
+  selectedId.value = node.id;
+}
+
+function onConnect(conn) {
+  const handle = conn.sourceHandle || "next";
+  edges.value = edges.value.filter(
+    (e) => !(e.source === conn.source && (e.sourceHandle || "next") === handle)
+  );
+  edges.value.push(makeEdge(conn.source, handle, conn.target));
+  emitChange();
+}
+
+function onEdgeDblClick({ edge }) {
+  edges.value = edges.value.filter((e) => e.id !== edge.id);
+  emitChange();
+}
+
+function addBranch() {
+  if (!selectedNode.value) return;
+  selectedNode.value.data.outcomes.push({ id: "b" + ++branchSeq, label: "" });
+  onBranchesChange();
+}
+function removeBranch(bi) {
+  const list = selectedNode.value.data.outcomes;
+  const [removed] = list.splice(bi, 1);
+  edges.value = edges.value.filter(
+    (e) => !(e.source === selectedId.value && e.sourceHandle === removed.id)
+  );
+  onBranchesChange();
+}
+function onBranchesChange() {
+  restyleEdges();
+  emitChange();
+  refreshHandles();
+}
+
+function deleteNode(id) {
+  nodes.value = nodes.value.filter((n) => n.id !== id);
+  edges.value = edges.value.filter((e) => e.source !== id && e.target !== id);
+  selectedId.value = null;
+  emitChange();
+}
+
+function pruneEdges() {
+  const valid = {};
+  for (const n of nodes.value) {
+    valid[n.id] = new Set(outcomesOf(n.data).map((o) => o.id));
   }
-  if (required.length === 0) return null;
-  return {
-    type: "object",
-    properties: props_,
-    required,
-    additionalProperties: false,
-  };
+  edges.value = edges.value.filter((e) => {
+    const set = valid[e.source];
+    return set && set.has(e.sourceHandle || "next");
+  });
 }
 
-function fromFlow(flow) {
-  const src = (flow && flow.steps) || [];
-  steps.value = src.map((s) => ({
-    _id: ++idSeq,
-    name: s.name || "",
-    prompt: s.prompt || "",
-    model: s.model || "",
-    database_ids: s.database_ids || [],
-    use_history: !!s.use_history,
-    reply: !!s.reply,
-    routes: (s.routes || []).map((r) => ({
-      when_var: r.when_var || "",
-      equals: r.equals || "",
-      goto: r.goto || "",
-    })),
-    _fields: fieldsFromSchema(s.output),
-  }));
+// ------------------------------ layout ------------------------------
+function layout() {
+  const incoming = {};
+  edges.value.forEach((e) => (incoming[e.target] = true));
+  const adj = {};
+  edges.value.forEach((e) => (adj[e.source] = adj[e.source] || []).push(e.target));
+
+  const depth = {};
+  const q = [];
+  nodes.value.forEach((n) => {
+    if (!incoming[n.id]) {
+      depth[n.id] = 0;
+      q.push(n.id);
+    }
+  });
+  if (!q.length && nodes.value.length) {
+    depth[nodes.value[0].id] = 0;
+    q.push(nodes.value[0].id);
+  }
+  while (q.length) {
+    const id = q.shift();
+    for (const tgt of adj[id] || []) {
+      if (depth[tgt] === undefined) {
+        depth[tgt] = depth[id] + 1;
+        q.push(tgt);
+      }
+    }
+  }
+  const perDepth = {};
+  nodes.value.forEach((n) => {
+    const d = depth[n.id] ?? 0;
+    perDepth[d] = perDepth[d] || 0;
+    n.position = { x: d * 280, y: perDepth[d] * 160 };
+    perDepth[d] += 1;
+  });
+}
+
+// ------------------------------ (de)serialization ------------------------------
+function nameOf(id) {
+  const n = nodes.value.find((x) => x.id === id);
+  return (n && (n.data.name || n.id)) || id;
 }
 
 function toFlow() {
+  const withIncoming = new Set(edges.value.map((e) => e.target));
+
+  const steps = nodes.value.map((n) => {
+    const d = n.data;
+    const step = { name: d.name || n.id, prompt: d.prompt || "", reply: !!d.reply };
+    if (d.model) step.model = d.model;
+    if ((d.database_ids || []).length) step.database_ids = d.database_ids;
+    if (d.use_history) step.use_history = true;
+
+    const edgeFor = (handleId) =>
+      edges.value.find(
+        (e) => e.source === n.id && (e.sourceHandle || "next") === handleId
+      );
+
+    const branches = (d.outcomes || []).filter((o) => o && o.label);
+    const routes = [];
+    if (branches.length) {
+      const labels = branches.map((o) => o.label);
+      step.output = {
+        type: "object",
+        properties: { route: { type: "string", enum: labels } },
+        required: ["route"],
+        additionalProperties: false,
+      };
+      for (const b of branches) {
+        const e = edgeFor(b.id);
+        if (e) routes.push({ when_var: `${step.name}.route`, equals: b.label, goto: nameOf(e.target) });
+      }
+    } else {
+      const e = edgeFor("next");
+      if (e) routes.push({ when_var: "", equals: "", goto: nameOf(e.target) });
+    }
+    if (routes.length) step.routes = routes;
+    return step;
+  });
+
+  const entryIdx = nodes.value.findIndex((n) => !withIncoming.has(n.id));
+  if (entryIdx > 0) {
+    const [s] = steps.splice(entryIdx, 1);
+    steps.unshift(s);
+  }
+  return { steps };
+}
+
+function fromFlow(flow) {
+  const steps = (flow && flow.steps) || [];
+  const ns = [];
+  const es = [];
+  const nameToId = {};
+  const labelToBranchId = {}; // stepId -> { label -> branchId }
+  steps.forEach((s, i) => (nameToId[s.name] = "n" + (i + 1)));
+
+  steps.forEach((s, i) => {
+    const id = "n" + (i + 1);
+    idSeq = Math.max(idSeq, i + 1);
+    const enumLabels =
+      s.output && s.output.properties && s.output.properties.route
+        ? s.output.properties.route.enum || []
+        : [];
+    const outcomes = enumLabels.map((label) => {
+      const bid = "b" + ++branchSeq;
+      (labelToBranchId[id] = labelToBranchId[id] || {})[label] = bid;
+      return { id: bid, label };
+    });
+    ns.push({
+      id,
+      type: "agent",
+      position: { x: 0, y: 0 },
+      data: {
+        name: s.name || "",
+        prompt: s.prompt || "",
+        model: s.model || "",
+        database_ids: s.database_ids || [],
+        use_history: !!s.use_history,
+        reply: !!s.reply,
+        outcomes,
+      },
+    });
+  });
+
+  // second pass: edges (need branch ids resolved above)
+  steps.forEach((s, i) => {
+    const id = "n" + (i + 1);
+    const hasBranches = (labelToBranchId[id] && Object.keys(labelToBranchId[id]).length) > 0;
+    for (const r of s.routes || []) {
+      if (!r.goto) continue;
+      const target = nameToId[r.goto];
+      if (!target) continue;
+      const handle = hasBranches ? labelToBranchId[id][r.equals] : "next";
+      if (!handle) continue;
+      es.push({
+        id: `${id}:${handle}->${target}`,
+        source: id,
+        sourceHandle: handle,
+        target,
+      });
+    }
+  });
+
+  nodes.value = ns;
+  edges.value = es;
+  layout();
+  restyleEdges();
+  refreshHandles();
+  nextTick(() => fitView({ padding: 0.2 }));
+}
+
+// Mock support flow: intake agent decides (by prompt) new vs existing client;
+// existing -> classify -> billing summary -> generate (each step auto-sees the
+// previous); new -> a separate answer with its own knowledge bases.
+function presetSupport() {
   return {
-    steps: steps.value.map((s) => {
-      const out = { name: s.name, prompt: s.prompt, reply: !!s.reply };
-      if (s.model) out.model = s.model;
-      if (s.database_ids && s.database_ids.length)
-        out.database_ids = s.database_ids;
-      if (s.use_history) out.use_history = true;
-      const schema = schemaFromFields(s._fields);
-      if (schema) out.output = schema;
-      if (s.routes && s.routes.length)
-        out.routes = s.routes.filter((r) => r.when_var !== "" || r.goto !== "");
-      return out;
-    }),
+    steps: [
+      {
+        name: "Приёмная",
+        prompt:
+          "Ты — приёмная службы поддержки хостинга. Пойми, с кем разговор.\n" +
+          "• «Существующий клиент» — если человек упоминает свой сервер, услугу, счёт, домен или логин, то есть уже пользуется нами.\n" +
+          "• «Новый клиент» — если это первое обращение: вопросы о ценах, подключении, возможностях, аккаунта пока нет.\n" +
+          "Если сомневаешься — выбирай «Новый клиент». Выбери ветку.",
+        use_history: true,
+        output: {
+          type: "object",
+          properties: {
+            route: { type: "string", enum: ["Новый клиент", "Существующий клиент"] },
+          },
+          required: ["route"],
+          additionalProperties: false,
+        },
+        routes: [
+          { when_var: "Приёмная.route", equals: "Новый клиент", goto: "Ответ новому клиенту" },
+          { when_var: "Приёмная.route", equals: "Существующий клиент", goto: "Сводка из биллинга" },
+        ],
+      },
+      {
+        name: "Сводка из биллинга",
+        prompt:
+          "Собери досье клиента через доступные инструменты: тариф, активные услуги и инстансы, " +
+          "статус оплат и неоплаченные счета, дату продления. Дай короткую фактическую сводку без воды. " +
+          "Если данных нет — так и скажи, не выдумывай. Сводку увидят следующие шаги.",
+        use_history: true,
+        routes: [{ when_var: "", equals: "", goto: "Классификация" }],
+      },
+      {
+        name: "Классификация",
+        prompt:
+          "Определи, в какой отдел направить обращение существующего клиента:\n" +
+          "• «Биллинг» — оплаты, счета, тарифы, продление, возвраты.\n" +
+          "• «Техника» — сервер не работает, ошибки, доступы, настройка, производительность.\n" +
+          "• «Другое» — всё остальное и общие вопросы.\n" +
+          "Выбери ветку.",
+        use_history: true,
+        output: {
+          type: "object",
+          properties: {
+            route: { type: "string", enum: ["Биллинг", "Техника", "Другое"] },
+          },
+          required: ["route"],
+          additionalProperties: false,
+        },
+        routes: [
+          { when_var: "Классификация.route", equals: "Биллинг", goto: "Ответ по биллингу" },
+          { when_var: "Классификация.route", equals: "Техника", goto: "Технический ответ" },
+          { when_var: "Классификация.route", equals: "Другое", goto: "Общий ответ" },
+        ],
+      },
+      {
+        name: "Ответ по биллингу",
+        prompt:
+          "Ты — специалист отдела биллинга. Опираясь на сводку по клиенту выше, реши вопрос по оплатам, " +
+          "счетам и тарифам: дай конкретику по суммам и срокам, подскажи как оплатить/продлить. " +
+          "Не выдумывай цифры — бери из сводки и базы знаний.",
+        use_history: true,
+        reply: true,
+        database_ids: [],
+      },
+      {
+        name: "Технический ответ",
+        prompt:
+          "Ты — инженер техподдержки. Помоги решить техническую проблему пошагово, с учётом услуг клиента из сводки. " +
+          "Спрашивай уточнения, только если без них не обойтись. Опирайся на техническую базу знаний.",
+        use_history: true,
+        reply: true,
+        database_ids: [],
+      },
+      {
+        name: "Общий ответ",
+        prompt:
+          "Ты — специалист поддержки. Ответь на общий вопрос клиента дружелюбно и по делу, " +
+          "опираясь на базу знаний. Если вопрос не по адресу — подскажи, куда обратиться.",
+        use_history: true,
+        reply: true,
+        database_ids: [],
+      },
+      {
+        name: "Ответ новому клиенту",
+        prompt:
+          "Ты — менеджер по продажам. Клиент новый, аккаунта нет — не запрашивай данные аккаунта и не обещай лишнего. " +
+          "Ответь дружелюбно на вопрос, подскажи подходящий тариф и мягко предложи оформить услугу. " +
+          "Опирайся на базу знаний по продуктам и ценам.",
+        use_history: true,
+        reply: true,
+        database_ids: [],
+      },
+    ],
   };
 }
 
-// toFlow() drops editor-only keys (_id/_fields), so compare on the backend shape.
+function loadPreset() {
+  fromFlow(presetSupport());
+  selectedId.value = null;
+  emitChange();
+}
+
+function emitChange() {
+  pruneEdges();
+  pushHistory();
+  emit("update:modelValue", toFlow());
+}
+
 function sameAsModel(v) {
   return JSON.stringify(toFlow()) === JSON.stringify(v || { steps: [] });
 }
 
-function emitChange() {
-  emit("update:modelValue", toFlow());
-}
-
 fromFlow(props.modelValue);
+initialSnapshot = snapshot();
+history.value = [snapshot()];
+histIdx.value = 0;
 
 watch(
   () => props.modelValue,
   (v) => {
-    if (!sameAsModel(v)) fromFlow(v);
+    if (!sameAsModel(v)) {
+      fromFlow(v);
+      pushHistory();
+    }
   }
 );
 </script>
 
 <style scoped>
-.flow__topbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 10px;
-}
-.flow__step {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
-  background: #fafafa;
-  transition: box-shadow 0.15s, border-color 0.15s, opacity 0.15s;
-}
-/* vuedraggable: placeholder gap + the element being dragged */
-.flow__ghost {
-  opacity: 0.5;
-  border-color: #1677ff;
-  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2);
-}
-.flow__dragging {
-  cursor: grabbing;
-}
-.flow__head {
+.canvas__bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.flow__grip {
-  cursor: grab;
-  color: #bbb;
-  font-size: 18px;
-  line-height: 1;
-  user-select: none;
-  padding: 0 2px;
-}
-.flow__grip:active {
-  cursor: grabbing;
-}
-.flow__badge {
-  width: 24px;
-  height: 24px;
-  flex: none;
-  border-radius: 50%;
-  background: #1677ff;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-}
-.flow__name {
-  max-width: 240px;
-  font-weight: 600;
-}
-.flow__del {
-  margin-left: auto;
-}
-.flow__row {
-  display: flex;
   gap: 12px;
   margin-bottom: 8px;
 }
-.flow__col {
-  flex: 1;
-}
-.flow__col--switch {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-.flow__lbl {
-  display: block;
-  font-size: 0.85rem;
-  color: #666;
-  margin: 6px 0 2px;
-}
-.flow__vars {
-  margin: 6px 0;
-}
-.flow__vars-lbl {
+.canvas__hint {
   font-size: 0.8rem;
   color: #999;
-  margin-right: 4px;
 }
-.flow__var {
-  cursor: pointer;
-  font-family: monospace;
-}
-.flow__block {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px dashed #ddd;
-}
-.flow__field,
-.flow__route {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
-}
-.flow__field-note {
-  flex: 1;
-  min-width: 150px;
-  color: #bbb;
-  font-size: 0.8rem;
-  font-style: italic;
-}
-.flow__route-if,
-.flow__route-then,
-.flow__route-eq {
-  color: #888;
-  font-size: 0.85rem;
-}
-.flow__hint {
-  display: inline-flex;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: #ddd;
-  color: #555;
-  font-size: 11px;
-  align-items: center;
-  justify-content: center;
-  cursor: help;
+.canvas__stage {
+  height: 540px;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fcfcfc;
 }
 
-/* ---- graph preview ---- */
-.graph {
-  padding: 4px 2px;
-}
-.graph__row {
-  margin-bottom: 6px;
-}
-.graph__node {
+.ctrl {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid #d9d9d9;
-  border-left: 4px solid #1677ff;
-  border-radius: 6px;
+  gap: 2px;
   background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
-.graph__node--reply {
-  border-left-color: #52c41a;
-}
-.graph__node--branch {
-  border-left-color: #fa8c16;
-}
-.graph__node--dead {
-  opacity: 0.6;
-  border-left-color: #bfbfbf;
-  background: #f5f5f5;
-}
-.graph__num {
-  width: 22px;
-  height: 22px;
-  flex: none;
-  border-radius: 50%;
-  background: #f0f0f0;
-  color: #555;
+.ctrl__btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #555;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
-.graph__name {
-  font-weight: 600;
+.ctrl__btn:hover:not(:disabled) {
+  background: #f0f5ff;
+  color: #1677ff;
 }
-.graph__tag {
-  font-size: 0.72rem;
-  padding: 1px 7px;
+.ctrl__btn:disabled {
+  color: #ccc;
+  cursor: default;
+}
+.ctrl__sep {
+  width: 1px;
+  height: 18px;
+  background: #eaeaea;
+  margin: 0 2px;
+}
+
+.fnode {
+  min-width: 160px;
+  padding: 10px 14px;
+  border: 1px solid #e0e0e0;
+  border-left: 4px solid #1677ff;
   border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: grab;
+}
+.fnode:active {
+  cursor: grabbing;
+}
+.fnode--reply {
+  border-left-color: #52c41a;
+}
+.fnode--branch {
+  border-left-color: #fa8c16;
+}
+.fnode--sel {
+  box-shadow: 0 0 0 2px #1677ff, 0 2px 10px rgba(22, 119, 255, 0.25);
+}
+.fnode__title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.fnode__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+.fnode__tag {
+  font-size: 0.68rem;
+  padding: 1px 7px;
+  border-radius: 9px;
   background: #f0f0f0;
   color: #666;
 }
-.graph__tag--reply {
+.fnode__tag--reply {
   background: #f6ffed;
   color: #389e0d;
 }
-.graph__tag--dead {
-  background: #fff1f0;
-  color: #cf1322;
+.fnode__outs {
+  margin-top: 8px;
 }
-.graph__edges {
-  margin: 2px 0 0 26px;
+.fnode__out {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  font-size: 0.74rem;
+  color: #555;
+  padding: 2px 0;
 }
-.graph__edge {
+.fnode__out-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.fnode__out-lbl {
+  padding-right: 10px;
+}
+
+/* bigger, easier-to-grab ports */
+.fnode :deep(.vue-flow__handle) {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.fnode :deep(.vue-flow__handle:hover) {
+  transform: scale(1.25);
+}
+.fnode__in {
+  background: #bfbfbf;
+}
+
+.fld__lbl {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  margin: 12px 0 4px;
+}
+.fld__hint {
+  font-size: 0.78rem;
+  color: #999;
+  margin: 0 0 8px;
+}
+.fld__switch {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+.brow__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: none;
+}
+.branch {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: #fafafa;
+}
+.branch__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.branch__to {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.82rem;
-  color: #777;
-  padding: 1px 0;
+  margin-top: 6px;
+  padding-left: 20px;
 }
-.graph__arrow {
-  color: #bbb;
-}
-.graph__cond {
-  font-family: monospace;
-  color: #555;
-}
-.graph__cond--default {
-  font-family: inherit;
-  font-style: italic;
+.branch__arrow {
   color: #999;
-}
-.graph__to {
-  color: #1677ff;
 }
 </style>

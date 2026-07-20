@@ -16,6 +16,8 @@
     "@connectrpc/connect": "^1.6.1",
     "@connectrpc/connect-web": "^1.6.1",
     "@liripeng/vue-audio-player": "^2.0.4",
+    "@vue-flow/background": "^1.3.2",
+    "@vue-flow/core": "^1.48.2",
     "ant-design-vue": "^4.2.6",
     "core-js": "^3.44.0",
     "dayjs": "^1.11.13",
@@ -28,7 +30,7 @@
     "markdown-it-emoji": "^3.0.0",
     "marked": "^5.1.2",
     "marked-mangle": "^1.1.11",
-    "nocloud-proto": "github:slntopp/nocloud-proto#703807c5866494654eae8d44896c4a401eec3598",
+    "nocloud-proto": "github:slntopp/nocloud-proto#d38243ef1adde81bc42126e61bb45234dc6e77c6",
     "nocloud-ui": "^1.0.19",
     "nocloudjsrest": "^1.5.17",
     "pinia": "^2.3.1",
@@ -36,12 +38,12 @@
     "swagger-ui": "^5.26.2",
     "vnc-ui-vue": "^1.0.0",
     "vue": "^3.5.17",
+    "vue-draggable-plus": "^0.6.1",
     "vue-google-charts": "^1.1.0",
     "vue-gtag": "2.0.2-beta.0",
     "vue-i18n": "^9.14.4",
     "vue-router": "^4.5.1",
-    "vue-simple-password-meter": "^1.3.4",
-    "vuedraggable": "^4.1.0"
+    "vue-simple-password-meter": "^1.3.4"
   },
   "devDependencies": {
     "@types/dompurify": "^3.2.0",

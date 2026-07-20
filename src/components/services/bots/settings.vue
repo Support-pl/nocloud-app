@@ -240,7 +240,30 @@
         <a-switch v-model:checked="bot.settings.enable_spam_filter" />
       </a-col>
 
-      <a-col span="24">
+      <a-col
+        v-if="hasChatChannel"
+        span="24"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 10px;
+        "
+      >
+        <span class="field_title"
+          >{{ t("bots.flow.use_flow") }}:
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.flow.use_flow_tip').replaceAll('\n', '<br/>')" />
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-switch v-model:checked="useFlow" />
+      </a-col>
+
+      <!-- Flow replaces the general prompt/role, so hide them when it's on -->
+      <a-col v-if="!useFlow" span="24">
         <span class="field_title"
           >{{ t("bots.fields.role") }}:
 
@@ -261,7 +284,7 @@
         />
       </a-col>
 
-      <a-col span="24">
+      <a-col v-if="!useFlow" span="24">
         <span class="field_title"
           >{{ t("bots.fields.promt") }}:
 
@@ -281,7 +304,15 @@
         />
       </a-col>
 
-      <a-col span="24" v-if="hasChatChannel">
+      <a-col v-if="useFlow" span="24" style="margin-top: 10px">
+        <bot-flow
+          v-model="bot.settings.flow"
+          :models-options="modelsOptions"
+          :databases="bot.databases || []"
+        />
+      </a-col>
+
+      <a-col span="24" v-if="hasChatChannel && !useFlow">
         <span class="field_title"
           >{{ t("bots.fields.processing_model") }}:
 
@@ -307,7 +338,7 @@
         />
       </a-col>
 
-      <a-col span="24" v-if="hasChatChannel">
+      <a-col span="24" v-if="hasChatChannel && !useFlow">
         <span class="field_title"
           >{{ t("bots.fields.processing_prompt") }}:
 
@@ -345,36 +376,6 @@
         <bot-schedule
           style="margin-top: 10px"
           v-model="bot.settings.schedule"
-        />
-      </a-col>
-
-      <a-col
-        v-if="hasChatChannel"
-        span="24"
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: 10px;
-        "
-      >
-        <span class="field_title"
-          >{{ t("bots.flow.use_flow") }}:
-          <a-tooltip>
-            <template #title>
-              <span v-html="t('bots.flow.use_flow_tip').replaceAll('\n', '<br/>')" />
-            </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <a-switch v-model:checked="useFlow" />
-      </a-col>
-
-      <a-col v-if="hasChatChannel && useFlow" span="24" style="margin-top: 10px">
-        <bot-flow
-          v-model="bot.settings.flow"
-          :models-options="modelsOptions"
-          :databases="databasesList"
         />
       </a-col>
 
@@ -861,25 +862,25 @@ const hasChatChannel = computed(() =>
   (bot.value.channels || []).some((c) => c.type === "core_chatting")
 );
 
-// Flow pattern toggle: presence of settings.flow decides. Turning it on seeds a
-// single reply step so the builder isn't empty; turning it off drops back to the
-// classic single-agent behaviour (flow = null).
-const databasesList = ref([]);
+// Flow pattern toggle: presence of settings.flow decides. Turning it off keeps
+// the built flow in a stash so turning it back on restores it (instead of
+// resetting to the starter). Backend still sees flow = null while disabled.
+const flowStash = ref(null);
 const useFlow = computed({
   get: () => !!bot.value.settings.flow,
   set: (v) => {
-    bot.value.settings.flow = v
-      ? bot.value.settings.flow || {
+    if (v) {
+      bot.value.settings.flow =
+        bot.value.settings.flow ||
+        flowStash.value || {
           steps: [
-            {
-              name: "answer",
-              prompt: "{{input}}",
-              reply: true,
-              use_history: true,
-            },
+            { name: "answer", prompt: "", reply: true, use_history: true },
           ],
-        }
-      : null;
+        };
+    } else {
+      if (bot.value.settings.flow) flowStash.value = bot.value.settings.flow;
+      bot.value.settings.flow = null;
+    }
   },
 });
 
@@ -911,14 +912,7 @@ async function fetch() {
       bot.value.settings.flow = null;
     }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
-    await Promise.all([
-      aiBotsStore.getRoles(),
-      chatsStore.fetch_models_list(),
-      aiBotsStore
-        .getDatabases()
-        .then((d) => (databasesList.value = d || []))
-        .catch(() => {}),
-    ]);
+    await Promise.all([aiBotsStore.getRoles(), chatsStore.fetch_models_list()]);
   } catch (err) {
     const opts = {
       message: `Error: ${
