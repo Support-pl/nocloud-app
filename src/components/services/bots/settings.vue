@@ -348,6 +348,36 @@
         />
       </a-col>
 
+      <a-col
+        v-if="hasChatChannel"
+        span="24"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 10px;
+        "
+      >
+        <span class="field_title"
+          >{{ t("bots.flow.use_flow") }}:
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.flow.use_flow_tip').replaceAll('\n', '<br/>')" />
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-switch v-model:checked="useFlow" />
+      </a-col>
+
+      <a-col v-if="hasChatChannel && useFlow" span="24" style="margin-top: 10px">
+        <bot-flow
+          v-model="bot.settings.flow"
+          :models-options="modelsOptions"
+          :databases="databasesList"
+        />
+      </a-col>
+
       <a-col span="24" style="padding-bottom: 40px; margin-top: 10px">
         <a-row justify="end"> </a-row>
       </a-col>
@@ -612,6 +642,7 @@ import { useChatsStore } from "@/stores/chats";
 import { marked } from "marked";
 import Loading from "@/components/ui/loading.vue";
 import BotSchedule from "@/components/services/bots/bot_schedule.vue";
+import BotFlow from "@/components/services/bots/bot_flow.vue";
 import { storeToRefs } from "pinia";
 import { useCurrenciesStore } from "@/stores/currencies";
 
@@ -830,6 +861,28 @@ const hasChatChannel = computed(() =>
   (bot.value.channels || []).some((c) => c.type === "core_chatting")
 );
 
+// Flow pattern toggle: presence of settings.flow decides. Turning it on seeds a
+// single reply step so the builder isn't empty; turning it off drops back to the
+// classic single-agent behaviour (flow = null).
+const databasesList = ref([]);
+const useFlow = computed({
+  get: () => !!bot.value.settings.flow,
+  set: (v) => {
+    bot.value.settings.flow = v
+      ? bot.value.settings.flow || {
+          steps: [
+            {
+              name: "answer",
+              prompt: "{{input}}",
+              reply: true,
+              use_history: true,
+            },
+          ],
+        }
+      : null;
+  },
+});
+
 const isSavePrimary = computed(
   () => JSON.stringify(ogBot.value) != JSON.stringify(bot.value)
 );
@@ -854,8 +907,18 @@ async function fetch() {
     if (bot.value.settings.schedule == null) {
       bot.value.settings.schedule = { enabled: false, tz: "", default: "review", rules: [] };
     }
+    if (bot.value.settings.flow === undefined) {
+      bot.value.settings.flow = null;
+    }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
-    await Promise.all([aiBotsStore.getRoles(), chatsStore.fetch_models_list()]);
+    await Promise.all([
+      aiBotsStore.getRoles(),
+      chatsStore.fetch_models_list(),
+      aiBotsStore
+        .getDatabases()
+        .then((d) => (databasesList.value = d || []))
+        .catch(() => {}),
+    ]);
   } catch (err) {
     const opts = {
       message: `Error: ${

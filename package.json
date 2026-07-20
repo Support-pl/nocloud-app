@@ -28,7 +28,7 @@
     "markdown-it-emoji": "^3.0.0",
     "marked": "^5.1.2",
     "marked-mangle": "^1.1.11",
-    "nocloud-proto": "github:slntopp/nocloud-proto#d38243ef1adde81bc42126e61bb45234dc6e77c6",
+    "nocloud-proto": "github:slntopp/nocloud-proto#703807c5866494654eae8d44896c4a401eec3598",
     "nocloud-ui": "^1.0.19",
     "nocloudjsrest": "^1.5.17",
     "pinia": "^2.3.1",
@@ -40,7 +40,8 @@
     "vue-gtag": "2.0.2-beta.0",
     "vue-i18n": "^9.14.4",
     "vue-router": "^4.5.1",
-    "vue-simple-password-meter": "^1.3.4"
+    "vue-simple-password-meter": "^1.3.4",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@types/dompurify": "^3.2.0",
