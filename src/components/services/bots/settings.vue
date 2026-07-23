@@ -309,74 +309,85 @@
           v-model="bot.settings.flow"
           :models-options="modelsOptions"
           :databases="bot.databases || []"
-        />
-      </a-col>
-
-      <a-col span="24" v-if="hasChatChannel && !useFlow">
-        <span class="field_title"
-          >{{ t("bots.fields.processing_model") }}:
-
-          <a-tooltip>
-            <template #title>
-              <span
-                v-html="
-                  t('bots.tips.processing_model').replaceAll('\n', '<br/>')
-                "
-              >
-              </span>
-            </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <a-select
-          :options="modelsOptions"
-          style="width: 100%; margin-top: 10px"
-          allow-clear
-          :placeholder="t('bots.placeholders.processing_model')"
-          :value="bot.settings.processing_model || undefined"
-          @update:value="bot.settings.processing_model = $event || ''"
-        />
-      </a-col>
-
-      <a-col span="24" v-if="hasChatChannel && !useFlow">
-        <span class="field_title"
-          >{{ t("bots.fields.processing_prompt") }}:
-
-          <a-tooltip>
-            <template #title>
-              <span
-                v-html="
-                  t('bots.tips.processing_prompt').replaceAll('\n', '<br/>')
-                "
-              >
-              </span>
-            </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <a-textarea
-          style="margin-top: 10px"
-          v-model:value="bot.settings.processing_prompt"
-          :placeholder="t('bots.placeholders.processing_prompt')"
-          :auto-size="{ minRows: 4 }"
+          @apply-preset="onApplyPreset"
         />
       </a-col>
 
       <a-col span="24" v-if="hasChatChannel" style="margin-top: 10px">
-        <span class="field_title"
-          >{{ t("bots.fields.schedule") }}:
+        <a-collapse>
+          <a-collapse-panel key="mcp" :header="t('bots.mcp.title')">
+            <bot-mcp v-model="bot.settings.mcp_servers" />
+          </a-collapse-panel>
+        </a-collapse>
+      </a-col>
 
-          <a-tooltip>
-            <template #title>
-              <span v-html="t('bots.tips.schedule').replaceAll('\n', '<br/>')" />
+      <a-col span="24" v-if="hasChatChannel" style="margin-top: 10px">
+        <a-collapse>
+          <a-collapse-panel key="processing" :header="t('bots.fields.processing_prompt')">
+            <span class="field_title"
+              >{{ t("bots.fields.processing_model") }}:
+
+              <a-tooltip>
+                <template #title>
+                  <span
+                    v-html="
+                      t('bots.tips.processing_model').replaceAll('\n', '<br/>')
+                    "
+                  >
+                  </span>
+                </template>
+                <help-icon style="margin-left: 5px" />
+              </a-tooltip>
+            </span>
+            <a-select
+              :options="modelsOptions"
+              style="width: 100%; margin-top: 10px"
+              allow-clear
+              :placeholder="t('bots.placeholders.processing_model')"
+              :value="bot.settings.processing_model || undefined"
+              @update:value="bot.settings.processing_model = $event || ''"
+            />
+
+            <span class="field_title" style="margin-top: 10px; display: block"
+              >{{ t("bots.fields.processing_prompt") }}:
+
+              <a-tooltip>
+                <template #title>
+                  <span
+                    v-html="
+                      t('bots.tips.processing_prompt').replaceAll('\n', '<br/>')
+                    "
+                  >
+                  </span>
+                </template>
+                <help-icon style="margin-left: 5px" />
+              </a-tooltip>
+            </span>
+            <a-textarea
+              style="margin-top: 10px"
+              v-model:value="bot.settings.processing_prompt"
+              :placeholder="t('bots.placeholders.processing_prompt')"
+              :auto-size="{ minRows: 4 }"
+            />
+          </a-collapse-panel>
+        </a-collapse>
+      </a-col>
+
+      <a-col span="24" v-if="hasChatChannel" style="margin-top: 10px">
+        <a-collapse>
+          <a-collapse-panel key="schedule">
+            <template #header>
+              {{ t("bots.fields.schedule") }}
+              <a-tooltip>
+                <template #title>
+                  <span v-html="t('bots.tips.schedule').replaceAll('\n', '<br/>')" />
+                </template>
+                <help-icon style="margin-left: 5px" />
+              </a-tooltip>
             </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <bot-schedule
-          style="margin-top: 10px"
-          v-model="bot.settings.schedule"
-        />
+            <bot-schedule v-model="bot.settings.schedule" />
+          </a-collapse-panel>
+        </a-collapse>
       </a-col>
 
       <a-col span="24" style="padding-bottom: 40px; margin-top: 10px">
@@ -644,6 +655,7 @@ import { marked } from "marked";
 import Loading from "@/components/ui/loading.vue";
 import BotSchedule from "@/components/services/bots/bot_schedule.vue";
 import BotFlow from "@/components/services/bots/bot_flow.vue";
+import BotMcp from "@/components/services/bots/bot_mcp.vue";
 import { storeToRefs } from "pinia";
 import { useCurrenciesStore } from "@/stores/currencies";
 
@@ -888,6 +900,20 @@ const isSavePrimary = computed(
   () => JSON.stringify(ogBot.value) != JSON.stringify(bot.value)
 );
 
+// Applying the flow template also switches its default MCP servers on (the
+// support template needs the NoCloud MCP). Merge by URL so re-applying doesn't
+// duplicate, and never clobber servers the operator already added.
+function onApplyPreset(defaultMcp) {
+  if (!Array.isArray(bot.value.settings.mcp_servers)) {
+    bot.value.settings.mcp_servers = [];
+  }
+  for (const srv of defaultMcp || []) {
+    if (!bot.value.settings.mcp_servers.some((s) => s.url === srv.url)) {
+      bot.value.settings.mcp_servers.push({ ...srv, headers: { ...(srv.headers || {}) } });
+    }
+  }
+}
+
 async function fetch() {
   try {
     isLoading.value = true;
@@ -910,6 +936,9 @@ async function fetch() {
     }
     if (bot.value.settings.flow === undefined) {
       bot.value.settings.flow = null;
+    }
+    if (!Array.isArray(bot.value.settings.mcp_servers)) {
+      bot.value.settings.mcp_servers = [];
     }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
     await Promise.all([aiBotsStore.getRoles(), chatsStore.fetch_models_list()]);

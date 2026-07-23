@@ -784,6 +784,19 @@
     "Add new chat": "Dodaj nowy czat",
     "API / Settings": "API / Ustawienia",
     "bots": {
+      "mcp": {
+        "title": "Serwery MCP",
+        "hint": "Podłącz serwery MCP, aby udostępnić botowi ich narzędzia. Dowolny serwer, dowolny bot.",
+        "name_ph": "Nazwa (np. NoCloud)",
+        "url": "URL",
+        "headers": "Nagłówki",
+        "headers_tip": "Wysyłane z każdym żądaniem, np. Authorization: Bearer <token>.",
+        "add_header": "Dodaj nagłówek",
+        "inject_account": "Powiąż konto klienta",
+        "inject_account_tip": "Dla serwerów powiązanych z kontem (tryb serwisowy NoCloud): rozpoznane konto klienta jest wysyłane z każdym wywołaniem i ukryte przed modelem. Dla zwykłych serwerów — wyłączone.",
+        "enabled": "Włączony",
+        "add_server": "Dodaj serwer MCP"
+      },
       "flow": {
         "next": "Next",
         "undo": "Undo",
@@ -815,6 +828,9 @@
         "unreachable": "unreachable",
         "drag_hint": "Drag to reorder",
         "unnamed": "(unnamed)",
+        "start": "Start",
+        "start_tip": "This is where the flow begins — the first step, the one nothing points to.",
+        "branch_tip": "Decision block: the agent picks the outcome itself based on its prompt, and the matching branch runs next.",
         "no_enum": "any value",
         "use_flow": "Use flow pattern",
         "use_flow_tip": "Instead of one prompt, drive the chat through a sequence of agent steps (classify, gather, answer). When off, the bot works as before.",

@@ -784,6 +784,19 @@
     "Add new chat": "Add new chat",
     "API / Settings": "API / Settings",
     "bots": {
+      "mcp": {
+        "title": "MCP servers",
+        "hint": "Attach MCP servers to give the bot their tools. Any server, any bot.",
+        "name_ph": "Name (e.g. NoCloud)",
+        "url": "URL",
+        "headers": "Headers",
+        "headers_tip": "Sent on every request, e.g. Authorization: Bearer <token>.",
+        "add_header": "Add header",
+        "inject_account": "Bind customer account",
+        "inject_account_tip": "For account-scoped servers (NoCloud service mode): the resolved customer account is sent with each call and hidden from the model. Leave off for ordinary servers.",
+        "enabled": "Enabled",
+        "add_server": "Add MCP server"
+      },
       "flow": {
         "next": "Next",
         "undo": "Undo",
@@ -815,6 +828,9 @@
         "unreachable": "unreachable",
         "drag_hint": "Drag to reorder",
         "unnamed": "(unnamed)",
+        "start": "Start",
+        "start_tip": "This is where the flow begins — the first step, the one nothing points to.",
+        "branch_tip": "Decision block: the agent picks the outcome itself based on its prompt, and the matching branch runs next.",
         "no_enum": "any value",
         "use_flow": "Use flow pattern",
         "use_flow_tip": "Instead of one prompt, drive the chat through a sequence of agent steps (classify, gather, answer). When off, the bot works as before.",

@@ -21,8 +21,8 @@
 
     <div class="canvas__stage">
       <VueFlow
-        v-model:nodes="nodes"
-        v-model:edges="edges"
+        v-model:nodes="displayNodes"
+        v-model:edges="displayEdges"
         :fit-view-on-init="true"
         :min-zoom="0.3"
         :max-zoom="1.6"
@@ -71,6 +71,9 @@
               {{ data.name || t("bots.flow.unnamed") }}
             </div>
             <div class="fnode__meta">
+              <span v-if="outcomesOf(data).length > 1" class="fnode__tag fnode__tag--branch"
+                >⑂ {{ t("bots.flow.branch") }}</span
+              >
               <span v-if="data.reply" class="fnode__tag fnode__tag--reply"
                 >✉ {{ t("bots.flow.reply") }}</span
               >
@@ -107,7 +110,30 @@
             </div>
           </div>
         </template>
+
+        <!-- purely decorative: marks where the flow begins, not part of the model -->
+        <template #node-start>
+          <div class="fnode-start">
+            ▶ {{ t("bots.flow.start") }}
+            <Handle type="source" :position="Position.Right" />
+          </div>
+        </template>
       </VueFlow>
+    </div>
+
+    <div class="canvas__legend">
+      <span class="canvas__legend-item">
+        <span class="canvas__swatch" style="background: #1677ff" />
+        <b>{{ t("bots.flow.start") }}</b> — {{ t("bots.flow.start_tip") }}
+      </span>
+      <span class="canvas__legend-item">
+        <span class="canvas__swatch" style="background: #fa8c16" />
+        <b>{{ t("bots.flow.branch") }}</b> — {{ t("bots.flow.branch_tip") }}
+      </span>
+      <span class="canvas__legend-item">
+        <span class="canvas__swatch" style="background: #52c41a" />
+        <b>{{ t("bots.flow.reply") }}</b> — {{ t("bots.flow.reply_tip") }}
+      </span>
     </div>
 
     <!-- editor panel -->
@@ -251,7 +277,21 @@ const props = defineProps({
   modelsOptions: { type: Array, default: () => [] },
   databases: { type: Array, default: () => [] },
 });
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "apply-preset"]);
+
+// The support template's tools (account/billing/instances) come from the NoCloud
+// MCP server; applying the template switches it on by default. inject_account
+// binds the customer account per call. The service token is left blank for the
+// operator to paste (it's a secret, never shipped in the bundle).
+const SUPPORT_MCP = [
+  {
+    name: "NoCloud",
+    url: "https://mcp.nocloud.support.by/mcp",
+    headers: { Authorization: "" },
+    inject_account: true,
+    enabled: true,
+  },
+];
 
 const PALETTE = ["#1677ff", "#fa8c16", "#52c41a", "#722ed1", "#eb2f96", "#13c2c2", "#faad14"];
 const colorFor = (i) => PALETTE[i % PALETTE.length];
@@ -319,6 +359,53 @@ const selectedNode = computed(() =>
   nodes.value.find((n) => n.id === selectedId.value)
 );
 
+// Decorative-only "Start" node/edge pointing at the entry node (the node
+// nothing points to) — never part of the saved flow. Fed into VueFlow
+// alongside the real nodes/edges; the writable computed strips it back out
+// before it could ever land in `nodes`/`edges` (and so in toFlow()'s output).
+const START_ID = "__start__";
+const startNode = computed(() => {
+  const withIncoming = new Set(edges.value.map((e) => e.target));
+  const entry = nodes.value.find((n) => !withIncoming.has(n.id)) || nodes.value[0];
+  const position = entry
+    ? { x: entry.position.x - 140, y: entry.position.y + 20 }
+    : { x: -140, y: 20 };
+  return {
+    id: START_ID,
+    type: "start",
+    position,
+    draggable: false,
+    selectable: false,
+    connectable: false,
+  };
+});
+const displayNodes = computed({
+  get: () => (nodes.value.length ? [...nodes.value, startNode.value] : nodes.value),
+  set: (val) => {
+    nodes.value = val.filter((n) => n.type !== "start");
+  },
+});
+const displayEdges = computed({
+  get: () => {
+    const withIncoming = new Set(edges.value.map((e) => e.target));
+    const entry = nodes.value.find((n) => !withIncoming.has(n.id));
+    if (!entry) return edges.value;
+    return [
+      ...edges.value,
+      {
+        id: `${START_ID}->${entry.id}`,
+        source: START_ID,
+        target: entry.id,
+        selectable: false,
+        style: { stroke: "#bfbfbf", strokeWidth: 1.5 },
+      },
+    ];
+  },
+  set: (val) => {
+    edges.value = val.filter((e) => e.source !== START_ID);
+  },
+});
+
 // Targets you can send an output to (every other node + "end"). Lets you wire
 // the flow from the panel with a dropdown instead of dragging tiny ports.
 const nodeTargetOptions = computed(() => [
@@ -339,7 +426,7 @@ function setTarget(source, handle, target) {
     (e) => !(e.source === source && (e.sourceHandle || "next") === handle)
   );
   if (target) edges.value.push(makeEdge(source, handle, target));
-  emitChange();
+  commitStructuralChange();
   refreshHandles();
 }
 
@@ -429,31 +516,35 @@ function addAgent() {
     },
   });
   selectedId.value = id;
-  emitChange();
+  commitStructuralChange();
 }
 
 function onNodeClick({ node }) {
+  if (node.type === "start") return;
   selectedId.value = node.id;
 }
 
 function onConnect(conn) {
+  if (conn.source === START_ID || conn.target === START_ID) return;
   const handle = conn.sourceHandle || "next";
   edges.value = edges.value.filter(
     (e) => !(e.source === conn.source && (e.sourceHandle || "next") === handle)
   );
   edges.value.push(makeEdge(conn.source, handle, conn.target));
-  emitChange();
+  commitStructuralChange();
 }
 
 function onEdgeDblClick({ edge }) {
+  if (edge.source === START_ID) return;
   edges.value = edges.value.filter((e) => e.id !== edge.id);
-  emitChange();
+  commitStructuralChange();
 }
 
 function addBranch() {
   if (!selectedNode.value) return;
   selectedNode.value.data.outcomes.push({ id: "b" + ++branchSeq, label: "" });
   onBranchesChange();
+  pushHistory();
 }
 function removeBranch(bi) {
   const list = selectedNode.value.data.outcomes;
@@ -462,7 +553,9 @@ function removeBranch(bi) {
     (e) => !(e.source === selectedId.value && e.sourceHandle === removed.id)
   );
   onBranchesChange();
+  pushHistory();
 }
+// Also used for branch label edits, which are a parameter change (no history push).
 function onBranchesChange() {
   restyleEdges();
   emitChange();
@@ -473,7 +566,7 @@ function deleteNode(id) {
   nodes.value = nodes.value.filter((n) => n.id !== id);
   edges.value = edges.value.filter((e) => e.source !== id && e.target !== id);
   selectedId.value = null;
-  emitChange();
+  commitStructuralChange();
 }
 
 function pruneEdges() {
@@ -768,13 +861,21 @@ function presetSupport() {
 function loadPreset() {
   fromFlow(presetSupport());
   selectedId.value = null;
-  emitChange();
+  commitStructuralChange();
+  emit("apply-preset", SUPPORT_MCP); // turn the template's default MCP servers on
 }
 
 function emitChange() {
   pruneEdges();
-  pushHistory();
   emit("update:modelValue", toFlow());
+}
+
+// History (undo/redo) should only track structural edits — adding/removing
+// agents or branches, (dis)connecting them — not every keystroke in a
+// parameter field like name/prompt/model.
+function commitStructuralChange() {
+  emitChange();
+  pushHistory();
 }
 
 function sameAsModel(v) {
@@ -814,6 +915,25 @@ watch(
   border-radius: 10px;
   overflow: hidden;
   background: #fcfcfc;
+}
+.canvas__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+}
+.canvas__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.canvas__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
 }
 
 .ctrl {
@@ -870,12 +990,27 @@ watch(
 }
 .fnode--reply {
   border-left-color: #52c41a;
+  background: #f6ffed;
 }
 .fnode--branch {
   border-left-color: #fa8c16;
+  background: #fffbf0;
 }
 .fnode--sel {
   box-shadow: 0 0 0 2px #1677ff, 0 2px 10px rgba(22, 119, 255, 0.25);
+}
+.fnode-start {
+  min-width: 70px;
+  padding: 8px 14px;
+  border: 1px solid #91caff;
+  border-left: 4px solid #1677ff;
+  border-radius: 10px;
+  background: #e6f4ff;
+  color: #1677ff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 .fnode__title {
   font-weight: 600;
@@ -893,6 +1028,10 @@ watch(
   border-radius: 9px;
   background: #f0f0f0;
   color: #666;
+}
+.fnode__tag--branch {
+  background: #fff7e6;
+  color: #d4670a;
 }
 .fnode__tag--reply {
   background: #f6ffed;
