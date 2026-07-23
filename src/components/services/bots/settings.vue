@@ -309,7 +309,6 @@
           v-model="bot.settings.flow"
           :models-options="modelsOptions"
           :databases="bot.databases || []"
-          @apply-preset="onApplyPreset"
         />
       </a-col>
 
@@ -874,24 +873,18 @@ const hasChatChannel = computed(() =>
   (bot.value.channels || []).some((c) => c.type === "core_chatting")
 );
 
-// Flow pattern toggle: presence of settings.flow decides. Turning it off keeps
-// the built flow in a stash so turning it back on restores it (instead of
-// resetting to the starter). Backend still sees flow = null while disabled.
-const flowStash = ref(null);
+// Flow pattern toggle: a real, persisted flag (settings.flow_enabled),
+// independent of the flow steps themselves. Disabling it just stops the flow
+// from running - the built steps stay in settings.flow untouched, so
+// re-enabling brings them straight back, even after a reload.
 const useFlow = computed({
-  get: () => !!bot.value.settings.flow,
+  get: () => !!bot.value.settings.flow_enabled,
   set: (v) => {
-    if (v) {
-      bot.value.settings.flow =
-        bot.value.settings.flow ||
-        flowStash.value || {
-          steps: [
-            { name: "answer", prompt: "", reply: true, use_history: true },
-          ],
-        };
-    } else {
-      if (bot.value.settings.flow) flowStash.value = bot.value.settings.flow;
-      bot.value.settings.flow = null;
+    bot.value.settings.flow_enabled = v;
+    if (v && !bot.value.settings.flow) {
+      bot.value.settings.flow = {
+        steps: [{ name: "answer", prompt: "", reply: true, use_history: true }],
+      };
     }
   },
 });
@@ -899,20 +892,6 @@ const useFlow = computed({
 const isSavePrimary = computed(
   () => JSON.stringify(ogBot.value) != JSON.stringify(bot.value)
 );
-
-// Applying the flow template also switches its default MCP servers on (the
-// support template needs the NoCloud MCP). Merge by URL so re-applying doesn't
-// duplicate, and never clobber servers the operator already added.
-function onApplyPreset(defaultMcp) {
-  if (!Array.isArray(bot.value.settings.mcp_servers)) {
-    bot.value.settings.mcp_servers = [];
-  }
-  for (const srv of defaultMcp || []) {
-    if (!bot.value.settings.mcp_servers.some((s) => s.url === srv.url)) {
-      bot.value.settings.mcp_servers.push({ ...srv, headers: { ...(srv.headers || {}) } });
-    }
-  }
-}
 
 async function fetch() {
   try {

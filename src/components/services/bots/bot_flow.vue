@@ -277,21 +277,7 @@ const props = defineProps({
   modelsOptions: { type: Array, default: () => [] },
   databases: { type: Array, default: () => [] },
 });
-const emit = defineEmits(["update:modelValue", "apply-preset"]);
-
-// The support template's tools (account/billing/instances) come from the NoCloud
-// MCP server; applying the template switches it on by default. inject_account
-// binds the customer account per call. The service token is left blank for the
-// operator to paste (it's a secret, never shipped in the bundle).
-const SUPPORT_MCP = [
-  {
-    name: "NoCloud",
-    url: "https://mcp.nocloud.support.by/mcp",
-    headers: { Authorization: "" },
-    inject_account: true,
-    enabled: true,
-  },
-];
+const emit = defineEmits(["update:modelValue"]);
 
 const PALETTE = ["#1677ff", "#fa8c16", "#52c41a", "#722ed1", "#eb2f96", "#13c2c2", "#faad14"];
 const colorFor = (i) => PALETTE[i % PALETTE.length];
@@ -763,8 +749,12 @@ function presetSupport() {
       {
         name: "Сводка из биллинга",
         prompt:
-          "Собери досье клиента через доступные инструменты: тариф, активные услуги и инстансы, " +
-          "статус оплат и неоплаченные счета, дату продления. Дай короткую фактическую сводку без воды. " +
+          "Собери ПОЛНОЕ досье клиента для оператора — это не ответ на конкретный вопрос клиента, " +
+          "поэтому игнорируй рекомендации самих инструментов о том, какой один action выбрать под вопрос. " +
+          "Вызови ВСЕ пять, именно все, вне зависимости от того, о чём спросил клиент:\n" +
+          "nocloud_instances(action=list), nocloud_billing(action=account), " +
+          "nocloud_billing(action=balance), nocloud_billing(action=invoices), nocloud_tickets(action=list).\n" +
+          "Дай короткую фактическую сводку без воды по итогам всех пяти вызовов. " +
           "Если данных нет — так и скажи, не выдумывай. Сводку увидят следующие шаги.",
         model: "gpt-4o-mini",
         use_history: true,
@@ -773,11 +763,15 @@ function presetSupport() {
       {
         name: "Создание admin note",
         prompt:
-          "Вызови инструмент create_admin_note и выгрузи в заметке для оператора вообще всё интересное, " +
-          "что удалось узнать о клиенте и обращении: тип клиента, тариф, инстансы, статус оплат и счета, " +
-          "суть обращения, любые договорённости и важные детали из переписки. Полнота важнее краткости, " +
-          "ничего не сокращай. Клиент эту заметку не видит. Пользователю в этом шаге не отвечай — " +
-          "твоя единственная задача здесь — вызвать инструмент.",
+          "Вызови инструмент create_admin_note. В поле note перечисли КАЖДЫЙ объект из сводки выше " +
+          "отдельной строкой, поимённо/по номеру — не считай и не обобщай:\n" +
+          "- каждый инстанс: имя, статус;\n" +
+          "- баланс, тариф, статус аккаунта;\n" +
+          "- каждый неоплаченный счёт: номер, сумма, дата;\n" +
+          "- суть обращения клиента.\n" +
+          "Запрещены фразы вида '8 неоплаченных инвойсов' или '10 инстансов' без перечисления каждого — " +
+          "если их 8, должно быть 8 строк с номером и суммой. Клиент эту заметку не видит. " +
+          "Пользователю в этом шаге не отвечай — твоя единственная задача здесь — вызвать инструмент.",
         model: "gpt-4o-mini",
         use_history: true,
         routes: [{ when_var: "", equals: "", goto: "Классификация" }],
@@ -862,7 +856,6 @@ function loadPreset() {
   fromFlow(presetSupport());
   selectedId.value = null;
   commitStructuralChange();
-  emit("apply-preset", SUPPORT_MCP); // turn the template's default MCP servers on
 }
 
 function emitChange() {
