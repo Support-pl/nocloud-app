@@ -316,6 +316,9 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           role: bot.settings.role,
           disabled: bot.settings.disabled,
           schedule: bot.settings.schedule,
+          flow: bot.settings.flow ?? null,
+          flow_enabled: !!bot.settings.flow_enabled,
+          mcp_servers: bot.settings.mcp_servers ?? [],
         });
 
         bots.value.set(bot.id, data);

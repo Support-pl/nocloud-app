@@ -240,7 +240,30 @@
         <a-switch v-model:checked="bot.settings.enable_spam_filter" />
       </a-col>
 
-      <a-col span="24">
+      <a-col
+        v-if="hasChatChannel"
+        span="24"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 10px;
+        "
+      >
+        <span class="field_title"
+          >{{ t("bots.flow.use_flow") }}:
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.flow.use_flow_tip').replaceAll('\n', '<br/>')" />
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-switch v-model:checked="useFlow" />
+      </a-col>
+
+      <!-- Flow replaces the general prompt/role, so hide them when it's on -->
+      <a-col v-if="!useFlow" span="24">
         <span class="field_title"
           >{{ t("bots.fields.role") }}:
 
@@ -261,7 +284,7 @@
         />
       </a-col>
 
-      <a-col span="24">
+      <a-col v-if="!useFlow" span="24">
         <span class="field_title"
           >{{ t("bots.fields.promt") }}:
 
@@ -281,71 +304,89 @@
         />
       </a-col>
 
-      <a-col span="24" v-if="hasChatChannel">
-        <span class="field_title"
-          >{{ t("bots.fields.processing_model") }}:
-
-          <a-tooltip>
-            <template #title>
-              <span
-                v-html="
-                  t('bots.tips.processing_model').replaceAll('\n', '<br/>')
-                "
-              >
-              </span>
-            </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <a-select
-          :options="modelsOptions"
-          style="width: 100%; margin-top: 10px"
-          allow-clear
-          :placeholder="t('bots.placeholders.processing_model')"
-          :value="bot.settings.processing_model || undefined"
-          @update:value="bot.settings.processing_model = $event || ''"
-        />
-      </a-col>
-
-      <a-col span="24" v-if="hasChatChannel">
-        <span class="field_title"
-          >{{ t("bots.fields.processing_prompt") }}:
-
-          <a-tooltip>
-            <template #title>
-              <span
-                v-html="
-                  t('bots.tips.processing_prompt').replaceAll('\n', '<br/>')
-                "
-              >
-              </span>
-            </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <a-textarea
-          style="margin-top: 10px"
-          v-model:value="bot.settings.processing_prompt"
-          :placeholder="t('bots.placeholders.processing_prompt')"
-          :auto-size="{ minRows: 4 }"
+      <a-col v-if="useFlow" span="24" style="margin-top: 10px">
+        <bot-flow
+          v-model="bot.settings.flow"
+          :models-options="modelsOptions"
+          :databases="bot.databases || []"
         />
       </a-col>
 
       <a-col span="24" v-if="hasChatChannel" style="margin-top: 10px">
-        <span class="field_title"
-          >{{ t("bots.fields.schedule") }}:
+        <a-collapse>
+          <a-collapse-panel key="mcp" :header="t('bots.mcp.title')">
+            <bot-mcp v-model="bot.settings.mcp_servers" />
+          </a-collapse-panel>
+        </a-collapse>
+      </a-col>
 
-          <a-tooltip>
-            <template #title>
-              <span v-html="t('bots.tips.schedule').replaceAll('\n', '<br/>')" />
+      <a-col span="24" v-if="hasChatChannel" style="margin-top: 10px">
+        <a-collapse>
+          <a-collapse-panel key="processing" :header="t('bots.fields.processing_prompt')">
+            <span class="field_title"
+              >{{ t("bots.fields.processing_model") }}:
+
+              <a-tooltip>
+                <template #title>
+                  <span
+                    v-html="
+                      t('bots.tips.processing_model').replaceAll('\n', '<br/>')
+                    "
+                  >
+                  </span>
+                </template>
+                <help-icon style="margin-left: 5px" />
+              </a-tooltip>
+            </span>
+            <a-select
+              :options="modelsOptions"
+              style="width: 100%; margin-top: 10px"
+              allow-clear
+              :placeholder="t('bots.placeholders.processing_model')"
+              :value="bot.settings.processing_model || undefined"
+              @update:value="bot.settings.processing_model = $event || ''"
+            />
+
+            <span class="field_title" style="margin-top: 10px; display: block"
+              >{{ t("bots.fields.processing_prompt") }}:
+
+              <a-tooltip>
+                <template #title>
+                  <span
+                    v-html="
+                      t('bots.tips.processing_prompt').replaceAll('\n', '<br/>')
+                    "
+                  >
+                  </span>
+                </template>
+                <help-icon style="margin-left: 5px" />
+              </a-tooltip>
+            </span>
+            <a-textarea
+              style="margin-top: 10px"
+              v-model:value="bot.settings.processing_prompt"
+              :placeholder="t('bots.placeholders.processing_prompt')"
+              :auto-size="{ minRows: 4 }"
+            />
+          </a-collapse-panel>
+        </a-collapse>
+      </a-col>
+
+      <a-col span="24" v-if="hasChatChannel" style="margin-top: 10px">
+        <a-collapse>
+          <a-collapse-panel key="schedule">
+            <template #header>
+              {{ t("bots.fields.schedule") }}
+              <a-tooltip>
+                <template #title>
+                  <span v-html="t('bots.tips.schedule').replaceAll('\n', '<br/>')" />
+                </template>
+                <help-icon style="margin-left: 5px" />
+              </a-tooltip>
             </template>
-            <help-icon style="margin-left: 5px" />
-          </a-tooltip>
-        </span>
-        <bot-schedule
-          style="margin-top: 10px"
-          v-model="bot.settings.schedule"
-        />
+            <bot-schedule v-model="bot.settings.schedule" />
+          </a-collapse-panel>
+        </a-collapse>
       </a-col>
 
       <a-col span="24" style="padding-bottom: 40px; margin-top: 10px">
@@ -612,6 +653,8 @@ import { useChatsStore } from "@/stores/chats";
 import { marked } from "marked";
 import Loading from "@/components/ui/loading.vue";
 import BotSchedule from "@/components/services/bots/bot_schedule.vue";
+import BotFlow from "@/components/services/bots/bot_flow.vue";
+import BotMcp from "@/components/services/bots/bot_mcp.vue";
 import { storeToRefs } from "pinia";
 import { useCurrenciesStore } from "@/stores/currencies";
 
@@ -830,6 +873,22 @@ const hasChatChannel = computed(() =>
   (bot.value.channels || []).some((c) => c.type === "core_chatting")
 );
 
+// Flow pattern toggle: a real, persisted flag (settings.flow_enabled),
+// independent of the flow steps themselves. Disabling it just stops the flow
+// from running - the built steps stay in settings.flow untouched, so
+// re-enabling brings them straight back, even after a reload.
+const useFlow = computed({
+  get: () => !!bot.value.settings.flow_enabled,
+  set: (v) => {
+    bot.value.settings.flow_enabled = v;
+    if (v && !bot.value.settings.flow) {
+      bot.value.settings.flow = {
+        steps: [{ name: "answer", prompt: "", reply: true, use_history: true }],
+      };
+    }
+  },
+});
+
 const isSavePrimary = computed(
   () => JSON.stringify(ogBot.value) != JSON.stringify(bot.value)
 );
@@ -853,6 +912,12 @@ async function fetch() {
     }
     if (bot.value.settings.schedule == null) {
       bot.value.settings.schedule = { enabled: false, tz: "", default: "review", rules: [] };
+    }
+    if (bot.value.settings.flow === undefined) {
+      bot.value.settings.flow = null;
+    }
+    if (!Array.isArray(bot.value.settings.mcp_servers)) {
+      bot.value.settings.mcp_servers = [];
     }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
     await Promise.all([aiBotsStore.getRoles(), chatsStore.fetch_models_list()]);

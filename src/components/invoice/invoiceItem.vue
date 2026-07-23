@@ -1,14 +1,7 @@
 <template>
   <div
     class="invoice"
-    @click="
-      if (needVerification) {
-        isVerificationOpen = true;
-      } else {
-        isLoading = true;
-        openInvoiceDocument(invoice);
-      }
-    "
+    @click="onCardClick"
   >
     <div class="invoice__header">
       <div class="invoice__status" :style="{ color: statusColor }">
@@ -68,7 +61,7 @@
             @confirm="payByBalance"
           >
             <a-button
-              :loading="isBalanceLoading"
+              :loading="isBalanceLoading || buttonsLocked"
               type="primary"
               shape="round"
               size="small"
@@ -80,7 +73,7 @@
 
           <a-button
             style="background-color: var(--success)"
-            :loading="isLoading"
+            :loading="isLoading || buttonsLocked"
             @click.stop="paidInvoice"
             type="primary"
             shape="round"
@@ -119,7 +112,7 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, ref, toRefs } from "vue";
+import { computed, defineAsyncComponent, onMounted, ref, toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 import { ActionType } from "nocloud-proto/proto/es/billing/billing_pb";
 import VerificationModal from "../settings/verificationModal.vue";
@@ -156,6 +149,13 @@ const isLoading = ref(false);
 const isBalanceLoading = ref(false);
 const isVerificationOpen = ref(false);
 
+// ponytail: blocks payment buttons for 3s after mount so a slower
+// isPhoneVerified fetch can't be raced by a user paying an unverified invoice
+const buttonsLocked = ref(true);
+onMounted(() => {
+  setTimeout(() => (buttonsLocked.value = false), 3000);
+});
+
 const statusColor = computed(() => {
   switch (invoice.value.status?.toLowerCase()) {
     case "paid":
@@ -181,6 +181,16 @@ const needVerification = computed(
     !!invoice.value.properties.phoneVerificationRequired &&
     !userdata.value.isPhoneVerified
 );
+
+function onCardClick() {
+  if (buttonsLocked.value) return;
+  if (needVerification.value) {
+    isVerificationOpen.value = true;
+  } else {
+    isLoading.value = true;
+    openInvoiceDocument(invoice.value);
+  }
+}
 
 async function paidInvoice() {
   isLoading.value = true;
