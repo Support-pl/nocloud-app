@@ -70,7 +70,7 @@ const statusVM = computed(() => {
       start: true, shutdown: true, reboot: true
     }
   }
-  const isSuspended = props.vm.state.state === 'SUSPENDED' || props.vm.data.suspended_manually
+  const isSuspended = props.vm.state.state === 'SUSPENDED';
 
   if (isSuspended || props.vm.data.lock || props.vm.state.state === 'PENDING') {
     return {

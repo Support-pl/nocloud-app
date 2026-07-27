@@ -223,7 +223,7 @@
             <div class="block__value">
               {{
                 new Intl.DateTimeFormat().format(
-                  VM.data.next_payment_date * 1000
+                  VM.data.next_payment_date * 1000,
                 )
               }}
               <sync-icon title="Renew" @click="isVisible = !isVisible" />
@@ -556,51 +556,51 @@ import renewalModal from "@/components/ui/renewalModal.vue";
 import { useAddonsStore } from "@/stores/addons";
 import { marked } from "marked";
 
-const redoIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/RedoOutlined")
+const redoIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/RedoOutlined"),
 );
-const backwardIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/BackwardOutlined")
+const backwardIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/BackwardOutlined"),
 );
-const clusterOutlined = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ClusterOutlined")
-);
-
-const flagIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/FlagFilled")
-);
-const envIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/EnvironmentOutlined")
-);
-const infoIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/InfoCircleOutlined")
+const clusterOutlined = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ClusterOutlined"),
 );
 
-const syncIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SyncOutlined")
+const flagIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/FlagFilled"),
 );
-const cardIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CreditCardOutlined")
+const envIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/EnvironmentOutlined"),
 );
-
-const settingIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/SettingFilled")
-);
-const databaseIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/DatabaseFilled")
-);
-const apartmentIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/ApartmentOutlined")
+const infoIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/InfoCircleOutlined"),
 );
 
-const lineChartIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/LineChartOutlined")
+const syncIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/SyncOutlined"),
 );
-const caretRightIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CaretRightOutlined")
+const cardIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CreditCardOutlined"),
 );
-const closeIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CloseOutlined")
+
+const settingIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/SettingFilled"),
+);
+const databaseIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/DatabaseFilled"),
+);
+const apartmentIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ApartmentOutlined"),
+);
+
+const lineChartIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/LineChartOutlined"),
+);
+const caretRightIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CaretRightOutlined"),
+);
+const closeIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CloseOutlined"),
 );
 
 const columns = [
@@ -717,8 +717,7 @@ export default defineComponent({
           recover: true,
         };
       }
-      const isSuspended =
-        this.VM.state.meta.state === 1 || this.VM.data.suspended_manually;
+      const isSuspended = this.VM.state.meta.state === 1;
 
       if (
         isSuspended ||
@@ -1048,7 +1047,7 @@ export default defineComponent({
             title: this.$t("Do you want to download a backup?"),
             maskClosable: true,
             content: this.$t(
-              "All unsaved progress will be lost, are you sure?"
+              "All unsaved progress will be lost, are you sure?",
             ),
             okText: this.$t("Yes"),
             cancelText: this.$t("Cancel"),
