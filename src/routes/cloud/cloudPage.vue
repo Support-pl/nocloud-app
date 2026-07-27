@@ -478,7 +478,6 @@ export default {
 
       if (this.VM.state.meta.state === 1) return "PENDING";
       if (this.VM.state.meta.state === 5) return "SUSPENDED";
-      if (this.VM.data.suspended_manually) return "SUSPENDED";
       if (this.VM.state.meta.state === "BUILD") return "BUILD";
 
       switch (state) {
@@ -490,7 +489,6 @@ export default {
     },
     stateColor() {
       if (!this.VM.state && !this.VM.vm_info?.STATE) return "var(--err)";
-      if (this.VM.data?.suspended_manually) return "#ff9140";
 
       let state;
       if (this.VM?.billingPlan?.type === "ione") {

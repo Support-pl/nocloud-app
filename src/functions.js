@@ -176,7 +176,7 @@ export function transformInstances(instances) {
       /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/;
 
     const publicIPs = inst.state?.meta?.networking?.public?.filter(
-      (el) => !regexp.test(el)
+      (el) => !regexp.test(el),
     );
     const state = inst.state?.meta?.lcm_state_str ?? inst.state?.state;
     let status = "UNKNOWN";
@@ -191,7 +191,6 @@ export function transformInstances(instances) {
 
     if (inst.state?.meta.state === 1) status = "PENDING";
     if (inst.state?.meta.state === 5) status = "SUSPENDED";
-    if (inst.data.suspended_manually) status = "SUSPENDED";
     if (inst.state?.meta.state === "BUILD") status = "BUILD";
     if (!inst.state && !inst.data.is_monitored) status = "INIT";
 
@@ -285,7 +284,7 @@ function setOvhInst(inst, result) {
       : `${inst.config.duration} ${addon}`;
 
     const { price } = inst.billingPlan.resources.find(
-      ({ key }) => key === addonKey
+      ({ key }) => key === addonKey,
     ) ?? { price: 0 };
 
     result.orderamount += +price;
@@ -326,7 +325,7 @@ export function generateUuid() {
 
   for (let i = 0; i < 4; i++) {
     result.push(
-      window.crypto.getRandomValues(new Uint32Array(1))[0].toString(16)
+      window.crypto.getRandomValues(new Uint32Array(1))[0].toString(16),
     );
   }
 
@@ -335,7 +334,7 @@ export function generateUuid() {
 
 export function isUUUID(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value
+    value,
   );
 }
 
@@ -343,7 +342,7 @@ export function setChartsTheme(charts, isDark = true) {
   for (const chart of charts) {
     const rect = chart.querySelector("svg[aria-label] > rect");
     const texts = chart.querySelectorAll(
-      "svg[aria-label] > g text[text-anchor]"
+      "svg[aria-label] > g text[text-anchor]",
     );
 
     rect.setAttribute("fill", "var(--bright_bg)");
@@ -374,7 +373,7 @@ export function toKebabCase(text) {
 
 export function toPascalCase(text) {
   return text.replace(/(^\w|-\w)/g, (text) =>
-    text.replace(/-/, "").toUpperCase()
+    text.replace(/-/, "").toUpperCase(),
   );
 }
 
@@ -397,13 +396,13 @@ export function toInvoice(transaction, type = "default") {
         Number(+new Date(transaction.created_at) / 1000),
         "-",
         false,
-        true
+        true,
       ),
       deadline: toDate(
         Number(+new Date(transaction.duedate) / 1000),
         "-",
         false,
-        true
+        true,
       ),
       payment:
         isPaid &&
@@ -411,7 +410,7 @@ export function toInvoice(transaction, type = "default") {
           Number(+new Date(transaction.datepaid) / 1000),
           "-",
           false,
-          true
+          true,
         ),
       total: transaction.total || 0,
       status,
@@ -462,7 +461,7 @@ export function removeEmptyValues(obj) {
       (obj[key] &&
         typeof obj[key] === "object" &&
         removeEmptyValues(obj[key])) ||
-      ((obj[key] === undefined || obj[key] === null) && delete obj[key])
+      ((obj[key] === undefined || obj[key] === null) && delete obj[key]),
   );
   return obj;
 }

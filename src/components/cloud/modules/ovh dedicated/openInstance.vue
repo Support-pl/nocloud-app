@@ -501,7 +501,7 @@ export default defineComponent({
       if (!this.VM) return;
       const isPending = ["PENDING", "OPERATION"].includes(this.VM.state.state);
       const isSuspended =
-        this.VM.state.state === "SUSPENDED" || this.VM.data.suspended_manually;
+        this.VM.state.state === "SUSPENDED";
 
       if (isPending || isSuspended || this.VM.data.lock) {
         return { shutdown: true, reboot: true, start: true, recover: true };
