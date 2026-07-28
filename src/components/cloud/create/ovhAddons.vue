@@ -1,23 +1,25 @@
 <template>
   <template v-if="!isFlavorsLoading">
-    <a-row v-for="(addon, key) in addons" :key="key" class="newCloud__prop">
-      <a-col span="8" :xs="6"> {{ capitalize($t(key)) }}: </a-col>
-      <a-col span="16" :xs="18">
-        <a-select
-          default-value="-1"
-          style="width: 100%"
-          :value="addonName(addon)"
-          @change="(value) => setAddon(value, addon[value], key)"
-        >
-          <a-select-option v-if="!isMandatory(addon)" value="-1">
-            {{ $t("ip.none") }}
-          </a-select-option>
-          <a-select-option v-for="item in getGroupAddons(addon)" :key="item.id">
-            {{ item.title }} ({{ item.priceFormatted }})
-          </a-select-option>
-        </a-select>
-      </a-col>
-    </a-row>
+    <template v-for="(addon, key) in addons" :key="key">
+      <a-row v-if="Object.keys(addon).length" class="newCloud__prop">
+        <a-col span="8" :xs="6"> {{ capitalize($t(key)) }}: </a-col>
+        <a-col span="16" :xs="18">
+          <a-select
+            default-value="-1"
+            style="width: 100%"
+            :value="addonName(addon)"
+            @change="(value) => setAddon(value, addon[value], key)"
+          >
+            <a-select-option v-if="!isMandatory(addon)" value="-1">
+              {{ $t("ip.none") }}
+            </a-select-option>
+            <a-select-option v-for="item in getGroupAddons(addon)" :key="item.id">
+              {{ item.title }} ({{ item.priceFormatted }})
+            </a-select-option>
+          </a-select>
+        </a-col>
+      </a-row>
+    </template>
   </template>
   <a-spin v-else style="display: block; margin: 0 auto" :tip="$t('loading')" />
 </template>
