@@ -619,6 +619,7 @@
     "You can't resize disk to the same size": "Vous ne pouvez pas redimensionner le disque à la même taille",
     "size": "Taille",
     "disk": "Disque",
+    "storage": "Stockage",
     "disk resize": "Redimensionner le disque",
     "disk attach": "Attachement de disque",
     "disk detach": "Détachement de disque",

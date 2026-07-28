@@ -20,14 +20,14 @@ const addonsStore = useAddonsStore()
 const [product] = inject('useProduct', () => [])()
 
 const addons = computed(() => {
-  const result = { backup: {}, snapshot: {}, disk: {} }
+  const result = { backup: {}, snapshot: {}, disk: {}, storage: {} }
 
   const filtered = addonsStore.addons.filter(({ uuid }) =>
     cloudStore.plan.addons.includes(uuid) || product.value.addons?.includes(uuid)
   )
 
   filtered.forEach(({ uuid, title, periods, meta, system, group, public: enabled }) => {
-    const addonGroups = ['backup', 'snapshot', 'disk']
+    const addonGroups = ['backup', 'snapshot', 'disk', 'storage']
     const addonGroup = addonGroups.find((key) =>
       meta.key.toLowerCase().includes(key)
     )

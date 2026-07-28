@@ -534,6 +534,7 @@
     "attach new disk": "Thêm bộ nhớ mới",
     "size": "Kích thước",
     "disk": "Bộ nhớ",
+    "storage": "Lưu trữ",
     "disk attach": "Bộ nhớ thêm",
     "assign to VM": "Gắn cho VM",
     "NIC attach": "NIC thêm",
