@@ -9,7 +9,7 @@
           :value="addonName(addon)"
           @change="(value) => setAddon(value, addon[value], key)"
         >
-          <a-select-option value="-1">
+          <a-select-option v-if="!isMandatory(addon)" value="-1">
             {{ $t("ip.none") }}
           </a-select-option>
           <a-select-option v-for="item in getGroupAddons(addon)" :key="item.id">
@@ -47,18 +47,30 @@ watch(
       ? JSON.parse(localStorage.getItem("data"))
       : JSON.parse(route.query.data ?? "{}");
 
-    if (!data.ovhConfig) return;
-    if (data.ovhConfig.addons.length < 1) return;
+    if (data.ovhConfig?.addons.length > 0) {
+      options.addons.forEach((addon) => {
+        const keys = Object.keys(value);
+        const key = keys.find((el) => addon.includes(el));
 
-    options.addons.forEach((addon) => {
-      const keys = Object.keys(value);
-      const key = keys.find((el) => addon.includes(el));
+        if (!value[key][addon]) return;
+        setAddon(addon, value[key][addon], key);
+      });
+    }
 
-      if (!value[key][addon]) return;
-      setAddon(addon, value[key][addon], key);
-    });
-  }
+    selectDefaultMandatoryAddons(value);
+  },
+  { immediate: true }
 );
+
+// ponytail: any free addon counts as "selected by default", user just can't drop back to none
+function selectDefaultMandatoryAddons(addonsGroups) {
+  Object.entries(addonsGroups).forEach(([key, groupAddons]) => {
+    if (addonName(groupAddons) !== "-1") return;
+
+    const free = getGroupAddons(groupAddons).find((item) => item.price === 0);
+    if (free) setAddon(free.id, groupAddons[free.id], key);
+  });
+}
 
 function setAddon(code, addon, key) {
   const addonsPrices = JSON.parse(JSON.stringify(price.addons));
@@ -88,6 +100,10 @@ function addonName(addons) {
   const keys = Object.keys(addons);
 
   return options.addons.find((el) => keys.includes(el)) ?? "-1";
+}
+
+function isMandatory(groupAddons) {
+  return getGroupAddons(groupAddons).some((item) => item.price === 0);
 }
 
 function getGroupAddons(groupAddons) {
