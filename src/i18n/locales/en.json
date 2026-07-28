@@ -1335,6 +1335,7 @@
     "You can't resize disk to the same size": "You can't resize disk to the same size",
     "size": "Size",
     "disk": "Disk",
+    "storage": "Storage",
     "disk resize": "Disk resize",
     "disk attach": "Disk attach",
     "disk detach": "Disk detach",
