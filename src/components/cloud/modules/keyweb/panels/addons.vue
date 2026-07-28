@@ -18,7 +18,7 @@ import { useCloudStore } from "@/stores/cloud.js";
 import { useAddonsStore } from "@/stores/addons.js";
 import { useCurrency } from "@/hooks/utils";
 
-defineProps({
+const props = defineProps({
   mode: { type: String, required: true },
   productSize: { type: String, required: true },
   plans: { type: Array, default: () => [] },
@@ -70,15 +70,18 @@ const addons = computed(() => {
 });
 
 watch(addons, setAddons);
+watch(() => props.productSize, () => setAddons(addons.value));
 setAddons(addons.value);
 
 async function setAddons(value) {
   await nextTick();
 
   Object.entries(value).forEach(([key, value]) => {
+    if (getAddon(value)) return;
+
     const [code, addon] = Object.entries(value)
       .filter(([code, addon]) => addon.required && code)
-      .sort(([b, addonB], [a, addonA]) => addonB.price - addonA.price)[0];
+      .sort(([b, addonB], [a, addonA]) => addonB.price - addonA.price)[0] ?? [];
     if (!code || !addon.required) return;
 
     setAddon(code, addon, key);
@@ -87,8 +90,18 @@ async function setAddons(value) {
 
 async function setAddon(code, addon, key) {
   const addonsPrices = { ...price.addons };
+  // ponytail: addons.value[key] is already scoped to the current product's
+  // addons, so a stale uuid from a previously selected product (e.g. leftover
+  // backup addon after switching tariffs) won't be in it and survives the
+  // filter. Filter against the full addon list for this key category instead.
+  const categoryUuids = addonsStore.addons
+    .filter(({ meta, system, group }) => {
+      const isInclude = meta.key.toLowerCase().includes("backup");
+      return (system && isInclude ? "backup" : group) === key;
+    })
+    .map(({ uuid }) => uuid);
   const addonsKeys = [...options.addons].filter(
-    (uuid) => !Object.keys(addons.value[key]).includes(uuid)
+    (uuid) => !categoryUuids.includes(uuid)
   );
 
   if (code !== -1) {
