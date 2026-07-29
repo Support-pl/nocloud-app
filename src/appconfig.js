@@ -22,6 +22,7 @@ export default {
   sharedFolder: globalConfig.app?.shared_folder ?? "virtualHosting",
 
   legal: globalConfig.legal ?? null,
+  cookieConsentEnabled: globalConfig.legal?.cookie_consent?.enabled ?? true,
 
   appTitle: globalConfig.app?.title ?? "",
   appLogo: {
