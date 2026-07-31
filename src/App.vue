@@ -15,6 +15,7 @@
       </transition>
     </router-view>
     <update-notification />
+    <consent-banner />
 
     <a-float-button
       v-if="isThemeButtonVisible"
@@ -58,6 +59,7 @@ import { useAuthStore } from "@/stores/auth.js";
 
 import addFunds from "@/components/ui/addFunds.vue";
 import updateNotification from "@/components/ui/updateNotification.vue";
+import consentBanner from "@/components/ui/consentBanner.vue";
 import { useCurrenciesStore } from "./stores/currencies";
 import { useSpStore } from "./stores/sp";
 
