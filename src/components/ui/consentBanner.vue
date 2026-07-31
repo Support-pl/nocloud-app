@@ -34,6 +34,7 @@
 import { computed, ref } from "vue";
 import api from "@/api.js";
 import appconfig from "@/appconfig.js";
+import { initGtag } from "@/gtag.js";
 
 const POLICY_VERSION = "1";
 const STORAGE_KEY = "consent_decision";
@@ -42,11 +43,15 @@ const isVisible = ref(
   appconfig.cookieConsentEnabled && !localStorage.getItem(STORAGE_KEY),
 );
 
-const docs = computed(() => (appconfig.legal?.documents ?? []).filter((d) => d.file));
+const docs = computed(() => (appconfig.legal?.cookie_consent?.documents ?? []).filter((d) => d.file));
 
 async function decide(decision) {
   isVisible.value = false;
   localStorage.setItem(STORAGE_KEY, decision);
+
+  if (decision === "ACCEPT") {
+    initGtag();
+  }
 
   try {
     await api.axios.post("/consent", {
