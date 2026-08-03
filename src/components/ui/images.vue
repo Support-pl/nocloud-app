@@ -94,6 +94,12 @@ const groups = computed(() => {
     map.get(key).versions.push({ index, item, version });
   });
 
+  map.forEach((group) => {
+    group.versions.sort((a, b) =>
+      b.version.localeCompare(a.version, undefined, { numeric: true })
+    );
+  });
+
   return [...map.values()];
 });
 
