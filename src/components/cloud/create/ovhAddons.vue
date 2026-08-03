@@ -32,7 +32,6 @@
 
 <script setup>
 import { inject, watch } from "vue";
-import { useRoute } from "vue-router";
 import { useCurrency } from "@/hooks/utils";
 
 const props = defineProps({
@@ -43,7 +42,6 @@ const props = defineProps({
   isFlavorsLoading: { type: Boolean, default: false },
 });
 
-const route = useRoute();
 const { currency, formatPrice } = useCurrency();
 const [options, setOptions] = inject("useOptions", () => [])();
 const [price, setPrice] = inject("usePriceOVH", () => [])();
@@ -51,11 +49,7 @@ const [price, setPrice] = inject("usePriceOVH", () => [])();
 watch(
   () => props.addons,
   (value) => {
-    const data = localStorage.getItem("data")
-      ? JSON.parse(localStorage.getItem("data"))
-      : JSON.parse(route.query.data ?? "{}");
-
-    if (data.ovhConfig?.addons.length > 0) {
+    if (options.addons.length > 0) {
       options.addons.forEach((addon) => {
         const keys = Object.keys(value);
         const key = keys.find((el) => addon.includes(el));
@@ -68,6 +62,15 @@ watch(
     selectDefaultMandatoryAddons(value);
   },
   { immediate: true }
+);
+
+// options.addons gets reset to [] on provider/location change (elsewhere) —
+// re-apply mandatory free addons so the select never lands on an unrenderable "-1"
+watch(
+  () => options.addons.length,
+  (length) => {
+    if (length === 0) selectDefaultMandatoryAddons(props.addons);
+  }
 );
 
 // ponytail: any free addon counts as "selected by default", user just can't drop back to none
@@ -106,8 +109,14 @@ function setAddon(code, addon, key) {
 
 function addonName(addons) {
   const keys = Object.keys(addons);
+  const selected = options.addons.find((el) => keys.includes(el));
 
-  return options.addons.find((el) => keys.includes(el)) ?? "-1";
+  if (selected) return selected;
+
+  // nothing selected yet: for a mandatory group "-1" isn't a renderable option,
+  // so show the free item instead of a raw "-1" while the real selection catches up
+  const free = getGroupAddons(addons).find((item) => item.price === 0);
+  return free?.id ?? "-1";
 }
 
 function isMandatory(groupAddons) {
