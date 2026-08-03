@@ -163,7 +163,11 @@ function useCloudOptions(activeKey, tarification) {
         }
 
         if (dataLocalStorage.value.ovhConfig) {
-          options.config = dataLocalStorage.value.ovhConfig;
+          options.config = {
+            configuration: {},
+            addons: [],
+            ...dataLocalStorage.value.ovhConfig,
+          };
         }
 
         if (dataLocalStorage.value.resources) {

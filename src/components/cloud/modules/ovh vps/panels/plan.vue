@@ -233,7 +233,7 @@ const products = computed(() =>
     new Set(
       props.products
         .filter(({ datacenter }) => {
-          const key = options.config.configuration.vps_datacenter;
+          const key = options.config.configuration?.vps_datacenter;
 
           return datacenter?.includes(key);
         })
