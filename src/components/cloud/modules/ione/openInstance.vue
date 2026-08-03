@@ -257,43 +257,11 @@
           <card-icon /> {{ capitalize($t("prices")) }}
         </div>
 
-        <div class="Fcloud__block-content block-content_table">
-          <template v-if="tariffPrice">
-            <div class="block__column block__column_table">
-              <div class="block__title">
-                {{ capitalize($t("tariff")) }}
-              </div>
-            </div>
-            <div class="block__column block__column_table block__column_price">
-              <div class="block__title">
-                {{ productName || $t("No Data") }}:
-              </div>
-              <div class="block__value">
-                {{ +tariffPrice.toFixed(2) }} {{ currency.title }}
-              </div>
-            </div>
-          </template>
-
-          <div class="block__column block__column_table">
-            <div class="block__title">
-              {{ $t("Addons") }}
-            </div>
-          </div>
-          <div
-            v-for="(price, addon) in addonsPrice"
-            :key="addon"
-            class="block__column block__column_table block__column_price"
-          >
-            <div class="block__title">{{ capitalize(addon) }}:</div>
+        <div class="Fcloud__block-content">
+          <div class="block__column">
+            <div class="block__title">{{ $t("Price") }}</div>
             <div class="block__value">
-              {{ +price.toFixed(2) }} {{ currency.title }}
-            </div>
-          </div>
-
-          <div class="block__column block__column_table block__column_total">
-            <div class="block__title">{{ $t("Total") }}:</div>
-            <div class="block__value">
-              {{ +fullPrice.toFixed(2) }} {{ currency.title }}
+              {{ totalPrice }} {{ currency.title }}
             </div>
           </div>
         </div>
@@ -824,6 +792,11 @@ export default defineComponent({
         Object.values(this.addonsPrice)?.reduce((sum, curr) => sum + curr, 0)
       );
     },
+    // billing plan tariff price can come through negative (credit/downgrade
+    // accounting); the price shown to the user is never negative.
+    totalPrice() {
+      return Math.abs(+this.fullPrice.toFixed(2));
+    },
     renewalProps() {
       const { period } = this.VM.billingPlan.products[this.VM.product];
       const currentPeriod = this.date(this.VM.data.next_payment_date);
@@ -837,6 +810,7 @@ export default defineComponent({
         addonsPrice: this.addonsPrice,
         currentAutoRenew: this.VM.config.auto_renew,
         blocked: this.VM.data.blocked,
+        simplified: true,
       };
     },
 
@@ -1329,65 +1303,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped>
-.block-content_table {
-  position: relative;
-  display: grid;
-  padding: 10px 15px;
-}
-
-.block-content_table::before {
-  content: "";
-  position: absolute;
-  bottom: 40px;
-  left: 15px;
-  height: 1px;
-  width: calc(100% - 30px);
-  background: var(--gray);
-}
-
-.block-content_table::after {
-  content: "";
-  position: absolute;
-  top: 35px;
-  left: 15px;
-  height: 1px;
-  width: calc(100% - 30px);
-  background: var(--gray);
-}
-
-.block__column_table {
-  flex-direction: row;
-  justify-content: start;
-  gap: 7px;
-}
-
-.block__column_price {
-  grid-column: 2 / 3;
-  justify-content: end;
-  overflow: hidden;
-}
-
-.block__column_price .block__title {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.block__column_price .block__value {
-  white-space: nowrap;
-}
-
-.block__column_total {
-  grid-column: 1 / 3;
-  justify-content: end;
-  margin-top: 5px;
-}
-
-@media (max-width: 575px) {
-  .block-content_table {
-    justify-content: initial;
-  }
-}
-</style>

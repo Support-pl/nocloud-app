@@ -52,7 +52,12 @@
       </a-button>
     </div>
 
-    <div style="margin-top: 10px">
+    <div v-if="simplified" style="margin-top: 10px">
+      <span style="font-weight: 700">{{ $t("Price") }}: </span>
+      {{ formatPrice(totalPrice) }} {{ currency.title }}
+    </div>
+
+    <div v-else style="margin-top: 10px">
       <div>{{ $t("Manual renewal") }}:</div>
       <span style="font-weight: 700">{{ $t("Tariff price") }}: </span>
       {{ formatPrice(price) }} {{ currency.title }}
@@ -68,12 +73,7 @@
 
       <div>
         <span style="font-weight: 700">{{ $t("Total") }}: </span>
-        {{
-          formatPrice(
-            price +
-              Object.values(addonsPrice).reduce((sum, cur) => sum + +cur, 0)
-          )
-        }}
+        {{ formatPrice(rawTotal) }}
         {{ currency.title }}
       </div>
     </div>
@@ -81,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineAsyncComponent } from "vue";
+import { ref, computed, onMounted, defineAsyncComponent } from "vue";
 import { Modal } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 import { useCurrency, useNotification } from "@/hooks/utils";
@@ -102,6 +102,7 @@ const props = defineProps({
   addonsPrice: { type: Object, default: () => ({}) },
   currentAutoRenew: { type: Boolean, default: false },
   blocked: { type: Boolean, default: false },
+  simplified: { type: Boolean, default: false },
 });
 const emits = defineEmits(["update:visible"]);
 
@@ -116,6 +117,15 @@ const isLoading = ref(false);
 const isDisabled = ref(false);
 const autoRenew = ref(false);
 const isRenewLoading = ref(false);
+
+const rawTotal = computed(
+  () =>
+    props.price +
+    Object.values(props.addonsPrice).reduce((sum, cur) => sum + +cur, 0)
+);
+// Tariff price can come from the billing plan as negative (credit/downgrade
+// accounting), but the simplified (ione) view never shows the cost as negative.
+const totalPrice = computed(() => Math.abs(rawTotal.value));
 
 async function onClick() {
   const service = instancesStore.services.find(
