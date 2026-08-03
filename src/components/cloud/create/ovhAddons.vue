@@ -14,7 +14,13 @@
               {{ $t("ip.none") }}
             </a-select-option>
             <a-select-option v-for="item in getGroupAddons(addon)" :key="item.id">
-              {{ item.title }} ({{ item.priceFormatted }})
+              <span class="addon-option">
+                <span class="addon-option__title">{{ item.title }}</span>
+                <span class="addon-option__price">
+                  <template v-if="item.hasDiscount"><del class="addon-option__old">{{ item.baseFormatted }}</del> {{ item.priceFormatted }}</template>
+                  <template v-else>{{ item.priceFormatted }}</template>
+                </span>
+              </span>
             </a-select-option>
           </a-select>
         </a-col>
@@ -115,13 +121,18 @@ function getGroupAddons(groupAddons) {
     const period = groupAddons[key].periods.find(
       ({ pricingMode }) => pricingMode === props.mode
     ) ?? { price: { value: 0 } };
-    const price = formatPrice(period.price.value);
+    const price = period.price.value;
+    const hasDiscount = period.basePrice > price;
 
     return {
       ...groupAddons[key],
       price: price,
       id: key,
+      hasDiscount,
       priceFormatted: formatPrice(price) + " " + currency.value.title,
+      baseFormatted: hasDiscount
+        ? formatPrice(period.basePrice) + " " + currency.value.title
+        : "",
     };
   });
 
@@ -134,3 +145,16 @@ function getGroupAddons(groupAddons) {
 <script>
 export default { name: "OvhAddons" };
 </script>
+
+<style scoped>
+.addon-option {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.addon-option__old {
+  opacity: 0.5;
+  margin-right: 4px;
+}
+</style>

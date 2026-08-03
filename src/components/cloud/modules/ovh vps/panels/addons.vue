@@ -41,6 +41,7 @@ const addons = computed(() => {
     const [duration] = meta.key.split(' ') ?? []
     const period = {
       price: { value: periods[product.value.period] },
+      basePrice: meta.basePrices?.[product.value.period],
       duration,
       pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
     }
