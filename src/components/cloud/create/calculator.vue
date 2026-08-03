@@ -94,9 +94,9 @@
       </a-row>
     </transition>
 
-    <a-divider orientation="left" style="margin-bottom: 0; margin-top: 5px">
+    <div style="font-size: 1.2rem; margin-top: 5px">
       {{ $t("Total") }}:
-    </a-divider>
+    </div>
     <a-row justify="center" style="margin-top: 15px">
       <a-col>
         <a-radio-group

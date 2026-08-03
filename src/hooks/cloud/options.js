@@ -163,12 +163,27 @@ function useCloudOptions(activeKey, tarification) {
         }
 
         if (dataLocalStorage.value.ovhConfig) {
-          options.config = dataLocalStorage.value.ovhConfig;
+          options.config = {
+            configuration: {},
+            addons: [],
+            ...dataLocalStorage.value.ovhConfig,
+          };
         }
 
         if (dataLocalStorage.value.resources) {
-          options.disk.size = dataLocalStorage.value.resources.drive_size;
-          options.disk.type = dataLocalStorage.value.resources.drive_type;
+          const { drive_size, drive_type, cpu, ram, ips_private, ips_public } =
+            dataLocalStorage.value.resources;
+
+          options.disk.size = drive_size;
+          options.disk.type = drive_type;
+          if (cpu) options.cpu.size = cpu;
+          if (ram) options.ram.size = ram / 1024;
+          if (ips_private !== undefined) options.network.private.count = ips_private;
+          if (ips_public !== undefined) options.network.public.count = ips_public;
+        }
+
+        if (dataLocalStorage.value.addons) {
+          options.addons = dataLocalStorage.value.addons;
         }
 
         activeKey.value = dataLocalStorage.value?.activeKey ?? "os";

@@ -14,7 +14,13 @@
               {{ $t("ip.none") }}
             </a-select-option>
             <a-select-option v-for="item in getGroupAddons(addon)" :key="item.id">
-              {{ item.title }} ({{ item.priceFormatted }})
+              <span class="addon-option">
+                <span class="addon-option__title">{{ item.title }}</span>
+                <span class="addon-option__price">
+                  <template v-if="item.hasDiscount"><del class="addon-option__old">{{ item.baseFormatted }}</del> {{ item.priceFormatted }}</template>
+                  <template v-else>{{ item.priceFormatted }}</template>
+                </span>
+              </span>
             </a-select-option>
           </a-select>
         </a-col>
@@ -26,7 +32,6 @@
 
 <script setup>
 import { inject, watch } from "vue";
-import { useRoute } from "vue-router";
 import { useCurrency } from "@/hooks/utils";
 
 const props = defineProps({
@@ -37,7 +42,6 @@ const props = defineProps({
   isFlavorsLoading: { type: Boolean, default: false },
 });
 
-const route = useRoute();
 const { currency, formatPrice } = useCurrency();
 const [options, setOptions] = inject("useOptions", () => [])();
 const [price, setPrice] = inject("usePriceOVH", () => [])();
@@ -45,11 +49,7 @@ const [price, setPrice] = inject("usePriceOVH", () => [])();
 watch(
   () => props.addons,
   (value) => {
-    const data = localStorage.getItem("data")
-      ? JSON.parse(localStorage.getItem("data"))
-      : JSON.parse(route.query.data ?? "{}");
-
-    if (data.ovhConfig?.addons.length > 0) {
+    if (options.addons.length > 0) {
       options.addons.forEach((addon) => {
         const keys = Object.keys(value);
         const key = keys.find((el) => addon.includes(el));
@@ -62,6 +62,15 @@ watch(
     selectDefaultMandatoryAddons(value);
   },
   { immediate: true }
+);
+
+// options.addons gets reset to [] on provider/location change (elsewhere) —
+// re-apply mandatory free addons so the select never lands on an unrenderable "-1"
+watch(
+  () => options.addons.length,
+  (length) => {
+    if (length === 0) selectDefaultMandatoryAddons(props.addons);
+  }
 );
 
 // ponytail: any free addon counts as "selected by default", user just can't drop back to none
@@ -100,8 +109,14 @@ function setAddon(code, addon, key) {
 
 function addonName(addons) {
   const keys = Object.keys(addons);
+  const selected = options.addons.find((el) => keys.includes(el));
 
-  return options.addons.find((el) => keys.includes(el)) ?? "-1";
+  if (selected) return selected;
+
+  // nothing selected yet: for a mandatory group "-1" isn't a renderable option,
+  // so show the free item instead of a raw "-1" while the real selection catches up
+  const free = getGroupAddons(addons).find((item) => item.price === 0);
+  return free?.id ?? "-1";
 }
 
 function isMandatory(groupAddons) {
@@ -115,13 +130,18 @@ function getGroupAddons(groupAddons) {
     const period = groupAddons[key].periods.find(
       ({ pricingMode }) => pricingMode === props.mode
     ) ?? { price: { value: 0 } };
-    const price = formatPrice(period.price.value);
+    const price = period.price.value;
+    const hasDiscount = period.basePrice > price;
 
     return {
       ...groupAddons[key],
       price: price,
       id: key,
+      hasDiscount,
       priceFormatted: formatPrice(price) + " " + currency.value.title,
+      baseFormatted: hasDiscount
+        ? formatPrice(period.basePrice) + " " + currency.value.title
+        : "",
     };
   });
 
@@ -134,3 +154,16 @@ function getGroupAddons(groupAddons) {
 <script>
 export default { name: "OvhAddons" };
 </script>
+
+<style scoped>
+.addon-option {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.addon-option__old {
+  opacity: 0.5;
+  margin-right: 4px;
+}
+</style>

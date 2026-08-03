@@ -1,5 +1,5 @@
 <template>
-  <div class="canvas">
+  <div class="canvas" :class="{ 'canvas--full': isFullscreen }">
     <div class="canvas__bar">
       <a-button type="primary" size="small" @click="addAgent">
         + {{ t("bots.flow.add_agent") }}
@@ -17,6 +17,17 @@
         {{ t("bots.flow.load_example") }}
       </a-button>
       <span class="canvas__hint">{{ t("bots.flow.canvas_hint") }}</span>
+
+      <a-tooltip :title="t(isFullscreen ? 'bots.flow.collapse' : 'bots.flow.expand')">
+        <a-button
+          size="small"
+          class="canvas__full-btn"
+          @click="isFullscreen = !isFullscreen"
+        >
+          <fullscreen-exit-outlined v-if="isFullscreen" />
+          <fullscreen-outlined v-else />
+        </a-button>
+      </a-tooltip>
     </div>
 
     <div class="canvas__stage">
@@ -257,7 +268,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { VueFlow, Handle, Position, MarkerType, Panel, useVueFlow } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
@@ -265,6 +276,8 @@ import {
   UndoOutlined,
   RedoOutlined,
   ReloadOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined,
 } from "@ant-design/icons-vue";
 import "@vue-flow/core/dist/style.css";
 import "@vue-flow/core/dist/theme-default.css";
@@ -287,6 +300,13 @@ const edges = ref([]);
 const selectedId = ref(null);
 let idSeq = 0;
 let branchSeq = 0;
+
+const isFullscreen = ref(false);
+const onEscKey = (e) => {
+  if (e.key === "Escape" && isFullscreen.value) isFullscreen.value = false;
+};
+onMounted(() => window.addEventListener("keydown", onEscKey));
+onUnmounted(() => window.removeEventListener("keydown", onEscKey));
 
 // ------- undo / redo / reset history -------
 const history = ref([]);
@@ -902,12 +922,27 @@ watch(
   font-size: 0.8rem;
   color: #999;
 }
+.canvas__full-btn {
+  margin-left: auto;
+}
 .canvas__stage {
   height: 540px;
   border: 1px solid #e6e6e6;
   border-radius: 10px;
   overflow: hidden;
   background: #fcfcfc;
+}
+
+.canvas--full {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #fff;
+  padding: 16px;
+  overflow: auto;
+}
+.canvas--full .canvas__stage {
+  height: calc(100vh - 150px);
 }
 .canvas__legend {
   display: flex;
