@@ -196,6 +196,7 @@ function availableLogin(mode) {
     },
     billing_plan: { uuid: plan.value.uuid },
     ovhConfig: options.config,
+    addons: options.addons,
   };
 
   if (mode === "login") {
