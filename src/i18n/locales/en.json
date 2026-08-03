@@ -805,6 +805,8 @@
         "undo": "Undo",
         "redo": "Redo",
         "reset": "Reset",
+        "expand": "Fullscreen",
+        "collapse": "Exit fullscreen",
         "add_branch": "Add branch",
         "branch_name_ph": "Branch name (e.g. Billing)",
         "branches": "Branches",
