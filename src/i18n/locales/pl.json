@@ -1329,7 +1329,7 @@
     "You can't resize disk to the same size": "Nie można zmienić rozmiaru dysku do tego samego rozmiaru",
     "size": "Rozmiar",
     "disk": "Dysk",
-    "storage": "Magazyn",
+    "storage": "Typ magazynu",
     "disk resize": "Zmiana rozmiaru dysku",
     "disk attach": "Podłącz dysk",
     "disk detach": "Odłącz dysk",

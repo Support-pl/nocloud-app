@@ -1332,7 +1332,7 @@
     "You can't resize disk to the same size": "Вы не можете изменить размер диска до того же размера",
     "size": "Размер",
     "disk": "Диск",
-    "storage": "Хранилище",
+    "storage": "Тип хранилища",
     "disk resize": "Изменить размер диска",
     "disk attach": "Прикрепить диск",
     "disk detach": "Открепить диск",
