@@ -36,7 +36,7 @@
           </a-form-item>
         </a-col>
 
-        <a-col :xs="24" :sm="12">
+        <a-col v-if="authStore.userdata.uuid" :xs="24" :sm="12">
           <a-form-item
             name="password"
             :label="`${capitalize($t('clientinfo.password'))}:`"
@@ -200,6 +200,7 @@ import {
 import passwordMeter from "vue-simple-password-meter";
 import { useCloudStore } from "@/stores/cloud.js";
 import { useAddonsStore } from "@/stores/addons.js";
+import { useAuthStore } from "@/stores/auth.js";
 import imagesList from "@/components/ui/images.vue";
 import { useI18n } from "vue-i18n";
 
@@ -214,6 +215,7 @@ const props = defineProps({
 const i18n = useI18n();
 
 const cloudStore = useCloudStore();
+const authStore = useAuthStore();
 const { authData, validationPanels } = storeToRefs(cloudStore);
 const addonsStore = useAddonsStore();
 const images = ref([]);
