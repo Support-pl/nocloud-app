@@ -258,11 +258,21 @@ function getAddonsValue(key) {
   return isFinite(value) ? ` (${value} Gb)` : "";
 }
 
+// OVH addon keys renamed for the calculator only - other pages still show
+// the generic i18n keys (e.g. "disk" means VM disk size elsewhere).
+const ADDON_TITLE_KEYS = {
+  backup: "calculator.addons.backup",
+  snapshot: "calculator.addons.snapshot",
+  Snapshot: "calculator.addons.snapshot",
+  disk: "calculator.addons.disk",
+  storage: "calculator.addons.storage",
+};
+
 function getAddonsTitle(key) {
   if (cloudStore.plan.type === "ione") {
     return addonsStore.addons.find(({ uuid }) => uuid === key)?.title ?? key;
   } else {
-    return i18n.t(key);
+    return i18n.t(ADDON_TITLE_KEYS[key] ?? key);
   }
 }
 

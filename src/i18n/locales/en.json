@@ -3,6 +3,14 @@
     "localePrefix": "en",
     "localeLang": "English",
     "locale": "english",
+    "calculator": {
+      "addons": {
+        "backup": "Automatic backup",
+        "snapshot": "Snapshot",
+        "disk": "Additional storage",
+        "storage": "Storage type"
+      }
+    },
     "bitrix_domain": "Link to your Bitrix24:",
     "No snapshots available": "No snapshots available",
     "backup_addon_not_available": "This backup feature is not available with your current plan",
