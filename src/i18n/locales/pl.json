@@ -2,6 +2,14 @@
   "pl": {
     "localePrefix": "pl",
     "localeLang": "Polski",
+    "calculator": {
+      "addons": {
+        "backup": "Automatic backup",
+        "snapshot": "Snapshot",
+        "disk": "Additional storage",
+        "storage": "Storage type"
+      }
+    },
     "bitrix_domain": "Link do Twojego Bitrix24:",
     "ovh_vps_backup_description": "### Co zapewnia standardowa kopia zapasowa\n\n* Twój VPS otrzymuje **automatyczną kopię zapasową każdego dnia**.\n* Taka kopia jest przechowywana przez **24 godziny**.\n\n**Ograniczenia:** standardowa kopia zapasowa nie zapewnia historii przywracania przez kilka dni — jeśli problem zostanie odkryty po 24 godzinach, poprzednia wersja prawdopodobnie nie będzie już dostępna do przywrócenia.\n\n### Co zapewnia Premium Backup\n\n* Kopie zapasowe są również tworzone codziennie, ale przechowywane przez **7 dni**.\n* Możesz **ustawić czas** tworzenia kopii zapasowej.\n* Dzięki dłuższemu okresowi przechowywania uzyskujesz **większą elastyczność**: możesz przywrócić VPS do stanu, w jakim był kilka dni temu.",
     "backup_creation_time_ovh_vps": "Czas tworzenia kopii zapasowej:",

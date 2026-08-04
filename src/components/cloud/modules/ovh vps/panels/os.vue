@@ -137,7 +137,10 @@ async function setImages() {
     }));
   images.value.sort((a, b) => a.name.localeCompare(b.name));
 
-  setOptions("addons", []);
+  // setOS() below already swaps the OS addon in place (filters out the old
+  // one, appends the new). Wiping the whole array here used to also drop
+  // every other selected addon (backup/snapshot/storage) on every currency
+  // or addons-store reload, not just on an actual plan change.
   if (images.value[0]) {
     setOS(images.value[0]);
   }

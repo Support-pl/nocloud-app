@@ -64,19 +64,25 @@ watch(
   { immediate: true }
 );
 
-// options.addons gets reset to [] on provider/location change (elsewhere) —
-// re-apply mandatory free addons so the select never lands on an unrenderable "-1"
+// options.addons gets reset/overwritten from elsewhere too - provider/location
+// change clears it to [], and useCloudOptions.setReadyData() restores a saved
+// array from localStorage ~1s after mount, blowing away whatever was already
+// selected here. selectDefaultMandatoryAddons() only *adds* a group's free
+// item when that group has nothing selected yet, so re-running it on every
+// change is safe and keeps mandatory defaults from getting silently dropped.
 watch(
   () => options.addons.length,
-  (length) => {
-    if (length === 0) selectDefaultMandatoryAddons(props.addons);
-  }
+  () => selectDefaultMandatoryAddons(props.addons)
 );
 
 // ponytail: any free addon counts as "selected by default", user just can't drop back to none
 function selectDefaultMandatoryAddons(addonsGroups) {
   Object.entries(addonsGroups).forEach(([key, groupAddons]) => {
-    if (addonName(groupAddons) !== "-1") return;
+    const keys = Object.keys(groupAddons);
+    // addonName() fakes a "selected" id for display even when nothing was
+    // actually picked yet - checking options.addons directly is the only way
+    // to tell "really selected" apart from "just rendered as selected".
+    if (options.addons.some((el) => keys.includes(el))) return;
 
     const free = getGroupAddons(groupAddons).find((item) => item.price === 0);
     if (free) setAddon(free.id, groupAddons[free.id], key);
