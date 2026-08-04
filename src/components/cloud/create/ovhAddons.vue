@@ -46,17 +46,37 @@ const { currency, formatPrice } = useCurrency();
 const [options, setOptions] = inject("useOptions", () => [])();
 const [price, setPrice] = inject("usePriceOVH", () => [])();
 
+// uuids that belonged to OUR groups (backup/snapshot/disk/storage) as of the
+// last time props.addons had data. options.addons also holds addons this
+// component knows nothing about (e.g. the OS pick from panels/os.vue) -
+// never touch those, only clean up uuids that were ours before.
+let ownedUuids = new Set();
+
 watch(
   () => props.addons,
   (value) => {
-    if (options.addons.length > 0) {
-      options.addons.forEach((addon) => {
-        const keys = Object.keys(value);
-        const key = keys.find((el) => addon.includes(el));
+    if (Object.keys(value).length) {
+      const validUuids = new Set(
+        Object.values(value).flatMap((group) => Object.keys(group))
+      );
 
-        if (!value[key][addon]) return;
-        setAddon(addon, value[key][addon], key);
-      });
+      // A product switch swaps in a whole new addon catalog (new uuids per
+      // group). If something we previously owned isn't in the new catalog,
+      // drop it instead of leaving a dangling uuid; selectDefaultMandatoryAddons()
+      // below then fills that now-empty mandatory group with the new default.
+      if (options.addons.length && ownedUuids.size) {
+        const stale = options.addons.filter(
+          (uuid) => ownedUuids.has(uuid) && !validUuids.has(uuid)
+        );
+        if (stale.length) {
+          setOptions(
+            "addons",
+            options.addons.filter((uuid) => !stale.includes(uuid))
+          );
+        }
+      }
+
+      ownedUuids = validUuids;
     }
 
     selectDefaultMandatoryAddons(value);
