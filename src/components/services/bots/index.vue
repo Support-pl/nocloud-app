@@ -268,11 +268,6 @@ function orderClickHandler() {
     return;
   }
 
-  console.log(instance);
-  
-
-  return;
-
   createBot(instance);
 }
 
