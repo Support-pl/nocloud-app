@@ -10,7 +10,7 @@ import {
   CreateRenewalInvoiceRequest,
 } from "nocloud-proto/proto/es/billing/billing_pb";
 import { useAppStore } from "./app.js";
-import { debounce, toInvoice } from "@/functions.js";
+import { debounce, normalizeWhmcsInvoiceId, toInvoice } from "@/functions.js";
 import api from "@/api.js";
 import { useAuthStore } from "./auth.js";
 import { useRouter } from "vue-router";
@@ -68,6 +68,19 @@ export const useInvoicesStore = defineStore("invoices", () => {
     });
 
     return deduped;
+  };
+
+  const findNcUuidByWhmcsId = (whmcsId) => {
+    const target = normalizeWhmcsInvoiceId(whmcsId);
+    if (target == null || target === "") return null;
+
+    return (
+      invoices.value.find((invoice) => {
+        if (!invoice?.uuid) return false;
+        const paymentId = normalizeWhmcsInvoiceId(invoice.payment_invoice_id);
+        return paymentId != null && String(paymentId) === String(target);
+      })?.uuid ?? null
+    );
   };
 
   const shouldHideInvoiceInMixedMode = (rawInvoice) => {
@@ -285,6 +298,7 @@ export const useInvoicesStore = defineStore("invoices", () => {
     getInvoices,
     isInvoicesNotificationEnabled,
     fetch,
+    findNcUuidByWhmcsId,
 
     async createTopUpBalanceInvoice(sum = 0) {
       try {
