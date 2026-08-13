@@ -377,6 +377,23 @@ export function toPascalCase(text) {
   );
 }
 
+export function normalizeWhmcsInvoiceId(value) {
+  if (value == null || value === "") return null;
+
+  if (typeof value === "object") {
+    if (value.numberValue != null && value.numberValue !== "") {
+      return value.numberValue;
+    }
+    if (value.stringValue != null && value.stringValue !== "") {
+      return value.stringValue;
+    }
+    if (value.kind?.case === "numberValue") return value.kind.value;
+    if (value.kind?.case === "stringValue") return value.kind.value;
+  }
+
+  return value;
+}
+
 export function toInvoice(transaction, type = "default") {
   if (type == "whmcs") {
     let status = transaction.status;

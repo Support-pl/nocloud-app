@@ -211,8 +211,14 @@ async function paidInvoice() {
 async function openInvoiceDocument(invoice) {
   let paymentLink;
 
-  if (!invoice.uuid) {
-    //whmcs
+  const uuid =
+    invoice.uuid ||
+    invoicesStore.findNcUuidByWhmcsId(
+      invoice.payment_invoice_id ?? invoice.id,
+    );
+
+  if (!uuid) {
+    // whmcs-only invoice (no linked NoCloud invoice yet)
     const response = await api.get(authStore.baseURL, {
       params: {
         run: "download_invoice",
@@ -222,7 +228,7 @@ async function openInvoiceDocument(invoice) {
     });
     paymentLink = response[0];
   } else {
-    paymentLink = await invoicesStore.getPaymentLink(invoice.uuid);
+    paymentLink = await invoicesStore.getPaymentLink(uuid);
   }
 
   isLoading.value = false;
@@ -233,8 +239,14 @@ async function openInvoiceDocument(invoice) {
 async function payByBalance() {
   isBalanceLoading.value = true;
   try {
-    if (invoice.value.uuid) {
-      await invoicesStore.payWithBalance({ invoiceUuid: invoice.value.uuid });
+    const uuid =
+      invoice.value.uuid ||
+      invoicesStore.findNcUuidByWhmcsId(
+        invoice.value.payment_invoice_id ?? invoice.value.id,
+      );
+
+    if (uuid) {
+      await invoicesStore.payWithBalance({ invoiceUuid: uuid });
     } else {
       await invoicesStore.payWithBalance({ whmcsId: invoice.value.id });
     }
