@@ -32,6 +32,7 @@
 
     <div class="canvas__stage">
       <VueFlow
+        :id="variant"
         v-model:nodes="displayNodes"
         v-model:edges="displayEdges"
         :fit-view-on-init="true"
@@ -171,6 +172,19 @@
           :placeholder="t('bots.flow.prompt_ph')"
           @change="emitChange"
         />
+        <div class="vars">
+          <span class="vars__lbl">{{ t("bots.flow.available_vars") }}:</span>
+          <button
+            v-for="v in availableVars"
+            :key="v"
+            type="button"
+            class="vars__chip"
+            :title="t('bots.flow.insert_var')"
+            @click="insertVar(v)"
+          >
+            {{ varLabel(v) }}
+          </button>
+        </div>
 
         <label class="fld__lbl">{{ t("bots.flow.model") }}</label>
         <a-select
@@ -283,14 +297,45 @@ import "@vue-flow/core/dist/style.css";
 import "@vue-flow/core/dist/theme-default.css";
 
 const { t } = useI18n();
-const { updateNodeInternals, fitView } = useVueFlow();
 
 const props = defineProps({
   modelValue: { type: Object, default: () => ({ steps: [] }) },
   modelsOptions: { type: Array, default: () => [] },
   databases: { type: Array, default: () => [] },
+  // "client" — the conversation with the customer; "admin" — the operator's
+  // copilot. Picks the starter preset and the variable hints, and doubles as
+  // the VueFlow store id: without a distinct one, two editors mounted on the
+  // same page share nodes and fight each other. The editor and the saved shape
+  // are identical for both.
+  variant: { type: String, default: "client" },
 });
 const emit = defineEmits(["update:modelValue"]);
+
+const isAdmin = computed(() => props.variant === "admin");
+const { updateNodeInternals, fitView } = useVueFlow({ id: props.variant });
+
+// Variables the engine seeds for this kind of turn, listed under the prompt
+// field so nobody has to learn them from the backend source.
+const CLIENT_VARS = ["input", "account_id", "channel"];
+const ADMIN_VARS = [
+  "input",
+  "operator",
+  "operator_id",
+  "customer",
+  // The customer's own last message, separate from the dialog blob: pin it in a
+  // prompt so a reply meant for the customer follows THEIR subject rather than
+  // whatever the operator asked about a moment ago.
+  "last_customer_message",
+  "account_id",
+  "bot_prompt",
+  "customer_dialog",
+  "last_turn",
+  "chat_paused",
+  "chat_disabled",
+  "need_operator",
+  "spam_detected",
+];
+const availableVars = computed(() => (isAdmin.value ? ADMIN_VARS : CLIENT_VARS));
 
 const PALETTE = ["#1677ff", "#fa8c16", "#52c41a", "#722ed1", "#eb2f96", "#13c2c2", "#faad14"];
 const colorFor = (i) => PALETTE[i % PALETTE.length];
@@ -355,6 +400,20 @@ function resetFlow() {
     pushHistory();
   }
   selectedId.value = null;
+}
+
+// Built here, not inline in the template: a literal "}}" in an interpolation
+// closes it and the SFC fails to parse.
+const varLabel = (name) => `{{${name}}}`;
+
+// Append a variable to the step's prompt. Appending (rather than inserting at
+// the caret) keeps it to one line and never depends on focus being in the box.
+function insertVar(name) {
+  const n = selectedNode.value;
+  if (!n) return;
+  const cur = n.data.prompt || "";
+  n.data.prompt = cur + (cur && !cur.endsWith(" ") ? " " : "") + `{{${name}}}`;
+  emitChange();
 }
 
 const databaseOptions = computed(() =>
@@ -872,8 +931,89 @@ function presetSupport() {
   };
 }
 
+// Starter copilot flow: sort out what the operator wants, then either explain
+// the bot's own last turn (reading {{last_turn}} / inspect_last_turns) or draft
+// a corrected answer for the customer via send_reply. Deliberately short — the
+// point is to show the shape and the variables, not to be production-ready.
+//
+// Kept in step with the backend default (DefaultAdminFlow): the two-conversations
+// rule and {{last_customer_message}} are the reason the copilot stopped dragging
+// the operator's subject into messages meant for the customer. A preset without
+// them reintroduces that bug the moment somebody draws their own graph.
+const COPILOT_CONTEXT =
+  "Идут ДВА независимых разговора, не смешивай их:\n" +
+  "1. Разговор с оператором (этот) — здесь тебе дают указания. Его тема НИКОГДА не становится темой разговора с клиентом.\n" +
+  "2. Разговор с клиентом — отдельная переписка. Всё, что уходит клиенту, строится только по ней.\n\n" +
+  "Клиент: {{customer}}\n" +
+  "Состояние чата: пауза={{chat_paused}}, бот выключен={{chat_disabled}}, нужен оператор={{need_operator}}\n\n" +
+  "Последнее сообщение клиента:\n{{last_customer_message}}\n\n" +
+  "Переписка с клиентом:\n{{customer_dialog}}\n\n" +
+  "Последний ход бота:\n{{last_turn}}\n\n" +
+  "Правила, по которым работает бот в этом чате:\n{{bot_prompt}}\n\n";
+
+function presetCopilot() {
+  return {
+    steps: [
+      {
+        name: "Разбор просьбы",
+        prompt:
+          "Ты разбираешь обращение оператора поддержки к ИИ-помощнику по чату с клиентом «{{customer}}».\n" +
+          "Обращение оператора: {{input}}\n\n" +
+          "Определи, что от тебя хотят:\n" +
+          "• «Вопрос по чату» — спрашивают о клиенте, о переписке, почему бот ответил именно так, " +
+          "или чем помощник вообще может помочь.\n" +
+          "• «Правка ответа» — просят ответить клиенту или переписать неудачный ответ бота.",
+        model: "gpt-4o-mini",
+        use_history: true,
+        output: {
+          type: "object",
+          properties: {
+            route: { type: "string", enum: ["Вопрос по чату", "Правка ответа"] },
+          },
+          required: ["route"],
+          additionalProperties: false,
+        },
+        routes: [
+          { when_var: "Разбор просьбы.route", equals: "Вопрос по чату", goto: "Справка оператору" },
+          { when_var: "Разбор просьбы.route", equals: "Правка ответа", goto: "Правка ответа клиенту" },
+        ],
+      },
+      {
+        name: "Справка оператору",
+        prompt:
+          "Ты — ИИ-помощник оператора поддержки. Отвечаешь ОПЕРАТОРУ во внутренней ветке, клиент этого не видит.\n\n" +
+          COPILOT_CONTEXT +
+          "Как отвечать:\n" +
+          "• «Чем ты можешь помочь / что ты умеешь» — вызови help и перечисли СТРОГО то, что он вернул. " +
+          "Не обещай возможностей, которых нет в списке.\n" +
+          "• «Почему ты так ответил» — вызови inspect_last_turns и опирайся ТОЛЬКО на факты из трассировки. " +
+          "Нет данных — так и скажи, не реконструируй по памяти.\n" +
+          "• Вопросы о клиенте (баланс, услуги, заявки) — бери данные своими инструментами, не спрашивай оператора.\n" +
+          "• Что бот знает по теме — проверяй через search_knowledge.\n\n" +
+          "Отвечай коротко и по делу, как коллега коллеге.",
+        use_history: true,
+        reply: true,
+      },
+      {
+        name: "Правка ответа клиенту",
+        prompt:
+          "Ты — ИИ-помощник оператора поддержки. Оператор просит ответить клиенту или исправить ответ бота.\n\n" +
+          COPILOT_CONTEXT +
+          "Составь текст ПО ПЕРЕПИСКЕ С КЛИЕНТОМ, с учётом правки оператора, и отправь его инструментом send_reply. " +
+          "Если оператор спрашивал про одно, а клиент писал про другое — клиенту отвечаем по его теме. " +
+          "Если у чата включена премодерация, сообщение уйдёт черновиком на подтверждение — это нормально.\n" +
+          "Затем коротко отчитайся оператору, что именно отправил и что изменил. " +
+          "Если оператор сообщил факт, которого бот не знал, — предложи сохранить его через add_qa_pair, " +
+          "но сначала согласуй формулировку.",
+        use_history: true,
+        reply: true,
+      },
+    ],
+  };
+}
+
 function loadPreset() {
-  fromFlow(presetSupport());
+  fromFlow(isAdmin.value ? presetCopilot() : presetSupport());
   selectedId.value = null;
   commitStructuralChange();
 }
@@ -1108,6 +1248,35 @@ watch(
   color: #666;
   margin: 12px 0 4px;
 }
+.vars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+}
+.vars__lbl {
+  font-size: 0.78rem;
+  color: #999;
+}
+.vars__chip {
+  padding: 1px 7px;
+  border: 1px solid #e6e6e6;
+  border-radius: 9px;
+  background: #fafafa;
+  color: #666;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.vars__chip:hover {
+  border-color: #91caff;
+  background: #f0f5ff;
+  color: #1677ff;
+}
+
 .fld__hint {
   font-size: 0.78rem;
   color: #999;

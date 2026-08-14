@@ -809,6 +809,13 @@
         "enabled": "Enabled",
         "add_server": "Add MCP server"
       },
+      "admin_flow": {
+        "title": "Operator copilot (admin flow)",
+        "on": "on",
+        "use": "Enable copilot",
+        "use_tip": "A second, fully independent flow. It runs only when an operator writes an admin-only note in the support chat, and the bot answers in that same operator-only lane — the customer never sees any of it.\nOff means the bot stays silent on admin notes, exactly as before.",
+        "hint": "Lets an operator ask about the chat, find out why the bot answered the way it did, have it draft a corrected reply to the customer, or teach it a new Q&A pair."
+      },
       "flow": {
         "next": "Next",
         "undo": "Undo",
@@ -860,6 +867,7 @@
         "prompt": "Prompt",
         "prompt_ph": "Instruction for this step. Reference ｛｛input｝｝ or fields from earlier steps.",
         "available_vars": "Available variables",
+        "insert_var": "Insert into the prompt",
         "output": "Output fields",
         "output_tip": "Fields the step must return as structured data. Their values become variables usable by later steps and routes.",
         "field_key_ph": "field name",

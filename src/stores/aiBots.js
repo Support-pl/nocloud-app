@@ -318,6 +318,8 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           schedule: bot.settings.schedule,
           flow: bot.settings.flow ?? null,
           flow_enabled: !!bot.settings.flow_enabled,
+          admin_flow: bot.settings.admin_flow ?? null,
+          admin_flow_enabled: !!bot.settings.admin_flow_enabled,
           mcp_servers: bot.settings.mcp_servers ?? [],
         });
 

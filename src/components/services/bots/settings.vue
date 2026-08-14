@@ -307,9 +307,58 @@
       <a-col v-if="useFlow" span="24" style="margin-top: 10px">
         <bot-flow
           v-model="bot.settings.flow"
+          variant="client"
           :models-options="modelsOptions"
           :databases="bot.databases || []"
         />
+      </a-col>
+
+      <!-- Second, fully independent flow: what the bot answers to OPERATORS in
+           the admin-only lane of the support chat. Off by default. -->
+      <a-col span="24" v-if="hasChatChannel" style="margin-top: 10px">
+        <a-collapse>
+          <a-collapse-panel key="admin_flow">
+            <template #header>
+              {{ t("bots.admin_flow.title") }}
+              <a-tag v-if="useAdminFlow" color="purple" style="margin-left: 8px">
+                {{ t("bots.admin_flow.on") }}
+              </a-tag>
+            </template>
+
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <span class="field_title"
+                >{{ t("bots.admin_flow.use") }}:
+                <a-tooltip>
+                  <template #title>
+                    <span
+                      v-html="
+                        t('bots.admin_flow.use_tip').replaceAll('\n', '<br/>')
+                      "
+                    />
+                  </template>
+                  <help-icon style="margin-left: 5px" />
+                </a-tooltip>
+              </span>
+              <a-switch v-model:checked="useAdminFlow" />
+            </div>
+
+            <p class="admin_flow__hint">{{ t("bots.admin_flow.hint") }}</p>
+
+            <bot-flow
+              v-if="useAdminFlow"
+              v-model="bot.settings.admin_flow"
+              variant="admin"
+              :models-options="modelsOptions"
+              :databases="bot.databases || []"
+            />
+          </a-collapse-panel>
+        </a-collapse>
       </a-col>
 
       <a-col span="24" v-if="hasChatChannel" style="margin-top: 10px">
@@ -889,6 +938,20 @@ const useFlow = computed({
   },
 });
 
+// Same pattern as useFlow, over the second, independent flow. Off by default
+// on purpose: admin notes are how operators talk to each other, so the bot
+// must stay silent there until someone deliberately turns this on.
+const useAdminFlow = computed({
+  get: () => !!bot.value.settings.admin_flow_enabled,
+  set: (v) => {
+    bot.value.settings.admin_flow_enabled = v;
+    // Deliberately does NOT seed an empty step: an empty flow left behind here
+    // would count as "configured" on the backend and override its built-in
+    // default, so switching the copilot on would give it a blank prompt. Leaving
+    // admin_flow null makes the backend run its default until someone draws one.
+  },
+});
+
 const isSavePrimary = computed(
   () => JSON.stringify(ogBot.value) != JSON.stringify(bot.value)
 );
@@ -915,6 +978,9 @@ async function fetch() {
     }
     if (bot.value.settings.flow === undefined) {
       bot.value.settings.flow = null;
+    }
+    if (bot.value.settings.admin_flow === undefined) {
+      bot.value.settings.admin_flow = null;
     }
     if (!Array.isArray(bot.value.settings.mcp_servers)) {
       bot.value.settings.mcp_servers = [];
@@ -1240,6 +1306,12 @@ export default { name: "AiBotDraw" };
 </script>
 
 <style scoped>
+.admin_flow__hint {
+  margin: 6px 0 12px;
+  font-size: 0.82rem;
+  color: rgba(0, 0, 0, 0.45);
+}
+
 .bots .field_title {
   font-size: 1.1rem;
   font-weight: 500;
