@@ -222,6 +222,10 @@ const addons = computed(() => {
 
   delete addons.os;
   delete addons.ram;
+
+  // storage type is bundled into the plan when free - no point showing 0
+  if (!parseFloat(addons.storage)) delete addons.storage;
+
   return addons;
 });
 

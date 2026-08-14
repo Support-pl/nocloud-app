@@ -127,7 +127,8 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { NcMap } from "nocloud-ui";
+// local fork of nocloud-ui NcMap: zoom buttons/wheel were broken there
+import NcMap from "@/components/ui/map.vue";
 
 import { Modal, Spin } from "ant-design-vue";
 import { useAuthStore } from "@/stores/auth.js";
