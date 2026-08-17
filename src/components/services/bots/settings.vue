@@ -304,6 +304,21 @@
         />
       </a-col>
 
+      <!-- How the bot phrases replies, as opposed to what it knows. Its own field
+           because the copilot writes here when an operator corrects the tone
+           mid-chat, and a rule learned that way must not rewrite the prompt the
+           operator tuned by hand. -->
+      <a-col span="24" style="margin-top: 10px">
+        <span class="field_title">{{ t("bots.reply_rules.title") }}</span>
+        <a-textarea
+          style="margin-top: 10px"
+          v-model:value="replyRulesText"
+          :placeholder="t('bots.reply_rules.placeholder')"
+          :auto-size="{ minRows: 2 }"
+        />
+        <p class="admin_flow__hint">{{ t("bots.reply_rules.hint") }}</p>
+      </a-col>
+
       <a-col v-if="useFlow" span="24" style="margin-top: 10px">
         <bot-flow
           v-model="bot.settings.flow"
@@ -941,6 +956,18 @@ const useFlow = computed({
 // Same pattern as useFlow, over the second, independent flow. Off by default
 // on purpose: admin notes are how operators talk to each other, so the bot
 // must stay silent there until someone deliberately turns this on.
+// One rule per line in the UI, a string list on the wire. Blank lines are
+// dropped so trailing newlines while typing do not persist as empty rules.
+const replyRulesText = computed({
+  get: () => (bot.value.settings.reply_rules || []).join("\n"),
+  set: (v) => {
+    bot.value.settings.reply_rules = String(v)
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+  },
+});
+
 const useAdminFlow = computed({
   get: () => !!bot.value.settings.admin_flow_enabled,
   set: (v) => {

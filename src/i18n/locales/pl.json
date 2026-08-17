@@ -262,6 +262,7 @@
     "sign up": "sign up",
     "High speed": "High speed",
     "traffic": "traffic",
+    "network speed": "Przepustowość do sieci publicznej",
     "vrack": "vrack",
     "under 3 Gb per month": "poniżej 3 GB miesięcznie",
     "panel": "panel",
@@ -877,7 +878,9 @@
         "value_ph": "value",
         "add_route": "Add route",
         "add_step": "Add step",
-        "end": "-- end --"
+        "end": "-- end --",
+        "once_per_chat": "Collect once per chat",
+        "once_per_chat_hint": "The step runs only the first time it is reached in a chat; later turns reuse its remembered result. For expensive lookups that do not change between messages."
       },
       "fields": {
         "promt": "Prompt",
@@ -1006,6 +1009,11 @@
           "sat": "Sob",
           "sun": "Nd"
         }
+      },
+      "reply_rules": {
+        "title": "Reply rules",
+        "hint": "How the bot phrases replies to customers: tone, form of address, number and currency format. One rule per line. Applied to every chat of this bot and every step that replies.",
+        "placeholder": "For example: Always name the currency in words, not as a code."
       }
     },
     "ai_bot_page": {

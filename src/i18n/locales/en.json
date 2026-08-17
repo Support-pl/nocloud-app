@@ -222,6 +222,7 @@
     "sign up": "Sign up",
     "High speed": "High speed",
     "traffic": "traffic",
+    "network speed": "public network speed",
     "vrack": "vrack",
     "under 3 Gb per month": "under 3 Gb per month",
     "panel": "panel",
@@ -720,7 +721,6 @@
     "reload": "reload",
     "new content is avaliable": "New content is avaliable",
     "We use cookies and collect analytics to improve the service": "We use cookies and collect analytics to improve the service",
-    "Accept": "Accept",
     "Decline": "Decline",
     "accept terms": "Please accept terms of use to proceed.",
     "ask a question": "Ask a question",
@@ -880,7 +880,9 @@
         "value_ph": "value",
         "add_route": "Add route",
         "add_step": "Add step",
-        "end": "-- end --"
+        "end": "-- end --",
+        "once_per_chat": "Collect once per chat",
+        "once_per_chat_hint": "The step runs only the first time it is reached in a chat; later turns reuse its remembered result. For expensive lookups that do not change between messages."
       },
       "fields": {
         "promt": "Prompt",
@@ -1009,6 +1011,11 @@
           "sat": "Sat",
           "sun": "Sun"
         }
+      },
+      "reply_rules": {
+        "title": "Reply rules",
+        "hint": "How the bot phrases replies to customers: tone, form of address, number and currency format. One rule per line. Applied to every chat of this bot and every step that replies.",
+        "placeholder": "For example: Always name the currency in words, not as a code."
       }
     },
     "ai_bot_page": {

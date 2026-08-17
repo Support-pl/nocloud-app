@@ -221,6 +221,14 @@
             @change="emitChange"
           />
         </div>
+        <div class="fld__switch">
+          <span>{{ t("bots.flow.once_per_chat") }}</span>
+          <a-switch
+            v-model:checked="selectedNode.data.once_per_chat"
+            @change="emitChange"
+          />
+        </div>
+        <p class="fld__hint">{{ t("bots.flow.once_per_chat_hint") }}</p>
 
         <a-divider />
 
@@ -334,6 +342,10 @@ const ADMIN_VARS = [
   "chat_disabled",
   "need_operator",
   "spam_detected",
+  // The list of tools actually connected this turn. The engine also injects it
+  // as <available_tools> on every step, so a prompt only needs this to place it
+  // somewhere specific.
+  "tools",
 ];
 const availableVars = computed(() => (isAdmin.value ? ADMIN_VARS : CLIENT_VARS));
 
@@ -577,6 +589,7 @@ function addAgent() {
       database_ids: [],
       use_history: true,
       reply: false,
+      once_per_chat: false,
       outcomes: [],
     },
   });
@@ -697,6 +710,7 @@ function toFlow() {
     if (d.model) step.model = d.model;
     if ((d.database_ids || []).length) step.database_ids = d.database_ids;
     if (d.use_history) step.use_history = true;
+    if (d.once_per_chat) step.once_per_chat = true;
 
     const edgeFor = (handleId) =>
       edges.value.find(
@@ -764,6 +778,7 @@ function fromFlow(flow) {
         database_ids: s.database_ids || [],
         use_history: !!s.use_history,
         reply: !!s.reply,
+        once_per_chat: !!s.once_per_chat,
         outcomes,
       },
     });
@@ -800,18 +815,24 @@ function fromFlow(flow) {
 // existing -> billing summary -> admin note (full dump, operator-only) ->
 // classify -> generate (each step auto-sees the previous); new -> a separate
 // answer with its own knowledge bases.
+// Starter support flow: reception → dossier for the operator → routing → a reply
+// in the voice of the right department.
+//
+// Prompts stay short on purpose. Each step is its own model call, and everything
+// a step repeats about the customer is context the previous step already
+// produced: the dossier is gathered once and carried forward automatically, so
+// the reply steps say what to do and not what is already known.
 function presetSupport() {
   return {
     steps: [
       {
         name: "Приёмная",
         prompt:
-          "Ты — приёмная службы поддержки хостинга. Определи тип клиента строго по этому техническому " +
-          'признаку (не по смыслу и тону сообщения): account_id = "{{account_id}}".\n' +
-          "• account_id непустой → «Существующий клиент».\n" +
-          '• account_id пустой (равен "") → «Новый клиент».',
+          "Определи тип клиента по техническому признаку, а не по смыслу сообщения: " +
+          'account_id = "{{account_id}}".\n' +
+          '• пустой (равен "") → «Новый клиент»\n' +
+          "• непустой → «Существующий клиент»",
         model: "gpt-4o-mini",
-        use_history: true,
         output: {
           type: "object",
           properties: {
@@ -827,30 +848,64 @@ function presetSupport() {
       },
       {
         name: "Сводка из биллинга",
+        // Collected once per chat: five remote calls that do not change between
+        // two messages a minute apart. Every later turn reads {{Сводка из
+        // биллинга}} instead of paying for them again — and stops posting the
+        // operator a second copy of the same dossier.
+        once_per_chat: true,
+        // "Дай сухую сводку" made the model compress: instances collapsed into
+        // "Small 3, Medium 10 и другие", and the admin-note step downstream could
+        // then only be as detailed as this — the data was already gone. The ban on
+        // summarising has to live here, in the step that holds the raw output.
         prompt:
-          "Собери ПОЛНОЕ досье клиента для оператора — это не ответ на конкретный вопрос клиента, " +
-          "поэтому игнорируй рекомендации самих инструментов о том, какой один action выбрать под вопрос. " +
-          "Вызови ВСЕ пять, именно все, вне зависимости от того, о чём спросил клиент:\n" +
+          "Собери досье клиента. Вызови все пять инструментов независимо от того, о чём спросил " +
+          "клиент, и не выбирай один под его вопрос:\n" +
           "nocloud_instances(action=list), nocloud_billing(action=account), " +
-          "nocloud_billing(action=balance), nocloud_billing(action=invoices), nocloud_tickets(action=list).\n" +
-          "Дай короткую фактическую сводку без воды по итогам всех пяти вызовов. " +
-          "Если данных нет — так и скажи, не выдумывай. Сводку увидят следующие шаги.",
+          "nocloud_billing(action=balance), nocloud_billing(action=invoices), nocloud_tickets(action=list).\n\n" +
+          "Выложи ВСЁ, что вернули инструменты, построчно. Обобщать запрещено: никаких «и другие», " +
+          "«некоторые», «несколько». Если инструмент вернул 25 услуг — 25 строк.\n\n" +
+          "Формат:\n" +
+          "**Аккаунт:** имя, статус, валюта, e-mail подтверждён/нет\n" +
+          "**Баланс:** сумма и валюта\n" +
+          "**Неоплаченные счета (сколько, на какую сумму всего):** по строке на счёт — " +
+          "номер документа, сумма, дата создания, срок оплаты\n" +
+          "**Услуги:** по строке на услугу — название, продукт, тип, статус, состояние, " +
+          "дата следующего платежа\n" +
+          "**Тикеты:** сколько всего, сколько открытых, темы последних трёх\n" +
+          "**Обращение сейчас:** дословно последнее сообщение клиента\n\n" +
+          "Чего инструмент не вернул — пиши «нет данных», не придумывай и не пропускай раздел.",
         model: "gpt-4o-mini",
         use_history: true,
         routes: [{ when_var: "", equals: "", goto: "Создание admin note" }],
       },
       {
         name: "Создание admin note",
+        once_per_chat: true,
+        // The wording is blunt on purpose. Trimmed to a polite "клиенту в этом шаге
+        // не отвечай", the model answered the customer's question in plain text and
+        // never called the tool at all — the operator got no note. A step whose only
+        // product is a side effect has to say so in its first sentence.
+        // The note is what the operator reads before touching the chat, and it is
+        // written once. One dense paragraph of semicolons is unreadable at exactly
+        // the moment it matters, so the layout is dictated rather than left to the
+        // model, and it has to arrive verbatim from the step above.
         prompt:
-          "Вызови инструмент create_admin_note. В поле note перечисли КАЖДЫЙ объект из сводки выше " +
-          "отдельной строкой, поимённо/по номеру — не считай и не обобщай:\n" +
-          "- каждый инстанс: имя, статус;\n" +
-          "- баланс, тариф, статус аккаунта;\n" +
-          "- каждый неоплаченный счёт: номер, сумма, дата;\n" +
-          "- суть обращения клиента.\n" +
-          "Запрещены фразы вида '8 неоплаченных инвойсов' или '10 инстансов' без перечисления каждого — " +
-          "если их 8, должно быть 8 строк с номером и суммой. Клиент эту заметку не видит. " +
-          "Пользователю в этом шаге не отвечай — твоя единственная задача здесь — вызвать инструмент.",
+          "В этом шаге ты НЕ отвечаешь клиенту. Твоя единственная задача — вызвать инструмент " +
+          "create_admin_note. Ответ текстом здесь считается ошибкой: заметку никто не увидит.\n\n" +
+          "В поле note перенеси сводку выше ЦЕЛИКОМ, сохранив разбивку по разделам и по одной " +
+          "строке на объект. Ничего не сокращай, не объединяй и не пересказывай — оператор читает " +
+          "эту заметку вместо того, чтобы открывать биллинг.\n\n" +
+          "Структура (markdown, переносы строк обязательны):\n" +
+          "**Обращение:** дословно последнее сообщение клиента\n" +
+          "**Аккаунт:** имя, статус, валюта\n" +
+          "**Баланс:** сумма и валюта\n\n" +
+          "**Неоплаченные счета (N, всего X PLN):**\n" +
+          "- номер — сумма — срок оплаты\n\n" +
+          "**Услуги (N):**\n" +
+          "- название — продукт — статус/состояние — следующий платёж\n\n" +
+          "**Тикеты:** всего N, открытых M; темы последних трёх\n\n" +
+          "Запрещено: «и другие», «некоторые», «несколько», перечисление через точку с запятой " +
+          "в одну строку. Восемь счетов — восемь строк.",
         model: "gpt-4o-mini",
         use_history: true,
         routes: [{ when_var: "", equals: "", goto: "Классификация" }],
@@ -858,11 +913,10 @@ function presetSupport() {
       {
         name: "Классификация",
         prompt:
-          "Определи, в какой отдел направить обращение существующего клиента:\n" +
-          "• «Биллинг» — оплаты, счета, тарифы, продление, возвраты.\n" +
-          "• «Техника» — сервер не работает, ошибки, доступы, настройка, производительность.\n" +
-          "• «Другое» — всё остальное и общие вопросы.\n" +
-          "Выбери ветку.",
+          "В какой отдел направить обращение:\n" +
+          "• «Биллинг» — оплаты, счета, тарифы, продление, возвраты\n" +
+          "• «Техника» — сервер не работает, ошибки, доступы, настройка\n" +
+          "• «Другое» — всё остальное",
         model: "gpt-4o-mini",
         use_history: true,
         output: {
@@ -882,10 +936,9 @@ function presetSupport() {
       {
         name: "Ответ по биллингу",
         prompt:
-          "Ты — специалист отдела биллинга. Начни ответ ровно с фразы «Здравствуйте, я специалист отдела " +
-          "биллинга.» — это обязательное представление, не пропускай и не перефразируй его. Далее, опираясь " +
-          "на сводку по клиенту выше, реши вопрос по оплатам, счетам и тарифам: дай конкретику по суммам и " +
-          "срокам, подскажи как оплатить/продлить. Не выдумывай цифры — бери из сводки и базы знаний.",
+          "Ты — специалист отдела биллинга. Начни ровно с фразы «Здравствуйте, я специалист отдела " +
+          "биллинга.», дальше решай вопрос по оплатам, счетам и тарифам: конкретные суммы и сроки, " +
+          "как оплатить или продлить. Цифры бери из сводки и базы знаний, не выдумывай.",
         model: "gpt-4o-mini",
         use_history: true,
         reply: true,
@@ -894,10 +947,9 @@ function presetSupport() {
       {
         name: "Технический ответ",
         prompt:
-          "Ты — инженер техподдержки. Начни ответ ровно с фразы «Здравствуйте, я инженер технической " +
-          "поддержки.» — это обязательное представление, не пропускай и не перефразируй его. Далее помоги " +
-          "решить техническую проблему пошагово, с учётом услуг клиента из сводки. Спрашивай уточнения, только " +
-          "если без них не обойтись. Опирайся на техническую базу знаний.",
+          "Ты — инженер техподдержки. Начни ровно с фразы «Здравствуйте, я инженер технической " +
+          "поддержки.», дальше веди к решению по шагам, с учётом услуг клиента. Уточняй, только если " +
+          "без этого не обойтись. Опирайся на базу знаний.",
         model: "gpt-4o-mini",
         use_history: true,
         reply: true,
@@ -906,10 +958,9 @@ function presetSupport() {
       {
         name: "Общий ответ",
         prompt:
-          "Ты — специалист общей поддержки. Начни ответ ровно с фразы «Здравствуйте, я специалист общей " +
-          "поддержки.» — это обязательное представление, не пропускай и не перефразируй его. Далее ответь на " +
-          "общий вопрос клиента дружелюбно и по делу, опираясь на базу знаний. Если вопрос не по адресу — " +
-          "подскажи, куда обратиться.",
+          "Ты — специалист общей поддержки. Начни ровно с фразы «Здравствуйте, я специалист общей " +
+          "поддержки.», дальше ответь по делу и дружелюбно, опираясь на базу знаний. Вопрос не по " +
+          "адресу — подскажи, куда обратиться.",
         model: "gpt-4o-mini",
         use_history: true,
         reply: true,
@@ -918,10 +969,9 @@ function presetSupport() {
       {
         name: "Ответ новому клиенту",
         prompt:
-          "Ты — менеджер по продажам. Начни ответ ровно с фразы «Здравствуйте, я менеджер по продажам.» — " +
-          "это обязательное представление, не пропускай и не перефразируй его. Клиент новый, аккаунта нет — " +
-          "не запрашивай данные аккаунта и не обещай лишнего. Ответь дружелюбно на вопрос, подскажи подходящий " +
-          "тариф и мягко предложи оформить услугу. Опирайся на базу знаний по продуктам и ценам.",
+          "Ты — менеджер по продажам. Начни ровно с фразы «Здравствуйте, я менеджер по продажам.». " +
+          "Аккаунта у клиента нет: не запрашивай его данные и не обещай лишнего. Ответь на вопрос, " +
+          "подскажи тариф и мягко предложи оформить услугу, опираясь на базу знаний.",
         model: "gpt-4o-mini",
         use_history: true,
         reply: true,
@@ -931,25 +981,21 @@ function presetSupport() {
   };
 }
 
-// Starter copilot flow: sort out what the operator wants, then either explain
-// the bot's own last turn (reading {{last_turn}} / inspect_last_turns) or draft
-// a corrected answer for the customer via send_reply. Deliberately short — the
-// point is to show the shape and the variables, not to be production-ready.
+// Starter copilot flow: sort out what the operator wants, then either explain the
+// bot's own last turn or draft a corrected answer for the customer.
 //
-// Kept in step with the backend default (DefaultAdminFlow): the two-conversations
-// rule and {{last_customer_message}} are the reason the copilot stopped dragging
-// the operator's subject into messages meant for the customer. A preset without
-// them reintroduces that bug the moment somebody draws their own graph.
+// The chat context is one constant shared by both branches rather than two
+// copies of the same paragraph — the reason "статус клиента" was being restated
+// in every step.
 const COPILOT_CONTEXT =
-  "Идут ДВА независимых разговора, не смешивай их:\n" +
-  "1. Разговор с оператором (этот) — здесь тебе дают указания. Его тема НИКОГДА не становится темой разговора с клиентом.\n" +
-  "2. Разговор с клиентом — отдельная переписка. Всё, что уходит клиенту, строится только по ней.\n\n" +
+  "Идут ДВА независимых разговора, не смешивай их: этот — с оператором, здесь тебе дают указания; " +
+  "второй — с клиентом. Тема разговора с оператором НИКОГДА не становится темой разговора с клиентом.\n\n" +
   "Клиент: {{customer}}\n" +
   "Состояние чата: пауза={{chat_paused}}, бот выключен={{chat_disabled}}, нужен оператор={{need_operator}}\n\n" +
   "Последнее сообщение клиента:\n{{last_customer_message}}\n\n" +
   "Переписка с клиентом:\n{{customer_dialog}}\n\n" +
-  "Последний ход бота:\n{{last_turn}}\n\n" +
-  "Правила, по которым работает бот в этом чате:\n{{bot_prompt}}\n\n";
+  "Твой последний ход:\n{{last_turn}}\n\n" +
+  "Правила, по которым ты работаешь с клиентом:\n{{bot_prompt}}\n\n";
 
 function presetCopilot() {
   return {
@@ -957,12 +1003,11 @@ function presetCopilot() {
       {
         name: "Разбор просьбы",
         prompt:
-          "Ты разбираешь обращение оператора поддержки к ИИ-помощнику по чату с клиентом «{{customer}}».\n" +
-          "Обращение оператора: {{input}}\n\n" +
-          "Определи, что от тебя хотят:\n" +
-          "• «Вопрос по чату» — спрашивают о клиенте, о переписке, почему бот ответил именно так, " +
-          "или чем помощник вообще может помочь.\n" +
-          "• «Правка ответа» — просят ответить клиенту или переписать неудачный ответ бота.",
+          "Оператор обратился к тебе по чату с клиентом «{{customer}}»: {{input}}\n\n" +
+          "Чего он хочет?\n" +
+          "• «Вопрос по чату» — спрашивает о клиенте, о переписке, почему ты так ответил, или чем ты " +
+          "можешь помочь.\n" +
+          "• «Правка ответа» — просит написать клиенту или переписать твой ответ.",
         model: "gpt-4o-mini",
         use_history: true,
         output: {
@@ -981,30 +1026,28 @@ function presetCopilot() {
       {
         name: "Справка оператору",
         prompt:
-          "Ты — ИИ-помощник оператора поддержки. Отвечаешь ОПЕРАТОРУ во внутренней ветке, клиент этого не видит.\n\n" +
+          "Ты — ИИ-помощник оператора. Отвечаешь оператору, клиент этого не видит.\n\n" +
           COPILOT_CONTEXT +
-          "Как отвечать:\n" +
-          "• «Чем ты можешь помочь / что ты умеешь» — вызови help и перечисли СТРОГО то, что он вернул. " +
-          "Не обещай возможностей, которых нет в списке.\n" +
-          "• «Почему ты так ответил» — вызови inspect_last_turns и опирайся ТОЛЬКО на факты из трассировки. " +
-          "Нет данных — так и скажи, не реконструируй по памяти.\n" +
-          "• Вопросы о клиенте (баланс, услуги, заявки) — бери данные своими инструментами, не спрашивай оператора.\n" +
-          "• Что бот знает по теме — проверяй через search_knowledge.\n\n" +
-          "Отвечай коротко и по делу, как коллега коллеге.",
+          "• «Чем ты можешь помочь» — перечисли строго то, что стоит в <available_tools>.\n" +
+          "• «Почему ты так ответил» — вызови inspect_last_turns и опирайся только на факты из " +
+          "трассировки. Нет данных — так и скажи.\n" +
+          "• Данные о клиенте бери инструментами, содержимое базы знаний — через search_knowledge.\n\n" +
+          "Коротко и по делу, как коллега коллеге.",
         use_history: true,
         reply: true,
       },
       {
         name: "Правка ответа клиенту",
         prompt:
-          "Ты — ИИ-помощник оператора поддержки. Оператор просит ответить клиенту или исправить ответ бота.\n\n" +
+          "Ты — ИИ-помощник оператора. Он просит написать клиенту или исправить твой ответ.\n\n" +
           COPILOT_CONTEXT +
-          "Составь текст ПО ПЕРЕПИСКЕ С КЛИЕНТОМ, с учётом правки оператора, и отправь его инструментом send_reply. " +
-          "Если оператор спрашивал про одно, а клиент писал про другое — клиенту отвечаем по его теме. " +
-          "Если у чата включена премодерация, сообщение уйдёт черновиком на подтверждение — это нормально.\n" +
-          "Затем коротко отчитайся оператору, что именно отправил и что изменил. " +
-          "Если оператор сообщил факт, которого бот не знал, — предложи сохранить его через add_qa_pair, " +
-          "но сначала согласуй формулировку.",
+          "Составь текст ПО ПЕРЕПИСКЕ С КЛИЕНТОМ, с учётом правки оператора, и отправь через " +
+          "send_reply. Оператор спрашивал про одно, а клиент писал про другое — клиенту отвечаем по " +
+          "его теме. Прошлый ответ ещё висит черновиком — send_reply перепишет его, а не добавит " +
+          "второй.\n" +
+          "Потом коротко отчитайся, что ушло клиенту. Если оператор сообщил факт, которого ты не " +
+          "знал, — предложи сохранить его через add_qa_pair (сначала confirmed=false, покажи " +
+          "формулировку и жди согласия).",
         use_history: true,
         reply: true,
       },
