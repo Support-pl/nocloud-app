@@ -96,6 +96,22 @@ const diskType = computed(
   () => options.disk.type ?? props.minProduct.resources?.drive_type
 );
 
+const trafficSize = computed(() => {
+  const resources = props.minProduct.resources ?? product.value?.resources;
+  const tb = resources?.traffic;
+  if (!tb) return undefined;
+
+  return tb < 1 ? `${tb * 1000} GB` : `${tb} TB`;
+});
+
+const networkSpeed = computed(() => {
+  const resources = props.minProduct.resources ?? product.value?.resources;
+  const mbps = resources?.network;
+  if (!mbps) return undefined;
+
+  return mbps >= 1000 ? `${mbps / 1000} Gbps` : `${mbps} Mbps`;
+});
+
 const resources = computed(() => ({
   location: {
     title: i18n.t("location"),
@@ -129,6 +145,16 @@ const resources = computed(() => ({
     value: `${diskType.value} ${diskSize.value}`,
     visible: parseFloat(diskSize.value),
     style: { marginBottom: "5px" },
+  },
+  traffic: {
+    title: i18n.t("traffic"),
+    value: trafficSize.value,
+    visible: !!trafficSize.value,
+  },
+  network: {
+    title: i18n.t("network speed"),
+    value: networkSpeed.value,
+    visible: !!networkSpeed.value,
   },
   os: {
     title: i18n.t("os"),
