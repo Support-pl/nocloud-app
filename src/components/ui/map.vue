@@ -1,31 +1,35 @@
 <template>
-  <div class="map">
-    <div style="position: absolute; right: 25px; top: 13px">
-      <button class="map__button" @click="(e) => zoom(e, 1)">
+  <div class="map" ref="map">
+    <div class="map__buttons">
+      <button type="button" class="map__button" @click="(e) => zoom(e, 1)">
         +
       </button>
-      <button class="map__button" @click="(e) => zoom(e, -1)">
-        -
+      <button type="button" class="map__button" @click="(e) => zoom(e, -1)">
+        –
       </button>
     </div>
 
+    <slot name="actions"></slot>
+
     <svg
       ref="svgwrapper"
-      :viewBox="`0 0 ${mapData.meta.width} ${mapData.meta.height}`"
+      :viewBox="`0 0 ${widthMap} ${heightMap}`"
       @click="mapClickHandler"
       @mousemove="drag"
       @mousedown="beginDrag"
-      @mousewheel="zoom"
+      @wheel="zoom"
+      @touchmove="drag"
+      @touchstart="beginDrag"
     >
       <defs>
         <g id="marker">
           <slot name="marker">
             <path
-              id="Shape"
               d="M14,0 C21.732,0 28,5.641 28,12.6 C28,23.963 14,36 14,36 C14,36 0,24.064 0,12.6 C0,5.641 6.268,0 14,0 Z"
+              id="Shape"
               fill="#FF6E6E"
               style="fill: inherit"
-            />
+            ></path>
             <circle
               id="elips"
               fill="#FFFFFF"
@@ -33,30 +37,36 @@
               cx="14"
               cy="14"
               r="7"
-            />
+            ></circle>
           </slot>
         </g>
+
+        <g v-for="(icon, id) in markerIcons" v-html="icon" :id="id"></g>
       </defs>
       <g
-        ref="viewport"
         class="map__viewport"
-        transform="matrix(1 0 0 1 0 0)"
+				ref="viewport"
+				transform="matrix(1 0 0 1 0 0)"
       >
-        <g>
+        <g v-for="country in mapData.countries" :key="country.id + country.title">
+          <title>{{ country.title }}</title>
           <path
-            v-for="country in mapData.countries"
-            :id="country.id"
-            :key="country.id + country.title"
-            :style="{ fill: (selected.split(' ').at(-1).split('-').includes(country.id)) ? (mapActiveColor ?? 'var(--main)') : null }"
+            :style="{
+              fill: (isSelected(country.id)) ? (mapActiveColor ?? '#427cf7') : null,
+              cursor: (highlightHoveredCountry) ? 'pointer': null
+            }"
             class="map__part"
+            :id="country.id"
             :title="country.title"
             :d="country.d"
+            @mouseenter="hoverCountry(country.id, $event)"
+            @mouseleave="unhoverCountry(country.id, $event)"
           />
         </g>
 
         <g
-          ref="notscale"
           class="map_ui"
+          ref="notscale"
           transform="matrix(1 0 0 1 0 0)"
         >
           <g v-for="marker in markerOrder" :key="marker.id + '_1'">
@@ -64,10 +74,14 @@
               x="0"
               y="0"
               class="map__marker"
-              :style="{ fill: (selected == marker.id) ? (markerActiveColor ?? 'var(--success)') : (markerColor ?? 'var(--err)') }"
+              :style="{
+                fill: (selected == marker.id)
+                  ? (marker.extra.activeColor ?? markerActiveColor ?? '#0fd058')
+                  : (marker.extra.color ?? markerColor ?? '#f9383b')
+              }"
               :href="`#${marker.svgId || 'marker'}`"
               :data-id="marker.id"
-              :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${marker.x} ${marker.y})`"
+              :transform="`matrix(${markerScaleDivider / scale} 0 0 ${markerScaleDivider / scale} ${marker.x} ${marker.y})`"
               transform-origin="14 36"
               @mouseenter="(e) => mouseEnterHandler(marker.id, e)"
               @mouseleave="(e) => mouseLeaveHandler(marker.id, e)"
@@ -80,41 +94,43 @@
             :class="{ 'map__popup--hovered': hovered == marker.id }"
           >
             <!-- popup -->
-            <rect
-              x="0"
-              y="0"
-              :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${Math.max(marker.x + 14 - popupWidth[marker.id] / 2, 1)} ${(marker.y - 45)})`"
-              :transform-origin="`${popupWidth[marker.id]/2} 80`"
-              :width="popupWidth[marker.id]"
-              height="40"
-              fill="#fff"
-              stroke-width="1"
-              stroke="#000"
-              rx="8"
-              @mouseenter="(e) => mouseEnterHandler(marker.id, e)"
-              @mouseleave="(e) => mouseLeaveHandler(marker.id, e)"
-            />
+            <slot name="popup" :marker="marker">
+              <rect
+                x="0"
+                y="0"
+                :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${Math.max(marker.x + 14 - popupWidth[marker.id] / 2, 1)} ${(marker.y - 45)})`"
+                :transform-origin="`${popupWidth[marker.id]/2} 80`"
+                :width="popupWidth[marker.id]"
+                height="40"
+                fill="#fff"
+                stroke-width="1"
+                stroke="#000"
+                rx="8"
+                @mouseenter="(e) => mouseEnterHandler(marker.id, e)"
+                @mouseleave="(e) => mouseLeaveHandler(marker.id, e)"
+              ></rect>
 
-            <!-- text -->
-            <foreignObject
-              v-if="marker.title"
-              x="0"
-              y="0"
-              :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${Math.max(marker.x + 14 - popupWidth[marker.id] / 2, 1)} ${(marker.y - 45)})`"
-              :transform-origin="`${popupWidth[marker.id]/2} 80`"
-              :width="popupWidth[marker.id]"
-              height="40"
-              @mouseenter="(e) => mouseEnterHandler(marker.id, e)"
-              @mouseleave="(e) => mouseLeaveHandler(marker.id, e)"
-            >
-              <div class="map__popup-content">
-                <slot name="popup" :marker="marker">
-                  <div class="map__popup-content--default">
-                    {{ marker.title }}
-                  </div>
-                </slot>
-              </div>
-            </foreignObject>
+              <!-- text -->
+              <foreignObject
+                v-if="marker.title"
+                x="0"
+                y="0"
+                :transform="`matrix(${1 / scale} 0 0 ${1 / scale} ${Math.max(marker.x + 14 - popupWidth[marker.id] / 2, 1)} ${(marker.y - 45)})`"
+                :transform-origin="`${popupWidth[marker.id]/2} 80`"
+                :width="popupWidth[marker.id]"
+                height="40"
+                @mouseenter="(e) => mouseEnterHandler(marker.id, e)"
+                @mouseleave="(e) => mouseLeaveHandler(marker.id, e)"
+              >
+                <div class="map__popup-content">
+                  <slot name="popup" :marker="marker">
+                    <div class="map__popup-content--default">
+                      {{ marker.title }}
+                    </div>
+                  </slot>
+                </div>
+              </foreignObject>
+            </slot>
           </g>
         </g>
       </g>
@@ -123,192 +139,325 @@
 </template>
 
 <script>
-import mapData from '@/assets/map.json'
+import mapData from "@/assets/map.json";
 
 export default {
-  name: 'SupportMap',
-  props: ['value', 'markers', 'map-active-color', 'marker-active-color', 'marker-color'],
+  name: "nc-map",
+  props: {
+    value: { type: String, required: true },
+    markers: { type: Array, required: true },
+    mapActiveColor: { type: String, default: null },
+    markerActiveColor: { type: String, default: null },
+    markerColor: { type: String, default: null },
+    mapClick: { type: Function, default: null },
+    notScale: { type: Boolean, default: false },
+    markerScaleDivider: { type: Number, default: 1 },
+    highlightHoveredCountry: { type: Boolean, default: false },
+    markerUrl: { type: String, default: null }
+  },
   data: () => ({
-    selected: '',
-    hovered: '',
+    selected: "",
+    hovered: "",
     popupWidth: {},
+    markerIcons: {},
+
     leaveDelay: 300,
     leaveDelayInterval: -1,
     scale: 1,
-    maxScale: 6,
-    minScale: 1,
-    selectedDrag: null,
+    maxScale: 24, // ceiling for manual zoom
+    initialScale: 6, // cap for the auto-fit on mount
+		minScale: 1,
+
+		selectedDrag: null,
     svg: null,
-    mapData
+    mapData,
+
+    widthMap: 1010,
+    heightMap: 666,
   }),
+  methods: {
+    mapClickHandler(event) {
+      if (this.mapClick) {
+        this.mapClick(event);
+        return;
+      }
+
+      if (event.target.dataset.id) {
+        this.selected = event.target.getAttribute("data-id");
+        this.$emit("input", this.selected);
+      }
+    },
+    mouseEnterHandler(id, e, select) {
+      this.hovered = id;
+      if (select) this.selected = id;
+      clearInterval(this.leaveDelayInterval);
+    },
+    mouseLeaveHandler() {
+      this.leaveDelayInterval = setInterval(() => {
+        this.hovered = "";
+      }, this.leaveDelay);
+    },
+    beginDrag(e) {
+			if (e.target.closest('.map_ui')) return;
+			if (e.target.classList.contains('draggable')) {
+				this.selectedDrag = e.target;
+			} else {
+				this.selectedDrag = this.$refs.viewport;
+			}
+
+			this.selectedDrag.dataset.startMouseX = (e.clientX)
+        ? e.clientX
+        : e.changedTouches[0].clientX;
+			this.selectedDrag.dataset.startMouseY = (e.clientY)
+        ? e.clientY
+        : e.changedTouches[0].clientY;
+			e.stopPropagation();
+
+      if (!e.clientX) {
+        document.body.style.overflow = 'hidden';
+        const wrapper = document.querySelector('.newCloud_wrapper');
+        if (wrapper) wrapper.style.overflow = 'hidden';
+      }
+		},
+		drag(e) {
+			if (!this.selectedDrag) return;
+			e.stopPropagation();
+      e.preventDefault();
+
+			const startX = parseFloat(this.selectedDrag.dataset.startMouseX);
+			const startY = parseFloat(this.selectedDrag.dataset.startMouseY);
+			let dx = ((e.clientX) ? e.clientX : e.changedTouches[0].clientX) - startX;
+			let dy = ((e.clientY) ? e.clientY : e.changedTouches[0].clientY) - startY;
+
+			if (this.selectedDrag.classList.contains('draggable')) {
+        const selectedBox = this.selectedDrag.getBoundingClientRect();
+        const boundaryBox = this.selectedDrag.parentElement.getBoundingClientRect();
+
+        if (selectedBox.right + dx > boundaryBox.right) {
+          dx = (boundaryBox.right - selectedBox.right);
+        } else if (selectedBox.left + dx < boundaryBox.left) {
+          dx = (boundaryBox.left - selectedBox.left);
+        }
+
+        if (selectedBox.bottom + dy > boundaryBox.bottom) {
+          dy = (boundaryBox.bottom - selectedBox.bottom);
+        } else if (selectedBox.top + dy < boundaryBox.top) {
+          dy = (boundaryBox.top - selectedBox.top);
+        }
+			}
+
+			const currentMatrix = this.selectedDrag.transform.baseVal.consolidate().matrix;
+			const newMatrix = currentMatrix.translate(dx / this.scale, dy / this.scale);
+			const transform = this.svg.createSVGTransformFromMatrix(newMatrix);
+
+			this.selectedDrag.transform.baseVal.initialize(transform);
+			this.selectedDrag.dataset.startMouseX = (dx / (e.clientX ? 1 : 3)) + startX;
+			this.selectedDrag.dataset.startMouseY = (dy / (e.clientY ? 1 : 3)) + startY;
+		},
+		endDrag(e) {
+			e.stopPropagation();
+			if (this.selectedDrag) {
+				this.selectedDrag = undefined;
+			}
+
+      if (!e.clientX) {
+        document.body.style.overflow = '';
+        const wrapper = document.querySelector('.newCloud_wrapper');
+        if (wrapper) wrapper.style.overflow = '';
+      }
+		},
+		zoom(e, delta) {
+			e.stopPropagation();
+			e.preventDefault();
+
+			const container = this.$refs.viewport;
+			const direction = delta || (e.deltaY !== undefined ? -e.deltaY : e.wheelDelta);
+			let scaleStep = direction > 0 ? 1.25 : 0.8;
+
+			if (this.scale * scaleStep > this.maxScale) {
+        scaleStep = this.maxScale / this.scale;
+			}
+			if (this.scale * scaleStep < this.minScale) {
+        scaleStep = this.minScale / this.scale;
+			}
+			if (scaleStep === 1) return;
+
+			const box = this.svg.getBoundingClientRect();
+			let point = this.svg.createSVGPoint();
+
+			this.scale *= scaleStep;
+			// buttons zoom to the center of the map, wheel to the cursor
+			point.x = (delta) ? box.left + box.width / 2 : e.clientX;
+			point.y = (delta) ? box.top + box.height / 2 : e.clientY;
+			// client px -> viewBox units, otherwise the zoom anchor is way off
+			point = point.matrixTransform(this.svg.getScreenCTM().inverse());
+
+			const currentZoomMatrix = container.transform.baseVal.consolidate().matrix;
+			point = point.matrixTransform(currentZoomMatrix.inverse());
+			const matrix = this.svg.createSVGMatrix()
+					.translate(point.x, point.y)
+					.scale(scaleStep)
+					.translate(-point.x, -point.y);
+			const newZoomMatrix = currentZoomMatrix.multiply(matrix);
+
+			container.transform.baseVal.initialize(this.svg.createSVGTransformFromMatrix(newZoomMatrix));
+		},
+    hoverCountry(id, { target }) {
+      if (!this.highlightHoveredCountry) return;
+      const isCurrentCountry = !this.selected.split('-').at(0).includes(id);
+
+      if (id === target.id && isCurrentCountry) {
+        target.style.fill = this.mapActiveColor ?? '#427cf7';
+      }
+    },
+    unhoverCountry(id, { target }) {
+      if (!this.highlightHoveredCountry) return;
+      const isCurrentCountry = !this.selected.split('-').at(0).includes(id);
+
+      if (id === target.id && isCurrentCountry) {
+        target.style.fill = "";
+      }
+    },
+    isSelected(id) {
+      const { extra } = this.markers.find((marker) => marker.id === this.selected) ?? {};
+
+      if (!extra) return false;
+      if (extra.country) return extra.country === id;
+      if (extra.region) return this.selected?.split('-').at(-2) === id;
+      else return this.selected?.split('-').at(-1) === id;
+    },
+    changeMarkers() {
+      const links = [];
+
+      if (this.markerUrl) links.push({ link: this.markerUrl });
+
+      this.markers.forEach(({ id, extra }) => {
+        if (extra.link) links.push({ id, link: extra.link });
+      });
+
+      links.forEach(async ({ id, link }) => {
+        const response = await fetch(link);
+        const blob = await response.blob();
+        const text = await blob.text();
+        const i = text.indexOf('<svg');
+
+        // $set is Vue 2 only — plain assignment is reactive in Vue 3
+        this.markerIcons[id ?? 'default'] = text.slice(i);
+      });
+    },
+    setScale() {
+      const container = this.$refs.viewport;
+      const min = { x: Infinity, y: Infinity };
+      const max = { x: -Infinity, y: -Infinity };
+      let x, y, right = 0, down = 0;
+
+      this.markers.forEach(({ x, y }) => {
+        if (min.x > x) min.x = x;
+        if (min.y > y) min.y = y;
+        if (max.x < x) max.x = x;
+        if (max.y < y) max.y = y;
+      });
+
+      const xScale = mapData.meta.width / (max.x - min.x + 70);
+      const yScale = mapData.meta.height / (max.y - min.y + 70);
+
+      this.scale = Math.min(xScale, yScale);
+      if (this.scale > this.initialScale) this.scale = this.initialScale;
+      if (xScale > yScale) right = 20 * xScale;
+      if (yScale > xScale) down = 20 * yScale;
+
+      x = (min.x - 20) * this.scale - right;
+      y = (min.y - 10) * this.scale - down;
+
+      if (this.markers.length < 2) {
+        const { width, height } = mapData.meta;
+
+        this.scale = this.initialScale;
+        x = (this.markers[0].x * this.scale - width / 2) + 70;
+        y = (this.markers[0].y * this.scale - height / 2) + 140;
+      }
+
+		  container.setAttribute('transform', `matrix(${this.scale} 0 0 ${this.scale} ${-x} ${-y})`);
+    }
+  },
   computed: {
-    markerOrder () {
-      const tempMarkers = [...this.markers]
-      return tempMarkers.sort((a, b) => {
+    markerOrder() {
+      const tempMarkers = [...this.markers];
+
+      tempMarkers.sort((a, b) => {
         if (a.id == this.hovered) {
-          return 1
+          return 1;
         }
         if (b.id == this.hovered) {
-          return -1
+          return -1;
         }
-        return 0
-      })
-    }
+        return 0;
+      });
+
+      return tempMarkers.map((marker) => {
+        const icon = this.markerIcons[marker.id];
+        const defaultIcon = this.markerIcons.default;
+        let svgId = null;
+
+        if (icon) svgId = marker.id;
+        else if (defaultIcon) svgId = 'default';
+        return { ...marker, svgId };
+      });
+    },
   },
-  watch: {
-    value (newVal) {
-      this.selected = newVal
-    }
-  },
-  created () {
-    this.selected = this.value ?? this.selected
+  created() {
+    this.selected = this.value ?? this.selected;
 
     if (this.markers.length === 1) {
-      this.$emit('input', this.markers[0].id)
+      this.$emit('input', this.markers[0].id);
     }
 
     this.markers.forEach(({ id, title }) => {
-      this.popupWidth[id] = title.length * 10 + 15
-    })
+      this.popupWidth[id] = title.length * 10 + 15;
+    });
   },
-  mounted () {
-    const container = this.$refs.viewport
-    const min = { x: Infinity, y: Infinity }
-    const max = { x: -Infinity, y: -Infinity }
-    let x; let y; let right = 0; let down = 0
+  mounted() {
+    this.changeMarkers();
+    this.widthMap = mapData.meta.width;
+    this.heightMap = mapData.meta.height;
 
-    this.markers.forEach(({ x, y }) => {
-      if (min.x > x) min.x = x
-      if (min.y > y) min.y = y
-      if (max.x < x) max.x = x
-      if (max.y < y) max.y = y
-    })
+    const container = this.$refs.viewport;
 
-    const xScale = mapData.meta.width / (max.x - min.x + 70)
-    const yScale = mapData.meta.height / (max.y - min.y + 70)
+    if (this.notScale) {
+      this.widthMap = +this.$refs.map.getBoundingClientRect().width;
+      this.heightMap = +this.$refs.map.getBoundingClientRect().height;
 
-    this.scale = Math.min(xScale, yScale)
-    if (this.scale > this.maxScale) this.scale = this.maxScale
-    if (xScale > yScale) right = 20 * xScale
-    if (yScale > xScale) down = 20 * yScale
+      let x = parseInt(this.widthMap - mapData.meta.width) / 2;
+      let y = parseInt(this.heightMap - mapData.meta.height) / 2;
 
-    x = (min.x - 20) * this.scale - right
-    y = (min.y - 10) * this.scale - down
-
-    if (this.markers.length < 2) {
-      const { width, height } = mapData.meta
-
-      this.scale = this.maxScale
-      x = (this.markers[0].x * this.scale - width / 2) + 70
-      y = (this.markers[0].y * this.scale - height / 2) + 140
+      container.setAttribute("transform", `matrix(1 0 0 1 ${x} ${y})`);
+    } else if (this.markers.length > 0) {
+      this.setScale();
     }
 
-    this.svg = this.$refs.svgwrapper
-    container.setAttribute('transform', `matrix(${this.scale} 0 0 ${this.scale} ${-x} ${-y})`)
-    window.addEventListener('mouseup', this.endDrag)
-  },
-  beforeUnmount () {
-    window.removeEventListener('mouseup', this.endDrag)
-  },
-  methods: {
-    mapClickHandler ({ target }) {
-      if (target.dataset.id) {
-        this.selected = target.getAttribute('data-id')
-        this.$emit('input', this.selected)
-      }
+		this.svg = this.$refs.svgwrapper;
+		window.addEventListener('mouseup', this.endDrag);
+    window.addEventListener('touchend', this.endDrag);
+	},
+	beforeUnmount() {
+		window.removeEventListener('mouseup', this.endDrag);
+    window.removeEventListener('touchend', this.endDrag);
+	},
+  watch: {
+    value(newVal) {
+      this.selected = newVal;
     },
-    mouseEnterHandler (id) {
-      this.hovered = id
-      this.$emit('pinHover', id)
-      clearInterval(this.leaveDelayInterval)
-    },
-    mouseLeaveHandler () {
-      this.leaveDelayInterval = setInterval(() => {
-        this.hovered = ''
-      }, this.leaveDelay)
-    },
-    beginDrag (e) {
-      e.stopPropagation()
-      if (e.target.closest('.map_ui')) return
-      const target = e.target
-      if (target.classList.contains('draggable')) {
-        this.selectedDrag = target
-      } else {
-        this.selectedDrag = this.$refs.viewport
-      }
-      this.selectedDrag.dataset.startMouseX = e.clientX
-      this.selectedDrag.dataset.startMouseY = e.clientY
-    },
-    drag (e) {
-      if (!this.selectedDrag) return
-      e.stopPropagation()
-      const startX = parseFloat(this.selectedDrag.dataset.startMouseX)
-      const startY = parseFloat(this.selectedDrag.dataset.startMouseY)
-      let dx = (e.clientX - startX)
-      let dy = (e.clientY - startY)
-      if (this.selectedDrag.classList.contains('draggable')) {
-        const selectedBox = this.selectedDrag.getBoundingClientRect()
-        const boundaryBox = this.selectedDrag.parentElement.getBoundingClientRect()
-        if (selectedBox.right + dx > boundaryBox.right) {
-          dx = (boundaryBox.right - selectedBox.right)
-        } else if (selectedBox.left + dx < boundaryBox.left) {
-          dx = (boundaryBox.left - selectedBox.left)
-        }
-        if (selectedBox.bottom + dy > boundaryBox.bottom) {
-          dy = (boundaryBox.bottom - selectedBox.bottom)
-        } else if (selectedBox.top + dy < boundaryBox.top) {
-          dy = (boundaryBox.top - selectedBox.top)
-        }
-      }
-      const currentMatrix = this.selectedDrag.transform.baseVal.consolidate().matrix
-      const newMatrix = currentMatrix.translate(dx / this.scale, dy / this.scale)
-      const transform = this.svg.createSVGTransformFromMatrix(newMatrix)
-      this.selectedDrag.transform.baseVal.initialize(transform)
-      this.selectedDrag.dataset.startMouseX = dx + startX
-      this.selectedDrag.dataset.startMouseY = dy + startY
-    },
-    endDrag (e) {
-      e.stopPropagation()
-      if (this.selectedDrag) {
-        this.selectedDrag = undefined
-      }
-    },
-    zoom (e, delta) {
-      e.stopPropagation()
-      e.preventDefault()
-
-      const container = this.$refs.viewport
-      let scaleStep = (delta || e.wheelDelta) > 0 ? 1.25 : 0.8
-
-      if (this.scale * scaleStep > this.maxScale) {
-        scaleStep = this.maxScale / this.scale
-      }
-      if (this.scale * scaleStep < this.minScale) {
-        scaleStep = this.minScale / this.scale
-      }
-
-      const box = this.svg.getBoundingClientRect()
-      let point = this.svg.createSVGPoint()
-
-      this.scale *= scaleStep
-      point.x = (delta) ? box.x / 2 + box.left : e.clientX - box.left
-      point.y = (delta) ? box.y / 2 + box.top : e.clientY - box.top
-
-      const currentZoomMatrix = container.transform.baseVal[0].matrix
-      point = point.matrixTransform(currentZoomMatrix.inverse())
-      const matrix = this.svg.createSVGMatrix()
-        .translate(point.x, point.y)
-        .scale(scaleStep)
-        .translate(-point.x, -point.y)
-      const newZoomMatrix = currentZoomMatrix.multiply(matrix)
-
-      container.transform.baseVal.initialize(this.svg.createSVGTransformFromMatrix(newZoomMatrix))
+    markers(value) {
+      value.forEach(({ id, title }) => {
+        this.popupWidth[id] = title.length * 10 + 15;
+      });
+      this.setScale()
     }
-  }
-}
+  },
+};
 </script>
 
-<style>
+<style scoped>
 .map {
   /* width: 800px;
   height: 600px; */
@@ -356,21 +505,34 @@ export default {
 .map__part {
   fill: #c9c9c9;
   transition: fill 0.2s ease;
-  stroke: white;
+  stroke: #fff;
   stroke-opacity: 1;
   stroke-width: 1;
 }
 
+.map__buttons {
+  position: absolute;
+  right: 25px;
+  top: 13px;
+  display: flex;
+}
+
 .map__button {
-  padding: 0 15px;
-  font-size: 20px;
+  padding: 3px 13px 6px;
+  font-size: 22px;
+  line-height: 1;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 4px;
-  background: var(--bright_font);
+  background: #fff;
+  color: #000;
   cursor: pointer;
 }
 
 .map__button:not(:last-child) {
   margin-right: 5px;
+}
+
+.map__button:last-child {
+  padding: 2px 13px 7px;
 }
 </style>

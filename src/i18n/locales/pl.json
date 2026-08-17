@@ -806,6 +806,13 @@
         "enabled": "Włączony",
         "add_server": "Dodaj serwer MCP"
       },
+      "admin_flow": {
+        "title": "Asystent operatora (przepływ administratora)",
+        "on": "wł.",
+        "use": "Włącz asystenta",
+        "use_tip": "Drugi, całkowicie niezależny przepływ. Uruchamia się tylko wtedy, gdy operator napisze notatkę administracyjną w czacie wsparcia, a bot odpowiada w tym samym miejscu — klient tego nie widzi.\nWyłączony oznacza, że bot milczy na notatki administracyjne, dokładnie jak dotąd.",
+        "hint": "Operator może zapytać o czat, dowiedzieć się dlaczego bot odpowiedział w ten sposób, poprosić o poprawioną odpowiedź dla klienta lub uzupełnić bazę wiedzy."
+      },
       "flow": {
         "next": "Next",
         "undo": "Undo",
@@ -857,6 +864,7 @@
         "prompt": "Prompt",
         "prompt_ph": "Instruction for this step. Reference ｛｛input｝｝ or fields from earlier steps.",
         "available_vars": "Available variables",
+        "insert_var": "Wstaw do promptu",
         "output": "Output fields",
         "output_tip": "Fields the step must return as structured data. Their values become variables usable by later steps and routes.",
         "field_key_ph": "field name",
