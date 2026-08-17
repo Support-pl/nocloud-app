@@ -815,169 +815,159 @@ function fromFlow(flow) {
 // existing -> billing summary -> admin note (full dump, operator-only) ->
 // classify -> generate (each step auto-sees the previous); new -> a separate
 // answer with its own knowledge bases.
-// Starter support flow: reception → dossier for the operator → routing → a reply
-// in the voice of the right department.
+// Starter support flow. This is the flow that actually runs in production,
+// captured verbatim: prompts, models, knowledge-base scopes and routing are the
+// tuned originals, not a rewrite. The only addition is once_per_chat on the two
+// dossier steps - five MCP calls and an operator note are worth exactly once per
+// conversation, not once per message.
 //
-// Prompts stay short on purpose. Each step is its own model call, and everything
-// a step repeats about the customer is context the previous step already
-// produced: the dossier is gathered once and carried forward automatically, so
-// the reply steps say what to do and not what is already known.
+// database_ids point at THIS installation's knowledge bases. On a bot with other
+// bases the reply steps end up scoped to nothing and their RAG stays silent, so
+// re-pick them in the two select fields after loading the preset.
 function presetSupport() {
   return {
-    steps: [
+    "steps": [
       {
-        name: "Приёмная",
-        prompt:
-          "Определи тип клиента по техническому признаку, а не по смыслу сообщения: " +
-          'account_id = "{{account_id}}".\n' +
-          '• пустой (равен "") → «Новый клиент»\n' +
-          "• непустой → «Существующий клиент»",
-        model: "gpt-4o-mini",
-        output: {
-          type: "object",
-          properties: {
-            route: { type: "string", enum: ["Новый клиент", "Существующий клиент"] },
+        "name": "Приёмная",
+        "prompt": "Ты — приёмная службы поддержки хостинга. Определи тип клиента строго по этому техническому признаку (не по смыслу и тону сообщения): account_id = \"{{account_id}}\".\n• account_id непустой → «Существующий клиент».\n• account_id пустой (равен \"\") → «Новый клиент».",
+        "model": "gpt-4.1",
+        "use_history": true,
+        "output": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "enum": [
+                "Существующий клиент",
+                "Новый клиент"
+              ]
+            }
           },
-          required: ["route"],
-          additionalProperties: false,
+          "required": [
+            "route"
+          ],
+          "additionalProperties": false
         },
-        routes: [
-          { when_var: "Приёмная.route", equals: "Новый клиент", goto: "Ответ новому клиенту" },
-          { when_var: "Приёмная.route", equals: "Существующий клиент", goto: "Сводка из биллинга" },
-        ],
-      },
-      {
-        name: "Сводка из биллинга",
-        // Collected once per chat: five remote calls that do not change between
-        // two messages a minute apart. Every later turn reads {{Сводка из
-        // биллинга}} instead of paying for them again — and stops posting the
-        // operator a second copy of the same dossier.
-        once_per_chat: true,
-        // "Дай сухую сводку" made the model compress: instances collapsed into
-        // "Small 3, Medium 10 и другие", and the admin-note step downstream could
-        // then only be as detailed as this — the data was already gone. The ban on
-        // summarising has to live here, in the step that holds the raw output.
-        prompt:
-          "Собери досье клиента. Вызови все пять инструментов независимо от того, о чём спросил " +
-          "клиент, и не выбирай один под его вопрос:\n" +
-          "nocloud_instances(action=list), nocloud_billing(action=account), " +
-          "nocloud_billing(action=balance), nocloud_billing(action=invoices), nocloud_tickets(action=list).\n\n" +
-          "Выложи ВСЁ, что вернули инструменты, построчно. Обобщать запрещено: никаких «и другие», " +
-          "«некоторые», «несколько». Если инструмент вернул 25 услуг — 25 строк.\n\n" +
-          "Формат:\n" +
-          "**Аккаунт:** имя, статус, валюта, e-mail подтверждён/нет\n" +
-          "**Баланс:** сумма и валюта\n" +
-          "**Неоплаченные счета (сколько, на какую сумму всего):** по строке на счёт — " +
-          "номер документа, сумма, дата создания, срок оплаты\n" +
-          "**Услуги:** по строке на услугу — название, продукт, тип, статус, состояние, " +
-          "дата следующего платежа\n" +
-          "**Тикеты:** сколько всего, сколько открытых, темы последних трёх\n" +
-          "**Обращение сейчас:** дословно последнее сообщение клиента\n\n" +
-          "Чего инструмент не вернул — пиши «нет данных», не придумывай и не пропускай раздел.",
-        model: "gpt-4o-mini",
-        use_history: true,
-        routes: [{ when_var: "", equals: "", goto: "Создание admin note" }],
-      },
-      {
-        name: "Создание admin note",
-        once_per_chat: true,
-        // The wording is blunt on purpose. Trimmed to a polite "клиенту в этом шаге
-        // не отвечай", the model answered the customer's question in plain text and
-        // never called the tool at all — the operator got no note. A step whose only
-        // product is a side effect has to say so in its first sentence.
-        // The note is what the operator reads before touching the chat, and it is
-        // written once. One dense paragraph of semicolons is unreadable at exactly
-        // the moment it matters, so the layout is dictated rather than left to the
-        // model, and it has to arrive verbatim from the step above.
-        prompt:
-          "В этом шаге ты НЕ отвечаешь клиенту. Твоя единственная задача — вызвать инструмент " +
-          "create_admin_note. Ответ текстом здесь считается ошибкой: заметку никто не увидит.\n\n" +
-          "В поле note перенеси сводку выше ЦЕЛИКОМ, сохранив разбивку по разделам и по одной " +
-          "строке на объект. Ничего не сокращай, не объединяй и не пересказывай — оператор читает " +
-          "эту заметку вместо того, чтобы открывать биллинг.\n\n" +
-          "Структура (markdown, переносы строк обязательны):\n" +
-          "**Обращение:** дословно последнее сообщение клиента\n" +
-          "**Аккаунт:** имя, статус, валюта\n" +
-          "**Баланс:** сумма и валюта\n\n" +
-          "**Неоплаченные счета (N, всего X PLN):**\n" +
-          "- номер — сумма — срок оплаты\n\n" +
-          "**Услуги (N):**\n" +
-          "- название — продукт — статус/состояние — следующий платёж\n\n" +
-          "**Тикеты:** всего N, открытых M; темы последних трёх\n\n" +
-          "Запрещено: «и другие», «некоторые», «несколько», перечисление через точку с запятой " +
-          "в одну строку. Восемь счетов — восемь строк.",
-        model: "gpt-4o-mini",
-        use_history: true,
-        routes: [{ when_var: "", equals: "", goto: "Классификация" }],
-      },
-      {
-        name: "Классификация",
-        prompt:
-          "В какой отдел направить обращение:\n" +
-          "• «Биллинг» — оплаты, счета, тарифы, продление, возвраты\n" +
-          "• «Техника» — сервер не работает, ошибки, доступы, настройка\n" +
-          "• «Другое» — всё остальное",
-        model: "gpt-4o-mini",
-        use_history: true,
-        output: {
-          type: "object",
-          properties: {
-            route: { type: "string", enum: ["Биллинг", "Техника", "Другое"] },
+        "routes": [
+          {
+            "when_var": "Приёмная.route",
+            "equals": "Существующий клиент",
+            "goto": "Сводка из биллинга"
           },
-          required: ["route"],
-          additionalProperties: false,
+          {
+            "when_var": "Приёмная.route",
+            "equals": "Новый клиент",
+            "goto": "Ответ новому клиенту"
+          }
+        ]
+      },
+      {
+        "name": "Сводка из биллинга",
+        "prompt": "Используй MCP. Это этап ДОСЬЕ для оператора, не ответ клиенту.\nСделай РОВНО эти 5 вызовов (можно параллельно), никаких других:\n1) nocloud_instances action=list\n2) nocloud_billing action=account\n3) nocloud_billing action=balance\n4) nocloud_billing action=invoices\n5) nocloud_tickets action=list\naccount_uuid не подставляй сам — его добавляет система.\nКороткая фактическая сводка по всем пяти. Не выдумывай.\nВ услугах пиши status И state; uuid услуги не подменяй title.\nДаты (created/deadline/payment, next_payment_date) уже читаемые (YYYY-MM-DD) — пиши как есть, не пересчитывай.\nНеоплаченные счета отдельно; номер счёта в сводке — только whmcs_invoice_id (number и uuid счёта не используй как «№»).",
+        "model": "gpt-4.1",
+        "use_history": true,
+        "once_per_chat": true,
+        "routes": [
+          {
+            "when_var": "",
+            "equals": "",
+            "goto": "Создание admin note"
+          }
+        ]
+      },
+      {
+        "name": "Создание admin note",
+        "prompt": "Вызови инструмент create_admin_note. В поле note перечисли КАЖДЫЙ объект из сводки выше отдельной строкой, поимённо/по номеру — не считай и не обобщай:\n- каждый инстанс: имя, статус;\n- баланс, тариф, статус аккаунта;\n- каждый неоплаченный счёт: номер, сумма, дата;\n- суть обращения клиента.\nЗапрещены фразы вида '8 неоплаченных инвойсов' или '10 инстансов' без перечисления каждого — если их 8, должно быть 8 строк с номером и суммой. Клиент эту заметку не видит. Пользователю в этом шаге не отвечай — твоя единственная задача здесь — вызвать инструмент.",
+        "model": "gpt-4.1-mini",
+        "use_history": true,
+        "once_per_chat": true,
+        "routes": [
+          {
+            "when_var": "",
+            "equals": "",
+            "goto": "Классификация"
+          }
+        ]
+      },
+      {
+        "name": "Классификация",
+        "prompt": "Определи, в какой отдел направить обращение существующего клиента:\n• «Биллинг» — оплаты, счета, тарифы, продление, возвраты.\n• «Техника» — сервер не работает, ошибки, доступы, настройка, производительность.\n• «Другое» — всё остальное и общие вопросы.\nВыбери ветку.",
+        "model": "gpt-4.1",
+        "use_history": true,
+        "output": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "enum": [
+                "Биллинг",
+                "Техника",
+                "Другое"
+              ]
+            }
+          },
+          "required": [
+            "route"
+          ],
+          "additionalProperties": false
         },
-        routes: [
-          { when_var: "Классификация.route", equals: "Биллинг", goto: "Ответ по биллингу" },
-          { when_var: "Классификация.route", equals: "Техника", goto: "Технический ответ" },
-          { when_var: "Классификация.route", equals: "Другое", goto: "Общий ответ" },
-        ],
+        "routes": [
+          {
+            "when_var": "Классификация.route",
+            "equals": "Биллинг",
+            "goto": "Ответ по биллингу"
+          },
+          {
+            "when_var": "Классификация.route",
+            "equals": "Техника",
+            "goto": "Технический ответ"
+          },
+          {
+            "when_var": "Классификация.route",
+            "equals": "Другое",
+            "goto": "Общий ответ"
+          }
+        ]
       },
       {
-        name: "Ответ по биллингу",
-        prompt:
-          "Ты — специалист отдела биллинга. Начни ровно с фразы «Здравствуйте, я специалист отдела " +
-          "биллинга.», дальше решай вопрос по оплатам, счетам и тарифам: конкретные суммы и сроки, " +
-          "как оплатить или продлить. Цифры бери из сводки и базы знаний, не выдумывай.",
-        model: "gpt-4o-mini",
-        use_history: true,
-        reply: true,
-        database_ids: [],
+        "name": "Ответ по биллингу",
+        "prompt": "Ты — специалист отдела биллинга. Опираясь на сводку по клиенту выше, реши вопрос по оплатам, счетам и тарифам: дай конкретику по суммам и срокам, подскажи как оплатить/продлить. Не выдумывай цифры — бери из сводки и базы знаний.\n\nЕсли в сводке не хватает данных — добери через MCP (nocloud_billing / при необходимости nocloud_instances list для next_payment_date и тарифа услуги). Правила:\n1) Счета: nocloud_billing invoices (status PAID/UNPAID/…, total, даты). Неоплаченные выделяй отдельно.\n   - Клиенту называй номер счёта из whmcs_invoice_id (например «счёт №79094»).\n   - Поле document_number — номер документа NoCloud, uuid — внутренний id: клиенту их не называй, если он сам об этом не спрашивает.\n   - Даты (created/deadline/payment, next_payment_date) уже в читаемом виде (YYYY-MM-DD UTC) — цитируй как есть, не пересчитывай и не угадывай.\n2) Баланс: balance — prepaid. 0 или пустой ledger ≠ «клиент ничего не платил» (часто invoice/WHMCS-only). Для таких клиентов опирайся на invoices, не на transactions.\n3) account — профиль/валюта/статус аккаунта; не путай с «услуга оплачена».\n4) Продление услуги: next_payment_date / product из сводки по инстансу + связанные invoices. status=UP у услуги ≠ «оплата в порядке». Для услуги используй uuid из list/find, не title/имя.\n5) Не вызывай shell_ro/dns/health — это не биллинг. Уточняй у клиента только если без этого нельзя сказать, какой счёт/услугу он имеет в виду.\n6) Ответ: суммы, валюта, сроки, номера счетов (whmcs_invoice_id), что оплатить и куда/как (из базы знаний). Без воды и выдуманных цифр.",
+        "model": "gpt-4.1",
+        "use_history": true,
+        "reply": true,
+        "database_ids": [
+          "0dfe7fa7-fd40-4120-97f4-c8e240f44354"
+        ]
       },
       {
-        name: "Технический ответ",
-        prompt:
-          "Ты — инженер техподдержки. Начни ровно с фразы «Здравствуйте, я инженер технической " +
-          "поддержки.», дальше веди к решению по шагам, с учётом услуг клиента. Уточняй, только если " +
-          "без этого не обойтись. Опирайся на базу знаний.",
-        model: "gpt-4o-mini",
-        use_history: true,
-        reply: true,
-        database_ids: [],
+        "name": "Технический ответ",
+        "prompt": "Ты — инженер техподдержки. Помоги решить техническую проблему пошагово, с учётом услуг клиента из сводки предыдущего шага. Спрашивай уточнения только если без них нельзя продолжить. Опирайся на техническую базу знаний.\n\nИнструменты — MCP (nocloud_*). Правила:\n1) Услуги бери из сводки. Для get/state/health/shell_ro/hosting_status нужен UUID инстанса (поле uuid), НЕ title вроде \"raceTest\".\n2) Сайт/домен «не работает»:\n   - resolve + http_check по URL/домену;\n   - если есть A/AAAA — ищи услугу по IP (find query=<ip> или сопоставь со сводкой), не только по имени домена (у VDS domain в карточке часто пустой);\n   - whois не обязателен, если DNS уже резолвится; для .by/.бел whois — про регистрацию/expiry родителя, не про работу сайта на поддомене.\n3) «Сервер работает?» смотри state (RUNNING/SUSPENDED/…), не status (UP = карточка жива).\n4) Диагностика на VDS: shell_ro — только allowlist read-only (df, free, systemctl status, journalctl без -f, nginx -t, tail/head логов…). Не чини через shell_ro (это не write). Пароли не запрашивай и не выдумывай.\n5) Не вызывай зависимые шаги параллельно с теми, от чьего результата они зависят (сначала resolve/list → потом find/state/shell_ro с конкретным uuid/IP).\n6) Не выдумывай факты из сводки/MCP. Если данных нет — так и скажи. Клиенту — кратко и по делу; детали команд/логов — по необходимости.",
+        "model": "gpt-4.1",
+        "use_history": true,
+        "reply": true,
+        "database_ids": [
+          "02a52ce2-1120-49e5-92ae-9dc046fdfe4d"
+        ]
       },
       {
-        name: "Общий ответ",
-        prompt:
-          "Ты — специалист общей поддержки. Начни ровно с фразы «Здравствуйте, я специалист общей " +
-          "поддержки.», дальше ответь по делу и дружелюбно, опираясь на базу знаний. Вопрос не по " +
-          "адресу — подскажи, куда обратиться.",
-        model: "gpt-4o-mini",
-        use_history: true,
-        reply: true,
-        database_ids: [],
+        "name": "Общий ответ",
+        "prompt": "Ты — специалист общей поддержки. Ответь на общий вопрос клиента дружелюбно и по делу, опираясь на базу знаний. Если вопрос не по адресу — подскажи, куда обратиться.\n\nПравила:\n1) Сводку по клиенту используй только если она реально помогает ответить (имя услуг, факт наличия тикета и т.п.). Не устраивай диагностику сервера и не лезь в биллинг-цифры без нужды.\n2) MCP: для общего вопроса обычно не нужен. Не вызывай shell_ro / health / dns-пробы «на всякий случай».\n3) Если по ходу ясно, что это техника (сайт/сервер не работает) или оплаты/счета — коротко скажи, что передаёшь в нужный контур / ответь в рамках базы и направь правильно; не притворяйся узким специалистом.\n4) Не выдумывай тарифы, сроки, IP, статусы услуг. Нет в сводке/базе — так и скажи или уточни один конкретный вопрос.\n5) Ответ короткий, понятный, без канцелярита и без лишних дисклеймеров.",
+        "model": "gpt-4.1",
+        "use_history": true,
+        "reply": true,
+        "database_ids": [
+          "02a52ce2-1120-49e5-92ae-9dc046fdfe4d",
+          "0dfe7fa7-fd40-4120-97f4-c8e240f44354"
+        ]
       },
       {
-        name: "Ответ новому клиенту",
-        prompt:
-          "Ты — менеджер по продажам. Начни ровно с фразы «Здравствуйте, я менеджер по продажам.». " +
-          "Аккаунта у клиента нет: не запрашивай его данные и не обещай лишнего. Ответь на вопрос, " +
-          "подскажи тариф и мягко предложи оформить услугу, опираясь на базу знаний.",
-        model: "gpt-4o-mini",
-        use_history: true,
-        reply: true,
-        database_ids: [],
-      },
-    ],
+        "name": "Ответ новому клиенту",
+        "prompt": "Ты — менеджер по продажам. Начни ответ ровно с фразы «Здравствуйте, я менеджер по продажам.» — это обязательное представление, не пропускай и не перефразируй его. Клиент новый, аккаунта нет — не запрашивай данные аккаунта и не обещай лишнего. Ответь дружелюбно на вопрос, подскажи подходящий тариф и мягко предложи оформить услугу. Опирайся на базу знаний по продуктам и ценам.",
+        "model": "gpt-4.1",
+        "use_history": true,
+        "reply": true
+      }
+    ]
   };
 }
 
