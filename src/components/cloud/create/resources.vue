@@ -99,9 +99,11 @@ const diskType = computed(
 const trafficSize = computed(() => {
   const resources = props.minProduct.resources ?? product.value?.resources;
   const tb = resources?.traffic;
-  if (!tb) return undefined;
+  if (tb === undefined || tb === null) return undefined;
+  if (tb === 0) return i18n.t("unlimited");
 
-  return tb < 1 ? `${tb * 1000} GB` : `${tb} TB`;
+  const size = tb < 1 ? `${tb * 1000} GB` : `${tb} TB`;
+  return `${size}/${i18n.t("period.month")}`;
 });
 
 const networkSpeed = computed(() => {
