@@ -9,7 +9,7 @@ import { useAddonsStore } from '@/stores/addons.js'
 
 import ovhAddons from '@/components/cloud/create/ovhAddons.vue'
 
-defineProps({
+const props = defineProps({
   mode: { type: String, required: true },
   productSize: { type: String, required: true },
   products: { type: Array, required: true }
@@ -38,12 +38,13 @@ const addons = computed(() => {
     if (system && !addonGroup) return
     if (!result[key]) result[key] = {}
 
-    const [duration] = meta.key.split(' ') ?? []
+    // this addon's period entry is the one matching the plan's current billing
+    // period, so it always represents the current mode - meta.key carries no
+    // duration to derive that from (it's just the addon's planCode)
     const period = {
       price: { value: periods[product.value.period] },
       basePrice: meta.basePrices?.[product.value.period],
-      duration,
-      pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
+      pricingMode: props.mode
     }
 
     result[key][uuid] = {
