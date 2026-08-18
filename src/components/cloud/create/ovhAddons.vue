@@ -95,7 +95,8 @@ watch(
   () => selectDefaultMandatoryAddons(props.addons)
 );
 
-// ponytail: any free addon counts as "selected by default", user just can't drop back to none
+// a mandatory group always needs *something* selected - the cheapest item when
+// nothing's free (e.g. backup), user just can't drop back to none
 function selectDefaultMandatoryAddons(addonsGroups) {
   Object.entries(addonsGroups).forEach(([key, groupAddons]) => {
     const keys = Object.keys(groupAddons);
@@ -103,9 +104,10 @@ function selectDefaultMandatoryAddons(addonsGroups) {
     // actually picked yet - checking options.addons directly is the only way
     // to tell "really selected" apart from "just rendered as selected".
     if (options.addons.some((el) => keys.includes(el))) return;
+    if (!isMandatory(groupAddons)) return;
 
-    const free = getGroupAddons(groupAddons).find((item) => item.price === 0);
-    if (free) setAddon(free.id, groupAddons[free.id], key);
+    const [cheapest] = getGroupAddons(groupAddons);
+    if (cheapest) setAddon(cheapest.id, groupAddons[cheapest.id], key);
   });
 }
 
@@ -140,13 +142,15 @@ function addonName(addons) {
   if (selected) return selected;
 
   // nothing selected yet: for a mandatory group "-1" isn't a renderable option,
-  // so show the free item instead of a raw "-1" while the real selection catches up
-  const free = getGroupAddons(addons).find((item) => item.price === 0);
-  return free?.id ?? "-1";
+  // so show the cheapest item instead of a raw "-1" while the real selection catches up
+  if (!isMandatory(addons)) return "-1";
+  return getGroupAddons(addons)[0]?.id ?? "-1";
 }
 
 function isMandatory(groupAddons) {
-  return getGroupAddons(groupAddons).some((item) => item.price === 0);
+  return getGroupAddons(groupAddons).some(
+    (item) => item.price === 0 || item.required
+  );
 }
 
 function getGroupAddons(groupAddons) {

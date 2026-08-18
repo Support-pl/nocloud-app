@@ -46,7 +46,12 @@ const addons = computed(() => {
       pricingMode: (duration === 'P1Y') ? 'upfront12' : 'default'
     }
 
-    result[key][uuid] = { title, periods: [period], multiple: !system }
+    result[key][uuid] = {
+      title,
+      periods: [period],
+      multiple: !system,
+      required: !!meta.required,
+    }
   })
 
   return result
