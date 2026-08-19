@@ -129,6 +129,7 @@ export const useCloudStore = defineStore("cloud", () => {
 
     if (newGroup.type === "ovh") {
       newInstance.config = {
+        ...newInstance.config,
         ...options.config,
         type: plan.value.type.split(" ")[1],
       };
