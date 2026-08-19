@@ -129,10 +129,10 @@ async function setProduct(value) {
 
   switch (props.mode) {
     case "Annually":
-      cycle = "yearly";
+      cycle = "annually";
       break;
     case "Biennially":
-      cycle = "2-yearly";
+      cycle = "biennially";
       break;
     case "Hourly":
       cycle = "hourly";
