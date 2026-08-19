@@ -579,10 +579,9 @@
             shape="round"
             size="large"
             :disabled="VM.state.state !== 'RUNNING' || VM.data.lock"
+            @click="$router.push({ path: `${$route.params.uuid}/vnc` })"
           >
-            <router-link :to="{ path: `${$route.params.uuid}/vnc` }">
-              VNC
-            </router-link>
+            VNC
           </a-button>
         </a-col>
       </a-row>
