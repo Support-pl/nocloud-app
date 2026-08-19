@@ -194,6 +194,7 @@ export const useCloudStore = defineStore("cloud", () => {
     const locationItem = locations.value.find(
       ({ id }) => id === locationId.value,
     );
+
     const instance = {
       title: authData.vmName,
       config: {
@@ -202,6 +203,7 @@ export const useCloudStore = defineStore("cloud", () => {
         username: authData.username,
         password: authData.password,
         auto_start: plan.value.meta.auto_start,
+        hostname: options.config.hostname,
       },
       resources: {
         cpu: options.cpu.size,

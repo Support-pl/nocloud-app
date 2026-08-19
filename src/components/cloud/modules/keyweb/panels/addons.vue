@@ -76,6 +76,21 @@ setAddons(addons.value);
 async function setAddons(value) {
   await nextTick();
 
+  // cloudStore.plan.addons + product.value.addons are the whole allowed set
+  // for this order - anything in options.addons outside that (e.g. carried
+  // over from a previously configured plan) doesn't belong here, drop it.
+  const allowedUuids = new Set([
+    ...cloudStore.plan.addons,
+    ...(product.value.addons ?? []),
+  ]);
+
+  if (options.addons.some((uuid) => !allowedUuids.has(uuid))) {
+    setOptions(
+      "addons",
+      options.addons.filter((uuid) => allowedUuids.has(uuid))
+    );
+  }
+
   Object.entries(value).forEach(([key, value]) => {
     if (getAddon(value)) return;
 
