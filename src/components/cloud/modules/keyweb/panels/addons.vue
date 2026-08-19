@@ -53,15 +53,15 @@ const addons = computed(() => {
       if (system && !isInclude) return;
       if (!result[key]) result[key] = {};
 
+      const price = periods[product.value.period];
+
       result[key][uuid] = {
         value: uuid,
-        label: `${title} (${periods[product.value.period]} ${
-          currency.value.title
-        })`,
+        label: `${title} (${price ? `${price} ${currency.value.title}` : "-"})`,
         title,
         required: system,
         type: meta.type ?? "custom",
-        price: periods[product.value.period],
+        price,
       };
     }
   );

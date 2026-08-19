@@ -11,6 +11,7 @@
         :min-product="activeKey === 'location' ? minProduct : {}"
         :product-size="productSize"
         :tarification="tarification"
+        :is-preview="activeKey === 'location'"
       />
 
       <!-- addons -->
@@ -28,6 +29,8 @@
             <template v-if="isFlavorsLoading">
               <a-spin class="price__spin" size="small" spinning />
             </template>
+            <!-- keyweb's "no backup" tier - show a dash instead of "0 <currency>" -->
+            <template v-else-if="key === 'backup' && isNoBackupSelected">-</template>
             <template v-else>
               {{ formatPrice(price) }} {{ currency.title }}
             </template>
@@ -227,6 +230,19 @@ const addons = computed(() => {
   if (!parseFloat(addons.storage)) delete addons.storage;
 
   return addons;
+});
+
+// keyweb's "0|No Backup" tier is a real, distinct addon (price 0 by definition)
+// vs. an OVH backup addon that just happens to be free - only the former should
+// render as "-"; checking price alone can't tell those apart.
+const isNoBackupSelected = computed(() => {
+  const backup = addonsStore.addons.find(
+    (a) =>
+      options.addons.includes(a.uuid) &&
+      a.meta.key?.toLowerCase().includes("backup")
+  );
+
+  return !!backup?.meta.key?.toLowerCase().startsWith("0|");
 });
 
 const locationDescription = computed(() => {

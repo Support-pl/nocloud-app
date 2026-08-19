@@ -22,6 +22,10 @@ const props = defineProps({
   productSize: { type: String, required: true },
   tarification: { type: String, required: true },
   minProduct: { type: Object, default: () => ({}) },
+  // true while showing the cheapest-matching-plan preview before the user
+  // has actually picked a tariff - the tariff name and its traffic/network
+  // limits shouldn't be presented as already decided at that point
+  isPreview: { type: Boolean, default: false },
 });
 
 const i18n = useI18n();
@@ -124,7 +128,11 @@ const resources = computed(() => ({
       borderBottom: "1px solid #e8e8e8",
     },
   },
-  tarif: { title: i18n.t("tariff"), value: tariffTitle.value },
+  tarif: {
+    title: i18n.t("tariff"),
+    value: tariffTitle.value,
+    visible: !props.isPreview,
+  },
 
   cpu: {
     title: i18n.t("cpu"),
@@ -151,12 +159,12 @@ const resources = computed(() => ({
   traffic: {
     title: i18n.t("traffic"),
     value: trafficSize.value,
-    visible: !!trafficSize.value,
+    visible: !props.isPreview && !!trafficSize.value,
   },
   network: {
     title: i18n.t("network speed"),
     value: networkSpeed.value,
-    visible: !!networkSpeed.value,
+    visible: !props.isPreview && !!networkSpeed.value,
   },
   os: {
     title: i18n.t("os"),
