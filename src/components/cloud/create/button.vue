@@ -67,6 +67,7 @@ import createActions from "@/components/ui/createActions.vue";
 import { useCurrenciesStore } from "@/stores/currencies";
 import { useI18n } from "vue-i18n";
 import { useSpStore } from "@/stores/sp";
+import useVpsAvailability from "@/hooks/cloud/vpsAvailability.js";
 
 const copyIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/CopyOutlined")
@@ -99,6 +100,7 @@ const currenciesStore = useCurrenciesStore();
 const { addToClipboard } = useClipboard();
 const { locale } = useI18n();
 const spStore = useSpStore();
+const { isPlanAvailable, isOsAvailable } = useVpsAvailability();
 
 const [options] = inject("useOptions", () => [])();
 const [activeKey, nextStep] = inject("useActiveKey", () => [])();
@@ -123,6 +125,18 @@ const modalOptions = computed(() => {
   };
 });
 
+// last line of defence: the pick can survive a login or a restored link, so the
+// order button must not fire for something OVH cannot deliver
+const isOutOfStock = computed(() => {
+  if (plan.value?.type !== "ovh vps") return false;
+
+  const planCode = options.config.planCode;
+
+  return (
+    !isPlanAvailable(planCode) || !isOsAvailable(planCode, options.os.name)
+  );
+});
+
 const createButtonOptions = computed(() => {
   const result = {
     disabled: true,
@@ -134,6 +148,7 @@ const createButtonOptions = computed(() => {
 
   if (provider.value?.type === "ovh") {
     result.disabled =
+      isOutOfStock.value ||
       authData.value.vmName === "" ||
       (!namespaceId.value && isLogged.value) ||
       options.os.name === "" ||

@@ -5,16 +5,25 @@
     :tip="$t('loading')"
   />
   <template v-else-if="products.length > 0">
+    <a-alert
+      v-if="!products.some(isGroupAvailable)"
+      show-icon
+      type="warning"
+      style="margin-bottom: 15px"
+      :message="$t('No linked plans. Choose another location')"
+    />
+
     <a-row style="margin-bottom: 15px" align="middle">
       <a-col v-if="products.length < 6 && products.length > 1" span="24">
         <a-slider
+          :key="sliderKey"
           style="margin-top: 10px"
-          :marks="{ ...products }"
+          :marks="marks"
           :tip-formatter="null"
           :max="products.length - 1"
           :min="0"
           :value="products.indexOf(product)"
-          @change="(i) => (product = products[i])"
+          @change="(i) => selectGroup(products[i])"
         />
       </a-col>
 
@@ -24,8 +33,11 @@
             v-for="provider of products"
             :key="provider"
             class="order__slider-item"
-            :class="{ 'order__slider-item--active': product === provider }"
-            @click="product = provider"
+            :class="{
+              'order__slider-item--active': product === provider,
+              'order__slider-item--unavailable': !isGroupAvailable(provider),
+            }"
+            @click="selectGroup(provider)"
           >
             {{ provider }}
           </div>
@@ -139,8 +151,12 @@ import {
   nextTick,
   toRefs,
 } from "vue";
+import { storeToRefs } from "pinia";
 import { useRoute } from "vue-router";
 import { useCloudStore } from "@/stores/cloud.js";
+import { useAddonsStore } from "@/stores/addons";
+import { useAuthStore } from "@/stores/auth.js";
+import useVpsAvailability from "@/hooks/cloud/vpsAvailability.js";
 
 const loadingIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LoadingOutlined")
@@ -162,6 +178,11 @@ const cloudStore = useCloudStore();
 const [options, setOptions] = inject("useOptions", () => [])();
 const [, setPrice] = inject("usePriceOVH", () => [])();
 const product = ref("");
+const sliderKey = ref(0);
+const { addons } = storeToRefs(useAddonsStore());
+const { isLogged } = storeToRefs(useAuthStore());
+const { availability, fetchAvailability, isPlanAvailable, hasOrderableOs } =
+  useVpsAvailability();
 
 if (props.products.length < 1) resetData();
 
@@ -180,13 +201,23 @@ const productKey = computed(() => {
 });
 
 watch(product, (value) => {
-  const product = props.products.find(({ group }) => group === value);
+  const groupProduct = props.products.find(({ group }) => group === value);
 
   const dataString = localStorage.getItem("data") ?? route.query.data ?? "{}";
   const data = JSON.parse(dataString);
 
-  if (!product) return;
-  setResources(data?.ovhConfig?.planCode ?? product.value);
+  if (!groupProduct) return;
+
+  // the restored planCode is only worth keeping while it belongs to the picked
+  // group and OVH can still deliver it, otherwise it would drag the selection
+  // back to a tariff we have just greyed out
+  const restored = data?.ovhConfig?.planCode;
+  const keepRestored =
+    props.products.some(
+      ({ value: code, group }) => code === restored && group === value
+    ) && isCodeAvailable(restored);
+
+  setResources(keepRestored ? restored : groupProduct.value);
 });
 
 watch(
@@ -228,19 +259,112 @@ watch(
   }
 );
 
-const products = computed(() =>
-  Array.from(
-    new Set(
-      props.products
-        .filter(({ datacenter }) => {
-          const key = options.config.configuration?.vps_datacenter;
+const datacenterProducts = computed(() =>
+  props.products.filter(({ datacenter }) => {
+    const key = options.config.configuration?.vps_datacenter;
 
-          return datacenter?.includes(key);
-        })
-        .map(({ group }) => group)
-    )
+    return datacenter?.includes(key);
+  })
+);
+
+const products = computed(() =>
+  Array.from(new Set(datacenterProducts.value.map(({ group }) => group)))
+);
+
+const marks = computed(() =>
+  Object.fromEntries(
+    products.value.map((group, index) => [
+      index,
+      isGroupAvailable(group)
+        ? group
+        : {
+            label: group,
+            style: { opacity: 0.45, textDecoration: "line-through" },
+          },
+    ])
   )
 );
+
+// same source the OS panel renders from: addon uuids live on the plan product,
+// while product.meta.addons holds billing plan resource keys, not uuids
+function planCodeOsNames(planCode) {
+  const uuids = new Set(
+    Object.entries(cloudStore.plan.products ?? {})
+      .filter(([key]) => key.split(" ")[1] === planCode)
+      .flatMap(([, product]) => product.addons ?? [])
+  );
+
+  return addons.value
+    .filter((addon) => uuids.has(addon.uuid) && addon.meta?.type === "os")
+    .map(({ title }) => title);
+}
+
+function isCodeAvailable(planCode) {
+  return (
+    !!planCode &&
+    isPlanAvailable(planCode) &&
+    hasOrderableOs(planCode, planCodeOsNames(planCode))
+  );
+}
+
+function isGroupAvailable(group) {
+  return datacenterProducts.value.some(
+    ({ group: name, value }) => name === group && isCodeAvailable(value)
+  );
+}
+
+function selectGroup(group) {
+  if (!group || !isGroupAvailable(group)) {
+    // the slider is controlled by :value, so an ignored change would leave the
+    // handle sitting on the greyed mark - remount it back to the real pick
+    sliderKey.value += 1;
+    return;
+  }
+
+  product.value = group;
+}
+
+watch(
+  [
+    () => cloudStore.provider?.uuid,
+    () => options.config.configuration?.vps_datacenter,
+    datacenterProducts,
+    isLogged,
+  ],
+  () => {
+    fetchAvailability(
+      cloudStore.provider?.uuid,
+      options.config.configuration?.vps_datacenter,
+      Array.from(new Set(datacenterProducts.value.map(({ value }) => value)))
+    );
+  },
+  { immediate: true }
+);
+
+// stock and the os list arrive after the products, so the pick may be stale
+watch([availability, addons], () => {
+  if (products.value.length < 1) return;
+
+  const available = products.value.find(isGroupAvailable);
+
+  if (!available) {
+    resetData();
+    return;
+  }
+  if (!isGroupAvailable(product.value)) {
+    product.value = available;
+    return;
+  }
+
+  // group is fine, but the code inside it may still be a stale restore
+  if (!isCodeAvailable(options.config.planCode)) {
+    const groupProduct = datacenterProducts.value.find(
+      ({ group, value }) => group === product.value && isCodeAvailable(value)
+    );
+
+    if (groupProduct) setResources(groupProduct.value);
+  }
+});
 
 watch(products, async (value) => {
   if (value.length < 1) {
@@ -254,18 +378,24 @@ watch(products, async (value) => {
     const data = JSON.parse(dataString);
     const code = data.ovhConfig?.planCode;
 
-    if (code && options.config.planCode === code) {
+    if (code && options.config.planCode === code && isCodeAvailable(code)) {
       return;
     }
-    product.value = data.productSize;
-    await nextTick();
+    if (!code || isCodeAvailable(code)) {
+      product.value = data.productSize;
+      await nextTick();
 
-    if (data.ovhConfig) setOptions("config", data.ovhConfig);
-    return;
+      if (data.ovhConfig) setOptions("config", data.ovhConfig);
+      return;
+    }
   }
 
   nextTick(() => {
-    product.value = value[1] ?? value[0];
+    const fallback = value[1] ?? value[0];
+
+    product.value = isGroupAvailable(fallback)
+      ? fallback
+      : value.find(isGroupAvailable) ?? fallback;
   });
 });
 
@@ -399,6 +529,12 @@ export default { name: "OvhVpsPlanPanel" };
 
 .order__slider-item:hover {
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.order__slider-item--unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: line-through;
 }
 
 .order__slider-item--active {

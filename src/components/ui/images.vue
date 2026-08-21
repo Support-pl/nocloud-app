@@ -4,7 +4,10 @@
       v-for="group in groups"
       :key="group.title"
       class="newCloud__template-item"
-      :class="{ active: activeVersion(group).item.name === osName }"
+      :class="{
+        active: activeVersion(group).item.name === osName,
+        unavailable: activeVersion(group).item.unavailable,
+      }"
       @click="selectGroup(group)"
     >
       <div class="newCloud__template-head">
@@ -160,6 +163,11 @@ export default { name: "ImagesList" };
   flex-direction: column;
   flex: 1 1 200px;
   max-width: calc(33.333% - 12px);
+}
+
+.newCloud__template-item.unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .newCloud__template-item:hover {

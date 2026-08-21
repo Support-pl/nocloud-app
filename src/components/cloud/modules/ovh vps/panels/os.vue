@@ -1,5 +1,8 @@
 <template>
-  <div v-if="images.length > 0 || !isLoading" class="newCloud__option-field">
+  <div
+    v-if="imagesWithStock.length > 0 || !isLoading"
+    class="newCloud__option-field"
+  >
     <a-row>
       <a-col :xs="24" :sm="10">
         <a-form
@@ -36,7 +39,7 @@
               class="password"
               autocomplete="new-password"
               @update:value="authData.password = $event"
-              @input="(e) => authData.password = e.target.value"
+              @input="(e) => (authData.password = e.target.value)"
             />
           </a-form-item>
         </a-form>
@@ -46,7 +49,7 @@
     <images-list
       v-if="cloudStore.provider"
       :os-name="options.os.name"
-      :images="images"
+      :images="imagesWithStock"
       :set-o-s="setOS"
     />
   </div>
@@ -61,7 +64,7 @@
 </template>
 
 <script setup>
-import { inject, ref, watch } from "vue";
+import { computed, inject, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import passwordMeter from "vue-simple-password-meter";
 
@@ -70,6 +73,7 @@ import imagesList from "@/components/ui/images.vue";
 import { useAddonsStore } from "@/stores/addons";
 import { useCurrency } from "@/hooks/utils";
 import { useI18n } from "vue-i18n";
+import useVpsAvailability from "@/hooks/cloud/vpsAvailability.js";
 
 const props = defineProps({
   mode: { type: String, required: true },
@@ -83,6 +87,7 @@ const cloudStore = useCloudStore();
 const { validationPanels, authData } = storeToRefs(cloudStore);
 const { currency, formatPrice } = useCurrency();
 const { addons, loading } = storeToRefs(useAddonsStore());
+const { availability, isOsAvailable } = useVpsAvailability();
 
 const ovhVpsForm = ref(null);
 const images = ref([]);
@@ -103,7 +108,16 @@ const [options, setOptions] = inject("useOptions", () => [])();
 const [price, setPrice] = inject("usePriceOVH", () => [])();
 const [activeKey] = inject("useActiveKey", () => [])();
 
-watch([() => props.productSize, loading, currency], setImages);
+watch(
+  [
+    () => props.productSize,
+    () => options.config.planCode,
+    availability,
+    loading,
+    currency,
+  ],
+  setImages,
+);
 if (props.productSize) setImages();
 
 watch(
@@ -134,20 +148,41 @@ async function setImages() {
       prices: [formatPrice(os.periods[product.period])],
       desc: os.title,
       uuid: os.uuid,
+      rawPrice: os.periods[product.period] ?? 0,
     }));
   images.value.sort((a, b) => a.name.localeCompare(b.name));
-
-  // setOS() below already swaps the OS addon in place (filters out the old
-  // one, appends the new). Wiping the whole array here used to also drop
-  // every other selected addon (backup/snapshot/storage) on every currency
-  // or addons-store reload, not just on an actual plan change.
-  if (images.value[0]) {
-    setOS(images.value[0]);
-  }
 }
 
+// OVH reports linux and windows stock separately, per datacenter. Derived, not
+// stored on the item: the tariff can change under us (a greyed one gets swapped
+// for an orderable one) and a baked-in flag would keep the old plan's stock.
+const imagesWithStock = computed(() =>
+  images.value.map((image) => ({
+    ...image,
+    unavailable: !isOsAvailable(options.config.planCode, image.name),
+  })),
+);
+
+// setOS() swaps the OS addon in place (filters out the old one, appends the
+// new), so it has to run again whenever the list or the tariff changes - the
+// addon uuids belong to the plan product, not to the image name.
+// Cheapest first, not alphabetically first: when OVH is out of linux stock the
+// only selectable images are the paid Windows ones, and picking one silently
+// adds its licence to the order price. Equal prices keep the A-Z order.
+watch(
+  imagesWithStock,
+  (list) => {
+    const [orderable] = list
+      .filter(({ unavailable }) => !unavailable)
+      .sort((a, b) => a.rawPrice - b.rawPrice);
+
+    if (orderable) setOS(orderable);
+  },
+  { immediate: true },
+);
+
 function setOS(item, index) {
-  if (item.warning) return;
+  if (item.warning || item.unavailable) return;
   setOptions("os.id", +index);
   setOptions("os.name", item.name);
 
