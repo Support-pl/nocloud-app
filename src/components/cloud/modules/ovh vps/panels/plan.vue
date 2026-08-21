@@ -16,14 +16,13 @@
     <a-row style="margin-bottom: 15px" align="middle">
       <a-col v-if="products.length < 6 && products.length > 1" span="24">
         <a-slider
-          :key="sliderKey"
           style="margin-top: 10px"
           :marks="marks"
           :tip-formatter="null"
           :max="products.length - 1"
           :min="0"
           :value="products.indexOf(product)"
-          @change="(i) => selectGroup(products[i])"
+          @change="(i) => (product = products[i])"
         />
       </a-col>
 
@@ -37,7 +36,7 @@
               'order__slider-item--active': product === provider,
               'order__slider-item--unavailable': !isGroupAvailable(provider),
             }"
-            @click="selectGroup(provider)"
+            @click="product = provider"
           >
             {{ provider }}
           </div>
@@ -158,8 +157,8 @@ import { useAddonsStore } from "@/stores/addons";
 import { useAuthStore } from "@/stores/auth.js";
 import useVpsAvailability from "@/hooks/cloud/vpsAvailability.js";
 
-const loadingIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/LoadingOutlined")
+const loadingIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/LoadingOutlined"),
 );
 
 const props = defineProps({
@@ -178,10 +177,9 @@ const cloudStore = useCloudStore();
 const [options, setOptions] = inject("useOptions", () => [])();
 const [, setPrice] = inject("usePriceOVH", () => [])();
 const product = ref("");
-const sliderKey = ref(0);
 const { addons } = storeToRefs(useAddonsStore());
 const { isLogged } = storeToRefs(useAuthStore());
-const { availability, fetchAvailability, isPlanAvailable, hasOrderableOs } =
+const { fetchAvailability, isPlanAvailable, hasOrderableOs } =
   useVpsAvailability();
 
 if (props.products.length < 1) resetData();
@@ -194,7 +192,7 @@ const productKey = computed(() => {
   const plan = props.products.find(
     ({ group, resources }) =>
       group === product.value &&
-      keys.every((key) => resources[key] === values[key].size)
+      keys.every((key) => resources[key] === values[key].size),
   );
 
   return plan?.value;
@@ -208,16 +206,7 @@ watch(product, (value) => {
 
   if (!groupProduct) return;
 
-  // the restored planCode is only worth keeping while it belongs to the picked
-  // group and OVH can still deliver it, otherwise it would drag the selection
-  // back to a tariff we have just greyed out
-  const restored = data?.ovhConfig?.planCode;
-  const keepRestored =
-    props.products.some(
-      ({ value: code, group }) => code === restored && group === value
-    ) && isCodeAvailable(restored);
-
-  setResources(keepRestored ? restored : groupProduct.value);
+  setResources(data?.ovhConfig?.planCode ?? groupProduct.value);
 });
 
 watch(
@@ -229,11 +218,11 @@ watch(
     if (plan) return;
     const { resources } =
       props.products.find(
-        (el) => el.group === product.value && el.resources.ram / 1024 === size
+        (el) => el.group === product.value && el.resources.ram / 1024 === size,
       ) ?? {};
 
     setOptions("disk.size", resources?.disk);
-  }
+  },
 );
 
 watch(
@@ -245,18 +234,18 @@ watch(
     if (plan) return;
     const { resources } =
       props.products.find(
-        (el) => el.group === product.value && el.resources.disk === size
+        (el) => el.group === product.value && el.resources.disk === size,
       ) ?? {};
 
     setOptions("ram.size", resources?.ram / 1024);
-  }
+  },
 );
 
 watch(
   () => props.mode,
   () => {
     setResources(productKey.value, false);
-  }
+  },
 );
 
 const datacenterProducts = computed(() =>
@@ -264,11 +253,11 @@ const datacenterProducts = computed(() =>
     const key = options.config.configuration?.vps_datacenter;
 
     return datacenter?.includes(key);
-  })
+  }),
 );
 
 const products = computed(() =>
-  Array.from(new Set(datacenterProducts.value.map(({ group }) => group)))
+  Array.from(new Set(datacenterProducts.value.map(({ group }) => group))),
 );
 
 const marks = computed(() =>
@@ -277,12 +266,9 @@ const marks = computed(() =>
       index,
       isGroupAvailable(group)
         ? group
-        : {
-            label: group,
-            style: { opacity: 0.45, textDecoration: "line-through" },
-          },
-    ])
-  )
+        : { label: group, style: { opacity: 0.45 } },
+    ]),
+  ),
 );
 
 // same source the OS panel renders from: addon uuids live on the plan product,
@@ -291,7 +277,7 @@ function planCodeOsNames(planCode) {
   const uuids = new Set(
     Object.entries(cloudStore.plan.products ?? {})
       .filter(([key]) => key.split(" ")[1] === planCode)
-      .flatMap(([, product]) => product.addons ?? [])
+      .flatMap(([, product]) => product.addons ?? []),
   );
 
   return addons.value
@@ -309,19 +295,8 @@ function isCodeAvailable(planCode) {
 
 function isGroupAvailable(group) {
   return datacenterProducts.value.some(
-    ({ group: name, value }) => name === group && isCodeAvailable(value)
+    ({ group: name, value }) => name === group && isCodeAvailable(value),
   );
-}
-
-function selectGroup(group) {
-  if (!group || !isGroupAvailable(group)) {
-    // the slider is controlled by :value, so an ignored change would leave the
-    // handle sitting on the greyed mark - remount it back to the real pick
-    sliderKey.value += 1;
-    return;
-  }
-
-  product.value = group;
 }
 
 watch(
@@ -335,36 +310,11 @@ watch(
     fetchAvailability(
       cloudStore.provider?.uuid,
       options.config.configuration?.vps_datacenter,
-      Array.from(new Set(datacenterProducts.value.map(({ value }) => value)))
+      Array.from(new Set(datacenterProducts.value.map(({ value }) => value))),
     );
   },
-  { immediate: true }
+  { immediate: true },
 );
-
-// stock and the os list arrive after the products, so the pick may be stale
-watch([availability, addons], () => {
-  if (products.value.length < 1) return;
-
-  const available = products.value.find(isGroupAvailable);
-
-  if (!available) {
-    resetData();
-    return;
-  }
-  if (!isGroupAvailable(product.value)) {
-    product.value = available;
-    return;
-  }
-
-  // group is fine, but the code inside it may still be a stale restore
-  if (!isCodeAvailable(options.config.planCode)) {
-    const groupProduct = datacenterProducts.value.find(
-      ({ group, value }) => group === product.value && isCodeAvailable(value)
-    );
-
-    if (groupProduct) setResources(groupProduct.value);
-  }
-});
 
 watch(products, async (value) => {
   if (value.length < 1) {
@@ -378,24 +328,18 @@ watch(products, async (value) => {
     const data = JSON.parse(dataString);
     const code = data.ovhConfig?.planCode;
 
-    if (code && options.config.planCode === code && isCodeAvailable(code)) {
+    if (code && options.config.planCode === code) {
       return;
     }
-    if (!code || isCodeAvailable(code)) {
-      product.value = data.productSize;
-      await nextTick();
+    product.value = data.productSize;
+    await nextTick();
 
-      if (data.ovhConfig) setOptions("config", data.ovhConfig);
-      return;
-    }
+    if (data.ovhConfig) setOptions("config", data.ovhConfig);
+    return;
   }
 
   nextTick(() => {
-    const fallback = value[1] ?? value[0];
-
-    product.value = isGroupAvailable(fallback)
-      ? fallback
-      : value.find(isGroupAvailable) ?? fallback;
+    product.value = value[1] ?? value[0];
   });
 });
 
@@ -411,7 +355,7 @@ const resources = computed(() => {
   const disk = new Set();
 
   const filteredPlans = props.products.filter(
-    ({ group }) => group === product.value
+    ({ group }) => group === product.value,
   );
 
   filteredPlans.forEach(({ resources }) => {
@@ -524,7 +468,10 @@ export default { name: "OvhVpsPlanPanel" };
   border-radius: 15px;
   cursor: pointer;
   box-shadow: inset 0 0 0 1px var(--border_color);
-  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .order__slider-item:hover {
@@ -533,8 +480,6 @@ export default { name: "OvhVpsPlanPanel" };
 
 .order__slider-item--unavailable {
   opacity: 0.45;
-  cursor: not-allowed;
-  text-decoration: line-through;
 }
 
 .order__slider-item--active {

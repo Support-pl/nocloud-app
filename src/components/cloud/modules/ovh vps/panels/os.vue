@@ -112,6 +112,9 @@ watch(
   [
     () => props.productSize,
     () => options.config.planCode,
+    // switching the billing period wipes price.addons in the plan panel and
+    // reprices the OS, so the list has to be rebuilt and reapplied
+    () => props.mode,
     availability,
     loading,
     currency,
@@ -133,23 +136,52 @@ watch(
   { deep: true },
 );
 
+// the plan holds one product per billing period, keyed "<duration> <planCode>"
+function durationMode(duration) {
+  switch (duration) {
+    case "P1H":
+      return "hourly";
+    case "P1Y":
+      return "upfront12";
+    case "P2Y":
+      return "upfront24";
+    default:
+      return "default";
+  }
+}
+
 async function setImages() {
   const planProducts = Object.entries(cloudStore.plan.products ?? {}).filter(
     ([, { title }]) => title === props.productSize,
   );
 
   if (!planProducts[0]) return;
-  const product = planProducts[0][1];
+
+  // price the OS for the period the customer actually picked, not for whichever
+  // product happens to come first
+  const [, product] =
+    planProducts.find(
+      ([key]) => durationMode(key.split(" ")[0]) === props.mode,
+    ) ?? planProducts[0];
 
   images.value = addons.value
     .filter((a) => product.addons.includes(a.uuid) && a.meta?.type == "os")
-    .map((os) => ({
-      name: os.title,
-      prices: [formatPrice(os.periods[product.period])],
-      desc: os.title,
-      uuid: os.uuid,
-      rawPrice: os.periods[product.period] ?? 0,
-    }));
+    .map((os) => {
+      const price = os.periods?.[product.period];
+      // no price for the picked period means we cannot sell it for that period:
+      // giving a paid licence away at 0 is worse than not offering it. A free
+      // image (nothing charged in any period) has nothing to leak, keep it.
+      const isFree = Object.values(os.periods ?? {}).every((value) => !value);
+
+      return {
+        name: os.title,
+        prices: [formatPrice(price)],
+        desc: os.title,
+        uuid: os.uuid,
+        rawPrice: price ?? 0,
+        unpriced: price === undefined && !isFree,
+      };
+    });
   images.value.sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -159,7 +191,8 @@ async function setImages() {
 const imagesWithStock = computed(() =>
   images.value.map((image) => ({
     ...image,
-    unavailable: !isOsAvailable(options.config.planCode, image.name),
+    unavailable:
+      image.unpriced || !isOsAvailable(options.config.planCode, image.name),
   })),
 );
 
@@ -176,10 +209,46 @@ watch(
       .filter(({ unavailable }) => !unavailable)
       .sort((a, b) => a.rawPrice - b.rawPrice);
 
-    if (orderable) setOS(orderable);
+    if (orderable) {
+      setOS(orderable);
+      return;
+    }
+    // nothing orderable: drop the OS from the order instead of leaving a
+    // greyed one selected. The create button already refuses an empty os.name
+    clearOS();
   },
   { immediate: true },
 );
+
+// the plan panel wipes price.addons on every reprice (setResources), which drops
+// the OS licence from the total while the image stays selected on screen
+watch(
+  () => price.addons.os,
+  (osPrice) => {
+    if (osPrice !== undefined) return;
+
+    const current = imagesWithStock.value.find(
+      ({ name }) => name === options.os.name,
+    );
+
+    if (current && !current.unavailable) setOS(current);
+  },
+);
+
+function clearOS() {
+  if (options.os.name === "" && price.addons.os === undefined) return;
+
+  setOptions("os.name", "");
+  setOptions("config.configuration.vps_os", "");
+  setOptions(
+    "addons",
+    options.addons.filter(
+      (uuid) =>
+        addons.value.find((addon) => addon.uuid == uuid)?.meta?.type !== "os",
+    ),
+  );
+  setPrice("addons.os", 0);
+}
 
 function setOS(item, index) {
   if (item.warning || item.unavailable) return;

@@ -6,6 +6,19 @@
   >
     <template #before>
       <a-col
+        v-if="isOutOfStock && activeKey === panels.at(-1)"
+        :span="22"
+        style="
+          margin-top: 15px;
+          text-align: center;
+          font-size: 14px;
+          color: var(--gray);
+        "
+      >
+        {{ capitalize($t("Temporarily out of stock")) }}
+      </a-col>
+
+      <a-col
         v-if="isUnlogginedLinkVisible"
         class="products__unregistred"
         style="margin-top: 15px; text-align: center"
@@ -69,8 +82,8 @@ import { useI18n } from "vue-i18n";
 import { useSpStore } from "@/stores/sp";
 import useVpsAvailability from "@/hooks/cloud/vpsAvailability.js";
 
-const copyIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/CopyOutlined")
+const copyIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/CopyOutlined"),
 );
 
 const props = defineProps({
@@ -173,7 +186,7 @@ const nextButtonOptions = computed(() => ({
   visible:
     activeKey.value !== props.panels.at(-1) ||
     Object.keys(validationPanels.value).some(
-      (key) => validationPanels.value[key]
+      (key) => validationPanels.value[key],
     ),
   onClick: nextStep,
 }));
