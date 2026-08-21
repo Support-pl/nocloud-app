@@ -40,11 +40,25 @@
       </div>
 
       <div
-        v-if="!activeVersion(group).item.warning"
+        v-if="
+          !(
+            activeVersion(group).item.warning ||
+            activeVersion(group).item.unavailable
+          )
+        "
         class="newCloud__template-price"
       >
-        <template v-if="activeVersion(group).item.prices || activeVersion(group).item.price">
-          {{ osPrice(activeVersion(group).item.prices ?? activeVersion(group).item) }} {{ currency.title }}
+        <template
+          v-if="
+            activeVersion(group).item.prices || activeVersion(group).item.price
+          "
+        >
+          {{
+            osPrice(
+              activeVersion(group).item.prices ?? activeVersion(group).item,
+            )
+          }}
+          {{ currency.title }}
         </template>
         <template v-else>{{ $t("vpn.labels.free") }}</template>
       </div>
@@ -99,7 +113,7 @@ const groups = computed(() => {
 
   map.forEach((group) => {
     group.versions.sort((a, b) =>
-      b.version.localeCompare(a.version, undefined, { numeric: true })
+      b.version.localeCompare(a.version, undefined, { numeric: true }),
     );
   });
 
@@ -153,7 +167,9 @@ export default { name: "ImagesList" };
 
 .newCloud__template-item {
   background-color: var(--bright_font);
-  box-shadow: 3px 2px 6px rgba(0, 0, 0, 0.08), 0px 0px 8px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    3px 2px 6px rgba(0, 0, 0, 0.08),
+    0px 0px 8px rgba(0, 0, 0, 0.05);
   border-radius: 12px;
   border: 2px solid transparent;
   transition: all 0.2s ease;
@@ -171,7 +187,9 @@ export default { name: "ImagesList" };
 }
 
 .newCloud__template-item:hover {
-  box-shadow: 5px 8px 10px rgba(0, 0, 0, 0.08), 0px 0px 12px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    5px 8px 10px rgba(0, 0, 0, 0.08),
+    0px 0px 12px rgba(0, 0, 0, 0.05);
 }
 
 .newCloud__template-item.active {
