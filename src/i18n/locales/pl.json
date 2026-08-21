@@ -178,6 +178,7 @@
     "Payment will be made immediately after purchase": "Płatność zostanie dokonana natychmiast po zakupie",
     "Please select a suitable location": "Wybierz odpowiednią lokalizację",
     "No linked plans. Choose another location": "Przepraszamy, obecnie nie ma dostępnych serwerów do wdrożenia w tym konkretnym miejscu. Proszę wybrać inne miejsce lub skontaktować się z nami w sprawie zapytania o serwer",
+    "Temporarily out of stock": "Chwilowo niedostępne",
     "No OS. Choose another plan": "Brak systemu operacyjnego. Wybierz inny plan",
     "Pay as you Go": "Serwer w chmurze PAYG",
     "VDC created successfully with": "VDC utworzono pomyślnie za pomocą",
@@ -881,7 +882,9 @@
         "add_step": "Add step",
         "end": "-- end --",
         "once_per_chat": "Collect once per chat",
-        "once_per_chat_hint": "The step runs only the first time it is reached in a chat; later turns reuse its remembered result. For expensive lookups that do not change between messages."
+        "once_per_chat_hint": "The step runs only the first time it is reached in a chat; later turns reuse its remembered result. For expensive lookups that do not change between messages.",
+        "once_per_chat_ttl": "Refresh after, minutes",
+        "once_per_chat_ttl_hint": "0 - remembered for the whole chat. A support chat can stay open for days, so data that goes stale (balance, invoices, service status) should name how long it stays valid."
       },
       "fields": {
         "promt": "Prompt",
