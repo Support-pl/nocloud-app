@@ -5,14 +5,6 @@
     :tip="$t('loading')"
   />
   <template v-else-if="products.length > 0">
-    <a-alert
-      v-if="!products.some(isGroupAvailable)"
-      show-icon
-      type="warning"
-      style="margin-bottom: 15px"
-      :message="$t('No linked plans. Choose another location')"
-    />
-
     <a-row style="margin-bottom: 15px" align="middle">
       <a-col v-if="products.length < 6 && products.length > 1" span="24">
         <a-slider
