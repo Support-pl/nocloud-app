@@ -22,15 +22,15 @@
           justify="space-between"
           style="font-size: 1.1rem"
         >
-          <a-col>
-            {{ getAddonsTitle(key) }}{{ getAddonsValue(key) }}:
-          </a-col>
+          <a-col> {{ getAddonsTitle(key) }}{{ getAddonsValue(key) }}: </a-col>
           <a-col>
             <template v-if="isFlavorsLoading">
               <a-spin class="price__spin" size="small" spinning />
             </template>
             <!-- keyweb's "no backup" tier - show a dash instead of "0 <currency>" -->
-            <template v-else-if="key === 'backup' && isNoBackupSelected">-</template>
+            <template v-else-if="key === 'backup' && isNoBackupSelected"
+              >-</template
+            >
             <template v-else>
               {{ formatPrice(price) }} {{ currency.title }}
             </template>
@@ -97,9 +97,7 @@
       </a-row>
     </transition>
 
-    <div style="font-size: 1.2rem; margin-top: 5px">
-      {{ $t("Total") }}:
-    </div>
+    <div style="font-size: 1.2rem; margin-top: 5px">{{ $t("Total") }}:</div>
     <a-row justify="center" style="margin-top: 15px">
       <a-col>
         <a-radio-group
@@ -158,6 +156,12 @@
       </transition>
     </a-row>
 
+    <a-row v-if="isOutOfStock" justify="center" style="margin-top: 10px">
+      <a-col style="font-size: 14px; text-align: center; color: var(--gray)">
+        {{ capitalize($t("Temporarily out of stock")) }}
+      </a-col>
+    </a-row>
+
     <promocode-menu
       :is-flavors-loading="isFlavorsLoading"
       :plan-id="cloudStore.planId"
@@ -185,6 +189,7 @@ import { useCloudStore } from "@/stores/cloud.js";
 import useCloudPrices from "@/hooks/cloud/prices.js";
 import { useAddonsStore } from "@/stores/addons.js";
 import { useCurrency } from "@/hooks/utils";
+import useVpsAvailability from "@/hooks/cloud/vpsAvailability.js";
 import { checkPayg } from "@/functions.js";
 
 import selectsToCreate from "@/components/ui/selectsToCreate.vue";
@@ -213,6 +218,17 @@ const [product] = inject("useProduct", () => [])();
 const [options] = inject("useOptions", () => [])();
 const [priceOVH] = inject("usePriceOVH", () => [])();
 
+const { isCodeOrderable } = useVpsAvailability();
+
+// OVH stock: the picked tariff is either out of stock itself or has no image
+// (neither linux nor windows) that can be delivered here
+const isOutOfStock = computed(
+  () =>
+    cloudStore.plan?.type === "ovh vps" &&
+    !!options.config?.planCode &&
+    !isCodeOrderable(options.config.planCode),
+);
+
 const sumOrder = ref();
 const checkBalance = inject("checkBalance", () => {});
 
@@ -239,7 +255,7 @@ const isNoBackupSelected = computed(() => {
   const backup = addonsStore.addons.find(
     (a) =>
       options.addons.includes(a.uuid) &&
-      a.meta.key?.toLowerCase().includes("backup")
+      a.meta.key?.toLowerCase().includes("backup"),
   );
 
   return !!backup?.meta.key?.toLowerCase().startsWith("0|");

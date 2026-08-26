@@ -6,19 +6,6 @@
   >
     <template #before>
       <a-col
-        v-if="isOutOfStock && activeKey === panels.at(-1)"
-        :span="22"
-        style="
-          margin-top: 15px;
-          text-align: center;
-          font-size: 14px;
-          color: var(--gray);
-        "
-      >
-        {{ capitalize($t("Temporarily out of stock")) }}
-      </a-col>
-
-      <a-col
         v-if="isUnlogginedLinkVisible"
         class="products__unregistred"
         style="margin-top: 15px; text-align: center"
@@ -113,7 +100,7 @@ const currenciesStore = useCurrenciesStore();
 const { addToClipboard } = useClipboard();
 const { locale } = useI18n();
 const spStore = useSpStore();
-const { isPlanAvailable, isOsAvailable } = useVpsAvailability();
+const { isCodeOrderable, isOsAvailable } = useVpsAvailability();
 
 const [options] = inject("useOptions", () => [])();
 const [activeKey, nextStep] = inject("useActiveKey", () => [])();
@@ -146,7 +133,7 @@ const isOutOfStock = computed(() => {
   const planCode = options.config.planCode;
 
   return (
-    !isPlanAvailable(planCode) || !isOsAvailable(planCode, options.os.name)
+    !isCodeOrderable(planCode) || !isOsAvailable(planCode, options.os.name)
   );
 });
 
