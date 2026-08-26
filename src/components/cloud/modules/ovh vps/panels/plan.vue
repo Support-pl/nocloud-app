@@ -9,7 +9,7 @@
       <a-col v-if="products.length < 6 && products.length > 1" span="24">
         <a-slider
           style="margin-top: 10px"
-          :marks="marks"
+          :marks="{ ...products }"
           :tip-formatter="null"
           :max="products.length - 1"
           :min="0"
@@ -24,10 +24,7 @@
             v-for="provider of products"
             :key="provider"
             class="order__slider-item"
-            :class="{
-              'order__slider-item--active': product === provider,
-              'order__slider-item--unavailable': !isGroupAvailable(provider),
-            }"
+            :class="{ 'order__slider-item--active': product === provider }"
             @click="product = provider"
           >
             {{ provider }}
@@ -145,7 +142,6 @@ import {
 import { storeToRefs } from "pinia";
 import { useRoute } from "vue-router";
 import { useCloudStore } from "@/stores/cloud.js";
-import { useAddonsStore } from "@/stores/addons";
 import { useAuthStore } from "@/stores/auth.js";
 import useVpsAvailability from "@/hooks/cloud/vpsAvailability.js";
 
@@ -169,10 +165,8 @@ const cloudStore = useCloudStore();
 const [options, setOptions] = inject("useOptions", () => [])();
 const [, setPrice] = inject("usePriceOVH", () => [])();
 const product = ref("");
-const { addons } = storeToRefs(useAddonsStore());
 const { isLogged } = storeToRefs(useAuthStore());
-const { fetchAvailability, isPlanAvailable, hasOrderableOs } =
-  useVpsAvailability();
+const { fetchAvailability } = useVpsAvailability();
 
 if (props.products.length < 1) resetData();
 
@@ -251,45 +245,6 @@ const datacenterProducts = computed(() =>
 const products = computed(() =>
   Array.from(new Set(datacenterProducts.value.map(({ group }) => group))),
 );
-
-const marks = computed(() =>
-  Object.fromEntries(
-    products.value.map((group, index) => [
-      index,
-      isGroupAvailable(group)
-        ? group
-        : { label: group, style: { opacity: 0.45 } },
-    ]),
-  ),
-);
-
-// same source the OS panel renders from: addon uuids live on the plan product,
-// while product.meta.addons holds billing plan resource keys, not uuids
-function planCodeOsNames(planCode) {
-  const uuids = new Set(
-    Object.entries(cloudStore.plan.products ?? {})
-      .filter(([key]) => key.split(" ")[1] === planCode)
-      .flatMap(([, product]) => product.addons ?? []),
-  );
-
-  return addons.value
-    .filter((addon) => uuids.has(addon.uuid) && addon.meta?.type === "os")
-    .map(({ title }) => title);
-}
-
-function isCodeAvailable(planCode) {
-  return (
-    !!planCode &&
-    isPlanAvailable(planCode) &&
-    hasOrderableOs(planCode, planCodeOsNames(planCode))
-  );
-}
-
-function isGroupAvailable(group) {
-  return datacenterProducts.value.some(
-    ({ group: name, value }) => name === group && isCodeAvailable(value),
-  );
-}
 
 watch(
   [
@@ -468,10 +423,6 @@ export default { name: "OvhVpsPlanPanel" };
 
 .order__slider-item:hover {
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
-}
-
-.order__slider-item--unavailable {
-  opacity: 0.45;
 }
 
 .order__slider-item--active {

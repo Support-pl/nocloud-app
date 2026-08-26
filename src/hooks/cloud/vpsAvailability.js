@@ -1,7 +1,9 @@
 import { ref } from "vue";
 
 import api from "@/api.js";
+import { useAddonsStore } from "@/stores/addons";
 import { useAuthStore } from "@/stores/auth.js";
+import { useCloudStore } from "@/stores/cloud.js";
 
 // Live OVH stock for the picked datacenter: the catalog datacenter list on
 // product.meta says "we sell it there", this says "OVH can deliver it now".
@@ -64,12 +66,38 @@ function useVpsAvailability() {
     return osNames.some((name) => isOsAvailable(planCode, name));
   }
 
+  // the OS addon uuids live on the plan product, keyed "<duration> <planCode>";
+  // product.meta.addons holds billing plan resource keys, not uuids
+  function planOsNames(planCode) {
+    const uuids = new Set(
+      Object.entries(useCloudStore().plan?.products ?? {})
+        .filter(([key]) => key.split(" ")[1] === planCode)
+        .flatMap(([, product]) => product.addons ?? []),
+    );
+
+    return useAddonsStore()
+      .addons.filter(
+        (addon) => uuids.has(addon.uuid) && addon.meta?.type === "os",
+      )
+      .map(({ title }) => title);
+  }
+
+  // orderable = OVH can deliver the range here AND at least one of its images
+  // is in stock (a tariff with neither linux nor windows cannot be ordered)
+  function isCodeOrderable(planCode) {
+    return (
+      isPlanAvailable(planCode) &&
+      hasOrderableOs(planCode, planOsNames(planCode))
+    );
+  }
+
   return {
     availability: plans,
     fetchAvailability,
     isPlanAvailable,
     isOsAvailable,
     hasOrderableOs,
+    isCodeOrderable,
   };
 }
 
