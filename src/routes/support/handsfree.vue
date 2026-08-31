@@ -85,6 +85,7 @@ async function sendCode () {
     if (!chat) {
       localStorage.setItem('gateway', 'telegram')
       router.back()
+      return
     } else if (!uuid) {
       const { departments } = chatsStore.getDefaults
       const { admins, id: key } = departments.find(({ id }) => id === chat.department) ?? {}
@@ -106,7 +107,8 @@ async function sendCode () {
       uuid,
       content: chat.message,
       account: authStore.userdata.uuid,
-      date: BigInt(Date.now())
+      date: BigInt(Date.now()),
+      meta: [{ key: 'mode', value: 'default' }]
     })
 
     localStorage.removeItem('telegramChat')

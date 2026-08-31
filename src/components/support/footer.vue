@@ -140,7 +140,10 @@ async function sendMessage() {
   }
 
   const { replies, result } = updateReplies();
-  if (props.replies[0].gateways) {
+  // A cc chat can legitimately have zero messages (e.g. the telegram flow
+  // creates the chat first), so the chat store - not replies[0] - decides
+  // whether this is a cc chat or a whmcs ticket. Same check as chatPage.
+  if (chatsStore.chats.has(route.params.id)) {
     await sendChatMessage(result, replies);
   } else {
     await sendTicket(replies);
