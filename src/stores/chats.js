@@ -633,9 +633,9 @@ export const useChatsStore = defineStore("chats", () => {
           }, {}),
         });
 
-        if (mes.meta.mode.kind.value === "default") {
+        if (mes.meta?.mode?.kind?.value === "default") {
           mes.meta.model = Value.fromJson(
-            chats.value.get(message.uuid).meta.data?.model?.kind?.value ?? "",
+            chats.value.get(message.uuid)?.meta?.data?.model?.kind?.value ?? "",
           );
         }
 
