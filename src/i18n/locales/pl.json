@@ -741,6 +741,7 @@
     "resolution": "resolution",
     "quality": "quality",
     "ticketStatus": {
+      "Onboarding": "Onboarding",
       "Closed": "Zamknięte",
       "Close-Ticket": "Zamknij zgłoszenie",
       "Customer-Reply": "Odpowiedź klienta",

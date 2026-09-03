@@ -485,6 +485,7 @@
     "question": "Nội dung yêu cầu",
     "message": "Tin nhắn",
     "ticketStatus": {
+      "Onboarding": "Onboarding",
       "Closed": "Đã đóng",
       "Close-Ticket": "Đóng yêu cầu",
       "Customer-Reply": "Phản hồi của khách hàng",

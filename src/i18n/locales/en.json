@@ -743,6 +743,7 @@
     "resolution": "resolution",
     "quality": "quality",
     "ticketStatus": {
+      "Onboarding": "Onboarding",
       "Closed": "Closed",
       "Close-Ticket": "Close ticket",
       "Customer-Reply": "Customer reply",

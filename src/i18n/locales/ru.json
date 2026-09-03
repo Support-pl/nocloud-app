@@ -1134,6 +1134,7 @@
     "files": "Файлы",
     "send message": "отправить сообщение",
     "ticketStatus": {
+      "Onboarding": "Онбординг",
       "Closed": "Закрыт",
       "Close-Ticket": "Обращение закрыто",
       "Customer-Reply": "Ответ клиента",
