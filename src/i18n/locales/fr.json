@@ -1,5 +1,9 @@
 {
   "fr": {
+    "Answer": "Répondre",
+    "Change answer": "Modifier la réponse",
+    "Pick an answer": "Choisissez une réponse",
+    "Your answer is saved, you can change it": "Votre réponse est enregistrée, vous pouvez la modifier",
     "localePrefix": "fr",
     "localeLang": "Français",
     "bitrix_domain": "Lien vers votre Bitrix24:",

@@ -1,5 +1,9 @@
 {
   "ru": {
+    "Answer": "Ответить",
+    "Change answer": "Изменить ответ",
+    "Pick an answer": "Выберите вариант",
+    "Your answer is saved, you can change it": "Ответ сохранён, его можно изменить",
     "localePrefix": "ru",
     "localeLang": "Русский",
     "calculator": {
