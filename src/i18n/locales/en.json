@@ -1,5 +1,9 @@
 {
   "en": {
+    "Answer": "Answer",
+    "Change answer": "Change answer",
+    "Pick an answer": "Pick an answer",
+    "Your answer is saved, you can change it": "Your answer is saved, you can change it",
     "localePrefix": "en",
     "localeLang": "English",
     "locale": "english",

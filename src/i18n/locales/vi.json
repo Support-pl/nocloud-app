@@ -1,5 +1,9 @@
 {
   "vi": {
+    "Answer": "Trả lời",
+    "Change answer": "Đổi câu trả lời",
+    "Pick an answer": "Chọn một câu trả lời",
+    "Your answer is saved, you can change it": "Câu trả lời đã được lưu, bạn có thể thay đổi",
     "localePrefix": "vi",
     "localeLang": "Tiếng Việt",
     "bitrix_domain": "Liên kết đến Bitrix24 của bạn:",

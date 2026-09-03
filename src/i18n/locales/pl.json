@@ -1,5 +1,9 @@
 {
   "pl": {
+    "Answer": "Odpowiedz",
+    "Change answer": "Zmień odpowiedź",
+    "Pick an answer": "Wybierz odpowiedź",
+    "Your answer is saved, you can change it": "Odpowiedź zapisana, można ją zmienić",
     "localePrefix": "pl",
     "localeLang": "Polski",
     "calculator": {

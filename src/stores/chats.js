@@ -19,6 +19,7 @@ import {
   Kind,
   EventType,
   Status,
+  VoteRequest,
 } from "@/libs/cc_connect/cc_pb";
 import {
   ChatsAPI,
@@ -276,6 +277,12 @@ export const useChatsStore = defineStore("chats", () => {
       case EventType.MESSAGE_UPDATED: {
         const chat = chats.value.get(message.chat);
         if (!chat) break;
+        // A message we do not have is nothing to update. Without this,
+        // splice(-1, 1, msg) REPLACES the last message in the chat: the same
+        // event arrives more than once — it is published to the chat's users
+        // and to its admins, and one account is often both — and the repeat
+        // would overwrite whatever stood at the end.
+        if (i === -1) break;
 
         replies.splice(i, 1, newMessage);
         if (chat.uuid !== route.params.id) {
@@ -291,6 +298,11 @@ export const useChatsStore = defineStore("chats", () => {
       }
 
       case EventType.MESSAGE_DELETED: {
+        // Same reason, and here it removes rather than overwrites: a repeated
+        // delete event with splice(-1, 1) takes away the last message in the
+        // chat, which has nothing to do with the one that was deleted.
+        if (i === -1) break;
+
         replies.splice(i, 1);
         break;
       }
@@ -304,6 +316,7 @@ export const useChatsStore = defineStore("chats", () => {
       sent: message.sent,
       email: user.data?.email ?? "none",
       message: message.content,
+      poll: message.poll,
       name: user.title ?? "anonymous",
       userid: user.uuid,
       requestor_type: uuid === user.uuid ? "Owner" : "Other",
@@ -613,6 +626,17 @@ export const useChatsStore = defineStore("chats", () => {
       }
 
       return files;
+    },
+
+    // Answering a poll. The ticket service records the answer and keeps the
+    // single message that states it in words — posting it, editing it when the
+    // answer changes — so there is nothing to send from here. The updated poll
+    // comes back over the event stream.
+    async vote(messageUuid, options) {
+      const messagesApi = createPromiseClient(MessagesAPI, transport);
+      return messagesApi.vote(
+        new VoteRequest({ message: messageUuid, options })
+      );
     },
 
     async sendMessage(message) {
