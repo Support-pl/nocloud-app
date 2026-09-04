@@ -157,6 +157,7 @@ import { useAuthStore } from "@/stores/auth.js";
 import { useCurrency, useNotification } from "@/hooks/utils";
 
 import { useSpStore } from "@/stores/sp.js";
+import { driverType } from "@/functions.js";
 import { usePlansStore } from "@/stores/plans.js";
 import { useNamespasesStore } from "@/stores/namespaces.js";
 import { useInstancesStore } from "@/stores/instances.js";
@@ -262,7 +263,8 @@ function orderClickHandler() {
 
   const newGroup = {
     title: authStore.userdata.title + Date.now(),
-    type: "ione",
+    // тип группы уезжает на бэкенд — берём настоящий драйвер выбранного SP
+    type: driverType(providers.value.find(({ uuid }) => uuid === sp.value)),
     sp: sp.value,
     instances: [],
     config: { is_vdc: true },

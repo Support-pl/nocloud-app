@@ -271,7 +271,7 @@ const chats = computed(() => {
     if (value !== props.service.uuid) return;
     const { value: model } = chat.meta.data.model?.kind ?? {};
 
-    const status = Status[chat.status].toLowerCase().split("_");
+    const status = (Status[chat.status]?.toLowerCase() ?? "new").split("_");
     const capitalized = status
       .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
       .join(" ");

@@ -4,6 +4,7 @@ import api from "@/api.js";
 import { BillingService } from "nocloud-proto/proto/es/billing/billing_connect";
 import { useAppStore } from "./app.js";
 import { createPromiseClient } from "@connectrpc/connect";
+import { aliasEntity } from "@/functions.js";
 
 export const usePlansStore = defineStore("plans", () => {
   const app = useAppStore();
@@ -13,7 +14,7 @@ export const usePlansStore = defineStore("plans", () => {
   const plansApi = createPromiseClient(BillingService, app.transport);
 
   function setPlans(value) {
-    plans.value = value.map((plan) => {
+    plans.value = value.map(aliasEntity).map((plan) => {
       plan.resources = plan.resources.map((resource) => ({
         ...resource,
         price: +resource.price.toFixed(2),
@@ -37,7 +38,7 @@ export const usePlansStore = defineStore("plans", () => {
         isLoading.value = true;
         const response = await api.plans.list(params);
 
-        plans.value = response.pool;
+        plans.value = response.pool.map(aliasEntity);
         return response;
       } catch (error) {
         console.error(error);

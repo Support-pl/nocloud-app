@@ -40,7 +40,7 @@ const chats = computed(() => {
 
   chatsStore.getChats.forEach((ticket) => {
     const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
-    const status = Status[ticket.status].toLowerCase().split("_");
+    const status = (Status[ticket.status]?.toLowerCase() ?? "new").split("_");
     const capitalized = status
       .map((el) => `${el[0].toUpperCase()}${el.slice(1)}`)
       .join(" ");

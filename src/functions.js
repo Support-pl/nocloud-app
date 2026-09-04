@@ -1,6 +1,44 @@
 import api from "@/api.js";
 import { capitalize } from "vue";
 
+// ponytail: proxmox == ione по схеме данных — resources (cpu/ram/drive_type/
+// drive_size/ips_public/ips_private), config.template_id, sp.publicData.templates,
+// plan.meta.minDiskSize/maxDiskSize. Алиасим тип на чтении из API, настоящий
+// драйвер держим в _driver и достаём через driverType() на записи в API.
+// Потолок: ломается, если у proxmox появится своя схема resources — тогда
+// ветка по driverType() в конкретном месте (как сделано для VNC).
+const TYPE_ALIASES = { proxmox: "ione" };
+
+export const aliasType = (type) => TYPE_ALIASES[type] ?? type;
+
+export const aliasEntity = (entity) =>
+  TYPE_ALIASES[entity?.type]
+    ? { ...entity, type: TYPE_ALIASES[entity.type], _driver: entity.type }
+    : entity;
+
+export const driverType = (entity) => entity?._driver ?? entity?.type;
+
+// highCPU живёт либо на продукте (proxmox, оба варианта в одном плане), либо
+// на плане (ione, варианты разнесены по двум планам). Тумблер нужен в обоих случаях.
+export const hasHighCPU = (plans = []) =>
+  plans.some(
+    (plan) =>
+      plan.meta?.highCPU ||
+      Object.values(plan.products ?? {}).some((p) => p.meta?.highCPU),
+  );
+
+// Два режима в одном плане не смешиваются: как только хоть один продукт несёт
+// ключ highCPU, план-левел флаг игнорируется целиком, а отсутствие ключа у
+// остальных продуктов читается как false. Иначе включённый флаг плана сделал бы
+// hCPU-шными все продукты разом, и пара просто не нашлась бы.
+export function isHighCPUProduct(product, plan) {
+  const byProduct = Object.values(plan?.products ?? {}).some(
+    (p) => p?.meta?.highCPU !== undefined,
+  );
+
+  return byProduct ? !!product?.meta?.highCPU : !!plan?.meta?.highCPU;
+}
+
 export function debounce(func, ms) {
   let timeout;
 
