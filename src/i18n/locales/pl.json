@@ -1256,7 +1256,8 @@
         "runway": "Runway",
         "stability-ai": "Stability AI",
         "alibaba": "Alibaba",
-        "nocloud-ocr": "NoCloud OCR"
+        "nocloud-ocr": "NoCloud OCR",
+        "openrouter": "OpenRouter"
       },
       "filters": {
         "video": "Wideo",

@@ -1291,7 +1291,8 @@
         "stability-ai": "Stability AI",
         "alibaba": "Alibaba",
         "google-cloud": "Cloud Document AI API",
-        "nocloud-ocr": "NoCloud OCR"
+        "nocloud-ocr": "NoCloud OCR",
+        "openrouter": "OpenRouter"
       },
       "agents": {
         "chats": "Чаты",
