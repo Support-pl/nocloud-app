@@ -9,6 +9,7 @@ import { useAppStore } from "./app.js";
 import { createPromiseClient } from "@connectrpc/connect";
 import { useAddonsStore } from "./addons.js";
 import { UpdateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
+import { aliasEntity, aliasType } from "@/functions.js";
 
 export const useInstancesStore = defineStore("instances", () => {
   const authStore = useAuthStore();
@@ -97,9 +98,10 @@ export const useInstancesStore = defineStore("instances", () => {
         items.value.push({
           ...inst,
           uuidService: service.uuid,
-          type: group.type,
+          type: aliasType(group.type),
+          _driver: group.type,
           sp: group.sp,
-          billingPlan: { ...inst.billingPlan, resources, products },
+          billingPlan: aliasEntity({ ...inst.billingPlan, resources, products }),
         });
       });
     });

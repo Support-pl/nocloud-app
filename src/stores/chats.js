@@ -76,7 +76,7 @@ export const useChatsStore = defineStore("chats", () => {
       const result = [];
 
       chats.value.forEach((chat) => {
-        const status = Status[chat.status].toLowerCase();
+        const status = (Status[chat.status]?.toLowerCase() ?? "new");
         const capitalized = `${status[0].toUpperCase()}${status.slice(1)}`;
 
         if (filters.includes(capitalized)) {

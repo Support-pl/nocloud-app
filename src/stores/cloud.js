@@ -9,7 +9,7 @@ import { usePlansStore } from "./plans.js";
 import { useNamespasesStore } from "./namespaces.js";
 import { useInstancesStore } from "./instances.js";
 import useCreateInstance from "@/hooks/instances/create.js";
-import { checkPayg } from "@/functions.js";
+import { aliasEntity, aliasType, checkPayg, driverType } from "@/functions.js";
 import { usePromocodesStore } from "./promocodes.js";
 import { useAddonsStore } from "./addons.js";
 import useCurrency from "@/hooks/utils/currency.js";
@@ -81,6 +81,9 @@ export const useCloudStore = defineStore("cloud", () => {
         if (showcaseId.value === "" || showcaseId.value === showcase.uuid) {
           locations.push({
             ...location,
+            // локации приходят из showcases мимо sp-стора — алиасим тип здесь,
+            // иначе он не сойдётся с уже заалиашенным типом плана
+            type: aliasType(location.type),
             sp: sp?.uuid,
             showcase: showcase.uuid,
           });
@@ -229,7 +232,7 @@ export const useCloudStore = defineStore("cloud", () => {
     const group = {
       title: authStore.userdata.title + Date.now(),
       resources: { ips_private: 0, ips_public: 0 },
-      type: provider.value.type,
+      type: driverType(provider.value),
       instances: [],
       sp: provider.value.uuid,
     };
@@ -263,7 +266,9 @@ export const useCloudStore = defineStore("cloud", () => {
       addons: addonsStore.addons.map((a) => a.uuid),
     });
 
-    planWithApplyedPromocode.value = response.toJson().billingPlans[0];
+    planWithApplyedPromocode.value = aliasEntity(
+      response.toJson().billingPlans[0],
+    );
   });
 
   watch(planId, () => {

@@ -5,7 +5,7 @@ import { useCloudStore } from "@/stores/cloud.js";
 import { usePlansStore } from "@/stores/plans.js";
 
 import { useNotification } from "@/hooks/utils";
-import { getTarification } from "@/functions.js";
+import { getTarification, isHighCPUProduct } from "@/functions.js";
 import { useAddonsStore } from "@/stores/addons.js";
 import { storeToRefs } from "pinia";
 import { useCurrenciesStore } from "@/stores/currencies.js";
@@ -95,7 +95,7 @@ function useCloudPlans(tarification, options) {
             : true;
 
           const isEqualSize = title === productSize.value;
-          const isHighCpu = options.highCPU === (plan.meta.highCPU ?? false);
+          const isHighCpu = options.highCPU === isHighCPUProduct(item, plan);
           let isEqualPeriod = getTarification(period) === tarification.value;
 
           if (isDynamic && isIone && isHourly) {

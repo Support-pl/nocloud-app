@@ -100,6 +100,7 @@ import {
 } from "vue";
 import { useRoute } from "vue-router";
 import { usePlansStore } from "@/stores/plans.js";
+import { hasHighCPU } from "@/functions.js";
 
 const questionCircleIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/QuestionCircleOutlined")
@@ -215,9 +216,7 @@ watch(
   }
 );
 
-const isHighCPUExist = computed(() =>
-  plansStore.plans.find((plan) => plan.meta.highCPU)
-);
+const isHighCPUExist = computed(() => hasHighCPU(plansStore.plans));
 
 function setProduct() {
   for (const product of props.products) {

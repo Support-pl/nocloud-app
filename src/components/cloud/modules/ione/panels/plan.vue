@@ -40,13 +40,33 @@
       align="middle"
       :style="{ marginTop: !products.length < 2 ? null : '50px' }"
     >
-      <a-col>
+      <a-col v-if="isHighCPUExist" class="hcpu-block">
+        <span style="display: inline-block">CPU:</span>
+        <a-badge>
+          <template #count>
+            <span>
+              <a-tooltip :title="$t('highCPU')">
+                <question-circle-icon style="color: #ff9140" />
+              </a-tooltip>
+            </span>
+          </template>
+
+          <a-switch
+            checked-children="hCPU"
+            un-checked-children="CPU"
+            :checked="options.highCPU"
+            @click="setOptions('highCPU', !options.highCPU)"
+          />
+        </a-badge>
+      </a-col>
+
+      <a-col v-else>
         <span style="display: inline-block; width: 70px">CPU:</span>
       </a-col>
       <transition name="textchange" mode="out-in">
         <a-col class="changing__field" span="6" style="text-align: right">
           <template v-if="isProductsExist">
-            {{ options.cpu.size }} vCPU
+            {{ options.cpu.size }} {{ cpuPostfix }}
           </template>
 
           <template v-else>
@@ -57,7 +77,7 @@
               :max="32"
               @update:value="setOptions('cpu.size', $event)"
             />
-            vCPU
+            {{ cpuPostfix }}
           </template>
         </a-col>
       </transition>
@@ -105,14 +125,32 @@
 </template>
 
 <script setup>
-import { computed, inject, nextTick, reactive, toRefs, watch } from "vue";
-import { useRoute } from "vue-router";
-import { useCloudStore } from "@/stores/cloud.js";
-import { getPeriods, getTarification } from "@/functions.js";
-
+import {
+  computed,
+  defineAsyncComponent,
+  inject,
+  nextTick,
+  reactive,
+  toRefs,
+  watch,
+} from "vue";
 import ioneDrive from "@/components/cloud/create/ioneDrive.vue";
 import ioneFilters from "@/components/cloud/create/ioneFilters.vue";
 import ioneProducts from "@/components/cloud/create/ioneProducts.vue";
+
+import { useRoute } from "vue-router";
+import { useCloudStore } from "@/stores/cloud.js";
+import {
+  getPeriods,
+  getTarification,
+  hasHighCPU,
+  isHighCPUProduct,
+} from "@/functions.js";
+
+const questionCircleIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/QuestionCircleOutlined")
+);
+
 
 const props = defineProps({
   mode: { type: String, required: true },
@@ -162,6 +200,8 @@ if (props.products.length > 0) {
 }
 
 const isProductsExist = computed(() => props.products.length > 0);
+const isHighCPUExist = computed(() => hasHighCPU(props.plans));
+const cpuPostfix = computed(() => (options.highCPU ? "hCPU" : "vCPU"));
 const filters = reactive({ cpu: [], ram: [] });
 
 const filteredProducts = computed(() => {
@@ -201,11 +241,16 @@ const groups = computed(() =>
 
 function getProduct(size, plan = cloudStore.plan) {
   const isDynamic = cloudStore.plan.kind === "DYNAMIC";
-  const products = Object.values(plan.products);
-  const product = products.find(
+  const byTitle = Object.values(plan.products).filter(
     ({ title, period }) =>
       title === size && (getTarification(period) === props.mode || isDynamic)
   );
+
+  // Если у размера нет пары под текущий режим — берём единственный вариант,
+  // а не пустой продукт с нулевыми ресурсами.
+  const product =
+    byTitle.find((p) => isHighCPUProduct(p, plan) === options.highCPU) ??
+    byTitle[0];
 
   return { ...product?.resources, group: product?.group, meta: product?.meta };
 }
@@ -231,6 +276,13 @@ async function setProduct(value) {
   setOptions("disk.type", diskType);
 }
 
+watch(
+  () => options.highCPU,
+  () => {
+    if (props.productSize) setProduct(props.productSize);
+  }
+);
+
 watch(isFlavorsLoading, () => {
   if (isFlavorsLoading.value) {
     const { productSize } = JSON.parse(data);
@@ -249,6 +301,13 @@ export default { name: "IonePlanPanel" };
 </script>
 
 <style scoped>
+.hcpu-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 70px;
+}
+
 .newCloud__drive {
   display: grid;
   grid-template-columns: auto auto 1fr auto;

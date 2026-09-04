@@ -274,6 +274,7 @@ import { notification } from 'ant-design-vue'
 import { useRoute, useRouter } from 'vue-router'
 import UI from 'vnc-ui-vue'
 import api from '@/api.js'
+import { driverType } from '@/functions.js'
 
 import { useAppStore } from '@/stores/app.js'
 import { useAuthStore } from '@/stores/auth.js'
@@ -344,7 +345,11 @@ async function getToken () {
     token.value = response.meta.token
     desktopName.value = instance.value?.title ?? 'Unknown'
 
-    if (response.meta.info) {
+    // proxmox отдаёт готовый url на ноду — не через nocloud-proxy, как ione
+    if (driverType(instance.value) === 'proxmox') {
+      url.value = (response.meta.url || '').replace(/^http/, 'ws')
+      connect(response.meta.token)
+    } else if (response.meta.info) {
       url.value = `wss://${instance.value.sp}.proxy.${baseURL.join('.')}socket?${response.meta.url}`
       connect(authStore.token)
     } else {

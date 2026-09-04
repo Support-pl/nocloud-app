@@ -7,6 +7,7 @@ import { useCloudStore } from "@/stores/cloud.js";
 import { useInstancesStore } from "@/stores/instances.js";
 import { useNamespasesStore } from "@/stores/namespaces.js";
 import { useSpStore } from "@/stores/sp.js";
+import { aliasType } from "@/functions.js";
 
 function useCloudOptions(activeKey, tarification) {
   const route = useRoute();
@@ -98,7 +99,7 @@ function useCloudOptions(activeKey, tarification) {
     );
     const group =
       service.instancesGroups.find(({ type }) =>
-        cloudStore.plan.type?.includes(type)
+        cloudStore.plan.type?.includes(aliasType(type))
       ) ?? {};
 
     if (group.config?.ssh) {
