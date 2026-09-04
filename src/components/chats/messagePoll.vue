@@ -10,7 +10,7 @@
         :key="option.id"
         class="poll__option"
         :checked="picked.includes(option.id)"
-        :disabled="busy"
+        :disabled="Boolean(busy)"
         @change="toggle(option.id, $event.target.checked)"
       >
         {{ option.label }}
@@ -20,8 +20,8 @@
         class="poll__send"
         size="small"
         type="primary"
-        :loading="busy"
-        :disabled="!picked.length || sameAsAnswered"
+        :loading="Boolean(busy)"
+        :disabled="Boolean(busy) || !picked.length || sameAsAnswered"
         @click="answer(picked)"
       >
         {{ answered.length ? $t("Change answer") : $t("Answer") }}
