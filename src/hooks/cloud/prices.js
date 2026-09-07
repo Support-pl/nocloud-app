@@ -200,8 +200,8 @@ function useCloudPrices(
       (product) => product.public
     );
     const product = getProduct(plan);
-    // getProduct уже вернул нужный продукт по ключу. Искать его заново по title
-    // нельзя: у пары hCPU/не-hCPU title общий, и find вернул бы первый попавшийся.
+    // getProduct already resolved the product by key. Looking it up again by title
+    // is wrong: an hCPU/non-hCPU pair shares a title, so find would return either.
     const value =
       activeKey.value !== "location"
         ? values.find((p) => p === product) ??

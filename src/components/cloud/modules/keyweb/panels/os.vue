@@ -327,6 +327,10 @@ watch(
 watch(
   [activeKey, authData],
   async () => {
+    // the form is not mounted yet: the catch below would swallow the TypeError
+    // and lock the order button on this panel
+    if (!keywebForm.value) return;
+
     try {
       await keywebForm.value.validateFields();
       validationPanels.value["os"] = false;

@@ -126,6 +126,10 @@ if (props.productSize) setImages();
 watch(
   [activeKey, authData],
   async () => {
+    // the form is not mounted yet: the catch below would swallow the TypeError
+    // and lock the order button on this panel
+    if (!ovhVpsForm.value) return;
+
     try {
       await ovhVpsForm.value.validateFields();
       validationPanels.value["os"] = false;

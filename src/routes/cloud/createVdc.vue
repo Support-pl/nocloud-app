@@ -263,7 +263,7 @@ function orderClickHandler() {
 
   const newGroup = {
     title: authStore.userdata.title + Date.now(),
-    // тип группы уезжает на бэкенд — берём настоящий драйвер выбранного SP
+    // the group type goes to the backend: use the selected SP's real driver
     type: driverType(providers.value.find(({ uuid }) => uuid === sp.value)),
     sp: sp.value,
     instances: [],
