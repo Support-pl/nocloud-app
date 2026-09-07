@@ -1,181 +1,100 @@
 <template>
   <a-row class="module" style="margin-top: 10px" :gutter="[10, 10]">
     <a-col span="24">
-      <a-tabs v-model:activeKey="activeApiTab">
-        <a-tab-pane key="2" tab="API v2">
-          <openai-prices
-            compact
-            :selected-model="selectedModelV2"
-            @update:selectedModel="selectedModelV2 = $event"
-            :selected-provider="selectedProviderV2"
-            @update:selectedProvider="selectedProviderV2 = $event"
-            :selected-type="selectedTypeV2"
-            @update:selectedType="selectedTypeV2 = $event"
+      <openai-prices
+        compact
+        :selected-model="selectedModelV2"
+        @update:selectedModel="selectedModelV2 = $event"
+        :selected-provider="selectedProviderV2"
+        @update:selectedProvider="selectedProviderV2 = $event"
+        :selected-type="selectedTypeV2"
+        @update:selectedType="selectedTypeV2 = $event"
+      />
+
+      <a-col span="24" style="margin: 5px 0px">
+        <div class="token-title">
+          Base URL:
+          <copy-icon
+            style="font-size: 18px"
+            @click="addToClipboard(baseUrlV2)"
           />
+        </div>
+        <div style="padding-top: 0; font-size: 18px">
+          {{ baseUrlV2 }}
+        </div>
+      </a-col>
 
-          <a-col span="24" style="margin: 5px 0px">
-            <div class="token-title">
-              Base URL:
-              <copy-icon
-                style="font-size: 18px"
-                @click="addToClipboard(baseUrlV2)"
-              />
-            </div>
-            <div style="padding-top: 0; font-size: 18px">
-              {{ baseUrlV2 }}
-            </div>
-          </a-col>
+      <a-col span="24">
+        <div class="token-title">
+          Token API:
 
-          <a-col span="24">
-            <div class="token-title">
-              Token API:
+          <visible-icon
+            v-if="isVisible"
+            style="font-size: 18px"
+            @click="isVisible = false"
+          />
+          <invisible-icon
+            v-else
+            style="font-size: 18px"
+            @click="isVisible = true"
+          />
+          <copy-icon
+            style="font-size: 18px"
+            @click="addToClipboard(token)"
+          />
+        </div>
+        <div
+          style="padding-top: 0; font-size: 18px; word-break: break-word"
+        >
+          {{ isVisible ? token : `${token.slice(0, 15)}...` }}
+        </div>
+      </a-col>
 
-              <visible-icon
-                v-if="isVisible"
-                style="font-size: 18px"
-                @click="isVisible = false"
-              />
-              <invisible-icon
-                v-else
-                style="font-size: 18px"
-                @click="isVisible = true"
-              />
-              <copy-icon
-                style="font-size: 18px"
-                @click="addToClipboard(token)"
-              />
-            </div>
-            <div
-              style="padding-top: 0; font-size: 18px; word-break: break-word"
-            >
-              {{ isVisible ? token : `${token.slice(0, 15)}...` }}
-            </div>
-          </a-col>
-
-          <a-col span="24" style="margin: 5px 0px">
-            <div
-              class="token-title"
-              style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-              "
-            >
-              <div
-                style="
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                "
-              >
-                <span> {{ t("openai.labels.api_example") }} </span>
-                <copy-icon
-                  style="font-size: 18px; margin-left: 5px"
-                  @click="addToClipboard(exampleV2.replace('<token>', token))"
-                />
-              </div>
-              <template
-                v-if="!['video', 'vision'].includes(selectedTypeV2)"
-                style="display: flex; align-items: center"
-              >
-                <div
-                  class="api_compatibility_label"
-                  v-html="marked(t('openai.labels.api_compatible_with_openai'))"
-                />
-              </template>
-            </div>
-            <pre
-              class="code-block"
-            ><code class="language-curl" v-html="highlightedExampleV2"></code></pre>
-          </a-col>
-
-          <a-collapse
-            v-if="selectedTypeV2 === 'video'"
-            @change="onCallapseOpen"
+      <a-col span="24" style="margin: 5px 0px">
+        <div
+          class="token-title"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
           >
-            <a-collapse-panel key="video" :header="t('moreExamples')">
-              <div id="swagger-video" />
-            </a-collapse-panel>
-          </a-collapse>
-        </a-tab-pane>
-
-        <a-tab-pane key="1" style="opacity: 0.5">
-          <template #tab>
-            <span style="opacity: 0.5"> API v1 (DEPRECATED) </span>
-          </template>
-
-          <a-row style="padding: 0px 5px; margin-bottom: 10px">
-            <a-col span="12">
-              <div style="padding-bottom: 0; font-weight: 700">
-                Input kilotoken:
-              </div>
-              <div style="padding-top: 0; font-size: 18px">
-                {{ service.resources.inputKilotoken }} {{ currency.title }}
-              </div>
-            </a-col>
-            <a-col span="12">
-              <div style="padding-bottom: 0; font-weight: 700">
-                Output kilotoken:
-              </div>
-              <div style="padding-top: 0; font-size: 18px">
-                {{ service.resources.outputKilotoken }} {{ currency.title }}
-              </div>
-            </a-col>
-          </a-row>
-
-          <a-col span="24">
-            <div class="token-title">
-              API endpoint:
-              <copy-icon
-                style="font-size: 18px"
-                @click="addToClipboard(endpointv1)"
-              />
-            </div>
-            <div style="padding-top: 0; font-size: 18px">
-              {{ endpointv1 }}
-            </div>
-          </a-col>
-
-          <a-col span="24">
-            <div class="token-title">
-              Token API:
-
-              <visible-icon
-                v-if="isVisible"
-                style="font-size: 18px"
-                @click="isVisible = false"
-              />
-              <invisible-icon
-                v-else
-                style="font-size: 18px"
-                @click="isVisible = true"
-              />
-              <copy-icon
-                style="font-size: 18px"
-                @click="addToClipboard(token)"
-              />
-            </div>
+            <span> {{ t("openai.labels.api_example") }} </span>
+            <copy-icon
+              style="font-size: 18px; margin-left: 5px"
+              @click="addToClipboard(exampleV2.replace('<token>', token))"
+            />
+          </div>
+          <template
+            v-if="!['video', 'vision'].includes(selectedTypeV2)"
+            style="display: flex; align-items: center"
+          >
             <div
-              style="padding-top: 0; font-size: 18px; word-break: break-word"
-            >
-              {{ isVisible ? token : `${token.slice(0, 15)}...` }}
-            </div>
-          </a-col>
+              class="api_compatibility_label"
+              v-html="marked(t('openai.labels.api_compatible_with_openai'))"
+            />
+          </template>
+        </div>
+        <pre
+          class="code-block"
+        ><code class="language-curl" v-html="highlightedExampleV2"></code></pre>
+      </a-col>
 
-          <a-col span="24">
-            <div class="token-title">
-              API example:
-              <copy-icon
-                style="font-size: 18px"
-                @click="addToClipboard(exampleV1)"
-              />
-            </div>
-            <pre
-              class="code-block"
-            ><code class="language-curl" v-html="highlightedExampleV1"></code></pre>
-          </a-col>
-        </a-tab-pane>
-      </a-tabs>
+      <a-collapse
+        v-if="selectedTypeV2 === 'video'"
+        @change="onCallapseOpen"
+      >
+        <a-collapse-panel key="video" :header="t('moreExamples')">
+          <div id="swagger-video" />
+        </a-collapse-panel>
+      </a-collapse>
     </a-col>
 
     <a-col span="24" style="margin-top: 10px">
@@ -300,26 +219,7 @@ onMounted(() => {
 const isVisible = ref(false);
 const isSwaggerVideosInitWas = ref(false);
 const isLoading = ref(false);
-const activeApiTab = ref("2");
 const token = ref("-");
-
-const endpointv1 = `${VUE_APP_BASE_URL}nocloud/chat/completions`;
-const exampleV1 = `curl <endpoint> \\
-  -X POST \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer <token>" \\
-  -d '{
-    "messages": [
-      {
-        "role": "system", 
-        "content": "You are a helpful assistant."
-      },
-      {
-        "role": "user", 
-        "content": "Hello!"
-      }
-    ]
-  }'`;
 
 const selectedModelV2 = ref("gpt-4o-mini");
 const selectedProviderV2 = ref("openai");
@@ -468,11 +368,6 @@ function highlightCurl(code) {
     .replace(/\\$/gm, '<span class="hljs-meta">\\</span>')
     .replace(/([{}[\]])/g, '<span class="hljs-punctuation">$1</span>');
 }
-
-const highlightedExampleV1 = computed(() => {
-  const highlighted = highlightCurl(exampleV1);
-  return addLineNumbers(highlighted);
-});
 
 const highlightedExampleV2 = computed(() => {
   const highlighted = highlightCurl(exampleV2.value);

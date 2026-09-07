@@ -78,6 +78,7 @@
       style="min-width: 200px; margin-right: 5px"
     >
       <a-select
+        :get-popup-container="(node) => node.parentNode"
         style="width: 100%; margin-right: 5px; margin-top: 10px"
         :value="selectedType"
         @select="emits('update:selectedType', $event)"
@@ -92,6 +93,8 @@
     >
       <a-select
         show-search
+        option-filter-prop="label"
+        :get-popup-container="(node) => node.parentNode"
         style="margin-right: 10px; width: 100%; margin-top: 10px"
         :value="selectedModel"
         :options="modelsOptions"
