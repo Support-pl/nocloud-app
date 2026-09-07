@@ -345,7 +345,7 @@ async function getToken () {
     token.value = response.meta.token
     desktopName.value = instance.value?.title ?? 'Unknown'
 
-    // proxmox отдаёт готовый url на ноду — не через nocloud-proxy, как ione
+    // proxmox returns a ready node url, not a nocloud-proxy one like ione
     if (driverType(instance.value) === 'proxmox') {
       url.value = (response.meta.url || '').replace(/^http/, 'ws')
       connect(response.meta.token)

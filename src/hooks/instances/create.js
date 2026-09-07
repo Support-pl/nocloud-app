@@ -80,7 +80,7 @@ function useCreateInstance() {
     if (!currentGroup) {
       newService.instancesGroups.push({
         title: authStore.userdata.title + Date.now(),
-        // тип группы уезжает на бэкенд — берём настоящий драйвер, не алиас
+        // the group type goes to the backend: use the real driver, not the alias
         type:
           instancesGroupType || driverType(instance.billing_plan)?.split(" ")[0],
         sp: provider,

@@ -81,8 +81,8 @@ export const useCloudStore = defineStore("cloud", () => {
         if (showcaseId.value === "" || showcaseId.value === showcase.uuid) {
           locations.push({
             ...location,
-            // локации приходят из showcases мимо sp-стора — алиасим тип здесь,
-            // иначе он не сойдётся с уже заалиашенным типом плана
+            // locations come from showcases, bypassing the sp store: alias the
+            // type here or it will not match the already aliased plan type
             type: aliasType(location.type),
             sp: sp?.uuid,
             showcase: showcase.uuid,

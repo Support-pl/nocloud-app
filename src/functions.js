@@ -1,12 +1,12 @@
 import api from "@/api.js";
 import { capitalize } from "vue";
 
-// ponytail: proxmox == ione по схеме данных — resources (cpu/ram/drive_type/
+// ponytail: proxmox == ione data-wise — resources (cpu/ram/drive_type/
 // drive_size/ips_public/ips_private), config.template_id, sp.publicData.templates,
-// plan.meta.minDiskSize/maxDiskSize. Алиасим тип на чтении из API, настоящий
-// драйвер держим в _driver и достаём через driverType() на записи в API.
-// Потолок: ломается, если у proxmox появится своя схема resources — тогда
-// ветка по driverType() в конкретном месте (как сделано для VNC).
+// plan.meta.minDiskSize/maxDiskSize. The type is aliased when read from the API;
+// the real driver is kept in _driver and read back via driverType() when writing
+// to the API. Ceiling: breaks once proxmox grows its own resources schema — then
+// branch on driverType() at that specific spot, as done for VNC.
 const TYPE_ALIASES = { proxmox: "ione" };
 
 export const aliasType = (type) => TYPE_ALIASES[type] ?? type;
@@ -18,8 +18,8 @@ export const aliasEntity = (entity) =>
 
 export const driverType = (entity) => entity?._driver ?? entity?.type;
 
-// highCPU живёт либо на продукте (proxmox, оба варианта в одном плане), либо
-// на плане (ione, варианты разнесены по двум планам). Тумблер нужен в обоих случаях.
+// highCPU lives either on the product (proxmox: both variants in one plan) or on
+// the plan (ione: variants split across two plans). The toggle is needed for both.
 export const hasHighCPU = (plans = []) =>
   plans.some(
     (plan) =>
@@ -27,10 +27,10 @@ export const hasHighCPU = (plans = []) =>
       Object.values(plan.products ?? {}).some((p) => p.meta?.highCPU),
   );
 
-// Два режима в одном плане не смешиваются: как только хоть один продукт несёт
-// ключ highCPU, план-левел флаг игнорируется целиком, а отсутствие ключа у
-// остальных продуктов читается как false. Иначе включённый флаг плана сделал бы
-// hCPU-шными все продукты разом, и пара просто не нашлась бы.
+// The two modes never mix: once any product carries the highCPU key, the
+// plan-level flag is ignored entirely and a missing key on the remaining products
+// reads as false. Otherwise a plan-level flag would mark every product as high-CPU
+// at once and the pair would never be found.
 export function isHighCPUProduct(product, plan) {
   const byProduct = Object.values(plan?.products ?? {}).some(
     (p) => p?.meta?.highCPU !== undefined,

@@ -246,8 +246,8 @@ function getProduct(size, plan = cloudStore.plan) {
       title === size && (getTarification(period) === props.mode || isDynamic)
   );
 
-  // Если у размера нет пары под текущий режим — берём единственный вариант,
-  // а не пустой продукт с нулевыми ресурсами.
+  // When a size has no counterpart for the current mode, fall back to the single
+  // variant instead of an empty product with zeroed resources.
   const product =
     byTitle.find((p) => isHighCPUProduct(p, plan) === options.highCPU) ??
     byTitle[0];
