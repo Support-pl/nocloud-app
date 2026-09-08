@@ -1122,7 +1122,8 @@
         "qa_knowledge_base": "Pytanie - Odpowiedź",
         "knowledge_integrations": "Podłączone dane",
         "knowledge_file_search": "Inteligentne pliki (wektoryzowane)",
-        "knowledge_site_search": "Podłączone strony"
+        "knowledge_site_search": "Podłączone strony",
+        "import_qa_invalid": "Nie udało się odczytać pliku: oczekiwano JSON z listą wpisów pytanie/odpowiedź."
       },
       "diff": {
         "added": "Nowe",
@@ -1150,7 +1151,9 @@
         "create_site_search_knowledge": "Dodaj stronę",
         "import_site_search_knowledge": "Dodaj do QA",
         "delete_import": "Usuń",
-        "open_import": "Wyświetl dane"
+        "open_import": "Wyświetl dane",
+        "export_qa": "Eksport",
+        "import_qa": "Import"
       }
     },
     "openai": {
