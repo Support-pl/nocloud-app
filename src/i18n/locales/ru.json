@@ -835,7 +835,8 @@
         "qa_knowledge_base": "Вопрос - Ответ",
         "knowledge_integrations": "Документы",
         "knowledge_file_search": "Библиотека знаний (векторная база данных)",
-        "knowledge_site_search": "Подключённые сайты"
+        "knowledge_site_search": "Подключённые сайты",
+        "import_qa_invalid": "Не удалось прочитать файл: ожидается JSON со списком записей вопрос/ответ."
       },
       "diff": {
         "added": "Новое",
@@ -863,7 +864,9 @@
         "create_site_search_knowledge": "Добавить сайт",
         "import_site_search_knowledge": "Добавить в Вопрос/Ответ",
         "delete_import": "Удалить",
-        "open_import": "Просмотреть данные"
+        "open_import": "Просмотреть данные",
+        "export_qa": "Экспорт",
+        "import_qa": "Импорт"
       }
     },
     "domains_view": {

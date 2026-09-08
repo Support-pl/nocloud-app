@@ -1124,7 +1124,8 @@
         "qa_knowledge_base": "Question - Answer",
         "knowledge_integrations": "Connected Data",
         "knowledge_file_search": "Smart Files (Vectorized)",
-        "knowledge_site_search": "Connected Sites"
+        "knowledge_site_search": "Connected Sites",
+        "import_qa_invalid": "Could not read the file: expected JSON with a list of question/answer records."
       },
       "diff": {
         "added": "New",
@@ -1152,7 +1153,9 @@
         "create_site_search_knowledge": "Add site",
         "import_site_search_knowledge": "Add to QA",
         "delete_import": "Delete",
-        "open_import": "View Data"
+        "open_import": "View Data",
+        "export_qa": "Export",
+        "import_qa": "Import"
       }
     },
     "openai": {

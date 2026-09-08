@@ -136,6 +136,30 @@
           </a-tooltip>
 
           <a-button
+            :disabled="isSaveQaKnoledgeLoading"
+            @click="exportQaKnowledge"
+          >
+            {{ t("bots_databases.actions.export_qa") }}
+            <download-icon />
+          </a-button>
+
+          <a-button
+            :disabled="isSaveQaKnoledgeLoading"
+            @click="importInput?.click()"
+          >
+            {{ t("bots_databases.actions.import_qa") }}
+            <upload-icon />
+          </a-button>
+
+          <input
+            ref="importInput"
+            type="file"
+            accept=".json,application/json"
+            hidden
+            @change="handleImportQaFile"
+          />
+
+          <a-button
             :loading="isSaveQaKnoledgeLoading"
             :type="isSaveQaKnowledgePrimary ? 'primary' : 'default'"
             @click="handleSaveQaKnowledge"
@@ -815,10 +839,15 @@
       <a-row justify="space-between" align="middle" style="margin: 10px 0 15px">
         <a-button @click="cancelRebuild">{{ t("ssl_product.back") }}</a-button>
         <span class="rebuild__page-title">
-          {{ t("bots_databases.actions.rebuild_qa") }} · {{ database.name }}
+          {{
+            isImportMode
+              ? t("bots_databases.actions.import_qa")
+              : t("bots_databases.actions.rebuild_qa")
+          }}
+          · {{ database.name }}
         </span>
         <a-button
-          v-if="rebuildAnalyzed"
+          v-if="rebuildAnalyzed && !isImportMode"
           :loading="isRebuildLoading"
           @click="runRebuild"
         >
@@ -994,6 +1023,10 @@ const detachIcon = defineAsyncComponent(() =>
 
 const uploadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/UploadOutlined")
+);
+
+const downloadIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/DownloadOutlined")
 );
 
 const editIcon = defineAsyncComponent(() =>
@@ -1346,6 +1379,9 @@ const qaNorm = (s) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
 // URL so the browser back button and state survive (the component stays mounted).
 const isRebuildView = computed(() => !!route.query.rebuild);
 
+// The same review page serves both flows; only the source of the draft differs.
+const isImportMode = computed(() => route.query.rebuild === "import");
+
 // Saved records indexed by normalised question — the "before" side of the diff.
 const savedByQuestion = computed(() => {
   const map = new Map();
@@ -1398,6 +1434,67 @@ const rebuildSummary = computed(() => {
 
 function diffTagColor(status) {
   return { added: "green", removed: "red", modified: "orange" }[status] || "";
+}
+
+const importInput = ref(null);
+
+function exportQaKnowledge() {
+  const records = (database.value.qa_knowledge.records || [])
+    .map((r) => ({ question: r.question || "", answer: r.answer || "" }))
+    .filter((r) => r.question.trim() || r.answer.trim());
+
+  const url = URL.createObjectURL(
+    new Blob([JSON.stringify({ records }, null, 2)], {
+      type: "application/json",
+    })
+  );
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `qa-${database.value.name || database.value.id}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Accepts our own export shape, a bare array, or a whole database dump.
+function parseQaJson(text) {
+  const data = JSON.parse(text);
+  const raw = Array.isArray(data)
+    ? data
+    : data?.records || data?.qa_knowledge?.records;
+
+  if (!Array.isArray(raw)) {
+    throw new Error("no records array");
+  }
+
+  const records = raw
+    .map((r) => ({
+      question: String(r?.question ?? "").trim(),
+      answer: String(r?.answer ?? "").trim(),
+    }))
+    .filter((r) => r.question || r.answer);
+
+  if (!records.length) {
+    throw new Error("empty");
+  }
+  return records;
+}
+
+// Import lands in the same reviewable draft as rebuild — nothing is written
+// until the operator applies the diff and then saves.
+async function handleImportQaFile(event) {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (!file) return;
+
+  try {
+    rebuildDraft.value = parseQaJson(await file.text());
+    rebuildAnalyzed.value = true;
+    router.push({ query: { ...route.query, rebuild: "import" } });
+  } catch (err) {
+    openNotification("error", {
+      message: t("bots_databases.labels.import_qa_invalid"),
+    });
+  }
 }
 
 function openRebuild() {
