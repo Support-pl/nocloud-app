@@ -216,6 +216,7 @@ import {
 import passwordMeter from "vue-simple-password-meter";
 
 import { useAuthStore } from "@/stores/auth.js";
+import usePanelValidity from "@/hooks/cloud/panelValidity.js";
 import { useCloudStore } from "@/stores/cloud.js";
 
 import imagesList from "@/components/ui/images.vue";
@@ -223,7 +224,7 @@ import imagesList from "@/components/ui/images.vue";
 const i18n = useI18n();
 const authStore = useAuthStore();
 const cloudStore = useCloudStore();
-const { authData, provider, validationPanels } = storeToRefs(cloudStore);
+const { authData, provider } = storeToRefs(cloudStore);
 
 const [options, setOptions] = inject("useOptions")();
 
@@ -318,21 +319,14 @@ onBeforeMount(() => {
   if (images.length === 1) setOS(images[0][1], images[0][0]);
 });
 
-watch(
+// the password field only exists for logged in users
+usePanelValidity(
+  "os",
+  () =>
+    authStore.userdata.uuid
+      ? rules
+      : { vmName: rules.vmName, username: rules.username },
   [activeKey, authData],
-  async () => {
-    // the form is not mounted yet: the catch below would swallow the TypeError
-    // and lock the order button on this panel
-    if (!ioneForm.value) return;
-
-    try {
-      await ioneForm.value.validateFields();
-      validationPanels.value["os"] = false;
-    } catch (e) {
-      validationPanels.value["os"] = true;
-    }
-  },
-  { deep: true },
 );
 
 watch(

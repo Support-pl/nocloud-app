@@ -9,7 +9,7 @@
         >
           <template v-for="(panel, key) in panelsComponents" :key="key">
             <a-collapse-panel
-              v-if="panels[key].visible ?? true"
+              v-if="panelsKeys.includes(key)"
               :key="key"
               :force-render="cloudStore.provider ? true : false"
               :header="capitalize(panels[key].title)"
@@ -223,15 +223,15 @@ const panelsKeys = computed(() =>
     .map(([key]) => key)
 );
 
-const isAddonsExists = computed(() => {
-  return (
-    isPlansLoading.value ||
+// No isPlansLoading here: while plans load it would report the addons panel as
+// existing, making it the last panel, so the order button never showed up on os.
+const isAddonsExists = computed(
+  () =>
     !!(product.value?.addons || [])
       .concat(cloudStore.plan?.addons || [])
       .map((uuid) => addons.value.find((addon) => addon.uuid === uuid))
       .filter((a) => !!a).length
-  );
-});
+);
 
 watch(
   () => cloudStore.plan.type,

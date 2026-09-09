@@ -69,6 +69,7 @@ import { storeToRefs } from "pinia";
 import passwordMeter from "vue-simple-password-meter";
 
 import { useCloudStore } from "@/stores/cloud.js";
+import usePanelValidity from "@/hooks/cloud/panelValidity.js";
 import imagesList from "@/components/ui/images.vue";
 import { useAddonsStore } from "@/stores/addons";
 import { useCurrency } from "@/hooks/utils";
@@ -84,7 +85,7 @@ const props = defineProps({
 const i18n = useI18n();
 
 const cloudStore = useCloudStore();
-const { validationPanels, authData } = storeToRefs(cloudStore);
+const { authData } = storeToRefs(cloudStore);
 const { currency, formatPrice } = useCurrency();
 const { addons, loading } = storeToRefs(useAddonsStore());
 const { availability, isOsAvailable } = useVpsAvailability();
@@ -123,22 +124,7 @@ watch(
 );
 if (props.productSize) setImages();
 
-watch(
-  [activeKey, authData],
-  async () => {
-    // the form is not mounted yet: the catch below would swallow the TypeError
-    // and lock the order button on this panel
-    if (!ovhVpsForm.value) return;
-
-    try {
-      await ovhVpsForm.value.validateFields();
-      validationPanels.value["os"] = false;
-    } catch (e) {
-      validationPanels.value["os"] = true;
-    }
-  },
-  { deep: true },
-);
+usePanelValidity("os", () => rules, [activeKey, authData]);
 
 // the plan holds one product per billing period, keyed "<duration> <planCode>"
 function durationMode(duration) {
