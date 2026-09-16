@@ -382,6 +382,7 @@ const { getInstances } = storeToRefs(instancesStore);
 
 onBeforeRouteUpdate((to, from, next) => {
   appStore.setOnRefreshClick(reload);
+  chatsStore.resetSpeechPlayback();
 
   chatid.value = to.params.chatId;
   loadMessages();
@@ -634,42 +635,6 @@ function isBotSent(reply) {
   return reply.requestor_type !== "Owner";
 }
 
-const spokenUrls = new Set();
-const speechQueue = [];
-let speechAudio = null;
-let speechPlaying = false;
-
-function stopSpeech() {
-  speechQueue.length = 0;
-  speechPlaying = false;
-  if (speechAudio) {
-    speechAudio.pause();
-    speechAudio.src = "";
-    speechAudio = null;
-  }
-}
-
-function playNextSpeech() {
-  if (speechPlaying || !chatsStore.speakReplies) return;
-  const url = speechQueue.shift();
-  if (!url) return;
-  speechPlaying = true;
-  speechAudio = new Audio(url);
-  speechAudio.playbackRate = chatsStore.speechSpeed || 1;
-  speechAudio.play().catch(() => {
-    speechPlaying = false;
-    playNextSpeech();
-  });
-  speechAudio.onended = () => {
-    speechPlaying = false;
-    playNextSpeech();
-  };
-  speechAudio.onerror = () => {
-    speechPlaying = false;
-    playNextSpeech();
-  };
-}
-
 function speechPartIds(reply) {
   const raw = metaValue(reply?.meta, "speech_parts");
   if (Array.isArray(raw)) return raw.filter(Boolean);
@@ -684,46 +649,21 @@ watch(
   () => {
     const lastBot = [...visibleReplies.value].reverse().find(isBotSent);
     return {
-      enabled: chatsStore.speakReplies,
       uuid: lastBot?.uuid || "",
-      ids: speechPartIds(lastBot),
+      ids: speechPartIds(lastBot).join(","),
     };
   },
-  async ({ enabled, uuid, ids }, previous) => {
-    if (!enabled) {
-      stopSpeech();
+  ({ uuid, ids }, previous) => {
+    if (!chatsStore.speakReplies) {
+      chatsStore.stopSpeechPlayback();
       return;
     }
     if (previous?.uuid && previous.uuid !== uuid) {
-      stopSpeech();
-      spokenUrls.clear();
+      chatsStore.resetSpeechPlayback();
     }
-    const missing = ids.filter((id) => {
-      const file = chatsStore.attachments.get(id);
-      return !file || file === true;
-    });
-    if (missing.length) {
-      await chatsStore.fetch_attachments(missing);
-    }
-    ids.forEach((id) => {
-      const url = chatsStore.attachments.get(id)?.url;
-      if (!url || spokenUrls.has(url)) return;
-      spokenUrls.add(url);
-      speechQueue.push(url);
-    });
-    playNextSpeech();
-  },
-  { deep: true }
-);
-
-watch(
-  () => chatsStore.speechSpeed,
-  (speed) => {
-    if (speechAudio) speechAudio.playbackRate = speed || 1;
+    chatsStore.enqueueSpeech(ids ? ids.split(",") : []);
   }
 );
-
-onBeforeUnmount(stopSpeech);
 
 function isEditable(reply) {
   return reply.userid === authStore.userdata.uuid;
@@ -932,6 +872,7 @@ onBeforeUnmount(() => {
   removeScrollEventListner();
   clearTimeout(showTimeout);
   clearTimeout(hideTimeout);
+  chatsStore.resetSpeechPlayback();
 });
 
 watch(content, () => {
