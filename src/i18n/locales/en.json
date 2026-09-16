@@ -1175,6 +1175,8 @@
         "folder": "Folder",
         "folder_placeholder": "Work, ideas, no folder...",
         "voice_message": "Voice message",
+        "speak_replies": "Read aloud",
+        "speak_replies_tip": "The reply is written and spoken at the same time",
         "api_compatible_with_openai": "_Our API is compatible with OpenAI ([Learn more](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "default_model": {

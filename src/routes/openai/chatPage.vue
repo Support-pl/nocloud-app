@@ -114,6 +114,7 @@
                v-if="files[reply.uuid]?.length===1 && files[reply.uuid]?.[0]?.name.endsWith('.mp3')"
                 :url="files[reply.uuid][0]?.url"
                   :name="files[reply.uuid][0]?.name"
+                  :autoplay="shouldAutoplayReply(reply, i)"
               />
               <div 
                v-if="files[reply.uuid]?.length===1 && files[reply.uuid]?.[0]?.name.endsWith('.mp4')"
@@ -731,6 +732,14 @@ function getModel(reply) {
   return "";
 }
 
+function shouldAutoplayReply(reply, index) {
+  return (
+    chatsStore.speakReplies &&
+    isBotSent(reply) &&
+    index === visibleReplies.value.length - 1
+  );
+}
+
 function getPlaceholderType(reply) {
   var type = reply?.meta?.mode?.kind?.value || "default";
   if (type === "default") {
@@ -739,8 +748,10 @@ function getPlaceholderType(reply) {
     return "image";
   } else if (type === "video") {
     return "video";
-  } else if (type === "speech" || type === "transcribe") {
+  } else if (type === "speech") {
     return "audio";
+  } else if (type === "transcribe") {
+    return chatsStore.speakReplies ? "text" : "audio";
   }
 
   return "text";

@@ -33,9 +33,15 @@
 <script setup>
 import { downloadFile } from "@/functions";
 import VueAudioPlayer from "@liripeng/vue-audio-player";
-import { computed, defineAsyncComponent } from "vue";
-const props = defineProps(["url", "name"]);
+import { computed, defineAsyncComponent, nextTick, ref, watch } from "vue";
 
+const props = defineProps({
+  url: { type: String, default: "" },
+  name: { type: String, default: "" },
+  autoplay: { type: Boolean, default: false },
+});
+
+const audioPlayer = ref();
 const downloadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DownloadOutlined")
 );
@@ -46,6 +52,22 @@ const audioList = computed(() => [
     title: props.name,
   },
 ]);
+
+watch(
+  () => [props.url, props.autoplay],
+  async ([src, shouldPlay]) => {
+    if (!shouldPlay || !src) return;
+    await nextTick();
+    const player = audioPlayer.value;
+    if (typeof player?.play === "function") {
+      player.play();
+      return;
+    }
+    const el = player?.$el?.querySelector?.("audio") || player?.audio;
+    el?.play?.().catch(() => {});
+  },
+  { immediate: true }
+);
 </script>
 
 <style>

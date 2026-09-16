@@ -158,10 +158,10 @@ async function sendChatMessage(result, chatId) {
     account: authStore.userdata.uuid,
     date: BigInt(result.date),
     attachments: files.map(({ uuid }) => uuid),
-    meta: buildMessageMeta(
-      sendAdvancedOptions.value,
-      pendingVoiceMeta.value.splice(0)
-    ),
+    meta: buildMessageMeta(sendAdvancedOptions.value, [
+      { key: "speak_reply", value: chatsStore.speakReplies },
+      ...pendingVoiceMeta.value.splice(0),
+    ]),
   };
   sendAdvancedOptions.value.checked = "default";
 
@@ -217,10 +217,7 @@ async function toggleMic() {
       ];
       message.value = t("openai.labels.voice_message");
       sendAdvancedOptions.value.checked = "default";
-      pendingVoiceMeta.value = [
-        { key: "mode", value: "transcribe" },
-        { key: "speak_reply", value: true },
-      ];
+      pendingVoiceMeta.value = [{ key: "mode", value: "transcribe" }];
       await createChatAndRedirect();
     };
     mediaRecorder.start();

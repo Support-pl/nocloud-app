@@ -70,6 +70,10 @@ export function buildMessageMeta(options = {}, extra = []) {
     meta.push({ key: "model", value: options.model });
   }
 
+  if (options.speak_reply) {
+    meta.push({ key: "speak_reply", value: true });
+  }
+
   extra.forEach((item) => {
     const index = meta.findIndex((entry) => entry.key === item.key);
     if (index >= 0) meta[index] = item;
