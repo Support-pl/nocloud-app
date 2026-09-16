@@ -29,6 +29,26 @@
   </div>
 
   <div style="margin-bottom: 16px">
+    <div style="margin-bottom: 8px">{{ t("openai.labels.speak_replies") }}</div>
+    <a-switch
+      :checked="chatsStore.speakReplies"
+      @update:checked="chatsStore.setSpeakReplies"
+    />
+  </div>
+
+  <div style="margin-bottom: 16px">
+    <div style="margin-bottom: 8px">{{ t("openai.labels.speech_speed") }}</div>
+    <a-slider
+      :min="0.75"
+      :max="2"
+      :step="0.25"
+      :marks="speechSpeedMarks"
+      :value="chatsStore.speechSpeed"
+      @update:value="chatsStore.setSpeechSpeed"
+    />
+  </div>
+
+  <div style="margin-bottom: 16px">
     <div style="margin-bottom: 8px">{{ capitalize(t("model")) }}</div>
     <model-bar
       :model="selectedModel"
@@ -209,6 +229,12 @@ const options = computed(() => {
 
 const prompts = ref([]);
 const promptsOptions = ref([]);
+
+const speechSpeedMarks = computed(() => ({
+  0.75: t("openai.labels.speech_speed_slow"),
+  1: t("openai.labels.speech_speed_normal"),
+  2: t("openai.labels.speech_speed_fast"),
+}));
 
 const folderOptions = computed(() => {
   const names = new Set();

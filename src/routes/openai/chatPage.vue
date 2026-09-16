@@ -111,24 +111,22 @@
               <pre>
               <message-content :uuid="reply.uuid" :message="reply.message"/>
               <audio-player
-               v-if="files[reply.uuid]?.length===1 && files[reply.uuid]?.[0]?.name.endsWith('.mp3')"
-                :url="files[reply.uuid][0]?.url"
-                  :name="files[reply.uuid][0]?.name"
-                  :autoplay="shouldAutoplayReply(reply, i)"
+               v-if="visibleAudioFiles(reply).length"
+                :tracks="visibleAudioFiles(reply)"
               />
               <div 
-               v-if="files[reply.uuid]?.length===1 && files[reply.uuid]?.[0]?.name.endsWith('.mp4')"
+               v-if="videoFile(reply)"
               >
                 <div class="relative">
                   <video
                     ref="videoRef"
-                    :src="files[reply.uuid][0]?.url"
+                    :src="videoFile(reply).url"
                     controls
                     class="video"
                   />
                 </div>
               </div>
-             <message-files v-else :files="files[reply.uuid]"/>
+             <message-files v-if="otherFiles(reply).length" :files="otherFiles(reply)"/>
               
             </pre>
 
@@ -636,6 +634,97 @@ function isBotSent(reply) {
   return reply.requestor_type !== "Owner";
 }
 
+const spokenUrls = new Set();
+const speechQueue = [];
+let speechAudio = null;
+let speechPlaying = false;
+
+function stopSpeech() {
+  speechQueue.length = 0;
+  speechPlaying = false;
+  if (speechAudio) {
+    speechAudio.pause();
+    speechAudio.src = "";
+    speechAudio = null;
+  }
+}
+
+function playNextSpeech() {
+  if (speechPlaying || !chatsStore.speakReplies) return;
+  const url = speechQueue.shift();
+  if (!url) return;
+  speechPlaying = true;
+  speechAudio = new Audio(url);
+  speechAudio.playbackRate = chatsStore.speechSpeed || 1;
+  speechAudio.play().catch(() => {
+    speechPlaying = false;
+    playNextSpeech();
+  });
+  speechAudio.onended = () => {
+    speechPlaying = false;
+    playNextSpeech();
+  };
+  speechAudio.onerror = () => {
+    speechPlaying = false;
+    playNextSpeech();
+  };
+}
+
+function speechPartIds(reply) {
+  const raw = metaValue(reply?.meta, "speech_parts");
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  if (!raw) return [];
+  return String(raw)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+watch(
+  () => {
+    const lastBot = [...visibleReplies.value].reverse().find(isBotSent);
+    return {
+      enabled: chatsStore.speakReplies,
+      uuid: lastBot?.uuid || "",
+      ids: speechPartIds(lastBot),
+    };
+  },
+  async ({ enabled, uuid, ids }, previous) => {
+    if (!enabled) {
+      stopSpeech();
+      return;
+    }
+    if (previous?.uuid && previous.uuid !== uuid) {
+      stopSpeech();
+      spokenUrls.clear();
+    }
+    const missing = ids.filter((id) => {
+      const file = chatsStore.attachments.get(id);
+      return !file || file === true;
+    });
+    if (missing.length) {
+      await chatsStore.fetch_attachments(missing);
+    }
+    ids.forEach((id) => {
+      const url = chatsStore.attachments.get(id)?.url;
+      if (!url || spokenUrls.has(url)) return;
+      spokenUrls.add(url);
+      speechQueue.push(url);
+    });
+    playNextSpeech();
+  },
+  { deep: true }
+);
+
+watch(
+  () => chatsStore.speechSpeed,
+  (speed) => {
+    if (speechAudio) speechAudio.playbackRate = speed || 1;
+  }
+);
+
+onBeforeUnmount(stopSpeech);
+
 function isEditable(reply) {
   return reply.userid === authStore.userdata.uuid;
 }
@@ -732,12 +821,37 @@ function getModel(reply) {
   return "";
 }
 
-function shouldAutoplayReply(reply, index) {
-  return (
-    chatsStore.speakReplies &&
-    isBotSent(reply) &&
-    index === visibleReplies.value.length - 1
+function isVoiceReplyFile(file) {
+  const name = file?.name?.toLowerCase?.() || "";
+  return name === "reply.mp3" || /^reply-\d+\.mp3$/.test(name);
+}
+
+function audioFiles(reply) {
+  return (files.value[reply?.uuid] || []).filter((file) =>
+    file?.name?.toLowerCase?.().endsWith(".mp3")
   );
+}
+
+function visibleAudioFiles(reply) {
+  return audioFiles(reply).filter((file) => !isVoiceReplyFile(file));
+}
+
+function videoFile(reply) {
+  const items = files.value[reply.uuid] || [];
+  if (items.length === 1 && items[0]?.name?.toLowerCase?.().endsWith(".mp4")) {
+    return items[0];
+  }
+  return null;
+}
+
+function otherFiles(reply) {
+  return (files.value[reply.uuid] || []).filter((file) => {
+    const name = file?.name?.toLowerCase?.() || "";
+    return (
+      !name.endsWith(".mp4") &&
+      !name.endsWith(".mp3")
+    );
+  });
 }
 
 function getPlaceholderType(reply) {
