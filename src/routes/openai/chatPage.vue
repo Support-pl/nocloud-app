@@ -5,14 +5,12 @@
         v-if="chat"
         :class="{ chat__subheader: true, chats_opened: !isChatMenuClosed }"
       >
-        <a-tag color="primary" class="chat__subheader_model">
-          <template #icon>
-            <ai-icon />
-          </template>
-          <span style="margin-inline-start: 0px">
-            {{ model }}
-          </span>
-        </a-tag>
+        <model-bar
+          class="chat__subheader_models"
+          :model="chatModelKey"
+          @update:model="changeChatModel"
+          :models="globalModelsList"
+        />
 
         <a-button shape="circle" size="large" @click="isSettingsVisible = true">
           <template #icon>
@@ -71,8 +69,8 @@
 
     <div v-else class="chat__container" ref="content">
       <div :class="{ chat__content: true, chats_opened: !isChatMenuClosed }">
-        <template v-for="(reply, i) in replies" :key="i">
-          <span v-if="isDateVisible(replies, i)" class="chat__date">
+        <template v-for="(reply, i) in visibleReplies" :key="reply.uuid || i">
+          <span v-if="isDateVisible(visibleReplies, i)" class="chat__date">
             {{ reply.date.split(" ")[0] }}
           </span>
 
@@ -93,6 +91,13 @@
                 @click="footer.changeEditing(reply)"
               >
                 <edit-icon /> {{ capitalize($t("edit")) }}
+              </div>
+              <div
+                v-if="isBotSent(reply)"
+                style="cursor: pointer; margin-top: 5px"
+                @click="regenerateReply(reply)"
+              >
+                <reload-icon /> {{ $t("openai.actions.regenerate") }}
               </div>
             </template>
 
@@ -127,7 +132,7 @@
             </pre>
 
               <div class="chat__info">
-                <span>{{ getModel(replies[i - 1]) }}</span>
+                <span>{{ replyCostLabel(reply) || getModel(reply) || getModel(visibleReplies[i - 1]) }}</span>
                 <span>{{ reply.date.slice(-8, -3) }}</span>
               </div>
 
@@ -151,7 +156,7 @@
 
         <typing-placeholder
           v-if="isPlaceholderVisible"
-          :type="getPlaceholderType(replies.at(-1))"
+          :type="getPlaceholderType(visibleReplies.at(-1))"
         />
         <div style="height: 250px"></div>
       </div>
@@ -230,8 +235,13 @@
           </div>
         </template>
 
-        <template v-if="!isChatMenuClosed" v-for="item of chats">
+        <template v-if="!isChatMenuClosed" v-for="group of groupedChats" :key="group.name">
+          <div v-if="group.name" class="chats_folder">
+            {{ group.name }}
+          </div>
           <ticket-item
+            v-for="item of group.items"
+            :key="item.id"
             :ticket="item"
             :instance-id="instanceId"
             :style="item.id == chatid ? 'filter: contrast(0.8)' : null"
@@ -279,6 +289,7 @@ import {
   h,
   onBeforeUnmount,
   onMounted,
+  capitalize,
 } from "vue";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { Status } from "@/libs/cc_connect/cc_pb";
@@ -297,7 +308,14 @@ import { useAppStore } from "@/stores/app";
 import TicketItem from "@/components/openai-chats/ticketItem.vue";
 import CreateChat from "@/components/openai-chats/createChat.vue";
 import ChatSettings from "@/components/openai-chats/chatSettings.vue";
+import ModelBar from "@/components/openai-chats/modelBar.vue";
+import {
+  formatTokens,
+  isHiddenReply,
+  metaValue,
+} from "@/components/openai-chats/helpers.js";
 import { marked } from "marked";
+import { useCurrency } from "@/hooks/utils";
 
 const exclamationIcon = defineAsyncComponent(
   () => import("@ant-design/icons-vue/ExclamationCircleOutlined"),
@@ -347,6 +365,9 @@ const openFullscreanIcon = defineAsyncComponent(
 const closeFullscreanIcon = defineAsyncComponent(
   () => import("@ant-design/icons-vue/FullscreenExitOutlined"),
 );
+const reloadIcon = defineAsyncComponent(
+  () => import("@ant-design/icons-vue/ReloadOutlined"),
+);
 
 const route = useRoute();
 const router = useRouter();
@@ -375,15 +396,20 @@ const isSettingsVisible = ref(false);
 const chatid = ref(route.params.chatId);
 const searchString = ref("");
 const isPlaceholderVisible = ref(false);
+const chatPaddingTop = ref(0);
 
-const isChatMenuClosed = ref(false);
+const isChatMenuClosed = ref(
+  localStorage.getItem("openai_chat_menu_closed") === "true" ||
+    window.innerWidth < 768
+);
+const { currency, formatPrice } = useCurrency();
 
 const content = ref();
 const chatList = ref();
 const footer = ref();
 
 onMounted(() => {
-  if (window.innerWidth < 768) {
+  if (window.innerWidth < 768 && localStorage.getItem("openai_chat_menu_closed") == null) {
     isChatMenuClosed.value = true;
   }
 });
@@ -413,7 +439,21 @@ const chats = computed(() => {
 
     const string = searchString.value.toLowerCase();
     const topic = ticket.topic?.toLowerCase() ?? "";
-    if (!topic.includes(string) && string !== "") return;
+    const folder = ticket.meta.data?.folder?.kind?.value?.toLowerCase() ?? "";
+    const lastMessage =
+      chatsStore.messages[ticket.uuid]?.replies?.[
+        chatsStore.messages[ticket.uuid]?.replies?.length - 1
+      ]?.message ||
+      ticket.meta.lastMessage?.content ||
+      "";
+    if (
+      string &&
+      !topic.includes(string) &&
+      !folder.includes(string) &&
+      !String(lastMessage).toLowerCase().includes(string)
+    ) {
+      return;
+    }
 
     const isReaded = ticket.meta.lastMessage?.readers.includes(uuid);
 
@@ -436,6 +476,7 @@ const chats = computed(() => {
         .join(" "),
       unread: isReaded ? 0 : ticket.meta.unread,
       model,
+      folder: ticket.meta.data?.folder?.kind?.value || "",
       attachments: ticket.meta.lastMessage?.attachments ?? [],
     };
     result.push(value);
@@ -444,6 +485,26 @@ const chats = computed(() => {
   result.sort((a, b) => b.date - a.date);
 
   return result;
+});
+
+const visibleReplies = computed(() =>
+  replies.value.filter((reply) => !isHiddenReply(reply)),
+);
+
+const groupedChats = computed(() => {
+  const groups = new Map();
+  chats.value.forEach((item) => {
+    const name = item.folder || "";
+    if (!groups.has(name)) groups.set(name, []);
+    groups.get(name).push(item);
+  });
+  return [...groups.entries()]
+    .sort((a, b) => {
+      if (!a[0]) return 1;
+      if (!b[0]) return -1;
+      return a[0].localeCompare(b[0]);
+    })
+    .map(([name, items]) => ({ name, items }));
 });
 
 const files = computed(() =>
@@ -464,15 +525,26 @@ const files = computed(() =>
   }, {}),
 );
 
-const model = computed(() => {
-  return (
-    globalModelsList.value.find(
-      (model) => model.key === chat.value?.meta?.data?.model?.kind?.value,
-    )?.name || chat.value?.meta?.data?.model?.kind?.value
-  );
-});
+const chatModelKey = computed(
+  () => chat.value?.meta?.data?.model?.kind?.value || "",
+);
+
+async function changeChatModel(value) {
+  if (!chat.value) return;
+  await chatsStore.editChat({
+    ...chat.value,
+    meta: {
+      ...chat.value.meta,
+      data: { ...chat.value.meta.data, model: value },
+    },
+  });
+}
 
 const isFullScreanChat = computed(() => route.query.fullscreen === "true");
+
+watch(isChatMenuClosed, (value) => {
+  localStorage.setItem("openai_chat_menu_closed", String(value));
+});
 
 watch(
   chats,
@@ -571,7 +643,7 @@ async function loadMessages(update) {
   const result = chatsStore.messages[chatid.value];
 
   if (!update && result) {
-    replies.value = result.replies ?? [];
+    replies.value = (result.replies ?? []).filter((reply) => !isHiddenReply(reply));
 
     scrollToBottom(100);
 
@@ -585,7 +657,9 @@ async function loadMessages(update) {
   try {
     const response = await chatsStore.fetchMessages(chatid.value);
 
-    replies.value = response.replies ?? [];
+    replies.value = (response.replies ?? []).filter(
+      (reply) => !isHiddenReply(reply),
+    );
 
     replies.value.sort((a, b) => Number(a.sent - b.sent));
     chatsStore.messages[chatid.value] = response;
@@ -619,8 +693,30 @@ function deleteMessage(message) {
 
 function resendMessage(reply) {
   deleteMessage(reply);
-  footer.value.message = reply.message;
-  footer.value.sendMessage();
+  footer.value?.setMessage?.(reply.message);
+  footer.value?.sendMessage?.();
+}
+
+function regenerateReply(reply) {
+  footer.value?.regenerateFrom?.(reply);
+}
+
+function replyCostLabel(reply) {
+  if (!isBotSent(reply)) return "";
+  const modelName =
+    globalModelsList.value.find(
+      (item) => item.key === metaValue(reply.meta, "model"),
+    )?.name || metaValue(reply.meta, "model");
+  const tokens = formatTokens(metaValue(reply.meta, "tokens"));
+  const cost = metaValue(reply.meta, "cost");
+  const parts = [];
+  if (modelName) parts.push(modelName);
+  if (tokens) parts.push(`${tokens} tok`);
+  if (cost != null && cost !== "") {
+    const converted = Number(cost) * (currency.value.rate || 1);
+    parts.push(`${formatPrice(converted)} ${currency.value.title || ""}`.trim());
+  }
+  return parts.join(" · ");
 }
 
 function getModel(reply) {
@@ -643,7 +739,7 @@ function getPlaceholderType(reply) {
     return "image";
   } else if (type === "video") {
     return "video";
-  } else if (type === "speech") {
+  } else if (type === "speech" || type === "transcribe") {
     return "audio";
   }
 
@@ -973,6 +1069,8 @@ export default { name: "OpenaiChat" };
   z-index: 100;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
+  max-width: min(70vw, 760px);
 }
 
 .chat__subheader_model {
@@ -984,5 +1082,18 @@ export default { name: "OpenaiChat" };
   height: 30px;
   margin-right: 10px;
   background-color: var(--bright_font);
+}
+
+.chat__subheader_models {
+  margin-right: 10px;
+}
+
+.chats_folder {
+  padding: 8px 12px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 </style>

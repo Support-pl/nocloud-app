@@ -4,24 +4,27 @@
       <div class="chat__footer">
         <send-input
           :send-loading="isSendMessageLoading"
+          :generating="isGenerating"
+          :recording="isRecording"
+          show-mic
           :editing="editing"
           @update:editing="editing = $event"
           :message="message"
           @update:message="message = $event"
           :replies="replies"
           @send-message="sendMessage"
+          @stop="stopGeneration"
+          @toggle-mic="toggleMic"
           :file-list="fileList"
           @update:filelist="fileList = $event"
           ref="sendinput"
-          :placeholder="
-            $t(`openai.prompts.${sendAdvancedOptions.checked}.placeholder`)
-          "
+          :placeholder="composerPlaceholder"
         >
           <template #right-menu>
             <chat-generation-menu
               :options="sendAdvancedOptions"
               @update:options="sendAdvancedOptions[$event.key] = $event.value"
-              :is-send-message-loading="isSendMessageLoading"
+              :is-send-message-loading="isSendMessageLoading || isGenerating"
             />
           </template>
         </send-input>
@@ -31,7 +34,7 @@
 </template>
 
 <script setup>
-import { nextTick, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import SendInput from "../chats/sendInput.vue";
@@ -40,6 +43,7 @@ import { useChatsStore } from "@/stores/chats.js";
 import { useNotification } from "@/hooks/utils";
 import { beautufyMessage, toDate } from "@/functions.js";
 import ChatGenerationMenu from "./chatGenerationMenu.vue";
+import { buildMessageMeta } from "./helpers.js";
 import markdown from "markdown-it";
 import { full as emoji } from "markdown-it-emoji";
 
@@ -70,6 +74,7 @@ const fileList = ref([]);
 const message = ref("");
 const isSendMessageLoading = ref(false);
 const editing = ref(null);
+const isRecording = ref(false);
 
 const sendAdvancedOptions = ref({
   checked: "default",
@@ -78,14 +83,28 @@ const sendAdvancedOptions = ref({
   model: "",
 });
 
-function updateReplies() {
+let mediaRecorder = null;
+let recordedChunks = [];
+
+const isGenerating = computed(() =>
+  chatsStore.isChatGenerating(props.ticket?.uuid)
+);
+
+const composerPlaceholder = computed(() => {
+  if (isRecording.value) {
+    return i18n.t("openai.prompts.transcribe.recording");
+  }
+  return i18n.t(`openai.prompts.${sendAdvancedOptions.value.checked}.placeholder`);
+});
+
+function updateReplies(content) {
   const result = {
     admin: "",
     attachment: "",
     contactid: "0",
     date: Date.now(),
     email: authStore.userdata.data?.email ?? "none",
-    message: beautufyMessage(md, message.value),
+    message: content,
     name: authStore.userdata.title,
     userid: authStore.userdata.uuid,
     sending: true,
@@ -101,7 +120,7 @@ function updateReplies() {
   return { replies, result };
 }
 
-async function sendChatMessage(result, replies) {
+async function sendChatMessage(result, replies, extraMeta = []) {
   await nextTick();
 
   isSendMessageLoading.value = true;
@@ -111,39 +130,18 @@ async function sendChatMessage(result, replies) {
       fileList.value,
       props.ticket.uuid
     );
-    const message = {
+    const payload = {
       uuid: props.ticket.uuid,
       content: result.message,
       account: result.userid,
       date: BigInt(result.date),
       attachments: files.map(({ uuid }) => uuid),
-      meta: [{ key: "mode", value: sendAdvancedOptions.value.checked }],
+      meta: buildMessageMeta(sendAdvancedOptions.value, extraMeta),
     };
 
-    if (sendAdvancedOptions.value.checked === "generate") {
-      message.meta.push(
-        { key: "size", value: sendAdvancedOptions.value.size },
-        { key: "quality", value: sendAdvancedOptions.value.quality }
-      );
-    }
-
-    if (sendAdvancedOptions.value.checked === "video") {
-      message.meta.push(
-        { key: "duration", value: sendAdvancedOptions.value.duration },
-        { key: "with_audio", value: sendAdvancedOptions.value.with_audio },
-        { key: "aspect_ratio", value: sendAdvancedOptions.value.aspect_ratio }
-      );
-    }
-
-    if (sendAdvancedOptions.value.checked !== "default") {
-      message.meta.push({
-        key: "model",
-        value: sendAdvancedOptions.value.model,
-      });
-    }
     sendAdvancedOptions.value.checked = "default";
 
-    const { uuid } = await chatsStore.sendMessage(message);
+    const { uuid } = await chatsStore.sendMessage(payload);
 
     replies[replies.length - 1].uuid = uuid;
     emits("update:replies", replies);
@@ -156,9 +154,21 @@ async function sendChatMessage(result, replies) {
 }
 
 async function sendMessage() {
-  if (message.value.trim().length < 1) return;
+  if (isGenerating.value) {
+    await stopGeneration();
+    return;
+  }
 
-  const { replies, result } = updateReplies();
+  const text = message.value.trim();
+  if (text.length < 1 && fileList.value.length < 1) return;
+
+  if (editing.value) {
+    await applyEditAndRegenerate(editing.value, text);
+    return;
+  }
+
+  const content = beautufyMessage(md, text || " ");
+  const { replies, result } = updateReplies(content);
   await sendChatMessage(result, replies);
 
   message.value = "";
@@ -166,11 +176,139 @@ async function sendMessage() {
   editing.value = null;
 }
 
+async function applyEditAndRegenerate(uuid, text) {
+  isSendMessageLoading.value = true;
+  try {
+    const content = beautufyMessage(md, text);
+    await chatsStore.editMessage({ uuid, content });
+
+    const replies = props.replies.map((reply) =>
+      reply.uuid === uuid ? { ...reply, message: content } : reply
+    );
+    emits("update:replies", replies);
+
+    await chatsStore.sendMessage({
+      uuid: props.ticket.uuid,
+      content: " ",
+      account: authStore.userdata.uuid,
+      date: BigInt(Date.now()),
+      attachments: [],
+      meta: [
+        { key: "mode", value: "regenerate" },
+        { key: "from", value: uuid },
+        { key: "hidden", value: true },
+      ],
+    });
+
+    message.value = "";
+    editing.value = null;
+  } catch (error) {
+    openNotification("error", {
+      message: error.message || i18n.t("openai.errors.create_failed"),
+    });
+  } finally {
+    isSendMessageLoading.value = false;
+  }
+}
+
+async function regenerateFrom(reply) {
+  const replies = props.replies;
+  const index = replies.findIndex((item) => item.uuid === reply.uuid);
+  const previousUser = [...replies]
+    .slice(0, index === -1 ? replies.length : index)
+    .reverse()
+    .find((item) => item.userid === authStore.userdata.uuid);
+
+  if (!previousUser) return;
+
+  await chatsStore.sendMessage({
+    uuid: props.ticket.uuid,
+    content: " ",
+    account: authStore.userdata.uuid,
+    date: BigInt(Date.now()),
+    attachments: [],
+    meta: [
+      { key: "mode", value: "regenerate" },
+      { key: "from", value: previousUser.uuid },
+      { key: "hidden", value: true },
+    ],
+  });
+}
+
+async function stopGeneration() {
+  if (!props.ticket?.uuid) return;
+  try {
+    await chatsStore.stopGeneration(props.ticket.uuid);
+  } catch (error) {
+    openNotification("error", { message: error.message });
+  }
+}
+
+async function toggleMic() {
+  if (isRecording.value) {
+    mediaRecorder?.stop();
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) recordedChunks.push(event.data);
+    };
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach((track) => track.stop());
+      isRecording.value = false;
+      const blob = new Blob(recordedChunks, {
+        type: mediaRecorder?.mimeType || "audio/webm",
+      });
+      if (blob.size < 1) return;
+      const file = new File([blob], "voice.webm", { type: blob.type });
+      await sendVoice(file);
+    };
+    mediaRecorder.start();
+    isRecording.value = true;
+  } catch (error) {
+    openNotification("error", {
+      message: i18n.t("openai.errors.microphone"),
+    });
+  }
+}
+
+async function sendVoice(file) {
+  fileList.value = [file];
+  const content = beautufyMessage(md, i18n.t("openai.labels.voice_message"));
+  const { replies, result } = updateReplies(content);
+  await sendChatMessage(result, replies, [
+    { key: "mode", value: "transcribe" },
+    { key: "speak_reply", value: true },
+  ]);
+  message.value = "";
+  fileList.value = [];
+}
+
 function changeEditing(d) {
   sendinput.value.changeEditing(d);
 }
 
-defineExpose({ changeEditing });
+function setMessage(value) {
+  message.value = value;
+}
+
+onBeforeUnmount(() => {
+  if (isRecording.value) {
+    mediaRecorder?.stop();
+  }
+});
+
+defineExpose({
+  changeEditing,
+  sendMessage,
+  setMessage,
+  stopGeneration,
+  regenerateFrom,
+});
 </script>
 
 <script>

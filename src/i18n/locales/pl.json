@@ -1165,6 +1165,14 @@
         "generate_video": "Generuj wideo",
         "generate_image": "Generuj obraz",
         "generate_audio": "Generuj audio",
+        "price": "Cena",
+        "cheaper": "Taniej",
+        "smarter": "Mądrzej",
+        "balance": "Saldo",
+        "chat_title": "Tytuł czatu",
+        "folder": "Folder",
+        "folder_placeholder": "Praca, pomysły, bez folderu...",
+        "voice_message": "Wiadomość głosowa",
         "api_compatible_with_openai": "_Nasze API jest kompatybilne z OpenAI ([Dowiedz się więcej](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "default_model": {
@@ -1197,10 +1205,15 @@
         },
         "video": {
           "placeholder": "Opisz możliwie szczegółowo scenariusz swojego wideo. Na przykład: \"Pies biegnący przez pole, wiatr rozwiewa sierść, zwolnione tempo, realistyczny styl\" lub \"Statek kosmiczny lecący przez mgłę z niebieskim blaskiem, styl sci-fi\""
+        },
+        "transcribe": {
+          "placeholder": "Kliknij mikrofon, powiedz prośbę — transkrybujemy, odpowiemy i odczytamy odpowiedź",
+          "recording": "Słucham… kliknij mikrofon, aby wysłać"
         }
       },
       "errors": {
-        "create_failed": "Nie udało się utworzyć nowej rozmowy. Spróbuj ponownie później."
+        "create_failed": "Nie udało się utworzyć nowej rozmowy. Spróbuj ponownie później.",
+        "microphone": "Brak dostępu do mikrofonu. Sprawdź uprawnienia przeglądarki."
       },
       "payment_types": {
         "text_input": "Cena za 1 mln tokenów wejściowych",
@@ -1285,7 +1298,10 @@
         "generate_text": "tekst",
         "generate_image": "obraz",
         "generate_audio": "audio",
-        "generate_video": "wideo"
+        "generate_video": "wideo",
+        "regenerate": "Wygeneruj ponownie",
+        "voice": "Głos",
+        "stop_record": "Zatrzymaj nagrywanie"
       }
     },
     "Domains": "Domeny",
