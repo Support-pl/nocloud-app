@@ -1,5 +1,9 @@
 {
   "en": {
+    "Answer": "Answer",
+    "Change answer": "Change answer",
+    "Pick an answer": "Pick an answer",
+    "Your answer is saved, you can change it": "Your answer is saved, you can change it",
     "localePrefix": "en",
     "localeLang": "English",
     "locale": "english",
@@ -739,6 +743,7 @@
     "resolution": "resolution",
     "quality": "quality",
     "ticketStatus": {
+      "Onboarding": "Notification",
       "Closed": "Closed",
       "Close-Ticket": "Close ticket",
       "Customer-Reply": "Customer reply",
@@ -810,6 +815,12 @@
         "inject_account_tip": "For account-scoped servers (NoCloud service mode): the resolved customer account is sent with each call and hidden from the model. Leave off for ordinary servers.",
         "enabled": "Enabled",
         "add_server": "Add MCP server"
+      },
+      "otus": {
+        "title": "Otus",
+        "on": "on",
+        "use": "Otus answers",
+        "use_tip": "The bot stops thinking for itself: the customer's line goes to Otus as written, and Otus decides what to answer from its own knowledge base.\nThe prompt, role, knowledge bases and flow on this page do nothing while this is on.\nWhen Otus writes nothing to the customer, the chat goes to a human.\nThe operator copilot, when it is on, answers through Otus too."
       },
       "admin_flow": {
         "title": "Operator copilot (admin flow)",
@@ -1119,7 +1130,8 @@
         "qa_knowledge_base": "Question - Answer",
         "knowledge_integrations": "Connected Data",
         "knowledge_file_search": "Smart Files (Vectorized)",
-        "knowledge_site_search": "Connected Sites"
+        "knowledge_site_search": "Connected Sites",
+        "import_qa_invalid": "Could not read the file: expected JSON with a list of question/answer records."
       },
       "diff": {
         "added": "New",
@@ -1147,7 +1159,9 @@
         "create_site_search_knowledge": "Add site",
         "import_site_search_knowledge": "Add to QA",
         "delete_import": "Delete",
-        "open_import": "View Data"
+        "open_import": "View Data",
+        "export_qa": "Export",
+        "import_qa": "Import"
       }
     },
     "openai": {
@@ -1357,7 +1371,8 @@
       "5": "Customer reply",
       "6": "Waiting for reply",
       "7": "On hold",
-      "8": "In progress"
+      "8": "In progress",
+      "9": "Notification"
     },
     "virtual": "virtual",
     "ssl": "SSL",

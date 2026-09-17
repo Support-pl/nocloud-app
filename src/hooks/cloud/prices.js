@@ -200,9 +200,12 @@ function useCloudPrices(
       (product) => product.public
     );
     const product = getProduct(plan);
+    // getProduct already resolved the product by key. Looking it up again by title
+    // is wrong: an hCPU/non-hCPU pair shares a title, so find would return either.
     const value =
       activeKey.value !== "location"
-        ? values.find(({ title }) => title === product.title)
+        ? values.find((p) => p === product) ??
+          values.find(({ title }) => title === product.title)
         : product;
 
     if (!value) return 0;

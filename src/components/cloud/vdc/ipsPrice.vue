@@ -26,6 +26,7 @@
 <script setup>
 import { computed, defineAsyncComponent } from "vue";
 import { useInstancesStore } from "@/stores/instances.js";
+import { aliasType } from "@/functions.js";
 import { useCurrency } from "@/hooks/utils";
 
 const dollarIcon = defineAsyncComponent(() =>
@@ -66,7 +67,7 @@ const ipsQuantity = computed(() => {
   instancesStore.services.forEach((service) => {
     service.instancesGroups.forEach((group) => {
       group.instances.forEach((inst) => {
-        if (group.type !== "ione") return;
+        if (aliasType(group.type) !== "ione") return;
         if (props.selected && props.selected !== group.uuid) return;
 
         result.push(inst.resources.ips_public);

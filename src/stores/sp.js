@@ -2,7 +2,7 @@ import { computed, ref, watch } from "vue";
 import { defineStore } from "pinia";
 import api from "@/api.js";
 import { useRoute } from "vue-router";
-import { isUUUID } from "@/functions.js";
+import { aliasEntity, isUUUID } from "@/functions.js";
 
 export const useSpStore = defineStore("sp", () => {
   const route = useRoute();
@@ -118,7 +118,7 @@ export const useSpStore = defineStore("sp", () => {
         isLoading.value = true;
         const response = await api.servicesProviders.list({ anonymously });
 
-        servicesProviders.value = response.pool;
+        servicesProviders.value = response.pool.map(aliasEntity);
         return response;
       } catch (error) {
         console.error(error);

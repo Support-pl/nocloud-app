@@ -240,8 +240,32 @@
         <a-switch v-model:checked="bot.settings.enable_spam_filter" />
       </a-col>
 
+      <!-- Otus answers instead of this bot: the prompt, the knowledge bases and
+           the flow below stop being used, so they are hidden while it is on. -->
       <a-col
         v-if="hasChatChannel"
+        span="24"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 10px;
+        "
+      >
+        <span class="field_title"
+          >{{ t("bots.otus.use") }}:
+          <a-tooltip>
+            <template #title>
+              <span v-html="t('bots.otus.use_tip').replaceAll('\n', '<br/>')" />
+            </template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-switch v-model:checked="useOtus" />
+      </a-col>
+
+      <a-col
+        v-if="hasChatChannel && !useOtus"
         span="24"
         style="
           display: flex;
@@ -263,7 +287,7 @@
       </a-col>
 
       <!-- Flow replaces the general prompt/role, so hide them when it's on -->
-      <a-col v-if="!useFlow" span="24">
+      <a-col v-if="!useFlow && !useOtus" span="24">
         <span class="field_title"
           >{{ t("bots.fields.role") }}:
 
@@ -284,7 +308,7 @@
         />
       </a-col>
 
-      <a-col v-if="!useFlow" span="24">
+      <a-col v-if="!useFlow && !useOtus" span="24">
         <span class="field_title"
           >{{ t("bots.fields.promt") }}:
 
@@ -319,7 +343,7 @@
         <p class="admin_flow__hint">{{ t("bots.reply_rules.hint") }}</p>
       </a-col>
 
-      <a-col v-if="useFlow" span="24" style="margin-top: 10px">
+      <a-col v-if="useFlow && !useOtus" span="24" style="margin-top: 10px">
         <bot-flow
           v-model="bot.settings.flow"
           variant="client"
@@ -936,6 +960,15 @@ const roles = computed(() => aiBotsStore.roles);
 const hasChatChannel = computed(() =>
   (bot.value.channels || []).some((c) => c.type === "core_chatting")
 );
+
+// Otus answers this bot's chats instead of the model configured here. Gated on
+// the support chat like the other switches, because that is where Otus lives.
+const useOtus = computed({
+  get: () => !!bot.value.settings.otus_enabled,
+  set: (v) => {
+    bot.value.settings.otus_enabled = v;
+  },
+});
 
 // Flow pattern toggle: a real, persisted flag (settings.flow_enabled),
 // independent of the flow steps themselves. Disabling it just stops the flow

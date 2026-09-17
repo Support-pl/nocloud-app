@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { Chat, Chats, Defaults, Empty, Event, Merge, Message, Messages, StreamRequest, User, Users } from "./cc_pb.js";
+import { Chat, Chats, Defaults, Empty, Event, Merge, Message, Messages, StreamRequest, User, Users, VoteRequest } from "./cc_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -153,6 +153,15 @@ export const MessagesAPI = {
     delete: {
       name: "Delete",
       I: Message,
+      O: Message,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc cc.MessagesAPI.Vote
+     */
+    vote: {
+      name: "Vote",
+      I: VoteRequest,
       O: Message,
       kind: MethodKind.Unary,
     },

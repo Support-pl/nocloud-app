@@ -4,7 +4,7 @@ import { useNotification } from "@/hooks/utils";
 import { useInstancesStore } from "@/stores/instances.js";
 import api from "@/api.js";
 import { CreateRequest } from "nocloud-proto/proto/es/instances/instances_pb";
-import { removeEmptyValues } from "@/functions.js";
+import { driverType, removeEmptyValues } from "@/functions.js";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/stores/auth.js";
 import { useNamespasesStore } from "@/stores/namespaces.js";
@@ -80,7 +80,9 @@ function useCreateInstance() {
     if (!currentGroup) {
       newService.instancesGroups.push({
         title: authStore.userdata.title + Date.now(),
-        type: instancesGroupType || instance.billing_plan?.type.split(" ")[0],
+        // the group type goes to the backend: use the real driver, not the alias
+        type:
+          instancesGroupType || driverType(instance.billing_plan)?.split(" ")[0],
         sp: provider,
         instances: [],
       });

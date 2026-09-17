@@ -62,6 +62,7 @@ const STATUS_COLORS = {
   RESOLVE: "#ff8300",
   ANSWERED: "#ff8300",
   CLOSE: "#e23535",
+  ONBOARDING: "#a78bfa",
 };
 
 function normalizeStatus(status) {

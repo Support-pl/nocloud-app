@@ -201,6 +201,7 @@ import passwordMeter from "vue-simple-password-meter";
 import { useCloudStore } from "@/stores/cloud.js";
 import { useAddonsStore } from "@/stores/addons.js";
 import { useAuthStore } from "@/stores/auth.js";
+import usePanelValidity from "@/hooks/cloud/panelValidity.js";
 import imagesList from "@/components/ui/images.vue";
 import { useI18n } from "vue-i18n";
 
@@ -216,7 +217,7 @@ const i18n = useI18n();
 
 const cloudStore = useCloudStore();
 const authStore = useAuthStore();
-const { authData, validationPanels } = storeToRefs(cloudStore);
+const { authData } = storeToRefs(cloudStore);
 const addonsStore = useAddonsStore();
 const images = ref([]);
 
@@ -324,17 +325,15 @@ watch(
   { immediate: true },
 );
 
-watch(
-  [activeKey, authData],
-  async () => {
-    try {
-      await keywebForm.value.validateFields();
-      validationPanels.value["os"] = false;
-    } catch (e) {
-      validationPanels.value["os"] = true;
-    }
+// the password field only exists for logged in users
+usePanelValidity(
+  "os",
+  () => {
+    const { password, ...rest } = rules;
+
+    return authStore.userdata.uuid ? rules : rest;
   },
-  { deep: true },
+  [activeKey, authData],
 );
 
 watch(() => addonsStore.addons, setImages);

@@ -1,5 +1,9 @@
 {
   "pl": {
+    "Answer": "Odpowiedz",
+    "Change answer": "Zmień odpowiedź",
+    "Pick an answer": "Wybierz odpowiedź",
+    "Your answer is saved, you can change it": "Odpowiedź zapisana, można ją zmienić",
     "localePrefix": "pl",
     "localeLang": "Polski",
     "calculator": {
@@ -737,6 +741,7 @@
     "resolution": "resolution",
     "quality": "quality",
     "ticketStatus": {
+      "Onboarding": "Powiadomienie",
       "Closed": "Zamknięte",
       "Close-Ticket": "Zamknij zgłoszenie",
       "Customer-Reply": "Odpowiedź klienta",
@@ -808,6 +813,12 @@
         "inject_account_tip": "Dla serwerów powiązanych z kontem (tryb serwisowy NoCloud): rozpoznane konto klienta jest wysyłane z każdym wywołaniem i ukryte przed modelem. Dla zwykłych serwerów — wyłączone.",
         "enabled": "Włączony",
         "add_server": "Dodaj serwer MCP"
+      },
+      "otus": {
+        "title": "Otus",
+        "on": "on",
+        "use": "Otus answers",
+        "use_tip": "The bot stops thinking for itself: the customer's line goes to Otus as written, and Otus decides what to answer from its own knowledge base.\nThe prompt, role, knowledge bases and flow on this page do nothing while this is on.\nWhen Otus writes nothing to the customer, the chat goes to a human.\nThe operator copilot, when it is on, answers through Otus too."
       },
       "admin_flow": {
         "title": "Asystent operatora (przepływ administratora)",
@@ -1117,7 +1128,8 @@
         "qa_knowledge_base": "Pytanie - Odpowiedź",
         "knowledge_integrations": "Podłączone dane",
         "knowledge_file_search": "Inteligentne pliki (wektoryzowane)",
-        "knowledge_site_search": "Podłączone strony"
+        "knowledge_site_search": "Podłączone strony",
+        "import_qa_invalid": "Nie udało się odczytać pliku: oczekiwano JSON z listą wpisów pytanie/odpowiedź."
       },
       "diff": {
         "added": "Nowe",
@@ -1145,7 +1157,9 @@
         "create_site_search_knowledge": "Dodaj stronę",
         "import_site_search_knowledge": "Dodaj do QA",
         "delete_import": "Usuń",
-        "open_import": "Wyświetl dane"
+        "open_import": "Wyświetl dane",
+        "export_qa": "Eksport",
+        "import_qa": "Import"
       }
     },
     "openai": {
@@ -1337,6 +1351,7 @@
       "6": "Oczekiwanie na odpowiedź",
       "7": "Wstrzymany",
       "8": "W trakcie",
+      "9": "Powiadomienie",
       "Unpaid": "Nie zapłacony",
       "Paid": "Zapłacony",
       "Open": "Otwarty",

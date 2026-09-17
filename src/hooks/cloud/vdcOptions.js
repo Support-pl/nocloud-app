@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 import { useInstancesStore } from '@/stores/instances.js'
+import { aliasType } from '@/functions.js'
 
 function useVdcOptions () {
   const instancesStore = useInstancesStore()
@@ -10,11 +11,12 @@ function useVdcOptions () {
     instancesStore.services.forEach((service) => {
       service.instancesGroups.forEach((group) => {
         group.instances.forEach((inst) => {
-          if (group.type !== 'ione') return
+          if (aliasType(group.type) !== 'ione') return
 
           result.push({
             ...inst,
-            type: group.type,
+            type: aliasType(group.type),
+            _driver: group.type,
             serviceTitle: service.title,
             serviceUuid: service.uuid,
             groupUuid: group.uuid
