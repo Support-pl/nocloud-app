@@ -33,6 +33,7 @@ export const Status = proto3.makeEnum(
     {no: 6, name: "WAITING_FOR_REPLY"},
     {no: 7, name: "ON_HOLD"},
     {no: 8, name: "IN_PROGRESS"},
+    {no: 9, name: "ONBOARDING"},
   ],
 );
 

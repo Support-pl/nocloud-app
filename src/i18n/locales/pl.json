@@ -741,7 +741,7 @@
     "resolution": "resolution",
     "quality": "quality",
     "ticketStatus": {
-      "Onboarding": "Onboarding",
+      "Onboarding": "Powiadomienie",
       "Closed": "Zamknięte",
       "Close-Ticket": "Zamknij zgłoszenie",
       "Customer-Reply": "Odpowiedź klienta",
@@ -1344,6 +1344,7 @@
       "6": "Oczekiwanie na odpowiedź",
       "7": "Wstrzymany",
       "8": "W trakcie",
+      "9": "Powiadomienie",
       "Unpaid": "Nie zapłacony",
       "Paid": "Zapłacony",
       "Open": "Otwarty",
