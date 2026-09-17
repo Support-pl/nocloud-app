@@ -814,6 +814,12 @@
         "enabled": "Włączony",
         "add_server": "Dodaj serwer MCP"
       },
+      "otus": {
+        "title": "Otus",
+        "on": "on",
+        "use": "Otus answers",
+        "use_tip": "The bot stops thinking for itself: the customer's line goes to Otus as written, and Otus decides what to answer from its own knowledge base.\nThe prompt, role, knowledge bases and flow on this page do nothing while this is on.\nWhen Otus writes nothing to the customer, the chat goes to a human.\nThe operator copilot, when it is on, answers through Otus too."
+      },
       "admin_flow": {
         "title": "Asystent operatora (przepływ administratora)",
         "on": "wł.",
