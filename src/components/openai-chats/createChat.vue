@@ -6,6 +6,14 @@
       }}</span>
     </div>
 
+    <div class="create_model_bar">
+      <model-bar
+        :model="selectedModel"
+        @update:model="selectedModel = $event"
+        :models="chatsStore.globalModelsList"
+      />
+    </div>
+
     <a-collapse
       style="max-width: 900px; margin: auto; background: var(--bright_font)"
     >
@@ -53,12 +61,17 @@
           @update:message="message = $event"
           :replies="[]"
           @send-message="createChatAndRedirect"
+          @toggle-mic="toggleMic"
+          :recording="isRecording"
+          show-mic
           :file-list="fileList"
           @update:filelist="fileList = $event"
           :min-rows="6"
           ref="sendinput"
           :placeholder="
-            t(`openai.prompts.${sendAdvancedOptions.checked}.placeholder`)
+            isRecording
+              ? t('openai.prompts.transcribe.recording')
+              : t(`openai.prompts.${sendAdvancedOptions.checked}.placeholder`)
           "
         >
           <template #right-menu>
@@ -85,6 +98,8 @@ import { useNotification } from "@/hooks/utils";
 import { beautufyMessage } from "@/functions.js";
 import ChatGenerationMenu from "./chatGenerationMenu.vue";
 import OpenaiPrices from "../services/openai/prices.vue";
+import ModelBar from "./modelBar.vue";
+import { buildMessageMeta } from "./helpers.js";
 import markdown from "markdown-it";
 import { full as emoji } from "markdown-it-emoji";
 
@@ -121,6 +136,10 @@ const editing = ref(null);
 const selectedModel = ref("gpt-4o-mini");
 const selectedProvider = ref("openai");
 const selectedType = ref("text");
+const isRecording = ref(false);
+const pendingVoiceMeta = ref([]);
+let mediaRecorder = null;
+let recordedChunks = [];
 
 const sendAdvancedOptions = ref({
   checked: "default",
@@ -139,27 +158,12 @@ async function sendChatMessage(result, chatId) {
     account: authStore.userdata.uuid,
     date: BigInt(result.date),
     attachments: files.map(({ uuid }) => uuid),
-    meta: [{ key: "mode", value: sendAdvancedOptions.value.checked }],
+    meta: buildMessageMeta(sendAdvancedOptions.value, [
+      { key: "speak_reply", value: chatsStore.speakReplies },
+      { key: "speech_speed", value: chatsStore.speechSpeed },
+      ...pendingVoiceMeta.value.splice(0),
+    ]),
   };
-
-  if (sendAdvancedOptions.value.checked === "generate") {
-    message.meta.push(
-      { key: "size", value: sendAdvancedOptions.value.size },
-      { key: "quality", value: sendAdvancedOptions.value.quality }
-    );
-  }
-
-  if (sendAdvancedOptions.value.checked === "video") {
-    message.meta.push(
-      { key: "duration", value: sendAdvancedOptions.value.duration },
-      { key: "with_audio", value: sendAdvancedOptions.value.with_audio },
-      { key: "aspect_ratio", value: sendAdvancedOptions.value.aspect_ratio }
-    );
-  }
-
-  if (sendAdvancedOptions.value.checked !== "default") {
-    message.meta.push({ key: "model", value: sendAdvancedOptions.value.model });
-  }
   sendAdvancedOptions.value.checked = "default";
 
   await chatsStore.sendMessage(message);
@@ -190,9 +194,44 @@ async function createChat(message) {
   return response;
 }
 
+async function toggleMic() {
+  if (isRecording.value) {
+    mediaRecorder?.stop();
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) recordedChunks.push(event.data);
+    };
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach((track) => track.stop());
+      isRecording.value = false;
+      const blob = new Blob(recordedChunks, {
+        type: mediaRecorder?.mimeType || "audio/webm",
+      });
+      if (blob.size < 1) return;
+      fileList.value = [
+        new File([blob], "voice.webm", { type: blob.type }),
+      ];
+      message.value = t("openai.labels.voice_message");
+      sendAdvancedOptions.value.checked = "default";
+      pendingVoiceMeta.value = [{ key: "mode", value: "transcribe" }];
+      await createChatAndRedirect();
+    };
+    mediaRecorder.start();
+    isRecording.value = true;
+  } catch {
+    openNotification("error", { message: t("openai.errors.microphone") });
+  }
+}
+
 const createChatAndRedirect = async () => {
   let firstMessage = message.value.trim();
-  if (!firstMessage) return;
+  if (!firstMessage && fileList.value.length < 1) return;
+  if (!firstMessage) firstMessage = t("openai.labels.voice_message");
 
   isSendMessageLoading.value = true;
   try {
@@ -260,6 +299,11 @@ export default { name: "SupportFooter" };
   display: flex;
   justify-content: center;
   width: 100%;
+}
+
+.create_model_bar {
+  max-width: 900px;
+  margin: 0 auto 16px;
 }
 
 :deep(textarea.ant-input) {

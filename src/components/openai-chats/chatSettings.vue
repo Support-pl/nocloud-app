@@ -1,9 +1,61 @@
 <template>
-  <div style="margin-bottom: 10px">
-    {{ capitalize(t("model")) }}:
-    <span>
-      {{ model }}
-    </span>
+  <div style="margin-bottom: 16px">
+    <div style="margin-bottom: 8px">{{ t("openai.labels.chat_title") }}</div>
+    <a-input
+      v-model:value="topic"
+      :placeholder="t('openai.labels.newChat')"
+      @pressEnter="saveTopic"
+    />
+    <a-button
+      type="primary"
+      size="small"
+      style="margin-top: 8px"
+      :loading="isTopicLoading"
+      @click="saveTopic"
+    >
+      {{ t("Save") }}
+    </a-button>
+  </div>
+
+  <div style="margin-bottom: 16px">
+    <div style="margin-bottom: 8px">{{ t("openai.labels.folder") }}</div>
+    <a-auto-complete
+      style="width: 100%"
+      v-model:value="folder"
+      :options="folderOptions"
+      :placeholder="t('openai.labels.folder_placeholder')"
+      @blur="saveFolder"
+    />
+  </div>
+
+  <div style="margin-bottom: 16px">
+    <div style="margin-bottom: 8px">{{ t("openai.labels.speak_replies") }}</div>
+    <a-switch
+      :checked="chatsStore.speakReplies"
+      @update:checked="chatsStore.setSpeakReplies"
+    />
+  </div>
+
+  <div style="margin-bottom: 16px">
+    <div style="margin-bottom: 8px">{{ t("openai.labels.speech_speed") }}</div>
+    <a-slider
+      :min="0.75"
+      :max="2"
+      :step="0.25"
+      :marks="speechSpeedMarks"
+      :value="chatsStore.speechSpeed"
+      @update:value="chatsStore.setSpeechSpeed"
+    />
+  </div>
+
+  <div style="margin-bottom: 16px">
+    <div style="margin-bottom: 8px">{{ capitalize(t("model")) }}</div>
+    <model-bar
+      :model="selectedModel"
+      @update:model="changeModel"
+      :models="globalModelsList"
+      :show-balance="false"
+    />
   </div>
 
   <template v-if="options.length > 1">
@@ -123,7 +175,7 @@ import { useNotification } from "@/hooks/utils";
 import { getImageName, onError, generateUuid } from "@/functions.js";
 import { toRefs } from "vue";
 import { storeToRefs } from "pinia";
-import { query } from "vue-gtag";
+import ModelBar from "./modelBar.vue";
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -149,6 +201,10 @@ const isEditLoading = ref(false);
 const isPromptLoading = ref(false);
 const isPromptsLoading = ref(false);
 const isDeleteLoading = ref(false);
+const isTopicLoading = ref(false);
+const topic = ref("");
+const folder = ref("");
+const selectedModel = ref("");
 
 watch(
   () => props.chat,
@@ -174,13 +230,70 @@ const options = computed(() => {
 const prompts = ref([]);
 const promptsOptions = ref([]);
 
-const model = computed(() => {
-  return (
-    globalModelsList.value.find(
-      (model) => model.key === chat.meta?.data?.model?.kind?.value
-    )?.name || chat.value.meta.data.model?.kind?.value
-  );
+const speechSpeedMarks = computed(() => ({
+  0.75: t("openai.labels.speech_speed_slow"),
+  1: t("openai.labels.speech_speed_normal"),
+  2: t("openai.labels.speech_speed_fast"),
+}));
+
+const folderOptions = computed(() => {
+  const names = new Set();
+  chatsStore.chats.forEach((item) => {
+    const value = item.meta?.data?.folder?.kind?.value;
+    if (value) names.add(value);
+  });
+  return [...names].map((value) => ({ value }));
 });
+
+async function patchChatMeta(data, extra = {}) {
+  await chatsStore.editChat({
+    ...props.chat,
+    ...extra,
+    meta: {
+      ...props.chat.meta,
+      data: { ...props.chat.meta.data, ...data },
+    },
+  });
+}
+
+async function saveTopic() {
+  isTopicLoading.value = true;
+  try {
+    await patchChatMeta(
+      { dynamic_topic_defined: true },
+      { topic: topic.value.trim() || props.chat.topic }
+    );
+    openNotification("success", { message: t("Done") });
+  } catch (error) {
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+  } finally {
+    isTopicLoading.value = false;
+  }
+}
+
+async function saveFolder() {
+  try {
+    await patchChatMeta({ folder: folder.value.trim() });
+  } catch (error) {
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+  }
+}
+
+async function changeModel(value) {
+  selectedModel.value = value;
+  try {
+    await patchChatMeta({ model: value });
+    openNotification("success", { message: t("Done") });
+  } catch (error) {
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+  }
+}
 
 function newLine() {
   message.value.replace(/$/, "\n");
@@ -309,6 +422,9 @@ onMounted(() => {
 
 function setOptions(value) {
   gateway.value = value.gateways[0] ?? "";
+  topic.value = value.topic || "";
+  folder.value = value.meta?.data?.folder?.kind?.value || "";
+  selectedModel.value = value.meta?.data?.model?.kind?.value || "";
 
   prompts.value = [];
   promptsOptions.value = [];

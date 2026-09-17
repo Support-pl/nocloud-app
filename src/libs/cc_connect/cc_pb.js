@@ -33,6 +33,7 @@ export const Status = proto3.makeEnum(
     {no: 6, name: "WAITING_FOR_REPLY"},
     {no: 7, name: "ON_HOLD"},
     {no: 8, name: "IN_PROGRESS"},
+    {no: 9, name: "ONBOARDING"},
   ],
 );
 
@@ -161,6 +162,7 @@ export const Message = proto3.makeMessageType(
     { no: 11, name: "readers", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 12, name: "meta", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: Value} },
     { no: 13, name: "mentioned", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 14, name: "poll", kind: "message", T: Poll, opt: true },
   ],
 );
 
@@ -271,3 +273,51 @@ export const StreamRequest = proto3.makeMessageType(
   ],
 );
 
+
+/**
+ * @generated from message cc.PollOption
+ */
+export const PollOption = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.PollOption",
+  () => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ],
+);
+
+/**
+ * @generated from message cc.PollVote
+ */
+export const PollVote = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.PollVote",
+  () => [
+    { no: 1, name: "options", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 2, name: "ts", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 3, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ],
+);
+
+/**
+ * @generated from message cc.Poll
+ */
+export const Poll = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.Poll",
+  () => [
+    { no: 1, name: "question", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "options", kind: "message", T: PollOption, repeated: true },
+    { no: 3, name: "multiple", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "closed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 5, name: "votes", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: PollVote} },
+  ],
+);
+
+/**
+ * @generated from message cc.VoteRequest
+ */
+export const VoteRequest = /*@__PURE__*/ proto3.makeMessageType(
+  "cc.VoteRequest",
+  () => [
+    { no: 1, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "options", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ],
+);

@@ -19,6 +19,7 @@ import {
   Kind,
   EventType,
   Status,
+  VoteRequest,
 } from "@/libs/cc_connect/cc_pb";
 import {
   ChatsAPI,
@@ -27,6 +28,7 @@ import {
   UsersAPI,
 } from "@/libs/cc_connect/cc_connect";
 import api from "@/api.js";
+import { isHiddenReply, metaValue } from "@/components/openai-chats/helpers.js";
 
 export const useChatsStore = defineStore("chats", () => {
   const router = useRouter();
@@ -60,6 +62,21 @@ export const useChatsStore = defineStore("chats", () => {
   let reconnectAttempts = 0;
 
   const attachments = ref(new Map());
+  const generatingChats = ref(new Set());
+  const generatingTimers = new Map();
+  const speakReplies = ref(localStorage.getItem("openai_speak_replies") === "1");
+  const speechSpeed = ref(Number(localStorage.getItem("openai_speech_speed") || 1) || 1);
+
+  function setSpeakReplies(value) {
+    speakReplies.value = !!value;
+    localStorage.setItem("openai_speak_replies", value ? "1" : "0");
+  }
+
+  function setSpeechSpeed(value) {
+    const speed = Math.min(2, Math.max(0.75, Number(value) || 1));
+    speechSpeed.value = speed;
+    localStorage.setItem("openai_speech_speed", String(speed));
+  }
 
   const getChats = computed(() => {
     if (supportStore.filter[0] === "all" || supportStore.filter.length === 0) {
@@ -75,7 +92,7 @@ export const useChatsStore = defineStore("chats", () => {
       const result = [];
 
       chats.value.forEach((chat) => {
-        const status = Status[chat.status].toLowerCase();
+        const status = (Status[chat.status]?.toLowerCase() ?? "new");
         const capitalized = `${status[0].toUpperCase()}${status.slice(1)}`;
 
         if (filters.includes(capitalized)) {
@@ -251,6 +268,13 @@ export const useChatsStore = defineStore("chats", () => {
       {};
     const newMessage = changeMessage(message, user, event.uuid);
 
+    if (isHiddenReply(newMessage)) {
+      if (metaValue(newMessage.meta, "mode") === "stop") {
+        markIdle(message.chat);
+      }
+      return;
+    }
+
     if (event.item.case === "chat") return;
     switch (event.type) {
       case EventType.MESSAGE_SENT: {
@@ -276,6 +300,12 @@ export const useChatsStore = defineStore("chats", () => {
       case EventType.MESSAGE_UPDATED: {
         const chat = chats.value.get(message.chat);
         if (!chat) break;
+        // A message we do not have is nothing to update. Without this,
+        // splice(-1, 1, msg) REPLACES the last message in the chat: the same
+        // event arrives more than once — it is published to the chat's users
+        // and to its admins, and one account is often both — and the repeat
+        // would overwrite whatever stood at the end.
+        if (i === -1) break;
 
         replies.splice(i, 1, newMessage);
         if (chat.uuid !== route.params.id) {
@@ -287,10 +317,21 @@ export const useChatsStore = defineStore("chats", () => {
             }),
           });
         }
+        if (
+          metaValue(newMessage.meta, "cost") != null ||
+          metaValue(newMessage.meta, "stopped") === true
+        ) {
+          markIdle(message.chat);
+        }
         break;
       }
 
       case EventType.MESSAGE_DELETED: {
+        // Same reason, and here it removes rather than overwrites: a repeated
+        // delete event with splice(-1, 1) takes away the last message in the
+        // chat, which has nothing to do with the one that was deleted.
+        if (i === -1) break;
+
         replies.splice(i, 1);
         break;
       }
@@ -304,6 +345,7 @@ export const useChatsStore = defineStore("chats", () => {
       sent: message.sent,
       email: user.data?.email ?? "none",
       message: message.content,
+      poll: message.poll,
       name: user.title ?? "anonymous",
       userid: user.uuid,
       requestor_type: uuid === user.uuid ? "Owner" : "Other",
@@ -351,6 +393,124 @@ export const useChatsStore = defineStore("chats", () => {
     fetch_attachments(attachmentsForFetch);
   });
 
+  const queuedSpeechIds = new Set();
+  const speechPending = [];
+  let speechAudio = null;
+  let speechBusy = false;
+
+  function stopSpeechPlayback() {
+    speechPending.length = 0;
+    speechBusy = false;
+    if (speechAudio) {
+      speechAudio.pause();
+      speechAudio.removeAttribute("src");
+      speechAudio.load();
+      speechAudio = null;
+    }
+  }
+
+  function resetSpeechPlayback() {
+    queuedSpeechIds.clear();
+    stopSpeechPlayback();
+  }
+
+  async function playSpeechUrl(url) {
+    const audio = new Audio();
+    speechAudio = audio;
+    audio.preload = "auto";
+    audio.playbackRate = speechSpeed.value || 1;
+    await new Promise((resolve) => {
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+      let started = false;
+      const start = () => {
+        if (started || settled) return;
+        started = true;
+        audio.play().catch(done);
+      };
+      audio.addEventListener("canplaythrough", start, { once: true });
+      audio.addEventListener("ended", done, { once: true });
+      audio.addEventListener("error", done, { once: true });
+      audio.src = url;
+      audio.load();
+      if (audio.readyState >= 3) start();
+    });
+    if (speechAudio === audio) speechAudio = null;
+  }
+
+  async function pumpSpeech() {
+    if (speechBusy || !speakReplies.value) return;
+    const id = speechPending.shift();
+    if (!id) return;
+    speechBusy = true;
+    try {
+      let file = attachments.value.get(id);
+      if (!file || file === true) {
+        await fetch_attachments([id]);
+        file = attachments.value.get(id);
+      }
+      if (file?.url && speakReplies.value) {
+        await playSpeechUrl(file.url);
+      }
+    } finally {
+      speechBusy = false;
+      if (speakReplies.value) pumpSpeech();
+    }
+  }
+
+  function enqueueSpeech(ids = []) {
+    if (!speakReplies.value) return;
+    let added = false;
+    ids.forEach((id) => {
+      if (!id || queuedSpeechIds.has(id)) return;
+      queuedSpeechIds.add(id);
+      speechPending.push(id);
+      added = true;
+    });
+    if (added) pumpSpeech();
+  }
+
+  watch(speechSpeed, (speed) => {
+    if (speechAudio) speechAudio.playbackRate = speed || 1;
+  });
+
+  watch(speakReplies, (enabled) => {
+    if (!enabled) stopSpeechPlayback();
+  });
+
+  function isChatGenerating(chatId) {
+    return generatingChats.value.has(chatId);
+  }
+
+  function markGenerating(chatId) {
+    if (!chatId) return;
+    const next = new Set(generatingChats.value);
+    next.add(chatId);
+    generatingChats.value = next;
+    if (generatingTimers.has(chatId)) {
+      clearTimeout(generatingTimers.get(chatId));
+    }
+    generatingTimers.set(
+      chatId,
+      setTimeout(() => markIdle(chatId), 3 * 60 * 1000),
+    );
+  }
+
+  function markIdle(chatId) {
+    if (!chatId || !generatingChats.value.has(chatId)) return;
+    const next = new Set(generatingChats.value);
+    next.delete(chatId);
+    generatingChats.value = next;
+    if (generatingTimers.has(chatId)) {
+      clearTimeout(generatingTimers.get(chatId));
+      generatingTimers.delete(chatId);
+    }
+  }
+
   return {
     transport,
     accounts,
@@ -364,6 +524,18 @@ export const useChatsStore = defineStore("chats", () => {
 
     globalModelsList,
     fetch_models_list,
+    generatingChats,
+    isChatGenerating,
+    markGenerating,
+    markIdle,
+    speakReplies,
+    setSpeakReplies,
+    speechSpeed,
+    setSpeechSpeed,
+    fetch_attachments,
+    enqueueSpeech,
+    resetSpeechPlayback,
+    stopSpeechPlayback,
 
     getChats,
     getDefaults,
@@ -407,14 +579,16 @@ export const useChatsStore = defineStore("chats", () => {
 
         const response = await messagesApi.get(chat);
 
-        const replies = response.messages.map((message) => {
-          const user =
-            accounts.value.users.find(
-              (account) => account.uuid === message.sender,
-            ) ?? {};
+        const replies = response.messages
+          .map((message) => {
+            const user =
+              accounts.value.users.find(
+                (account) => account.uuid === message.sender,
+              ) ?? {};
 
-          return changeMessage(message, user, authStore.userdata.uuid);
-        });
+            return changeMessage(message, user, authStore.userdata.uuid);
+          })
+          .filter((reply) => !isHiddenReply(reply));
 
         messages.value[id] = {
           status: chat.status,
@@ -615,6 +789,17 @@ export const useChatsStore = defineStore("chats", () => {
       return files;
     },
 
+    // Answering a poll. The ticket service records the answer and keeps the
+    // single message that states it in words — posting it, editing it when the
+    // answer changes — so there is nothing to send from here. The updated poll
+    // comes back over the event stream.
+    async vote(messageUuid, options) {
+      const messagesApi = createPromiseClient(MessagesAPI, transport);
+      return messagesApi.vote(
+        new VoteRequest({ message: messageUuid, options })
+      );
+    },
+
     async sendMessage(message) {
       try {
         const messagesApi = createPromiseClient(MessagesAPI, transport);
@@ -627,16 +812,30 @@ export const useChatsStore = defineStore("chats", () => {
           sender: message.account,
           attachments: message.attachments,
           meta: message.meta?.reduce((result, { key, value }) => {
-            if (value) result[key] = Value.fromJson(value);
+            if (value !== undefined && value !== null && value !== "") {
+              result[key] = Value.fromJson(value);
+            }
 
             return result;
           }, {}),
         });
 
-        if (mes.meta?.mode?.kind?.value === "default") {
+        if (!mes.meta) mes.meta = {};
+        const mode = mes.meta?.mode?.kind?.value;
+        if (
+          !mes.meta.model &&
+          (!mode ||
+            mode === "default" ||
+            mode === "regenerate" ||
+            mode === "transcribe")
+        ) {
           mes.meta.model = Value.fromJson(
             chats.value.get(message.uuid)?.meta?.data?.model?.kind?.value ?? "",
           );
+        }
+
+        if (mode && mode !== "stop") {
+          markGenerating(message.uuid);
         }
 
         const response = await messagesApi.send(mes);
@@ -645,6 +844,7 @@ export const useChatsStore = defineStore("chats", () => {
         }
         return response;
       } catch (error) {
+        markIdle(message.uuid);
         throw error;
       }
     },
@@ -657,11 +857,41 @@ export const useChatsStore = defineStore("chats", () => {
           content: message.content,
         });
 
-        messagesApi.update(newMessage);
+        await messagesApi.update(newMessage);
         return newMessage;
       } catch (error) {
         throw error;
       }
+    },
+    async deleteMessage(message) {
+      const messagesApi = createPromiseClient(MessagesAPI, transport);
+      const existing =
+        rawMessages.value.find(({ uuid }) => uuid === message.uuid) || message;
+
+      await messagesApi.delete(
+        new Message({
+          uuid: message.uuid,
+          chat: message.chat || existing.chat,
+          sender: message.userid || existing.sender,
+        }),
+      );
+    },
+    async stopGeneration(chatId) {
+      markIdle(chatId);
+      const messagesApi = createPromiseClient(MessagesAPI, transport);
+      await messagesApi.send(
+        new Message({
+          kind: Kind.DEFAULT,
+          content: " ",
+          chat: chatId,
+          sent: BigInt(Date.now()),
+          sender: authStore.userdata.uuid,
+          meta: {
+            mode: Value.fromJson("stop"),
+            hidden: Value.fromJson(true),
+          },
+        }),
+      );
     },
   };
 });

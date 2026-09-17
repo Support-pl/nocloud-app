@@ -53,6 +53,14 @@
              <message-files :files="files[reply.uuid]"/>
             </pre>
 
+            <!-- A poll rides along with the text: the message says what is
+                 being asked, the card is what you answer with. -->
+            <message-poll
+              v-if="reply.poll"
+              :message-uuid="reply.uuid"
+              :poll="reply.poll"
+            />
+
             <div class="chat__info">
               <span>{{ reply.name }}</span>
               <span>{{ reply.date.slice(-8, -3) }}</span>
@@ -114,6 +122,7 @@ import supportAlert from "@/components/support/alert.vue";
 import supportFooter from "@/components/support/footer.vue";
 import MessageFiles from "@/components/chats/messageFiles.vue";
 import MessageContent from "@/components/chats/messageContent.vue";
+import MessagePoll from "@/components/chats/messagePoll.vue";
 
 const exclamationIcon = defineAsyncComponent(
   () => import("@ant-design/icons-vue/ExclamationCircleOutlined"),
