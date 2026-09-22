@@ -157,7 +157,7 @@
     </a-row>
 
     <a-row v-if="isOutOfStock" justify="center" style="margin-top: 10px">
-      <a-col style="font-size: 14px; text-align: center; color: var(--gray)">
+      <a-col class="price__out-of-stock">
         {{ capitalize($t("Temporarily out of stock")) }}
       </a-col>
     </a-row>
@@ -326,6 +326,13 @@ export default { name: "CalculatorBlock" };
 </script>
 
 <style>
+.price__out-of-stock {
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--gray);
+}
+
 .price__spin {
   margin-left: 5px;
   margin-top: 3px;
