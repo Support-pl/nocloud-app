@@ -136,10 +136,7 @@ async function sendChatMessage(result, replies, extraMeta = []) {
       account: result.userid,
       date: BigInt(result.date),
       attachments: files.map(({ uuid }) => uuid),
-      meta: buildMessageMeta(sendAdvancedOptions.value, [
-        { key: "speak_reply", value: chatsStore.speakReplies },
-        ...extraMeta,
-      ]),
+      meta: buildMessageMeta(sendAdvancedOptions.value, extraMeta),
     };
 
     sendAdvancedOptions.value.checked = "default";
@@ -200,7 +197,6 @@ async function applyEditAndRegenerate(uuid, text) {
         { key: "mode", value: "regenerate" },
         { key: "from", value: uuid },
         { key: "hidden", value: true },
-        { key: "speak_reply", value: chatsStore.speakReplies },
       ],
     });
 
@@ -225,19 +221,18 @@ async function regenerateFrom(reply) {
 
   if (!previousUser) return;
 
-    await chatsStore.sendMessage({
-      uuid: props.ticket.uuid,
-      content: " ",
-      account: authStore.userdata.uuid,
-      date: BigInt(Date.now()),
-      attachments: [],
-      meta: [
-        { key: "mode", value: "regenerate" },
-        { key: "from", value: previousUser.uuid },
-        { key: "hidden", value: true },
-        { key: "speak_reply", value: chatsStore.speakReplies },
-      ],
-    });
+  await chatsStore.sendMessage({
+    uuid: props.ticket.uuid,
+    content: " ",
+    account: authStore.userdata.uuid,
+    date: BigInt(Date.now()),
+    attachments: [],
+    meta: [
+      { key: "mode", value: "regenerate" },
+      { key: "from", value: previousUser.uuid },
+      { key: "hidden", value: true },
+    ],
+  });
 }
 
 async function stopGeneration() {
@@ -287,6 +282,7 @@ async function sendVoice(file) {
   const { replies, result } = updateReplies(content);
   await sendChatMessage(result, replies, [
     { key: "mode", value: "transcribe" },
+    { key: "speak_reply", value: true },
   ]);
   message.value = "";
   fileList.value = [];

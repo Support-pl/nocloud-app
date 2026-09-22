@@ -64,12 +64,6 @@ export const useChatsStore = defineStore("chats", () => {
   const attachments = ref(new Map());
   const generatingChats = ref(new Set());
   const generatingTimers = new Map();
-  const speakReplies = ref(localStorage.getItem("openai_speak_replies") === "1");
-
-  function setSpeakReplies(value) {
-    speakReplies.value = !!value;
-    localStorage.setItem("openai_speak_replies", value ? "1" : "0");
-  }
 
   const getChats = computed(() => {
     if (supportStore.filter[0] === "all" || supportStore.filter.length === 0) {
@@ -432,8 +426,6 @@ export const useChatsStore = defineStore("chats", () => {
     isChatGenerating,
     markGenerating,
     markIdle,
-    speakReplies,
-    setSpeakReplies,
 
     getChats,
     getDefaults,

@@ -15,18 +15,6 @@
       @update:value="$emit('update:model', $event)"
     />
 
-    <a-tooltip>
-      <template #title>{{ t("openai.labels.speak_replies_tip") }}</template>
-      <div class="model_bar__speak">
-        <a-switch
-          size="small"
-          :checked="chatsStore.speakReplies"
-          @update:checked="chatsStore.setSpeakReplies"
-        />
-        <span>{{ t("openai.labels.speak_replies") }}</span>
-      </div>
-    </a-tooltip>
-
     <div v-if="showBalance" class="model_bar__balance">
       {{ t("openai.labels.balance") }}:
       <strong>{{ formatPrice(userBalance) }} {{ currency.title }}</strong>
@@ -39,7 +27,6 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/stores/auth.js";
-import { useChatsStore } from "@/stores/chats.js";
 import { useCurrency } from "@/hooks/utils";
 import {
   pickCheaperModel,
@@ -58,7 +45,6 @@ const emit = defineEmits(["update:model"]);
 const { t } = useI18n();
 const { currency, formatPrice } = useCurrency();
 const authStore = useAuthStore();
-const chatsStore = useChatsStore();
 const { userBalance } = storeToRefs(authStore);
 
 const cheaper = computed(() => pickCheaperModel(props.models));
@@ -102,15 +88,6 @@ function onTierChange(value) {
 
 .model_bar__select {
   min-width: 170px;
-}
-
-.model_bar__speak {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--gray);
-  cursor: pointer;
 }
 
 .model_bar__balance {

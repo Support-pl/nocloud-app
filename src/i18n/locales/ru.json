@@ -1203,8 +1203,6 @@
         "folder": "Папка",
         "folder_placeholder": "Работа, идеи, без папки...",
         "voice_message": "Голосовое сообщение",
-        "speak_replies": "Озвучивать",
-        "speak_replies_tip": "Ответ пишется и сразу озвучивается",
         "api_compatible_with_openai": "_Наше API совместимо с OpenAI ([Подробнее](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "images_properties": {
