@@ -393,95 +393,6 @@ export const useChatsStore = defineStore("chats", () => {
     fetch_attachments(attachmentsForFetch);
   });
 
-  const queuedSpeechIds = new Set();
-  const speechPending = [];
-  let speechAudio = null;
-  let speechBusy = false;
-
-  function stopSpeechPlayback() {
-    speechPending.length = 0;
-    speechBusy = false;
-    if (speechAudio) {
-      speechAudio.pause();
-      speechAudio.removeAttribute("src");
-      speechAudio.load();
-      speechAudio = null;
-    }
-  }
-
-  function resetSpeechPlayback() {
-    queuedSpeechIds.clear();
-    stopSpeechPlayback();
-  }
-
-  async function playSpeechUrl(url) {
-    const audio = new Audio();
-    speechAudio = audio;
-    audio.preload = "auto";
-    audio.playbackRate = speechSpeed.value || 1;
-    await new Promise((resolve) => {
-      let settled = false;
-      const done = () => {
-        if (settled) return;
-        settled = true;
-        resolve();
-      };
-      let started = false;
-      const start = () => {
-        if (started || settled) return;
-        started = true;
-        audio.play().catch(done);
-      };
-      audio.addEventListener("canplaythrough", start, { once: true });
-      audio.addEventListener("ended", done, { once: true });
-      audio.addEventListener("error", done, { once: true });
-      audio.src = url;
-      audio.load();
-      if (audio.readyState >= 3) start();
-    });
-    if (speechAudio === audio) speechAudio = null;
-  }
-
-  async function pumpSpeech() {
-    if (speechBusy || !speakReplies.value) return;
-    const id = speechPending.shift();
-    if (!id) return;
-    speechBusy = true;
-    try {
-      let file = attachments.value.get(id);
-      if (!file || file === true) {
-        await fetch_attachments([id]);
-        file = attachments.value.get(id);
-      }
-      if (file?.url && speakReplies.value) {
-        await playSpeechUrl(file.url);
-      }
-    } finally {
-      speechBusy = false;
-      if (speakReplies.value) pumpSpeech();
-    }
-  }
-
-  function enqueueSpeech(ids = []) {
-    if (!speakReplies.value) return;
-    let added = false;
-    ids.forEach((id) => {
-      if (!id || queuedSpeechIds.has(id)) return;
-      queuedSpeechIds.add(id);
-      speechPending.push(id);
-      added = true;
-    });
-    if (added) pumpSpeech();
-  }
-
-  watch(speechSpeed, (speed) => {
-    if (speechAudio) speechAudio.playbackRate = speed || 1;
-  });
-
-  watch(speakReplies, (enabled) => {
-    if (!enabled) stopSpeechPlayback();
-  });
-
   function isChatGenerating(chatId) {
     return generatingChats.value.has(chatId);
   }
@@ -533,9 +444,6 @@ export const useChatsStore = defineStore("chats", () => {
     speechSpeed,
     setSpeechSpeed,
     fetch_attachments,
-    enqueueSpeech,
-    resetSpeechPlayback,
-    stopSpeechPlayback,
 
     getChats,
     getDefaults,
