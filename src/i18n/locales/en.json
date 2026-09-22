@@ -1168,13 +1168,6 @@
         "generate_image": "Generate Image",
         "generate_audio": "Generate Audio",
         "price": "Price",
-        "cheaper": "Cheaper",
-        "smarter": "Smarter",
-        "balance": "Balance",
-        "chat_title": "Chat title",
-        "folder": "Folder",
-        "folder_placeholder": "Work, ideas, no folder...",
-        "voice_message": "Voice message",
         "api_compatible_with_openai": "_Our API is compatible with OpenAI ([Learn more](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "default_model": {
@@ -1207,15 +1200,10 @@
         },
         "video": {
           "placeholder": "Describe as fully as possible the scenario of your video. For example: \"A dog running through a field, wind blowing through its fur, slow motion, realistic style\" or \"A spaceship flying through fog with blue glow, sci-fi style\""
-        },
-        "transcribe": {
-          "placeholder": "Click the microphone, speak, and we will transcribe, answer, and read the reply aloud",
-          "recording": "Listening… click the microphone to send"
         }
       },
       "errors": {
-        "create_failed": "Failed to create a new chat. Please try again later.",
-        "microphone": "Could not access the microphone. Check browser permissions."
+        "create_failed": "Failed to create a new chat. Please try again later."
       },
       "payment_types": {
         "text_input": "Price per 1M input tokens",
@@ -1305,10 +1293,7 @@
         "generate_text": "text",
         "generate_image": "image",
         "generate_audio": "audio",
-        "generate_video": "video",
-        "regenerate": "Regenerate",
-        "voice": "Voice",
-        "stop_record": "Stop recording"
+        "generate_video": "video"
       }
     },
     "Domains": "Domains",

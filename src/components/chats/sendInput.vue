@@ -53,22 +53,7 @@
             <slot name="right-menu" />
           </div>
 
-          <div style="min-width: 85px; display: flex; align-items: center">
-            <a-tooltip v-if="showMic" :title="recording ? t('openai.actions.stop_record') : t('openai.actions.voice')">
-              <a-button
-                size="large"
-                shape="circle"
-                :type="recording ? 'primary' : 'default'"
-                :danger="recording"
-                :disabled="disabled || generating"
-                @click="emits('toggleMic')"
-              >
-                <template #icon>
-                  <audio-icon />
-                </template>
-              </a-button>
-            </a-tooltip>
-
+          <div style="min-width: 85px">
             <upload-files
               v-if="showSendFiles"
               ref="upload"
@@ -80,16 +65,14 @@
 
             <a-button
               size="large"
-              :loading="sendLoading && !generating"
+              :loading="sendLoading"
               type="primary"
-              :danger="generating"
               shape="circle"
-              @click="generating ? emits('stop') : emits('sendMessage')"
+              @click="emits('sendMessage')"
               style="margin-left: 10px"
             >
               <template #icon>
-                <stop-icon v-if="generating" />
-                <arrow-up-icon v-else />
+                <arrow-up-icon />
               </template>
             </a-button>
           </div>
@@ -113,12 +96,6 @@ import { useI18n } from "vue-i18n";
 const arrowUpIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/ArrowUpOutlined")
 );
-const stopIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/BorderOutlined")
-);
-const audioIcon = defineAsyncComponent(() =>
-  import("@ant-design/icons-vue/AudioOutlined")
-);
 
 const props = defineProps({
   replies: { type: Array, required: true },
@@ -129,9 +106,6 @@ const props = defineProps({
   fileList: { type: Array, required: true },
   placeholder: { type: String, required: false },
   minRows: { type: Number, default: 2 },
-  generating: { type: Boolean, default: false },
-  recording: { type: Boolean, default: false },
-  showMic: { type: Boolean, default: false },
 });
 
 const emits = defineEmits([
@@ -140,8 +114,6 @@ const emits = defineEmits([
   "update:message",
   "update:editing",
   "update:filelist",
-  "stop",
-  "toggleMic",
 ]);
 
 const { t } = useI18n();
@@ -178,13 +150,11 @@ async function handlePaste(event) {
 
   const newFiles = [];
   for (let i = 0; i < items.length; i++) {
-    if (items[i].kind !== "file") continue;
-    const file = items[i].getAsFile();
-    if (!file) continue;
-    if (items[i].type.includes("image")) {
+    if (items[i].kind === "file" && items[i].type.includes("image")) {
+      const file = items[i].getAsFile();
       await setPreview(file);
+      newFiles.push(file);
     }
-    newFiles.push(file);
   }
 
   if (newFiles.length > 0) {

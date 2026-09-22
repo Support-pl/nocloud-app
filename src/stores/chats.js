@@ -28,7 +28,6 @@ import {
   UsersAPI,
 } from "@/libs/cc_connect/cc_connect";
 import api from "@/api.js";
-import { isHiddenReply, metaValue } from "@/components/openai-chats/helpers.js";
 
 export const useChatsStore = defineStore("chats", () => {
   const router = useRouter();
@@ -62,8 +61,6 @@ export const useChatsStore = defineStore("chats", () => {
   let reconnectAttempts = 0;
 
   const attachments = ref(new Map());
-  const generatingChats = ref(new Set());
-  const generatingTimers = new Map();
 
   const getChats = computed(() => {
     if (supportStore.filter[0] === "all" || supportStore.filter.length === 0) {
@@ -255,13 +252,6 @@ export const useChatsStore = defineStore("chats", () => {
       {};
     const newMessage = changeMessage(message, user, event.uuid);
 
-    if (isHiddenReply(newMessage)) {
-      if (metaValue(newMessage.meta, "mode") === "stop") {
-        markIdle(message.chat);
-      }
-      return;
-    }
-
     if (event.item.case === "chat") return;
     switch (event.type) {
       case EventType.MESSAGE_SENT: {
@@ -303,12 +293,6 @@ export const useChatsStore = defineStore("chats", () => {
               unread: Number(chat.meta?.unread || 0) + 1,
             }),
           });
-        }
-        if (
-          metaValue(newMessage.meta, "cost") != null ||
-          metaValue(newMessage.meta, "stopped") === true
-        ) {
-          markIdle(message.chat);
         }
         break;
       }
@@ -380,35 +364,6 @@ export const useChatsStore = defineStore("chats", () => {
     fetch_attachments(attachmentsForFetch);
   });
 
-  function isChatGenerating(chatId) {
-    return generatingChats.value.has(chatId);
-  }
-
-  function markGenerating(chatId) {
-    if (!chatId) return;
-    const next = new Set(generatingChats.value);
-    next.add(chatId);
-    generatingChats.value = next;
-    if (generatingTimers.has(chatId)) {
-      clearTimeout(generatingTimers.get(chatId));
-    }
-    generatingTimers.set(
-      chatId,
-      setTimeout(() => markIdle(chatId), 3 * 60 * 1000),
-    );
-  }
-
-  function markIdle(chatId) {
-    if (!chatId || !generatingChats.value.has(chatId)) return;
-    const next = new Set(generatingChats.value);
-    next.delete(chatId);
-    generatingChats.value = next;
-    if (generatingTimers.has(chatId)) {
-      clearTimeout(generatingTimers.get(chatId));
-      generatingTimers.delete(chatId);
-    }
-  }
-
   return {
     transport,
     accounts,
@@ -422,10 +377,6 @@ export const useChatsStore = defineStore("chats", () => {
 
     globalModelsList,
     fetch_models_list,
-    generatingChats,
-    isChatGenerating,
-    markGenerating,
-    markIdle,
 
     getChats,
     getDefaults,
@@ -469,16 +420,14 @@ export const useChatsStore = defineStore("chats", () => {
 
         const response = await messagesApi.get(chat);
 
-        const replies = response.messages
-          .map((message) => {
-            const user =
-              accounts.value.users.find(
-                (account) => account.uuid === message.sender,
-              ) ?? {};
+        const replies = response.messages.map((message) => {
+          const user =
+            accounts.value.users.find(
+              (account) => account.uuid === message.sender,
+            ) ?? {};
 
-            return changeMessage(message, user, authStore.userdata.uuid);
-          })
-          .filter((reply) => !isHiddenReply(reply));
+          return changeMessage(message, user, authStore.userdata.uuid);
+        });
 
         messages.value[id] = {
           status: chat.status,
@@ -702,30 +651,16 @@ export const useChatsStore = defineStore("chats", () => {
           sender: message.account,
           attachments: message.attachments,
           meta: message.meta?.reduce((result, { key, value }) => {
-            if (value !== undefined && value !== null && value !== "") {
-              result[key] = Value.fromJson(value);
-            }
+            if (value) result[key] = Value.fromJson(value);
 
             return result;
           }, {}),
         });
 
-        if (!mes.meta) mes.meta = {};
-        const mode = mes.meta?.mode?.kind?.value;
-        if (
-          !mes.meta.model &&
-          (!mode ||
-            mode === "default" ||
-            mode === "regenerate" ||
-            mode === "transcribe")
-        ) {
+        if (mes.meta?.mode?.kind?.value === "default") {
           mes.meta.model = Value.fromJson(
             chats.value.get(message.uuid)?.meta?.data?.model?.kind?.value ?? "",
           );
-        }
-
-        if (mode && mode !== "stop") {
-          markGenerating(message.uuid);
         }
 
         const response = await messagesApi.send(mes);
@@ -734,7 +669,6 @@ export const useChatsStore = defineStore("chats", () => {
         }
         return response;
       } catch (error) {
-        markIdle(message.uuid);
         throw error;
       }
     },
@@ -747,41 +681,11 @@ export const useChatsStore = defineStore("chats", () => {
           content: message.content,
         });
 
-        await messagesApi.update(newMessage);
+        messagesApi.update(newMessage);
         return newMessage;
       } catch (error) {
         throw error;
       }
-    },
-    async deleteMessage(message) {
-      const messagesApi = createPromiseClient(MessagesAPI, transport);
-      const existing =
-        rawMessages.value.find(({ uuid }) => uuid === message.uuid) || message;
-
-      await messagesApi.delete(
-        new Message({
-          uuid: message.uuid,
-          chat: message.chat || existing.chat,
-          sender: message.userid || existing.sender,
-        }),
-      );
-    },
-    async stopGeneration(chatId) {
-      markIdle(chatId);
-      const messagesApi = createPromiseClient(MessagesAPI, transport);
-      await messagesApi.send(
-        new Message({
-          kind: Kind.DEFAULT,
-          content: " ",
-          chat: chatId,
-          sent: BigInt(Date.now()),
-          sender: authStore.userdata.uuid,
-          meta: {
-            mode: Value.fromJson("stop"),
-            hidden: Value.fromJson(true),
-          },
-        }),
-      );
     },
   };
 });
