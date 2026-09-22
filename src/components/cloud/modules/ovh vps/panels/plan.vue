@@ -13,8 +13,8 @@
           :tip-formatter="null"
           :max="products.length - 1"
           :min="0"
-          :value="products.indexOf(product)"
-          @change="(i) => (product = products[i])"
+          :value="Math.max(products.indexOf(product), 0)"
+          @change="(i) => pickProduct(products[i])"
         />
       </a-col>
 
@@ -25,7 +25,7 @@
             :key="provider"
             class="order__slider-item"
             :class="{ 'order__slider-item--active': product === provider }"
-            @click="product = provider"
+            @click="pickProduct(provider)"
           >
             {{ provider }}
           </div>
@@ -164,9 +164,37 @@ const route = useRoute();
 const cloudStore = useCloudStore();
 const [options, setOptions] = inject("useOptions", () => [])();
 const [, setPrice] = inject("usePriceOVH", () => [])();
-const product = ref("");
 const { isLogged } = storeToRefs(useAuthStore());
-const { fetchAvailability } = useVpsAvailability();
+const { availability, fetchAvailability, isCodeOrderable } =
+  useVpsAvailability();
+const isPicked = ref(false);
+
+// the slider shows a group, the calculator shows what the planCode says: derive
+// the group from that planCode so the two cannot show different tariffs
+const product = computed(
+  () =>
+    datacenterProducts.value.find(
+      ({ value }) => value === options.config.planCode,
+    )?.group ?? "",
+);
+
+// picking a group is picking its plan in this datacenter - the same group name
+// in another one carries a planCode that is not on sale here
+function selectGroup(group) {
+  const [groupProduct] = datacenterProducts.value.filter(
+    ({ group: name }) => name === group,
+  );
+
+  if (groupProduct) setResources(groupProduct.value);
+}
+
+function pickProduct(group) {
+  // the slider echoes an out-of-range value back as a change
+  if (!group) return;
+
+  isPicked.value = true;
+  selectGroup(group);
+}
 
 if (props.products.length < 1) resetData();
 
@@ -182,17 +210,6 @@ const productKey = computed(() => {
   );
 
   return plan?.value;
-});
-
-watch(product, (value) => {
-  const groupProduct = props.products.find(({ group }) => group === value);
-
-  const dataString = localStorage.getItem("data") ?? route.query.data ?? "{}";
-  const data = JSON.parse(dataString);
-
-  if (!groupProduct) return;
-
-  setResources(data?.ovhConfig?.planCode ?? groupProduct.value);
 });
 
 watch(
@@ -270,24 +287,39 @@ watch(products, async (value) => {
   }
 
   const dataString = localStorage.getItem("data") ?? route.query.data ?? "{}";
+  const data = dataString.includes("productSize") ? JSON.parse(dataString) : {};
+  const code = data.ovhConfig?.planCode;
 
-  if (dataString.includes("productSize")) {
-    const data = JSON.parse(dataString);
-    const code = data.ovhConfig?.planCode;
+  if (code && options.config.planCode === code) return;
 
-    if (code && options.config.planCode === code) {
-      return;
-    }
-    product.value = data.productSize;
-    await nextTick();
+  await nextTick();
 
-    if (data.ovhConfig) setOptions("config", data.ovhConfig);
+  // a restored order only counts while its plan is sold in this datacenter
+  if (datacenterProducts.value.some((el) => el.value === code)) {
+    setResources(code);
+    setOptions("config", data.ovhConfig);
     return;
   }
 
-  nextTick(() => {
-    product.value = value[1] ?? value[0];
-  });
+  selectGroup(value[1] ?? value[0]);
+});
+
+// the default tariff is a guess made before OVH stock is known: when it turns
+// out to be undeliverable here, fall to the first one that is orderable
+watch([availability, product], () => {
+  if (isPicked.value || !product.value) return;
+
+  const groupCode = (group) =>
+    datacenterProducts.value.find((el) => el.group === group)?.value;
+  const code = groupCode(product.value);
+
+  if (!code || isCodeOrderable(code)) return;
+
+  const orderable = products.value.find((group) =>
+    isCodeOrderable(groupCode(group)),
+  );
+
+  if (orderable) selectGroup(orderable);
 });
 
 watch(isFlavorsLoading, () => {
@@ -327,7 +359,6 @@ const diskSize = computed(() => {
 });
 
 function resetData() {
-  product.value = "";
   emits("update:product-size", "-");
   emits("update:periods", [{ value: "-", label: "unknown" }]);
 
