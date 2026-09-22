@@ -138,7 +138,6 @@ async function sendChatMessage(result, replies, extraMeta = []) {
       attachments: files.map(({ uuid }) => uuid),
       meta: buildMessageMeta(sendAdvancedOptions.value, [
         { key: "speak_reply", value: chatsStore.speakReplies },
-        { key: "speech_speed", value: chatsStore.speechSpeed },
         ...extraMeta,
       ]),
     };
@@ -202,7 +201,6 @@ async function applyEditAndRegenerate(uuid, text) {
         { key: "from", value: uuid },
         { key: "hidden", value: true },
         { key: "speak_reply", value: chatsStore.speakReplies },
-        { key: "speech_speed", value: chatsStore.speechSpeed },
       ],
     });
 
@@ -238,7 +236,6 @@ async function regenerateFrom(reply) {
         { key: "from", value: previousUser.uuid },
         { key: "hidden", value: true },
         { key: "speak_reply", value: chatsStore.speakReplies },
-        { key: "speech_speed", value: chatsStore.speechSpeed },
       ],
     });
 }

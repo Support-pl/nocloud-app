@@ -160,7 +160,6 @@ async function sendChatMessage(result, chatId) {
     attachments: files.map(({ uuid }) => uuid),
     meta: buildMessageMeta(sendAdvancedOptions.value, [
       { key: "speak_reply", value: chatsStore.speakReplies },
-      { key: "speech_speed", value: chatsStore.speechSpeed },
       ...pendingVoiceMeta.value.splice(0),
     ]),
   };

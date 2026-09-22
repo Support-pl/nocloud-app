@@ -1,20 +1,23 @@
 <template>
   <div class="audio" style="display: flex; align-items: center">
     <div style="width: 250px; padding: 0px 10px">
-      <audio
-        ref="nativeAudio"
-        :src="currentTrack?.src"
-        controls
-        @ended="playNext"
-      />
+      <vue-audio-player
+        :show-prev-button="false"
+        :show-next-button="false"
+        :isLoop="false"
+        ref="audioPlayer"
+        theme-color="#3d73da"
+        :audio-list="audioList"
+        :show-playback-rate="false"
+      >
+      </vue-audio-player>
 
       <div class="name">
-        {{ currentTrack?.title || name }}
+        {{ audioList[0].title }}
         <a-button
-          v-if="currentTrack?.src || url"
           style="margin-left: 10px; margin-bottom: 4px"
           size="small"
-          @click="downloadFile(currentTrack?.src || url, currentTrack?.title || name)"
+          @click="downloadFile(url, name)"
           shape="round"
           type="primary"
         >
@@ -29,73 +32,39 @@
 
 <script setup>
 import { downloadFile } from "@/functions";
+import VueAudioPlayer from "@liripeng/vue-audio-player";
 import { computed, defineAsyncComponent, nextTick, ref, watch } from "vue";
 
 const props = defineProps({
   url: { type: String, default: "" },
   name: { type: String, default: "" },
-  tracks: { type: Array, default: () => [] },
   autoplay: { type: Boolean, default: false },
 });
 
-const nativeAudio = ref();
-const currentIndex = ref(0);
-const started = ref(false);
+const audioPlayer = ref();
 const downloadIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/DownloadOutlined")
 );
 
-const list = computed(() => {
-  if (props.tracks.length) {
-    return props.tracks
-      .map((track) => ({
-        src: track.url || track.src,
-        title: track.name || track.title,
-      }))
-      .filter((track) => track.src);
-  }
-  if (props.url) {
-    return [{ src: props.url, title: props.name }];
-  }
-  return [];
-});
-
-const currentTrack = computed(
-  () => list.value[currentIndex.value] || list.value[0]
-);
-
-function playCurrent() {
-  nextTick(() => {
-    nativeAudio.value?.play?.().catch(() => {});
-  });
-}
-
-function playNext() {
-  if (currentIndex.value < list.value.length - 1) {
-    currentIndex.value += 1;
-    playCurrent();
-  }
-}
+const audioList = computed(() => [
+  {
+    src: props.url,
+    title: props.name,
+  },
+]);
 
 watch(
-  () => list.value.map((track) => track.src).join("|"),
-  (srcs, previous) => {
-    if (!srcs) return;
-    if (props.autoplay && !started.value) {
-      started.value = true;
-      currentIndex.value = 0;
-      playCurrent();
+  () => [props.url, props.autoplay],
+  async ([src, shouldPlay]) => {
+    if (!shouldPlay || !src) return;
+    await nextTick();
+    const player = audioPlayer.value;
+    if (typeof player?.play === "function") {
+      player.play();
+      return;
     }
-    if (
-      props.autoplay &&
-      started.value &&
-      previous &&
-      srcs.startsWith(previous) &&
-      nativeAudio.value?.paused &&
-      currentIndex.value >= (previous.split("|").length - 1)
-    ) {
-      playNext();
-    }
+    const el = player?.$el?.querySelector?.("audio") || player?.audio;
+    el?.play?.().catch(() => {});
   },
   { immediate: true }
 );
@@ -110,7 +79,15 @@ watch(
   color: var(--main);
 }
 
-.audio audio {
-  width: 230px;
+.vue-audio-player__btn-wrap svg {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.vue-audio-player__progress-wrap {
+  margin-top: 10px !important;
+}
+.vue-audio-player__play-volume-icon-wrap {
+  display: none !important;
 }
 </style>

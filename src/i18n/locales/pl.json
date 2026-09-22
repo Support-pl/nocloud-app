@@ -1175,10 +1175,6 @@
         "voice_message": "Wiadomość głosowa",
         "speak_replies": "Czytaj na głos",
         "speak_replies_tip": "Odpowiedź jest pisana i odczytywana jednocześnie",
-        "speech_speed": "Szybkość mowy",
-        "speech_speed_slow": "wolniej",
-        "speech_speed_normal": "normalnie",
-        "speech_speed_fast": "szybciej",
         "api_compatible_with_openai": "_Nasze API jest kompatybilne z OpenAI ([Dowiedz się więcej](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "default_model": {

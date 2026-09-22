@@ -65,17 +65,10 @@ export const useChatsStore = defineStore("chats", () => {
   const generatingChats = ref(new Set());
   const generatingTimers = new Map();
   const speakReplies = ref(localStorage.getItem("openai_speak_replies") === "1");
-  const speechSpeed = ref(Number(localStorage.getItem("openai_speech_speed") || 1) || 1);
 
   function setSpeakReplies(value) {
     speakReplies.value = !!value;
     localStorage.setItem("openai_speak_replies", value ? "1" : "0");
-  }
-
-  function setSpeechSpeed(value) {
-    const speed = Math.min(2, Math.max(0.75, Number(value) || 1));
-    speechSpeed.value = speed;
-    localStorage.setItem("openai_speech_speed", String(speed));
   }
 
   const getChats = computed(() => {
@@ -441,9 +434,6 @@ export const useChatsStore = defineStore("chats", () => {
     markIdle,
     speakReplies,
     setSpeakReplies,
-    speechSpeed,
-    setSpeechSpeed,
-    fetch_attachments,
 
     getChats,
     getDefaults,

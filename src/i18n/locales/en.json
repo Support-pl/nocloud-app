@@ -1177,10 +1177,6 @@
         "voice_message": "Voice message",
         "speak_replies": "Read aloud",
         "speak_replies_tip": "The reply is written and spoken at the same time",
-        "speech_speed": "Speech speed",
-        "speech_speed_slow": "slower",
-        "speech_speed_normal": "normal",
-        "speech_speed_fast": "faster",
         "api_compatible_with_openai": "_Our API is compatible with OpenAI ([Learn more](https://platform.openai.com/docs/api-reference/chat/create))_"
       },
       "default_model": {
