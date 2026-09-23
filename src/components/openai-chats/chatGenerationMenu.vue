@@ -57,7 +57,14 @@
         </a-form-item>
 
         <a-form-item :label="t('openai.chat_action_properties.duration')">
+          <a-select
+            v-if="videoDurations.length"
+            :value="options.duration"
+            @update:value="updateOptions('duration', $event)"
+            :options="videoDurations"
+          />
           <a-input-number
+            v-else
             style="width: 100%"
             :value="options.duration"
             @update:value="
@@ -272,12 +279,25 @@ const videoRequestParameters = computed(() => {
 });
 
 const videoAspectRatios = computed(() => {
-  return (
-    videoRequestParameters.value?.["aspect_ratio"]?.enum.map((v) => ({
-      value: v,
-      label: v,
-    })) || []
-  );
+  const values = videoRequestParameters.value?.["aspect_ratio"]?.enum;
+  if (!Array.isArray(values)) {
+    return [];
+  }
+  return values.map((v) => ({
+    value: v,
+    label: v,
+  }));
+});
+
+const videoDurations = computed(() => {
+  const values = videoRequestParameters.value?.["duration"]?.enum;
+  if (!Array.isArray(values) || !values.length) {
+    return [];
+  }
+  return values.map((v) => ({
+    value: Number(v),
+    label: String(v),
+  }));
 });
 
 const videoDurationRange = computed(() => {
@@ -428,10 +448,19 @@ watch(videoRequestParameters, () => {
       )?.value || videoAspectRatios.value[0].value
     );
   }
-  updateOptions(
-    "duration",
-    options.value.duration || videoDurationRange.value.min
-  );
+  if (videoDurations.value.length) {
+    const current = Number(options.value.duration);
+    updateOptions(
+      "duration",
+      videoDurations.value.find((v) => v.value === current)?.value ??
+        videoDurations.value[0].value
+    );
+  } else {
+    updateOptions(
+      "duration",
+      options.value.duration || videoDurationRange.value.min
+    );
+  }
   if (!isAudioEnabled.value) {
     updateOptions("with_audio", false);
   }
