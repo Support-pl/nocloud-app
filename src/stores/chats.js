@@ -567,7 +567,7 @@ export const useChatsStore = defineStore("chats", () => {
           meta: new ChatMeta({
             lastMessage: data.chat.message,
             data: data.chat.meta?.reduce((result, { key, value }) => {
-              if (value) result[key] = Value.fromJson(value);
+              if (value || value === false) result[key] = Value.fromJson(value);
 
               return result;
             }, {}),
@@ -651,7 +651,7 @@ export const useChatsStore = defineStore("chats", () => {
           sender: message.account,
           attachments: message.attachments,
           meta: message.meta?.reduce((result, { key, value }) => {
-            if (value) result[key] = Value.fromJson(value);
+            if (value || value === false) result[key] = Value.fromJson(value);
 
             return result;
           }, {}),
