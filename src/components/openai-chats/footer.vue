@@ -131,7 +131,8 @@ async function sendChatMessage(result, replies) {
       message.meta.push(
         { key: "duration", value: sendAdvancedOptions.value.duration },
         { key: "with_audio", value: sendAdvancedOptions.value.with_audio },
-        { key: "aspect_ratio", value: sendAdvancedOptions.value.aspect_ratio }
+        { key: "aspect_ratio", value: sendAdvancedOptions.value.aspect_ratio },
+        { key: "resolution", value: sendAdvancedOptions.value.resolution }
       );
     }
 

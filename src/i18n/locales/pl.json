@@ -1178,6 +1178,7 @@
       },
       "chat_action_properties": {
         "aspect_ratio": "Proporcje obrazu",
+        "resolution": "Rozdzielczość",
         "duration": "Czas trwania (sekundy)",
         "with_audio": "Z dźwiękiem?",
         "model": "Model AI",
