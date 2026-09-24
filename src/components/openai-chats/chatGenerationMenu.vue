@@ -28,7 +28,7 @@
         {{
           options.checked === "video" && !isAdvancedModalOpen
             ? `(${formatPrice(
-                ((convertedVideoPrices.get(options.model) || 0) / 60) *
+                (convertedVideoPrices.get(options.model) || 0) *
                   options.duration
               )} ${currency.title})`
             : ""
@@ -72,6 +72,17 @@
             "
             :min="videoDurationRange.min"
             :max="videoDurationRange.max"
+          />
+        </a-form-item>
+
+        <a-form-item
+          v-if="videoResolutions.length"
+          :label="t('openai.chat_action_properties.resolution')"
+        >
+          <a-select
+            :value="options.resolution"
+            @update:value="updateOptions('resolution', $event)"
+            :options="videoResolutions"
           />
         </a-form-item>
 
@@ -154,11 +165,11 @@
           marked(
             t('openai.labels.videos_price_tip', {
               perSecond: `${formatPrice(
-                (convertedVideoPrices.get(options.model) || 0) / 60
+                convertedVideoPrices.get(options.model) || 0
               )}
         ${currency.title}`,
               total: `${formatPrice(
-                ((convertedVideoPrices.get(options.model) || 0) / 60) *
+                (convertedVideoPrices.get(options.model) || 0) *
                   options.duration
               )} ${currency.title}`,
             }).replaceAll('\n', ' ')
@@ -280,6 +291,17 @@ const videoRequestParameters = computed(() => {
 
 const videoAspectRatios = computed(() => {
   const values = videoRequestParameters.value?.["aspect_ratio"]?.enum;
+  if (!Array.isArray(values)) {
+    return [];
+  }
+  return values.map((v) => ({
+    value: v,
+    label: v,
+  }));
+});
+
+const videoResolutions = computed(() => {
+  const values = videoRequestParameters.value?.["resolution"]?.enum;
   if (!Array.isArray(values)) {
     return [];
   }
@@ -440,6 +462,13 @@ watch(instanceImageSizes, (v) => {
 });
 
 watch(videoRequestParameters, () => {
+  if (videoResolutions.value.length) {
+    updateOptions(
+      "resolution",
+      videoResolutions.value.find((v) => v.value === options.value.resolution)
+        ?.value || videoResolutions.value[0].value
+    );
+  }
   if (videoAspectRatios.value.length) {
     updateOptions(
       "aspect_ratio",
@@ -470,21 +499,29 @@ watch(isAdvancedModalOpen, () => {
   lastOptionsValue.value = JSON.parse(JSON.stringify(options.value));
 });
 
-watch(instanceVideoModels, (value) => {
-  const forConvert = new Map();
-  value.forEach((model) => {
-    const fullModel = instanceModels.value.find(
-      ({ key }) => key === model.value
-    );
+watch(
+  [instanceVideoModels, () => options.value.resolution],
+  ([value]) => {
+    const forConvert = new Map();
+    value.forEach((model) => {
+      const fullModel = instanceModels.value.find(
+        ({ key }) => key === model.value
+      );
+      const resolutionPrice =
+        fullModel?.billing?.media_duration?.resolution_prices?.[
+          options.value.resolution
+        ]?.amount;
 
-    forConvert.set(
-      model.value,
-      fullModel?.billing?.media_duration?.duration_price?.price?.amount
-    );
-  });
+      forConvert.set(
+        model.value,
+        resolutionPrice ||
+          fullModel?.billing?.media_duration?.duration_price?.price?.amount
+      );
+    });
 
-  convertPrices(forConvert);
-});
+    convertPrices(forConvert);
+  }
+);
 
 watch(
   [instanceImageModels, () => options.value.size, () => options.value.quality],
