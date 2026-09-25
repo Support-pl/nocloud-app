@@ -547,7 +547,7 @@
     "question": "Question",
     "message": "Message",
     "ticketStatus": {
-      "Onboarding": "Onboarding",
+      "Onboarding": "Notification",
       "Closed": "Fermé",
       "Close-Ticket": "Fermer le ticket",
       "Customer-Reply": "Réponse client",

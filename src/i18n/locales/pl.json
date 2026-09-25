@@ -741,7 +741,7 @@
     "resolution": "resolution",
     "quality": "quality",
     "ticketStatus": {
-      "Onboarding": "Onboarding",
+      "Onboarding": "Powiadomienie",
       "Closed": "Zamknięte",
       "Close-Ticket": "Zamknij zgłoszenie",
       "Customer-Reply": "Odpowiedź klienta",
@@ -813,6 +813,12 @@
         "inject_account_tip": "Dla serwerów powiązanych z kontem (tryb serwisowy NoCloud): rozpoznane konto klienta jest wysyłane z każdym wywołaniem i ukryte przed modelem. Dla zwykłych serwerów — wyłączone.",
         "enabled": "Włączony",
         "add_server": "Dodaj serwer MCP"
+      },
+      "otus": {
+        "title": "Otus",
+        "on": "on",
+        "use": "Otus answers",
+        "use_tip": "The bot stops thinking for itself: the customer's line goes to Otus as written, and Otus decides what to answer from its own knowledge base.\nThe prompt, role, knowledge bases and flow on this page do nothing while this is on.\nWhen Otus writes nothing to the customer, the chat goes to a human.\nThe operator copilot, when it is on, answers through Otus too."
       },
       "admin_flow": {
         "title": "Asystent operatora (przepływ administratora)",
@@ -1265,7 +1271,8 @@
         "runway": "Runway",
         "stability-ai": "Stability AI",
         "alibaba": "Alibaba",
-        "nocloud-ocr": "NoCloud OCR"
+        "nocloud-ocr": "NoCloud OCR",
+        "openrouter": "OpenRouter"
       },
       "filters": {
         "video": "Wideo",
@@ -1345,6 +1352,7 @@
       "6": "Oczekiwanie na odpowiedź",
       "7": "Wstrzymany",
       "8": "W trakcie",
+      "9": "Powiadomienie",
       "Unpaid": "Nie zapłacony",
       "Paid": "Zapłacony",
       "Open": "Otwarty",

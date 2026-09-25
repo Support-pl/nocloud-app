@@ -322,6 +322,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           admin_flow_enabled: !!bot.settings.admin_flow_enabled,
           mcp_servers: bot.settings.mcp_servers ?? [],
           reply_rules: bot.settings.reply_rules ?? [],
+          otus_enabled: !!bot.settings.otus_enabled,
         });
 
         bots.value.set(bot.id, data);
