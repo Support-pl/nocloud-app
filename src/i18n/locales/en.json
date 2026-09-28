@@ -1262,6 +1262,9 @@
         "pages_count_price": "null"
       },
       "images_quality": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low",
         "hd": "High quality (HD)",
         "auto": "Auto",
         "standard": "Standard"
