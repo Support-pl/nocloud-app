@@ -65,6 +65,7 @@
     "advanced options": "Расширенные опции",
     "forgotPass": "Забыли пароль?",
     "reset_password_success": "На указанный email отправлена инструкция по сбросу пароля",
+    "reset_password_not_found": "Указанный адрес e-mail не найден",
     "Enter new password": "Введите новый пароль",
     "Cloud": "Облако",
     "Support": "Поддержка",

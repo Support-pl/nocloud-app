@@ -38,6 +38,7 @@
     "advanced options": "Advanced options",
     "forgotPass": "Forgot password?",
     "reset_password_success": "Password reset instructions have been sent to the specified email",
+    "reset_password_not_found": "The specified email address was not found",
     "Enter new password": "Enter new password",
     "Cloud": "Cloud",
     "Support": "Support",
