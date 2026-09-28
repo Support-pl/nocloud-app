@@ -1292,9 +1292,12 @@
         "characters_price": "null"
       },
       "images_quality": {
-        "hd": "High quality (HD)",
-        "auto": "Auto",
-        "standard": "Standard"
+        "high": "Высокое",
+        "medium": "Среднее",
+        "low": "Низкое",
+        "hd": "Высокое качество (HD)",
+        "auto": "Автоматически",
+        "standard": "Стандартное"
       },
       "providers": {
         "openai": "OpenAI",
