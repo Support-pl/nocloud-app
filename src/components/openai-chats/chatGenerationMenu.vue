@@ -499,24 +499,42 @@ watch(isAdvancedModalOpen, () => {
   lastOptionsValue.value = JSON.parse(JSON.stringify(options.value));
 });
 
+const videoSecondAmount = (fullModel) => {
+  const rate =
+    fullModel?.billing?.media_duration?.resolution_prices?.[
+      options.value.resolution
+    ];
+  if (!rate) {
+    return undefined;
+  }
+  if (rate.with_audio || rate.without_audio) {
+    const chosen = options.value.with_audio
+      ? rate.with_audio
+      : rate.without_audio;
+    const other = options.value.with_audio
+      ? rate.without_audio
+      : rate.with_audio;
+    return chosen?.amount || other?.amount;
+  }
+  return rate.amount;
+};
+
 watch(
-  [instanceVideoModels, () => options.value.resolution],
+  [
+    instanceVideoModels,
+    () => options.value.resolution,
+    () => options.value.with_audio,
+  ],
   ([value]) => {
     const forConvert = new Map();
     value.forEach((model) => {
       const fullModel = instanceModels.value.find(
         ({ key }) => key === model.value
       );
-      const resolutionPrice =
-        fullModel?.billing?.media_duration?.resolution_prices?.[
-          options.value.resolution
-        ]?.amount;
-
-      forConvert.set(
-        model.value,
-        resolutionPrice ||
-          fullModel?.billing?.media_duration?.duration_price?.price?.amount
-      );
+      const amount = videoSecondAmount(fullModel);
+      if (amount) {
+        forConvert.set(model.value, amount);
+      }
     });
 
     convertPrices(forConvert);
