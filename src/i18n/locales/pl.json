@@ -65,6 +65,7 @@
     "advanced options": "Zaawansowane opcje",
     "forgotPass": "Zapomniałeś hasła?",
     "reset_password_success": "Instrukcje resetowania hasła zostały wysłane na podany adres email",
+    "reset_password_not_found": "Podany adres e-mail nie został znaleziony",
     "Enter new password": "Wprowadź nowe hasło",
     "Cloud": "Chmura",
     "Support": "Wsparcie",

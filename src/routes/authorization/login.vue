@@ -280,6 +280,7 @@ function forgotPass() {
 
 async function restorePass() {
   tryingLogin.value = true;
+  loginError.value = "";
   try {
     const formatedEmail = `${email.value[0].toLowerCase()}${email.value.slice(
       1,
@@ -295,8 +296,12 @@ async function restorePass() {
     if (result === "success") {
       notification.success({ message: i18n.t("reset_password_success") });
     } else if (result === "error") {
-      loginError.value = i18n.t(message);
-      tryingLogin.value = false;
+      const key =
+        !message || message === "User Not Found"
+          ? "reset_password_not_found"
+          : message;
+      loginError.value = key;
+      notification.error({ message: i18n.t(key) });
     }
   } catch (error) {
     notification.error({
