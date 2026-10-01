@@ -16,7 +16,7 @@
         {{ capitalize(t("openai.actions.generate_image")) }}
         {{
           options.checked === "generate" && !isAdvancedModalOpen
-            ? `(${formatPrice(convertedImagePrices.get(currentImagePrice))} ${
+            ? `(${exactPrice(convertedImagePrices.get(currentImagePrice))} ${
                 currency.title
               })`
             : ""
@@ -137,7 +137,7 @@
           style="display: flex; justify-content: center; margin-bottom: 10px"
         >
           <span style="font-size: 1rem; text-align: center">
-            {{ t("openai.labels.price") }}: {{ formatPrice(convertedImagePrices.get(currentImagePrice)) }} {{ currency.title }}
+            {{ t("openai.labels.price") }}: {{ exactPrice(convertedImagePrices.get(currentImagePrice)) }} {{ currency.title }}
           </span>
         </div>
       </template>
@@ -225,6 +225,10 @@ const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 
 const { currency, formatPrice } = useCurrency();
+
+// an image costs cents, and the currency precision would round that to 0:
+// show it as it is, only trimming the float noise
+const exactPrice = (price) => +(+price || 0).toFixed(10);
 const { t } = useI18n();
 
 const convertedVideoPrices = ref(new Map());
