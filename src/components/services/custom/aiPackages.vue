@@ -53,7 +53,15 @@
         </div>
 
         <div class="ai-packages__price">
-          {{ formatPrice(offer.price) }} {{ currency.title }}
+          <template v-if="deals[offer.key]">
+            <span class="ai-packages__old-price">
+              {{ formatPrice(offer.price) }} {{ currency.title }}
+            </span>
+            {{ formatPrice(deals[offer.key].price) }} {{ currency.title }}
+          </template>
+          <template v-else>
+            {{ formatPrice(offer.price) }} {{ currency.title }}
+          </template>
           <span class="ai-packages__period">/ {{ getPeriod(offer.period) }}</span>
         </div>
         <div class="ai-packages__muted">
@@ -69,13 +77,23 @@
         <div v-if="offer.seats" class="ai-packages__muted">
           {{ t("ai_packages.seats", offer.seats) }}
         </div>
+        <div v-if="deals[offer.key]" class="ai-packages__deal">
+          <GiftOutlined />
+          {{
+            deals[offer.key].price > 0
+              ? t("ai_packages.deal_discount", {
+                  n: Math.round((1 - deals[offer.key].price / offer.price) * 100),
+                })
+              : t("ai_packages.deal_free")
+          }}
+        </div>
 
         <a-button
           class="ai-packages__buy"
           type="primary"
           size="large"
           block
-          @click="emit('order', offer)"
+          @click="emit('order', { ...offer, promocode: deals[offer.key]?.uuid })"
         >
           {{ t("ai_packages.choose") }}
         </a-button>
@@ -125,12 +143,14 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
-import { TeamOutlined, UserOutlined } from "@ant-design/icons-vue";
+import { GiftOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons-vue";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import markdown from "markdown-it";
 import { useCurrency, usePeriod } from "@/hooks/utils";
 import { useChatsStore } from "@/stores/chats.js";
+import { usePromocodesStore } from "@/stores/promocodes";
+import { GetPromocodeByCodeRequest } from "nocloud-proto/proto/es/billing/promocodes/promocodes_pb";
 
 /**
  * The storefront of an ai_packages showcase: one card per package, described in the showcase
@@ -154,6 +174,7 @@ const { currency, formatPrice } = useCurrency();
 const md = markdown({ breaks: true });
 const expanded = ref({});
 
+const promocodesStore = usePromocodesStore();
 const chatsStore = useChatsStore();
 const { globalModelsList } = storeToRefs(chatsStore);
 onMounted(() => chatsStore.fetch_models_list());
@@ -268,6 +289,48 @@ watch(
   },
   { immediate: true },
 );
+
+/**
+ * A package with a promocode on it (meta.ai_promocode) shows its price with that code applied.
+ * A code this user cannot use (spent, expired) just leaves the package at its price.
+ */
+const deals = ref({});
+const loadDeals = async () => {
+  const next = {};
+
+  await Promise.all(
+    offers.value.map(async (offer) => {
+      const { key } = offer;
+      const product = props.products[key];
+      const code = product?.meta?.ai_promocode;
+      if (!code) return;
+
+      try {
+        const promocode = await promocodesStore.promocodesApi.getByCode(
+          GetPromocodeByCodeRequest.fromJson({
+            code: code.toUpperCase(),
+            billingPlan: product.planId,
+          }),
+        );
+        const sale = await promocodesStore.applyToPlan({
+          promocodes: [promocode.uuid],
+          billingPlan: product.planId,
+          addons: [],
+        });
+        // a free product comes back without its price at all: proto3 leaves out the zero
+        const sold = sale.toJson().billingPlans[0]?.products?.[key];
+        const price = +(sold?.price ?? 0);
+        if (sold && price < offer.price) {
+          next[key] = { uuid: promocode.uuid, price };
+        }
+      } catch {
+        // not applicable to this user: the package is sold at its price
+      }
+    }),
+  );
+  deals.value = next;
+};
+watch(() => [offers.value, currency.value.code], loadDeals, { immediate: true });
 
 const shownModels = (offer) =>
   expanded.value[offer.key] ? offer.models : offer.models.slice(0, MODELS_SHOWN);
@@ -429,6 +492,27 @@ export default { name: "AiPackages" };
   color: #fff;
   background-color: var(--success);
   font-size: 0.8rem;
+}
+
+.ai-packages__old-price {
+  margin-right: 6px;
+  color: var(--gray);
+  font-size: 1.1rem;
+  font-weight: 400;
+  text-decoration: line-through;
+}
+
+.ai-packages__deal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  color: var(--success);
+  background-color: color-mix(in srgb, var(--success) 12%, transparent);
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .ai-packages__buy {

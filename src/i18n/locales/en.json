@@ -1770,6 +1770,8 @@
       }
     },
     "ai_packages": {
+      "deal_discount": "{n}% off the first order",
+      "deal_free": "Free for the first time",
       "choose": "Choose",
       "details": "Details",
       "models": "Models",

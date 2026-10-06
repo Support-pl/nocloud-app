@@ -905,7 +905,8 @@ const createVirtual = async (instance) => {
   }
 };
 /** An AI package picked on its card: selected with its period, then ordered as any product. */
-const orderPackage = async ({ key, period }) => {
+const orderPackage = async ({ key, period, promocode: uuid }) => {
+  promocode.value = uuid ? { uuid } : null;
   options.value.period = period;
   await nextTick();
   options.value.size = key;
