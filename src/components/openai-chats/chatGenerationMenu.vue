@@ -94,9 +94,11 @@
           />
         </a-form-item>
 
-        <a-form-item :label="t('openai.chat_action_properties.with_audio')">
+        <a-form-item
+          v-if="hasAudioChoice"
+          :label="t('openai.chat_action_properties.with_audio')"
+        >
           <a-switch
-            :disabled="!isAudioEnabled"
             :checked="options.with_audio"
             @update:checked="updateOptions('with_audio', $event)"
           />
@@ -333,11 +335,28 @@ const videoDurationRange = computed(() => {
   };
 });
 
-const isAudioEnabled = computed(() => {
-  return (videoRequestParameters.value?.["with_audio"]?.enum || []).includes(
-    true
+const videoAudioSides = computed(() => {
+  const fullModel = instanceModels.value.find(
+    ({ key }) => key === options.value.model
   );
+  const prices =
+    fullModel?.billing?.media_duration?.resolution_prices || {};
+  let withAudio = false;
+  let withoutAudio = false;
+  for (const rate of Object.values(prices)) {
+    if (rate?.with_audio) {
+      withAudio = true;
+    }
+    if (rate?.without_audio) {
+      withoutAudio = true;
+    }
+  }
+  return { withAudio, withoutAudio };
 });
+
+const hasAudioChoice = computed(
+  () => videoAudioSides.value.withAudio && videoAudioSides.value.withoutAudio
+);
 
 const instanceImageSizes = computed(() => {
   if (options.value.checked !== "generate") {
@@ -494,10 +513,21 @@ watch(videoRequestParameters, () => {
       options.value.duration || videoDurationRange.value.min
     );
   }
-  if (!isAudioEnabled.value) {
-    updateOptions("with_audio", false);
-  }
 });
+
+watch(
+  videoAudioSides,
+  (sides) => {
+    if (sides.withAudio && !sides.withoutAudio) {
+      updateOptions("with_audio", true);
+      return;
+    }
+    if (!sides.withAudio) {
+      updateOptions("with_audio", false);
+    }
+  },
+  { immediate: true }
+);
 
 watch(isAdvancedModalOpen, () => {
   lastOptionsValue.value = JSON.parse(JSON.stringify(options.value));

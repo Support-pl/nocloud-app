@@ -63,13 +63,13 @@
                 :disabled="noDomain"
               />
               <a-checkbox
-                v-if="!fetchLoading"
+                v-if="!fetchLoading && allowsTempDomain"
                 v-model:checked="noDomain"
                 class="domainCheck"
               >
                 {{ $t("domain optional hint") }}
               </a-checkbox>
-              <div v-else class="loadingLine" />
+              <div v-if="fetchLoading" class="loadingLine" />
             </a-form-item>
 
           </a-form>
@@ -239,9 +239,42 @@ const options = reactive({ size: "", model: "", period: "" });
 const config = reactive({ domain: "", email: "" });
 const noDomain = ref(false);
 
+function metaFlag(value) {
+  if (value === true || value === "true") {
+    return true;
+  }
+  if (value && typeof value === "object") {
+    return value.boolValue === true || value.bool_value === true;
+  }
+  return false;
+}
+
+const selectedProduct = computed(() => {
+  if (!Array.isArray(products.value)) {
+    return null;
+  }
+  return (
+    products.value.find(
+      ({ title, period }) => title === options.size && +period === options.period
+    ) || null
+  );
+});
+
+const allowsTempDomain = computed(
+  () =>
+    metaFlag(selectedProduct.value?.meta?.temp_domain) ||
+    metaFlag(selectedProduct.value?.resources?.temp_domain)
+);
+
 watch(noDomain, (on) => {
   if (on) {
     config.domain = "";
+  }
+});
+
+watch(allowsTempDomain, (on) => {
+  if (!on) {
+    noDomain.value = false;
   }
 });
 const modal = reactive({ confirmCreate: false, confirmLoading: false });
@@ -296,6 +329,7 @@ const currentProduct = computed(() => {
   delete product.resources.model;
   delete product.resources.empty_plan;
   delete product.resources.empty_product;
+  delete product.resources.temp_domain;
   if (`${product.resources.ssd}`.includes("Gb")) return product;
   product.resources.ssd = `${product.resources.ssd / 1024} Gb`;
 
@@ -323,6 +357,7 @@ const currentProductWithSale = computed(() => {
   delete product.resources.model;
   delete product.resources.empty_plan;
   delete product.resources.empty_product;
+  delete product.resources.temp_domain;
   if (`${product.resources.ssd}`.includes("Gb")) return product;
   product.resources.ssd = `${product.resources.ssd / 1024} Gb`;
 
@@ -506,9 +541,10 @@ const createVirtual = async (instance) => {
   }
 };
 const orderConfirm = () => {
-  if (noDomain.value) {
+  if (noDomain.value && allowsTempDomain.value) {
     config.domain = "";
   } else {
+    noDomain.value = false;
     config.domain = config.domain.trim();
     if (!config.domain) {
       notification.openNotification("error", {
