@@ -279,6 +279,8 @@ const currentProduct = computed(() => {
   );
 
   delete product.resources.model;
+  delete product.resources.empty_plan;
+  delete product.resources.empty_product;
   if (`${product.resources.ssd}`.includes("Gb")) return product;
   product.resources.ssd = `${product.resources.ssd / 1024} Gb`;
 
@@ -304,6 +306,8 @@ const currentProductWithSale = computed(() => {
   );
 
   delete product.resources.model;
+  delete product.resources.empty_plan;
+  delete product.resources.empty_product;
   if (`${product.resources.ssd}`.includes("Gb")) return product;
   product.resources.ssd = `${product.resources.ssd / 1024} Gb`;
 
