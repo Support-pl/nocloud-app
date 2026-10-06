@@ -1,6 +1,15 @@
 <template>
   <div class="order_wrapper">
-    <div class="order">
+    <ai-packages
+      v-if="showcase.meta?.ai_packages"
+      :showcase="showcase"
+      :sizes="sizes"
+      :products="products"
+      :selected="route.query.product ?? ''"
+      :loading="fetchLoading"
+      @order="orderPackage"
+    />
+    <div v-else class="order">
       <div>
         <div v-if="sizes.length > 1" class="order__field order_filters">
           <h3>{{ capitalize($t("filters")) }}</h3>
@@ -300,19 +309,6 @@
               >
                 {{ capitalize($t("order")) }}
               </a-button>
-              <a-modal
-                :title="$t('Confirm')"
-                :open="modal.confirmCreate"
-                :confirm-loading="modal.confirmLoading"
-                :cancel-text="$t('Cancel')"
-                @ok="orderClickHandler"
-                @cancel="modal.confirmCreate = false"
-              >
-                <p>
-                  {{ $t("order_services.Do you want to order") }}:
-                  {{ currentProduct.title }}
-                </p>
-              </a-modal>
             </a-col>
           </a-row>
         </div>
@@ -320,6 +316,20 @@
 
       <promo-block class="order__promo" />
     </div>
+
+    <a-modal
+      :title="$t('Confirm')"
+      :open="modal.confirmCreate"
+      :confirm-loading="modal.confirmLoading"
+      :cancel-text="$t('Cancel')"
+      @ok="orderClickHandler"
+      @cancel="modal.confirmCreate = false"
+    >
+      <p>
+        {{ $t("order_services.Do you want to order") }}:
+        {{ currentProduct.title }}
+      </p>
+    </a-modal>
   </div>
 </template>
 
@@ -347,6 +357,7 @@ import selectsToCreate from "@/components/ui/selectsToCreate.vue";
 import customPagination from "@/components/ui/pagination.vue";
 import filtersView from "@/components/ui/filters.vue";
 import promoBlock from "@/components/ui/promo.vue";
+import aiPackages from "@/components/services/custom/aiPackages.vue";
 import { CaretDownOutlined, CaretUpOutlined } from "@ant-design/icons-vue";
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -651,26 +662,25 @@ const sizesByPage = computed(() => {
   return filteredSizes.value.slice(start, end);
 });
 
-const plans = computed(() => {
-  return (
-    cachedPlans.value[`${provider.value}_${currency.value.code}`]?.filter(
-      ({ type, uuid }) => {
-        const { items } = showcase.value;
-        const plans = [];
+/** The provider's plans this showcase sells: its empty plans, or all of them without items. */
+const showcasePlans = (pool, providerId) => {
+  const { items } = showcase.value;
+  const uuids = (items ?? [])
+    .filter(({ servicesProvider }) => servicesProvider === providerId)
+    .map(({ plan }) => plan);
 
-        if (!items) return type === "empty";
-        items.forEach(({ servicesProvider, plan }) => {
-          if (servicesProvider === provider.value) {
-            plans.push(plan);
-          }
-        });
-
-        if (plans.length < 1) return type === "empty";
-        return type === "empty" && plans.includes(uuid);
-      },
-    ) ?? []
+  return (pool ?? []).filter(
+    ({ type, uuid }) =>
+      type === "empty" && (uuids.length < 1 || uuids.includes(uuid)),
   );
-});
+};
+
+const plans = computed(() =>
+  showcasePlans(
+    cachedPlans.value[`${provider.value}_${currency.value.code}`],
+    provider.value,
+  ),
+);
 
 const sp = computed(() => {
   const { items } = showcase.value;
@@ -717,8 +727,10 @@ const changeProducts = () => {
   const productsAndSizes = plans.value.reduce(
     (result, plan) => {
       for (const [key, product] of Object.entries(plan.products)) {
+        // same title with different seats is a separate size (AI packages: individual vs team)
         const i = result.sizes.findIndex(
-          ({ label }) => label === product.title,
+          ({ label, seats }) =>
+            label === product.title && seats === product.meta?.ai_seats,
         );
 
         if (!product.public) continue;
@@ -732,6 +744,7 @@ const changeProducts = () => {
           result.sizes.push({
             keys: { [product.period]: key },
             label: product.title,
+            seats: product.meta?.ai_seats,
             group: product.group ?? product.title,
             price: { [product.period]: product.price },
             sorter: product.sorter,
@@ -891,6 +904,16 @@ const createVirtual = async (instance) => {
     console.error(error);
   }
 };
+/** An AI package picked on its card: selected with its period, then ordered as any product. */
+const orderPackage = async ({ key, period, promocode: uuid }) => {
+  promocode.value = uuid ? { uuid } : null;
+  options.value.period = period;
+  await nextTick();
+  options.value.size = key;
+  await nextTick();
+  orderConfirm();
+};
+
 const orderConfirm = () => {
   validateDomain();
 
@@ -921,7 +944,7 @@ const fetchPlans = async (provider) => {
     });
 
     const descriptions = [];
-    pool.forEach((p) =>
+    showcasePlans(pool, provider).forEach((p) =>
       Object.keys(p.products || {}).forEach((key) =>
         descriptions.push(p.products[key]?.descriptionId),
       ),
