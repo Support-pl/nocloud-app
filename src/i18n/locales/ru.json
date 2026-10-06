@@ -1770,6 +1770,10 @@
     "ai_packages": {
       "deal_discount": "Скидка {n}% на первый заказ",
       "deal_free": "Первый раз бесплатно",
+      "open_chat": "Перейти в чаты",
+      "credit_title": "Кредит на ИИ",
+      "seats_title": "Места",
+      "seats_all": "Вся организация",
       "choose": "Выбрать",
       "details": "Подробнее",
       "models": "Модели",

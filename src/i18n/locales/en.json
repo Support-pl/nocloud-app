@@ -1772,6 +1772,10 @@
     "ai_packages": {
       "deal_discount": "{n}% off the first order",
       "deal_free": "Free for the first time",
+      "open_chat": "Open chats",
+      "credit_title": "AI credit",
+      "seats_title": "Seats",
+      "seats_all": "Whole organization",
       "choose": "Choose",
       "details": "Details",
       "models": "Models",

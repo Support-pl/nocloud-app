@@ -1,5 +1,63 @@
 <template>
-  <a-row :gutter="[10, 10]" style="margin-top: 20px">
+  <div v-if="aiPackage" class="ai-package">
+    <a-button
+      class="ai-package__chat"
+      type="primary"
+      size="large"
+      block
+      :href="chatUrl"
+      target="_blank"
+      rel="noopener"
+      @click="shareSession"
+    >
+      <template #icon><message-outlined /></template>
+      {{ t("ai_packages.open_chat") }}
+    </a-button>
+
+    <div class="ai-package__stats">
+      <div class="ai-package__stat">
+        <div class="ai-package__label">{{ t("ai_packages.credit_title") }}</div>
+        <div class="ai-package__value">
+          {{ formatPrice(aiPackage.credit) }} {{ currency.title }}
+        </div>
+        <div class="ai-package__hint">/ {{ getPeriod(aiPackage.period) }}</div>
+      </div>
+      <div class="ai-package__stat">
+        <div class="ai-package__label">{{ t("ai_packages.seats_title") }}</div>
+        <div class="ai-package__value">
+          {{ aiPackage.seats || "∞" }}
+        </div>
+        <div class="ai-package__hint">
+          {{
+            aiPackage.seats
+              ? t("ai_packages.seats", aiPackage.seats)
+              : t("ai_packages.seats_all")
+          }}
+        </div>
+      </div>
+      <div class="ai-package__stat">
+        <div class="ai-package__label">{{ t("ai_packages.models") }}</div>
+        <div class="ai-package__value">
+          {{ aiPackage.models.length || "∞" }}
+        </div>
+        <div class="ai-package__hint">
+          {{ aiPackage.models.length ? "" : t("ai_packages.all_models") }}
+        </div>
+      </div>
+    </div>
+
+    <div v-if="aiPackage.models.length" class="ai-package__tags">
+      <span
+        v-for="model of aiPackage.models"
+        :key="model.key"
+        class="ai-package__tag"
+      >
+        {{ model.name }}
+      </span>
+    </div>
+  </div>
+
+  <a-row v-if="addons.length" :gutter="[10, 10]" style="margin-top: 20px">
     <a-col span="24">
       <div class="service-page__info">
         <div class="service-page__info-title">
@@ -35,22 +93,89 @@
 </template>
 
 <script setup>
-import { computed, getCurrentInstance } from "vue";
+import { computed, getCurrentInstance, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
+import { storeToRefs } from "pinia";
+import { MessageOutlined } from "@ant-design/icons-vue";
+import config from "@/appconfig.js";
 import { useCurrency, usePeriod } from "@/hooks/utils";
+import { useChatsStore } from "@/stores/chats.js";
+import { useAuthStore } from "@/stores/auth.js";
+import cookies from "js-cookie";
 
 const props = defineProps({
   service: { type: Object, required: true },
 });
 
 const i18n = useI18n();
+const { t } = i18n;
 const app = getCurrentInstance().appContext.config.globalProperties;
-const { currency } = useCurrency();
+const { currency, formatPrice } = useCurrency();
 const { getPeriod } = usePeriod();
 
+const chatsStore = useChatsStore();
+const { globalModelsList } = storeToRefs(chatsStore);
+
+/** LibreChat signs the visitor in with their NoCloud session at /oauth/nocloud. */
+const chatUrl = `${config.aiChatUrl.replace(/\/$/, "")}/oauth/nocloud`;
+
+/** LibreChat's nocloud.sso.cookie: the cookie /oauth/nocloud reads the token from. */
+const SSO_COOKIE = "nocloud_token";
+
+/**
+ * The domain this page and the chat share (global.support.by and ai.support.by → support.by), or ""
+ * when they share none and the chat can only show its login form.
+ */
+const sharedDomain = (a, b) => {
+  const x = a.split(".").reverse();
+  const y = b.split(".").reverse();
+  let n = 0;
+  while (n < x.length && x[n] === y[n]) n++;
+  return n >= 2 ? x.slice(0, n).reverse().join(".") : "";
+};
+
+/**
+ * Hands the session to the chat for the one redirect: the cookie lives a minute on the shared domain,
+ * not for the whole session, so other subdomains hardly ever get to see it.
+ */
+const authStore = useAuthStore();
+const shareSession = () => {
+  const domain = sharedDomain(location.hostname, new URL(chatUrl).hostname);
+  if (!domain || !authStore.token) return;
+
+  cookies.set(SSO_COOKIE, authStore.token, {
+    domain,
+    expires: 1 / 1440,
+    secure: location.protocol === "https:",
+    sameSite: "lax",
+  });
+};
+
+/** The instance's product when it is an AI package (meta.ai_credit), as the storefront shows it. */
+const aiPackage = computed(() => {
+  const key = props.service.product ?? props.service.config?.product;
+  const product = props.service.billingPlan?.products?.[key];
+  const credit = +product?.meta?.ai_credit || 0;
+  if (!credit) return null;
+
+  const names = new Map(globalModelsList.value.map((m) => [m.key, m.name]));
+  const models = Array.isArray(product.meta.ai_models) ? product.meta.ai_models : [];
+
+  return {
+    credit: credit * (currency.value.rate || 1),
+    period: product.period,
+    seats: +product.meta.ai_seats || 0,
+    models: models.map((key) => ({ key, name: names.get(key) || key })),
+  };
+});
+
+onMounted(() => {
+  if (aiPackage.value) chatsStore.fetch_models_list();
+});
+
 const addons = computed(() =>
-  props.service.billingPlan.resources.filter(({ key }) =>
-    props.service.config.addons.includes(key)
+  (props.service.billingPlan?.resources ?? []).filter(({ key }) =>
+    props.service.config?.addons?.includes(key)
   )
 );
 
@@ -64,3 +189,72 @@ const columns = computed(() => [
 <script>
 export default { name: "CustomDraw" };
 </script>
+
+<style scoped>
+.ai-package {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border_color);
+}
+
+.ai-package__chat {
+  height: 56px;
+  border-radius: 12px;
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+.ai-package__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.ai-package__stat {
+  padding: 16px;
+  border: 1px solid var(--border_color);
+  border-radius: 12px;
+}
+
+.ai-package__label {
+  color: var(--gray);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ai-package__value {
+  margin-top: 4px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ai-package__hint {
+  min-height: 1.2em;
+  color: var(--gray);
+  font-size: 0.85rem;
+}
+
+.ai-package__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ai-package__tag {
+  padding: 2px 10px;
+  border: 1px solid var(--border_color);
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 576px) {
+  .ai-package__stats {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

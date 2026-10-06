@@ -15,6 +15,8 @@ export default {
   sharedEnabled: globalConfig.shared_enabled ?? false,
   cloudEnabled: globalConfig.cloud_enabled ?? false,
 
+  // ponytail: support.by's chat as the default, set ai_chat.url for another installation
+  aiChatUrl: globalConfig.ai_chat?.url ?? "https://ai.support.by",
   whmcsSiteUrl: globalConfig.whmcs?.site_url ?? "",
   whmcsRegistration: globalConfig.whmcs?.registration ?? false,
   dnsEditor: globalConfig.dnsEditor?.enabled ?? false,
