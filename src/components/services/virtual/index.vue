@@ -60,7 +60,15 @@
                 v-if="!fetchLoading"
                 v-model:value="config.domain"
                 placeholder="example.com"
+                :disabled="noDomain"
               />
+              <a-checkbox
+                v-if="!fetchLoading"
+                v-model:checked="noDomain"
+                class="domainCheck"
+              >
+                {{ $t("domain optional hint") }}
+              </a-checkbox>
               <div v-else class="loadingLine" />
             </a-form-item>
 
@@ -229,6 +237,13 @@ const periods = ref([]);
 
 const options = reactive({ size: "", model: "", period: "" });
 const config = reactive({ domain: "", email: "" });
+const noDomain = ref(false);
+
+watch(noDomain, (on) => {
+  if (on) {
+    config.domain = "";
+  }
+});
 const modal = reactive({ confirmCreate: false, confirmLoading: false });
 
 const slider = ref();
@@ -354,10 +369,19 @@ const rules = computed(() => {
 
   return {
     domain: [
-      req,
       {
-        message: t("domain is wrong"),
-        pattern: /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/,
+        validator: async (_rule, value) => {
+          if (noDomain.value) {
+            return;
+          }
+          const domain = String(value || "").trim();
+          if (!domain) {
+            throw new Error(t("ssl_product.field is required"));
+          }
+          if (!/^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(domain)) {
+            throw new Error(t("domain is wrong"));
+          }
+        },
       },
     ],
     email: [
@@ -458,7 +482,7 @@ const orderClickHandler = () => {
       currency: userCurrency.value.code,
     };
     onLogin.value.action = () => {
-      return { options: { ...options }, config: { ...config } };
+      return { options: { ...options }, config: { ...config }, noDomain: noDomain.value };
     };
 
     router.push({ name: "login" });
@@ -482,9 +506,20 @@ const createVirtual = async (instance) => {
   }
 };
 const orderConfirm = () => {
-  if (!config.domain.match(/^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/)) {
-    notification.openNotification("error", { message: t("domain is wrong") });
-    return;
+  if (noDomain.value) {
+    config.domain = "";
+  } else {
+    config.domain = config.domain.trim();
+    if (!config.domain) {
+      notification.openNotification("error", {
+        message: t("ssl_product.field is required"),
+      });
+      return;
+    }
+    if (!config.domain.match(/^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/)) {
+      notification.openNotification("error", { message: t("domain is wrong") });
+      return;
+    }
   }
 
   const instance = {
@@ -571,6 +606,7 @@ watch(
       options.size = data.options.size;
       options.period = data.options.period;
       config.domain = data.config.domain;
+      noDomain.value = Boolean(data.noDomain);
 
       onLogin.value = {};
     }, 300);
@@ -980,5 +1016,11 @@ export default {
 .price__sale .without_sale {
   text-decoration: line-through;
   margin-right: 10px;
+}
+
+.domainCheck {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.4;
 }
 </style>

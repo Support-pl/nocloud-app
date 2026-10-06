@@ -1311,6 +1311,7 @@
     "Domains": "Domains",
     "domains": "domains",
     "domain is wrong": "Please enter a valid domain",
+    "domain optional hint": "I don't have a domain. A temporary address is created on cPanel after the hosting is paid, when the site is published.",
     "Domain created successfully": "Domain created successfully",
     "Data for authorization in the control panel": "Data for authorization in the control panel",
     "user data": "user data",

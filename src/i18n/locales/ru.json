@@ -1161,6 +1161,7 @@
     "Domains": "Домены",
     "domains": "домены",
     "domain is wrong": "Пожалуйста введите правильный домен",
+    "domain optional hint": "Нет своего домена. Временный адрес создастся на cPanel после оплаты, когда сайт опубликуют.",
     "Domain created successfully": "Домен успешно создан",
     "Data for authorization in the control panel": "Данные для авторизации в панели управления",
     "user data": "данные пользователя",
