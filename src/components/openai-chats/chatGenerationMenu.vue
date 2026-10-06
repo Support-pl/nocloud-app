@@ -343,11 +343,12 @@ const videoAudioSides = computed(() => {
     fullModel?.billing?.media_duration?.resolution_prices || {};
   let withAudio = false;
   let withoutAudio = false;
+  const filled = (side) => Number(side?.amount) > 0;
   for (const rate of Object.values(prices)) {
-    if (rate?.with_audio) {
+    if (filled(rate?.with_audio)) {
       withAudio = true;
     }
-    if (rate?.without_audio) {
+    if (filled(rate?.without_audio)) {
       withoutAudio = true;
     }
   }
