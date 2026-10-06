@@ -727,8 +727,10 @@ const changeProducts = () => {
   const productsAndSizes = plans.value.reduce(
     (result, plan) => {
       for (const [key, product] of Object.entries(plan.products)) {
+        // same title with different seats is a separate size (AI packages: individual vs team)
         const i = result.sizes.findIndex(
-          ({ label }) => label === product.title,
+          ({ label, seats }) =>
+            label === product.title && seats === product.meta?.ai_seats,
         );
 
         if (!product.public) continue;
@@ -742,6 +744,7 @@ const changeProducts = () => {
           result.sizes.push({
             keys: { [product.period]: key },
             label: product.title,
+            seats: product.meta?.ai_seats,
             group: product.group ?? product.title,
             price: { [product.period]: product.price },
             sorter: product.sorter,
