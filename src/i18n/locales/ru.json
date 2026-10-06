@@ -1294,9 +1294,12 @@
         "characters_price": "null"
       },
       "images_quality": {
-        "hd": "High quality (HD)",
-        "auto": "Auto",
-        "standard": "Standard"
+        "high": "Высокое",
+        "medium": "Среднее",
+        "low": "Низкое",
+        "hd": "Высокое качество (HD)",
+        "auto": "Автоматически",
+        "standard": "Стандартное"
       },
       "providers": {
         "openai": "OpenAI",
@@ -1765,6 +1768,18 @@
         "read": "Чтение ваших данных",
         "write": "Чтение и изменение данных вашего аккаунта"
       }
+    },
+    "ai_packages": {
+      "choose": "Выбрать",
+      "details": "Подробнее",
+      "models": "Модели",
+      "all_models": "Все модели",
+      "all_models_count": "Все модели ({n})",
+      "less_models": "Свернуть",
+      "credit": "{amount} кредита на ИИ",
+      "seats": "Для {n} человек | Для {n} человека | Для {n} человек | Для {n} человек",
+      "solo": "Индивидуальный",
+      "team": "Команда"
     }
   }
 }
