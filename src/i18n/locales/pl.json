@@ -451,11 +451,10 @@
     "subaccounts": "subkonta",
     "member_access": {
       "title": "dostęp",
-      "ai": "Wydatki na AI",
-      "billing_read": "Widzieć faktury i płatności",
-      "billing_pay": "Opłacać faktury i doładowywać",
-      "services_read": "Widzieć usługi",
-      "services_manage": "Zamawiać i zarządzać usługami"
+      "order": "Kupować subskrypcje i usługi, doładowywać saldo",
+      "invoices": "Przeglądać i opłacać faktury",
+      "support": "Pisać do pomocy technicznej",
+      "services": "Przeglądać usługi"
     },
     "with": "z",
     "Servers": "Serwery Wirtualne",

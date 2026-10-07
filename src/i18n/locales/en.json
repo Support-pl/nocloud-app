@@ -451,11 +451,10 @@
     "subaccounts": "subaccounts",
     "member_access": {
       "title": "access",
-      "ai": "Spend on AI",
-      "billing_read": "See invoices and payments",
-      "billing_pay": "Pay invoices and top up",
-      "services_read": "See services",
-      "services_manage": "Order and manage services"
+      "order": "Buy subscriptions and services, top up the balance",
+      "invoices": "See and pay invoices",
+      "support": "Write to support",
+      "services": "See services"
     },
     "with": "with",
     "Servers": "Virtual Servers",

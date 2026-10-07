@@ -367,7 +367,10 @@ export default {
   },
   async created () {
     try {
-      await this.namespacesStore.fetchAccounts()
+      // A subaccount may not list accounts, nor has subaccounts of its own.
+      if (!this.authStore.userdata.accountOwner) {
+        await this.namespacesStore.fetchAccounts()
+      }
     } catch (error) {
       this.openNotificationWithIcon('error', {
         message: error.response?.data.message ?? error.message ?? error

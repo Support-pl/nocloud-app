@@ -41,7 +41,7 @@
     <a-form-item :label="`${capitalize($t('member_access.title'))}:`">
       <a-checkbox-group v-model:value="access" style="display: grid; gap: 4px">
         <a-checkbox v-for="key of accessKeys" :key="key" :value="key">
-          {{ $t(`member_access.${key.replace(".", "_")}`) }}
+          {{ $t(`member_access.${key}`) }}
         </a-checkbox>
       </a-checkbox-group>
     </a-form-item>
@@ -93,9 +93,12 @@ const mainKeys = ["firstname", "lastname", "email"];
 const formRef = ref(null);
 const form = ref({});
 
-// What the organization lets a subaccount do; NoCloud refuses the rest. "ai" is spending on AI.
-const accessKeys = ["ai", "billing.read", "billing.pay", "services.read", "services.manage"];
-const access = ref(props.account?.data?.member_access ?? ["ai"]);
+// What the organization lets a subaccount do; NoCloud refuses the rest. Spending on AI any
+// subaccount may.
+const accessKeys = ["order", "invoices", "support", "services"];
+const access = ref(
+  (props.account?.data?.member_access ?? []).filter((key) => accessKeys.includes(key))
+);
 
 const isDisabled = computed(() => props.account);
 const isPasswordVisible = computed(() => !props.account);
