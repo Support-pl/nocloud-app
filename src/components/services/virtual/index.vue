@@ -266,8 +266,21 @@ const allowsTempDomain = computed(
     metaFlag(selectedProduct.value?.resources?.temp_domain)
 );
 
+const tempZone = "7min.page";
+
+function tempDomain() {
+  const bytes = new Uint8Array(5);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `s${hex}.${tempZone}`;
+}
+
 watch(noDomain, (on) => {
   if (on) {
+    config.domain = tempDomain();
+    return;
+  }
+  if (String(config.domain).endsWith(`.${tempZone}`)) {
     config.domain = "";
   }
 });
@@ -542,7 +555,9 @@ const createVirtual = async (instance) => {
 };
 const orderConfirm = () => {
   if (noDomain.value && allowsTempDomain.value) {
-    config.domain = "";
+    if (!String(config.domain).endsWith(`.${tempZone}`)) {
+      config.domain = tempDomain();
+    }
   } else {
     noDomain.value = false;
     config.domain = config.domain.trim();
