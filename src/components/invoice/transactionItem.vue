@@ -6,7 +6,13 @@
   >
     <div class="invoice__middle">
       <div class="invoice__cost" :style="{ color: costColor }">
-        {{ -formatPrice(invoice.cost) }} {{ currency.title }}
+        <template v-if="packageCredit !== null">
+          {{ -formatPrice(packageCredit * (baseCurrency.rate || 1)) }}
+          {{ baseCurrency.title }}
+        </template>
+        <template v-else>
+          {{ -formatPrice(invoice.cost) }} {{ currency.title }}
+        </template>
       </div>
       <div class="invoice__date-item invoice__invDate">
         <div class="invoice__date-title">
@@ -28,6 +34,9 @@
 
     <div class="invoice__footer">
       <div class="invoice__tags">
+        <a-tag v-if="packageCredit !== null" color="blue">
+          {{ $t("ai_packages.from_credit") }}
+        </a-tag>
         <instance-tags :instances="[invoice.instance]" v-if="invoice.instance" />
         <a-tag v-if="invoice.product">
           {{ $t("Product") }}: {{ invoice.product }}
@@ -102,6 +111,16 @@ const costColor = computed(() => {
     return null;
   }
 });
+
+/**
+ * What a request paid from an AI package took from its credit, in NCU: the driver writes such a
+ * transaction with a zero total, as nothing leaves the balance, and the amount in meta.credit.
+ */
+const packageCredit = computed(() =>
+  props.invoice.meta?.reason === "AI package credit"
+    ? +props.invoice.meta.credit || 0
+    : null
+);
 
 const model = computed(() => {
   if (!props.invoice?.meta?.model) return null;
