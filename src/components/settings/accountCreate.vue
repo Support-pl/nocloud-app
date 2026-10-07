@@ -38,6 +38,14 @@
       <a-input v-model:value="form.passwordAgain" />
     </a-form-item>
 
+    <a-form-item :label="`${capitalize($t('member_access.title'))}:`">
+      <a-checkbox-group v-model:value="access" style="display: grid; gap: 4px">
+        <a-checkbox v-for="key of accessKeys" :key="key" :value="key">
+          {{ $t(`member_access.${key}`) }}
+        </a-checkbox>
+      </a-checkbox-group>
+    </a-form-item>
+
     <a-space style="margin-top: 10px">
       <a-button
         v-if="isPasswordVisible"
@@ -46,6 +54,14 @@
         @click="createAccount"
       >
         {{ $t("Submit") }}
+      </a-button>
+      <a-button
+        v-else
+        type="primary"
+        :loading="isCreateLoading"
+        @click="saveAccess"
+      >
+        {{ $t("Save") }}
       </a-button>
 
       <a-button danger @click="emits('cancel')">
@@ -76,6 +92,13 @@ const { openNotification } = useNotification();
 const mainKeys = ["firstname", "lastname", "email"];
 const formRef = ref(null);
 const form = ref({});
+
+// What the organization lets a subaccount do; NoCloud refuses the rest. Spending on AI any
+// subaccount may.
+const accessKeys = ["order", "invoices", "support", "services"];
+const access = ref(
+  (props.account?.data?.member_access ?? []).filter((key) => accessKeys.includes(key))
+);
 
 const isDisabled = computed(() => props.account);
 const isPasswordVisible = computed(() => !props.account);
@@ -134,11 +157,32 @@ async function createAccount() {
       currency: authStore.userdata.currency,
       data: {
         email: form.value.email,
+        member_access: access.value,
         phone_new: {
           phone_cc: form.value.phone_cc,
           phone_number: form.value.phone_number,
         },
       },
+    });
+
+    openNotification("success", { message: `${i18n.t("Done")}!` });
+    emits("cancel");
+  } catch (error) {
+    openNotification("error", {
+      message: error.response?.data?.message ?? error.message ?? error,
+    });
+  } finally {
+    isCreateLoading.value = false;
+  }
+}
+
+async function saveAccess() {
+  isCreateLoading.value = true;
+  try {
+    await namespacesStore.updateAccount({
+      uuid: props.account.uuid,
+      status: props.account.status,
+      data: { member_access: access.value },
     });
 
     openNotification("success", { message: `${i18n.t("Done")}!` });

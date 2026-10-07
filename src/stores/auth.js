@@ -38,6 +38,22 @@ export const useAuthStore = defineStore("auth", () => {
       : +userdata.value.balance?.toFixed(userCurrency.value.precision || 0),
   );
 
+  // A subaccount sees what its organization allows: the footer and the router hide the rest by
+  // roles, and NoCloud refuses it anyway.
+  function applyMemberRoles() {
+    if (!userdata.value.accountOwner) return;
+    const access = userdata.value.data?.member_access ?? [];
+
+    billingUser.value = {
+      ...billingUser.value,
+      roles: {
+        services: access.includes("services"),
+        invoice: access.includes("invoices"),
+        support: access.includes("support"),
+      },
+    };
+  }
+
   function setToken(value) {
     const expires = new Date(Date.now() + 7776e6);
 
@@ -139,6 +155,7 @@ export const useAuthStore = defineStore("auth", () => {
         if (!response.data) response.data = {};
 
         userdata.value = response;
+        applyMemberRoles();
         return response;
       } catch (error) {
         console.error(error);
@@ -161,6 +178,7 @@ export const useAuthStore = defineStore("auth", () => {
 
         if (!response.id) response.id = "none";
         billingUser.value = response;
+        applyMemberRoles();
 
         return response;
       } catch (error) {

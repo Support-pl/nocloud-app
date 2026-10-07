@@ -449,6 +449,13 @@
     "link": "link",
     "account": "konto",
     "subaccounts": "subkonta",
+    "member_access": {
+      "title": "dostęp",
+      "order": "Kupować subskrypcje i usługi, doładowywać saldo",
+      "invoices": "Przeglądać i opłacać faktury",
+      "support": "Pisać do pomocy technicznej",
+      "services": "Przeglądać usługi"
+    },
     "with": "z",
     "Servers": "Serwery Wirtualne",
     "Virtual": "Web Hosting",

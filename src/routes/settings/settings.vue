@@ -152,7 +152,7 @@
           </div>
         </a-spin>
 
-        <div v-if="false && authStore.userdata.subaccounts && !authStore.userdata.accountOwner && subaccounts.length>0" class="settings__item" @click="showModal('accounts')">
+        <div v-if="authStore.userdata.subaccounts && !authStore.userdata.accountOwner && subaccounts.length>0" class="settings__item" @click="showModal('accounts')">
           <div class="settings__logo">
             <accounts-icon />
           </div>
@@ -367,7 +367,10 @@ export default {
   },
   async created () {
     try {
-      await this.namespacesStore.fetchAccounts()
+      // A subaccount may not list accounts, nor has subaccounts of its own.
+      if (!this.authStore.userdata.accountOwner) {
+        await this.namespacesStore.fetchAccounts()
+      }
     } catch (error) {
       this.openNotificationWithIcon('error', {
         message: error.response?.data.message ?? error.message ?? error

@@ -449,6 +449,13 @@
     "link": "link",
     "account": "account",
     "subaccounts": "subaccounts",
+    "member_access": {
+      "title": "access",
+      "order": "Buy subscriptions and services, top up the balance",
+      "invoices": "See and pay invoices",
+      "support": "Write to support",
+      "services": "See services"
+    },
     "with": "with",
     "Servers": "Virtual Servers",
     "Virtual": "Web Hosting",
@@ -1781,6 +1788,7 @@
       "seats_all": "Whole organization",
       "preparing_title": "Getting your package ready",
       "preparing_text": "It usually takes a couple of minutes. The page will update by itself.",
+      "from_credit": "From package credit",
       "choose": "Choose",
       "details": "Details",
       "models": "Models",
