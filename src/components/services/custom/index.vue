@@ -895,18 +895,27 @@ const createVirtual = async (instance) => {
   onLogin.value = {};
 
   try {
-    await createInstance(instance, {
+    const { instanceId } = await createInstance(instance, {
       promocode: promocode.value?.uuid,
       provider: provider.value,
     });
-    router.push({ path: "/billing" });
+
+    // a free package has nothing to pay: straight to it, to watch it start
+    if (openCreated.value && instanceId) {
+      router.push({ name: "service", params: { id: instanceId } });
+    } else {
+      router.push({ path: "/billing" });
+    }
   } catch {
     console.error(error);
   }
 };
+/** Whether the order goes to the new instance instead of billing: a free AI package. */
+const openCreated = ref(false);
 /** An AI package picked on its card: selected with its period, then ordered as any product. */
-const orderPackage = async ({ key, period, promocode: uuid }) => {
+const orderPackage = async ({ key, period, promocode: uuid, free }) => {
   promocode.value = uuid ? { uuid } : null;
+  openCreated.value = free;
   options.value.period = period;
   await nextTick();
   options.value.size = key;

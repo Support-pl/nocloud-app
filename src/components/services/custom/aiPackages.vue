@@ -93,7 +93,7 @@
           type="primary"
           size="large"
           block
-          @click="emit('order', { ...offer, promocode: deals[offer.key]?.uuid })"
+          @click="choose(offer)"
         >
           {{ t("ai_packages.choose") }}
         </a-button>
@@ -331,6 +331,16 @@ const loadDeals = async () => {
   deals.value = next;
 };
 watch(() => [offers.value, currency.value.code], loadDeals, { immediate: true });
+
+/** Orders the package with its promocode, saying whether it then costs nothing. */
+const choose = (offer) => {
+  const deal = deals.value[offer.key];
+  emit("order", {
+    ...offer,
+    promocode: deal?.uuid,
+    free: (deal?.price ?? offer.price) === 0,
+  });
+};
 
 const shownModels = (offer) =>
   expanded.value[offer.key] ? offer.models : offer.models.slice(0, MODELS_SHOWN);
