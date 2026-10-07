@@ -449,6 +449,14 @@
     "link": "link",
     "account": "account",
     "subaccounts": "subaccounts",
+    "member_access": {
+      "title": "access",
+      "ai": "Spend on AI",
+      "billing_read": "See invoices and payments",
+      "billing_pay": "Pay invoices and top up",
+      "services_read": "See services",
+      "services_manage": "Order and manage services"
+    },
     "with": "with",
     "Servers": "Virtual Servers",
     "Virtual": "Web Hosting",

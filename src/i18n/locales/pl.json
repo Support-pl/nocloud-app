@@ -449,6 +449,14 @@
     "link": "link",
     "account": "konto",
     "subaccounts": "subkonta",
+    "member_access": {
+      "title": "dostęp",
+      "ai": "Wydatki na AI",
+      "billing_read": "Widzieć faktury i płatności",
+      "billing_pay": "Opłacać faktury i doładowywać",
+      "services_read": "Widzieć usługi",
+      "services_manage": "Zamawiać i zarządzać usługami"
+    },
     "with": "z",
     "Servers": "Serwery Wirtualne",
     "Virtual": "Web Hosting",
