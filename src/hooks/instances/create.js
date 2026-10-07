@@ -134,13 +134,14 @@ function useCreateInstance() {
       data.promocode = promocode;
     }
 
-    await instancesStore.instancesApi.create(
+    const created = await instancesStore.instancesApi.create(
       CreateRequest.fromJson(removeEmptyValues(data))
     );
 
     if (resultService.uuid) {
       await deployService(resultService.uuid);
 
+      resultService.instanceId = created.id;
       return resultService;
     } else {
       throw new Error("[Error]: Service uuid not found");

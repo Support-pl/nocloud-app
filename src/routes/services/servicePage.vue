@@ -217,6 +217,16 @@
             </div>
           </div>
 
+          <div v-if="isPreparing" class="service-page__preparing">
+            <a-spin size="large" />
+            <div class="service-page__preparing-title">
+              {{ t("ai_packages.preparing_title") }}
+            </div>
+            <div class="service-page__preparing-text">
+              {{ t("ai_packages.preparing_text") }}
+            </div>
+          </div>
+
           <component :is="getModuleButtons" :service="service" />
         </template>
 
@@ -227,7 +237,14 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, h, ref, watch } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  h,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue";
 import { useNotification, usePeriod } from "@/hooks/utils";
 import config from "@/appconfig.js";
 
@@ -644,7 +661,43 @@ function validateDomain() {
   service.value.domain = domainOnly;
 }
 
-watch(service, async () => {
+/** The states an instance passes through before its driver starts it. */
+const STARTING = ["PENDING", "INIT", "UNKNOWN", "OPERATION", "BOOT"];
+
+/** An AI package paid for (or free) whose driver has not started it yet. */
+const isPreparing = computed(() => {
+  const key = service.value?.product ?? service.value?.config?.product;
+  const product = service.value?.billingPlan?.products?.[key];
+  if (!(+product?.meta?.ai_credit > 0)) return false;
+
+  const state = service.value.status?.replace("cloudStateItem.", "");
+  return STARTING.includes(state) && lastInvoice.value?.status !== "UNPAID";
+});
+
+/** Rereads the instance, and the page once its state moves on or its invoice is due. */
+const refreshPreparing = async () => {
+  await instancesStore.fetch(true);
+  const instance = instancesStore.getInstances.find(
+    ({ uuid }) => uuid === route.params.id
+  );
+
+  if (instance && instance.state?.state !== service.value.state?.state) {
+    onStart();
+  } else if (!lastInvoice.value) {
+    fetchLastInvoice();
+  }
+};
+
+let preparingTimer;
+watch(isPreparing, (preparing) => {
+  clearInterval(preparingTimer);
+  if (preparing) preparingTimer = setInterval(refreshPreparing, 5000);
+});
+onUnmounted(() => clearInterval(preparingTimer));
+
+watch(service, () => fetchLastInvoice());
+
+async function fetchLastInvoice() {
   const invoices = await invoicesStore.invoicesApi.getInvoices(
     GetInvoicesRequest.fromJson({
       page: 1,
@@ -655,7 +708,7 @@ watch(service, async () => {
     })
   );
   lastInvoice.value = invoices.toJson().pool?.[0];
-});
+}
 </script>
 
 <script>
@@ -667,6 +720,28 @@ export default {
 <style scoped>
 .service-page {
   padding-top: 20px;
+}
+
+.service-page__preparing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 32px 16px;
+  border-top: 1px solid var(--border_color);
+  text-align: center;
+}
+
+.service-page__preparing-title {
+  margin-top: 8px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.service-page__preparing-text {
+  max-width: 420px;
+  color: var(--gray);
 }
 
 .service-page-card {

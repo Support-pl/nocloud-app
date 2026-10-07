@@ -201,6 +201,9 @@ export default { name: "CustomDraw" };
 }
 
 .ai-package__chat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 56px;
   border-radius: 12px;
   font-size: 1.15rem;
