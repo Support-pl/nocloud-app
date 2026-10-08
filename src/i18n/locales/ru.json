@@ -942,6 +942,7 @@
       "createButton": "VM"
     },
     "virtual_product": {
+      "enter_cpanel": "Войти в cPanel",
       "used space": "использовано места",
       "bw": "использовано трафика",
       "unlimited": "неограниченно",

@@ -556,6 +556,7 @@
       "createButton": "VM"
     },
     "virtual_product": {
+      "enter_cpanel": "Open cPanel",
       "used space": "Used Space",
       "bw": "Used Traffic",
       "unlimited": "Unlimited",
