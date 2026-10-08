@@ -31,11 +31,20 @@
     </a-col>
   </a-row>
 
-  <a-row :gutter="[10, 10]" :style="{ marginTop: (!serviceUsed) ? '10px' : null }">
+  <a-row :gutter="[10, 10]" :style="{ marginTop: (!serviceUsed) ? '10px' : '16px' }">
     <a-col :md="12" :xs="24" :sm="12">
-      <a-button size="large" type="primary" :loading="isLoginLoading" @click="loginToCpanel">
-        {{ capitalize($t('enter')) }}
+      <a-button
+        class="virtual-draw__cpanel"
+        size="large"
+        block
+        :loading="isLoginLoading"
+        @click="loginToCpanel"
+      >
+        {{ $t('virtual_product.enter_cpanel') }}
       </a-button>
+    </a-col>
+    <a-col :md="12" :xs="24" :sm="12">
+      <ai-chat-button />
     </a-col>
   </a-row>
 </template>
@@ -46,6 +55,7 @@ import { notification } from 'ant-design-vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useInstancesStore } from '@/stores/instances.js'
+import aiChatButton from '@/components/ui/aiChatButton.vue'
 
 const props = defineProps({
   service: { type: Object, required: true }
@@ -115,6 +125,13 @@ export default { name: 'VirtualDraw' }
 </script>
 
 <style>
+/* as tall as the chat button beside it */
+.virtual-draw__cpanel {
+  height: 56px;
+  border-radius: 12px;
+  font-size: 1.15rem;
+  font-weight: 500;
+}
 
 .module__row-title {
   font-weight: bold;
