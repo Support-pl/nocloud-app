@@ -10,7 +10,7 @@
     @click="shareSession"
   >
     <template #icon><message-outlined /></template>
-    {{ t("ai_packages.open_chat") }}
+    <slot>{{ t("ai_packages.open_chat") }}</slot>
   </a-button>
 </template>
 
@@ -64,8 +64,11 @@ export default { name: "AiChatButton" };
 </script>
 
 <style scoped>
-/* rendered as a link, an ant button keeps its text at the top of a taller box */
-.ai-chat-button {
+/*
+ * rendered as a link, an ant button keeps its text at the top of a taller box; the selector
+ * outweighs ant's own .ant-btn.ant-btn-lg, which otherwise keeps its height
+ */
+.ant-btn.ant-btn-lg.ai-chat-button {
   display: flex;
   align-items: center;
   justify-content: center;

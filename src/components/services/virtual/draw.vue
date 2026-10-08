@@ -44,7 +44,7 @@
       </a-button>
     </a-col>
     <a-col :md="12" :xs="24" :sm="12">
-      <ai-chat-button />
+      <ai-chat-button>{{ $t('virtual_product.ai_sitebuilder') }}</ai-chat-button>
     </a-col>
   </a-row>
 </template>
@@ -125,8 +125,8 @@ export default { name: 'VirtualDraw' }
 </script>
 
 <style>
-/* as tall as the chat button beside it */
-.virtual-draw__cpanel {
+/* as tall as the chat button beside it, outweighing ant's .ant-btn.ant-btn-lg */
+.ant-btn.ant-btn-lg.virtual-draw__cpanel {
   height: 56px;
   border-radius: 12px;
   font-size: 1.15rem;

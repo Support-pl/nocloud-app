@@ -557,6 +557,7 @@
     },
     "virtual_product": {
       "enter_cpanel": "Open cPanel",
+      "ai_sitebuilder": "AI Sitebuilder",
       "used space": "Used Space",
       "bw": "Used Traffic",
       "unlimited": "Unlimited",
