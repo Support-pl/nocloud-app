@@ -943,6 +943,7 @@
     },
     "virtual_product": {
       "enter_cpanel": "Войти в cPanel",
+      "ai_sitebuilder": "ИИ конструктор сайтов",
       "used space": "использовано места",
       "bw": "использовано трафика",
       "unlimited": "неограниченно",
