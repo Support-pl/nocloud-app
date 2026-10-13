@@ -193,6 +193,15 @@
           </a-modal>
         </div>
 
+        <div v-if="!authStore.userdata.accountOwner" class="settings__item" @click="$router.push({ name: 'mcp' })">
+          <div class="settings__logo">
+            <api-icon />
+          </div>
+          <div class="settings__title">
+            {{ $t("mcp.title") }}
+          </div>
+        </div>
+
         <div class="settings__item" @click="showModal('QR')">
           <div class="settings__logo">
             <qrcode-icon />
@@ -289,6 +298,9 @@ const qrcodeIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/QrcodeOutlined')
 )
 
+const apiIcon = defineAsyncComponent(
+  () => import('@ant-design/icons-vue/ApiOutlined')
+)
 const accountsIcon = defineAsyncComponent(
   () => import('@ant-design/icons-vue/TeamOutlined')
 )
@@ -303,6 +315,7 @@ export default {
     addFunds,
     addSSH,
     accountCreate,
+    apiIcon,
 
     rightIcon,
     userIcon,
