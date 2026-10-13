@@ -154,6 +154,17 @@ const routes = [
         component: () => import("@/routes/settings/settings.vue"),
       },
       {
+        path: "settings/mcp",
+        name: "mcp",
+        meta: {
+          mustBeLoggined: true,
+          footerTitle: "settings",
+          headerTitle: "mcp.title",
+          isNeedBackButton: true,
+        },
+        component: () => import("@/routes/settings/mcpPage.vue"),
+      },
+      {
         path: "cloud/newVM",
         name: "newPaaS",
         meta: {
