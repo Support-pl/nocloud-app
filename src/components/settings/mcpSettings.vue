@@ -77,7 +77,7 @@
           :visibility-toggle="true"
         />
         <div class="mcp__actions">
-          <a-button type="primary" size="large" @click="addToClipboard(data.config)">
+          <a-button type="primary" size="large" @click="addToClipboard(configToCopy)">
             <template #icon><copy-outlined /></template>
             {{ t("mcp.copy_config") }}
           </a-button>
@@ -209,7 +209,10 @@ const used = ({ counter, money }) => {
   return money ? `${value} ${currency.value.title ?? ""}` : value;
 };
 
-/** The config is copied as it came; it is read only to show the address and its shape. */
+/**
+ * The config comes as one line of JSON. It is copied indented, so it reads when pasted; a string
+ * that does not parse is copied as it came.
+ */
 const parsedConfig = computed(() => {
   try {
     return JSON.parse(data.value.config);
@@ -219,6 +222,11 @@ const parsedConfig = computed(() => {
 });
 const serverUrl = computed(
   () => parsedConfig.value?.mcpServers?.["support.by"]?.url ?? DEFAULT_URL
+);
+const configToCopy = computed(() =>
+  parsedConfig.value
+    ? JSON.stringify(parsedConfig.value, null, 2)
+    : data.value.config
 );
 const prettyConfig = computed(() =>
   JSON.stringify(
