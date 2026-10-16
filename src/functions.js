@@ -337,7 +337,7 @@ function setIoneInst(inst, result) {
       if (keys.includes(curr.key)) return prev;
       else keys.push(curr.key);
 
-      if (curr.key === `drive_${inst.resources.drive_type.toLowerCase()}`) {
+      if (curr.key === `drive_${(inst.resources.drive_type || '').toLowerCase()}`) {
         return prev + (curr.price * inst.resources.drive_size) / 1024;
       } else if (curr.key === "ram") {
         return prev + (curr.price * inst.resources.ram) / 1024;
