@@ -108,7 +108,8 @@ const price = computed(() => {
 
   instances.value.forEach((inst) => {
     if (selected.value && selected.value !== inst.groupUuid) return;
-    const type = inst.resources.drive_type.toLowerCase();
+    
+    const type = (inst.resources.drive_type || '').toLowerCase();
 
     inst.billingPlan.resources.forEach(({ key, price, period }) => {
       switch (key) {
