@@ -1314,6 +1314,21 @@ export default {
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
+.order__grid-item--grid {
+  padding: 16px 16px 36px !important;
+}
+
+.order__grid-item--grid .product_name {
+  margin: 4px 0 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.order__grid-item--grid > :last-child {
+  align-self: stretch;
+  line-height: 1.5;
+}
+
 .order__grid-item h1 {
   margin-bottom: 5px;
   color: inherit;
@@ -1333,6 +1348,17 @@ export default {
   border: 1px solid var(--border_color);
   border-radius: 10px;
   background: #fff;
+}
+
+.order__grid-item--grid img {
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  padding: 0;
+  border: 0;
+  margin: 0 !important;
+  border-radius: 8px;
 }
 
 .order__radio-group > * {
