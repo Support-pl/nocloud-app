@@ -143,7 +143,7 @@ import {
   defineAsyncComponent,
 } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import * as icons from "@ant-design/icons-vue";
 import config from "@/appconfig.js";
 
@@ -183,6 +183,7 @@ const props = defineProps({
 // Composables
 const { locale: i18nLocale } = useI18n();
 const router = useRouter();
+const route = useRoute();
 
 // Stores
 const authStore = useAuthStore();
@@ -192,7 +193,18 @@ const spStore = useSpStore();
 // Reactive data
 const hovered = ref(null);
 const windowWidth = ref(window.innerWidth);
-const selectedCategories = ref(["all"]);
+// ponytail: selection lives in ?service= so the services list below filters by it
+const selectedCategories = computed({
+  get: () => {
+    const key = route.query.service?.split(",")[0];
+    return [categories.value.some((c) => c.uuid === key) ? key : "all"];
+  },
+  set: ([key]) => {
+    const { service, ...query } = route.query;
+    if (key && key !== "all") query.service = key;
+    router.replace({ query });
+  },
+});
 
 // Computed properties
 const isLogged = computed(() => authStore.isLogged);
