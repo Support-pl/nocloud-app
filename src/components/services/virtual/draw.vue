@@ -31,6 +31,27 @@
     </a-col>
   </a-row>
 
+  <a-collapse v-if="service.data?.username" ghost class="virtual-draw__creds">
+    <a-collapse-panel key="creds" header="cPanel">
+      <div>
+        {{ capitalize($t('clientinfo.username')) }}:
+        <a-typography-text :copyable="{ text: service.data.username }" strong>
+          {{ service.data.username }}
+        </a-typography-text>
+      </div>
+      <div v-if="service.data.password">
+        {{ capitalize($t('clientinfo.password')) }}:
+        <a-typography-text :copyable="{ text: service.data.password }" strong>
+          {{ service.data.password }}
+        </a-typography-text>
+      </div>
+      <div v-if="panelUrl">
+        {{ capitalize($t('panel')) }}:
+        <a :href="panelUrl" target="_blank" rel="noopener">{{ panelUrl }}</a>
+      </div>
+    </a-collapse-panel>
+  </a-collapse>
+
   <a-row :gutter="[10, 10]" :style="{ marginTop: (!serviceUsed) ? '10px' : '16px' }">
     <a-col :md="12" :xs="24" :sm="12">
       <a-button
@@ -55,6 +76,7 @@ import { notification } from 'ant-design-vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useInstancesStore } from '@/stores/instances.js'
+import { useSpStore } from '@/stores/sp.js'
 import aiChatButton from '@/components/ui/aiChatButton.vue'
 
 const props = defineProps({
@@ -66,6 +88,18 @@ const i18n = useI18n()
 const instancesStore = useInstancesStore()
 
 const isLoginLoading = ref(false)
+
+// ponytail: panel host = provider title, domain hardcoded; move to config if it varies
+const spStore = useSpStore()
+
+// the service page doesn't load providers itself
+if (!spStore.servicesProviders.length) spStore.fetch().catch(console.error)
+
+const panelUrl = computed(() => {
+  const sp = spStore.servicesProviders.find(({ uuid }) => uuid === props.service.sp)
+
+  return sp?.title && `https://${sp.title}.support.by:2083/`
+})
 
 const serviceUsed = computed(() =>
   props.service.state?.meta?.account.reduce((result, value) => ({
@@ -125,6 +159,10 @@ export default { name: 'VirtualDraw' }
 </script>
 
 <style>
+.virtual-draw__creds {
+  margin-top: 8px;
+}
+
 /* as tall as the chat button beside it, outweighing ant's .ant-btn.ant-btn-lg */
 .ant-btn.ant-btn-lg.virtual-draw__cpanel {
   height: 56px;
