@@ -299,6 +299,8 @@ const fullPrice = computed(
 );
 
 const OSName = computed(() => {
+  if (props.VM.data?.os_name) return props.VM.data.os_name;
+
   const product = plan.value.products[props.VM.product];
   if (!product?.meta.os) return;
 

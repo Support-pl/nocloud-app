@@ -83,6 +83,15 @@
                         :os-name="reinstallOSName"
                         :set-o-s="setOS"
                       />
+                      <template v-if="isKeywebReinstall">
+                        <p style="margin-top: 10px">
+                          {{ capitalize($t("clientinfo.password")) }}
+                        </p>
+                        <a-input-password
+                          v-model:value="reinstallPassword"
+                          autocomplete="new-password"
+                        />
+                      </template>
                     </a-spin>
                   </a-modal>
                   <a-modal
@@ -312,6 +321,7 @@ export default {
     isResizeLoading: false,
     reinstallOS: "",
     reinstallOSName: "",
+    reinstallPassword: "",
     renameNewName: "",
     modal: {
       menu: false,
@@ -372,10 +382,12 @@ export default {
         {
           title: "Reinstall",
           onclick:
-            type === "ovh vps" ? this.openVpsReinstall : this.sendReinstall,
+            type === "ovh vps" || type === "keyweb"
+              ? this.openVpsReinstall
+              : this.sendReinstall,
           params: ["reinstall"],
           icon: "ExclamationOutlined",
-          modules: ["ione", "custom", "ovh vps"],
+          modules: ["ione", "custom", "ovh vps", "keyweb"],
         },
         {
           title: "Rename",
@@ -439,6 +451,9 @@ export default {
       });
     },
 
+    isKeywebReinstall() {
+      return this.VM.billingPlan?.type === "keyweb";
+    },
     itemService() {
       return this.services.find((el) => this.VM.uuidService === el.uuid);
     },
@@ -564,6 +579,14 @@ export default {
       "invokeAction",
     ]),
     disabledMenu(menuName) {
+      if (menuName === "reinstall" && this.isKeywebReinstall) {
+        return (
+          !["RUNNING", "STOPPED"].includes(this.VM.state?.state) ||
+          !!this.VM.data?.lock ||
+          !this.VM.data?.serviceId
+        );
+      }
+
       const states = ["RUNNING", "STOPPED", "POWEROFF", "SUSPENDED"];
 
       if (this.VM?.product && menuName === "resize") {
@@ -747,6 +770,15 @@ export default {
       }
     },
     sendReinstall() {
+      if (this.isKeywebReinstall) {
+        const error = this.keywebReinstallError();
+
+        if (error) {
+          this.openNotification("error", { message: error });
+          return;
+        }
+      }
+
       this.$confirm({
         title: this.$t("Do you want to reinstall this virtual machine?"),
         okType: "danger",
@@ -761,12 +793,21 @@ export default {
         onOk: async () => {
           try {
             const { type } = this.VM.billingPlan;
+            let params = {};
+
+            if (type === "ovh vps") params = { imageId: this.reinstallOS };
+            if (type === "keyweb") {
+              params = {
+                actionid: `${this.reinstallOS}`,
+                password: this.reinstallPassword,
+              };
+            }
 
             await this.invokeAction({
               uuid: this.VM.uuid,
               uuidService: this.VM.uuidService,
               action: type === "ovh vps" ? "rebuild" : "reinstall",
-              params: type === "ovh vps" ? { imageId: this.reinstallOS } : {},
+              params,
             });
 
             this.openNotification("success", {
@@ -833,7 +874,26 @@ export default {
         },
       });
     },
+    keywebReinstallError() {
+      const password = this.reinstallPassword;
+
+      if (!this.reinstallOS) return this.$t("select OS");
+      if (!password) return this.$t("ssl_product.field is required");
+      if (/[^a-zA-Z0-9]$/.test(password)) {
+        return this.$t("The last character must not be special");
+      }
+      // same rule as the order form: components/cloud/modules/keyweb/panels/os.vue
+      if (!/^(?=.*\d)[\w+=._!*-]{9,32}$/.test(password)) {
+        return `${this.$t(
+          "Password must contain uppercase letters, numbers and symbols"
+        )} (+-.-_!*)`;
+      }
+    },
     openVpsReinstall() {
+      this.images = [];
+      this.reinstallOS = "";
+      this.reinstallOSName = "";
+      this.reinstallPassword = "";
       this.getImages();
       this.changeModal("reinstall");
     },
@@ -847,7 +907,7 @@ export default {
         const { meta } = await this.invokeAction({
           uuid: this.VM.uuid,
           uuidService: this.VM.uuidService,
-          action: "images",
+          action: this.isKeywebReinstall ? "reinstall_templates" : "images",
         });
 
         this.images = meta.images;
