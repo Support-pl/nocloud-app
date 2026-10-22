@@ -31,23 +31,6 @@
     </a-col>
   </a-row>
 
-  <a-row :gutter="[10, 10]" :style="{ marginTop: (!serviceUsed) ? '10px' : '16px' }">
-    <a-col :md="12" :xs="24" :sm="12">
-      <a-button
-        class="virtual-draw__cpanel"
-        size="large"
-        block
-        :loading="isLoginLoading"
-        @click="loginToCpanel"
-      >
-        {{ $t('virtual_product.enter_cpanel') }}
-      </a-button>
-    </a-col>
-    <a-col :md="12" :xs="24" :sm="12">
-      <ai-chat-button>{{ $t('virtual_product.ai_sitebuilder') }}</ai-chat-button>
-    </a-col>
-  </a-row>
-
   <a-collapse v-if="service.data?.username" ghost class="virtual-draw__creds">
     <a-collapse-panel key="creds" header="cPanel">
       <div>
@@ -68,6 +51,23 @@
       </div>
     </a-collapse-panel>
   </a-collapse>
+
+  <a-row :gutter="[10, 10]" :style="{ marginTop: (!serviceUsed) ? '10px' : '16px' }">
+    <a-col :md="12" :xs="24" :sm="12">
+      <a-button
+        class="virtual-draw__cpanel"
+        size="large"
+        block
+        :loading="isLoginLoading"
+        @click="loginToCpanel"
+      >
+        {{ $t('virtual_product.enter_cpanel') }}
+      </a-button>
+    </a-col>
+    <a-col :md="12" :xs="24" :sm="12">
+      <ai-chat-button>{{ $t('virtual_product.ai_sitebuilder') }}</ai-chat-button>
+    </a-col>
+  </a-row>
 </template>
 
 <script setup>
