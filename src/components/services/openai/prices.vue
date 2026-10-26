@@ -36,7 +36,10 @@
         <div class="provider_image">
           <img
             :src="providerLogo(provider.value)"
-            class="openai_provider_img"
+            :class="{
+              openai_provider_img: true,
+              own: ownProviders.includes(provider.value),
+            }"
           />
         </div>
 
@@ -455,9 +458,10 @@ const filterOptions = computed(() => {
 
 // Our own providers wear the app's logo.
 const ownProviders = ["spark", "nocloud-ocr"];
+// The logo path may be relative: resolve it from the site root, not the route.
 const providerLogo = (key) =>
   ownProviders.includes(key) && config.appLogo.path
-    ? config.appLogo.path
+    ? new URL(config.appLogo.path, location.origin).href
     : `/img/ai-providers/${key}.svg`;
 
 const providersOptions = computed(() => {
@@ -673,6 +677,14 @@ watch(selectedModel, () => {
   width: calc(100% - 60px);
   height: 45px;
   max-width: 190px;
+}
+
+/* the app logo is drawn for the main-colour background */
+.openai_provider_img.own {
+  object-fit: contain;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--main);
 }
 
 @media screen and (max-width: 768px) {
