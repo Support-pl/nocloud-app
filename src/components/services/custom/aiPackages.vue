@@ -62,7 +62,9 @@
           <template v-else>
             {{ formatPrice(offer.price) }} {{ currency.title }}
           </template>
-          <span class="ai-packages__period">/ {{ getPeriod(offer.period) }}</span>
+          <span class="ai-packages__period">
+            / {{ offer.period ? getPeriod(offer.period) : t("ai_packages.one_time") }}
+          </span>
         </div>
         <div class="ai-packages__muted">
           {{

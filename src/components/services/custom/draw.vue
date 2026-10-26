@@ -8,7 +8,13 @@
         <div class="ai-package__value">
           {{ formatPrice(aiPackage.credit) }} {{ currency.title }}
         </div>
-        <div class="ai-package__hint">/ {{ getPeriod(aiPackage.period) }}</div>
+        <div class="ai-package__hint">
+          {{
+            aiPackage.period
+              ? `/ ${getPeriod(aiPackage.period)}`
+              : t("ai_packages.one_time_hint")
+          }}
+        </div>
       </div>
       <div class="ai-package__stat">
         <div class="ai-package__label">{{ t("ai_packages.seats_title") }}</div>
@@ -113,7 +119,7 @@ const aiPackage = computed(() => {
 
   return {
     credit: credit * (currency.value.rate || 1),
-    period: product.period,
+    period: +product.period || 0,
     seats: +product.meta.ai_seats || 0,
     models: models.map((key) => ({ key, name: names.get(key) || key })),
   };
