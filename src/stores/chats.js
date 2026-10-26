@@ -117,8 +117,18 @@ export const useChatsStore = defineStore("chats", () => {
     }
   }
 
+  // Admin notes, copilot (Kind 3, missing from our cc_pb.js) and unreviewed
+  // drafts must never reach the client. The server should filter them already.
+  function isHiddenMessage(message) {
+    return (
+      message?.kind === Kind.ADMIN_ONLY ||
+      message?.kind === 3 ||
+      !!message?.underReview
+    );
+  }
+
   function hasMessagePayload(message) {
-    if (!message) return false;
+    if (!message || isHiddenMessage(message)) return false;
 
     const sent = Number(message.sent || 0);
     const content = String(message.content || "").trim();
@@ -226,6 +236,7 @@ export const useChatsStore = defineStore("chats", () => {
 
   function updateMessage(event) {
     const { value: message } = event.item;
+    if (isHiddenMessage(message)) return;
     if (!messages.value[message.chat]) {
       const chat = chats.value.get(message.chat);
 
@@ -394,10 +405,16 @@ export const useChatsStore = defineStore("chats", () => {
         if (!accounts.value)
           accounts.value = await usersApi.getMembers(new Empty());
 
-        const chatsArray = response.chats.map((chat) => [
-          chat.uuid,
-          chat.meta ? chat : { ...chat, meta: new ChatMeta({ unread: 0 }) },
-        ]);
+        const chatsArray = response.chats.map((chat) => {
+          if (isHiddenMessage(chat.meta?.lastMessage)) {
+            chat.meta.lastMessage = undefined;
+          }
+
+          return [
+            chat.uuid,
+            chat.meta ? chat : { ...chat, meta: new ChatMeta({ unread: 0 }) },
+          ];
+        });
 
         chats.value = new Map(chatsArray);
         return chatsArray;
@@ -420,14 +437,16 @@ export const useChatsStore = defineStore("chats", () => {
 
         const response = await messagesApi.get(chat);
 
-        const replies = response.messages.map((message) => {
-          const user =
-            accounts.value.users.find(
-              (account) => account.uuid === message.sender,
-            ) ?? {};
+        const replies = response.messages
+          .filter((message) => !isHiddenMessage(message))
+          .map((message) => {
+            const user =
+              accounts.value.users.find(
+                (account) => account.uuid === message.sender,
+              ) ?? {};
 
-          return changeMessage(message, user, authStore.userdata.uuid);
-        });
+            return changeMessage(message, user, authStore.userdata.uuid);
+          });
 
         messages.value[id] = {
           status: chat.status,
