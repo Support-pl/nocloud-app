@@ -1800,7 +1800,9 @@
       "credit": "{amount} of AI credit",
       "seats": "For {n} person | For {n} people",
       "solo": "Individual",
-      "team": "Team"
+      "team": "Team",
+      "one_time": "one-time, no expiry",
+      "one_time_hint": "No expiry: lasts until it is spent"
     },
     "mcp": {
       "title": "MCP for AI",
