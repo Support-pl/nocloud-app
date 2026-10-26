@@ -35,7 +35,7 @@
       >
         <div class="provider_image">
           <img
-            :src="`/img/ai-providers/${provider.value}.svg`"
+            :src="providerLogo(provider.value)"
             class="openai_provider_img"
           />
         </div>
@@ -200,6 +200,7 @@ import {
   watch,
 } from "vue";
 import { useI18n } from "vue-i18n";
+import config from "@/appconfig.js";
 
 const imageIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/FileImageOutlined")
@@ -451,6 +452,13 @@ const filterOptions = computed(() => {
 
   return result;
 });
+
+// Our own providers wear the app's logo.
+const ownProviders = ["spark", "nocloud-ocr"];
+const providerLogo = (key) =>
+  ownProviders.includes(key) && config.appLogo.path
+    ? config.appLogo.path
+    : `/img/ai-providers/${key}.svg`;
 
 const providersOptions = computed(() => {
   return availableModels.value

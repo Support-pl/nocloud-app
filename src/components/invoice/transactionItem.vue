@@ -128,7 +128,12 @@ const model = computed(() => {
   return (
     globalModelsList.value.find(
       (model) => model.key === props.invoice.meta.model
-    ) || { name: props.invoice.meta.model }
+    ) || {
+      name: props.invoice.meta.model,
+      // private models (OCR) are missing from get_config
+      provider:
+        props.invoice.meta.model === "nocloud_ocr" ? "nocloud-ocr" : undefined,
+    }
   );
 });
 

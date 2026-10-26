@@ -1288,7 +1288,8 @@
         "stability-ai": "Stability AI",
         "alibaba": "Alibaba",
         "google-cloud": "Cloud Document AI API",
-        "nocloud-ocr": "NoCloud OCR",
+        "nocloud-ocr": "Support.by",
+        "spark": "Support.by",
         "openrouter": "OpenRouter"
       },
       "agents": {
