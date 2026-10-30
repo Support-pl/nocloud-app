@@ -262,7 +262,7 @@ const rules = {
           throw new Error(i18n.t("The last character must not be special"));
         }
 
-        if (/^(?=.*\d)[\w+=._!*-]{9,32}$/.test(authData.value.password)) {
+        if (isPasswordValid(authData.value.password)) {
           return Promise.resolve();
         } else {
           throw new Error(`
@@ -424,7 +424,7 @@ function shuffle(chars) {
 
 function isPasswordValid(password) {
   return (
-    /^(?=.*\d)[\w+=._!*-]{9,32}$/.test(password) &&
+    /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[\w+=._!*-]{9,32}$/.test(password) &&
     !/[^a-zA-Z0-9]$/.test(password)
   );
 }
