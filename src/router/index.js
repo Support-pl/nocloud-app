@@ -402,6 +402,40 @@ const routes = [
     component: () => import("@/routes/invoices/transactionPage.vue"),
   },
   {
+    path: "/password/reset/redeem/:token",
+    redirect: (to) => ({
+      path: "/login",
+      query: { reset: to.params.token },
+    }),
+  },
+  {
+    path: "/password/reset/:pathMatch(.*)*",
+    redirect: "/login",
+  },
+  {
+    path: "/index.php",
+    redirect: (to) => {
+      const rp = String(to.query.rp || "");
+      const reset = rp.match(/\/password\/reset\/redeem\/([^/&]+)/);
+      if (reset) {
+        return { path: "/login", query: { reset: reset[1] } };
+      }
+      if (rp.includes("viewinvoice")) return "/billing";
+      if (rp.includes("viewticket") || rp.includes("supportticket")) {
+        return "/support";
+      }
+      return "/";
+    },
+  },
+  { path: "/viewinvoice.php", redirect: "/billing" },
+  { path: "/viewticket.php", redirect: "/support" },
+  { path: "/submitticket.php", redirect: "/support" },
+  { path: "/clientarea.php", redirect: "/" },
+  { path: "/login.php", redirect: "/login" },
+  { path: "/pwreset.php", redirect: "/login" },
+  { path: "/register.php", redirect: "/register" },
+  { path: "/cart.php", redirect: "/services" },
+  {
     path: "/:pathMatch(.*)*",
     name: "NotFound",
     redirect: "/services",

@@ -60,13 +60,24 @@
           <div v-if="loginError" class="login__error">
             {{ $t(loginError) }}
           </div>
-          <div class="inputs__log-pas" @keyup.enter="send">
-            <input v-model="email" type="text" placeholder="Email" />
-            <template v-if="remember">
-              <span class="login__horisontal-line" />
+          <div
+            class="inputs__log-pas"
+            @keyup.enter="resetToken ? confirmReset() : send()"
+          >
+            <template v-if="resetToken">
               <a-input-password
                 v-model:value="password"
-                placeholder="Password"
+                :placeholder="$t('Enter new password')"
+                style="
+                  padding: 6px 15px;
+                  border: none;
+                  background: var(--bright_font);
+                "
+              />
+              <span class="login__horisontal-line" />
+              <a-input-password
+                v-model:value="password2"
+                :placeholder="$t('Repeat new password')"
                 style="
                   padding: 6px 15px;
                   border: none;
@@ -74,11 +85,29 @@
                 "
               />
             </template>
+            <template v-else>
+              <input v-model="email" type="text" placeholder="Email" />
+              <template v-if="remember">
+                <span class="login__horisontal-line" />
+                <a-input-password
+                  v-model:value="password"
+                  placeholder="Password"
+                  style="
+                    padding: 6px 15px;
+                    border: none;
+                    background: var(--bright_font);
+                  "
+                />
+              </template>
+            </template>
           </div>
 
           <template v-if="!tryingLogin">
             <div class="login__button">
-              <button v-if="remember" class="login__submit" @click="send">
+              <button v-if="resetToken" class="login__submit" @click="confirmReset">
+                {{ capitalize($t("restore")) }}
+              </button>
+              <button v-else-if="remember" class="login__submit" @click="send">
                 {{ capitalize($t("login")) }}
               </button>
               <button v-else class="login__submit" @click="restorePass">
@@ -122,7 +151,10 @@
           />
         </div>
         <div class="login__forgot">
-          <a href="#" @click.prevent="forgotPass">{{
+          <a v-if="resetToken" href="#" @click.prevent="clearReset">{{
+            capitalize($t("I have a password"))
+          }}</a>
+          <a v-else href="#" @click.prevent="forgotPass">{{
             capitalize(remember ? $t("forgotPass") : $t("I have a password"))
           }}</a>
         </div>
@@ -187,8 +219,12 @@ const tryingLogin = ref(false);
 const loginError = ref("");
 const remember = ref(true);
 const password = ref("");
+const password2 = ref("");
 const email = ref("");
 const redirect = ref(false);
+const resetToken = computed(() =>
+  typeof route.query.reset === "string" ? route.query.reset : "",
+);
 
 const companyName = computed(() => appStore.domainInfo.name ?? config.appTitle);
 const selfUrl = location.href;
@@ -276,6 +312,57 @@ async function send() {
 
 function forgotPass() {
   remember.value = !remember.value;
+}
+
+function clearReset() {
+  password.value = "";
+  password2.value = "";
+  loginError.value = "";
+  remember.value = true;
+  router.replace({ name: "login" });
+}
+
+async function confirmReset() {
+  if (!resetToken.value || !password.value || !password2.value) {
+    return;
+  }
+  if (password.value !== password2.value) {
+    loginError.value = "reset_password_mismatch";
+    notification.error({ message: i18n.t("reset_password_mismatch") });
+    return;
+  }
+
+  tryingLogin.value = true;
+  loginError.value = "";
+  try {
+    const body = new URLSearchParams();
+    body.set("run", "confirm_reset_password");
+    body.set("token", resetToken.value);
+    body.set("password", password.value);
+    body.set("password2", password2.value);
+    const response = await api.axios.post(authStore.baseURL, body);
+    const { result, message } = response.data || {};
+
+    if (result === "success") {
+      notification.success({ message: i18n.t("reset_password_done") });
+      password.value = "";
+      password2.value = "";
+      remember.value = true;
+      await router.replace({ name: "login" });
+      return;
+    }
+
+    const key = message || "reset_password_invalid";
+    loginError.value = key;
+    notification.error({ message: i18n.t(key) });
+  } catch (error) {
+    notification.error({
+      message: i18n.t("Can't connect to the server"),
+    });
+    console.error(error);
+  } finally {
+    tryingLogin.value = false;
+  }
 }
 
 async function restorePass() {
