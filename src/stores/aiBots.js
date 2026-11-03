@@ -308,6 +308,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           bot: bot.id,
           delay: bot.settings.delay,
           model: bot.settings.ai_model,
+          reasoning_effort: bot.settings.reasoning_effort ?? "",
           system_prompt: bot.settings.system_prompt,
           processing_prompt: bot.settings.processing_prompt,
           processing_model: bot.settings.processing_model,

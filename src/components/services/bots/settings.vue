@@ -11,17 +11,11 @@
           style="width: 100%; margin-left: 10px"
           allow-clear
           :value="bot.settings.ai_model"
-          @update:value="bot.settings.ai_model = $event || defaultModel"
+          @update:value="onModelChange($event || defaultModel)"
         />
       </a-col>
-      <a-col span="24">
-        <span
-          v-html="
-            marked(
-              t(`bots.tips.model_${bot.settings.ai_model.replaceAll('.', '/')}`)
-            )
-          "
-        ></span>
+      <a-col span="24" v-if="modelDescription">
+        <span v-html="marked(modelDescription)"></span>
       </a-col>
 
       <a-col v-if="priceForTokens.input" span="12">
@@ -147,7 +141,36 @@
         </a-row>
       </a-col>
 
-      <a-col span="24">
+      <a-col span="24" v-if="reasoningEfforts.length">
+        <span class="field_title"
+          >{{ t("bots.fields.reasoning_effort") }}:
+          <a-tooltip>
+            <template #title>{{ t("bots.tips.reasoning_effort") }}</template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-radio-group
+          style="margin-top: 8px; display: block"
+          button-style="solid"
+          :value="currentEffort"
+          @update:value="bot.settings.reasoning_effort = $event"
+        >
+          <a-radio-button
+            v-for="effort in reasoningEfforts"
+            :key="effort"
+            :value="effort"
+          >
+            {{ effortLabel(effort) }}
+          </a-radio-button>
+        </a-radio-group>
+      </a-col>
+
+      <a-col span="24" v-if="!supportsTemperature">
+        <span class="field_title">{{ t("bots.fields.temperature") }}: </span>
+        <span>{{ t("bots.tips.temperature_fixed") }}</span>
+      </a-col>
+
+      <a-col span="24" v-else>
         <span class="field_title"
           >{{ t("bots.fields.temperature") }}: {{ bot.settings?.temperature }}
           <a-tooltip>
@@ -820,7 +843,7 @@ const chanellsOptions = [
   { title: "WhatsApp", key: "whatsapp" },
 ];
 
-const { t } = useI18n();
+const { t, te, locale } = useI18n();
 const { openNotification } = useNotification();
 const aiBotsStore = useAiBotsStore();
 const chatsStore = useChatsStore();
@@ -858,19 +881,116 @@ const editChanellFormRef = ref();
 const editedChanellData = ref({ type: "" });
 const newChanellData = ref({ type: "" });
 
-const allowedModels = ["gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini"];
-const defaultModel = "gpt-4o-mini";
+// Which models a bot may use is decided in the AI models config (admin "AI
+// prices" -> AI bots). Until an administrator marks any model there, the old
+// fixed list is shown, so this screen works the same before and after.
+const legacyBotModels = ["gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini"];
+const legacyDefaultModel = "gpt-4o-mini";
 
-const modelsOptions = computed(() =>
-  globalModelsList.value
-    .filter(
-      (model) =>
-        allowedModels.includes(model.key) &&
-        ["api_only", "public"].includes(model.visibility) &&
-        model.state.state != "broken"
-    )
-    .map((model) => ({ label: model.name, value: model.key }))
+const isSellableModel = (model) =>
+  !model.disabled &&
+  ["api_only", "public"].includes(model.visibility) &&
+  model.state?.state != "broken";
+
+const configHasBotModels = computed(() =>
+  globalModelsList.value.some((model) => model.bots?.enabled)
 );
+
+const sorterOf = (model) => {
+  const sorter = Number(model.meta?.sorter);
+  return Number.isFinite(sorter) ? sorter : Number.MAX_SAFE_INTEGER;
+};
+
+const botModels = computed(() =>
+  globalModelsList.value
+    .filter(isSellableModel)
+    .filter((model) =>
+      configHasBotModels.value
+        ? model.bots?.enabled
+        : legacyBotModels.includes(model.key)
+    )
+    .sort(
+      (a, b) =>
+        Number(!!b.bots?.default) - Number(!!a.bots?.default) ||
+        sorterOf(a) - sorterOf(b) ||
+        String(a.name).localeCompare(String(b.name))
+    )
+);
+
+const defaultModel = computed(
+  () =>
+    botModels.value.find((model) => model.bots?.default)?.key ||
+    legacyDefaultModel
+);
+
+const modelsOptions = computed(() => {
+  const options = botModels.value.map((model) => ({
+    label: model.bots?.default
+      ? `${model.name} · ${t("bots.fields.recommended")}`
+      : model.name,
+    value: model.key,
+  }));
+  // A bot keeps working on a model that is no longer offered; it must still
+  // see it selected rather than an empty field.
+  const current = bot.value.settings.ai_model;
+  if (current && !options.some((option) => option.value === current)) {
+    const known = globalModelsList.value.find(({ key }) => key === current);
+    options.push({
+      label: `${known?.name || current} (${t("bots.fields.model_unavailable")})`,
+      value: current,
+    });
+  }
+  return options;
+});
+
+const modelDescription = computed(() => {
+  const model = currentModel.value;
+  const fromConfig =
+    model?.description?.[locale.value] || model?.description?.en || "";
+  if (fromConfig) return fromConfig;
+  const key = `bots.tips.model_${(bot.value.settings.ai_model || "").replaceAll(".", "/")}`;
+  return te(key) ? t(key) : "";
+});
+
+// Capabilities unknown -> as before: temperature shown, no reasoning effort.
+const supportsTemperature = computed(
+  () =>
+    !currentModel.value?.capabilities ||
+    !!currentModel.value.capabilities.temperature
+);
+
+const reasoningEfforts = computed(
+  () => currentModel.value?.capabilities?.reasoning || []
+);
+
+const modelDefaultEffort = (model) => {
+  const efforts = model?.capabilities?.reasoning || [];
+  if (!efforts.length) return "";
+  return efforts.includes(model.bots?.reasoning_effort)
+    ? model.bots.reasoning_effort
+    : efforts[0];
+};
+
+const currentEffort = computed(() =>
+  reasoningEfforts.value.includes(bot.value.settings.reasoning_effort)
+    ? bot.value.settings.reasoning_effort
+    : modelDefaultEffort(currentModel.value)
+);
+
+const effortLabel = (effort) => {
+  const key = `bots.fields.reasoning_${effort}`;
+  return te(key) ? t(key) : effort;
+};
+
+// A new model may not accept the effort chosen for the old one.
+const onModelChange = (key) => {
+  bot.value.settings.ai_model = key;
+  const model = globalModelsList.value.find((item) => item.key === key);
+  const efforts = model?.capabilities?.reasoning || [];
+  if (!efforts.includes(bot.value.settings.reasoning_effort)) {
+    bot.value.settings.reasoning_effort = modelDefaultEffort(model);
+  }
+};
 
 const newChanellFormRules = computed(() => {
   const fields = Object.keys(chanellsFields.value).reduce((acc, v) => {
@@ -1032,6 +1152,9 @@ async function fetch() {
     }
     if (bot.value.settings.processing_model == null) {
       bot.value.settings.processing_model = "";
+    }
+    if (bot.value.settings.reasoning_effort == null) {
+      bot.value.settings.reasoning_effort = "";
     }
     if (bot.value.settings.schedule == null) {
       bot.value.settings.schedule = { enabled: false, tz: "", default: "review", rules: [] };
