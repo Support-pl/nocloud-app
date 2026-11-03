@@ -13,6 +13,16 @@
                 :icon="h(editOutlined)"
                 @click="isNameEditActive = true"
               />
+              <a-button
+                v-if="service.data?.bot_uuid"
+                style="margin-left: 10px"
+                size="small"
+                type="primary"
+                :disabled="isPending"
+                @click="isAssistantOpen = true"
+              >
+                {{ t("bots.assistant.open") }}
+              </a-button>
 
               <a-modal
                 v-model:open="isNameEditActive"
@@ -252,6 +262,16 @@
         </template>
       </a-button>
     </div>
+    <a-drawer
+      v-if="service?.data?.bot_uuid"
+      v-model:open="isAssistantOpen"
+      :title="t('bots.assistant.title')"
+      placement="right"
+      :width="isMobile ? '100%' : 520"
+      destroy-on-close
+    >
+      <bot-assistant :bot-id="service.data.bot_uuid" :form-dirty="isSavePrimary" />
+    </a-drawer>
   </div>
 </template>
 
@@ -274,6 +294,7 @@ import { useAiBotsStore } from "@/stores/aiBots";
 import BotDatabase from "@/components/services/bots/database.vue";
 import BotSettings from "@/components/services/bots/settings.vue";
 import BotNotifications from "@/components/services/bots/notifications.vue";
+import BotAssistant from "@/components/services/bots/assistant.vue";
 import { marked } from "marked";
 import { useInvoicesStore } from "@/stores/invoices";
 import { GetInvoicesRequest } from "nocloud-proto/proto/es/billing/billing_pb";
@@ -325,6 +346,9 @@ const activeTab = ref();
 const lastInvoice = ref(null);
 
 const isSavePrimary = ref(false);
+const isAssistantOpen = ref(false);
+// The assistant panel takes the whole screen on a phone.
+const isMobile = computed(() => window.innerWidth < 768);
 const isBotSaveLoading = ref(false);
 
 const isUpdateAutoRenewLoading = ref(false);
