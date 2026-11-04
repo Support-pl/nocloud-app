@@ -1,7 +1,18 @@
 <template>
-  <a-tabs v-model:activeKey="tab" class="assistant">
+  <div class="assistant" :class="{ 'assistant--wide': isWide }">
+    <a-segmented
+      v-if="!isWide"
+      v-model:value="tab"
+      block
+      style="margin-bottom: 8px"
+      :options="[
+        { value: 'assistant', label: t('bots.assistant.tab_assistant') },
+        { value: 'test', label: t('bots.assistant.tab_test') },
+      ]"
+    />
     <!-- The owner's conversation with the editing assistant -->
-    <a-tab-pane key="assistant" :tab="t('bots.assistant.tab_assistant')">
+    <section v-show="isWide || tab === 'assistant'" class="assistant__pane">
+      <div class="assistant__pane-title" v-if="isWide">{{ t("bots.assistant.tab_assistant") }}</div>
       <div class="assistant__model" v-if="model">
         {{ t("bots.assistant.runs_on", { model }) }}
         <a-button type="link" size="small" @click="resetEditor">
@@ -10,14 +21,21 @@
       </div>
 
       <div ref="editorScroll" class="assistant__messages">
-        <a-empty v-if="!messages.length && !isLoading" :description="t('bots.assistant.empty')" />
+        <div v-if="!messages.length && !isLoading" class="msg msg--assistant">
+          <div class="msg__text" v-html="renderMarkdown(t('bots.assistant.welcome'))" />
+        </div>
         <div
           v-for="message in messages"
           :key="message.id"
           class="msg"
           :class="message.role === 'user' ? 'msg--user' : 'msg--assistant'"
         >
-          <div class="msg__text" v-html="renderMarkdown(message.content)" />
+          <div v-if="message.content" class="msg__text" v-html="renderMarkdown(message.content)" />
+          <div v-if="message.attachments?.length" class="msg__files">
+            <a-tag v-for="file in message.attachments" :key="file.id || file.filename" class="msg__file">
+              <paperclip-icon /> {{ file.filename }}
+            </a-tag>
+          </div>
 
           <div
             v-for="proposal in proposalsOf(message)"
@@ -40,7 +58,26 @@
               :message="t(`bots.assistant.warning_${warning.code}`, { detail: warning.detail || '' })"
             />
 
-            <div v-for="item in previewOf(proposal).items" :key="item.field" class="proposal__item">
+            <a-collapse
+              v-if="proposal.kind === 'articles_create'"
+              ghost
+              size="small"
+              class="proposal__articles"
+            >
+              <a-collapse-panel
+                v-for="(item, index) in previewOf(proposal).items"
+                :key="index"
+                :header="item.before"
+              >
+                <div class="msg__text proposal__article" v-html="renderMarkdown(item.after)" />
+              </a-collapse-panel>
+            </a-collapse>
+
+            <div
+              v-for="item in proposal.kind === 'articles_create' ? [] : previewOf(proposal).items"
+              :key="item.field"
+              class="proposal__item"
+            >
               <div class="proposal__field">{{ fieldLabel(item.field) }}</div>
               <div v-if="isLongField(item.field)" class="proposal__diff">
                 <span
@@ -79,22 +116,51 @@
         </div>
       </div>
 
+      <div v-if="pendingFiles.length" class="assistant__files">
+        <a-tag
+          v-for="(file, index) in pendingFiles"
+          :key="file.name + index"
+          closable
+          @close="pendingFiles.splice(index, 1)"
+        >
+          <paperclip-icon /> {{ file.name }}
+        </a-tag>
+      </div>
       <div class="assistant__input">
+        <input
+          ref="fileInput"
+          type="file"
+          multiple
+          :accept="acceptedFiles"
+          style="display: none"
+          @change="onFilesPicked"
+        />
+        <a-tooltip :title="t('bots.assistant.attach')">
+          <a-button :disabled="isSending" @click="fileInput.click()">
+            <template #icon><paperclip-icon /></template>
+          </a-button>
+        </a-tooltip>
         <a-textarea
           v-model:value="draft"
-          :auto-size="{ minRows: 2, maxRows: 6 }"
+          :auto-size="{ minRows: 2, maxRows: 8 }"
           :placeholder="t('bots.assistant.placeholder')"
           :disabled="isSending"
           @pressEnter="onEnter($event, sendToEditor)"
         />
-        <a-button type="primary" :loading="isSending" :disabled="!draft.trim()" @click="sendToEditor">
+        <a-button
+          type="primary"
+          :loading="isSending"
+          :disabled="!draft.trim() && !pendingFiles.length"
+          @click="sendToEditor"
+        >
           {{ t("bots.assistant.send") }}
         </a-button>
       </div>
-    </a-tab-pane>
+    </section>
 
     <!-- The owner's test chat with the bot itself -->
-    <a-tab-pane key="test" :tab="t('bots.assistant.tab_test')">
+    <section v-show="isWide || tab === 'test'" class="assistant__pane">
+      <div class="assistant__pane-title" v-if="isWide">{{ t("bots.assistant.tab_test") }}</div>
       <div class="assistant__model">
         {{ t("bots.assistant.test_hint") }}
         <a-button type="link" size="small" @click="resetTest">
@@ -137,12 +203,12 @@
           {{ t("bots.assistant.send") }}
         </a-button>
       </div>
-    </a-tab-pane>
-  </a-tabs>
+    </section>
+  </div>
 </template>
 
 <script setup>
-import { nextTick, onMounted, onUnmounted, ref } from "vue";
+import { defineAsyncComponent, nextTick, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
@@ -161,7 +227,24 @@ const { t, te, locale } = useI18n();
 const { openNotification } = useNotification();
 const aiBotsStore = useAiBotsStore();
 
+const paperclipIcon = defineAsyncComponent(() =>
+  import("@ant-design/icons-vue/PaperClipOutlined")
+);
+
 const tab = ref("assistant");
+
+// Side by side when there is room; one at a time on a narrow screen.
+const isWide = ref(window.innerWidth >= 1100);
+const onResize = () => {
+  isWide.value = window.innerWidth >= 1100;
+};
+
+// Files the owner attaches for the assistant: read as text on the server.
+const acceptedFiles = ".pdf,.docx,.xlsx,.csv,.txt,.md";
+const maxFiles = 5;
+const maxFileSize = 20 * 1024 * 1024;
+const pendingFiles = ref([]);
+const fileInput = ref();
 
 const messages = ref([]);
 const proposals = ref(new Map());
@@ -288,18 +371,63 @@ async function loadHistory() {
   }
 }
 
+function onFilesPicked(event) {
+  for (const file of event.target.files || []) {
+    if (pendingFiles.value.length >= maxFiles) {
+      openNotification("warning", { message: t("bots.assistant.too_many_files", { max: maxFiles }) });
+      break;
+    }
+    if (file.size > maxFileSize) {
+      openNotification("warning", { message: t("bots.assistant.file_too_big", { name: file.name }) });
+      continue;
+    }
+    pendingFiles.value.push(file);
+  }
+  event.target.value = "";
+}
+
+// The browser leaves the type empty for some files (.md); the server goes by it.
+const fileType = (file) => {
+  if (file.type) return file.type;
+  const ext = file.name.split(".").pop().toLowerCase();
+  return ext === "csv" ? "text/csv" : "text/plain";
+};
+
+const readAsDataURL = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
 async function sendToEditor(textOverride) {
-  const text = (typeof textOverride === "string" ? textOverride : draft.value).trim();
-  if (!text || isSending.value) return;
-  if (typeof textOverride !== "string") draft.value = "";
-  messages.value.push({ id: `local-${Date.now()}`, role: "user", content: text });
+  const fromDraft = typeof textOverride !== "string";
+  const text = (fromDraft ? draft.value : textOverride).trim();
+  const files = fromDraft ? [...pendingFiles.value] : [];
+  if ((!text && !files.length) || isSending.value) return;
+  const local = {
+    id: `local-${Date.now()}`,
+    role: "user",
+    content: text,
+    attachments: files.map((f) => ({ filename: f.name })),
+  };
+  messages.value.push(local);
   scrollDown(editorScroll);
   isSending.value = true;
   try {
+    const payload = await Promise.all(
+      files.map(async (f) => ({ filename: f.name, content_type: fileType(f), data: await readAsDataURL(f) }))
+    );
+    if (fromDraft) {
+      draft.value = "";
+      pendingFiles.value = [];
+    }
     const data = await api.post("/agents/api/editor/send", {
       bot: props.botId,
       text,
       locale: locale.value,
+      files: payload,
     });
     rememberProposals(data.proposals);
     model.value = data.model || model.value;
@@ -310,6 +438,11 @@ async function sendToEditor(textOverride) {
       await aiBotsStore.getBot(props.botId);
     }
   } catch (err) {
+    messages.value = messages.value.filter((m) => m !== local && m.id !== local.id);
+    if (fromDraft) {
+      draft.value = text;
+      pendingFiles.value = files;
+    }
     openNotification("error", { message: `Error: ${errorText(err)}` });
   } finally {
     isSending.value = false;
@@ -409,11 +542,13 @@ function askWhy() {
 }
 
 onMounted(async () => {
+  window.addEventListener("resize", onResize);
   await aiBotsStore.startChatsStream({ playground_message: playgroundHandler });
   await Promise.all([loadHistory(), resetTest()]);
 });
 
 onUnmounted(() => {
+  window.removeEventListener("resize", onResize);
   aiBotsStore.removeCustomHandler("playground_message", playgroundHandler);
   clearTimeout(testWaitTimer);
 });
@@ -423,14 +558,49 @@ onUnmounted(() => {
 .assistant {
   height: 100%;
 }
+.assistant--wide {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
+}
+.assistant__pane {
+  min-width: 0;
+}
+.assistant__pane-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.assistant__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.msg__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.msg__file {
+  margin: 0;
+}
+.proposal__articles :deep(.ant-collapse-header) {
+  padding: 4px 0 !important;
+}
+.proposal__article {
+  font-size: 13px;
+  max-height: 260px;
+  overflow-y: auto;
+}
 .assistant__model {
   font-size: 12px;
   opacity: 0.75;
   margin-bottom: 6px;
 }
 .assistant__messages {
-  height: calc(100vh - 290px);
-  min-height: 240px;
+  height: calc(100vh - 360px);
+  min-height: 320px;
   overflow-y: auto;
   padding: 4px;
 }
