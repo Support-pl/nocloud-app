@@ -308,6 +308,10 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           bot: bot.id,
           delay: bot.settings.delay,
           model: bot.settings.ai_model,
+          reasoning_effort: bot.settings.reasoning_effort ?? "",
+          // The revision this form was loaded at: the server refuses to
+          // overwrite a newer one (CONFLICT) instead of silently losing it.
+          revision: bot.revision,
           system_prompt: bot.settings.system_prompt,
           processing_prompt: bot.settings.processing_prompt,
           processing_model: bot.settings.processing_model,
@@ -326,6 +330,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
         });
 
         bots.value.set(bot.id, data);
+        return data;
       } catch (error) {
         console.debug(error);
         throw error;
