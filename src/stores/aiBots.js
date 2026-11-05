@@ -66,7 +66,9 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
   async function startChatsStream(customHandlers = {}) {
     const token = cookies.get("noCloudinApp-token");
-    const url = VUE_APP_BASE_URL.replace(/^http/, "ws");
+    // VUE_APP_WS_BASE_URL (optional, public/api.js): where the socket goes
+    // when the API is reached through an HTTP-only proxy, as in local dev.
+    const url = (globalThis.VUE_APP_WS_BASE_URL || VUE_APP_BASE_URL).replace(/^http/, "ws");
     const wsUrl = `${url}agents/api/get_updates?token=${encodeURIComponent(
       token
     )}`;
