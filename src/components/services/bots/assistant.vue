@@ -389,11 +389,13 @@ function onFilesPicked(event) {
   event.target.value = "";
 }
 
-// The browser leaves the type empty for some files (.md); the server goes by it.
+// The server reads PDF, DOCX, XLSX, CSV and plain text. The browser gives
+// .md as text/markdown or nothing at all: any other text goes as plain text.
 const fileType = (file) => {
-  if (file.type) return file.type;
   const ext = file.name.split(".").pop().toLowerCase();
-  return ext === "csv" ? "text/csv" : "text/plain";
+  if (ext === "csv") return "text/csv";
+  if (!file.type || file.type.startsWith("text/")) return "text/plain";
+  return file.type;
 };
 
 const readAsDataURL = (file) =>
