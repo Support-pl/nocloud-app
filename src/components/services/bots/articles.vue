@@ -26,7 +26,7 @@
         ref="fileInput"
         type="file"
         hidden
-        accept=".pdf,.docx,.xlsx,.csv,.txt,application/pdf,text/plain,text/csv"
+        accept=".pdf,.docx,.xlsx,.csv,.txt,.md"
         @change="onFilePicked"
       />
     </div>
@@ -43,88 +43,33 @@
     </div>
 
     <a-spin :spinning="isLoading">
-      <a-empty v-if="!isLoading && !articles.length" :description="t('bots_databases.articles.empty')" />
+      <a-empty
+        v-if="!isLoading && !articles.length && !newArticle"
+        :description="t('bots_databases.articles.empty')"
+      />
 
-      <div
+      <article-card
+        v-if="newArticle"
+        :key="'new'"
+        :article="newArticle"
+        :saving="isSaving"
+        @save="createArticle"
+        @cancel="newArticle = null"
+      />
+      <article-card
         v-for="(article, index) in filteredArticles"
         :key="article.id"
-        class="article"
-        :class="{ 'article--off': !article.enabled || !article.fits }"
-      >
-        <div class="article__head">
-          <span class="article__title" @click="openEditor(article)">{{ article.title }}</span>
-          <a-tag v-if="article.source_type">{{ sourceLabel(article.source_type) }}</a-tag>
-          <a-tag v-if="article.enabled && !article.fits" color="orange">
-            {{ t("bots_databases.articles.does_not_fit") }}
-          </a-tag>
-          <span class="article__tokens">~{{ article.tokens }}</span>
-        </div>
-        <div class="article__body" @click="openEditor(article)">
-          {{ preview(article.body) }}
-        </div>
-        <div class="article__actions">
-          <a-switch
-            size="small"
-            :checked="article.enabled"
-            :loading="busyId === article.id"
-            @change="toggleEnabled(article, $event)"
-          />
-          <span class="article__switch-label">{{ t("bots_databases.articles.enabled") }}</span>
-          <a-button
-            size="small"
-            type="text"
-            :disabled="!!search || index === 0"
-            @click="move(article, -1)"
-          >↑</a-button>
-          <a-button
-            size="small"
-            type="text"
-            :disabled="!!search || index === filteredArticles.length - 1"
-            @click="move(article, 1)"
-          >↓</a-button>
-          <a-button size="small" @click="openEditor(article)">
-            {{ t("bots_databases.articles.edit") }}
-          </a-button>
-          <a-popconfirm
-            :title="t('bots_databases.articles.delete_confirm')"
-            @confirm="removeArticle(article)"
-          >
-            <a-button size="small" danger>{{ t("bots_databases.articles.delete") }}</a-button>
-          </a-popconfirm>
-        </div>
-      </div>
+        :article="article"
+        :busy="busyId === article.id"
+        :saving="savingId === article.id"
+        :can-up="!search && index > 0"
+        :can-down="!search && index < filteredArticles.length - 1"
+        @save="updateArticle(article, $event)"
+        @toggle="toggleEnabled(article, $event)"
+        @move="move(article, $event)"
+        @remove="removeArticle(article)"
+      />
     </a-spin>
-
-    <!-- One article: write or edit -->
-    <a-modal
-      v-model:open="isEditorOpen"
-      :title="editor.id ? t('bots_databases.articles.edit') : t('bots_databases.articles.add_write')"
-      :confirm-loading="isSaving"
-      :ok-text="t('bots_databases.articles.save')"
-      width="760px"
-      @ok="saveEditor"
-    >
-      <a-input
-        v-model:value="editor.title"
-        :placeholder="t('bots_databases.articles.title')"
-        style="margin-bottom: 10px"
-      />
-      <a-segmented
-        v-model:value="editorMode"
-        :options="[
-          { label: t('bots_databases.articles.mode_edit'), value: 'edit' },
-          { label: t('bots_databases.articles.mode_preview'), value: 'preview' },
-        ]"
-        style="margin-bottom: 10px"
-      />
-      <a-textarea
-        v-if="editorMode === 'edit'"
-        v-model:value="editor.body"
-        :auto-size="{ minRows: 10, maxRows: 24 }"
-        :placeholder="t('bots_databases.articles.body')"
-      />
-      <div v-else class="article__markdown" v-html="renderMarkdown(editor.body)" />
-    </a-modal>
 
     <!-- Paste text / link to import -->
     <a-modal
@@ -173,9 +118,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { marked } from "marked";
-import DOMPurify from "dompurify";
 import api from "@/api";
+import ArticleCard from "@/components/services/bots/articleCard.vue";
 import { useNotification } from "@/hooks/utils";
 
 const props = defineProps({
@@ -185,7 +129,7 @@ const props = defineProps({
 // shows elsewhere (the Q&A tools work on the same articles).
 const emit = defineEmits(["changed"]);
 
-const { t, te } = useI18n();
+const { t } = useI18n();
 const { openNotification } = useNotification();
 
 const articles = ref([]);
@@ -197,9 +141,9 @@ const isSaving = ref(false);
 const isImporting = ref(false);
 const busyId = ref("");
 
-const isEditorOpen = ref(false);
-const editorMode = ref("edit");
-const editor = ref({ id: "", title: "", body: "", enabled: true, version: 0 });
+const savingId = ref("");
+// The article being written from scratch, shown on top until saved.
+const newArticle = ref(null);
 
 const isSourceOpen = ref(false);
 const sourceKind = ref("text");
@@ -226,17 +170,6 @@ const notifyError = (err) =>
 
 const isConflict = (err) => err?.response?.data?.error_code === "CONFLICT";
 
-const preview = (body) => {
-  const text = (body || "").replace(/\s+/g, " ").trim();
-  return text.length > 220 ? `${text.slice(0, 220)}…` : text;
-};
-
-const renderMarkdown = (text) => DOMPurify.sanitize(marked(text || ""));
-
-const sourceLabel = (source) => {
-  const key = `bots_databases.articles.source_${source}`;
-  return te(key) ? t(key) : source;
-};
 
 async function load() {
   isLoading.value = true;
@@ -259,35 +192,36 @@ async function changed() {
   emit("changed");
 }
 
-function openEditor(article) {
-  editor.value = article
-    ? { id: article.id, title: article.title, body: article.body, enabled: article.enabled, version: article.version }
-    : { id: "", title: "", body: "", enabled: true, version: 0 };
-  editorMode.value = "edit";
-  isEditorOpen.value = true;
+function openEditor() {
+  newArticle.value = { id: "", title: "", body: "", enabled: true, version: 0 };
 }
 
-async function saveEditor() {
-  if (!editor.value.title.trim()) {
-    return openNotification("error", { message: t("bots_databases.articles.no_title") });
-  }
+async function createArticle({ title, body }) {
   isSaving.value = true;
   try {
-    if (editor.value.id) {
-      await api.post("/agents/api/update_article", {
-        id: editor.value.id,
-        title: editor.value.title,
-        body: editor.value.body,
-        enabled: editor.value.enabled,
-        version: editor.value.version,
-      });
-    } else {
-      await api.post("/agents/api/create_articles", {
-        database: props.database,
-        articles: [{ title: editor.value.title, body: editor.value.body, source_type: "manual" }],
-      });
-    }
-    isEditorOpen.value = false;
+    await api.post("/agents/api/create_articles", {
+      database: props.database,
+      articles: [{ title, body, source_type: "manual" }],
+    });
+    newArticle.value = null;
+    await changed();
+  } catch (err) {
+    notifyError(err);
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+async function updateArticle(article, { title, body }) {
+  savingId.value = article.id;
+  try {
+    await api.post("/agents/api/update_article", {
+      id: article.id,
+      title,
+      body,
+      enabled: article.enabled,
+      version: article.version,
+    });
     await changed();
   } catch (err) {
     if (isConflict(err)) {
@@ -297,7 +231,7 @@ async function saveEditor() {
       notifyError(err);
     }
   } finally {
-    isSaving.value = false;
+    savingId.value = "";
   }
 }
 
@@ -348,7 +282,7 @@ async function removeArticle(article) {
 }
 
 function onAddMenu({ key }) {
-  if (key === "write") return openEditor(null);
+  if (key === "write") return openEditor();
   if (key === "file") return fileInput.value?.click();
   sourceKind.value = key;
   sourceText.value = "";
@@ -377,6 +311,15 @@ async function runSourceImport() {
   }
 }
 
+// The server reads PDF, DOCX, XLSX, CSV and plain text; .md and other text
+// files come from the browser as text/markdown or untyped.
+const fileType = (file) => {
+  const ext = file.name.split(".").pop().toLowerCase();
+  if (ext === "csv") return "text/csv";
+  if (!file.type || file.type.startsWith("text/")) return "text/plain";
+  return file.type;
+};
+
 const readAsDataURL = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -393,7 +336,7 @@ async function onFilePicked(event) {
   try {
     const data = await api.post("/agents/api/ingest_file", {
       database: props.database,
-      file: { filename: file.name, content_type: file.type, data: await readAsDataURL(file) },
+      file: { filename: file.name, content_type: fileType(file), data: await readAsDataURL(file) },
     });
     showDrafts(data.drafts);
   } catch (err) {
@@ -440,50 +383,6 @@ onMounted(load);
 }
 .articles__budget {
   margin-bottom: 12px;
-}
-.article {
-  border: 1px solid var(--border_color, #e5e5e5);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-.article--off {
-  opacity: 0.6;
-}
-.article__head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.article__title {
-  font-weight: 600;
-  cursor: pointer;
-}
-.article__tokens {
-  margin-left: auto;
-  font-size: 12px;
-  opacity: 0.6;
-}
-.article__body {
-  margin: 6px 0;
-  cursor: pointer;
-  opacity: 0.85;
-  word-break: break-word;
-}
-.article__actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.article__switch-label {
-  margin-right: 8px;
-  font-size: 12px;
-}
-.article__markdown {
-  max-height: 60vh;
-  overflow: auto;
 }
 .draft {
   display: flex;

@@ -40,9 +40,10 @@
         >
           <div v-if="message.content" class="msg__text" v-html="renderMarkdown(message.content)" />
           <div v-if="message.attachments?.length" class="msg__files">
-            <a-tag v-for="file in message.attachments" :key="file.id || file.filename" class="msg__file">
-              <paperclip-icon /> {{ file.filename }}
-            </a-tag>
+            <span v-for="file in message.attachments" :key="file.id || file.filename" class="msg__file">
+              <paperclip-icon class="msg__file-icon" />
+              <span class="msg__file-name">{{ file.filename }}</span>
+            </span>
           </div>
 
           <div
@@ -448,7 +449,14 @@ async function sendToEditor(textOverride) {
       draft.value = text;
       pendingFiles.value = files;
     }
-    openNotification("error", { message: `Error: ${errorText(err)}` });
+    // A bad request (file, size) says what to fix; a failure of the model
+    // behind it means nothing to the owner, so it gets a plain message.
+    if (err?.response?.data?.error_code === "INTERNAL") {
+      console.error(err);
+      openNotification("error", { message: t("bots.assistant.failed") });
+    } else {
+      openNotification("error", { message: `Error: ${errorText(err)}` });
+    }
   } finally {
     isSending.value = false;
     scrollDown(editorScroll);
@@ -664,7 +672,27 @@ onUnmounted(() => {
   margin-top: 6px;
 }
 .msg__file {
-  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.06);
+}
+.msg--user .msg__file {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+.msg__file-icon {
+  font-size: 13px;
+  opacity: 0.85;
+}
+.msg__file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .msg__why {
   padding: 0;
