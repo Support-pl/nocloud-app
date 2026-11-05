@@ -152,7 +152,7 @@
         </a-row>
       </a-col>
 
-      <a-col span="24" v-if="reasoningEfforts.length">
+      <a-col span="24" v-if="reasoningEfforts.length > 1">
         <span class="field_title"
           >{{ t("bots.fields.reasoning_effort") }}:
           <a-tooltip>
