@@ -1,26 +1,34 @@
 <template>
-  <div class="assistant" :class="{ 'assistant--wide': isWide }">
-    <a-segmented
-      v-if="!isWide"
-      v-model:value="tab"
-      block
-      style="margin-bottom: 8px"
-      :options="[
-        { value: 'assistant', label: t('bots.assistant.tab_assistant') },
-        { value: 'test', label: t('bots.assistant.tab_test') },
-      ]"
-    />
-    <!-- The owner's conversation with the editing assistant -->
-    <section v-show="isWide || tab === 'assistant'" class="assistant__pane">
-      <div class="assistant__pane-title" v-if="isWide">{{ t("bots.assistant.tab_assistant") }}</div>
-      <div class="assistant__model" v-if="model">
-        {{ t("bots.assistant.runs_on", { model }) }}
-        <a-button type="link" size="small" @click="resetEditor">
+  <div class="assistant">
+    <div class="assistant__toolbar">
+      <a-segmented
+        v-model:value="tab"
+        :options="[
+          { value: 'assistant', label: t('bots.assistant.tab_assistant') },
+          { value: 'test', label: t('bots.assistant.tab_test') },
+        ]"
+      />
+      <div class="assistant__toolbar-right">
+        <span v-if="tab === 'assistant' && model" class="assistant__hint">
+          {{ model }}
+        </span>
+        <a-button
+          v-if="tab === 'assistant'"
+          size="small"
+          :disabled="isSending || !messages.length"
+          @click="resetEditor"
+        >
           {{ t("bots.assistant.new_conversation") }}
         </a-button>
+        <a-button v-else size="small" :disabled="!testMessages.length" @click="resetTest">
+          {{ t("bots.assistant.restart_test") }}
+        </a-button>
       </div>
+    </div>
 
-      <div ref="editorScroll" class="assistant__messages">
+    <!-- The owner's conversation with the editing assistant -->
+    <section v-show="tab === 'assistant'" class="chat">
+      <div ref="editorScroll" class="chat__messages">
         <div v-if="!messages.length && !isLoading" class="msg msg--assistant">
           <div class="msg__text" v-html="renderMarkdown(t('bots.assistant.welcome'))" />
         </div>
@@ -116,60 +124,58 @@
         </div>
       </div>
 
-      <div v-if="pendingFiles.length" class="assistant__files">
-        <a-tag
-          v-for="(file, index) in pendingFiles"
-          :key="file.name + index"
-          closable
-          @close="pendingFiles.splice(index, 1)"
-        >
-          <paperclip-icon /> {{ file.name }}
-        </a-tag>
-      </div>
-      <div class="assistant__input">
-        <input
-          ref="fileInput"
-          type="file"
-          multiple
-          :accept="acceptedFiles"
-          style="display: none"
-          @change="onFilesPicked"
-        />
-        <a-tooltip :title="t('bots.assistant.attach')">
-          <a-button :disabled="isSending" @click="fileInput.click()">
-            <template #icon><paperclip-icon /></template>
-          </a-button>
-        </a-tooltip>
+      <div class="composer">
+        <div v-if="pendingFiles.length" class="composer__files">
+          <a-tag
+            v-for="(file, index) in pendingFiles"
+            :key="file.name + index"
+            closable
+            @close="pendingFiles.splice(index, 1)"
+          >
+            <paperclip-icon /> {{ file.name }}
+          </a-tag>
+        </div>
         <a-textarea
           v-model:value="draft"
+          :bordered="false"
           :auto-size="{ minRows: 2, maxRows: 8 }"
           :placeholder="t('bots.assistant.placeholder')"
           :disabled="isSending"
           @pressEnter="onEnter($event, sendToEditor)"
         />
-        <a-button
-          type="primary"
-          :loading="isSending"
-          :disabled="!draft.trim() && !pendingFiles.length"
-          @click="sendToEditor"
-        >
-          {{ t("bots.assistant.send") }}
-        </a-button>
+        <div class="composer__bar">
+          <input
+            ref="fileInput"
+            type="file"
+            multiple
+            :accept="acceptedFiles"
+            style="display: none"
+            @change="onFilesPicked"
+          />
+          <a-tooltip :title="t('bots.assistant.attach')">
+            <a-button type="text" :disabled="isSending" @click="fileInput.click()">
+              <template #icon><paperclip-icon /></template>
+              {{ t("bots.assistant.attach_short") }}
+            </a-button>
+          </a-tooltip>
+          <a-button
+            type="primary"
+            :loading="isSending"
+            :disabled="!draft.trim() && !pendingFiles.length"
+            @click="sendToEditor"
+          >
+            {{ t("bots.assistant.send") }}
+          </a-button>
+        </div>
       </div>
     </section>
 
     <!-- The owner's test chat with the bot itself -->
-    <section v-show="isWide || tab === 'test'" class="assistant__pane">
-      <div class="assistant__pane-title" v-if="isWide">{{ t("bots.assistant.tab_test") }}</div>
-      <div class="assistant__model">
-        {{ t("bots.assistant.test_hint") }}
-        <a-button type="link" size="small" @click="resetTest">
-          {{ t("bots.assistant.restart_test") }}
-        </a-button>
-      </div>
-
-      <div ref="testScroll" class="assistant__messages">
-        <a-empty v-if="!testMessages.length" :description="t('bots.assistant.test_empty')" />
+    <section v-show="tab === 'test'" class="chat">
+      <div ref="testScroll" class="chat__messages">
+        <div v-if="!testMessages.length" class="chat__empty">
+          {{ t("bots.assistant.test_hint") }}
+        </div>
         <div
           v-for="(message, index) in testMessages"
           :key="index"
@@ -192,16 +198,19 @@
         </div>
       </div>
 
-      <div class="assistant__input">
+      <div class="composer">
         <a-textarea
           v-model:value="testDraft"
+          :bordered="false"
           :auto-size="{ minRows: 1, maxRows: 5 }"
           :placeholder="t('bots.assistant.test_placeholder')"
           @pressEnter="onEnter($event, sendToTest)"
         />
-        <a-button type="primary" :disabled="!testDraft.trim()" @click="sendToTest">
-          {{ t("bots.assistant.send") }}
-        </a-button>
+        <div class="composer__bar composer__bar--end">
+          <a-button type="primary" :disabled="!testDraft.trim()" @click="sendToTest">
+            {{ t("bots.assistant.send") }}
+          </a-button>
+        </div>
       </div>
     </section>
   </div>
@@ -232,12 +241,6 @@ const paperclipIcon = defineAsyncComponent(() =>
 );
 
 const tab = ref("assistant");
-
-// Side by side when there is room; one at a time on a narrow screen.
-const isWide = ref(window.innerWidth >= 1100);
-const onResize = () => {
-  isWide.value = window.innerWidth >= 1100;
-};
 
 // Files the owner attaches for the assistant: read as text on the server.
 const acceptedFiles = ".pdf,.docx,.xlsx,.csv,.txt,.md";
@@ -542,13 +545,11 @@ function askWhy() {
 }
 
 onMounted(async () => {
-  window.addEventListener("resize", onResize);
   await aiBotsStore.startChatsStream({ playground_message: playgroundHandler });
   await Promise.all([loadHistory(), resetTest()]);
 });
 
 onUnmounted(() => {
-  window.removeEventListener("resize", onResize);
   aiBotsStore.removeCustomHandler("playground_message", playgroundHandler);
   clearTimeout(testWaitTimer);
 });
@@ -556,100 +557,134 @@ onUnmounted(() => {
 
 <style scoped>
 .assistant {
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-.assistant--wide {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: 16px;
+.assistant__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
-.assistant__pane {
-  min-width: 0;
+.assistant__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.assistant__pane-title {
-  font-weight: 600;
+.assistant__hint {
+  font-size: 12px;
+  opacity: 0.6;
+}
+.chat {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border_color, #e5e7eb);
+  border-radius: 12px;
+  overflow: hidden;
+  height: max(420px, calc(100vh - 330px));
+}
+.chat__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chat__empty {
+  margin: auto;
+  max-width: 360px;
+  text-align: center;
+  opacity: 0.6;
+}
+.composer {
+  border-top: 1px solid var(--border_color, #e5e7eb);
+  padding: 8px 12px;
+}
+.composer :deep(textarea) {
+  padding: 4px 0;
+  resize: none;
+}
+.composer__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
   margin-bottom: 4px;
 }
-.assistant__files {
+.composer__bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 8px;
-}
-.msg__files {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 4px;
 }
-.msg__file {
-  margin: 0;
-}
-.proposal__articles :deep(.ant-collapse-header) {
-  padding: 4px 0 !important;
-}
-.proposal__article {
-  font-size: 13px;
-  max-height: 260px;
-  overflow-y: auto;
-}
-.assistant__model {
-  font-size: 12px;
-  opacity: 0.75;
-  margin-bottom: 6px;
-}
-.assistant__messages {
-  height: calc(100vh - 360px);
-  min-height: 320px;
-  overflow-y: auto;
-  padding: 4px;
-}
-.assistant__input {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  align-items: flex-end;
+.composer__bar--end {
+  justify-content: flex-end;
 }
 .msg {
-  max-width: 92%;
-  margin-bottom: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 14px;
   word-break: break-word;
+  line-height: 1.5;
 }
 .msg--user {
-  margin-left: auto;
+  align-self: flex-end;
   background: var(--main, #1677ff);
   color: #fff;
+  border-bottom-right-radius: 4px;
 }
 .msg--assistant {
+  align-self: flex-start;
   background: var(--bright_bg, #f3f4f6);
+  border-bottom-left-radius: 4px;
 }
 .msg--typing {
   font-style: italic;
   opacity: 0.7;
 }
-.msg__text :deep(p:last-child) {
+.msg__text :deep(p) {
+  margin-bottom: 8px;
+}
+.msg__text :deep(p:last-child),
+.msg__text :deep(ul:last-child) {
   margin-bottom: 0;
+}
+.msg__text :deep(ul) {
+  padding-left: 20px;
+  margin-bottom: 8px;
+}
+.msg__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.msg__file {
+  margin: 0;
 }
 .msg__why {
   padding: 0;
+  height: auto;
+  margin-top: 4px;
 }
 .proposal {
   border: 1px solid var(--border_color, #d9d9d9);
-  border-radius: 8px;
-  padding: 8px;
-  margin-top: 8px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 10px;
   background: var(--bright_font, #fff);
   color: inherit;
 }
 .proposal__head {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 8px;
 }
 .proposal__item {
-  margin-top: 6px;
+  margin-top: 8px;
 }
 .proposal__field {
   font-size: 12px;
@@ -661,10 +696,18 @@ onUnmounted(() => {
   overflow-y: auto;
   font-size: 13px;
 }
+.proposal__articles :deep(.ant-collapse-header) {
+  padding: 4px 0 !important;
+}
+.proposal__article {
+  font-size: 13px;
+  max-height: 260px;
+  overflow-y: auto;
+}
 .proposal__actions {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 .diff--removed {
   background: rgba(255, 77, 79, 0.18);
