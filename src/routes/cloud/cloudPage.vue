@@ -354,7 +354,7 @@ export default {
       "isLoading",
       "socket",
     ]),
-    ...mapState(useAuthStore, ["isLogged", "baseURL", "userdata"]),
+    ...mapState(useAuthStore, ["isLogged", "baseURL", "userdata", "isMember"]),
     ...mapState(useChatsStore, ["getDefaults"]),
     ...mapState(useProductsStore, {
       products: "products",
@@ -445,6 +445,8 @@ export default {
 
       if (this.VM.server_on) type = "custom";
       return options.filter((el) => {
+        // No subaccount may delete its organization's services.
+        if (el.title === "Delete" && this.isMember) return false;
         if (!el.modules) return true;
 
         return el.modules.find((module) => type.includes(module));

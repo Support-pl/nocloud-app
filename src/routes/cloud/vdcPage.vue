@@ -30,14 +30,26 @@
             </div>
           </div>
 
-          <div v-if="isActionsActive" class="service-page__info">
+          <div
+            v-if="isActionsActive && authStore.can('invoice')"
+            class="service-page__info"
+          >
             <div class="service-page__info-title">
               {{ $t("Actions") }}:
               <div style="display: inline-flex; gap: 8px">
-                <a-button size="small" @click="sendRenew">
+                <a-button
+                  v-if="authStore.can('invoice')"
+                  size="small"
+                  @click="sendRenew"
+                >
                   {{ capitalize($t("renew")) }}
                 </a-button>
-                <a-button danger size="small" @click="sendDelete">
+                <a-button
+                  v-if="!authStore.isMember"
+                  danger
+                  size="small"
+                  @click="sendDelete"
+                >
                   {{ $t("Delete") }}
                 </a-button>
               </div>

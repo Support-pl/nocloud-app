@@ -275,6 +275,8 @@ const getModuleProductBtn = computed(() => {
 
   if (["keyweb", "ovh cloud"].includes(type)) return;
   if (meta?.renew === false) return;
+  // Renewing makes an invoice, which a subaccount needs invoices for.
+  if (!authStore.can("invoice")) return;
   if (props.instance.date === 0) return;
   if (props.instance.server_on) return;
   if (!(isActive && components[component])) return;

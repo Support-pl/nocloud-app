@@ -65,63 +65,24 @@
         <template #header>
           <div class="header">
             <span style="margin-right: 10px">
-              {{ t("bots_databases.labels.qa_knowledge_base") }}
+              {{ t("bots_databases.articles.title_panel") }}
             </span>
             <a-tooltip>
               <template #title>
-                <span v-html="t(`bots_databases.tips.qa_knowledge_base`)" />
+                <span>{{ t("bots_databases.articles.tip_panel") }}</span>
               </template>
               <help-icon style="font-size: 22px" />
             </a-tooltip>
           </div>
         </template>
 
-        <div
-          v-for="(item, index) in database.qa_knowledge.records"
-          :key="index"
-          class="question_item"
-        >
-          <div class="question">
-            <span style="width: 25px">{{ index + 1 }}.</span>
-            <a-input
-              class="field"
-              v-model:value="item.question"
-              :placeholder="t('bots_databases.fields.question')"
-              compact
-              :status="qaKnowledgeStatuses[index]?.['question'] ? 'error' : ''"
-            >
-            </a-input>
-            <a-button
-              @click="handleRemoveQaKnowledge(index)"
-              class="delete_btn"
-              type="text"
-              shape="circle"
-            >
-              <template #icon>
-                <delete-icon two-tone-color="#ff4d4f" class="icon" />
-              </template>
-            </a-button>
-          </div>
-
-          <a-textarea
-            style="width: calc(100% - 60px)"
-            class="field"
-            v-model:value="item.answer"
-            :placeholder="t('bots_databases.fields.answer')"
-            compact
-            :status="qaKnowledgeStatuses[index]?.['answer'] ? 'error' : ''"
-          />
-        </div>
+        <bot-articles
+          ref="articlesRef"
+          :database="database.id"
+          @changed="refreshDatabase"
+        />
 
         <div class="actions">
-          <a-button
-            :disabled="isSaveQaKnoledgeLoading"
-            @click="handleAddQaKnowledge"
-          >
-            {{ t("bots_databases.actions.add_qa_record") }}
-            <add-icon />
-          </a-button>
-
           <a-tooltip>
             <template #title>
               {{ t("bots_databases.tips.rebuild_qa") }}
@@ -159,14 +120,6 @@
             @change="handleImportQaFile"
           />
 
-          <a-button
-            :loading="isSaveQaKnoledgeLoading"
-            :type="isSaveQaKnowledgePrimary ? 'primary' : 'default'"
-            @click="handleSaveQaKnowledge"
-          >
-            {{ t("bots_databases.actions.save_qa_records") }}
-            <save-icon
-          /></a-button>
         </div>
       </a-collapse-panel>
 
@@ -977,6 +930,7 @@
 <script setup>
 import api from "@/api";
 import Loading from "@/components/ui/loading.vue";
+import BotArticles from "@/components/services/bots/articles.vue";
 import { useNotification } from "@/hooks/utils";
 import { useAiBotsStore } from "@/stores/aiBots";
 import { marked } from "marked";
@@ -1059,6 +1013,7 @@ const rebuildPrompt = ref("");
 const rebuildAnalyzed = ref(false); // true once the model has returned a proposal
 const rebuildDraft = ref([]); // editable working copy of the proposal
 const collapseKey = ref();
+const articlesRef = ref();
 const database = ref({ name: "" });
 const editDatabaseFormRef = ref();
 const qaKnowledgeStatuses = ref({});
@@ -1089,13 +1044,13 @@ onMounted(async () => {
     await aiBotsStore.getBot(props.service.data.bot_uuid);
 
     database.value = JSON.parse(JSON.stringify(originalDatabase.value));
-
-    if (
-      !database.value.qa_knowledge.records ||
-      !database.value.qa_knowledge.records.length
-    ) {
-      database.value.qa_knowledge.records = [{ question: "", answer: "" }];
+    if (!database.value.qa_knowledge) {
+      database.value.qa_knowledge = { records: [] };
     }
+    if (!database.value.qa_knowledge.records) {
+      database.value.qa_knowledge.records = [];
+    }
+
 
     if (!database.value.saved_urls || !database.value.saved_urls.length) {
       database.value.saved_urls = [];
@@ -1318,12 +1273,6 @@ const newKnowledgeRules = computed(() => ({
   ],
 }));
 
-const isSaveQaKnowledgePrimary = computed(
-  () =>
-    JSON.stringify(originalDatabase.value.qa_knowledge) !==
-    JSON.stringify(database.value.qa_knowledge)
-);
-
 const countUnreadSiteKnowledge = computed(() => {
   return Object.keys(unInmportedSitesMap.value || {}).reduce((acc, key) => {
     if (
@@ -1342,14 +1291,6 @@ const countUnreadSiteKnowledge = computed(() => {
 const databaseRules = computed(() => ({
   name: [{ required: true, message: t("ssl_product.field is required") }],
 }));
-
-function handleAddQaKnowledge() {
-  database.value.qa_knowledge.records.push({ question: "", answer: "" });
-}
-
-function handleRemoveQaKnowledge(index) {
-  database.value.qa_knowledge.records.splice(index, 1);
-}
 
 // Default rebuild instruction shown (and editable) in the modal. Sent verbatim;
 // the backend only falls back to its own default when the field is left empty.
@@ -1487,6 +1428,7 @@ async function handleImportQaFile(event) {
   if (!file) return;
 
   try {
+    await refreshDatabase();
     rebuildDraft.value = parseQaJson(await file.text());
     rebuildAnalyzed.value = true;
     router.push({ query: { ...route.query, rebuild: "import" } });
@@ -1497,7 +1439,10 @@ async function handleImportQaFile(event) {
   }
 }
 
-function openRebuild() {
+async function openRebuild() {
+  // The rebuild replaces the base's Q&A articles; start from what is stored now,
+  // not from what this page loaded before any article was edited.
+  await refreshDatabase();
   rebuildAnalyzed.value = false;
   rebuildDraft.value = [];
   // Come back to the last instruction this bot used; default on first run.
@@ -1556,10 +1501,22 @@ function applyRebuild() {
   const next = rebuildDraft.value
     .map((p) => ({ question: p.question, answer: p.answer }))
     .filter((p) => (p.question || "").trim() || (p.answer || "").trim());
-  database.value.qa_knowledge.records = next.length
-    ? next
-    : [{ question: "", answer: "" }];
+  database.value.qa_knowledge.records = next;
   cancelRebuild();
+  // Records are no longer edited by hand on this page, so the reviewed draft is
+  // saved right away (it replaces the Q&A articles only).
+  handleSaveQaKnowledge().then(() => articlesRef.value?.load());
+}
+
+// Reloads the base from the server after articles changed, so the Q&A tools
+// (rebuild, export) work on what is stored.
+async function refreshDatabase() {
+  await aiBotsStore.getDatabases();
+  if (originalDatabase.value?.qa_knowledge) {
+    database.value.qa_knowledge = JSON.parse(
+      JSON.stringify(originalDatabase.value.qa_knowledge)
+    );
+  }
 }
 
 function getRootDomain(url) {
@@ -1986,42 +1943,34 @@ const handelOpenSiteSearchKnowledge = (record) => {
   isImportSiteSearchOpen.value = true;
 };
 
+// Site import adds what the crawler found as articles. It used to append to the
+// Q&A list loaded with the page and send the whole list back, which would wipe
+// any article edited since.
 const handleImportSiteSearch = async () => {
   isImportSiteSearchLoading.value = true;
 
   try {
-    const qa_knowledge =
-      JSON.parse(JSON.stringify(originalDatabase.value.qa_knowledge.records)) ||
-      [];
+    const url = currentImportSiteSearch.value.url?.url || "";
+    const articles = currentImportSiteSearch.value.qa
+      .filter((qa) => qa.selected && (qa.question || "").trim())
+      .map((qa) => ({
+        title: qa.question,
+        body: qa.answer,
+        source_type: "site",
+        source_ref: url,
+      }));
 
-    currentImportSiteSearch.value.qa
-      .filter((qa) => qa.selected)
-      .forEach((qa) => {
-        qa_knowledge.push({ answer: qa.answer, question: qa.question });
+    if (articles.length) {
+      await api.post("/agents/api/create_articles", {
+        database: database.value.id,
+        articles,
       });
-
-    const data = await api.post("/agents/api/update_knowledge", {
-      database: database.value.id,
-      type: "question_answer",
-      data: {
-        qa_knowledge: {
-          id: originalDatabase.value.qa_knowledge.id,
-          records: qa_knowledge,
-        },
-      },
-    });
+    }
 
     unInmportedSitesMap.value[currentImportSiteSearch.value.url.id] = true;
-
-    database.value.qa_knowledge.records = JSON.parse(
-      JSON.stringify(data.records)
-    );
-
-    originalDatabase.value.qa_knowledge.records = JSON.parse(
-      JSON.stringify(data.records)
-    );
-
     isImportSiteSearchOpen.value = false;
+    await articlesRef.value?.load();
+    await refreshDatabase();
 
     openNotification("success", {
       message: `${t("Done")}!`,

@@ -1,6 +1,17 @@
 <template>
   <template v-if="!isLoading">
     <a-row class="bots" style="margin-top: 10px" :gutter="[10, 10]">
+      <a-col span="24" v-if="isStaleNotice">
+        <a-alert type="warning" show-icon :message="t('bots.history.changed_elsewhere')">
+          <template #action>
+            <a-button size="small" @click="reloadSettings">{{ t("bots.history.reload") }}</a-button>
+          </template>
+        </a-alert>
+      </a-col>
+      <a-col span="24" style="display: flex; justify-content: flex-end">
+        <a-button size="small" @click="openHistory">{{ t("bots.history.open") }}</a-button>
+      </a-col>
+
       <a-col span="24" style="display: flex; align-items: center">
         <span class="field_title"
           >{{ capitalize(t("bots.fields.model")) }}:
@@ -11,17 +22,11 @@
           style="width: 100%; margin-left: 10px"
           allow-clear
           :value="bot.settings.ai_model"
-          @update:value="bot.settings.ai_model = $event || defaultModel"
+          @update:value="onModelChange($event || defaultModel)"
         />
       </a-col>
-      <a-col span="24">
-        <span
-          v-html="
-            marked(
-              t(`bots.tips.model_${bot.settings.ai_model.replaceAll('.', '/')}`)
-            )
-          "
-        ></span>
+      <a-col span="24" v-if="modelDescription">
+        <span v-html="marked(modelDescription)"></span>
       </a-col>
 
       <a-col v-if="priceForTokens.input" span="12">
@@ -147,7 +152,36 @@
         </a-row>
       </a-col>
 
-      <a-col span="24">
+      <a-col span="24" v-if="reasoningEfforts.length > 1">
+        <span class="field_title"
+          >{{ t("bots.fields.reasoning_effort") }}:
+          <a-tooltip>
+            <template #title>{{ t("bots.tips.reasoning_effort") }}</template>
+            <help-icon style="margin-left: 5px" />
+          </a-tooltip>
+        </span>
+        <a-radio-group
+          style="margin-top: 8px; display: block"
+          button-style="solid"
+          :value="currentEffort"
+          @update:value="bot.settings.reasoning_effort = $event"
+        >
+          <a-radio-button
+            v-for="effort in reasoningEfforts"
+            :key="effort"
+            :value="effort"
+          >
+            {{ effortLabel(effort) }}
+          </a-radio-button>
+        </a-radio-group>
+      </a-col>
+
+      <a-col span="24" v-if="!supportsTemperature">
+        <span class="field_title">{{ t("bots.fields.temperature") }}: </span>
+        <span>{{ t("bots.tips.temperature_fixed") }}</span>
+      </a-col>
+
+      <a-col span="24" v-else>
         <span class="field_title"
           >{{ t("bots.fields.temperature") }}: {{ bot.settings?.temperature }}
           <a-tooltip>
@@ -721,10 +755,40 @@
     </a-row>
   </template>
   <loading v-else />
+
+  <a-modal
+    v-model:open="isHistoryOpen"
+    :title="t('bots.history.title')"
+    :footer="null"
+    width="720px"
+  >
+    <a-spin :spinning="isHistoryLoading">
+      <a-empty v-if="!isHistoryLoading && !revisions.length" :description="t('bots.history.empty')" />
+      <div v-for="rev in revisions" :key="rev.revision" class="revision">
+        <div class="revision__head">
+          <strong>#{{ rev.revision }}</strong>
+          <span>{{ new Date(rev.created_at).toLocaleString() }}</span>
+          <a-tag>{{ revisionSource(rev.source) }}</a-tag>
+          <a-tag v-if="rev.revision === currentRevision" color="green">{{ t("bots.history.current") }}</a-tag>
+          <a-popconfirm
+            v-else
+            :title="t('bots.history.revert_confirm', { revision: rev.revision })"
+            @confirm="revertTo(rev.revision)"
+          >
+            <a-button size="small" :loading="revertingRevision === rev.revision">{{ t("bots.history.revert") }}</a-button>
+          </a-popconfirm>
+        </div>
+        <div v-if="rev.changed?.length" class="revision__changed">
+          {{ rev.changed.map(revisionField).join(", ") }}
+        </div>
+      </div>
+    </a-spin>
+  </a-modal>
 </template>
 
 <script setup>
 import api from "@/api";
+import { Modal } from "ant-design-vue";
 import {
   capitalize,
   computed,
@@ -771,15 +835,30 @@ renderer.link = function (href, title, text) {
 
 marked.setOptions({ renderer });
 
+// The bot changed elsewhere (the assistant, a revert, another tab). A form
+// with no unsaved edits just reloads; one with edits says so, and saving it
+// would be refused anyway.
+const botUpdatedHandler = (data) => {
+  if (data.bot !== bot.value.id || data.revision == null) return;
+  if (data.revision <= (ogBot.value?.revision ?? 0)) return;
+  if (isSavePrimary.value) {
+    isStaleNotice.value = true;
+  } else {
+    fetch();
+  }
+};
+
 onMounted(async () => {
   await aiBotsStore.startChatsStream({
     channel_updated: channelsUpdatedHandler,
     channel_created: channelsCreatedHandler,
     channel_deleted: channelsDeletedHandler,
+    bot_updated: botUpdatedHandler,
   });
 });
 
 onUnmounted(() => {
+  aiBotsStore.removeCustomHandler("bot_updated", botUpdatedHandler);
   aiBotsStore.removeCustomHandler("channel_updated", channelsUpdatedHandler);
   aiBotsStore.removeCustomHandler("channel_created", channelsCreatedHandler);
   aiBotsStore.removeCustomHandler("channel_deleted", channelsDeletedHandler);
@@ -820,7 +899,7 @@ const chanellsOptions = [
   { title: "WhatsApp", key: "whatsapp" },
 ];
 
-const { t } = useI18n();
+const { t, te, locale } = useI18n();
 const { openNotification } = useNotification();
 const aiBotsStore = useAiBotsStore();
 const chatsStore = useChatsStore();
@@ -828,6 +907,61 @@ const { globalModelsList } = storeToRefs(chatsStore);
 const currenciesStore = useCurrenciesStore();
 const { userCurrency, defaultCurrency } = storeToRefs(currenciesStore);
 const priceForTokens = ref({ input: "", output: "" });
+
+const isStaleNotice = ref(false);
+const isHistoryOpen = ref(false);
+const isHistoryLoading = ref(false);
+const revisions = ref([]);
+const currentRevision = ref(0);
+const revertingRevision = ref(null);
+
+const revisionField = (key) => {
+  const path = `bots.history.field_${key}`;
+  return te(path) ? t(path) : key;
+};
+const revisionSource = (source) => {
+  const path = `bots.history.source_${source}`;
+  return te(path) ? t(path) : source;
+};
+
+async function openHistory() {
+  isHistoryOpen.value = true;
+  isHistoryLoading.value = true;
+  try {
+    const data = await api.get(
+      `/agents/api/bot_revisions?bot=${encodeURIComponent(bot.value.id)}`
+    );
+    revisions.value = data.revisions || [];
+    currentRevision.value = data.current ?? 0;
+  } catch (err) {
+    openNotification("error", {
+      message: `Error: ${err?.response?.data?.message || "Unknown"}.`,
+    });
+  } finally {
+    isHistoryLoading.value = false;
+  }
+}
+
+async function revertTo(revision) {
+  revertingRevision.value = revision;
+  try {
+    await api.post("/agents/api/revert_bot", { bot: bot.value.id, revision });
+    isHistoryOpen.value = false;
+    await reloadSettings();
+    openNotification("success", { message: t("bots.history.reverted", { revision }) });
+  } catch (err) {
+    openNotification("error", {
+      message: `Error: ${err?.response?.data?.message || "Unknown"}.`,
+    });
+  } finally {
+    revertingRevision.value = null;
+  }
+}
+
+async function reloadSettings() {
+  isStaleNotice.value = false;
+  await fetch();
+}
 
 const isLoading = ref(false);
 const isBotSaveLoading = ref(false);
@@ -858,19 +992,116 @@ const editChanellFormRef = ref();
 const editedChanellData = ref({ type: "" });
 const newChanellData = ref({ type: "" });
 
-const allowedModels = ["gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini"];
-const defaultModel = "gpt-4o-mini";
+// Which models a bot may use is decided in the AI models config (admin "AI
+// prices" -> AI bots). Until an administrator marks any model there, the old
+// fixed list is shown, so this screen works the same before and after.
+const legacyBotModels = ["gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini"];
+const legacyDefaultModel = "gpt-4o-mini";
 
-const modelsOptions = computed(() =>
-  globalModelsList.value
-    .filter(
-      (model) =>
-        allowedModels.includes(model.key) &&
-        ["api_only", "public"].includes(model.visibility) &&
-        model.state.state != "broken"
-    )
-    .map((model) => ({ label: model.name, value: model.key }))
+const isSellableModel = (model) =>
+  !model.disabled &&
+  ["api_only", "public"].includes(model.visibility) &&
+  model.state?.state != "broken";
+
+const configHasBotModels = computed(() =>
+  globalModelsList.value.some((model) => model.bots?.enabled)
 );
+
+const sorterOf = (model) => {
+  const sorter = Number(model.meta?.sorter);
+  return Number.isFinite(sorter) ? sorter : Number.MAX_SAFE_INTEGER;
+};
+
+const botModels = computed(() =>
+  globalModelsList.value
+    .filter(isSellableModel)
+    .filter((model) =>
+      configHasBotModels.value
+        ? model.bots?.enabled
+        : legacyBotModels.includes(model.key)
+    )
+    .sort(
+      (a, b) =>
+        Number(!!b.bots?.default) - Number(!!a.bots?.default) ||
+        sorterOf(a) - sorterOf(b) ||
+        String(a.name).localeCompare(String(b.name))
+    )
+);
+
+const defaultModel = computed(
+  () =>
+    botModels.value.find((model) => model.bots?.default)?.key ||
+    legacyDefaultModel
+);
+
+const modelsOptions = computed(() => {
+  const options = botModels.value.map((model) => ({
+    label: model.bots?.default
+      ? `${model.name} · ${t("bots.fields.recommended")}`
+      : model.name,
+    value: model.key,
+  }));
+  // A bot keeps working on a model that is no longer offered; it must still
+  // see it selected rather than an empty field.
+  const current = bot.value.settings.ai_model;
+  if (current && !options.some((option) => option.value === current)) {
+    const known = globalModelsList.value.find(({ key }) => key === current);
+    options.push({
+      label: `${known?.name || current} (${t("bots.fields.model_unavailable")})`,
+      value: current,
+    });
+  }
+  return options;
+});
+
+const modelDescription = computed(() => {
+  const model = currentModel.value;
+  const fromConfig =
+    model?.description?.[locale.value] || model?.description?.en || "";
+  if (fromConfig) return fromConfig;
+  const key = `bots.tips.model_${(bot.value.settings.ai_model || "").replaceAll(".", "/")}`;
+  return te(key) ? t(key) : "";
+});
+
+// Capabilities unknown -> as before: temperature shown, no reasoning effort.
+const supportsTemperature = computed(
+  () =>
+    !currentModel.value?.capabilities ||
+    !!currentModel.value.capabilities.temperature
+);
+
+const reasoningEfforts = computed(
+  () => currentModel.value?.capabilities?.reasoning || []
+);
+
+const modelDefaultEffort = (model) => {
+  const efforts = model?.capabilities?.reasoning || [];
+  if (!efforts.length) return "";
+  return efforts.includes(model.bots?.reasoning_effort)
+    ? model.bots.reasoning_effort
+    : efforts[0];
+};
+
+const currentEffort = computed(() =>
+  reasoningEfforts.value.includes(bot.value.settings.reasoning_effort)
+    ? bot.value.settings.reasoning_effort
+    : modelDefaultEffort(currentModel.value)
+);
+
+const effortLabel = (effort) => {
+  const key = `bots.fields.reasoning_${effort}`;
+  return te(key) ? t(key) : effort;
+};
+
+// A new model may not accept the effort chosen for the old one.
+const onModelChange = (key) => {
+  bot.value.settings.ai_model = key;
+  const model = globalModelsList.value.find((item) => item.key === key);
+  const efforts = model?.capabilities?.reasoning || [];
+  if (!efforts.includes(bot.value.settings.reasoning_effort)) {
+    bot.value.settings.reasoning_effort = modelDefaultEffort(model);
+  }
+};
 
 const newChanellFormRules = computed(() => {
   const fields = Object.keys(chanellsFields.value).reduce((acc, v) => {
@@ -1032,6 +1263,9 @@ async function fetch() {
     }
     if (bot.value.settings.processing_model == null) {
       bot.value.settings.processing_model = "";
+    }
+    if (bot.value.settings.reasoning_effort == null) {
+      bot.value.settings.reasoning_effort = "";
     }
     if (bot.value.settings.schedule == null) {
       bot.value.settings.schedule = { enabled: false, tz: "", default: "review", rules: [] };
@@ -1238,13 +1472,28 @@ const handleDeleteChanell = async () => {
 const handleSaveBot = async () => {
   isBotSaveLoading.value = true;
   try {
-    await aiBotsStore.updateBot(bot.value);
+    const saved = await aiBotsStore.updateBot(bot.value);
+    if (saved?.revision != null) {
+      bot.value.revision = saved.revision;
+    }
     ogBot.value = JSON.parse(JSON.stringify(bot.value));
+    isStaleNotice.value = false;
 
     openNotification("success", {
       message: `${t("Done")}!`,
     });
   } catch (err) {
+    // Saved meanwhile by the assistant, a revert or another tab: the server
+    // refuses to overwrite it with this older copy.
+    if (err?.response?.data?.error_code === "CONFLICT") {
+      Modal.confirm({
+        title: t("bots.history.conflict_title"),
+        content: t("bots.history.conflict_text"),
+        okText: t("bots.history.reload"),
+        onOk: reloadSettings,
+      });
+      return;
+    }
     const opts = {
       message: `Error: ${
         err?.response?.data?.message || err?.response?.data || "Unknown"
@@ -1366,6 +1615,26 @@ export default { name: "AiBotDraw" };
 </script>
 
 <style scoped>
+.revision {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border_color, #eee);
+}
+.revision__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.revision__head .ant-btn,
+.revision__head .ant-tag:last-child {
+  margin-left: auto;
+}
+.revision__changed {
+  font-size: 12px;
+  opacity: 0.75;
+  margin-top: 4px;
+}
+
 .admin_flow__hint {
   margin: 6px 0 12px;
   font-size: 0.82rem;

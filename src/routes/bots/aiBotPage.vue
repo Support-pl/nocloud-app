@@ -120,7 +120,12 @@
                   }}</a-button
                 >
 
-                <a-button danger size="small" @click="sendDelete">
+                <a-button
+                  v-if="!authStore.isMember"
+                  danger
+                  size="small"
+                  @click="sendDelete"
+                >
                   {{ t("Delete") }}
                 </a-button>
               </div>
@@ -138,6 +143,22 @@
           </a-collapse>
 
           <a-tabs v-model:activeKey="activeTab">
+            <!-- The owner sets the bot up by talking to its assistant. -->
+            <a-tab-pane
+              v-if="service.data?.bot_uuid"
+              :disabled="isPending"
+              key="assistant"
+            >
+              <template #tab>
+                <span class="tab">
+                  {{ t("bots.assistant.open") }}
+                </span>
+              </template>
+              <bot-assistant
+                :bot-id="service.data.bot_uuid"
+                :form-dirty="isSavePrimary"
+              />
+            </a-tab-pane>
             <a-tab-pane :disabled="isPending" key="chats">
               <template #tab>
                 <span class="tab">
@@ -204,7 +225,7 @@
               </template>
 
               <bot-database v-if="route.query.database" :service="service" />
-              <bot-databases v-else :service="service" />
+              <bot-databases v-else :key="databasesKey" :service="service" />
             </a-tab-pane>
 
             <a-tab-pane
@@ -274,6 +295,7 @@ import { useAiBotsStore } from "@/stores/aiBots";
 import BotDatabase from "@/components/services/bots/database.vue";
 import BotSettings from "@/components/services/bots/settings.vue";
 import BotNotifications from "@/components/services/bots/notifications.vue";
+import BotAssistant from "@/components/services/bots/assistant.vue";
 import { marked } from "marked";
 import { useInvoicesStore } from "@/stores/invoices";
 import { GetInvoicesRequest } from "nocloud-proto/proto/es/billing/billing_pb";
@@ -322,6 +344,12 @@ const isNameEditActive = ref(false);
 const isNameEditLoading = ref(false);
 const nameEditData = ref({ title: "" });
 const activeTab = ref();
+// The assistant may have added a knowledge base or articles meanwhile: the
+// list is built anew each time the tab is opened.
+const databasesKey = ref(0);
+watch(activeTab, (tab) => {
+  if (tab === "database") databasesKey.value++;
+});
 const lastInvoice = ref(null);
 
 const isSavePrimary = ref(false);
@@ -612,6 +640,7 @@ watch(isNameEditActive, (value) => {
 });
 
 watch(service, async () => {
+  if (!authStore.can("invoice")) return;
   const invoices = await invoicesStore.invoicesApi.getInvoices(
     GetInvoicesRequest.fromJson({
       page: 1,

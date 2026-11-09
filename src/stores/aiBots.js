@@ -66,7 +66,9 @@ export const useAiBotsStore = defineStore("aiBots", () => {
 
   async function startChatsStream(customHandlers = {}) {
     const token = cookies.get("noCloudinApp-token");
-    const url = VUE_APP_BASE_URL.replace(/^http/, "ws");
+    // VUE_APP_WS_BASE_URL (optional, public/api.js): where the socket goes
+    // when the API is reached through an HTTP-only proxy, as in local dev.
+    const url = (globalThis.VUE_APP_WS_BASE_URL || VUE_APP_BASE_URL).replace(/^http/, "ws");
     const wsUrl = `${url}agents/api/get_updates?token=${encodeURIComponent(
       token
     )}`;
@@ -308,6 +310,10 @@ export const useAiBotsStore = defineStore("aiBots", () => {
           bot: bot.id,
           delay: bot.settings.delay,
           model: bot.settings.ai_model,
+          reasoning_effort: bot.settings.reasoning_effort ?? "",
+          // The revision this form was loaded at: the server refuses to
+          // overwrite a newer one (CONFLICT) instead of silently losing it.
+          revision: bot.revision,
           system_prompt: bot.settings.system_prompt,
           processing_prompt: bot.settings.processing_prompt,
           processing_model: bot.settings.processing_model,
@@ -326,6 +332,7 @@ export const useAiBotsStore = defineStore("aiBots", () => {
         });
 
         bots.value.set(bot.id, data);
+        return data;
       } catch (error) {
         console.debug(error);
         throw error;

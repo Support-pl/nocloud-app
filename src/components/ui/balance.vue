@@ -5,11 +5,11 @@
         <LoadingOutlined style="color: var(--gloomy_font)" />
       </template>
     </a-spin>
-    <div v-else class="balance__item" :class="{ clickable }" @click="showModal">
+    <div v-else class="balance__item" :class="{ clickable: canTopUp }" @click="showModal">
       {{ formatedBalance }}
 
       <span class="currency__suffix">{{ currency.title }}</span>
-      <span v-if="clickable" class="badge">
+      <span v-if="canTopUp" class="badge">
         <plus-icon />
       </span>
     </div>
@@ -42,6 +42,12 @@ const plusIcon = defineAsyncComponent(() =>
 
 const isLoading = ref(false);
 
+// Topping up is ordering: a subaccount without it has no way to make the invoice.
+const canTopUp = computed(() => {
+  const { roles } = authStore.billingUser;
+  return props.clickable && (!roles || roles.order);
+});
+
 const formatedBalance = computed(() => {
   const balance = (userBalance.value || 0).toFixed(2);
   if (Math.abs(balance) == 0) {
@@ -67,7 +73,7 @@ const formatedBalance = computed(() => {
 // }
 
 function showModal() {
-  if (props.clickable) appStore.openAddFundsModal();
+  if (canTopUp.value) appStore.openAddFundsModal();
 }
 
 function hideModal() {
