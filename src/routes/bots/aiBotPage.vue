@@ -142,7 +142,31 @@
             </a-collapse-panel>
           </a-collapse>
 
-          <a-tabs v-model:activeKey="activeTab">
+          <!-- The bot is set up in the AI chat's Bots mode; the full page stays behind ai_chat.bots: false. -->
+          <div v-if="config.botsInAiChat" class="bot-chat-card">
+            <a-alert
+              v-if="isSettingsBroken && !isPending"
+              type="warning"
+              show-icon
+              style="margin-bottom: 16px"
+            >
+              <template #description>
+                <span v-html="marked(t('bots.labels.channel_warning'))" />
+              </template>
+            </a-alert>
+            <p class="bot-chat-card__text">{{ t("ai_bot_page.chat.text") }}</p>
+            <ai-chat-button
+              :path="botChatPath"
+              :disabled="isPending || !service.data?.bot_uuid"
+            >
+              {{ t("ai_bot_page.chat.open") }}
+            </ai-chat-button>
+            <p v-if="isPending" class="bot-chat-card__hint">
+              {{ t("ai_bot_page.chat.pending") }}
+            </p>
+          </div>
+
+          <a-tabs v-else v-model:activeKey="activeTab">
             <!-- The owner sets the bot up by talking to its assistant. -->
             <a-tab-pane
               v-if="service.data?.bot_uuid"
@@ -248,7 +272,7 @@
     </div>
 
     <div
-      v-if="activeTab === 'settings' && isSavePrimary"
+      v-if="!config.botsInAiChat && activeTab === 'settings' && isSavePrimary"
       class="container"
       style="
         position: sticky;
@@ -296,6 +320,8 @@ import BotDatabase from "@/components/services/bots/database.vue";
 import BotSettings from "@/components/services/bots/settings.vue";
 import BotNotifications from "@/components/services/bots/notifications.vue";
 import BotAssistant from "@/components/services/bots/assistant.vue";
+import AiChatButton from "@/components/ui/aiChatButton.vue";
+import config from "@/appconfig.js";
 import { marked } from "marked";
 import { useInvoicesStore } from "@/stores/invoices";
 import { GetInvoicesRequest } from "nocloud-proto/proto/es/billing/billing_pb";
@@ -404,6 +430,12 @@ const isSettingsBroken = computed(
 );
 
 const isSuspended = computed(() => service.value?.state?.state === "SUSPENDED");
+
+/** The chat's Bots mode with this bot open in its panel. */
+const botChatPath = computed(
+  () =>
+    `/c/new?spec=bots&bot=${encodeURIComponent(service.value?.data?.bot_uuid ?? "")}`
+);
 const isPending = computed(() => service.value?.state?.state === "PENDING");
 const isLastInstance = computed(
   () =>
@@ -663,6 +695,25 @@ export default {
 <style scoped>
 .service-page {
   padding-top: 20px;
+}
+
+.bot-chat-card {
+  margin-top: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--bright_bg);
+}
+
+.bot-chat-card__text {
+  margin-bottom: 16px;
+  font-size: 1rem;
+  color: var(--gray);
+}
+
+.bot-chat-card__hint {
+  margin-top: 8px;
+  margin-bottom: 0;
+  color: var(--gray);
 }
 
 .service-page-card {

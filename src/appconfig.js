@@ -17,6 +17,8 @@ export default {
 
   // ponytail: support.by's chat as the default, set ai_chat.url for another installation
   aiChatUrl: globalConfig.ai_chat?.url ?? "https://ai.support.by",
+  // A bot is set up in the chat's Bots mode; ai_chat.bots: false brings back the full bot page.
+  botsInAiChat: globalConfig.ai_chat?.bots ?? true,
   whmcsSiteUrl: globalConfig.whmcs?.site_url ?? "",
   whmcsRegistration: globalConfig.whmcs?.registration ?? false,
   dnsEditor: globalConfig.dnsEditor?.enabled ?? false,
