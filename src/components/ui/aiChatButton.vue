@@ -7,6 +7,7 @@
     :href="chatUrl"
     target="_blank"
     rel="noopener"
+    :disabled="disabled"
     @click="shareSession"
   >
     <template #icon><message-outlined /></template>
@@ -15,17 +16,27 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { MessageOutlined } from "@ant-design/icons-vue";
 import cookies from "js-cookie";
 import config from "@/appconfig.js";
 import { useAuthStore } from "@/stores/auth.js";
 
+const props = defineProps({
+  /** Where in the chat to land once signed in, e.g. "/c/new?spec=bots&bot=…"; its start page by default. */
+  path: { type: String, default: "" },
+  disabled: { type: Boolean, default: false },
+});
+
 const { t } = useI18n();
 const authStore = useAuthStore();
 
-/** LibreChat signs the visitor in with their NoCloud session at /oauth/nocloud. */
-const chatUrl = `${config.aiChatUrl.replace(/\/$/, "")}/oauth/nocloud`;
+/** LibreChat signs the visitor in with their NoCloud session at /oauth/nocloud, then opens `to`. */
+const chatUrl = computed(() => {
+  const url = `${config.aiChatUrl.replace(/\/$/, "")}/oauth/nocloud`;
+  return props.path ? `${url}?to=${encodeURIComponent(props.path)}` : url;
+});
 
 /** LibreChat's nocloud.sso.cookie: the cookie /oauth/nocloud reads the token from. */
 const SSO_COOKIE = "nocloud_token";
@@ -47,7 +58,7 @@ const sharedDomain = (a, b) => {
  * not for the whole session, so other subdomains hardly ever get to see it.
  */
 const shareSession = () => {
-  const domain = sharedDomain(location.hostname, new URL(chatUrl).hostname);
+  const domain = sharedDomain(location.hostname, new URL(chatUrl.value).hostname);
   if (!domain || !authStore.token) return;
 
   cookies.set(SSO_COOKIE, authStore.token, {
