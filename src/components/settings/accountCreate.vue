@@ -39,8 +39,17 @@
     </a-form-item>
 
     <a-form-item :label="`${capitalize($t('member_access.title'))}:`">
-      <a-checkbox-group v-model:value="access" style="display: grid; gap: 4px">
-        <a-checkbox v-for="key of accessKeys" :key="key" :value="key">
+      <a-checkbox-group
+        :value="access"
+        style="display: grid; gap: 4px"
+        @update:value="access = withImpliedAccess($event)"
+      >
+        <a-checkbox
+          v-for="key of accessKeys"
+          :key="key"
+          :value="key"
+          :disabled="requiredAccess.has(key)"
+        >
           {{ $t(`member_access.${key}`) }}
         </a-checkbox>
       </a-checkbox-group>
@@ -77,6 +86,7 @@ import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth.js";
 import { useNamespasesStore } from "@/stores/namespaces.js";
 import { useNotification } from "@/hooks/utils";
+import { MEMBER_ACCESS_IMPLIES, withImpliedAccess } from "@/functions.js";
 import PhoneInput from "../ui/phoneInput.vue";
 
 const props = defineProps({
@@ -94,10 +104,11 @@ const formRef = ref(null);
 const form = ref({});
 
 // What the organization lets a subaccount do; NoCloud refuses the rest. Spending on AI any
-// subaccount may.
-const accessKeys = ["order", "invoices", "support", "services"];
-const access = ref(
-  (props.account?.data?.member_access ?? []).filter((key) => accessKeys.includes(key))
+// subaccount may. An access ticks what it needs, and that stays ticked while it is needed.
+const accessKeys = Object.keys(MEMBER_ACCESS_IMPLIES);
+const access = ref(withImpliedAccess(props.account?.data?.member_access ?? []));
+const requiredAccess = computed(
+  () => new Set(access.value.flatMap((key) => MEMBER_ACCESS_IMPLIES[key] ?? []))
 );
 
 const isDisabled = computed(() => props.account);

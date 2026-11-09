@@ -120,7 +120,12 @@
                   }}</a-button
                 >
 
-                <a-button danger size="small" @click="sendDelete">
+                <a-button
+                  v-if="!authStore.isMember"
+                  danger
+                  size="small"
+                  @click="sendDelete"
+                >
                   {{ t("Delete") }}
                 </a-button>
               </div>
@@ -635,6 +640,7 @@ watch(isNameEditActive, (value) => {
 });
 
 watch(service, async () => {
+  if (!authStore.can("invoice")) return;
   const invoices = await invoicesStore.invoicesApi.getInvoices(
     GetInvoicesRequest.fromJson({
       page: 1,

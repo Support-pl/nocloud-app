@@ -78,7 +78,12 @@
             <div class="service-page__info-title">
               {{ t("Actions") }}:
               <div style="display: inline-flex; gap: 8px">
-                <a-button danger size="small" @click="sendDelete">
+                <a-button
+                  v-if="!authStore.isMember"
+                  danger
+                  size="small"
+                  @click="sendDelete"
+                >
                   {{ t("Delete") }}
                 </a-button>
               </div>
@@ -177,6 +182,8 @@ const isActionsActive = computed(() => {
   const key = service.value.product ?? service.value.config?.product;
   const { meta } = service.value.billingPlan?.products[key] ?? {};
 
+  // Its only action is deleting, which no subaccount may.
+  if (authStore.isMember) return false;
   return !service.value.clientid && meta?.renew !== false;
 });
 

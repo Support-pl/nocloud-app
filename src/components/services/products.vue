@@ -366,6 +366,8 @@ function getUnpaidInvoiceForProduct(product) {
 }
 
 async function fetchUnpaidInvoices() {
+  // A subaccount without invoices sees its services without their unpaid invoices.
+  if (!authStore.can("invoice")) return;
   try {
     const res = await invoicesStore.invoicesApi.getInvoices(
       GetInvoicesRequest.fromJson({

@@ -163,6 +163,9 @@ export const useAppStore = defineStore("app", () => {
     },
 
     openAddFundsModal() {
+      // Topping up is ordering, which a subaccount may not have.
+      const { roles } = useAuthStore().billingUser;
+      if (roles && !roles.order) return;
       addFundsModalVisible.value = true;
     },
 

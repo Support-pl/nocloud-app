@@ -43,15 +43,27 @@ export const useAuthStore = defineStore("auth", () => {
   function applyMemberRoles() {
     if (!userdata.value.accountOwner) return;
     const access = userdata.value.data?.member_access ?? [];
+    // As NoCloud grants it: ordering sees services there too. Access saved before the form ticked
+    // what an access needs may still lack the rest, so pages check each role they call.
+    const order = access.includes("order");
 
     billingUser.value = {
       ...billingUser.value,
       roles: {
-        services: access.includes("services"),
+        services: order || access.includes("services"),
         invoice: access.includes("invoices"),
         support: access.includes("support"),
+        order,
       },
     };
+  }
+
+  const isMember = computed(() => !!userdata.value.accountOwner);
+  // Whether the user has a member role (services, invoice, support, order); anyone but a subaccount
+  // has them all. Deleting services no member may: check isMember for that.
+  function can(role) {
+    if (!isMember.value) return true;
+    return !!billingUser.value.roles?.[role];
   }
 
   function setToken(value) {
@@ -80,6 +92,8 @@ export const useAuthStore = defineStore("auth", () => {
 
     baseURL,
     isLogged,
+    isMember,
+    can,
     loginButtons,
     setToken,
 
@@ -174,7 +188,7 @@ export const useAuthStore = defineStore("auth", () => {
         billingUserPromise.value = api.get(baseURL, {
           params: { run: "client_detail" },
         });
-        const response = await billingUserPromise.value;
+        const response = (await billingUserPromise.value) ?? {};
 
         if (!response.id) response.id = "none";
         billingUser.value = response;

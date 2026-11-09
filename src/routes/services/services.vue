@@ -2,7 +2,10 @@
   <div class="services">
     <div class="container">
       <services-wrapper
-        v-if="!authStore.billingUser.non_buyer"
+        v-if="
+          !authStore.billingUser.non_buyer &&
+          (!authStore.billingUser.roles || authStore.billingUser.roles.order)
+        "
         class="services__block"
         :products-count="productsCount"
       />

@@ -123,6 +123,7 @@
                 >{{ t("vpn.actions.hard_reset") }}</a-button
               >
               <a-button
+                v-if="!authStore.isMember"
                 @click="deleteInstance"
                 :loading="loadingAction == 'delete'"
                 danger
@@ -361,6 +362,7 @@
 <script setup>
 import Loading from "@/components/ui/loading.vue";
 import { useInstancesStore } from "@/stores/instances";
+import { useAuthStore } from "@/stores/auth.js";
 import { Modal, notification } from "ant-design-vue";
 import {
   capitalize,
@@ -421,6 +423,7 @@ const { t, locale } = useI18n();
 const { currency, formatPrice } = useCurrency();
 
 const instancesStore = useInstancesStore();
+const authStore = useAuthStore();
 const { instances } = storeToRefs(useInstancesStore());
 
 const wgConfig = ref("");

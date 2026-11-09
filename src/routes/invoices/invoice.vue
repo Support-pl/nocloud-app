@@ -395,6 +395,8 @@ function invoicesOnShowSizeChange(page, limit) {
 
 async function fetchInstances() {
   if (instancesStore.allInstances?.length > 0) return;
+  // A subaccount that may not see services gets its invoices without their names.
+  if (authStore.billingUser.roles && !authStore.billingUser.roles.services) return;
   try {
     await instancesStore.fetchAll();
   } catch (error) {

@@ -94,13 +94,21 @@
               {{ t("Actions") }}:
               <div style="display: inline-flex; gap: 8px">
                 <a-button
-                  v-if="service.nextduedate !== '0000-00-00'"
+                  v-if="
+                    service.nextduedate !== '0000-00-00' &&
+                    authStore.can('invoice')
+                  "
                   size="small"
                   @click="sendRenew"
                 >
                   {{ capitalize(t("renew")) }}
                 </a-button>
-                <a-button danger size="small" @click="sendDelete">
+                <a-button
+                  v-if="!authStore.isMember"
+                  danger
+                  size="small"
+                  @click="sendDelete"
+                >
                   {{ t("Delete") }}
                 </a-button>
               </div>
@@ -360,6 +368,8 @@ const isActionsActive = computed(() => {
   const key = service.value.product ?? service.value.config?.product;
   const { meta } = service.value.billingPlan?.products[key] ?? {};
 
+  // Renewing needs invoices and deleting no subaccount may, so a member without invoices has none.
+  if (!authStore.can("invoice")) return false;
   return !service.value.clientid && meta?.renew !== false;
 });
 const description = computed(() => {
@@ -698,6 +708,7 @@ onUnmounted(() => clearInterval(preparingTimer));
 watch(service, () => fetchLastInvoice());
 
 async function fetchLastInvoice() {
+  if (!authStore.can("invoice")) return;
   const invoices = await invoicesStore.invoicesApi.getInvoices(
     GetInvoicesRequest.fromJson({
       page: 1,

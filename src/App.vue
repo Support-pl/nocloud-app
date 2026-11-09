@@ -118,10 +118,19 @@ function checkBalance(price = 0) {
 function isRouteExist(name) {
   if (name === "root") name = "services";
   if (!authStore.billingUser.roles) return true;
+  // Ordering pages: one per service type, and the cloud ones.
+  if (name?.startsWith("service-") || ["newPaaS", "newVDC"].includes(name)) {
+    return authStore.billingUser.roles.order;
+  }
 
   switch (name) {
     case "billing":
+    case "invoiceFS":
+    case "transaction":
       return authStore.billingUser.roles?.invoice;
+
+    case "ticket":
+      return authStore.billingUser.roles?.support;
 
     case "settings":
       return true;

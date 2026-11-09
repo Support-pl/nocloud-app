@@ -569,3 +569,26 @@ export function beautufyMessage(md, message) {
     .replace(/^<p>/, "")
     .replace(/<\/p>$/, "");
 }
+
+// Subaccount access and what each one needs to work. NoCloud gates every call by access: ordering
+// ends in an invoice to pay on the billing page, and the billing page lists the services the
+// invoices are for, so both need seeing services.
+export const MEMBER_ACCESS_IMPLIES = {
+  order: ["invoices", "services"],
+  invoices: ["services"],
+  support: [],
+  services: [],
+};
+
+// The access with everything it implies, in MEMBER_ACCESS_IMPLIES order.
+export function withImpliedAccess(access = []) {
+  const result = new Set();
+  const add = (key) => {
+    if (result.has(key) || !(key in MEMBER_ACCESS_IMPLIES)) return;
+    result.add(key);
+    MEMBER_ACCESS_IMPLIES[key].forEach(add);
+  };
+
+  access.forEach(add);
+  return Object.keys(MEMBER_ACCESS_IMPLIES).filter((key) => result.has(key));
+}
