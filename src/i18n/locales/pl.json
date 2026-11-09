@@ -1140,6 +1140,11 @@
       }
     },
     "ai_bot_page": {
+      "chat": {
+        "text": "Bota konfiguruje się w czacie AI: prompt, wiedza, kanały, harmonogram i czat testowy są w panelu bota, a asystent czatu pomaga je uzupełnić.",
+        "open": "Skonfiguruj bota w czacie AI",
+        "pending": "Bot się uruchamia — przycisk będzie dostępny za kilka minut."
+      },
       "tabs": {
         "chats": "Czaty",
         "settings": "Ustawienia",

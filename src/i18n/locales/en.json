@@ -1144,6 +1144,11 @@
       }
     },
     "ai_bot_page": {
+      "chat": {
+        "text": "The bot is set up in the AI chat: its prompt, knowledge, channels, schedule and test chat are in the bot panel, and the chat's assistant helps fill them in.",
+        "open": "Set up the bot in the AI chat",
+        "pending": "The bot is starting — the button becomes available in a couple of minutes."
+      },
       "tabs": {
         "chats": "Chats",
         "settings": "Settings",
