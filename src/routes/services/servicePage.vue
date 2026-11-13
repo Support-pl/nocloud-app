@@ -373,6 +373,15 @@ const isActionsActive = computed(() => {
   return !service.value.clientid && meta?.renew !== false;
 });
 const description = computed(() => {
+  const serviceData = service.value.config?.service_data;
+  // Jodit leaves markup such as "<p><br></p>" behind when cleared, so check the text.
+  const hasServiceData = !!serviceData
+    ?.replace(/<[^>]*>|&nbsp;/g, "")
+    .trim();
+  if (service.value.billingPlan?.type === "empty" && hasServiceData) {
+    return serviceData;
+  }
+
   const key = service.value.product ?? service.value.config?.product;
   const { meta } = service.value.billingPlan?.products[key] ?? {};
   let description = service.value.desc_product?.replace(
