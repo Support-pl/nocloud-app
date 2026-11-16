@@ -105,8 +105,13 @@ const form = ref({});
 
 // What the organization lets a subaccount do; NoCloud refuses the rest. Spending on AI any
 // subaccount may. An access ticks what it needs, and that stays ticked while it is needed.
-const accessKeys = Object.keys(MEMBER_ACCESS_IMPLIES);
-const access = ref(withImpliedAccess(props.account?.data?.member_access ?? []));
+// Seeing services has no checkbox: it comes with ordering and only with it.
+const accessKeys = Object.keys(MEMBER_ACCESS_IMPLIES).filter((key) => key !== "services");
+const access = ref(
+  withImpliedAccess(
+    (props.account?.data?.member_access ?? []).filter((key) => key !== "services")
+  )
+);
 const requiredAccess = computed(
   () => new Set(access.value.flatMap((key) => MEMBER_ACCESS_IMPLIES[key] ?? []))
 );
