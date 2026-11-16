@@ -43,14 +43,14 @@ export const useAuthStore = defineStore("auth", () => {
   function applyMemberRoles() {
     if (!userdata.value.accountOwner) return;
     const access = userdata.value.data?.member_access ?? [];
-    // As NoCloud grants it: ordering sees services there too. Access saved before the form ticked
-    // what an access needs may still lack the rest, so pages check each role they call.
+    // The services tab comes with ordering only. Access saved before the form ticked what an
+    // access needs may still lack the rest, so pages check each role they call.
     const order = access.includes("order");
 
     billingUser.value = {
       ...billingUser.value,
       roles: {
-        services: order || access.includes("services"),
+        services: order,
         invoice: access.includes("invoices"),
         support: access.includes("support"),
         order,

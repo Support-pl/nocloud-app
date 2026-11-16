@@ -140,6 +140,7 @@ import { defineAsyncComponent } from "vue";
 import config from "@/appconfig.js";
 import loading from "@/components/ui/loading.vue";
 import { useInvoicesStore } from "@/stores/invoices";
+import { useAuthStore } from "@/stores/auth.js";
 
 const leftIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/LeftOutlined")
@@ -245,8 +246,15 @@ export default {
       sessionStorage.setItem("invoice", uuid);
     });
 
-    this.$api
-      .get("/services", { params: { show_deleted: true } })
+    // Service names only for who may see services: an accountant gets the records without them.
+    const services = useAuthStore().can("services")
+      ? this.$api.get("/services", { params: { show_deleted: true } }).catch((err) => {
+          console.error(err);
+          return { pool: [] };
+        })
+      : Promise.resolve({ pool: [] });
+
+    services
       .then(({ pool }) => {
         pool.forEach((service) => {
           service.instancesGroups.forEach((group) => {

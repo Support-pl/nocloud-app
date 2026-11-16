@@ -571,11 +571,11 @@ export function beautufyMessage(md, message) {
 }
 
 // Subaccount access and what each one needs to work. NoCloud gates every call by access: ordering
-// ends in an invoice to pay on the billing page, and the billing page lists the services the
-// invoices are for, so both need seeing services.
+// shows what was ordered and ends in an invoice to pay on the billing page. Invoices alone (an
+// accountant) need no services: the billing page then lists invoices without service names.
 export const MEMBER_ACCESS_IMPLIES = {
   order: ["invoices", "services"],
-  invoices: ["services"],
+  invoices: [],
   support: [],
   services: [],
 };
