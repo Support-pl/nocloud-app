@@ -815,6 +815,15 @@ export default {
                   )
                 )
               : null,
+            this.isCloudReinstall
+              ? h(
+                  "div",
+                  { style: "margin-top: 8px" },
+                  this.$t(
+                    "Wait until loading finishes. Do not stop it."
+                  )
+                )
+              : null,
           ]),
         onOk: async () => {
           const previousConfig = { ...(this.VM.config ?? {}) };
