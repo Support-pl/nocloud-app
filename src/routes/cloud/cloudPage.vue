@@ -268,6 +268,17 @@
               </div>
             </div>
           </template>
+          <template #notice>
+            <a-alert
+              v-if="reinstallNotice"
+              class="reinstall-banner"
+              :type="reinstallNotice.ok ? 'success' : 'error'"
+              :message="reinstallNotice.text"
+              show-icon
+              closable
+              @close="reinstallNotice = null"
+            />
+          </template>
         </component>
       </div>
       <loading
@@ -331,6 +342,7 @@ export default {
     reinstallOS: "",
     reinstallOSName: "",
     reinstallPassword: "",
+    reinstallNotice: null,
     renameNewName: "",
     modal: {
       menu: false,
@@ -815,81 +827,92 @@ export default {
                   )
                 )
               : null,
-            this.isCloudReinstall
-              ? h(
-                  "div",
-                  { style: "margin-top: 8px" },
-                  this.$t(
-                    "Wait until loading finishes. Do not stop it."
-                  )
-                )
-              : null,
           ]),
-        onOk: async () => {
-          const previousConfig = { ...(this.VM.config ?? {}) };
-          try {
-            const { type } = this.VM.billingPlan;
-            let params = {};
-
-            if (type === "ovh vps") params = { imageId: this.reinstallOS };
-            if (type === "keyweb") {
-              params = {
-                actionid: `${this.reinstallOS}`,
-                password: this.reinstallPassword,
-              };
-            }
-            if (this.isCloudReinstall) {
-              const templateId = Number(this.reinstallOS);
-              const username = /windows/i.test(this.reinstallOSName)
-                ? "Administrator"
-                : "root";
-              await this.updateInstance({
-                ...this.VM,
-                config: {
-                  ...this.VM.config,
-                  template_id: templateId,
-                  username,
-                },
-              });
-              params = { template_id: templateId, username };
-            }
-
-            await this.invokeAction({
-              uuid: this.VM.uuid,
-              uuidService: this.VM.uuidService,
-              action: type === "ovh vps" ? "rebuild" : "reinstall",
-              params,
-            });
-
-            this.openNotification("success", {
-              message: this.isCloudReinstall
-                ? this.$t(
-                    "Reinstall started. Login, password and SSH port are in Access manager."
-                  )
-                : `${this.$t("Done")}!`,
-            });
-          } catch (error) {
-            if (this.isCloudReinstall) {
-              await this.updateInstance({
-                ...this.VM,
-                config: previousConfig,
-              }).catch(() => {});
-            }
-            const message =
-              error.response?.data?.message ?? error.message ?? error;
-
-            this.openNotification("error", {
-              message: this.$t(message),
-            });
-          } finally {
-            this.modal.menu = false;
-            this.modal.reinstall = false;
-          }
+        onOk: () => {
+          const job = this.executeReinstall();
+          if (this.isCloudReinstall) return;
+          return job;
         },
         onCancel: () => {
           this.modal.reinstall = false;
         },
       });
+    },
+    async executeReinstall() {
+      const cloud = this.isCloudReinstall;
+      const previousConfig = { ...(this.VM.config ?? {}) };
+      if (cloud) {
+        this.modal.menu = false;
+        this.modal.reinstall = false;
+      }
+      try {
+        const { type } = this.VM.billingPlan;
+        let params = {};
+
+        if (type === "ovh vps") params = { imageId: this.reinstallOS };
+        if (type === "keyweb") {
+          params = {
+            actionid: `${this.reinstallOS}`,
+            password: this.reinstallPassword,
+          };
+        }
+        if (cloud) {
+          const templateId = Number(this.reinstallOS);
+          const username = /windows/i.test(this.reinstallOSName)
+            ? "Administrator"
+            : "root";
+          await this.updateInstance({
+            ...this.VM,
+            config: {
+              ...this.VM.config,
+              template_id: templateId,
+              username,
+            },
+          });
+          params = { template_id: templateId, username };
+        }
+
+        await this.invokeAction({
+          uuid: this.VM.uuid,
+          uuidService: this.VM.uuidService,
+          action: type === "ovh vps" ? "rebuild" : "reinstall",
+          params,
+        });
+
+        if (cloud) {
+          this.reinstallNotice = {
+            ok: true,
+            text: this.$t(
+              "Reinstall finished. Login, password and SSH port are in Access manager."
+            ),
+          };
+          return;
+        }
+        this.openNotification("success", {
+          message: `${this.$t("Done")}!`,
+        });
+      } catch (error) {
+        if (cloud) {
+          await this.updateInstance({
+            ...this.VM,
+            config: previousConfig,
+          }).catch(() => {});
+        }
+        const message = error.response?.data?.message ?? error.message ?? error;
+        if (cloud) {
+          this.reinstallNotice = {
+            ok: false,
+            text: this.$t(message),
+          };
+          return;
+        }
+        this.openNotification("error", {
+          message: this.$t(message),
+        });
+      } finally {
+        this.modal.menu = false;
+        this.modal.reinstall = false;
+      }
     },
     sendDelete() {
       this.$confirm({
@@ -1115,6 +1138,9 @@ export default {
   justify-content: space-around;
   align-items: center;
   margin-top: 20px;
+}
+.reinstall-banner {
+  margin: 16px 16px 0;
 }
 .Fcloud__button {
   display: flex;

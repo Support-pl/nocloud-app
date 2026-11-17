@@ -141,6 +141,8 @@
       </div>
     </div>
 
+    <slot name="notice" />
+
     <div class="Fcloud__info">
       <div class="Fcloud__info-header">
         <div class="Fcloud__info-title">
