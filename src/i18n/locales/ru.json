@@ -405,6 +405,7 @@
     "Do you want to reinstall this virtual machine?": "Вы хотите переустановить виртуальную машину?",
     "All data will be deleted!": "Вся информация будет удалена!",
     "Login, password and SSH port stay the same. They are in Access manager after the server is back.": "Логин, пароль и SSH-порт не меняются. Они в разделе «Доступ» после того, как сервер поднимется.",
+    "Wait until loading finishes. Do not stop it.": "Дождитесь окончания загрузки. Останавливать её нельзя.",
     "Reinstall started. Login, password and SSH port are in Access manager.": "Переустановка запущена. Логин, пароль и SSH-порт — в разделе «Доступ».",
     "No public OS images. Publish the template (Debian 13 included) on the provider.": "Нет публичных образов ОС. Опубликуйте шаблон (в том числе Debian 13) на провайдере.",
     "Data will be lost": "Данные будут потеряны",
