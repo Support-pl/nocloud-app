@@ -78,6 +78,15 @@
                   >
                     <a-spin :spinning="isRenameLoading && images.length < 1">
                       <p>{{ $t("select OS") }}</p>
+                      <p
+                        v-if="isCloudReinstall && !Object.keys(images).length"
+                      >
+                        {{
+                          $t(
+                            "No public OS images. Publish the template (Debian 13 included) on the provider."
+                          )
+                        }}
+                      </p>
                       <images-list
                         :images="images"
                         :os-name="reinstallOSName"
@@ -381,13 +390,12 @@ export default {
       const options = [
         {
           title: "Reinstall",
-          onclick:
-            type === "ovh vps" || type === "keyweb"
-              ? this.openVpsReinstall
-              : this.sendReinstall,
+          onclick: ["ovh vps", "keyweb", "ione", "proxmox"].includes(type)
+            ? this.openVpsReinstall
+            : this.sendReinstall,
           params: ["reinstall"],
           icon: "ExclamationOutlined",
-          modules: ["ione", "custom", "ovh vps", "keyweb"],
+          modules: ["ione", "proxmox", "custom", "ovh vps", "keyweb"],
         },
         {
           title: "Rename",
@@ -455,6 +463,10 @@ export default {
 
     isKeywebReinstall() {
       return this.VM.billingPlan?.type === "keyweb";
+    },
+    isCloudReinstall() {
+      const type = this.VM.billingPlan?.type;
+      return type === "ione" || type === "proxmox";
     },
     itemService() {
       return this.services.find((el) => this.VM.uuidService === el.uuid);
@@ -579,6 +591,7 @@ export default {
       "updateService",
       "deleteInstance",
       "invokeAction",
+      "updateInstance",
     ]),
     disabledMenu(menuName) {
       if (menuName === "reinstall" && this.isKeywebReinstall) {
@@ -780,6 +793,10 @@ export default {
           return;
         }
       }
+      if (this.isCloudReinstall && !this.reinstallOS) {
+        this.openNotification("error", { message: this.$t("select OS") });
+        return;
+      }
 
       this.$confirm({
         title: this.$t("Do you want to reinstall this virtual machine?"),
@@ -787,12 +804,20 @@ export default {
         okText: this.$t("Yes"),
         cancelText: this.$t("Cancel"),
         content: () =>
-          h(
-            "div",
-            { style: "color: red" },
-            this.$t("All data will be deleted!")
-          ),
+          h("div", [
+            h("div", { style: "color: red" }, this.$t("All data will be deleted!")),
+            this.isCloudReinstall
+              ? h(
+                  "div",
+                  { style: "margin-top: 8px" },
+                  this.$t(
+                    "Login, password and SSH port stay the same. They are in Access manager after the server is back."
+                  )
+                )
+              : null,
+          ]),
         onOk: async () => {
+          const previousConfig = { ...(this.VM.config ?? {}) };
           try {
             const { type } = this.VM.billingPlan;
             let params = {};
@@ -804,6 +829,21 @@ export default {
                 password: this.reinstallPassword,
               };
             }
+            if (this.isCloudReinstall) {
+              const templateId = Number(this.reinstallOS);
+              const username = /windows/i.test(this.reinstallOSName)
+                ? "Administrator"
+                : "root";
+              await this.updateInstance({
+                ...this.VM,
+                config: {
+                  ...this.VM.config,
+                  template_id: templateId,
+                  username,
+                },
+              });
+              params = { template_id: templateId, username };
+            }
 
             await this.invokeAction({
               uuid: this.VM.uuid,
@@ -813,9 +853,19 @@ export default {
             });
 
             this.openNotification("success", {
-              message: `${this.$t("Done")}!`,
+              message: this.isCloudReinstall
+                ? this.$t(
+                    "Reinstall started. Login, password and SSH port are in Access manager."
+                  )
+                : `${this.$t("Done")}!`,
             });
           } catch (error) {
+            if (this.isCloudReinstall) {
+              await this.updateInstance({
+                ...this.VM,
+                config: previousConfig,
+              }).catch(() => {});
+            }
             const message =
               error.response?.data?.message ?? error.message ?? error;
 
@@ -892,16 +942,36 @@ export default {
       }
     },
     openVpsReinstall() {
-      this.images = [];
       this.reinstallOS = "";
       this.reinstallOSName = "";
       this.reinstallPassword = "";
-      this.getImages();
+      if (this.isCloudReinstall) {
+        this.images = this.cloudOsImages();
+      } else {
+        this.images = [];
+        this.getImages();
+      }
       this.changeModal("reinstall");
     },
-    setOS({ id, name }) {
-      this.reinstallOSName = name;
-      this.reinstallOS = id;
+    cloudOsImages() {
+      const provider = this.sp?.find((item) => item.uuid === this.VM.sp);
+      const templates = provider?.publicData?.templates ?? {};
+      const disk = Number(this.VM.resources?.drive_size) || 0;
+      const images = {};
+      Object.entries(templates).forEach(([key, value]) => {
+        if (!value || value.is_public === false) return;
+        const item = { ...value };
+        if (disk > 0 && Number(item.min_size) > disk) {
+          item.unavailable = true;
+        }
+        images[key] = item;
+      });
+      return images;
+    },
+    setOS(item, index) {
+      if (!item || item.unavailable) return;
+      this.reinstallOSName = item.name;
+      this.reinstallOS = index ?? item.id;
     },
     async getImages() {
       this.isRenameLoading = true;
