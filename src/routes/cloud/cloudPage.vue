@@ -883,7 +883,7 @@ export default {
           this.reinstallNotice = {
             ok: true,
             text: this.$t(
-              "Reinstall finished. Login, password and SSH port are in Access manager."
+              "The old VM is deleted. A new one is being created. Login, password and SSH port stay in Access manager."
             ),
           };
           return;
