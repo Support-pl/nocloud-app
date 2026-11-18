@@ -405,7 +405,6 @@
     "All data will be deleted!": "All data will be deleted!",
     "Login, password and SSH port stay the same. They are in Access manager after the server is back.": "Login, password and SSH port stay the same. They are in Access manager after the server is back.",
     "Wait until loading finishes. Do not stop it.": "Wait until loading finishes. Do not stop it.",
-    "Reinstall finished. Login, password and SSH port are in Access manager.": "Reinstall finished. Login, password and SSH port are in Access manager.",
     "Reinstall started. Login, password and SSH port are in Access manager.": "Reinstall started. Login, password and SSH port are in Access manager.",
     "No public OS images. Publish the template (Debian 13 included) on the provider.": "No public OS images. Publish the template (Debian 13 included) on the provider.",
     "Data will be lost": "Data will be lost",
