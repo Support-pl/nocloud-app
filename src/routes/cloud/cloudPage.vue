@@ -268,17 +268,6 @@
               </div>
             </div>
           </template>
-          <template #notice>
-            <a-alert
-              v-if="reinstallNotice"
-              class="reinstall-banner"
-              :type="reinstallNotice.ok ? 'success' : 'error'"
-              :message="reinstallNotice.text"
-              show-icon
-              closable
-              @close="reinstallNotice = null"
-            />
-          </template>
         </component>
       </div>
       <loading
@@ -342,7 +331,6 @@ export default {
     reinstallOS: "",
     reinstallOSName: "",
     reinstallPassword: "",
-    reinstallNotice: null,
     renameNewName: "",
     modal: {
       menu: false,
@@ -880,12 +868,6 @@ export default {
         });
 
         if (cloud) {
-          this.reinstallNotice = {
-            ok: true,
-            text: this.$t(
-              "The old VM is deleted. A new one is being created. Login, password and SSH port stay in Access manager."
-            ),
-          };
           return;
         }
         this.openNotification("success", {
@@ -899,13 +881,6 @@ export default {
           }).catch(() => {});
         }
         const message = error.response?.data?.message ?? error.message ?? error;
-        if (cloud) {
-          this.reinstallNotice = {
-            ok: false,
-            text: this.$t(message),
-          };
-          return;
-        }
         this.openNotification("error", {
           message: this.$t(message),
         });
@@ -1138,9 +1113,6 @@ export default {
   justify-content: space-around;
   align-items: center;
   margin-top: 20px;
-}
-.reinstall-banner {
-  margin: 16px 16px 0;
 }
 .Fcloud__button {
   display: flex;
