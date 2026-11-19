@@ -177,8 +177,10 @@ window.addEventListener("message", async ({ data, origin }) => {
 
   addApiInterceptors();
 
-  await authStore.fetchUserData(true);
-  await authStore.fetchBillingData(true);
+  await Promise.all([
+    authStore.fetchUserData(true),
+    authStore.fetchBillingData(true),
+  ]);
 
   if (data.chatId)
     router.replace({ name: "ticket", params: { id: data.chatId } });
@@ -187,6 +189,13 @@ window.addEventListener("message", async ({ data, origin }) => {
     router.replace({ name: "root" });
   }
 });
+
+// Opened by the admin panel's "log in as the client": ask for the token as soon as the listener above
+// is there, not after the page has mounted, so it arrives while the rest loads.
+if (window.opener) {
+  window.opener.postMessage("ready", "*");
+  window.opener = null;
+}
 
 router.beforeEach((to, _, next) => {
   const mustBeLoggined = to.matched.some((el) => !!el.meta?.mustBeLoggined);
@@ -220,10 +229,6 @@ onMounted(async () => {
   const lang = route.query.lang ?? localStorage.getItem("lang");
 
   if (lang) i18n.locale.value = lang;
-  if (window.opener) {
-    window.opener.postMessage("ready", "*");
-    window.opener = null;
-  }
   await router.isReady();
 
   const mustUnloggined =
