@@ -521,6 +521,7 @@ const generateRouteConfig = (service) => {
     opensrs: "service-domains",
     goget: "service-ssl",
     acronis: "service-acronis",
+    mondoo: "service-mondoo",
     openai: "service-openai",
     bots: "service-bots",
     ione: "newPaaS",
@@ -533,6 +534,11 @@ const generateRouteConfig = (service) => {
     name = routeMap[type];
   } else if (type === "empty" || type === "virtual") {
     name = getVirtualServiceRoute(showcase);
+    query.headerTitle =
+      showcase.promo?.[i18nLocale.value]?.title ?? showcase.title;
+  }
+
+  if (type === "mondoo") {
     query.headerTitle =
       showcase.promo?.[i18nLocale.value]?.title ?? showcase.title;
   }

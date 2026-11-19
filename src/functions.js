@@ -279,6 +279,10 @@ function setInstByType(inst, result) {
     case "acronis":
       result.groupname = "Acronis";
       break;
+    case "mondoo":
+      result.groupname = "Mondoo";
+      result.domain = inst.config?.domains?.join(", ");
+      break;
     case "opensrs":
       result.groupname = "Domains";
       result.date = inst.data.expiry?.expiredate ?? 0;

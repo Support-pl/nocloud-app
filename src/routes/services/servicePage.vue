@@ -361,7 +361,10 @@ const getModuleButtons = computed(() => {
 
   if (!components[component]) return;
   if (serviceType === undefined) return;
-  if (!(status === "Active" || state?.state === "RUNNING")) return;
+  // Mondoo results are a local copy: they stay readable while suspended.
+  const readable =
+    serviceType === "mondoo" && state?.state === "SUSPENDED";
+  if (!(status === "Active" || state?.state === "RUNNING" || readable)) return;
   return defineAsyncComponent(() => components[component]());
 });
 const isActionsActive = computed(() => {
@@ -482,6 +485,21 @@ async function onStart() {
         if (domain.billingPlan.type === "bitrix24") {
           groupname = "b24-apps";
         }
+        break;
+      }
+
+      case "mondoo": {
+        const { period } = domain.billingPlan.products[domain.product] ?? {};
+
+        domain.data ??= {};
+        domain.resources ??= {};
+        domain.data.expiry = {
+          expiredate: formatDate(domain.data.next_payment_date ?? 0),
+          regdate: domain.data.creation * 1000 || domain.created * 1000 || "0000-00-00",
+        };
+        domain.resources.period = getPeriod(period);
+        domain.resources.domain = domain.config?.domains?.join(", ");
+        groupname = "Mondoo";
         break;
       }
 

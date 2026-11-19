@@ -2005,6 +2005,65 @@
       "used_spend": "Today: {n}",
       "used_spend_month": "This month: {n}",
       "save": "Save limits"
+    },
+    "mondoo": {
+      "choose plan": "Choose a plan",
+      "domains": "Domains to scan",
+      "domains placeholder": "example.com, example.org",
+      "domains hint": "Enter the domains you own. Subdomains are discovered automatically.",
+      "invalid domain": "\"{domain}\" is not a valid domain name",
+      "too many domains": "This plan covers up to {n} domains",
+      "up to domains": "Up to {n} domains",
+      "trial days": "{n} days free",
+      "trial note": "Free for the first {n} days, then",
+      "start trial": "Start free trial",
+      "order": "Order",
+      "title suffix": "attack surface",
+      "unavailable": "This service is not available right now",
+      "hosts": "Hosts",
+      "open findings": "Open findings",
+      "grade": "Grade",
+      "last sync": "Last update",
+      "findings": "Findings",
+      "assets": "Hosts",
+      "any rating": "Any severity",
+      "discovered": "discovered by scan",
+      "all domains": "All domains",
+      "details": {
+        "meaning": "What it means",
+        "fix": "How to fix it",
+        "no fix": "No fix instructions are available for this finding.",
+        "verify": "How to verify",
+        "references": "References",
+        "affected": "Affected hosts"
+      },
+      "first scan pending": "The first scan is running. Results appear here when it finishes.",
+      "trial until": "Free trial until {date}",
+      "suspended": "Scanning is paused. Pay the open invoice to resume; the results below are from the last scan.",
+      "scan now": "Scan now",
+      "scan started": "Scan requested",
+      "rating": {
+        "CRITICAL": "Critical",
+        "HIGH": "High",
+        "MEDIUM": "Medium",
+        "LOW": "Low",
+        "NONE": "Info"
+      },
+      "state": {
+        "open": "Open",
+        "passing": "Passing",
+        "all": "All"
+      },
+      "columns": {
+        "rating": "Severity",
+        "finding": "Finding",
+        "host": "Host",
+        "affected": "Affected hosts",
+        "domain": "Domain",
+        "updated": "Updated",
+        "grade": "Grade",
+        "type": "Type"
+      }
     }
   }
 }

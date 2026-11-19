@@ -96,6 +96,11 @@ export default {
       creationRouteName: "service-b24-apps",
       icon: icons.AppstoreOutlined,
     },
+    mondoo: {
+      groupname: ["Mondoo"],
+      creationRouteName: "service-mondoo",
+      icon: icons.SafetyCertificateOutlined,
+    },
     openai: {
       groupname: ["OpenAI"],
       creationRouteName: "service-openai",

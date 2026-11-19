@@ -42,7 +42,11 @@ export const useProductsStore = defineStore("products", () => {
     baseURL,
 
     async fetch(userid, silent) {
-      if (!config.whmcsSiteUrl) return {};
+      if (!config.whmcsSiteUrl) {
+        // nothing to load without WHMCS; isLoading starts out true
+        isLoading.value = false;
+        return {};
+      }
 
       const keyCache = `products_user_${userid}`;
 
