@@ -439,6 +439,11 @@ function newProductHandle() {
     case "acronis":
       name = "service-acronis";
       break;
+    case "mondoo":
+      name = "service-mondoo";
+      query.headerTitle =
+        foundShowcase.promo?.[locale.value]?.title ?? foundShowcase.title;
+      break;
     case "empty":
     case "virtual": {
       if (foundShowcase?.meta?.type === "vpn") {
