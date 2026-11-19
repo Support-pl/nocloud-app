@@ -2028,7 +2028,15 @@
       "assets": "Hosts",
       "any rating": "Any severity",
       "discovered": "discovered by scan",
-      "group by domain": "Group by domain",
+      "all domains": "All domains",
+      "details": {
+        "meaning": "What it means",
+        "fix": "How to fix it",
+        "no fix": "No fix instructions are available for this finding.",
+        "verify": "How to verify",
+        "references": "References",
+        "affected": "Affected hosts"
+      },
       "first scan pending": "The first scan is running. Results appear here when it finishes.",
       "trial until": "Free trial until {date}",
       "suspended": "Scanning is paused. Pay the open invoice to resume; the results below are from the last scan.",
@@ -2050,6 +2058,8 @@
         "rating": "Severity",
         "finding": "Finding",
         "host": "Host",
+        "affected": "Affected hosts",
+        "domain": "Domain",
         "updated": "Updated",
         "grade": "Grade",
         "type": "Type"

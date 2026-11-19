@@ -1,11 +1,13 @@
 <template>
   <a-table
+    v-model:expanded-row-keys="expanded"
     :columns="columns"
     :data-source="items"
     :loading="loading"
     :pagination="pagination"
-    :row-key="(row) => row.asset + row.mrn"
+    row-key="mrn"
     size="small"
+    expand-row-by-click
     :scroll="{ x: 640 }"
     @change="({ current }) => (page = current)"
   >
@@ -15,9 +17,22 @@
           {{ $t(`mondoo.rating.${record.rating}`) }}
         </a-tag>
       </template>
+      <template v-else-if="column.key === 'title'">
+        {{ record.title }}
+        <span v-if="record.id" class="finding-id">{{ record.id }}</span>
+      </template>
       <template v-else-if="column.key === 'last_updated'">
         {{ shortDate(record.last_updated) }}
       </template>
+    </template>
+    <template #expandedRowRender="{ record }">
+      <mondoo-finding-details
+        :uuid="uuid"
+        :mrn="record.mrn"
+        :rating="rating"
+        :state="state"
+        :namespace="namespace"
+      />
     </template>
   </a-table>
 </template>
@@ -27,6 +42,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { message } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 import api from "@/api.js";
+import MondooFindingDetails from "./findingDetails.vue";
 import { ratingColor, shortDate } from "./shared.js";
 
 const props = defineProps({
@@ -47,11 +63,12 @@ const page = ref(1);
 const loading = ref(false);
 const items = ref([]);
 const total = ref(0);
+const expanded = ref([]);
 
 const columns = computed(() => [
   { title: t("mondoo.columns.rating"), key: "rating", width: 110 },
-  { title: t("mondoo.columns.finding"), dataIndex: "title", key: "title" },
-  { title: t("mondoo.columns.host"), dataIndex: "asset_name", key: "asset_name" },
+  { title: t("mondoo.columns.finding"), key: "title" },
+  { title: t("mondoo.columns.affected"), dataIndex: "assets", key: "assets", width: 130 },
   { title: t("mondoo.columns.updated"), key: "last_updated", width: 110 },
 ]);
 
@@ -68,7 +85,7 @@ async function load() {
   try {
     const { meta = {} } = await api.instances.action({
       uuid: props.uuid,
-      action: "findings",
+      action: "finding_groups",
       params: {
         limit: props.pageSize,
         offset: (page.value - 1) * props.pageSize,
@@ -79,6 +96,7 @@ async function load() {
     });
 
     items.value = meta.items ?? [];
+    expanded.value = [];
     total.value = +meta.total || 0;
     emit("total", total.value);
   } catch (error) {
@@ -104,3 +122,15 @@ onMounted(load);
 <script>
 export default { name: "MondooFindingsTable" };
 </script>
+
+<style scoped>
+.finding-id {
+  margin-left: 6px;
+  color: var(--gray);
+  font-size: 0.85em;
+}
+
+:deep(.ant-table-row) {
+  cursor: pointer;
+}
+</style>

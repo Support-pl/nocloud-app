@@ -97,9 +97,16 @@
             <a-select-option value="CLOSED">{{ $t("mondoo.state.passing") }}</a-select-option>
             <a-select-option value="ALL">{{ $t("mondoo.state.all") }}</a-select-option>
           </a-select>
-          <a-checkbox v-model:checked="grouped">
-            {{ $t("mondoo.group by domain") }}
-          </a-checkbox>
+          <a-select
+            v-if="namespaces.length > 1"
+            v-model:value="filter.namespace"
+            style="width: 190px"
+          >
+            <a-select-option value="">{{ $t("mondoo.all domains") }}</a-select-option>
+            <a-select-option v-for="ns in namespaces" :key="ns.name" :value="ns.name">
+              {{ ns.name }}
+            </a-select-option>
+          </a-select>
         </template>
 
         <a-button
@@ -112,47 +119,16 @@
         </a-button>
       </div>
 
-      <template v-if="tab === 'findings'">
-        <a-collapse v-if="grouped" class="mondoo__groups">
-          <a-collapse-panel v-for="group in groups" :key="group.namespace">
-            <template #header>
-              <span class="mondoo__group">
-                <b>{{ group.namespace }}</b>
-                <a-tag v-if="group.configured === false">{{ $t("mondoo.discovered") }}</a-tag>
-                <span class="mondoo__group-info">
-                  {{ $t("mondoo.findings") }}: {{ group.findings }} ·
-                  {{ $t("mondoo.hosts") }}: {{ group.hosts }}
-                </span>
-                <b v-if="group.grade" :style="{ color: gradeColor(group.grade) }">
-                  {{ group.grade }}
-                </b>
-                <template v-for="rating in ratings" :key="rating.key">
-                  <a-tag v-if="group.findings_by_rating?.[rating.key]" :color="rating.color">
-                    {{ $t(`mondoo.rating.${rating.key}`) }}: {{ group.findings_by_rating[rating.key] }}
-                  </a-tag>
-                </template>
-              </span>
-            </template>
-            <mondoo-findings-table
-              :uuid="service.uuid"
-              :namespace="group.namespace"
-              :rating="filter.rating"
-              :state="filter.state"
-              :page-size="pageSize"
-              :refresh-key="refreshKey"
-            />
-          </a-collapse-panel>
-        </a-collapse>
-        <mondoo-findings-table
-          v-else
-          :uuid="service.uuid"
-          :rating="filter.rating"
-          :state="filter.state"
-          :page-size="pageSize"
-          :refresh-key="refreshKey"
-          @total="findings.total = $event"
-        />
-      </template>
+      <mondoo-findings-table
+        v-if="tab === 'findings'"
+        :uuid="service.uuid"
+        :rating="filter.rating"
+        :state="filter.state"
+        :namespace="filter.namespace"
+        :page-size="pageSize"
+        :refresh-key="refreshKey"
+        @total="findings.total = $event"
+      />
 
       <a-table
         v-else
@@ -201,17 +177,9 @@ const page = ref(1);
 const loading = ref(false);
 const scanning = ref(false);
 const findings = reactive({ total: 0 });
-const groups = ref([]);
-const refreshKey = ref(0);
-// Findings are grouped per domain once there is more than one, unless the
-// checkbox was used.
-const groupChoice = ref(null);
-const grouped = computed({
-  get: () => groupChoice.value ?? groups.value.length > 1,
-  set: (value) => (groupChoice.value = value),
-});
 const assets = reactive({ items: [], total: 0 });
-const filter = reactive({ rating: "", state: "" });
+const refreshKey = ref(0);
+const filter = reactive({ rating: "", state: "", namespace: "" });
 
 const data = computed(() => props.service.data ?? {});
 // The copy in instance data is refreshed by the driver's monitoring pass and
@@ -284,21 +252,6 @@ async function load() {
   }
 }
 
-async function loadGroups() {
-  try {
-    const meta = await invoke("finding_groups", {
-      ...(filter.rating && { rating: filter.rating }),
-      ...(filter.state && { state: filter.state }),
-    });
-
-    groups.value = meta.items ?? [];
-    findings.total = +meta.total || 0;
-  } catch {
-    // without grouping the findings are still listed ungrouped
-    groups.value = [];
-  }
-}
-
 async function loadCounts() {
   try {
     const [meta, live] = await Promise.all([
@@ -328,7 +281,6 @@ async function scan() {
     await invoke("scan");
     message.success(t("mondoo.scan started"));
     loadCounts();
-    loadGroups();
     refreshKey.value++;
   } catch (error) {
     message.error(error.response?.data?.message ?? error.message ?? error);
@@ -342,12 +294,7 @@ watch(tab, () => {
   else load();
 });
 watch(page, load);
-watch(filter, loadGroups);
-
-onMounted(() => {
-  loadCounts();
-  loadGroups();
-});
+onMounted(loadCounts);
 </script>
 
 <script>
@@ -408,17 +355,6 @@ export default { name: "MondooDraw" };
   gap: 8px;
   align-items: center;
   margin: 16px 0 10px;
-}
-
-.mondoo__group {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 6px 8px;
-  align-items: center;
-}
-
-.mondoo__group-info {
-  color: var(--gray);
 }
 
 .mondoo__empty {
