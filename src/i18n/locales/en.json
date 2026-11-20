@@ -2007,6 +2007,26 @@
       "save": "Save limits"
     },
     "mondoo": {
+      "fix": {
+        "button": "Fix with Ansible",
+        "requested": "Fix requested. The server is scanned again when it finishes.",
+        "confirm title": "Run this fix on your server?",
+        "run": "Run fix",
+        "warning": "This Ansible play from Mondoo runs on your server as root and changes its configuration. A change to SSH settings can end remote access. Read it before running.",
+        "status": {
+          "requested": "Fix queued: {title}",
+          "running": "Fix running: {title}",
+          "done": "Fix applied: {title}",
+          "failed": "Fix failed: {title}"
+        }
+      },
+      "machine": "Server to scan",
+      "machine placeholder": "Choose one of your servers",
+      "machine hint": "The server is checked over SSH from our scanner. Nothing is installed on it.",
+      "no machines": "You have no servers to scan yet",
+      "scan title suffix": "security scan",
+      "scan failed": "The last scan failed",
+      "search": "Title or CVE",
       "choose plan": "Choose a plan",
       "domains": "Domains to scan",
       "domains placeholder": "example.com, example.org",

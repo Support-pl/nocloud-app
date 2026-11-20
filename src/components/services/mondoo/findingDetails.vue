@@ -36,6 +36,27 @@
       {{ $t("mondoo.details.no fix") }}
     </div>
 
+    <div v-if="details.ansible_fix && details.can_fix" class="finding__fix">
+      <a-button type="primary" :disabled="fixRequested" :loading="fixing" @click="confirmFix = true">
+        {{ $t("mondoo.fix.button") }}
+      </a-button>
+      <span v-if="fixRequested" class="finding__fix-note">{{ $t("mondoo.fix.requested") }}</span>
+
+      <a-modal
+        :open="confirmFix"
+        :title="$t('mondoo.fix.confirm title')"
+        :ok-text="$t('mondoo.fix.run')"
+        :cancel-text="$t('Cancel')"
+        :confirm-loading="fixing"
+        width="760px"
+        @ok="runFix"
+        @cancel="confirmFix = false"
+      >
+        <p>{{ $t("mondoo.fix.warning") }}</p>
+        <pre class="finding__play">{{ details.ansible_fix }}</pre>
+      </a-modal>
+    </div>
+
     <a-collapse v-if="details.audit" ghost class="finding__audit">
       <a-collapse-panel key="audit" :header="$t('mondoo.details.verify')">
         <!-- eslint-disable-next-line vue/no-v-html -->
@@ -87,6 +108,29 @@ const render = (text) => md.render(String(text ?? ""));
 const loading = ref(true);
 const details = ref({});
 
+const emit = defineEmits(["fix"]);
+const confirmFix = ref(false);
+const fixing = ref(false);
+const fixRequested = ref(false);
+
+async function runFix() {
+  fixing.value = true;
+  try {
+    await api.instances.action({
+      uuid: props.uuid,
+      action: "fix",
+      params: { mrn: props.mrn },
+    });
+    fixRequested.value = true;
+    emit("fix");
+  } catch (error) {
+    message.error(error.response?.data?.message ?? error.message ?? error);
+  } finally {
+    fixing.value = false;
+    confirmFix.value = false;
+  }
+}
+
 const facts = computed(() => {
   const d = details.value;
   const out = [];
@@ -131,6 +175,25 @@ export default { name: "MondooFindingDetails" };
 </script>
 
 <style scoped>
+.finding__fix {
+  margin: 4px 0 14px;
+}
+
+.finding__fix-note {
+  margin-left: 10px;
+  color: var(--gray);
+}
+
+.finding__play {
+  max-height: 46vh;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .finding {
   padding: 4px 0 8px;
   white-space: normal;
