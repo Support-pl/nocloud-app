@@ -22,7 +22,13 @@
       :message="$t('mondoo.scan failed')"
       :description="scanInfo.error"
       class="mondoo__alert"
-    />
+    >
+      <template v-if="canScan && summary.accepts_login" #action>
+        <a-button size="small" @click="askLogin = true">
+          {{ $t("mondoo.login.scan with") }}
+        </a-button>
+      </template>
+    </a-alert>
 
     <a-alert
       v-if="fix.status"
@@ -133,11 +139,24 @@
           </a-select>
         </template>
 
+        <a-dropdown-button
+          v-if="canScan && summary.accepts_login"
+          :loading="scanning"
+          style="margin-left: auto; width: auto"
+          @click="scan()"
+        >
+          {{ $t("mondoo.scan now") }}
+          <template #overlay>
+            <a-menu @click="askLogin = true">
+              <a-menu-item key="login">{{ $t("mondoo.login.scan with") }}</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown-button>
         <a-button
-          v-if="canScan"
+          v-else-if="canScan"
           :loading="scanning"
           style="margin-left: auto"
-          @click="scan"
+          @click="scan()"
         >
           {{ $t("mondoo.scan now") }}
         </a-button>
@@ -180,6 +199,18 @@
         </template>
       </a-table>
     </template>
+
+    <a-modal
+      :open="askLogin"
+      :title="$t('mondoo.login.scan title')"
+      :ok-text="$t('mondoo.scan now')"
+      :cancel-text="$t('Cancel')"
+      :confirm-loading="scanning"
+      @ok="scan(login)"
+      @cancel="askLogin = false"
+    >
+      <mondoo-login-form v-model:value="login" expanded />
+    </a-modal>
   </div>
 </template>
 
@@ -189,7 +220,8 @@ import { message } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 import api from "@/api.js";
 import MondooFindingsTable from "./findingsTable.vue";
-import { gradeColor, ratings, shortDate } from "./shared.js";
+import MondooLoginForm from "./loginForm.vue";
+import { emptyLogin, gradeColor, loginParams, ratings, shortDate } from "./shared.js";
 
 const props = defineProps({
   service: { type: Object, required: true },
@@ -202,6 +234,9 @@ const tab = ref("findings");
 const page = ref(1);
 const loading = ref(false);
 const scanning = ref(false);
+// A scan with an SSH login typed in for it, when our own key no longer works.
+const askLogin = ref(false);
+const login = ref(emptyLogin());
 const findings = reactive({ total: 0 });
 const assets = reactive({ items: [], total: 0 });
 const refreshKey = ref(0);
@@ -335,10 +370,18 @@ function filterRating(rating) {
   filter.rating = filter.rating === rating ? "" : rating;
 }
 
-async function scan() {
+async function scan(withLogin) {
+  const params = loginParams(withLogin);
+
+  if (withLogin && !params.login) {
+    message.warning(t("mondoo.login.incomplete"));
+    return;
+  }
   scanning.value = true;
   try {
-    await invoke("scan");
+    await invoke("scan", params);
+    askLogin.value = false;
+    login.value = emptyLogin();
     message.success(t("mondoo.scan started"));
     loadCounts();
     refreshKey.value++;

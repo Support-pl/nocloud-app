@@ -2008,17 +2008,27 @@
     },
     "mondoo": {
       "fix": {
-        "button": "Fix with Ansible",
+        "button": "Fix automatically",
         "requested": "Fix requested. The server is scanned again when it finishes.",
         "confirm title": "Run this fix on your server?",
         "run": "Run fix",
-        "warning": "This Ansible play from Mondoo runs on your server as root and changes its configuration. A change to SSH settings can end remote access. Read it before running.",
+        "warning": "These steps from Mondoo run on your server as root and change its configuration. A change to SSH settings can end remote access. Read them before running.",
         "status": {
           "requested": "Fix queued: {title}",
           "running": "Fix running: {title}",
           "done": "Fix applied: {title}",
           "failed": "Fix failed: {title}"
         }
+      },
+      "login": {
+        "title": "Use a different SSH login",
+        "hint": "Only needed when our access key was removed from the server. The login is used for this run only and is not saved.",
+        "user": "User",
+        "password": "Password",
+        "key": "Private key",
+        "scan with": "Scan with a different login",
+        "scan title": "Scan with a different SSH login",
+        "incomplete": "Enter a password or a private key"
       },
       "machine": "Server to scan",
       "machine placeholder": "Choose one of your servers",
