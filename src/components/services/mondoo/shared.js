@@ -54,3 +54,20 @@ export function shortDate(value) {
 
   return isNaN(date) ? "-" : date.toLocaleDateString();
 }
+
+// The login typed into the form, as the driver takes it; nothing when the
+// form was left empty.
+export const emptyLogin = () => ({ user: "", password: "", key: "" });
+export function loginParams(login) {
+  const password = login?.password ?? "";
+  const key = (login?.key ?? "").trim();
+
+  if (!password && !key) return {};
+  return {
+    login: {
+      user: (login.user ?? "").trim() || "root",
+      ...(password && { password }),
+      ...(key && { key }),
+    },
+  };
+}

@@ -37,7 +37,19 @@
           />
         </div>
 
-        <div class="order__field">
+        <div v-if="isSsh" class="order__field">
+          <div class="order__title">{{ $t("mondoo.machine") }}</div>
+          <a-select
+            v-model:value="machine"
+            style="width: 100%"
+            :placeholder="$t('mondoo.machine placeholder')"
+            :not-found-content="$t('mondoo.no machines')"
+            :options="machines"
+          />
+          <div class="order__hint">{{ $t("mondoo.machine hint") }}</div>
+        </div>
+
+        <div v-else class="order__field">
           <div class="order__title">{{ $t("mondoo.domains") }}</div>
           <a-select
             v-model:value="domains"
@@ -83,7 +95,7 @@
           >
             <p>
               {{ $t("order_services.Do you want to order") }}:
-              {{ selected?.title }} ({{ domains.join(", ") }})
+              {{ selected?.title }} ({{ isSsh ? machineTitle : domains.join(", ") }})
             </p>
           </a-modal>
         </div>
@@ -204,9 +216,30 @@ const domainsError = computed(() => {
   return "";
 });
 
-const canOrder = computed(
-  () => !!selected.value && domains.value.length > 0 && !domainsError.value
+// A product of kind "ssh" scans one of the customer's machines over SSH
+// instead of a set of domains.
+const isSsh = computed(() => selected.value?.meta?.kind === "ssh");
+const machine = ref(null);
+const machines = computed(() =>
+  instancesStore.getInstances
+    // a scan of a machine is not itself a machine, and neither is a domain scan
+    .filter(
+      (inst) =>
+        (inst.type !== "mondoo" || inst.config?.host) &&
+        !inst.config?.instance &&
+        !["DELETED", "INIT"].includes(inst.state?.state)
+    )
+    .map((inst) => ({ value: inst.uuid, label: inst.title }))
 );
+const machineTitle = computed(
+  () => machines.value.find(({ value }) => value === machine.value)?.label ?? ""
+);
+
+const canOrder = computed(() => {
+  if (!selected.value) return false;
+  if (isSsh.value) return !!machine.value;
+  return domains.value.length > 0 && !domainsError.value;
+});
 
 function normalize(values) {
   domains.value = cleanDomains(values);
@@ -261,8 +294,12 @@ function orderClickHandler() {
   if (!canOrder.value) return;
 
   const instance = {
-    config: { domains: [...domains.value], auto_renew: false },
-    title: `${domains.value[0]} ${t("mondoo.title suffix")}`,
+    config: isSsh.value
+      ? { instance: machine.value, auto_renew: false }
+      : { domains: [...domains.value], auto_renew: false },
+    title: isSsh.value
+      ? `${machineTitle.value} ${t("mondoo.scan title suffix")}`
+      : `${domains.value[0]} ${t("mondoo.title suffix")}`,
     billing_plan: planItem.value,
     product: product.value,
   };

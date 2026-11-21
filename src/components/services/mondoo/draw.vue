@@ -15,6 +15,30 @@
       class="mondoo__alert"
     />
 
+    <a-alert
+      v-if="scanInfo.error"
+      type="warning"
+      show-icon
+      :message="$t('mondoo.scan failed')"
+      :description="scanInfo.error"
+      class="mondoo__alert"
+    >
+      <template v-if="canScan && summary.accepts_login" #action>
+        <a-button size="small" @click="askLogin = true">
+          {{ $t("mondoo.login.scan with") }}
+        </a-button>
+      </template>
+    </a-alert>
+
+    <a-alert
+      v-if="fix.status"
+      :type="fixAlert"
+      show-icon
+      :message="$t(`mondoo.fix.status.${fix.status}`, { title: fix.title })"
+      :description="fix.error"
+      class="mondoo__alert"
+    />
+
     <a-row :gutter="[12, 12]">
       <a-col :xs="12" :sm="6">
         <div class="stat">
@@ -97,6 +121,12 @@
             <a-select-option value="CLOSED">{{ $t("mondoo.state.passing") }}</a-select-option>
             <a-select-option value="ALL">{{ $t("mondoo.state.all") }}</a-select-option>
           </a-select>
+          <a-input-search
+            v-model:value="searchText"
+            allow-clear
+            :placeholder="$t('mondoo.search')"
+            style="width: 200px"
+          />
           <a-select
             v-if="namespaces.length > 1"
             v-model:value="filter.namespace"
@@ -109,11 +139,24 @@
           </a-select>
         </template>
 
+        <a-dropdown-button
+          v-if="canScan && summary.accepts_login"
+          :loading="scanning"
+          style="margin-left: auto; width: auto"
+          @click="scan()"
+        >
+          {{ $t("mondoo.scan now") }}
+          <template #overlay>
+            <a-menu @click="askLogin = true">
+              <a-menu-item key="login">{{ $t("mondoo.login.scan with") }}</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown-button>
         <a-button
-          v-if="canScan"
+          v-else-if="canScan"
           :loading="scanning"
           style="margin-left: auto"
-          @click="scan"
+          @click="scan()"
         >
           {{ $t("mondoo.scan now") }}
         </a-button>
@@ -125,9 +168,11 @@
         :rating="filter.rating"
         :state="filter.state"
         :namespace="filter.namespace"
+        :search="filter.search"
         :page-size="pageSize"
         :refresh-key="refreshKey"
         @total="findings.total = $event"
+        @fix="watchFix"
       />
 
       <a-table
@@ -154,16 +199,29 @@
         </template>
       </a-table>
     </template>
+
+    <a-modal
+      :open="askLogin"
+      :title="$t('mondoo.login.scan title')"
+      :ok-text="$t('mondoo.scan now')"
+      :cancel-text="$t('Cancel')"
+      :confirm-loading="scanning"
+      @ok="scan(login)"
+      @cancel="askLogin = false"
+    >
+      <mondoo-login-form v-model:value="login" expanded />
+    </a-modal>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { message } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 import api from "@/api.js";
 import MondooFindingsTable from "./findingsTable.vue";
-import { gradeColor, ratings, shortDate } from "./shared.js";
+import MondooLoginForm from "./loginForm.vue";
+import { emptyLogin, gradeColor, loginParams, ratings, shortDate } from "./shared.js";
 
 const props = defineProps({
   service: { type: Object, required: true },
@@ -176,10 +234,20 @@ const tab = ref("findings");
 const page = ref(1);
 const loading = ref(false);
 const scanning = ref(false);
+// A scan with an SSH login typed in for it, when our own key no longer works.
+const askLogin = ref(false);
+const login = ref(emptyLogin());
 const findings = reactive({ total: 0 });
 const assets = reactive({ items: [], total: 0 });
 const refreshKey = ref(0);
-const filter = reactive({ rating: "", state: "", namespace: "" });
+const filter = reactive({ rating: "", state: "", namespace: "", search: "" });
+// Typing must not fire a request per key.
+const searchText = ref("");
+let searchTimer;
+watch(searchText, (value) => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => (filter.search = (value ?? "").trim()), 350);
+});
 
 const data = computed(() => props.service.data ?? {});
 // The copy in instance data is refreshed by the driver's monitoring pass and
@@ -188,12 +256,39 @@ const liveSummary = ref(null);
 const summary = computed(() => liveSummary.value ?? data.value.summary ?? {});
 const byRating = computed(() => summary.value.findings_by_rating ?? {});
 const namespaces = computed(() => summary.value.namespaces ?? []);
-const worst = computed(
-  () =>
-    [...namespaces.value]
-      .filter((ns) => ns.grade)
-      .sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0]
+// An SSH scan has one machine and no domains; its grade comes with the summary.
+const scanInfo = computed(() => summary.value.scan ?? {});
+// The last fix run on the server, and whether it is still under way.
+const fix = computed(() => summary.value.remediation ?? {});
+const fixActive = computed(() => ["requested", "running"].includes(fix.value.status));
+const fixAlert = computed(
+  () => ({ done: "success", failed: "error" })[fix.value.status] ?? "info"
 );
+
+// After a fix is requested, follow it: its status first, then the scan that
+// comes after it, and reload the findings once that scan is in.
+let fixTimer;
+function watchFix() {
+  clearInterval(fixTimer);
+  let ticks = 0;
+  fixTimer = setInterval(async () => {
+    await loadCounts();
+    const rescanned = +scanInfo.value.finished_at >= +fix.value.finished_at;
+    if (++ticks > 72 || (!fixActive.value && fix.value.finished_at && rescanned)) {
+      clearInterval(fixTimer);
+      refreshKey.value++;
+    }
+  }, 5000);
+}
+onBeforeUnmount(() => clearInterval(fixTimer));
+const worst = computed(() => {
+  if (summary.value.grade) {
+    return { grade: summary.value.grade, score: summary.value.score };
+  }
+  return [...namespaces.value]
+    .filter((ns) => ns.grade)
+    .sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
+});
 
 const formatTs = (seconds) =>
   seconds ? new Date(seconds * 1000).toLocaleString() : "";
@@ -275,10 +370,18 @@ function filterRating(rating) {
   filter.rating = filter.rating === rating ? "" : rating;
 }
 
-async function scan() {
+async function scan(withLogin) {
+  const params = loginParams(withLogin);
+
+  if (withLogin && !params.login) {
+    message.warning(t("mondoo.login.incomplete"));
+    return;
+  }
   scanning.value = true;
   try {
-    await invoke("scan");
+    await invoke("scan", params);
+    askLogin.value = false;
+    login.value = emptyLogin();
     message.success(t("mondoo.scan started"));
     loadCounts();
     refreshKey.value++;
