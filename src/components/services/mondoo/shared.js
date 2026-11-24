@@ -22,6 +22,12 @@ export function cleanDomains(values) {
   ];
 }
 
+// What a product's free trial is counted against, as billing does it: its
+// group, by default the plan type. product is a plan's product; plan its plan.
+export function trialGroup(product, plan) {
+  return product?.meta?.trial?.group || plan?.type || "mondoo";
+}
+
 export function periodLabel(seconds, t) {
   const day = 86400;
 
