@@ -28,6 +28,8 @@ export const useAuthStore = defineStore("auth", () => {
   const userdata = ref({ data: {} });
   const billingUser = ref({});
   const billingUserPromise = ref();
+  /** The latest billing request: an older one, made with a token since replaced, keeps quiet. */
+  let billingRequest = 0;
 
   const loginButtons = ref([]);
   const baseURL = `${config.whmcsSiteUrl}/modules/addons/nocloud/api/index.php`;
@@ -182,13 +184,17 @@ export const useAuthStore = defineStore("auth", () => {
         return billingUser.value;
       }
       if (!config.whmcsSiteUrl) return billingUser.value;
-      if (billingUserPromise.value) return billingUserPromise.value;
+      // An update asks again: the request in flight may carry the token it replaces.
+      if (billingUserPromise.value && !update) return billingUserPromise.value;
 
+      const current = ++billingRequest;
+      const request = api.get(baseURL, {
+        params: { run: "client_detail" },
+      });
+      billingUserPromise.value = request;
       try {
-        billingUserPromise.value = api.get(baseURL, {
-          params: { run: "client_detail" },
-        });
-        const response = (await billingUserPromise.value) ?? {};
+        const response = (await request) ?? {};
+        if (current !== billingRequest) return billingUser.value;
 
         if (!response.id) response.id = "none";
         billingUser.value = response;
@@ -196,10 +202,11 @@ export const useAuthStore = defineStore("auth", () => {
 
         return response;
       } catch (error) {
+        if (current !== billingRequest) return billingUser.value;
         console.error(error);
         throw error;
       } finally {
-        billingUserPromise.value = null;
+        if (billingUserPromise.value === request) billingUserPromise.value = null;
       }
     },
 

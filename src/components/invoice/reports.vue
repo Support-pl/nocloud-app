@@ -27,8 +27,14 @@
       style="margin-top: 16px"
       :loading="isStatisticsDataLoading"
     >
-      <template #bodyCell="{ column, text }">
-        <template v-if="column.dataIndex === 'amount'">
+      <template #bodyCell="{ column, text, record }">
+        <template v-if="column.dataIndex === 'title'">
+          {{ text }}
+          <a-tag v-if="record.deleted" class="deleted-tag">
+            {{ t("invoices.reports.deleted") }}
+          </a-tag>
+        </template>
+        <template v-else-if="column.dataIndex === 'amount'">
           {{ formatPrice(text) }} {{ currency.title }}
         </template>
       </template>
@@ -53,7 +59,7 @@ import dayjs from "dayjs";
 import { useAuthStore } from "@/stores/auth";
 import { useInstancesStore } from "@/stores/instances";
 import { storeToRefs } from "pinia";
-import { debounce } from "@/functions";
+import { debounce, isInstanceDeleted } from "@/functions";
 
 const authStore = useAuthStore();
 const instancesStore = useInstancesStore();
@@ -86,8 +92,6 @@ const columns = computed(() => [
   },
 ]);
 
-const aliveInstances = computed(() => allInstances.value);
-
 const reports = computed(() => {
   if (
     statisticsData.value === null ||
@@ -96,14 +100,21 @@ const reports = computed(() => {
   ) {
     return [];
   }
-  const reports = Object.keys(statisticsData.value.summary.revenue_by_service)
-    .map((key) => ({
-      title: aliveInstances.value.find((instance) => instance.uuid === key)
-        ?.title,
-      amount: statisticsData.value.summary.revenue_by_service[key],
-      uuid: key,
-    }))
-    .filter((report) => report.title);
+  // Every charged service stays in the list and in the total, even one we know nothing about.
+  const reports = Object.keys(statisticsData.value.summary.revenue_by_service).map(
+    (key) => {
+      const instance = allInstances.value.find((inst) => inst.uuid === key);
+
+      return {
+        title:
+          instance?.title ??
+          `${t("invoices.reports.deleted_service")} (${key.split("-")[0]})`,
+        deleted: !instance || isInstanceDeleted(instance),
+        amount: statisticsData.value.summary.revenue_by_service[key],
+        uuid: key,
+      };
+    }
+  );
 
   reports.push({
     title: t("invoices.reports.total"),
@@ -174,6 +185,10 @@ function onFilterChange() {
     margin: 10px 0px;
     font-size: 1rem;
     border: dashed 0.2rem var(--main);
+  }
+
+  .deleted-tag {
+    margin-left: 8px;
   }
 }
 </style>

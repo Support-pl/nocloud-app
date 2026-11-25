@@ -9,12 +9,16 @@
         >
           <a-button
             class="instance-filter-btn"
+            :class="{ 'instance-filter-btn--deleted': isDeleted(uuid) }"
             :type="isInstanceSelected(uuid) ? 'primary' : 'default'"
             :size="size"
             @click="toggleInstance(uuid)"
           >
             <div class="instance-content">
               {{ getTruncatedInstanceName(uuid) }}
+              <span v-if="isDeleted(uuid)" class="deleted-mark">
+                ({{ t("invoices.reports.deleted") }})
+              </span>
               <plus-icon v-if="!isInstanceSelected(uuid)" class="toggle-icon" />
               <minus-icon v-else class="toggle-icon" />
             </div>
@@ -24,12 +28,16 @@
         <a-button
           v-else
           class="instance-filter-btn"
+          :class="{ 'instance-filter-btn--deleted': isDeleted(uuid) }"
           :type="isInstanceSelected(uuid) ? 'primary' : 'default'"
           :size="size"
           @click="toggleInstance(uuid)"
         >
           <div class="instance-content">
             {{ getFullInstanceName(uuid) }}
+            <span v-if="isDeleted(uuid)" class="deleted-mark">
+              ({{ t("invoices.reports.deleted") }})
+            </span>
             <plus-icon v-if="!isInstanceSelected(uuid)" class="toggle-icon" />
             <minus-icon v-else class="toggle-icon" />
           </div>
@@ -78,6 +86,7 @@ import { computed, defineAsyncComponent, ref, watch } from "vue";
 import { useInstancesStore } from "@/stores/instances";
 import { capitalize } from "vue";
 import { useI18n } from "vue-i18n";
+import { isInstanceDeleted } from "@/functions";
 
 const plusIcon = defineAsyncComponent(() =>
   import("@ant-design/icons-vue/PlusCircleOutlined")
@@ -120,9 +129,30 @@ const { t } = useI18n();
 
 const selectedInstances = ref([...(props.modelValue || [])]);
 
+// Deleted services stay selectable (their charges are still in the reports), but go last.
 const allInstanceUuids = computed(() => {
-  return instancesStore.allInstances.map((instance) => instance.uuid);
+  const alive = [];
+  const deleted = [];
+
+  instancesStore.allInstances.forEach((instance) => {
+    (isInstanceDeleted(instance) ? deleted : alive).push(instance.uuid);
+  });
+
+  return [...alive, ...deleted];
 });
+
+const deletedUuids = computed(
+  () =>
+    new Set(
+      instancesStore.allInstances
+        .filter((instance) => isInstanceDeleted(instance))
+        .map((instance) => instance.uuid)
+    )
+);
+
+function isDeleted(uuid) {
+  return deletedUuids.value.has(uuid);
+}
 
 const visibleInstances = computed(() => {
   const instancesToShow = props.filterMode
@@ -235,6 +265,14 @@ export default { name: "InstanceTags" };
 
 .toggle-icon {
   font-size: 14px;
+}
+
+.instance-filter-btn--deleted:not(.ant-btn-primary) {
+  opacity: 0.6;
+}
+
+.deleted-mark {
+  font-size: 0.85em;
 }
 
 .more-tag {

@@ -200,7 +200,9 @@ export const useInstancesStore = defineStore("instances", () => {
 
     async fetchAll() {
       try {
-        const response = await api.post("/services?show_deleted=true", {
+        // List is POST with body "*": the flag is read from the body only, a query param is ignored.
+        const response = await api.post("/services", {
+          showDeleted: true,
           filters: {
             accounts: authStore.userdata.accountOwner
               ? [authStore.userdata.accountOwner, authStore.userdata.uuid]

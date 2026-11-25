@@ -353,6 +353,8 @@
         "amount": "Amount",
         "total": "Total",
         "download_full_report": "Download Full Report",
+        "deleted_service": "Deleted service",
+        "deleted": "deleted",
         "instruction": "📊 **Service Charge Reports**\n\nHere you can view reports on service charges. The data is updated daily and is accurate **up to yesterday**. Charges for the current day are not included."
       }
     },
