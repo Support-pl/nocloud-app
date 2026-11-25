@@ -39,6 +39,10 @@ export function isHighCPUProduct(product, plan) {
   return byProduct ? !!product?.meta?.highCPU : !!plan?.meta?.highCPU;
 }
 
+export function isInstanceDeleted(instance) {
+  return instance?.status === "DEL" || instance?.state?.state === "DELETED";
+}
+
 export function debounce(func, ms) {
   let timeout;
 
