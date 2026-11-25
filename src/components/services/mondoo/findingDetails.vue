@@ -30,6 +30,30 @@
     </template>
 
     <div class="finding__title">{{ $t("mondoo.details.fix") }}</div>
+    <div v-if="details.ansible_fix && details.can_fix" class="finding__fix">
+      <a-button type="primary" :disabled="fixRequested" :loading="fixing" @click="confirmFix = true">
+        {{ $t("mondoo.fix.button") }}
+      </a-button>
+      <span v-if="fixRequested" class="finding__fix-note">{{ $t("mondoo.fix.requested") }}</span>
+
+      <a-modal
+        :open="confirmFix"
+        :title="$t('mondoo.fix.confirm title')"
+        :ok-text="$t('mondoo.fix.run')"
+        :cancel-text="$t('Cancel')"
+        :confirm-loading="fixing"
+        width="760px"
+        @ok="runFix"
+        @cancel="confirmFix = false"
+      >
+        <p>{{ $t("mondoo.fix.warning") }}</p>
+        <ol class="finding__steps">
+          <li v-for="(step, index) in fixSteps" :key="index">{{ step }}</li>
+        </ol>
+        <mondoo-login-form v-if="details.accepts_login" v-model:value="login" />
+      </a-modal>
+    </div>
+
     <!-- eslint-disable-next-line vue/no-v-html -->
     <div v-if="details.remediation" class="finding__text" v-html="render(details.remediation)" />
     <div v-else class="finding__text finding__text--muted">
@@ -62,6 +86,8 @@ import { computed, onMounted, ref } from "vue";
 import { message } from "ant-design-vue";
 import markdown from "markdown-it";
 import api from "@/api.js";
+import MondooLoginForm from "./loginForm.vue";
+import { emptyLogin, loginParams } from "./shared.js";
 
 const props = defineProps({
   uuid: { type: String, required: true },
@@ -86,6 +112,44 @@ const render = (text) => md.render(String(text ?? ""));
 
 const loading = ref(true);
 const details = ref({});
+
+const emit = defineEmits(["fix"]);
+const confirmFix = ref(false);
+const fixing = ref(false);
+const fixRequested = ref(false);
+const login = ref(emptyLogin());
+
+async function runFix() {
+  fixing.value = true;
+  try {
+    await api.instances.action({
+      uuid: props.uuid,
+      action: "fix",
+      params: { mrn: props.mrn, ...loginParams(login.value) },
+    });
+    login.value = emptyLogin();
+    fixRequested.value = true;
+    emit("fix");
+  } catch (error) {
+    message.error(error.response?.data?.message ?? error.message ?? error);
+  } finally {
+    fixing.value = false;
+    confirmFix.value = false;
+  }
+}
+
+// What the fix does, as its steps are named. The customer is shown these,
+// not the play they are part of.
+const fixSteps = computed(() => {
+  const lines = String(details.value.ansible_fix ?? "").split("\n");
+  const from = lines.findIndex((line) => /^\s*tasks:\s*$/.test(line));
+
+  return lines
+    .slice(from + 1)
+    .map((line) => line.match(/^\s*- name:\s*(.+?)\s*$/)?.[1])
+    .filter(Boolean)
+    .map((name) => name.replace(/^(["'])(.*)\1$/, "$2"));
+});
 
 const facts = computed(() => {
   const d = details.value;
@@ -131,6 +195,25 @@ export default { name: "MondooFindingDetails" };
 </script>
 
 <style scoped>
+.finding__fix {
+  margin: 2px 0 12px;
+}
+
+.finding__fix-note {
+  margin-left: 10px;
+  color: var(--gray);
+}
+
+.finding__steps {
+  max-height: 46vh;
+  overflow: auto;
+  margin: 0 0 12px;
+  padding: 10px 10px 10px 32px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+  line-height: 1.6;
+}
+
 .finding {
   padding: 4px 0 8px;
   white-space: normal;

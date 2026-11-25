@@ -22,6 +22,12 @@ export function cleanDomains(values) {
   ];
 }
 
+// What a product's free trial is counted against, as billing does it: its
+// group, by default the plan type. product is a plan's product; plan its plan.
+export function trialGroup(product, plan) {
+  return product?.meta?.trial?.group || plan?.type || "mondoo";
+}
+
 export function periodLabel(seconds, t) {
   const day = 86400;
 
@@ -53,4 +59,21 @@ export function shortDate(value) {
   const date = new Date(typeof value === "number" ? value * 1000 : value);
 
   return isNaN(date) ? "-" : date.toLocaleDateString();
+}
+
+// The login typed into the form, as the driver takes it; nothing when the
+// form was left empty.
+export const emptyLogin = () => ({ user: "", password: "", key: "" });
+export function loginParams(login) {
+  const password = login?.password ?? "";
+  const key = (login?.key ?? "").trim();
+
+  if (!password && !key) return {};
+  return {
+    login: {
+      user: (login.user ?? "").trim() || "root",
+      ...(password && { password }),
+      ...(key && { key }),
+    },
+  };
 }

@@ -15,7 +15,7 @@
               >
                 <div class="product__head">
                   <span class="product__title">{{ item.title }}</span>
-                  <a-tag v-if="item.trialDays" color="green">
+                  <a-tag v-if="item.trialDays && !trialUsed(item)" color="green">
                     {{ $t("mondoo.trial days", { n: item.trialDays }) }}
                   </a-tag>
                 </div>
@@ -23,8 +23,8 @@
                   {{ item.price }} {{ userCurrency?.code }}
                   <span class="product__period">/ {{ item.period }}</span>
                 </div>
-                <div v-if="item.limit" class="product__limit">
-                  {{ $t("mondoo.up to domains", { n: item.limit }) }}
+                <div class="product__limit">
+                  {{ item.isSsh ? $t("mondoo.per server") : $t("mondoo.per domain") }}
                 </div>
               </div>
             </a-col>
@@ -37,26 +37,33 @@
           />
         </div>
 
-        <div class="order__field">
-          <div class="order__title">{{ $t("mondoo.domains") }}</div>
+        <div v-if="isSsh" class="order__field">
+          <div class="order__title">{{ $t("mondoo.machine") }}</div>
           <a-select
-            v-model:value="domains"
-            mode="tags"
+            v-model:value="machine"
             style="width: 100%"
-            :open="false"
-            :token-separators="[',', ' ', ';']"
-            :placeholder="$t('mondoo.domains placeholder')"
-            :status="domainsError ? 'error' : ''"
-            @change="normalize"
+            :placeholder="$t('mondoo.machine placeholder')"
+            :not-found-content="$t('mondoo.no machines')"
+            :options="machines"
           />
-          <div class="order__hint" :class="{ 'order__hint--error': domainsError }">
-            {{ domainsError || $t("mondoo.domains hint") }}
+          <div class="order__hint">{{ $t("mondoo.machine hint") }}</div>
+        </div>
+
+        <div v-else class="order__field">
+          <div class="order__title">{{ $t("mondoo.domain") }}</div>
+          <a-input
+            v-model:value="domainInput"
+            :placeholder="$t('mondoo.domain placeholder')"
+            :status="domainError ? 'error' : ''"
+          />
+          <div class="order__hint" :class="{ 'order__hint--error': domainError }">
+            {{ domainError || $t("mondoo.domain hint") }}
           </div>
         </div>
 
         <div class="order__field order__summary">
           <div>
-            <div v-if="selected?.trialDays" class="order__trial">
+            <div v-if="onTrial" class="order__trial">
               {{ $t("mondoo.trial note", { n: selected.trialDays }) }}
             </div>
             <div class="order__total">
@@ -71,7 +78,7 @@
             :disabled="!canOrder"
             @click="modal.confirmCreate = true"
           >
-            {{ selected?.trialDays ? $t("mondoo.start trial") : $t("mondoo.order") }}
+            {{ onTrial ? $t("mondoo.start trial") : $t("mondoo.order") }}
           </a-button>
           <a-modal
             :title="$t('Confirm')"
@@ -83,8 +90,9 @@
           >
             <p>
               {{ $t("order_services.Do you want to order") }}:
-              {{ selected?.title }} ({{ domains.join(", ") }})
+              {{ selected?.title }} ({{ isSsh ? machineTitle : domain }})
             </p>
+            <p v-if="onTrial">{{ $t("mondoo.trial confirm", { n: selected.trialDays }) }}</p>
           </a-modal>
         </div>
       </template>
@@ -111,7 +119,7 @@ import { useInstancesStore } from "@/stores/instances.js";
 import { useCurrenciesStore } from "@/stores/currencies";
 import useCreateInstance from "@/hooks/instances/create";
 import useServiceId from "@/hooks/services/serviceId";
-import { cleanDomains, isDomain, periodLabel } from "./shared.js";
+import { cleanDomains, isDomain, periodLabel, trialGroup } from "./shared.js";
 
 const router = useRouter();
 const route = useRoute();
@@ -133,7 +141,7 @@ const { serviceId } = useServiceId("mondoo");
 const plan = ref(null);
 const provider = ref(null);
 const product = ref(null);
-const domains = ref([]);
+const domainInput = ref("");
 
 const cachedPlans = reactive({});
 const fetchLoading = ref(false);
@@ -177,7 +185,7 @@ const products = computed(() =>
     .map(([key, item]) => ({
       ...item,
       key,
-      limit: +item.resources?.domains || 0,
+      isSsh: item.meta?.kind === "ssh",
       period: periodLabel(+item.period, t),
       trialDays: Math.round((+item.meta?.trial?.period || 0) / 86400),
     }))
@@ -193,24 +201,55 @@ watch(products, (value) => {
   }
 });
 
-const domainsError = computed(() => {
-  const bad = domains.value.find((domain) => !isDomain(domain));
-  if (bad) return t("mondoo.invalid domain", { domain: bad });
-
-  const limit = selected.value?.limit;
-  if (limit && domains.value.length > limit) {
-    return t("mondoo.too many domains", { n: limit });
+// One domain per order: each further domain is ordered on its own.
+const domain = computed(() => cleanDomains([domainInput.value])[0] ?? "");
+const domainError = computed(() => {
+  if (/[\s,;]/.test(domainInput.value.trim())) return t("mondoo.one domain");
+  if (domain.value && !isDomain(domain.value)) {
+    return t("mondoo.invalid domain", { domain: domain.value });
   }
   return "";
 });
 
-const canOrder = computed(
-  () => !!selected.value && domains.value.length > 0 && !domainsError.value
+// A trial is once per account and kind (its group). Only instances still
+// listed are known here; billing has the final word and issues an invoice
+// for an order whose trial was already used.
+function trialUsed(item) {
+  const group = trialGroup(item, planItem.value);
+  return instancesStore.getInstances.some(
+    (inst) =>
+      inst.config?.trial_ends &&
+      trialGroup(inst.billingPlan?.products?.[inst.product], inst.billingPlan) === group
+  );
+}
+const onTrial = computed(
+  () => !!selected.value?.trialDays && !trialUsed(selected.value)
 );
 
-function normalize(values) {
-  domains.value = cleanDomains(values);
-}
+// A product of kind "ssh" scans one of the customer's machines over SSH
+// instead of a set of domains.
+const isSsh = computed(() => selected.value?.meta?.kind === "ssh");
+const machine = ref(null);
+const machines = computed(() =>
+  instancesStore.getInstances
+    // a scan of a machine is not itself a machine, and neither is a domain scan
+    .filter(
+      (inst) =>
+        (inst.type !== "mondoo" || inst.config?.host) &&
+        !inst.config?.instance &&
+        !["DELETED", "INIT"].includes(inst.state?.state)
+    )
+    .map((inst) => ({ value: inst.uuid, label: inst.title }))
+);
+const machineTitle = computed(
+  () => machines.value.find(({ value }) => value === machine.value)?.label ?? ""
+);
+
+const canOrder = computed(() => {
+  if (!selected.value) return false;
+  if (isSsh.value) return !!machine.value;
+  return !!domain.value && !domainError.value;
+});
 
 const sp = computed(() => {
   const items = showcaseItems.value;
@@ -261,8 +300,12 @@ function orderClickHandler() {
   if (!canOrder.value) return;
 
   const instance = {
-    config: { domains: [...domains.value], auto_renew: false },
-    title: `${domains.value[0]} ${t("mondoo.title suffix")}`,
+    config: isSsh.value
+      ? { instance: machine.value, auto_renew: false }
+      : { domains: [domain.value], auto_renew: false },
+    title: isSsh.value
+      ? `${machineTitle.value} ${t("mondoo.scan title suffix")}`
+      : `${domain.value} ${t("mondoo.title suffix")}`,
     billing_plan: planItem.value,
     product: product.value,
   };

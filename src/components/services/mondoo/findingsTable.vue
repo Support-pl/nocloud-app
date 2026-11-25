@@ -32,6 +32,7 @@
         :rating="rating"
         :state="state"
         :namespace="namespace"
+        @fix="emit('fix')"
       />
     </template>
   </a-table>
@@ -51,11 +52,13 @@ const props = defineProps({
   state: { type: String, default: "" },
   // Limits the list to one domain namespace; all of them when empty.
   namespace: { type: String, default: "" },
+  // Free text over finding titles and CVE/advisory ids.
+  search: { type: String, default: "" },
   pageSize: { type: Number, default: 10 },
   // Changing it reloads the current page.
   refreshKey: { type: Number, default: 0 },
 });
-const emit = defineEmits(["total"]);
+const emit = defineEmits(["total", "fix"]);
 
 const { t } = useI18n();
 
@@ -92,6 +95,7 @@ async function load() {
         ...(props.rating && { rating: props.rating }),
         ...(props.state && { state: props.state }),
         ...(props.namespace && { namespace: props.namespace }),
+        ...(props.search && { search: props.search }),
       },
     });
 
@@ -109,7 +113,7 @@ async function load() {
 watch(page, load);
 watch(() => props.refreshKey, load);
 watch(
-  () => [props.rating, props.state, props.namespace],
+  () => [props.rating, props.state, props.namespace, props.search],
   () => {
     if (page.value !== 1) page.value = 1;
     else load();
