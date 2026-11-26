@@ -63,6 +63,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useApiKeysStore } from "@/stores/apiKeys.js";
 import { useCurrency } from "@/hooks/utils";
 import { marked } from "marked";
 import { useI18n } from "vue-i18n";
@@ -85,8 +86,7 @@ const isStatisticsDataLoading = ref(false);
 const lastParams = ref("");
 // "services" splits the spend by the services charged, "keys" by the API keys it was made with.
 const groupBy = ref("services");
-// The account's API keys from the AI driver, revoked ones included, by id: their names.
-const apiKeys = ref({});
+const apiKeys = useApiKeysStore();
 
 const filterData = ref({
   dateRange: [null, null],
@@ -137,10 +137,9 @@ const serviceRows = (summary) =>
 const keyRows = (summary) =>
   Object.entries(summary.revenue_by_key ?? {})
     .map(([id, amount]) => {
-      const key = apiKeys.value[id];
       return {
-        title: key?.name ?? `${t("invoices.reports.unknown_key")} (${id})`,
-        deleted: !key || Boolean(key.revoked),
+        title: apiKeys.name(id, t("invoices.reports.unknown_key")),
+        deleted: apiKeys.isDeleted(id),
         amount,
         uuid: id,
       };
@@ -171,17 +170,7 @@ const reports = computed(() => {
   ];
 });
 
-const fetchApiKeys = async () => {
-  try {
-    const { keys = [] } = await api.get("/api/openai/keys?revoked=1");
-    apiKeys.value = Object.fromEntries(keys.map((key) => [key.id, key]));
-  } catch {
-    // A driver without keys, or without this account's: the rows show the key's id.
-    apiKeys.value = {};
-  }
-};
-
-onMounted(fetchApiKeys);
+onMounted(apiKeys.fetch);
 
 const fetchStatistics = async () => {
   try {

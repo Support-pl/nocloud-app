@@ -38,6 +38,10 @@
           {{ $t("ai_packages.from_credit") }}
         </a-tag>
         <instance-tags :instances="[invoice.instance]" v-if="invoice.instance" />
+        <a-tag v-if="invoice.meta?.key" class="key-tag">
+          {{ $t("invoices.reports.key") }}:
+          {{ apiKeys.name(invoice.meta.key, $t("invoices.reports.unknown_key")) }}
+        </a-tag>
         <a-tag v-if="invoice.product">
           {{ $t("Product") }}: {{ invoice.product }}
         </a-tag>
@@ -76,6 +80,7 @@ import config from "@/appconfig.js";
 import { useChatsStore } from "@/stores/chats";
 import { storeToRefs } from "pinia";
 import InstanceTags from "./instanceTags.vue";
+import { useApiKeysStore } from "@/stores/apiKeys.js";
 
 
 const rightIcon = defineAsyncComponent(() =>
@@ -90,6 +95,8 @@ const router = useRouter();
 const { currency: baseCurrency, formatPrice } = useCurrency();
 const { toDate } = useAppStore();
 const chatsStore = useChatsStore();
+const apiKeys = useApiKeysStore();
+apiKeys.fetch();
 const { globalModelsList } = storeToRefs(chatsStore);
 
 const currency = computed(() =>
