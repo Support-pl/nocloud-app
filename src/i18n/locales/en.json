@@ -355,6 +355,12 @@
         "download_full_report": "Download Full Report",
         "deleted_service": "Deleted service",
         "deleted": "deleted",
+        "by_services": "By services",
+        "by_keys": "By API keys",
+        "key": "API key",
+        "unknown_key": "Key",
+        "without_key": "Without a key: chat, app and services",
+        "without_service": "Without a service: AI chat and API keys",
         "instruction": "📊 **Service Charge Reports**\n\nHere you can view reports on service charges. The data is updated daily and is accurate **up to yesterday**. Charges for the current day are not included."
       }
     },

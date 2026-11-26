@@ -91,6 +91,12 @@
         "download_full_report": "Pobierz pełny raport",
         "deleted_service": "Usunięta usługa",
         "deleted": "usunięta",
+        "by_services": "Według usług",
+        "by_keys": "Według kluczy API",
+        "key": "Klucz API",
+        "unknown_key": "Klucz",
+        "without_key": "Bez klucza: czat, aplikacja i usługi",
+        "without_service": "Bez usługi: czat AI i klucze API",
         "instruction": "📊 **Raporty dotyczące opłat za usługi**\n\nTutaj możesz przeglądać raporty dotyczące opłat za usługi. Dane są aktualizowane codziennie i są aktualne **do wczoraj**. Opłaty za bieżący dzień nie są uwzględnione."
       }
     },
