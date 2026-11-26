@@ -1353,12 +1353,14 @@ export default {
 .order__grid-item--grid img {
   width: 100%;
   max-width: none;
-  aspect-ratio: 2 / 1;
-  object-fit: cover;
+  height: 56px;
+  object-fit: contain;
+  object-position: center;
   padding: 0;
   border: 0;
   margin: 0 !important;
-  border-radius: 8px;
+  border-radius: 0;
+  background: transparent;
 }
 
 .order__radio-group > * {
