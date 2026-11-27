@@ -9,23 +9,11 @@
       <div v-html="marked(t('invoices.reports.instruction'))"></div>
     </a-card>
 
-    <a-radio-group
-      v-model:value="groupBy"
-      button-style="solid"
-      @change="onFilterChange"
-    >
-      <a-radio-button value="services">
-        {{ t("invoices.reports.by_services") }}
-      </a-radio-button>
-      <a-radio-button value="keys">
-        {{ t("invoices.reports.by_keys") }}
-      </a-radio-button>
-    </a-radio-group>
-
     <billing-filters
       today-maximum
+      show-keys
       v-model="filterData"
-      :show-instances-filter="groupBy === 'services'"
+      :show-instances-filter="true"
       default-filter="currentMonth"
       @filter-change="onFilterChange"
     />
@@ -84,8 +72,7 @@ const statisticsData = ref(null);
 const isStatisticsDataLoading = ref(false);
 
 const lastParams = ref("");
-// "services" splits the spend by the services charged, "keys" by the API keys it was made with.
-const groupBy = ref("services");
+
 const apiKeys = useApiKeysStore();
 
 const filterData = ref({
@@ -93,7 +80,12 @@ const filterData = ref({
   selectedInstances: [],
   activeFilter: null,
   showAll: false,
+  groupBy: "services",
+  selectedKeys: [],
 });
+
+// "services" splits the spend by the services charged, "keys" by the API keys it was made with.
+const groupBy = computed(() => filterData.value.groupBy ?? "services");
 
 const columns = computed(() => [
   {
@@ -190,6 +182,12 @@ const fetchStatistics = async () => {
         .map((account) => "accounts=" + account)
         .join("&"),
       with_details: true,
+      keys: (groupBy.value !== "keys" || filterData.value.showAll
+        ? []
+        : filterData.value.selectedKeys ?? []
+      )
+        .map((key) => "keys=" + encodeURIComponent(key))
+        .join("&"),
       services: (groupBy.value === "keys" ||
       filterData.value.showAll ||
       filterData.value.selectedInstances.length == 0
@@ -209,7 +207,7 @@ const fetchStatistics = async () => {
         params.end_date
       }&${params.accounts}${
         params.services.length ? "&" + params.services : ""
-      }`
+      }${params.keys.length ? "&" + params.keys : ""}`
     );
 
     statisticsData.value = response;

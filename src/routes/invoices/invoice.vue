@@ -63,9 +63,9 @@
           <div style="margin-bottom: 20px">
             <billing-filters
               :show-instances-filter="!isMobileScreen"
+              show-keys
               v-model="transactionsFilterData"
             />
-            <key-tags v-model="transactionsSelectedKeys" />
           </div>
           <div v-if="isLoading" class="loading_container">
             <loading />
@@ -132,7 +132,6 @@ import Reports from "@/components/invoice/reports.vue";
 import empty from "@/components/ui/empty.vue";
 import invoiceItem from "@/components/invoice/invoiceItem.vue";
 import transactionItem from "@/components/invoice/transactionItem.vue";
-import KeyTags from "@/components/invoice/keyTags.vue";
 import { storeToRefs } from "pinia";
 import { useChatsStore } from "@/stores/chats";
 import { useRoute, useRouter } from "vue-router";
@@ -179,9 +178,6 @@ const transactionsFilterData = ref({
   activeFilter: null,
   showAll: false,
 });
-
-// The API keys whose charges the transactions list keeps; billing-filters owns the rest.
-const transactionsSelectedKeys = ref([]);
 
 const invoicesTotalSize = computed(() => filtredInvoices.value?.length || 0);
 const invoicesCurrentPage = ref(1);
@@ -429,15 +425,17 @@ const fetchTransactions = () => {
   const filters = {
     exec: Object.keys(executed).length ? executed : undefined,
     instance:
+      transactionsFilterData.value.groupBy !== "keys" &&
       transactionsFilterData.value.selectedInstances.length > 0 &&
       !transactionsFilterData.value.showAll
         ? transactionsFilterData.value.selectedInstances
         : undefined,
     // The API keys the charges were made with (meta.key).
     key:
-      transactionsSelectedKeys.value.length > 0 &&
+      transactionsFilterData.value.groupBy === "keys" &&
+      transactionsFilterData.value.selectedKeys?.length > 0 &&
       !transactionsFilterData.value.showAll
-        ? transactionsSelectedKeys.value
+        ? transactionsFilterData.value.selectedKeys
         : undefined,
   };
 
@@ -466,12 +464,7 @@ const fetchTransactions = () => {
 const fetchTransactionsDebounced = debounce(fetchTransactions, 300);
 
 watch(
-  [
-    transactionsCurrentPage,
-    transactionsPageSize,
-    transactionsFilterData,
-    transactionsSelectedKeys,
-  ],
+  [transactionsCurrentPage, transactionsPageSize, transactionsFilterData],
   () => {
     fetchTransactionsDebounced();
   },
