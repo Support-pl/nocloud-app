@@ -361,8 +361,7 @@ const getModuleButtons = computed(() => {
 
   if (!components[component]) return;
   if (serviceType === undefined) return;
-  // The component stays mounted while suspended so the notice is visible.
-  // The report itself is hidden in the Mondoo block.
+  // Mondoo results are a local copy: they stay readable while suspended.
   const readable =
     serviceType === "mondoo" && state?.state === "SUSPENDED";
   if (!(status === "Active" || state?.state === "RUNNING" || readable)) return;
