@@ -40,7 +40,19 @@
       </a-checkbox>
     </a-space>
 
-    <a-space v-if="showInstancesFilter" class="instances-filter" wrap>
+    <a-segmented
+      v-if="showKeys"
+      v-model:value="groupBy"
+      class="group-by"
+      :options="groupByOptions"
+      @change="emitChange"
+    />
+
+    <a-space
+      v-if="showInstancesFilter && groupBy === 'services'"
+      class="instances-filter"
+      wrap
+    >
       <instance-tags
         v-model="selectedInstances"
         :filter-mode="true"
@@ -50,6 +62,12 @@
         size="normal"
       />
     </a-space>
+
+    <key-tags
+      v-if="showKeys && groupBy === 'keys'"
+      :model-value="selectedKeys"
+      @update:model-value="setSelectedKeys"
+    />
   </a-space>
 </template>
 
@@ -58,6 +76,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import dayjs from "dayjs";
 import { useInstancesStore } from "@/stores/instances";
 import { storeToRefs } from "pinia";
+import KeyTags from "./keyTags.vue";
 import { useI18n } from "vue-i18n";
 import InstanceTags from "./instanceTags.vue";
 
@@ -87,6 +106,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // A "By services / By API keys" switch over the chips: which ones filter, and how a report splits.
+  showKeys: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["update:modelValue", "filter-change"]);
@@ -99,6 +123,18 @@ const dateRange = ref(props.modelValue.dateRange || [null, null]);
 const activeFilter = ref(props.modelValue.activeFilter || null);
 const selectedInstances = ref(props.modelValue.selectedInstances || []);
 const showAll = ref(props.modelValue.showAll || false);
+const groupBy = ref(props.modelValue.groupBy || "services");
+const selectedKeys = ref(props.modelValue.selectedKeys || []);
+
+const groupByOptions = computed(() => [
+  { label: t("invoices.reports.by_services"), value: "services" },
+  { label: t("invoices.reports.by_keys"), value: "keys" },
+]);
+
+function setSelectedKeys(keys) {
+  selectedKeys.value = keys;
+  emitChange();
+}
 
 const sortedInstances = computed(() => {
   return [...allInstances.value]
@@ -114,6 +150,8 @@ const filterData = computed(() => ({
   selectedInstances: selectedInstances.value,
   activeFilter: activeFilter.value,
   showAll: showAll.value,
+  groupBy: groupBy.value,
+  selectedKeys: selectedKeys.value,
   selectedInstancesData: allInstances.value.filter((instance) =>
     selectedInstances.value.includes(instance.uuid)
   ),
@@ -191,12 +229,14 @@ watch(
       dateRange.value = newValue.dateRange || [null, null];
       activeFilter.value = newValue.activeFilter || null;
       selectedInstances.value = newValue.selectedInstances || [];
+      groupBy.value = newValue.groupBy || "services";
+      selectedKeys.value = newValue.selectedKeys || [];
     }
   },
   { deep: true }
 );
 
-watch([dateRange, selectedInstances], () => {
+watch([dateRange, selectedInstances, selectedKeys], () => {
   showAll.value = false;
 });
 </script>
@@ -222,6 +262,10 @@ export default { name: "BillingFilters" };
 
 .instances-filter {
   width: 100%;
+}
+
+.group-by {
+  align-self: flex-start;
 }
 
 .instance-tag {
