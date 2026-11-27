@@ -11,6 +11,7 @@
 
     <billing-filters
       today-maximum
+      show-keys
       v-model="filterData"
       :show-instances-filter="true"
       default-filter="currentMonth"
@@ -29,7 +30,7 @@
     >
       <template #bodyCell="{ column, text, record }">
         <template v-if="column.dataIndex === 'title'">
-          {{ text }}
+          <span :class="{ 'muted-row': record.muted }">{{ text }}</span>
           <a-tag v-if="record.deleted" class="deleted-tag">
             {{ t("invoices.reports.deleted") }}
           </a-tag>
@@ -49,7 +50,8 @@
       </template> -->
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useApiKeysStore } from "@/stores/apiKeys.js";
 import { useCurrency } from "@/hooks/utils";
 import { marked } from "marked";
 import { useI18n } from "vue-i18n";
@@ -71,16 +73,26 @@ const isStatisticsDataLoading = ref(false);
 
 const lastParams = ref("");
 
+const apiKeys = useApiKeysStore();
+
 const filterData = ref({
   dateRange: [null, null],
   selectedInstances: [],
   activeFilter: null,
   showAll: false,
+  groupBy: "services",
+  selectedKeys: [],
 });
+
+// "services" splits the spend by the services charged, "keys" by the API keys it was made with.
+const groupBy = computed(() => filterData.value.groupBy ?? "services");
 
 const columns = computed(() => [
   {
-    title: t("invoices.reports.service"),
+    title:
+      groupBy.value === "keys"
+        ? t("invoices.reports.key")
+        : t("invoices.reports.service"),
     dataIndex: "title",
     key: "title",
   },
@@ -92,38 +104,65 @@ const columns = computed(() => [
   },
 ]);
 
-const reports = computed(() => {
-  if (
-    statisticsData.value === null ||
-    statisticsData.value.summary === undefined ||
-    statisticsData.value.summary.revenue_by_service === undefined
-  ) {
-    return [];
-  }
+// A row for what the breakdown leaves out, so the rows always add up to everything charged.
+const restRow = (rows, title, summary) => {
+  const rest =
+    Number(summary.revenue ?? 0) -
+    rows.reduce((acc, row) => acc + Number(row.amount ?? 0), 0);
+  return rest > 0.005 ? [{ title, amount: rest, uuid: "rest", muted: true }] : [];
+};
+
+const serviceRows = (summary) =>
   // Every charged service stays in the list and in the total, even one we know nothing about.
-  const reports = Object.keys(statisticsData.value.summary.revenue_by_service).map(
-    (key) => {
-      const instance = allInstances.value.find((inst) => inst.uuid === key);
-
-      return {
-        title:
-          instance?.title ??
-          `${t("invoices.reports.deleted_service")} (${key.split("-")[0]})`,
-        deleted: !instance || isInstanceDeleted(instance),
-        amount: statisticsData.value.summary.revenue_by_service[key],
-        uuid: key,
-      };
-    }
-  );
-
-  reports.push({
-    title: t("invoices.reports.total"),
-    amount: reports.reduce((acc, report) => acc + report.amount, 0),
-    uuid: "total",
+  Object.entries(summary.revenue_by_service ?? {}).map(([key, amount]) => {
+    const instance = allInstances.value.find((inst) => inst.uuid === key);
+    return {
+      title:
+        instance?.title ??
+        `${t("invoices.reports.deleted_service")} (${key.split("-")[0]})`,
+      deleted: !instance || isInstanceDeleted(instance),
+      amount,
+      uuid: key,
+    };
   });
 
-  return reports;
+const keyRows = (summary) =>
+  Object.entries(summary.revenue_by_key ?? {})
+    .map(([id, amount]) => {
+      return {
+        title: apiKeys.name(id, t("invoices.reports.unknown_key")),
+        deleted: apiKeys.isDeleted(id),
+        amount,
+        uuid: id,
+      };
+    })
+    .sort((a, b) => b.amount - a.amount);
+
+const reports = computed(() => {
+  const summary = statisticsData.value?.summary;
+  if (!summary) {
+    return [];
+  }
+  const byKeys = groupBy.value === "keys";
+  const rows = byKeys ? keyRows(summary) : serviceRows(summary);
+  const rest = restRow(
+    rows,
+    t(byKeys ? "invoices.reports.without_key" : "invoices.reports.without_service"),
+    summary
+  );
+
+  return [
+    ...rows,
+    ...rest,
+    {
+      title: t("invoices.reports.total"),
+      amount: Number(summary.revenue ?? 0),
+      uuid: "total",
+    },
+  ];
 });
+
+onMounted(apiKeys.fetch);
 
 const fetchStatistics = async () => {
   try {
@@ -143,7 +182,14 @@ const fetchStatistics = async () => {
         .map((account) => "accounts=" + account)
         .join("&"),
       with_details: true,
-      services: (filterData.value.showAll ||
+      keys: (groupBy.value !== "keys" || filterData.value.showAll
+        ? []
+        : filterData.value.selectedKeys ?? []
+      )
+        .map((key) => "keys=" + encodeURIComponent(key))
+        .join("&"),
+      services: (groupBy.value === "keys" ||
+      filterData.value.showAll ||
       filterData.value.selectedInstances.length == 0
         ? []
         : filterData.value.selectedInstances
@@ -161,7 +207,7 @@ const fetchStatistics = async () => {
         params.end_date
       }&${params.accounts}${
         params.services.length ? "&" + params.services : ""
-      }`
+      }${params.keys.length ? "&" + params.keys : ""}`
     );
 
     statisticsData.value = response;
@@ -189,6 +235,10 @@ function onFilterChange() {
 
   .deleted-tag {
     margin-left: 8px;
+  }
+
+  .muted-row {
+    color: var(--gray, #8c8c8c);
   }
 }
 </style>

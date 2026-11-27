@@ -63,6 +63,7 @@
           <div style="margin-bottom: 20px">
             <billing-filters
               :show-instances-filter="!isMobileScreen"
+              show-keys
               v-model="transactionsFilterData"
             />
           </div>
@@ -424,9 +425,17 @@ const fetchTransactions = () => {
   const filters = {
     exec: Object.keys(executed).length ? executed : undefined,
     instance:
+      transactionsFilterData.value.groupBy !== "keys" &&
       transactionsFilterData.value.selectedInstances.length > 0 &&
       !transactionsFilterData.value.showAll
         ? transactionsFilterData.value.selectedInstances
+        : undefined,
+    // The API keys the charges were made with (meta.key).
+    key:
+      transactionsFilterData.value.groupBy === "keys" &&
+      transactionsFilterData.value.selectedKeys?.length > 0 &&
+      !transactionsFilterData.value.showAll
+        ? transactionsFilterData.value.selectedKeys
         : undefined,
   };
 
