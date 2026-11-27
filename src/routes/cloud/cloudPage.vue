@@ -269,6 +269,7 @@
             </div>
           </template>
         </component>
+        <mondoo-draw v-if="mondooOnServer" :service="mondooOnServer" />
       </div>
       <loading
         v-else-if="vmsLoading"
@@ -298,6 +299,7 @@ import networkControl from "@/components/cloud/options/networkControl.vue";
 import accessManager from "@/components/cloud/options/accessManager.vue";
 import loading from "@/components/ui/loading.vue";
 import imagesList from "@/components/ui/images.vue";
+import MondooDraw from "@/components/services/mondoo/draw.vue";
 import { getInstStatusColor } from "@/functions";
 
 const leftIcon = defineAsyncComponent(() =>
@@ -316,6 +318,7 @@ export default {
     accessManager,
     leftIcon,
     moreIcon,
+    MondooDraw,
   },
   setup() {
     const { openNotification } = useNotification();
@@ -384,6 +387,22 @@ export default {
 
       if (!component) return () => ({});
       return defineAsyncComponent(() => components[component]());
+    },
+    mondooOnServer() {
+      const id = this.VM?.uuid;
+      if (!id) return null;
+      const inst = (this.getInstances || []).find(
+        (item) =>
+          (item.type === "mondoo" || item._driver === "mondoo") &&
+          item.config?.instance === id
+      );
+      if (!inst) return null;
+      return {
+        uuid: inst.uuid,
+        state: inst.state,
+        data: inst.data,
+        config: inst.config,
+      };
     },
     menuOptions() {
       let { type } = this.VM.billingPlan ?? {};

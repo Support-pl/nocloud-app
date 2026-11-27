@@ -39,14 +39,46 @@
 
         <div v-if="isSsh" class="order__field">
           <div class="order__title">{{ $t("mondoo.machine") }}</div>
-          <a-select
-            v-model:value="machine"
-            style="width: 100%"
-            :placeholder="$t('mondoo.machine placeholder')"
-            :not-found-content="$t('mondoo.no machines')"
-            :options="machines"
-          />
-          <div class="order__hint">{{ $t("mondoo.machine hint") }}</div>
+          <a-radio-group v-model:value="sshMode" class="order__mode">
+            <a-radio value="ours">{{ $t("mondoo.our server") }}</a-radio>
+            <a-radio value="foreign">{{ $t("mondoo.foreign server") }}</a-radio>
+          </a-radio-group>
+          <template v-if="sshMode === 'ours'">
+            <a-select
+              v-model:value="machine"
+              style="width: 100%"
+              :placeholder="$t('mondoo.machine placeholder')"
+              :not-found-content="$t('mondoo.no machines')"
+              :options="machines"
+            />
+            <div class="order__hint">{{ $t("mondoo.machine hint") }}</div>
+          </template>
+          <template v-else>
+            <a-input
+              v-model:value="foreignHost"
+              :placeholder="$t('mondoo.foreign host placeholder')"
+              :status="foreignError ? 'error' : ''"
+            />
+            <a-input
+              v-model:value="foreignUser"
+              :placeholder="$t('mondoo.login.user')"
+            />
+            <a-input-password
+              v-model:value="foreignPassword"
+              :placeholder="$t('mondoo.login.password')"
+              autocomplete="new-password"
+            />
+            <a-textarea
+              v-model:value="foreignKey"
+              :rows="4"
+              spellcheck="false"
+              class="order__key"
+              placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
+            />
+            <div class="order__hint" :class="{ 'order__hint--error': foreignError }">
+              {{ foreignError || $t("mondoo.foreign hint") }}
+            </div>
+          </template>
         </div>
 
         <div v-else class="order__field">
@@ -90,7 +122,7 @@
           >
             <p>
               {{ $t("order_services.Do you want to order") }}:
-              {{ selected?.title }} ({{ isSsh ? machineTitle : domain }})
+              {{ selected?.title }} ({{ isSsh ? sshTitle : domain }})
             </p>
             <p v-if="onTrial">{{ $t("mondoo.trial confirm", { n: selected.trialDays }) }}</p>
           </a-modal>
@@ -229,7 +261,12 @@ const onTrial = computed(
 // A product of kind "ssh" scans one of the customer's machines over SSH
 // instead of a set of domains.
 const isSsh = computed(() => selected.value?.meta?.kind === "ssh");
+const sshMode = ref("ours");
 const machine = ref(null);
+const foreignHost = ref("");
+const foreignUser = ref("root");
+const foreignPassword = ref("");
+const foreignKey = ref("");
 const machines = computed(() =>
   instancesStore.getInstances
     // a scan of a machine is not itself a machine, and neither is a domain scan
@@ -244,10 +281,26 @@ const machines = computed(() =>
 const machineTitle = computed(
   () => machines.value.find(({ value }) => value === machine.value)?.label ?? ""
 );
+const foreignError = computed(() => {
+  const host = foreignHost.value.trim();
+  if (!host) return "";
+  if (/[\s,;]/.test(host)) return t("mondoo.one host");
+  const secret = foreignPassword.value || foreignKey.value.trim();
+  if (!secret) return t("mondoo.login.incomplete");
+  return "";
+});
+const sshTitle = computed(() =>
+  sshMode.value === "ours" ? machineTitle.value : foreignHost.value.trim()
+);
 
 const canOrder = computed(() => {
   if (!selected.value) return false;
-  if (isSsh.value) return !!machine.value;
+  if (isSsh.value) {
+    if (sshMode.value === "foreign") {
+      return !!foreignHost.value.trim() && !foreignError.value;
+    }
+    return !!machine.value;
+  }
   return !!domain.value && !domainError.value;
 });
 
@@ -299,12 +352,21 @@ watch(userCurrency, () => fetchPlans(provider.value));
 function orderClickHandler() {
   if (!canOrder.value) return;
 
+  const key = foreignKey.value.trim();
   const instance = {
     config: isSsh.value
-      ? { instance: machine.value, auto_renew: false }
+      ? sshMode.value === "foreign"
+        ? {
+            host: foreignHost.value.trim(),
+            username: foreignUser.value.trim() || "root",
+            ...(foreignPassword.value && { password: foreignPassword.value }),
+            ...(key && { key }),
+            auto_renew: false,
+          }
+        : { instance: machine.value, auto_renew: false }
       : { domains: [domain.value], auto_renew: false },
     title: isSsh.value
-      ? `${machineTitle.value} ${t("mondoo.scan title suffix")}`
+      ? `${sshTitle.value} ${t("mondoo.scan title suffix")}`
       : `${domain.value} ${t("mondoo.title suffix")}`,
     billing_plan: planItem.value,
     product: product.value,

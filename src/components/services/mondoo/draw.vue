@@ -14,6 +14,7 @@
       :message="$t('mondoo.suspended')"
       class="mondoo__alert"
     />
+    <template v-else>
 
     <a-alert
       v-if="scanInfo.error"
@@ -198,6 +199,7 @@
           </template>
         </template>
       </a-table>
+    </template>
     </template>
 
     <a-modal
